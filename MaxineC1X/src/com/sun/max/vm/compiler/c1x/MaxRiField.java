@@ -113,8 +113,8 @@ public class MaxRiField implements RiField {
         if (fieldActor != null) {
             return constantPool.runtime.canonicalRiType(fieldActor.holder(), constantPool, -1);
         }
-        // TODO: get the correct cpi of the field's holder
-        return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool), -1);
+        int holderCpi = PoolConstant.Static.holderIndex(fieldRef);
+        return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool), holderCpi);
     }
 
     /**

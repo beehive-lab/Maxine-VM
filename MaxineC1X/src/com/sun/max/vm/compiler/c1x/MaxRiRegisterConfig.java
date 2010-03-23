@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
+import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -48,8 +49,8 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
     private final CiRegister stackPointerRegister;
     private final CiRegister framePointerRegister;
     private final CiRegister scratchRegister;
-    private final CiRegister[] returnRegisterInt;
-    private final CiRegister[] returnRegisterFloat;
+    private final CiRegister returnRegisterInt;
+    private final CiRegister returnRegisterFloat;
     private final CiRegister[] integerRegisterRoleMap;
     private final CiRegister[] allocatableRegisters;
     private final CiRegister[] registerReferenceMapOrder;
@@ -62,8 +63,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         if (vmConfiguration.platform.instructionSet() != InstructionSet.AMD64) {
             FatalError.unimplemented();
         }
-        InstructionSet isa = vmConfiguration.platform().processorKind.instructionSet;
-        CiArchitecture arch = CiArchitecture.findArchitecture(isa.name().toLowerCase());
+        CiArchitecture arch = new AMD64();
 
         // get the unallocatable registers
         Set<String> unallocatable = new HashSet<String>();
@@ -92,8 +92,8 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         framePointerRegister = markUnallocatable(unallocatable, regMap, Role.CPU_FRAME_POINTER, roles);
         scratchRegister = markUnallocatable(unallocatable, regMap, Role.ABI_SCRATCH, roles);
         markUnallocatable(unallocatable, regMap, Role.LITERAL_BASE_POINTER, roles);
-        returnRegisterInt = new CiRegister[] {regMap.get(roles.integerRegisterActingAs(Role.ABI_RETURN).name().toLowerCase())};
-        returnRegisterFloat = new CiRegister[] {regMap.get(roles.floatingPointRegisterActingAs(Role.ABI_RETURN).name().toLowerCase())};
+        returnRegisterInt = regMap.get(roles.integerRegisterActingAs(Role.ABI_RETURN).name().toLowerCase());
+        returnRegisterFloat = regMap.get(roles.floatingPointRegisterActingAs(Role.ABI_RETURN).name().toLowerCase());
 
         assert safepointRegister != null;
         assert stackPointerRegister != null;
@@ -144,7 +144,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         xmmParameterRegisters = xmmList.toArray(new CiRegister[xmmList.size()]);
     }
 
-    public CiRegister[] getReturnRegisters(CiKind kind) {
+    public CiRegister getReturnRegister(CiKind kind) {
         if (kind == CiKind.Float || kind == CiKind.Double) {
             return returnRegisterFloat;
         }
@@ -239,11 +239,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                 case Object:
                     if (currentGeneral < generalParameterRegisters.length) {
                         CiRegister register = generalParameterRegisters[currentGeneral++];
-                        if (kind == CiKind.Long) {
-                            result[i] = new CiRegisterLocation(kind, register, register);
-                        } else {
-                            result[i] = new CiRegisterLocation(kind, register);
-                        }
+                        result[i] = new CiRegisterLocation(kind, register);
                     }
                     break;
 
@@ -251,11 +247,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                 case Double:
                     if (currentXMM < xmmParameterRegisters.length) {
                         CiRegister register = xmmParameterRegisters[currentXMM++];
-                        if (kind == CiKind.Float) {
-                            result[i] = new CiRegisterLocation(kind, register);
-                        } else {
-                            result[i] = new CiRegisterLocation(kind, register, register);
-                        }
+                        result[i] = new CiRegisterLocation(kind, register);
                     }
                     break;
 

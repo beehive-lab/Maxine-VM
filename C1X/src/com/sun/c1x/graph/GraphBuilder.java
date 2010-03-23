@@ -44,13 +44,13 @@ import com.sun.c1x.value.*;
 public final class GraphBuilder {
 
     /**
-     * The minimum value to which {@link C1XOptions#TraceGraphBuilderLevel} must be set to trace
+     * The minimum value to which {@link C1XOptions#TraceBytecodeParserLevel} must be set to trace
      * the bytecode instructions as they are parsed.
      */
     public static final int TRACELEVEL_INSTRUCTIONS = 1;
 
     /**
-     * The minimum value to which {@link C1XOptions#TraceGraphBuilderLevel} must be set to trace
+     * The minimum value to which {@link C1XOptions#TraceBytecodeParserLevel} must be set to trace
      * the frame state before each bytecode instruction as it is parsed.
      */
     public static final int TRACELEVEL_STATE = 2;
@@ -88,7 +88,7 @@ public final class GraphBuilder {
         this.canonicalizer = C1XOptions.OptCanonicalize ? new Canonicalizer(compilation.runtime, compilation.method, compilation.target) : null;
         RiMethod rootMethod = compilation.method;
 
-        traceLevel = C1XOptions.TraceGraphBuilderLevel;
+        traceLevel = C1XOptions.TraceBytecodeParserLevel;
         log = traceLevel > 0 ? new LogStream(TTY.out) : null;
         if (log != null) {
             log.println();

@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target.x86;
+package com.sun.c1x.target.amd64;
 
 import java.util.*;
 
@@ -28,11 +28,11 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
-import com.sun.c1x.target.x86.X86Assembler.*;
+import com.sun.c1x.target.amd64.AMD64Assembler.*;
 import com.sun.c1x.xir.*;
 import com.sun.c1x.xir.CiXirAssembler.*;
 
-public class X86GlobalStubEmitter implements GlobalStubEmitter {
+public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     public static final int ARGUMENT_SIZE = 8;
 
@@ -41,12 +41,12 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private static final int ReservedArgumentSlots = 4;
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
-    private static final CiRegister convertArgument = X86.xmm0;
-    private static final CiRegister convertResult = X86.rax;
-    private static final CiRegister negateArgument = X86.xmm0;
-    private static final CiRegister negateTemp = X86.xmm1;
+    private static final CiRegister convertArgument = AMD64.xmm0;
+    private static final CiRegister convertResult = AMD64.rax;
+    private static final CiRegister negateArgument = AMD64.xmm0;
+    private static final CiRegister negateTemp = AMD64.xmm1;
 
-    private X86MacroAssembler asm;
+    private AMD64MacroAssembler asm;
     private final CiTarget target;
     private int argsSize;
     private int[] argOffsets;
@@ -63,15 +63,15 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private CiRegister[] allRegisters;
     private boolean savedAllRegisters;
 
-    public X86GlobalStubEmitter(C1XCompiler compiler) {
+    public AMD64GlobalStubEmitter(C1XCompiler compiler) {
         this.compiler = compiler;
         this.target = compiler.target;
         this.runtime = compiler.runtime;
-        allRegisters = target.arch.is64bit() ? X86.allRegisters64 : X86.allRegisters;
+        allRegisters = AMD64.allRegisters;
     }
 
     private void reset(CiKind resultKind, CiKind[] argTypes) {
-        asm = new X86MacroAssembler(compiler, compiler.target);
+        asm = new AMD64MacroAssembler(compiler, compiler.target);
         localSize = 0;
         saveSize = 0;
         argsSize = 0;
@@ -139,11 +139,11 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private LIROperand allocateOperand(XirParameter param, int parameterIndex) {
-        return LIROperand.forAddress(X86.rsp, argumentIndexToStackOffset(parameterIndex), param.kind);
+        return LIROperand.forAddress(AMD64.rsp, argumentIndexToStackOffset(parameterIndex), param.kind);
     }
 
     private LIROperand allocateResultOperand(XirOperand result) {
-        return LIROperand.forAddress(X86.rsp, argumentIndexToStackOffset(0), result.kind);
+        return LIROperand.forAddress(AMD64.rsp, argumentIndexToStackOffset(0), result.kind);
     }
 
     private LIROperand allocateOperand(XirTemp temp) {
@@ -167,7 +167,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, compiler.runtime, null);
         compilation.initFrameMap(0);
         compilation.frameMap().setFrameSize(frameSize());
-        X86LIRAssembler assembler = new X86LIRAssembler(compilation);
+        AMD64LIRAssembler assembler = new AMD64LIRAssembler(compilation);
         asm = assembler.masm;
 
         for (CiRegister reg : compiler.target.allocatableRegs.allocatableRegisters) {
@@ -180,10 +180,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             if (t instanceof XirFixed) {
                 final XirFixed fixed = (XirFixed) t;
                 if (fixed.location.isRegister()) {
-                    allocatableRegisters.remove(fixed.location.first());
-                    if (fixed.location.isDoubleRegister()) {
-                        allocatableRegisters.remove(fixed.location.second());
-                    }
+                    allocatableRegisters.remove(fixed.location.register());
                 }
             }
         }
@@ -360,11 +357,11 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void loadArgument(int index, CiRegister register) {
-        asm.movptr(register, new Address(X86.rsp, argumentIndexToStackOffset(index)));
+        asm.movq(register, new Address(AMD64.rsp, argumentIndexToStackOffset(index)));
     }
 
     private void storeArgument(int index, CiRegister register) {
-        asm.movptr(new Address(X86.rsp, argumentIndexToStackOffset(index)), register);
+        asm.movq(new Address(AMD64.rsp, argumentIndexToStackOffset(index)), register);
     }
 
     private void partialSavePrologue(CiRegister... registersToSave) {
@@ -377,11 +374,11 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         if (entryCodeOffset != 0) {
             asm.nop(entryCodeOffset);
         }
-        asm.subq(X86.rsp, frameSize());
+        asm.subq(AMD64.rsp, frameSize());
 
         int index = 0;
         for (CiRegister r : registersToSave) {
-            asm.movq(new Address(X86.rsp, index * target.arch.wordSize), r);
+            asm.movq(new Address(AMD64.rsp, index * target.arch.wordSize), r);
             index++;
         }
 
@@ -397,13 +394,13 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             // align to code size
             asm.nop(entryCodeOffset);
         }
-        asm.subq(X86.rsp, frameSize());
+        asm.subq(AMD64.rsp, frameSize());
         asm.setFrameSize(frameSize());
         // save all registers
         for (CiRegister r : allRegisters) {
           int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
-              if (r != X86.rsp && offset >= 0) {
-                asm.movq(new Address(X86.rsp, offset), r);
+              if (r != AMD64.rsp && offset >= 0) {
+                asm.movq(new Address(AMD64.rsp, offset), r);
             }
         }
         this.savedAllRegisters = true;
@@ -425,21 +422,21 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             // saved all registers, restore all registers
             for (CiRegister r : allRegisters) {
                 int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
-                if (r != X86.rsp && offset >= 0) {
-                    asm.movq(r, new Address(X86.rsp, offset));
+                if (r != AMD64.rsp && offset >= 0) {
+                    asm.movq(r, new Address(AMD64.rsp, offset));
                 }
             }
         } else {
             // saved only select registers
             for (int index = 0; index < registersSaved.length; index++) {
                 CiRegister r = registersSaved[index];
-                asm.movq(r, new Address(X86.rsp, index * target.arch.wordSize));
+                asm.movq(r, new Address(AMD64.rsp, index * target.arch.wordSize));
             }
             registersSaved = null;
         }
 
         // Restore rsp
-        asm.addq(X86.rsp, frameSize());
+        asm.addq(AMD64.rsp, frameSize());
         asm.ret(0);
     }
 
@@ -451,16 +448,15 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         // Load arguments
         CiLocation[] result = target.registerConfig.getRuntimeParameterLocations(call.arguments);
         for (int i = 0; i < call.arguments.length; i++) {
-            loadArgument(i, result[i].first());
+            loadArgument(i, result[i].register());
         }
 
         // Call to the runtime
         asm.directCall(call, null);
 
         if (call.resultKind != CiKind.Void) {
-            CiRegister[] returnRegisters = target.registerConfig.getReturnRegisters(call.resultKind);
-            assert returnRegisters.length == 1;
-            this.storeArgument(0, returnRegisters[0]);
+            CiRegister returnRegister = target.registerConfig.getReturnRegister(call.resultKind);
+            this.storeArgument(0, returnRegister);
         }
     }
 }

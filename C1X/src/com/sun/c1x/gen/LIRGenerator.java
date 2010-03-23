@@ -1906,12 +1906,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (kind == CiKind.Void) {
             return IllegalLocation;
         }
-        CiRegister[] returnRegisters = compilation.target.registerConfig.getReturnRegisters(kind);
-        assert is64 : "64 bit only for now";
-        if (returnRegisters.length == 2) {
-            return forRegisters(kind, returnRegisters[0], returnRegisters[1]);
-        }
-        return forRegister(kind, returnRegisters[0]);
+        CiRegister returnRegister = compilation.target.registerConfig.getReturnRegister(kind);
+        return forRegister(kind, returnRegister);
     }
 
     public int maxVirtualRegisterNumber() {

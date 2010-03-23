@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target.x86;
+package com.sun.c1x.target.amd64;
 
 import java.util.*;
 
@@ -31,7 +31,7 @@ import com.sun.c1x.xir.*;
  * @author Thomas Wuerthinger
  *
  */
-public class X86XirAssembler extends CiXirAssembler {
+public class AMD64XirAssembler extends CiXirAssembler {
 
     @Override
     protected XirTemplate buildTemplate(String name, boolean isStub) {
@@ -71,7 +71,7 @@ public class X86XirAssembler extends CiXirAssembler {
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
                         // Special treatment to make sure that the left input of % and / is in RAX
                         if (divModLeftInput == null) {
-                            divModLeftInput = this.createRegister("divModLeftInput", CiKind.Int, X86.rax);
+                            divModLeftInput = this.createRegister("divModLeftInput", CiKind.Int, AMD64.rax);
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, divModLeftInput, i.x()));
                         xOp = divModLeftInput;
@@ -85,7 +85,7 @@ public class X86XirAssembler extends CiXirAssembler {
                     XirOperand yOp = i.y();
                     if (i.op == XirOp.Shl || i.op == XirOp.Shr) {
                         // Special treatment to make sure that the shift count is always in RCX
-                        XirOperand fixedLocation = createRegister("fixedShiftCount", i.y().kind, X86.rcx);
+                        XirOperand fixedLocation = createRegister("fixedShiftCount", i.y().kind, AMD64.rcx);
                         currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, fixedLocation, i.y()));
                         yOp = fixedLocation;
                     } else if (i.op == XirOp.Mul && (i.y() instanceof XirConstantOperand)) {
@@ -98,7 +98,7 @@ public class X86XirAssembler extends CiXirAssembler {
 
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
                         if (divModTemp == null) {
-                            divModTemp = this.createRegister("divModTemp", CiKind.Int, X86.rdx);
+                            divModTemp = this.createRegister("divModTemp", CiKind.Int, AMD64.rdx);
                         }
                     }
 
@@ -166,6 +166,6 @@ public class X86XirAssembler extends CiXirAssembler {
 
     @Override
     public CiXirAssembler copy() {
-        return new X86XirAssembler();
+        return new AMD64XirAssembler();
     }
 }

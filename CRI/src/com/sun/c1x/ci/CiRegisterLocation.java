@@ -28,25 +28,15 @@ package com.sun.c1x.ci;
  */
 public final class CiRegisterLocation extends CiLocation {
 
-    public final CiRegister first;
-    public final CiRegister second;
+    public final CiRegister register;
 
-    public CiRegisterLocation(CiKind kind, CiRegister first, CiRegister second) {
+    public CiRegisterLocation(CiKind kind, CiRegister register) {
         super(kind);
-        assert kind.jvmSlots == 2;
-        this.first = first;
-        this.second = second;
-    }
-
-    public CiRegisterLocation(CiKind kind, CiRegister first) {
-        super(kind);
-        assert kind.jvmSlots == 1;
-        this.first = first;
-        this.second = null;
+        this.register = register;
     }
 
     public int hashCode() {
-        return kind.ordinal() + first.hashCode(); // second's hashcode probably doesn't help much
+        return kind.ordinal() ^ register.number;
     }
 
     public boolean equals(Object o) {
@@ -55,12 +45,12 @@ public final class CiRegisterLocation extends CiLocation {
         }
         if (o instanceof CiRegisterLocation) {
             CiRegisterLocation l = (CiRegisterLocation) o;
-            return l.kind == kind && l.first == first && l.second == second;
+            return l.kind == kind && l.register == register;
         }
         return false;
     }
 
     public String toString() {
-        return "%" + first.name + (second == null ? "" : "&" + second.name) + ":" + kind;
+        return "%" + register.name + ":" + kind;
     }
 }

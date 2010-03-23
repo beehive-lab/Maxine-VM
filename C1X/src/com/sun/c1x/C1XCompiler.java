@@ -26,7 +26,6 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.*;
 import com.sun.c1x.xir.*;
 
 /**
@@ -64,9 +63,7 @@ public class C1XCompiler extends CiCompiler {
         this.target = target;
         this.xir = xirGen;
 
-        // TODO: Remove this fixed wiring to X86
-        assert target.arch instanceof AMD64;
-        this.backend = new X86Backend(this);
+        this.backend = Backend.create(target.arch, this);
     }
 
     @Override

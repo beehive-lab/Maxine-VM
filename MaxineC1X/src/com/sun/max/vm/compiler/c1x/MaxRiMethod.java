@@ -104,8 +104,8 @@ public class MaxRiMethod implements RiMethod {
         if (methodActor != null) {
             return constantPool.runtime.canonicalRiType(methodActor.holder(), constantPool, -1);
         }
-        // TODO: get the correct CPI of the holder
-        return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool), -1);
+        int holderCpi = PoolConstant.Static.holderIndex(methodRef);
+        return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool), holderCpi);
     }
 
     /**

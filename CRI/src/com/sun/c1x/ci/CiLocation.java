@@ -38,20 +38,6 @@ public abstract class CiLocation extends CiValue {
         super(kind);
     }
 
-    public boolean isSingleRegister() {
-        if (this instanceof CiRegisterLocation) {
-            return ((CiRegisterLocation) this).second == null;
-        }
-        return false;
-    }
-
-    public boolean isDoubleRegister() {
-        if (this instanceof CiRegisterLocation) {
-            return ((CiRegisterLocation) this).second != null;
-        }
-        return false;
-    }
-
     public boolean isRegister() {
         return this instanceof CiRegisterLocation;
     }
@@ -64,12 +50,8 @@ public abstract class CiLocation extends CiValue {
         return kind != CiKind.Illegal;
     }
 
-    public CiRegister first() {
-        return ((CiRegisterLocation) this).first;
-    }
-
-    public CiRegister second() {
-        return ((CiRegisterLocation) this).second;
+    public CiRegister register() {
+        return ((CiRegisterLocation) this).register;
     }
 
     public int stackOffset() {

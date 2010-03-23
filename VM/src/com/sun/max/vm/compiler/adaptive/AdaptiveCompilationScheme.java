@@ -96,7 +96,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                     "In mixed mode, sets the recompilation threshold for methods."), MaxineVM.Phase.STARTING);
     private static final VMBooleanXXOption gcOnRecompileOption = register(new VMBooleanXXOption("-XX:-GCOnRecompilation",
                     "When specified, the compiler will request GC before every re-compilation operation."), MaxineVM.Phase.STARTING);
-    private static final VMBooleanXXOption failoverOption = register(new VMBooleanXXOption("-XX:+FailOverCompilation",
+    private static final VMBooleanXXOption failoverOption = register(new VMBooleanXXOption("-XX:-FailOverCompilation",
                     "When specified, the compiler will attempt to use a different compiler if compilation fails " +
                     "with the first compiler."), MaxineVM.Phase.STARTING);
 

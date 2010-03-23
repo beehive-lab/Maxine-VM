@@ -33,9 +33,9 @@ import com.sun.c1x.ri.RiBytecodeExtension;
 import com.sun.c1x.ri.RiField;
 import com.sun.c1x.ri.RiMethod;
 import com.sun.c1x.ri.RiType;
-import com.sun.c1x.target.x86.X86;
-import com.sun.c1x.target.x86.X86Assembler;
-import com.sun.c1x.target.x86.X86MacroAssembler;
+import com.sun.c1x.target.amd64.AMD64;
+import com.sun.c1x.target.amd64.AMD64Assembler;
+import com.sun.c1x.target.amd64.AMD64MacroAssembler;
 import com.sun.c1x.util.Util;
 
 /**
@@ -45,15 +45,17 @@ import com.sun.c1x.util.Util;
  */
 public class X86CodeGen extends CodeGen {
 
+    // Checkstyle: stop
+    
     private static boolean GenBoundsCheck = false;
 
-    final X86MacroAssembler asm;
+    final AMD64MacroAssembler asm;
     final boolean is64bit;
     int fakeRegisterNum = -1;
 
     public X86CodeGen(C0XCompilation compilation, CiTarget target) {
         super(compilation, target);
-        asm = new X86MacroAssembler(null, target);
+        asm = new AMD64MacroAssembler(null, target);
         is64bit = target.arch.is64bit();
     }
 
@@ -145,7 +147,8 @@ public class X86CodeGen extends CodeGen {
             // the field is loaded, emit a single store instruction
             recordImplicitExceptionPoint(NullPointerException.class);
             // XXX: write barrier
-            emitStore(kind, new Address(objReg, field.offset()), valReg);
+            // XXX: store
+            //emitStore(kind, new Address(objReg, field.offset()), valReg);
         } else {
             // TODO: call global stub to resolve the field and get its offset
             unimplemented(CiKind.Void);
@@ -160,7 +163,7 @@ public class X86CodeGen extends CodeGen {
             // the field is loaded, emit a single load instruction
             CiRegister valReg = allocDst(kind);
             recordImplicitExceptionPoint(NullPointerException.class);
-            emitLoad(kind, valReg, new Address(objReg, field.offset()));
+            // emitLoad(kind, valReg, new Address(objReg, field.offset()));
             return location(valReg);
         } else {
             // TODO: call global stub to resolve the field and get its offset
@@ -177,7 +180,9 @@ public class X86CodeGen extends CodeGen {
             Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
             CiRegister objReg = allocSrc(l, CiKind.Object);
             // XXX: write barrier
-            emitStore(kind, new Address(objReg, field.offset()), valReg);
+
+            // XXX: store
+            //emitStore(kind, new Address(objReg, field.offset()), valReg);
         } else {
             // TODO: call global stub to resolve the field and get its offset
             unimplemented(CiKind.Void);
@@ -192,7 +197,7 @@ public class X86CodeGen extends CodeGen {
             // TODO: convert CiConstant to object
             Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
             CiRegister objReg = allocSrc(l, CiKind.Object);
-            emitLoad(kind, valReg, new Address(objReg, field.offset()));
+            //emitLoad(kind, valReg, new Address(objReg, field.offset()));
             return location(valReg);
         } else {
             // TODO: call global stub to resolve the field and get its offset
@@ -207,7 +212,7 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genReturn(CiKind kind, Location value) {
-        allocDst(target.registerConfig.getReturnRegisters(kind)[0], kind);
+        allocDst(target.registerConfig.getReturnRegister(kind), kind);
         // TODO: adjust stack pointer
         asm.ret(0);
     }
@@ -305,7 +310,7 @@ public class X86CodeGen extends CodeGen {
                 Label endLabel = new Label();
                 asm.cvttss2sil(dst, src);
                 asm.cmp32(dst, Integer.MIN_VALUE);
-                asm.jcc(X86Assembler.ConditionFlag.notEqual, endLabel);
+                asm.jcc(AMD64Assembler.ConditionFlag.notEqual, endLabel);
                 recordGlobalStubCallPoint();
 // TODO                asm.callGlobalStub(GlobalStub.f2i, dst, src);
                 asm.bind(endLabel);
@@ -317,7 +322,7 @@ public class X86CodeGen extends CodeGen {
                 asm.cvttss2siq(dst, src);
                 asm.mov64(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);
-                asm.jcc(X86Assembler.ConditionFlag.notEqual, endLabel);
+                asm.jcc(AMD64Assembler.ConditionFlag.notEqual, endLabel);
 // TODO                asm.callGlobalStub(GlobalStub.f2i, dst, src);
                 asm.bind(endLabel);
                 return location(dst);
@@ -329,7 +334,7 @@ public class X86CodeGen extends CodeGen {
                 Label endLabel = new Label();
                 asm.cvttsd2sil(dst, src);
                 asm.cmp32(dst, Integer.MIN_VALUE);
-                asm.jcc(X86Assembler.ConditionFlag.notEqual, endLabel);
+                asm.jcc(AMD64Assembler.ConditionFlag.notEqual, endLabel);
 // TODO                asm.callGlobalStub(GlobalStub.d2i, dst, src);
                 asm.bind(endLabel);
                 return location(dst);
@@ -340,7 +345,7 @@ public class X86CodeGen extends CodeGen {
                 asm.cvttsd2siq(dst, src);
                 asm.mov64(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);
-                asm.jcc(X86Assembler.ConditionFlag.notEqual, endLabel);
+                asm.jcc(AMD64Assembler.ConditionFlag.notEqual, endLabel);
 // TODO                asm.callGlobalStub(GlobalStub.d2i, dst, src);
                 asm.bind(endLabel);
                 return location(dst);
@@ -406,35 +411,35 @@ public class X86CodeGen extends CodeGen {
                 return location(dst);
             }
             case Bytecodes.IDIV: {
-                CiRegister dst = allocSrcDst(x, X86.rax, CiKind.Int);
-                CiRegister edx = allocTmp(X86.rdx, CiKind.Int);
+                CiRegister dst = allocSrcDst(x, AMD64.rax, CiKind.Int);
+                CiRegister edx = allocTmp(AMD64.rdx, CiKind.Int);
                 asm.xorl(edx, edx);
                 recordImplicitExceptionPoint(ArithmeticException.class);
                 asm.idivl(allocSrc(y, CiKind.Int));
                 return location(dst);
             }
             case Bytecodes.IREM: {
-                allocSrc(x, X86.rax, CiKind.Int);
-                CiRegister edx = allocDst(X86.rdx, CiKind.Int);
+                allocSrc(x, AMD64.rax, CiKind.Int);
+                CiRegister edx = allocDst(AMD64.rdx, CiKind.Int);
                 asm.xorl(edx, edx);
                 recordImplicitExceptionPoint(ArithmeticException.class);
                 asm.idivl(allocSrc(y, CiKind.Int));
                 return location(edx);
             }
             case Bytecodes.ISHL: {
-                allocSrc(y, X86.rcx, CiKind.Int);
+                allocSrc(y, AMD64.rcx, CiKind.Int);
                 CiRegister dst = allocSrcDst(x, CiKind.Int);
                 asm.shll(dst);
                 return location(dst);
             }
             case Bytecodes.ISHR: {
-                allocSrc(y, X86.rcx, CiKind.Int);
+                allocSrc(y, AMD64.rcx, CiKind.Int);
                 CiRegister dst = allocSrcDst(x, CiKind.Int);
                 asm.sarl(dst);
                 return location(dst);
             }
             case Bytecodes.IUSHR: {
-                allocSrc(y, X86.rcx, CiKind.Int);
+                allocSrc(y, AMD64.rcx, CiKind.Int);
                 CiRegister dst = allocSrcDst(x, CiKind.Int);
                 asm.shrl(dst);
                 return location(dst);
@@ -478,35 +483,35 @@ public class X86CodeGen extends CodeGen {
                 return location(dst);
             }
             case Bytecodes.LDIV: {
-                CiRegister dst = allocSrcDst(x, X86.rax, CiKind.Long);
-                CiRegister edx = allocTmp(X86.rdx, CiKind.Long);
+                CiRegister dst = allocSrcDst(x, AMD64.rax, CiKind.Long);
+                CiRegister edx = allocTmp(AMD64.rdx, CiKind.Long);
                 asm.xorq(edx, edx);
                 recordImplicitExceptionPoint(ArithmeticException.class);
                 asm.idivq(allocSrc(y, CiKind.Long));
                 return location(dst);
             }
             case Bytecodes.LREM: {
-                allocSrc(x, X86.rax, CiKind.Long);
-                CiRegister edx = allocDst(X86.rdx, CiKind.Long);
+                allocSrc(x, AMD64.rax, CiKind.Long);
+                CiRegister edx = allocDst(AMD64.rdx, CiKind.Long);
                 asm.xorq(edx, edx);
                 recordImplicitExceptionPoint(ArithmeticException.class);
                 asm.idivq(allocSrc(y, CiKind.Long));
                 return location(edx);
             }
             case Bytecodes.LSHL: {
-                allocSrc(y, X86.rcx, CiKind.Int);
+                allocSrc(y, AMD64.rcx, CiKind.Int);
                 CiRegister dst = allocSrcDst(x, CiKind.Long);
                 asm.shlq(dst);
                 return location(dst);
             }
             case Bytecodes.LSHR: {
-                allocSrc(y, X86.rcx, CiKind.Int);
+                allocSrc(y, AMD64.rcx, CiKind.Int);
                 CiRegister dst = allocSrcDst(x, CiKind.Long);
                 asm.sarq(dst);
                 return location(dst);
             }
             case Bytecodes.LUSHR: {
-                allocSrc(y, X86.rcx, CiKind.Int);
+                allocSrc(y, AMD64.rcx, CiKind.Int);
                 CiRegister dst = allocSrcDst(x, CiKind.Long);
                 asm.shrq(dst);
                 return location(dst);
@@ -784,7 +789,7 @@ public class X86CodeGen extends CodeGen {
     }
 
     private CiRegister defaultRegister(CiKind kind) {
-        return kind == CiKind.Float || kind == CiKind.Double ? X86.xmm0 : X86.rax;
+        return kind == CiKind.Float || kind == CiKind.Double ? AMD64.xmm0 : AMD64.rax;
     }
 
     Location location(CiRegister r) {
