@@ -669,22 +669,22 @@ public interface AMD64EirInstruction {
 
         @Override
         protected void emit_G_G(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64EirRegister.General sourceRegister) {
-            emitter.assembler().cmovge(destinationRegister.as32(), sourceRegister.as32());
+            emitter.assembler().cmovae(destinationRegister.as32(), sourceRegister.as32());
         }
 
         @Override
         protected void emit_G_L(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, Label sourceLiteralLabel) {
-            emitter.assembler().rip_cmovge(destinationRegister.as32(), sourceLiteralLabel);
+            emitter.assembler().rip_cmovae(destinationRegister.as32(), sourceLiteralLabel);
         }
 
         @Override
         protected void emit_G_S8(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64IndirectRegister64 sourceBasePointer, byte sourceOffset) {
-            emitter.assembler().cmovge(destinationRegister.as32(), sourceOffset, sourceBasePointer);
+            emitter.assembler().cmovae(destinationRegister.as32(), sourceOffset, sourceBasePointer);
         }
 
         @Override
         protected void emit_G_S32(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64IndirectRegister64 sourceBasePointer, int sourceOffset) {
-            emitter.assembler().cmovge(destinationRegister.as32(), sourceOffset, sourceBasePointer);
+            emitter.assembler().cmovae(destinationRegister.as32(), sourceOffset, sourceBasePointer);
         }
 
         @Override
