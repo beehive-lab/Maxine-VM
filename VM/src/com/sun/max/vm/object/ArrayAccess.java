@@ -62,7 +62,7 @@ public final class ArrayAccess {
     @INLINE
     public static void checkIndex(Object array, int index) {
         // note that we must read the array length first (implicit null check has precedence over bounds check)
-        if (SpecialBuiltin.unsignedIntGreaterEqual(index, readArrayLength(array))) {
+        if (SpecialBuiltin.aboveEqual(index, readArrayLength(array))) {
             Throw.arrayIndexOutOfBoundsException(array, index);
         }
     }

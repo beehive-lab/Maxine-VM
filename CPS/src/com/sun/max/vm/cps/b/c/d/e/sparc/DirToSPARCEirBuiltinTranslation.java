@@ -773,7 +773,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitUnsignedIntGreaterEqual(UnsignedIntGreaterEqual builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitAboveEqual(AboveEqual builtin, DirValue dirResult, DirValue[] dirArguments) {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);

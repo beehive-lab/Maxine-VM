@@ -51,7 +51,7 @@ public abstract class CompilerTest_comparisons<Method_Type extends IrMethod> ext
     }
 
     private static boolean useUnsignedIntGreaterEqualDirectly(int a, int b) {
-        return SpecialBuiltin.unsignedIntGreaterEqual(a, b);
+        return SpecialBuiltin.aboveEqual(a, b);
     }
 
     public void test_forceAddressGreaterThan() {
@@ -98,7 +98,7 @@ public abstract class CompilerTest_comparisons<Method_Type extends IrMethod> ext
         //Trace.on(3);
         final Method_Type method = compileMethod(CompilerTest_comparisons.class, "useUnsignedIntGreaterEqualDirectly");
         //Trace.on(1);
-        assertTrue(method.contains(SpecialBuiltin.UnsignedIntGreaterEqual.BUILTIN, true));
+        assertTrue(method.contains(SpecialBuiltin.AboveEqual.BUILTIN, true));
 
         Value result = execute(method, IntValue.from(3), IntValue.from(4));
         assertFalse(result.asBoolean());
@@ -231,18 +231,18 @@ public abstract class CompilerTest_comparisons<Method_Type extends IrMethod> ext
     }
 
     private static int unsignedIntGreaterEqual(int a, int b) {
-        if (SpecialBuiltin.unsignedIntGreaterEqual(a, b)) {
+        if (SpecialBuiltin.aboveEqual(a, b)) {
             return 10;
         }
         return 20;
     }
 
     private static boolean unsignedIntGreaterEqualZero(int a) {
-        return SpecialBuiltin.unsignedIntGreaterEqual(a, 0);
+        return SpecialBuiltin.aboveEqual(a, 0);
     }
 
     private static boolean unsignedIntMaxGreaterEqual(int b) {
-        return SpecialBuiltin.unsignedIntGreaterEqual(0xffffffff, b);
+        return SpecialBuiltin.aboveEqual(0xffffffff, b);
     }
 
     public void test_unsignedIntGreaterEqual() {
