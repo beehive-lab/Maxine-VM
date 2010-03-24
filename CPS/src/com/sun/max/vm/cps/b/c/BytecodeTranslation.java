@@ -1854,10 +1854,12 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                 break;
             }
             case UCMP: {
-                if (operand == ABOVE_EQUAL) {
-                    stackCall(UnsignedIntGreaterEqual.BUILTIN);
-                } else {
-                    throw verifyError("Unsupported UCMP operand: " + operand);
+                switch (operand) {
+                    case ABOVE_EQUAL: stackCall(AboveEqual.BUILTIN); break;
+                    case ABOVE_THAN : stackCall(AboveThan.BUILTIN); break;
+                    case BELOW_EQUAL: stackCall(BelowEqual.BUILTIN); break;
+                    case BELOW_THAN : stackCall(BelowThan.BUILTIN); break;
+                    default:          throw verifyError("Unsupported UCMP operand: " + operand);
                 }
                 break;
             }

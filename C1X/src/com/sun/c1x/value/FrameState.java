@@ -54,7 +54,7 @@ public class FrameState {
      * overflow issues in the original bytecode, the assumption is that such
      * issues must be caught by the verifier.
      */
-    private static final int MINIMUM_STACK_SLOTS = 0;
+    private static final int MINIMUM_STACK_SLOTS = 1;
 
     public FrameState(IRScope irScope, int maxLocals, int maxStack) {
         this.scope = irScope;
@@ -351,6 +351,7 @@ public class FrameState {
      */
     public void xpush(Value x) {
         assert stackIndex >= 0;
+        assert maxLocals + stackIndex < values.length;
         values[maxLocals + stackIndex++] = x;
     }
 

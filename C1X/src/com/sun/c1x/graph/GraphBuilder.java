@@ -1574,7 +1574,7 @@ public final class GraphBuilder {
             skipBlock = true;
         } else {
             // Resume parsing in continuation block unless it was already parsed.
-            // Note that if we don't change _last here, iteration in
+            // Note that if we don't change lastInstr here, iteration in
             // iterateBytecodesForBlock will stop when we return.
             if (!scopeData.continuation().wasVisited()) {
                 // add continuation to work list instead of parsing it immediately

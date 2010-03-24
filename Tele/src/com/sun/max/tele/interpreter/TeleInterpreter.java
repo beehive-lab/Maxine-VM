@@ -1350,7 +1350,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 int value2 = pop().asInt();
                 int value1 = pop().asInt();
                 if (operand == ABOVE_EQUAL) {
-                    push(SpecialBuiltin.unsignedIntGreaterEqual(value1, value2) ? 1 : 0);
+                    push(SpecialBuiltin.aboveEqual(value1, value2) ? 1 : 0);
                 } else {
                     machine.raiseException(new ClassFormatError("Unsupported UCMP operand: " + operand));
                 }

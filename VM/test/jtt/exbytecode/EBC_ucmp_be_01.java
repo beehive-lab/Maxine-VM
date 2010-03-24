@@ -20,16 +20,16 @@
  */
 /*
  * @Harness: java
- * @Runs: (64, 47) = true; (-2, 1) = true; (-2,-2) = true
+ * @Runs: (48, 67) = true; (-2, 1) = false; (-2,-2) = true
  */
 
 package jtt.exbytecode;
 
 import com.sun.max.vm.compiler.builtin.*;
 
-public class EBC_uge_01 {
+public class EBC_ucmp_be_01 {
     public static boolean test(int a, int b) {
-        return SpecialBuiltin.unsignedIntGreaterEqual(a, b);
+        return SpecialBuiltin.belowEqual(a, b);
     }
 
 }
