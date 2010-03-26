@@ -58,7 +58,7 @@ public class VMStringOption extends VMOption {
     }
 
     /**
-     * Package private constructor for @see AgentVMOption to use at runtime.
+     * Package private constructor for {@link AgentVMOption} to use at runtime.
      */
     VMStringOption() {
         super("", "");

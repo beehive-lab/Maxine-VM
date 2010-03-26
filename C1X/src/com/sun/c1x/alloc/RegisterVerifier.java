@@ -131,8 +131,8 @@ final class RegisterVerifier {
                     TTY.print("   __");
                 }
             }
-            TTY.cr();
-            TTY.cr();
+            TTY.println();
+            TTY.println();
         }
 
         // process all operations of the block
@@ -234,7 +234,7 @@ final class RegisterVerifier {
             //visitor.visit(op);
 
             if (C1XOptions.TraceLinearScanLevel >= 4) {
-                op.printOn(TTY.out);
+                op.printOn(TTY.out());
             }
 
             // check if input operands are correct

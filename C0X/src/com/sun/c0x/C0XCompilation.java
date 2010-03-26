@@ -72,16 +72,16 @@ public class C0XCompilation {
 
     static class Register extends Location {
         final int num;
-        final CiKind type;
+        final CiKind kind;
 
-        Register(int num, CiKind type) {
+        Register(int num, CiKind kind) {
             this.num = num;
-            this.type = type;
+            this.kind = kind;
         }
 
         @Override
         public String toString() {
-            return "R" + num + ":" + type;
+            return "R" + num + ":" + kind;
         }
     }
 

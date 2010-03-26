@@ -27,10 +27,11 @@ import java.util.*;
 import sun.misc.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.memory.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Method sustitutions for the {@link sun.misc.Perf} class.
@@ -73,21 +74,14 @@ final class JDK_sun_misc_Perf {
         }
     }
 
-    private static Map<String, PerfData> perfDataMap;
-    private static Constructor<?> directByteBufferConstructor;
+    private static final Map<String, PerfData> perfDataMap = new HashMap<String, PerfData>();
+    private static final Constructor<?> directByteBufferConstructor = ClassRegistry.DirectByteBuffer_init.toJavaConstructor();
+
     /**
      * Register any native methods.
      */
     @SUBSTITUTE
     private static void registerNatives() {
-        // This is called from the static initializer and is a hook for this implementation's initialization
-        perfDataMap = new HashMap<String, PerfData>();
-        try {
-            directByteBufferConstructor = Class.forName("java.nio.DirectByteBuffer").getDeclaredConstructor(long.class, int.class);
-            directByteBufferConstructor.setAccessible(true);
-        } catch (Exception ex) {
-            ProgramError.unexpected("failed to find java.nio.DirectByteBuffer constructor");
-        }
     }
 
     /**

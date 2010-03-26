@@ -50,10 +50,10 @@ public abstract class Instruction extends Value {
 
     /**
      * Constructs a new instruction with the specified value type.
-     * @param type the value type for this instruction
+     * @param kind the value type for this instruction
      */
-    public Instruction(CiKind type) {
-        super(type);
+    public Instruction(CiKind kind) {
+        super(kind);
         bci = BCI_NOT_APPENDED;
         lirOperand = LIROperand.IllegalLocation;
     }

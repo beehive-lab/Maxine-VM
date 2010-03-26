@@ -70,8 +70,8 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected boolean canStoreAsConstant(Value v, CiKind type) {
-        if (type == CiKind.Short || type == CiKind.Char) {
+    protected boolean canStoreAsConstant(Value v, CiKind kind) {
+        if (kind == CiKind.Short || kind == CiKind.Char) {
             // there is no immediate move of word values in asemblerI486.?pp
             return false;
         }
@@ -100,44 +100,13 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected LIRAddress genAddress(LIRLocation base, LIROperand index, int shift, int disp, CiKind type) {
+    protected LIRAddress genAddress(LIRLocation base, LIROperand index, int shift, int disp, CiKind kind) {
         assert base.isVariableOrRegister() : "must be";
         if (LIROperand.isConstant(index)) {
-            return new LIRAddress(base, (((LIRConstant) index).asInt() << shift) + disp, type);
+            return new LIRAddress(base, (((LIRConstant) index).asInt() << shift) + disp, kind);
         } else {
             assert index.isVariableOrRegister();
-            return new LIRAddress(base, ((LIRLocation) index), LIRAddress.Scale.fromLog2(shift), disp, type);
-        }
-    }
-
-    @Override
-    protected LIRAddress genArrayAddress(LIRLocation arrayOpr, LIROperand indexOpr, CiKind type, boolean needsCardMark) {
-        int offsetInBytes = compilation.runtime.firstArrayElementOffset(type);
-        LIRAddress addr;
-        if (LIROperand.isConstant(indexOpr)) {
-            LIRConstant constantIndexOpr = (LIRConstant) indexOpr;
-            int elemSize = type.elementSizeInBytes(compilation.target.referenceSize, compilation.target.arch.wordSize);
-            addr = new LIRAddress(arrayOpr, offsetInBytes + constantIndexOpr.asInt() * elemSize, type);
-        } else {
-
-            if (is64) {
-                if (indexOpr.kind == CiKind.Int) {
-                    LIROperand tmp = newVariable(CiKind.Long);
-                    lir.convert(Bytecodes.I2L, indexOpr, tmp, null);
-                    indexOpr = tmp;
-                }
-            }
-            addr = new LIRAddress(arrayOpr, (LIRLocation) indexOpr, LIRAddress.scale(compilation.target.sizeInBytes(type)), offsetInBytes, type);
-        }
-        if (needsCardMark) {
-            // This store will need a precise card mark, so go ahead and
-            // compute the full address instead of computing once for the
-            // store and again for the card mark.
-            LIRLocation tmp = newVariable(CiKind.Word);
-            lir.leal(addr, tmp);
-            return new LIRAddress(tmp, 0, type);
-        } else {
-            return addr;
+            return new LIRAddress(base, ((LIRLocation) index), LIRAddress.Scale.fromLog2(shift), disp, kind);
         }
     }
 
@@ -147,8 +116,8 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genCmpRegMem(Condition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, LIRDebugInfo info) {
-        lir.cmpRegMem(condition, reg, new LIRAddress(base, disp, type), info);
+    protected void genCmpRegMem(Condition condition, LIROperand reg, LIRLocation base, int disp, CiKind kind, LIRDebugInfo info) {
+        lir.cmpRegMem(condition, reg, new LIRAddress(base, disp, kind), info);
     }
 
     @Override
@@ -523,36 +492,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genAttemptUpdate(Intrinsic x) {
-        assert x.numberOfArguments() == 3 : "wrong type";
-        LIRItem obj = new LIRItem(x.argumentAt(0), this); // AtomicLong object
-        LIRItem cmpValue = new LIRItem(x.argumentAt(1), this); // value to compare with field
-        LIRItem newValue = new LIRItem(x.argumentAt(2), this); // replace field with newValue if it matches cmpValue
-
-        // compare value must be in rdx,eax (hi,lo); may be destroyed by cmpxchg8 instruction
-        cmpValue.loadItemForce(LONG_0_64);
-
-        // new value must be in rcx,ebx (hi,lo)
-        newValue.loadItemForce(LONG_1_64);
-
-        // object pointer register is overwritten with field address
-        obj.loadItem();
-
-        // generate compare-and-swap; produces zero condition if swap occurs
-        int valueOffset = compilation.runtime.sunMiscAtomicLongCSImplValueOffset();
-        LIROperand addr = obj.result();
-        lir.add(addr, LIROperand.forInt(valueOffset), addr);
-        LIROperand t1 = ILLEGAL; // no temp needed
-        LIROperand t2 = ILLEGAL; // no temp needed
-        lir.casLong(addr, cmpValue.result(), newValue.result(), t1, t2);
-
-        // generate conditional move of boolean result
-        LIROperand result = createResultVariable(x);
-        lir.cmove(Condition.EQ, LIROperand.forInt(1), LIROperand.forInt(0), result);
-    }
-
-    @Override
-    protected void genCompareAndSwap(Intrinsic x, CiKind type) {
+    protected void genCompareAndSwap(Intrinsic x, CiKind kind) {
         assert x.numberOfArguments() == 4 : "wrong type";
         LIRItem obj = new LIRItem(x.argumentAt(0), this); // object
         LIRItem offset = new LIRItem(x.argumentAt(1), this); // offset of field
@@ -561,20 +501,20 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
         assert obj.value.kind.isObject() : "invalid type";
 
-        assert cmp.value.kind == type : "invalid type";
-        assert val.value.kind == type : "invalid type";
+        assert cmp.value.kind == kind : "invalid type";
+        assert val.value.kind == kind : "invalid type";
 
         // get address of field
         obj.loadItem();
         offset.loadNonconstant();
 
-        if (type.isObject()) {
+        if (kind.isObject()) {
             cmp.loadItemForce(LIROperand.forRegister(CiKind.Object, AMD64.rax));
             val.loadItem();
-        } else if (type.isInt()) {
+        } else if (kind.isInt()) {
             cmp.loadItemForce(LIROperand.forRegister(CiKind.Int, AMD64.rax));
             val.loadItem();
-        } else if (type.isLong()) {
+        } else if (kind.isLong()) {
             assert is64 : "32-bit not implemented";
             cmp.loadItemForce(LIROperand.forRegister(CiKind.Long, AMD64.rax));
             val.loadItemForce(LIROperand.forRegister(CiKind.Long, AMD64.rbx));
@@ -586,17 +526,17 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         lir.move(obj.result(), addr);
         lir.add(addr, offset.result(), addr);
 
-        if (type.isObject()) { // Write-barrier needed for Object fields.
+        if (kind.isObject()) { // Write-barrier needed for Object fields.
             // Do the pre-write barrier : if any.
             preBarrier(addr, false, null);
         }
 
         LIROperand ill = ILLEGAL; // for convenience
-        if (type.isObject()) {
+        if (kind.isObject()) {
             lir.casObj(addr, cmp.result(), val.result(), ill, ill);
-        } else if (type.isInt()) {
+        } else if (kind.isInt()) {
             lir.casInt(addr, cmp.result(), val.result(), ill, ill);
-        } else if (type.isLong()) {
+        } else if (kind.isLong()) {
             lir.casLong(addr, cmp.result(), val.result(), ill, ill);
         } else {
             Util.shouldNotReachHere();
@@ -605,7 +545,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         // generate conditional move of boolean result
         LIROperand result = createResultVariable(x);
         lir.cmove(Condition.EQ, LIROperand.forInt(1), LIROperand.forInt(0), result);
-        if (type.isObject()) { // Write-barrier needed for Object fields.
+        if (kind.isObject()) { // Write-barrier needed for Object fields.
             // Seems to be precise
             postBarrier(addr, val.result());
         }
@@ -721,8 +661,8 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genGetObjectUnsafe(LIRLocation dst, LIRLocation src, LIRLocation offset, CiKind type, boolean isVolatile) {
-        if (isVolatile && type == CiKind.Long) {
+    protected void genGetObjectUnsafe(LIRLocation dst, LIRLocation src, LIRLocation offset, CiKind kind, boolean isVolatile) {
+        if (isVolatile && kind == CiKind.Long) {
             LIRAddress addr = new LIRAddress(src, offset, CiKind.Double);
             LIROperand tmp = newVariable(CiKind.Double);
             lir.load(addr, tmp, null);
@@ -730,14 +670,14 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             lir.move(tmp, spill);
             lir.move(spill, dst);
         } else {
-            LIRAddress addr = new LIRAddress(src, offset, type);
+            LIRAddress addr = new LIRAddress(src, offset, kind);
             lir.load(addr, dst, null);
         }
     }
 
     @Override
-    protected void genPutObjectUnsafe(LIRLocation src, LIRLocation offset, LIROperand data, CiKind type, boolean isVolatile) {
-        if (isVolatile && type == CiKind.Long) {
+    protected void genPutObjectUnsafe(LIRLocation src, LIRLocation offset, LIROperand data, CiKind kind, boolean isVolatile) {
+        if (isVolatile && kind == CiKind.Long) {
             LIRAddress addr = new LIRAddress(src, offset, CiKind.Double);
             LIROperand tmp = newVariable(CiKind.Double);
             LIROperand spill = newVariable(CiKind.Double, VariableFlag.MustStartInMemory);
@@ -745,8 +685,8 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             lir.move(spill, tmp);
             lir.move(tmp, addr);
         } else {
-            LIRAddress addr = new LIRAddress(src, offset, type);
-            boolean isObj = (type == CiKind.Jsr || type == CiKind.Object);
+            LIRAddress addr = new LIRAddress(src, offset, kind);
+            boolean isObj = (kind == CiKind.Jsr || kind == CiKind.Object);
             if (isObj) {
                 // Do the pre-write barrier, if any.
                 preBarrier(addr, false, null);

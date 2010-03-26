@@ -394,7 +394,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitInvoke(Invoke i) {
-        Invoke other = new Invoke(i.opcode(), i.kind, cloneArguments(i.arguments()), i.isStatic(), i.vtableIndex(), i.target(), i.cpi, i.constantPool, i.stateBefore().copy());
+        Invoke other = new Invoke(i.opcode(), i.kind, cloneArguments(i.arguments()), i.isStatic(), i.target(), i.cpi, i.constantPool, i.stateBefore().copy());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);

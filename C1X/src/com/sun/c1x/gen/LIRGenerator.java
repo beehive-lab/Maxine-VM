@@ -37,7 +37,6 @@ import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.lir.LIRAddress.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.ri.*;
-import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.xir.*;
@@ -221,13 +220,13 @@ public abstract class LIRGenerator extends ValueVisitor {
             // Assign new location to Local instruction for this local
             Value instr = state.localAt(javaIndex);
             Local local = ((Local) instr);
-            CiKind type = src.kind.stackKind();
-            assert type == local.kind.stackKind() : "local type check failed";
+            CiKind kind = src.kind.stackKind();
+            assert kind == local.kind.stackKind() : "local type check failed";
             if (local.isLive()) {
                 local.setOperand(dest);
                 instructionForOperand.put(dest.variableNumber(), local);
             }
-            javaIndex += type.jvmSlots;
+            javaIndex += kind.jvmSlots;
         }
     }
 
@@ -470,11 +469,6 @@ public abstract class LIRGenerator extends ValueVisitor {
                 genCompareAndSwap(x, CiKind.Long);
                 break;
 
-            // sun.misc.AtomicLongCSImpl.attemptUpdate
-            case sun_misc_AtomicLongCSImpl$attemptUpdate:
-                genAttemptUpdate(x);
-                break;
-
             default:
                 Util.shouldNotReachHere();
                 break;
@@ -562,7 +556,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         } else {
             // address is [pointer + disp + (index * scale)]
-            assert (x.opcode & 0xff) == PGET;
+            assert (x.opcode & 0xff) == PGET || (x.opcode & 0xff) == PSET;
             int displacement = x.displacement().asConstant().asInt();
             LIRItem index = new LIRItem(x.index(), this);
             index.loadItem();
@@ -1010,7 +1004,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitUnsafeGetObject(UnsafeGetObject x) {
-        CiKind type = x.unsafeOpKind;
+        CiKind kind = x.unsafeOpKind;
         LIRItem src = new LIRItem(x.object(), this);
         LIRItem off = new LIRItem(x.offset(), this);
 
@@ -1022,7 +1016,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membarAcquire();
         }
-        genGetObjectUnsafe(reg, (LIRLocation) src.result(), (LIRLocation) off.result(), type, x.isVolatile());
+        genGetObjectUnsafe(reg, (LIRLocation) src.result(), (LIRLocation) off.result(), kind, x.isVolatile());
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membar();
         }
@@ -1107,13 +1101,13 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitUnsafePutObject(UnsafePutObject x) {
-        CiKind type = x.unsafeOpKind;
+        CiKind kind = x.unsafeOpKind;
         LIRItem src = new LIRItem(x.object(), this);
         LIRItem off = new LIRItem(x.offset(), this);
         LIRItem data = new LIRItem(x.value(), this);
 
         src.loadItem();
-        data.loadItem(type);
+        data.loadItem(kind);
         off.loadItem();
 
         setNoResult(x);
@@ -1121,13 +1115,13 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membarRelease();
         }
-        genPutObjectUnsafe((LIRLocation) src.result(), (LIRLocation) off.result(), data.result(), type, x.isVolatile());
+        genPutObjectUnsafe((LIRLocation) src.result(), (LIRLocation) off.result(), data.result(), kind, x.isVolatile());
     }
 
     @Override
     public void visitUnsafePutRaw(UnsafePutRaw x) {
         int log2scale = 0;
-        CiKind type = x.unsafeOpKind;
+        CiKind kind = x.unsafeOpKind;
 
         if (x.hasIndex()) {
             assert x.index().kind.isInt() : "should not find non-int index";
@@ -1144,7 +1138,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             idx.loadItem();
         }
 
-        value.loadItem(type);
+        value.loadItem(kind);
 
         setNoResult(x);
 
@@ -1452,18 +1446,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected void arrayRangeCheck(LIROperand array, LIROperand index, LIRDebugInfo nullCheckInfo, LIRDebugInfo rangeCheckInfo, ThrowStub throwStub) {
-        assert nullCheckInfo != rangeCheckInfo;
-        if (isConstant(index)) {
-            LIRConstant indexConstant = (LIRConstant) index;
-            genCmpMemInt(Condition.BE, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), indexConstant.asInt(), nullCheckInfo);
-            lir.branch(Condition.BE, CiKind.Int, throwStub); // forward branch
-        } else {
-            genCmpRegMem(Condition.AE, index, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int, nullCheckInfo);
-            lir.branch(Condition.AE, CiKind.Int, throwStub); // forward branch
-        }
-    }
-
     protected final LIRLocation callRuntime(CiRuntimeCall runtimeCall, LIRDebugInfo info, LIROperand... args) {
         // get a result register
         CiKind rtype = runtimeCall.resultKind;
@@ -1704,9 +1686,9 @@ public abstract class LIRGenerator extends ValueVisitor {
      * @param kind the kind of the variable
      * @return a new LIR variable
      */
-    public LIRLocation newVariable(CiKind type, VariableFlag flag) {
-        assert type != CiKind.Void;
-        LIRLocation location = forVariable(currentVariableNumber++, type);
+    public LIRLocation newVariable(CiKind kind, VariableFlag flag) {
+        assert kind != CiKind.Void;
+        LIRLocation location = forVariable(currentVariableNumber++, kind);
         setVarFlag(location, flag);
         return location;
     }
@@ -1868,7 +1850,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (arg != null) {
                 LIRItem param = new LIRItem(arg, this);
                 LIROperand loc = cc.operands[j++];
-                if (loc.isVariableOrRegister()) {
+                if (loc.isRegister()) {
                     param.loadItemForce(loc);
                 } else {
                     LIRAddress addr = (LIRAddress) loc;
@@ -1925,7 +1907,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void maybePrintCurrentInstruction() {
         if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
             lastInstructionPrinted = currentInstruction;
-            InstructionPrinter ip = new InstructionPrinter(TTY.out, true, compilation.target);
+            InstructionPrinter ip = new InstructionPrinter(TTY.out(), true, compilation.target);
             ip.printInstructionListing(currentInstruction);
         }
     }
@@ -1934,7 +1916,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract boolean canInlineAsConstant(LIRConstant c);
 
-    protected abstract boolean canStoreAsConstant(Value i, CiKind type);
+    protected abstract boolean canStoreAsConstant(Value i, CiKind kind);
 
     protected abstract LIROperand exceptionPcOpr();
 
@@ -1944,21 +1926,17 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract boolean strengthReduceMultiply(LIROperand left, int constant, LIROperand result, LIROperand tmp);
 
-    protected abstract LIRAddress genAddress(LIRLocation base, LIROperand index, int shift, int disp, CiKind type);
+    protected abstract LIRAddress genAddress(LIRLocation base, LIROperand index, int shift, int disp, CiKind kind);
 
     protected abstract void genCmpMemInt(Condition condition, LIRLocation base, int disp, int c, LIRDebugInfo info);
 
-    protected abstract void genCmpRegMem(Condition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, LIRDebugInfo info);
+    protected abstract void genCmpRegMem(Condition condition, LIROperand reg, LIRLocation base, int disp, CiKind kind, LIRDebugInfo info);
 
-    protected abstract LIRAddress genArrayAddress(LIRLocation arrayOpr, LIROperand indexOpr, CiKind type, boolean needsCardMark);
+    protected abstract void genGetObjectUnsafe(LIRLocation dest, LIRLocation src, LIRLocation offset, CiKind kind, boolean isVolatile);
 
-    protected abstract void genGetObjectUnsafe(LIRLocation dest, LIRLocation src, LIRLocation offset, CiKind type, boolean isVolatile);
+    protected abstract void genPutObjectUnsafe(LIRLocation src, LIRLocation offset, LIROperand data, CiKind kind, boolean isVolatile);
 
-    protected abstract void genPutObjectUnsafe(LIRLocation src, LIRLocation offset, LIROperand data, CiKind type, boolean isVolatile);
-
-    protected abstract void genAttemptUpdate(Intrinsic x);
-
-    protected abstract void genCompareAndSwap(Intrinsic x, CiKind type);
+    protected abstract void genCompareAndSwap(Intrinsic x, CiKind kind);
 
     protected abstract void genMathIntrinsic(Intrinsic x);
 

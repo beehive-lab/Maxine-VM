@@ -1799,14 +1799,14 @@ public class IRInterpreter {
             }
         }
 
-        private void assertKind(CiKind xval, CiKind yval, CiKind type) {
-            assertKind(xval, type);
-            assertKind(yval, type);
+        private void assertKind(CiKind xval, CiKind yval, CiKind kind) {
+            assertKind(xval, kind);
+            assertKind(yval, kind);
         }
 
-        private void assertKind(CiKind x, CiKind type) {
-            if (x != type) {
-                if (!(x.isInt() && (type.isLong() || type.isInt()))) {
+        private void assertKind(CiKind x, CiKind kind) {
+            if (x != kind) {
+                if (!(x.isInt() && (kind.isLong() || kind.isInt()))) {
                     throw new CiBailout("Type mismatch");
                 }
             }

@@ -34,7 +34,7 @@ import com.sun.c1x.stub.*;
 public class LIRBranch extends LIRInstruction {
 
     private Condition cond;
-    private CiKind type;
+    private CiKind kind;
     private Label label;
     private BlockBegin block;  // if this is a branch to a block, this is the block
     private BlockBegin ublock; // if this is a float-branch, this is the unordered block
@@ -56,38 +56,38 @@ public class LIRBranch extends LIRInstruction {
      * Creates a new LIRBranch instruction.
      *
      * @param cond the branch condition
-     * @param type
+     * @param kind
      * @param stub
      *
      */
-    public LIRBranch(Condition cond, CiKind type, LocalStub stub) {
+    public LIRBranch(Condition cond, CiKind kind, LocalStub stub) {
         super(LIROpcode.Branch, LIROperand.IllegalLocation, null, false, stub, 0, 0);
         this.cond = cond;
         this.label = stub.entry;
-        this.type = type;
+        this.kind = kind;
     }
 
     /**
      * Creates a new LIRBranch instruction.
      *
      * @param cond
-     * @param type
+     * @param kind
      * @param block
      *
      */
-    public LIRBranch(Condition cond, CiKind type, BlockBegin block) {
+    public LIRBranch(Condition cond, CiKind kind, BlockBegin block) {
         super(LIROpcode.Branch, LIROperand.IllegalLocation, null, false, null, 0, 0);
         this.cond = cond;
-        this.type = type;
+        this.kind = kind;
         this.label = block.label();
         this.block = block;
         this.ublock = null;
     }
 
-    public LIRBranch(Condition cond, CiKind type, BlockBegin block, BlockBegin ublock) {
+    public LIRBranch(Condition cond, CiKind kind, BlockBegin block, BlockBegin ublock) {
         super(LIROpcode.CondFloatBranch, LIROperand.IllegalLocation, null, false, null, 0, 0);
         this.cond = cond;
-        this.type = type;
+        this.kind = kind;
         this.label = block.label();
         this.block = block;
         this.ublock = ublock;

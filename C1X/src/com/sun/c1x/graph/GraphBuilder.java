@@ -89,7 +89,7 @@ public final class GraphBuilder {
         RiMethod rootMethod = compilation.method;
 
         traceLevel = C1XOptions.TraceBytecodeParserLevel;
-        log = traceLevel > 0 ? new LogStream(TTY.out) : null;
+        log = traceLevel > 0 ? new LogStream(TTY.out()) : null;
         if (log != null) {
             log.println();
             log.println("Compiling " + compilation.method);
@@ -477,7 +477,7 @@ public final class GraphBuilder {
         }
     }
 
-    void genLoadIndexed(CiKind type) {
+    void genLoadIndexed(CiKind kind) {
         FrameState stateBefore = curState.immutableCopy();
         Value index = ipop();
         Value array = apop();
@@ -485,19 +485,19 @@ public final class GraphBuilder {
         if (cseArrayLength(array)) {
             length = append(new ArrayLength(array, stateBefore));
         }
-        push(type.stackKind(), append(new LoadIndexed(array, index, length, type, stateBefore)));
+        push(kind.stackKind(), append(new LoadIndexed(array, index, length, kind, stateBefore)));
     }
 
-    void genStoreIndexed(CiKind type) {
+    void genStoreIndexed(CiKind kind) {
         FrameState stateBefore = curState.immutableCopy();
-        Value value = pop(type.stackKind());
+        Value value = pop(kind.stackKind());
         Value index = ipop();
         Value array = apop();
         Value length = null;
         if (cseArrayLength(array)) {
             length = append(new ArrayLength(array, stateBefore));
         }
-        StoreIndexed result = new StoreIndexed(array, index, length, type, value, stateBefore);
+        StoreIndexed result = new StoreIndexed(array, index, length, kind, value, stateBefore);
         append(result);
         if (memoryMap != null) {
             memoryMap.storeValue(value);
@@ -911,7 +911,7 @@ public final class GraphBuilder {
 
     private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
         CiKind resultType = returnKind(target);
-        Value result = append(new Invoke(opcode, resultType.stackKind(), args, isStatic, target.vtableIndex(), target, cpi, constantPool, stateBefore));
+        Value result = append(new Invoke(opcode, resultType.stackKind(), args, isStatic, target, cpi, constantPool, stateBefore));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             pushReturn(resultType, roundFp(result));
         } else {
@@ -924,8 +924,18 @@ public final class GraphBuilder {
         if (exact == null) {
             exact = receiver.exactType();
             if (exact == null) {
-                RiType declared = receiver.declaredType();
-                exact = declared == null ? null : declared.exactType();
+                if (receiver.isConstant()) {
+                    CiConstant constant = receiver.asConstant();
+                    assert constant.kind.isObject();
+                    Object object = constant.asObject();
+                    if (object != null) {
+                        exact = compilation.runtime.getRiType(object.getClass());
+                    }
+                }
+                if (exact == null) {
+                    RiType declared = receiver.declaredType();
+                    exact = declared == null ? null : declared.exactType();
+                }
             }
         }
         return exact;
@@ -1039,7 +1049,9 @@ public final class GraphBuilder {
             // State at end of inlined method is the state of the caller
             // without the method parameters on stack, including the
             // return value, if any, of the inlined method on operand stack.
+            boolean unsafe = curState.unsafe;
             curState = scopeData.continuationState().copy();
+            curState.unsafe = unsafe;
             if (x != null) {
                 curState.push(x.kind, x);
             }
@@ -1382,6 +1394,12 @@ public final class GraphBuilder {
     private boolean tryFoldable(RiMethod target, Value[] args) {
         CiConstant result = Canonicalizer.foldInvocation(target, args);
         if (result != null) {
+            if (traceLevel > 0) {
+                log.println("|");
+                log.println("|   [folded " + target + " --> " + result + "]");
+                log.println("|");
+            }
+
             pushReturn(returnKind(target), append(new Constant(result)));
             return true;
         }
@@ -2032,8 +2050,8 @@ public final class GraphBuilder {
                 case MOV_L2D        : genConvert(opcode, CiKind.Long, CiKind.Double ); break;
                 case MOV_D2L        : genConvert(opcode, CiKind.Double, CiKind.Long ); break;
 
-                case UCMP           : genUnsignedCompareOp(CiKind.Int, opcode, s.readCPI());
-                case UWCMP          : genUnsignedCompareOp(CiKind.Word, opcode, s.readCPI());
+                case UCMP           : genUnsignedCompareOp(CiKind.Int, opcode, s.readCPI()); break;
+                case UWCMP          : genUnsignedCompareOp(CiKind.Word, opcode, s.readCPI()); break;
 
 //                case PCMPSWP: {
 //                    opcode |= readUnsigned2() << 8;
@@ -2300,8 +2318,8 @@ public final class GraphBuilder {
         Value value = pop(kind);
         Value offsetOrIndex;
         Value displacement;
-        if ((opcode & 0xff) == PREAD) {
-            offsetOrIndex = (opcode >= PREAD_BYTE_I && opcode <= PREAD_REFERENCE_I) ? ipop() : wpop();
+        if ((opcode & 0xff) == PWRITE) {
+            offsetOrIndex = (opcode >= PWRITE_BYTE_I && opcode <= PWRITE_REFERENCE_I) ? ipop() : wpop();
             displacement = null;
         } else {
             offsetOrIndex = ipop();

@@ -417,21 +417,21 @@ public class Canonicalizer extends DefaultValueVisitor {
         return true;
     }
 
-    private Value eliminateNarrowing(CiKind type, Convert c) {
+    private Value eliminateNarrowing(CiKind kind, Convert c) {
         Value nv = null;
         switch (c.opcode()) {
             case I2B:
-                if (type == CiKind.Byte) {
+                if (kind == CiKind.Byte) {
                     nv = c.value();
                 }
                 break;
             case I2S:
-                if (type == CiKind.Short || type == CiKind.Byte) {
+                if (kind == CiKind.Short || kind == CiKind.Byte) {
                     nv = c.value();
                 }
                 break;
             case I2C:
-                if (type == CiKind.Char || type == CiKind.Byte) {
+                if (kind == CiKind.Char || kind == CiKind.Byte) {
                     nv = c.value();
                 }
                 break;
@@ -669,38 +669,38 @@ public class Canonicalizer extends DefaultValueVisitor {
             // Checkstyle: resume
         }
 
-        CiKind type = CiKind.Illegal;
+        CiKind kind = CiKind.Illegal;
         if (v instanceof LoadField) {
             // remove redundant conversions from field loads of the correct type
-            type = ((LoadField) v).field().kind();
+            kind = ((LoadField) v).field().kind();
         } else if (v instanceof LoadIndexed) {
             // remove redundant conversions from array loads of the correct type
-            type = ((LoadIndexed) v).elementKind();
+            kind = ((LoadIndexed) v).elementKind();
         } else if (v instanceof Convert) {
             // remove chained redundant conversions
             Convert c = (Convert) v;
             switch (c.opcode()) {
-                case I2B: type = CiKind.Byte; break;
-                case I2S: type = CiKind.Short; break;
-                case I2C: type = CiKind.Char; break;
+                case I2B: kind = CiKind.Byte; break;
+                case I2S: kind = CiKind.Short; break;
+                case I2C: kind = CiKind.Char; break;
             }
         }
 
-        if (type != CiKind.Illegal) {
+        if (kind != CiKind.Illegal) {
             // if any of the above matched
             switch (i.opcode()) {
                 case I2B:
-                    if (type == CiKind.Byte) {
+                    if (kind == CiKind.Byte) {
                         setCanonical(v);
                     }
                     break;
                 case I2S:
-                    if (type == CiKind.Byte || type == CiKind.Short) {
+                    if (kind == CiKind.Byte || kind == CiKind.Short) {
                         setCanonical(v);
                     }
                     break;
                 case I2C:
-                    if (type == CiKind.Char) {
+                    if (kind == CiKind.Char) {
                         setCanonical(v);
                     }
                     break;

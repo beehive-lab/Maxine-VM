@@ -38,7 +38,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.layout.*;
@@ -1337,9 +1336,9 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 Address value1 = pop().asWord().asAddress();
                 switch (operand) {
                     case ABOVE_EQUAL: push(value1.greaterEqual(value2) ? 1 : 0); break;
-                    case ABOVE_THAN:  push(value1.greaterEqual(value2) ? 1 : 0); break;
-                    case BELOW_EQUAL: push(value1.greaterEqual(value2) ? 1 : 0); break;
-                    case BELOW_THAN:  push(value1.greaterEqual(value2) ? 1 : 0); break;
+                    case ABOVE_THAN:  push(value1.greaterThan(value2) ? 1 : 0); break;
+                    case BELOW_EQUAL: push(value1.lessEqual(value2) ? 1 : 0); break;
+                    case BELOW_THAN:  push(value1.lessThan(value2) ? 1 : 0); break;
                     default:
                         machine.raiseException(new ClassFormatError("Unsupported UWCMP operand: " + operand));
                 }
@@ -1347,12 +1346,15 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
             }
             case UCMP: {
                 int operand = readU2();
-                int value2 = pop().asInt();
-                int value1 = pop().asInt();
-                if (operand == ABOVE_EQUAL) {
-                    push(SpecialBuiltin.aboveEqual(value1, value2) ? 1 : 0);
-                } else {
-                    machine.raiseException(new ClassFormatError("Unsupported UCMP operand: " + operand));
+                long value2 = pop().toLong() & 0xFFFFFFFFL;
+                long value1 = pop().toLong() & 0xFFFFFFFFL;
+                switch (operand) {
+                    case ABOVE_EQUAL: push(value1 >= value2 ? 1 : 0); break;
+                    case ABOVE_THAN:  push(value1 >  value2 ? 1 : 0); break;
+                    case BELOW_EQUAL: push(value1 <= value2 ? 1 : 0); break;
+                    case BELOW_THAN:  push(value1 <  value2 ? 1 : 0); break;
+                    default:
+                        machine.raiseException(new ClassFormatError("Unsupported UCMP operand: " + operand));
                 }
                 break;
             }

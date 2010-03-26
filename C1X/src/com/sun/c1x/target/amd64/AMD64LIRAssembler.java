@@ -26,7 +26,6 @@ import static com.sun.c1x.lir.LIROperand.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.FrameMap.*;
@@ -65,8 +64,6 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         target = compilation.target;
         wordSize = target.arch.wordSize;
         rscratch1 = target.scratchRegister;
-
-        assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.hubOffset());
     }
 
     private boolean isLiteralAddress(LIRAddress addr) {
@@ -339,7 +336,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             case Int     : masm.movl(dest.asRegister(), addr); break;
             case Object  :
             case Long    :
-            case Word    : masm.movl(dest.asRegister(), addr); break;
+            case Word    : masm.movq(dest.asRegister(), addr); break;
             case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
             case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
             default      : throw Util.shouldNotReachHere();
@@ -415,15 +412,11 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         LIRAddress addr = (LIRAddress) src;
         Address fromAddr = asAddress(addr);
 
-        if (compilation.target.supportsSSE()) {
-            switch (C1XOptions.ReadPrefetchInstr) {
-                case 0  : masm.prefetchnta(fromAddr); break;
-                case 1  : masm.prefetcht0(fromAddr); break;
-                case 2  : masm.prefetcht2(fromAddr); break;
-                default : throw Util.shouldNotReachHere();
-            }
-        } else if (compilation.target.supports3DNOW()) {
-            masm.prefetchr(fromAddr);
+        switch (C1XOptions.ReadPrefetchInstr) {
+            case 0  : masm.prefetchnta(fromAddr); break;
+            case 1  : masm.prefetcht0(fromAddr); break;
+            case 2  : masm.prefetcht2(fromAddr); break;
+            default : throw Util.shouldNotReachHere();
         }
     }
 
@@ -665,9 +658,17 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 acond = ConditionFlag.belowEqual;
                 ncond = ConditionFlag.above;
                 break;
+            case BT:
+                acond = ConditionFlag.below;
+                ncond = ConditionFlag.aboveEqual;
+                break;
             case AE:
                 acond = ConditionFlag.aboveEqual;
                 ncond = ConditionFlag.below;
+                break;
+            case AT:
+                acond = ConditionFlag.above;
+                ncond = ConditionFlag.belowEqual;
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -717,7 +718,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             // conditional move not available, use emit a branch and move
             Label skip = new Label();
             masm.jcc(acond, skip);
-            if (other.isVariableOrRegister()) {
+            if (other.isRegister()) {
                 reg2reg(other, result);
             } else if (other.isStack()) {
                 stack2reg(other, result, result.kind);
@@ -1242,15 +1243,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     protected void emitCallAlignment(LIROpcode code) {
         // make sure that the displacement word of the call ends up word aligned
         int offset = masm.codeBuffer.position();
-        switch (code) {
-            case DirectCall:
-                offset += compilation.target.arch.machineCodeCallDisplacementOffset;
-                break;
-            case VirtualCall:
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
+        assert code == LIROpcode.DirectCall;
+        offset += compilation.target.arch.machineCodeCallDisplacementOffset;
         while (offset++ % wordSize != 0) {
             masm.nop();
         }
@@ -1259,7 +1253,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     @Override
     protected void emitIndirectCall(Object target, LIRDebugInfo info, LIROperand callAddress) {
         CiRegister reg = compilation.target.scratchRegister;
-        if (callAddress.isVariableOrRegister()) {
+        if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
             moveOp(callAddress, forRegister(callAddress.kind, reg), callAddress.kind, null, false);
@@ -1276,40 +1270,12 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     protected void emitNativeCall(NativeFunction nativeFunction, LIRDebugInfo info) {
         CiRegister reg = compilation.target.scratchRegister;
         LIROperand callAddress = nativeFunction.address;
-        if (callAddress.isVariableOrRegister()) {
+        if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
             moveOp(callAddress, forRegister(callAddress.kind, reg), callAddress.kind, null, false);
         }
         masm.nativeCall(reg, nativeFunction.symbol, info);
-    }
-
-    @Override
-    protected void emitVirtualCall(RiMethod method, LIROperand receiver, LIRDebugInfo info) {
-        assert method.isLoaded() : "method is not resolved";
-        assert receiver != null && receiver.isVariableOrRegister() : "Receiver must be in a register";
-
-        int vtableOffset = compilation.runtime.vtableEntryMethodOffsetInBytes() + compilation.runtime.vtableStartOffset() + method.vtableIndex() * compilation.runtime.vtableEntrySize();
-
-        asm.recordImplicitException(codePos(), info); // record deopt info for next instruction (possible NPE)
-        masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset())); // load hub
-        Address callAddress = new Address(rscratch1, vtableOffset);
-        masm.indirectCall(callAddress, method, info); // perform indirect call
-    }
-
-    @Override
-    protected void emitInterfaceCall(RiMethod method, LIROperand receiver, LIRDebugInfo info, GlobalStub globalStub) {
-        assert method.isLoaded() : "method is not resolved";
-        assert receiver != null && receiver.isVariableOrRegister() : "Receiver must be in a register";
-
-        // TODO: emit interface ID calculation inline
-        masm.movl(rscratch1, method.interfaceID());
-        // asm.recordExceptionHandlers(codePos(), info);
-        masm.callGlobalStub(globalStub, info, rscratch1, receiver.asRegister(), rscratch1);
-        masm.addq(rscratch1, method.indexInInterface() * wordSize);
-
-        masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset()));
-        masm.indirectCall(new Address(rscratch1, 0), method, info);
     }
 
     @Override
@@ -1568,7 +1534,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     public static Object asRegisterOrConstant(LIROperand operand) {
-        if (operand.isVariableOrRegister()) {
+        if (operand.isRegister()) {
             return operand.asRegister();
         } else {
             assert isConstant(operand);
@@ -1841,7 +1807,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             return newPointerOperand;
         }
 
-        assert pointer.isVariableOrRegister();
+        assert pointer.isRegister();
         return pointer;
     }
 

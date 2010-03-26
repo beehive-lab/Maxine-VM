@@ -83,8 +83,8 @@ public class LIRItem {
         return this;
     }
 
-    public LIRItem loadItem(CiKind type) {
-        if (type == CiKind.Byte || type == CiKind.Boolean) {
+    public LIRItem loadItem(CiKind kind) {
+        if (kind == CiKind.Byte || kind == CiKind.Boolean) {
             loadByteItem();
         } else {
             loadItem();
@@ -92,13 +92,13 @@ public class LIRItem {
         return this;
     }
 
-    public void loadForStore(CiKind type) {
-        if (gen.canStoreAsConstant(value, type)) {
+    public void loadForStore(CiKind kind) {
+        if (gen.canStoreAsConstant(value, kind)) {
             result = value.operand();
             if (!isConstant(result)) {
                 result = forConstant(value);
             }
-        } else if (type == CiKind.Byte || type == CiKind.Boolean) {
+        } else if (kind == CiKind.Byte || kind == CiKind.Boolean) {
             loadByteItem();
         } else {
             loadItem();

@@ -190,7 +190,7 @@ public class MaxineTesterConfiguration {
         imageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
         imageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
         imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x");
+        imageConfig("cpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x");
 
         String c1xPackage = "com.sun.max.vm.compiler.c1x";
         String c1xClass = c1xPackage + ".C1XCompilerScheme";

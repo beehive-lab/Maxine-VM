@@ -1306,15 +1306,6 @@ public final class ClassfileReader {
         if (superClassActor != null) {
             superClassActor.checkAccessBy(classActor);
         }
-
-        if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
-            for (Annotation annotation : getAnnotations(name, classDescriptor)) {
-                if (annotation.annotationType() == METHOD_SUBSTITUTIONS.class) {
-                    METHOD_SUBSTITUTIONS.Static.processAnnotationInfo((METHOD_SUBSTITUTIONS) annotation, classActor);
-                }
-            }
-        }
-
         return classActor;
     }
 

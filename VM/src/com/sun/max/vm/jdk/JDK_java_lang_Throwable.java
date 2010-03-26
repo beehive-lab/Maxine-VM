@@ -21,6 +21,7 @@
 package com.sun.max.vm.jdk;
 
 import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.util.*;
 
@@ -31,13 +32,11 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Substitutions for {@link java.lang.Throwable} that collect the stack trace.
@@ -47,12 +46,6 @@ import com.sun.max.vm.type.*;
  */
 @METHOD_SUBSTITUTIONS(Throwable.class)
 public final class JDK_java_lang_Throwable {
-
-    /**
-     * This field provides access to the private field "stackTrace" in the {@link java.lang.Throwable java.lang.Throwable}
-     * class.
-     */
-    private static final FieldActor stackTrace = ClassRegistry.THROWABLE.findFieldActor(SymbolTable.makeSymbol("stackTrace"));
 
     private JDK_java_lang_Throwable() {
     }
@@ -121,7 +114,7 @@ public final class JDK_java_lang_Throwable {
             }
         }
         final Object value = result.toArray(new StackTraceElement[result.size()]);
-        TupleAccess.writeObject(thisThrowable, stackTrace.offset(), value);
+        TupleAccess.writeObject(thisThrowable, Throwable_stackTrace.offset(), value);
         return thisThrowable;
     }
 
@@ -194,7 +187,7 @@ public final class JDK_java_lang_Throwable {
      */
     @INLINE
     private StackTraceElement[] getStackTraceElements() {
-        return (StackTraceElement[]) TupleAccess.readObject(thisThrowable(), stackTrace.offset());
+        return (StackTraceElement[]) TupleAccess.readObject(thisThrowable(), Throwable_stackTrace.offset());
     }
 
 }

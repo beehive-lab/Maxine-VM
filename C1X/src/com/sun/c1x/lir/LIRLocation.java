@@ -35,7 +35,7 @@ import com.sun.c1x.ci.*;
  */
 public final class LIRLocation extends LIROperand {
 
-    public final CiRegister register1;
+    public final CiRegister register;
 
     /**
      * The index for this location. A negative value indicates a {@linkplain #isStack() stack location},
@@ -54,7 +54,7 @@ public final class LIRLocation extends LIROperand {
         super(kind);
         assert kind.jvmSlots != -1 || number == CiRegister.None;
         assert number != null;
-        this.register1 = number;
+        this.register = number;
         index = 0;
     }
 
@@ -69,20 +69,20 @@ public final class LIRLocation extends LIROperand {
     LIRLocation(CiKind kind, int number) {
         super(kind);
         assert number < 0 || number >= CiRegister.LowestVirtualRegisterNumber;
-        this.register1 = CiRegister.None;
+        this.register = CiRegister.None;
         this.index = number;
     }
 
     @Override
     public int hashCode() {
-        return register1.number + index;
+        return register.number + index;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o instanceof LIRLocation) {
             LIRLocation l = (LIRLocation) o;
-            return l.kind == kind && l.register1 == register1 && l.index == index;
+            return l.kind == kind && l.register == register && l.index == index;
         }
         return false;
     }
@@ -119,34 +119,10 @@ public final class LIRLocation extends LIROperand {
         return index == 0;
     }
 
-//    @Override
-//    public boolean isSingleRegister() {
-//        // TODO: Modify for 32-bit
-//        return register1.isCpu() && register1.width >= 32;
-//    }
-
-//    @Override
-//    public boolean isDoubleRegister() {
-//        // TODO: Modify for 32-bit
-//        return register1.isCpu() && register1.width >= 64;
-//    }
-
     @Override
     public boolean isVariableOrRegister() {
         return !isStack();
     }
-
-//    @Override
-//    public boolean isSingleXmm() {
-//        // TODO: Modify for 32-bit
-//        return register1.isXmm() && register1.width >= 32;
-//    }
-//
-//    @Override
-//    public boolean isDoubleXmm() {
-//        // TODO: Modify for 32-bit
-//        return register1.isXmm() && register1.width >= 64;
-//    }
 
     @Override
     public int stackIndex() {
@@ -169,12 +145,12 @@ public final class LIRLocation extends LIROperand {
     @Override
     public CiRegister asRegister() {
         assert isRegister() : illegalOperation("asRegister()");
-        return this.register1;
+        return this.register;
     }
 
     @Override
     public int registerNumber() {
         assert index == 0 : illegalOperation("cpuRegNumber()");
-        return register1.number;
+        return register.number;
     }
 }

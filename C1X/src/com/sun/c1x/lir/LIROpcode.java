@@ -91,8 +91,6 @@ public enum LIROpcode {
         Wremi,
     EndOp3,
     NativeCall,
-    InterfaceCall,
-    VirtualCall,
     DirectCall,
     IndirectCall,
     InstanceOf,

@@ -139,12 +139,12 @@ public class AMD64OptStackWalking {
                 Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
             }
 
+            TargetMethod calleeMethod = callee.targetMethod();
             // Reset the stack walker
             current.stackFrameWalker().reset();
             // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
             Safepoint.enable();
 
-            TargetMethod calleeMethod = callee.targetMethod();
             if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
                 unwindToCalleeEpilogue(throwable, catchAddress, sp, calleeMethod);
             } else {

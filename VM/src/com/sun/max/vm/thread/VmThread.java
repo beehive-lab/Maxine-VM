@@ -167,7 +167,7 @@ public class VmThread {
     private VmThread nextWaitingThread = this;
 
     /**
-     * A stack of elements that support  @see AccessController.doPrivileged calls.
+     * A stack of elements that support  {@link AccessController#doPrivileged(PrivilegedAction)} calls.
      */
     private PrivilegedElement privilegedStackTop;
 

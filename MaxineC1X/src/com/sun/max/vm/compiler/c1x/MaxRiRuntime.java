@@ -29,7 +29,6 @@ import com.sun.c1x.ci.CiTargetMethod.Safepoint;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
-import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
@@ -43,9 +42,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -134,7 +131,19 @@ public class MaxRiRuntime implements RiRuntime {
      * to allow the compiler to use its own heuristics
      */
     public boolean mustInline(RiMethod method) {
-        return method.isLoaded() && asClassMethodActor(method, "mustInline()").isInline();
+        if (!method.isLoaded()) {
+            return false;
+        }
+        final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
+        if (classMethodActor.accessor() != null) {
+            // TODO: Remove once C1X implements the semantics of ACCESSOR
+            return false;
+        }
+        if (classMethodActor.isNative()) {
+            // TODO: Remove once C1X can compile JNICALL
+            return false;
+        }
+        return classMethodActor.isInline();
     }
 
     /**
@@ -148,6 +157,14 @@ public class MaxRiRuntime implements RiRuntime {
             return false;
         }
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
+        if (classMethodActor.accessor() != null) {
+            // TODO: Remove once C1X implements the semantics of ACCESSOR
+            return true;
+        }
+        if (classMethodActor.isNative()) {
+            // TODO: Remove once C1X can compile JNICALL
+            return true;
+        }
         return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
     }
 
@@ -168,10 +185,6 @@ public class MaxRiRuntime implements RiRuntime {
         throw new MaxRiUnresolved("invalid RiMethod instance: " + method.getClass());
     }
 
-    public int arrayLengthOffsetInBytes() {
-        return VMConfiguration.target().layoutScheme().arrayHeaderLayout.arrayLengthOffset();
-    }
-
     public boolean isMP() {
         return true;
     }
@@ -179,11 +192,6 @@ public class MaxRiRuntime implements RiRuntime {
     public boolean jvmtiCanPostExceptions() {
         // TODO: Check what to return here
         return false;
-    }
-
-    @UNSAFE
-    public int hubOffset() {
-        return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
 
     public boolean needsExplicitNullCheck(int offset) {
@@ -195,42 +203,8 @@ public class MaxRiRuntime implements RiRuntime {
         return VmThreadLocal.EXCEPTION_OBJECT.offset;
     }
 
-    public int vtableEntryMethodOffsetInBytes() {
-        // TODO: (tw) check if 0 is correct (probably)
-        return 0;
-    }
-
-    public int vtableEntrySize() {
-        // TODO: (tw) modify, return better value
-        return 8;
-    }
-
-    public int vtableStartOffset() {
-        return VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
-    }
-
-    public int firstArrayElementOffset(CiKind type) {
-        return VMConfiguration.target().layoutScheme().arrayHeaderLayout.headerSize();
-    }
-
-    public int sunMiscAtomicLongCSImplValueOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int arrayHeaderSize(CiKind type) {
-        throw Util.unimplemented();
-    }
-
     public int basicObjectLockOffsetInBytes() {
         return Util.nonFatalUnimplemented(0);
-    }
-
-    public int elementHubOffset() {
-        return ClassActor.fromJava(Hub.class).findLocalInstanceFieldActor("componentHub").offset();
-    }
-
-    public int maximumArrayLength() {
-        throw Util.unimplemented();
     }
 
     public int sizeofBasicObjectLock() {
@@ -263,7 +237,7 @@ public class MaxRiRuntime implements RiRuntime {
             final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
             writer.flush();
             final ProcessorKind processorKind = VMConfiguration.target().platform().processorKind;
-            final InlineDataDecoder inlineDataDecoder = null; //InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
+            final InlineDataDecoder inlineDataDecoder = null;
             final Pointer startAddress = Pointer.fromInt(0);
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false);
             Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
@@ -284,13 +258,13 @@ public class MaxRiRuntime implements RiRuntime {
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
                 private String toString(Call call) {
                     if (call.runtimeCall != null) {
-                        return "{rt-call: " + call.runtimeCall.name() + "}";
+                        return "{" + call.runtimeCall.name() + "}";
                     } else if (call.symbol != null) {
-                        return "{native-call: " + call.symbol + "}";
+                        return "{" + call.symbol + "}";
                     } else if (call.globalStubID != null) {
-                        return "{stub-call: " + call.globalStubID + "}";
+                        return "{" + call.globalStubID + "}";
                     } else {
-                        return "{call: " + call.method + "}";
+                        return "{" + call.method + "}";
                     }
                 }
                 private String siteInfo(int pcOffset) {
@@ -311,7 +285,7 @@ public class MaxRiRuntime implements RiRuntime {
                     }
                     for (DataPatch site : targetMethod.dataReferences) {
                         if (site.pcOffset == pcOffset) {
-                            return "{data: " + site.data + "}";
+                            return "{" + site.data + "}";
                         }
                     }
                     return null;
@@ -337,14 +311,6 @@ public class MaxRiRuntime implements RiRuntime {
 
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
         return new C1XTargetMethod(name, ciTargetMethod);
-    }
-
-    public RiType primitiveArrayType(CiKind elemType) {
-        return canonicalRiType(ClassActor.fromJava(elemType.primitiveArrayClass()), globalConstantPool, -1);
-    }
-
-    public int getJITStackSlotSize() {
-        return JitStackFrameLayout.JIT_SLOT_SIZE;
     }
 
     /**

@@ -169,14 +169,6 @@ public interface RiMethod {
     boolean isOverridden();
 
     /**
-     * For virtual methods, this method returns the index into the virtual table
-     * of the method.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the virtual table index
-     */
-    int vtableIndex();
-
-    /**
      * Gets the {@link RiMethodProfile method data} for this method, which stores instrumentation,
      * including invocation counts, branch counts, etc.
      * @return the method data object, if it exists; {@code null} otherwise

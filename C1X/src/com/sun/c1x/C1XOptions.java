@@ -20,6 +20,8 @@
  */
 package com.sun.c1x;
 
+import com.sun.c1x.debug.*;
+
 /**
  * This class encapsulates options that control the behavior of the C1X compiler.
  *
@@ -67,15 +69,12 @@ public class C1XOptions {
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
-    public static boolean VerifyOopMaps                      = ____;
-    public static boolean VerifyOops                         = ____;
     public static boolean PrintHIR                           = ____;
     public static boolean PrintLIR                           = ____;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
     public static boolean PrintTimers                        = ____;
     public static boolean PrintCompilation                   = ____;
-    public static boolean PrintExceptionHandlers             = ____;
     public static boolean PrintXirTemplates                  = ____;
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean FatalUnimplemented                 = ____;
@@ -88,6 +87,11 @@ public class C1XOptions {
     public static boolean TraceLIRVisit                      = ____;
     public static int     TraceBytecodeParserLevel           = 0;
     public static boolean PrintLoopList                      = ____;
+
+    /**
+     * @see TTY.Filter#matches(String, Object)
+     */
+    public static String  PrintFilter                        = null;
 
     // canonicalizer settings
     public static boolean CanonicalizeClassIsInstance        = true;

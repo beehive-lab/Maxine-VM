@@ -27,7 +27,7 @@ import com.sun.max.vm.compiler.builtin.*;
 /*
  * @Harness: java
  * @Runs: `java.lang.Double.NaN = 0x7ff8000000000000L; 1.0d = 0x3ff0000000000000L; -1.0d = -4616189618054758400L; 473729.5945321d = 4691882224927966680L
-*/
+ */
 public class EBC_movd2l_02 {
     static class D {
         double d;

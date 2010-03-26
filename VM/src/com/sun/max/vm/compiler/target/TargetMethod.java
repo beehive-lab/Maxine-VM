@@ -139,6 +139,16 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         return null;
     }
 
+    /**
+     * Gets the bytecode locations for the inlining chain rooted at a given stop.
+     *
+     * @param stopIndex an index of a stop within this method
+     * @return the bytecode locations for the inlining chain rooted at the denoted stop
+     */
+    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
+        return null;
+    }
+
     public final int numberOfDirectCalls() {
         return (directCallees == null) ? 0 : directCallees.length;
     }
