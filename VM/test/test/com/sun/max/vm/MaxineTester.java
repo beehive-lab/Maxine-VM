@@ -1166,7 +1166,7 @@ public class MaxineTester {
      * @author Doug Simon
      */
     public static class JTImageHarness implements Harness {
-        private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +(\\S+)\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
+        private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +(\\S+)\\s+next: -XX:TesterStart=(\\d+).*");
 
         public boolean run() {
             final List<String> javaTesterConfigs = jtImageConfigsOption.getValue();
@@ -1201,13 +1201,20 @@ public class MaxineTester {
                             lastTestNumber = matcher.group(1);
                             lastTest = matcher.group(2);
                             String nextTestNumber = matcher.group(3);
-                            String endTestNumber = matcher.group(4);
-                            if (!nextTestNumber.equals(endTestNumber)) {
-                                nextTestOption = "-XX:TesterStart=" + nextTestNumber;
-                            } else {
-                                nextTestOption = null;
-                            }
+                            nextTestOption = "-XX:TesterStart=" + nextTestNumber;
 
+                        } else if (line.startsWith("Done: ")) {
+                            if (lastTest != null) {
+                                addTestResult(lastTest, null);
+                            }
+                            lastTest = null;
+                            lastTestNumber = null;
+                            nextTestOption = null;
+                            // found the terminating line indicating how many tests passed
+                            if (failedLines.isEmpty()) {
+                                return new JTResult(line, null);
+                            }
+                            break;
                         } else if (line.contains("failed")) {
                             // found a line with "failed"--probably a failed test
                             if (lastTest != null) {
@@ -1218,18 +1225,6 @@ public class MaxineTester {
                             }
                             lastTest = null;
                             lastTestNumber = null;
-                        } else if (line.startsWith("Done: ")) {
-                            if (lastTest != null) {
-                                addTestResult(lastTest, null);
-                            }
-                            lastTest = null;
-                            lastTestNumber = null;
-                            // found the terminating line indicating how many tests passed
-                            if (failedLines.isEmpty()) {
-                                assert nextTestOption == null;
-                                return new JTResult(line, null);
-                            }
-                            break;
                         }
                     }
                     if (lastTest != null) {
