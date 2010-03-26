@@ -26,6 +26,7 @@ import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
+import com.sun.max.lang.Bytes;
 import com.sun.max.platform.*;
 import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.*;

@@ -869,7 +869,7 @@ compile_help="compile a list of classes and/or methods using the VM's compiler
     Use \"max compile -help\" to see what other options this command accepts."
 
 function run_compile() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.compiler.CompilerRunner $@
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.cps.CompilerRunner $@
 }
 
 #=======================================
