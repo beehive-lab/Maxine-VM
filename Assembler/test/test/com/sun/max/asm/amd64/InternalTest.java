@@ -170,4 +170,15 @@ public class InternalTest extends MaxTestCase {
         final byte[] bytes = assemble2(startAddress);
         disassemble(startAddress, bytes);
     }
+
+    public void test3() throws IOException, AssemblyException {
+        System.out.println("--- test3: ---");
+        final long startAddress = 0x12345678L;
+        final AMD64Assembler asm = new AMD64Assembler(startAddress);
+        for (AMD64GeneralRegister64 gpr : AMD64GeneralRegister64.ENUMERATOR) {
+            asm.call(gpr);
+        }
+        final byte[] bytes = asm.toByteArray();
+        disassemble(startAddress, bytes);
+    }
 }

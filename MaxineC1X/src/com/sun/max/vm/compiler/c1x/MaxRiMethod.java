@@ -265,20 +265,6 @@ public class MaxRiMethod implements RiMethod {
     }
 
     /**
-     * Gets the virtual table index of this method.
-     * @return the virtual table index of this method
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
-    public int vtableIndex() {
-        if (methodActor instanceof VirtualMethodActor) {
-            return ((VirtualMethodActor) methodActor).vTableIndex();
-        } else if (methodActor instanceof InterfaceMethodActor) {
-            return ((InterfaceMethodActor) methodActor).iIndexInInterface();
-        }
-        return -1;
-    }
-
-    /**
      * Gets the method instrumentation for this method.
      * @return the method instruction for this method; {@code null} if no instrumentation
      * is available

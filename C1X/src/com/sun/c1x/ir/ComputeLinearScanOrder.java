@@ -632,7 +632,7 @@ public class ComputeLinearScanOrder {
                         TTY.print("B%d ", ex.blockID);
                     }
                 }
-                TTY.cr();
+                TTY.println();
             }
         }
     }

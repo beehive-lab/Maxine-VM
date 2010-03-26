@@ -84,10 +84,10 @@ public abstract class Value {
 
     /**
      * Creates a new value with the specified kind.
-     * @param type the type of this value
+     * @param kind the type of this value
      */
-    public Value(CiKind type) {
-        kind = type;
+    public Value(CiKind kind) {
+        this.kind = kind;
     }
 
     /**

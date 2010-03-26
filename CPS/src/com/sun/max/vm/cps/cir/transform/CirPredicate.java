@@ -31,7 +31,7 @@ import com.sun.max.vm.cps.cir.variable.*;
  * In case several nodes are visited the result is the logical "or"
  * of the results of the individual visits, with evaluation shortcuts.
  *
- *  @see CirVisitor
+ * @see CirVisitor
  *
  * @author Bernd Mathiske
  */

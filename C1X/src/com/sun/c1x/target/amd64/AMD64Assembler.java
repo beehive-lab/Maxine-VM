@@ -429,41 +429,15 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void bsrl(CiRegister dst, CiRegister src) {
-        assert !target.supportsLzcnt() : "encoding is treated as LZCNT";
-        int encode = prefixAndEncode(dst.encoding, src.encoding);
-        emitByte(0x0F);
-        emitByte(0xBD);
-        emitByte(0xC0 | encode);
-    }
-
     public final void bswapl(CiRegister reg) { // bswap
         int encode = prefixAndEncode(reg.encoding);
         emitByte(0x0F);
         emitByte(0xC8 | encode);
     }
 
-    public final void internalCall(Label l) {
-        if (l.isBound()) {
-            int longSize = 5;
-            int offs = Util.safeToInt(target(l) - codeBuffer.position());
-            assert offs <= 0 : "assembler error";
-
-            // 1110 1000 #32-bit disp
-            emitByte(0xE8);
-            emitInt((offs - longSize));
-        } else {
-
-            // 1110 1000 #32-bit disp
-            l.addPatchAt(codeBuffer.position());
-            emitByte(0xE8);
-            emitInt(0);
-        }
-    }
-
     public final void nativeCall(CiRegister dst, String symbol, LIRDebugInfo info) {
         int before = codeBuffer.position();
-        int encode = prefixqAndEncode(dst.encoding);
+        int encode = prefixAndEncode(dst.encoding);
         emitByte(0xFF);
         emitByte(0xD0 | encode);
         int after = codeBuffer.position();
@@ -483,7 +457,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
 
     public final int indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
         int before = codeBuffer.position();
-        int encode = prefixqAndEncode(dst.encoding);
+        int encode = prefixAndEncode(dst.encoding);
 
         emitByte(0xFF);
         emitByte(0xD0 | encode);
@@ -724,12 +698,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void emms() {
-        assert target.supportsMmx();
-        emitByte(0x0F);
-        emitByte(0x77);
-    }
-
     public final void hlt() {
         emitByte(0xF4);
     }
@@ -884,15 +852,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         } else {
             emitByte(0xF0);
         }
-    }
-
-    public final void lzcntl(CiRegister dst, CiRegister src) {
-        assert target.supportsLzcnt() : "encoding is treated as BSR";
-        emitByte(0xF3);
-        int encode = prefixAndEncode(dst.encoding, src.encoding);
-        emitByte(0x0F);
-        emitByte(0xBD);
-        emitByte(0xC0 | encode);
     }
 
     // Emit mfence instruction
@@ -1101,7 +1060,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     public final void movq(CiRegister dst, Address src) {
         if (dst.isMMX()) {
             assert dst.isMMX();
-            assert target.supportsMMX() : "unsupported";
             emitByte(0x0F);
             emitByte(0x6F);
             emitOperand(dst, src);
@@ -1128,7 +1086,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     public final void movq(Address dst, CiRegister src) {
         if (src.isMMX()) {
             assert src.isMMX();
-            assert target.supportsMMX() : "unsupported";
             emitByte(0x0F);
             emitByte(0x7F);
             // workaround gcc (3.2.1-7a) bug
@@ -1371,94 +1328,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
             return;
         }
 
-        if (C1XOptions.UseAddressNop && target.isIntel()) {
-            //
-            // Using multi-bytes nops "0x0F 0x1F [Address]" for Intel
-            // 1: 0x90
-            // 2: 0x66 0x90
-            // 3: 0x66 0x66 0x90 (don't use "0x0F 0x1F 0x00" - need patching safe padding)
-            // 4: 0x0F 0x1F 0x40 0x00
-            // 5: 0x0F 0x1F 0x44 0x00 0x00
-            // 6: 0x66 0x0F 0x1F 0x44 0x00 0x00
-            // 7: 0x0F 0x1F 0x80 0x00 0x00 0x00 0x00
-            // 8: 0x0F 0x1F 0x84 0x00 0x00 0x00 0x00 0x00
-            // 9: 0x66 0x0F 0x1F 0x84 0x00 0x00 0x00 0x00 0x00
-            // 10: 0x66 0x66 0x0F 0x1F 0x84 0x00 0x00 0x00 0x00 0x00
-            // 11: 0x66 0x66 0x66 0x0F 0x1F 0x84 0x00 0x00 0x00 0x00 0x00
-
-            // The rest coding is Intel specific - don't use consecutive Address nops
-
-            // 12: 0x0F 0x1F 0x84 0x00 0x00 0x00 0x00 0x00 0x66 0x66 0x66 0x90
-            // 13: 0x66 0x0F 0x1F 0x84 0x00 0x00 0x00 0x00 0x00 0x66 0x66 0x66 0x90
-            // 14: 0x66 0x66 0x0F 0x1F 0x84 0x00 0x00 0x00 0x00 0x00 0x66 0x66 0x66 0x90
-            // 15: 0x66 0x66 0x66 0x0F 0x1F 0x84 0x00 0x00 0x00 0x00 0x00 0x66 0x66 0x66 0x90
-
-            while (i >= 15) {
-                // For Intel don't generate consecutive address nops (mix with regular nops)
-                i -= 15;
-                emitByte(0x66); // size prefix
-                emitByte(0x66); // size prefix
-                emitByte(0x66); // size prefix
-                addrNop8();
-                emitByte(0x66); // size prefix
-                emitByte(0x66); // size prefix
-                emitByte(0x66); // size prefix
-                emitByte(0x90); // nop
-            }
-            switch (i) {
-                case 14:
-                    emitByte(0x66); // size prefix
-                    // fall through
-                case 13:
-                    emitByte(0x66); // size prefix
-                    // fall through
-                case 12:
-                    addrNop8();
-                    emitByte(0x66); // size prefix
-                    emitByte(0x66); // size prefix
-                    emitByte(0x66); // size prefix
-                    emitByte(0x90); // nop
-                    break;
-                case 11:
-                    emitByte(0x66); // size prefix
-                    // fall through
-                case 10:
-                    emitByte(0x66); // size prefix
-                    // fall through
-                case 9:
-                    emitByte(0x66); // size prefix
-                    // fall through
-                case 8:
-                    addrNop8();
-                    break;
-                case 7:
-                    addrNop7();
-                    break;
-                case 6:
-                    emitByte(0x66); // size prefix
-                    // fall through
-                case 5:
-                    addrNop5();
-                    break;
-                case 4:
-                    addrNop4();
-                    break;
-                case 3:
-                    // Don't use "0x0F 0x1F 0x00" - need patching safe padding
-                    emitByte(0x66); // size prefix
-                    // fall through
-                case 2:
-                    emitByte(0x66); // size prefix
-                    // fall through
-                case 1:
-                    emitByte(0x90); // nop
-                    break;
-                default:
-                    assert i == 0;
-            }
-            return;
-        }
-        if (C1XOptions.UseAddressNop && target.isAmd()) {
+        if (C1XOptions.UseAddressNop) {
             //
             // Using multi-bytes nops "0x0F 0x1F [Address]" for AMD.
             // 1: 0x90
@@ -1674,56 +1544,10 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         emitArith(0x0B, 0xC0, dst, src);
     }
 
-    public final void pcmpestri(CiRegister dst, Address src, int imm8) {
-        assert dst.isXmm();
-        assert target.supportsSse42() : "";
-
-        emitByte(0x66);
-        prefix(src, dst);
-        emitByte(0x0F);
-        emitByte(0x3A);
-        emitByte(0x61);
-        emitOperand(dst, src);
-        emitByte(imm8);
-
-    }
-
-    public final void pcmpestri(CiRegister dst, CiRegister src, int imm8) {
-        assert dst.isXmm();
-        assert src.isXmm();
-        assert target.supportsSse42() : "";
-
-        emitByte(0x66);
-        int encode = prefixqAndEncode(dst.encoding, src.encoding);
-        emitByte(0x0F);
-        emitByte(0x3A);
-        emitByte(0x61);
-        emitByte(0xC0 | encode);
-        emitByte(imm8);
-    }
-
     // generic
     public final void pop(CiRegister dst) {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0x58 | encode);
-    }
-
-    public final void popcntl(CiRegister dst, Address src) {
-        assert target.supportsPopcnt() : "must support";
-        emitByte(0xF3);
-        prefix(src, dst);
-        emitByte(0x0F);
-        emitByte(0xB8);
-        emitOperand(dst, src);
-    }
-
-    public final void popcntl(CiRegister dst, CiRegister src) {
-        assert target.supportsPopcnt() : "must support";
-        emitByte(0xF3);
-        int encode = prefixAndEncode(dst.encoding, src.encoding);
-        emitByte(0x0F);
-        emitByte(0xB8);
-        emitByte(0xC0 | encode);
     }
 
     public final void popf() {
@@ -1840,31 +1664,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         emitByte(0x73);
         emitByte(0xC0 | encode);
         emitByte(shift);
-    }
-
-    public final void ptest(CiRegister dst, Address src) {
-        assert dst.isXmm();
-        assert target.supportsSse41() : "";
-
-        emitByte(0x66);
-        prefix(src, dst);
-        emitByte(0x0F);
-        emitByte(0x38);
-        emitByte(0x17);
-        emitOperand(dst, src);
-    }
-
-    public final void ptest(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
-        assert target.supportsSse41() : "";
-
-        emitByte(0x66);
-        int encode = prefixqAndEncode(dst.encoding, src.encoding);
-        emitByte(0x0F);
-        emitByte(0x38);
-        emitByte(0x17);
-        emitByte(0xC0 | encode);
     }
 
     public final void punpcklbw(CiRegister dst, CiRegister src) {
@@ -2313,7 +2112,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     int prefixAndEncode(int regEnc, boolean byteinst) {
-      //  assert is32;
         if (regEnc >= 8) {
             emitByte(Prefix.REXB);
             regEnc -= 8;
@@ -2551,14 +2349,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void bsrq(CiRegister dst, CiRegister src) {
-        assert !target.supportsLzcnt() : "encoding is treated as LZCNT";
-        int encode = prefixqAndEncode(dst.encoding, src.encoding);
-        emitByte(0x0F);
-        emitByte(0xBD);
-        emitByte(0xC0 | encode);
-    }
-
     public final void bswapq(CiRegister reg) {
         int encode = prefixqAndEncode(reg.encoding);
         emitByte(0x0F);
@@ -2737,15 +2527,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         emitLong(imm64);
     }
 
-    public final void lzcntq(CiRegister dst, CiRegister src) {
-        assert target.supportsLzcnt() : "encoding is treated as BSR";
-        emitByte(0xF3);
-        int encode = prefixqAndEncode(dst.encoding, src.encoding);
-        emitByte(0x0F);
-        emitByte(0xBD);
-        emitByte(0xC0 | encode);
-    }
-
     public final void movdq(CiRegister dst, CiRegister src) {
 
         // table D-1 says MMX/SSE2
@@ -2794,12 +2575,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         emitInt(imm32);
     }
 
-    public static boolean isSimm32(int imm32) {
-        return true;
-    }
-
     public final void movslq(Address dst, int imm32) {
-        assert isSimm32(imm32) : "lost bits";
         prefixq(dst);
         emitByte(0xC7);
         emitOperand(AMD64.rax, dst, 4);
@@ -2893,24 +2669,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     public final void orq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x0B, 0xC0, dst, src);
-    }
-
-    public final void popcntq(CiRegister dst, Address src) {
-        assert target.supportsPopcnt() : "must support";
-        emitByte(0xF3);
-        prefixq(src, dst);
-        emitByte(0x0F);
-        emitByte(0xB8);
-        emitOperand(dst, src);
-    }
-
-    public final void popcntq(CiRegister dst, CiRegister src) {
-        assert target.supportsPopcnt() : "must support";
-        emitByte(0xF3);
-        int encode = prefixqAndEncode(dst.encoding, src.encoding);
-        emitByte(0x0F);
-        emitByte(0xB8);
-        emitByte(0xC0 | encode);
     }
 
     public final void popq(Address dst) {
@@ -3143,11 +2901,10 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     public final void patchJumpTarget(int branch, int branchTarget) {
         int op = codeBuffer.getByte(branch);
         assert op == 0xE8 // call
-                        ||
-                        op == 0xE9 // jmp
-                        || op == 0xEB // short jmp
-                        || (op & 0xF0) == 0x70 // short jcc
-                        || op == 0x0F && (codeBuffer.getByte(branch + 1) & 0xF0) == 0x80 // jcc
+            || op == 0xE9 // jmp
+            || op == 0xEB // short jmp
+            || (op & 0xF0) == 0x70 // short jcc
+            || op == 0x0F && (codeBuffer.getByte(branch + 1) & 0xF0) == 0x80 // jcc
         : "Invalid opcode at patch point";
 
         if (op == 0xEB || (op & 0xF0) == 0x70) {

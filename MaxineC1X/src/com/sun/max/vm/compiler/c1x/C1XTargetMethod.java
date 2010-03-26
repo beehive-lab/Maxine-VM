@@ -849,6 +849,14 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         return decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, stopIndex);
     }
 
+    @Override
+    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
+        if (classMethodActor == null) {
+            return null;
+        }
+        return decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, stopIndex);
+    }
+
     public static BytecodeLocation decodeBytecodeLocation(ClassMethodActor classMethodActor, Object sourceInfoObject, ClassMethodActor[] sourceMethods, int index) {
         if (sourceInfoObject instanceof int[]) {
             int[] sourceInfo = (int[]) sourceInfoObject;

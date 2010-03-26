@@ -106,28 +106,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         decrementq(reg, value);
     }
 
-    void cmpoop(Address src1, Object obj) {
-        // (tw) Cannot embed oop as literal (only 32-bit relevant)
-        throw Util.unimplemented();
-        //cmpLiteral32(src1, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
-    }
-
-    void cmpoop(CiRegister src1, Object obj) {
-        // (tw) Cannot embed oop as literal (only 32-bit relevant)
-        throw Util.unimplemented();
-        //cmpLiteral32(src1, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
-    }
-
-    void extendSign(CiRegister hi, CiRegister lo) {
-        // According to Intel Doc. AP-526, "Integer Divide", p.18.
-        if (target.isP6() && hi == AMD64.rdx && lo == AMD64.rax) {
-            cdql();
-        } else {
-            movl(hi, lo);
-            sarl(hi, 31);
-        }
-    }
-
     void movoop(CiRegister dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
         if (obj.isNull()) {
@@ -500,15 +478,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         subq(dst, imm32);
     }
 
-    boolean verifyOop(CiRegister reg) {
-        if (!C1XOptions.VerifyOops) {
-            return true;
-        }
-
-        // TODO: Figure out how to verify oops, maybe a runtime call?
-        throw Util.unimplemented();
-    }
-
     // Support optimal SSE move instructions.
     void movflt(CiRegister dst, CiRegister src) {
         assert dst.isXmm() && src.isXmm();
@@ -580,16 +549,8 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void verifyNotNullOop(CiRegister r) {
-        if (!C1XOptions.VerifyOops) {
-            return;
-        }
-        Label notNull = new Label();
-        testq(r, r);
-        jcc(AMD64Assembler.ConditionFlag.notZero, notNull);
-        stop("non-null oop required");
-        bind(notNull);
-        verifyOop(r);
+    public void verifyOop(CiRegister r) {
+        Util.nonFatalUnimplemented();
     }
 
     void xchgptr(CiRegister src1, CiRegister src2) {

@@ -77,6 +77,7 @@ public @interface METHOD_SUBSTITUTIONS {
                     if (substituteName.length() == 0) {
                         substituteName = substituteMethod.getName();
                     }
+
                     final Method originalMethod = findMethod(substitutee, substituteName, SignatureDescriptor.fromJava(substituteMethod));
                     ProgramError.check(originalMethod != null, "could not find method in " + substitutee + " substituted by " + substituteMethod);
                     final ClassMethodActor originalMethodActor = ClassMethodActor.fromJava(originalMethod);

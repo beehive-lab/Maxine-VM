@@ -49,6 +49,15 @@ import com.sun.c1x.ir.*;
 public class LogStream {
 
     /**
+     * Null output stream that simply swallows any output sent to it.
+     */
+    public static final LogStream SINK = new LogStream(new OutputStream() {
+        @Override
+        public void write(int b) throws IOException {
+        }
+    });
+
+    /**
      * The output stream to which this log stream writes.
      */
     private final PrintStream ps;

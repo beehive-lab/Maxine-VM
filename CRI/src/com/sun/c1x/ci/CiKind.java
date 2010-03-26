@@ -355,4 +355,41 @@ public enum CiKind {
     public String toString() {
         return javaName;
     }
+    
+    /**
+     * Gets a formatted string for a given value of this kind.
+     * 
+     * @param value a value of this kind
+     * @return a formatted string for {@code value} based on this kind
+     */
+    public String format(Object value) {
+        StringBuilder sb = new StringBuilder(javaName).append('(');
+        if (isWord()) {
+            sb.append("0x" + java.lang.Long.toHexString(((Number) value).longValue()));
+        } else if (isObject()) {
+            if (value == null) {
+                sb.append("null");
+            } else {
+                String s = "";
+                try {
+                    // Append the result of value.toString() only if Object.toString() is overridden in the class hierarchy of value 
+                    if (!value.getClass().getMethod("toString").equals(Object.class.getDeclaredMethod("toString"))) {
+                        s = String.valueOf(value);
+                        if (s.length() > 50) {
+                            s = s.substring(0, 30) + "...";
+                        }
+                        s = " \"" + s + '"';
+                    }
+                } catch (Exception e) {
+                }
+                if (s.isEmpty()) {
+                    s = "@" + System.identityHashCode(value); 
+                }
+                sb.append(value.getClass().getSimpleName()).append(s);
+            }
+        } else {
+            sb.append(value); 
+        }
+        return sb.append(')').toString();
+    }
 }

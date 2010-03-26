@@ -162,9 +162,9 @@ public class LIROperand {
      * @param kind the kind of the stack slot
      * @return a LIR stack slot operand
      */
-    public static LIRLocation forStack(int index, CiKind type) {
+    public static LIRLocation forStack(int index, CiKind kind) {
         assert index >= 0;
-        return new LIRLocation(type, -index - 1);
+        return new LIRLocation(kind, -index - 1);
     }
 
     /**
@@ -249,8 +249,8 @@ public class LIROperand {
         return new LIRConstant(value);
     }
 
-    public static LIROperand forScratch(CiKind type, CiTarget target) {
-        return forRegister(type, target.scratchRegister);
+    public static LIROperand forScratch(CiKind kind, CiTarget target) {
+        return forRegister(kind, target.scratchRegister);
     }
 
     public static boolean isIllegal(LIROperand operand) {

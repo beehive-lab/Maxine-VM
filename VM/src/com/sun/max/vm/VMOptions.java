@@ -23,6 +23,8 @@ package com.sun.max.vm;
 import java.lang.reflect.*;
 import java.util.*;
 
+import sun.misc.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -633,7 +635,7 @@ public final class VMOptions {
     }
 
     /**
-     * Support for @see sun.misc.VMSupport.initAgentProperties.
+     * Support for {@link VMSupport#initAgentProperties}.
      * @return space separated string of main class and arguments.
      */
     public static String mainClassAndArguments() {

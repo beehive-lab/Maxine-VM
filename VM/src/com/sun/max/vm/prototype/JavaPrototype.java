@@ -42,6 +42,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.jdk.Package;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -306,6 +307,43 @@ public class JavaPrototype extends Prototype {
     }
 
     /**
+     * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
+     */
+    void loadMethodSubstitutions(final VMConfiguration vmConfiguration, final PackageLoader pl) {
+        new ClassSearch(true) {
+            @Override
+            protected boolean visitClass(String className) {
+                if (className.endsWith(".Package")) {
+                    try {
+                        Class<?> packageClass = Class.forName(className);
+                        if (VMPackage.class.isAssignableFrom(packageClass)) {
+                            VMPackage vmPackage = (VMPackage) packageClass.newInstance();
+                            if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
+                                String[] classes = pl.listClassesInPackage(vmPackage.name(), false);
+                                for (String cn : classes) {
+                                    try {
+                                        Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
+                                        METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
+                                        if (annotation != null) {
+                                            loadClass(c);
+                                            METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
+                                        }
+                                    } catch (Exception e) {
+                                        throw ProgramError.unexpected(e);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        throw ProgramError.unexpected(e);
+                    }
+                }
+                return true;
+            }
+        }.run(pl.classpath);
+    }
+
+    /**
      * Extends {@link PackageLoader} to ignore classes that are {@link HostOnlyClassError prototype only} or
      * explicitly {@linkplain OmittedClassError omitted} from the boot image.
      *
@@ -365,6 +403,8 @@ public class JavaPrototype extends Prototype {
                 Builtin.register(vmConfiguration.bootCompilerScheme());
                 vmConfiguration.bootCompilerScheme().createSnippets(packageLoader);
                 Snippet.register();
+
+                loadMethodSubstitutions(vmConfiguration, packageLoader);
 
                 if (loadPackages) {
 

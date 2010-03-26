@@ -71,7 +71,7 @@ public final class Interval {
     }
 
     private int registerNumber;
-    private CiKind type; // valid only for variables
+    private CiKind kind; // valid only for variables
     private Range first; // sorted list of Ranges
     private List<Integer> usePosAndKinds; // sorted list of use-positions and their according use-kinds
 
@@ -106,15 +106,15 @@ public final class Interval {
         registerNumber = r;
     }
 
-    CiKind type() {
+    CiKind kind() {
         assert registerNumber == -1 || registerNumber >= CiRegister.LowestVirtualRegisterNumber : "cannot access type for fixed interval";
-        return type;
+        return kind;
     }
 
-    void setType(CiKind type) {
-        assert registerNumber < CiRegister.LowestVirtualRegisterNumber || this.type == CiKind.Illegal || this.type == type : "overwriting existing type";
-        assert type != CiKind.Boolean && type != CiKind.Byte && type != CiKind.Char : "these kinds should have int type registers";
-        this.type = type;
+    void setKind(CiKind kind) {
+        assert registerNumber < CiRegister.LowestVirtualRegisterNumber || this.kind == CiKind.Illegal || this.kind == kind : "overwriting existing type";
+        assert kind != CiKind.Boolean && kind != CiKind.Byte && kind != CiKind.Char : "these kinds should have int type registers";
+        this.kind = kind;
     }
 
     Range first() {
@@ -292,7 +292,7 @@ public final class Interval {
 
         C1XMetrics.LSRAIntervalsCreated++;
         this.registerNumber = regNum;
-        this.type = CiKind.Illegal;
+        this.kind = CiKind.Illegal;
         this.first = Range.EndMarker;
         this.usePosAndKinds = new ArrayList<Integer>(12);
         this.current = Range.EndMarker;
@@ -332,7 +332,7 @@ public final class Interval {
                 Interval i1 = splitChildren.get(i);
 
                 assert i1.splitParent() == this : "not a split child of this interval";
-                assert i1.type() == type() : "must be equal for all split children";
+                assert i1.kind() == kind() : "must be equal for all split children";
                 assert i1.canonicalSpillSlot() == canonicalSpillSlot() : "must be equal for all split children";
 
                 for (int j = i + 1; j < splitChildren.size(); j++) {
@@ -432,8 +432,8 @@ public final class Interval {
             Interval tmp = splitChildren.get(i);
             if (tmp != result && tmp.from() <= opId && opId < tmp.to() + toOffset) {
                 TTY.println(String.format("two valid result intervals found for opId %d: %d and %d", opId, result.registerNumber(), tmp.registerNumber()));
-                result.print(TTY.out, allocator);
-                tmp.print(TTY.out, allocator);
+                result.print(TTY.out(), allocator);
+                tmp.print(TTY.out(), allocator);
                 throw new CiBailout("two valid result intervals found");
             }
         }
@@ -579,7 +579,7 @@ public final class Interval {
     Interval newSplitChild() {
         // allocate new interval
         Interval result = new Interval(-1);
-        result.setType(type());
+        result.setKind(kind());
 
         Interval parent = splitParent();
         result.splitParent = parent;
@@ -768,7 +768,7 @@ public final class Interval {
         if (registerNumber() < CiRegister.LowestVirtualRegisterNumber) {
             typeName = "fixed";
         } else {
-            typeName = type().name();
+            typeName = kind().name();
         }
         return typeName;
     }

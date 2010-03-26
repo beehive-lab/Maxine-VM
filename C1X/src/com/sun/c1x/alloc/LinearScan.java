@@ -136,7 +136,7 @@ public class LinearScan {
         @Override
         public boolean apply(Interval i) {
             // fixed intervals never contain oops
-            return i.registerNumber() >= numRegs && i.type() == CiKind.Object;
+            return i.registerNumber() >= numRegs && i.kind() == CiKind.Object;
         }
     };
 
@@ -173,7 +173,7 @@ public class LinearScan {
         if (it.canonicalSpillSlot() >= 0) {
             it.assignReg(it.canonicalSpillSlot());
         } else {
-            int spill = allocateSpillSlot(numberOfSpillSlots(it.type()) == 2);
+            int spill = allocateSpillSlot(numberOfSpillSlots(it.kind()) == 2);
             it.setCanonicalSpillSlot(spill);
             it.assignReg(spill);
         }
@@ -941,13 +941,13 @@ public class LinearScan {
                    && allocatableRegisters.allocatableRegister[reg]);
     }
 
-    void addDef(int regNum, int defPos, IntervalUseKind useKind, CiKind type) {
+    void addDef(int regNum, int defPos, IntervalUseKind useKind, CiKind kind) {
         Interval interval = intervalAt(regNum);
         if (interval != null) {
             assert interval.registerNumber() == regNum : "wrong interval";
 
-            if (type != CiKind.Illegal) {
-                interval.setType(type);
+            if (kind != CiKind.Illegal) {
+                interval.setKind(kind);
             }
 
             Range r = interval.first();
@@ -969,8 +969,8 @@ public class LinearScan {
             // Dead value - make vacuous interval
             // also add useKind for dead intervals
             interval = createInterval(regNum);
-            if (type != CiKind.Illegal) {
-                interval.setType(type);
+            if (kind != CiKind.Illegal) {
+                interval.setKind(kind);
             }
 
             interval.addRange(defPos, defPos + 1);
@@ -986,30 +986,30 @@ public class LinearScan {
         }
     }
 
-    void addUse(int regNum, int from, int to, IntervalUseKind useKind, CiKind type) {
+    void addUse(int regNum, int from, int to, IntervalUseKind useKind, CiKind kind) {
         Interval interval = intervalAt(regNum);
         if (interval == null) {
             interval = createInterval(regNum);
         }
         assert interval.registerNumber() == regNum : "wrong interval";
 
-        if (type != CiKind.Illegal) {
-            interval.setType(type);
+        if (kind != CiKind.Illegal) {
+            interval.setKind(kind);
         }
 
         interval.addRange(from, to);
         interval.addUsePos(to, useKind);
     }
 
-    void addTemp(int regNum, int tempPos, IntervalUseKind useKind, CiKind type) {
+    void addTemp(int regNum, int tempPos, IntervalUseKind useKind, CiKind kind) {
         Interval interval = intervalAt(regNum);
         if (interval == null) {
             interval = createInterval(regNum);
         }
         assert interval.registerNumber() == regNum : "wrong interval";
 
-        if (type != CiKind.Illegal) {
-            interval.setType(type);
+        if (kind != CiKind.Illegal) {
+            interval.setKind(kind);
         }
 
         interval.addRange(tempPos, tempPos + 1);
@@ -1961,16 +1961,16 @@ public class LinearScan {
 
     LIROperand calcOperandForInterval(Interval interval) {
         int assignedReg = interval.assignedReg();
-        CiKind type = interval.type();
+        CiKind kind = interval.kind();
 
         if (assignedReg >= numRegs) {
             // stack slot
             assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-            return LIROperand.forStack(assignedReg - numRegs, type);
+            return LIROperand.forStack(assignedReg - numRegs, kind);
 
         } else {
             // register
-            switch (type) {
+            switch (kind) {
                 case Object: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
@@ -1990,7 +1990,7 @@ public class LinearScan {
                 case Int: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperand.forRegister(type, toRegister(assignedReg));
+                    return LIROperand.forRegister(kind, toRegister(assignedReg));
                 }
 
                 case Long: {
@@ -2058,7 +2058,7 @@ public class LinearScan {
 
     LIROperand canonicalSpillOpr(Interval interval) {
         assert interval.canonicalSpillSlot() >= numRegs : "canonical spill slot not set";
-        return LIROperand.forStack(interval.canonicalSpillSlot() - numRegs, interval.type());
+        return LIROperand.forStack(interval.canonicalSpillSlot() - numRegs, interval.kind());
     }
 
     LIRLocation colorLirOpr(LIROperand opr, int opId, LIRInstruction.OperandMode mode) {
@@ -2513,7 +2513,7 @@ public class LinearScan {
 
         numberInstructions();
 
-        printLir("Before Register Allocation", true);
+        printLir("Before register allocation", true);
 
         computeLocalLiveSets();
         computeGlobalLiveSets();
@@ -2526,7 +2526,7 @@ public class LinearScan {
             C1XTimers.LINEAR_SCAN.start();
         }
 
-        printIntervals("Before Register Allocation");
+        printIntervals("Before register allocation");
 
         allocateRegisters();
 
@@ -2550,8 +2550,8 @@ public class LinearScan {
         // fill in number of spill slots into frameMap
         frameMap.finalizeFrame(maxSpills);
 
-        printIntervals("After Register Allocation");
-        printLir("After Register Allocation", true);
+        printIntervals("After register allocation");
+        printLir("After register allocation", true);
 
         sortIntervalsAfterAllocation();
 
@@ -2565,53 +2565,53 @@ public class LinearScan {
             C1XTimers.CODE_CREATE.start();
         }
 
-        printLir("After Register Number Assignment", true);
+        printLir("After register number assignment", true);
 
         EdgeMoveOptimizer.optimize(ir.linearScanOrder());
         if (C1XOptions.OptControlFlow) {
             ControlFlowOptimizer.optimize(ir);
         }
 
-        printLir("Before Code Generation", false);
+        printLir("After control flow optimization", false);
     }
 
     void printIntervals(String label) {
         if (C1XOptions.TraceLinearScanLevel >= 1) {
             int i;
-            TTY.cr();
-            TTY.println("%s", label);
+            TTY.println();
+            TTY.println(label);
 
             for (i = 0; i < intervalCount(); i++) {
                 Interval interval = intervalAt(i);
                 if (interval != null) {
-                    interval.print(TTY.out, this);
+                    interval.print(TTY.out(), this);
                 }
             }
 
-            TTY.cr();
+            TTY.println();
             TTY.println("--- Basic Blocks ---");
             for (i = 0; i < blockCount(); i++) {
                 BlockBegin block = blockAt(i);
                 TTY.print("B%d [%d, %d, %d, %d] ", block.blockID, block.firstLirInstructionId(), block.lastLirInstructionId(), block.loopIndex(), block.loopDepth());
             }
-            TTY.cr();
-            TTY.cr();
+            TTY.println();
+            TTY.println();
         }
 
-        if (C1XOptions.PrintCFGToFile) {
+        if (compilation.cfgPrinter() != null) {
             compilation.cfgPrinter().printIntervals(this, intervalsArray, label);
         }
     }
 
     void printLir(String label, boolean hirValid) {
         if (C1XOptions.TraceLinearScanLevel >= 1) {
-            TTY.cr();
-            TTY.println("%s", label);
+            TTY.println();
+            TTY.println(label);
             LIRList.printLIR(ir.linearScanOrder());
-            TTY.cr();
+            TTY.println();
         }
 
-        if (C1XOptions.PrintCFGToFile) {
+        if (compilation.cfgPrinter() != null) {
             compilation.cfgPrinter().printCFG(compilation.hir().startBlock, label, hirValid, true);
         }
     }
@@ -2653,51 +2653,51 @@ public class LinearScan {
 
             if (i1.registerNumber() != i) {
                 TTY.println("Interval %d is on position %d in list", i1.registerNumber(), i);
-                i1.print(TTY.out, this);
-                TTY.cr();
+                i1.print(TTY.out(), this);
+                TTY.println();
                 throw new CiBailout("");
             }
 
-            if (i1.registerNumber() >= CiRegister.LowestVirtualRegisterNumber && i1.type() == CiKind.Illegal) {
+            if (i1.registerNumber() >= CiRegister.LowestVirtualRegisterNumber && i1.kind() == CiKind.Illegal) {
                 TTY.println("Interval %d has no type assigned", i1.registerNumber());
-                i1.print(TTY.out, this);
-                TTY.cr();
+                i1.print(TTY.out(), this);
+                TTY.println();
                 throw new CiBailout("");
             }
 
             if (i1.assignedReg() == getAnyreg()) {
                 TTY.println("Interval %d has no register assigned", i1.registerNumber());
-                i1.print(TTY.out, this);
-                TTY.cr();
+                i1.print(TTY.out(), this);
+                TTY.println();
                 throw new CiBailout("");
             }
 
             if (i1.assignedReg() == i1.assignedRegHi()) {
                 TTY.println("Interval %d: low and high register equal", i1.registerNumber());
-                i1.print(TTY.out, this);
-                TTY.cr();
+                i1.print(TTY.out(), this);
+                TTY.println();
                 throw new CiBailout("");
             }
 
             if (!isProcessedRegNum(i1.assignedReg())) {
                 TTY.println("Can not have an Interval for an ignored register " + i1.assignedReg());
-                i1.print(TTY.out, this);
-                TTY.cr();
+                i1.print(TTY.out(), this);
+                TTY.println();
                 throw new CiBailout("");
             }
 
             if (i1.first() == Range.EndMarker) {
                 TTY.println("Interval %d has no Range", i1.registerNumber());
-                i1.print(TTY.out, this);
-                TTY.cr();
+                i1.print(TTY.out(), this);
+                TTY.println();
                 throw new CiBailout("");
             }
 
             for (Range r = i1.first(); r != Range.EndMarker; r = r.next) {
                 if (r.from >= r.to) {
                     TTY.println("Interval %d has zero length range", i1.registerNumber());
-                    i1.print(TTY.out, this);
-                    TTY.cr();
+                    i1.print(TTY.out(), this);
+                    TTY.println();
                     throw new CiBailout("");
                 }
             }
@@ -2724,10 +2724,10 @@ public class LinearScan {
                 if (i1.intersects(i2) && (r1 == r2 || r1 == r2Hi || (r1Hi != getAnyreg() && (r1Hi == r2 || r1Hi == r2Hi)))) {
                     if (C1XOptions.DetailedAsserts) {
                         TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.registerNumber(), i2.registerNumber());
-                        i1.print(TTY.out, this);
-                        TTY.cr();
-                        i2.print(TTY.out, this);
-                        TTY.cr();
+                        i1.print(TTY.out(), this);
+                        TTY.println();
+                        i2.print(TTY.out(), this);
+                        TTY.println();
                     }
                     throw new CiBailout("");
                 }
@@ -2830,8 +2830,8 @@ public class LinearScan {
     }
 
     // TODO: Platform specific!!
-    public int numPhysicalRegs(CiKind type) {
-        if (type == CiKind.Double && compilation.target.arch.is32bit()) {
+    public int numPhysicalRegs(CiKind kind) {
+        if (kind == CiKind.Double && compilation.target.arch.is32bit()) {
             return 2;
         } else {
             return 1;
@@ -2839,7 +2839,7 @@ public class LinearScan {
     }
 
     // TODO: Platform specific!!
-    public boolean requiresAdjacentRegs(CiKind type) {
+    public boolean requiresAdjacentRegs(CiKind kind) {
         return Util.nonFatalUnimplemented(false);
     }
 

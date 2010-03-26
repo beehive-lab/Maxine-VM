@@ -47,8 +47,6 @@ public class X86CodeGen extends CodeGen {
 
     // Checkstyle: stop
     
-    private static boolean GenBoundsCheck = false;
-
     final AMD64MacroAssembler asm;
     final boolean is64bit;
     int fakeRegisterNum = -1;
@@ -96,11 +94,7 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     Location genArrayLength(Location object) {
-        CiRegister objReg = allocSrc(object, CiKind.Object);
-        CiRegister lenReg = allocDst(CiKind.Int);
-        recordImplicitExceptionPoint(NullPointerException.class);
-        asm.movl(lenReg, new Address(objReg, runtime.arrayLengthOffsetInBytes()));
-        return location(lenReg);
+        return unimplemented(CiKind.Int);
     }
 
     @Override
@@ -359,37 +353,12 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     Location genArrayLoad(CiKind kind, Location array, Location index) {
-        int arrayElemSize = target.sizeInBytes(kind);
-        int arrayBaseOffset = runtime.firstArrayElementOffset(kind);
-        CiRegister objReg = allocSrc(array, CiKind.Object);
-        CiRegister indReg = allocSrc(index, CiKind.Int);
-        genBoundsCheck(objReg, indReg);
-        CiRegister dst = allocDst(kind);
-        Address elemAddress = new Address(objReg, indReg, Address.ScaleFactor.fromInt(arrayElemSize), arrayBaseOffset);
-        emitLoad(kind, dst, elemAddress);
-        return location(dst);
+        throw Util.unimplemented();
     }
 
     @Override
     void genArrayStore(CiKind kind, Location array, Location index, Location value) {
-        int arrayElemSize = target.sizeInBytes(kind);
-        int arrayBaseOffset = runtime.firstArrayElementOffset(kind);
-        CiRegister objReg = allocSrc(array, CiKind.Object);
-        CiRegister indReg = allocSrc(index, CiKind.Int);
-        CiRegister valReg = allocSrc(value, kind);
-        genBoundsCheck(objReg, indReg);
-        Address elemAddress = new Address(objReg, indReg, Address.ScaleFactor.fromInt(arrayElemSize), arrayBaseOffset);
-        emitStore(kind, elemAddress, valReg);
-    }
-
-    private void genBoundsCheck(CiRegister objReg, CiRegister indReg) {
-        if (GenBoundsCheck) {
-            // TODO: finish bounds check
-            CiRegister lenReg = allocTmp(CiKind.Int);
-            recordImplicitExceptionPoint(NullPointerException.class);
-            asm.movl(lenReg, new Address(objReg, runtime.arrayLengthOffsetInBytes()));
-            asm.cmpl(indReg, lenReg);
-        }
+        throw Util.unimplemented();
     }
 
     @Override
@@ -666,7 +635,7 @@ public class X86CodeGen extends CodeGen {
         return location(dst);
     }
 
-    private void emitLoad(CiKind kind, CiRegister dst, Address elemAddress) {
+    void emitLoad(CiKind kind, CiRegister dst, Address elemAddress) {
         switch (kind) {
             case Byte:
             case Boolean:
@@ -707,7 +676,7 @@ public class X86CodeGen extends CodeGen {
         }
     }
 
-    private void emitStore(CiKind kind, Address elemAddress, CiRegister valReg) {
+    void emitStore(CiKind kind, Address elemAddress, CiRegister valReg) {
         switch (kind) {
             case Byte:
             case Boolean:

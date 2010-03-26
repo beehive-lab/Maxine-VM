@@ -21,6 +21,7 @@
 package com.sun.max.program;
 
 import java.io.*;
+import java.util.*;
 import java.util.zip.*;
 
 import com.sun.max.lang.*;
@@ -31,6 +32,25 @@ import com.sun.max.lang.*;
  * @author Doug Simon
  */
 public class ClassSearch extends ClasspathTraversal {
+
+    private final HashSet<String> classes;
+
+    public ClassSearch() {
+        this(false);
+    }
+
+    /**
+     * Creates a class search object.
+     *
+     * @param omitDuplicates if true, then each argument passed to {@link #visitClass(String)} is guaranteed to be unique.
+     */
+    public ClassSearch(boolean omitDuplicates) {
+        if (omitDuplicates) {
+            classes = new HashSet<String>();
+        } else {
+            classes = null;
+        }
+    }
 
     /**
      * Handles a class file encountered during the traversal.
@@ -44,15 +64,21 @@ public class ClassSearch extends ClasspathTraversal {
     }
 
     /**
-     * Handles a class file encountered during the traversal. This method may be called more than once for the same class as
-     * class files are not guaranteed to be unique in a classpath.
+     * Handles a class file encountered during the traversal. Unless this object was initialized to omit duplicates,
+     * this method may be called more than once for the same class as class files are not guaranteed to be unique in a
+     * classpath.
      *
      * @param isArchiveEntry true if the class is in a .zip or .jar file, false if it is a file in a directory
-     * @param className
-     *                the name of the class denoted by the class file
+     * @param className the name of the class denoted by the class file
      * @return true if the traversal should continue, false if it should terminate
      */
     protected boolean visitClass(boolean isArchiveEntry, String className) {
+        if (classes != null) {
+            if (classes.contains(className)) {
+                return true;
+            }
+            classes.add(className);
+        }
         return visitClass(className);
     }
 

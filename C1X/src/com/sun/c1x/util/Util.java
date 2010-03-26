@@ -575,7 +575,7 @@ public class Util {
             }
         }
 
-        if (length % bytesPerLine != bytesPerLine - 1) {
+        if (length % bytesPerLine != bytesPerLine) {
             TTY.println();
         }
     }

@@ -104,8 +104,9 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     public GlobalStub emit(CiRuntimeCall runtimeCall, RiRuntime runtime) {
         reset(runtimeCall.resultKind, runtimeCall.arguments);
         emitStandardForward(null, runtimeCall);
-        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, registerRestoreEpilogueOffset);
-        Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + runtimeCall);
+        String name = "stub-" + runtimeCall;
+        CiTargetMethod targetMethod = asm.finishTargetMethod(name, runtime, registerRestoreEpilogueOffset);
+        Object stubObject = runtime.registerTargetMethod(targetMethod, name);
         return new GlobalStub(null, runtimeCall.resultKind, stubObject, argsSize, argOffsets, resultOffset);
     }
 
@@ -133,8 +134,9 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
                 break;
         }
 
-        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, registerRestoreEpilogueOffset);
-        Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + stub);
+        String name = "stub-" + stub;
+        CiTargetMethod targetMethod = asm.finishTargetMethod(name, runtime, registerRestoreEpilogueOffset);
+        Object stubObject = runtime.registerTargetMethod(targetMethod, name);
         return new GlobalStub(stub, stub.resultKind, stubObject, argsSize, argOffsets, resultOffset);
     }
 
@@ -239,7 +241,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
         assembler.emitXirInstructions(null, template.fastPath, labels, operands);
         epilogue();
-        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(template.name, runtime, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, template.name);
         return new GlobalStub(null, template.resultOperand.kind, stubObject, argsSize, argOffsets, resultOffset);
     }

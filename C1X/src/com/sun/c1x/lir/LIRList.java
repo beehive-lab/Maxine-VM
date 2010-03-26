@@ -61,7 +61,7 @@ public class LIRList {
 
         if (C1XOptions.PrintIRWithLIR) {
             generator.maybePrintCurrentInstruction();
-            op.printOn(TTY.out);
+            op.printOn(TTY.out());
             TTY.println();
         }
 
@@ -79,16 +79,6 @@ public class LIRList {
 
     public LIRInstruction at(int i) {
         return operations.get(i);
-    }
-
-    public void callInterface(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, GlobalStub globalStub) {
-        LIRCall op = new LIRCall(LIROpcode.InterfaceCall, method, result, arguments, info, false);
-        op.globalStub = globalStub;
-        append(op);
-    }
-
-    public void callVirtual(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRCall(LIROpcode.VirtualCall, method, result, arguments, info, false));
     }
 
     public void callDirect(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
@@ -165,8 +155,8 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.kind, null));
     }
 
-    public void volatileMove(LIROperand src, LIROperand dst, CiKind type, LIRDebugInfo info) {
-        append(new LIROp1(LIROp1.LIRMoveKind.Volatile, src, dst, type, info));
+    public void volatileMove(LIROperand src, LIROperand dst, CiKind kind, LIRDebugInfo info) {
+        append(new LIROp1(LIROp1.LIRMoveKind.Volatile, src, dst, kind, info));
     }
 
     public void oop2reg(Object o, LIROperand reg) {
@@ -303,19 +293,19 @@ public class LIRList {
         append(new LIRBranch(cond, lbl));
     }
 
-    public void branch(Condition cond, CiKind type, BlockBegin block) {
-        assert type != CiKind.Float && type != CiKind.Double : "no fp comparisons";
-        append(new LIRBranch(cond, type, block));
+    public void branch(Condition cond, CiKind kind, BlockBegin block) {
+        assert kind != CiKind.Float && kind != CiKind.Double : "no fp comparisons";
+        append(new LIRBranch(cond, kind, block));
     }
 
-    public void branch(Condition cond, CiKind type, LocalStub stub) {
-        assert type != CiKind.Float && type != CiKind.Double : "no fp comparisons";
-        append(new LIRBranch(cond, type, stub));
+    public void branch(Condition cond, CiKind kind, LocalStub stub) {
+        assert kind != CiKind.Float && kind != CiKind.Double : "no fp comparisons";
+        append(new LIRBranch(cond, kind, stub));
     }
 
-    public void branch(Condition cond, CiKind type, BlockBegin block, BlockBegin unordered) {
-        assert type == CiKind.Float || type == CiKind.Double : "fp comparisons only";
-        append(new LIRBranch(cond, type, block, unordered));
+    public void branch(Condition cond, CiKind kind, BlockBegin block, BlockBegin unordered) {
+        assert kind == CiKind.Float || kind == CiKind.Double : "fp comparisons only";
+        append(new LIRBranch(cond, kind, block, unordered));
     }
 
     public void shiftLeft(LIROperand value, int count, LIROperand dst) {
@@ -474,7 +464,7 @@ public class LIRList {
             }
         }
 
-        TTY.cr();
+        TTY.println();
     }
 
     public static void printLIR(List<BlockBegin> blocks) {
@@ -484,17 +474,17 @@ public class LIRList {
             BlockBegin bb = blocks.get(i);
             printBlock(bb);
             TTY.print("IdInstruction_");
-            TTY.cr();
+            TTY.println();
             bb.lir().printInstructions();
         }
     }
 
     private void printInstructions() {
         for (int i = 0; i < operations.size(); i++) {
-            operations.get(i).printOn(TTY.out);
+            operations.get(i).printOn(TTY.out());
             TTY.println();
         }
-        TTY.cr();
+        TTY.println();
     }
 
     public void append(LIRInsertionBuffer buffer) {

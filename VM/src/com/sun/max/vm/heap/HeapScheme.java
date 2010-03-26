@@ -261,7 +261,7 @@ public interface HeapScheme extends VMScheme {
 
     /**
      * Returns the garbage collection management bean for this heap scheme.
-     * @return the @see GarbageCollectorMXBean instance
+     * @return the {@link GarbageCollectorMXBean} instance
      */
     GarbageCollectorMXBean getGarbageCollectorMXBean();
 

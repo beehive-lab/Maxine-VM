@@ -82,6 +82,7 @@ public class Address {
         this.scale = scale;
         this.disp = displacement;
         assert base != null && index != null && scale != null;
+        assert index.isValid() == (scale != ScaleFactor.noScale);
     }
 
     public Address(CiRegister reg) {
@@ -90,5 +91,24 @@ public class Address {
 
     public boolean uses(CiRegister r) {
         return base == r || index == r;
+    }
+
+    @Override
+    public String toString() {
+        if (this == InternalRelocation) {
+            return "[<internal reloc>]";
+        }
+        String base = this.base.isValid() ? this.base.toString() : "";
+        if (index.isValid()) {
+            if (disp == 0) {
+                return String.format("[%s + %s*%d]", base, index, scale.value);
+            }
+            return String.format("[%s + %s*%d + %d]", base, index, scale.value, disp);
+        } else {
+            if (disp == 0) {
+                return String.format("[%s]", base);
+            }
+            return String.format("[%s + %d]", base, disp);
+        }
     }
 }

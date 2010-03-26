@@ -202,7 +202,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             }
         }
 
-        invokeVirtualTemplates = buildResolvedInvokeVirtual();
+        invokeVirtualTemplates = buildInvokeVirtual();
         invokeInterfaceTemplates = buildInvokeInterface();
         invokeSpecialTemplates = buildInvokeSpecial();
         invokeStaticTemplates = buildInvokeStatic();
@@ -682,7 +682,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
-    private XirPair buildResolvedInvokeVirtual() {
+    private XirPair buildInvokeVirtual() {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
@@ -1208,7 +1208,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
 
         public static Object resolveStaticTuple(ResolutionGuard guard) {
-            ClassActor classActor = ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard).holder();
+            ClassActor classActor = ResolveClass.resolveClass(guard);
             classActor.makeInitialized();
             return classActor.staticTuple();
         }

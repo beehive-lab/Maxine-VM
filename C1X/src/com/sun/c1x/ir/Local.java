@@ -34,8 +34,8 @@ public final class Local extends Value {
     private final int javaIndex;
     private RiType declaredType;
 
-    public Local(CiKind type, int javaIndex) {
-        super(type);
+    public Local(CiKind kind, int javaIndex) {
+        super(kind);
         this.javaIndex = javaIndex;
     }
 
