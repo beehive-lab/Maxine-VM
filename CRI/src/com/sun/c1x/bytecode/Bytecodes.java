@@ -28,8 +28,6 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.regex.*;
 
-import com.sun.c1x.util.*;
-
 /**
  * The {@code Bytecodes} class defines constants associated with bytecodes,
  * in particular the opcode numbers for each bytecode.
