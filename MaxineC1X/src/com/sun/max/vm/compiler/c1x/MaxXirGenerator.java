@@ -487,8 +487,10 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     private ResolutionGuard makeResolutionGuard(MaxRiConstantPool pool, int cpi, ResolutionSnippet snippet) {
-        assert cpi > 0;
-        return pool.constantPool.makeResolutionGuard(cpi, snippet);
+        if (cpi > 0) {
+            return pool.constantPool.makeResolutionGuard(cpi, snippet);
+        }
+        return new ResolutionGuard(pool.constantPool, cpi);
     }
 
     private XirTemplate buildResolveClass(Representation representation) {
