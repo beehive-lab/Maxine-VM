@@ -1794,11 +1794,21 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     break;
                 }
 
-                case Bind:
+                case Bind: {
                     XirLabel l = (XirLabel) inst.extra;
                     Label label = labels[l.index];
                     asm.bind(label);
                     break;
+                }
+                case NullCheck: {
+                    asm.recordImplicitException(codePos(), info);
+                    LIROperand pointer = operands[inst.x().index];
+                    asm.nullCheck(pointer.asRegister());
+                    break;
+                }
+
+                default:
+                    throw Util.unimplemented("XIR operation " + inst.op);
             }
         }
     }

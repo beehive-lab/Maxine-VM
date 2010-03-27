@@ -23,6 +23,7 @@ package com.sun.c1x.target.amd64;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.xir.*;
 
 /**
@@ -108,6 +109,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     }
                     break;
 
+                case NullCheck:
                 case PointerLoad:
                 case PointerStore:
                 case PointerLoadDisp:
@@ -149,6 +151,8 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     XirLabel label = (XirLabel) i.extra;
                     currentList = label.inline ? fastPath : slowPath;
                     break;
+                default:
+                    throw Util.unimplemented("XIR operation " + i.op);
             }
             if (!appended) {
                 currentList.add(i);

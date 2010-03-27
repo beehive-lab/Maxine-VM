@@ -73,9 +73,18 @@ public class MaxXirGenerator extends RiXirGenerator {
         final XirTemplate resolved;
         final XirTemplate unresolved;
 
-        XirPair(XirTemplate r, XirTemplate u) {
-            resolved = r;
-            unresolved = u;
+        XirPair(XirTemplate resolved, XirTemplate unresolved) {
+            this.resolved = resolved;
+            this.unresolved = unresolved;
+        }
+    }
+
+    static class InvokeSpecialTemplates extends XirPair {
+        final XirTemplate resolvedNullCheckEliminated;
+
+        public InvokeSpecialTemplates(XirTemplate resolved, XirTemplate unresolved, XirTemplate resolvedNullCheckEliminated) {
+            super(resolved, unresolved);
+            this.resolvedNullCheckEliminated = resolvedNullCheckEliminated;
         }
     }
 
@@ -109,7 +118,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     private XirPair invokeVirtualTemplates;
     private XirPair invokeInterfaceTemplates;
-    private XirPair invokeSpecialTemplates;
+    private InvokeSpecialTemplates invokeSpecialTemplates;
     private XirPair invokeStaticTemplates;
     private XirPair[] newArrayTemplates;
     private XirTemplate[] arrayLoadTemplates;
@@ -278,12 +287,25 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     @Override
     public XirSnippet genInvokeSpecial(XirSite site, XirArgument receiver, RiMethod method) {
-        return genInvokeDirect(method, invokeSpecialTemplates, ResolveVirtualMethod.SNIPPET);
+        if (method.isLoaded()) {
+            if (site.requiresNullCheck()) {
+                return new XirSnippet(invokeSpecialTemplates.resolved, XirArgument.forWord(0), receiver);
+            }
+            return new XirSnippet(invokeSpecialTemplates.resolvedNullCheckEliminated, XirArgument.forWord(0));
+        }
+
+        XirArgument guard = XirArgument.forObject(guardFor(method, ResolveVirtualMethod.SNIPPET));
+        return new XirSnippet(invokeSpecialTemplates.unresolved, guard);
     }
 
     @Override
     public XirSnippet genInvokeStatic(XirSite site, RiMethod method) {
-        return genInvokeDirect(method, invokeStaticTemplates, ResolveStaticMethod.SNIPPET);
+        if (method.isLoaded()) {
+            return new XirSnippet(invokeStaticTemplates.resolved, XirArgument.forWord(0));
+        }
+
+        XirArgument guard = XirArgument.forObject(guardFor(method, ResolveStaticMethod.SNIPPET));
+        return new XirSnippet(invokeStaticTemplates.unresolved, guard);
     }
 
     @Override
@@ -453,15 +475,6 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirSnippet(arraylengthTemplate, array);
     }
 
-    private XirSnippet genInvokeDirect(RiMethod method, XirPair pair, ResolutionSnippet snippet) {
-        if (method.isLoaded()) {
-            return new XirSnippet(pair.resolved, XirArgument.forWord(0));
-        }
-
-        XirArgument guard = XirArgument.forObject(guardFor(method, snippet));
-        return new XirSnippet(pair.unresolved, guard);
-    }
-
     private ResolutionGuard guardFor(RiField field, ResolutionSnippet snippet) {
         MaxRiField f = (MaxRiField) field;
         return makeResolutionGuard(f.constantPool, f.cpi, snippet);
@@ -613,15 +626,23 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
-    private XirPair buildInvokeSpecial() {
+    private InvokeSpecialTemplates buildInvokeSpecial() {
         XirTemplate resolved;
+        XirTemplate resolvedNullCheckEliminated;
         XirTemplate unresolved;
         {
             // resolved case
-            // TODO: load the hub to provoke an NPE
             asm.restart();
             XirParameter addr = asm.createConstantInputParameter("addr", CiKind.Word); // address to call
+            XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object); // receiver object
+            asm.nullCheck(receiver);
             resolved = finishTemplate(asm, addr, "invokespecial");
+        }
+        {
+            // resolved case, null pointer check eliminated
+            asm.restart();
+            XirParameter addr = asm.createConstantInputParameter("addr", CiKind.Word); // address to call
+            resolvedNullCheckEliminated = finishTemplate(asm, addr, "invokespecial-nce");
         }
         {
             // unresolved invokespecial template
@@ -631,7 +652,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             resolve(asm, "resolveSpecialMethod", addr, guard);
             unresolved = finishTemplate(asm, addr, "invokespecial-unresolved");
         }
-        return new XirPair(resolved, unresolved);
+        return new InvokeSpecialTemplates(resolved, unresolved, resolvedNullCheckEliminated);
     }
 
     private XirPair buildInvokeInterface() {
@@ -1147,23 +1168,23 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     private void callRuntime(CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {
         // TODO: make direct runtime calls work in XIR!
-        RiMethod rtmethod = runtimeMethods.get(method);
-        if (rtmethod == null) {
+        RiMethod rtMethod = runtimeMethods.get(method);
+        if (rtMethod == null) {
             // search for the runtime call and create the stub
             for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
                 int flags = m.getModifiers();
                 if (Modifier.isStatic(flags) && Modifier.isPublic(flags) && m.getName().equals(method)) {
                     // runtime call found. create a global stub that calls the runtime method
                     MethodActor methodActor = MethodActor.fromJava(m);
-                    rtmethod = runtime.getRiMethod((ClassMethodActor) methodActor);
-                    runtimeMethods.put(method, rtmethod);
+                    rtMethod = runtime.getRiMethod((ClassMethodActor) methodActor);
+                    runtimeMethods.put(method, rtMethod);
                 }
             }
         }
-        if (rtmethod == null) {
+        if (rtMethod == null) {
             throw ProgramError.unexpected("could not find runtime call: " + method);
         }
-        asm.callRuntime(rtmethod, result, args);
+        asm.callRuntime(rtMethod, result, args);
     }
 
     public static class RuntimeCalls {
