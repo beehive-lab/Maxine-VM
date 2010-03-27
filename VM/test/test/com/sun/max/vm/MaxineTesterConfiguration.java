@@ -51,6 +51,7 @@ public class MaxineTesterConfiguration {
     static final Expectation RAND_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
 
     static final Expectation PASS_SOLARIS_AMD64 = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.AMD64, ExpectedResult.PASS);
+    static final Expectation PASS_DARWIN_AMD64 = new Expectation(OperatingSystem.DARWIN, ProcessorModel.AMD64, ExpectedResult.PASS);
 
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapoTests = new LinkedList<String>();
@@ -191,7 +192,7 @@ public class MaxineTesterConfiguration {
         imageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
         imageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
         imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("cpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x");
+        imageConfig("cpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
 
         String c1xPackage = "com.sun.max.vm.compiler.c1x";
         String c1xClass = c1xPackage + ".C1XCompilerScheme";
@@ -268,17 +269,28 @@ public class MaxineTesterConfiguration {
         addExpectedResults(name, results);
     }
 
-    private static void imageConfig(String name, String... params) {
+    private static void imageConfig(String name, Object... spec) {
+        String[] params = {};
+        Expectation[] results = {};
+        for (Object o : spec) {
+            if (o instanceof String) {
+                params = Arrays.copyOf(params, params.length + 1);
+                params[params.length - 1] = (String) o;
+            } else {
+                assert o instanceof Expectation;
+                results = Arrays.copyOf(results, results.length + 1);
+                results[results.length - 1] = (Expectation) o;
+            }
+        }
+
         imageParams.put(name, params);
+        if (results.length != 0) {
+            configResultMap.put(name, results);
+        }
     }
 
     private static void jtLoadConfig(String name, String... params) {
         jtLoadParams.put(name, params);
-    }
-
-    private static void imageConfig(String name, Expectation result, String... params) {
-        configResultMap.put(name, new Expectation[]{result});
-        imageParams.put(name, params);
     }
 
     private static void maxvmConfig(String name, String... params) {
