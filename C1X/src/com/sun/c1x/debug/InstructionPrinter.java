@@ -187,6 +187,10 @@ public class InstructionPrinter extends ValueVisitor {
              print(instruction).
              fillTo(INSTRUCTION.position + indentation, ' ');
         printInstruction(instruction);
+        String flags = instruction.flagsToString();
+        if (!flags.isEmpty()) {
+            out.print("  [flags: " + flags + "]");
+        }
         out.println();
     }
 

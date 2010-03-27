@@ -332,19 +332,21 @@ public abstract class Value {
             builder.append(" @ ");
             builder.append(((Instruction) this).bci());
         }
-        builder.append(" [");
-        boolean hasFlag = false;
+        builder.append(" [").append(flagsToString()).append("]");
+        return builder.toString();
+    }
+
+    public String flagsToString() {
+        StringBuilder sb = new StringBuilder();
         for (Flag f : Flag.values()) {
             if (checkFlag(f)) {
-                if (hasFlag) {
-                    builder.append(' ');
+                if (sb.length() != 0) {
+                    sb.append(' ');
                 }
-                builder.append(f.name());
-                hasFlag = true;
+                sb.append(f.name());
             }
         }
-        builder.append("]");
-        return builder.toString();
+        return sb.toString();
     }
 
     public final boolean isDeadPhi() {
