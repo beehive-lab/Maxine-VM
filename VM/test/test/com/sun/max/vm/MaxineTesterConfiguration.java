@@ -104,6 +104,7 @@ public class MaxineTesterConfiguration {
         jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
         jtt(jtt.except.BC_invokespecial01.class, RAND_ALL);      // may fail due to incorrect invokevirtual / invokespecial optimization
         jtt(jtt.except.BC_invokevirtual02.class, RAND_ALL);      // may fail due to incorrect invokevirtual / invokespecial optimization
+        jtt(jtt.optimize.NCE_FlowSensitive02.class, RAND_ALL);   // Fails on all but C1X due to missing explicit null pointer checks
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                      RAND_ALL);
         jtt(jtt.jdk.EnumMap02.class,                      RAND_ALL);
