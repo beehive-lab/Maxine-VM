@@ -26,6 +26,7 @@ import static com.sun.c1x.bytecode.Bytecodes.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.bytecode.BytecodeIntrinsifier.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
@@ -195,6 +196,10 @@ public class Intrinsics extends IntrinsifierClient {
                     int operand = (intrinsic >> 8) & 0xffff;
                     bi.intrinsify(opcode, operand);
                 } else {
+                    if (!unsafe) {
+                        // The semantics of @INLINE and @FOLD are only implemented by the opto compiler.
+                        unsafe = (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
+                    }
                     if (holderIsWord && !isStatic) {
                         // Cannot dispatch dynamically on Word types
                         bi.intrinsify(INVOKESPECIAL, cpi);
