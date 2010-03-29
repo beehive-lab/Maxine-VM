@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,24 +18,37 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.bytecode;
+package com.sun.c1x.bytecode;
 
 /**
- * Tests that class initialization is triggered by 'getstatic'.
+ * This class implements a number of utilities for dealing with bytes,
+ * particularly in byte arrays.
  *
- * @Harness: java
- * @Runs: 0 = 42
+ * @author Ben L. Titzer
  */
-public class BC_getstatic_clinit {
-    static int f;
-    public static int test(int a) {
-        return Nested.g + f;
+public class Bytes {
+    public static int beS1(byte[] data, int bci) {
+        // big-endian signed 1-byte quantity
+        return data[bci];
     }
 
-    static class Nested {
-        static int g;
-        static {
-            f = 42;
-        }
+    public static int beS2(byte[] data, int bci) {
+        // big-endian signed 2-byte quantity
+        return (data[bci] << 8) | (data[bci + 1] & 0xff);
+    }
+
+    public static int beU1(byte[] data, int bci) {
+        // big-endian unsigned 1-byte quantity
+        return data[bci] & 0xff;
+    }
+
+    public static int beU2(byte[] data, int bci) {
+        // big-endian unsigned 2-byte quantity
+        return ((data[bci] & 0xff) << 8) | (data[bci + 1] & 0xff);
+    }
+
+    public static int beS4(byte[] data, int bci) {
+        // big-endian signed 4-byte quantity
+        return (data[bci] << 24) | ((data[bci + 1] & 0xff) << 16) | ((data[bci + 2] & 0xff) << 8) | (data[bci + 3] & 0xff);
     }
 }

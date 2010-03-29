@@ -361,6 +361,28 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         agentMethod.invoke(null, agentInvokeArgs);
     }
 
+    /**
+     * The method used to extend the class path of the app class loader with entries specified by an agent.
+     * Reflection is used for this as the method used to make the addition depends on the JDK
+     * version in use.
+     */
+    private static final Method addURLToAppClassLoader;
+    static {
+        Method method;
+        try {
+            method = Launcher.class.getDeclaredMethod("addURL", URL.class);
+        } catch (NoSuchMethodException e) {
+            try {
+                method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+            } catch (NoSuchMethodException e2) {
+                throw FatalError.unexpected("Cannot find method to extend class path of app class loader");
+            }
+        }
+        method.setAccessible(true);
+        addURLToAppClassLoader = method;
+    }
+
+
     private void loadAgents() throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         for (int i = 0; i < javaagentOption.count(); i++) {
             final String javaagentOptionString = javaagentOption.getValue(i);
@@ -384,7 +406,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                         Log.println("could not find premain class in jarfile: " + jarPath);
                     }
                     final URL url = new URL("file://" + jarPath);
-                    Launcher.addURLToAppClassLoader(url);
+                    addURLToAppClassLoader.invoke(Launcher.getLauncher().getClassLoader(), url);
                     invokeAgentMethod(url, preMainClassName, "premain", agentArgs);
                 } finally {
                     if (jarFile != null) {
@@ -396,5 +418,4 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             }
         }
     }
-
 }

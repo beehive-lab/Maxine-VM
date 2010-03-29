@@ -858,7 +858,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             x.setOperand(allocatedResultOperand);
         }
 
-        if (!isConstant(operands[resultOperand.index])) {
+        if (!isConstant(operands[resultOperand.index]) || snippet.template.fastPath.length != 0) {
             // XIR instruction is only needed when the operand is not a constant!
             lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
                     operandArray, operandIndicesArray,

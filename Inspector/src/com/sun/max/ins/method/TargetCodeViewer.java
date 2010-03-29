@@ -23,7 +23,6 @@ package com.sun.max.ins.method;
 import java.util.*;
 
 import com.sun.c1x.bytecode.*;
-import com.sun.c1x.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;

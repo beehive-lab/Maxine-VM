@@ -1085,6 +1085,9 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         assert lreg == AMD64.rax : "left register must be rax";
         assert rreg != AMD64.rdx : "right register must not be rdx";
 
+        // Must zero the high 64-bit word (in RDX) of the dividend
+        masm.xorq(AMD64.rdx, AMD64.rdx);
+
         if (code == LIROpcode.Wdivi || code == LIROpcode.Wremi) {
             // Zero the high 32 bits of the divisor
             masm.movzxd(rreg, rreg);
@@ -1791,11 +1794,21 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     break;
                 }
 
-                case Bind:
+                case Bind: {
                     XirLabel l = (XirLabel) inst.extra;
                     Label label = labels[l.index];
                     asm.bind(label);
                     break;
+                }
+                case NullCheck: {
+                    asm.recordImplicitException(codePos(), info);
+                    LIROperand pointer = operands[inst.x().index];
+                    asm.nullCheck(pointer.asRegister());
+                    break;
+                }
+
+                default:
+                    throw Util.unimplemented("XIR operation " + inst.op);
             }
         }
     }

@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.bytecode;
 
-import com.sun.c1x.util.*;
-
 /**
  * The {@code BytecodeSwitch} class definition.
  *
