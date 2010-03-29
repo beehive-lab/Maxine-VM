@@ -28,7 +28,7 @@ package com.sun.c1x.util;
  */
 public class Bytes {
     public static int beS1(byte[] data, int bci) {
-        // big-endian unsigned 1-byte quantity
+        // big-endian signed 1-byte quantity
         return data[bci];
     }
 
