@@ -1041,11 +1041,6 @@ public final class GraphBuilder {
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
-            // if this is the first return, store some of the state for a later return
-            if (scopeData.numberOfReturns() == 0) {
-                scopeData.setInlineCleanupInfo(curBlock, lastInstr, curState);
-            }
-
             // State at end of inlined method is the state of the caller
             // without the method parameters on stack, including the
             // return value, if any, of the inlined method on operand stack.
@@ -1056,10 +1051,8 @@ public final class GraphBuilder {
                 curState.push(x.kind, x);
             }
 
-            // The current bci() is in the wrong scope, so use the bci() of
-            // the continuation point.
+            // The current bci is in the wrong scope, so use the bci of the continuation point.
             appendWithoutOptimization(gotoCallee, scopeData.continuation().bci());
-            scopeData.incrementNumberOfReturns();
             return;
         }
 
@@ -1192,7 +1185,6 @@ public final class GraphBuilder {
     private Value appendWithBCI(Instruction x, int bci, boolean canonicalize) {
         if (canonicalize) {
             // attempt simple constant folding and strength reduction
-            // Canonicalizer canon = new Canonicalizer(x, bci);
             Value r = canonicalizer.canonicalize(x);
             List<Instruction> extra = canonicalizer.extra();
             if (extra != null) {
@@ -1312,7 +1304,6 @@ public final class GraphBuilder {
     void pushScope(RiMethod target, BlockBegin continuation) {
         IRScope calleeScope = new IRScope(compilation, scope(), bci(), target, -1);
         BlockMap blockMap = compilation.getBlockMap(calleeScope.method, -1);
-
         calleeScope.setCallerState(curState);
         calleeScope.setStoresInLoops(blockMap.getStoresInLoops());
         curState = curState.pushScope(calleeScope);
@@ -1474,7 +1465,7 @@ public final class GraphBuilder {
         if (!target.hasBalancedMonitors()) {
             return cannotInline(target, "has unbalanced monitors");
         }
-        if ("<init>".equals(target.name()) && target.holder().isSubtypeOf(compilation.throwableType())) {
+        if (target.isConstructor() && target.holder().isSubtypeOf(compilation.throwableType())) {
             // don't inline constructors of throwable classes unless the inlining tree is
             // rooted in a throwable class
             if (!rootScope().method.holder().isSubtypeOf(compilation.throwableType())) {
@@ -1490,9 +1481,8 @@ public final class GraphBuilder {
     }
 
     void inline(RiMethod target, Value[] args, RiType knownHolder, FrameState stateBefore) {
-        BlockBegin orig = curBlock;
         if (!target.isStatic()) {
-            // the receiver object must be nullchecked for instance methods
+            // the receiver object must be null-checked for instance methods
             Value receiver = args[0];
             if (!receiver.isNonNull() && !receiver.kind.isWord()) {
                 NullCheck check = new NullCheck(receiver, stateBefore);
@@ -1501,10 +1491,8 @@ public final class GraphBuilder {
             }
         }
 
-        // Introduce a new callee continuation point. If the target has
-        // more than one return instruction or the return does not allow
-        // fall-through of control flow, all return instructions will be
-        // transformed to Goto's to the continuation
+        // Introduce a new callee continuation point. All return instructions
+        // in the callee will be transformed to Goto's to the continuation
         BlockBegin continuationBlock = blockAt(nextBCI());
         boolean continuationExisted = true;
         if (continuationBlock == null) {
@@ -1569,24 +1557,11 @@ public final class GraphBuilder {
 
         assert continuationExisted || !continuationBlock.wasVisited() : "continuation should not have been parsed if we created it";
 
-        // At this point we are almost ready to return and resume parsing of
-        // the caller back in the GraphBuilder. The only thing we want to do
-        // first is an optimization: during parsing of the callee we
-        // generated at least one Goto to the continuation block. If we
-        // generated exactly one, and if the inlined method spanned exactly
-        // one block (and we didn't have to Goto its entry), then we snip
-        // off the Goto to the continuation, allowing control to fall
-        // through back into the caller block and effectively performing
-        // block merging. This allows load elimination and CSE to take place
-        // across multiple callee scopes if they are relatively simple, and
-        // is currently essential to making inlining profitable.
-        if (scopeData.numberOfReturns() == 1 && curBlock == orig && curBlock == scopeData.inlineCleanupBlock()) {
-            lastInstr = scopeData.inlineCleanupReturnPrev();
-            curState = scopeData.inlineCleanupState().popScope();
-        } else if (continuationPredecessors == continuationBlock.predecessors().size()) {
+        if (continuationPredecessors == continuationBlock.predecessors().size()) {
             // Inlining caused that the instructions after the invoke in the
-            // caller are not reachable any more. So skip filling this block
-            // with instructions!
+            // caller are not reachable any more (i.e. not one control flow path
+            // in the callee was terminated by a return instruction).
+            // So skip filling this block with instructions!
             assert continuationBlock == scopeData.continuation();
             assert lastInstr instanceof BlockEnd;
             skipBlock = true;
@@ -1768,7 +1743,6 @@ public final class GraphBuilder {
     }
 
     BlockEnd iterateBytecodesForBlock(int bci) {
-
         // Temporary variable for constant pool index
         char cpi;
 
@@ -2170,7 +2144,7 @@ public final class GraphBuilder {
         wpush(append(new StackAllocate(size)));
     }
 
-    private void appendSnippetCall(RiSnippetCall snippetCall, FrameState stateBefore, char cpi) {
+    private void appendSnippetCall(RiSnippetCall snippetCall, FrameState stateBefore) {
         Value[] args = new Value[snippetCall.arguments.length];
         RiMethod snippet = snippetCall.snippet;
         RiSignature signature = snippet.signatureType();
@@ -2186,12 +2160,12 @@ public final class GraphBuilder {
 
         if (!tryRemoveCall(snippet, args, true)) {
             if (!tryInline(snippet, args, null, stateBefore)) {
-                appendInvoke(snippetCall.opcode, snippet, args, true, cpi, constantPool(), stateBefore);
+                appendInvoke(snippetCall.opcode, snippet, args, true, (char) 0, constantPool(), stateBefore);
             }
         }
     }
 
-    private void genNativeCall(char cpi) {
+    void genNativeCall(char cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiSignature sig = constantPool().lookupSignature(cpi);
         Value[] args = curState.popArguments(sig.argumentSlots(false));
@@ -2205,14 +2179,14 @@ public final class GraphBuilder {
         if (linkSnippet.result != null) {
             nativeFunctionAddress = appendConstant(linkSnippet.result);
         } else {
-            appendSnippetCall(linkSnippet, stateBefore, cpi);
+            appendSnippetCall(linkSnippet, stateBefore);
             nativeFunctionAddress = pop(CiKind.Word);
         }
 
-        appendSnippetCall(snippets.enterNative(nativeMethod), stateBefore, cpi);
+        appendSnippetCall(snippets.enterNative(nativeMethod), stateBefore);
         CiKind returnKind = sig.returnKind();
         push(returnKind, append(new NativeCall(nativeMethod, returnKind, nativeFunctionAddress, args, stateBefore)));
-        appendSnippetCall(snippets.enterVM(nativeMethod), stateBefore, cpi);
+        appendSnippetCall(snippets.enterVM(nativeMethod), stateBefore);
     }
 
     private void genLoadPC() {

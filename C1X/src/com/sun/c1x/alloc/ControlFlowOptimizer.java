@@ -107,7 +107,11 @@ final class ControlFlowOptimizer {
     // only blocks with exactly one successor can be deleted. Such blocks
     // must always end with an unconditional branch to this successor
     private boolean canDeleteBlock(BlockBegin block) {
-        if (block.numberOfSux() != 1 || block.numberOfExceptionHandlers() != 0 || block == ir.startBlock || block.isExceptionEntry()) {
+        if (block.numberOfSux() != 1 ||
+            block.numberOfExceptionHandlers() != 0 ||
+            block == ir.startBlock ||
+            block.isExceptionEntry() ||
+            block.suxAt(0) == block) {
             return false;
         }
 

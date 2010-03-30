@@ -63,12 +63,12 @@ public class FrameState {
     }
 
     /**
-     * Copies the contents of this value stack so that further updates to either stack aren't reflected in the other.
+     * Copies the contents of this frame state so that further updates to either stack aren't reflected in the other.
      *
      * @param withLocals indicates whether to copy the local state
      * @param withStack indicates whether to copy the stack state
      * @param withLocks indicates whether to copy the lock state
-     * @return a new value stack with the specified components
+     * @return a new frame state with the specified components
      */
     public FrameState copy(boolean withLocals, boolean withStack, boolean withLocks) {
         final FrameState other = new FrameState(scope, localsSize(), maxStackSize());
@@ -135,7 +135,7 @@ public class FrameState {
     }
 
     /**
-     * Returns the inlining context associated with this value stack.
+     * Returns the inlining context associated with this frame state.
      *
      * @return the inlining context
      */
@@ -254,10 +254,10 @@ public class FrameState {
     }
 
     /**
-     * Replace the local variables in this value stack with the local variables from the specified value stack. This is
+     * Replace the local variables in this frame state with the local variables from the specified frame state. This is
      * used in inlining.
      *
-     * @param with the value stack containing the new local variables
+     * @param with the frame state containing the new local variables
      */
     public void replaceLocals(FrameState with) {
         assert with.maxLocals == maxLocals;
@@ -265,9 +265,9 @@ public class FrameState {
     }
 
     /**
-     * Replace the stack in this value stack with the stack from the specified value stack. This is used in inlining.
+     * Replace the stack in this frame state with the stack from the specified frame state. This is used in inlining.
      *
-     * @param with the value stack containing the new local variables
+     * @param with the frame state containing the new local variables
      */
     public void replaceStack(FrameState with) {
         System.arraycopy(with.values, with.maxLocals, values, maxLocals, with.stackIndex);
@@ -275,9 +275,9 @@ public class FrameState {
     }
 
     /**
-     * Replace the locks in this value stack with the locks from the specified value stack. This is used in inlining.
+     * Replace the locks in this frame state with the locks from the specified frame state. This is used in inlining.
      *
-     * @param with the value stack containing the new local variables
+     * @param with the frame state containing the new local variables
      */
     public void replaceLocks(FrameState with) {
         if (with.locks == null) {
@@ -546,9 +546,9 @@ public class FrameState {
     }
 
     /**
-     * Creates a new ValueStack corresponding to inlining the specified method into this point in this value stack.
+     * Creates a new {@code FrameState} corresponding to inlining the specified method into this point in this frame state.
      * @param scope the IRScope representing the inlined method
-     * @return a new value stack representing the state at the beginning of inlining the specified method into this one
+     * @return a new frame state representing the state at the beginning of inlining the specified method into this one
      */
     public FrameState pushScope(IRScope scope) {
         assert scope.caller == this.scope;
@@ -561,9 +561,9 @@ public class FrameState {
     }
 
     /**
-     * Creates a new ValueStack corresponding to the state upon returning from this inlined method into the outer
+     * Creates a new {@code FrameState} corresponding to the state upon returning from this inlined method into the outer
      * IRScope.
-     * @return a new value stack representing the state at exit from this value stack
+     * @return a new frame state representing the state at exit from this frame state
      */
     public FrameState popScope() {
         IRScope callingScope = scope.caller;
@@ -610,7 +610,7 @@ public class FrameState {
     }
 
     /**
-     * Iterates over all the values in this value stack, including the stack, locals, and locks.
+     * Iterates over all the values in this frame state, including the stack, locals, and locks.
      * @param closure the closure to apply to each value
      */
     public void valuesDo(ValueClosure closure) {
@@ -760,7 +760,7 @@ public class FrameState {
     }
 
     /**
-     * This is a helper method for iterating over all phis in this value stack.
+     * This is a helper method for iterating over all phis in this frame state.
      * @return an iterator over all phis
      */
     public Iterable<Phi> allPhis(BlockBegin block) {
@@ -780,7 +780,7 @@ public class FrameState {
     }
 
     /**
-     * This is a helper method for iterating over all phis in this value stack.
+     * This is a helper method for iterating over all phis in this frame state.
      * @return an iterator over all phis
      */
     public Iterable<Phi> allLivePhis(BlockBegin block) {
@@ -799,9 +799,9 @@ public class FrameState {
         return phis;
     }
     /**
-     * Checks whether this value stack has any phi statements that refer to the specified block.
+     * Checks whether this frame state has any phi statements that refer to the specified block.
      * @param block the block to check
-     * @return {@code true} if this value stack has phis for the specified block
+     * @return {@code true} if this frame state has phis for the specified block
      */
     public boolean hasPhisFor(BlockBegin block) {
         int max = valuesSize();
@@ -817,7 +817,7 @@ public class FrameState {
     }
 
     /**
-     * This is a helper method for iterating over all stack values and local variables in this value stack.
+     * This is a helper method for iterating over all stack values and local variables in this frame state.
      * @return an iterator over all state values
      */
     public Iterable<Value> allLiveStateValues() {

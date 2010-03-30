@@ -74,10 +74,6 @@ public class MaxRiField implements RiField {
         this.cpi = cpi;
     }
 
-    /**
-     * Gets the name of this field as a string.
-     * @return the name of the field
-     */
     public String name() {
         if (fieldActor != null) {
             return fieldActor.name.string;
@@ -85,10 +81,6 @@ public class MaxRiField implements RiField {
         return fieldRef.name(constantPool.constantPool).string;
     }
 
-    /**
-     * Gets the compiler interface type of this field.
-     * @return the compiler interface type
-     */
     public RiType type() {
         if (fieldActor != null) {
             return constantPool.runtime.canonicalRiType(fieldActor.type(), constantPool, -1);
@@ -97,18 +89,10 @@ public class MaxRiField implements RiField {
         return new MaxRiType(constantPool, fieldRef.type(constantPool.constantPool), -1);
     }
 
-    /**
-     * Gets the C1X kind for the this field.
-     * @return the C1X kind for this field
-     */
     public CiKind kind() {
         return kind;
     }
 
-    /**
-     * Gets the holder of this field.
-     * @return the compiler interface type that represents the holder
-     */
     public RiType holder() {
         if (fieldActor != null) {
             return constantPool.runtime.canonicalRiType(fieldActor.holder(), constantPool, -1);
@@ -117,19 +101,10 @@ public class MaxRiField implements RiField {
         return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool), holderCpi);
     }
 
-    /**
-     * Checks whether this compiler interface field is loaded (i.e. resolved).
-     * @return {@code true} if this field is loaded
-     */
     public boolean isLoaded() {
         return fieldActor != null;
     }
 
-    /**
-     * Checks whether this field is static.
-     * @return {@code true} if this field is static
-     * @throws MaxRiUnresolved if the field is unresolved
-     */
     public boolean isStatic() {
         if (fieldActor != null) {
             return fieldActor.isStatic();
@@ -137,11 +112,6 @@ public class MaxRiField implements RiField {
         throw unresolved("isStatic()");
     }
 
-    /**
-     * Checks whether this field is volatile.
-     * @return {@code true} if the field is volatile
-     * @throws MaxRiUnresolved if the field is unresolved
-     */
     public boolean isVolatile() {
         if (fieldActor != null) {
             return fieldActor.isVolatile();
@@ -149,16 +119,13 @@ public class MaxRiField implements RiField {
         throw unresolved("isVolatile()");
     }
 
-    /**
-     * Checks whether this field is a constant.
-     * @return {@code true} if the field is resolved and is a constant
-     */
     public boolean isConstant()  {
         return fieldActor != null && fieldActor.isConstant();
     }
 
     /**
      * Gets the offset from the origin of the object for this field.
+     *
      * @return the offset in bytes
      * @throws MaxRiUnresolved if the field is unresolved
      */
@@ -169,10 +136,6 @@ public class MaxRiField implements RiField {
         throw unresolved("offset()");
     }
 
-    /**
-     * Gets the constant value for this field, if it is a constant.
-     * @return the compiler interface constant for this field
-     */
     public CiConstant constantValue() {
         if (fieldActor != null && fieldActor.isConstant()) {
             if (!fieldActor.isStatic()) {
