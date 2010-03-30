@@ -51,6 +51,7 @@ callback
 callee
 callees
 cannonical
+cannonicalizer
 checkbox
 checkstyle
 classfile
@@ -72,6 +73,7 @@ deprecated
 disassembly
 editable
 emitting
+entrypoint
 enum
 epilogue
 floatable
@@ -120,6 +122,8 @@ outbound
 payload
 polymorphic
 popup
+postorder
+preorder
 preprocessed
 primordial
 println

@@ -28,7 +28,7 @@ import com.sun.c1x.value.*;
 
 /**
  * The {@code BlockEnd} instruction is a base class for all instructions that end a basic
- * block, including branches, switches, throws, and gotos.
+ * block, including branches, switches, throws, and goto's.
  *
  * @author Ben L. Titzer
  */

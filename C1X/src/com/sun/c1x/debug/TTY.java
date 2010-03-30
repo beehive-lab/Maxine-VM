@@ -123,7 +123,7 @@ public class TTY {
     }
 
     /**
-     * @see LogStream#print(int))
+     * @see LogStream#print(int)
      */
     public static void print(int i) {
         out().print(i);
