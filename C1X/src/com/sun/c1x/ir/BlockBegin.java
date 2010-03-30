@@ -30,8 +30,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The {@code BlockBegin} instruction represents the beginning of a basic block,
- * and holds a lot of information about the basic block, including the successor and
+ * Denotes the beginning of a basic block, and holds information about the basic block, including the successor and
  * predecessor blocks, exception handlers, liveness information, etc.
  *
  * @author Ben L. Titzer
@@ -60,11 +59,18 @@ public final class BlockBegin extends Instruction {
         public final int mask = 1 << ordinal();
     }
 
+    /**
+     * A unique id used in tracing.
+     */
     public final int blockID;
 
+    /** Denotes the current set of {@link BlockBegin#BlockFlag} settings. */
     private int blockFlags;
+    /** TBD. */
     private FrameState stateBefore;
+    /** A link to the last node in the block (which contains the successors). */
     private BlockEnd end;
+    /** The {@link BlockBegin} nodes for which this node is a successor. */
     private final List<BlockBegin> predecessors;
 
     private int depthFirstNumber;

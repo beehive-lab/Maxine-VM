@@ -24,8 +24,12 @@ import static com.sun.c1x.ci.CiKind.Flags.*;
 import static com.sun.c1x.ci.CiKind.Slots.*;
 
 /**
- * This enum represents the basic kinds of types in C1X, including the primitive types, objects, words,
- * {@code void}, and bytecode addresses used in JSR bytecodes.
+ * Denotes the basic kinds of types in C1X, including the all the Java primitive types,
+ * for example, {@link CiKind#Int} for {@code int} and {@link CiKind#Object}
+ * for all object types. {@link CiKind#Jsr} and {@link CiKind#Word} are special cases.
+ * A kind has a single character short name, a Java name, a JNI name,
+ * the number of (abstract) stack slots the value occupies, and a set of flags
+ * further describing its behaviour.
  *
  * @author Ben L. Titzer
  */
@@ -39,9 +43,12 @@ public enum CiKind {
     Long   ('l', "long",    "jlong",    SLOTS_2,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
     Double ('d', "double",  "jdouble",  SLOTS_2,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
     Object ('a', "object",  "jobject",  SLOTS_1,  FIELD_TYPE | RETURN_TYPE),
+    /** Denotes a machine word type used in the extended bytecodes. */
     Word   ('w', "word",    "jword",    SLOTS_1,  FIELD_TYPE | RETURN_TYPE),
     Void   ('v', "void",    "void",     SLOTS_0,  RETURN_TYPE),
+    /** Denote a bytecode address in a {@code JSR} bytecode. */
     Jsr    ('r', "jsr",     null,       SLOTS_1,  0),
+    /** The non-type. */
     Illegal(' ', "illegal", null,       -1,       0);
 
     CiKind(char ch, String name, String jniName, int jvmSlots, int flags) {
@@ -59,14 +66,21 @@ public enum CiKind {
     }
 
     static class Flags {
+    	/** Can be an object field type .*/
         public static final int FIELD_TYPE  = 0x0001;
+        /** Can be result type of a method. */
         public static final int RETURN_TYPE = 0x0002;
+        /** Behaves as an integer when on Java evaluation stack. */
         public static final int STACK_INT   = 0x0004;
+        /** Represents a Java primitive type. */
         public static final int PRIMITIVE   = 0x0008;
     }
-    
+
+    /**
+     * The flags for this kind.
+     */
     private final int flags;
-    
+
     /**
      * The name of the kind as a single character.
      */
@@ -85,7 +99,7 @@ public enum CiKind {
 
     /**
      * The size of this kind in terms of abstract JVM words. Note that this may
-     * differ with actual size of this type in it machine representation.
+     * differ from the actual size of this type in it machine representation.
      */
     public final int jvmSlots;
 
@@ -355,10 +369,10 @@ public enum CiKind {
     public String toString() {
         return javaName;
     }
-    
+
     /**
      * Gets a formatted string for a given value of this kind.
-     * 
+     *
      * @param value a value of this kind
      * @return a formatted string for {@code value} based on this kind
      */
@@ -372,7 +386,7 @@ public enum CiKind {
             } else {
                 String s = "";
                 try {
-                    // Append the result of value.toString() only if Object.toString() is overridden in the class hierarchy of value 
+                    // Append the result of value.toString() only if Object.toString() is overridden in the class hierarchy of value
                     if (!value.getClass().getMethod("toString").equals(Object.class.getDeclaredMethod("toString"))) {
                         s = String.valueOf(value);
                         if (s.length() > 50) {
@@ -383,12 +397,12 @@ public enum CiKind {
                 } catch (Exception e) {
                 }
                 if (s.isEmpty()) {
-                    s = "@" + System.identityHashCode(value); 
+                    s = "@" + System.identityHashCode(value);
                 }
                 sb.append(value.getClass().getSimpleName()).append(s);
             }
         } else {
-            sb.append(value); 
+            sb.append(value);
         }
         return sb.append(')').toString();
     }

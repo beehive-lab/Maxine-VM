@@ -33,7 +33,7 @@ import com.sun.c1x.util.*;
 /**
  * The {@code BlockMap} class builds a mapping between bytecodes and basic blocks
  * and builds a conservative control flow graph. Note that this class serves a similar role
- * to {@code BlockListBuilder}, but makes fewer assumptions about what the compiler
+ * to C1's {@code BlockListBuilder}, but makes fewer assumptions about what the compiler
  * interface provides. It builds all basic blocks for the control flow graph without requiring
  * the compiler interface to provide a bitmap of the beginning of basic blocks. It makes
  * two linear passes; one over the bytecodes to build block starts and successor lists,
@@ -109,10 +109,25 @@ public class BlockMap {
         }
     }
 
+    /** The bytecodes for the associated method. */
     private final byte[] code;
+    /**
+     * Every {@link BlockBegin} node created by {@link BlockMap#build} has an entry in this
+     * array at the corresponding bytecode index. Length is same as {@link BlockMap#code}.
+     */
     private final BlockBegin[] blockMap;
+    /**
+     * TBD.
+     */
     private final BitMap storesInLoops;
+    /**
+     * Every bytecode instruction that has zero, one or more successor nodes (e.g. {@link Bytecodes#GOTO} has one) has
+     * an entry in this array at the corresponding bytecode index. The value is another array of {@code BlockBegin} nodes,
+     * with length equal to the number of successors, whose entries are the {@code BlockBegin} nodes for the successor
+     * blocks. Length is same as {@link BlockMap#code}.
+     */
     private BlockBegin[][] successorMap;
+    /** List of {@code BlockBegin} nodes that are inside loops. */
     private ArrayList<BlockBegin> loopBlocks;
     private ExceptionMap exceptionMap;
     private final int firstBlock;

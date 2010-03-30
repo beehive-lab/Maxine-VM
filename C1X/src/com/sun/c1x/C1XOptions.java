@@ -89,7 +89,7 @@ public class C1XOptions {
     public static boolean PrintLoopList                      = ____;
 
     /**
-     * @see TTY.Filter#matches(String, Object)
+     * See {@link com.sun.c1x.debug.TTY.Filter#matches(String, Object)}.
      */
     public static String  PrintFilter                        = null;
 
