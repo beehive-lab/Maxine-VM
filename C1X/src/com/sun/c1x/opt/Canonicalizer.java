@@ -445,8 +445,8 @@ public class Canonicalizer extends DefaultValueVisitor {
             // only try to canonicalize static field loads
             RiField field = i.field();
             if (field.isConstant()) {
-                if (method.isStatic() && method.isInitializer()) {
-                    // don't do canonicalization in the initializer method
+                if (method.isClassInitializer()) {
+                    // don't do canonicalization in the <clinit> method
                     return;
                 }
 

@@ -77,10 +77,6 @@ public class MaxRiMethod implements RiMethod {
         this.cpi = cpi;
     }
 
-    /**
-     * Gets the name of this method.
-     * @return the name of this method as a string
-     */
     public String name() {
         if (methodActor != null) {
             return methodActor.name.toString();
@@ -96,10 +92,6 @@ public class MaxRiMethod implements RiMethod {
         return null;
     }
 
-    /**
-     * Gets the compiler interface type of the holder of this method.
-     * @return the holder of this method
-     */
     public RiType holder() {
         if (methodActor != null) {
             return constantPool.runtime.canonicalRiType(methodActor.holder(), constantPool, -1);
@@ -108,10 +100,6 @@ public class MaxRiMethod implements RiMethod {
         return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool), holderCpi);
     }
 
-    /**
-     * Gets the compiler interface signature for this method.
-     * @return the signature of this method
-     */
     public RiSignature signatureType() {
         if (methodActor != null) {
             return constantPool.cacheSignature(methodActor.descriptor());
@@ -119,20 +107,10 @@ public class MaxRiMethod implements RiMethod {
         return constantPool.cacheSignature(methodRef.signature(constantPool.constantPool));
     }
 
-    /**
-     * Gets the code of this method as byte array.
-     * @return the code of this method
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public byte[] code() {
         return codeAttribute("code()").code();
     }
 
-    /**
-     * Checks whether this method has bytecode. For unresolved, abstract, or native methods,
-     * this method returns {@code false}.
-     * @return {@code true} if bytecode is available for the method
-     */
     public boolean hasCode() {
         if (methodActor instanceof ClassMethodActor) {
             return ((ClassMethodActor) methodActor).originalCodeAttribute() != null;
@@ -140,39 +118,19 @@ public class MaxRiMethod implements RiMethod {
         return false;
     }
 
-    /**
-     * Gets the maximum number of locals used in the code of this method.
-     * @return the maximum number of locals
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public int maxLocals() {
         return codeAttribute("maxLocals()").maxLocals;
     }
 
-    /**
-     * Gets the maximum stack size used in the code of this method.
-     * @return the maximum stack size
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public int maxStackSize() {
         return codeAttribute("maxStackSize()").maxStack;
     }
 
-    /**
-     * Checks whether this method has balanced monitor operations.
-     * @return {@code true} if the monitor operations are balanced correctly
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public boolean hasBalancedMonitors() {
         asClassMethodActor("hasBalancedMonitors()");
-        return true; // TODO: do the analyzes
+        return true; // TODO: do the required analysis
     }
 
-    /**
-     * Checks whether this method has any exception handlers.
-     * @return {@code true} if this method has any exception handlers
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public boolean hasExceptionHandlers() {
         final CodeAttribute codeAttribute = codeAttribute("hasExceptionHandlers()");
         if (codeAttribute != null) {
@@ -182,112 +140,55 @@ public class MaxRiMethod implements RiMethod {
         return false;
     }
 
-    /**
-     * Checks whether this compiler interface method is loaded (i.e. resolved).
-     * @return {@code true} if this method is loaded
-     */
     public boolean isLoaded() {
         return methodActor != null;
     }
 
-    /**
-     * Checks whether this method is abstract.
-     * @return {@code true} if this method is abstract
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public boolean isAbstract() {
         return asMethodActor("isAbstract()").isAbstract();
     }
 
-    /**
-     * Checks whether this method is native.
-     * @return {@code true} if this method is native
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public boolean isNative() {
         return asMethodActor("isNative()").isNative();
     }
 
-    /**
-     * Checks whether this method is final.
-     * @return {@code true} if this method is final
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public boolean isLeafMethod() {
         MethodActor methodActor = asMethodActor("isLeafMethod()");
         return methodActor.isFinal() || methodActor.isPrivate() || methodActor.holder().isFinal();
     }
 
-    /**
-     * Checks whether this method is synchronized.
-     * @return {@code true} if this method is synchronized
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public boolean isSynchronized() {
         return asMethodActor("isSynchronized()").isSynchronized();
-
     }
 
-    /**
-     * Checks whether this method is strict-fp.
-     * @return {@code true} if this method is strict-fp
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public boolean isStrictFP() {
         return asMethodActor("isStrictFP()").isStrict();
     }
 
-    /**
-     * Checks whether this method is static.
-     * @return {@code true} if this method is static
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public boolean isStatic() {
         return asMethodActor("isStatic()").isStatic();
     }
 
-    /**
-     * Checks whether this method is initializer.
-     * @return {@code true} if this method is initializer
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
-    public boolean isInitializer() {
-        return asMethodActor("isInitializer()").isInitializer();
+    public boolean isClassInitializer() {
+        return asMethodActor("isClassInitializer()").isClassInitializer();
     }
 
-    /**
-     * Checks whether this method has been overridden in the current runtime environment.
-     * @return {@code true} if this method has been overridden
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
+    public boolean isConstructor() {
+        return asMethodActor("isConstructor()").isInstanceInitializer();
+    }
+
     public boolean isOverridden() {
         return !canBeStaticallyBound(); // TODO: do leaf method checks
     }
 
-    /**
-     * Gets the method instrumentation for this method.
-     * @return the method instruction for this method; {@code null} if no instrumentation
-     * is available
-     */
     public RiMethodProfile methodData() {
         return null;
     }
 
-    /**
-     * Gets the liveness information for local variables at a particular bytecode index.
-     * @param bci the bytecode index
-     * @return a bitmap representing which locals are live; {@code null} if no liveness
-     * information is available
-     */
     public BitMap liveness(int bci) {
         return null;
     }
 
-    /**
-     * Checks whether this method can be statically bound (i.e. it is final or private).
-     * @return {@code true} if this method can be statically bound; {@code false}
-     * if the field is unresolved or cannot be statically bound
-     */
     public boolean canBeStaticallyBound() {
         if (methodActor instanceof ClassMethodActor) {
             final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
@@ -296,20 +197,10 @@ public class MaxRiMethod implements RiMethod {
         return false;
     }
 
-    /**
-     * Gets the size of the code in this method.
-     * @return the size of the code in bytes
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public int codeSize() {
         return codeAttribute("codeSize()").code().length;
     }
 
-    /**
-     * Gets the exception handlers for this method.
-     * @return the exception handlers
-     * @throws MaxRiUnresolved if the method is unresolved
-     */
     public List<RiExceptionHandler> exceptionHandlers() {
         if (exceptionHandlers != null) {
             // return the cached exception handlers
