@@ -37,7 +37,7 @@ import com.sun.c1x.ci.CiConstant;
  * There are three immediate subclasses of {@link Value}, {@link Instruction}, {@link Local} and {@link Phi}.
  * The vast majority of HIR nodes are further subclasses of {@link Instruction}.
  * Only {@link Instruction} nodes can occur inside a basic block, {@link Local} and {@link Phi}
- * nodes occur in the associated {@link FrameState}.
+ * nodes occur in the associated {@link com.sun.c1x.value.FrameState}.
  *
  * @author Ben L. Titzer
  * @author Mick Jordan

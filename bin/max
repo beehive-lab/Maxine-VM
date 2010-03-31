@@ -692,6 +692,7 @@ javadoc_help="run javadoc over the Maxine Java source files
    
 options:
  -clean     removes existing generated javadoc first
+ -projects p1,p2,... limit to listed projects
  <any other javadoc option>
     
     Use \"max javadoc -help\" to see what other options this command accepts."
@@ -700,10 +701,16 @@ function run_javadoc() {
     javadoc=${JAVA_HOME}/bin/javadoc
     clean=false
     extra_javadoc_options=""
+    projects_to_build=""
     while [ "$1" != "" ]; do
         case $1 in
             -clean )
                 clean=true
+                ;;
+            -projects )
+                shift
+                projects_to_build="$projects_to_build ${1//,/ }"
+
                 ;;
             * )
                 extra_javadoc_options="$extra_javadoc_options $1"
@@ -711,6 +718,13 @@ function run_javadoc() {
         esac
         shift
     done
+    
+    if [ -z "$projects_to_build" ]; then
+        for project in ${projects[@]}; do
+            project_dir=${project/:*/}
+            projects_to_build="$projects_to_build $project_dir"
+        done
+    fi
     
     javadoc_output_dir=${maxine_dir}/javadoc
     if $clean ; then
@@ -724,6 +738,15 @@ function run_javadoc() {
     
     for project in ${projects[@]}; do
         project_dir=${project/:*/}
+        project_build_match=0
+        for project_to_build in ${projects_to_build[@]}; do
+            if [[ "$project_to_build" == ${project_dir} ]]; then
+                project_build_match=1
+            fi
+        done
+        if [ $project_build_match -eq 0 ] ; then
+            continue
+        fi
 
         source_dirs_spec=${project/*:/}
         source_dirs=${source_dirs_spec//,/ }
@@ -744,7 +767,7 @@ function run_javadoc() {
         -sourcepath $source_path \
         -d $javadoc_output_dir \
         -link http://java.sun.com/javase/6/docs/api \
-         $extra_javadoc_options $(<$package_list)
+     $extra_javadoc_options $(<$package_list)
     result=$?
     rm $package_list
     if [ $result -ne 0 ]; then
