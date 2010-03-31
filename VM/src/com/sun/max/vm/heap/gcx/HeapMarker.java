@@ -768,6 +768,50 @@ public class HeapMarker implements MarkingStack.OverflowHandler {
     private final RightmostMark normalRightmostMark = new NormalScanRightmostMark();
     private final OverflowScanRightmostMark overflowRightmostMark = new OverflowScanRightmostMark();
 
+    /**
+     * Search the tricolor mark bitmap for a grey object in a specific region of the heap.
+     * @param start start of the heap region.
+     * @param end end of the heap region.
+     * @return Return the bit index to the first grey mark found if any, -1 otherwise.
+     */
+    public int firstGreyMarks(Pointer start, Pointer end) {
+        final Pointer colorMapBase = bitmapWordPointerAt(0);
+        final int lastBitIndex = bitIndexOf(end);
+        final int lastBitmapWordIndex = bitmapWordIndex(lastBitIndex);
+        int bitmapWordIndex = bitmapWordIndex(bitIndexOf(start));
+        while (bitmapWordIndex <= lastBitmapWordIndex) {
+            long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
+            if (bitmapWord != 0) {
+                final long greyMarksInWord = bitmapWord & (bitmapWord >> 1);
+                if (greyMarksInWord != 0) {
+                    // First grey mark is the least set bit.
+                    final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
+                    final int bitIndexOfGreyMark = (bitmapWordIndex << Word.width()) + bitIndexInWord;
+                    return bitIndexOfGreyMark < lastBitIndex ? bitIndexOfGreyMark : -1;
+                } else if ((bitmapWord >> LAST_BIT_INDEX_IN_WORD) == 1) {
+                    // Mark span two words. Check first bit of next word to decide if mark is grey.
+                    bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
+                    if ((bitmapWord & 1) != 0) {
+                        // it is a grey object.
+                        final int bitIndexOfGreyMark = (bitmapWordIndex << Word.width()) + LAST_BIT_INDEX_IN_WORD;
+                        return bitIndexOfGreyMark < lastBitIndex ? bitIndexOfGreyMark : -1;
+                    }
+                }
+            }
+            bitmapWordIndex++;
+        }
+        return -1;
+    }
+
+    /**
+     * Verifies that a heap region has no grey objects.
+     * @param start start of the region
+     * @param end end of the region
+     * @return true if the region has no grey objects, false otherwise.
+     */
+    public boolean verifyHasNoGreyMarks(Pointer start, Pointer end) {
+        return firstGreyMarks(start, end) < 0;
+    }
 
     public void visitGreyObjects(Pointer start, RightmostMark rightmostMark) {
         final Pointer colorMapBase = bitmapWordPointerAt(0);
