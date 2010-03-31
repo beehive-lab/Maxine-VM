@@ -31,15 +31,89 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
- * The {@code BlockMap} class builds a mapping between bytecodes and basic blocks
- * and builds a conservative control flow graph. Note that this class serves a similar role
- * to C1's {@code BlockListBuilder}, but makes fewer assumptions about what the compiler
- * interface provides. It builds all basic blocks for the control flow graph without requiring
- * the compiler interface to provide a bitmap of the beginning of basic blocks. It makes
- * two linear passes; one over the bytecodes to build block starts and successor lists,
- * and one pass over the block map to build the CFG. Note that the CFG built by this class
- * is <i>not</i> connected to the actual {@code BlockBegin} instances; this class does,
- * however, compute and assign the reverse postorder number of the blocks.
+ * Builds a mapping between bytecodes and basic blocks and builds a conservative control flow
+ * graph. Note that this class serves a similar role to C1's {@code BlockListBuilder}, but makes fewer assumptions about
+ * what the compiler interface provides. It builds all basic blocks for the control flow graph without requiring the
+ * compiler interface to provide a bitmap of the beginning of basic blocks. It makes two linear passes; one over the
+ * bytecodes to build block starts and successor lists, and one pass over the block map to build the CFG.
+ *
+ * Note that the CFG built by this class is <i>not</i> connected to the actual {@code BlockBegin} instances; this class
+ * does, however, compute and assign the reverse postorder number of the blocks. This comment needs refinement. (MJJ)
+ *
+ * <H2>More Details on {@link BlockMap#build}</H2>
+ *
+ * If the method has any exception handlers the {@link #exceptionMap} will be created (TBD).
+ *
+ * A {@link BlockBegin} node with the {@link com.sun.c1x.ir.BlockBegin.BlockFlag#StandardEntry} flag is created with bytecode index 0.
+ * Note this is distinct from the similar {@code BlockBegin} node assigned to {@code startBlock} by
+ * {@link com.sun.c1x.graph.GraphBuilder}.
+ *
+ * The bytecodes are then scanned linearly looking for bytecodes that contain control transfers, e.g., {@code GOTO},
+ * {@code RETURN}, {@code IFGE}, and creating the corresponding entries in {@link #successorMap} and {@link #blockMap}.
+ * In addition, if {@link #exceptionMap} is not null, entries are made for any bytecode that can cause an exception.
+ * More TBD.
+ *
+ * Observe that this process finds bytecodes that terminate basic blocks, so the {@link #moveSuccessorLists} method is
+ * called to reassign the successors to the {@code BlockBegin} node that actually starts the block.
+ *
+ * <H3>Example</H3>
+ *
+ * Consider the following source code:
+ *
+ * <pre>
+ * <code>
+ *     public static int test(int arg1, int arg2) {
+ *         int x = 0;
+ *         while (arg2 > 0) {
+ *             if (arg1 > 0) {
+ *                 x += 1;
+ *             } else if (arg1 < 0) {
+ *                 x -= 1;
+ *             }
+ *         }
+ *         return x;
+ *     }
+ * </code>
+ * </pre>
+ *
+ * This is translated by javac to the following bytecode:
+ *
+ * <pre>
+ * <code>
+ *    0:   iconst_0
+ *    1:   istore_2
+ *    2:   goto    22
+ *    5:   iload_0
+ *    6:   ifle    15
+ *    9:   iinc    2, 1
+ *    12:  goto    22
+ *    15:  iload_0
+ *    16:  ifge    22
+ *    19:  iinc    2, -1
+ *    22:  iload_1
+ *    23:  ifgt    5
+ *    26:  iload_2
+ *    27: ireturn
+ *    </code>
+ * </pre>
+ *
+ * There are seven basic blocks in this method, 0..2, 5..6, 9..12, 15..16, 19..19, 22..23 and 26..27. Therefore, before
+ * the call to {@code moveSuccessorLists}, the {@code blockMap} array has {@code BlockBegin} nodes at indices 0, 5, 9,
+ * 15, 19, 22 and 26. The {@code successorMap} array has entries at 2, 6, 12, 16, 23, 27 corresponding to the control
+ * transfer bytecodes. The entry at index 6, for example, is a length two array of {@code BlockBegin} nodes for indices
+ * 9 and 15, which are the successors for the basic block 5..6. After the call to {@code moveSuccessors}, {@code
+ * successorMap} has entries at 0, 5, 9, 15, 19, 22 and 26, i.e, matching {@code blockMap}.
+ * <p>
+ * Next the blocks are numbered using <a href="http://en.wikipedia.org/wiki/Depth-first_search#Vertex_orderings">reverse
+ * post-order</a>. For the above example this results in the numbering 2, 4, 7, 5, 6, 3, 8. Also loop header blocks are
+ * detected during the traversal by detecting a repeat visit to a block that is still being processed. This causes the
+ * block to be flagged as a loop header and also added to the {@link #loopBlocks} list. The {@code loopBlocks} list
+ * contains the blocks at 0, 5, 9, 15, 19, 22, with 22 as the loop header. (N.B. the loop header block is added multiple
+ * (4) times to this list). (Should 0 be in? It's not inside the loop).
+ *
+ * If the {@code computeStoresInLoops} argument to {@code build} is true, the {@code loopBlocks} list is processed to
+ * mark all local variables that are stored in the blocks in the list.
+ *
  *
  * @author Ben L. Titzer
  */
@@ -131,12 +205,13 @@ public class BlockMap {
     private ArrayList<BlockBegin> loopBlocks;
     private ExceptionMap exceptionMap;
     private final int firstBlock;
-    private int blockNum; // used for initial block ID (count up) and post-order number (count down)
+    /** Used for initial block ID (count up) and post-order number (count down) */
+    private int blockNum; //
 
     /**
-     * Creates a new BlockMap instance from the specified bytecode.
+     * Creates a new BlockMap instance from bytecode of the given method .
      * @param method the compiler interface method containing the code
-     * @param firstBlockNum the first block number to use
+     * @param firstBlockNum the first block number to use when creating {@link BlockBegin} nodes
      */
     public BlockMap(RiMethod method, int firstBlockNum) {
         byte[] code = method.code();

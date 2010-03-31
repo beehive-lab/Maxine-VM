@@ -36,8 +36,7 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public final class BlockBegin extends Instruction {
-    // XXX: could use a shared, empty ArrayList
-    private static final List<BlockBegin> NO_HANDLERS = Util.uncheckedCast(Collections.EMPTY_LIST);
+    private static final List<BlockBegin> NO_HANDLERS = Collections.emptyList();
 
     /**
      * An enumeration of flags for block entries indicating various things.
@@ -64,7 +63,7 @@ public final class BlockBegin extends Instruction {
      */
     public final int blockID;
 
-    /** Denotes the current set of {@link BlockBegin#BlockFlag} settings. */
+    /** Denotes the current set of {@link BlockBegin.BlockFlag} settings. */
     private int blockFlags;
     /** TBD. */
     private FrameState stateBefore;
