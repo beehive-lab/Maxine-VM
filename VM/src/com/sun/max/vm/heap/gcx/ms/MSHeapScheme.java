@@ -45,6 +45,8 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  */
 public class MSHeapScheme extends HeapSchemeWithTLAB {
+    private static final int WORDS_COVERED_PER_BIT = 1;
+
     /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
      * appended to a TLAB to fill unused space before a TLAB refill.
@@ -72,7 +74,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     public MSHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        heapMarker = new HeapMarker();
+        heapMarker = new HeapMarker(WORDS_COVERED_PER_BIT);
         freeSpace = new FreeHeapSpaceManager();
         totalUsedSpace = Size.zero();
         committedHeapSpace = new RuntimeMemoryRegion("Heap");
@@ -106,7 +108,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         CodeManager codeManager = Code.getCodeManager();
         if (codeManager instanceof FixedAddressCodeManager && codeManager.getRuntimeCodeRegion().start().equals(endOfCodeRegion)) {
             endOfCodeRegion = codeManager.getRuntimeCodeRegion().end();
+        } else {
+            FatalError.unimplemented();
         }
+
         if (!VirtualMemory.allocatePageAlignedAtFixedAddress(endOfCodeRegion, initSize, VirtualMemory.Type.HEAP)) {
             reportPristineMemoryFailure("object heap", initSize);
         }
@@ -184,7 +189,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             HeapScheme.Static.notifyGCStarted();
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
-            // TODO
+            heapMarker.markAll();
 
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
             HeapScheme.Static.notifyGCCompleted();

@@ -142,6 +142,10 @@ public final class ImmortalHeap {
         immortalHeap.initialize(Size.fromLong(Math.max(maxPermSize.getValue().toLong(), permSize.getValue().toLong())));
     }
 
+    public static void initialize(MemoryRegion memoryRegion) {
+        immortalHeap.initialize(memoryRegion);
+    }
+
     /**
      * Visit the cells in the immortal heap.
      *
