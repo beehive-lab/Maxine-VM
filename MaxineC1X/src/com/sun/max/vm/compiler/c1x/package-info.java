@@ -30,9 +30,9 @@
  * MaxineC1X defines {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme} which implements
  * {@link com.sun.max.vm.compiler.RuntimeCompilerScheme} and conforms to the standard API for schemes in Maxine. In
  * particular it implements the {@link com.sun.max.vm.VMScheme#initialize} method that is called during VM startup with
- * the startup phase as argument. Note that this includes the special {@link com.sun.max.vm.MaxineVM.Phase#BOOTSTRAPPING
- * bootstrapping} phase which is used when the VM image is being built using another host JVM. In this phase several
- * objects are created that are used in subsequent compilations:
+ * the startup phase as argument. Note that this includes the special
+ * {@link com.sun.max.vm.MaxineVM.Phase#BOOTSTRAPPING bootstrapping} phase which is used when the VM image is being
+ * built using another host JVM. In this phase several objects are created that are used in subsequent compilations:
  * <ul>
  * <li>{@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#c1xRuntime}: an instance of
  * {@link com.sun.max.vm.compiler.c1x.MaxRiRuntime} that implements {@link com.sun.c1x.ri.RiRuntime}.</li>
@@ -41,16 +41,23 @@
  * <li>{@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#c1xXirGenerator}: an instance of
  * {@link com.sun.max.vm.compiler.c1x.MaxXirGenerator} that extends {@link com.sun.c1x.xir.RiXirGenerator} class.</li>
  * <li>{@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#c1xCompiler} : an instance of
- * {@link com.sun.c1x.C1XCompiler} , which is created with arguments {@code c1xRuntime} , {@code c1xTarget} and {@code
- * c1xXirGenerator} .
+ * {@link com.sun.c1x.C1XCompiler} , which is created with arguments
+ * {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#c1xRuntime} ,
+ * {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#c1xTarget} and
+ * {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#c1xXirGenerator} .
  * </ul>
- * The compilation entry method in {@code RuntimeCompilerScheme} is
- * {@link com.sun.max.vm.compiler.RuntimeCompilerScheme#compile} which returns a {@link com.sun.max.vm.compiler.target.TargetMethod}. The
- * {@code C1XCompilerScheme} implementation of {@code compile} first gets an {@code RiMethod} for the {@code
- * ClassMethodActor} using {@code c1xRuntime} and then calls {@link com.sun.c1x.C1XCompiler#compileMethod}. The result is {@code null} if the
- * compilation failed, otherwise an instance of {@link com.sun.c1x.ci.CiTargetMethod}, which encapsulates all the information about the
- * resulting compiled code, in particular, a byte array containing the actual bytes for the generated machine code,
- * which is available from {@link com.sun.c1x.ci.CiTargetMethod#targetCode}. The {@code CiTargetMethod} is wrapped in a {@link com.sun.max.vm.compiler.c1x.C1XTargetMethod}, a subclass of Maxine's
- * {@code TargetMethod} class and returned as the result of {@code compile}.
+ * The compilation entry method in {@link com.sun.max.vm.compiler.RuntimeCompilerScheme} is
+ * {@link com.sun.max.vm.compiler.RuntimeCompilerScheme#compile} which returns a
+ * {@link com.sun.max.vm.compiler.target.TargetMethod}. The {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme}
+ * implementation of {@link com.sun.max.vm.compiler.RuntimeCompilerScheme#compile} first gets an
+ * {@link com.sun.c1x.ri.RiMethod} for the {@link com.sun.max.vm.actor.member.ClassMethodActor} using
+ * {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#c1xRuntime} and then calls
+ * {@link com.sun.c1x.C1XCompiler#compileMethod}. The result is {@code null} if the compilation failed, otherwise an
+ * instance of {@link com.sun.c1x.ci.CiTargetMethod}, which encapsulates all the information about the resulting
+ * compiled code, in particular, a byte array containing the actual bytes for the generated machine code, which is
+ * available from {@link com.sun.c1x.ci.CiTargetMethod#targetCode}. The {@link com.sun.c1x.ci.CiTargetMethod} is wrapped
+ * in a {@link com.sun.max.vm.compiler.c1x.C1XTargetMethod}, a subclass of Maxine's
+ * {@link com.sun.max.vm.compiler.target.TargetMethod} class and returned as the result of
+ * {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#compile}.
  */
 package com.sun.max.vm.compiler.c1x;
