@@ -20,10 +20,11 @@
  */
 package com.sun.c1x.gen;
 
+import static com.sun.c1x.ci.CiValue.*;
+
 import java.util.*;
 
-import com.sun.c1x.lir.*;
-import static com.sun.c1x.lir.LIROperand.*;
+import com.sun.c1x.ci.*;
 
 /**
  * Converts the HIR program's Phi instructions into moves.
@@ -51,7 +52,7 @@ public class PhiResolver {
     private final PhiResolverState state;
 
     private ResolveNode loop;
-    private LIROperand temp;
+    private CiValue temp;
 
     public PhiResolver(LIRGenerator gen, int maxVars) {
         this.gen = gen;
@@ -69,7 +70,7 @@ public class PhiResolver {
                 loop = null;
                 move(null, node);
                 node.startNode = true;
-                assert isIllegal(temp) : "moveTempTo() call missing";
+                assert temp.isIllegal() : "moveTempTo() call missing";
             }
         }
 
@@ -82,16 +83,16 @@ public class PhiResolver {
         }
     }
 
-    public void move(LIROperand src, LIROperand dest) {
+    public void move(CiValue src, CiValue dest) {
         assert dest.isVariable() : "destination must be virtual";
         // tty.print("move "); src.print(); tty.print(" to "); dest.print(); tty.cr();
-        assert isLegal(src) : "source for phi move is illegal";
-        assert isLegal(dest) : "destination for phi move is illegal";
+        assert src.isLegal() : "source for phi move is illegal";
+        assert dest.isLegal() : "destination for phi move is illegal";
         ResolveNode source = sourceNode(src);
         source.append(destinationNode(dest));
       }
 
-    private ResolveNode createNode(LIROperand opr, boolean source) {
+    private ResolveNode createNode(CiValue opr, boolean source) {
         ResolveNode node;
         if (opr.isVariable()) {
             int varNum = opr.variableNumber();
@@ -114,13 +115,13 @@ public class PhiResolver {
         return node;
     }
 
-    private ResolveNode destinationNode(LIROperand opr) {
+    private ResolveNode destinationNode(CiValue opr) {
         return createNode(opr, false);
     }
 
-    private void emitMove(LIROperand src, LIROperand dest) {
-        assert isLegal(src);
-        assert isLegal(dest);
+    private void emitMove(CiValue src, CiValue dest) {
+        assert src.isLegal();
+        assert dest.isLegal();
         gen().lir.move(src, dest);
     }
 
@@ -160,14 +161,14 @@ public class PhiResolver {
         }
     }
 
-    private void moveTempTo(LIROperand dest) {
-        assert isLegal(temp);
+    private void moveTempTo(CiValue dest) {
+        assert temp.isLegal();
         emitMove(temp, dest);
         temp = IllegalLocation;
     }
 
-    private void moveToTemp(LIROperand src) {
-        assert isIllegal(temp);
+    private void moveToTemp(CiValue src) {
+        assert temp.isIllegal();
         temp = gen().newVariable(src.kind);
         emitMove(src, temp);
     }
@@ -176,7 +177,7 @@ public class PhiResolver {
         return state.otherOperands;
     }
 
-    private ResolveNode sourceNode(LIROperand opr) {
+    private ResolveNode sourceNode(CiValue opr) {
         return createNode(opr, true);
     }
 

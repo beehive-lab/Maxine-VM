@@ -33,42 +33,30 @@ public class CallingConvention {
 
     public final int overflowArgumentSize;
     public final CiLocation[] locations;
-    public final LIROperand[] operands;
+    public final CiValue[] operands;
 
-    CallingConvention(CiLocation[] locations) {
+    CallingConvention(CiLocation[] locations, CiTarget target) {
         this.locations = locations;
-        this.operands = new LIROperand[locations.length];
+        this.operands = new CiValue[locations.length];
         int outgoing = 0;
         for (int i = 0; i < locations.length; i++) {
             CiLocation l = locations[i];
-            operands[i] = locationToOperand(l);
-            if (l.isStack()) {
-                outgoing = Math.max(outgoing, l.stackOffset() + l.stackSize());
+            operands[i] = l;
+            if (l.isAddress()) {
+                CiAddress s = (CiAddress) l;
+                int spillSize = target.spillSlotSize * target.spillSlots(l.kind);
+                outgoing = Math.max(outgoing, s.displacement + spillSize);
             }
         }
 
         overflowArgumentSize = outgoing;
     }
 
-    public static LIROperand locationToOperand(CiLocation location) {
-        if (location.isStack()) {
-            int stackOffset = location.stackOffset();
-            if (location.isCallerFrame()) {
-                return LIROperand.forAddress(LIROperand.forRegister(CiKind.Int, CiRegister.CallerStack), stackOffset, location.kind);
-            } else {
-                return LIROperand.forAddress(LIROperand.forRegister(CiKind.Int, CiRegister.Stack), stackOffset, location.kind);
-            }
-        } else {
-            assert location.register() != null;
-            return new LIRLocation(location.kind, location.register());
-        }
-    }
-
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
         result.append("CallingConvention[");
-        for (LIROperand op : operands) {
+        for (CiValue op : operands) {
             result.append(op.toString()).append(" ");
         }
         result.append("]");

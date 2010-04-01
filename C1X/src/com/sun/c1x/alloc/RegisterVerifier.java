@@ -48,7 +48,7 @@ final class RegisterVerifier {
         return allocator.intervalAt(regNum);
     }
 
-    int regNum(LIROperand opr) {
+    int regNum(CiValue opr) {
         return allocator.regNum(opr);
     }
 
@@ -87,7 +87,7 @@ final class RegisterVerifier {
         }
         CallingConvention args = compilation().frameMap().incomingArguments();
         for (int n = 0; n < args.operands.length; n++) {
-            LIROperand opr = args.operands[n];
+            CiValue opr = args.operands[n];
             if (opr.isVariableOrRegister()) {
                 Interval interval = intervalAt(regNum(opr));
 
@@ -241,7 +241,7 @@ final class RegisterVerifier {
             int j;
             int n = op.oprCount(LIRInstruction.OperandMode.InputMode);
             for (j = 0; j < n; j++) {
-                LIRLocation opr = op.oprAt(LIRInstruction.OperandMode.InputMode, j);
+                CiLocation opr = op.oprAt(LIRInstruction.OperandMode.InputMode, j);
                 if (opr.isVariableOrRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id != -1) {
@@ -270,7 +270,7 @@ final class RegisterVerifier {
             // set temp operands (some operations use temp operands also as output operands, so can't set them null)
             n = op.oprCount(LIRInstruction.OperandMode.TempMode);
             for (j = 0; j < n; j++) {
-                LIROperand opr = op.oprAt(LIRInstruction.OperandMode.TempMode, j);
+                CiValue opr = op.oprAt(LIRInstruction.OperandMode.TempMode, j);
                 if (opr.isVariableOrRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id != -1) {
@@ -285,7 +285,7 @@ final class RegisterVerifier {
             // set output operands
             n = op.oprCount(LIRInstruction.OperandMode.OutputMode);
             for (j = 0; j < n; j++) {
-                LIROperand opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, j);
+                CiValue opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, j);
                 if (opr.isVariableOrRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id != -1) {

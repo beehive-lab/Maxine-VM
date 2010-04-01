@@ -71,6 +71,9 @@ public final class Interval {
     }
 
     private int registerNumber;
+    private CiLocation location;
+
+
     private CiKind kind; // valid only for variables
     private Range first; // sorted list of Ranges
     private List<Integer> usePosAndKinds; // sorted list of use-positions and their according use-kinds
@@ -83,7 +86,7 @@ public final class Interval {
     private int assignedHighRegister;
 
     private int cachedTo; // cached value: to of last range (-1: not cached)
-    private LIROperand cachedOpr;
+    private CiValue cachedOpr;
     private CiLocation cachedVmReg;
 
     private Interval splitParent; // the original interval where this interval is derived from
@@ -226,7 +229,7 @@ public final class Interval {
     }
 
     // caching of values that take time to compute and are used multiple times
-    LIROperand cachedOpr() {
+    CiValue cachedOpr() {
         return cachedOpr;
     }
 
@@ -234,7 +237,7 @@ public final class Interval {
         return cachedVmReg;
     }
 
-    void setCachedOpr(LIROperand opr) {
+    void setCachedOpr(CiValue opr) {
         cachedOpr = opr;
     }
 
@@ -301,7 +304,7 @@ public final class Interval {
         this.assignedRegister = LinearScan.getAnyreg();
         this.assignedHighRegister = LinearScan.getAnyreg();
         this.cachedTo = -1;
-        this.cachedOpr = LIROperand.IllegalLocation;
+        this.cachedOpr = CiValue.IllegalLocation;
         this.cachedVmReg = null;
         this.canonicalSpillSlot = -1;
         this.insertMoveWhenActivated = false;
@@ -774,13 +777,13 @@ public final class Interval {
     }
 
     public void print(LogStream out, LinearScan allocator) {
-        LIROperand opr = LIROperand.IllegalLocation;
+        CiValue opr = CiValue.IllegalLocation;
         if (registerNumber() < CiRegister.LowestVirtualRegisterNumber) {
             // need a temporary operand for fixed intervals because type() cannot be called
             if (allocator.isCpu(assignedReg())) {
-                opr = LIROperand.forRegister(CiKind.Int, allocator.toRegister(assignedReg()));
+                opr = allocator.toRegister(assignedReg()).asLocation(CiKind.Int);
             } else if (allocator.isXmm(assignedReg())) {
-                opr = LIROperand.forRegister(CiKind.Float, allocator.toRegister(assignedReg()));
+                opr = allocator.toRegister(assignedReg()).asLocation(CiKind.Float);
             } else {
                 Util.shouldNotReachHere();
             }
@@ -791,7 +794,7 @@ public final class Interval {
         }
 
         out.printf("%d %s ", registerNumber(), typeName());
-        if (LIROperand.isLegal(opr)) {
+        if (opr.isLegal()) {
             out.printf("\"%s\"", opr);
         }
         out.printf("%d %d ", splitParent().registerNumber(), registerHint(false, allocator) != null ? registerHint(false, allocator).registerNumber() : -1);

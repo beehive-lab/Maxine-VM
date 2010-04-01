@@ -966,8 +966,8 @@ final class LinearScanWalker extends IntervalWalker {
         }
         assert op instanceof LIROp1 : "move must be LIROp1";
 
-        LIROperand in = ((LIROp1) op).operand();
-        LIROperand res = ((LIROp1) op).result();
+        CiValue in = ((LIROp1) op).operand();
+        CiValue res = ((LIROp1) op).result();
         return in.isVariable() && res.isVariable() && in.variableNumber() == from.registerNumber() && res.variableNumber() == to.registerNumber();
     }
 
@@ -999,7 +999,7 @@ final class LinearScanWalker extends IntervalWalker {
             return;
         }
 
-        if (!isMove(allocator.lirOpWithId(beginPos), registerHint, cur) || !isMove(allocator.lirOpWithId(endPos), cur, registerHint)) {
+        if (!isMove(allocator.instructionForId(beginPos), registerHint, cur) || !isMove(allocator.instructionForId(endPos), cur, registerHint)) {
             // cur and registerHint are not connected with two moves
             return;
         }

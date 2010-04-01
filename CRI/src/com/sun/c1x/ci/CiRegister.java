@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ci;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.sun.c1x.ri.RiRegisterConfig;
 
@@ -39,15 +39,16 @@ public final class CiRegister {
     public static final CiRegister None = new CiRegister(-1, -1, -1, "noreg");
 
     /**
-     * Stack register of the current method.
+     * Frame pointer of the current method. All spill slots and outgoing stack-based arguments
+     * are addressed relative to this register.
      */
-    public static final CiRegister Stack = new CiRegister(-2, -2, -2, "stackreg", RegisterFlag.CPU);
+    public static final CiRegister Frame = new CiRegister(-2, -2, -2, "framereg", RegisterFlag.CPU);
 
     /**
-     * Stack register relative to the caller stack. When this register is used in relative addressing, it means that the
-     * offset is based to stack register of the caller and not to the stack register of the current method.
+     * Frame pointer for the caller of the current method. All incoming stack-based arguments
+     * are address relative to this register.
      */
-    public static final CiRegister CallerStack = new CiRegister(-3, -3, -3, "caller-stackreg", RegisterFlag.CPU);
+    public static final CiRegister CallerFrame = new CiRegister(-3, -3, -3, "caller-framereg", RegisterFlag.CPU);
 
     public static final int LowestVirtualRegisterNumber = 40;
 
@@ -113,6 +114,13 @@ public final class CiRegister {
 
     private boolean checkFlag(RegisterFlag f) {
         return (flags & f.mask) != 0;
+    }
+
+    /**
+     * Gets this register as a {@linkplain CiLocation location} with a specified kind.
+     */
+    public CiRegisterLocation asLocation(CiKind kind) {
+        return CiRegisterLocation.get(kind, this);
     }
 
     public boolean isValid() {

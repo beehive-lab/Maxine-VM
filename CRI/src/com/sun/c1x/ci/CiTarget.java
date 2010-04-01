@@ -90,16 +90,16 @@ public class CiTarget {
     }
 
     /**
-     * Gets the spill slot size for a specified kind in this target.
-     * @param kind the kind for which to get the spill slot size
-     * @return the spill slot size in bytes of {@code kind}
+     * Gets the number of spill slots for a specified kind in this target.
+     * @param kind the kind for which to get the spill slot count
+     * @return the number of spill slots for {@code kind}
      */
-    public int spillSlotSize(CiKind kind) {
+    public int spillSlots(CiKind kind) {
         return spillSlotsPerKindMap[kind.ordinal()];
     }
     
     /**
-     * Align the given frame size (without return instruction pointer) to the stack
+     * Aligns the given frame size (without return instruction pointer) to the stack
      * alignment size and return the aligned size (without return instruction pointer).
      * @param frameSize the initial frame size to be aligned
      * @return the aligned frame size

@@ -29,10 +29,10 @@ import com.sun.c1x.util.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class Address {
+public class OLD__Address {
 
     public enum ScaleFactor {
-        noScale(-1), times1(0), times2(1), times4(2), times8(3);
+        None(-1), Times1(0), Times2(1), Times4(2), Times8(3);
 
         public final int value;
 
@@ -42,50 +42,50 @@ public class Address {
 
         public static ScaleFactor fromInt(int v) {
             switch (v) {
-                case 1: return times1;
-                case 2: return times2;
-                case 4: return times4;
-                case 8: return times8;
+                case 1: return Times1;
+                case 2: return Times2;
+                case 4: return Times4;
+                case 8: return Times8;
             }
             throw Util.shouldNotReachHere();
         }
 
         public static ScaleFactor fromLog(int v) {
             switch (v) {
-                case 0: return times1;
-                case 1: return times2;
-                case 2: return times4;
-                case 3: return times8;
+                case 0: return Times1;
+                case 1: return Times2;
+                case 2: return Times4;
+                case 3: return Times8;
             }
             throw Util.shouldNotReachHere();
         }
     }
 
-    public static final Address InternalRelocation = new Address(CiRegister.None, 0);
+    public static final OLD__Address InternalRelocation = new OLD__Address(CiRegister.None, 0);
 
-    public final CiRegister base;
-    public final int disp;
+    private final CiRegister base;
+    public final int displacement;
     public final ScaleFactor scale;
-    public final CiRegister index;
+    private final CiRegister index;
 
-    public Address(CiRegister base, int displacement) {
-        this(base, CiRegister.None, ScaleFactor.noScale, displacement);
+    public OLD__Address(CiRegister base, int displacement) {
+        this(base, CiRegister.None, ScaleFactor.None, displacement);
     }
 
-    public Address(CiRegister base, CiRegister index, ScaleFactor scale) {
+    public OLD__Address(CiRegister base, CiRegister index, ScaleFactor scale) {
         this(base, index, scale, 0);
     }
 
-    public Address(CiRegister base, CiRegister index, ScaleFactor scale, int displacement) {
+    public OLD__Address(CiRegister base, CiRegister index, ScaleFactor scale, int displacement) {
         this.base = base;
         this.index = index;
         this.scale = scale;
-        this.disp = displacement;
+        this.displacement = displacement;
         assert base != null && index != null && scale != null;
-        assert index.isValid() == (scale != ScaleFactor.noScale);
+        assert index.isValid() == (scale != ScaleFactor.None);
     }
 
-    public Address(CiRegister reg) {
+    public OLD__Address(CiRegister reg) {
         this(reg, 0);
     }
 
@@ -100,15 +100,23 @@ public class Address {
         }
         String base = this.base.isValid() ? this.base.toString() : "";
         if (index.isValid()) {
-            if (disp == 0) {
+            if (displacement == 0) {
                 return String.format("[%s + %s*%d]", base, index, scale.value);
             }
-            return String.format("[%s + %s*%d + %d]", base, index, scale.value, disp);
+            return String.format("[%s + %s*%d + %d]", base, index, scale.value, displacement);
         } else {
-            if (disp == 0) {
+            if (displacement == 0) {
                 return String.format("[%s]", base);
             }
-            return String.format("[%s + %d]", base, disp);
+            return String.format("[%s + %d]", base, displacement);
         }
+    }
+
+    public CiRegister base() {
+        return base;
+    }
+
+    public CiRegister index() {
+        return index;
     }
 }

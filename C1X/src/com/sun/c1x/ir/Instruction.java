@@ -23,7 +23,6 @@ package com.sun.c1x.ir;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -67,7 +66,7 @@ public abstract class Instruction extends Value {
     public Instruction(CiKind kind) {
         super(kind);
         bci = BCI_NOT_APPENDED;
-        lirOperand = LIROperand.IllegalLocation;
+        operand = CiValue.IllegalLocation;
     }
 
     /**

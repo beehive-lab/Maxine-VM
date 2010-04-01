@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.ir.BlockBegin.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
@@ -42,11 +43,11 @@ import com.sun.c1x.util.*;
  *
  * <H2>More Details on {@link BlockMap#build}</H2>
  *
- * If the method has any exception handlers the {@link #exceptionMap} will be created (TBD).
+ * If the method has any exception handlers the {@linkplain #exceptionMap exception map} will be created (TBD).
  *
- * A {@link BlockBegin} node with the {@link com.sun.c1x.ir.BlockBegin.BlockFlag#StandardEntry} flag is created with bytecode index 0.
- * Note this is distinct from the similar {@code BlockBegin} node assigned to {@code startBlock} by
- * {@link com.sun.c1x.graph.GraphBuilder}.
+ * A {@link BlockBegin} node with the {@link BlockFlag#StandardEntry} flag is created with bytecode index 0.
+ * Note this is distinct from the similar {@link BlockBegin} node assigned to {@link IR#startBlock} by
+ * {@link GraphBuilder}.
  *
  * The bytecodes are then scanned linearly looking for bytecodes that contain control transfers, e.g., {@code GOTO},
  * {@code RETURN}, {@code IFGE}, and creating the corresponding entries in {@link #successorMap} and {@link #blockMap}.
@@ -93,7 +94,7 @@ import com.sun.c1x.util.*;
  *    22:  iload_1
  *    23:  ifgt    5
  *    26:  iload_2
- *    27: ireturn
+ *    27:  ireturn
  *    </code>
  * </pre>
  *
@@ -113,7 +114,6 @@ import com.sun.c1x.util.*;
  *
  * If the {@code computeStoresInLoops} argument to {@code build} is true, the {@code loopBlocks} list is processed to
  * mark all local variables that are stored in the blocks in the list.
- *
  *
  * @author Ben L. Titzer
  */
@@ -205,7 +205,7 @@ public class BlockMap {
     private ArrayList<BlockBegin> loopBlocks;
     private ExceptionMap exceptionMap;
     private final int firstBlock;
-    /** Used for initial block ID (count up) and post-order number (count down) */
+    /** Used for initial block ID (count up) and post-order number (count down). */
     private int blockNum; //
 
     /**

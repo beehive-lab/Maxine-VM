@@ -26,7 +26,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.*;
 import com.sun.c1x.xir.*;
@@ -140,27 +139,27 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         return new GlobalStub(stub, stub.resultKind, stubObject, argsSize, argOffsets, resultOffset);
     }
 
-    private LIROperand allocateOperand(XirParameter param, int parameterIndex) {
-        return LIROperand.forAddress(AMD64.rsp, argumentIndexToStackOffset(parameterIndex), param.kind);
+    private CiValue allocateOperand(XirParameter param, int parameterIndex) {
+        return new CiAddress(param.kind, AMD64.RSP, argumentIndexToStackOffset(parameterIndex));
     }
 
-    private LIROperand allocateResultOperand(XirOperand result) {
-        return LIROperand.forAddress(AMD64.rsp, argumentIndexToStackOffset(0), result.kind);
+    private CiValue allocateResultOperand(XirOperand result) {
+        return new CiAddress(result.kind, AMD64.RSP, argumentIndexToStackOffset(0));
     }
 
-    private LIROperand allocateOperand(XirTemp temp) {
+    private CiValue allocateOperand(XirTemp temp) {
         if (temp instanceof XirFixed) {
             XirFixed fixed = (XirFixed) temp;
-            return CallingConvention.locationToOperand(fixed.location);
+            return fixed.location;
         }
 
         return newRegister(temp.kind);
     }
 
-    private LIROperand newRegister(CiKind kind) {
+    private CiValue newRegister(CiKind kind) {
         assert kind != CiKind.Float && kind != CiKind.Double;
         assert allocatableRegisters.size() > 0;
-        return LIROperand.forRegister(kind, allocatableRegisters.remove(allocatableRegisters.size() - 1));
+        return allocatableRegisters.remove(allocatableRegisters.size() - 1).asLocation(kind);
     }
 
     public GlobalStub emit(XirTemplate template, RiRuntime runtime) {
@@ -182,19 +181,19 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
             if (t instanceof XirFixed) {
                 final XirFixed fixed = (XirFixed) t;
                 if (fixed.location.isRegister()) {
-                    allocatableRegisters.remove(fixed.location.register());
+                    allocatableRegisters.remove(fixed.location.asRegister());
                 }
             }
         }
 
         completeSavePrologue();
 
-        LIROperand[] operands = new LIROperand[template.variableCount];
+        CiValue[] operands = new CiValue[template.variableCount];
 
         XirOperand resultOperand = template.resultOperand;
 
         if (template.allocateResultOperand) {
-            LIROperand outputOperand = LIROperand.IllegalLocation;
+            CiValue outputOperand = CiValue.IllegalLocation;
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
@@ -206,12 +205,12 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
         for (XirParameter param : template.parameters) {
             assert !(param instanceof XirConstantOperand) : "constant parameters not supported for stubs";
-            LIROperand op = allocateOperand(param, param.parameterIndex);
+            CiValue op = allocateOperand(param, param.parameterIndex);
             assert operands[param.index] == null;
 
             // Is the value destroyed?
             if (template.isParameterDestroyed(param.parameterIndex)) {
-                LIROperand newOp = newRegister(op.kind);
+                CiValue newOp = newRegister(op.kind);
                 assembler.moveOp(op, newOp, op.kind, null, false);
                 operands[param.index] = newOp;
             } else {
@@ -221,16 +220,16 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
         for (XirConstant c : template.constants) {
             assert operands[c.index] == null;
-            operands[c.index] = LIROperand.forConstant(c.value);
+            operands[c.index] = c.value;
         }
 
         for (XirTemp t : template.temps) {
-            LIROperand op = allocateOperand(t);
+            CiValue op = allocateOperand(t);
             assert operands[t.index] == null;
             operands[t.index] = op;
         }
 
-        for (LIROperand operand : operands) {
+        for (CiValue operand : operands) {
             assert operand != null;
         }
 
@@ -359,11 +358,11 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void loadArgument(int index, CiRegister register) {
-        asm.movq(register, new Address(AMD64.rsp, argumentIndexToStackOffset(index)));
+        asm.movq(register, new CiAddress(CiKind.Word, AMD64.RSP, argumentIndexToStackOffset(index)));
     }
 
     private void storeArgument(int index, CiRegister register) {
-        asm.movq(new Address(AMD64.rsp, argumentIndexToStackOffset(index)), register);
+        asm.movq(new CiAddress(CiKind.Word, AMD64.RSP, argumentIndexToStackOffset(index)), register);
     }
 
     private void partialSavePrologue(CiRegister... registersToSave) {
@@ -380,7 +379,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
         int index = 0;
         for (CiRegister r : registersToSave) {
-            asm.movq(new Address(AMD64.rsp, index * target.arch.wordSize), r);
+            asm.movq(new CiAddress(CiKind.Word, AMD64.RSP, index * target.arch.wordSize), r);
             index++;
         }
 
@@ -402,7 +401,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         for (CiRegister r : allRegisters) {
           int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
               if (r != AMD64.rsp && offset >= 0) {
-                asm.movq(new Address(AMD64.rsp, offset), r);
+                asm.movq(new CiAddress(CiKind.Word, AMD64.RSP, offset), r);
             }
         }
         this.savedAllRegisters = true;
@@ -425,14 +424,14 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
             for (CiRegister r : allRegisters) {
                 int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
                 if (r != AMD64.rsp && offset >= 0) {
-                    asm.movq(r, new Address(AMD64.rsp, offset));
+                    asm.movq(r, new CiAddress(CiKind.Word, AMD64.RSP, offset));
                 }
             }
         } else {
             // saved only select registers
             for (int index = 0; index < registersSaved.length; index++) {
                 CiRegister r = registersSaved[index];
-                asm.movq(r, new Address(AMD64.rsp, index * target.arch.wordSize));
+                asm.movq(r, new CiAddress(CiKind.Word, AMD64.RSP, index * target.arch.wordSize));
             }
             registersSaved = null;
         }
@@ -448,9 +447,9 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     private void forwardRuntimeCall(CiRuntimeCall call) {
         // Load arguments
-        CiLocation[] result = target.registerConfig.getRuntimeParameterLocations(call.arguments);
+        CiLocation[] result = target.registerConfig.getRuntimeParameterLocations(call.arguments, target);
         for (int i = 0; i < call.arguments.length; i++) {
-            loadArgument(i, result[i].register());
+            loadArgument(i, result[i].asRegister());
         }
 
         // Call to the runtime

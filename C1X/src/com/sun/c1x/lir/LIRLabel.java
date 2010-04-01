@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 
 /**
@@ -37,7 +38,7 @@ public class LIRLabel extends LIROp0 {
      * @param label the label
      */
     public LIRLabel(Label label) {
-        super(LIROpcode.Label, LIROperand.IllegalLocation, null);
+        super(LIROpcode.Label, CiValue.IllegalLocation, null);
         assert label != null;
         this.label = label;
     }

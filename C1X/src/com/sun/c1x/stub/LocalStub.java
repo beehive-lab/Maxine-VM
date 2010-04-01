@@ -21,6 +21,7 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.asm.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
 
@@ -38,29 +39,29 @@ public abstract class LocalStub {
 
     protected LIRInstruction instruction;
 
-    public LIROperand[] operands;
-    public LIROperand result;
+    public CiValue[] operands;
+    public CiValue result;
     public LIRInstruction.OperandSlot resultSlot;
 
     public int tempCount;
     public int tempInputCount;
 
     public LocalStub(LIRDebugInfo info) {
-        this(info, LIROperand.IllegalLocation);
+        this(info, CiValue.IllegalLocation);
     }
 
-    public LocalStub(LIRDebugInfo info, LIROperand result) {
+    public LocalStub(LIRDebugInfo info, CiValue result) {
         this.info = info;
         this.result = result;
     }
 
-    protected void setOperands(int tempInputCount, int tempCount, LIROperand... operands) {
+    protected void setOperands(int tempInputCount, int tempCount, CiValue... operands) {
         this.tempCount = tempCount;
         this.tempInputCount = tempInputCount;
         this.operands = operands;
     }
 
-    public LIROperand operand(int index) {
+    public CiValue operand(int index) {
         return instruction.stubOperand(index);
     }
 
@@ -83,11 +84,11 @@ public abstract class LocalStub {
         return this.getClass().getSimpleName();
     }
 
-    public LIROperand originalResult() {
+    public CiValue originalResult() {
         return result;
     }
 
-    public LIROperand result() {
+    public CiValue result() {
         return resultSlot.get(instruction);
     }
 

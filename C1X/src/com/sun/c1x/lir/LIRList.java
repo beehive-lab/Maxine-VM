@@ -81,15 +81,15 @@ public class LIRList {
         return operations.get(i);
     }
 
-    public void callDirect(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
+    public void callDirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
         append(new LIRCall(LIROpcode.DirectCall, method, result, arguments, info, false));
     }
 
-    public void callIndirect(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
+    public void callIndirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
         append(new LIRCall(LIROpcode.IndirectCall, method, result, arguments, info, false));
     }
 
-    public void callNative(LIROperand address, String symbol, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
+    public void callNative(CiValue address, String symbol, CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
         append(new LIRCall(LIROpcode.NativeCall, new NativeFunction(address, symbol), result, arguments, info, false));
     }
 
@@ -109,11 +109,11 @@ public class LIRList {
         append(new LIROp0(LIROpcode.MembarRelease));
     }
 
-    public void stdEntry(LIROperand receiver) {
+    public void stdEntry(CiValue receiver) {
         append(new LIROp0(LIROpcode.StdEntry, receiver));
     }
 
-    public void osrEntry(LIROperand osrPointer) {
+    public void osrEntry(CiValue osrPointer) {
         append(new LIROp0(LIROpcode.OsrEntry, osrPointer));
     }
 
@@ -121,163 +121,163 @@ public class LIRList {
         append(new LIRLabel(lbl));
     }
 
-    public void negate(LIROperand from, LIROperand to, GlobalStub globalStub) {
+    public void negate(CiValue from, CiValue to, GlobalStub globalStub) {
         LIROp1 op = new LIROp1(LIROpcode.Neg, from, to);
         op.globalStub = globalStub;
         append(op);
     }
 
-    public void leal(LIROperand from, LIROperand resultReg) {
+    public void leal(CiValue from, CiValue resultReg) {
         append(new LIROp1(LIROpcode.Leal, from, resultReg));
     }
 
-    public void unalignedMove(LIRAddress src, LIROperand dst) {
+    public void unalignedMove(CiAddress src, CiValue dst) {
         append(new LIROp1(LIROp1.LIRMoveKind.Unaligned, src, dst, dst.kind, null));
     }
 
-    public void unalignedMove(LIROperand src, LIRAddress dst) {
+    public void unalignedMove(CiValue src, CiAddress dst) {
         append(new LIROp1(LIROp1.LIRMoveKind.Unaligned, src, dst, src.kind, null));
     }
 
-    public void move(LIRAddress src, LIROperand dst, LIRDebugInfo info) {
+    public void move(CiAddress src, CiValue dst, LIRDebugInfo info) {
         append(new LIROp1(LIROpcode.Move, src, dst, src.kind, info));
     }
 
-    public void move(LIROperand src, LIRAddress dst, LIRDebugInfo info) {
+    public void move(CiValue src, CiAddress dst, LIRDebugInfo info) {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.kind, info));
     }
 
-    public void move(LIROperand src, LIROperand dst, CiKind kind) {
+    public void move(CiValue src, CiValue dst, CiKind kind) {
         append(new LIROp1(LIROpcode.Move, src, dst, kind, null));
     }
 
-    public void move(LIROperand src, LIROperand dst) {
+    public void move(CiValue src, CiValue dst) {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.kind, null));
     }
 
-    public void volatileMove(LIROperand src, LIROperand dst, CiKind kind, LIRDebugInfo info) {
+    public void volatileMove(CiValue src, CiValue dst, CiKind kind, LIRDebugInfo info) {
         append(new LIROp1(LIROp1.LIRMoveKind.Volatile, src, dst, kind, info));
     }
 
-    public void oop2reg(Object o, LIROperand reg) {
-        append(new LIROp1(LIROpcode.Move, LIROperand.forObject(o), reg));
+    public void oop2reg(Object o, CiValue reg) {
+        append(new LIROp1(LIROpcode.Move, CiConstant.forObject(o), reg));
     }
 
-    public void returnOp(LIROperand result) {
+    public void returnOp(CiValue result) {
         append(new LIROp1(LIROpcode.Return, result));
     }
 
-    public void safepoint(LIROperand tmp, LIRDebugInfo info) {
+    public void safepoint(CiValue tmp, LIRDebugInfo info) {
         append(new LIROp1(LIROpcode.Safepoint, tmp, info));
     }
 
-    public void readPC(LIROperand dst) {
+    public void readPC(CiValue dst) {
         append(new LIROp0(LIROpcode.ReadPC, dst));
     }
 
-    public void alloca(StackBlock stackBlock, LIROperand dst) {
+    public void alloca(StackBlock stackBlock, CiValue dst) {
         append(new LIRStackAllocate(dst, stackBlock));
     }
 
-    public void convert(int code, LIROperand left, LIROperand dst, GlobalStub globalStub) {
+    public void convert(int code, CiValue left, CiValue dst, GlobalStub globalStub) {
         LIRConvert op = new LIRConvert(code, left, dst);
         op.globalStub = globalStub;
         append(op);
     }
 
-    public void logicalAnd(LIROperand left, LIROperand right, LIROperand dst) {
+    public void logicalAnd(CiValue left, CiValue right, CiValue dst) {
         append(new LIROp2(LIROpcode.LogicAnd, left, right, dst));
     }
 
-    public void logicalOr(LIROperand left, LIROperand right, LIROperand dst) {
+    public void logicalOr(CiValue left, CiValue right, CiValue dst) {
         append(new LIROp2(LIROpcode.LogicOr, left, right, dst));
     }
 
-    public void logicalXor(LIROperand left, LIROperand right, LIROperand dst) {
+    public void logicalXor(CiValue left, CiValue right, CiValue dst) {
         append(new LIROp2(LIROpcode.LogicXor, left, right, dst));
     }
 
-    public void nullCheck(LIROperand opr, LIRDebugInfo info) {
+    public void nullCheck(CiValue opr, LIRDebugInfo info) {
         append(new LIROp1(LIROpcode.NullCheck, opr, info));
     }
 
-    public void throwException(LIROperand exceptionPC, LIROperand exceptionOop, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Throw, exceptionPC, exceptionOop, LIROperand.IllegalLocation, info, CiKind.Illegal, true));
+    public void throwException(CiValue exceptionPC, CiValue exceptionOop, LIRDebugInfo info) {
+        append(new LIROp2(LIROpcode.Throw, exceptionPC, exceptionOop, CiValue.IllegalLocation, info, CiKind.Illegal, true));
     }
 
-    public void unwindException(LIROperand exceptionPC, LIROperand exceptionOop, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Unwind, exceptionPC, exceptionOop, LIROperand.IllegalLocation, info));
+    public void unwindException(CiValue exceptionPC, CiValue exceptionOop, LIRDebugInfo info) {
+        append(new LIROp2(LIROpcode.Unwind, exceptionPC, exceptionOop, CiValue.IllegalLocation, info));
     }
 
-    public void compareTo(LIROperand left, LIROperand right, LIROperand dst) {
+    public void compareTo(CiValue left, CiValue right, CiValue dst) {
         append(new LIROp2(LIROpcode.CompareTo, left, right, dst));
     }
 
-    public void cmp(Condition condition, LIROperand left, LIROperand right, LIRDebugInfo info) {
+    public void cmp(Condition condition, CiValue left, CiValue right, LIRDebugInfo info) {
         append(new LIROp2(LIROpcode.Cmp, condition, left, right, info));
     }
 
-    public void cmp(Condition condition, LIROperand left, LIROperand right) {
+    public void cmp(Condition condition, CiValue left, CiValue right) {
         cmp(condition, left, right, null);
     }
 
-    public void cmp(Condition condition, LIROperand left, int right, LIRDebugInfo info) {
-        cmp(condition, left, LIROperand.forInt(right), info);
+    public void cmp(Condition condition, CiValue left, int right, LIRDebugInfo info) {
+        cmp(condition, left, CiConstant.forInt(right), info);
     }
 
-    public void cmp(Condition condition, LIROperand left, int right) {
+    public void cmp(Condition condition, CiValue left, int right) {
         cmp(condition, left, right, null);
     }
 
-    public void cmove(Condition condition, LIROperand src1, LIROperand src2, LIROperand dst) {
+    public void cmove(Condition condition, CiValue src1, CiValue src2, CiValue dst) {
         append(new LIROp2(LIROpcode.Cmove, condition, src1, src2, dst));
     }
 
-    public void abs(LIROperand from, LIROperand to, LIROperand tmp) {
+    public void abs(CiValue from, CiValue to, CiValue tmp) {
         append(new LIROp2(LIROpcode.Abs, from, tmp, to));
     }
 
-    public void sqrt(LIROperand from, LIROperand to, LIROperand tmp) {
+    public void sqrt(CiValue from, CiValue to, CiValue tmp) {
         append(new LIROp2(LIROpcode.Sqrt, from, tmp, to));
     }
 
-    public void log(LIROperand from, LIROperand to, LIROperand tmp) {
+    public void log(CiValue from, CiValue to, CiValue tmp) {
         append(new LIROp2(LIROpcode.Log, from, tmp, to));
     }
 
-    public void log10(LIROperand from, LIROperand to, LIROperand tmp) {
+    public void log10(CiValue from, CiValue to, CiValue tmp) {
         append(new LIROp2(LIROpcode.Log10, from, tmp, to));
     }
 
-    public void sin(LIROperand from, LIROperand to, LIROperand tmp1, LIROperand tmp2) {
+    public void sin(CiValue from, CiValue to, CiValue tmp1, CiValue tmp2) {
         append(new LIROp2(LIROpcode.Sin, from, tmp1, to, tmp2));
     }
 
-    public void cos(LIROperand from, LIROperand to, LIROperand tmp1, LIROperand tmp2) {
+    public void cos(CiValue from, CiValue to, CiValue tmp1, CiValue tmp2) {
         append(new LIROp2(LIROpcode.Cos, from, tmp1, to, tmp2));
     }
 
-    public void tan(LIROperand from, LIROperand to, LIROperand tmp1, LIROperand tmp2) {
+    public void tan(CiValue from, CiValue to, CiValue tmp1, CiValue tmp2) {
         append(new LIROp2(LIROpcode.Tan, from, tmp1, to, tmp2));
     }
 
-    public void add(LIROperand left, LIROperand right, LIROperand res) {
+    public void add(CiValue left, CiValue right, CiValue res) {
         append(new LIROp2(LIROpcode.Add, left, right, res));
     }
 
-    public void sub(LIROperand left, LIROperand right, LIROperand res, LIRDebugInfo info) {
+    public void sub(CiValue left, CiValue right, CiValue res, LIRDebugInfo info) {
         append(new LIROp2(LIROpcode.Sub, left, right, res, info));
     }
 
-    public void mul(LIROperand left, LIROperand right, LIROperand res) {
+    public void mul(CiValue left, CiValue right, CiValue res) {
         append(new LIROp2(LIROpcode.Mul, left, right, res));
     }
 
-    public void div(LIROperand left, LIROperand right, LIROperand res, LIRDebugInfo info) {
+    public void div(CiValue left, CiValue right, CiValue res, LIRDebugInfo info) {
         append(new LIROp2(LIROpcode.Div, left, right, res, info));
     }
 
-    public void rem(LIROperand left, LIROperand right, LIROperand res, LIRDebugInfo info) {
+    public void rem(CiValue left, CiValue right, CiValue res, LIRDebugInfo info) {
         append(new LIROp2(LIROpcode.Rem, left, right, res, info));
     }
 
@@ -308,105 +308,105 @@ public class LIRList {
         append(new LIRBranch(cond, kind, block, unordered));
     }
 
-    public void shiftLeft(LIROperand value, int count, LIROperand dst) {
-        shiftLeft(value, LIROperand.forInt(count), dst, LIROperand.IllegalLocation);
+    public void shiftLeft(CiValue value, int count, CiValue dst) {
+        shiftLeft(value, CiConstant.forInt(count), dst, CiValue.IllegalLocation);
     }
 
-    public void shiftRight(LIROperand value, int count, LIROperand dst) {
-        shiftRight(value, LIROperand.forInt(count), dst, LIROperand.IllegalLocation);
+    public void shiftRight(CiValue value, int count, CiValue dst) {
+        shiftRight(value, CiConstant.forInt(count), dst, CiValue.IllegalLocation);
     }
 
-    public void lcmp2int(LIROperand left, LIROperand right, LIROperand dst) {
+    public void lcmp2int(CiValue left, CiValue right, CiValue dst) {
         append(new LIROp2(LIROpcode.Cmpl2i, left, right, dst));
     }
 
-    public void callRuntime(CiRuntimeCall rtCall, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
+    public void callRuntime(CiRuntimeCall rtCall, CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
         append(new LIRCall(LIROpcode.DirectCall, rtCall, result, arguments, info, false));
     }
 
-    public void prefetch(LIRAddress addr, boolean isStore) {
+    public void prefetch(CiAddress addr, boolean isStore) {
         append(new LIROp1(isStore ? LIROpcode.Prefetchw : LIROpcode.Prefetchr, addr));
     }
 
-    public void idiv(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+    public void idiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Idiv, left, right, tmp, res, info));
     }
 
-    public void irem(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+    public void irem(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Irem, left, right, tmp, res, info));
     }
 
-    public void ldiv(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+    public void ldiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Ldiv, left, right, tmp, res, info));
     }
 
-    public void lrem(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+    public void lrem(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Lrem, left, right, tmp, res, info));
     }
 
-    public void wdiv(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+    public void wdiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Wdiv, left, right, tmp, res, info));
     }
 
-    public void wrem(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+    public void wrem(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Wrem, left, right, tmp, res, info));
     }
 
-    public void wdivi(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+    public void wdivi(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Wdivi, left, right, tmp, res, info));
     }
 
-    public void wremi(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+    public void wremi(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Wremi, left, right, tmp, res, info));
     }
 
-    public void cmpMemInt(Condition condition, LIRLocation base, int disp, int c, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Cmp, condition, new LIRAddress(base, disp, CiKind.Int), LIROperand.forInt(c), info));
+    public void cmpMemInt(Condition condition, CiLocation base, int disp, int c, LIRDebugInfo info) {
+        append(new LIROp2(LIROpcode.Cmp, condition, new CiAddress(CiKind.Int, base, disp), CiConstant.forInt(c), info));
     }
 
-    public void cmpRegMem(Condition condition, LIROperand reg, LIRAddress addr, LIRDebugInfo info) {
+    public void cmpRegMem(Condition condition, CiValue reg, CiAddress addr, LIRDebugInfo info) {
         append(new LIROp2(LIROpcode.Cmp, condition, reg, addr, info));
     }
 
-    public void shiftLeft(LIROperand value, LIROperand count, LIROperand dst, LIROperand tmp) {
+    public void shiftLeft(CiValue value, CiValue count, CiValue dst, CiValue tmp) {
         append(new LIROp2(LIROpcode.Shl, value, count, dst, tmp));
     }
 
-    public void shiftRight(LIROperand value, LIROperand count, LIROperand dst, LIROperand tmp) {
+    public void shiftRight(CiValue value, CiValue count, CiValue dst, CiValue tmp) {
         append(new LIROp2(LIROpcode.Shr, value, count, dst, tmp));
     }
 
-    public void unsignedShiftRight(LIROperand value, LIROperand count, LIROperand dst, LIROperand tmp) {
+    public void unsignedShiftRight(CiValue value, CiValue count, CiValue dst, CiValue tmp) {
         append(new LIROp2(LIROpcode.Ushr, value, count, dst, tmp));
     }
 
-    public void fcmp2int(LIROperand left, LIROperand right, LIROperand dst, boolean isUnorderedLess) {
+    public void fcmp2int(CiValue left, CiValue right, CiValue dst, boolean isUnorderedLess) {
         append(new LIROp2(isUnorderedLess ? LIROpcode.Ucmpfd2i : LIROpcode.Cmpfd2i, left, right, dst));
     }
 
-    public void casLong(LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand t1, LIROperand t2) {
+    public void casLong(CiValue addr, CiValue cmpValue, CiValue newValue, CiValue t1, CiValue t2) {
         // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
         // implying successful swap of newValue into addr
         append(new LIRCompareAndSwap(LIROpcode.CasLong, addr, cmpValue, newValue, t1, t2));
     }
 
-    public void casObj(LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand t1, LIROperand t2) {
+    public void casObj(CiValue addr, CiValue cmpValue, CiValue newValue, CiValue t1, CiValue t2) {
         // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
         // implying successful swap of newValue into addr
         append(new LIRCompareAndSwap(LIROpcode.CasObj, addr, cmpValue, newValue, t1, t2));
     }
 
-    public void casInt(LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand t1, LIROperand t2) {
+    public void casInt(CiValue addr, CiValue cmpValue, CiValue newValue, CiValue t1, CiValue t2) {
         // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
         // implying successful swap of newValue into addr
         append(new LIRCompareAndSwap(LIROpcode.CasInt, addr, cmpValue, newValue, t1, t2));
     }
 
-    public void store(LIROperand src, LIRAddress dst, LIRDebugInfo info) {
+    public void store(CiValue src, CiAddress dst, LIRDebugInfo info) {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.kind, info));
     }
 
-    public void load(LIRAddress src, LIROperand dst, LIRDebugInfo info) {
+    public void load(CiAddress src, CiValue dst, LIRDebugInfo info) {
         append(new LIROp1(LIROpcode.Move, src, dst, src.kind, info));
     }
 
@@ -521,7 +521,7 @@ public class LIRList {
         operations.add(i, op);
     }
 
-    public void xir(XirSnippet snippet, LIROperand[] operands, LIROperand outputOperand, int tempInputCount, int tempCount, LIROperand[] inputOperands, int[] operandIndices, int outputOperandIndex, LIRDebugInfo info, RiMethod method) {
+    public void xir(XirSnippet snippet, CiValue[] operands, CiValue outputOperand, int tempInputCount, int tempCount, CiValue[] inputOperands, int[] operandIndices, int outputOperandIndex, LIRDebugInfo info, RiMethod method) {
         append(new LIRXirInstruction(snippet, operands, outputOperand, tempInputCount, tempCount, inputOperands, operandIndices, outputOperandIndex, info, method));
     }
 }

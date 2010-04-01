@@ -20,15 +20,18 @@
  */
 package com.sun.c1x.ci;
 
+
 /**
- * This class simply unifies {@link CiConstant} and {@link CiLocation}.
+ * Base class for compiler interface values.
  *
  * @author Thomas Wuerthinger
  */
 public abstract class CiValue {
 
+    public static CiLocation IllegalLocation = CiRegisterLocation.None;
+    
     /**
-     * Stores the kind of this value.
+     * The kind of this value.
      */
     public final CiKind kind;
 
@@ -39,4 +42,51 @@ public abstract class CiValue {
     protected CiValue(CiKind kind) {
         this.kind = kind;
     }
+
+    public final boolean isVariableOrRegister() {
+        return this instanceof CiVariable || this instanceof CiRegisterLocation;
+    }
+
+    protected Error illegalOperation(String operation) {
+        throw new InternalError("Cannot call " + operation + " on " + this);
+    }
+
+    public CiRegister asRegister() {
+        throw illegalOperation("asRegister");
+    }
+
+    public final boolean isIllegal() {
+        return this == IllegalLocation;
+    }
+    
+    public final boolean isLegal() {
+        return this != IllegalLocation;
+    }
+
+    public final boolean isStackSlot() {
+        return this instanceof CiStackSlot;
+    }
+
+    public int variableNumber() {
+        throw illegalOperation("variableNumber");
+    }
+
+    public final boolean isRegister() {
+        return this instanceof CiRegisterLocation;
+    }
+
+    public final boolean isVariable() {
+        return this instanceof CiVariable;
+    }
+
+    public final boolean isAddress() {
+        return this instanceof CiAddress;
+    }
+
+    public final boolean isConstant() {
+        return this instanceof CiConstant;
+    }
+    
+    @Override
+    public abstract String toString();
 }

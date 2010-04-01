@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 
 /**
@@ -40,7 +41,7 @@ public class LIRConvert extends LIROp1 {
      * @param operand the input operand for this instruction
      * @param result the result operand for this instruction
      */
-    public LIRConvert(int bytecode, LIROperand operand, LIROperand result) {
+    public LIRConvert(int bytecode, CiValue operand, CiValue result) {
         super(LIROpcode.Convert, operand, result);
         this.bytecode = bytecode;
     }

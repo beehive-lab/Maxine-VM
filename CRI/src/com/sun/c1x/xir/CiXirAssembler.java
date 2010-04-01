@@ -509,7 +509,7 @@ public abstract class CiXirAssembler {
 
     public XirOperand createRegister(String name, CiKind kind, CiRegister register) {
     	assert !finished;
-        XirFixed fixed = new XirFixed(name, new CiRegisterLocation(kind, register));
+        XirFixed fixed = new XirFixed(name, register.asLocation(kind));
         temps.add(fixed);
         return fixed;
     }

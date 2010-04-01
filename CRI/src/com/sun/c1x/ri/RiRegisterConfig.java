@@ -23,6 +23,7 @@ package com.sun.c1x.ri;
 import com.sun.c1x.ci.CiRegister;
 import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.ci.CiLocation;
+import com.sun.c1x.ci.CiTarget;
 
 /**
  * This interface represents the register configuration specified by the runtime system
@@ -46,9 +47,9 @@ public interface RiRegisterConfig {
 
     CiRegister getThreadRegister(); // will be deprecated with XIR
 
-    CiLocation[] getJavaParameterLocations(CiKind[] types, boolean outgoing);
+    CiLocation[] getJavaParameterLocations(CiKind[] types, boolean outgoing, CiTarget target);
 
-    CiLocation[] getRuntimeParameterLocations(CiKind[] types);
+    CiLocation[] getRuntimeParameterLocations(CiKind[] types, CiTarget target);
 
     CiRegister[] getAllocatableRegisters();
 

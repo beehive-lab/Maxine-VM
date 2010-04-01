@@ -23,6 +23,7 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
@@ -230,7 +231,7 @@ final class ControlFlowOptimizer {
                 assert curLastOp.info == null : "return instructions do not have debug information";
 
                 assert curLastOp instanceof LIROp1 : "return must be LIROp1";
-                LIROperand returnOpr = ((LIROp1) curLastOp).operand();
+                CiValue returnOpr = ((LIROp1) curLastOp).operand();
 
                 for (int j = block.numberOfPreds() - 1; j >= 0; j--) {
                     BlockBegin pred = block.predAt(j);

@@ -45,8 +45,8 @@ public class LIROp2 extends LIRInstruction {
      * @param opr2 the second input operand
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp2(LIROpcode opcode, Condition condition, LIROperand opr1, LIROperand opr2, LIRDebugInfo info) {
-        super(opcode, LIROperand.IllegalLocation, info, false, null, 0, 0, opr1, opr2);
+    public LIROp2(LIROpcode opcode, Condition condition, CiValue opr1, CiValue opr2, LIRDebugInfo info) {
+        super(opcode, CiValue.IllegalLocation, info, false, null, 0, 0, opr1, opr2);
         this.kind = CiKind.Illegal;
         this.condition = condition;
         assert opcode == LIROpcode.Cmp : "Instruction opcode should be of type LIROpcode.Cmp";
@@ -61,7 +61,7 @@ public class LIROp2 extends LIRInstruction {
      * @param opr2 the second input operand
      * @param result the operand that holds the result of this instruction
      */
-    public LIROp2(LIROpcode opcode, Condition condition, LIROperand opr1, LIROperand opr2, LIROperand result) {
+    public LIROp2(LIROpcode opcode, Condition condition, CiValue opr1, CiValue opr2, CiValue result) {
         super(opcode, result, null, false, null, 0, 0, opr1, opr2);
         this.kind = CiKind.Illegal;
         this.condition = condition;
@@ -78,7 +78,7 @@ public class LIROp2 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      * @param kind the kind of this instruction
      */
-    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, LIRDebugInfo info, CiKind kind, boolean hasCall) {
+    public LIROp2(LIROpcode opcode, CiValue opr1, CiValue opr2, CiValue result, LIRDebugInfo info, CiKind kind, boolean hasCall) {
         super(opcode, result, info, hasCall, null, 0, 0, opr1, opr2);
         this.kind = kind;
         this.condition = null;
@@ -94,7 +94,7 @@ public class LIROp2 extends LIRInstruction {
      * @param result the operand that holds the result of this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, LIRDebugInfo info) {
+    public LIROp2(LIROpcode opcode, CiValue opr1, CiValue opr2, CiValue result, LIRDebugInfo info) {
         this(opcode, opr1, opr2, result, info, CiKind.Illegal, false);
     }
 
@@ -106,7 +106,7 @@ public class LIROp2 extends LIRInstruction {
      * @param opr2 the instruction's second operand
      * @param result the operand that holds the result of this instruction
      */
-    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result) {
+    public LIROp2(LIROpcode opcode, CiValue opr1, CiValue opr2, CiValue result) {
         this(opcode, opr1, opr2, result, (LIRDebugInfo) null);
     }
 
@@ -119,7 +119,7 @@ public class LIROp2 extends LIRInstruction {
      * @param result the operand that holds the result of this instruction
      * @param tmp the temporary operand used by this instruction
      */
-    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, LIROperand tmp) {
+    public LIROp2(LIROpcode opcode, CiValue opr1, CiValue opr2, CiValue result, CiValue tmp) {
         super(opcode, result, null, false, null, 0, 1, opr1, opr2, tmp);
         this.kind = CiKind.Illegal;
         this.condition = null;
@@ -131,7 +131,7 @@ public class LIROp2 extends LIRInstruction {
      *
      * @return opr1 the first input operand
      */
-    public LIROperand opr1() {
+    public CiValue opr1() {
         return operand(0);
     }
 
@@ -140,7 +140,7 @@ public class LIROp2 extends LIRInstruction {
      *
      * @return opr2 the second input operand
      */
-    public LIROperand opr2() {
+    public CiValue opr2() {
         return operand(1);
     }
 
@@ -150,7 +150,7 @@ public class LIROp2 extends LIRInstruction {
      * @return tmp the temporary operand of this instruction
      *
      */
-    public LIROperand tmp() {
+    public CiValue tmp() {
         return operand(2);
     }
 

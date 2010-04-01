@@ -22,7 +22,7 @@ package com.sun.c1x.gen;
 
 import java.util.*;
 
-import com.sun.c1x.lir.*;
+import com.sun.c1x.ci.*;
 
 /**
  * @author Marcelo Cintra
@@ -30,14 +30,14 @@ import com.sun.c1x.lir.*;
  */
 class ResolveNode {
 
-    final LIROperand operand;
+    final CiValue operand;
     final List<ResolveNode> destinations;
 
     boolean assigned;
     boolean visited;
     boolean startNode;
 
-    ResolveNode(LIROperand operand) {
+    ResolveNode(CiValue operand) {
         this.operand = operand;
         destinations = new ArrayList<ResolveNode>();
     }

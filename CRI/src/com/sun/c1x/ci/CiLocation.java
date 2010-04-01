@@ -29,40 +29,7 @@ package com.sun.c1x.ci;
  */
 public abstract class CiLocation extends CiValue {
 
-    /**
-     * Singleton object representing an invalid location.
-     */
-    public static final CiLocation InvalidLocation = new CiStackLocation(CiKind.Illegal, 0, 0, false);
-
     protected CiLocation(CiKind kind) {
         super(kind);
-    }
-
-    public boolean isRegister() {
-        return this instanceof CiRegisterLocation;
-    }
-
-    public boolean isStack() {
-        return this instanceof CiStackLocation;
-    }
-
-    public boolean isValid() {
-        return kind != CiKind.Illegal;
-    }
-
-    public CiRegister register() {
-        return ((CiRegisterLocation) this).register;
-    }
-
-    public int stackOffset() {
-        return ((CiStackLocation) this).stackOffset;
-    }
-
-    public int stackSize() {
-        return ((CiStackLocation) this).stackSize;
-    }
-
-    public boolean isCallerFrame() {
-        return ((CiStackLocation) this).callerFrame;
     }
 }

@@ -20,105 +20,64 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XMetrics;
-import com.sun.c1x.C1XCompilation;
+import static com.sun.c1x.ci.CiValue.*;
+
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.opt.*;
-import com.sun.c1x.ri.RiType;
-import com.sun.c1x.ri.RiRuntime;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiConstant;
+import com.sun.c1x.ri.*;
 
 /**
- * A value within the HIR graph, including local variables, phis, and all other instructions.
- * In other words, every node in an HIR graph is a subclass of {@link Value}.
- *
- * There are three immediate subclasses of {@link Value}, {@link Instruction}, {@link Local} and {@link Phi}.
- * The vast majority of HIR nodes are further subclasses of {@link Instruction}.
- * Only {@link Instruction} nodes can occur inside a basic block, {@link Local} and {@link Phi}
- * nodes occur in the associated {@link com.sun.c1x.value.FrameState}.
+ * This class represents a value within the HIR graph, including local variables, phis, and
+ * all other instructions.
  *
  * @author Ben L. Titzer
- * @author Mick Jordan
  */
 public abstract class Value {
-
     /**
-     * The list of attributes that a {@link Value} may have at a given instant during the compilation.
+     * An enumeration of flags on values.
      */
     public enum Flag {
-        /** this value is non-null. */
-        NonNull,
-        /** does not require null check. */
-        NoNullCheck,
-        /** does not require store check. */
-        NoStoreCheck,
-        /** does not require bounds check. */
-        NoBoundsCheck,
-        /** does not require read barrier. */
-        NoReadBarrier,
-        /** does not require write barrier. */
-        NoWriteBarrier,
-        /** divide or modulus cannot cause exception. */
-        NoZeroCheck,
-        /** divide or modulus cannot be special case of {@code MIN_INT / -1}. */
-        NoDivSpecialCase,
-        /** <b>TBD</b>. */
+        NonNull,            // this value is non-null
+        NoNullCheck,        // does not require null check
+        NoStoreCheck,       // does not require store check
+        NoBoundsCheck,      // does not require bounds check
+        NoReadBarrier,      // does not require read barrier
+        NoWriteBarrier,     // does not require write barrier
+        NoZeroCheck,        // divide or modulus cannot cause exception
+        NoDivSpecialCase,   // divide or modulus cannot be special case of MIN_INT / -1
         DirectCompare,
-        /** field or method is resolved and class is loaded and initialized. */
-        IsLoaded,
-        /** field or method access is static. */
-        IsStatic,
-        /** branch is backward (safepoint). */
-        IsSafepoint,
-        /** <b>TBD</b>. */
+        IsLoaded,           // field or method is resolved and class is loaded and initialized
+        IsStatic,           // field or method access is static
+        IsSafepoint,        // branch is backward (safepoint)
         IsStrictFP,
-        /** intrinsic preserves state. */
-        PreservesState,
-        /** <b>TBD</b>. */
+        PreservesState,     // intrinsic preserves state
         UnorderedIsTrue,
-        /** <b>TBD</b>. */
         NeedsPatching,
-        /** live because value is used. */
-        LiveValue,
-        /** live for deoptimization. */
-        LiveDeopt,
-        /** live for control dependencies. */
-        LiveControl,
-        /** live for possible side-effects only. */
-        LiveSideEffect,
-        /** instruction is a store. */
-        LiveStore,
-        /** phi is illegal because local is dead. */
-        PhiDead,
-        /** phi cannot be simplified. */
-        PhiCannotSimplify,
-        /** phi has been visited during simplification. */
-        PhiVisited;
+        LiveValue,          // live because value is used
+        LiveDeopt,          // live for deoptimization
+        LiveControl,        // live for control dependencies
+        LiveSideEffect,     // live for possible side-effects only
+        LiveStore,          // instruction is a store
+        PhiDead,            // phi is illegal because local is dead
+        PhiCannotSimplify,  // phi cannot be simplified
+        PhiVisited;         // phi has been visited during simplification
 
         public final int mask = 1 << ordinal();
     }
 
-    /** The set of attributes that indicate that the node is <i>live</i>. */
     private static final int LIVE_FLAGS = Flag.LiveValue.mask |
                                           Flag.LiveDeopt.mask |
                                           Flag.LiveControl.mask |
                                           Flag.LiveSideEffect.mask;
-
-    /** The set of attributes for this node. */
-    private int flags;
-    /**  The <i>type</i> of this HIR node, see {@link CiKind}. */
     public final CiKind kind;
-    /**  A unique id used only in tracing. */
-    private int id;
-    /** <b>TBD</b>. */
-    protected LIROperand lirOperand;
 
-    /** A field that can be used to cache arbitrary analysis information. */
-    public Object optInfo;
-    /** Set by {@link InstructionSubstituter} with value that should replace this. */
-    public Value subst;    // managed by
+    private int id;
+    private int flags;
+    protected CiValue operand;
+
+    public Object optInfo; // a cache field for analysis information
+    public Value subst;    // managed by InstructionSubstituter
 
     /**
      * Creates a new value with the specified kind.
@@ -315,25 +274,25 @@ public abstract class Value {
      * Gets the LIR operand associated with this instruction.
      * @return the LIR operand for this instruction
      */
-    public final LIROperand operand() {
-        return lirOperand;
+    public final CiValue operand() {
+        return operand;
     }
 
     /**
      * Sets the LIR operand associated with this instruction.
      * @param operand the operand to associate with this instruction
      */
-    public final void setOperand(LIROperand operand) {
-        assert operand != null && LIROperand.isLegal(operand) : "operand must exist";
+    public final void setOperand(CiValue operand) {
+        assert operand != null && operand.isLegal() : "operand must exist";
         assert operand.kind == this.kind;
-        lirOperand = operand;
+        this.operand = operand;
     }
 
     /**
      * Clears the LIR operand associated with this instruction.
      */
     public final void clearOperand() {
-        lirOperand = LIROperand.IllegalLocation;
+        this.operand = IllegalLocation;
     }
 
     /**

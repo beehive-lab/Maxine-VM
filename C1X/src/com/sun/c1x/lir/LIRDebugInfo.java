@@ -22,9 +22,10 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ci.CiAddress.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.ci.*;
 
 /**
  * This class represents debugging and deoptimization information attached to a LIR instruction.
@@ -83,15 +84,20 @@ public class LIRDebugInfo {
 
     public void setOop(CiLocation location, CiTarget target) {
         assert debugInfo != null : "debug info not allocated yet";
-        if (location.isStack() && !location.isCallerFrame()) {
-            int offset = location.stackOffset();
-            assert offset % target.arch.wordSize == 0 : "must be aligned";
-            int stackMapIndex = offset / target.arch.wordSize;
-            setBit(debugInfo.frameRefMap, stackMapIndex);
+        if (location.isAddress()) {
+            CiAddress stackLocation = (CiAddress) location;
+            assert stackLocation.format == Format.BASE_DISP;
+            if (stackLocation.base == CiRegisterLocation.Frame) {
+                int offset = stackLocation.displacement;
+                assert offset % target.arch.wordSize == 0 : "must be aligned";
+                int stackMapIndex = offset / target.arch.wordSize;
+                setBit(debugInfo.frameRefMap, stackMapIndex);
+            }
         } else {
-            int index = target.allocatableRegs.referenceMapIndex[location.register().number];
-            assert index >= 0 : "object cannot be in non-object register " + location.register();
-            assert location.isRegister() : "objects can only be in a single register";
+            assert location.isRegister() : "objects can only be in a register";
+            CiRegisterLocation registerLocation = (CiRegisterLocation) location;
+            int index = target.allocatableRegs.referenceMapIndex[registerLocation.register.number];
+            assert index >= 0 : "object cannot be in non-object register " + registerLocation.register;
             setBit(debugInfo.registerRefMap, index);
         }
     }

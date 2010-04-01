@@ -104,15 +104,15 @@ public final class CiConstant extends CiValue {
         return other == this || valueEqual(other);
     }
 
-    private boolean valueEqual(CiConstant cother) {
+    private boolean valueEqual(CiConstant other) {
         // must have equivalent tags to be equal
-        if (kind != cother.kind) {
+        if (kind != other.kind) {
             return false;
         }
         // use == for object references and .equals() for boxed types
-        if (value == cother.value) {
+        if (value == other.value) {
             return true;
-        } else if (!kind.isObject() && value != null && value.equals(cother.value)) {
+        } else if (!kind.isObject() && value != null && value.equals(other.value)) {
             return true;
         }
         return false;

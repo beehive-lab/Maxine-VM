@@ -21,11 +21,11 @@
 package com.sun.c0x;
 
 import com.sun.c0x.C0XCompilation.Location;
-import com.sun.c1x.asm.Address;
 import com.sun.c1x.asm.Label;
 import com.sun.c1x.bytecode.BytecodeLookupSwitch;
 import com.sun.c1x.bytecode.BytecodeTableSwitch;
 import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiAddress;
 import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.ci.CiRegister;
 import com.sun.c1x.ci.CiTarget;
@@ -635,7 +635,7 @@ public class X86CodeGen extends CodeGen {
         return location(dst);
     }
 
-    void emitLoad(CiKind kind, CiRegister dst, Address elemAddress) {
+    void emitLoad(CiKind kind, CiRegister dst, CiAddress elemAddress) {
         switch (kind) {
             case Byte:
             case Boolean:
@@ -676,7 +676,7 @@ public class X86CodeGen extends CodeGen {
         }
     }
 
-    void emitStore(CiKind kind, Address elemAddress, CiRegister valReg) {
+    void emitStore(CiKind kind, CiAddress elemAddress, CiRegister valReg) {
         switch (kind) {
             case Byte:
             case Boolean:

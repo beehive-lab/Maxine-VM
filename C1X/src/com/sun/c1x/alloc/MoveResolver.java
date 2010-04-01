@@ -23,7 +23,7 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.CiRegister;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
@@ -41,7 +41,7 @@ final class MoveResolver {
     private LIRInsertionBuffer insertionBuffer; // buffer where moves are inserted
 
     private final List<Interval> mappingFrom;
-    private final List<LIROperand> mappingFromOpr;
+    private final List<CiValue> mappingFromOpr;
     private final List<Interval> mappingTo;
     private boolean multipleReadsAllowed;
     private final int[] registerBlocked;
@@ -71,7 +71,7 @@ final class MoveResolver {
         this.allocator = allocator;
         this.multipleReadsAllowed = false;
         this.mappingFrom = new ArrayList<Interval>(8);
-        this.mappingFromOpr = new ArrayList<LIROperand>(8);
+        this.mappingFromOpr = new ArrayList<CiValue>(8);
         this.mappingTo = new ArrayList<Interval>(8);
         this.insertIdx = -1;
         this.insertionBuffer = new LIRInsertionBuffer();
@@ -228,8 +228,8 @@ final class MoveResolver {
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
-        LIROperand fromOpr = LIROperand.forVariable(fromInterval.registerNumber(), fromInterval.kind());
-        LIROperand toOpr = LIROperand.forVariable(toInterval.registerNumber(), toInterval.kind());
+        CiValue fromOpr = CiVariable.forIndex(fromInterval.registerNumber(), fromInterval.kind());
+        CiValue toOpr = CiVariable.forIndex(toInterval.registerNumber(), toInterval.kind());
 
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
@@ -238,12 +238,12 @@ final class MoveResolver {
         //                   toInterval.regNum(), toInterval.assignedReg(), toInterval.assignedRegHi());
     }
 
-    private void insertMove(LIROperand fromOpr, Interval toInterval) {
+    private void insertMove(CiValue fromOpr, Interval toInterval) {
         assert fromOpr.kind == toInterval.kind() : "move between different types";
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
-        LIROperand toOpr = LIROperand.forVariable(toInterval.registerNumber(), toInterval.kind());
+        CiValue toOpr = CiVariable.forIndex(toInterval.registerNumber(), toInterval.kind());
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
@@ -369,15 +369,15 @@ final class MoveResolver {
 
         assert fromInterval.kind() == toInterval.kind();
         mappingFrom.add(fromInterval);
-        mappingFromOpr.add(LIROperand.IllegalLocation);
+        mappingFromOpr.add(CiValue.IllegalLocation);
         mappingTo.add(toInterval);
     }
 
-    void addMapping(LIROperand fromOpr, Interval toInterval) {
+    void addMapping(CiValue fromOpr, Interval toInterval) {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
             TTY.println("MoveResolver: adding mapping from %s to %d (%d, %d)", fromOpr, toInterval.registerNumber(), toInterval.assignedReg(), toInterval.assignedRegHi());
         }
-        assert LIROperand.isConstant(fromOpr) : "only for constants";
+        assert fromOpr.isConstant() : "only for constants";
 
         mappingFrom.add(null);
         mappingFromOpr.add(fromOpr);

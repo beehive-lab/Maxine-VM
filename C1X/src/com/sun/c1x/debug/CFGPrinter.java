@@ -209,7 +209,7 @@ public class CFGPrinter {
               Value value = state.stackAt(i);
               out.disableIndentation();
               out.print(InstructionPrinter.stateString(i, value, block));
-              printLirOperand(value);
+              printCiValue(value);
               out.println();
               out.enableIndentation();
               i += value.kind.sizeInSlots();
@@ -225,7 +225,7 @@ public class CFGPrinter {
                 Value value = state.lockAt(i);
                 out.disableIndentation();
                 out.print(InstructionPrinter.stateString(i, value, block));
-                printLirOperand(value);
+                printCiValue(value);
                 out.println();
                 out.enableIndentation();
             }
@@ -242,7 +242,7 @@ public class CFGPrinter {
                 if (value != null) {
                     out.disableIndentation();
                     out.print(InstructionPrinter.stateString(i, value, block));
-                    printLirOperand(value);
+                    printCiValue(value);
                     out.println();
                     out.enableIndentation();
                     // also ignore illegal HiWords
@@ -290,7 +290,7 @@ public class CFGPrinter {
         }
     }
 
-    private void printLirOperand(Value i) {
+    private void printCiValue(Value i) {
         if (i != null && i.operand() != null && i.operand().isVariable()) {
             out.print(" \"").print(i.operand().toString()).print("\" ");
         }
@@ -307,7 +307,7 @@ public class CFGPrinter {
         }
         int useCount = 0;
         out.print(i.bci()).print(' ').print(useCount).print(' ');
-        printLirOperand(i);
+        printCiValue(i);
         out.print(i).print(' ');
         new InstructionPrinter(out, true, target).printInstruction(i);
 
