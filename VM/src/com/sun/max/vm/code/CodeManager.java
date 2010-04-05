@@ -54,7 +54,7 @@ public abstract class CodeManager {
             "Memory allocated for runtime code region cache."), MaxineVM.Phase.PRISTINE);
 
     /**
-     * The code regions.
+     * The code region.
      */
     @INSPECTED
     protected static final CodeRegion runtimeCodeRegion = new CodeRegion("Code-Runtime");
