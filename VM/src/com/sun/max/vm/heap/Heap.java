@@ -242,8 +242,14 @@ public final class Heap {
         return disableGCOption.getValue();
     }
 
+    /**
+     * Used by the Inspector to uniquely identify the special boot heap region.
+     */
     @INSPECTED
-    public static final BootHeapRegion bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), "Heap-Boot");
+    private static final String HEAP_BOOT_NAME = "Heap-Boot";
+
+    @INSPECTED
+    public static final BootHeapRegion bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), HEAP_BOOT_NAME);
 
     @UNSAFE
     @FOLD
