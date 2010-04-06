@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ci;
 
+import com.sun.c1x.ci.CiRegister.AllocationSpec;
 import com.sun.c1x.ri.RiRegisterConfig;
 
 /**
@@ -32,7 +33,7 @@ import com.sun.c1x.ri.RiRegisterConfig;
 public class CiTarget {
     public final CiArchitecture arch;
 
-    public final CiRegister.AllocationSet allocatableRegs;
+    public final AllocationSpec allocationSpec;
     public final CiRegister stackPointerRegister;
     public final CiRegister scratchRegister;
     public final RiRegisterConfig registerConfig;
@@ -66,7 +67,7 @@ public class CiTarget {
 
         this.pageSize = pageSize;
         this.isMP = isMP;
-        this.allocatableRegs = new CiRegister.AllocationSet(registerConfig.getAllocatableRegisters(), registerConfig.getRegisterReferenceMapOrder(), registerConfig.getCallerSaveRegisters());
+        this.allocationSpec = new AllocationSpec(registerConfig.getAllocatableRegisters(), registerConfig.getRegisterReferenceMapOrder(), registerConfig.getCallerSaveRegisters());
         this.spillSlotsPerKindMap = new int[CiKind.values().length];
 
         for (CiKind k : CiKind.values()) {

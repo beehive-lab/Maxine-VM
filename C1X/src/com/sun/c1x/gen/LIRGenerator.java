@@ -26,6 +26,8 @@ import static com.sun.c1x.ci.CiValue.*;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.alloc.*;
+import com.sun.c1x.alloc.Operands.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ci.CiAddress.*;
@@ -83,24 +85,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    /**
-     * Flags that can be set on {@linkplain CiLocation#isVariable() variables}.
-     */
-    public enum VariableFlag {
-        /**
-         * Denotes a variable that needs to be assigned a memory location
-         * at the beginning, but may then be loaded in a register.
-         */
-        MustStartInMemory,
-
-        /**
-         * Denotes a variable that must be assigned to a byte-sized register.
-         */
-        MustBeByteReg;
-
-        public static final VariableFlag[] VALUES = values();
-    }
-
     protected final C1XCompilation compilation;
     protected final IR ir;
     protected final XirSupport xirSupport;
@@ -110,7 +94,9 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected final boolean isTwoOperand;
 
     private BlockBegin currentBlock;
-    private int currentVariableNumber;
+
+    private final Operands operands;
+
     private Value currentInstruction;
     private Value lastInstructionPrinted; // Debugging only
 
@@ -120,17 +106,12 @@ public abstract class LIRGenerator extends ValueVisitor {
      */
     ArrayMap<Value> instructionForOperand;
 
-    // XXX: refactor this to use 2 one dimensional bitmaps
-    private BitMap2D varFlags; // flags which can be set on a per-variable basis
-
     private List<CiConstant> constants;
     private List<CiValue> regForConstants;
     protected LIRList lir;
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
-        this.currentVariableNumber = CiRegister.LowestVirtualRegisterNumber;
-        this.varFlags = new BitMap2D(0, VariableFlag.VALUES.length);
         this.ir = compilation.hir();
         this.xir = compilation.compiler.xir;
         this.xirSupport = new XirSupport(xir);
@@ -142,7 +123,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         constants = new ArrayList<CiConstant>();
         regForConstants = new ArrayList<CiValue>();
 
-        init();
+        this.operands = new Operands(compilation.target);
+
+        // mark the liveness of all instructions if it hasn't already been done by the optimizer
+        LivenessMarker livenessMarker = new LivenessMarker(ir);
+        C1XMetrics.HIRInstructions += livenessMarker.liveCount();
     }
 
     public void doBlock(BlockBegin block) {
@@ -162,27 +147,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     public Value instructionForVariable(int variableNumber) {
         return instructionForOperand.get(variableNumber);
-    }
-
-    public boolean isVarFlagSet(int varNum, VariableFlag f) {
-        return varFlags.isValidIndex(varNum, f.ordinal()) && varFlags.at(varNum, f.ordinal());
-    }
-
-    public boolean isVarFlagSet(CiValue opr, VariableFlag f) {
-        return isVarFlagSet(opr.variableNumber(), f);
-    }
-
-    public void setVarFlag(int varNum, VariableFlag f) {
-        if (varFlags.sizeInBits() == 0) {
-            BitMap2D temp = new BitMap2D(100, VariableFlag.VALUES.length);
-            temp.clear();
-            varFlags = temp;
-        }
-        varFlags.atPutGrow(varNum, f.ordinal(), true);
-    }
-
-    public void setVarFlag(CiValue opr, VariableFlag f) {
-        setVarFlag(opr.variableNumber(), f);
     }
 
     @Override
@@ -1202,7 +1166,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         // create a spill location
-        CiValue tmp = newVariable(t, VariableFlag.MustStartInMemory);
+        CiValue tmp = operands.newVariable(t, VariableFlag.MustStartInMemory);
         // move from register to spill
         lir.move(value, tmp);
         return tmp;
@@ -1553,12 +1517,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected void incrementBackedgeCounter(LIRDebugInfo info) {
     }
 
-    void init() {
-        // mark the liveness of all instructions if it hasn't already been done by the optimizer
-        LivenessMarker livenessMarker = new LivenessMarker(ir);
-        C1XMetrics.HIRInstructions += livenessMarker.liveCount();
-    }
-
     protected void logicOp(int code, CiValue resultOp, CiValue leftOp, CiValue rightOp) {
         if (isTwoOperand && leftOp != resultOp) {
             assert rightOp != resultOp : "malformed";
@@ -1617,8 +1575,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             // a block with only one predecessor never has phi functions
             if (sux.numberOfPreds() > 1) {
-                int maxPhis = curState.valuesSize();
-                PhiResolver resolver = new PhiResolver(this, currentVariableNumber + maxPhis * 2);
+                PhiResolver resolver = new PhiResolver(this);
 
                 FrameState suxState = sux.stateBefore();
 
@@ -1643,34 +1600,13 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     /**
-     * Creates a new {@linkplain CiLocation#isVariable() LIR variable}.
+     * Creates a new {@linkplain CiVariable variable}.
      *
      * @param kind the kind of the variable
-     * @return a new LIR variable
+     * @return a new variable
      */
-    public CiLocation newVariable(CiKind kind) {
-        if (kind == CiKind.Boolean || kind == CiKind.Byte) {
-            return newVariable(kind, VariableFlag.MustBeByteReg);
-        }
-        assert kind != CiKind.Void;
-        return forVariable(currentVariableNumber++, kind);
-    }
-
-    private CiLocation forVariable(int i, CiKind kind) {
-        return CiVariable.forIndex(kind, i);
-    }
-
-    /**
-     * Creates a new {@linkplain CiLocation#isVariable() LIR variable}.
-     *
-     * @param kind the kind of the variable
-     * @return a new LIR variable
-     */
-    public CiLocation newVariable(CiKind kind, VariableFlag flag) {
-        assert kind != CiKind.Void;
-        CiLocation location = forVariable(currentVariableNumber++, kind);
-        setVarFlag(location, flag);
-        return location;
+    public CiVariable newVariable(CiKind kind) {
+        return operands.newVariable(kind);
     }
 
     CiValue operandForInstruction(Value x) {
@@ -1872,8 +1808,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         return returnRegister.asLocation(kind);
     }
 
-    public int maxVirtualRegisterNumber() {
-        return currentVariableNumber;
+    public Operands operands() {
+        return operands;
     }
 
     public Value currentInstruction() {

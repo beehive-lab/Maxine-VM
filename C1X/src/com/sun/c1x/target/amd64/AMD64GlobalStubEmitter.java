@@ -171,7 +171,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         AMD64LIRAssembler assembler = new AMD64LIRAssembler(compilation);
         asm = assembler.masm;
 
-        for (CiRegister reg : compiler.target.allocatableRegs.allocatableRegisters) {
+        for (CiRegister reg : compiler.target.allocationSpec.allocatableRegisters) {
             if (reg.isCpu()) {
                 allocatableRegisters.add(reg);
             }

@@ -46,17 +46,20 @@ public abstract class Instruction extends Value {
     public static final int INVOCATION_ENTRY_BCI = -1;  // XXX: not currently used
     public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
-    /** Index of bytecode that generated this node when appended in a basic block.
+    /**
+     * Index of bytecode that generated this node when appended in a basic block.
      * Negative values indicate special cases.
-     * XXX: this field may not really be needed.
      */
     private int bci;
+
     /**
      * Link to next Instruction in a basic block.
      */
     private Instruction next;
 
-    /** List of associated exception handlers. */
+    /**
+     * List of associated exception handlers.
+     */
     private List<ExceptionHandler> exceptionHandlers = ExceptionHandler.ZERO_HANDLERS;
 
     /**

@@ -66,7 +66,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
 
         // get the unallocatable registers
         Set<String> unallocatable = new HashSet<String>();
-        HashMap<String, CiRegister> regMap = buildRegisterMap(arch);
+        HashMap<String, CiRegister> regMap = arch.registersByName;
         calleeSaveOffset = new HashMap<CiRegister, Integer>();
 
         // set up well known registers
@@ -250,21 +250,12 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
             }
 
             if (result[i] == null) {
-                result[i] = new CiAddress(kind, outgoing ? CiRegisterLocation.Frame : CiRegisterLocation.CallerFrame, currentStackSlot);
+                result[i] = new CiAddress(kind, outgoing ? CiRegister.Frame.asLocation() : CiRegister.CallerFrame.asLocation(), currentStackSlot);
                 currentStackSlot += target.spillSlots(kind) * target.spillSlotSize;
             }
         }
 
         return result;
-    }
-
-    @HOSTED_ONLY
-    private HashMap<String, CiRegister> buildRegisterMap(CiArchitecture arch) {
-        HashMap<String, CiRegister> regMap = new HashMap<String, CiRegister>();
-        for (CiRegister r : arch.registers) {
-            regMap.put(r.name.toLowerCase(), r);
-        }
-        return regMap;
     }
 
     @HOSTED_ONLY

@@ -22,8 +22,8 @@ package com.sun.c1x.gen;
 
 import static com.sun.c1x.ci.CiValue.*;
 
+import com.sun.c1x.alloc.Operands.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.gen.LIRGenerator.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 
@@ -135,10 +135,10 @@ public class LIRItem {
             loadItem();
             CiValue res = result();
 
-            if (!res.isVariable() || !gen.isVarFlagSet(res, LIRGenerator.VariableFlag.MustBeByteReg)) {
+            if (!res.isVariable() || !gen.operands().mustBeByteRegister(res.asLocation())) {
                 // make sure that it is a byte register
                 assert !value.kind.isFloat() && !value.kind.isDouble() : "can't load floats in byte register";
-                CiValue reg = gen.newVariable(CiKind.Byte, VariableFlag.MustBeByteReg);
+                CiValue reg = gen.operands().newVariable(CiKind.Byte, VariableFlag.MustBeByteRegister);
                 gen.lir.move(res, reg);
                 result = reg;
             }

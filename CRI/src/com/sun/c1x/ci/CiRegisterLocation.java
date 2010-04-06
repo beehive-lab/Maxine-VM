@@ -23,8 +23,11 @@ package com.sun.c1x.ci;
 
 /**
  * This class represents a register location storing a value of a fixed kind.
+ * Use {@link CiRegister#asLocation(CiKind))} to retrieve the canonical
+ * {@link CiRegisterLocation} instance for a given (register,kind) pair.  
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public final class CiRegisterLocation extends CiLocation {
 
@@ -33,42 +36,10 @@ public final class CiRegisterLocation extends CiLocation {
      */
     public final CiRegister register;
 
-    public static final CiRegisterLocation None = new CiRegisterLocation(CiKind.Illegal, CiRegister.None);
-    public static final CiRegisterLocation Frame = new CiRegisterLocation(CiKind.Illegal, CiRegister.Frame);
-    public static final CiRegisterLocation CallerFrame = new CiRegisterLocation(CiKind.Illegal, CiRegister.CallerFrame);
-
     /**
-     * Gets a {@link CiRegisterLocation} instance representing a given register
-     * storing a value of a given kind.
-     *  
-     * @param kind the kind of the value read/written to {@code register}
-     * @param register a register
-     * 
-     * @see CiRegister#asLocation(CiKind)
+     * Should only be called from {@link CiRegister#CiRegister} to ensure canonicalization.
      */
-    public static CiRegisterLocation get(CiKind kind, CiRegister register) {
-        assert register != CiRegister.None;
-        assert register != CiRegister.Frame;
-        assert register != CiRegister.CallerFrame;
-        CiRegisterLocation reg = cache[kind.ordinal()][register.number];
-        if (reg == null) {
-            reg = new CiRegisterLocation(kind, register);
-            
-            // Note: this is not atomic so it's possible for more than one CiRegisterLocation
-            // for the same (CiKind, CiRegister) pair to exist. That is fine as this pooling
-            // is only for reducing memory usage, not for providing canonicalization.
-            cache[kind.ordinal()][register.number] = reg;
-        }
-        return reg;
-    }
-
-    private static CiRegisterLocation[][] cache = new CiRegisterLocation[CiKind.values().length][CiRegister.LowestVirtualRegisterNumber];
-    
-    /**
-     * Private constructor to enforce use of {@link #get(CiKind, int)} so that the
-     * shared instance {@linkplain #cache cache} is used.
-     */
-    private CiRegisterLocation(CiKind kind, CiRegister register) {
+    CiRegisterLocation(CiKind kind, CiRegister register) {
         super(kind);
         this.register = register;
     }
@@ -78,14 +49,7 @@ public final class CiRegisterLocation extends CiLocation {
     }
 
     public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (o instanceof CiRegisterLocation) {
-            CiRegisterLocation l = (CiRegisterLocation) o;
-            return l.kind == kind && l.register == register;
-        }
-        return false;
+        return o == this;
     }
 
     public String toString() {

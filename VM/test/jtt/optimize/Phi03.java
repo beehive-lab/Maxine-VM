@@ -33,6 +33,11 @@ public class Phi03 {
         this.f = f;
     }
 
+    static boolean ternary(int a, int b) {
+        boolean result = a < b;
+        return result;
+    }
+
     public static int test(int arg) {
         return test2(new Phi03(arg), arg);
     }

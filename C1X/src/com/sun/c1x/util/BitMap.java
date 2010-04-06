@@ -31,18 +31,32 @@ import java.util.*;
  */
 public class BitMap {
 
+    private static final int ADDRESS_BITS_PER_WORD = 6;
+    private static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
+    private static final int BIT_INDEX_MASK = BITS_PER_WORD - 1;
+
+    public static final int DEFAULT_LENGTH = BITS_PER_WORD;
+
     private int length;
-    private int low;
-    private int[] extra;
+    private long low;
+    private long[] extra;
+
+    /**
+     * Constructs a new bit map with the {@linkplain #DEFAULT_LENGTH default length}.
+     */
+    public BitMap() {
+        this(DEFAULT_LENGTH);
+    }
 
     /**
      * Construct a new bit map with the specified length.
      * @param length the length of the bitmap
      */
     public BitMap(int length) {
+        assert length >= 0;
         this.length = length;
-        if (length > 32) {
-            extra = new int[length >> 5];
+        if (length > BITS_PER_WORD) {
+            extra = new long[length >> ADDRESS_BITS_PER_WORD];
         }
     }
 
@@ -51,12 +65,12 @@ public class BitMap {
      * @param i the index of the bit to set
      */
     public void set(int i) {
-        if (checkIndex(i) < 32) {
-            low |= 1 << i;
+        if (checkIndex(i) < BITS_PER_WORD) {
+            low |= 1L << i;
         } else {
             int pos = wordIndex(i);
             int index = bitInWord(i);
-            extra[pos] |= 1 << index;
+            extra[pos] |= 1L << index;
         }
     }
 
@@ -67,15 +81,15 @@ public class BitMap {
     public void grow(int newLength) {
         if (newLength > length) {
             // grow this bitmap to the new length
-            int newSize = newLength >> 5;
+            int newSize = newLength >> ADDRESS_BITS_PER_WORD;
             if (newLength > 0) {
                 if (extra == null) {
                     // extra just needs to be allocated now
-                    extra = new int[newSize];
+                    extra = new long[newSize];
                 } else {
                     if (extra.length < newSize) {
                         // extra needs to be copied
-                        int[] newExtra = new int[newSize];
+                        long[] newExtra = new long[newSize];
                         for (int i = 0; i < extra.length; i++) {
                             newExtra[i] = extra[i];
                         }
@@ -94,11 +108,11 @@ public class BitMap {
     }
 
     private int bitInWord(int i) {
-        return i & (32 - 1);
+        return i & BIT_INDEX_MASK;
     }
 
     private int wordIndex(int i) {
-        return (i >> 5) - 1;
+        return (i >> ADDRESS_BITS_PER_WORD) - 1;
     }
 
     /**
@@ -106,12 +120,12 @@ public class BitMap {
      * @param i the index of the bit to clear
      */
     public void clear(int i) {
-        if (checkIndex(i) < 32) {
-            low &= ~(1 << i);
+        if (checkIndex(i) < BITS_PER_WORD) {
+            low &= ~(1L << i);
         } else {
             int pos = wordIndex(i);
             int index = bitInWord(i);
-            extra[pos] &= ~(1 << index);
+            extra[pos] &= ~(1L << index);
         }
     }
 
@@ -147,12 +161,12 @@ public class BitMap {
      * @return {@code true} if the bit at the specified position is {@code 1}
      */
     public boolean get(int i) {
-        if (checkIndex(i) < 32) {
+        if (checkIndex(i) < BITS_PER_WORD) {
             return ((low >> i) & 1) != 0;
         }
         int pos = wordIndex(i);
         int index = bitInWord(i);
-        int bits = extra[pos];
+        long bits = extra[pos];
         return ((bits >> index) & 1) != 0;
     }
 
@@ -167,12 +181,12 @@ public class BitMap {
         if (i < 0 || i >= length) {
             return false;
         }
-        if (i < 32) {
+        if (i < BITS_PER_WORD) {
             return ((low >> i) & 1) != 0;
         }
         int pos = wordIndex(i);
         int index = bitInWord(i);
-        int bits = extra[pos];
+        long bits = extra[pos];
         return ((bits >> index) & 1) != 0;
     }
 
@@ -201,18 +215,18 @@ public class BitMap {
      */
     public boolean setIntersect(BitMap other) {
         boolean same = true;
-        int intx = low & other.low;
+        long intx = low & other.low;
         if (low != intx) {
             same = false;
             low = intx;
         }
-        int[] oxtra = other.extra;
+        long[] oxtra = other.extra;
         if (extra != null && oxtra != null) {
             for (int i = 0; i < extra.length; i++) {
-                int a = extra[i];
+                long a = extra[i];
                 if (i < oxtra.length) {
                     // zero bits out of this map
-                    int ax = a & oxtra[i];
+                    long ax = a & oxtra[i];
                     if (a != ax) {
                         same = false;
                         extra[i] = ax;
@@ -297,7 +311,7 @@ public class BitMap {
 
         // check bits including and to the left_ of offset's position
         int pos = bitInWord(resOffset);
-        int res = map(index) >> pos;
+        long res = map(index) >> pos;
         if (res != 0) {
             // find the position of the 1-bit
             for (; (res & 1) == 0; resOffset++) {
@@ -322,10 +336,10 @@ public class BitMap {
     }
 
     private int bitIndex(int index) {
-        return (index + 1) << 5;
+        return (index + 1) << ADDRESS_BITS_PER_WORD;
     }
 
-    private int map(int index) {
+    private long map(int index) {
         if (index == -1) {
             return low;
         }
@@ -346,7 +360,7 @@ public class BitMap {
     }
 
     public BitMap copy() {
-        BitMap n = new BitMap(32);
+        BitMap n = new BitMap(BITS_PER_WORD);
         n.low = low;
         if (extra != null) {
             n.extra = Arrays.copyOf(extra, extra.length);

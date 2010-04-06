@@ -77,6 +77,14 @@ public class Util {
         return false;
     }
 
+    public static boolean isOdd(int n) {
+        return (n & 1) == 1;
+    }
+
+    public static boolean isEven(int n) {
+        return (n & 1) == 0;
+    }
+
     /**
      * Checks whether the specified integer is a power of two.
      *
@@ -527,7 +535,7 @@ public class Util {
 
     public static boolean traceLinearScan(int level, String string, Object... objects) {
         if (C1XOptions.TraceLinearScanLevel >= level) {
-            TTY.println(String.format(string, objects));
+            TTY.println(string, objects);
         }
         return true;
     }

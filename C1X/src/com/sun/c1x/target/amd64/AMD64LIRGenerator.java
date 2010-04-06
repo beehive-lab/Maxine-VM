@@ -24,6 +24,7 @@ package com.sun.c1x.target.amd64;
 import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.alloc.Operands.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
@@ -666,7 +667,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             CiAddress addr = new CiAddress(CiKind.Double, src, offset);
             CiValue tmp = newVariable(CiKind.Double);
             lir.load(addr, tmp, null);
-            CiValue spill = newVariable(CiKind.Long, VariableFlag.MustStartInMemory);
+            CiValue spill = operands().newVariable(CiKind.Long, VariableFlag.MustStartInMemory);
             lir.move(tmp, spill);
             lir.move(spill, dst);
         } else {
@@ -680,7 +681,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         if (isVolatile && kind == CiKind.Long) {
             CiAddress addr = new CiAddress(CiKind.Double, src, offset);
             CiValue tmp = newVariable(CiKind.Double);
-            CiValue spill = newVariable(CiKind.Double, VariableFlag.MustStartInMemory);
+            CiValue spill = operands().newVariable(CiKind.Double, VariableFlag.MustStartInMemory);
             lir.move(data, spill);
             lir.move(spill, tmp);
             lir.move(tmp, addr);

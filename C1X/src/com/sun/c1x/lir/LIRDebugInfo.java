@@ -87,7 +87,7 @@ public class LIRDebugInfo {
         if (location.isAddress()) {
             CiAddress stackLocation = (CiAddress) location;
             assert stackLocation.format == Format.BASE_DISP;
-            if (stackLocation.base == CiRegisterLocation.Frame) {
+            if (stackLocation.base == CiRegister.Frame.asLocation()) {
                 int offset = stackLocation.displacement;
                 assert offset % target.arch.wordSize == 0 : "must be aligned";
                 int stackMapIndex = offset / target.arch.wordSize;
@@ -96,7 +96,7 @@ public class LIRDebugInfo {
         } else {
             assert location.isRegister() : "objects can only be in a register";
             CiRegisterLocation registerLocation = (CiRegisterLocation) location;
-            int index = target.allocatableRegs.referenceMapIndex[registerLocation.register.number];
+            int index = target.allocationSpec.refMapIndexMap[registerLocation.register.number];
             assert index >= 0 : "object cannot be in non-object register " + registerLocation.register;
             setBit(debugInfo.registerRefMap, index);
         }
