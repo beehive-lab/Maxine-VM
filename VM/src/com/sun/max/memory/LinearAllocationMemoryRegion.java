@@ -74,7 +74,7 @@ public class LinearAllocationMemoryRegion extends RuntimeMemoryRegion {
 
     @Override
     public MemoryUsage getUsage() {
-        return new MemoryUsage(size.toLong(), getAllocationMark().minus(start).toLong(), size.toLong(), size.toLong());
+        return new MemoryUsage(size.toLong(), used().toLong(), size.toLong(), size.toLong());
     }
 
     @INLINE
@@ -82,5 +82,8 @@ public class LinearAllocationMemoryRegion extends RuntimeMemoryRegion {
         return mark.get().asAddress();
     }
 
+    protected Size used() {
+        return getAllocationMark().minus(start).asSize();
+    }
 
 }
