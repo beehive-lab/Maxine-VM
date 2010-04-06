@@ -81,7 +81,7 @@ public final class IfOp extends Op2 {
      * @return {@code true} if this comparison is commutative
      */
     public boolean isCommutative() {
-        return cond == Condition.eql || cond == Condition.neq;
+        return cond == Condition.EQ || cond == Condition.NE;
     }
 
     /**

@@ -40,16 +40,12 @@ public abstract class AbstractAssembler {
     public final CiTarget target;
     public final CiTargetMethod targetMethod;
     public final List<ExceptionInfo> exceptionInfoList;
-    public final boolean is64;
-    public final boolean is32;
     protected final int wordSize;
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;
         this.targetMethod = new CiTargetMethod(target.allocatableRegs.registerRefMapSize);
         this.codeBuffer = new Buffer(target.arch.byteOrder);
-        this.is32 = target.arch.is32bit();
-        this.is64 = target.arch.is64bit();
         this.exceptionInfoList = new ArrayList<ExceptionInfo>();
         this.wordSize = target.arch.wordSize;
     }
@@ -69,7 +65,7 @@ public abstract class AbstractAssembler {
         targetMethod.setFrameSize(frameSize);
     }
 
-    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int registerRestoreEpilogueOffset) {
+    public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset) {
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
@@ -98,9 +94,9 @@ public abstract class AbstractAssembler {
 
         if (C1XOptions.PrintAssembly) {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
-            TTY.println("Frame size: %d", targetMethod);
-            TTY.println("Frame size: %d", targetMethod.frameSize());
-            TTY.println("Register size: %d", targetMethod.referenceRegisterCount());
+            TTY.println("Name: " + name);
+            TTY.println("Frame size: " + targetMethod.frameSize());
+            TTY.println("Register size: " + targetMethod.referenceRegisterCount());
 
             Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
             Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);

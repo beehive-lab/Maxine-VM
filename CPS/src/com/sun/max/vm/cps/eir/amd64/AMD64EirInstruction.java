@@ -669,22 +669,22 @@ public interface AMD64EirInstruction {
 
         @Override
         protected void emit_G_G(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64EirRegister.General sourceRegister) {
-            emitter.assembler().cmovge(destinationRegister.as32(), sourceRegister.as32());
+            emitter.assembler().cmovae(destinationRegister.as32(), sourceRegister.as32());
         }
 
         @Override
         protected void emit_G_L(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, Label sourceLiteralLabel) {
-            emitter.assembler().rip_cmovge(destinationRegister.as32(), sourceLiteralLabel);
+            emitter.assembler().rip_cmovae(destinationRegister.as32(), sourceLiteralLabel);
         }
 
         @Override
         protected void emit_G_S8(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64IndirectRegister64 sourceBasePointer, byte sourceOffset) {
-            emitter.assembler().cmovge(destinationRegister.as32(), sourceOffset, sourceBasePointer);
+            emitter.assembler().cmovae(destinationRegister.as32(), sourceOffset, sourceBasePointer);
         }
 
         @Override
         protected void emit_G_S32(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64IndirectRegister64 sourceBasePointer, int sourceOffset) {
-            emitter.assembler().cmovge(destinationRegister.as32(), sourceOffset, sourceBasePointer);
+            emitter.assembler().cmovae(destinationRegister.as32(), sourceOffset, sourceBasePointer);
         }
 
         @Override
@@ -1449,8 +1449,8 @@ public interface AMD64EirInstruction {
 
     public static class DIV_I64 extends AMD64EirDivision {
 
-        public DIV_I64(EirBlock block, EirValue rd, EirValue ra, EirValue divisor) {
-            super(block, rd, ra, divisor);
+        public DIV_I64(EirBlock block, EirValue rdx, EirValue rax, EirValue divisor) {
+            super(block, rdx, rax, divisor);
         }
 
         @Override
@@ -1553,8 +1553,8 @@ public interface AMD64EirInstruction {
 
     public static class IDIV_I32 extends AMD64EirDivision {
 
-        public IDIV_I32(EirBlock block, EirValue rd, EirValue ra, EirValue divisor) {
-            super(block, rd, ra, divisor);
+        public IDIV_I32(EirBlock block, EirValue rdx, EirValue rax, EirValue divisor) {
+            super(block, rdx, rax, divisor);
         }
 
         @Override
@@ -1593,8 +1593,8 @@ public interface AMD64EirInstruction {
 
     public static class IDIV_I64 extends AMD64EirDivision {
 
-        public IDIV_I64(EirBlock block, EirValue rd, EirValue ra, EirValue divisor) {
-            super(block, rd, ra, divisor);
+        public IDIV_I64(EirBlock block, EirValue rdx, EirValue rax, EirValue divisor) {
+            super(block, rdx, rax, divisor);
         }
 
         @Override

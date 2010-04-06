@@ -75,6 +75,13 @@ public class CFGPrinter {
         this.target = target;
     }
 
+    /**
+     * Flushes all buffered output to the stream passed to {@link #CFGPrinter(OutputStream, CiTarget)}.
+     */
+    public void flush() {
+        out.flush();
+    }
+
     private void begin(String string) {
         out.println("begin_" + string);
         out.adjustIndentation(2);

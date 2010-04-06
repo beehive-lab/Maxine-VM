@@ -450,7 +450,7 @@ public class IRInterpreter {
             CiConstant xval = environment.lookup(i.x());
             CiConstant yval = environment.lookup(i.y());
 
-            assertKind(xval.kind.stackType(), yval.kind.stackType(), i.kind.stackType());
+            assertKind(xval.kind.stackKind(), yval.kind.stackKind(), i.kind.stackKind());
 
             switch (i.opcode()) {
                 case Bytecodes.IADD:
@@ -547,19 +547,19 @@ public class IRInterpreter {
 
             switch (i.opcode()) {
                 case Bytecodes.ISHL:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forInt((xval.asInt() << (yval.asInt() & 0x1F))), instructionCounter);
                     break;
 
                 case Bytecodes.ISHR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forInt((xval.asInt() >> (yval.asInt() & 0x1F))), instructionCounter);
                     break;
 
                 case Bytecodes.IUSHR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     s = yval.asInt() & 0x1f;
                     int iresult = xval.asInt() >> s;
@@ -570,22 +570,22 @@ public class IRInterpreter {
                     break;
 
                 case Bytecodes.LSHL:
-                    assertKind(xval.kind.stackType(), CiKind.Long);
-                    assertKind(yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), CiKind.Long);
+                    assertKind(yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forLong((xval.asLong() << (yval.asInt() & 0x3F))), instructionCounter);
                     break;
 
                 case Bytecodes.LSHR:
-                    assertKind(xval.kind.stackType(), CiKind.Long);
-                    assertKind(yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), CiKind.Long);
+                    assertKind(yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forLong((xval.asLong() >> (yval.asInt() & 0x3F))), instructionCounter);
                     break;
 
                 case Bytecodes.LUSHR:
-                    assertKind(xval.kind.stackType(), CiKind.Long);
-                    assertKind(yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), CiKind.Long);
+                    assertKind(yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     s = yval.asInt() & 0x3f;
                     long lresult = xval.asLong() >> s;
@@ -607,27 +607,27 @@ public class IRInterpreter {
 
             switch (i.opcode()) {
                 case Bytecodes.IAND:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() & yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() | yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IXOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() ^ yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.LAND:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() & yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() | yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LXOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() ^ yval.asLong())), instructionCounter);
                     break;
                 default:
@@ -670,27 +670,27 @@ public class IRInterpreter {
             final CiConstant y = environment.lookup(i.y());
 
             switch (i.condition()) {
-                case eql:
+                case EQ:
                     bindIfOp(i, x.equals(y), tval, fval);
                     break;
 
-                case neq:
+                case NE:
                     bindIfOp(i, !x.equals(y), tval, fval);
                     break;
 
-                case gtr:
+                case GT:
                     bindIfOp(i, x.asInt() > y.asInt(), tval, fval);
                     break;
 
-                case geq:
+                case GE:
                     bindIfOp(i, x.asInt() >= y.asInt(), tval, fval);
                     break;
 
-                case lss:
+                case LT:
                     bindIfOp(i, x.asInt() < y.asInt(), tval, fval);
                     break;
 
-                case leq:
+                case LE:
                     bindIfOp(i, x.asInt() <= y.asInt(), tval, fval);
                     break;
             }
@@ -878,9 +878,7 @@ public class IRInterpreter {
                 environment.bind(i, fromBoxedJavaValue(result.boxedValue()), instructionCounter);
             } catch (InvocationTargetException e) {
                 unexpected(i, e.getTargetException());
-            } catch (CiBailout e) {
-                unexpected(i, e.getCause());
-            } catch (StackOverflowError e) {
+            } catch (Throwable e) {
                 unexpected(i, e);
             }
             jumpNextInstruction();
@@ -1294,7 +1292,7 @@ public class IRInterpreter {
             int cmp = compareValues(x, y);
 
             switch (i.condition()) {
-                case eql:
+                case EQ:
                     if (cmp == 0) {
                         jump(i.successor(true));
                     } else {
@@ -1302,7 +1300,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case neq:
+                case NE:
                     if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
                     } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
@@ -1314,7 +1312,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case gtr:
+                case GT:
                     if (cmp == 1) {
                         jump(i.successor(true));
                     } else {
@@ -1322,7 +1320,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case geq:
+                case GE:
                     if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
                     } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
@@ -1335,7 +1333,7 @@ public class IRInterpreter {
 
                     break;
 
-                case lss:
+                case LT:
                     if (cmp == -1) {
                         jump(i.successor(true));
                     } else {
@@ -1343,7 +1341,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case leq:
+                case LE:
                     if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
                     } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
@@ -1801,14 +1799,14 @@ public class IRInterpreter {
             }
         }
 
-        private void assertKind(CiKind xval, CiKind yval, CiKind type) {
-            assertKind(xval, type);
-            assertKind(yval, type);
+        private void assertKind(CiKind xval, CiKind yval, CiKind kind) {
+            assertKind(xval, kind);
+            assertKind(yval, kind);
         }
 
-        private void assertKind(CiKind x, CiKind type) {
-            if (x != type) {
-                if (!(x.isInt() && (type.isLong() || type.isInt()))) {
+        private void assertKind(CiKind x, CiKind kind) {
+            if (x != kind) {
+                if (!(x.isInt() && (kind.isLong() || kind.isInt()))) {
                     throw new CiBailout("Type mismatch");
                 }
             }

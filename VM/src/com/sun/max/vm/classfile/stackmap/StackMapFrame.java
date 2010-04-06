@@ -38,9 +38,8 @@ public abstract class StackMapFrame {
     /**
      * Creates a stack map frame.
      *
-     * @param positionDelta
-     *            the value that is used to derive the {@linkplain #getPosition(int) bytecode position} at which
-     *            this frame applies based on the bytecode position at which the previous frame applies
+     * @param positionDelta the value that is used to derive the {@linkplain #getPosition(int) bytecode position} at
+     *            which this frame applies based on the bytecode position at which the previous frame applies
      */
     public StackMapFrame(int positionDelta) {
         this.positionDelta = positionDelta;
@@ -54,8 +53,8 @@ public abstract class StackMapFrame {
      * Gets the bytecode position at which this frame applies based on the bytecode position at which the previous frame
      * applies.
      *
-     * @param previousFramePosition
-     *            the bytecode position at which the previous frame applies or -1 if this is the first frame
+     * @param previousFramePosition the bytecode position at which the previous frame applies or -1 if this is the first
+     *            frame
      */
     public final int getPosition(int previousFramePosition) {
         return previousFramePosition == -1 ? positionDelta : previousFramePosition + 1 + positionDelta;
@@ -64,8 +63,8 @@ public abstract class StackMapFrame {
     /**
      * Transforms a given frame model to match the state described by this stack map frame.
      *
-     * @param frameModel
-     *            a frame model whose current state is the result of calling this method on the previous stack map frame
+     * @param frameModel a frame model whose current state is the result of calling this method on the previous stack
+     *            map frame
      */
     public abstract void applyTo(FrameModel frameModel);
 

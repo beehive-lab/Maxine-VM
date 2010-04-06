@@ -20,9 +20,9 @@
  */
 package com.sun.max.memory;
 
-import static com.sun.max.memory.MemoryBarrier.*;
+import static com.sun.c1x.bytecode.Bytecodes.MemoryBarriers.*;
 
-import com.sun.max.collect.*;
+import com.sun.c1x.bytecode.Bytecodes.*;
 
 /**
  * SMP memory models.
@@ -30,19 +30,22 @@ import com.sun.max.collect.*;
  * @author Bernd Mathiske
  */
 public enum MemoryModel {
-    SequentialConsistency(LOAD_LOAD, LOAD_STORE, STORE_LOAD, STORE_STORE),
-    TotalStoreOrder(LOAD_LOAD, LOAD_STORE, STORE_STORE),
-    AMD64(LOAD_STORE, STORE_STORE),
+    SequentialConsistency(LOAD_LOAD | LOAD_STORE | STORE_LOAD | STORE_STORE),
+    TotalStoreOrder(LOAD_LOAD | LOAD_STORE | STORE_STORE),
+    AMD64(LOAD_STORE | STORE_STORE),
     PartialStoreOrder(LOAD_LOAD),
-    RelaxedMemoryOrder();
+    RelaxedMemoryOrder(0);
 
-    public final PoolSet<MemoryBarrier> barriers;
+    /**
+     * Mask of {@linkplain MemoryBarriers memory barrier} flags denoting the barriers that
+     * are not required to be explicitly inserted under this memory model.
+     */
+    public final int impliedBarriers;
 
     /**
      * @param barriers the barriers that are implied everywhere in the code by this memory model
      */
-    private MemoryModel(MemoryBarrier... barriers) {
-        this.barriers = PoolSet.of(MemoryBarrier.VALUE_POOL, barriers);
+    private MemoryModel(int barriers) {
+        this.impliedBarriers = barriers;
     }
-
 }

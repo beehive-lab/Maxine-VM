@@ -458,16 +458,16 @@ public class NullCheckEliminator extends DefaultValueVisitor {
     }
 
     private void compareAgainstNonNull(If i, Value use) {
-        if (i.condition() == Condition.eql) {
+        if (i.condition() == Condition.EQ) {
             propagateNonNull(i, use, i.trueSuccessor());
         }
     }
 
     private void compareAgainstNull(If i, Value use) {
-        if (i.condition() == Condition.eql) {
+        if (i.condition() == Condition.EQ) {
             propagateNonNull(i, use, i.falseSuccessor());
         }
-        if (i.condition() == Condition.neq) {
+        if (i.condition() == Condition.NE) {
             propagateNonNull(i, use, i.trueSuccessor());
         }
     }

@@ -25,6 +25,7 @@ import java.util.List;
 import com.sun.c1x.ri.RiField;
 import com.sun.c1x.ri.RiMethod;
 import com.sun.c1x.ri.RiType;
+import com.sun.c1x.ri.RiType.Representation;
 import com.sun.c1x.ci.CiKind;
 
 /**
@@ -36,95 +37,51 @@ import com.sun.c1x.ci.CiKind;
  */
 public abstract class RiXirGenerator {
 
-    public XirSnippet genEntrypoint(XirSite site) {
+    public abstract XirSnippet genEntrypoint(XirSite site);
+
+    public abstract XirSnippet genSafepoint(XirSite site);
+
+    public abstract XirSnippet genResolveClass(XirSite site, RiType type, Representation representation);
+
+    public abstract XirSnippet genIntrinsic(XirSite site, XirArgument[] arguments, RiMethod method);
+
+    public abstract XirSnippet genInvokeInterface(XirSite site, XirArgument receiver, RiMethod method);
+
+    public abstract XirSnippet genInvokeVirtual(XirSite site, XirArgument receiver, RiMethod method);
+
+    public abstract XirSnippet genInvokeSpecial(XirSite site, XirArgument receiver, RiMethod method);
+
+    public abstract XirSnippet genInvokeStatic(XirSite site, RiMethod method);
+
+    public abstract XirSnippet genMonitorEnter(XirSite site, XirArgument receiver);
+
+    public abstract XirSnippet genMonitorExit(XirSite site, XirArgument receiver);
+
+    public abstract XirSnippet genGetField(XirSite site, XirArgument receiver, RiField field);
+
+    public abstract XirSnippet genPutField(XirSite site, XirArgument receiver, RiField field, XirArgument value);
+
+    public abstract XirSnippet genGetStatic(XirSite site, XirArgument staticTuple, RiField field);
+
+    public abstract XirSnippet genPutStatic(XirSite site, XirArgument staticTuple, RiField field, XirArgument value);
+
+    public abstract XirSnippet genNewInstance(XirSite site, RiType type);
+
+    public abstract XirSnippet genNewArray(XirSite site, XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType);
+
+    public abstract XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type);
+
+    public abstract XirSnippet genCheckCast(XirSite site, XirArgument receiver, XirArgument hub, RiType type);
+
+    public abstract XirSnippet genInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, RiType type);
+
+    public abstract XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, XirArgument length, CiKind elementKind, RiType elementType);
+
+    public abstract XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument length, XirArgument value, CiKind elementKind, RiType elementType);
+
+    public abstract XirSnippet genArrayLength(XirSite site, XirArgument array);
+
+    public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
         return null;
     }
-
-    public XirSnippet genSafepoint(XirSite site) {
-        return null;
-    }
-
-    public XirSnippet genResolveClassObject(XirSite site, RiType type) {
-        return null;
-    }
-
-    public XirSnippet genIntrinsic(XirSite site, XirArgument[] arguments, RiMethod method) {
-        return null;
-    }
-
-    public XirSnippet genInvokeInterface(XirSite site, XirArgument receiver, RiMethod method) {
-        return null;
-    }
-
-    public XirSnippet genInvokeVirtual(XirSite site, XirArgument receiver, RiMethod method) {
-        return null;
-    }
-
-    public XirSnippet genInvokeSpecial(XirSite site, XirArgument receiver, RiMethod method) {
-        return null;
-    }
-
-    public XirSnippet genInvokeStatic(XirSite site, RiMethod method) {
-        return null;
-    }
-
-    public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver) {
-        return null;
-    }
-
-    public XirSnippet genMonitorExit(XirSite site, XirArgument receiver) {
-        return null;
-    }
-
-    public XirSnippet genGetField(XirSite site, XirArgument receiver, RiField field) {
-        return null;
-    }
-
-    public XirSnippet genPutField(XirSite site, XirArgument receiver, RiField field, XirArgument value) {
-        return null;
-    }
-
-    public XirSnippet genGetStatic(XirSite site, XirArgument staticTuple, RiField field) {
-        return null;
-    }
-
-    public XirSnippet genPutStatic(XirSite site, XirArgument staticTuple, RiField field, XirArgument value) {
-        return null;
-    }
-
-    public XirSnippet genNewInstance(XirSite site, RiType type) {
-        return null;
-    }
-
-    public XirSnippet genNewArray(XirSite site, XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType) {
-        return null;
-    }
-
-    public XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type) {
-        return null;
-    }
-
-    public XirSnippet genCheckCast(XirSite site, XirArgument receiver, XirArgument hub, RiType type) {
-        return null;
-    }
-
-    public XirSnippet genInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, RiType type) {
-        return null;
-    }
-
-    public XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, XirArgument length, CiKind elementKind, RiType elementType) {
-        return null;
-    }
-
-    public XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument length, XirArgument value, CiKind elementKind, RiType elementType) {
-        return null;
-    }
-
-    public XirSnippet genArrayLength(XirSite site, XirArgument array) {
-        return null;
-    }
-
-	public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
-		return null;
-	}
 }

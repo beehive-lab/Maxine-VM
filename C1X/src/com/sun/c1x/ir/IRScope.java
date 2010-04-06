@@ -125,7 +125,7 @@ public class IRScope {
         if (caller == null) {
             return "root-scope: " + method;
         } else {
-            return "inline-scope @ " + callerBCI + ": " + method;
+            return "inlined-scope: " + method + " [caller bci: " + callerBCI + "]";
         }
     }
 

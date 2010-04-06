@@ -345,11 +345,6 @@ public class C1XRuntimeCalls {
         VMConfiguration.target().monitorScheme().monitorExit(obj);
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.TraceBlockEntry)
-    public static void runtimeTraceBlockEntry() {
-        verifyRefMaps();
-    }
-
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.OSRMigrationEnd)
     public static void runtimeOSRMigrationEnd() {
         verifyRefMaps();

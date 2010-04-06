@@ -105,23 +105,32 @@ public abstract class Actor {
     public static final int NEVER_INLINE =         0x80000000;
 
     /**
+     * Mask of flags that a substitutee should adopt from its {@linkplain SUBSTITUTE substitute}.
+     * Adoption of flags is a union operation with the existing flags of the substitutee.
+     */
+    public static final int SUBSTITUTION_ADOPTED_FLAGS =
+        UNSAFE |
+        FOLD |
+        INLINE |
+        NEVER_INLINE |
+        EXTENDED;
+
+    /**
      * Mask of flags used to determine if a given method is unsafe. Unsafe methods
      * cannot be compiled with the JIT compiler.
      */
     public static final int UNSAFE_FLAGS =
-        Actor.ACC_NATIVE |
-        Actor.TEMPLATE |
-        Actor.BUILTIN |
-        Actor.UNSAFE |
-        Actor.C_FUNCTION |
-        Actor.VM_ENTRY_POINT |
-        Actor.FOLD |
-        Actor.LOCAL_SUBSTITUTE |
-        Actor.INLINE |
-        Actor.STATIC_TRAMPOLINE |
-        Actor.INTERFACE_TRAMPOLINE |
-        Actor.VIRTUAL_TRAMPOLINE |
-        Actor.NO_SAFEPOINTS;
+        ACC_NATIVE |
+        TEMPLATE |
+        BUILTIN |
+        UNSAFE |
+        C_FUNCTION |
+        VM_ENTRY_POINT |
+        LOCAL_SUBSTITUTE |
+        STATIC_TRAMPOLINE |
+        INTERFACE_TRAMPOLINE |
+        VIRTUAL_TRAMPOLINE |
+        NO_SAFEPOINTS;
 
     /**
      * Mask of the flags defined for classes in Table 4.1 of the JVM specification.
@@ -408,13 +417,14 @@ public abstract class Actor {
         return (flags & UNSAFE) != 0;
     }
 
+    @HOSTED_ONLY
+    public void setFlagsFromSubstitute(ClassMethodActor substitute) {
+        final int adoptedFlagsMask = SUBSTITUTION_ADOPTED_FLAGS;
+        flags |= adoptedFlagsMask & substitute.flags();
+    }
+
     @INLINE
     public final void beUnsafe() {
-
-        if (toString().equals("com.sun.c1x.debug.IRInterpreter$Evaluator.visitNegateOp(NegateOp)")) {
-            System.console();
-        }
-
         flags |= UNSAFE;
     }
 

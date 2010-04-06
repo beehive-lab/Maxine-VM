@@ -23,10 +23,9 @@ package com.sun.c1x.asm;
 import java.io.*;
 import java.util.*;
 
+import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.CiArchitecture.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.C1XMetrics;
-import com.sun.c1x.C1XOptions;
 
 /**
  *

@@ -24,12 +24,11 @@ import java.lang.management.*;
 import java.util.*;
 
 /**
- * This interface is used to augment @see MemoryManagerMXBean to provide
- * access to concrete instances of its associated @see MemoryPoolMXBean instances.
+ * This interface is used to augment {@link MemoryManagerMXBean} to provide
+ * access to concrete instances of its associated {@code MemoryPoolMXBean} instances.
  *
  * @author Mick Jordan
  */
-
 public interface MemoryManagerMXBeanPools {
     void add(MemoryPoolMXBean pool);
     void remove(MemoryPoolMXBean pool);

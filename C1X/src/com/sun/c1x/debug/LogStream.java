@@ -35,9 +35,9 @@ import com.sun.c1x.ir.*;
  * on which they were invoked. This allows chaining of these calls to mitigate use of String
  * concatenation by the caller.
  *
- * A {@code LogStream} maintains a current {@linkplain #indentation() indentation} level.
+ * A {@code LogStream} maintains a current {@linkplain #indentationLevel() indentation} level.
  * Each line of output written to this stream has {@code n} spaces prefixed to it where
- * {@code n} is the value that would be returned by {@link #indentation()} when the first
+ * {@code n} is the value that would be returned by {@link #indentationLevel()} when the first
  * character of a new line is written.
  *
  * A {@code LogStream} maintains a current {@linkplain #position() position} for the current
@@ -48,9 +48,23 @@ import com.sun.c1x.ir.*;
  */
 public class LogStream {
 
-    private final StringBuilder lineBuffer = new StringBuilder(100);
+    /**
+     * Null output stream that simply swallows any output sent to it.
+     */
+    public static final LogStream SINK = new LogStream(new OutputStream() {
+        @Override
+        public void write(int b) throws IOException {
+        }
+    });
+
+    /**
+     * The output stream to which this log stream writes.
+     */
     private final PrintStream ps;
-    private int indentation;
+
+    private final StringBuilder lineBuffer = new StringBuilder(100);
+    private int indentationLevel;
+    private char indentation = ' ';
     private boolean indentationDisabled;
 
     /**
@@ -68,13 +82,22 @@ public class LogStream {
     }
 
     /**
-     * Prepends spaces to the current output line until its write position is equal to the
-     * current {@linkplain #indentation()} level.
+     * Creates a new log stream that shares the same {@linkplain #ps output stream} as a given {@link LogStream}.
+     *
+     * @param log a LogStream whose output stream is shared with this one
+     */
+    public LogStream(LogStream log) {
+        ps = log.ps;
+    }
+
+    /**
+     * Prepends {@link #indentation} to the current output line until its write position is equal to the
+     * current {@linkplain #indentationLevel()} level.
      */
     private void indent() {
-        if (!indentationDisabled && indentation != 0) {
-            while (lineBuffer.length() < indentation) {
-                lineBuffer.append(' ');
+        if (!indentationDisabled && indentationLevel != 0) {
+            while (lineBuffer.length() < indentationLevel) {
+                lineBuffer.append(indentation);
             }
         }
     }
@@ -113,26 +136,31 @@ public class LogStream {
 
     /**
      * Gets the current indentation level for this log stream.
-     * Each line of output written to this stream has {@code n} spaces prefixed to it where
-     * {@code n} is the value returned by this method when the first character of a new line
-     * is written.
      *
      * @return the current indentation level for this log stream.
      */
-    public int indentation() {
-        return indentation;
+    public int indentationLevel() {
+        return indentationLevel;
     }
 
     /**
      * Adjusts the current indentation level of this log stream.
+     *
      * @param delta
      */
     public void adjustIndentation(int delta) {
         if (delta < 0) {
-            indentation = Math.max(0, indentation + delta);
+            indentationLevel = Math.max(0, indentationLevel + delta);
         } else {
-            indentation += delta;
+            indentationLevel += delta;
         }
+    }
+
+    /**
+     * Gets the current indentation character of this log stream.
+     */
+    public char indentation() {
+        return indentation;
     }
 
     public void disableIndentation() {
@@ -141,6 +169,13 @@ public class LogStream {
 
     public void enableIndentation() {
         indentationDisabled = false;
+    }
+
+    /**
+     * Sets the character used for indentation.
+     */
+    public void setIndentation(char c) {
+        indentation = c;
     }
 
     /**

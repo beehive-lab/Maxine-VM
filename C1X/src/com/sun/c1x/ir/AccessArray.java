@@ -34,12 +34,12 @@ public abstract class AccessArray extends StateSplit {
 
     /**
      * Creates a new AccessArray instruction.
-     * @param type the type of the result of this instruction
+     * @param kind the type of the result of this instruction
      * @param array the instruction that produces the array object value
      * @param stateBefore the lock stack
      */
-    public AccessArray(CiKind type, Value array, FrameState stateBefore) {
-        super(type, stateBefore);
+    public AccessArray(CiKind kind, Value array, FrameState stateBefore) {
+        super(kind, stateBefore);
         this.array = array;
         if (array.isNonNull()) {
             redundantNullCheck();

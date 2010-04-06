@@ -21,10 +21,10 @@
 package com.sun.max.vm.compiler.builtin;
 
 import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -138,13 +138,21 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     /**
-     * Return the index to the least significant bit set in a word value.
-     * @param value the word scan for the least significant bit
-     * @return the index to the least significant bit within the specified word
+     * Returns the index to the least significant bit set in a given value.
+     *
+     * @param value the value to scan for the least significant bit
+     * @return the index to the least significant bit within {@code value} or {@code -1} if {@code value == 0}
      */
     @INTRINSIC(LSB)
     @BUILTIN(LeastSignificantBit.class)
-    public static native int leastSignificantBit(Word value);
+    public static int leastSignificantBit(Word value) {
+        long l = value.asAddress().toLong();
+        if (l == 0) {
+            return -1;
+        }
+        long lowestOneBit = Long.lowestOneBit(l);
+        return Long.numberOfTrailingZeros(lowestOneBit);
+    }
 
     public static class LeastSignificantBit extends SpecialBuiltin {
         @Override
@@ -156,13 +164,21 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     /**
-     * Return the index to the most significant bit set in a word value.
-     * @param value the word scan for the most significant bit
-     * @return the index to the most significant bit within the specified word
+     * Returns the index to the most significant bit set in a given value.
+     *
+     * @param value the value to scan for the most significant bit
+     * @return the index to the most significant bit within {@code value} or {@code -1} if {@code value == 0}
      */
     @INTRINSIC(MSB)
     @BUILTIN(MostSignificantBit.class)
-    public static native int mostSignificantBit(Word value);
+    public static int mostSignificantBit(Word value) {
+        long l = value.asAddress().toLong();
+        if (l == 0) {
+            return -1;
+        }
+        long highestOneBit = Long.highestOneBit(l);
+        return Long.numberOfTrailingZeros(highestOneBit);
+    }
 
     public static class MostSignificantBit extends SpecialBuiltin {
         @Override
@@ -277,15 +293,15 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final Call BUILTIN = new Call();
     }
 
-    @BUILTIN(UnsignedIntGreaterEqual.class)
-    @INTRINSIC(UGE)
-    public static boolean unsignedIntGreaterEqual(int value1, int value2) {
+    @BUILTIN(AboveEqual.class)
+    @INTRINSIC(UCMP | (ABOVE_EQUAL << 8))
+    public static boolean aboveEqual(int value1, int value2) {
         final long unsignedInt1 = value1 & 0xFFFFFFFFL;
         final long unsignedInt2 = value2 & 0xFFFFFFFFL;
         return unsignedInt1 >= unsignedInt2;
     }
 
-    public static class UnsignedIntGreaterEqual extends SpecialBuiltin {
+    public static class AboveEqual extends SpecialBuiltin {
 
         @Override
         public final boolean hasSideEffects() {
@@ -295,10 +311,82 @@ public abstract class SpecialBuiltin extends Builtin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitUnsignedIntGreaterEqual(this, result, arguments);
+            visitor.visitAboveEqual(this, result, arguments);
         }
 
-        public static final UnsignedIntGreaterEqual BUILTIN = new UnsignedIntGreaterEqual();
+        public static final AboveEqual BUILTIN = new AboveEqual();
+    }
+
+    @BUILTIN(AboveThan.class)
+    @INTRINSIC(UCMP | (ABOVE_THAN << 8))
+    public static boolean aboveThan(int value1, int value2) {
+        final long unsignedInt1 = value1 & 0xFFFFFFFFL;
+        final long unsignedInt2 = value2 & 0xFFFFFFFFL;
+        return unsignedInt1 > unsignedInt2;
+    }
+
+    public static class AboveThan extends SpecialBuiltin {
+
+        @Override
+        public final boolean hasSideEffects() {
+            return false;
+        }
+
+        @Override
+        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+            assert arguments.length == 2;
+            visitor.visitAboveThan(this, result, arguments);
+        }
+
+        public static final AboveThan BUILTIN = new AboveThan();
+    }
+
+    @BUILTIN(BelowEqual.class)
+    @INTRINSIC(UCMP | (BELOW_EQUAL << 8))
+    public static boolean belowEqual(int value1, int value2) {
+        final long unsignedInt1 = value1 & 0xFFFFFFFFL;
+        final long unsignedInt2 = value2 & 0xFFFFFFFFL;
+        return unsignedInt1 <= unsignedInt2;
+    }
+
+    public static class BelowEqual extends SpecialBuiltin {
+
+        @Override
+        public final boolean hasSideEffects() {
+            return false;
+        }
+
+        @Override
+        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+            assert arguments.length == 2;
+            visitor.visitBelowEqual(this, result, arguments);
+        }
+
+        public static final BelowEqual BUILTIN = new BelowEqual();
+    }
+
+    @BUILTIN(BelowThan.class)
+    @INTRINSIC(UCMP | (BELOW_THAN << 8))
+    public static boolean belowThan(int value1, int value2) {
+        final long unsignedInt1 = value1 & 0xFFFFFFFFL;
+        final long unsignedInt2 = value2 & 0xFFFFFFFFL;
+        return unsignedInt1 < unsignedInt2;
+    }
+
+    public static class BelowThan extends SpecialBuiltin {
+
+        @Override
+        public final boolean hasSideEffects() {
+            return false;
+        }
+
+        @Override
+        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+            assert arguments.length == 2;
+            visitor.visitBelowThan(this, result, arguments);
+        }
+
+        public static final BelowThan BUILTIN = new BelowThan();
     }
 
     /**
@@ -347,11 +435,11 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final CompareWords BUILTIN = new CompareWords();
     }
 
-    public static class BarMemory extends SpecialBuiltin {
+    @BUILTIN(BarMemory.class)
+    public static void barMemory(int barriers) {
+    }
 
-        public BarMemory() {
-            super(MemoryBarrier.class);
-        }
+    public static class BarMemory extends SpecialBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {

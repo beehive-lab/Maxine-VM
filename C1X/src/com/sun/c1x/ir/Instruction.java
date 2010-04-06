@@ -23,8 +23,8 @@ package com.sun.c1x.ir;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.lir.LIROperand;
 
 /**
  * This class represents an instruction node in the IR, which is a {@link Value} that
@@ -50,10 +50,10 @@ public abstract class Instruction extends Value {
 
     /**
      * Constructs a new instruction with the specified value type.
-     * @param type the value type for this instruction
+     * @param kind the value type for this instruction
      */
-    public Instruction(CiKind type) {
-        super(type);
+    public Instruction(CiKind kind) {
+        super(kind);
         bci = BCI_NOT_APPENDED;
         lirOperand = LIROperand.IllegalLocation;
     }

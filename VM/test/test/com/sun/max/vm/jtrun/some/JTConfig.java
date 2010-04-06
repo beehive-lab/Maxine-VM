@@ -18,61 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.bytecode;
+package test.com.sun.max.vm.jtrun.some;
 
-import com.sun.c1x.util.*;
+import test.com.sun.max.vm.jtrun.*;
 
 /**
- * The {@code BytecodeSwitch} class definition.
+ * The {@codeJTConfig} class contains generated code which contains the class list
+ * for a generated JavaTesterRuns class.
  *
  * @author Ben L. Titzer
  */
-public abstract class BytecodeSwitch {
-    final BytecodeStream stream;
-    final byte[] code;
-    final int bci;
-    final int aligned;
+public class JTConfig {
 
-    public BytecodeSwitch(BytecodeStream stream, int bci) {
-        this.aligned = (bci + 4) & 0xfffffffc;
-        this.stream = stream;
-        this.code = null;
-        this.bci = bci;
-    }
+// GENERATED TEST CLASS LIST
+    private static final Class<?>[] classList = {
+    };
+// END GENERATED TEST CLASS LIST
 
-    public BytecodeSwitch(byte[] code, int bci) {
-        this.aligned = (bci + 4) & 0xfffffffc;
-        this.stream = null;
-        this.code = code;
-        this.bci = bci;
-    }
+    public static final JTClasses testClasses = new JTClasses(classList, JTRuns.class);
 
-    public int bci() {
-        return bci;
-    }
-
-    public int targetAt(int i) {
-        return bci + offsetAt(i);
-    }
-
-    public int defaultTarget() {
-        return bci + defaultOffset();
-    }
-
-    public abstract int defaultOffset();
-
-    public abstract int keyAt(int i);
-
-    public abstract int offsetAt(int i);
-
-    public abstract int numberOfCases();
-
-    public abstract int size();
-
-    protected int readWord(int bci) {
-        if (code != null) {
-            return Bytes.beS4(code, bci);
-        }
-        return stream.readInt(bci);
-    }
 }

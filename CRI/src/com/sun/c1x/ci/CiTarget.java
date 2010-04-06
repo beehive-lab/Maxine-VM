@@ -98,62 +98,6 @@ public class CiTarget {
         return spillSlotsPerKindMap[kind.ordinal()];
     }
     
-    public boolean supportsSSE() {
-        return true;
-    }
-
-    public boolean supports3DNOW() {
-        return true;
-    }
-
-    public boolean supportsSSE2() {
-        return true;
-    }
-
-    public boolean supportsLzcnt() {
-        return true;
-    }
-
-    public boolean supportsCmov() {
-        return true;
-    }
-
-    public boolean supportsMmx() {
-        return true;
-    }
-
-    public boolean supportsSse42() {
-        return false;
-    }
-
-    public boolean supportsMMX() {
-        return true;
-    }
-
-    public boolean isIntel() {
-        return false;
-    }
-
-    public boolean isAmd() {
-        return true;
-    }
-
-    public boolean supportsPopcnt() {
-        return true;
-    }
-
-    public boolean supportsSse41() {
-        return false;
-    }
-
-    public boolean isP6() {
-        return true;
-    }
-
-    public boolean supportsCx8() {
-        return true;
-    }
-
     /**
      * Align the given frame size (without return instruction pointer) to the stack
      * alignment size and return the aligned size (without return instruction pointer).

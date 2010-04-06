@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.bytecode;
 
-import com.sun.c1x.util.*;
-
 /**
  * The {@code CiBytecodeStream} class implements a utility that makes iterating over
  * bytecodes and reading operands simpler and less error prone. For example, it handles

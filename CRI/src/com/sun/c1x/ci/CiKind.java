@@ -20,6 +20,9 @@
  */
 package com.sun.c1x.ci;
 
+import static com.sun.c1x.ci.CiKind.Flags.*;
+import static com.sun.c1x.ci.CiKind.Slots.*;
+
 /**
  * This enum represents the basic kinds of types in C1X, including the primitive types, objects, words,
  * {@code void}, and bytecode addresses used in JSR bytecodes.
@@ -27,29 +30,43 @@ package com.sun.c1x.ci;
  * @author Ben L. Titzer
  */
 public enum CiKind {
-    Boolean('z', "boolean", "jboolean", 1),
-    Byte('b', "byte", "jbyte", 1),
-    Short('s', "short", "jshort", 1),
-    Char('c', "char", "jchar", 1),
-    Int('i', "int", "jint", 1),
-    Float('f', "float", "jfloat", 1),
-    Long('l', "long", "jlong", 2),
-    Double('d', "double", "jdouble", 2),
-    Object('a', "object", "jobject", 1),
-    Word('w', "word", "jword", 1),
-    Void('v', "void", "void", 0),
-    Jsr('r', "jsr", null, 1),
-    Illegal(' ', "illegal", null, -1);
+    Boolean('z', "boolean", "jboolean", SLOTS_1,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE | STACK_INT),
+    Byte   ('b', "byte",    "jbyte",    SLOTS_1,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE | STACK_INT),
+    Short  ('s', "short",   "jshort",   SLOTS_1,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE | STACK_INT),
+    Char   ('c', "char",    "jchar",    SLOTS_1,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE | STACK_INT),
+    Int    ('i', "int",     "jint",     SLOTS_1,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE | STACK_INT),
+    Float  ('f', "float",   "jfloat",   SLOTS_1,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
+    Long   ('l', "long",    "jlong",    SLOTS_2,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
+    Double ('d', "double",  "jdouble",  SLOTS_2,  FIELD_TYPE | RETURN_TYPE | PRIMITIVE),
+    Object ('a', "object",  "jobject",  SLOTS_1,  FIELD_TYPE | RETURN_TYPE),
+    Word   ('w', "word",    "jword",    SLOTS_1,  FIELD_TYPE | RETURN_TYPE),
+    Void   ('v', "void",    "void",     SLOTS_0,  RETURN_TYPE),
+    Jsr    ('r', "jsr",     null,       SLOTS_1,  0),
+    Illegal(' ', "illegal", null,       -1,       0);
 
-    CiKind(char ch, String name, String jniName, int size) {
+    CiKind(char ch, String name, String jniName, int jvmSlots, int flags) {
         this.typeChar = ch;
         this.javaName = name;
         this.jniName = jniName;
-        this.size = size;
-        switch (ch) {
-        }
+        this.jvmSlots = jvmSlots;
+        this.flags = flags;
     }
 
+    static final class Slots {
+        public static final int SLOTS_0 = 0;
+        public static final int SLOTS_1 = 1;
+        public static final int SLOTS_2 = 2;
+    }
+
+    static class Flags {
+        public static final int FIELD_TYPE  = 0x0001;
+        public static final int RETURN_TYPE = 0x0002;
+        public static final int STACK_INT   = 0x0004;
+        public static final int PRIMITIVE   = 0x0008;
+    }
+    
+    private final int flags;
+    
     /**
      * The name of the kind as a single character.
      */
@@ -70,14 +87,14 @@ public enum CiKind {
      * The size of this kind in terms of abstract JVM words. Note that this may
      * differ with actual size of this type in it machine representation.
      */
-    public final int size;
+    public final int jvmSlots;
 
     /**
      * Checks whether this kind is valid as the type of a field.
      * @return {@code true} if this kind is valid as the type of a Java field
      */
     public boolean isValidFieldType() {
-        return ordinal() <= Object.ordinal();
+        return (flags & FIELD_TYPE) != 0;
     }
 
     /**
@@ -85,7 +102,7 @@ public enum CiKind {
      * @return {@code true} if this kind is valid as the return type of a Java method
      */
     public boolean isValidReturnType() {
-        return ordinal() <= Void.ordinal();
+        return (flags & RETURN_TYPE) != 0;
     }
 
     /**
@@ -93,7 +110,7 @@ public enum CiKind {
      * @return {@code true} if this type is represented by an {@code int} on the operand stack
      */
     public boolean isInt() {
-        return ordinal() <= Int.ordinal();
+        return (flags & STACK_INT) != 0;
     }
 
     /**
@@ -102,15 +119,15 @@ public enum CiKind {
      *                                 {@link #Int}, {@link #Long}, {@link #Float} or {@link #Double}.
      */
     public boolean isPrimitive() {
-        return ordinal() <= Long.ordinal();
+        return (flags & PRIMITIVE) != 0;
     }
 
     /**
      * Gets the kind that represents this kind when on the Java operand stack.
      * @return the kind used on the operand stack
      */
-    public CiKind stackType() {
-        if (ordinal() <= Int.ordinal()) {
+    public CiKind stackKind() {
+        if (isInt()) {
             return Int;
         }
         return this;
@@ -121,7 +138,7 @@ public enum CiKind {
      * @return the size of the kind in slots
      */
     public int sizeInSlots() {
-        return size;
+        return jvmSlots;
     }
 
     /**
@@ -272,6 +289,14 @@ public enum CiKind {
     }
 
     /**
+     * Checks whether this value type is float or double.
+     * @return {@code true} if this type is float or double
+     */
+    public final boolean isFloatOrDouble() {
+        return this == CiKind.Double || this == CiKind.Float;
+    }
+
+   /**
      * Checks whether this value type is an object type.
      * @return {@code true} if this type is an object
      */
@@ -317,8 +342,8 @@ public enum CiKind {
      * @return the result of the meet operation for these two types
      */
     public final CiKind meet(CiKind other) {
-        if (other.stackType() == this.stackType()) {
-            return this.stackType();
+        if (other.stackKind() == this.stackKind()) {
+            return this.stackKind();
         }
         return CiKind.Illegal;
     }
@@ -329,5 +354,42 @@ public enum CiKind {
     @Override
     public String toString() {
         return javaName;
+    }
+    
+    /**
+     * Gets a formatted string for a given value of this kind.
+     * 
+     * @param value a value of this kind
+     * @return a formatted string for {@code value} based on this kind
+     */
+    public String format(Object value) {
+        StringBuilder sb = new StringBuilder(javaName).append('(');
+        if (isWord()) {
+            sb.append("0x" + java.lang.Long.toHexString(((Number) value).longValue()));
+        } else if (isObject()) {
+            if (value == null) {
+                sb.append("null");
+            } else {
+                String s = "";
+                try {
+                    // Append the result of value.toString() only if Object.toString() is overridden in the class hierarchy of value 
+                    if (!value.getClass().getMethod("toString").equals(Object.class.getDeclaredMethod("toString"))) {
+                        s = String.valueOf(value);
+                        if (s.length() > 50) {
+                            s = s.substring(0, 30) + "...";
+                        }
+                        s = " \"" + s + '"';
+                    }
+                } catch (Exception e) {
+                }
+                if (s.isEmpty()) {
+                    s = "@" + System.identityHashCode(value); 
+                }
+                sb.append(value.getClass().getSimpleName()).append(s);
+            }
+        } else {
+            sb.append(value); 
+        }
+        return sb.append(')').toString();
     }
 }

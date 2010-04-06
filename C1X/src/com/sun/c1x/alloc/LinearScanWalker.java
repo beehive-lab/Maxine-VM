@@ -383,7 +383,7 @@ final class LinearScanWalker extends IntervalWalker {
     void splitBeforeUsage(Interval it, int minSplitPos, int maxSplitPos) {
         // Util.traceLinearScan(2, "----- splitting interval: ");
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            it.print(TTY.out, allocator);
+            it.print(TTY.out(), allocator);
         }
         // Util.traceLinearScan(2, "      between %d and %d", minSplitPos, maxSplitPos);
 
@@ -427,9 +427,9 @@ final class LinearScanWalker extends IntervalWalker {
         // Util.traceLinearScan(2, "      split interval in two parts (insertMoveWhenActivated: %b)", moveNecessary);
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("      ");
-            it.print(TTY.out, allocator);
+            it.print(TTY.out(), allocator);
             TTY.print("      ");
-            splitPart.print(TTY.out, allocator);
+            splitPart.print(TTY.out(), allocator);
         }
     }
 
@@ -446,7 +446,7 @@ final class LinearScanWalker extends IntervalWalker {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("----- splitting and spilling interval: ");
 
-            it.print(TTY.out, allocator);
+            it.print(TTY.out(), allocator);
             TTY.println("      between %d and %d", minSplitPos, maxSplitPos);
         }
 
@@ -517,9 +517,9 @@ final class LinearScanWalker extends IntervalWalker {
             if (C1XOptions.TraceLinearScanLevel >= 2) {
                 TTY.println("      split interval in two parts");
                 TTY.print("      ");
-                it.print(TTY.out, allocator);
+                it.print(TTY.out(), allocator);
                 TTY.print("      ");
-                spilledPart.print(TTY.out, allocator);
+                spilledPart.print(TTY.out(), allocator);
             }
         }
     }
@@ -627,7 +627,7 @@ final class LinearScanWalker extends IntervalWalker {
     boolean allocFreeReg(Interval cur) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("trying to find free register for ");
-            cur.print(TTY.out, allocator);
+            cur.print(TTY.out(), allocator);
         }
 
         initUseLists(true);
@@ -663,7 +663,7 @@ final class LinearScanWalker extends IntervalWalker {
             }
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.print("      hint registers %d, %d from interval ", hintReg, hintRegHi);
-                registerHint.print(TTY.out, allocator);
+                registerHint.print(TTY.out(), allocator);
             }
 
         } else {
@@ -798,7 +798,7 @@ final class LinearScanWalker extends IntervalWalker {
     void allocLockedReg(Interval cur) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("need to split and spill to get register for ");
-            cur.print(TTY.out, allocator);
+            cur.print(TTY.out(), allocator);
         }
 
         // collect current usage of registers
@@ -927,13 +927,13 @@ final class LinearScanWalker extends IntervalWalker {
     }
 
     void initVarsForAlloc(Interval cur) {
-        CiKind type = cur.type();
-        numPhysRegs = allocator.numPhysicalRegs(type);
-        adjacentRegs = allocator.requiresAdjacentRegs(type);
+        CiKind kind = cur.kind();
+        numPhysRegs = allocator.numPhysicalRegs(kind);
+        adjacentRegs = allocator.requiresAdjacentRegs(kind);
 
         if (pdInitRegsForAlloc(cur)) {
             // the appropriate register range was selected.
-        } else if (type == CiKind.Float || type == CiKind.Double) {
+        } else if (kind == CiKind.Float || kind == CiKind.Double) {
             assert false : "should not reach here!";
         } else {
             firstReg = allocatableRegisters.pdFirstCpuReg;
@@ -947,11 +947,11 @@ final class LinearScanWalker extends IntervalWalker {
     private boolean pdInitRegsForAlloc(Interval cur) {
         assert compilation.target.arch.isX86();
         if (allocator.gen.isVarFlagSet(cur.registerNumber(), LIRGenerator.VariableFlag.MustBeByteReg)) {
-            assert cur.type() != CiKind.Float && cur.type() != CiKind.Double : "cpu regs only";
+            assert cur.kind() != CiKind.Float && cur.kind() != CiKind.Double : "cpu regs only";
             firstReg = allocatableRegisters.pdFirstByteReg;
             lastReg = allocatableRegisters.pdLastByteReg;
             return true;
-        } else if (cur.type() == CiKind.Float || cur.type() == CiKind.Double) {
+        } else if (cur.kind() == CiKind.Float || cur.kind() == CiKind.Double) {
             firstReg = allocatableRegisters.pdFirstXmmReg;
             lastReg = allocatableRegisters.pdLastXmmReg;
             return true;
@@ -1037,7 +1037,7 @@ final class LinearScanWalker extends IntervalWalker {
 
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("+++++ activating interval ");
-            cur.print(TTY.out, allocator);
+            cur.print(TTY.out(), allocator);
         }
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {

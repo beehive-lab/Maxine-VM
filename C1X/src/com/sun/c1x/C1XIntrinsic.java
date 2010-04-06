@@ -120,10 +120,6 @@ public enum C1XIntrinsic {
     sun_reflect_Reflection$getClassAccessFlags ("(Ljava/lang/Class;)I"),
     sun_reflect_Reflection$getCallerClass      ("(I)Ljava/lang/Class;"),
 
-    // sun.misc.AtomicLongCSImpl
-    sun_misc_AtomicLongCSImpl$get ("()J"),
-    sun_misc_AtomicLongCSImpl$attemptUpdate ("(JJ)Z"),
-
     // sun.misc.Unsafe
     sun_misc_Unsafe$allocateInstance ("(Ljava/lang/Class;)Ljava/lang/Object;"),
     sun_misc_Unsafe$copyMemory       ("(Ljava/lang/Object;JLjava/lang/Object;JJ)V"),

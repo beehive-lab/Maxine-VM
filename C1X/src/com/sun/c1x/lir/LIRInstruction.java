@@ -20,14 +20,15 @@
  */
 package com.sun.c1x.lir;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.util.Util;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
+import com.sun.c1x.util.*;
 
 /**
  * The {@code LIRInstruction} class definition.
@@ -324,7 +325,7 @@ public abstract class LIRInstruction {
     }
 
     /**
-     * Gets the lock stack for this instruction.
+     * Gets the result operand for this instruction.
      *
      * @return return the result operand
      */
@@ -396,36 +397,10 @@ public abstract class LIRInstruction {
         return start.ordinal() < opcode.ordinal() && opcode.ordinal() < end.ordinal();
     }
 
-    protected static void printCondition(LogStream out, LIRCondition cond) {
-        switch (cond) {
-            case Equal:
-                out.print("[EQ]");
-                break;
-            case NotEqual:
-                out.print("[NE]");
-                break;
-            case Less:
-                out.print("[LT]");
-                break;
-            case LessEqual:
-                out.print("[LE]");
-                break;
-            case GreaterEqual:
-                out.print("[GT]");
-                break;
-            case BelowEqual:
-                out.print("[BE]");
-                break;
-            case AboveEqual:
-                out.print("[AE]");
-                break;
-            case Always:
-                out.print("[AL]");
-                break;
-            default:
-                out.printf("[%d]", cond.ordinal());
-                break;
-        }
+    protected static void printCondition(LogStream out, Condition cond) {
+        String operator = cond.operator;
+        assert operator != null;
+        out.print(operator);
     }
 
     public boolean hasOperands() {
@@ -525,5 +500,14 @@ public abstract class LIRInstruction {
                 return info;
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        LogStream out = new LogStream(baos);
+        printOn(out);
+        out.flush();
+        return baos.toString();
     }
 }

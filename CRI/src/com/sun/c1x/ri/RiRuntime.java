@@ -22,7 +22,6 @@ package com.sun.c1x.ri;
 
 import java.io.OutputStream;
 
-import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.ci.CiTargetMethod;
 
 /**
@@ -73,18 +72,6 @@ public interface RiRuntime {
     boolean mustNotCompile(RiMethod method);
 
     /**
-     * Byte offset of the array length of an array object.
-     * @return the byte offset of the array length
-     */
-    int arrayLengthOffsetInBytes();
-
-    /**
-     * Byte offset of the field of an object that contains the pointer to the internal class representation of the type of the object.
-     * @return the byte offset of the class field
-     */
-    int hubOffset();
-
-    /**
      * Byte offset of the field of the internal thread representation that contains the pointer to the thread exception object.
      * @return the byte offset of the exception object field
      */
@@ -111,52 +98,11 @@ public interface RiRuntime {
     boolean jvmtiCanPostExceptions();
 
     /**
-     * Byte offset of the virtual method table of an internal class object.
-     * @return the virtual method table offset in bytes
-     */
-    int vtableStartOffset();
-
-    /**
-     * Byte size of a single virtual method table entry of an internal class object.
-     * @return the virtual method table entry
-     */
-    int vtableEntrySize();
-
-    /**
-     * Byte offset of the method field of a virtual method table entry.
-     * @return the method offset in bytes
-     */
-    int vtableEntryMethodOffsetInBytes();
-
-    /**
      * Resolves a given identifier to a type.
      * @param string the name of the type
      * @return the resolved type
      */
     RiType resolveType(String string);
-
-    /**
-     * The offset of the first array element of an array of the given type.
-     *
-     * @param type the type of the array
-     * @return the offset in bytes
-     */
-    int firstArrayElementOffset(CiKind type);
-
-    /**
-     * Offset used for the implementation of an intrinsic.
-     *
-     * @return the offset in bytes
-     */
-    int sunMiscAtomicLongCSImplValueOffset();
-
-    /**
-     * The size of an array header of an array of the given type.
-     *
-     * @param type the type of the array
-     * @return the size in bytes
-     */
-    int arrayHeaderSize(CiKind type);
 
     /**
      * Offset of the lock within the lock object.
@@ -173,25 +119,6 @@ public interface RiRuntime {
     int sizeofBasicObjectLock();
 
     /**
-     * Offset of the element hub of an array hub object.
-     *
-     * @return the offset in bytes
-     */
-    int elementHubOffset();
-
-    /**
-     * @return the maximum length of an array
-     */
-    int maximumArrayLength();
-
-    /**
-     * The size of a JIT stack slot. Used for implementing the adapter frames.
-     *
-     * @return the JIT stack slot size in bytes
-     */
-    int getJITStackSlotSize();
-
-    /**
      * The offset of the normal entry to the code. The compiler inserts NOP instructions to satisfy this constraint.
      *
      * @return the code offset in bytes
@@ -204,7 +131,7 @@ public interface RiRuntime {
      * offsets that moves the outgoing arguments of the caller to the locations expected by the callee.
      * This method emits the adapter code if it is required.
      * 
-     * TODO: Parameterize this method will the calling convention in use by the code currently being compiled.
+     * TODO: Parameterize this method with the calling convention in use by the code currently being compiled.
      * 
      * @param method the callee method being compiled that may need an adapter code prologue
      * @param out where the prologue code (if any) will be emitted
@@ -245,14 +172,6 @@ public interface RiRuntime {
      * @return the identification object
      */
     Object registerTargetMethod(CiTargetMethod targetMethod, String name);
-
-    /**
-     * Returns the runtime interface type representing the array type of the given kind.
-     *
-     * @param elementType the primitive type of the array
-     * @return the array type
-     */
-    RiType primitiveArrayType(CiKind elementType);
 
     /**
      * Returns the runtime interface representation of the given Java class object.

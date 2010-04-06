@@ -84,13 +84,6 @@ public interface RiField {
     boolean isStatic();
 
     /**
-     * Gets the offset of this field from the origin of an object.
-     * ONLY AVAILABLE FOR RESOLVED FIELDS.
-     * @return the offset of the field from origin of an object.
-     */
-    int offset();
-
-    /**
      * Gets the constant value of this field, if it is a constant (i.e. {@code static final} and <i>initialized</i>).
      * ONLY AVAILABLE FOR RESOLVED FIELDS.
      * @return the constant value of this field

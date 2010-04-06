@@ -174,7 +174,7 @@ public class IR {
 
     private void print(boolean cfgOnly) {
         TTY.println("IR for " + compilation.method);
-        final InstructionPrinter ip = new InstructionPrinter(TTY.out, true, compilation.target);
+        final InstructionPrinter ip = new InstructionPrinter(TTY.out(), true, compilation.target);
         final BlockPrinter bp = new BlockPrinter(this, ip, cfgOnly, false);
         startBlock.iteratePreOrder(bp);
     }
@@ -188,7 +188,7 @@ public class IR {
             new IRChecker(this, phase).check();
         }
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
-        if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
+        if (cfgPrinter != null) {
             cfgPrinter.printCFG(startBlock, phase, true, false);
         }
         if (C1XOptions.PrintHIR) {

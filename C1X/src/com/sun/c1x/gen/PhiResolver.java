@@ -168,7 +168,7 @@ public class PhiResolver {
 
     private void moveToTemp(LIROperand src) {
         assert isIllegal(temp);
-        temp = gen().newRegister(src.kind);
+        temp = gen().newVariable(src.kind);
         emitMove(src, temp);
     }
 

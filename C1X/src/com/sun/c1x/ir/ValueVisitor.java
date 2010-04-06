@@ -35,6 +35,7 @@ public abstract class ValueVisitor {
     public abstract void visitBlockBegin(BlockBegin i);
     public abstract void visitCheckCast(CheckCast i);
     public abstract void visitCompareOp(CompareOp i);
+    public abstract void visitUnsignedCompareOp(UnsignedCompareOp i);
     public abstract void visitConstant(Constant i);
     public abstract void visitConvert(Convert i);
     public abstract void visitExceptionObject(ExceptionObject i);
@@ -75,6 +76,7 @@ public abstract class ValueVisitor {
     public abstract void visitStoreRegister(StoreRegister i);
     public abstract void visitTableSwitch(TableSwitch i);
     public abstract void visitThrow(Throw i);
+    public abstract void visitUnsafeCast(UnsafeCast i);
     public abstract void visitUnsafeGetObject(UnsafeGetObject i);
     public abstract void visitUnsafeGetRaw(UnsafeGetRaw i);
     public abstract void visitUnsafePrefetchRead(UnsafePrefetchRead i);

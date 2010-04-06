@@ -23,16 +23,25 @@ package com.sun.c1x.lir;
 import com.sun.c1x.ci.*;
 
 /**
- * The {@code LIRLocation} class represents a LIROperand that is either a stack slot or a CPU register.
+ * The {@code LIRLocation} class represents a LIROperand that is either a {@linkplain #isStack() stack slot},
+ * a {@linkplain #isRegister() CPU register} or a {@linkplain #isVariable() variable}.
+ * Each definition and use of a variable must be given a physical location by the register
+ * allocator.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public final class LIRLocation extends LIROperand {
 
-    public final CiRegister location1;
-    public final CiRegister location2;
+    public final CiRegister register;
+
+    /**
+     * The index for this location. A negative value indicates a {@linkplain #isStack() stack location},
+     * a value of 0 indicates a {@linkplain #isRegister() physical CPU register} and a value greater
+     * or equals to {@link CiRegister#LowestVirtualRegisterNumber} indicates a {@linkplain #isVariable() virtual register}.
+     */
     public final int index;
 
     /**
@@ -43,54 +52,37 @@ public final class LIRLocation extends LIROperand {
      */
     LIRLocation(CiKind kind, CiRegister number) {
         super(kind);
-        assert kind.size == 1 || (kind.size == -1 && number == CiRegister.None);
+        assert kind.jvmSlots != -1 || number == CiRegister.None;
         assert number != null;
-        this.location1 = number;
-        this.location2 = CiRegister.None;
+        this.register = number;
         index = 0;
     }
 
     /**
-     * Creates a new LIRLocation representing either a variable or a stack location, with negative indexes
-     * representing stack locations.
+     * Creates a new location representing either a variable or a stack location, with negative indexes representing
+     * stack locations.
      *
-     * @param kind the kind of the location
-     * @param number the variable index or the stack location index if negative
+     * @param kind the kind of the variable or a stack location
+     * @param number the variable index (if greater than {@link CiRegister#LowestVirtualRegisterNumber}) or the stack
+     *            location index (if negative)
      */
     LIRLocation(CiKind kind, int number) {
         super(kind);
-        assert number < 0 || number >= CiRegister.MaxPhysicalRegisterNumber;
-        this.location1 = CiRegister.None;
-        this.location2 = CiRegister.None;
+        assert number < 0 || number >= CiRegister.LowestVirtualRegisterNumber;
+        this.register = CiRegister.None;
         this.index = number;
-    }
-
-    /**
-     * Creates a new LIRLocation representing a CPU register pair.
-     *
-     * @param kind the kind of the location
-     * @param location1 the number of the location
-     * @param location2 the number of the second location
-     */
-    LIRLocation(CiKind kind, CiRegister location1, CiRegister location2) {
-        super(kind);
-        assert kind.size == 2;
-        assert location1 != null && location2 != null;
-        this.location1 = location1;
-        this.location2 = location2;
-        index = 0;
     }
 
     @Override
     public int hashCode() {
-        return location1.number + location2.number + index;
+        return register.number + index;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o instanceof LIRLocation) {
             LIRLocation l = (LIRLocation) o;
-            return l.kind == kind && l.location1 == location1 && l.location2 == location2 && l.index == index;
+            return l.kind == kind && l.register == register && l.index == index;
         }
         return false;
     }
@@ -102,13 +94,14 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public int variableNumber() {
-        assert index >= CiRegister.MaxPhysicalRegisterNumber;
+        assert index >= CiRegister.LowestVirtualRegisterNumber : illegalOperation("variableNumber()");
         return index;
     }
 
     @Override
     public boolean isSingleStack() {
-        return isStack() && kind.sizeInSlots() == 1;
+        final boolean kindFitsInWord = true;
+        return isStack() && kindFitsInWord;
     }
 
     @Override
@@ -118,22 +111,12 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public boolean isVariable() {
-        return index >= CiRegister.MaxPhysicalRegisterNumber;
+        return index >= CiRegister.LowestVirtualRegisterNumber;
     }
 
     @Override
-    public boolean isFixedCpu() {
-        return !isStack() && index < CiRegister.MaxPhysicalRegisterNumber;
-    }
-
-    @Override
-    public boolean isSingleCpu() {
-        return !isStack() && location2 == CiRegister.None && location1.isCpu();
-    }
-
-    @Override
-    public boolean isDoubleCpu() {
-        return !isStack() && location2 != CiRegister.None && location1.isCpu() && location2.isCpu();
+    public boolean isRegister() {
+        return index == 0;
     }
 
     @Override
@@ -142,64 +125,32 @@ public final class LIRLocation extends LIROperand {
     }
 
     @Override
-    public boolean isSingleXmm() {
-        return !isStack() && location1.isXmm() && kind.sizeInSlots() == 1;
-    }
-
-    @Override
-    public boolean isDoubleXmm() {
-        return !isStack() && location1.isXmm() && kind.sizeInSlots() == 2;
-    }
-
-    @Override
     public int stackIndex() {
-        assert (isSingleStack() || isDoubleStack()) && !this.isVariable() : "type check";
+        assert isStack() : illegalOperation("stackIndex()");
         return -index - 1;
     }
 
     @Override
     public int singleStackIndex() {
-        assert isSingleStack() && !this.isVariable() : "type check";
+        assert isSingleStack() : illegalOperation("singleStackIndex()");
         return -index - 1;
     }
 
     @Override
     public int doubleStackIndex() {
-        assert isDoubleStack() && !this.isVariable() : "type check";
+        assert isDoubleStack() : illegalOperation("doubleStackIndex()");
         return -index - 1;
     }
 
     @Override
     public CiRegister asRegister() {
-        assert location1 == location2 || location2 == CiRegister.None;
-        return this.location1;
+        assert isRegister() : illegalOperation("asRegister()");
+        return this.register;
     }
 
     @Override
-    public CiRegister asRegisterLow() {
-        return this.location1;
-    }
-
-    @Override
-    public CiRegister asRegisterHigh() {
-        return this.location2;
-    }
-
-    @Override
-    public int cpuRegNumber() {
-        assert index == 0;
-        return location1.number;
-    }
-
-    @Override
-    public int cpuRegNumberLow() {
-        assert index == 0;
-        return location1.number;
-    }
-
-    @Override
-    public int cpuRegNumberHigh() {
-        assert index == 0;
-        return location2.number;
+    public int registerNumber() {
+        assert index == 0 : illegalOperation("cpuRegNumber()");
+        return register.number;
     }
 }

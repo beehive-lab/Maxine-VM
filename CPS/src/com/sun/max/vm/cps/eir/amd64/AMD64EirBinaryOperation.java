@@ -440,12 +440,6 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
             }
         }
 
-        /**
-         * Marker interface for a move instruction that it conditional. For the purpose of the register allocator,
-         * a conditional move is an {@link Effect#UPDATE} as opposed to simply being a {@link Effect#DEFINITION}.
-         */
-        public static interface Conditional {}
-
         public abstract static class GeneralToGeneral extends Move {
             protected GeneralToGeneral(EirBlock block, EirValue destination, EirValue source, boolean conditional) {
                 super(block, destination, G, source, G_L_S, conditional);

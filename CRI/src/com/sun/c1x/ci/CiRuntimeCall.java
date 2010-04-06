@@ -59,7 +59,6 @@ public enum CiRuntimeCall {
     SlowStoreCheck(Void, Object, Object),
     Monitorenter(Void, Object),
     Monitorexit(Void, Object),
-    TraceBlockEntry(Void),
     OSRMigrationEnd(Void),
     JavaTimeMillis(Long),
     JavaTimeNanos(Long),

@@ -71,7 +71,7 @@ public final class Interval {
     }
 
     private int registerNumber;
-    private CiKind type; // valid only for variables
+    private CiKind kind; // valid only for variables
     private Range first; // sorted list of Ranges
     private List<Integer> usePosAndKinds; // sorted list of use-positions and their according use-kinds
 
@@ -106,15 +106,15 @@ public final class Interval {
         registerNumber = r;
     }
 
-    CiKind type() {
-        assert registerNumber == -1 || registerNumber >= CiRegister.MaxPhysicalRegisterNumber : "cannot access type for fixed interval";
-        return type;
+    CiKind kind() {
+        assert registerNumber == -1 || registerNumber >= CiRegister.LowestVirtualRegisterNumber : "cannot access type for fixed interval";
+        return kind;
     }
 
-    void setType(CiKind type) {
-        assert registerNumber < CiRegister.MaxPhysicalRegisterNumber || this.type == CiKind.Illegal || this.type == type : "overwriting existing type";
-        assert type != CiKind.Boolean && type != CiKind.Byte && type != CiKind.Char : "these kinds should have int type registers";
-        this.type = type;
+    void setKind(CiKind kind) {
+        assert registerNumber < CiRegister.LowestVirtualRegisterNumber || this.kind == CiKind.Illegal || this.kind == kind : "overwriting existing type";
+        assert kind != CiKind.Boolean && kind != CiKind.Byte && kind != CiKind.Char : "these kinds should have int type registers";
+        this.kind = kind;
     }
 
     Range first() {
@@ -292,7 +292,7 @@ public final class Interval {
 
         C1XMetrics.LSRAIntervalsCreated++;
         this.registerNumber = regNum;
-        this.type = CiKind.Illegal;
+        this.kind = CiKind.Illegal;
         this.first = Range.EndMarker;
         this.usePosAndKinds = new ArrayList<Integer>(12);
         this.current = Range.EndMarker;
@@ -332,7 +332,7 @@ public final class Interval {
                 Interval i1 = splitChildren.get(i);
 
                 assert i1.splitParent() == this : "not a split child of this interval";
-                assert i1.type() == type() : "must be equal for all split children";
+                assert i1.kind() == kind() : "must be equal for all split children";
                 assert i1.canonicalSpillSlot() == canonicalSpillSlot() : "must be equal for all split children";
 
                 for (int j = i + 1; j < splitChildren.size(); j++) {
@@ -432,8 +432,8 @@ public final class Interval {
             Interval tmp = splitChildren.get(i);
             if (tmp != result && tmp.from() <= opId && opId < tmp.to() + toOffset) {
                 TTY.println(String.format("two valid result intervals found for opId %d: %d and %d", opId, result.registerNumber(), tmp.registerNumber()));
-                result.print(TTY.out, allocator);
-                tmp.print(TTY.out, allocator);
+                result.print(TTY.out(), allocator);
+                tmp.print(TTY.out(), allocator);
                 throw new CiBailout("two valid result intervals found");
             }
         }
@@ -538,7 +538,7 @@ public final class Interval {
 
         // do not add use positions for precolored intervals because
         // they are never used
-        if (useKind != IntervalUseKind.NoUse && registerNumber() >= CiRegister.MaxPhysicalRegisterNumber) {
+        if (useKind != IntervalUseKind.NoUse && registerNumber() >= CiRegister.LowestVirtualRegisterNumber) {
             assert usePosAndKinds.size() % 2 == 0 : "must be";
             for (int i = 0; i < usePosAndKinds.size(); i += 2) {
                 assert pos <= usePosAndKinds.get(i) : "already added a use-position with lower position";
@@ -579,7 +579,7 @@ public final class Interval {
     Interval newSplitChild() {
         // allocate new interval
         Interval result = new Interval(-1);
-        result.setType(type());
+        result.setKind(kind());
 
         Interval parent = splitParent();
         result.splitParent = parent;
@@ -669,7 +669,7 @@ public final class Interval {
     }
 
     boolean isVirtualInterval() {
-        return registerNumber() >= CiRegister.MaxPhysicalRegisterNumber;
+        return registerNumber() >= CiRegister.LowestVirtualRegisterNumber;
     }
 
     // split this interval at the specified position and return
@@ -754,22 +754,28 @@ public final class Interval {
 
     @Override
     public String toString() {
-        return "#" + registerNumber() + ":" + typeName() + "[" + from() + "," + to() + "]";
+        String to;
+        if (cachedTo == -1) {
+            to = "?";
+        } else {
+            to = String.valueOf(to());
+        }
+        return "#" + registerNumber() + ":" + typeName() + "[" + from() + "," + to + "]";
     }
 
     private String typeName() {
         String typeName;
-        if (registerNumber() < CiRegister.MaxPhysicalRegisterNumber) {
+        if (registerNumber() < CiRegister.LowestVirtualRegisterNumber) {
             typeName = "fixed";
         } else {
-            typeName = type().name();
+            typeName = kind().name();
         }
         return typeName;
     }
 
     public void print(LogStream out, LinearScan allocator) {
         LIROperand opr = LIROperand.IllegalLocation;
-        if (registerNumber() < CiRegister.MaxPhysicalRegisterNumber) {
+        if (registerNumber() < CiRegister.LowestVirtualRegisterNumber) {
             // need a temporary operand for fixed intervals because type() cannot be called
             if (allocator.isCpu(assignedReg())) {
                 opr = LIROperand.forRegister(CiKind.Int, allocator.toRegister(assignedReg()));

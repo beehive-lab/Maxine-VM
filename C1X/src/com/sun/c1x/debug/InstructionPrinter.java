@@ -114,7 +114,7 @@ public class InstructionPrinter extends ValueVisitor {
          * @param out the print stream
          */
         public void printLabel(LogStream out) {
-            out.fillTo(position + out.indentation(), '_');
+            out.fillTo(position + out.indentationLevel(), '_');
             out.print(label);
         }
 
@@ -124,7 +124,7 @@ public class InstructionPrinter extends ValueVisitor {
          * @param out the print stream
          */
         public void advance(LogStream out) {
-            out.fillTo(position + out.indentation(), ' ');
+            out.fillTo(position + out.indentationLevel(), ' ');
         }
     }
 
@@ -178,7 +178,7 @@ public class InstructionPrinter extends ValueVisitor {
             out.print('.');
         }
 
-        int indentation = out.indentation();
+        int indentation = out.indentationLevel();
         out.fillTo(BCI.position + indentation, ' ').
              print(instruction instanceof Instruction ? ((Instruction) instruction).bci() : 0).
              fillTo(USE.position + indentation, ' ').
@@ -187,6 +187,10 @@ public class InstructionPrinter extends ValueVisitor {
              print(instruction).
              fillTo(INSTRUCTION.position + indentation, ' ');
         printInstruction(instruction);
+        String flags = instruction.flagsToString();
+        if (!flags.isEmpty()) {
+            out.print("  [flags: " + flags + "]");
+        }
         out.println();
     }
 
@@ -375,6 +379,15 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitCompareOp(CompareOp compareOp) {
+        out.print(compareOp.x()).
+             print(' ').
+             print(Bytecodes.operator(compareOp.opcode())).
+             print(' ').
+             print(compareOp.y());
+    }
+
+    @Override
+    public void visitUnsignedCompareOp(UnsignedCompareOp compareOp) {
         out.print(compareOp.x()).
              print(' ').
              print(Bytecodes.operator(compareOp.opcode())).
@@ -753,5 +766,10 @@ public class InstructionPrinter extends ValueVisitor {
     @Override
     public void visitStackAllocate(StackAllocate i) {
         out.print("alloca(").print(i.size()).print(")");
+    }
+
+    @Override
+    public void visitUnsafeCast(UnsafeCast i) {
+        out.print("unsafe_cast ").print(i.value());
     }
 }

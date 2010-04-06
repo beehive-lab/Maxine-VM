@@ -25,7 +25,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.heap.*;
 
 /**
- * Implementation of VM-specific native method in @see sun.misc.GC.
+ * Implementation of VM-specific native methods in {@link GC}.
  *
  * @author Mick Jordan
  *
