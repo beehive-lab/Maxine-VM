@@ -20,7 +20,7 @@
  */
 package com.sun.c1x;
 
-import com.sun.c1x.debug.*;
+import com.sun.c1x.debug.TTY.*;
 
 /**
  * This class encapsulates options that control the behavior of the C1X compiler.
@@ -89,7 +89,7 @@ public class C1XOptions {
     public static boolean PrintLoopList                      = ____;
 
     /**
-     * See {@link com.sun.c1x.debug.TTY.Filter#matches(String, Object)}.
+     * See {@link Filter#matches(String, Object)}.
      */
     public static String  PrintFilter                        = null;
 
@@ -162,7 +162,7 @@ public class C1XOptions {
     public static boolean GenTableRanges                = ____;
 
     public static int     InitialCodeBufferSize         = 232;
-    public static boolean DetailedAsserts               = ____;
+    public static boolean DetailedAsserts               = true;
 
     // Runtime settings
     public static boolean UseBiasedLocking              = ____;

@@ -29,7 +29,7 @@ package com.sun.c1x.ci;
  */
 public final class CiAddress extends CiLocation {
 
-    public static final CiAddress InternalRelocation = new CiAddress(CiKind.Illegal, CiRegisterLocation.None);
+    public static final CiAddress InternalRelocation = new CiAddress(CiKind.Illegal, CiRegister.None.asLocation());
     
     public final CiLocation base;
     public final CiLocation index;

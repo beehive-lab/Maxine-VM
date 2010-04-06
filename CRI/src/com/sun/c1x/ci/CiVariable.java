@@ -50,20 +50,16 @@ public class CiVariable extends CiLocation {
         return variables;
     }
     
+    private static final int CACHE_PER_KIND_SIZE = 10;
+    
     /**
      * Cache of common variables.
      */
     private static final CiVariable[][] cache = new CiVariable[CiKind.values().length][];
     static {
         for (CiKind kind : CiKind.values()) {
-            if (kind.sizeInSlots() > 0) {
-                cache[kind.ordinal()] = generate(kind, 10);
-            }
+            cache[kind.ordinal()] = generate(kind, CACHE_PER_KIND_SIZE);
         }
-    }
-    
-    public static CiVariable forIndex(int index, CiKind kind) {
-        return forIndex(kind, index);
     }
     
     /**
@@ -73,9 +69,8 @@ public class CiVariable extends CiLocation {
      * @param index
      * @return
      */
-    public static CiVariable forIndex(CiKind kind, int index) {
+    public static CiVariable get(CiKind kind, int index) {
         assert index >= 0;
-        assert kind.jvmSlots > 0;
         CiVariable[] cachedVars = cache[kind.ordinal()];
         if (index < cachedVars.length) {
             return cachedVars[index];

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
 
 /**
  * @author Ben Titzer
@@ -30,3 +29,4 @@ package com.sun.c1x.ir;
  *         namely that everything is a value, including instructions. This allows an operand for an instruction node to
  *         refer directly to the node that generated the value, which might, for example, be another instruction.
  */
+package com.sun.c1x.ir;

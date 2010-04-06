@@ -28,7 +28,16 @@ package com.sun.c1x.ci;
  */
 public abstract class CiValue {
 
-    public static CiLocation IllegalLocation = CiRegisterLocation.None;
+    public static CiLocation IllegalLocation = new CiLocation(CiKind.Illegal) {
+        @Override
+        public String toString() {
+            return "<illegal>";
+        }
+        @Override
+        public CiRegister asRegister() {
+            return CiRegister.None;
+        }
+    };
     
     /**
      * The kind of this value.
@@ -55,6 +64,14 @@ public abstract class CiValue {
         throw illegalOperation("asRegister");
     }
 
+    public final CiLocation asLocation() {
+        return (CiLocation) this;
+    }
+
+    public int variableNumber() {
+        throw illegalOperation("variableNumber");
+    }
+
     public final boolean isIllegal() {
         return this == IllegalLocation;
     }
@@ -65,10 +82,6 @@ public abstract class CiValue {
 
     public final boolean isStackSlot() {
         return this instanceof CiStackSlot;
-    }
-
-    public int variableNumber() {
-        throw illegalOperation("variableNumber");
     }
 
     public final boolean isRegister() {

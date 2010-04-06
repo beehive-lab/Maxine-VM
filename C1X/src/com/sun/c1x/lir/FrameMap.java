@@ -195,12 +195,9 @@ public final class FrameMap {
     public CiLocation toLocation(CiValue opr) {
         if (opr.isStackSlot()) {
             CiStackSlot stkOpr = (CiStackSlot) opr;
-            if (stkOpr.index >= 0) {
-                int size = compiler.target.sizeInBytes(opr.kind);
-                int offset = spOffsetForSlot(stkOpr.index, size);
-                return new CiAddress(opr.kind, CiRegisterLocation.Frame, offset);
-            }
-            return stkOpr;
+            int size = compiler.target.sizeInBytes(opr.kind);
+            int offset = spOffsetForSlot(stkOpr.index, size);
+            return new CiAddress(opr.kind, CiRegister.Frame.asLocation(), offset);
         } else if (opr.isRegister()) {
             return (CiRegisterLocation) opr;
         }
@@ -231,7 +228,7 @@ public final class FrameMap {
      */
     public CiLocation toStackLocation(CiKind kind, int spillIndex) {
         int size = compiler.target.sizeInBytes(kind);
-        return new CiAddress(kind, CiRegisterLocation.Frame, spOffsetForSlot(spillIndex, size));
+        return new CiAddress(kind, CiRegister.Frame.asLocation(), spOffsetForSlot(spillIndex, size));
     }
 
     /**
@@ -250,7 +247,7 @@ public final class FrameMap {
      * @return a representation of the stack location
      */
     public CiLocation toMonitorLocation(int monitorIndex) {
-        return new CiAddress(CiKind.Object, CiRegisterLocation.Frame, spOffsetForMonitorObject(monitorIndex));
+        return new CiAddress(CiKind.Object, CiRegister.Frame.asLocation(), spOffsetForMonitorObject(monitorIndex));
     }
 
     /**

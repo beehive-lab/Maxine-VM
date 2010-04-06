@@ -51,6 +51,8 @@ public enum CiKind {
     /** The non-type. */
     Illegal(' ', "illegal", null,       -1,       0);
 
+    public static final CiKind[] VALUES = values();
+    
     CiKind(char ch, String name, String jniName, int jvmSlots, int flags) {
         this.typeChar = ch;
         this.javaName = name;
@@ -99,7 +101,7 @@ public enum CiKind {
 
     /**
      * The size of this kind in terms of abstract JVM words. Note that this may
-     * differ from the actual size of this type in it machine representation.
+     * differ from the actual size of this type in its machine representation.
      */
     public final int jvmSlots;
 

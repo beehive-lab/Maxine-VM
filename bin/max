@@ -710,14 +710,20 @@ function run_javadoc() {
             -projects )
                 shift
                 projects_to_build="$projects_to_build ${1//,/ }"
-
+                ;;
+            -* )
+                extra_javadoc_options="$extra_javadoc_options $1"
                 ;;
             * )
-                extra_javadoc_options="$extra_javadoc_options $1"
+                break
                 ;;
         esac
         shift
     done
+    
+    if [ $# -ne 0 ]; then
+        echo "Ignoring trailing args: $@"
+    fi
     
     if [ -z "$projects_to_build" ]; then
         for project in ${projects[@]}; do

@@ -134,7 +134,6 @@ public class LoopFinder {
 
     private void markLoops() {
         loopMap = new BitMap2D(numLoops, maxBlockId);
-        loopMap.clear();
 
         for (int i = loopEndBlocks.size() - 1; i >= 0; i--) {
             BlockBegin loopEnd = loopEndBlocks.get(i);
@@ -163,7 +162,7 @@ public class LoopFinder {
 
                         if (!isBlockInLoop(loopIdx, pred)) {
                             // this predecessor has not been processed yet, so add it to work list
-                            // Util.traceLinearScan(3, "    pushing B%d", pred.blockID);
+                            Util.traceLinearScan(3, "    pushing B%d", pred.blockID);
                             workList.add(pred);
                             loopBody.add(pred);
                             setBlockInLoop(loopIdx, pred);
