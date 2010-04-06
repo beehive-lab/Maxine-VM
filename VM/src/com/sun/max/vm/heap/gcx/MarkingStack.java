@@ -39,23 +39,18 @@ public class MarkingStack {
                         MaxineVM.Phase.PRISTINE);
 
     Address base;
-    Address end;
-    int drainThreshold;
+    int size;
     int topIndex = 0;
 
-    CellVisitor drainedCellVisitor;
+    CellVisitor flushingCellVisitor;
     OverflowHandler overflowHandler;
 
     void setCellVisitor(CellVisitor cellVisitor) {
-        drainedCellVisitor = cellVisitor;
+        flushingCellVisitor = cellVisitor;
     }
 
     void setOverflowHandler(OverflowHandler handler) {
         overflowHandler = handler;
-    }
-
-    private int overflowThreshold() {
-        return end.minus(base).toInt();
     }
 
     MarkingStack() {
@@ -65,15 +60,12 @@ public class MarkingStack {
         // FIXME: can be allocated in the heap, as reference array,
         // outside of the covered area. Root marking will skip it.
         // Same with the other GC data structures (i.e., rescan map and mark bitmap)
-        //
-        Size size = Size.fromInt(markingStackSizeOption.getValue() << Word.widthValue().log2numberOfBytes);
-        base = Memory.allocate(size);
+
+        size = markingStackSizeOption.getValue() << Word.widthValue().log2numberOfBytes;
+        base = Memory.allocate(Size.fromInt(size));
         if (base.isZero()) {
-            ((HeapSchemeAdaptor) VMConfiguration.target().heapScheme()).reportPristineMemoryFailure("marking stack", size);
+            ((HeapSchemeAdaptor) VMConfiguration.target().heapScheme()).reportPristineMemoryFailure("marking stack", Size.fromInt(size));
         }
-        end = base.plus(size);
-        // Hard coded for now -- is 75 % of the marking stack.
-        drainThreshold = (size.toInt() * 3) >> 2;
     }
 
     @INLINE
@@ -81,30 +73,16 @@ public class MarkingStack {
         return topIndex == 0;
     }
 
-    /**
-     * Returns a boolean indicating whether the stack will drain if the specified number
-     * of references is added to it.
-     * @param numReferences the number of reference to add to the marking stack
-     * @return true if adding numReference causes the marking stack to drain.
-     */
-    boolean willDrain(int numReferences) {
-        return topIndex + numReferences > drainThreshold;
-    }
-
     void push(Pointer cell) {
         base.asPointer().setWord(topIndex++, cell);
-        if (topIndex > drainThreshold) {
-            if (topIndex < overflowThreshold()) {
-                drain();
-                return;
-            }
+        if (topIndex == size) {
             overflowHandler.recoverFromOverflow();
         }
     }
 
-    void drain() {
+    void flush() {
         while (topIndex > 0) {
-            drainedCellVisitor.visitCell(base.asPointer().getWord(--topIndex).asPointer());
+            flushingCellVisitor.visitCell(base.asPointer().getWord(--topIndex).asPointer());
         }
     }
 

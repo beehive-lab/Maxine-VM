@@ -63,7 +63,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     /**
      * A marking algorithm for the MSHeapScheme.
      */
-    final HeapMarker heapMarker;
+    final TricolorHeapMarker heapMarker;
 
     /**
      * Free Space Manager.
@@ -72,9 +72,13 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     Size totalUsedSpace;
 
+    private final Collect collect = new Collect();
+
+    private StopTheWorldGCDaemon collectorThread;
+
     public MSHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        heapMarker = new HeapMarker(WORDS_COVERED_PER_BIT);
+        heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
         freeSpace = new FreeHeapSpaceManager();
         totalUsedSpace = Size.zero();
         committedHeapSpace = new RuntimeMemoryRegion("Heap");
@@ -93,6 +97,9 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             JavaMonitorManager.bindStickyMonitor(this);
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
+        } else if (phase == MaxineVM.Phase.STARTING) {
+            collectorThread = new StopTheWorldGCDaemon("GC", collect);
+            collectorThread.start();
         }
     }
 
@@ -134,9 +141,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         return 0;
     }
 
-    public boolean collectGarbage(Size requestedFreeSpace) {
-        // TODO Auto-generated method stub
-        return false;
+    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
+        // FIXME: need to revisit this.
+        if (requestedFreeSpace.greaterThan(freeSpace.freeSpaceLeft())) {
+            collectorThread.execute();
+        }
+        return true;
     }
 
     public boolean contains(Address address) {
