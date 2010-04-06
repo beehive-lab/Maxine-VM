@@ -127,6 +127,11 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
     }
 
+    @Override
+    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
+        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(stopPosition(stopIndex)));
+    }
+
     /**
      * Gets the bytecode position for a machine code instruction address.
      *

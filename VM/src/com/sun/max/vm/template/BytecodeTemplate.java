@@ -410,11 +410,6 @@ public enum BytecodeTemplate {
     MOV_L2D,
     MOV_D2L,
 
-    UWLT,
-    UWLTEQ,
-    UWGT,
-    UWGTEQ,
-    UGE,
     WRETURN,
     SAFEPOINT,
     PAUSE,
@@ -440,7 +435,7 @@ public enum BytecodeTemplate {
     MEMBAR_STORE_LOAD,
     MEMBAR_STORE_STORE,
     MEMBAR_MEMOP_STORE,
-    MEMBAR_ALL;
+    MEMBAR_FENCE;
 
 
 

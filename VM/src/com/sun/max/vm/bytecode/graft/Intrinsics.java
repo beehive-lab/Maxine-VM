@@ -197,6 +197,7 @@ public class Intrinsics extends IntrinsifierClient {
                     bi.intrinsify(opcode, operand);
                 } else {
                     if (!unsafe) {
+                        // The semantics of @INLINE and @FOLD are only implemented by the opto compiler.
                         unsafe = (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
                     }
                     if (holderIsWord && !isStatic) {

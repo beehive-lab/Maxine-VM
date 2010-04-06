@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,17 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target;
-
-import com.sun.c1x.target.x86.*;
-
-/**
- * This class represents the AMD64 architecture.
- * @author Thomas Wuerthinger
+/*
+ * @Harness: java
+ * @Runs: 1.0f = false; 2.0f = false; 0.5f = false; `java.lang.Float.NaN = true;
  */
-public class AMD64 extends X86 {
+package jtt.lang;
 
-    public AMD64() {
-        super("AMD64", 8, X86.allRegisters64, 0);
+public class Float_01 {
+    public static boolean test(float f) {
+        return /*Float.isNaN(f);*/ f != f;
     }
+
 }

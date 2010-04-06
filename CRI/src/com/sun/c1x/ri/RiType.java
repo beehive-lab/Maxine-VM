@@ -39,7 +39,7 @@ public interface RiType {
      * a type which compiled code may need to reference individually. These may or may not be
      * different objects or data structures, depending on the runtime system.
      */
-    enum Representation {
+    public enum Representation {
         /**
          * The runtime representation of the data structure containing the static fields of this type.
          */

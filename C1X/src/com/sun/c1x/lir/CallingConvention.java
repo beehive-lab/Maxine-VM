@@ -58,12 +58,9 @@ public class CallingConvention {
             } else {
                 return LIROperand.forAddress(LIROperand.forRegister(CiKind.Int, CiRegister.Stack), stackOffset, location.kind);
             }
-        } else if (location.second() == null) {
-            assert location.first() != null;
-            return new LIRLocation(location.kind, location.first());
         } else {
-            assert location.first() != null;
-            return new LIRLocation(location.kind, location.first(), location.second());
+            assert location.register() != null;
+            return new LIRLocation(location.kind, location.register());
         }
     }
 

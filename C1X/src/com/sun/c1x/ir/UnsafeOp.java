@@ -36,7 +36,7 @@ public abstract class UnsafeOp extends Instruction {
      * @param isStore {@code true} if this is a store operation
      */
     public UnsafeOp(CiKind unsafeOpKind, boolean isStore) {
-        super(isStore ? CiKind.Void : unsafeOpKind.stackType());
+        super(isStore ? CiKind.Void : unsafeOpKind.stackKind());
         this.unsafeOpKind = unsafeOpKind;
     }
 

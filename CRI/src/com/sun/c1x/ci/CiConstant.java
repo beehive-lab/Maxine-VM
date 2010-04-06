@@ -80,8 +80,7 @@ public final class CiConstant extends CiValue {
      */
     @Override
     public String toString() {
-        final String val = kind.isObject() ? "object@" + System.identityHashCode(value) : value.toString();
-        return kind.javaName + "(" + val + ")";
+        return kind.format(value);
     }
 
     /**
@@ -162,17 +161,8 @@ public final class CiConstant extends CiValue {
      */
     public long asLong() {
         if (kind != CiKind.Object) {
-            if (value instanceof Long) {
-                return (Long) value;
-            }
-            if (value instanceof Integer) {
-                return (Integer) value;
-            }
-            if (value instanceof Byte) {
-                return (Byte) value;
-            }
-            if (value instanceof Short) {
-                return (Short) value;
+            if (value instanceof Number) {
+                return ((Number) value).longValue();
             }
             if (value instanceof Character) {
                 return (Character) value;
@@ -228,9 +218,9 @@ public final class CiConstant extends CiValue {
      * Converts this constant to the jsr reference it represents.
      * @return the object which this constant represents
      */
-    public Object asJsr() {
+    public int asJsr() {
         if (kind == CiKind.Jsr) {
-            return value;
+            return (Integer) value;
         }
         throw new Error("Constant is not jsr: " + this);
     }

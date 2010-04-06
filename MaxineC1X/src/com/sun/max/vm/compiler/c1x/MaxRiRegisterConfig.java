@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
+import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -62,8 +63,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         if (vmConfiguration.platform.instructionSet() != InstructionSet.AMD64) {
             FatalError.unimplemented();
         }
-        InstructionSet isa = vmConfiguration.platform().processorKind.instructionSet;
-        CiArchitecture arch = CiArchitecture.findArchitecture(isa.name().toLowerCase());
+        CiArchitecture arch = new AMD64();
 
         // get the unallocatable registers
         Set<String> unallocatable = new HashSet<String>();
@@ -149,7 +149,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
             return returnRegisterFloat;
         }
         if (kind == CiKind.Void || kind == CiKind.Illegal) {
-            return CiRegister.None;
+            return null;
         }
         return returnRegisterInt;
     }
@@ -239,11 +239,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                 case Object:
                     if (currentGeneral < generalParameterRegisters.length) {
                         CiRegister register = generalParameterRegisters[currentGeneral++];
-                        if (kind == CiKind.Long) {
-                            result[i] = new CiRegisterLocation(kind, register, register);
-                        } else {
-                            result[i] = new CiRegisterLocation(kind, register);
-                        }
+                        result[i] = new CiRegisterLocation(kind, register);
                     }
                     break;
 
@@ -251,11 +247,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                 case Double:
                     if (currentXMM < xmmParameterRegisters.length) {
                         CiRegister register = xmmParameterRegisters[currentXMM++];
-                        if (kind == CiKind.Float) {
-                            result[i] = new CiRegisterLocation(kind, register);
-                        } else {
-                            result[i] = new CiRegisterLocation(kind, register, register);
-                        }
+                        result[i] = new CiRegisterLocation(kind, register);
                     }
                     break;
 

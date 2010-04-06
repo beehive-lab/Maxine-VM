@@ -350,7 +350,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      */
     public BytecodeLocation getBytecodeLocation(int stopIndex) {
         TargetMethod targetMethod = targetMethod();
-        return targetMethod.getBytecodeLocationFor(targetMethod.codeStart().plus(stopPositions.get(stopIndex)), false);
+        return targetMethod.getBytecodeLocationFor(stopIndex);
     }
 
     private TargetABI abi;

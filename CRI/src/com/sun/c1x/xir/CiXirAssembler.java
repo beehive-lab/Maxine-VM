@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.xir;
 
+import static com.sun.c1x.xir.CiXirAssembler.XirOp.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -295,6 +297,7 @@ public abstract class CiXirAssembler {
         And,
         Or,
         Xor,
+        NullCheck,
         PointerLoad,
         PointerStore,
         PointerLoadDisp,
@@ -331,91 +334,95 @@ public abstract class CiXirAssembler {
     }
 
     public void mov(XirOperand result, XirOperand a) {
-        append(new XirInstruction(result.kind, XirOp.Mov, result, a));
+        append(new XirInstruction(result.kind, Mov, result, a));
     }
 
     public void add(XirOperand result, XirOperand a, XirOperand b) {
-        append(new XirInstruction(result.kind, XirOp.Add, result, a, b));
+        append(new XirInstruction(result.kind, Add, result, a, b));
     }
 
     public void sub(XirOperand result, XirOperand a, XirOperand b) {
-        append(new XirInstruction(result.kind, XirOp.Sub, result, a, b));
+        append(new XirInstruction(result.kind, Sub, result, a, b));
     }
 
     public void div(XirOperand result, XirOperand a, XirOperand b) {
-        append(new XirInstruction(result.kind, XirOp.Div, result, a, b));
+        append(new XirInstruction(result.kind, Div, result, a, b));
     }
 
     public void mul(XirOperand result, XirOperand a, XirOperand b) {
-        append(new XirInstruction(result.kind, XirOp.Mul, result, a, b));
+        append(new XirInstruction(result.kind, Mul, result, a, b));
     }
 
     public void mod(XirOperand result, XirOperand a, XirOperand b) {
-        append(new XirInstruction(result.kind, XirOp.Mod, result, a, b));
+        append(new XirInstruction(result.kind, Mod, result, a, b));
     }
 
     public void shl(XirOperand result, XirOperand a, XirOperand b) {
-        append(new XirInstruction(result.kind, XirOp.Shl, result, a, b));
+        append(new XirInstruction(result.kind, Shl, result, a, b));
     }
 
     public void shr(XirOperand result, XirOperand a, XirOperand b) {
-        append(new XirInstruction(result.kind, XirOp.Shr, result, a, b));
+        append(new XirInstruction(result.kind, Shr, result, a, b));
     }
 
     public void and(XirOperand result, XirOperand a, XirOperand b) {
-        append(new XirInstruction(result.kind, XirOp.And, result, a, b));
+        append(new XirInstruction(result.kind, And, result, a, b));
     }
 
     public void or(XirOperand result, XirOperand a, XirOperand b) {
-        append(new XirInstruction(result.kind, XirOp.Or, result, a, b));
+        append(new XirInstruction(result.kind, Or, result, a, b));
     }
 
     public void xor(XirOperand result, XirOperand a, XirOperand b) {
-        append(new XirInstruction(result.kind, XirOp.Xor, result, a, b));
+        append(new XirInstruction(result.kind, Xor, result, a, b));
     }
 
+    public void nullCheck(XirOperand pointer) {
+        append(new XirInstruction(CiKind.Object, NullCheck, (XirOperand) null, pointer));
+    }
+    
     public void pload(CiKind kind, XirOperand result, XirOperand pointer, boolean canTrap) {
-        append(new XirInstruction(kind, canTrap, XirOp.PointerLoad, result, pointer));
+        append(new XirInstruction(kind, canTrap, PointerLoad, result, pointer));
     }
 
     public void pstore(CiKind kind, XirOperand pointer, XirOperand value, boolean canTrap) {
-        append(new XirInstruction(kind, canTrap, XirOp.PointerStore, null, pointer, value));
+        append(new XirInstruction(kind, canTrap, PointerStore, null, pointer, value));
     }
 
     public void pload(CiKind kind, XirOperand result, XirOperand pointer, XirOperand disp, boolean canTrap) {
-        append(new XirInstruction(kind, new AddressAccessInformation(canTrap), XirOp.PointerLoadDisp, result, pointer, disp));
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap), PointerLoadDisp, result, pointer, disp));
     }
 
     public void pstore(CiKind kind, XirOperand pointer, XirOperand disp, XirOperand value, boolean canTrap) {
-        append(new XirInstruction(kind, new AddressAccessInformation(canTrap), XirOp.PointerStoreDisp, (XirOperand) null, pointer, disp, value));
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap), PointerStoreDisp, (XirOperand) null, pointer, disp, value));
     }
 
     public void pload(CiKind kind, XirOperand result, XirOperand pointer, XirOperand disp, XirConstantOperand offset, boolean canTrap) {
-        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset), XirOp.PointerLoadDisp, result, pointer, disp));
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset), PointerLoadDisp, result, pointer, disp));
     }
 
     public void pstore(CiKind kind, XirOperand pointer, XirOperand disp, XirOperand value, XirConstantOperand offset, boolean canTrap) {
-        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset), XirOp.PointerStoreDisp, (XirOperand) null, pointer, disp, value));
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset), PointerStoreDisp, (XirOperand) null, pointer, disp, value));
     }
 
     public void pload(CiKind kind, XirOperand result, XirOperand pointer, XirOperand disp, XirConstantOperand offset, XirConstantOperand scaling,  boolean canTrap) {
-        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), XirOp.PointerLoadDisp, result, pointer, disp));
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), PointerLoadDisp, result, pointer, disp));
     }
 
     public void pstore(CiKind kind, XirOperand pointer, XirOperand disp, XirOperand value, XirConstantOperand offset, XirConstantOperand scaling, boolean canTrap) {
-        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), XirOp.PointerStoreDisp, (XirOperand) null, pointer, disp, value));
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), PointerStoreDisp, (XirOperand) null, pointer, disp, value));
     }
 
     public void pcas(CiKind kind, XirOperand result, XirOperand pointer, XirOperand value, XirOperand expectedValue) {
-        append(new XirInstruction(kind, XirOp.PointerLoad, result, pointer, value, expectedValue));
+        append(new XirInstruction(kind, PointerLoad, result, pointer, value, expectedValue));
     }
 
     public void jmp(XirLabel l) {
-        append(new XirInstruction(CiKind.Void, l, XirOp.Jmp, null));
+        append(new XirInstruction(CiKind.Void, l, Jmp, null));
     }
 
     public void jeq(XirLabel l, XirOperand a, XirOperand b) {
-        jcc(XirOp.Jeq, l, a, b);
+        jcc(Jeq, l, a, b);
     }
 
     private void jcc(XirOp op, XirLabel l, XirOperand a, XirOperand b) {
@@ -423,47 +430,47 @@ public abstract class CiXirAssembler {
     }
 
     public void jneq(XirLabel l, XirOperand a, XirOperand b) {
-        jcc(XirOp.Jneq, l, a, b);
+        jcc(Jneq, l, a, b);
     }
 
     public void jgt(XirLabel l, XirOperand a, XirOperand b) {
-        jcc(XirOp.Jgt, l, a, b);
+        jcc(Jgt, l, a, b);
     }
 
     public void jgteq(XirLabel l, XirOperand a, XirOperand b) {
-        jcc(XirOp.Jgteq, l, a, b);
+        jcc(Jgteq, l, a, b);
     }
 
     public void jugteq(XirLabel l, XirOperand a, XirOperand b) {
-        jcc(XirOp.Jugteq, l, a, b);
+        jcc(Jugteq, l, a, b);
     }
 
     public void jlt(XirLabel l, XirOperand a, XirOperand b) {
-        jcc(XirOp.Jlt, l, a, b);
+        jcc(Jlt, l, a, b);
     }
 
     public void jlteq(XirLabel l, XirOperand a, XirOperand b) {
-        jcc(XirOp.Jlteq, l, a, b);
+        jcc(Jlteq, l, a, b);
     }
 
     public void bindInline(XirLabel l) {
         assert l.inline;
-        append(new XirInstruction(CiKind.Void, l, XirOp.Bind, null));
+        append(new XirInstruction(CiKind.Void, l, Bind, null));
     }
 
     public void bindOutOfLine(XirLabel l) {
         assert !l.inline;
-        append(new XirInstruction(CiKind.Void, l, XirOp.Bind, null));
+        append(new XirInstruction(CiKind.Void, l, Bind, null));
     }
 
     public void callStub(XirTemplate stub, XirOperand result, XirOperand... args) {
         CiKind resultKind = result == null ? CiKind.Void : result.kind;
-        append(new XirInstruction(resultKind, stub, XirOp.CallStub, result, args));
+        append(new XirInstruction(resultKind, stub, CallStub, result, args));
     }
 
     public void callRuntime(Object rt, XirOperand result, XirOperand... args) {
         CiKind resultKind = result == null ? CiKind.Void : result.kind;
-        append(new XirInstruction(resultKind, rt, XirOp.CallRuntime, result, args));
+        append(new XirInstruction(resultKind, rt, CallRuntime, result, args));
     }
 
     private void end() {
@@ -540,9 +547,9 @@ public abstract class CiXirAssembler {
     }
 
     public XirTemplate finishTemplate(XirOperand result, String name) {
-		assert this.resultOperand == null;
-		assert result != null;
-		this.resultOperand = result;
+        assert this.resultOperand == null;
+        assert result != null;
+        this.resultOperand = result;
         final XirTemplate template = buildTemplate(name, false);
         end();
         return template;

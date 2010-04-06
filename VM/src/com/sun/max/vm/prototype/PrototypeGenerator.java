@@ -236,7 +236,7 @@ public final class PrototypeGenerator {
                     }
                 } while (currentNumberOfClasses() != numberOfClassActors);
 
-                compiledPrototype.compileUnsafeMethods();
+                compiledPrototype.compileFoldableMethods();
                 compiledPrototype.link();
 
                 graphPrototype = new GraphPrototype(compiledPrototype, tree);

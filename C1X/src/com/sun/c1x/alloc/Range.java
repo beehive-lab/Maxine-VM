@@ -45,7 +45,6 @@ final class Range {
      */
     public Range next;
 
-    // used only by class Interval, so hide them
     boolean intersects(Range r) {
         return intersectsAt(r) != -1;
     }

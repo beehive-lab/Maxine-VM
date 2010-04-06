@@ -40,12 +40,12 @@ public abstract class BlockEnd extends Instruction {
 
     /**
      * Constructs a new block end with the specified value type.
-     * @param type the type of the value produced by this instruction
+     * @param kind the type of the value produced by this instruction
      * @param stateAfter the value stack after the end of this block
      * @param isSafepoint {@code true} if this instruction is a safepoint instruction
      */
-    public BlockEnd(CiKind type, FrameState stateAfter, boolean isSafepoint) {
-        super(type);
+    public BlockEnd(CiKind kind, FrameState stateAfter, boolean isSafepoint) {
+        super(kind);
         this.successors = new ArrayList<BlockBegin>(2);
         this.stateAfter = stateAfter;
         if (isSafepoint) {

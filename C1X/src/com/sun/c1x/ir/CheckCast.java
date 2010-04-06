@@ -27,7 +27,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The {@code CheckCast} instruction represents a checkcast bytecode.
+ * The {@code CheckCast} instruction represents a {@link Bytecodes#CHECKCAST}.
  *
  * @author Ben L. Titzer
  */

@@ -36,14 +36,14 @@ public class RunBench implements Runnable {
      * The benchmark must implement this interface.
      */
     protected static interface LoopRunnable {
-        /*
-         * Run the benchmark for @see count iterations.
+        /**
+         * Runs the benchmark for {@code count} iterations.
          * @param count number of iterations
          */
         void run(long count) throws Exception;
 
-        /*
-         * Run the empty loop that encapsulates the benchmark for @see count iterations.
+        /**
+         * Runs the empty loop that encapsulates the benchmark for {@code count} iterations.
          * @param count number of iterations
          */
         void runBareLoop(long count);

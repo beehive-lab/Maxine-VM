@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.opt.*;
 import com.sun.c1x.ri.RiType;
 import com.sun.c1x.ri.RiRuntime;
 import com.sun.c1x.lir.*;
@@ -83,16 +84,16 @@ public abstract class Value {
 
     /**
      * Creates a new value with the specified kind.
-     * @param type the type of this value
+     * @param kind the type of this value
      */
-    public Value(CiKind type) {
-        kind = type;
+    public Value(CiKind kind) {
+        this.kind = kind;
     }
 
     /**
      * Checks whether this instruction is live (i.e. code should be generated for it).
-     * This is computed in a dedicated pass by {@link com.sun.c1x.opt.LivenessMarker}.
-     * An instruction be live because its value is needed by another live instruction,
+     * This is computed in a dedicated pass by {@link LivenessMarker}.
+     * An instruction is live because its value is needed by another live instruction,
      * because its value is needed for deoptimization, or the program is control dependent
      * upon it.
      * @return {@code true} if this instruction should be considered live
@@ -331,19 +332,21 @@ public abstract class Value {
             builder.append(" @ ");
             builder.append(((Instruction) this).bci());
         }
-        builder.append(" [");
-        boolean hasFlag = false;
+        builder.append(" [").append(flagsToString()).append("]");
+        return builder.toString();
+    }
+
+    public String flagsToString() {
+        StringBuilder sb = new StringBuilder();
         for (Flag f : Flag.values()) {
             if (checkFlag(f)) {
-                if (hasFlag) {
-                    builder.append(' ');
+                if (sb.length() != 0) {
+                    sb.append(' ');
                 }
-                builder.append(f.name());
-                hasFlag = true;
+                sb.append(f.name());
             }
         }
-        builder.append("]");
-        return builder.toString();
+        return sb.toString();
     }
 
     public final boolean isDeadPhi() {

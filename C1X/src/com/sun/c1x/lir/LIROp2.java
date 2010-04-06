@@ -22,6 +22,7 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.ir.*;
 
 /**
  * The {@code LIROp2} class represents a LIR instruction that performs an operation on two operands.
@@ -33,7 +34,7 @@ import com.sun.c1x.debug.*;
 public class LIROp2 extends LIRInstruction {
 
     final CiKind kind;
-    final LIRCondition condition;
+    final Condition condition;
 
     /**
      * Constructs a new LIROp2 instruction.
@@ -44,7 +45,7 @@ public class LIROp2 extends LIRInstruction {
      * @param opr2 the second input operand
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp2(LIROpcode opcode, LIRCondition condition, LIROperand opr1, LIROperand opr2, LIRDebugInfo info) {
+    public LIROp2(LIROpcode opcode, Condition condition, LIROperand opr1, LIROperand opr2, LIRDebugInfo info) {
         super(opcode, LIROperand.IllegalLocation, info, false, null, 0, 0, opr1, opr2);
         this.kind = CiKind.Illegal;
         this.condition = condition;
@@ -60,7 +61,7 @@ public class LIROp2 extends LIRInstruction {
      * @param opr2 the second input operand
      * @param result the operand that holds the result of this instruction
      */
-    public LIROp2(LIROpcode opcode, LIRCondition condition, LIROperand opr1, LIROperand opr2, LIROperand result) {
+    public LIROp2(LIROpcode opcode, Condition condition, LIROperand opr1, LIROperand opr2, LIROperand result) {
         super(opcode, result, null, false, null, 0, 0, opr1, opr2);
         this.kind = CiKind.Illegal;
         this.condition = condition;
@@ -80,7 +81,7 @@ public class LIROp2 extends LIRInstruction {
     public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, LIRDebugInfo info, CiKind kind, boolean hasCall) {
         super(opcode, result, info, hasCall, null, 0, 0, opr1, opr2);
         this.kind = kind;
-        this.condition = LIRCondition.Unknown;
+        this.condition = null;
         assert opcode != LIROpcode.Cmp && isInRange(opcode, LIROpcode.BeginOp2, LIROpcode.EndOp2) : "The " + opcode + " is not a valid LIROp2 opcode";
     }
 
@@ -121,7 +122,7 @@ public class LIROp2 extends LIRInstruction {
     public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, LIROperand tmp) {
         super(opcode, result, null, false, null, 0, 1, opr1, opr2, tmp);
         this.kind = CiKind.Illegal;
-        this.condition = LIRCondition.Unknown;
+        this.condition = null;
         assert opcode != LIROpcode.Cmp && isInRange(opcode, LIROpcode.BeginOp2, LIROpcode.EndOp2) : "The " + opcode + " is not a valid LIROp2 opcode";
     }
 
@@ -158,7 +159,7 @@ public class LIROp2 extends LIRInstruction {
      * .
      * @return condition the condition of this instruction
      */
-    public LIRCondition condition() {
+    public Condition condition() {
         assert code == LIROpcode.Cmp || code == LIROpcode.Cmove : "Field access only valid for cmp and cmove";
         return condition;
     }

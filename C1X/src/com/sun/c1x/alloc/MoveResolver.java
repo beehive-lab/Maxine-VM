@@ -224,12 +224,12 @@ final class MoveResolver {
 
     private void insertMove(Interval fromInterval, Interval toInterval) {
         assert fromInterval.registerNumber() != toInterval.registerNumber() : "from and to interval equal";
-        assert fromInterval.type() == toInterval.type() : "move between different types";
+        assert fromInterval.kind() == toInterval.kind() : "move between different types";
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
-        LIROperand fromOpr = LIROperand.forVariable(fromInterval.registerNumber(), fromInterval.type());
-        LIROperand toOpr = LIROperand.forVariable(toInterval.registerNumber(), toInterval.type());
+        LIROperand fromOpr = LIROperand.forVariable(fromInterval.registerNumber(), fromInterval.kind());
+        LIROperand toOpr = LIROperand.forVariable(toInterval.registerNumber(), toInterval.kind());
 
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
@@ -239,11 +239,11 @@ final class MoveResolver {
     }
 
     private void insertMove(LIROperand fromOpr, Interval toInterval) {
-        assert fromOpr.kind == toInterval.type() : "move between different types";
+        assert fromOpr.kind == toInterval.kind() : "move between different types";
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
-        LIROperand toOpr = LIROperand.forVariable(toInterval.registerNumber(), toInterval.type());
+        LIROperand toOpr = LIROperand.forVariable(toInterval.registerNumber(), toInterval.kind());
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
@@ -302,7 +302,7 @@ final class MoveResolver {
                 // create a new spill interval and assign a stack slot to it
                 Interval fromInterval = mappingFrom.get(spillCandidate);
                 Interval spillInterval = new Interval(-1);
-                spillInterval.setType(fromInterval.type());
+                spillInterval.setKind(fromInterval.kind());
 
                 // add a dummy range because real position is difficult to calculate
                 // Note: this range is a special case when the integrity of the allocation is checked
@@ -313,7 +313,7 @@ final class MoveResolver {
                 // one stack slot to another can happen (not allowed by LIRAssembler
                 int spillSlot = fromInterval.canonicalSpillSlot();
                 if (spillSlot < 0) {
-                    spillSlot = allocator.allocateSpillSlot(allocator.numberOfSpillSlots(spillInterval.type()) == 2);
+                    spillSlot = allocator.allocateSpillSlot(allocator.numberOfSpillSlots(spillInterval.kind()) == 2);
                     fromInterval.setCanonicalSpillSlot(spillSlot);
                 }
                 spillInterval.assignReg(spillSlot);
@@ -367,7 +367,7 @@ final class MoveResolver {
         // Util.traceLinearScan(4, "MoveResolver: adding mapping from %d (%d, %d) to %d (%d, %d)", fromInterval.registerNumber(), fromInterval.assignedReg(), fromInterval.assignedRegHi(), toInterval.registerNumber(),
         //                 toInterval.assignedReg(), toInterval.assignedRegHi());
 
-        assert fromInterval.type() == toInterval.type();
+        assert fromInterval.kind() == toInterval.kind();
         mappingFrom.add(fromInterval);
         mappingFromOpr.add(LIROperand.IllegalLocation);
         mappingTo.add(toInterval);

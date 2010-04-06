@@ -20,17 +20,18 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.ir.Value;
-import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.ir.*;
 
 /**
- * The {@code LIROperand} class represents an operand, either
- * a constant, an address calculation, a register, or a stack slot.
+ * An LIR operand is either a {@linkplain #isConstant(LIROperand) constant}, an {@linkplain #isAddress(LIROperand) address},
+ * a {@linkplain #isRegister() register}, a {@linkplain #isVariable() variable} or a {@linkplain #isStack() stack slot}.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public class LIROperand {
     public final CiKind kind;
@@ -54,14 +55,7 @@ public class LIROperand {
             out.append("dblStack:").append(doubleStackIndex());
         } else if (isVariable()) {
             out.append("V").append(variableNumber());
-        } else if (isSingleCpu()) {
-            out.append(asRegister().name);
-        } else if (isDoubleCpu()) {
-            out.append(asRegisterHigh().name);
-            out.append(asRegisterLow().name);
-        } else if (isSingleXmm()) {
-            out.append(asRegister().name);
-        } else if (isDoubleXmm()) {
+        } else if (isRegister()) {
             out.append(asRegister().name);
         } else {
             out.append("Unknown Operand");
@@ -89,137 +83,174 @@ public class LIROperand {
         return false;
     }
 
+    /**
+     * Determines if this is a variable that has yet to be allocated.
+     */
     public boolean isVariable() {
         return false;
     }
 
-    public boolean isFixedCpu() {
+    /**
+     * Determines if this is a physical register.
+     */
+    public boolean isRegister() {
         return false;
     }
 
-    public boolean isSingleCpu() {
-        return false;
-    }
-
-    public boolean isDoubleCpu() {
-        return false;
-    }
-
-    public boolean isSingleXmm() {
-        return false;
-    }
-
-    public boolean isDoubleXmm() {
-        return false;
+    protected Error illegalOperation(String operation) {
+        throw new InternalError("Cannot call " + operation + " on " + this);
     }
 
     public int stackIndex() {
-        throw new Error(getClass().getSimpleName() + " does not have a stackIndex");
+        throw illegalOperation("stackIndex()");
     }
 
     public int singleStackIndex() {
-        throw new Error(getClass().getSimpleName() + " does not have a singleStackIndex");
+        throw illegalOperation("singleStackIndex()");
     }
 
     public int doubleStackIndex() {
-        throw new Error(getClass().getSimpleName() + " does not have a doubleStackIndex");
+        throw illegalOperation("doubleStackIndex()");
     }
 
-    public int cpuRegNumber() {
-        throw new Error(getClass().getSimpleName() + " does not have a cpuRegNumber");
-    }
-
-    public int cpuRegNumberLow() {
-        throw new Error(getClass().getSimpleName() + " does not have a cpuRegNumberLow");
-    }
-
-    public int cpuRegNumberHigh() {
-        throw new Error(getClass().getSimpleName() + " does not have a cpuRegNumberHigh");
+    public int registerNumber() {
+        throw illegalOperation("registerNumber()");
     }
 
     public int variableNumber() {
-        throw new Error(getClass().getSimpleName() + " does not have a variableNumber");
+        throw illegalOperation("variableNumber()");
     }
 
     public CiRegister asRegister() {
         if (isIllegal(this)) {
             return CiRegister.None;
         }
-        throw new Error(getClass().getSimpleName() + " cannot be a register");
-    }
-
-    public CiRegister asRegisterLow() {
-        throw new Error(getClass().getSimpleName() + " cannot be a register");
-    }
-
-    public CiRegister asRegisterHigh() {
-        throw new Error(getClass().getSimpleName() + " cannot be a register");
+        throw illegalOperation("asRegister()");
     }
 
     public CiRegister asPointerRegister(CiArchitecture architecture) {
-        if (architecture.is64bit() && isDoubleCpu()) {
-            assert asRegisterLow() == asRegisterHigh() : "should be a single register";
-            return asRegisterLow();
-        }
         return asRegister();
     }
 
-    public static LIRLocation forRegister(CiKind type, CiRegister reg) {
-        return new LIRLocation(type, reg);
+    /**
+     * Creates a new LIR {@linkplain LIRLocation#isRegister() register} operand.
+     *
+     * @param reg the register
+     * @param kind the kind of the register
+     * @return a LIR register operand
+     */
+    public static LIRLocation forRegister(CiKind kind, CiRegister reg) {
+        return new LIRLocation(kind, reg);
     }
 
-    public static LIRLocation forRegisters(CiKind type, CiRegister reg1, CiRegister reg2) {
-        return new LIRLocation(type, reg1, reg2);
-    }
-
-    public static LIRLocation forVariable(int index, CiKind type) {
+    /**
+     * Creates a new LIR {@linkplain LIRLocation#isVariable() variable} operand.
+     *
+     * @param index the index of the variable
+     * @param kind the kind of the variable
+     * @return a LIR variable operand
+     */
+    public static LIRLocation forVariable(int index, CiKind kind) {
         C1XMetrics.LIRVariables++;
-        return new LIRLocation(type, index);
+        return new LIRLocation(kind, index);
     }
 
-    public static LIRLocation forStack(int index, CiKind type) {
+    /**
+     * Creates a new LIR {@linkplain LIRLocation#isStack() stack slot} operand.
+     *
+     * @param index the index of the stack slot
+     * @param kind the kind of the stack slot
+     * @return a LIR stack slot operand
+     */
+    public static LIRLocation forStack(int index, CiKind kind) {
         assert index >= 0;
-        return new LIRLocation(type, -index - 1);
+        return new LIRLocation(kind, -index - 1);
     }
 
+    /**
+     * Creates a new LIR {@linkplain LIRLocation#isConstant(LIROperand) constant} int operand.
+     *
+     * @param i an int constant
+     * @return a LIR constant int operand
+     */
     public static LIRConstant forInt(int i) {
         return new LIRConstant(CiConstant.forInt(i));
     }
 
+    /**
+     * Creates a new LIR {@linkplain LIRLocation#isConstant(LIROperand) constant} long operand.
+     *
+     * @param l a long constant
+     * @return a LIR constant long operand
+     */
     public static LIROperand forLong(long l) {
         return new LIRConstant(CiConstant.forLong(l));
     }
 
+    /**
+     * Creates a new LIR {@linkplain LIRLocation#isConstant(LIROperand) constant} float operand.
+     *
+     * @param f a float constant
+     * @return a LIR constant float operand
+     */
     public static LIROperand forFloat(float f) {
         return new LIRConstant(CiConstant.forFloat(f));
     }
 
+    /**
+     * Creates a new LIR {@linkplain LIRLocation#isConstant(LIROperand) constant} double operand.
+     *
+     * @param d a double constant
+     * @return a LIR constant double operand
+     */
     public static LIROperand forDouble(double d) {
         return new LIRConstant(CiConstant.forDouble(d));
     }
 
+    /**
+     * Creates a new LIR {@linkplain LIRLocation#isConstant(LIROperand) constant} object operand.
+     *
+     * @param o an object constant
+     * @return a LIR constant object operand
+     */
     public static LIROperand forObject(Object o) {
         return new LIRConstant(CiConstant.forObject(o));
     }
 
-    public static LIROperand forConstant(Value type) {
-        return new LIRConstant(type.asConstant());
+    /**
+     * Creates a new LIR {@linkplain LIRLocation#isConstant(LIROperand) constant} operand
+     * for a given value.
+     *
+     * @param value a {@linkplain Value#isConstant() constant} value
+     * @return a LIR constant for {@code value}
+     */
+    public static LIROperand forConstant(Value value) {
+        return new LIRConstant(value.asConstant());
     }
 
-    public static LIROperand forAddress(LIRLocation register, int disp, CiKind t) {
-        return new LIRAddress(register, disp, t);
+    /**
+     * Creates a new LIR {@linkplain LIRLocation#isAddress(LIROperand) address} operand
+     * for an address specified as a base register plus some displacement.
+     *
+     * @param register the base register for the address calculation
+     * @param disp the displacement for the address calculation
+     * @param kind the kind of the value located at the address
+     * @return a LIR address operand
+     */
+    public static LIROperand forAddress(LIRLocation register, int disp, CiKind kind) {
+        return new LIRAddress(register, disp, kind);
     }
 
-    public static LIROperand forAddress(CiRegister rsp, int disp, CiKind t) {
-        return forAddress(new LIRLocation(CiKind.Int, rsp), disp, t);
+    public static LIROperand forAddress(CiRegister rsp, int disp, CiKind kind) {
+        return forAddress(new LIRLocation(CiKind.Int, rsp), disp, kind);
     }
 
     public static LIROperand forConstant(CiConstant value) {
         return new LIRConstant(value);
     }
 
-    public static LIROperand forScratch(CiKind type, CiTarget target) {
-        return forRegister(type, target.scratchRegister);
+    public static LIROperand forScratch(CiKind kind, CiTarget target) {
+        return forRegister(kind, target.scratchRegister);
     }
 
     public static boolean isIllegal(LIROperand operand) {

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.type.ClassRegistry.*;
+
 import java.lang.reflect.*;
 import java.security.*;
 
@@ -27,10 +29,8 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -40,37 +40,14 @@ import com.sun.max.vm.type.*;
 
 /**
  * Method substitutions for the {@link java.security.AccessController} class.
- * We leverage some common code in the substitutions for @see sun.reflect.Reflection.
+ * We leverage some common code in the substitutions for {@link sun.reflect.Reflection}.
  */
 @METHOD_SUBSTITUTIONS(AccessController.class)
 final class JDK_java_security_AccessController {
 
-    private static Constructor<?> accessControlContextConstructor;
-    private static FieldActor privilegedContextActor;
+    private static final Constructor<?> AccessControlContext_init = ClassRegistry.AccessControlContext_init.toJavaConstructor();
 
     private JDK_java_security_AccessController() {
-    }
-
-    private static Constructor<?> getAccessControlContextConstructor() {
-        if (accessControlContextConstructor == null) {
-            // N.B. This is called very early in the VM startup, when creating the first VM thread,
-            // Experimentally, recursive entry while creating the constructor does not happen.
-            try {
-                accessControlContextConstructor = AccessControlContext.class.getDeclaredConstructor(ProtectionDomain[].class, boolean.class);
-                accessControlContextConstructor.setAccessible(true);
-            } catch (Exception ex) {
-                ProgramError.unexpected("failed to get AccessControlContext constructor ", ex);
-                return null;
-            }
-        }
-        return accessControlContextConstructor;
-    }
-
-    private static FieldActor getPrivilegedContextActor() {
-        if (privilegedContextActor == null) {
-            privilegedContextActor = ClassActor.fromJava(AccessControlContext.class).findFieldActor(SymbolTable.makeSymbol("privilegedContext"));
-        }
-        return privilegedContextActor;
     }
 
     /**
@@ -252,10 +229,10 @@ final class JDK_java_security_AccessController {
         }
 
         try {
-            final AccessControlContext result = (AccessControlContext) getAccessControlContextConstructor().newInstance(protectionDomains, context.isPrivileged);
+            final AccessControlContext result = (AccessControlContext) AccessControlContext_init.newInstance(protectionDomains, context.isPrivileged);
             if (context.isPrivileged) {
                 // need to manually set privilegedContext as no constructor for that
-                TupleAccess.writeObject(result, getPrivilegedContextActor().offset(), context.privilegedContext);
+                TupleAccess.writeObject(result, AccessControlContext_privilegedContext.offset(), context.privilegedContext);
             }
             return result;
         } catch (OutOfMemoryError ex) {

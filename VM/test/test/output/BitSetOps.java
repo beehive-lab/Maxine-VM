@@ -40,7 +40,7 @@ public class BitSetOps {
 
         void rightLeftIterate(BitClosure closure) {
             do {
-                int bitIndex =  Address.fromLong(bitmap).leastSignificantBitSet();
+                int bitIndex = Address.fromLong(bitmap).leastSignificantBitSet();
                 if (bitIndex < 0) {
                     return;
                 }
@@ -52,7 +52,7 @@ public class BitSetOps {
 
         void leftRightIterate(BitClosure closure) {
             do {
-                int bitIndex =  Address.fromLong(bitmap).mostSignificantBitSet();
+                int bitIndex = Address.fromLong(bitmap).mostSignificantBitSet();
                 if (bitIndex < 0) {
                     return;
                 }
@@ -74,6 +74,7 @@ public class BitSetOps {
 
         public void doBit(int bitIndex) {
             count++;
+            assert count < 64;
         }
     }
 
@@ -105,13 +106,26 @@ public class BitSetOps {
      * @param args
      */
     public static void main(String[] args) {
-        long bitmap = Long.parseLong(args[0]);
+        if (args.length == 0) {
+            for (long bitmap : new long[] {0xffff, 0x0, Long.MAX_VALUE, Long.MIN_VALUE}) {
+                process(bitmap);
+            }
+        } else {
+            for (String arg : args) {
+                process(Long.parseLong(arg));
+            }
+        }
+    }
+
+    private static void process(long bitmap) {
         BitCounter bc1 = new BitCounter(bitmap, false);
         BitCounter bc2 = new BitCounter(bitmap, true);
 
-        System.out.println(" Right Left count = " + bc1.count + " Left to Right count = " + bc2.count);
+        System.out.println("Bitmap: " + Long.toHexString(bitmap) + " (" + bitmap + ")");
+        System.out.println(" Right to Left count = " + bc1.count + " Left to Right count = " + bc2.count);
         System.out.println(" Right Left printer " + new BitPrinter(bitmap, false).toString());
         System.out.println(" Left Right printer " + new BitPrinter(bitmap, true).toString());
+        System.out.println();
     }
 
 }

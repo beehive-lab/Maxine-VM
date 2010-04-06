@@ -36,12 +36,12 @@ public final class Phi extends Value {
 
     /**
      * Create a new Phi for the specified join block and local variable (or operand stack) slot.
-     * @param type the type of the variable
+     * @param kind the type of the variable
      * @param block the join point
      * @param index the index into the stack (if < 0) or local variables
      */
-    public Phi(CiKind type, BlockBegin block, int index) {
-        super(type);
+    public Phi(CiKind kind, BlockBegin block, int index) {
+        super(kind);
         this.block = block;
         this.index = index;
     }

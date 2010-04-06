@@ -64,7 +64,7 @@ public abstract class ResolutionSnippet extends Snippet {
      * Resolves a constant pool entry denoting a class that will be resolved to any arbitrary class type. That is, the
      * entry can denote an array type, interface or normal class.
      *
-     * This snippet is useful for translating the {@link Bytecodes#INSTANCEOF}, {@link Bytecodes#CHECKCAST},
+     * This snippet is used when translating the {@link Bytecodes#INSTANCEOF}, {@link Bytecodes#CHECKCAST},
      * {@link Bytecodes#LDC} and {@link Bytecodes#MULTIANEWARRAY} instructions.
      */
     public static final class ResolveClass extends ResolutionSnippet {
@@ -93,7 +93,7 @@ public abstract class ResolutionSnippet extends Snippet {
      * Resolves a constant pool entry denoting a class that specifies the component type of an object.
      * The resolved value returned by this snippet is the array type derived from the component type.
      *
-     * This snippet is useful for translating the {@link Bytecodes#ANEWARRAY} instruction.
+     * This snippet is used when translating the {@link Bytecodes#ANEWARRAY} instruction.
      */
     public static final class ResolveArrayClass extends ResolutionSnippet {
 
@@ -120,7 +120,7 @@ public abstract class ResolutionSnippet extends Snippet {
     /**
      * Resolves a constant pool entry denoting a class that specifies a class type that can be instantiated.
      *
-     * This snippet is useful for translating the {@link Bytecodes#NEW} instruction.
+     * This snippet is used when translating the {@link Bytecodes#NEW} instruction.
      */
     public static final class ResolveClassForNew extends ResolutionSnippet {
 
@@ -151,7 +151,7 @@ public abstract class ResolutionSnippet extends Snippet {
     /**
      * Resolves a constant pool entry denoting a static field that is being read.
      *
-     * This snippet is useful for translating the {@link Bytecodes#GETSTATIC} instruction.
+     * This snippet is used when translating the {@link Bytecodes#GETSTATIC} instruction.
      */
     public static final class ResolveStaticFieldForReading extends ResolutionSnippet {
 
@@ -181,7 +181,7 @@ public abstract class ResolutionSnippet extends Snippet {
     /**
      * Resolves a constant pool entry denoting a static field that is being written to.
      *
-     * This snippet is useful for translating the {@link Bytecodes#PUTSTATIC} instruction.
+     * This snippet is used when translating the {@link Bytecodes#PUTSTATIC} instruction.
      */
     public static final class ResolveStaticFieldForWriting extends ResolutionSnippet {
 
@@ -214,7 +214,7 @@ public abstract class ResolutionSnippet extends Snippet {
     /**
      * Resolves a constant pool entry denoting an instance field that is being read.
      *
-     * This snippet is useful for translating the {@link Bytecodes#GETFIELD} instruction.
+     * This snippet is used when translating the {@link Bytecodes#GETFIELD} instruction.
      */
     public static final class ResolveInstanceFieldForReading extends ResolutionSnippet {
 
@@ -248,7 +248,7 @@ public abstract class ResolutionSnippet extends Snippet {
     /**
      * Resolves a constant pool entry denoting an instance field that is being written to.
      *
-     * This snippet is useful for translating the {@link Bytecodes#PUTFIELD} instruction.
+     * This snippet is used when translating the {@link Bytecodes#PUTFIELD} instruction.
      */
     public static final class ResolveInstanceFieldForWriting extends ResolutionSnippet {
 
@@ -282,7 +282,7 @@ public abstract class ResolutionSnippet extends Snippet {
     /**
      * Resolves a constant pool entry denoting a static method that is being invoked.
      *
-     * This snippet is useful for translating the {@link Bytecodes#INVOKESTATIC} instruction.
+     * This snippet is used when translating the {@link Bytecodes#INVOKESTATIC} instruction.
      */
     public static final class ResolveStaticMethod extends ResolutionSnippet {
         @NEVER_INLINE
@@ -372,7 +372,7 @@ public abstract class ResolutionSnippet extends Snippet {
     /**
      * Resolves a constant pool entry denoting a method that is being invoked "interfacially".
      *
-     * This snippet is useful for translating the {@link Bytecodes#INVOKEINTERFACE} instruction.
+     * This snippet is used when translating the {@link Bytecodes#INVOKEINTERFACE} instruction.
      *
      * Special note: While it is legal to invoke a virtual method declared in java.lang.Object with invokeinterface, an
      * assumption is made by this snippet that the verifier detects such cases and rewrites the instruction to use

@@ -21,13 +21,12 @@
 package com.sun.max.vm.cps.b.c;
 
 import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
 import com.sun.c1x.bytecode.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -1828,12 +1827,12 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                     case PCMPSWP_INT_I:          stackCall(CompareAndSwapIntAtIntOffset.BUILTIN); break;
                     case PCMPSWP_WORD_I:         stackCall(CompareAndSwapWordAtIntOffset.BUILTIN); break;
                     case PCMPSWP_REFERENCE_I:    stackCall(CompareAndSwapReferenceAtIntOffset.BUILTIN); break;
-                    case MEMBAR_LOAD_LOAD:       membar(MemoryBarrier.loadLoad); break;
-                    case MEMBAR_LOAD_STORE:      membar(MemoryBarrier.loadStore); break;
-                    case MEMBAR_STORE_LOAD:      membar(MemoryBarrier.storeLoad); break;
-                    case MEMBAR_STORE_STORE:     membar(MemoryBarrier.storeStore); break;
-                    case MEMBAR_MEMOP_STORE:     membar(MemoryBarrier.memopStore); break;
-                    case MEMBAR_ALL:             membar(MemoryBarrier.all); break;
+                    case MEMBAR_LOAD_LOAD:       membar(MemoryBarriers.LOAD_LOAD); break;
+                    case MEMBAR_LOAD_STORE:      membar(MemoryBarriers.LOAD_STORE); break;
+                    case MEMBAR_STORE_LOAD:      membar(MemoryBarriers.STORE_STORE); break;
+                    case MEMBAR_STORE_STORE:     membar(MemoryBarriers.STORE_STORE); break;
+                    case MEMBAR_MEMOP_STORE:     membar(MemoryBarriers.MEMOP_STORE); break;
+                    case MEMBAR_FENCE:           membar(MemoryBarriers.FENCE); break;
                     default:                     throw verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
                 }
                 break;
@@ -1843,11 +1842,27 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case MOV_F2I:                stackCall(FloatToInt.BUILTIN); break;
             case MOV_L2D:                stackCall(LongToDouble.BUILTIN); break;
             case MOV_D2L:                stackCall(DoubleToLong.BUILTIN); break;
-            case UWLT:                   stackCall(LessThan.BUILTIN); break;
-            case UWLTEQ:                 stackCall(LessEqual.BUILTIN); break;
-            case UWGT:                   stackCall(GreaterThan.BUILTIN); break;
-            case UWGTEQ:                 stackCall(GreaterEqual.BUILTIN); break;
-            case UGE:                    stackCall(UnsignedIntGreaterEqual.BUILTIN); break;
+
+            case UWCMP: {
+                switch (operand) {
+                    case ABOVE_EQUAL: stackCall(GreaterEqual.BUILTIN); break;
+                    case ABOVE_THAN:  stackCall(GreaterThan.BUILTIN); break;
+                    case BELOW_EQUAL: stackCall(LessEqual.BUILTIN); break;
+                    case BELOW_THAN:  stackCall(LessThan.BUILTIN); break;
+                    default:          throw verifyError("Unsupported UWCMP operand: " + operand);
+                }
+                break;
+            }
+            case UCMP: {
+                switch (operand) {
+                    case ABOVE_EQUAL: stackCall(AboveEqual.BUILTIN); break;
+                    case ABOVE_THAN : stackCall(AboveThan.BUILTIN); break;
+                    case BELOW_EQUAL: stackCall(BelowEqual.BUILTIN); break;
+                    case BELOW_THAN : stackCall(BelowThan.BUILTIN); break;
+                    default:          throw verifyError("Unsupported UCMP operand: " + operand);
+                }
+                break;
+            }
             case JNICALL:                jnicall(operand); break;
 
 
@@ -1860,10 +1875,10 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case ADD_SP:                 stackCall(AdjustJitStack.BUILTIN); break;
             case READ_PC:                stackCall(GetInstructionPointer.BUILTIN); break;
             case FLUSHW:                 stackCall(FlushRegisterWindows.BUILTIN); break;
-            case LSB:                 stackCall(LeastSignificantBit.BUILTIN); break;
-            case MSB:                 stackCall(MostSignificantBit.BUILTIN); break;
+            case LSB:                    stackCall(LeastSignificantBit.BUILTIN); break;
+            case MSB:                    stackCall(MostSignificantBit.BUILTIN); break;
 
-           case CALL: {
+            case CALL: {
                 Invocation inv = invoke(operand, 0);
                 completeInvocation(new Call(inv.sig), inv.sig.resultKind(), inv.args);
                 break;
@@ -1883,8 +1898,8 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         return true;
     }
 
-    private void membar(PoolSet<MemoryBarrier> barrier) {
-        callAndPush(new JavaBuiltinOperator(BarMemory.BUILTIN), CirConstant.fromObject(barrier));
+    private void membar(int barriers) {
+        callAndPush(new JavaBuiltinOperator(BarMemory.BUILTIN), CirConstant.fromInt(barriers));
     }
 
     private void readreg(VMRegister.Role role) {

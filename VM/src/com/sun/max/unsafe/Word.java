@@ -223,7 +223,7 @@ public abstract class Word {
     /**
      * @return bit index of the least significant bit set, or -1 if zero.
      */
-    @INLINE
+    @INTRINSIC(LSB)
     public final int leastSignificantBitSet() {
         return SpecialBuiltin.leastSignificantBit(this);
     }
@@ -231,7 +231,7 @@ public abstract class Word {
     /**
      * @return bit index of the least significant bit set, or -1 if zero.
      */
-    @INLINE
+    @INTRINSIC(MSB)
     public final int mostSignificantBitSet() {
         return SpecialBuiltin.mostSignificantBit(this);
     }

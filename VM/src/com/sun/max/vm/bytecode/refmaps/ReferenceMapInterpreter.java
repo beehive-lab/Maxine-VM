@@ -1568,15 +1568,6 @@ public abstract class ReferenceMapInterpreter {
                     skip2();
                     break;
                 }
-                case UWLT:
-                case UWLTEQ:
-                case UWGT:
-                case UWGTEQ:
-                case UGE: {
-                    skip2();
-                    popCategory1();
-                    break;
-                }
                 case MEMBAR: {
                     skip2();
                     break;

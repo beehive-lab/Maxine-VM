@@ -122,7 +122,7 @@ public final class LIRConstant extends LIROperand {
      *
      * @return the jsr
      */
-    public Object asJsr() {
+    public int asJsr() {
         assertType(this, CiKind.Jsr);
         return value.asJsr();
     }
@@ -236,13 +236,15 @@ public final class LIRConstant extends LIROperand {
             case Short:
             case Char:
             case Int:
-                return this.asInt();
+                return asInt();
             case Float:
                 return Float.floatToIntBits(this.asFloat());
             case Double:
                 return Double.doubleToLongBits(this.asDouble());
             case Long:
-                return this.asLong();
+                return asLong();
+            case Word:
+                return asWord();
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -275,7 +277,7 @@ public final class LIRConstant extends LIROperand {
                 }
             }
             case Jsr:
-                return String.format("jsr:%s", this.asJsr());
+                return String.format("jsr:%d", this.asJsr());
             case Word:
                 return String.format("word:%d", this.asWord());
             default:

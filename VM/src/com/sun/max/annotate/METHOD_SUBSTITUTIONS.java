@@ -34,7 +34,7 @@ import com.sun.max.vm.type.*;
 /**
  * Denotes a class (the "substitutor") that provides an alternative implementation
  * (a method annotated by {@link SUBSTITUTE}) for at least one method in another
- * class (the {@link #value "substitutee"}).
+ * class (the {@link #g "substitutee"}).
  *
  * @see SUBSTITUTE
  *
@@ -77,16 +77,18 @@ public @interface METHOD_SUBSTITUTIONS {
                     if (substituteName.length() == 0) {
                         substituteName = substituteMethod.getName();
                     }
+
                     final Method originalMethod = findMethod(substitutee, substituteName, SignatureDescriptor.fromJava(substituteMethod));
                     ProgramError.check(originalMethod != null, "could not find method in " + substitutee + " substituted by " + substituteMethod);
                     final ClassMethodActor originalMethodActor = ClassMethodActor.fromJava(originalMethod);
-                    if (originalToSubstitute.put(originalMethodActor, ClassMethodActor.fromJava(substituteMethod)) != null) {
+                    ClassMethodActor substituteMethodActor = ClassMethodActor.fromJava(substituteMethod);
+                    if (originalToSubstitute.put(originalMethodActor, substituteMethodActor) != null) {
                         ProgramError.unexpected("a substitute has already been registered for " + originalMethod);
                     }
-                    if (substituteToOriginal.put(ClassMethodActor.fromJava(substituteMethod), originalMethodActor) != null) {
+                    if (substituteToOriginal.put(substituteMethodActor, originalMethodActor) != null) {
                         ProgramError.unexpected("only one original method per substitute allowed - " + substituteMethod);
                     }
-                    originalMethodActor.beUnsafe();
+                    originalMethodActor.setFlagsFromSubstitute(substituteMethodActor);
                     MaxineVM.registerImageMethod(originalMethodActor); // TODO: loosen this requirement
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.

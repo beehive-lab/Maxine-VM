@@ -57,15 +57,14 @@ public interface RiMethod {
     RiSignature signatureType();
 
     /**
-     * Gets the bytecode of the method, if the method has bytecode.
+     * Gets the bytecode of the method, if the method {@linkplain #hasCode() has code}.
      * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
      * @return the bytecode of the method
      */
     byte[] code();
 
     /**
-     * Checks whether this method has bytecode. For unresolved, abstract, or native methods,
-     * this method must return {@code false}.
+     * Checks whether this method has bytecode.
      * @return {@code true} if bytecode is available for the method
      */
     boolean hasCode();
@@ -154,11 +153,18 @@ public interface RiMethod {
     boolean isStatic();
 
     /**
-     * Checks whether this method is an initializer.
+     * Checks whether this method is a class initializer (i.e. <clinit>).
      * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is static
+     * @return {@code true} if the method is a class initializer
      */
-    boolean isInitializer();
+    boolean isClassInitializer();
+
+    /**
+     * Checks whether this method is a constructor.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is a constructor
+     */
+    boolean isConstructor();
 
     /**
      * Checks whether this method has been overridden. Decisions made based
@@ -167,14 +173,6 @@ public interface RiMethod {
      * @return {@code true} if the method has been overridden
      */
     boolean isOverridden();
-
-    /**
-     * For virtual methods, this method returns the index into the virtual table
-     * of the method.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the virtual table index
-     */
-    int vtableIndex();
 
     /**
      * Gets the {@link RiMethodProfile method data} for this method, which stores instrumentation,

@@ -23,10 +23,10 @@ package com.sun.c1x;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.*;
 import com.sun.c1x.xir.*;
 
 /**
@@ -64,9 +64,7 @@ public class C1XCompiler extends CiCompiler {
         this.target = target;
         this.xir = xirGen;
 
-        // TODO: Remove this fixed wiring to X86
-        assert target.arch instanceof AMD64;
-        this.backend = new X86Backend(this);
+        this.backend = Backend.create(target.arch, this);
     }
 
     @Override
@@ -77,7 +75,19 @@ public class C1XCompiler extends CiCompiler {
     @Override
     public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
         C1XCompilation compilation = new C1XCompilation(this, target, runtime, method, osrBCI);
-        return compilation.compile();
+        CiResult result = compilation.compile();
+        if (false) {
+            if (result.bailout() != null) {
+                int oldLevel = C1XOptions.TraceBytecodeParserLevel;
+                String oldFilter = C1XOptions.PrintFilter;
+                C1XOptions.TraceBytecodeParserLevel = 2;
+                C1XOptions.PrintFilter = null;
+                new C1XCompilation(this, target, runtime, method, osrBCI).compile();
+                C1XOptions.TraceBytecodeParserLevel = oldLevel;
+                C1XOptions.PrintFilter = oldFilter;
+            }
+        }
+        return result;
     }
 
     public void init() {
@@ -86,11 +96,21 @@ public class C1XCompiler extends CiCompiler {
         final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
 
         for (XirTemplate t : globalStubs) {
-            map.put(t, emitter.emit(t, runtime));
+            TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, t.name);
+            try {
+                map.put(t, emitter.emit(t, runtime));
+            } finally {
+                filter.remove();
+            }
         }
 
         for (GlobalStub.Id id : GlobalStub.Id.values()) {
-            map.put(id, emitter.emit(id, runtime));
+            TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
+            try {
+                map.put(id, emitter.emit(id, runtime));
+            } finally {
+                suppressor.remove();
+            }
         }
     }
 

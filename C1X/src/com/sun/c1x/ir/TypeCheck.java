@@ -39,11 +39,11 @@ public abstract class TypeCheck extends StateSplit {
      * Creates a new TypeCheck instruction.
      * @param targetClass the class which is being casted to or checked against
      * @param object the instruction which produces the object
-     * @param type the result type of this instruction
+     * @param kind the result type of this instruction
      * @param stateBefore the state before this instruction is executed
      */
-    public TypeCheck(RiType targetClass, Value targetClassInstruction, Value object, CiKind type, FrameState stateBefore) {
-        super(type, stateBefore);
+    public TypeCheck(RiType targetClass, Value targetClassInstruction, Value object, CiKind kind, FrameState stateBefore) {
+        super(kind, stateBefore);
         this.targetClass = targetClass;
         this.targetClassInstruction = targetClassInstruction;
         this.object = object;

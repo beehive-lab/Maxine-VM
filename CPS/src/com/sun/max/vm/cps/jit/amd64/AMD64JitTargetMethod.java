@@ -22,7 +22,7 @@ package com.sun.max.vm.cps.jit.amd64;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
+import com.sun.max.lang.Bytes;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;

@@ -197,12 +197,9 @@ public final class FrameMap {
             int size = compiler.target.spillSlotSize(opr.kind);
             int offset = spOffsetForSlot(opr.stackIndex(), size);
             return new CiStackLocation(opr.kind, offset, size, false);
-        } else if (opr.isSingleCpu() || opr.isSingleXmm()) {
-            // create a single register location
+        } else if (opr.isRegister()) {
+            // create a register location
             return new CiRegisterLocation(opr.kind, opr.asRegister());
-        } else if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
-            // create a double register location
-            return new CiRegisterLocation(opr.kind, opr.asRegisterLow(), opr.asRegisterHigh());
         }
         throw new CiBailout("cannot convert " + opr + "to location");
     }

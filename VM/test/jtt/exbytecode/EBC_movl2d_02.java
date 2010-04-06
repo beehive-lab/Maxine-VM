@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,37 +18,27 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package jtt.exbytecode;
 
-/**
- * This class implements a number of utilities for dealing with bytes,
- * particularly in byte arrays.
- *
- * @author Ben L. Titzer
- */
-public class Bytes {
-    public static int beS1(byte[] data, int bci) {
-        // big-endian unsigned 1-byte quantity
-        return data[bci];
+import com.sun.max.vm.compiler.builtin.*;
+
+// memory -> register
+
+/*
+ * @Harness: java
+ * @Runs: 0x7ff8000000000000L = ()java.lang.Double.isNaN; 0x3ff0000000000000L = 1.0d; -4616189618054758400L = -1.0d; 4691882224927966680L = 473729.5945321d
+*/
+public class EBC_movl2d_02 {
+    static class L {
+        long l;
+        L(long l) {
+            this.l = l;
+        }
+    }
+    public static double test(long arg) {
+        L l = new L(arg);
+        return SpecialBuiltin.longToDouble(l.l);
     }
 
-    public static int beS2(byte[] data, int bci) {
-        // big-endian signed 2-byte quantity
-        return (data[bci] << 8) | (data[bci + 1] & 0xff);
-    }
-
-    public static int beU1(byte[] data, int bci) {
-        // big-endian unsigned 1-byte quantity
-        return data[bci] & 0xff;
-    }
-
-    public static int beU2(byte[] data, int bci) {
-        // big-endian unsigned 2-byte quantity
-        return ((data[bci] & 0xff) << 8) | (data[bci + 1] & 0xff);
-    }
-
-    public static int beS4(byte[] data, int bci) {
-        // big-endian signed 4-byte quantity
-        return (data[bci] << 24) | ((data[bci + 1] & 0xff) << 16) | ((data[bci + 2] & 0xff) << 8) | (data[bci + 3] & 0xff);
-    }
 }
+

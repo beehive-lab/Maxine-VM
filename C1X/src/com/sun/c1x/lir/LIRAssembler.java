@@ -29,7 +29,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.lir.LIRCall.*;
@@ -50,8 +49,6 @@ public abstract class LIRAssembler {
     public final C1XCompilation compilation;
     public final AbstractAssembler asm;
     public final FrameMap frameMap;
-    public final boolean is32;
-    public final boolean is64;
 
     protected final List<LocalStub> localStubs;
     protected final List<SlowPath> xirSlowPath;
@@ -73,8 +70,6 @@ public abstract class LIRAssembler {
         this.compilation = compilation;
         this.asm = compilation.masm();
         this.frameMap = compilation.frameMap();
-        this.is32 = compilation.target.arch.is32bit();
-        this.is64 = compilation.target.arch.is64bit();
         this.localStubs = new ArrayList<LocalStub>();
         this.branchTargetBlocks = new ArrayList<BlockBegin>();
         this.xirSlowPath = new ArrayList<SlowPath>();
@@ -165,7 +160,7 @@ public abstract class LIRAssembler {
 
         if (C1XOptions.PrintLIRWithAssembly) {
             // don't print Phi's
-            InstructionPrinter ip = new InstructionPrinter(TTY.out, false, compilation.target);
+            InstructionPrinter ip = new InstructionPrinter(TTY.out(), false, compilation.target);
             ip.printBlock(block);
         }
 
@@ -194,7 +189,7 @@ public abstract class LIRAssembler {
             }
             if (C1XOptions.PrintLIRWithAssembly) {
                 // print out the LIR operation followed by the resulting assembly
-                op.printOn(TTY.out);
+                op.printOn(TTY.out());
                 TTY.println();
             }
 
@@ -237,12 +232,6 @@ public abstract class LIRAssembler {
         verifyOopMap(op.info);
 
         switch (op.code) {
-            case InterfaceCall:
-                emitInterfaceCall(op.method(), op.receiver(), op.info, op.globalStub);
-                break;
-            case VirtualCall:
-                emitVirtualCall(op.method(), op.receiver(), op.info);
-                break;
             case DirectCall:
                 emitDirectCall(op.target, op.info);
                 break;
@@ -293,7 +282,7 @@ public abstract class LIRAssembler {
                 break;
             case NullCheck:
                 asm.recordImplicitException(codePos(), op.info);
-                assert op.operand().isSingleCpu();
+                assert op.operand().isRegister();
                 asm.nullCheck(op.operand().asRegister());
                 break;
             default:
@@ -401,38 +390,38 @@ public abstract class LIRAssembler {
         asm.buildFrame(initialFrameSizeInBytes());
     }
 
-    public void moveOp(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned) {
-        if (src.isVariableOrRegister()) {
-            if (dest.isVariableOrRegister()) {
+    public void moveOp(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
+        if (src.isRegister()) {
+            if (dest.isRegister()) {
                 assert info == null : "no patching and info allowed here";
                 reg2reg(src, dest);
             } else if (dest.isStack()) {
                 assert info == null : "no patching and info allowed here";
-                reg2stack(src, dest, type);
+                reg2stack(src, dest, kind);
             } else if (isAddress(dest)) {
-                reg2mem(src, dest, type, info, unaligned);
+                reg2mem(src, dest, kind, info, unaligned);
             } else {
                 throw Util.shouldNotReachHere();
             }
 
         } else if (src.isStack()) {
             assert info == null : "no patching and info allowed here";
-            if (dest.isVariableOrRegister()) {
-                stack2reg(src, dest, type);
+            if (dest.isRegister()) {
+                stack2reg(src, dest, kind);
             } else if (dest.isStack()) {
-                stack2stack(src, dest, type);
+                stack2stack(src, dest, kind);
             } else {
                 throw Util.shouldNotReachHere();
             }
 
         } else if (isConstant(src)) {
-            if (dest.isVariableOrRegister()) {
+            if (dest.isRegister()) {
                 const2reg(src, dest, info); // patching is possible
             } else if (dest.isStack()) {
                 assert info == null : "no patching and info allowed here";
                 const2stack(src, dest);
             } else if (isAddress(dest)) {
-                const2mem(src, dest, type, info);
+                const2mem(src, dest, kind, info);
             } else {
                 throw Util.shouldNotReachHere();
             }
@@ -440,12 +429,12 @@ public abstract class LIRAssembler {
         } else if (isAddress(src)) {
             if (dest.isStack()) {
                 assert info == null && !unaligned;
-                mem2stack(src, dest, type);
+                mem2stack(src, dest, kind);
             } else if (isAddress(dest)) {
                 assert info == null && !unaligned;
-                mem2mem(src, dest, type);
+                mem2mem(src, dest, kind);
             } else {
-                mem2reg(src, dest, type, info, unaligned);
+                mem2reg(src, dest, kind, info, unaligned);
             }
 
         } else {
@@ -481,7 +470,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitReadPrefetch(LIROperand inOpr);
 
-    protected abstract void emitVolatileMove(LIROperand inOpr, LIROperand result, CiKind type, LIRDebugInfo info);
+    protected abstract void emitVolatileMove(LIROperand inOpr, LIROperand result, CiKind kind, LIRDebugInfo info);
 
     protected abstract void emitPrologue();
 
@@ -497,11 +486,11 @@ public abstract class LIRAssembler {
 
     protected abstract void emitShiftOp(LIROpcode code, LIROperand inOpr1, int asJint, LIROperand resultOpr);
 
-    protected abstract void emitConditionalMove(LIRCondition condition, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr);
+    protected abstract void emitConditionalMove(Condition condition, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr);
 
     protected abstract void emitCompareFloatInt(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIROp2 op);
 
-    protected abstract void emitCompare(LIRCondition condition, LIROperand inOpr1, LIROperand inOpr2, LIROp2 op);
+    protected abstract void emitCompare(Condition condition, LIROperand inOpr1, LIROperand inOpr2, LIROp2 op);
 
     protected abstract void emitBranch(LIRBranch branch);
 
@@ -510,8 +499,6 @@ public abstract class LIRAssembler {
     protected abstract void emitLIROp2(LIROp2 op2);
 
     protected abstract void emitOp3(LIROp3 op3);
-
-    protected abstract void emitTypeCheck(LIRTypeCheck typeCheck);
 
     protected abstract void emitCompareAndSwap(LIRCompareAndSwap compareAndSwap);
 
@@ -525,10 +512,6 @@ public abstract class LIRAssembler {
 
     protected abstract void emitNativeCall(NativeFunction nativeFunction, LIRDebugInfo info);
 
-    protected abstract void emitInterfaceCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info, GlobalStub globalStub);
-
-    protected abstract void emitVirtualCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info);
-
     protected abstract void emitCallAlignment(LIROpcode code);
 
     protected abstract void emitMembarRelease();
@@ -539,25 +522,25 @@ public abstract class LIRAssembler {
 
     protected abstract void emitOsrEntry();
 
-    protected abstract void reg2stack(LIROperand src, LIROperand dest, CiKind type);
+    protected abstract void reg2stack(LIROperand src, LIROperand dest, CiKind kind);
 
-    protected abstract void reg2mem(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned);
+    protected abstract void reg2mem(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info, boolean unaligned);
 
-    protected abstract void mem2reg(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned);
+    protected abstract void mem2reg(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info, boolean unaligned);
 
-    protected abstract void const2mem(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info);
+    protected abstract void const2mem(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info);
 
     protected abstract void const2stack(LIROperand src, LIROperand dest);
 
     protected abstract void const2reg(LIROperand src, LIROperand dest, LIRDebugInfo info);
 
-    protected abstract void mem2stack(LIROperand src, LIROperand dest, CiKind type);
+    protected abstract void mem2stack(LIROperand src, LIROperand dest, CiKind kind);
 
-    protected abstract void mem2mem(LIROperand src, LIROperand dest, CiKind type);
+    protected abstract void mem2mem(LIROperand src, LIROperand dest, CiKind kind);
 
-    protected abstract void stack2stack(LIROperand src, LIROperand dest, CiKind type);
+    protected abstract void stack2stack(LIROperand src, LIROperand dest, CiKind kind);
 
-    protected abstract void stack2reg(LIROperand src, LIROperand dest, CiKind type);
+    protected abstract void stack2reg(LIROperand src, LIROperand dest, CiKind kind);
 
     protected abstract void reg2reg(LIROperand src, LIROperand dest);
 

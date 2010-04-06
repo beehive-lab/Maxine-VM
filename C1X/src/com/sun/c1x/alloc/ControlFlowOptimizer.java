@@ -107,7 +107,11 @@ final class ControlFlowOptimizer {
     // only blocks with exactly one successor can be deleted. Such blocks
     // must always end with an unconditional branch to this successor
     private boolean canDeleteBlock(BlockBegin block) {
-        if (block.numberOfSux() != 1 || block.numberOfExceptionHandlers() != 0 || block == ir.startBlock || block.isExceptionEntry()) {
+        if (block.numberOfSux() != 1 ||
+            block.numberOfExceptionHandlers() != 0 ||
+            block == ir.startBlock ||
+            block.isExceptionEntry() ||
+            block.suxAt(0) == block) {
             return false;
         }
 
@@ -116,7 +120,7 @@ final class ControlFlowOptimizer {
         assert instructions.size() >= 2 : "block must have label and branch";
         assert instructions.get(0).code == LIROpcode.Label : "first instruction must always be a label";
         assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "last instruction must always be a branch";
-        assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == LIRCondition.Always : "branch must be unconditional";
+        assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == Condition.TRUE : "branch must be unconditional";
         assert ((LIRBranch) instructions.get(instructions.size() - 1)).block() == block.suxAt(0) : "branch target must be the successor";
 
         // block must have exactly one successor
@@ -237,7 +241,7 @@ final class ControlFlowOptimizer {
                         assert predLastOp instanceof LIRBranch : "branch must be LIRBranch";
                         LIRBranch predLastBranch = (LIRBranch) predLastOp;
 
-                        if (predLastBranch.block() == block && predLastBranch.cond() == LIRCondition.Always && predLastBranch.info == null) {
+                        if (predLastBranch.block() == block && predLastBranch.cond() == Condition.TRUE && predLastBranch.info == null) {
                             // replace the jump to a return with a direct return
                             // Note: currently the edge between the blocks is not deleted
                             predInstructions.set(predInstructions.size() - 1, new LIROp1(LIROpcode.Return, returnOpr));

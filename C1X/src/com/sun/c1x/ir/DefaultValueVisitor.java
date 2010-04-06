@@ -45,6 +45,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitBlockBegin(BlockBegin i) { visit(i); }
     @Override public void visitCheckCast(CheckCast i) { visit(i); }
     @Override public void visitCompareOp(CompareOp i) { visit(i); }
+    @Override public void visitUnsignedCompareOp(UnsignedCompareOp i) { visit(i); }
     @Override public void visitConstant(Constant i) { visit(i); }
     @Override public void visitConvert(Convert i) { visit(i); }
     @Override public void visitExceptionObject(ExceptionObject i) { visit(i); }
@@ -85,6 +86,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitStoreRegister(StoreRegister i) { visit(i); }
     @Override public void visitTableSwitch(TableSwitch i) { visit(i); }
     @Override public void visitThrow(Throw i) { visit(i); }
+    @Override public void visitUnsafeCast(UnsafeCast i) { visit(i); }
     @Override public void visitUnsafeGetObject(UnsafeGetObject i) { visit(i); }
     @Override public void visitUnsafeGetRaw(UnsafeGetRaw i) { visit(i); }
     @Override public void visitUnsafePrefetchRead(UnsafePrefetchRead i) { visit(i); }

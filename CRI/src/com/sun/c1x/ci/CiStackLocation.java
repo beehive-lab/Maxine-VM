@@ -57,4 +57,16 @@ public final class CiStackLocation extends CiLocation {
     public String toString() {
         return (callerFrame ? "+" : "-") + stackOffset + ":" + kind;
     }
+    
+    public int stackOffset() {
+        return stackOffset;
+    }
+
+    public int stackSize() {
+        return stackSize;
+    }
+
+    public boolean isCallerFrame() {
+        return callerFrame;
+    }
 }

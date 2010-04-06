@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,24 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package jtt.exbytecode;
 
-/**
- * The {@code LIRCondition} enum represents the condition types available on LIR instructions .
- *
- * @author Marcelo Cintra
- *
- */
-public enum LIRCondition {
-    // XXX: this class can probably be folded into Instruction.Condition
-    Equal,
-    NotEqual,
-    Less,
-    LessEqual,
-    GreaterEqual,
-    Greater,
-    BelowEqual,
-    AboveEqual,
-    Always,
-    Unknown
+import com.sun.max.vm.compiler.builtin.*;
+
+// register -> register
+
+/*
+ * @Harness: java
+ * @Runs: 0x7fc00000 = ()java.lang.Float.isNaN; 0x3f800000 = 1.0f; -1082130432 = -1.0f; 0x48e6f500 = 473000.0f
+*/
+public class EBC_movi2f_01 {
+    public static float test(int arg) {
+        return SpecialBuiltin.intToFloat(arg);
+    }
+
 }
