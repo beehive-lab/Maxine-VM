@@ -264,6 +264,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         colorMap.setStart(bitmapStorage);
         colorMap.setSize(bitmapSize);
+        base = bitmapStorage;
         baseBias = coveredArea.start().unsignedShiftedRight(log2BitmapWord).toInt();
         biasedBitmapBase = colorMap.start().minus(baseBias);
         markingStack.initialize();
