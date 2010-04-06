@@ -242,7 +242,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     public TricolorHeapMarker(int wordsCoveredPerBit) {
         this.wordsCoveredPerBit = wordsCoveredPerBit;
         log2BytesCoveredPerBit = Word.widthValue().log2numberOfBytes + Integer.numberOfTrailingZeros(wordsCoveredPerBit);
-        assert wordsCoveredPerBit == 1 << log2BytesCoveredPerBit;
+        assert wordsCoveredPerBit * Word.widthValue().numberOfBytes == 1 << log2BytesCoveredPerBit;
         log2BitmapWord = log2BytesCoveredPerBit + Word.widthValue().log2numberOfBits;
         colorMap = new RuntimeMemoryRegion("Mark Bitmap");
         markingStack = new MarkingStack();
