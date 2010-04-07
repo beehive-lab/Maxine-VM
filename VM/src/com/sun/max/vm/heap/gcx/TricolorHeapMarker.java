@@ -117,7 +117,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     static final int LAST_BIT_INDEX_IN_WORD = Word.width() - 1;
 
-    static final int bitIndexInWordMask = ~LAST_BIT_INDEX_IN_WORD;
+    static final int bitIndexInWordMask = LAST_BIT_INDEX_IN_WORD;
 
     /**
      * Return the index within a word of the bit index.
@@ -125,6 +125,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param bitIndex
      * @return
      */
+    @INLINE
     static final int bitIndexInWord(int bitIndex) {
         return bitIndex & bitIndexInWordMask;
     }
@@ -308,10 +309,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     final Pointer bitmapWordPointerAt(int bitIndex) {
         return base.asPointer().plus(bitmapWordIndex(bitIndex));
     }
-    // Bit index in the bitmap for the address.
+
+    /**
+     *  Bit index in the bitmap for the address into the covered area.
+     */
     @INLINE
-    final int bitIndexOf(Address heapAddress) {
-        return heapAddress.unsignedShiftedRight(log2BytesCoveredPerBit).minus(baseBias).toInt();
+    final int bitIndexOf(Address address) {
+        return address.minus(coveredAreaStart).unsignedShiftedRight(log2BytesCoveredPerBit).toInt();
     }
 
     @INLINE
@@ -480,6 +484,24 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         Memory.clearWords(colorMap.start().asPointer(), colorMap.size().toInt() >> Word.widthValue().log2numberOfBytes);
     }
 
+    /**
+     * Marking cell referenced from outside of the covered area.
+     * If the cell is itself outside of the covered area, nothing is done.
+     *
+     * @param cell a pointer read from an external root (may be zero).
+     */
+    @INLINE
+    final void markExternalRoot(Pointer cell) {
+        // Note: the first test acts as a null pointer filter as well.
+        if (cell.greaterEqual(coveredAreaStart)) {
+            markGrey_(cell);
+            if (cell.lessThan(leftmost)) {
+                leftmost = cell;
+            } else if (cell.greaterThan(rightmost)) {
+                rightmost = cell;
+            }
+        }
+    }
 
     /**
      * Marking of strong roots outside of the covered area.
@@ -497,21 +519,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * and update the leftmost and rightmost marked positions.
      */
     class RootCellVisitor extends PointerIndexVisitor implements CellVisitor {
-        @INLINE
-        protected final void visit(Pointer cell) {
-            if (cell.greaterEqual(coveredAreaStart)) {
-                markGrey_(cell);
-                if (cell.lessThan(leftmost)) {
-                    leftmost = cell;
-                } else if (cell.greaterThan(rightmost)) {
-                    rightmost = cell;
-                }
-            }
-        }
-
         @Override
         public void visit(Pointer pointer, int wordIndex) {
-            visit(Layout.originToCell(pointer.getGrip(wordIndex).toOrigin()));
+            markExternalRoot(Layout.originToCell(pointer.getGrip(wordIndex).toOrigin()));
         }
 
         /**
@@ -529,7 +539,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             }
             final Pointer origin = Layout.cellToOrigin(cell);
             final Grip hubGrip = Layout.readHubGrip(origin);
-            visit(Layout.originToCell(hubGrip.toOrigin()));
+            markExternalRoot(Layout.originToCell(hubGrip.toOrigin()));
             final Hub hub = UnsafeCast.asHub(hubGrip.toJava());
 
             // Update the other references in the object
@@ -546,7 +556,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             } else if (specificLayout.isReferenceArrayLayout()) {
                 final int length = Layout.readArrayLength(origin);
                 for (int index = 0; index < length; index++) {
-                    visit(Layout.originToCell(Layout.getGrip(origin, index).toOrigin()));
+                    markExternalRoot(Layout.originToCell(Layout.getGrip(origin, index).toOrigin()));
                 }
             }
             return cell.plus(Layout.size(origin));

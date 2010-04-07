@@ -67,6 +67,16 @@ public class FreeHeapSpaceManager {
     private static  final Size TINY_OBJECT_SIZE = Size.fromInt(Word.size() * 2);
 
     static interface AllocationFailureHandler {
+        /**
+         * Handle allocation failure.
+         * API still in flux. Not pretty at the moment: a valid pointer to some allocated space of the requested size may be returned,
+         * or null. The former is typically because allocation was performed by some other allocator. The latter is when the heap ran
+         * out of space and space was reclaimed for the current allocator. The null value indicates that the allocator should retry allocating.
+         *
+         * @param allocator
+         * @param size
+         * @return
+         */
         Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size);
         Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size, int alignment);
     }
@@ -98,11 +108,6 @@ public class FreeHeapSpaceManager {
         @CONSTANT_WHEN_NOT_ZERO
         private Size sizeLimit;
 
-        /**
-         * Min TLAB Size accepted if cannot allocate quickly a TLAB of the desired size.
-         */
-        private Size minTLABSize;
-
         HeapSpaceAllocator(String description, AllocationFailureHandler allocationFailureHandler) {
             super(description);
             this.allocationFailureHandler = allocationFailureHandler;
@@ -127,13 +132,13 @@ public class FreeHeapSpaceManager {
         // FIXME: concurrency
         void refill(Address chunk, Size chunkSize) {
             start = chunk;
-            end = Address.zero();
+            size = chunkSize;
             end = chunk.plus(chunkSize);
             mark.set(start);
         }
 
         Size freeSpaceLeft() {
-            return used();
+            return size.minus(used());
         }
 
         @INLINE
@@ -175,40 +180,6 @@ public class FreeHeapSpaceManager {
             } while (mark.compareAndSwap(cell, nextMark) != cell);
             return DebugHeap.adjustForDebugTag(cell);
         }
-
-        /**
-         * Allocate space for a TLAB of the desired size, or less if can't quickly find
-         * a space of the exact size.
-         * @param size
-         * @return
-         */
-        final Pointer allocateTLAB(Size size) {
-            if (MaxineVM.isDebug()) {
-                FatalError.check(size.isWordAligned(), "Size must be word aligned");
-            }
-            // Try first a non-blocking allocation out of the current chunk.
-            // This may fail for a variety of reasons, all captured by the test
-            // against the current chunk limit.
-            Pointer cell;
-            Pointer nextMark;
-            do {
-                cell = top();
-                nextMark = cell.plus(size);
-                if (nextMark.greaterThan(end)) {
-                    if (end.minus(cell).lessThan(minTLABSize)) {
-                        cell = allocationFailureHandler.handleAllocationFailure(this, size);
-                        if (!cell.isZero()) {
-                            return cell;
-                        }
-                        // loop back to retry.
-                        continue;
-                    }
-                    nextMark = end.asPointer();
-                }
-            } while(mark.compareAndSwap(cell, nextMark) != cell);
-            return cell;
-        }
-
 
         @INLINE
         private Pointer setTopToEnd() {
@@ -311,11 +282,13 @@ public class FreeHeapSpaceManager {
     }
 
     public void initialize(RuntimeMemoryRegion committedSpace) {
-        minLargeObjectSize = Size.fromInt(largeObjectsMinSizeOption.getValue());
-        log2MinFreeChunkSize = Integer.highestOneBit(minLargeObjectSize.toInt());
+        // Round down to power of two.
+        minLargeObjectSize = Size.fromInt(Integer.highestOneBit(largeObjectsMinSizeOption.getValue()));
+        log2MinFreeChunkSize = Integer.numberOfTrailingZeros(minLargeObjectSize.toInt());
         smallObjectAllocator.initialize(committedSpace.start(), committedSpace.size(), minLargeObjectSize);
         largeObjectAllocator.initialize(Address.zero(), Size.zero(), Size.fromLong(Long.MAX_VALUE));
         InspectableHeapInfo.init(smallObjectAllocator, largeObjectAllocator);
+        // InspectableHeapInfo.init(committedSpace);
     }
 
     /**
@@ -386,14 +359,16 @@ public class FreeHeapSpaceManager {
 
         @Override
         public Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size) {
-            // TODO Auto-generated method stub
-            return null;
+            return handleAllocationFailure(allocator, size, Word.size());
         }
 
         @Override
         public Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size, int alignment) {
-            // TODO Auto-generated method stub
-            return null;
+            if (!Heap.collectGarbage(size)) {
+                // FIXME: handle the case where there isn't enough memory for this -- put in common the safety zone code of semi-space ?
+                throw new OutOfMemoryError();
+            }
+            return null; // Force allocation retry by caller.
         }
     }
 
@@ -404,7 +379,7 @@ public class FreeHeapSpaceManager {
 
     @INLINE
     public final Pointer allocateTLAB(Size size) {
-        return smallObjectAllocator.allocateTLAB(size);
+        return smallObjectAllocator.allocate(size);
     }
 
 
