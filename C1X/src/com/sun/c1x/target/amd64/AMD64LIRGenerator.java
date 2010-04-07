@@ -24,7 +24,7 @@ package com.sun.c1x.target.amd64;
 import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.alloc.Operands.*;
+import com.sun.c1x.alloc.OperandPool.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
@@ -144,7 +144,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         LIRItem value = new LIRItem(x.x(), this);
         value.setDestroysRegister();
         value.loadItem();
-        CiValue reg = newVariable(x.kind);
+        CiVariable reg = newVariable(x.kind);
         GlobalStub globalStub = null;
         if (x.kind == CiKind.Float) {
             globalStub = stubFor(GlobalStub.Id.fneg);
@@ -174,7 +174,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             right.loadItem();
         }
 
-        CiValue reg;
+        CiVariable reg;
 
         if (x.opcode() == Bytecodes.FREM) {
             reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticFrem, null, left.result(), right.result());
@@ -590,7 +590,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     public void visitConvert(Convert x) {
         assert C1XOptions.SSEVersion >= 2 : "no fpu stack";
         CiValue input = load(x.value());
-        CiValue result = newVariable(x.kind);
+        CiVariable result = newVariable(x.kind);
 
         // arguments of lirConvert
         GlobalStub globalStub = null;

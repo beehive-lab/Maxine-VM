@@ -27,7 +27,7 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
-import com.sun.c1x.alloc.Operands.*;
+import com.sun.c1x.alloc.OperandPool.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ci.CiAddress.*;
@@ -95,7 +95,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private BlockBegin currentBlock;
 
-    private final Operands operands;
+    private final OperandPool operands;
 
     private Value currentInstruction;
     private Value lastInstructionPrinted; // Debugging only
@@ -104,10 +104,10 @@ public abstract class LIRGenerator extends ValueVisitor {
      * Maps a {@linkplain CiLocation#variableNumber() variable number} to the instruction
      * that defines the variable.
      */
-    ArrayMap<Value> instructionForOperand;
+    final ArrayMap<Value> instructionForOperand;
 
     private List<CiConstant> constants;
-    private List<CiValue> regForConstants;
+    private List<CiVariable> variablesForConstants;
     protected LIRList lir;
 
     public LIRGenerator(C1XCompilation compilation) {
@@ -121,9 +121,9 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         instructionForOperand = new ArrayMap<Value>();
         constants = new ArrayList<CiConstant>();
-        regForConstants = new ArrayList<CiValue>();
+        variablesForConstants = new ArrayList<CiVariable>();
 
-        this.operands = new Operands(compilation.target);
+        this.operands = new OperandPool(compilation.target);
 
         // mark the liveness of all instructions if it hasn't already been done by the optimizer
         LivenessMarker livenessMarker = new LivenessMarker(ir);
@@ -178,7 +178,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             CiValue src = args.operands[i];
             assert src.isLegal() : "check";
 
-            CiValue dest = newVariable(src.kind.stackKind());
+            CiVariable dest = newVariable(src.kind.stackKind());
             lir.move(src, dest, src.kind);
 
             // Assign new location to Local instruction for this local
@@ -188,7 +188,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             assert kind == local.kind.stackKind() : "local type check failed";
             if (local.isLive()) {
                 local.setOperand(dest);
-                instructionForOperand.put(dest.variableNumber(), local);
+                instructionForOperand.put(dest.index, local);
             }
             javaIndex += kind.jvmSlots;
         }
@@ -281,10 +281,10 @@ public abstract class LIRGenerator extends ValueVisitor {
                 res = x.asConstant();
             }
             if (res.isConstant()) {
-                CiValue reg = createResultVariable(x);
+                CiVariable reg = createResultVariable(x);
                 lir.move(res, reg);
             } else {
-                setResult(x, res);
+                setResult(x, (CiVariable) res);
             }
         }
     }
@@ -300,7 +300,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             operandForPhi(phi);
         }
 
-        CiValue result = newVariable(CiKind.Object);
+        CiVariable result = newVariable(CiKind.Object);
         CiRegisterLocation threadReg = compilation.target.registerConfig.getThreadRegister().asLocation(CiKind.Object);
         lir.move(new CiAddress(CiKind.Object, threadReg, compilation.runtime.threadExceptionOffset()), result);
         setResult(x, result);
@@ -1136,7 +1136,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         // clear our any registers for other local constants
         constants.clear();
-        regForConstants.clear();
+        variablesForConstants.clear();
     }
 
     private void blockDoProlog(BlockBegin block) {
@@ -1172,23 +1172,23 @@ public abstract class LIRGenerator extends ValueVisitor {
         return tmp;
     }
 
-    private CiValue loadConstant(Constant x) {
+    private CiVariable loadConstant(Constant x) {
         return loadConstant(x.asConstant(), x.kind);
     }
 
-    protected CiValue loadConstant(CiConstant c, CiKind kind) {
+    protected CiVariable loadConstant(CiConstant c, CiKind kind) {
         // XXX: linear search might be kind of slow for big basic blocks
         int index = constants.indexOf(c);
         if (index != -1) {
             C1XMetrics.LoadConstantIterations += index;
-            return regForConstants.get(index);
+            return variablesForConstants.get(index);
         }
         C1XMetrics.LoadConstantIterations += constants.size();
 
-        CiValue result = newVariable(kind);
+        CiVariable result = newVariable(kind);
         lir.move(c, result);
         constants.add(c);
-        regForConstants.add(result);
+        variablesForConstants.add(result);
         return result;
     }
 
@@ -1216,16 +1216,16 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     /**
-     * Allocates a variable to hold the result of a given instruction.
+     * Allocates a variable operand to hold the result of a given instruction.
      * This can only be performed once for any given instruction.
      *
      * @param x an instruction that produces a result
      * @return the variable assigned to hold the result produced by {@code x}
      */
-    protected CiLocation createResultVariable(Value x) {
-        CiLocation var = newVariable(x.kind);
-        setResult(x, var);
-        return var;
+    protected CiVariable createResultVariable(Value x) {
+        CiVariable operand = newVariable(x.kind);
+        setResult(x, operand);
+        return operand;
     }
 
     private void visitFPIntrinsics(Intrinsic x) {
@@ -1425,8 +1425,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         return physReg;
     }
 
-    protected final CiValue callRuntimeWithResult(CiRuntimeCall runtimeCall, LIRDebugInfo info, CiValue... args) {
-        CiValue result = newVariable(runtimeCall.resultKind);
+    protected final CiVariable callRuntimeWithResult(CiRuntimeCall runtimeCall, LIRDebugInfo info, CiValue... args) {
+        CiVariable result = newVariable(runtimeCall.resultKind);
         CiLocation location = callRuntime(runtimeCall, info, args);
         lir.move(location, result);
         return result;
@@ -1628,8 +1628,9 @@ public abstract class LIRGenerator extends ValueVisitor {
     private CiValue operandForPhi(Phi phi) {
         if (phi.operand() == null || phi.operand().isIllegal()) {
             // allocate a variable for this phi
-            phi.setOperand(newVariable(phi.kind));
-            instructionForOperand.put(phi.operand().variableNumber(), phi);
+            CiVariable operand = newVariable(phi.kind);
+            phi.setOperand(operand);
+            instructionForOperand.put(operand.index, phi);
         }
         return phi.operand();
     }
@@ -1645,15 +1646,13 @@ public abstract class LIRGenerator extends ValueVisitor {
         x.clearOperand();
     }
 
-    protected CiValue setResult(Value x, CiValue opr) {
-        assert opr.isLegal() : "must set to valid value";
+    protected CiValue setResult(Value x, CiVariable operand) {
+        assert operand.isLegal() : "must set to valid value";
         assert x.operand().isIllegal() : "operand should never change";
-        assert !opr.isRegister() : "should never set result to a physical register";
-        x.setOperand(opr);
-        if (opr.isVariable()) {
-            instructionForOperand.put(opr.variableNumber(), x);
-        }
-        return opr;
+        assert !operand.isRegister() : "should never set result to a physical register";
+        x.setOperand(operand);
+        instructionForOperand.put(operand.index, x);
+        return operand;
     }
 
     protected void shiftOp(int code, CiValue resultOp, CiValue value, CiValue count, CiValue tmp) {
@@ -1808,7 +1807,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         return returnRegister.asLocation(kind);
     }
 
-    public Operands operands() {
+    public OperandPool operands() {
         return operands;
     }
 

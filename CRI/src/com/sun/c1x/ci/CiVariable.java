@@ -21,7 +21,9 @@
 package com.sun.c1x.ci;
 
 /**
- * Represents a value that is yet to be bound to a {@linkplain CiLocation machine location}.
+ * Represents a value that is yet to be bound to a machine location (such as
+ * a {@linkplain CiRegister register} or stack {@linkplain CiAddress address})
+ * by a register allocator.
  * 
  * @author Doug Simon
  */
@@ -79,12 +81,7 @@ public class CiVariable extends CiLocation {
     }
     
     @Override
-    public int variableNumber() {
-        return index;
-    }
-    
-    @Override
-    public String toString() {
-        return "v" + index + ":" + kind;
+    public String name() {
+        return "v" + index;
     }
 }

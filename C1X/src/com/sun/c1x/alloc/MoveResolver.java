@@ -26,7 +26,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 /**
  *
@@ -201,7 +200,9 @@ final class MoveResolver {
 
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
-        Util.traceLinearScan(4, "MoveResolver: inserted move from %s (%s) to %s (%s)", fromInterval.operand(), fromInterval.location(), toInterval.operand(), toInterval.location());
+        if (C1XOptions.TraceLinearScanLevel >= 4) {
+            TTY.println("MoveResolver: inserted move from %s (%s) to %s (%s)", fromInterval.operand(), fromInterval.location(), toInterval.operand(), toInterval.location());
+        }
     }
 
     private void insertMove(CiValue fromOpr, Interval toInterval) {
@@ -218,7 +219,7 @@ final class MoveResolver {
     }
 
     private void resolveMappings() {
-        //Util.traceLinearScan(4, "MoveResolver: resolving mappings for Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
+        //if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: resolving mappings for Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
         assert verifyBeforeResolve();
 
         // Block all registers that are used as input operands of a move.
@@ -284,7 +285,9 @@ final class MoveResolver {
                 }
                 spillInterval.assignLocation(spillSlot);
 
-                Util.traceLinearScan(4, "created new Interval %s for spilling", spillInterval.operand());
+                if (C1XOptions.TraceLinearScanLevel >= 4) {
+                    TTY.println("created new Interval %s for spilling", spillInterval.operand());
+                }
 
                 // insert a move from register to stack and update the mapping
                 insertMove(fromInterval, spillInterval);
@@ -301,7 +304,7 @@ final class MoveResolver {
     }
 
     void setInsertPosition(LIRList insertList, int insertIdx) {
-        //Util.traceLinearScan(4, "MoveResolver: setting insert position to Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
+        //if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: setting insert position to Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
         assert this.insertList == null && this.insertIdx == -1 : "use moveInsertPosition instead of setInsertPosition when data already set";
 
         createInsertionBuffer(insertList);
@@ -310,7 +313,7 @@ final class MoveResolver {
     }
 
     void moveInsertPosition(LIRList insertList, int insertIdx) {
-        //Util.traceLinearScan(4, "MoveResolver: moving insert position to Block B%d, index %d", (insertList != null && insertList.block() != null) ? insertList.block().blockID : -1, insertIdx);
+        //if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: moving insert position to Block B%d, index %d", (insertList != null && insertList.block() != null) ? insertList.block().blockID : -1, insertIdx);
 
         if (this.insertList != null && (this.insertList != insertList || this.insertIdx != insertIdx)) {
             // insert position changed . resolve current mappings
@@ -329,7 +332,9 @@ final class MoveResolver {
     }
 
     void addMapping(Interval fromInterval, Interval toInterval) {
-        Util.traceLinearScan(4, "MoveResolver: adding mapping from %s (%s) to %s (%s)", fromInterval.operand(), fromInterval.location(), toInterval.operand(), toInterval.location());
+        if (C1XOptions.TraceLinearScanLevel >= 4) {
+            TTY.println("MoveResolver: adding mapping from %s (%s) to %s (%s)", fromInterval.operand(), fromInterval.location(), toInterval.operand(), toInterval.location());
+        }
 
         assert fromInterval.kind() == toInterval.kind();
         mappingFrom.add(fromInterval);

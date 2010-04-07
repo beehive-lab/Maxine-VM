@@ -473,8 +473,7 @@ public class LIRList {
         for (i = 0; i < blocks.size(); i++) {
             BlockBegin bb = blocks.get(i);
             printBlock(bb);
-            TTY.print("IdInstruction_");
-            TTY.println();
+            TTY.println("__id_Instruction___________________________________________");
             bb.lir().printInstructions();
         }
     }

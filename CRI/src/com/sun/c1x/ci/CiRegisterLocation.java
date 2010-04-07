@@ -52,8 +52,8 @@ public final class CiRegisterLocation extends CiLocation {
         return o == this;
     }
 
-    public String toString() {
-        return "%" + register.name + ":" + kind;
+    public String name() {
+        return register.name;
     }
     
     @Override

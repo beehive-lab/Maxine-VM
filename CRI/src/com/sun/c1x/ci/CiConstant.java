@@ -75,12 +75,9 @@ public final class CiConstant extends CiValue {
         return kind == CiKind.Object && value == null;
     }
 
-    /**
-     * Converts this constant to a string.
-     */
     @Override
-    public String toString() {
-        return kind.format(value);
+    public String name() {
+        return "const[" + kind.format(value) + "]";
     }
 
     /**

@@ -54,7 +54,7 @@ public class LinearScan {
      */
     final BlockBegin[] sortedBlocks;
 
-    final Operands operands;
+    final OperandPool operands;
 
     private final int numRegs;
 
@@ -189,6 +189,12 @@ public class LinearScan {
         }
     }
 
+    /**
+     * Creates a new interval.
+     *
+     * @param operand the operand for the interval
+     * @return the created interval
+     */
     Interval createInterval(CiLocation operand) {
         assert isProcessed(operand);
 
@@ -675,18 +681,12 @@ public class LinearScan {
             lirBlock.liveOut = new BitMap(liveSize);
 
             if (C1XOptions.TraceLinearScanLevel >= 4) {
-                traceLiveness(block);
+                TTY.println("liveGen  B%d %s", block.blockID, block.lirBlock.liveGen);
+                TTY.println("liveKill B%d %s", block.blockID, block.lirBlock.liveKill);
             }
         } // end of block iteration
 
         intervalInLoop = localIntervalInLoop;
-    }
-
-    private void traceLiveness(BlockBegin block) {
-        Util.traceLinearScan(4, "liveGen  B%d ", block.blockID);
-        TTY.println(block.lirBlock.liveGen.toString());
-        Util.traceLinearScan(4, "liveKill B%d ", block.blockID);
-        TTY.println(block.lirBlock.liveKill.toString());
     }
 
     private void verifyTemp(BitMap liveKill, CiLocation opr) {
@@ -839,10 +839,7 @@ public class LinearScan {
     }
 
     private void traceLiveness(boolean changeOccurredInBlock, int iterationCount, BlockBegin block) {
-        char c = ' ';
-        if (iterationCount == 0 || changeOccurredInBlock) {
-            c = '*';
-        }
+        char c = iterationCount == 0 || changeOccurredInBlock ? '*' : ' ';
         TTY.print("(%d) liveIn%c  B%d ", iterationCount, c, block.blockID);
         TTY.println(block.lirBlock.liveIn.toString());
         TTY.print("(%d) liveOut%c B%d ", iterationCount, c, block.blockID);
@@ -1336,7 +1333,7 @@ public class LinearScan {
         // add the range [0, 1] to all fixed intervals.
         // the register allocator need not handle unhandled fixed intervals
         for (Interval interval : intervals) {
-            if (interval != null) {
+            if (interval != null && interval.operand().isRegister()) {
                 interval.addRange(0, 1);
             }
         }
@@ -1534,9 +1531,9 @@ public class LinearScan {
         notPrecoloredCpuIntervals = result[1];
 
         // allocate cpu registers
-        LinearScanWalker cpuLsw = new LinearScanWalker(this, precoloredCpuIntervals, notPrecoloredCpuIntervals);
-        cpuLsw.walk();
-        cpuLsw.finishAllocation();
+        LinearScanWalker lsw = new LinearScanWalker(this, precoloredCpuIntervals, notPrecoloredCpuIntervals);
+        lsw.walk();
+        lsw.finishAllocation();
     }
 
     // * Phase 6: resolve data flow
@@ -2667,17 +2664,15 @@ public class LinearScan {
             BlockBegin block = blockAt(i);
             BitMap liveAtEdge = block.lirBlock.liveIn;
 
-            // visit all registers where the liveAtEdge bit is set
-            for (int r = liveAtEdge.getNextOneOffset(0, size); r < size; r = liveAtEdge.getNextOneOffset(r + 1, size)) {
+            // visit all operands where the liveAtEdge bit is set
+            for (int operandNum = liveAtEdge.getNextOneOffset(0, size); operandNum < size; operandNum = liveAtEdge.getNextOneOffset(operandNum + 1, size)) {
                 if (C1XOptions.TraceLinearScanLevel >= 4) {
-                    TTY.println("checking interval %d of block B%d", r, block.blockID);
+                    TTY.println("checking interval %d of block B%d", operandNum, block.blockID);
                 }
-
-                Value value = gen.instructionForVariable(r);
-
+                Value value = gen.instructionForVariable(operandNum);
                 assert value != null : "all intervals live across block boundaries must have Value";
-                assert value.operand().isVariableOrRegister() && value.operand().isVariable() : "value must have virtual operand";
-                assert value.operand().variableNumber() == r : "register number must match";
+                assert value.operand().isVariable() : "value must have variable operand";
+                assert ((CiVariable) value.operand()).index == operandNum : "variable number must match";
                 // TKR assert value.asConstant() == null || value.isPinned() :
                 // "only pinned constants can be alive accross block boundaries";
             }

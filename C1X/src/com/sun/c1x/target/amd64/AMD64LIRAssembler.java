@@ -436,8 +436,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         if (op.block() != null) {
             branchTargetBlocks.add(op.block());
         }
-        if (op.ublock() != null) {
-            branchTargetBlocks.add(op.ublock());
+        if (op.unorderedBlock() != null) {
+            branchTargetBlocks.add(op.unorderedBlock());
         }
         return true;
     }
@@ -455,8 +455,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         } else {
             ConditionFlag acond = ConditionFlag.zero;
             if (op.code == LIROpcode.CondFloatBranch) {
-                assert op.ublock() != null : "must have unordered successor";
-                masm.jcc(ConditionFlag.parity, op.ublock().label());
+                assert op.unorderedBlock() != null : "must have unordered successor";
+                masm.jcc(ConditionFlag.parity, op.unorderedBlock().label());
                 switch (op.cond()) {
                     case EQ : acond = ConditionFlag.equal; break;
                     case NE : acond = ConditionFlag.notEqual; break;

@@ -74,8 +74,8 @@ public final class CiStackSlot extends CiLocation {
         return false;
     }
 
-    public String toString() {
-        return "s" + index + ":" + kind;
+    public String name() {
+        return "stack[" + index + "]";
     }
     
     private static CiStackSlot[] generate(CiKind kind, int count) {

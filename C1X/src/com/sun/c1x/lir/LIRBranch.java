@@ -37,7 +37,11 @@ public class LIRBranch extends LIRInstruction {
     private CiKind kind;
     private Label label;
     private BlockBegin block;  // if this is a branch to a block, this is the block
-    private BlockBegin ublock; // if this is a float-branch, this is the unordered block
+
+    /**
+     * This is the unordered block for a float branch.
+     */
+    private BlockBegin unorderedBlock; //
 
     /**
      * Creates a new LIRBranch instruction.
@@ -81,7 +85,7 @@ public class LIRBranch extends LIRInstruction {
         this.kind = kind;
         this.label = block.label();
         this.block = block;
-        this.ublock = null;
+        this.unorderedBlock = null;
     }
 
     public LIRBranch(Condition cond, CiKind kind, BlockBegin block, BlockBegin ublock) {
@@ -90,7 +94,7 @@ public class LIRBranch extends LIRInstruction {
         this.kind = kind;
         this.label = block.label();
         this.block = block;
-        this.ublock = ublock;
+        this.unorderedBlock = ublock;
     }
 
     /**
@@ -108,8 +112,8 @@ public class LIRBranch extends LIRInstruction {
         return block;
     }
 
-    public BlockBegin ublock() {
-        return ublock;
+    public BlockBegin unorderedBlock() {
+        return unorderedBlock;
     }
 
     public void changeBlock(BlockBegin b) {
@@ -121,8 +125,8 @@ public class LIRBranch extends LIRInstruction {
     }
 
     public void changeUblock(BlockBegin b) {
-        assert ublock != null : "must have old block";
-        this.ublock = b;
+        assert unorderedBlock != null : "must have old block";
+        this.unorderedBlock = b;
     }
 
     public void negateCondition() {
@@ -138,26 +142,24 @@ public class LIRBranch extends LIRInstruction {
     }
 
     @Override
-    public void printInstruction(LogStream out) {
-        printCondition(out, cond());
-        out.print(" ");
+    public String operationString() {
+        StringBuilder buf = new StringBuilder(cond().operator).append(' ');
         if (block() != null) {
-            out.printf("[B%d] ", block().blockID);
+            buf.append("[B").append(block.blockID).append(']');
         } else {
             if (stub != null) {
-                out.print("[");
-                stub.printName(out);
-                out.printf(": %s]", stub.toString());
+                buf.append("[").append(stub.name()).append(": ").append(stub).append(']');
                 if (stub.info != null) {
-                    out.printf(" [bci:%d]", stub.info.bci);
+                    buf.append(" [bci:").append(stub.info.bci).append(']');
                 }
             } else {
-                out.printf("[label:0x%x] ", label().position());
+                buf.append("[label:0x").append(Integer.toHexString(label().position())).append(']');
             }
         }
-        if (ublock() != null) {
-            out.printf("unordered: [B%d] ", ublock().blockID);
+        if (unorderedBlock() != null) {
+            buf.append("unordered: [B").append(unorderedBlock().blockID).append(']');
         }
+        return buf.toString();
     }
 
     public void substitute(BlockBegin oldBlock, BlockBegin newBlock) {
@@ -167,8 +169,8 @@ public class LIRBranch extends LIRInstruction {
             assert instr instanceof LIRLabel : "first instruction of block must be label";
             label = ((LIRLabel) instr).label();
         }
-        if (ublock == oldBlock) {
-            ublock = newBlock;
+        if (unorderedBlock == oldBlock) {
+            unorderedBlock = newBlock;
         }
     }
 }

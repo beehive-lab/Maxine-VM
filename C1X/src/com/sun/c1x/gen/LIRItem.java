@@ -22,7 +22,7 @@ package com.sun.c1x.gen;
 
 import static com.sun.c1x.ci.CiValue.*;
 
-import com.sun.c1x.alloc.Operands.*;
+import com.sun.c1x.alloc.OperandPool.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
@@ -172,15 +172,11 @@ public class LIRItem {
         }
     }
 
-    void setResult(CiValue opr) {
+    void setResult(CiVariable operand) {
         assert value.operand().isIllegal() || value.operand().isConstant() : "operand should never change";
-        value.setOperand(opr);
-
-        if (opr.isVariable()) {
-            gen.instructionForOperand.put(opr.variableNumber(), value);
-        }
-
-        result = opr;
+        value.setOperand(operand);
+        gen.instructionForOperand.put(operand.index, value);
+        result = operand;
     }
 
     public LIRItem loadItem() {
@@ -189,12 +185,12 @@ public class LIRItem {
             result = value.operand();
         }
         if (!result().isVariableOrRegister()) {
-            CiValue reg = gen.newVariable(value.kind);
-            gen.lir.move(result(), reg);
+            CiVariable operand = gen.newVariable(value.kind);
+            gen.lir.move(result(), operand);
             if (result().isConstant()) {
-                result = reg;
+                result = operand;
             } else {
-                setResult(reg);
+                setResult(operand);
             }
         }
         return this;

@@ -23,6 +23,7 @@ package com.sun.c1x.opt;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
@@ -162,7 +163,9 @@ public class LoopFinder {
 
                         if (!isBlockInLoop(loopIdx, pred)) {
                             // this predecessor has not been processed yet, so add it to work list
-                            Util.traceLinearScan(3, "    pushing B%d", pred.blockID);
+                            if (C1XOptions.TraceLinearScanLevel >= 3) {
+                                TTY.println("    pushing B%d", pred.blockID);
+                            }
                             workList.add(pred);
                             loopBody.add(pred);
                             setBlockInLoop(loopIdx, pred);
