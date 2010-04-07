@@ -22,7 +22,6 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.debug.*;
 
 /**
  * The {@code LIRConvert} class definition.
@@ -58,12 +57,9 @@ public class LIRConvert extends LIROp1 {
 
     /**
      * Prints this instruction to a LogStream.
-     *
-     * @param out the output stream
      */
     @Override
-    public void printInstruction(LogStream out) {
-        out.print("[" + Bytecodes.nameOf(bytecode) + "] ");
-        super.printInstruction(out);
+    public String operationString() {
+        return "[" + Bytecodes.nameOf(bytecode) + "] " + super.operationString();
     }
 }

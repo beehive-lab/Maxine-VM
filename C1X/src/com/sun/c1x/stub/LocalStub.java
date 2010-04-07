@@ -76,10 +76,6 @@ public abstract class LocalStub {
 
     public abstract void accept(LocalStubVisitor visitor);
 
-    public void printName(LogStream out) {
-        out.print(name());
-    }
-
     public String name() {
         return this.getClass().getSimpleName();
     }

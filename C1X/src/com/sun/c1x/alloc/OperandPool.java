@@ -26,16 +26,31 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
 /**
+ * An ordered, 0-based indexable pool of instruction operands for a method being compiled.
+ * The physical {@linkplain CiRegister registers} of the platform occupy the front of the
+ * pool (starting at index 0) followed by {@linkplain CiVariable variable} operands.
+ * The index of an operand in the pool is its {@linkplain #operandNumber(CiLocation) operand number}.
+ *
+ * In the original HotSpot C1 source code, this pool corresponds to the
+ * "flat register file" mentioned in c1_LinearScan.cpp.
  *
  * @author Doug Simon
- *
  */
-public class Operands {
+public class OperandPool {
 
     private static final int INITIAL_VARIABLE_CAPACITY = 20;
 
+    /**
+     * The physical registers occupying the head of the operand pool.
+     */
     private final CiRegister[] registers;
+
+    /**
+     * The variable operands allocated from this pool. The {@linkplain #operandNumber(CiLocation) number}
+     * of a variable operand is greater than the number of any fixed regisyer operand.
+     */
     private final ArrayList<CiVariable> variables;
+
     private final int lowestVariableNumber;
     private BitMap mustBeByteRegister;
     private BitMap mustStartInMemory;
@@ -73,7 +88,7 @@ public class Operands {
         return map.get(variable.index);
     }
 
-    public Operands(CiTarget target) {
+    public OperandPool(CiTarget target) {
         int maxRegisterNumber = target.allocationSpec.nofRegs;
         CiRegister[] registers = target.arch.registers;
         this.lowestVariableNumber = maxRegisterNumber + 1;
@@ -82,7 +97,7 @@ public class Operands {
     }
 
     /**
-     * Creates a new {@linkplain CiVariable variable}.
+     * Creates a new {@linkplain CiVariable variable} operand.
      *
      * @param kind the kind of the variable
      * @return a new variable

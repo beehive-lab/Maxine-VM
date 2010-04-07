@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -47,9 +46,9 @@ public abstract class LIRInstruction {
     public final LIROpcode code;
 
     /**
-     * The result operand for this instruction.
+     * Slot for the result operand for this instruction.
      */
-    private OperandSlot result;
+    private final OperandSlot result;
 
     /**
      * Used to emit debug information.
@@ -79,65 +78,90 @@ public abstract class LIRInstruction {
         TempMode
     }
 
+    /**
+     * The slots for the input and temp operands of this instruction.
+     */
     protected OperandSlot[] operandSlots;
+
     private int outputCount;
     private int allocatorInputCount;
     private int allocatorTempCount;
     private int allocatorTempInputCount;
-    private List<CiLocation> operands = new ArrayList<CiLocation>(3);
+    private final List<CiLocation> operands = new ArrayList<CiLocation>(3);
 
+    /**
+     * An indirection to an instruction operand that is constant in the context of register allocation.
+     * That is, while the register allocator may modify the underlying operand (e.g. to replace a
+     * variable with a register), an {@link OperandSlot} value can be used to address the operand
+     * for the lifetime of the instruction.
+     */
     public static final class OperandSlot {
-        private int base;
+
+        /**
+         * Index in instruction's {@linkplain LIRInstruction#operands operands} corresponding to this slot.
+         * This will be -1 for operands that are bound to a location prior to register allocation (e.g.
+         * method parameters in registers and stack slots).
+         */
+        private int index;
+
+        /**
+         * The current value of the operand. After register allocation, this is guaranteed
+         * to be a {@linkplain CiRegisterLocation register},
+         * a {@linkplain CiConstant constant} or an {@linkplain CiAddress address}.
+         */
         private CiValue direct;
+
+        /**
+         * Specifies if {@link direct} is a value that will no longer change.
+         */
         private boolean resolved;
 
         private OperandSlot(int base, CiAddress address) {
-            this.base = base;
+            this.index = base;
             this.direct = address;
             assert !address.isStackSlot();
         }
 
-        private OperandSlot(int base) {
-            this.base = base;
+        private OperandSlot(int index) {
+            this.index = index;
         }
 
         private OperandSlot(CiValue direct) {
+            index = -1;
             resolved = true;
             this.direct = direct;
         }
 
+        /**
+         * Gets the current value of the operand denoted by this object. This may still be a {@linkplain CiVariable}
+         * if the register allocator has not yet assigned a register or stack address to the operand.
+         *
+         * @param inst the instruction containing the operand denoted by this object
+         */
         public CiValue get(LIRInstruction inst) {
             if (!resolved) {
                 CiValue result = null;
                 if (direct != null && direct.isAddress()) {
                     CiAddress address = (CiAddress) direct;
-                    CiLocation baseOperand = inst.operands.get(base);
+                    CiLocation baseOperand = inst.operands.get(index);
                     CiLocation indexOperand = CiValue.IllegalLocation;
                     if (address.index.isLegal()) {
-                        indexOperand = inst.operands.get(base + 1);
+                        indexOperand = inst.operands.get(index + 1);
                         assert indexOperand.isVariableOrRegister();
                     }
                     assert baseOperand.isVariableOrRegister();
                     result = new CiAddress(address.kind, baseOperand, indexOperand, address.scale, address.displacement);
-                } else if (base != -1) {
-                    result = inst.operands.get(base);
+                } else if (index != -1) {
+                    result = inst.operands.get(index);
                 }
 
                 assert result != null;
 
                 direct = result;
-                if (result.isVariableOrRegister() && !result.isVariable()) {
+                if (result.isRegister()) {
                     resolved = true;
-                }
-
-                if (result.isAddress() && !((CiAddress) result).base.isVariable()) {
+                } else if (result.isAddress() && !((CiAddress) result).base.isVariable()) {
                     resolved = true;
-                }
-
-                if (resolved) {
-                    direct = result;
-                } else {
-                    return result;
                 }
             }
             return direct;
@@ -362,35 +386,44 @@ public abstract class LIRInstruction {
     public abstract void emitCode(LIRAssembler masm);
 
     /**
-     * Abstract method to be print information specific to each instruction.
-     *
-     * @param out the LogStream to print into.
+     * Gets the operation performed by this instruction in terms of its operands as a string.
      */
-    public void printInstruction(LogStream out) {
-        out.printf("%s = (", result.get(this), this.code.name());
-        for (OperandSlot operandSlot : operandSlots) {
-            out.printf("%s ", operandSlot.get(this));
+    public String operationString() {
+        StringBuilder buf = new StringBuilder();
+        if (result != ILLEGAL_SLOT) {
+            buf.append(result.get(this)).append(" = ");
         }
-        out.print(")");
+        if (operandSlots.length > 1) {
+            buf.append("(");
+        }
+        boolean first = true;
+        for (OperandSlot operandSlot : operandSlots) {
+            if (!first) {
+                buf.append(' ');
+            } else {
+                first = false;
+            }
+            buf.append(operandSlot.get(this));
+        }
+        if (operandSlots.length > 1) {
+            buf.append(")");
+        }
+        return buf.toString();
     }
 
     /**
-     * Prints information common to all LIR instruction.
+     * Prints this instruction to a log stream.
      *
      * @param st the LogStream to print into.
      */
-    public void printOn(LogStream st) {
+    public final void printOn(LogStream st) {
         if (id != -1 || C1XOptions.PrintCFGToFile) {
             st.printf("%4d ", id);
         } else {
             st.print("     ");
         }
-        st.print(name());
-        st.print(" ");
-        printInstruction(st);
-        if (info != null) {
-            st.printf(" [bci:%d]", info.bci);
-        }
+
+        st.print(toString());
     }
 
     public boolean verify() {
@@ -406,12 +439,6 @@ public abstract class LIRInstruction {
      */
     protected static boolean isInRange(LIROpcode opcode, LIROpcode start, LIROpcode end) {
         return start.ordinal() < opcode.ordinal() && opcode.ordinal() < end.ordinal();
-    }
-
-    protected static void printCondition(LogStream out, Condition cond) {
-        String operator = cond.operator;
-        assert operator != null;
-        out.print(operator);
     }
 
     public boolean hasOperands() {
@@ -515,10 +542,10 @@ public abstract class LIRInstruction {
 
     @Override
     public String toString() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        LogStream out = new LogStream(baos);
-        printOn(out);
-        out.flush();
-        return baos.toString();
+        StringBuilder buf = new StringBuilder(name()).append(' ').append(operationString());
+        if (info != null) {
+            buf.append(" [bci:").append(info.bci).append("]");
+        }
+        return buf.toString();
     }
 }

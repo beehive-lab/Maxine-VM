@@ -124,11 +124,11 @@ public final class CiAddress extends CiLocation {
             return location.asRegister().name;
         }
         assert location.isVariable();
-        return "v" + ((CiLocation) location).variableNumber();
+        return "v" + ((CiVariable) location).index;
     }
     
     @Override
-    public String toString() {
+    public String name() {
         switch (format) {
             case BASE                  : return "[" + s(base) + "]";
             case BASE_DISP             : return "[" + s(base) + " + " + displacement + "]";
@@ -137,5 +137,4 @@ public final class CiAddress extends CiLocation {
             default                    : throw new IllegalArgumentException("unknown format: " + format);
         }
     }
-
 }

@@ -25,12 +25,13 @@ package com.sun.c1x.ci;
  * Base class for compiler interface values.
  *
  * @author Thomas Wuerthinger
+ * @author Doug Simon
  */
 public abstract class CiValue {
 
     public static CiLocation IllegalLocation = new CiLocation(CiKind.Illegal) {
         @Override
-        public String toString() {
+        public String name() {
             return "<illegal>";
         }
         @Override
@@ -68,10 +69,6 @@ public abstract class CiValue {
         return (CiLocation) this;
     }
 
-    public int variableNumber() {
-        throw illegalOperation("variableNumber");
-    }
-
     public final boolean isIllegal() {
         return this == IllegalLocation;
     }
@@ -100,6 +97,20 @@ public abstract class CiValue {
         return this instanceof CiConstant;
     }
     
+    /**
+     * Gets a string name for this value without indicating its {@linkplain #kind kind}.
+     */
+    public abstract String name();
+    
     @Override
-    public abstract String toString();
+    public final String toString() {
+        return name() + kindSuffix();
+    }
+    
+    private final String kindSuffix() {
+        if (kind == CiKind.Illegal) {
+            return "";
+        }
+        return ":" + kind.typeChar;
+    }
 }

@@ -137,7 +137,9 @@ final class RegisterVerifier {
     }
 
     void processXhandler(ExceptionHandler xhandler, Interval[] inputState) {
-        Util.traceLinearScan(2, "processXhandler B%d", xhandler.entryBlock().blockID);
+        if (C1XOptions.TraceLinearScanLevel >= 2) {
+            TTY.println("processXhandler B%d", xhandler.entryBlock().blockID);
+        }
 
         // must copy state because it is modified
         inputState = copy(inputState);
@@ -167,23 +169,31 @@ final class RegisterVerifier {
                         savedStateCorrect = false;
                         savedState[i] = null;
 
-                        Util.traceLinearScan(4, "processSuccessor B%d: invalidating slot %d", block.blockID, i);
+                        if (C1XOptions.TraceLinearScanLevel >= 4) {
+                            TTY.println("processSuccessor B%d: invalidating slot %d", block.blockID, i);
+                        }
                     }
                 }
             }
 
             if (savedStateCorrect) {
                 // already processed block with correct inputState
-                Util.traceLinearScan(2, "processSuccessor B%d: previous visit already correct", block.blockID);
+                if (C1XOptions.TraceLinearScanLevel >= 2) {
+                    TTY.println("processSuccessor B%d: previous visit already correct", block.blockID);
+                }
             } else {
                 // must re-visit this block
-                Util.traceLinearScan(2, "processSuccessor B%d: must re-visit because input state changed", block.blockID);
+                if (C1XOptions.TraceLinearScanLevel >= 2) {
+                    TTY.println("processSuccessor B%d: must re-visit because input state changed", block.blockID);
+                }
                 addToWorkList(block);
             }
 
         } else {
             // block was not processed before, so set initial inputState
-            Util.traceLinearScan(2, "processSuccessor B%d: initial visit", block.blockID);
+            if (C1XOptions.TraceLinearScanLevel >= 2) {
+                TTY.println("processSuccessor B%d: initial visit", block.blockID);
+            }
 
             setStateForBlock(block, copy(inputState));
             addToWorkList(block);
@@ -199,9 +209,13 @@ final class RegisterVerifier {
             CiRegister reg = location.asRegister();
             int regNum = reg.number;
             if (interval != null) {
-                Util.traceLinearScan(4, "        %s = %s", reg, interval.operand());
+                if (C1XOptions.TraceLinearScanLevel >= 4) {
+                    TTY.println("        %s = %s", reg, interval.operand());
+                }
             } else if (inputState[regNum] != null) {
-                Util.traceLinearScan(4, "        %s = null", reg);
+                if (C1XOptions.TraceLinearScanLevel >= 4) {
+                    TTY.println("        %s = null", reg);
+                }
             }
 
             inputState[regNum] = interval;

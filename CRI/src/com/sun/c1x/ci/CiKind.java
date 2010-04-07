@@ -379,7 +379,7 @@ public enum CiKind {
      * @return a formatted string for {@code value} based on this kind
      */
     public String format(Object value) {
-        StringBuilder sb = new StringBuilder(javaName).append('(');
+        StringBuilder sb = new StringBuilder();
         if (isWord()) {
             sb.append("0x" + java.lang.Long.toHexString(((Number) value).longValue()));
         } else if (isObject()) {
@@ -406,6 +406,6 @@ public enum CiKind {
         } else {
             sb.append(value);
         }
-        return sb.append(')').toString();
+        return sb.toString();
     }
 }

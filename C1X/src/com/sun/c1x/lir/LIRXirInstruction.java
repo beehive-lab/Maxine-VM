@@ -22,7 +22,6 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.debug.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
 
@@ -73,12 +72,11 @@ public class LIRXirInstruction extends LIRInstruction {
 
      /**
      * Prints this instruction.
-     *
-     * @param out the output stream
      */
     @Override
-    public void printInstruction(LogStream out) {
-        out.print(toString());    }
+    public String operationString() {
+        return toString();
+    }
 
     @Override
     public String toString() {

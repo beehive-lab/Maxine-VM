@@ -261,7 +261,7 @@ final class ControlFlowOptimizer {
                 if (instr instanceof LIRBranch) {
                     LIRBranch opBranch = (LIRBranch) instr;
                     assert opBranch.block() == null || code.contains(opBranch.block()) : "missing successor branch from: " + block + " to: " + opBranch.block();
-                    assert opBranch.ublock() == null || code.contains(opBranch.ublock()) : "missing successor branch from: " + block + " to: " + opBranch.ublock();
+                    assert opBranch.unorderedBlock() == null || code.contains(opBranch.unorderedBlock()) : "missing successor branch from: " + block + " to: " + opBranch.unorderedBlock();
                 }
             }
 

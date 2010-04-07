@@ -352,7 +352,10 @@ public class BitMap {
         res.append("[");
         for (int i = 0; i < this.length; i++) {
             if (this.get(i)) {
-                res.append(i).append(" ");
+                if (res.length() != 1) {
+                    res.append(' ');
+                }
+                res.append(i);
             }
         }
         res.append("]");

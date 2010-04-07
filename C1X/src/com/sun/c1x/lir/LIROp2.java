@@ -21,7 +21,6 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 
 /**
@@ -176,16 +175,13 @@ public class LIROp2 extends LIRInstruction {
 
     /**
      * Prints this instruction.
-     *
-     * @param out the output log stream.
      */
     @Override
-    public void printInstruction(LogStream out) {
+    public String operationString() {
         if (code == LIROpcode.Cmove) {
-            printCondition(out, condition());
-            out.print(" ");
+            return condition.toString() + " " + super.operationString();
         }
-        super.printInstruction(out);
+        return super.operationString();
     }
 }
 
