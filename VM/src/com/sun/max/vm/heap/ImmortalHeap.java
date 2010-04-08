@@ -153,8 +153,9 @@ public final class ImmortalHeap {
      */
     public static void visitCells(CellVisitor cellVisitor) {
         Pointer firstCell = immortalHeap.start().asPointer();
+        final Pointer lastCell = immortalHeap.mark();
         Pointer cell = firstCell;
-        while (cell.lessThan(immortalHeap.mark())) {
+        while (cell.lessThan(lastCell)) {
             cell = DebugHeap.checkDebugCellTag(firstCell, cell);
             cell = cellVisitor.visitCell(cell);
         }
