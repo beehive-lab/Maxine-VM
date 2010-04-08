@@ -36,13 +36,23 @@ import java.lang.annotation.*;
  * <p>
  * There must never be an explicit call to a non-static method annotated with SUBSTITUTE
  * unless it is from another non-static method in the same class.
- * 
+ *
  * @see METHOD_SUBSTITUTIONS
- * 
+ *
  * @author Bernd Mathiske
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface SUBSTITUTE {
+
+    /**
+     * The name of the substitutee. If thie element is {@code ""}, then the name of the substitute method is used.
+     */
     String value() default "";
+
+    /**
+     * Specifies if the substitutee must exist. This property is useful to handle differences
+     * in JDK versions for private methods.
+     */
+    boolean conditional() default false;
 }
