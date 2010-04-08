@@ -1499,6 +1499,15 @@ public abstract class ClassActor extends Actor {
     }
 
     /**
+     * Modifies the initialization state of this class actor if necessary to prevent it being verified.
+     */
+    public void doNotVerify() {
+        if (isPrepared(initializationState)) {
+            initializationState = VERIFIED;
+        }
+    }
+
+    /**
      * See #2.17.5.
      */
     public void makeInitialized() {
