@@ -1009,6 +1009,19 @@ public class Bytecodes {
         }
         return name;
     }
+    
+    /**
+     * Allocation-free version of {@linkplain #nameOf(int)}.
+     * @param opcode an opcode.
+     * @return the mnemonic for {@code opcode} or {@code "<illegal opcode>"} if {@code opcode} is not a legal opcode.
+     */
+    public static String baseNameOf(int opcode) {
+    	String name = names[opcode & 0xff];
+    	if (name == null) {
+    		return "<illegal opcode>"; 
+    	}
+    	return name;
+    }
 
     /**
      * Gets the opcode corresponding to a given mnemonic.
