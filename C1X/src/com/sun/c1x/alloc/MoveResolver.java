@@ -190,18 +190,18 @@ final class MoveResolver {
     }
 
     private void insertMove(Interval fromInterval, Interval toInterval) {
-        assert fromInterval.operand() != toInterval.operand() : "from and to interval equal";
+        assert fromInterval.operand != toInterval.operand : "from and to interval equal";
         assert fromInterval.kind() == toInterval.kind() : "move between different types";
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
-        CiValue fromOpr = fromInterval.operand();
-        CiValue toOpr = toInterval.operand();
+        CiValue fromOpr = fromInterval.operand;
+        CiValue toOpr = toInterval.operand;
 
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("MoveResolver: inserted move from %s (%s) to %s (%s)", fromInterval.operand(), fromInterval.location(), toInterval.operand(), toInterval.location());
+            TTY.println("MoveResolver: inserted move from %d (%s) to %d (%s)", fromInterval.operandNumber, fromInterval.location(), toInterval.operandNumber, toInterval.location());
         }
     }
 
@@ -210,11 +210,11 @@ final class MoveResolver {
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
-        CiValue toOpr = toInterval.operand();
+        CiValue toOpr = toInterval.operand;
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.print("MoveResolver: inserted move from constant %s to %d (%s)", fromOpr, toInterval.operand(), toInterval.location());
+            TTY.print("MoveResolver: inserted move from constant %s to %d (%s)", fromOpr, toInterval.operandNumber, toInterval.location());
         }
     }
 
@@ -286,7 +286,7 @@ final class MoveResolver {
                 spillInterval.assignLocation(spillSlot);
 
                 if (C1XOptions.TraceLinearScanLevel >= 4) {
-                    TTY.println("created new Interval %s for spilling", spillInterval.operand());
+                    TTY.println("created new Interval %s for spilling", spillInterval.operand);
                 }
 
                 // insert a move from register to stack and update the mapping
@@ -333,7 +333,7 @@ final class MoveResolver {
 
     void addMapping(Interval fromInterval, Interval toInterval) {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("MoveResolver: adding mapping from %s (%s) to %s (%s)", fromInterval.operand(), fromInterval.location(), toInterval.operand(), toInterval.location());
+            TTY.println("MoveResolver: adding mapping from %d (%s) to %d (%s)", fromInterval.operandNumber, fromInterval.location(), toInterval.operandNumber, toInterval.location());
         }
 
         assert fromInterval.kind() == toInterval.kind();
@@ -344,7 +344,7 @@ final class MoveResolver {
 
     void addMapping(CiValue fromOpr, Interval toInterval) {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("MoveResolver: adding mapping from %s to %d (%s)", fromOpr, toInterval.operand(), toInterval.location());
+            TTY.println("MoveResolver: adding mapping from %s to %d (%s)", fromOpr, toInterval.operandNumber, toInterval.location());
         }
         assert fromOpr.isConstant() : "only for constants";
 

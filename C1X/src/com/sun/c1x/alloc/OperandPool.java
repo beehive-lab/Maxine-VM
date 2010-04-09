@@ -23,6 +23,8 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ci.CiRegister.*;
+import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -38,25 +40,45 @@ import com.sun.c1x.util.*;
  */
 public class OperandPool {
 
-    private static final int INITIAL_VARIABLE_CAPACITY = 20;
+    public static final int INITIAL_VARIABLE_CAPACITY = 20;
 
     /**
-     * The physical registers occupying the head of the operand pool.
+     * The physical registers occupying the head of the operand pool. This is the complete
+     * {@linkplain CiArchitecture#registers register set} of the target architecture, not
+     * just the {@linkplain AllocationSpec#allocatableRegisters allocatable registers}.
      */
     private final CiRegister[] registers;
 
     /**
      * The variable operands allocated from this pool. The {@linkplain #operandNumber(CiLocation) number}
-     * of a variable operand is greater than the number of any fixed regisyer operand.
+     * of the first variable operand in this pool is one greater than the number of the last
+     * register operand in the pool.
      */
     private final ArrayList<CiVariable> variables;
 
-    private final int lowestVariableNumber;
+    /**
+     * Map from a {@linkplain CiVariable#index variable index} to the instruction whose result is stored in the denoted variable.
+     */
+    private final ArrayList<Value> variableDefs;
+
+    /**
+     * The {@linkplain #operandNumber(CiLocation) number} of the first variable operand
+     * {@linkplain #newVariable(CiKind) allocated} from this pool.
+     */
+    private final int firstVariableNumber;
+
+    /**
+     * Records which variable operands have the {@link VariableFlag#MustBeByteRegister} flag set.
+     */
     private BitMap mustBeByteRegister;
+
+    /**
+     * Records which variable operands have the {@link VariableFlag#MustStartInMemory} flag set.
+     */
     private BitMap mustStartInMemory;
 
     /**
-     * Flags that can be set on {@linkplain CiLocation#isVariable() variables}.
+     * Flags that can be set for {@linkplain CiLocation#isVariable() variable} operands.
      */
     public enum VariableFlag {
         /**
@@ -88,12 +110,17 @@ public class OperandPool {
         return map.get(variable.index);
     }
 
+    /**
+     * Creates a new operand pool.
+     *
+     * @param target description of the target architecture for a compilation
+     */
     public OperandPool(CiTarget target) {
-        int maxRegisterNumber = target.allocationSpec.nofRegs;
         CiRegister[] registers = target.arch.registers;
-        this.lowestVariableNumber = maxRegisterNumber + 1;
+        this.firstVariableNumber = target.allocationSpec.nofRegs;
         this.registers = registers;
         variables = new ArrayList<CiVariable>(INITIAL_VARIABLE_CAPACITY);
+        variableDefs = new ArrayList<Value>(INITIAL_VARIABLE_CAPACITY);
     }
 
     /**
@@ -107,10 +134,11 @@ public class OperandPool {
     }
 
     /**
-     * Creates a new {@linkplain CiVariable variable}.
+     * Creates a new {@linkplain CiVariable variable} operand.
      *
      * @param kind the kind of the variable
-     * @return a new variable
+     * @param flag a flag that is set for the new variable operand (ignored if {@code null})
+     * @return a new variable operand
      */
     public CiVariable newVariable(CiKind kind, VariableFlag flag) {
         assert kind != CiKind.Void;
@@ -125,55 +153,85 @@ public class OperandPool {
         return var;
     }
 
+    /**
+     * Gets the unique number for an operand contained in this pool.
+     *
+     *
+     * @param operand an operand
+     * @return the unique number for {@code operand} in the range {@code [0 .. size())}
+     */
     public int operandNumber(CiLocation operand) {
         if (operand.isRegister()) {
             int number = operand.asRegister().number;
-            assert number < lowestVariableNumber;
+            assert number < firstVariableNumber;
             return number;
         }
         assert operand.isVariable();
-        return lowestVariableNumber + ((CiVariable) operand).index;
+        return firstVariableNumber + ((CiVariable) operand).index;
     }
 
+    /**
+     * Gets the operand in this pool denoted by a given operand number.
+     *
+     * @param operandNumber a value that must be in the range {@code [0 .. size())}
+     * @return the operand in this pool denoted by {@code operandNumber}
+     */
     public CiLocation operandFor(int operandNumber) {
-        if (operandNumber < lowestVariableNumber) {
+        if (operandNumber < firstVariableNumber) {
             assert operandNumber >= 0;
             return registers[operandNumber].asLocation();
         }
-        return variables.get(operandNumber - lowestVariableNumber);
+        int index = operandNumber - firstVariableNumber;
+        CiVariable variable = variables.get(index);
+        assert variable.index == index;
+        return variable;
     }
 
-    public boolean mustStartInMemory(CiLocation operand) {
-        if (operand.isVariable()) {
-            return get(mustStartInMemory, (CiVariable) operand);
+    /**
+     * Records that the result of {@code instruction} is stored in {@code result}.
+     *
+     * @param result the variable storing the result of {@code instruction}
+     * @param instruction an instruction that produces a result (i.e. pushes a value to the stack)
+     */
+    public void recordResult(CiVariable result, Value instruction) {
+        while (variableDefs.size() <= result.index) {
+            variableDefs.add(null);
         }
-        return false;
+        variableDefs.set(result.index, instruction);
     }
 
-    public void setMustStartInMemory(CiLocation operand) {
-        if (operand.isVariable()) {
-            mustStartInMemory = set(mustStartInMemory, (CiVariable) operand);
+    public Value instructionForResult(CiVariable result) {
+        if (variableDefs.size() > result.index) {
+            return variableDefs.get(result.index);
         }
+        return null;
+    }
+
+    public boolean mustStartInMemory(CiVariable operand) {
+        return get(mustStartInMemory, operand);
     }
 
     public boolean mustBeByteRegister(CiLocation operand) {
-        if (operand.isVariable()) {
-            return get(mustBeByteRegister, (CiVariable) operand);
-        }
-        return false;
+        return get(mustBeByteRegister, (CiVariable) operand);
     }
 
-    public void setMustBeByteRegister(CiLocation operand) {
-        if (operand.isVariable()) {
-            mustBeByteRegister = set(mustBeByteRegister, (CiVariable) operand);
-        }
+    public void setMustBeByteRegister(CiVariable operand) {
+        mustBeByteRegister = set(mustBeByteRegister, operand);
     }
 
-    public int maxOperandNumber() {
-        return lowestVariableNumber + variables.size();
+    /**
+     * Gets the number of operands in this pool. This value will increase by 1 for
+     * each new variable operand {@linkplain #newVariable(CiKind) allocated} from this pool.
+     */
+    public int size() {
+        return firstVariableNumber + variables.size();
     }
 
+    /**
+     * Gets the highest operand number for a register operand in this pool. This value will
+     * never change for the lifetime of this pool.
+     */
     public int maxRegisterNumber() {
-        return lowestVariableNumber - 1;
+        return firstVariableNumber - 1;
     }
 }

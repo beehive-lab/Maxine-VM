@@ -322,31 +322,31 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case Cmp:
                 if (op.info != null) {
-                    assert op.opr1().isAddress() || op.opr2().isAddress() : "shouldn't be codeemitinfo for non-address operands";
+                    assert op.operand1().isAddress() || op.operand2().isAddress() : "shouldn't be codeemitinfo for non-address operands";
                     //NullPointerExceptionStub stub = new NullPointerExceptionStub(pcOffset, cinfo);
                     //emitCodeStub(stub);
                     asm.recordImplicitException(codePos(), op.info);
                 }
-                emitCompare(op.condition(), op.opr1(), op.opr2(), op);
+                emitCompare(op.condition(), op.operand1(), op.operand2(), op);
                 break;
 
             case Cmpl2i:
             case Cmpfd2i:
             case Ucmpfd2i:
-                emitCompareFloatInt(op.code, op.opr1(), op.opr2(), op.result(), op);
+                emitCompareFloatInt(op.code, op.operand1(), op.operand2(), op.result(), op);
                 break;
 
             case Cmove:
-                emitConditionalMove(op.condition(), op.opr1(), op.opr2(), op.result());
+                emitConditionalMove(op.condition(), op.operand1(), op.operand2(), op.result());
                 break;
 
             case Shl:
             case Shr:
             case Ushr:
-                if (op.opr2().isConstant()) {
-                    emitShiftOp(op.code, op.opr1(), ((CiConstant) op.opr2()).asInt(), op.result());
+                if (op.operand2().isConstant()) {
+                    emitShiftOp(op.code, op.operand1(), ((CiConstant) op.operand2()).asInt(), op.result());
                 } else {
-                    emitShiftOp(op.code, op.opr1(), op.opr2(), op.result(), op.tmp());
+                    emitShiftOp(op.code, op.operand1(), op.operand2(), op.result(), op.tmp());
                 }
                 break;
 
@@ -355,7 +355,7 @@ public abstract class LIRAssembler {
             case Mul:
             case Div:
             case Rem:
-                emitArithOp(op.code, op.opr1(), op.opr2(), op.result(), op.info);
+                emitArithOp(op.code, op.operand1(), op.operand2(), op.result(), op.info);
                 break;
 
             case Abs:
@@ -365,18 +365,18 @@ public abstract class LIRAssembler {
             case Cos:
             case Log:
             case Log10:
-                emitIntrinsicOp(op.code, op.opr1(), op.opr2(), op.result(), op);
+                emitIntrinsicOp(op.code, op.operand1(), op.operand2(), op.result(), op);
                 break;
 
             case LogicAnd:
             case LogicOr:
             case LogicXor:
-                emitLogicOp(op.code, op.opr1(), op.opr2(), op.result());
+                emitLogicOp(op.code, op.operand1(), op.operand2(), op.result());
                 break;
 
             case Throw:
             case Unwind:
-                emitThrow(op.opr1(), op.opr2(), op.info, op.code == LIROpcode.Unwind);
+                emitThrow(op.operand1(), op.operand2(), op.info, op.code == LIROpcode.Unwind);
                 break;
 
             default:

@@ -361,7 +361,7 @@ public class CFGPrinter {
 
         for (Interval i : intervals) {
             if (i != null) {
-                i.print(out, allocator);
+                i.print(out, allocator, true);
             }
         }
 

@@ -72,6 +72,9 @@ public final class CiAddress extends CiLocation {
         this.format = Format.BASE_SCALE_INDEX_DISP;
     }
 
+    /**
+     * A scaling factor used in complex addressing modes such as those supported by x86 platforms.
+     */
     public enum Scale {
         None(-1, -1),
         Times1(1, 0),
@@ -79,13 +82,20 @@ public final class CiAddress extends CiLocation {
         Times4(4, 2),
         Times8(8, 3);
 
-        Scale(int value, int valueLog2) {
+        Scale(int value, int log2) {
             this.value = value;
-            this.valueLog2 = valueLog2;
+            this.log2 = log2;
         }
 
+        /**
+         * The value (or multiplier) of this scale.
+         */
         public final int value;
-        public final int valueLog2;
+        
+        /**
+         * The {@linkplain #value value} of this scale log 2.
+         */
+        public final int log2;
         
         public static Scale fromInt(int scale) {
             switch (scale) {

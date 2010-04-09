@@ -22,7 +22,6 @@ package com.sun.c1x.stub;
 
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
 
 /**

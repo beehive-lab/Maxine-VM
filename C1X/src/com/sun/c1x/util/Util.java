@@ -533,13 +533,6 @@ public class Util {
         return (int) l;
     }
 
-    public static boolean traceLinearScan(int level, String string, Object... objects) {
-        if (C1XOptions.TraceLinearScanLevel >= level) {
-            TTY.println(string, objects);
-        }
-        return true;
-    }
-
     public static int roundUp(int number, int mod) {
         return ((number + mod - 1) / mod) * mod;
     }

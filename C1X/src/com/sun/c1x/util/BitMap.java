@@ -297,42 +297,80 @@ public class BitMap {
         return true;
     }
 
-    public int getNextOneOffset(int lOffset, int rOffset) {
-        assert lOffset <= size() : "BitMap index out of bounds";
-        assert rOffset <= size() : "BitMap index out of bounds";
-        assert lOffset <= rOffset : "lOffset > rOffset ?";
+    /**
+     * Returns the index of the first set bit that occurs on or after a specified start index.
+     * If no such bit exists then -1 is returned.
+     * <p>
+     * To iterate over the set bits in a {@code BitMap}, use the following loop:
+     *
+     * <pre>
+     * for (int i = bitMap.nextSetBit(0); i &gt;= 0; i = bitMap.nextSetBit(i + 1)) {
+     *     // operate on index i here
+     * }
+     * </pre>
+     *
+     * @param fromIndex the index to start checking from (inclusive)
+     * @return the index of the lowest set bit between {@code [fromIndex .. size())} or -1 if there is no set bit in this range
+     * @throws IndexOutOfBoundsException if the specified index is negative.
+     */
+    public int nextSetBit(int fromIndex) {
+        return nextSetBit(fromIndex, size());
+    }
 
-        if (lOffset == rOffset) {
-            return lOffset;
+    /**
+     * Returns the index of the first set bit that occurs on or after a specified start index
+     * and before a specified end index. If no such bit exists then -1 is returned.
+     * <p>
+     * To iterate over the set bits in a {@code BitMap}, use the following loop:
+     *
+     * <pre>
+     * for (int i = bitMap.nextSetBit(0, bitMap.size()); i &gt;= 0; i = bitMap.nextSetBit(i + 1, bitMap.size())) {
+     *     // operate on index i here
+     * }
+     * </pre>
+     *
+     * @param fromIndex the index to start checking from (inclusive)
+     * @param toIndex the index at which to stop checking (exclusive)
+     * @return the index of the lowest set bit between {@code [fromIndex .. toIndex)} or -1 if there is no set bit in this range
+     * @throws IndexOutOfBoundsException if the specified index is negative.
+     */
+    public int nextSetBit(int fromIndex, int toIndex) {
+        assert fromIndex <= size() : "BitMap index out of bounds";
+        assert toIndex <= size() : "BitMap index out of bounds";
+        assert fromIndex <= toIndex : "fromIndex > toIndex";
+
+        if (fromIndex == toIndex) {
+            return -1;
         }
-        int index = wordIndex(lOffset);
-        int rIndex = wordIndex(rOffset - 1) + 1;
-        int resOffset = lOffset;
+        int fromWordIndex = wordIndex(fromIndex);
+        int toWordIndex = wordIndex(toIndex - 1) + 1;
+        int resultIndex = fromIndex;
 
         // check bits including and to the left_ of offset's position
-        int pos = bitInWord(resOffset);
-        long res = map(index) >> pos;
+        int pos = bitInWord(resultIndex);
+        long res = map(fromWordIndex) >> pos;
         if (res != 0) {
-            // find the position of the 1-bit
-            for (; (res & 1) == 0; resOffset++) {
-                res = res >> 1;
+            resultIndex += Long.numberOfTrailingZeros(res);
+            assert resultIndex >= fromIndex && resultIndex < toIndex : "just checking";
+            if (resultIndex < toIndex) {
+                return resultIndex;
             }
-            assert resOffset >= lOffset && resOffset < rOffset : "just checking";
-            return Math.min(resOffset, rOffset);
+            return -1;
         }
         // skip over all word length 0-bit runs
-        for (index++; index < rIndex; index++) {
-            res = map(index);
+        for (fromWordIndex++; fromWordIndex < toWordIndex; fromWordIndex++) {
+            res = map(fromWordIndex);
             if (res != 0) {
                 // found a 1, return the offset
-                for (resOffset = bitIndex(index); (res & 1) == 0; resOffset++) {
-                    res = res >> 1;
+                resultIndex = bitIndex(fromWordIndex) + Long.numberOfTrailingZeros(res);
+                assert resultIndex >= fromIndex : "just checking";
+                if (resultIndex < toIndex) {
+                    return resultIndex;
                 }
-                assert resOffset >= lOffset : "just checking";
-                return Math.min(resOffset, rOffset);
+                return -1;
             }
         }
-        return rOffset;
+        return -1;
     }
 
     private int bitIndex(int index) {

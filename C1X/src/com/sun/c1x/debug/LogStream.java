@@ -23,6 +23,7 @@ package com.sun.c1x.debug;
 import java.io.*;
 
 import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
 
 /**
  * A utility for printing compiler debug and informational output to an output stream.
@@ -407,11 +408,7 @@ public class LogStream {
      */
     public LogStream print(Value value) {
         indent();
-        if (value == null) {
-            lineBuffer.append("null");
-        } else {
-            lineBuffer.append(value.kind.typeChar).append(value.id());
-        }
+        lineBuffer.append(Util.valueString(value));
         return this;
     }
 

@@ -244,25 +244,25 @@ public class IntervalWalker {
         current.rewindRange();
     }
 
-    void walkTo(int lirOpId) {
-        assert currentPosition <= lirOpId : "can not walk backwards";
+    void walkTo(int toOpId) {
+        assert currentPosition <= toOpId : "can not walk backwards";
         while (current != null) {
-            boolean isActive = current.from() <= lirOpId;
-            int id = isActive ? current.from() : lirOpId;
+            boolean isActive = current.from() <= toOpId;
+            int opId = isActive ? current.from() : toOpId;
 
             if (C1XOptions.TraceLinearScanLevel >= 2) {
-                if (currentPosition < id) {
+                if (currentPosition < opId) {
                     TTY.println();
-                    TTY.println("walkTo(%d) *", id);
+                    TTY.println("walkTo(%d) *", opId);
                 }
             }
 
             // set currentPosition prior to call of walkTo
-            currentPosition = id;
+            currentPosition = opId;
 
             // call walkTo even if currentPosition == id
-            walkTo(State.Active, id);
-            walkTo(State.Inactive, id);
+            walkTo(State.Active, opId);
+            walkTo(State.Inactive, opId);
 
             if (isActive) {
                 current.state = State.Active;

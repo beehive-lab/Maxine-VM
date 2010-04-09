@@ -100,12 +100,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     private Value currentInstruction;
     private Value lastInstructionPrinted; // Debugging only
 
-    /**
-     * Maps a {@linkplain CiLocation#variableNumber() variable number} to the instruction
-     * that defines the variable.
-     */
-    final ArrayMap<Value> instructionForOperand;
-
     private List<CiConstant> constants;
     private List<CiVariable> variablesForConstants;
     protected LIRList lir;
@@ -119,7 +113,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         this.is64 = compilation.target.arch.is64bit();
         this.isTwoOperand = compilation.target.arch.twoOperandMode();
 
-        instructionForOperand = new ArrayMap<Value>();
         constants = new ArrayList<CiConstant>();
         variablesForConstants = new ArrayList<CiVariable>();
 
@@ -145,8 +138,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         blockDoEpilog(block);
     }
 
-    public Value instructionForVariable(int variableNumber) {
-        return instructionForOperand.get(variableNumber);
+    public Value instructionForVariable(CiVariable operand) {
+        return operands.instructionForResult(operand);
     }
 
     @Override
@@ -188,7 +181,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             assert kind == local.kind.stackKind() : "local type check failed";
             if (local.isLive()) {
                 local.setOperand(dest);
-                instructionForOperand.put(dest.index, local);
+                operands.recordResult(dest, local);
             }
             javaIndex += kind.jvmSlots;
         }
@@ -1630,7 +1623,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // allocate a variable for this phi
             CiVariable operand = newVariable(phi.kind);
             phi.setOperand(operand);
-            instructionForOperand.put(operand.index, phi);
+            operands.recordResult(operand, phi);
         }
         return phi.operand();
     }
@@ -1651,7 +1644,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert x.operand().isIllegal() : "operand should never change";
         assert !operand.isRegister() : "should never set result to a physical register";
         x.setOperand(operand);
-        instructionForOperand.put(operand.index, x);
+        operands.recordResult(operand, x);
         return operand;
     }
 
