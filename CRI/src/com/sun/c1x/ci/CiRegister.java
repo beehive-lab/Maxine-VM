@@ -299,7 +299,7 @@ public final class CiRegister {
          * @return {@code true} if {@code register} is allocatable, {@code false} otherwise
          */
         public boolean isAllocatable(CiRegister register) {
-            return register.number < nofRegs && allocatableRegistersMap[register.number];
+            return register.number >= 0 && register.number < nofRegs && allocatableRegistersMap[register.number];
         }
 
         /**

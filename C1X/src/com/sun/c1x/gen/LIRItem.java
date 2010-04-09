@@ -175,7 +175,7 @@ public class LIRItem {
     void setResult(CiVariable operand) {
         assert value.operand().isIllegal() || value.operand().isConstant() : "operand should never change";
         value.setOperand(operand);
-        gen.instructionForOperand.put(operand.index, value);
+        gen.operands().recordResult(operand, value);
         result = operand;
     }
 

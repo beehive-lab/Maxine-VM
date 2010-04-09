@@ -49,7 +49,7 @@ public enum CiKind {
     /** Denote a bytecode address in a {@code JSR} bytecode. */
     Jsr    ('r', "jsr",     null,       SLOTS_1,  0),
     /** The non-type. */
-    Illegal(' ', "illegal", null,       -1,       0);
+    Illegal('-', "illegal", null,       -1,       0);
 
     public static final CiKind[] VALUES = values();
     

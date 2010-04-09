@@ -225,8 +225,8 @@ public abstract class LIRInstruction {
             operands.add(address.index);
         }
 
-        if (address.base.isVariableOrRegister() && !address.base.isVariable()) {
-            assert address.index.isIllegal() || !address.index.isVariable();
+        if (address.base.isRegister()) {
+            assert address.index.isIllegal();
             return new OperandSlot(address);
         }
 
@@ -453,7 +453,7 @@ public abstract class LIRInstruction {
         return hasCall;
     }
 
-    public int oprCount(OperandMode mode) {
+    public int operandCount(OperandMode mode) {
         if (mode == OperandMode.OutputMode) {
             return outputCount;
         } else if (mode == OperandMode.InputMode) {
@@ -464,7 +464,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public CiLocation oprAt(OperandMode mode, int index) {
+    public CiLocation operandAt(OperandMode mode, int index) {
         if (mode == OperandMode.OutputMode) {
             assert index < outputCount;
             return operands.get(index);
@@ -478,18 +478,19 @@ public abstract class LIRInstruction {
         }
     }
 
-    public void setOprAt(OperandMode mode, int index, CiLocation colorLirOpr) {
-        assert index < oprCount(mode);
+    public void setOperandAt(OperandMode mode, int index, CiLocation location) {
+        assert index < operandCount(mode);
+        assert location.kind != CiKind.Illegal;
         if (mode == OperandMode.OutputMode) {
             assert index < outputCount;
-            operands.set(index, colorLirOpr);
+            operands.set(index, location);
         } else if (mode == OperandMode.InputMode) {
             assert index < allocatorInputCount + allocatorTempInputCount;
-            operands.set(index + outputCount, colorLirOpr);
+            operands.set(index + outputCount, location);
         } else {
             assert mode == OperandMode.TempMode;
             assert index < allocatorTempInputCount + allocatorTempCount;
-            operands.set(index + outputCount + allocatorInputCount, colorLirOpr);
+            operands.set(index + outputCount + allocatorInputCount, location);
         }
     }
 

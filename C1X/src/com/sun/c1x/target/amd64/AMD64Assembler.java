@@ -180,20 +180,20 @@ public abstract class AMD64Assembler extends AbstractAssembler {
                     // [00 reg 100][ss index base]
                     assert index != target.stackPointerRegister : "illegal addressing mode";
                     emitByte(0x04 | regenc);
-                    emitByte(scale.value << 6 | indexenc | baseenc);
+                    emitByte(scale.log2 << 6 | indexenc | baseenc);
                 } else if (Util.is8bit(disp)) {
                     // [base + indexscale + imm8]
                     // [01 reg 100][ss index base] imm8
                     assert index != target.stackPointerRegister : "illegal addressing mode";
                     emitByte(0x44 | regenc);
-                    emitByte(scale.value << 6 | indexenc | baseenc);
+                    emitByte(scale.log2 << 6 | indexenc | baseenc);
                     emitByte(disp & 0xFF);
                 } else {
                     // [base + indexscale + disp32]
                     // [10 reg 100][ss index base] disp32
                     assert index != target.stackPointerRegister : "illegal addressing mode";
                     emitByte(0x84 | regenc);
-                    emitByte(scale.value << 6 | indexenc | baseenc);
+                    emitByte(scale.log2 << 6 | indexenc | baseenc);
                     emitInt(disp);
                 }
             } else if (base == target.stackPointerRegister || (base == AMD64.r12)) {
@@ -242,7 +242,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
                 // [00 reg 100][ss index 101] disp32
                 assert index != target.stackPointerRegister : "illegal addressing mode";
                 emitByte(0x04 | regenc);
-                emitByte(scale.value << 6 | indexenc | 0x05);
+                emitByte(scale.log2 << 6 | indexenc | 0x05);
                 emitInt(disp);
             } else if (addr == CiAddress.InternalRelocation) {
                 // [00 000 101] disp32

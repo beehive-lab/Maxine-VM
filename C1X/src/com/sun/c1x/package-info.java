@@ -38,8 +38,8 @@
  *
  * <H3>The C1X Compilation Process</H3>
  *
- * {@code C1XCompiler.compileMethod} creates a {@code C1XCompilation} instance and then returns the result of calling its
- * {@link com.sun.c1x.C1XCompilation#compile} method. The {@code C1XCompilation} instance records whether {@code compileMethod}} was invoked with
+ * {@link com.sun.c1x.ci.CiCompiler#compileMethod} creates a {@link C1XCompilation} instance and then returns the result of calling its
+ * {@link com.sun.c1x.C1XCompilation#compile} method. The {@code C1XCompilation} instance records whether {@code compileMethod} was invoked with
  * the OSR variant, which is used later in the IR generation.
  * <p>
  * While there is only one {@code C1XCompiler} instance, there may be several compilations proceeding concurrently, each of

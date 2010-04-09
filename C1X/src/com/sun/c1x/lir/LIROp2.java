@@ -130,7 +130,7 @@ public class LIROp2 extends LIRInstruction {
      *
      * @return opr1 the first input operand
      */
-    public CiValue opr1() {
+    public CiValue operand1() {
         return operand(0);
     }
 
@@ -139,7 +139,7 @@ public class LIROp2 extends LIRInstruction {
      *
      * @return opr2 the second input operand
      */
-    public CiValue opr2() {
+    public CiValue operand2() {
         return operand(1);
     }
 

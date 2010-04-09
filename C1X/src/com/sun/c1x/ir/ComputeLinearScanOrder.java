@@ -222,7 +222,7 @@ public class ComputeLinearScanOrder {
         }
 
         if (C1XOptions.TraceLinearScanLevel >= 3) {
-            TTY.println("Finished countinf edges for block B%d", cur.blockID);
+            TTY.println("Finished counting edges for block B%d", cur.blockID);
         }
     }
 
