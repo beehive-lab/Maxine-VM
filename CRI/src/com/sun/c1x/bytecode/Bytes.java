@@ -21,34 +21,58 @@
 package com.sun.c1x.bytecode;
 
 /**
- * This class implements a number of utilities for dealing with bytes,
- * particularly in byte arrays.
+ * A collection of utility methods for dealing with bytes, particularly in byte arrays.
  *
  * @author Ben L. Titzer
  */
 public class Bytes {
+	/**
+	 * Gets a signed 1-byte value.
+	 * @param data the array containing the data
+	 * @param bci the start index of the value to retrieve
+	 * @return the signed 1-byte value at index {@code bci} in array {@code data}
+	 */
     public static int beS1(byte[] data, int bci) {
-        // big-endian signed 1-byte quantity
         return data[bci];
     }
 
+	/**
+	 * Gets a signed 2-byte big-endian value.
+	 * @param data the array containing the data
+	 * @param bci the start index of the value to retrieve
+	 * @return the signed 2-byte, big-endian, value at index {@code bci} in array {@code data}
+	 */
     public static int beS2(byte[] data, int bci) {
-        // big-endian signed 2-byte quantity
         return (data[bci] << 8) | (data[bci + 1] & 0xff);
     }
 
+	/**
+	 * Gets an unsigned 1-byte value.
+	 * @param data the array containing the data
+	 * @param bci the start index of the value to retrieve
+	 * @return the unsigned 1-byte value at index {@code bci} in array {@code data}
+	 */
     public static int beU1(byte[] data, int bci) {
-        // big-endian unsigned 1-byte quantity
         return data[bci] & 0xff;
     }
 
+	/**
+	 * Gets an unsigned 2-byte big-endian value.
+	 * @param data the array containing the data
+	 * @param bci the start index of the value to retrieve
+	 * @return the unsigned 2-byte, big-endian, value at index {@code bci} in array {@code data}
+	 */
     public static int beU2(byte[] data, int bci) {
-        // big-endian unsigned 2-byte quantity
         return ((data[bci] & 0xff) << 8) | (data[bci + 1] & 0xff);
     }
 
+	/**
+	 * Gets a signed 4-byte big-endian value.
+	 * @param data the array containing the data
+	 * @param bci the start index of the value to retrieve
+	 * @return the signed 4-byte, big-endian, value at index {@code bci} in array {@code data}
+	 */
     public static int beS4(byte[] data, int bci) {
-        // big-endian signed 4-byte quantity
         return (data[bci] << 24) | ((data[bci + 1] & 0xff) << 16) | ((data[bci + 2] & 0xff) << 8) | (data[bci + 3] & 0xff);
     }
 }

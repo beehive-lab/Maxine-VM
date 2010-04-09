@@ -21,26 +21,48 @@
 package com.sun.c1x.bytecode;
 
 /**
- * The {@code BytecodeTableSwitch} class is a utility for processing tableswitch bytecodes.
+ * A utility for processing {@link Bytecodes#TABLESWITCH} bytecodes.
  *
  * @author Ben L. Titzer
  */
 public class BytecodeTableSwitch extends BytecodeSwitch {
+	private static final int OFFSET_TO_LOW_KEY = 4;
+	private static final int OFFSET_TO_HIGH_KEY = 8;
+	private static final int OFFSET_TO_FIRST_JUMP_OFFSET = 12;
+	private static final int JUMP_OFFSET_SIZE = 4;
 
+    /**
+     * Constructor for a {@link BytecodeStream}.
+     * @param stream the {@code BytecodeStream} containing the switch instruction
+     * @param bci the index in the stream of the switch instruction
+     */
     public BytecodeTableSwitch(BytecodeStream stream, int bci) {
         super(stream, bci);
     }
 
+    /**
+     * Constructor for a bytecode array.
+     * @param code the bytecode array containing the switch instruction.
+     * @param bci the index in the array of the switch instruction
+     */
     public BytecodeTableSwitch(byte[] code, int bci) {
         super(code, bci);
     }
 
+    /**
+     * Gets the low key of the table switch.
+     * @return the low key
+     */
     public int lowKey() {
-        return readWord(aligned + 4);
+        return readWord(alignedBci + OFFSET_TO_LOW_KEY);
     }
 
+    /**
+     * Gets the high key of the table switch.
+     * @return the high key
+     */
     public int highKey() {
-        return readWord(aligned + 8);
+        return readWord(alignedBci + OFFSET_TO_HIGH_KEY);
     }
 
     @Override
@@ -50,12 +72,12 @@ public class BytecodeTableSwitch extends BytecodeSwitch {
 
     @Override
     public int defaultOffset() {
-        return readWord(aligned);
+        return readWord(alignedBci);
     }
 
     @Override
     public int offsetAt(int i) {
-        return readWord(aligned + 12 + 4 * i);
+        return readWord(alignedBci + OFFSET_TO_FIRST_JUMP_OFFSET + JUMP_OFFSET_SIZE * i);
     }
 
     @Override
@@ -65,6 +87,6 @@ public class BytecodeTableSwitch extends BytecodeSwitch {
 
     @Override
     public int size() {
-        return aligned + 12 + 4 * numberOfCases() - bci;
+        return alignedBci + OFFSET_TO_FIRST_JUMP_OFFSET + JUMP_OFFSET_SIZE * numberOfCases() - bci;
     }
 }

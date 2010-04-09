@@ -20,7 +20,7 @@
  */
 
 /**
- * IR Graph building.
+ * <H2>IR Graph building</H2>
  *
  * The {@link com.sun.c1x.graph.IR} class drives the generation of the HIR graph for a method, making use of other
  * utility classes in this package.
@@ -59,7 +59,7 @@
  * </li>
  *
  * <li>Next the {@link com.sun.c1x.graph.GraphBuilder#pushRootScope} method is called, with the passed-in {@link com.sun.c1x.ir.IRScope}
- * object, the {@link com.sun.c1x.ir.BlockMap} returned by build and the {@code startBlock}. (Note: Unlike
+ * object, the {@link com.sun.c1x.graph.BlockMap} returned by build and the {@code startBlock}. (Note: Unlike
  * {@link com.sun.c1x.graph.GraphBuilder#pushScope}, this method does not propagate the
  * {@link com.sun.c1x.graph.BlockMap#storesInLoops} field to the {@link com.sun.c1x.ir.IRScope} object, which means that
  * {@link com.sun.c1x.ir.BlockBegin#insertLoopPhis} will always get null for this value. Is this a bug?).
@@ -84,13 +84,13 @@
  * This step sets up three instance fields: {@link com.sun.c1x.graph.GraphBuilder#curBlock} and
  * {@link com.sun.c1x.graph.GraphBuilder#lastInstr} to {@code startBlock} and
  * {@link com.sun.c1x.graph.GraphBuilder#curState} to {@code initialState}. (N.B. the setting of {@code curBlock} is
- * redundant as it is done in {@com.sun.c1x.graph.GraphBuilder# pushRootScope}).
+ * redundant as it is done in {@link com.sun.c1x.graph.GraphBuilder#pushRootScope}).
  * </li>
  * <li>
  * Step 4 contains special handling for synchronized methods (TBD), otherwise it calls
  * {@link com.sun.c1x.graph.GraphBuilder#finishStartBlock} which adds a {@link com.sun.c1x.ir.Base} block as the end of
  * the {@code startBlock}. The {@link com.sun.c1x.ir.Base} block has one successor set to the (entry) block with flag
- * {@link com.sun.c1x.ir.BlockBegin.BlockFlag#StandardEntry}, that was created by {@link com.sun.c1x.graph.BlockMap.build} (and possibly a
+ * {@link com.sun.c1x.ir.BlockBegin.BlockFlag#StandardEntry}, that was created by {@link com.sun.c1x.graph.BlockMap#build} (and possibly a
  * successor to an OSREntry block).
  * </li>
  * <li>
@@ -117,7 +117,7 @@
  * build}.
  * <p>
 
- * <H3>{@link com.sun.c1x.graph.GraphBuilder#GraphBuilder.iterateBytecodesForBlock}</H3>
+ * <H3>{@link com.sun.c1x.graph.GraphBuilder#iterateBytecodesForBlock}</H3>
  *
  * {@link com.sun.c1x.graph.GraphBuilder#iterateBytecodesForBlock} performs an abstract interpretation of the bytecodes in the block, appending new
  * nodes as necessary, until the last added node is an instance of {@link com.sun.c1x.ir.BlockEnd}. (Note: It has an
