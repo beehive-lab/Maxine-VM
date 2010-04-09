@@ -22,12 +22,17 @@ package com.sun.c1x.bytecode;
 
 import java.lang.annotation.*;
 
-
+/**
+ * Marks a method as being implemented by an extended bytecode.
+ *
+ * @author Ben Titzer
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface INTRINSIC {
     /**
-     * The extended bytecode corresponding to this intrinsic.
+     * The value of the extended bytecode corresponding to this intrinsic.
+     * @return the extended bytecode value
      */
     int value();
 }
