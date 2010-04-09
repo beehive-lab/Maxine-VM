@@ -29,7 +29,12 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 
 /**
- * Fixed size marking stack. Used raw memory, allocated outside of the scope of the heap.
+ * Fixed size marking stack for heap tracer.
+ * Heap tracers specify an overflow handler to recover from overflow,
+ * and a {@link CellVisitor} to be used when draining or flushing the stack.
+ *
+ * Currently, the marking stack drains itself when reaching end of capacity.
+ * Overflows typically take place while the stack is draining.
  *
  * @author Laurent Daynes
  */
@@ -38,15 +43,26 @@ public class MarkingStack {
         register(new  VMIntOption("-XX:MarkingStackSize=", 32, "Size of the marking stack in number of references."),
                         MaxineVM.Phase.PRISTINE);
 
-    Address base;
-    int size;
-    int topIndex = 0;
+    abstract static class MarkingStackCellVisitor {
+        abstract void visitPoppedCell(Pointer cell);
+        abstract void visitFlushedCell(Pointer cell);
+    }
 
-    CellVisitor flushingCellVisitor;
-    OverflowHandler overflowHandler;
+    interface OverflowHandler {
+        void recoverFromOverflow();
+    }
 
-    void setCellVisitor(CellVisitor cellVisitor) {
-        flushingCellVisitor = cellVisitor;
+    private Address base;
+    private int last;
+    private int drainThreshold;
+    private int topIndex = 0;
+    private boolean draining = false;
+
+    private OverflowHandler overflowHandler;
+    private MarkingStackCellVisitor drainingCellVisitor;
+
+    void setCellVisitor(MarkingStackCellVisitor cellVisitor) {
+        drainingCellVisitor = cellVisitor;
     }
 
     void setOverflowHandler(OverflowHandler handler) {
@@ -57,15 +73,21 @@ public class MarkingStack {
     }
 
     void initialize() {
-        // FIXME: can be allocated in the heap, as reference array,
-        // outside of the covered area. Root marking will skip it.
+        // FIXME: should be allocated in the heap, outside of the covered area, as a  reference array,
+        // Root marking will skip it.
         // Same with the other GC data structures (i.e., rescan map and mark bitmap)
 
-        size = markingStackSizeOption.getValue() << Word.widthValue().log2numberOfBytes;
+        final int size = markingStackSizeOption.getValue() << Word.widthValue().log2numberOfBytes;
         base = Memory.allocate(Size.fromInt(size));
         if (base.isZero()) {
             ((HeapSchemeAdaptor) VMConfiguration.target().heapScheme()).reportPristineMemoryFailure("marking stack", Size.fromInt(size));
         }
+        last = size - 1;
+        drainThreshold = (size * 2) / 3;
+    }
+
+    Size size() {
+        return Size.fromInt(last + 1);
     }
 
     @INLINE
@@ -74,19 +96,32 @@ public class MarkingStack {
     }
 
     void push(Pointer cell) {
-        base.asPointer().setWord(topIndex++, cell);
-        if (topIndex == size) {
+        if (topIndex < last) {
+            base.asPointer().setWord(topIndex++, cell);
+            return;
+        }
+        if (draining) {
+            // We're already draining. So this is an overflow situation. Store the cell in the last slot of the stack (reserved for overflow).
+            base.asPointer().setWord(topIndex++, cell);
+            // Set draining back to false. The recovering will empty the marking stack.
+            draining = false;
             overflowHandler.recoverFromOverflow();
+        } else {
+            draining = true;
+            // Start draining with the cell requested to be pushed.
+            drainingCellVisitor.visitPoppedCell(cell);
+            // Drain further while we're at it.
+            while (topIndex > drainThreshold) {
+                drainingCellVisitor.visitPoppedCell(base.asPointer().getWord(--topIndex).asPointer());
+            }
+            draining = false;
         }
     }
 
     void flush() {
         while (topIndex > 0) {
-            flushingCellVisitor.visitCell(base.asPointer().getWord(--topIndex).asPointer());
+            drainingCellVisitor.visitFlushedCell(base.asPointer().getWord(--topIndex).asPointer());
         }
     }
 
-    interface OverflowHandler {
-        void recoverFromOverflow();
-    }
 }

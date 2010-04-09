@@ -558,22 +558,7 @@ public class SingleBitHeapMarker implements MarkingStack.OverflowHandler {
     final FlushMarkingStackCellVisitor flushMarkingStackCellVisitor = new FlushMarkingStackCellVisitor();
 
     public void recoverFromOverflow() {
-        // First, flush the mark stack, i.e., mark all cells in the stack remembering the leftmost pointer.
-        flushMarkingStackCellVisitor.reset();
-        markingStack.setCellVisitor(flushMarkingStackCellVisitor);
-        markingStack.flush();
-        Pointer leftmostFlushed = flushMarkingStackCellVisitor.leftmostFlushed;
-        // Next, initiate scanning to recover from overflow. This consists of
-        // visiting all marked objects between the leftmost flushed mark and the finger.
-        // Doing so, we're likely going to revisit black already marked object.
-        // As for a normal scan, any reference pointing after the finger are marked grey and
-        // the rightmost mark of the normal scan is updated.
-        // Any reference before the finger are pushed on the marking stack.
-        // The scan stops when reaching the finger (which act
-        // as the rightmost bound for this scan).
-        // If the marking stack overflow again, we flush the stack again, write down the leftmost mark
-        // for the next scan.
-   }
+    }
 
     private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(rootCellVisitor);
 
@@ -628,7 +613,7 @@ public class SingleBitHeapMarker implements MarkingStack.OverflowHandler {
      * Visit all objects marked grey during root marking.
      */
     void visitAllGreyObjects() {
-        markingStack.setCellVisitor(poppedCellVisitor);
+        // markingStack.setCellVisitor(poppedCellVisitor);
         visitGreyObjects(leftmost, normalRightmostMark);
     }
 
