@@ -20,7 +20,7 @@
  */
 
 /**
- * IR Graph building.
+ * <H2>IR Graph building</H2>
  *
  * The {@link com.sun.c1x.graph.IR} class drives the generation of the HIR graph for a method, making use of other
  * utility classes in this package.
@@ -47,10 +47,10 @@
  * <H3>{@code GraphBuilder.build}</H3>
  *
  * <ol>
- * <li>The {@link com.sun.c1x.graph.IR#startBlock} field of the cached {@code IR} instance is set to a newly created
+ * <li>The {@link com.sun.c1x.graph.IR#startBlock} field of the cached {@link com.sun.c1x.graph.IR} instance is set to a newly created
  * {@link com.sun.c1x.ir.BlockBegin} node, with bytecode index 0 and then the {@link com.sun.c1x.graph.BlockMap} is
  * constructed by calling {@link com.sun.c1x.C1XCompilation#getBlockMap}. This behaves slightly differently depending on
- * whether this is an OSR compilation. If so, a new {@code BlockBegin} node is added to the map at the OSR bytecode
+ * whether this is an OSR compilation. If so, a new {@link com.sun.c1x.ir.BlockBegin} node is added to the map at the OSR bytecode
  * index. The map is then built by the{@link com.sun.c1x.graph.BlockMap#build}, which takes a boolean argument that
  * controls whether a second pass is made over the bytecodes to compute stores in loops. This always false for an OSR
  * compilation (why?). Otherwise, it is only true if enabled by the {@link com.sun.c1x.C1XOptions#PhiLoopStores}
@@ -58,12 +58,12 @@
  * the statistics are updated.
  * </li>
  *
- * <li>Next the {@link com.sun.c1x.graph.GraphBuilder#pushRootScope} method is called, with the passed-in {@code IRScope}
- * object, the {@code BlockMap} returned by build and the {@code startBlock}. (Note: Unlike
+ * <li>Next the {@link com.sun.c1x.graph.GraphBuilder#pushRootScope} method is called, with the passed-in {@link com.sun.c1x.ir.IRScope}
+ * object, the {@link com.sun.c1x.graph.BlockMap} returned by build and the {@code startBlock}. (Note: Unlike
  * {@link com.sun.c1x.graph.GraphBuilder#pushScope}, this method does not propagate the
- * {@link com.sun.c1x.graph.BlockMap#storesInLoops} field to the {@code IRScope} object, which means that
+ * {@link com.sun.c1x.graph.BlockMap#storesInLoops} field to the {@link com.sun.c1x.ir.IRScope} object, which means that
  * {@link com.sun.c1x.ir.BlockBegin#insertLoopPhis} will always get null for this value. Is this a bug?).
- * {@code pushRootScope} initializes the {@link com.sun.c1x.graph.GraphBuilder#scopeData} field with a
+ * {@link com.sun.c1x.graph.GraphBuilder#pushRootScope} initializes the {@link com.sun.c1x.graph.GraphBuilder#scopeData} field with a
  * {@link com.sun.c1x.graph.ScopeData} instance, with null parent. The
  * {@link com.sun.c1x.graph.GraphBuilder#compilation} instance is called to get an {@link com.sun.c1x.ri.RiConstantPool}
  * , which is C1X's interface to constant pool information. The {@link com.sun.c1x.graph.GraphBuilder#curBlock} field is
@@ -73,10 +73,10 @@
  * Now a {@link com.sun.c1x.value.FrameState initialState} object is created by
  * {@link com.sun.c1x.graph.GraphBuilder#stateAtEntry}. If the method is not static, then a {@link com.sun.c1x.ir.Local}
  * instance is created at index 0. Since the receiver cannot be {@code null}, the
- * {@link com.sun.c1x.ir.Value.Flag#NonNull} flag is set. Additional {@code Local} instances are created for the
+ * {@link com.sun.c1x.ir.Value.Flag#NonNull} flag is set. Additional {@link com.sun.c1x.ir.Local} instances are created for the
  * arguments to the method. The index is incremented by the number of slots occupied by the
- * {@link com.sun.c1x.ci.CiKind} corresponding to the argument type. All the {@code Local} instances are stored in the
- * {@code FrameState} using the {@link com.sun.c1x.value.FrameState#storeLocal} method. This {@code FrameState} is then
+ * {@link com.sun.c1x.ci.CiKind} corresponding to the argument type. All the {@link com.sun.c1x.ir.Local} instances are stored in the
+ * {@link com.sun.c1x.value.FrameState} using the {@link com.sun.c1x.value.FrameState#storeLocal} method. This {@link com.sun.c1x.value.FrameState} is then
  * merged into the {@link com.sun.c1x.ir.BlockBegin#stateBefore} for the {@code startBlock}, which just results in a
  * copy since {@code stateBefore} will be {@code null}.
  * </li>
@@ -84,13 +84,13 @@
  * This step sets up three instance fields: {@link com.sun.c1x.graph.GraphBuilder#curBlock} and
  * {@link com.sun.c1x.graph.GraphBuilder#lastInstr} to {@code startBlock} and
  * {@link com.sun.c1x.graph.GraphBuilder#curState} to {@code initialState}. (N.B. the setting of {@code curBlock} is
- * redundant as it is done in {@code pushScope}).
+ * redundant as it is done in {@link com.sun.c1x.graph.GraphBuilder#pushRootScope}).
  * </li>
  * <li>
  * Step 4 contains special handling for synchronized methods (TBD), otherwise it calls
  * {@link com.sun.c1x.graph.GraphBuilder#finishStartBlock} which adds a {@link com.sun.c1x.ir.Base} block as the end of
- * the {@code startBlock}. The {@code Base} block has one successor set to the (entry) block with flag
- * {@link com.sun.c1x.ir.BlockBegin.BlockFlag#StandardEntry}, that was created by {@code BlockMap.build} (and possibly a
+ * the {@code startBlock}. The {@link com.sun.c1x.ir.Base} block has one successor set to the (entry) block with flag
+ * {@link com.sun.c1x.ir.BlockBegin.BlockFlag#StandardEntry}, that was created by {@link com.sun.c1x.graph.BlockMap#build} (and possibly a
  * successor to an OSREntry block).
  * </li>
  * <li>
@@ -108,20 +108,20 @@
  * </li>
  * </ol>
  *
- * <H3>{@code GraphBuilder.iterateAllBlocks}</H3>
- * {@code iterateAllBlocks} repeatedly removes a block from the work list and, if not already visited, marks it so,
- * kills the current memory map, sets {@code curBlock}, {@code curState} and {@code lastInstr} and then calls
+ * <H3>{@link com.sun.c1x.graph.GraphBuilder#iterateAllBlocks}</H3>
+ * {@link com.sun.c1x.graph#iterateAllBlocks} repeatedly removes a block from the work list and, if not already visited, marks it so,
+ * kills the current memory map, sets {@link com.sun.c1x.graph.GraphBuilder#curBlock}, {@link com.sun.c1x.graph.GraphBuilder#curState} and {@link com.sun.c1x.graph.GraphBuilder#lastInstr} and then calls
  * {@link com.sun.c1x.graph.GraphBuilder#iterateBytecodesForBlock}.
  *
  * This process continues until all the blocks have been visited (processed) after which control returns to {@code
  * build}.
  * <p>
 
- * <H3>{@code GraphBuilder.iterateBytecodesForBlock}</H3>
+ * <H3>{@link com.sun.c1x.graph.GraphBuilder#iterateBytecodesForBlock}</H3>
  *
- * {@code iterateBytecodesForBlock} performs an abstract interpretation of the bytecodes in the block, appending new
+ * {@link com.sun.c1x.graph.GraphBuilder#iterateBytecodesForBlock} performs an abstract interpretation of the bytecodes in the block, appending new
  * nodes as necessary, until the last added node is an instance of {@link com.sun.c1x.ir.BlockEnd}. (Note: It has an
- * explicit check for finding a new {@code BlockBegin} before a {@code BlockEnd} but
+ * explicit check for finding a new {@link com.sun.c1x.ir.BlockBegin} before a {@link com.sun.c1x.ir.BlockEnd} but
  * {@link com.sun.c1x.graph.BlockMap#moveSuccessorLists} has a similar check so this may be redundant). For example,
  * consider the following bytecodes:
  *
@@ -134,12 +134,12 @@
  * </pre>
  *
  * The {@code iconst_0} bytecode causes a {@link com.sun.c1x.ir.Constant} node representing zero to be pushed on the
- * {@code curState} stack and the node to be appended to the {@code BlockBegin} (entry) node associated with index 0.
+ * {@link com.sun.c1x.graph.GraphBuilder#curState} stack and the node to be appended to the {@link com.sun.c1x.ir.BlockBegin} (entry) node associated with index 0.
  * The {@code istore_2} causes the node to be popped of the stack and stored in the local slot 2. No IR node is
  * generated for the {@code istore_2}. The {@code goto} creates a {@link com.sun.c1x.ir.Goto} node which is a subclass
- * of {@code BlockEnd}, so this terminates the iteration. As part of termination the {@code Goto} node is marked as the
- * end node of the current block and the {@code FrameState} is propagated to the successor node(s) by merging any
- * existing {@code FrameState} with the current state. If the target is a loop header node this involves inserting
+ * of {@link com.sun.c1x.ir.BlockEnd}, so this terminates the iteration. As part of termination the {@link com.sun.c1x.ir.Goto} node is marked as the
+ * end node of the current block and the {@link com.sun.c1x.value.FrameState} is propagated to the successor node(s) by merging any
+ * existing {@link com.sun.c1x.value.FrameState} with the current state. If the target is a loop header node this involves inserting
  * {@link com.sun.c1x.ir.Phi} nodes. Finally, the target node is added to the {@code scopeData} work list.
  * <p>
  *
