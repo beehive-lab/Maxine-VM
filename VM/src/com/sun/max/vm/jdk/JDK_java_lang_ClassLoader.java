@@ -88,9 +88,32 @@ public final class JDK_java_lang_ClassLoader {
      * @param source
      * @return a new {@code Class} instance representing the class
      */
-    @SUBSTITUTE
+    @SUBSTITUTE(conditional = true)
     private Class defineClass1(String name, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, String source) {
         final ClassActor classActor = ClassfileReader.defineClassActor(name, thisClassLoader(), bytes, offset, length, protectionDomain, source, false);
+        return classActor.toJava();
+    }
+
+    /**
+     * Creates a class from a classfile represented as a byte array with the specified source.
+     *
+     * @see java.lang.ClassLoader#defineClass1(String, byte[], int, int, ProtectionDomain)
+     *
+     * @param name the name of the class
+     * @param bytes a representation of the classfile
+     * @param offset offset into the array at which the classfile begins
+     * @param length the length of the classfile
+     * @param protectionDomain the protection domain in which to create the class
+     * @param source
+     * @param verify if true, then verification is not performed for the class
+     * @return a new {@code Class} instance representing the class
+     */
+    @SUBSTITUTE(conditional = true)
+    private Class defineClass1(String name, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, String source, boolean verify) {
+        final ClassActor classActor = ClassfileReader.defineClassActor(name, thisClassLoader(), bytes, offset, length, protectionDomain, source, false);
+        if (!verify) {
+            classActor.doNotVerify();
+        }
         return classActor.toJava();
     }
 
@@ -107,9 +130,28 @@ public final class JDK_java_lang_ClassLoader {
      * @param source
      * @return a new {@code Class} instance representing the class
      */
-    @SUBSTITUTE
+    @SUBSTITUTE(conditional = true)
     private Class defineClass2(String name, java.nio.ByteBuffer byteBuffer, int offset, int length, ProtectionDomain protectionDomain, String source) {
         return defineClass1(name, byteBuffer.array(), offset, length, protectionDomain, source);
+    }
+
+    /**
+     * Creates a class from a classfile represented as a {@code ByteBuffer} with the specified source.
+     *
+     * @see java.lang.ClassLoader#defineClass2(String, java.nio.ByteBuffer, int, int, ProtectionDomain)
+     *
+     * @param name the name of the class
+     * @param byteBuffer the buffer containing the bytes of the classfile
+     * @param offset offset into the array at which the classfile begins
+     * @param length the length of the classfile
+     * @param protectionDomain the protection domain in which to create the class
+     * @param source
+     * @param verify if true, then verification is not performed for the class
+     * @return a new {@code Class} instance representing the class
+     */
+    @SUBSTITUTE(conditional = true)
+    private Class defineClass2(String name, java.nio.ByteBuffer byteBuffer, int offset, int length, ProtectionDomain protectionDomain, String source, boolean verify) {
+        return defineClass1(name, byteBuffer.array(), offset, length, protectionDomain, source, verify);
     }
 
     /**

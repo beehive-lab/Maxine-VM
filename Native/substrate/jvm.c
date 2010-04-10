@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <sys/ioctl.h>
 
 #include "jni.h"
 #include "log.h"
@@ -1883,7 +1884,7 @@ JVM_Bind(jint fd, struct sockaddr *him, jint len) {
 
 jint
 JVM_Accept(jint fd, struct sockaddr *him, jint *len) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     if (fd < 0) {
         return -1;
     }
@@ -1933,6 +1934,13 @@ JVM_SocketAvailable(jint fd, jint *pbytes) {
     // note ioctl can return 0 when successful, JVM_SocketAvailable
     // is expected to return 0 on failure and 1 on success to the jdk.
     return (ret == OS_ERR) ? 0 : 1;
+#elif os_LINUX
+    // Linux doc says EINTR not returned, unlike Solaris
+    int ret = ioctl(fd, FIONREAD, pbytes);
+
+    //%% note ioctl can return 0 when successful, JVM_SocketAvailable
+    // is expected to return 0 on failure and 1 on success to the jdk.
+    return (ret < 0) ? 0 : 1;
 #else
     c_UNIMPLEMENTED();
     return 0;
@@ -1942,7 +1950,7 @@ JVM_SocketAvailable(jint fd, jint *pbytes) {
 
 jint
 JVM_GetSockName(jint fd, struct sockaddr *him, int *len) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     return getsockname(fd, him, (socklen_t*) len);
 #else
     c_UNIMPLEMENTED();
@@ -1962,7 +1970,7 @@ JVM_GetSockOpt(jint fd, int level, int optname, char *optval, int *optlen) {
 
 jint
 JVM_SetSockOpt(jint fd, int level, int optname, const char *optval, int optlen) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     return setsockopt(fd, level, optname, optval, optlen);
 #else
     c_UNIMPLEMENTED();
