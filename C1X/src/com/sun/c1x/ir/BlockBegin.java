@@ -30,7 +30,8 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * Denotes the beginning of a basic block, and holds information about the basic block, including the successor and
+ * Denotes the beginning of a basic block, and holds information
+ * about the basic block, including the successor and
  * predecessor blocks, exception handlers, liveness information, etc.
  *
  * @author Ben L. Titzer
@@ -63,13 +64,24 @@ public final class BlockBegin extends Instruction {
      */
     public final int blockID;
 
-    /** Denotes the current set of {@link BlockBegin.BlockFlag} settings. */
+    /**
+     * Denotes the current set of {@link BlockBegin.BlockFlag} settings.
+     */
     private int blockFlags;
-    /** TBD. */
+
+    /**
+     * The frame state before execution of the first instruction in this block.
+     */
     private FrameState stateBefore;
-    /** A link to the last node in the block (which contains the successors). */
+
+    /**
+     * A link to the last node in the block (which contains the successors).
+     */
     private BlockEnd end;
-    /** The {@link BlockBegin} nodes for which this node is a successor. */
+
+    /**
+     * The {@link BlockBegin} nodes for which this node is a successor.
+     */
     private final List<BlockBegin> predecessors;
 
     private int depthFirstNumber;
@@ -658,7 +670,7 @@ public final class BlockBegin extends Instruction {
     }
 
     public BlockBegin predAt(int j) {
-        return this.predecessors.get(j);
+        return predecessors.get(j);
     }
 
     public int firstLirInstructionId() {

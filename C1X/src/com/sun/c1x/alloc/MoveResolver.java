@@ -268,7 +268,7 @@ final class MoveResolver {
 
                 // create a new spill interval and assign a stack slot to it
                 Interval fromInterval = mappingFrom.get(spillCandidate);
-                Interval spillInterval = allocator.createInterval(CiValue.IllegalLocation);
+                Interval spillInterval = allocator.createDerivedInterval(fromInterval);
                 spillInterval.setKind(fromInterval.kind());
 
                 // add a dummy range because real position is difficult to calculate

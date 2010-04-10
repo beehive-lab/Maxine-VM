@@ -181,6 +181,7 @@ public abstract class LIRInstruction {
         this.hasCall = hasCall;
         this.stub = stub;
 
+        assert opcode != LIROpcode.Move || result != CiValue.IllegalLocation;
         this.result = addOutput(result);
         if (stub != null) {
             stub.setInstruction(this);

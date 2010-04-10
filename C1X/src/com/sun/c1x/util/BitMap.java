@@ -23,8 +23,7 @@ package com.sun.c1x.util;
 import java.util.*;
 
 /**
- * The {@code BitMap} class implements a bitmap that stores a single bit for
- * a range of integers (0-n).
+ * Implements a bitmap that stores a single bit for a range of integers (0-n).
  *
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
@@ -36,6 +35,10 @@ public class BitMap {
     private static final int BIT_INDEX_MASK = BITS_PER_WORD - 1;
 
     public static final int DEFAULT_LENGTH = BITS_PER_WORD;
+
+    public static int roundUpLength(int length) {
+        return ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD;
+    }
 
     private int length;
     private long low;
@@ -156,8 +159,7 @@ public class BitMap {
     /**
      * Gets the value of the bit at the specified index.
      *
-     * @param i
-     *            the index of the bit to get
+     * @param i the index of the bit to get
      * @return {@code true} if the bit at the specified position is {@code 1}
      */
     public boolean get(int i) {
@@ -194,8 +196,7 @@ public class BitMap {
      * Performs the union operation on this bitmap with the specified bitmap. That is, all bits set in either of the two
      * bitmaps will be set in this bitmap following this operation.
      *
-     * @param other
-     *            the other bitmap for the union operation
+     * @param other the other bitmap for the union operation
      */
     public void setUnion(BitMap other) {
         low |= other.low;

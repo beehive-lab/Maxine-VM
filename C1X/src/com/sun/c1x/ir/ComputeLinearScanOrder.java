@@ -43,7 +43,7 @@ public class ComputeLinearScanOrder {
 
     final BitMap visitedBlocks; // used for recursive processing of blocks
     final BitMap activeBlocks; // used for recursive processing of blocks
-    final BitMap dominatorBlocks; // temproary BitMap used for computation of dominator
+    final BitMap dominatorBlocks; // temporary BitMap used for computation of dominator
     final int[] forwardBranches; // number of incoming forward branches for each block
     final List<BlockBegin> loopEndBlocks; // list of all loop end blocks collected during countEdges
     BitMap2D loopMap; // two-dimensional bit set: a bit is set if a block is contained in a loop
@@ -121,7 +121,6 @@ public class ComputeLinearScanOrder {
 
         splitCriticalEdges();
 
-        initVisited();
         countEdges(startBlock, null);
 
         if (numLoops > 0) {
@@ -638,7 +637,7 @@ public class ComputeLinearScanOrder {
         if (C1XOptions.TraceLinearScanLevel >= 1) {
             TTY.println("----- linear-scan block order:");
             for (BlockBegin cur : linearScanOrder) {
-                TTY.print(String.format("%4d: B%2d    loop: %2d  depth: %2d", cur.linearScanNumber(), cur.blockID, cur.loopIndex(), cur.loopDepth()));
+                TTY.print(String.format("%4d: B%02d    loop: %2d  depth: %2d", cur.linearScanNumber(), cur.blockID, cur.loopIndex(), cur.loopDepth()));
 
                 TTY.print(cur.isExceptionEntry() ? " ex" : "   ");
                 TTY.print(cur.isCriticalEdgeSplit() ? " ce" : "   ");

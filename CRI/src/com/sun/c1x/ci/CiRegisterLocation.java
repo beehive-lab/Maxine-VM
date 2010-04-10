@@ -44,14 +44,17 @@ public final class CiRegisterLocation extends CiLocation {
         this.register = register;
     }
 
+    @Override
     public int hashCode() {
         return kind.ordinal() ^ register.number;
     }
 
+    @Override
     public boolean equals(Object o) {
         return o == this;
     }
 
+    @Override
     public String name() {
         return register.name;
     }

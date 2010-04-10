@@ -52,7 +52,7 @@ public class CiVariable extends CiLocation {
         return variables;
     }
     
-    private static final int CACHE_PER_KIND_SIZE = 10;
+    private static final int CACHE_PER_KIND_SIZE = 100;
     
     /**
      * Cache of common variables.
@@ -78,6 +78,23 @@ public class CiVariable extends CiLocation {
             return cachedVars[index];
         }
         return new CiVariable(kind, index);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof CiVariable) {
+            CiVariable var = (CiVariable) obj;
+            return kind == var.kind && index == var.index;
+        }
+        return false;
+    }
+    
+    @Override
+    public int hashCode() {
+        return (index << 4) | kind.ordinal();
     }
     
     @Override
