@@ -73,23 +73,29 @@ public final class GraphBuilder {
     private Value rootMethodSynchronizedObject;
 
     /**
-     * Creates a new instance and builds the graph for a the specified IRScope.
+     * Creates a new, initialized, {@code GraphBuilder} instance for a given compilation.
      *
      * @param compilation the compilation
-     * @param scope the top IRScope
      * @param ir the IR to build the graph into
      */
-    public GraphBuilder(C1XCompilation compilation, IRScope scope, IR ir) {
+    public GraphBuilder(C1XCompilation compilation, IR ir) {
         this.compilation = compilation;
         this.ir = ir;
         this.stats = compilation.stats;
         this.memoryMap = C1XOptions.OptLocalLoadElimination ? new MemoryMap() : null;
         this.localValueMap = C1XOptions.OptLocalValueNumbering ? new ValueMap() : null;
         this.canonicalizer = C1XOptions.OptCanonicalize ? new Canonicalizer(compilation.runtime, compilation.method, compilation.target) : null;
-        RiMethod rootMethod = compilation.method;
-
         traceLevel = C1XOptions.TraceBytecodeParserLevel;
         log = traceLevel > 0 ? new LogStream(TTY.out()) : null;
+    }
+
+    /**
+     * Builds the graph for a the specified {@code IRScope}.
+     * @param scope the top IRScope
+     */
+    public void build(IRScope scope) {
+        RiMethod rootMethod = compilation.method;
+
         if (log != null) {
             log.println();
             log.println("Compiling " + compilation.method);
@@ -135,6 +141,7 @@ public final class GraphBuilder {
             finishStartBlock(startBlock, stdEntry, osrEntry);
         }
 
+        // 5.
         scope().computeLockStackSize();
         C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(rootMethod);
         if (intrinsic != null) {
@@ -1748,7 +1755,6 @@ public final class GraphBuilder {
 
         skipBlock = false;
         assert curState != null;
-        RiMethod method = method();
         BytecodeStream s = scopeData.stream;
         s.setBCI(bci);
 

@@ -21,7 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.util.*;
 
 /**
  * The {@code LIROp1} class definition. The LIROp1 instruction has only one input operand.
@@ -46,7 +46,7 @@ public class LIROp1 extends LIRInstruction {
      * @param kind the kind of this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind kind, LIRDebugInfo info) {
+    public LIROp1(LIROpcode opcode, CiValue opr, CiValue result, CiKind kind, LIRDebugInfo info) {
         super(opcode, result, info, false, null, 0, 0, opr);
         this.kind = kind;
         this.moveKind = LIRMoveKind.Normal;
@@ -61,7 +61,7 @@ public class LIROp1 extends LIRInstruction {
      * @param result the operand that holds the result of this instruction
      * @param kind the kind of this instruction
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind kind) {
+    public LIROp1(LIROpcode opcode, CiValue opr, CiValue result, CiKind kind) {
         this(opcode, opr, result, kind, null);
     }
 
@@ -72,7 +72,7 @@ public class LIROp1 extends LIRInstruction {
      * @param opr the first input operand
      * @param result the operand that holds the result of this instruction
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result) {
+    public LIROp1(LIROpcode opcode, CiValue opr, CiValue result) {
         this(opcode, opr, result, CiKind.Illegal);
     }
 
@@ -82,8 +82,8 @@ public class LIROp1 extends LIRInstruction {
      * @param opcode the instruction's opcode
      * @param opr the first input operand
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr) {
-        this(opcode, opr, LIROperand.IllegalLocation);
+    public LIROp1(LIROpcode opcode, CiValue opr) {
+        this(opcode, opr, CiValue.IllegalLocation);
     }
 
     /**
@@ -95,7 +95,7 @@ public class LIROp1 extends LIRInstruction {
      * @param kind the kind of this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIRMoveKind moveKind, LIROperand opr, LIROperand result, CiKind kind, LIRDebugInfo info) {
+    public LIROp1(LIRMoveKind moveKind, CiValue opr, CiValue result, CiKind kind, LIRDebugInfo info) {
         super(LIROpcode.Move, result, info, false, null, 0, 0, opr);
         this.kind = kind;
         this.moveKind = moveKind;
@@ -108,8 +108,8 @@ public class LIROp1 extends LIRInstruction {
      * @param opr the first input operand
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIRDebugInfo info) {
-        super(opcode, LIROperand.IllegalLocation, info, false, null, 0, 0, opr);
+    public LIROp1(LIROpcode opcode, CiValue opr, LIRDebugInfo info) {
+        super(opcode, CiValue.IllegalLocation, info, false, null, 0, 0, opr);
         this.kind = CiKind.Illegal;
         this.moveKind = LIRMoveKind.Normal;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
@@ -120,7 +120,7 @@ public class LIROp1 extends LIRInstruction {
      *
      * @return opr the input operand.
      */
-    public LIROperand operand() {
+    public CiValue operand() {
         return operand(0);
     }
 
@@ -161,13 +161,13 @@ public class LIROp1 extends LIRInstruction {
     public boolean verify() {
         switch (code) {
             case Move:
-                assert (LIROperand.isLegal(operand())) && (LIROperand.isLegal(result())) : "Operand and result must be valid in a LIROp1 move instruction.";
+                assert (operand().isLegal()) && (result().isLegal()) : "Operand and result must be valid in a LIROp1 move instruction.";
                 break;
             case NullCheck:
                 assert operand().isVariableOrRegister() : "Operand must be a register in a LIROp1 null check instruction.";
                 break;
             case Return:
-                assert operand().isVariableOrRegister() || LIROperand.isIllegal(operand()) : "Operand must be (register | illegal) in a LIROp1 return instruction.";
+                assert operand().isVariableOrRegister() || operand().isIllegal() : "Operand must be (register | illegal) in a LIROp1 return instruction.";
                 break;
         }
         return true;

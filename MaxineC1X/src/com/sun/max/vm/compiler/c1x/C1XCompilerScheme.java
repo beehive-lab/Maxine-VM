@@ -76,7 +76,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         if (MaxineVM.isHosted()) {
             if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
                 if (MaxineVM.isHosted()) {
-                    VMOptions.addFieldOptions("-C1X:", C1XOptions.class);
+                    VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.helpMap);
                 }
                 // create the RiRuntime object passed to C1X
                 c1xRuntime = new MaxRiRuntime(this);

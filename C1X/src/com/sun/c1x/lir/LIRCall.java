@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ri.RiMethod;
-import com.sun.c1x.ci.CiRuntimeCall;
-
 import java.util.*;
+
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 
 /**
  * This class represents a call instruction; either to a {@linkplain CiRuntimeCall runtime method},
@@ -34,27 +34,27 @@ import java.util.*;
 public class LIRCall extends LIRInstruction {
 
     public static final class NativeFunction {
-        public final LIROperand address;
+        public final CiValue address;
         public final String symbol;
-        public NativeFunction(LIROperand address, String symbol) {
+        public NativeFunction(CiValue address, String symbol) {
             this.address = address;
             this.symbol = symbol;
         }
     }
 
     /**
-     * The target of the call. This will be a {@link CiRuntimeCall}, {@link RiMethod} or {@link LIROperand}
+     * The target of the call. This will be a {@link CiRuntimeCall}, {@link RiMethod} or {@link CiValue}
      * object denoting a call to the runtime, a Java method or a native function respectively.
      */
     public final Object target;
 
-    public final List<LIROperand> arguments;
+    public final List<CiValue> arguments;
 
-    private static LIROperand[] toArray(List<LIROperand> arguments) {
-        return arguments.toArray(new LIROperand[arguments.size()]);
+    private static CiValue[] toArray(List<CiValue> arguments) {
+        return arguments.toArray(new CiValue[arguments.size()]);
     }
 
-    public LIRCall(LIROpcode opcode, Object target, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
+    public LIRCall(LIROpcode opcode, Object target, CiValue result, List<CiValue> arguments, LIRDebugInfo info, boolean calleeSaved) {
         super(opcode, result, info, !calleeSaved, null, 0, 0, toArray(arguments));
         this.arguments = arguments;
         this.target = target;
@@ -74,7 +74,7 @@ public class LIRCall extends LIRInstruction {
      * Returns the receiver for this method call.
      * @return the receiver
      */
-    public LIROperand receiver() {
+    public CiValue receiver() {
         return operand(0);
     }
 
@@ -90,7 +90,7 @@ public class LIRCall extends LIRInstruction {
         return (CiRuntimeCall) target;
     }
 
-    public LIROperand lastArgument() {
+    public CiValue lastArgument() {
         return operand(arguments.size() - 1);
     }
 }

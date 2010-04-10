@@ -20,6 +20,9 @@
  */
 package com.sun.c1x.ci;
 
+import java.util.HashMap;
+
+
 /**
  * This class represents a CPU architecture, including information such as its endianness, CPU
  * registers, word width, etc.
@@ -60,9 +63,12 @@ public abstract class CiArchitecture {
     public final int highWordOffset;
 
     /**
-     * Array of all available registers on this architecture.
+     * Array of all available registers on this architecture. The index of each register in this
+     * array is equal to its {@linkplain CiRegister#number number}.
      */
     public final CiRegister[] registers;
+    
+    public final HashMap<String, CiRegister> registersByName;
 
     /**
      * The bit ordering can be either little or big endian.
@@ -91,6 +97,12 @@ public abstract class CiArchitecture {
         } else {
             this.lowWordOffset = wordSize;
             this.highWordOffset = 0;
+        }
+        
+        registersByName = new HashMap<String, CiRegister>(registers.length);
+        for (CiRegister register : registers) {
+            registersByName.put(register.name, register);
+            assert registers[register.number] == register;
         }
     }
 

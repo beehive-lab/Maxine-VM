@@ -21,42 +21,56 @@
 package com.sun.c1x.bytecode;
 
 /**
- * The {@code BytecodeLookupSwitch} class is a utility for processing lookupswitch bytecodes.
+ * A utility for processing {@link Bytecodes#LOOKUPSWITCH} bytecodes.
  *
  * @author Ben L. Titzer
  */
 public class BytecodeLookupSwitch extends BytecodeSwitch {
+	private static final int OFFSET_TO_NUMBER_PAIRS = 4;
+	private static final int OFFSET_TO_FIRST_PAIR_MATCH = 8;
+	private static final int OFFSET_TO_FIRST_PAIR_OFFSET = 12;
+	private static final int PAIR_SIZE = 8;
 
+    /**
+     * Constructor for a {@link BytecodeStream}.
+     * @param stream the {@code BytecodeStream} containing the switch instruction
+     * @param bci the index in the stream of the switch instruction
+     */
     public BytecodeLookupSwitch(BytecodeStream stream, int bci) {
         super(stream, bci);
     }
 
+    /**
+     * Constructor for a bytecode array.
+     * @param code the bytecode array containing the switch instruction.
+     * @param bci the index in the array of the switch instruction
+     */
     public BytecodeLookupSwitch(byte[] code, int bci) {
         super(code, bci);
     }
 
     @Override
     public int defaultOffset() {
-        return readWord(aligned);
+        return readWord(alignedBci);
     }
 
     @Override
     public int offsetAt(int i) {
-        return readWord(aligned + 12 + 8 * i);
+        return readWord(alignedBci + OFFSET_TO_FIRST_PAIR_OFFSET + PAIR_SIZE * i);
     }
 
     @Override
     public int keyAt(int i) {
-        return readWord(aligned + 8 + 8 * i);
+        return readWord(alignedBci + OFFSET_TO_FIRST_PAIR_MATCH + PAIR_SIZE * i);
     }
 
     @Override
     public int numberOfCases() {
-        return readWord(aligned + 4);
+        return readWord(alignedBci + OFFSET_TO_NUMBER_PAIRS);
     }
 
     @Override
     public int size() {
-        return aligned + 8 + 8 * numberOfCases() - bci;
+        return alignedBci + OFFSET_TO_FIRST_PAIR_MATCH + PAIR_SIZE * numberOfCases() - bci;
     }
 }

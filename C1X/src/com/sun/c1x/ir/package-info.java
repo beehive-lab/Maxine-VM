@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,17 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
-
-import java.lang.annotation.*;
-
-@Target({ElementType.PACKAGE, ElementType.TYPE})
 
 /**
- * Marks a package as untested, non-functioning code that is not ready for anything yet.
- * Don't waste your time reading that package.
+ * @author Ben Titzer
  *
- * @author Bernd Mathiske
+ *         Classes that define the (High-level) Intermediate Representation (HIR) if the C1X compiler.
+ *
+ *         HIR instances are created by processing Java bytecodes and are Directed Acyclic Graphs (DAGs). All nodes in
+ *         an HIR graph are concrete subclasses of the abstract class {@link Value}. This indicates a property of HIR,
+ *         namely that everything is a value, including instructions. This allows an operand for an instruction node to
+ *         refer directly to the node that generated the value, which might, for example, be another instruction.
  */
-public @interface Hypothetical {
-}
+package com.sun.c1x.ir;

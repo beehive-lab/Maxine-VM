@@ -20,37 +20,47 @@
  */
 package com.sun.c1x.ci;
 
+
 /**
- * This class represents a register location. It can be used to represent either a single
- * register or a pair of registers.
+ * This class represents a register location storing a value of a fixed kind.
+ * Use {@link CiRegister#asLocation(CiKind))} to retrieve the canonical
+ * {@link CiRegisterLocation} instance for a given (register,kind) pair.  
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public final class CiRegisterLocation extends CiLocation {
 
+    /**
+     * The register.
+     */
     public final CiRegister register;
 
-    public CiRegisterLocation(CiKind kind, CiRegister register) {
+    /**
+     * Should only be called from {@link CiRegister#CiRegister} to ensure canonicalization.
+     */
+    CiRegisterLocation(CiKind kind, CiRegister register) {
         super(kind);
         this.register = register;
     }
 
+    @Override
     public int hashCode() {
         return kind.ordinal() ^ register.number;
     }
 
+    @Override
     public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (o instanceof CiRegisterLocation) {
-            CiRegisterLocation l = (CiRegisterLocation) o;
-            return l.kind == kind && l.register == register;
-        }
-        return false;
+        return o == this;
     }
 
-    public String toString() {
-        return "%" + register.name + ":" + kind;
+    @Override
+    public String name() {
+        return register.name;
+    }
+    
+    @Override
+    public CiRegister asRegister() {
+        return register;
     }
 }

@@ -26,6 +26,8 @@ import com.sun.max.vm.layout.*;
 
 /**
  * @author Bernd Mathiske
+ *
+ * @see com.sun.max.vm.layout.ohm
  */
 public class OhmLayoutScheme extends LayoutScheme {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,21 +18,8 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.bytecode;
-
-import java.lang.annotation.*;
+package com.sun.c1x.value;
 
 /**
- * Marks a method as being implemented by an extended bytecode.
- *
  * @author Ben Titzer
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface INTRINSIC {
-    /**
-     * The value of the extended bytecode corresponding to this intrinsic.
-     * @return the extended bytecode value
-     */
-    int value();
-}

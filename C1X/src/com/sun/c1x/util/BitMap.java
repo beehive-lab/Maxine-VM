@@ -23,26 +23,43 @@ package com.sun.c1x.util;
 import java.util.*;
 
 /**
- * The {@code BitMap} class implements a bitmap that stores a single bit for
- * a range of integers (0-n).
+ * Implements a bitmap that stores a single bit for a range of integers (0-n).
  *
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
 public class BitMap {
 
+    private static final int ADDRESS_BITS_PER_WORD = 6;
+    private static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
+    private static final int BIT_INDEX_MASK = BITS_PER_WORD - 1;
+
+    public static final int DEFAULT_LENGTH = BITS_PER_WORD;
+
+    public static int roundUpLength(int length) {
+        return ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD;
+    }
+
     private int length;
-    private int low;
-    private int[] extra;
+    private long low;
+    private long[] extra;
+
+    /**
+     * Constructs a new bit map with the {@linkplain #DEFAULT_LENGTH default length}.
+     */
+    public BitMap() {
+        this(DEFAULT_LENGTH);
+    }
 
     /**
      * Construct a new bit map with the specified length.
      * @param length the length of the bitmap
      */
     public BitMap(int length) {
+        assert length >= 0;
         this.length = length;
-        if (length > 32) {
-            extra = new int[length >> 5];
+        if (length > BITS_PER_WORD) {
+            extra = new long[length >> ADDRESS_BITS_PER_WORD];
         }
     }
 
@@ -51,12 +68,12 @@ public class BitMap {
      * @param i the index of the bit to set
      */
     public void set(int i) {
-        if (checkIndex(i) < 32) {
-            low |= 1 << i;
+        if (checkIndex(i) < BITS_PER_WORD) {
+            low |= 1L << i;
         } else {
             int pos = wordIndex(i);
             int index = bitInWord(i);
-            extra[pos] |= 1 << index;
+            extra[pos] |= 1L << index;
         }
     }
 
@@ -67,15 +84,15 @@ public class BitMap {
     public void grow(int newLength) {
         if (newLength > length) {
             // grow this bitmap to the new length
-            int newSize = newLength >> 5;
+            int newSize = newLength >> ADDRESS_BITS_PER_WORD;
             if (newLength > 0) {
                 if (extra == null) {
                     // extra just needs to be allocated now
-                    extra = new int[newSize];
+                    extra = new long[newSize];
                 } else {
                     if (extra.length < newSize) {
                         // extra needs to be copied
-                        int[] newExtra = new int[newSize];
+                        long[] newExtra = new long[newSize];
                         for (int i = 0; i < extra.length; i++) {
                             newExtra[i] = extra[i];
                         }
@@ -94,11 +111,11 @@ public class BitMap {
     }
 
     private int bitInWord(int i) {
-        return i & (32 - 1);
+        return i & BIT_INDEX_MASK;
     }
 
     private int wordIndex(int i) {
-        return (i >> 5) - 1;
+        return (i >> ADDRESS_BITS_PER_WORD) - 1;
     }
 
     /**
@@ -106,12 +123,12 @@ public class BitMap {
      * @param i the index of the bit to clear
      */
     public void clear(int i) {
-        if (checkIndex(i) < 32) {
-            low &= ~(1 << i);
+        if (checkIndex(i) < BITS_PER_WORD) {
+            low &= ~(1L << i);
         } else {
             int pos = wordIndex(i);
             int index = bitInWord(i);
-            extra[pos] &= ~(1 << index);
+            extra[pos] &= ~(1L << index);
         }
     }
 
@@ -142,17 +159,16 @@ public class BitMap {
     /**
      * Gets the value of the bit at the specified index.
      *
-     * @param i
-     *            the index of the bit to get
+     * @param i the index of the bit to get
      * @return {@code true} if the bit at the specified position is {@code 1}
      */
     public boolean get(int i) {
-        if (checkIndex(i) < 32) {
+        if (checkIndex(i) < BITS_PER_WORD) {
             return ((low >> i) & 1) != 0;
         }
         int pos = wordIndex(i);
         int index = bitInWord(i);
-        int bits = extra[pos];
+        long bits = extra[pos];
         return ((bits >> index) & 1) != 0;
     }
 
@@ -167,12 +183,12 @@ public class BitMap {
         if (i < 0 || i >= length) {
             return false;
         }
-        if (i < 32) {
+        if (i < BITS_PER_WORD) {
             return ((low >> i) & 1) != 0;
         }
         int pos = wordIndex(i);
         int index = bitInWord(i);
-        int bits = extra[pos];
+        long bits = extra[pos];
         return ((bits >> index) & 1) != 0;
     }
 
@@ -180,8 +196,7 @@ public class BitMap {
      * Performs the union operation on this bitmap with the specified bitmap. That is, all bits set in either of the two
      * bitmaps will be set in this bitmap following this operation.
      *
-     * @param other
-     *            the other bitmap for the union operation
+     * @param other the other bitmap for the union operation
      */
     public void setUnion(BitMap other) {
         low |= other.low;
@@ -201,18 +216,18 @@ public class BitMap {
      */
     public boolean setIntersect(BitMap other) {
         boolean same = true;
-        int intx = low & other.low;
+        long intx = low & other.low;
         if (low != intx) {
             same = false;
             low = intx;
         }
-        int[] oxtra = other.extra;
+        long[] oxtra = other.extra;
         if (extra != null && oxtra != null) {
             for (int i = 0; i < extra.length; i++) {
-                int a = extra[i];
+                long a = extra[i];
                 if (i < oxtra.length) {
                     // zero bits out of this map
-                    int ax = a & oxtra[i];
+                    long ax = a & oxtra[i];
                     if (a != ax) {
                         same = false;
                         extra[i] = ax;
@@ -283,49 +298,87 @@ public class BitMap {
         return true;
     }
 
-    public int getNextOneOffset(int lOffset, int rOffset) {
-        assert lOffset <= size() : "BitMap index out of bounds";
-        assert rOffset <= size() : "BitMap index out of bounds";
-        assert lOffset <= rOffset : "lOffset > rOffset ?";
+    /**
+     * Returns the index of the first set bit that occurs on or after a specified start index.
+     * If no such bit exists then -1 is returned.
+     * <p>
+     * To iterate over the set bits in a {@code BitMap}, use the following loop:
+     *
+     * <pre>
+     * for (int i = bitMap.nextSetBit(0); i &gt;= 0; i = bitMap.nextSetBit(i + 1)) {
+     *     // operate on index i here
+     * }
+     * </pre>
+     *
+     * @param fromIndex the index to start checking from (inclusive)
+     * @return the index of the lowest set bit between {@code [fromIndex .. size())} or -1 if there is no set bit in this range
+     * @throws IndexOutOfBoundsException if the specified index is negative.
+     */
+    public int nextSetBit(int fromIndex) {
+        return nextSetBit(fromIndex, size());
+    }
 
-        if (lOffset == rOffset) {
-            return lOffset;
+    /**
+     * Returns the index of the first set bit that occurs on or after a specified start index
+     * and before a specified end index. If no such bit exists then -1 is returned.
+     * <p>
+     * To iterate over the set bits in a {@code BitMap}, use the following loop:
+     *
+     * <pre>
+     * for (int i = bitMap.nextSetBit(0, bitMap.size()); i &gt;= 0; i = bitMap.nextSetBit(i + 1, bitMap.size())) {
+     *     // operate on index i here
+     * }
+     * </pre>
+     *
+     * @param fromIndex the index to start checking from (inclusive)
+     * @param toIndex the index at which to stop checking (exclusive)
+     * @return the index of the lowest set bit between {@code [fromIndex .. toIndex)} or -1 if there is no set bit in this range
+     * @throws IndexOutOfBoundsException if the specified index is negative.
+     */
+    public int nextSetBit(int fromIndex, int toIndex) {
+        assert fromIndex <= size() : "BitMap index out of bounds";
+        assert toIndex <= size() : "BitMap index out of bounds";
+        assert fromIndex <= toIndex : "fromIndex > toIndex";
+
+        if (fromIndex == toIndex) {
+            return -1;
         }
-        int index = wordIndex(lOffset);
-        int rIndex = wordIndex(rOffset - 1) + 1;
-        int resOffset = lOffset;
+        int fromWordIndex = wordIndex(fromIndex);
+        int toWordIndex = wordIndex(toIndex - 1) + 1;
+        int resultIndex = fromIndex;
 
         // check bits including and to the left_ of offset's position
-        int pos = bitInWord(resOffset);
-        int res = map(index) >> pos;
+        int pos = bitInWord(resultIndex);
+        long res = map(fromWordIndex) >> pos;
         if (res != 0) {
-            // find the position of the 1-bit
-            for (; (res & 1) == 0; resOffset++) {
-                res = res >> 1;
+            resultIndex += Long.numberOfTrailingZeros(res);
+            assert resultIndex >= fromIndex && resultIndex < toIndex : "just checking";
+            if (resultIndex < toIndex) {
+                return resultIndex;
             }
-            assert resOffset >= lOffset && resOffset < rOffset : "just checking";
-            return Math.min(resOffset, rOffset);
+            return -1;
         }
         // skip over all word length 0-bit runs
-        for (index++; index < rIndex; index++) {
-            res = map(index);
+        for (fromWordIndex++; fromWordIndex < toWordIndex; fromWordIndex++) {
+            res = map(fromWordIndex);
             if (res != 0) {
                 // found a 1, return the offset
-                for (resOffset = bitIndex(index); (res & 1) == 0; resOffset++) {
-                    res = res >> 1;
+                resultIndex = bitIndex(fromWordIndex) + Long.numberOfTrailingZeros(res);
+                assert resultIndex >= fromIndex : "just checking";
+                if (resultIndex < toIndex) {
+                    return resultIndex;
                 }
-                assert resOffset >= lOffset : "just checking";
-                return Math.min(resOffset, rOffset);
+                return -1;
             }
         }
-        return rOffset;
+        return -1;
     }
 
     private int bitIndex(int index) {
-        return (index + 1) << 5;
+        return (index + 1) << ADDRESS_BITS_PER_WORD;
     }
 
-    private int map(int index) {
+    private long map(int index) {
         if (index == -1) {
             return low;
         }
@@ -338,7 +391,10 @@ public class BitMap {
         res.append("[");
         for (int i = 0; i < this.length; i++) {
             if (this.get(i)) {
-                res.append(i).append(" ");
+                if (res.length() != 1) {
+                    res.append(' ');
+                }
+                res.append(i);
             }
         }
         res.append("]");
@@ -346,7 +402,7 @@ public class BitMap {
     }
 
     public BitMap copy() {
-        BitMap n = new BitMap(32);
+        BitMap n = new BitMap(BITS_PER_WORD);
         n.low = low;
         if (extra != null) {
             n.extra = Arrays.copyOf(extra, extra.length);

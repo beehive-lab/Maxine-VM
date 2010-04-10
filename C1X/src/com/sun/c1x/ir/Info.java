@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiCodePos;
-import com.sun.c1x.value.FrameStateInfo;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 
 /**
  * This class collects a number of debugging and exception-related information about

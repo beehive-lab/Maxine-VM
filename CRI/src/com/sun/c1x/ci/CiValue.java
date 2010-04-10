@@ -20,15 +20,36 @@
  */
 package com.sun.c1x.ci;
 
+
 /**
- * This class simply unifies {@link CiConstant} and {@link CiLocation}.
+ * Base class for compiler interface values.
  *
  * @author Thomas Wuerthinger
+ * @author Doug Simon
  */
 public abstract class CiValue {
 
+    public static CiLocation IllegalLocation = new CiLocation(CiKind.Illegal) {
+        @Override
+        public String name() {
+            return "<illegal>";
+        }
+        @Override
+        public CiRegister asRegister() {
+            return CiRegister.None;
+        }
+        @Override
+        public int hashCode() {
+            return -1;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            return obj == this;
+        }
+    };
+    
     /**
-     * Stores the kind of this value.
+     * The kind of this value.
      */
     public final CiKind kind;
 
@@ -38,5 +59,72 @@ public abstract class CiValue {
      */
     protected CiValue(CiKind kind) {
         this.kind = kind;
+    }
+
+    public final boolean isVariableOrRegister() {
+        return this instanceof CiVariable || this instanceof CiRegisterLocation;
+    }
+
+    protected Error illegalOperation(String operation) {
+        throw new InternalError("Cannot call " + operation + " on " + this);
+    }
+
+    public CiRegister asRegister() {
+        throw illegalOperation("asRegister");
+    }
+
+    public final CiLocation asLocation() {
+        return (CiLocation) this;
+    }
+
+    public final boolean isIllegal() {
+        return this == IllegalLocation;
+    }
+    
+    public final boolean isLegal() {
+        return this != IllegalLocation;
+    }
+
+    public final boolean isStackSlot() {
+        return this instanceof CiStackSlot;
+    }
+
+    public final boolean isRegister() {
+        return this instanceof CiRegisterLocation;
+    }
+
+    public final boolean isVariable() {
+        return this instanceof CiVariable;
+    }
+
+    public final boolean isAddress() {
+        return this instanceof CiAddress;
+    }
+
+    public final boolean isConstant() {
+        return this instanceof CiConstant;
+    }
+    
+    /**
+     * Gets a string name for this value without indicating its {@linkplain #kind kind}.
+     */
+    public abstract String name();
+    
+    @Override
+    public abstract boolean equals(Object obj);
+    
+    @Override
+    public abstract int hashCode();
+    
+    @Override
+    public final String toString() {
+        return name() + kindSuffix();
+    }
+    
+    private final String kindSuffix() {
+        if (kind == CiKind.Illegal) {
+            return "";
+        }
+        return ":" + kind.typeChar;
     }
 }

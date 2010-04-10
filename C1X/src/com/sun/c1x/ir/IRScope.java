@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.CiCodePos;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;

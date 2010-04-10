@@ -27,7 +27,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.util.*;
 
 /**
  * The {@code IRChecker} class walks over the IR graph and checks

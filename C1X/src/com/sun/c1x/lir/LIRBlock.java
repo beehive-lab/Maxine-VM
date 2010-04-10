@@ -30,6 +30,9 @@ import com.sun.c1x.util.*;
  */
 public class LIRBlock {
 
+    public LIRBlock() {
+    }
+
     public final Label label = new Label();
     private LIRList lir;
 

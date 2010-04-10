@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiRegister;
+import com.sun.c1x.ci.*;
 
 /**
  * The {@code StoreRegister} instruction represents a write of a physical register.

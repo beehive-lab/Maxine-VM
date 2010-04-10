@@ -18,39 +18,8 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.gen;
-
-import java.util.*;
-
-import com.sun.c1x.lir.*;
+package com.sun.c1x.ci;
 
 /**
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
+ * @author Ben Titzer
  */
-class ResolveNode {
-
-    final LIROperand operand;
-    final List<ResolveNode> destinations;
-
-    boolean assigned;
-    boolean visited;
-    boolean startNode;
-
-    ResolveNode(LIROperand operand) {
-        this.operand = operand;
-        destinations = new ArrayList<ResolveNode>();
-    }
-
-    void append(ResolveNode dest) {
-        destinations.add(dest);
-    }
-
-    ResolveNode destinationAt(int index) {
-        return destinations.get(index);
-    }
-
-    int numDestinations() {
-        return destinations.size();
-    }
-}

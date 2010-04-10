@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ci;
 
+import com.sun.c1x.ci.CiRegister.AllocationSpec;
 import com.sun.c1x.ri.RiRegisterConfig;
 
 /**
@@ -32,7 +33,7 @@ import com.sun.c1x.ri.RiRegisterConfig;
 public class CiTarget {
     public final CiArchitecture arch;
 
-    public final CiRegister.AllocationSet allocatableRegs;
+    public final AllocationSpec allocationSpec;
     public final CiRegister stackPointerRegister;
     public final CiRegister scratchRegister;
     public final RiRegisterConfig registerConfig;
@@ -66,7 +67,7 @@ public class CiTarget {
 
         this.pageSize = pageSize;
         this.isMP = isMP;
-        this.allocatableRegs = new CiRegister.AllocationSet(registerConfig.getAllocatableRegisters(), registerConfig.getRegisterReferenceMapOrder(), registerConfig.getCallerSaveRegisters());
+        this.allocationSpec = new AllocationSpec(registerConfig.getAllocatableRegisters(), registerConfig.getRegisterReferenceMapOrder(), registerConfig.getCallerSaveRegisters());
         this.spillSlotsPerKindMap = new int[CiKind.values().length];
 
         for (CiKind k : CiKind.values()) {
@@ -90,16 +91,16 @@ public class CiTarget {
     }
 
     /**
-     * Gets the spill slot size for a specified kind in this target.
-     * @param kind the kind for which to get the spill slot size
-     * @return the spill slot size in bytes of {@code kind}
+     * Gets the number of spill slots for a specified kind in this target.
+     * @param kind the kind for which to get the spill slot count
+     * @return the number of spill slots for {@code kind}
      */
-    public int spillSlotSize(CiKind kind) {
+    public int spillSlots(CiKind kind) {
         return spillSlotsPerKindMap[kind.ordinal()];
     }
     
     /**
-     * Align the given frame size (without return instruction pointer) to the stack
+     * Aligns the given frame size (without return instruction pointer) to the stack
      * alignment size and return the aligned size (without return instruction pointer).
      * @param frameSize the initial frame size to be aligned
      * @return the aligned frame size
