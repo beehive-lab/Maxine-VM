@@ -21,9 +21,9 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.xir.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 public class LIRXirInstruction extends LIRInstruction {
 

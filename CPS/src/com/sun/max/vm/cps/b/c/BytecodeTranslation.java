@@ -20,12 +20,12 @@
  */
 package com.sun.max.vm.cps.b.c;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
-import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;

@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ri.*;
 
 /**
  * An instruction that represents the runtime resolution of a Java class object. For example, an

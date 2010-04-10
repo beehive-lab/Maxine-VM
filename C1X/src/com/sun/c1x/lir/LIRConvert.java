@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code LIRConvert} class definition.

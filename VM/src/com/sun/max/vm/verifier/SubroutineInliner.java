@@ -20,13 +20,13 @@
  */
 package com.sun.max.vm.verifier;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.verifier.InstructionHandle.Flag.*;
 
 import java.io.*;
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.util.*;

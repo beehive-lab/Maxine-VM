@@ -23,7 +23,7 @@ package test.com.sun.max.vm.jit;
 import test.com.sun.max.vm.cps.*;
 import test.com.sun.max.vm.cps.bytecode.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 

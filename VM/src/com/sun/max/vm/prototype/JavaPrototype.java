@@ -250,8 +250,8 @@ public class JavaPrototype extends Prototype {
         loadClass(sun.misc.VM.class);
 
         // Needed for bytecode definitions and utilities
-        loadPackage("com.sun.c1x.bytecode", false);
-        loadClass(com.sun.c1x.bytecode.Bytes.class);
+        loadPackage("com.sun.cri.bytecode", false);
+        loadClass(com.sun.cri.bytecode.Bytes.class);
 
 
         // These classes need to be compiled and in the boot image in order to be able to

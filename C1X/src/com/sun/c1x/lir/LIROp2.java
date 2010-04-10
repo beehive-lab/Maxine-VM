@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code LIROp2} class represents a LIR instruction that performs an operation on two operands.

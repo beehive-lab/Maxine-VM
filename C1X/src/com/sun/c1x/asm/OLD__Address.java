@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code Address} class definition.

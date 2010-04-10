@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code Base} instruction represents the end of the entry block of the procedure that has

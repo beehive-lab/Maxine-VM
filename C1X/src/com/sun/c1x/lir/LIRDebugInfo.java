@@ -22,10 +22,10 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ci.CiAddress.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
 
 /**
  * This class represents debugging and deoptimization information attached to a LIR instruction.

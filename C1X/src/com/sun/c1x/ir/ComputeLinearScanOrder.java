@@ -24,9 +24,9 @@ package com.sun.c1x.ir;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * @author Thomas Wuerthinger

@@ -20,26 +20,26 @@
  */
 package com.sun.c1x.target.amd64;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
-import static com.sun.c1x.ci.CiKind.*;
-import static com.sun.c1x.ci.CiValue.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.ci.CiKind.*;
+import static com.sun.cri.ci.CiValue.*;
 import static java.lang.Double.*;
 import static java.lang.Float.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ci.CiAddress.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.lir.LIRCall.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.xir.*;
-import com.sun.c1x.xir.CiXirAssembler.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
  * This class implements the x86-specific code generation for LIR.

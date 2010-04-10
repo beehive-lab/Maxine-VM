@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.bytecode.graft;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.actor.member.*;

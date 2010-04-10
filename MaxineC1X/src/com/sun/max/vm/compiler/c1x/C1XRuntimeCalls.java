@@ -23,7 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;

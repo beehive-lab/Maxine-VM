@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.target.amd64;
 
-import static com.sun.c1x.ci.CiKind.*;
+import static com.sun.cri.ci.CiKind.*;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ci.CiRegister.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiRegister.*;
 
 /**
  * This class represents the AMD64 architecture.

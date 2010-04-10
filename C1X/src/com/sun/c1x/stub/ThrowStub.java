@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class implements a local stub that simply throws an exception, typically

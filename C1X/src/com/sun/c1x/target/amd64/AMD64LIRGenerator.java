@@ -21,18 +21,18 @@
 
 package com.sun.c1x.target.amd64;
 
-import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
+import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.OperandPool.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class implements the X86-specific portion of the LIR generator.

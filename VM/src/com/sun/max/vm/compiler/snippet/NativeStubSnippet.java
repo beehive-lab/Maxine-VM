@@ -25,7 +25,7 @@ import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.stack.JavaFrameAnchor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.c1x.bytecode.Bytecodes.*;
+import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;

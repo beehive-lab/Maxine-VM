@@ -23,11 +23,11 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class performs basic optimizations on the control flow graph after LIR generation.

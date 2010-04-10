@@ -23,12 +23,12 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code LIRInstruction} class definition.

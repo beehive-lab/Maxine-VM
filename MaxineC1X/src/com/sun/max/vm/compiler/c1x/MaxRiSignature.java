@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.vm.type.*;
 
 /**

@@ -23,10 +23,10 @@ package com.sun.c1x.opt;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class implements a data-flow analysis to remove redundant null checks

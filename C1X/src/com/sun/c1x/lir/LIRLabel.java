@@ -21,7 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code LIRLabel} class definition.

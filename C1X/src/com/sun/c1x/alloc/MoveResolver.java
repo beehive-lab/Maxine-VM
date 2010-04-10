@@ -23,9 +23,9 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
+import com.sun.cri.ci.*;
 
 /**
  *

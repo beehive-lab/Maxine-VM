@@ -24,13 +24,13 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.alloc.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * Utility for printing the control flow graph of a method being compiled by C1X at various compilation phases.

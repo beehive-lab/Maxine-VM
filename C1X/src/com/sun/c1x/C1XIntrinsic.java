@@ -23,8 +23,8 @@ package com.sun.c1x;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ri.*;
 
 /**
  * This enum represents all of the intrinsics, i.e. a library methods that

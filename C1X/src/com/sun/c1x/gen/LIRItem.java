@@ -20,12 +20,12 @@
  */
 package com.sun.c1x.gen;
 
-import static com.sun.c1x.ci.CiValue.*;
+import static com.sun.cri.ci.CiValue.*;
 
 import com.sun.c1x.alloc.OperandPool.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * @author Marcelo Cintra

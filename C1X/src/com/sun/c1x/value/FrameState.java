@@ -22,11 +22,11 @@ package com.sun.c1x.value;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code FrameState} class encapsulates the frame state (i.e. local variables and

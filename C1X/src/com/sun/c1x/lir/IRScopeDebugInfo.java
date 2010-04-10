@@ -22,8 +22,8 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code IRScopeDebugInfo} class definition.

@@ -22,10 +22,10 @@ package com.sun.c1x.alloc;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ci.CiRegister.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiRegister.*;
 
 /**
  * An ordered, 0-based indexable pool of instruction operands for a method being compiled.

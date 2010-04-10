@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.cir.operator;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.cps.b.c.*;

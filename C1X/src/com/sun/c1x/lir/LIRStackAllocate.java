@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.FrameMap.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
 /**
  * LIR instruction used in translating {@link Bytecodes#ALLOCA}.
