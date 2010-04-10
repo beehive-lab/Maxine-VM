@@ -173,7 +173,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
 
         if (base.isValid()) {
             if (index.isValid()) {
-                assert scale != CiAddress.Scale.None : "inconsistent Address";
                 // [base + indexscale + disp]
                 if (disp == 0 && base != AMD64.rbp && (base != AMD64.r13)) {
                     // [base + indexscale]
@@ -237,7 +236,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
             }
         } else {
             if (index.isValid()) {
-                assert scale != CiAddress.Scale.None : "inconsistent Address";
                 // [indexscale + disp]
                 // [00 reg 100][ss index 101] disp32
                 assert index != target.stackPointerRegister : "illegal addressing mode";

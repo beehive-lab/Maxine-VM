@@ -37,7 +37,14 @@ import com.sun.c1x.ir.*;
 public class CriticalEdgeFinder implements BlockClosure {
 
     private final IR ir;
-    private Map<BlockBegin, Set<BlockBegin>> edges = new HashMap<BlockBegin, Set<BlockBegin>>();
+
+    /**
+     * The graph edges represented as a map from source to target nodes.
+     * Using a linked hash map makes compilation tracing more deterministic and thus eases debugging.
+     */
+    private Map<BlockBegin, Set<BlockBegin>> edges = C1XOptions.DetailedAsserts ?
+                    new LinkedHashMap<BlockBegin, Set<BlockBegin>>() :
+                    new HashMap<BlockBegin, Set<BlockBegin>>();
 
     public CriticalEdgeFinder(IR ir) {
         this.ir = ir;
@@ -65,7 +72,7 @@ public class CriticalEdgeFinder implements BlockClosure {
     public void splitCriticalEdges() {
         for (BlockBegin from : edges.keySet()) {
             for (BlockBegin to : edges.get(from)) {
-                BlockBegin split =  ir.splitEdge(from, to);
+                BlockBegin split = ir.splitEdge(from, to);
                 if (C1XOptions.PrintHIR) {
                     TTY.println("Split edge between block %d and block %d, creating new block %d", from.blockID, to.blockID, split.blockID);
                 }

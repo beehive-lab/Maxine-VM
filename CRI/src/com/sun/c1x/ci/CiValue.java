@@ -38,6 +38,14 @@ public abstract class CiValue {
         public CiRegister asRegister() {
             return CiRegister.None;
         }
+        @Override
+        public int hashCode() {
+            return -1;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            return obj == this;
+        }
     };
     
     /**
@@ -101,6 +109,12 @@ public abstract class CiValue {
      * Gets a string name for this value without indicating its {@linkplain #kind kind}.
      */
     public abstract String name();
+    
+    @Override
+    public abstract boolean equals(Object obj);
+    
+    @Override
+    public abstract int hashCode();
     
     @Override
     public final String toString() {

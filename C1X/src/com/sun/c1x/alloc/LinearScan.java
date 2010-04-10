@@ -87,10 +87,9 @@ public class LinearScan {
     int intervalsSize;
 
     /**
-     * The index of the first entry in {@link #intervals} for an
-     * interval created during allocation when an existing interval is split.
+     * The index of the first entry in {@link #intervals} for a {@linkplain #createDerivedInterval(Interval) derived interval}.
      */
-    int firstSplitChildIntervalIndex = -1;
+    int firstDerivedIntervalIndex = -1;
 
     /**
      * Intervals sorted by {@link Interval#from()}.
@@ -210,31 +209,30 @@ public class LinearScan {
      */
     Interval createInterval(CiLocation operand) {
         assert isProcessed(operand);
-
+        assert operand.isLegal();
         int operandNumber = operandNumber(operand);
         Interval interval = new Interval(operand, operandNumber);
         assert operandNumber < intervalsSize;
         assert intervals[operandNumber] == null;
         intervals[operandNumber] = interval;
-
         return interval;
     }
 
     /**
-     * Creates an interval as a result of splitting a parent interval.
+     * Creates an interval as a result of splitting or spilling another interval.
      *
-     * @param kind the kind of the parent interval
-     * @return
+     * @param source an interval being split of spilled
+     * @return a new interval derived from {@code source}
      */
-    Interval createIntervalSplitChild(Interval splitParent) {
-        if (firstSplitChildIntervalIndex == -1) {
-            firstSplitChildIntervalIndex = intervalsSize;
+    Interval createDerivedInterval(Interval source) {
+        if (firstDerivedIntervalIndex == -1) {
+            firstDerivedIntervalIndex = intervalsSize;
         }
         if (intervalsSize == intervals.length) {
             intervals = Arrays.copyOf(intervals, intervals.length * 2);
         }
         intervalsSize++;
-        Interval interval = createInterval(operands.newVariable(splitParent.kind()));
+        Interval interval = createInterval(operands.newVariable(source.kind()));
         assert intervals[intervalsSize - 1] == interval;
         return interval;
     }
@@ -261,11 +259,12 @@ public class LinearScan {
     }
 
     /**
-     * Gets the size of the {@link LIRBlock#liveIn} and {@link LIRBlock#liveOut} sets for a basic block.
-     * These sets do not include any operands allocated as a result of interval splitting.
+     * Gets the size of the {@link LIRBlock#liveIn} and {@link LIRBlock#liveOut} sets for a basic block. These sets do
+     * not include any operands allocated as a result of creating {@linkplain #createDerivedInterval(Interval) derived
+     * intervals}.
      */
     int liveSetSize() {
-        return firstSplitChildIntervalIndex == -1 ? operands.size() : firstSplitChildIntervalIndex;
+        return firstDerivedIntervalIndex == -1 ? operands.size() : firstDerivedIntervalIndex;
     }
 
     int numLoops() {
@@ -460,13 +459,14 @@ public class LinearScan {
                 int opId = op.id;
 
                 if (opId == -1) {
+                    CiValue resultOperand = op.result();
                     // remove move from register to stack if the stack slot is guaranteed to be correct.
                     // only moves that have been inserted by LinearScan can be removed.
                     assert op.code == LIROpcode.Move : "only moves can have a opId of -1";
-                    assert op.result().isVariable() : "LinearScan inserts only moves to variables";
+                    assert resultOperand.isVariable() : "LinearScan inserts only moves to variables";
 
                     LIROp1 op1 = (LIROp1) op;
-                    Interval curInterval = intervalFor(op1.result().asLocation());
+                    Interval curInterval = intervalFor(resultOperand.asLocation());
 
                     if (!curInterval.location().isRegister() && curInterval.alwaysInMemory()) {
                         // move target is a stack slot that is always correct, so eliminate instruction
@@ -875,10 +875,6 @@ public class LinearScan {
     // (fills the list intervals)
 
     private CiKind operandKind(CiValue operand) {
-        assert operand.isVariableOrRegister();
-        if (operand.kind == CiKind.Short) {
-            return operand.kind;
-        }
         return operand.kind.stackKind();
     }
 
@@ -1441,13 +1437,13 @@ public class LinearScan {
     }
 
     void sortIntervalsAfterAllocation() {
-        if (firstSplitChildIntervalIndex == -1) {
+        if (firstDerivedIntervalIndex == -1) {
             // no intervals have been added during allocation, so sorted list is already up to date
             return;
         }
 
         Interval[] oldList = sortedIntervals;
-        Interval[] newList = Arrays.copyOfRange(intervals, firstSplitChildIntervalIndex, intervalsSize);
+        Interval[] newList = Arrays.copyOfRange(intervals, firstDerivedIntervalIndex, intervalsSize);
         int oldLen = oldList.length;
         int newLen = newList.length;
 
@@ -1981,7 +1977,7 @@ public class LinearScan {
         info.allocateDebugInfo(compilation.target.allocationSpec.refMapSize, compilation.frameMap().frameSize(), compilation.target);
 
         // Iterate through active intervals
-        for (Interval interval = iw.activeFirst(Constraint.Fixed); interval != Interval.EndMarker; interval = interval.next) {
+        for (Interval interval = iw.activeFirst(IntervalKind.Fixed); interval != Interval.EndMarker; interval = interval.next) {
             CiLocation operand = interval.operand;
 
             assert interval.currentFrom() <= op.id && op.id <= interval.currentTo() : "interval should not be active otherwise";
@@ -2585,7 +2581,7 @@ public class LinearScan {
                     // Make sure none of the fixed registers is live across an
                     // oopmap since we can't handle that correctly.
                     if (checkLive) {
-                        for (Interval interval = iw.activeFirst(Constraint.Fixed); interval != Interval.EndMarker; interval = interval.next) {
+                        for (Interval interval = iw.activeFirst(IntervalKind.Fixed); interval != Interval.EndMarker; interval = interval.next) {
                             if (interval.currentTo() > op.id + 1) {
                                 // This interval is live out of this op so make sure
                                 // that this interval represents some value that's

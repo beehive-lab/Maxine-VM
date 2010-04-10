@@ -39,7 +39,7 @@ public final class CiAddress extends CiLocation {
     public CiAddress(CiKind kind, CiLocation base) {
         super(kind);
         this.base = base;
-        this.index = CiLocation.IllegalLocation;
+        this.index = IllegalLocation;
         this.scale = Scale.Times1;
         this.displacement = 0;
         this.format = Format.BASE;
@@ -48,7 +48,7 @@ public final class CiAddress extends CiLocation {
     public CiAddress(CiKind kind, CiLocation base, int displacement) {
         super(kind);
         this.base = base;
-        this.index = CiLocation.IllegalLocation;
+        this.index = IllegalLocation;
         this.scale = Scale.Times1;
         this.displacement = displacement;
         this.format = Format.BASE_DISP;
@@ -58,7 +58,7 @@ public final class CiAddress extends CiLocation {
         super(kind);
         this.base = base;
         this.index = index;
-        this.scale = Scale.None;
+        this.scale = Scale.Times1;
         this.displacement = 0;
         this.format = Format.BASE_INDEX;
     }
@@ -76,7 +76,6 @@ public final class CiAddress extends CiLocation {
      * A scaling factor used in complex addressing modes such as those supported by x86 platforms.
      */
     public enum Scale {
-        None(-1, -1),
         Times1(1, 0),
         Times2(2, 1),
         Times4(4, 2),
@@ -146,5 +145,19 @@ public final class CiAddress extends CiLocation {
             case BASE_SCALE_INDEX_DISP : return "[" + s(base) + " + " + s(index) + "*" + scale.value + " + " + displacement + "]";
             default                    : throw new IllegalArgumentException("unknown format: " + format);
         }
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof CiAddress) {
+            CiAddress addr = (CiAddress) obj;
+            return kind == addr.kind && displacement == addr.displacement && base.equals(addr.base) && scale == addr.scale && index.equals(addr.index);
+        }
+        return false;
+    }
+    
+    @Override
+    public int hashCode() {
+        return (base.hashCode() << 4) | kind.ordinal();
     }
 }

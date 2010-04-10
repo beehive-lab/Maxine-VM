@@ -59,10 +59,12 @@ public final class CiStackSlot extends CiLocation {
         this.index = index;
     }
 
+    @Override
     public int hashCode() {
         return kind.ordinal() + index;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (o == this) {
             return true;
@@ -74,6 +76,7 @@ public final class CiStackSlot extends CiLocation {
         return false;
     }
 
+    @Override
     public String name() {
         return "stack:" + index;
     }
@@ -86,8 +89,11 @@ public final class CiStackSlot extends CiLocation {
         return slots;
     }
     
-    private static final int CACHE_PER_KIND_SIZE = 10;
+    private static final int CACHE_PER_KIND_SIZE = 100;
     
+    /**
+     * A cache of {@link CiStackSlot} objects.
+     */
     private static final CiStackSlot[][] cache = new CiStackSlot[CiKind.values().length][];
     static {
         cache[CiKind.Int.ordinal()]    = generate(CiKind.Int, CACHE_PER_KIND_SIZE);
@@ -96,5 +102,6 @@ public final class CiStackSlot extends CiLocation {
         cache[CiKind.Double.ordinal()] = generate(CiKind.Double, CACHE_PER_KIND_SIZE);
         cache[CiKind.Word.ordinal()]   = generate(CiKind.Word, CACHE_PER_KIND_SIZE);
         cache[CiKind.Object.ordinal()] = generate(CiKind.Object, CACHE_PER_KIND_SIZE);
+        cache[CiKind.Jsr.ordinal()]    = generate(CiKind.Jsr, CACHE_PER_KIND_SIZE);
     }
 }

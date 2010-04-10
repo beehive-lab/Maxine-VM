@@ -97,14 +97,18 @@ public class OperandPool {
 
     private static BitMap set(BitMap map, CiVariable variable) {
         if (map == null) {
-            map = new BitMap();
+            int length = BitMap.roundUpLength(variable.index + 1);
+            map = new BitMap(length);
+        } else if (map.size() <= variable.index) {
+            int length = BitMap.roundUpLength(variable.index + 1);
+            map.grow(length);
         }
         map.set(variable.index);
         return map;
     }
 
     private static boolean get(BitMap map, CiVariable variable) {
-        if (map == null) {
+        if (map == null || map.size() <= variable.index) {
             return false;
         }
         return map.get(variable.index);

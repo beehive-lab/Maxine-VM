@@ -31,21 +31,19 @@ import com.sun.c1x.debug.*;
  */
 public class IntervalWalker {
 
-    private static final Constraint[] INTERVAL_KINDS = Constraint.values();
-
     protected final C1XCompilation compilation;
     protected final LinearScan allocator;
 
-    Interval[] unhandledFirst = new Interval[INTERVAL_KINDS.length]; // sorted list of intervals, not live before
+    Interval[] unhandledFirst = new Interval[IntervalKind.VALUES.length]; // sorted list of intervals, not live before
                                                                      // the current position
-    Interval[] activeFirst = new Interval[INTERVAL_KINDS.length];    // sorted list of intervals, live
+    Interval[] activeFirst = new Interval[IntervalKind.VALUES.length];    // sorted list of intervals, live
                                                                      // at the current position
-    Interval[] inactiveFirst = new Interval[INTERVAL_KINDS.length];  // sorted list of intervals, intervals in a life
+    Interval[] inactiveFirst = new Interval[IntervalKind.VALUES.length];  // sorted list of intervals, intervals in a life
                                                                      // time hole at the current position
 
     protected Interval current; // the current interval coming from unhandled list
     protected int currentPosition; // the current position (intercept point through the intervals)
-    protected Constraint currentKind; // and whether it is IntervalKind.fixedKind or IntervalKind.anyKind.
+    protected IntervalKind currentKind; // and whether it is IntervalKind.fixedKind or IntervalKind.anyKind.
 
     boolean activateCurrent() {
         // activateCurrent() is called when an unhandled interval becomes active (in current(), currentKind()).
@@ -54,15 +52,15 @@ public class IntervalWalker {
         return true;
     }
 
-    Interval unhandledFirst(Constraint kind) {
+    Interval unhandledFirst(IntervalKind kind) {
         return unhandledFirst[kind.ordinal()];
     }
 
-    Interval activeFirst(Constraint kind) {
+    Interval activeFirst(IntervalKind kind) {
         return activeFirst[kind.ordinal()];
     }
 
-    Interval inactiveFirst(Constraint kind) {
+    Interval inactiveFirst(IntervalKind kind) {
         return inactiveFirst[kind.ordinal()];
     }
 
@@ -78,12 +76,12 @@ public class IntervalWalker {
         this.compilation = allocator.compilation;
         this.allocator = allocator;
 
-        unhandledFirst[Constraint.Fixed.ordinal()] = unhandledFixedFirst;
-        unhandledFirst[Constraint.Any.ordinal()] = unhandledAnyFirst;
-        activeFirst[Constraint.Fixed.ordinal()] = Interval.EndMarker;
-        inactiveFirst[Constraint.Fixed.ordinal()] = Interval.EndMarker;
-        activeFirst[Constraint.Any.ordinal()] = Interval.EndMarker;
-        inactiveFirst[Constraint.Any.ordinal()] = Interval.EndMarker;
+        unhandledFirst[IntervalKind.Fixed.ordinal()] = unhandledFixedFirst;
+        unhandledFirst[IntervalKind.Any.ordinal()] = unhandledAnyFirst;
+        activeFirst[IntervalKind.Fixed.ordinal()] = Interval.EndMarker;
+        inactiveFirst[IntervalKind.Fixed.ordinal()] = Interval.EndMarker;
+        activeFirst[IntervalKind.Any.ordinal()] = Interval.EndMarker;
+        inactiveFirst[IntervalKind.Any.ordinal()] = Interval.EndMarker;
         currentPosition = -1;
         current = null;
         nextInterval();
@@ -148,16 +146,16 @@ public class IntervalWalker {
 
     void removeFromList(Interval i) {
         if (i.state == State.Active) {
-            activeFirst[Constraint.Any.ordinal()] = removeFromList(activeFirst(Constraint.Any), i);
+            activeFirst[IntervalKind.Any.ordinal()] = removeFromList(activeFirst(IntervalKind.Any), i);
         } else {
             assert i.state == State.Inactive : "invalid state";
-            inactiveFirst[Constraint.Any.ordinal()] = removeFromList(inactiveFirst(Constraint.Any), i);
+            inactiveFirst[IntervalKind.Any.ordinal()] = removeFromList(inactiveFirst(IntervalKind.Any), i);
         }
     }
 
     void walkTo(State state, int from) {
         assert state == State.Active || state == State.Inactive : "wrong state";
-        for (Constraint kind : INTERVAL_KINDS) {
+        for (IntervalKind kind : IntervalKind.VALUES) {
             Interval prevprev = null;
             Interval prev = (state == State.Active) ? activeFirst(kind) : inactiveFirst(kind);
             Interval next = prev;
@@ -220,19 +218,19 @@ public class IntervalWalker {
     }
 
     void nextInterval() {
-        Constraint kind;
-        Interval any = unhandledFirst[Constraint.Any.ordinal()];
-        Interval fixed = unhandledFirst[Constraint.Fixed.ordinal()];
+        IntervalKind kind;
+        Interval any = unhandledFirst[IntervalKind.Any.ordinal()];
+        Interval fixed = unhandledFirst[IntervalKind.Fixed.ordinal()];
 
         if (any != Interval.EndMarker) {
             // intervals may start at same position . prefer fixed interval
-            kind = fixed != Interval.EndMarker && fixed.from() <= any.from() ? Constraint.Fixed : Constraint.Any;
+            kind = fixed != Interval.EndMarker && fixed.from() <= any.from() ? IntervalKind.Fixed : IntervalKind.Any;
 
-            assert kind == Constraint.Fixed && fixed.from() <= any.from() || kind == Constraint.Any && any.from() <= fixed.from() : "wrong interval!!!";
-            assert any == Interval.EndMarker || fixed == Interval.EndMarker || any.from() != fixed.from() || kind == Constraint.Fixed : "if fixed and any-Interval start at same position, fixed must be processed first";
+            assert kind == IntervalKind.Fixed && fixed.from() <= any.from() || kind == IntervalKind.Any && any.from() <= fixed.from() : "wrong interval!!!";
+            assert any == Interval.EndMarker || fixed == Interval.EndMarker || any.from() != fixed.from() || kind == IntervalKind.Fixed : "if fixed and any-Interval start at same position, fixed must be processed first";
 
         } else if (fixed != Interval.EndMarker) {
-            kind = Constraint.Fixed;
+            kind = IntervalKind.Fixed;
         } else {
             current = null;
             return;
@@ -278,7 +276,7 @@ public class IntervalWalker {
         }
     }
 
-    void intervalMoved(Interval interval, Constraint kind, State from, State to) {
+    void intervalMoved(Interval interval, IntervalKind kind, State from, State to) {
         // intervalMoved() is called whenever an interval moves from one interval list to another.
         // In the implementation of this method it is prohibited to move the interval to any list.
         if (C1XOptions.TraceLinearScanLevel >= 4) {

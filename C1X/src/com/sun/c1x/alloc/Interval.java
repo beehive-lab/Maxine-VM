@@ -54,7 +54,7 @@ public final class Interval {
      * whether its location is bound to a fixed register or not. This models
      * any platform dependencies on register usage for certain instructions.
      */
-    enum Constraint {
+    enum IntervalKind {
         /**
          * Interval has a specific register assigned to it by the platform dependent backend.
          */
@@ -65,7 +65,7 @@ public final class Interval {
          */
         Any;
 
-        public static final Constraint[] VALUES = values();
+        public static final IntervalKind[] VALUES = values();
     }
 
     /**
@@ -677,7 +677,7 @@ public final class Interval {
     Interval newSplitChild(LinearScan allocator) {
         // allocate new interval
         Interval parent = splitParent();
-        Interval result = allocator.createIntervalSplitChild(parent);
+        Interval result = allocator.createDerivedInterval(parent);
         result.setKind(kind());
 
         result.splitParent = parent;

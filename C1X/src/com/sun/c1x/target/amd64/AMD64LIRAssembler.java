@@ -125,27 +125,24 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     private void const2reg(CiRegister dst, int constant) {
-        if (constant == 0) {
-            masm.xorl(dst, dst);
-        } else {
-            masm.movl(dst, constant);
-        }
+        // Do not optimize with an XOR as this instruction may be between
+        // a CMP and a Jcc in which case the XOR will modify the condition
+        // flags and interfere with the Jcc.
+        masm.movl(dst, constant);
     }
 
     private void const2reg(CiRegister dst, long constant) {
-        if (constant == 0L) {
-            masm.xorptr(dst, dst);
-        } else {
-            masm.mov64(dst, constant);
-        }
+        // Do not optimize with an XOR as this instruction may be between
+        // a CMP and a Jcc in which case the XOR will modify the condition
+        // flags and interfere with the Jcc.
+        masm.mov64(dst, constant);
     }
 
     private void const2reg(CiRegister dst, Object constant) {
-        if (constant == null) {
-            masm.xorptr(dst, dst);
-        } else {
-            masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
-        }
+        // Do not optimize with an XOR as this instruction may be between
+        // a CMP and a Jcc in which case the XOR will modify the condition
+        // flags and interfere with the Jcc.
+        masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
     }
 
     private void const2reg(CiRegister dst, float constant) {
