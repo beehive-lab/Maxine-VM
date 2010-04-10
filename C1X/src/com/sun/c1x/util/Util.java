@@ -25,9 +25,9 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ir.Value;
 import com.sun.c1x.ir.Instruction;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code Util} class contains a motley collection of utility methods used throughout the compiler.
@@ -677,7 +677,7 @@ public class Util {
 
     /**
      * Converts a given instruction to a value string. The representation of an instruction as
-     * a value is formed by concatenating the {@linkplain com.sun.c1x.ci.CiKind#typeChar character} denoting its
+     * a value is formed by concatenating the {@linkplain com.sun.cri.ci.CiKind#typeChar character} denoting its
      * {@linkplain com.sun.c1x.ir.Instruction#kind kind} and its {@linkplain com.sun.c1x.ir.Instruction#id}. For example,
      * "i13".
      *

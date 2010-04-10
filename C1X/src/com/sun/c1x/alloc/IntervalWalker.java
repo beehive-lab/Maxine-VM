@@ -22,8 +22,8 @@ package com.sun.c1x.alloc;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.Interval.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.cri.ci.*;
 
 /**
  *

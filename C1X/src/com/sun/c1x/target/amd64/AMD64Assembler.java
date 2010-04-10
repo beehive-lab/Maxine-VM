@@ -22,9 +22,9 @@ package com.sun.c1x.target.amd64;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class implements an assembler that can encode most X86 instructions.

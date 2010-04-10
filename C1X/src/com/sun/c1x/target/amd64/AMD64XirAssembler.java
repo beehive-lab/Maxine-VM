@@ -22,9 +22,9 @@ package com.sun.c1x.target.amd64;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.xir.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.xir.*;
 
 /**
  * X86 specific preprocessing of XIR.

@@ -22,13 +22,13 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class collects a number of debugging and exception-related information about
  * an HIR node. Instances of this class can be attached to HIR nodes and contain
- * the {@link com.sun.c1x.ci.CiCodePos code position}, the {@link com.sun.c1x.value.FrameStateInfo frame state}
+ * the {@link com.sun.cri.ci.CiCodePos code position}, the {@link com.sun.c1x.value.FrameStateInfo frame state}
  * potential exceptions, and exception handlers.
  *
  * @author Ben L. Titzer

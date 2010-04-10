@@ -20,12 +20,12 @@
  */
 package com.sun.max.unsafe;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
-import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import java.math.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;

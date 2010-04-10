@@ -20,16 +20,16 @@
  */
 package com.sun.c1x.graph;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.BlockBegin.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ri.*;
 
 /**
  * Builds a mapping between bytecodes and basic blocks and builds a conservative control flow

@@ -22,10 +22,10 @@ package com.sun.max.vm.compiler.c1x;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;

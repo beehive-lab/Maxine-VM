@@ -23,13 +23,13 @@ package com.sun.c0x;
 import java.util.Arrays;
 import java.util.List;
 
-import com.sun.c1x.bytecode.BytecodeLookupSwitch;
-import com.sun.c1x.bytecode.BytecodeStream;
-import com.sun.c1x.bytecode.BytecodeTableSwitch;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.Util;
+import com.sun.cri.bytecode.BytecodeLookupSwitch;
+import com.sun.cri.bytecode.BytecodeStream;
+import com.sun.cri.bytecode.BytecodeTableSwitch;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code C0XCompiler} class is a sketch of a new baseline compiler design which borrows

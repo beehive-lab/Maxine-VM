@@ -20,14 +20,14 @@
  */
 package com.sun.c1x.lir;
 
-import static com.sun.c1x.ci.CiKind.*;
+import static com.sun.cri.ci.CiKind.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class is used to build the stack frame layout for a compiled method.

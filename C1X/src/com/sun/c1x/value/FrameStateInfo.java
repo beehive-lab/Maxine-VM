@@ -22,7 +22,7 @@ package com.sun.c1x.value;
 
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.ci.CiCodePos;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code FrameStateInfo} class represents an immutable view of the state of a frame

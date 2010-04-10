@@ -22,21 +22,21 @@ package com.sun.c0x;
 
 import com.sun.c0x.C0XCompilation.Location;
 import com.sun.c1x.asm.Label;
-import com.sun.c1x.bytecode.BytecodeLookupSwitch;
-import com.sun.c1x.bytecode.BytecodeTableSwitch;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiAddress;
-import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiRegister;
-import com.sun.c1x.ci.CiTarget;
-import com.sun.c1x.ri.RiBytecodeExtension;
-import com.sun.c1x.ri.RiField;
-import com.sun.c1x.ri.RiMethod;
-import com.sun.c1x.ri.RiType;
 import com.sun.c1x.target.amd64.AMD64;
 import com.sun.c1x.target.amd64.AMD64Assembler;
 import com.sun.c1x.target.amd64.AMD64MacroAssembler;
 import com.sun.c1x.util.Util;
+import com.sun.cri.bytecode.BytecodeLookupSwitch;
+import com.sun.cri.bytecode.BytecodeTableSwitch;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.ci.CiAddress;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiRegister;
+import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ri.RiBytecodeExtension;
+import com.sun.cri.ri.RiField;
+import com.sun.cri.ri.RiMethod;
+import com.sun.cri.ri.RiType;
 
 /**
  * The {@code X86CodeGen} class definition.

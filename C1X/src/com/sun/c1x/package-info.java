@@ -29,16 +29,16 @@
  * example Maxine.
  *
  * The compiler is represented by the class {@code C1XCompiler} which is a subclass of the abstract
- * {@link com.sun.c1x.ci.CiCompiler} class that defines {@link com.sun.c1x.ci.CiCompiler#compileMethod}. {@code
+ * {@link com.sun.cri.ci.CiCompiler} class that defines {@link com.sun.cri.ci.CiCompiler#compileMethod}. {@code
  * C1XCompiler} binds a specific target architecture and JVM interface to produce a usable compiler object. There are
  * two variants of {@code compileMethod}, one of which is used when doing <i>on stack replacement</i> (OSR), discussed
- * later. The main variant takes {@link com.sun.c1x.ri.RiMethod} and {@link com.sun.c1x.xir.RiXirGenerator} arguments.
+ * later. The main variant takes {@link com.sun.cri.ri.RiMethod} and {@link com.sun.cri.xir.RiXirGenerator} arguments.
  * {@code RiMethod} is C1X's representation of a Java method and {@code RiXirGenerator} represents the interface through
  * which the compiler requests the XIR for a given bytecode from the runtime system.
  *
  * <H3>The C1X Compilation Process</H3>
  *
- * {@link com.sun.c1x.ci.CiCompiler#compileMethod} creates a {@link C1XCompilation} instance and then returns the result of calling its
+ * {@link com.sun.cri.ci.CiCompiler#compileMethod} creates a {@link C1XCompilation} instance and then returns the result of calling its
  * {@link com.sun.c1x.C1XCompilation#compile} method. The {@code C1XCompilation} instance records whether {@code compileMethod} was invoked with
  * the OSR variant, which is used later in the IR generation.
  * <p>
@@ -46,7 +46,7 @@
  * which is represented by a unique {@code C1XCompilation} instance. The static method {@link com.sun.c1x.C1XCompilation#current}} returns the
  * {@code C1XCompilation} instance associated with the current thread, and is managed using a {@link java.lang.ThreadLocal} variable. It
  * is used when assigning the unique id that is used for tracing  output to an HIR node. Each {@code C1XCompilation} instance
- * has an associated {@link com.sun.c1x.ci.CiStatistics} object that accumulates information about the compilation process, but is also
+ * has an associated {@link com.sun.cri.ci.CiStatistics} object that accumulates information about the compilation process, but is also
  * used as a generator of, for example, basic block identifiers.
  * <p>
  * The compilation begins by calling {@link com.sun.c1x.C1XCompilation#emitHIR}, which creates the high-level intermediate representation (HIR) from the
@@ -94,13 +94,13 @@
  * <ul>
  * <li>
  * Deoptimization metadata. The locations of all local variables and stack values are not communicated back to the
- * runtime system through the {@link com.sun.c1x.ci.CiDebugInfo} class yet. Such values are known to the register allocator, and there
+ * runtime system through the {@link com.sun.cri.ci.CiDebugInfo} class yet. Such values are known to the register allocator, and there
  * vestigial logic to compute them still there in the
  * {@link com.sun.c1x.alloc.LinearScan#computeDebugInfo} method. To complete this metadata, the
  * {@link com.sun.c1x.alloc.LinearScan} class must implement the {@link ValueLocator} interface and pass it to the
  * {@link com.sun.c1x.lir.LIRDebugInfo#createFrame} method after register allocation. The
  * resulting debug info will be fed back to the runtime system by the existing logic that calls
- * {@link com.sun.c1x.ci.CiTargetMethod#recordCall(int, Object, CiDebugInfo, byte[], boolean)} and other methods. Obviously the runtime
+ * {@link com.sun.cri.ci.CiTargetMethod#recordCall(int, Object, CiDebugInfo, byte[], boolean)} and other methods. Obviously the runtime
  * system will need to encode this metadata in a dense format, because it is huge.</li>
  *
  *

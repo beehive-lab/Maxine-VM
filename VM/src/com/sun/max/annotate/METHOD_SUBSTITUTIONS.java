@@ -22,7 +22,7 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;

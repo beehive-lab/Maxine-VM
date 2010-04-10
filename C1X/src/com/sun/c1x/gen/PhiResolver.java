@@ -20,12 +20,12 @@
  */
 package com.sun.c1x.gen;
 
-import static com.sun.c1x.ci.CiValue.*;
+import static com.sun.cri.ci.CiValue.*;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
+import com.sun.cri.ci.*;
 
 /**
  * Converts {@link Phi} instructions into moves.

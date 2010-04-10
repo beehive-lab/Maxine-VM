@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.Interval.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
@@ -36,6 +35,7 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.LIRInstruction.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
  * An implementation of the linear scan register allocator algorithm described
@@ -135,10 +135,6 @@ public class LinearScan {
      */
     int operandNumber(CiLocation operand) {
         return operands.operandNumber(operand);
-    }
-
-    boolean isPrecoloredInterval(Interval i) {
-        return i.operand.isRegister();
     }
 
     static final IntervalPredicate isPrecoloredInterval = new IntervalPredicate() {
@@ -341,15 +337,9 @@ public class LinearScan {
         return instructionForId(opId).hasCall;
     }
 
-    // functions for converting LIR-Operands to register numbers
-    static boolean isValidRegNum(int regNum) {
-        return regNum >= 0;
-    }
-
-    // * spill move optimization
-    // eliminate moves from register to stack if stack slot is known to be correct
-
-    // called during building of intervals
+    /**
+     * Eliminates moves from register to stack if the stack slot is known to be correct.
+     */
     void changeSpillDefinitionPos(Interval interval, int defPos) {
         assert interval.isSplitParent() : "can only be called for split parents";
 
@@ -874,17 +864,13 @@ public class LinearScan {
     // * Phase 4: build intervals
     // (fills the list intervals)
 
-    private CiKind operandKind(CiValue operand) {
-        return operand.kind.stackKind();
-    }
-
     void addUse(Value value, int from, int to, UseKind useKind) {
         assert !value.isIllegal() : "if this value is used by the interpreter it shouldn't be of indeterminate type";
         CiValue operand = value.operand();
         Constant con = value.isConstant() ? (Constant) value : null;
 
         if ((con == null || con.isLive()) && operand.isVariableOrRegister()) {
-            CiKind kind = operandKind(operand);
+            CiKind kind = operand.kind.stackKind();
             addUse(operand.asLocation(), from, to, useKind, kind);
         }
     }
@@ -1057,7 +1043,7 @@ public class LinearScan {
 
             // optimizations for second input operand of arithmehtic operations on Intel
             // this operand is allowed to be on the stack in some cases
-            CiKind kind = operandKind(operand);
+            CiKind kind = operand.kind.stackKind();
             if (kind == CiKind.Float || kind == CiKind.Double) {
                 if ((C1XOptions.SSEVersion == 1 && kind == CiKind.Float) || C1XOptions.SSEVersion >= 2) {
                     // SSE float instruction (CiKind.Double only supported with SSE2)
@@ -1252,7 +1238,7 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     CiLocation operand = op.operandAt(LIRInstruction.OperandMode.OutputMode, k);
                     assert operand.isVariableOrRegister() : "visitor should only return register operands";
-                    addDef(operand, opId, useKindOfOutputOperand(op, operand), operandKind(operand));
+                    addDef(operand, opId, useKindOfOutputOperand(op, operand), operand.kind.stackKind());
                 }
 
                 n = op.operandCount(LIRInstruction.OperandMode.TempMode);
@@ -1262,7 +1248,7 @@ public class LinearScan {
                     if (C1XOptions.TraceLinearScanLevel >= 2) {
                         TTY.println(" temp %s tempPos %d (%s)", operand, opId, UseKind.MustHaveRegister.name());
                     }
-                    addTemp(operand, opId, UseKind.MustHaveRegister, operandKind(operand));
+                    addTemp(operand, opId, UseKind.MustHaveRegister, operand.kind.stackKind());
                 }
 
                 // visit uses (input operands)
@@ -1270,7 +1256,7 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     CiLocation operand = op.operandAt(LIRInstruction.OperandMode.InputMode, k);
                     assert operand.isVariableOrRegister() : "visitor should only return register operands";
-                    addUse(operand, blockFrom, opId, useKindOfInputOperand(op, operand), operandKind(operand));
+                    addUse(operand, blockFrom, opId, useKindOfInputOperand(op, operand), operand.kind.stackKind());
                 }
 
                 // Add uses of live locals from interpreter's point of view for proper

@@ -25,9 +25,9 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.xir.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 /**
  * The {@code X86Backend} class represents the backend for the AMD64 architecture.

@@ -24,12 +24,12 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.*;
-import com.sun.c1x.xir.*;
-import com.sun.c1x.xir.CiXirAssembler.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.*;
 
 public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 

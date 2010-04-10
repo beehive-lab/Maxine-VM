@@ -22,8 +22,8 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class represents a call instruction; either to a {@linkplain CiRuntimeCall runtime method},

@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.amd64;
 
-import com.sun.c1x.bytecode.Bytecodes.*;
+import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
 import com.sun.max.vm.compiler.builtin.IEEE754Builtin.*;

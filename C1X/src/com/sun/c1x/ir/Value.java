@@ -20,12 +20,12 @@
  */
 package com.sun.c1x.ir;
 
-import static com.sun.c1x.ci.CiValue.*;
+import static com.sun.cri.ci.CiValue.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.opt.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class represents a value within the HIR graph, including local variables, phis, and

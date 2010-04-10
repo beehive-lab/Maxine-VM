@@ -20,16 +20,16 @@
  */
 package com.sun.c1x.target.amd64;
 
-import static com.sun.c1x.ci.CiKind.*;
+import static com.sun.cri.ci.CiKind.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.xir.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 /**
  * This class implements the X86-specific portion of the macro assembler.

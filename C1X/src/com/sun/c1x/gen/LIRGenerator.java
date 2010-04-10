@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.gen;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
-import static com.sun.c1x.ci.CiValue.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.ci.CiValue.*;
 
 import java.util.*;
 
@@ -29,8 +29,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.alloc.OperandPool.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ci.CiAddress.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.graph.*;
@@ -38,11 +36,13 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.opt.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.xir.*;
-import com.sun.c1x.xir.CiXirAssembler.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.

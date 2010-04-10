@@ -24,13 +24,13 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.ri.RiType.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.xir.*;
-import com.sun.c1x.xir.CiXirAssembler.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiType.*;
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
@@ -492,7 +492,12 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     private XirArgument guardFor(RiType type, ResolutionSnippet snippet) {
         MaxRiType t = (MaxRiType) type;
-        ResolutionGuard guard = makeResolutionGuard(t.constantPool, t.cpi, snippet);
+        ResolutionGuard guard;
+        if (t.cpi > 0) {
+            guard = makeResolutionGuard(t.constantPool, t.cpi, snippet);
+        } else {
+            guard = new ResolutionGuard(t.constantPool.constantPool, Integer.MAX_VALUE);
+        }
         if (t.isLoaded()) {
             guard.value = t.classActor;
         }
@@ -500,10 +505,8 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     private ResolutionGuard makeResolutionGuard(MaxRiConstantPool pool, int cpi, ResolutionSnippet snippet) {
-        if (cpi > 0) {
-            return pool.constantPool.makeResolutionGuard(cpi, snippet);
-        }
-        return new ResolutionGuard(pool.constantPool, cpi);
+        assert cpi > 0;
+        return pool.constantPool.makeResolutionGuard(cpi, snippet);
     }
 
     private XirTemplate buildResolveClass(Representation representation) {

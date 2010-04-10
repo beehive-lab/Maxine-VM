@@ -75,7 +75,7 @@
  * instance is created at index 0. Since the receiver cannot be {@code null}, the
  * {@link com.sun.c1x.ir.Value.Flag#NonNull} flag is set. Additional {@link com.sun.c1x.ir.Local} instances are created for the
  * arguments to the method. The index is incremented by the number of slots occupied by the
- * {@link com.sun.c1x.ci.CiKind} corresponding to the argument type. All the {@link com.sun.c1x.ir.Local} instances are stored in the
+ * {@link com.sun.cri.ci.CiKind} corresponding to the argument type. All the {@link com.sun.c1x.ir.Local} instances are stored in the
  * {@link com.sun.c1x.value.FrameState} using the {@link com.sun.c1x.value.FrameState#storeLocal} method. This {@link com.sun.c1x.value.FrameState} is then
  * merged into the {@link com.sun.c1x.ir.BlockBegin#stateBefore} for the {@code startBlock}, which just results in a
  * copy since {@code stateBefore} will be {@code null}.

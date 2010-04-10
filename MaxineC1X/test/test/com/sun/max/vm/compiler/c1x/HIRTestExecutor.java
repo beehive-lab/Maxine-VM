@@ -25,10 +25,10 @@ import java.lang.reflect.*;
 import test.com.sun.max.vm.compiler.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
 import com.sun.max.test.JavaExecHarness.*;

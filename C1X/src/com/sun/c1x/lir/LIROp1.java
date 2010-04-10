@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code LIROp1} class definition. The LIROp1 instruction has only one input operand.
