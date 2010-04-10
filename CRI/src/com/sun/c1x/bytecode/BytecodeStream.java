@@ -21,9 +21,9 @@
 package com.sun.c1x.bytecode;
 
 /**
- * The {@code CiBytecodeStream} class implements a utility that makes iterating over
- * bytecodes and reading operands simpler and less error prone. For example, it handles
- * the WIDE instruction and wide variants of instructions internally.
+ * A utility class that makes iterating over bytecodes and reading operands
+ * simpler and less error prone. For example, it handles the {@link Bytecodes#WIDE} instruction
+ * and wide variants of instructions internally.
  *
  * @author Ben L. Titzer
  */
@@ -68,7 +68,7 @@ public class BytecodeStream {
 
     /**
      * Gets the bytecode index of the end of the code.
-     * @return the end of the code
+     * @return the index of the end of the code
      */
     public int endBCI() {
         return code.length;
@@ -76,8 +76,8 @@ public class BytecodeStream {
 
     /**
      * Gets the current opcode. This method will never return the
-     * {@link com.sun.c1x.bytecode.Bytecodes#WIDE WIDE} opcode, but will instead
-     * return the opcode that is modified by the WIDE opcode.
+     * {@link Bytecodes#WIDE WIDE} opcode, but will instead
+     * return the opcode that is modified by the {@code WIDE} opcode.
      * @return the current opcode; {@link Bytecodes#END} if at or beyond the end of the code
      */
     public int currentBC() {
@@ -102,8 +102,8 @@ public class BytecodeStream {
     }
 
     /**
-     * Read the delta for an IINC bytecode.
-     * @return the delta for the IINC
+     * Read the delta for an {@link Bytecodes#IINC} bytecode.
+     * @return the delta for the {@code IINC}
      */
     public int readIncrement() {
         // read the delta for the iinc bytecode
@@ -114,7 +114,7 @@ public class BytecodeStream {
     }
 
     /**
-     * Read the destination of a GOTO or IF instructions.
+     * Read the destination of a {@link Bytecodes#GOTO} or {@code IF} instructions.
      * @return the destination bytecode index
      */
     public int readBranchDest() {
@@ -123,7 +123,7 @@ public class BytecodeStream {
     }
 
     /**
-     * Read the destination of a GOTO_W or JSR_W instructions.
+     * Read the destination of a {@link Bytecodes#GOTO_W} or {@link Bytecodes#JSR_W} instructions.
      * @return the destination bytecode index
      */
     public int readFarBranchDest() {
@@ -179,6 +179,8 @@ public class BytecodeStream {
 
     /**
      * Sets the bytecode index to the specified value.
+     * If {@code bci} is beyond the end of the array, {@link #currentBC} will return
+     * {@link Bytecodes#END} and other methods may throw {@link ArrayIndexOutOfBoundsException}.
      * @param bci the new bytecode index
      */
     public void setBCI(int bci) {

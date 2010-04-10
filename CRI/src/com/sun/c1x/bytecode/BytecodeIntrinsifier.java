@@ -29,9 +29,11 @@ import java.io.*;
  * JVM instructions with extended bytecode instructions. The extended
  * instructions are for:
  *
- * 1. Supporting a Word type hierarchy that is separate from the Object type hierarchy.
- * 2. Supporting low-level, non-Java operations such as reading/writing registers.
- * 3. Other builtins necessary for writing a meta-circular VM.
+ *<ol>
+ * <li>Supporting a Word type hierarchy that is separate from the Object type hierarchy.
+ * <li>Supporting low-level, non-Java operations such as reading/writing registers.
+ * <li>Other builtins necessary for writing a meta-circular VM.
+ * </ol>
  *
  * The transformations made by this utility assume the input code has been verified
  * (or would successfully pass verification).
@@ -168,29 +170,34 @@ public final class BytecodeIntrinsifier {
      */
     private Frame todoHandler;
 
-    /**
-     * Sentinel value used in {@link #frameMap} to denote that a given instruction (bci) has been processed. This
-     * required as without a pre-pass to establish basic block boundaries, it's possible for
-     * {@linkplain #parseBlock(int) block parsing} to cross a block boundary at a (as yet unknown) control flow merge
-     * point. There's no need to re-process the instructions after the merge point when the other branch to the merge
-     * point is subsequently discovered.
-     */
+	/**
+	 * Sentinel value used in {@link #frameMap} to denote that a given
+	 * instruction ({@code bci}) has been processed. This required as without a
+	 * pre-pass to establish basic block boundaries, it's possible for
+	 * {@linkplain #parseBlock(int) block parsing} to cross a block boundary at
+	 * a (as yet unknown) control flow merge point. There's no need to
+	 * re-process the instructions after the merge point when the other branch
+	 * to the merge point is subsequently discovered.
+	 */
     private static final Frame VISITED = new Frame(-1, 0, null, null, null);
     static {
         VISITED.visited = true;
     }
 
-    /**
-     * A map from each bci to a {@link Frame} object. A entry equal to {@link #VISITED} in this map for a given bci
-     * indicates that the instruction at bci has already be processed. A {@code null} entry means that the instruction
-     * has not yet been processes and not a known basic block entry point. A non-null entry not equals to
-     * {@link #VISITED} indicates a known basic block entry point and the value of the {@link Frame} object indicates
-     * the frame state to be used when parsing the block.
-     */
+	/**
+	 * A map from each {@code bci} to a {@link Frame} object. A entry equal to
+	 * {@link #VISITED} in this map for a given {@code bci} indicates that the
+	 * instruction at {@code bci} has already be processed. A {@code null} entry
+	 * means that the instruction has not yet been processes and not a known
+	 * basic block entry point. A non-null entry not equals to {@link #VISITED}
+	 * indicates a known basic block entry point and the value of the
+	 * {@link Frame} object indicates the frame state to be used when parsing
+	 * the block.
+	 */
     private final Frame[] frameMap;
 
     /**
-     * A map from each bci to the head of a list of {@link Handler} objects denoting the handlers active at that bci.
+     * A map from each {@code bci} to the head of a list of {@link Handler} objects denoting the handlers active at that {@code bci}.
      */
     private final Handler[] handlerMap;
 
@@ -244,7 +251,7 @@ public final class BytecodeIntrinsifier {
      * @param method the method being processed. The only use of this value is to call its {@link Object#toString()} method for debug tracing.
      * @param inCode the code to be processed
      * @param outCode the code array in which the processed code is written. If {@code null}, then processing is performed 'in situ' on {@code inCode}
-     * @param handlers the exception handler table as an array of triplets (start bci, end bci, handler bci) or
+     * @param handlers the exception handler table as an array of triplets (start {@code bci}, end {@code bci}, handler {@code bci}) or
      *            {@code null} if the method has no exception handlers
      * @param maxStack the maximum amount of stack used by {@code inCode}
      * @param locals the initial state of the local variables derived from the signature of the method
@@ -450,7 +457,9 @@ public final class BytecodeIntrinsifier {
      * @return the unsigned 2-byte value read
      */
     private int readU2() {
-        return (inCode[bci++] & 0xff) << 8 | inCode[bci++] & 0xff;
+    	final int result = Bytes.beU2(inCode, bci);
+    	bci += 2;
+    	return result;
     }
 
     /**
@@ -472,7 +481,9 @@ public final class BytecodeIntrinsifier {
      * @return the signed 2-byte value read
      */
     private int readS2() {
-        return inCode[bci++] << 8 | inCode[bci++] & 0xff;
+    	final int result = Bytes.beS2(inCode, bci);
+    	bci += 2;
+    	return result;
     }
 
     /**
@@ -481,10 +492,9 @@ public final class BytecodeIntrinsifier {
      * @return the signed 4-byte value read
      */
     private int readS4() {
-        return (inCode[bci++]          << 24) |
-               (inCode[bci++] & 0xff) << 16 |
-               (inCode[bci++] & 0xff) << 8  |
-               (inCode[bci++] & 0xff);
+    	final int result = Bytes.beS4(inCode, bci);
+    	bci += 4;
+    	return result;
     }
 
     private void align4() {

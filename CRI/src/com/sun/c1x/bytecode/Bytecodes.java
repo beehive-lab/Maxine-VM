@@ -29,8 +29,18 @@ import java.util.*;
 import java.util.regex.*;
 
 /**
- * The {@code Bytecodes} class defines constants associated with bytecodes,
- * in particular the opcode numbers for each bytecode.
+ * The definitions of the bytecodes that are valid input to the compiler and
+ * related utility methods. This comprises two groups: the standard Java
+ * bytecodes defined by <a href=
+ * "http://java.sun.com/docs/books/jvms/second_edition/html/VMSpecTOC.doc.html">
+ * Java Virtual Machine Specification</a>, and a set of <i>extended</i>
+ * bytecodes that support low-level programming, for example, memory barriers.
+ *
+ * The extended bytecodes are one or two bytes in size. The one-byte bytecodes
+ * follow the values in the standard set, with no gap. The two-byte extended
+ * bytecodes share a common first byte and carry additional instruction-specific
+ * information in the second byte.
+ *
  *
  * @author Ben L. Titzer
  * @author Doug Simon
@@ -386,8 +396,8 @@ public class Bytecodes {
      *     ..., value => ..., value
      * </pre>
      *
-     * @param size bytes to allocate. This must be a compile-time constant.
-     * @return the address of the allocated block. <b>The contents of the block are uninitialized</b>.
+     * The value on the top of the stack is the size in bytes to allocate.
+     * The result is the address of the allocated block. <b>N.B.</b> The contents of the block are uninitialized.
      */
     public static final int ALLOCA               = 238;
 
@@ -493,8 +503,9 @@ public class Bytecodes {
     public static final int MEMBAR_MEMOP_STORE = MEMBAR   | MEMOP_STORE << 8;
     public static final int MEMBAR_FENCE       = MEMBAR   | FENCE << 8;
 
-    // Other constants:
-
+    /**
+     * Constants and {@link INTRINSIC} definitions for unsigned comparisons.
+     */
     public static class UnsignedComparisons {
         public static final int ABOVE_THAN    = 1;
         public static final int ABOVE_EQUAL   = 2;
@@ -633,6 +644,7 @@ public class Bytecodes {
 
         /**
          * Denotes an instruction that ends a basic block and may let control flow fall through to its lexical successor.
+         * In practice this means it is a conditional branch.
          */
         static final int FALL_THROUGH = 0x00000002;
 
@@ -657,19 +669,35 @@ public class Bytecodes {
          */
         static final int EXTENSION = 0x00000020;
 
+        /**
+         * Denotes an instruction that can cause an implicit exception.
+         */
         static final int TRAP        = 0x00000080;
+        /**
+         * Denotes an instruction that is commutative.
+         */
         static final int COMMUTATIVE = 0x00000100;
+        /**
+         * Denotes an instruction that is associative.
+         */
         static final int ASSOCIATIVE = 0x00000200;
+        /**
+         * Denotes an instruction that loads an operand.
+         */
         static final int LOAD        = 0x00000400;
+        /**
+         * Denotes an instruction that stores an operand.
+         */
         static final int STORE       = 0x00000800;
 
     }
 
+    // Performs a sanity check that none of the flags overlap.
     static {
         int allFlags = 0;
         try {
             for (Field field : Flags.class.getDeclaredFields()) {
-                int flagsFilter = Modifier.FINAL | Modifier.STATIC | Modifier.PUBLIC;
+                int flagsFilter = Modifier.FINAL | Modifier.STATIC;
                 if ((field.getModifiers() & flagsFilter) == flagsFilter) {
                     assert field.getType() == int.class : "Only " + field;
                     final int flag = field.getInt(null);
@@ -683,9 +711,22 @@ public class Bytecodes {
         }
     }
 
+    /**
+     * A array that maps from a bytecode value to a {@link String} for the corresponding instruction mnemonic.
+     * This will include the root instruction for the two-byte extended instructions.
+     */
     private static final String[] names = new String[256];
-    private static HashMap<Integer, String> extNames = new HashMap<Integer, String>();
+    /**
+     * Maps from a two-byte extended bytecode value to a {@link String} for the corresponding instruction mnemonic.
+     */
+    private static HashMap<Integer, String> twoByteExtNames = new HashMap<Integer, String>();
+    /**
+     * A array that maps from a bytecode value to the set of {@link Flags} for the corresponding instruction.
+     */
     private static final int[] flags = new int[256];
+    /**
+     * A array that maps from a bytecode value to the length in bytes for the corresponding instruction.
+     */
     private static final int[] length = new int[256];
 
     // Checkstyle: stop
@@ -941,6 +982,11 @@ public class Bytecodes {
     }
     // Checkstyle: resume
 
+    /**
+     * Determines if an opcode is commutative.
+     * @param opcode the opcode to check
+     * @return {@code true} iff commutative
+     */
     public static boolean isCommutative(int opcode) {
         return (flags[opcode & 0xff] & COMMUTATIVE) != 0;
     }
@@ -999,7 +1045,7 @@ public class Bytecodes {
      * @return the mnemonic for {@code opcode} or {@code "<illegal opcode: " + opcode + ">"} if {@code opcode} is not a legal opcode
      */
     public static String nameOf(int opcode) throws IllegalArgumentException {
-        String extName = extNames.get(Integer.valueOf(opcode));
+        String extName = twoByteExtNames.get(Integer.valueOf(opcode));
         if (extName != null) {
             return extName;
         }
@@ -1023,7 +1069,7 @@ public class Bytecodes {
                 return opcode;
             }
         }
-        for (Map.Entry<Integer, String> entry : extNames.entrySet()) {
+        for (Map.Entry<Integer, String> entry : twoByteExtNames.entrySet()) {
             if (entry.getValue().equalsIgnoreCase(name)) {
                 return entry.getKey();
             }
@@ -1035,7 +1081,7 @@ public class Bytecodes {
      * Determines if a given opcode denotes an instruction that can cause an implicit exception.
      *
      * @param opcode an opcode to test
-     * @return {@code true} if {@code opcode} can cause an implicit exception, {@code false} otherwise
+     * @return {@code true} iff {@code opcode} can cause an implicit exception, {@code false} otherwise
      */
     public static boolean canTrap(int opcode) {
         return (flags[opcode & 0xff] & TRAP) != 0;
@@ -1045,7 +1091,7 @@ public class Bytecodes {
      * Determines if a given opcode denotes an instruction that loads a local variable to the operand stack.
      *
      * @param opcode an opcode to test
-     * @return {@code true} if {@code opcode} loads a local variable to the operand stack, {@code false} otherwise
+     * @return {@code true} iff {@code opcode} loads a local variable to the operand stack, {@code false} otherwise
      */
     public static boolean isLoad(int opcode) {
         return (flags[opcode & 0xff] & LOAD) != 0;
@@ -1056,6 +1102,7 @@ public class Bytecodes {
      * through to its lexical successor.
      *
      * @param opcode an opcode to test
+     * @return {@code true} iff {@code opcode} properly ends a basic block
      */
     public static boolean isStop(int opcode) {
         return (flags[opcode & 0xff] & STOP) != 0;
@@ -1066,7 +1113,7 @@ public class Bytecodes {
      * after popping it from the operand stack.
      *
      * @param opcode an opcode to test
-     * @return {@code true} if {@code opcode} stores a value to a local variable, {@code false} otherwise
+     * @return {@code true} iff {@code opcode} stores a value to a local variable, {@code false} otherwise
      */
     public static boolean isStore(int opcode) {
         return (flags[opcode & 0xff] & STORE) != 0;
@@ -1076,7 +1123,7 @@ public class Bytecodes {
      * Determines if a given opcode is an instruction that delimits a basic block.
      *
      * @param opcode an opcode to test
-     * @return {@code true} if {@code opcode} delimits a basic block
+     * @return {@code true} iff {@code opcode} delimits a basic block
      */
     public static boolean isBlockEnd(int opcode) {
         return (flags[opcode & 0xff] & (STOP | FALL_THROUGH)) != 0;
@@ -1084,15 +1131,20 @@ public class Bytecodes {
 
     /**
      * Determines if a given opcode is an instruction that has a 2 or 4 byte operand that is an offset to another
-     * instruction in the same method. This does not include the {@linkplain #SWITCH switch} instructions.
+     * instruction in the same method. This does not include the {@linkplain #TABLESWITCH switch} instructions.
      *
      * @param opcode an opcode to test
-     * @return {@code true} if {@code opcode} is a branch instruction with a single operand
+     * @return {@code true} iff {@code opcode} is a branch instruction with a single operand
      */
     public static boolean isBranch(int opcode) {
         return (flags[opcode & 0xff] & BRANCH) != 0;
     }
 
+    /**
+     * Determines if a given opcode denotes a conditional branch.
+     * @param opcode
+     * @return {@code true} iff {@code opcode} is a conditional branch
+     */
     public static boolean isConditionalBranch(int opcode) {
         return (flags[opcode & 0xff] & FALL_THROUGH) != 0;
     }
@@ -1102,28 +1154,39 @@ public class Bytecodes {
      * defined in the JVM specification.
      *
      * @param opcode an opcode to test
-     * @return {@code true} if {@code opcode} is a standard bytecode
+     * @return {@code true} iff {@code opcode} is a standard bytecode
      */
     public static boolean isStandard(int opcode) {
         return (flags[opcode & 0xff] & EXTENSION) == 0;
     }
 
     /**
-     * Determines if a given opcode includes an operand value.
+     * Determines if a given opcode denotes an extended bytecode.
+     *
+     * @param opcode an opcode to test
+     * @return {@code true} if {@code opcode} is an extended bytecode
+     */
+    public static boolean isExtended(int opcode) {
+    	return (flags[opcode & 0xff] & EXTENSION) != 0;
+    }
+
+    /**
+     * Determines if a given opcode is a two-byte extended bytecode.
      *
      * @param opcode an opcode to test
      * @return {@code true} if {@code (opcode & ~0xff) != 0}
      */
-    public static boolean isExtended(int opcode) {
+    public static boolean isTwoByteExtended(int opcode) {
         return (opcode & ~0xff) != 0;
     }
 
     /**
-     * Gets an arithmetic operator name for a given opcode. If {@code opcode} does not denote an
+     * Gets the arithmetic operator name for a given opcode. If {@code opcode} does not denote an
      * arithmetic instruction, then the {@linkplain #nameOf(int) name} of the opcode is returned
      * instead.
      *
      * @param op an opcode
+     * @return the arithmetic operator name
      */
     public static String operator(int op) {
         switch (op) {
@@ -1167,7 +1230,7 @@ public class Bytecodes {
     }
 
     /**
-     * This method attempts to fold a binary operation on two constant integer inputs.
+     * Attempts to fold a binary operation on two constant integer inputs.
      *
      * @param opcode the bytecode operation to perform
      * @param x the first input
@@ -1204,7 +1267,7 @@ public class Bytecodes {
     }
 
     /**
-     * This method attempts to fold a binary operation on two constant long inputs.
+     * Attempts to fold a binary operation on two constant long inputs.
      *
      * @param opcode the bytecode operation to perform
      * @param x the first input
@@ -1253,7 +1316,7 @@ public class Bytecodes {
     public static native long unsignedRemainderByInt(long x, int y);
 
     /**
-     * This method attempts to fold a binary operation on two constant word inputs.
+     * Attempts to fold a binary operation on two constant word inputs.
      *
      * @param opcode the bytecode operation to perform
      * @param x the first input
@@ -1275,6 +1338,15 @@ public class Bytecodes {
         return null;
     }
 
+    /**
+     * Attempts to fold a binary operation on two constant {@code float} inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return a {@code Float} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
+     */
     public static strictfp Float foldFloatOp2(int opcode, float x, float y) {
         switch (opcode) {
             case FADD: return x + y;
@@ -1286,6 +1358,15 @@ public class Bytecodes {
         return null;
     }
 
+    /**
+     * Attempts to fold a binary operation on two constant {@code double} inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return a {@code Double} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
+     */
     public static strictfp Double foldDoubleOp2(int opcode, double x, double y) {
         switch (opcode) {
             case DADD: return x + y;
@@ -1297,6 +1378,13 @@ public class Bytecodes {
         return null;
     }
 
+    /**
+     * Attempts to fold a comparison operation on two constant {@code long} inputs.
+     *
+     * @param x the first input
+     * @param y the second input
+     * @return an {@code int}  representing the result of the compare
+     */
     public static int foldLongCompare(long x, long y) {
         if (x < y) {
             return -1;
@@ -1307,6 +1395,15 @@ public class Bytecodes {
         return 1;
     }
 
+    /**
+     * Attempts to fold a comparison operation on two constant {@code float} inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return an {@code Integer}  instance representing the result of the compare,
+     * if it is foldable, {@code null} otherwise
+     */
     public static Integer foldFloatCompare(int opcode, float x, float y) {
         // unfortunately we cannot write Java source to generate FCMPL or FCMPG
         int result = 0;
@@ -1329,6 +1426,15 @@ public class Bytecodes {
         return null; // unknown compare opcode
     }
 
+    /**
+     * Attempts to fold a comparison operation on two constant {@code double} inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return an {@code Integer}  instance representing the result of the compare,
+     * if it is foldable, {@code null} otherwise
+     */
     public static Integer foldDoubleCompare(int opcode, double x, double y) {
         // unfortunately we cannot write Java source to generate DCMPL or DCMPG
         int result = 0;
@@ -1355,33 +1461,44 @@ public class Bytecodes {
         def(name, format, 0);
     }
 
-    private static void def(String name, String format, int flags) {
+    /**
+     * Defines a bytecode by entering it into the arrays that record its state.
+     * @param name instruction name (lower case)
+     * @param format encodes the length of the instruction
+     * @param byteCodeFlags the set of {@link Flags} associated with the instruction
+     */
+    private static void def(String name, String format, int byteCodeFlags) {
         try {
             Field field = Bytecodes.class.getDeclaredField(name.toUpperCase());
             int opcode = field.getInt(null);
             assert names[opcode] == null : "opcode " + opcode + " is already bound to name " + names[opcode];
             names[opcode] = name;
-            int length = format.length();
-            Bytecodes.length[opcode] = length;
-            Bytecodes.flags[opcode] = flags;
+            int byteCodeLength = format.length();
+            length[opcode] = byteCodeLength;
+            flags[opcode] = byteCodeFlags;
 
             assert !isConditionalBranch(opcode) || isBranch(opcode) : "a conditional branch must also be a branch";
 
-            if (!isStandard(opcode)) {
+            /*
+             * All the two-byte extended instructions are entered with one call of this method, using the common
+             * first-byte value that is shared among members of the instruction variant, e.g., PREAD for PREAD_BYTE, PREAD_INT,...
+             * N.B. There is currently no simple way to tell if an extended instruction has two-byte variants, so
+             * the code below using prefix name matching.
+             */
+            if (isExtended(opcode)) {
                 for (Field otherField : Bytecodes.class.getDeclaredFields()) {
                     if (otherField.getName().startsWith(field.getName()) && !otherField.equals(field)) {
-                        String extName = otherField.getName();
+                    	// we have a prefix match, necessary but not sufficient
                         int opcodeWithOperand = otherField.getInt(null);
-                        if (isExtended(opcodeWithOperand)) {
-                            assert length == 3;
+                        if (isTwoByteExtended(opcodeWithOperand)) {
+                            String extName = otherField.getName();
+                            assert byteCodeLength == 3;
                             assert (opcodeWithOperand & 0xff) == opcode : "Extended opcode " + extName + " must share same low 8 bits as " + field.getName();
-                            String oldValue = extNames.put(opcodeWithOperand, extName.toLowerCase());
+                            String oldValue = twoByteExtNames.put(opcodeWithOperand, extName.toLowerCase());
                             assert oldValue == null;
                         }
                     }
                 }
-            } else {
-                assert !isExtended(opcode);
             }
 
         } catch (Exception e) {
