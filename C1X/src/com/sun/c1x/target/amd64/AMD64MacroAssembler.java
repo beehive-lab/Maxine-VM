@@ -452,7 +452,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         // provoke OS null exception if reg = null by
         // accessing M[reg] w/o changing any (non-CC) registers
         // NOTE: cmpl is plenty here to provoke a segv
-        cmpptr(AMD64.rax, new CiAddress(CiKind.Word, reg.asLocation(Word), 0));
+        cmpptr(AMD64.rax, new CiAddress(CiKind.Word, reg.asValue(Word), 0));
         // Note: should probably use testl(X86Register.rax, new Address(reg, 0));
         // may be shorter code (however, this version of
         // testl needs to be implemented first)
@@ -582,7 +582,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     public void safepoint(LIRDebugInfo info) {
         CiRegister safepointRegister = compiler.target.registerConfig.getSafepointRegister();
         recordSafepoint(codeBuffer.position(), info.registerRefMap(), info.stackRefMap(), info.debugInfo());
-        movq(safepointRegister, new CiAddress(CiKind.Word, safepointRegister.asLocation(CiKind.Word)));
+        movq(safepointRegister, new CiAddress(CiKind.Word, safepointRegister.asValue(CiKind.Word)));
     }
 
     public void enter(short imm16, byte imm8) {

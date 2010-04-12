@@ -20,7 +20,7 @@
  */
 package com.sun.cri.ci;
 
-import com.sun.cri.ri.RiMethod;
+import com.sun.cri.ri.*;
 
 /**
  * This class represents a code position (i.e. a chain of inlined methods with bytecode

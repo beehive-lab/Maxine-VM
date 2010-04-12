@@ -22,8 +22,7 @@ package com.sun.cri.xir;
 
 import static com.sun.cri.xir.CiXirAssembler.XirOp.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import com.sun.cri.ci.*;
 
@@ -509,7 +508,7 @@ public abstract class CiXirAssembler {
 
     public XirOperand createRegister(String name, CiKind kind, CiRegister register) {
     	assert !finished;
-        XirFixed fixed = new XirFixed(name, register.asLocation(kind));
+        XirFixed fixed = new XirFixed(name, register.asValue(kind));
         temps.add(fixed);
         return fixed;
     }

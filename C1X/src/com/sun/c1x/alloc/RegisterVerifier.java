@@ -253,7 +253,7 @@ final class RegisterVerifier {
             // invalidate all caller save registers at calls
             if (op.hasCall()) {
                 for (CiRegister r : allocator.compilation.target.allocationSpec.callerSaveRegisters) {
-                    statePut(inputState, r.asLocation(), null);
+                    statePut(inputState, r.asValue(), null);
                 }
             }
 

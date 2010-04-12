@@ -20,7 +20,7 @@
  */
 package com.sun.cri.ri;
 
-import com.sun.cri.ci.CiConstant;
+import com.sun.cri.ci.*;
 
 /**
  * Encapsulates a call to a {@link RiMethod} implementing a {@linkplain RiSnippets RI snippet}.

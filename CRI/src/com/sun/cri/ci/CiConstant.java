@@ -20,6 +20,10 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
+import java.lang.reflect.*;
+import java.util.*;
+
 
 /**
  * This class represents a boxed value, such as integer, floating point number, or object reference,
@@ -29,22 +33,56 @@ package com.sun.cri.ci;
  */
 public final class CiConstant extends CiValue {
 
-    public static final CiConstant NULL_OBJECT = new CiConstant(CiKind.Object, null);
-    public static final CiConstant ZERO = new CiConstant(CiKind.Word, 0L);
-    public static final CiConstant INT_MINUS_1 = new CiConstant(CiKind.Int, -1);
-    public static final CiConstant INT_0 = new CiConstant(CiKind.Int, 0);
-    public static final CiConstant INT_1 = new CiConstant(CiKind.Int, 1);
-    public static final CiConstant INT_2 = new CiConstant(CiKind.Int, 2);
-    public static final CiConstant INT_3 = new CiConstant(CiKind.Int, 3);
-    public static final CiConstant INT_4 = new CiConstant(CiKind.Int, 4);
-    public static final CiConstant INT_5 = new CiConstant(CiKind.Int, 5);
-    public static final CiConstant LONG_0 = new CiConstant(CiKind.Long, 0L);
-    public static final CiConstant LONG_1 = new CiConstant(CiKind.Long, 1L);
-    public static final CiConstant FLOAT_0 = new CiConstant(CiKind.Float, 0.0F);
-    public static final CiConstant FLOAT_1 = new CiConstant(CiKind.Float, 1.0F);
-    public static final CiConstant FLOAT_2 = new CiConstant(CiKind.Float, 2.0F);
-    public static final CiConstant DOUBLE_0 = new CiConstant(CiKind.Double, 0.0D);
-    public static final CiConstant DOUBLE_1 = new CiConstant(CiKind.Double, 1.0D);
+    /**
+     * Cache for non-Object boxed constants.
+     */
+    private static final Map<Object, CiConstant>[] cache;
+    
+    @SuppressWarnings("unchecked")
+    private static <T> T suppressCastWarning(Object object) {
+        return (T) object;
+    }
+
+    static {
+        final Object array = Array.newInstance(Map.class, CiKind.VALUES.length);
+        cache = suppressCastWarning(array);
+        for (CiKind kind : CiKind.VALUES) {
+            if (!kind.isVoid() & !kind.isObject()) {
+                cache[kind.ordinal()] = new HashMap<Object, CiConstant>();
+            }
+        }
+    }
+    
+    /**
+     * 
+     * @param out
+     */
+    public static void dumpCacheStats(PrintStream out) {
+        out.println("CiConstant cache contents:");
+        for (CiKind kind : CiKind.VALUES) {
+            Map<Object, CiConstant> map = cache[kind.ordinal()];
+            if (map != null) {
+                out.printf("  %8s: %d%n", kind, map.size());
+            }
+        }
+    }
+    
+    public static final CiConstant NULL_OBJECT = get(CiKind.Object, null);
+    public static final CiConstant ZERO = get(CiKind.Word, 0L);
+    public static final CiConstant INT_MINUS_1 = get(CiKind.Int, -1);
+    public static final CiConstant INT_0 = get(CiKind.Int, 0);
+    public static final CiConstant INT_1 = get(CiKind.Int, 1);
+    public static final CiConstant INT_2 = get(CiKind.Int, 2);
+    public static final CiConstant INT_3 = get(CiKind.Int, 3);
+    public static final CiConstant INT_4 = get(CiKind.Int, 4);
+    public static final CiConstant INT_5 = get(CiKind.Int, 5);
+    public static final CiConstant LONG_0 = get(CiKind.Long, 0L);
+    public static final CiConstant LONG_1 = get(CiKind.Long, 1L);
+    public static final CiConstant FLOAT_0 = get(CiKind.Float, 0.0F);
+    public static final CiConstant FLOAT_1 = get(CiKind.Float, 1.0F);
+    public static final CiConstant FLOAT_2 = get(CiKind.Float, 2.0F);
+    public static final CiConstant DOUBLE_0 = get(CiKind.Double, 0.0D);
+    public static final CiConstant DOUBLE_1 = get(CiKind.Double, 1.0D);
 
     private final Object value;
 
@@ -54,11 +92,37 @@ public final class CiConstant extends CiValue {
      * @param kind the type of this constant
      * @param value the value of this constant
      */
-    public CiConstant(CiKind kind, Object value) {
+    private CiConstant(CiKind kind, Object value) {
         super(kind);
         this.value = value;
     }
 
+    /**
+     * Gets a boxed value for a given value of a given kind. For non-object kinds,
+     * this operation tries to find a cached copy of the boxed value.
+     * 
+     * @param kind the kind of {@code value}
+     * @param value the value to box
+     * @return a boxed copy of {@code value}
+     */
+    public static CiConstant get(CiKind kind, Object value) {
+        if (kind.isObject()) {
+            return new CiConstant(kind, value);
+        }
+        Map<Object, CiConstant> map = cache[kind.ordinal()];
+        CiConstant constant = map.get(value);
+        if (constant == null) {
+            synchronized (map) {
+                constant = map.get(value);
+                if (constant == null) {
+                    constant = new CiConstant(kind, value);
+                    map.put(value, constant);
+                }
+            }
+        }
+        return constant;
+    }
+    
     /**
      * Checks whether this constant is non-null.
      * @return {@code true} if this constant is a primitive, or an object constant that is not null
@@ -110,6 +174,16 @@ public final class CiConstant extends CiValue {
         if (value == other.value) {
             return true;
         } else if (!kind.isObject() && value != null && value.equals(other.value)) {
+            return true;
+        }
+        return false;
+    }
+    
+    private static boolean valuesEqual(Object o1, Object o2, CiKind kind) {
+        // use == for object references and .equals() for boxed types
+        if (o1 == o2) {
+            return true;
+        } else if (!kind.isObject() && o1.equals(o2)) {
             return true;
         }
         return false;
@@ -261,36 +335,36 @@ public final class CiConstant extends CiValue {
     }
 
     /**
-     * Utility method to create a value type for a double constant.
-     * @param d the double value for which to create the value type
-     * @return a value type representing the double
+     * Creates a boxed double constant.
+     * @param d the double value to box
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forDouble(double d) {
-        return new CiConstant(CiKind.Double, d);
+        return get(CiKind.Double, d);
     }
 
     /**
-     * Utility method to create a value type for a float constant.
-     * @param f the float value for which to create the value type
-     * @return a value type representing the float
+     * Creates a boxed float constant.
+     * @param f the float value to box
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forFloat(float f) {
-        return new CiConstant(CiKind.Float, f);
+        return get(CiKind.Float, f);
     }
 
     /**
-     * Utility method to create a value type for an long constant.
-     * @param i the long value for which to create the value type
-     * @return a value type representing the long
+     * Creates a boxed long constant.
+     * @param i the long value to box
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forLong(long i) {
-        return i == 0 ? LONG_0 : i == 1 ? LONG_1 : new CiConstant(CiKind.Long, i);
+        return i == 0 ? LONG_0 : i == 1 ? LONG_1 : get(CiKind.Long, i);
     }
 
     /**
-     * Utility method to create a value type for an integer constant.
-     * @param i the integer value for which to create the value type
-     * @return a value type representing the integer
+     * Creates a boxed integer constant.
+     * @param i the integer value to box
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forInt(int i) {
         switch (i) {
@@ -302,75 +376,75 @@ public final class CiConstant extends CiValue {
             case 4  : return INT_4;
             case 5  : return INT_5;
         }
-        return new CiConstant(CiKind.Int, i);
+        return get(CiKind.Int, i);
     }
 
     /**
-     * Utility method to create a value type for a byte constant.
-     * @param i the byte value for which to create the value type
-     * @return a value type representing the byte
+     * Creates a boxed byte constant.
+     * @param i the byte value to box
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forByte(byte i) {
-        return new CiConstant(CiKind.Byte, i);
+        return get(CiKind.Byte, i);
     }
 
     /**
-     * Utility method to create a value type for a boolean constant.
-     * @param i the boolean value for which to create the value type
-     * @return a value type representing the boolean
+     * Creates a boxed boolean constant.
+     * @param i the boolean value to box
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forBoolean(boolean i) {
-        return new CiConstant(CiKind.Boolean, i);
+        return get(CiKind.Boolean, i);
     }
 
     /**
-     * Utility method to create a value type for a char constant.
-     * @param i the char value for which to create the value type
-     * @return a value type representing the char
+     * Creates a boxed char constant.
+     * @param i the char value to box
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forChar(char i) {
-        return new CiConstant(CiKind.Char, i);
+        return get(CiKind.Char, i);
     }
 
     /**
-     * Utility method to create a value type for a short constant.
-     * @param i the short value for which to create the value type
-     * @return a value type representing the short
+     * Creates a boxed short constant.
+     * @param i the short value to box
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forShort(short i) {
-        return new CiConstant(CiKind.Short, i);
+        return get(CiKind.Short, i);
     }
 
     /**
-     * Utility method to create a value type for an address (jsr/ret address) constant.
-     * @param i the address value for which to create the value type
-     * @return a value type representing the address
+     * Creates a boxed address (jsr/ret address) constant.
+     * @param i the address value to box
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forJsr(int i) {
-        return new CiConstant(CiKind.Jsr, i);
+        return get(CiKind.Jsr, i);
     }
 
     /**
-     * Utility method to create a value type for a word constant.
+     * Creates a boxed word constant.
      * @param i the number representing the word's value, either an {@link Integer} or a {@link Long}
-     * @return a value type representing the word
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forWord(Number i) {
         if (i instanceof Integer || i instanceof Long) {
-            return new CiConstant(CiKind.Word, i); // only Integer and Long are allowed
+            return get(CiKind.Word, i); // only Integer and Long are allowed
         }
         throw new IllegalArgumentException("cannot create word constant for object of type " + i.getClass());
     }
 
     /**
-     * Utility method to create a value type for an object constant.
-     * @param o the object value for which to create the value type
-     * @return a value type representing the object
+     * Creates a boxed object constant.
+     * @param o the object value to box
+     * @return a boxed copy of {@code value}
      */
     public static CiConstant forObject(Object o) {
         if (o == null) {
             return NULL_OBJECT;
         }
-        return new CiConstant(CiKind.Object, o);
+        return get(CiKind.Object, o);
     }
 }

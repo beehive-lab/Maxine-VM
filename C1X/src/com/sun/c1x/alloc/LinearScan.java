@@ -130,7 +130,7 @@ public class LinearScan {
 
     /**
      * Converts an operand (variable or register) to an index in a flat address space covering all the
-     * {@linkplain CiVariable variables} and {@linkplain CiRegisterLocation registers} being processed by this
+     * {@linkplain CiVariable variables} and {@linkplain CiRegisterValue registers} being processed by this
      * allocator.
      */
     int operandNumber(CiLocation operand) {
@@ -1221,7 +1221,7 @@ public class LinearScan {
                 // add a temp range for each register if operation destroys caller-save registers
                 if (op.hasCall()) {
                     for (CiRegister r : callerSaveRegs) {
-                        addTemp(r.asLocation(), opId, UseKind.NoUse, CiKind.Illegal);
+                        addTemp(r.asValue(), opId, UseKind.NoUse, CiKind.Illegal);
                     }
                     if (C1XOptions.TraceLinearScanLevel >= 4) {
                         TTY.println("operation destroys all caller-save registers");
@@ -1315,7 +1315,7 @@ public class LinearScan {
 
                 for (CiRegister r : compilation.target.allocationSpec.callerSaveRegisters) {
                     if (r.isXmm()) {
-                        addTemp(r.asLocation(), opId, UseKind.NoUse, CiKind.Illegal);
+                        addTemp(r.asValue(), opId, UseKind.NoUse, CiKind.Illegal);
                     }
                 }
                 break;

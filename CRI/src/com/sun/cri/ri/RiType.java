@@ -20,8 +20,7 @@
  */
 package com.sun.cri.ri;
 
-import com.sun.cri.ci.CiConstant;
-import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.*;
 
 /**
  * This interface represents a resolved or unresolved type in the compiler

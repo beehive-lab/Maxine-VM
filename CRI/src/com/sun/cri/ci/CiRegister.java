@@ -20,10 +20,9 @@
  */
 package com.sun.cri.ci;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
-import com.sun.cri.ri.RiRegisterConfig;
+import com.sun.cri.ri.*;
 
 /**
  * This class represents a machine register.
@@ -64,7 +63,7 @@ public final class CiRegister {
 
     private final int flags;
     
-    private final CiRegisterLocation[] locations;
+    private final CiRegisterValue[] values;
     
     public enum RegisterFlag {
         /**
@@ -96,9 +95,9 @@ public final class CiRegister {
         this.flags = createMask(flags);
         this.encoding = encoding;
         
-        locations = new CiRegisterLocation[CiKind.VALUES.length];
+        values = new CiRegisterValue[CiKind.VALUES.length];
         for (CiKind kind : CiKind.VALUES) {
-            locations[kind.ordinal()] = new CiRegisterLocation(kind, this);
+            values[kind.ordinal()] = new CiRegisterValue(kind, this);
         }
     }
 
@@ -115,14 +114,14 @@ public final class CiRegister {
     }
 
     /**
-     * Gets this register as a {@linkplain CiLocation location} with a specified kind.
+     * Gets this register as a {@linkplain CiRegisterValue value} with a specified kind.
      */
-    public CiRegisterLocation asLocation(CiKind kind) {
-        return locations[kind.ordinal()];
+    public CiRegisterValue asValue(CiKind kind) {
+        return values[kind.ordinal()];
     }
 
-    public CiRegisterLocation asLocation() {
-        return asLocation(CiKind.Illegal);
+    public CiRegisterValue asValue() {
+        return asValue(CiKind.Illegal);
     }
     
     public boolean isValid() {

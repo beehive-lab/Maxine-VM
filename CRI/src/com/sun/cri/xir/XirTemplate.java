@@ -20,14 +20,9 @@
  */
 package com.sun.cri.xir;
 
-import java.io.PrintStream;
+import java.io.*;
 
-import com.sun.cri.xir.CiXirAssembler.XirConstant;
-import com.sun.cri.xir.CiXirAssembler.XirInstruction;
-import com.sun.cri.xir.CiXirAssembler.XirLabel;
-import com.sun.cri.xir.CiXirAssembler.XirOperand;
-import com.sun.cri.xir.CiXirAssembler.XirParameter;
-import com.sun.cri.xir.CiXirAssembler.XirTemp;
+import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
  * This class represents a completed template of XIR code that has been first assembled by

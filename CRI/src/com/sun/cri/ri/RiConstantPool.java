@@ -20,7 +20,7 @@
  */
 package com.sun.cri.ri;
 
-import com.sun.cri.ci.CiConstant;
+import com.sun.cri.ci.*;
 
 /**
  * This interface represents the runtime representation of the constant pool that is

@@ -20,7 +20,7 @@
  */
 package com.sun.cri.ci;
 
-import java.util.HashMap;
+import java.util.*;
 
 
 /**

@@ -197,9 +197,9 @@ public final class FrameMap {
             CiStackSlot stkOpr = (CiStackSlot) opr;
             int size = compiler.target.sizeInBytes(opr.kind);
             int offset = spOffsetForSlot(stkOpr.index, size);
-            return new CiAddress(opr.kind, CiRegister.Frame.asLocation(), offset);
+            return new CiAddress(opr.kind, CiRegister.Frame.asValue(), offset);
         } else if (opr.isRegister()) {
-            return (CiRegisterLocation) opr;
+            return (CiRegisterValue) opr;
         }
         throw new CiBailout("cannot convert " + opr + "to location");
     }
@@ -216,7 +216,7 @@ public final class FrameMap {
         int spillIndex = ((CiStackSlot) opr).index;
         assert spillIndex >= 0;
         int size = compiler.target.sizeInBytes(opr.kind);
-        return new CiAddress(opr.kind, compiler.target.stackPointerRegister.asLocation(Word), spOffsetForSlot(spillIndex, size) + offset);
+        return new CiAddress(opr.kind, compiler.target.stackPointerRegister.asValue(Word), spOffsetForSlot(spillIndex, size) + offset);
     }
 
     /**
@@ -228,7 +228,7 @@ public final class FrameMap {
      */
     public CiLocation toStackLocation(CiKind kind, int spillIndex) {
         int size = compiler.target.sizeInBytes(kind);
-        return new CiAddress(kind, CiRegister.Frame.asLocation(), spOffsetForSlot(spillIndex, size));
+        return new CiAddress(kind, CiRegister.Frame.asValue(), spOffsetForSlot(spillIndex, size));
     }
 
     /**
@@ -238,7 +238,7 @@ public final class FrameMap {
      * @return a representation of the stack location
      */
     public CiAddress toStackAddress(StackBlock stackBlock) {
-        return new CiAddress(CiKind.Word, compiler.target.stackPointerRegister.asLocation(Word), spOffsetForStackBlock(stackBlock));
+        return new CiAddress(CiKind.Word, compiler.target.stackPointerRegister.asValue(Word), spOffsetForStackBlock(stackBlock));
     }
 
     /**
@@ -247,7 +247,7 @@ public final class FrameMap {
      * @return a representation of the stack location
      */
     public CiLocation toMonitorLocation(int monitorIndex) {
-        return new CiAddress(CiKind.Object, CiRegister.Frame.asLocation(), spOffsetForMonitorObject(monitorIndex));
+        return new CiAddress(CiKind.Object, CiRegister.Frame.asValue(), spOffsetForMonitorObject(monitorIndex));
     }
 
     /**

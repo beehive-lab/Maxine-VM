@@ -20,7 +20,7 @@
  */
 package com.sun.cri.ri;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * This interface represents resolved and unresolved methods.

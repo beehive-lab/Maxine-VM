@@ -20,8 +20,8 @@
  */
 package com.sun.cri.ci;
 
-import com.sun.cri.ri.RiMethod;
-import com.sun.cri.xir.RiXirGenerator;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 /**
  * This class represents a compiler instance which has been configured for a particular runtime system and

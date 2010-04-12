@@ -20,10 +20,7 @@
  */
 package com.sun.cri.ri;
 
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiLocation;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ci.*;
 
 /**
  * This interface represents the register configuration specified by the runtime system

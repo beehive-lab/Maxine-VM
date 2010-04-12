@@ -20,14 +20,7 @@
  */
 package com.sun.cri.ci;
 
-import static com.sun.cri.ci.CiKind.Boolean;
-import static com.sun.cri.ci.CiKind.Double;
-import static com.sun.cri.ci.CiKind.Float;
-import static com.sun.cri.ci.CiKind.Int;
-import static com.sun.cri.ci.CiKind.Long;
-import static com.sun.cri.ci.CiKind.Object;
-import static com.sun.cri.ci.CiKind.Void;
-import static com.sun.cri.ci.CiKind.Word;
+import static com.sun.cri.ci.CiKind.*;
 
 /**
  * This enumeration lists the calls that must be provided by the runtime system. The compiler

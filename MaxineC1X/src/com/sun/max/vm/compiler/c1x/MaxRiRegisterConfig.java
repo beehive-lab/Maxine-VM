@@ -233,7 +233,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                 case Object:
                     if (currentGeneral < generalParameterRegisters.length) {
                         CiRegister register = generalParameterRegisters[currentGeneral++];
-                        result[i] = register.asLocation(kind);
+                        result[i] = register.asValue(kind);
                     }
                     break;
 
@@ -241,7 +241,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                 case Double:
                     if (currentXMM < xmmParameterRegisters.length) {
                         CiRegister register = xmmParameterRegisters[currentXMM++];
-                        result[i] = register.asLocation(kind);
+                        result[i] = register.asValue(kind);
                     }
                     break;
 
@@ -250,7 +250,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
             }
 
             if (result[i] == null) {
-                result[i] = new CiAddress(kind, outgoing ? CiRegister.Frame.asLocation() : CiRegister.CallerFrame.asLocation(), currentStackSlot);
+                result[i] = new CiAddress(kind, outgoing ? CiRegister.Frame.asValue() : CiRegister.CallerFrame.asValue(), currentStackSlot);
                 currentStackSlot += target.spillSlots(kind) * target.spillSlotSize;
             }
         }

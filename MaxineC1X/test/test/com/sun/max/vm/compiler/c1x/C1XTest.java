@@ -355,7 +355,7 @@ public class C1XTest {
     }
 
     private static boolean isCompilable(MethodActor method) {
-        return method instanceof ClassMethodActor && !method.isAbstract() /*&& !method.isNative()*/ && !method.isBuiltin() && !method.isIntrinsic();
+        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative() && !method.isBuiltin() && !method.isIntrinsic();
     }
 
     enum PatternType {
@@ -658,6 +658,7 @@ public class C1XTest {
         if (C1XOptions.PrintMetrics) {
             printClassFields(C1XMetrics.class);
         }
+        CiConstant.dumpCacheStats(out);
         List<String> metrics = metricsOption.getValue();
         if (metrics.size() > 0) {
             for (String s : metrics) {

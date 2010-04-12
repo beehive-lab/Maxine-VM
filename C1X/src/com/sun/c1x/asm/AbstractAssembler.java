@@ -175,7 +175,7 @@ public abstract class AbstractAssembler {
         }
 
         targetMethod.recordDataReference(pos, data);
-        return CiAddress.InternalRelocation;
+        return CiAddress.Placeholder;
     }
 
     protected int target(Label l) {

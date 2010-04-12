@@ -20,9 +20,9 @@
  */
 package com.sun.cri.ri;
 
-import java.io.OutputStream;
+import java.io.*;
 
-import com.sun.cri.ci.CiTargetMethod;
+import com.sun.cri.ci.*;
 
 /**
  * This interface encapsulates the main functionality of the runtime for the compiler, including access

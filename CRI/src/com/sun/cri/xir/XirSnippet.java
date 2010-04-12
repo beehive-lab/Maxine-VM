@@ -20,8 +20,8 @@
  */
 package com.sun.cri.xir;
 
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.xir.CiXirAssembler.XirParameter;
+import com.sun.cri.ci.*;
+import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
  * This class represents a {@link XirTemplate template of XIR} along with the
