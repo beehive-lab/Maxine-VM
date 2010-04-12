@@ -56,17 +56,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     private static Size TLAB_HEADROOM;
 
     /**
-     * Region describing the currently committed heap space.
-     */
-    RuntimeMemoryRegion committedHeapSpace;
-
-    /**
      * A marking algorithm for the MSHeapScheme.
      */
     final TricolorHeapMarker heapMarker;
 
     /**
-     * Free Space Manager.
+     * Free Space Manager. Also implement sweeping.
      */
     final FreeHeapSpaceManager freeSpace;
 
@@ -81,7 +76,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
         freeSpace = new FreeHeapSpaceManager();
         totalUsedSpace = Size.zero();
-        committedHeapSpace = new RuntimeMemoryRegion("Heap");
     }
 
 
@@ -123,17 +117,15 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             reportPristineMemoryFailure("object heap", initSize);
         }
 
-        committedHeapSpace.setStart(endOfCodeRegion);
-        committedHeapSpace.setSize(initSize);
+        freeSpace.initialize(endOfCodeRegion, initSize);
 
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
-        final Address endOfHeap = committedHeapSpace.start().plus(maxSize);
+        final Address endOfHeap = endOfCodeRegion.plus(maxSize);
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
         if (!VirtualMemory.allocatePageAlignedAtFixedAddress(endOfHeap, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
             reportPristineMemoryFailure("heap marker data", heapMarkerDatasize);
         }
-        heapMarker.initialize(committedHeapSpace, endOfHeap, heapMarkerDatasize);
-        freeSpace.initialize(committedHeapSpace);
+        heapMarker.initialize(freeSpace.committedHeapSpace(), endOfHeap, heapMarkerDatasize);
     }
 
 
@@ -150,7 +142,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean contains(Address address) {
-        return committedHeapSpace.contains(address);
+        return freeSpace.committedHeapSpace().contains(address);
     }
 
     public final void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
@@ -200,6 +192,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
             heapMarker.markAll();
+            freeSpace.reclaim(heapMarker);
 
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
             HeapScheme.Static.notifyGCCompleted();

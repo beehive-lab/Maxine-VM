@@ -76,17 +76,17 @@ public class MarkingStack {
         // FIXME: should be allocated in the heap, outside of the covered area, as a  reference array,
         // Root marking will skip it.
         // Same with the other GC data structures (i.e., rescan map and mark bitmap)
-
-        final int size = markingStackSizeOption.getValue() << Word.widthValue().log2numberOfBytes;
+        final int length = markingStackSizeOption.getValue();
+        final int size = length << Word.widthValue().log2numberOfBytes;
         base = Memory.allocate(Size.fromInt(size));
         if (base.isZero()) {
             ((HeapSchemeAdaptor) VMConfiguration.target().heapScheme()).reportPristineMemoryFailure("marking stack", Size.fromInt(size));
         }
-        last = size - 1;
-        drainThreshold = (size * 2) / 3;
+        last = length - 1;
+        drainThreshold = (length * 2) / 3;
     }
 
-    Size size() {
+    Size length() {
         return Size.fromInt(last + 1);
     }
 

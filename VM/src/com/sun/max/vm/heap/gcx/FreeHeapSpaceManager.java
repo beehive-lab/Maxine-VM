@@ -28,6 +28,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -45,9 +46,9 @@ import com.sun.max.vm.tele.*;
  *
  * @author Laurent Daynes.
  */
-public class FreeHeapSpaceManager {
+public class FreeHeapSpaceManager extends HeapSweeper {
     private static final VMIntOption largeObjectsMinSizeOption =
-        register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(4).toInt(),
+        register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(16).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
 
     private static final VMIntOption freeChunkMinSizeOption =
@@ -56,13 +57,18 @@ public class FreeHeapSpaceManager {
                         "Below this size, the space is ignored (dark matter)"),
                         MaxineVM.Phase.PRISTINE);
 
+    private static final VMBooleanXXOption doImpreciseSweepOption = register(new VMBooleanXXOption("-XX:+",
+                    "ImpreciseSweep",
+                    "Perform imprecise sweeping phase"),
+                    MaxineVM.Phase.PRISTINE);
+
+    /**
+     * Minimum size to be treated as a large object.
+     */
     @CONSTANT_WHEN_NOT_ZERO
     static Size minLargeObjectSize;
 
     static int log2MinFreeChunkSize;
-
-    @CONSTANT_WHEN_NOT_ZERO
-    static Size minFreeChunkSize;
 
     private static  final Size TINY_OBJECT_SIZE = Size.fromInt(Word.size() * 2);
 
@@ -249,46 +255,158 @@ public class FreeHeapSpaceManager {
         }
     }
 
+    /**
+     * Region describing the currently committed heap space.
+     */
+    private final RuntimeMemoryRegion committedHeapSpace;
+    private boolean doImpreciseSweep;
     private final HeapSpaceAllocator largeObjectAllocator;
     private final HeapSpaceAllocator smallObjectAllocator;
 
     /**
+     * Head of a linked list of free space recovered by the Sweeper.
+     * Chunks are appended in the list only during sweeping.
+     * The entries are therefore ordered from low to high addresses
+     * (they are entered as the sweeper discover them).
+     */
+    final class FreeSpaceList {
+        Address head;
+        Address last;
+        long totalSize;
+        long totalChunks;
+
+        FreeSpaceList() {
+            head = Address.zero();
+            last = Address.zero();
+            totalSize = 0L;
+            totalChunks = 0L;
+        }
+        void append(Address chunk, Size size) {
+            HeapFreeChunk.format(chunk, size);
+            if (last.isZero()) {
+                head = chunk;
+            } else {
+                HeapFreeChunk.setFreeChunkNext(last, chunk);
+            }
+            last = chunk;
+            totalSize += size.toLong();
+            totalChunks++;
+        }
+    }
+
+    /**
      * Free space is managed via segregated list. The minimum chunk size managed is minFreeChunkSize.
      */
-    final Address [] freeChunkBins = new Address[10];
+    final FreeSpaceList [] freeChunkBins = new FreeSpaceList[10];
 
     /**
      * Total space in free chunks. This doesn't include space of chunks allocated to heap space allocator.
      */
     long totalFreeChunkSpace;
 
-    void recordFreeSpace(Address freeChunk, Size size) {
-        int binIndex = size.toInt() >> log2MinFreeChunkSize;
-        if  (binIndex > freeChunkBins.length) {
-            binIndex = freeChunkBins.length - 1;
-        }
-        HeapFreeChunk.setFreeChunkNext(freeChunk, freeChunkBins[binIndex]);
-        freeChunkBins[binIndex] = freeChunk;
+    /**
+     * Recording of free chunk of space.
+     * Chunks are recording in different list depending on their size.
+     * @param freeChunk
+     * @param size
+     */
+    @Override
+    public final void recordFreeSpace(Address freeChunk, Size size) {
+        long l = size.toLong() >> log2MinFreeChunkSize;
+        int binIndex =  (l > freeChunkBins.length) ?  (freeChunkBins.length - 1) : (int) l;
+        freeChunkBins[binIndex].append(freeChunk, size);
         totalFreeChunkSpace += size.toLong();
     }
 
+    private Size minReclaimableSpace;
+    private Pointer endOfLastVisitedObject;
+    private Size darkMatter = Size.zero();
+
+    @INLINE
+    private Pointer setEndOfLastVisitedObject(Pointer cell) {
+        final Pointer origin = Layout.cellToOrigin(cell);
+        endOfLastVisitedObject = cell.plus(Layout.size(origin));
+        return endOfLastVisitedObject;
+    }
+
+    void setMinReclaimableSpace(Size size) {
+        minReclaimableSpace = size;
+    }
+
+    @Override
+    public Pointer processLiveObject(Pointer liveObject) {
+        final Size deadSpace = liveObject.minus(endOfLastVisitedObject).asSize();
+        if (deadSpace.greaterThan(minReclaimableSpace)) {
+            recordFreeSpace(endOfLastVisitedObject, deadSpace);
+        } else {
+            darkMatter.plus(deadSpace);
+        }
+        endOfLastVisitedObject = liveObject.plus(Layout.size(Layout.cellToOrigin(liveObject)));
+        return endOfLastVisitedObject;
+    }
+
+
+    @Override
+    public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
+        Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
+        Size deadSpace = rightLiveObject.minus(endOfLeftObject).asSize();
+        if (deadSpace.greaterEqual(minReclaimableSpace)) {
+            recordFreeSpace(endOfLeftObject, deadSpace);
+        } else {
+            darkMatter.plus(deadSpace);
+        }
+        return rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
+    }
+
+    void print() {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("Min reclaimable space: "); Log.print(minReclaimableSpace);
+        Log.print("Dark matter: "); Log.print(darkMatter);
+        for (int i = 0; i < freeChunkBins.length; i++) {
+            Log.print("Bin ["); Log.print(i); Log.print("] (");
+            Log.print(i << log2MinFreeChunkSize); Log.print("<= chunk size < "); Log.print((i + 1) << log2MinFreeChunkSize);
+            Log.print(") total chunks: "); Log.print(freeChunkBins[i].totalChunks);
+            Log.print("total space : "); Log.println(freeChunkBins[i].totalSize);
+        }
+        Log.unlock(lockDisabledSafepoints);
+    }
+
+    public RuntimeMemoryRegion committedHeapSpace() {
+        return committedHeapSpace;
+    }
+
     public FreeHeapSpaceManager() {
+        committedHeapSpace = new RuntimeMemoryRegion("Heap");
         totalFreeChunkSpace = 0;
         for (int i = 0; i < freeChunkBins.length; i++) {
-            freeChunkBins[i] = Address.zero();
+            freeChunkBins[i] = new FreeSpaceList();
         }
         smallObjectAllocator = new HeapSpaceAllocator("Small Objects Allocator", new SmallObjectAllocationFailureHandler());
         largeObjectAllocator = new HeapSpaceAllocator("Large Objects Allocator", new LargeObjectAllocationFailureHandler());
     }
 
-    public void initialize(RuntimeMemoryRegion committedSpace) {
+    public void initialize(Address start, Size initSize) {
+        committedHeapSpace.setStart(start);
+        committedHeapSpace.setSize(initSize);
         // Round down to power of two.
         minLargeObjectSize = Size.fromInt(Integer.highestOneBit(largeObjectsMinSizeOption.getValue()));
         log2MinFreeChunkSize = Integer.numberOfTrailingZeros(minLargeObjectSize.toInt());
-        smallObjectAllocator.initialize(committedSpace.start(), committedSpace.size(), minLargeObjectSize);
+        minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
+        doImpreciseSweep = doImpreciseSweepOption.getValue();
+        smallObjectAllocator.initialize(committedHeapSpace.start(), committedHeapSpace.size(), minLargeObjectSize);
         largeObjectAllocator.initialize(Address.zero(), Size.zero(), Size.fromLong(Long.MAX_VALUE));
         InspectableHeapInfo.init(smallObjectAllocator, largeObjectAllocator);
         // InspectableHeapInfo.init(committedSpace);
+    }
+
+    public void reclaim(TricolorHeapMarker heapMarker) {
+        if (doImpreciseSweep) {
+            darkMatter.plus(heapMarker.impreciseSweep(this, minReclaimableSpace));
+        } else {
+            endOfLastVisitedObject = committedHeapSpace.start().asPointer();
+            heapMarker.sweep(this);
+        }
+        print();
     }
 
     /**
@@ -386,14 +504,5 @@ public class FreeHeapSpaceManager {
     @INLINE
     public final Pointer allocateLarge(Size size) {
         return largeObjectAllocator.allocate(size);
-    }
-
-    /**
-     * Return value indicated if the specified number of bytes may be allocated without GC s.
-     * @param size
-     * @return
-     */
-    boolean canAllocate(Size size) {
-        return false;
     }
 }
