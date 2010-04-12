@@ -83,7 +83,6 @@ final class HeapFreeChunk {
     private static native HeapFreeChunk asHeapFreeChunk(Object freeChunk);
 
     static HeapFreeChunk toHeapFreeChunk(Address address) {
-        FatalError.check(Safepoint.isDisabled(), "leaking a HeapFreeChunk");
         return asHeapFreeChunk(Reference.fromOrigin(address.asPointer()).toJava());
     }
 
