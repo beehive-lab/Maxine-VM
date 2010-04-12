@@ -788,13 +788,9 @@ function run_javadoc() {
 image_configs=( \
     java#-run=java \
     c1x-opt0#--C1X:OptLevel=0,-opt=com.sun.max.vm.compiler.c1x \
-    c1x-opt0x#--C1X:OptLevel=0,-opt=com.sun.max.vm.compiler.c1x,--C1X:+UseXIR \
-    c1x-opt1#--C1X:OptLevel=1,-opt=com.sun.max.vm.compiler.c1x,--C1X:-UseXIR \
-    c1x-opt1x#--C1X:OptLevel=1,-opt=com.sun.max.vm.compiler.c1x,--C1X:+UseXIR \
-    c1x-opt2#--C1X:OptLevel=2,-opt=com.sun.max.vm.compiler.c1x,--C1X:-UseXIR \
-    c1x-opt2x#--C1X:OptLevel=2,-opt=com.sun.max.vm.compiler.c1x,--C1X:+UseXIR \
-    c1x-opt3#--C1X:OptLevel=3,-opt=com.sun.max.vm.compiler.c1x,--C1X:-UseXIR \
-    c1x-opt3x#--C1X:OptLevel=3,-opt=com.sun.max.vm.compiler.c1x,--C1X:+UseXIR \
+    c1x-opt1#--C1X:OptLevel=1,-opt=com.sun.max.vm.compiler.c1x \
+    c1x-opt2#--C1X:OptLevel=2,-opt=com.sun.max.vm.compiler.c1x \
+    c1x-opt3#--C1X:OptLevel=3,-opt=com.sun.max.vm.compiler.c1x \
     cpsc1x#-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.all \
     cpscps#-run=test.com.sun.max.vm.jtrun.all,-native-tests \
     cpsjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
