@@ -34,14 +34,19 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * A marking algorithm that uses a three-color mark-bitmap with a fixed-size tiny marking stack, a rescan map, and a
- * finger.The three-color mark-bitmap consumes as much space overhead as a two-color mark bitmap, thanks to padding tiny
- * objects to guarantee two color bits for every objects.
+ * finger. The tricolor mark-bitmap encodes three colors using two consecutive bits but consumes as much space overhead as
+ * a single-bit mark bitmap, thanks to padding rare tiny objects to guarantee two color bits for every objects.
+ * Tracing algorithm uses a single-bit mark bitmap and a fairly large marking stack (from several thousands of references, up
+ * hundreds of thousands of references). The reason for the large marking stack is that if this one overflows, tracing must
+ * rescan the heap starting from leftmost reference that was on the stack, and must visit every marked object from that point,
+ * thus revisiting many objects. The cost of rescan is so overwhelming that a very large marking stack is used to avoid
+ * this possibility. The reason for the blind rescan is that with a single bit, one cannot distinguish visited (black) objects from
+ * unvisited but live (grey) objects.
  *
- * The three colors mark bitmap three colors (white, grey, black) using two consecutive bits. Every bit maps to a fixed
- * chunk of heap such that every object's first words coincide with one fixed chunk. Almost all objects have a size
- * larger than the size of a single chunk covered by one bit. Those that don't (called tiny objects) are segregated or
- * padded (i.e., the heap allocate them the required space cover 2 bits of the mark bitmap). Maxine currently aligns
- * objects on a 8-byte word boundary, uses 8-bytes words, and uses a two-words header.
+ * Every bit maps to a fixed chunk of heap such that every object's first words coincide with one fixed chunk.
+ *  Almost all objects have a size larger than the size of a single chunk covered by one bit. Those that don't
+ *  (called tiny objects) are segregated or padded (i.e., the heap allocate them the required space cover 2 bits of the mark bitmap).
+ *  Maxine currently aligns objects on a 8-byte word boundary, uses 8-bytes words, and uses a two-words header.
  *
  * The following choices are considered:
  * - each bit corresponds to a single word of the heap; Every object is thus guaranteed two-bit; the mark bitmap consumes 16 Kb
@@ -685,6 +690,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return endOfCell;
     }
 
+    @INLINE
     final void markAndVisitPoppedCell(Pointer cell) {
         visitGreyCell(cell);
         markBlackFromGrey(cell);
@@ -696,7 +702,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return endOfCell;
     }
 
-    class MarkingStackCellVisitor extends MarkingStack.MarkingStackCellVisitor {
+    final class MarkingStackCellVisitor extends MarkingStack.MarkingStackCellVisitor {
         Pointer leftmostFlushed;
         void resetLeftmostFlushed() {
             leftmostFlushed = finger;
@@ -718,7 +724,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
-    MarkingStackCellVisitor markStackCellVisitor;
+    MarkingStackCellVisitor markStackCellVisitor = new MarkingStackCellVisitor();
 
     abstract class ColorMapScanState {
         abstract  int rightmostBitmapWordIndex();
@@ -821,7 +827,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param end end of the heap region.
      * @return Return the bit index to the first grey mark found if any, -1 otherwise.
      */
-    public int firstGreyMarks(Pointer start, Pointer end) {
+    public int firstGreyMark(Pointer start, Pointer end) {
         final Pointer colorMapBase = base.asPointer();
         final int lastBitIndex = bitIndexOf(end);
         final int lastBitmapWordIndex = bitmapWordIndex(lastBitIndex);
@@ -857,7 +863,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @return true if the region has no grey objects, false otherwise.
      */
     public boolean verifyHasNoGreyMarks(Pointer start, Pointer end) {
-        return firstGreyMarks(start, end) < 0;
+        return firstGreyMark(start, end) < 0;
     }
 
     public void visitGreyObjects(Pointer start, ColorMapScanState scanState) {
@@ -1068,6 +1074,155 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         markingStack.setCellVisitor(markStackCellVisitor);
         visitGreyObjects(leftmost, forwardScanState);
     }
+
+
+    public Pointer firstBlackObject() {
+        return firstBlackObject(coveredAreaStart, rightmost);
+    }
+
+    public Pointer firstBlackObject(Address start, Address end) {
+        final int bitIndex = firstBlackMark(bitIndexOf(start), bitIndexOf(end));
+        if (bitIndex >= 0) {
+            return addressOf(bitIndex).asPointer();
+        }
+        return Pointer.zero();
+    }
+
+    int firstBlackMark(int firstBitIndex, int lastBitIndex) {
+        final Pointer colorMapBase = base.asPointer();
+        final int lastBitmapWordIndex = bitmapWordIndex(lastBitIndex);
+        int bitmapWordIndex = firstBitIndex;
+        while (bitmapWordIndex <= lastBitmapWordIndex) {
+            long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
+            if (bitmapWord != 0) {
+                // First mark is the least set bit.
+                final int bitIndexInWord = Pointer.fromLong(bitmapWord).leastSignificantBitSet();
+                final int bitIndexOfCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
+                if (bitIndexOfCell >= lastBitIndex) {
+                    return -1;
+                }
+                return bitIndexOfCell;
+            }
+            bitmapWordIndex++;
+        }
+        return -1;
+    }
+
+
+    public void sweep(HeapSweeper sweeper) {
+        final Pointer colorMapBase = base.asPointer();
+        int rightmostBitmapWordIndex =  bitmapWordIndex(bitIndexOf(rightmost));
+        int bitmapWordIndex = bitmapWordIndex(bitIndexOf(coveredAreaStart));
+
+        while (bitmapWordIndex <= rightmostBitmapWordIndex) {
+            long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
+            if (bitmapWord != 0) {
+                // At least one mark is set.
+                int bitIndexInWord = 0;
+                final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;
+                Pointer endOfLastVisitedCell;
+                do {
+                    // First mark is the least set bit.
+                    bitIndexInWord += Pointer.fromLong(bitmapWord).leastSignificantBitSet();
+                    final int bitIndexOfBlackMark = bitmapWordFirstBitIndex + bitIndexInWord;
+                    endOfLastVisitedCell = sweeper.processLiveObject(addressOf(bitIndexOfBlackMark).asPointer());
+                    final int nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
+                    if (nextCellBitmapWordIndex > bitmapWordIndex) {
+                        bitmapWordIndex = nextCellBitmapWordIndex;
+                        break;
+                    }
+                    // End of visited cell is within the same mark word. Just
+                    // right-shift the bitmap word to skip the mark bits already processed and loop back to
+                    // find the next black object with this word.
+                    bitIndexInWord += 2;
+                    bitmapWord = Pointer.fromLong(bitmapWord).unsignedShiftedRight(bitIndexInWord).toLong();
+                } while(bitmapWord != 0);
+                bitmapWordIndex++;
+                final int nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
+                if (nextCellBitmapWordIndex > bitmapWordIndex) {
+                    bitmapWordIndex = nextCellBitmapWordIndex;
+                }
+            } else {
+                bitmapWordIndex++;
+            }
+        }
+    }
+
+    /**
+     * Imprecise sweeping of the heap.
+     * The sweeper is notified only when the distance between two live marks is larger than a specified minimum amount of
+     * space. In this case, the sweeper is passed on the address of the two live objects delimiting the space.
+     * This avoids touching the heap for adjacent small objects, and paying reclamation cost for unusable dead spaces.
+     *
+     * @param sweeper
+     * @param minReclaimableSpace
+     */
+    public Size impreciseSweep(HeapSweeper sweeper, Size minReclaimableSpace) {
+        final Pointer colorMapBase = base.asPointer();
+        final int minBitsBetweenMark = minReclaimableSpace.toInt() >> log2BytesCoveredPerBit;
+        int bitmapWordIndex = 0;
+
+        // Indicate the closest position the next live mark should be at to make the space reclaimable.
+        int nextReclaimableMark = minBitsBetweenMark;
+        long darkMatterBitCount = 0;
+        int lastLiveMark = firstBlackMark(0, bitIndexOf(rightmost));
+        if (lastLiveMark > 0) {
+            if (lastLiveMark >=  nextReclaimableMark) {
+                sweeper.recordFreeSpace(coveredAreaStart, Size.fromInt(lastLiveMark << log2BytesCoveredPerBit));
+            }
+            bitmapWordIndex =  bitmapWordIndex(lastLiveMark + 2);
+            nextReclaimableMark = lastLiveMark + 2 + minBitsBetweenMark;
+        } else if (lastLiveMark < 0) {
+            // The whole heap is free. (is that ever possible ?)
+            sweeper.recordFreeSpace(coveredAreaStart, rightmost.minus(coveredAreaStart).asSize());
+            return Size.zero();
+        }
+
+        // Loop over the color map and call the sweeper only when the distance between two live mark is larger than
+        // the minimum reclaimable space specified.
+        int rightmostBitmapWordIndex =  bitmapWordIndex(bitIndexOf(rightmost));
+
+        while (bitmapWordIndex <= rightmostBitmapWordIndex) {
+            long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
+            if (bitmapWord != 0) {
+                // At least one mark is set.
+                int bitIndexInWord = 0;
+                final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;
+                int nextCellBitmapWordIndex = bitmapWordIndex + 1;
+                do {
+                    // First mark is the least set bit.
+                    bitIndexInWord += Pointer.fromLong(bitmapWord).leastSignificantBitSet();
+                    final int bitIndexOfBlackMark = bitmapWordFirstBitIndex + bitIndexInWord;
+                    if (bitIndexOfBlackMark < nextReclaimableMark) {
+                        darkMatterBitCount += bitIndexOfBlackMark - lastLiveMark;
+                        // Too small a gap between two live marks to be worth reporting to the sweeper.
+                        // Reset the next mark.
+                        lastLiveMark = bitIndexOfBlackMark;
+                        nextReclaimableMark = bitIndexOfBlackMark + 2 + minBitsBetweenMark;
+                    } else {
+                        final Pointer endOfLastVisitedCell = sweeper.processLargeGap(addressOf(lastLiveMark).asPointer(), addressOf(bitIndexOfBlackMark).asPointer());
+                        lastLiveMark  = bitIndexOfBlackMark;
+                        nextReclaimableMark = bitIndexOf(endOfLastVisitedCell) + minBitsBetweenMark;
+                        nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
+                        if (nextCellBitmapWordIndex > bitmapWordIndex) {
+                            break;
+                        }
+                        // End of visited cell is within the same mark word. Just
+                        // right-shift the bitmap word to skip the mark bits already processed and loop back to
+                        // find the next black object with this word.
+                    }
+                    bitIndexInWord += 2;
+                    bitmapWord = Pointer.fromLong(bitmapWord).unsignedShiftedRight(bitIndexInWord).toLong();
+                } while(bitmapWord != 0);
+                bitmapWordIndex = nextCellBitmapWordIndex;
+            } else {
+                bitmapWordIndex++;
+            }
+        }
+        return Size.fromLong(darkMatterBitCount << log2BytesCoveredPerBit);
+    }
+
+
 
     public void markAll() {
         markRoots();
