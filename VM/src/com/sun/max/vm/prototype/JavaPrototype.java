@@ -249,10 +249,8 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.util.jar", false); // needed to load classes from jar files
         loadClass(sun.misc.VM.class);
 
-        // Needed for bytecode definitions and utilities
-        loadPackage("com.sun.cri.bytecode", false);
-        loadClass(com.sun.cri.bytecode.Bytes.class);
-
+        // Need all of C1X
+        loadPackage("com.sun.cri", true);
 
         // These classes need to be compiled and in the boot image in order to be able to
         // run the optimizing compiler at run time (amongst other reasons)
