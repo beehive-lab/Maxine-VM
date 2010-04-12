@@ -183,7 +183,7 @@ public class OperandPool {
     public CiLocation operandFor(int operandNumber) {
         if (operandNumber < firstVariableNumber) {
             assert operandNumber >= 0;
-            return registers[operandNumber].asLocation();
+            return registers[operandNumber].asValue();
         }
         int index = operandNumber - firstVariableNumber;
         CiVariable variable = variables.get(index);

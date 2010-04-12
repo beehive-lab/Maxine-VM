@@ -20,7 +20,7 @@
  */
 package com.sun.cri.xir;
 
-import com.sun.cri.ci.CiConstant;
+import com.sun.cri.ci.*;
 
 /**
  * This class represents an argument to an {@link XirSnippet}.

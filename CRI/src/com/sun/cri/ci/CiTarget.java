@@ -20,8 +20,8 @@
  */
 package com.sun.cri.ci;
 
-import com.sun.cri.ci.CiRegister.AllocationSpec;
-import com.sun.cri.ri.RiRegisterConfig;
+import com.sun.cri.ci.CiRegister.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class represents the target machine for a compiler, including

@@ -21,6 +21,7 @@
 package com.sun.cri.ci;
 
 
+
 /**
  * Represents an address specified via some combination of a base register,
  * an index register, a displacement and a scale.
@@ -29,7 +30,10 @@ package com.sun.cri.ci;
  */
 public final class CiAddress extends CiLocation {
 
-    public static final CiAddress InternalRelocation = new CiAddress(CiKind.Illegal, CiRegister.None.asLocation());
+    /**
+     * A sentinel value used as a place holder in an instruction stream for an address that will be patched.
+     */
+    public static final CiAddress Placeholder = new CiAddress(CiKind.Illegal, CiRegister.None.asValue());
     
     public final CiLocation base;
     public final CiLocation index;
@@ -37,30 +41,15 @@ public final class CiAddress extends CiLocation {
     public final int displacement;
     
     public CiAddress(CiKind kind, CiLocation base) {
-        super(kind);
-        this.base = base;
-        this.index = IllegalLocation;
-        this.scale = Scale.Times1;
-        this.displacement = 0;
-        this.format = Format.BASE;
+        this(kind, base, IllegalLocation, Scale.Times1, 0);
     }
 
     public CiAddress(CiKind kind, CiLocation base, int displacement) {
-        super(kind);
-        this.base = base;
-        this.index = IllegalLocation;
-        this.scale = Scale.Times1;
-        this.displacement = displacement;
-        this.format = Format.BASE_DISP;
+        this(kind, base, IllegalLocation, Scale.Times1, displacement);
     }
 
     public CiAddress(CiKind kind, CiLocation base, CiLocation index) {
-        super(kind);
-        this.base = base;
-        this.index = index;
-        this.scale = Scale.Times1;
-        this.displacement = 0;
-        this.format = Format.BASE_INDEX;
+        this(kind, base, index, Scale.Times1, 0);
     }
     
     public CiAddress(CiKind kind, CiLocation base, CiLocation index, Scale scale, int displacement) {
@@ -69,9 +58,8 @@ public final class CiAddress extends CiLocation {
         this.index = index;
         this.scale = scale;
         this.displacement = displacement;
-        this.format = Format.BASE_SCALE_INDEX_DISP;
     }
-
+    
     /**
      * A scaling factor used in complex addressing modes such as those supported by x86 platforms.
      */
@@ -123,10 +111,29 @@ public final class CiAddress extends CiLocation {
         BASE,
         BASE_DISP,
         BASE_INDEX,
-        BASE_SCALE_INDEX_DISP;
+        BASE_INDEX_DISP,
+        PLACEHOLDER;
     }
     
-    public final Format format;
+    public Format format() {
+        if (this == Placeholder) {
+            return Format.PLACEHOLDER;
+        }
+        assert base.isLegal();
+        if (index.isLegal()) {
+            if (displacement != 0) {
+                return Format.BASE_INDEX_DISP;
+            } else {
+                return Format.BASE_INDEX;
+            }
+        } else {
+            if (displacement != 0) {
+                return Format.BASE_DISP;
+            } else {
+                return Format.BASE;
+            }
+        }
+    }
     
     private static String s(CiLocation location) {
         if (location.isRegister()) {
@@ -138,12 +145,13 @@ public final class CiAddress extends CiLocation {
     
     @Override
     public String name() {
-        switch (format) {
-            case BASE                  : return "[" + s(base) + "]";
-            case BASE_DISP             : return "[" + s(base) + " + " + displacement + "]";
-            case BASE_INDEX            : return "[" + s(base) + " + " + s(index) + "]";
-            case BASE_SCALE_INDEX_DISP : return "[" + s(base) + " + " + s(index) + "*" + scale.value + " + " + displacement + "]";
-            default                    : throw new IllegalArgumentException("unknown format: " + format);
+        switch (format()) {
+            case BASE            : return "[" + s(base) + "]";
+            case BASE_DISP       : return "[" + s(base) + " + " + displacement + "]";
+            case BASE_INDEX      : return "[" + s(base) + " + " + s(index) + "]";
+            case BASE_INDEX_DISP : return "[" + s(base) + " + " + s(index) + "*" + scale.value + " + " + displacement + "]";
+            case PLACEHOLDER     : return "[<placeholder>]";
+            default              : throw new IllegalArgumentException("unknown format: " + format());
         }
     }
     

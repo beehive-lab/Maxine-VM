@@ -20,8 +20,7 @@
  */
 package com.sun.cri.xir;
 
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ci.*;
 
 /**
  * This class is a sketch of types supported by Xir.

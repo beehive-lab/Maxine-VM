@@ -242,7 +242,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
                 emitByte(0x04 | regenc);
                 emitByte(scale.log2 << 6 | indexenc | 0x05);
                 emitInt(disp);
-            } else if (addr == CiAddress.InternalRelocation) {
+            } else if (addr == CiAddress.Placeholder) {
                 // [00 000 101] disp32
                 // (tw) The relocation was recorded before, now just emit 0
                 emitByte(0x05 | regenc);

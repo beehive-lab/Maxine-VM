@@ -56,7 +56,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected CiValue force(Value v, CiRegister reg) {
         LIRItem item = new LIRItem(v, this);
-        item.loadItemForce(reg.asLocation(v.kind));
+        item.loadItemForce(reg.asValue(v.kind));
         return item.result();
     }
 
@@ -294,7 +294,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         CiVariable result = newVariable(CiKind.Object);
-        CiRegisterLocation threadReg = compilation.target.registerConfig.getThreadRegister().asLocation(CiKind.Object);
+        CiRegisterValue threadReg = compilation.target.registerConfig.getThreadRegister().asValue(CiKind.Object);
         lir.move(new CiAddress(CiKind.Object, threadReg, compilation.runtime.threadExceptionOffset()), result);
         setResult(x, result);
     }
@@ -496,7 +496,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitLoadRegister(LoadRegister x) {
         CiValue reg = createResultVariable(x);
-        lir.move(x.register().asLocation(x.kind), reg);
+        lir.move(x.register().asValue(x.kind), reg);
     }
 
     private CiAddress getAddressForPointerOp(PointerOp x, LIRItem pointer) {
@@ -828,7 +828,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitStoreRegister(StoreRegister x) {
-        CiValue reg = x.register().asLocation(x.kind);
+        CiValue reg = x.register().asValue(x.kind);
         LIRItem src = new LIRItem(x.value(), this);
         lir.move(src.result(), reg);
     }
@@ -1797,7 +1797,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             return IllegalLocation;
         }
         CiRegister returnRegister = compilation.target.registerConfig.getReturnRegister(kind);
-        return returnRegister.asLocation(kind);
+        return returnRegister.asValue(kind);
     }
 
     public OperandPool operands() {

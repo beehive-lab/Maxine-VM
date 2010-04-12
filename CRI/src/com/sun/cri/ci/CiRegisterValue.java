@@ -22,14 +22,14 @@ package com.sun.cri.ci;
 
 
 /**
- * This class represents a register location storing a value of a fixed kind.
+ * This class represents a register storing a value of a fixed kind.
  * Use {@link CiRegister#asLocation(CiKind))} to retrieve the canonical
- * {@link CiRegisterLocation} instance for a given (register,kind) pair.  
+ * {@link CiRegisterValue} instance for a given (register,kind) pair.  
  *
  * @author Ben L. Titzer
  * @author Doug Simon
  */
-public final class CiRegisterLocation extends CiLocation {
+public final class CiRegisterValue extends CiLocation {
 
     /**
      * The register.
@@ -39,7 +39,7 @@ public final class CiRegisterLocation extends CiLocation {
     /**
      * Should only be called from {@link CiRegister#CiRegister} to ensure canonicalization.
      */
-    CiRegisterLocation(CiKind kind, CiRegister register) {
+    CiRegisterValue(CiKind kind, CiRegister register) {
         super(kind);
         this.register = register;
     }

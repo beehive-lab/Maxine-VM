@@ -20,13 +20,11 @@
  */
 package com.sun.cri.xir;
 
-import java.util.List;
+import java.util.*;
 
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ri.RiField;
-import com.sun.cri.ri.RiMethod;
-import com.sun.cri.ri.RiType;
-import com.sun.cri.ri.RiType.Representation;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiType.*;
 
 /**
  * This class represents the interface through which the compiler requests the XIR for a given

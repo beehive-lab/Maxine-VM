@@ -135,7 +135,7 @@ public final class Interval {
     }
 
     /**
-     * The {@linkplain CiRegisterLocation register} or {@linkplain CiVariable variable} for this interval prior to register allocation.
+     * The {@linkplain CiRegisterValue register} or {@linkplain CiVariable variable} for this interval prior to register allocation.
      */
     public final CiLocation operand;
 
@@ -145,7 +145,7 @@ public final class Interval {
     public final int operandNumber;
 
     /**
-     * The {@linkplain CiRegisterLocation register} or {@linkplain CiStackSlot spill slot} assigned to this interval during register allocation.
+     * The {@linkplain CiRegisterValue register} or {@linkplain CiStackSlot spill slot} assigned to this interval during register allocation.
      */
     private CiLocation location;
 
@@ -226,7 +226,7 @@ public final class Interval {
         if (location.isRegister()) {
             assert this.location == null : "cannot re-assign location for " + this;
             if (location.kind == CiKind.Illegal && kind != CiKind.Illegal) {
-                location = location.asRegister().asLocation(kind);
+                location = location.asRegister().asValue(kind);
             }
         } else {
             assert this.location == null || this.location.isRegister() : "cannot re-assign location for " + this;

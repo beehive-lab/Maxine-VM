@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.*;
 
 /**
  * This class represents debugging and deoptimization information attached to a LIR instruction.
@@ -86,8 +85,8 @@ public class LIRDebugInfo {
         assert debugInfo != null : "debug info not allocated yet";
         if (location.isAddress()) {
             CiAddress stackLocation = (CiAddress) location;
-            assert stackLocation.format == Format.BASE_DISP;
-            if (stackLocation.base == CiRegister.Frame.asLocation()) {
+            assert stackLocation.index.isIllegal();
+            if (stackLocation.base == CiRegister.Frame.asValue()) {
                 int offset = stackLocation.displacement;
                 assert offset % target.arch.wordSize == 0 : "must be aligned";
                 int stackMapIndex = offset / target.arch.wordSize;
@@ -95,7 +94,7 @@ public class LIRDebugInfo {
             }
         } else {
             assert location.isRegister() : "objects can only be in a register";
-            CiRegisterLocation registerLocation = (CiRegisterLocation) location;
+            CiRegisterValue registerLocation = (CiRegisterValue) location;
             int index = target.allocationSpec.refMapIndexMap[registerLocation.register.number];
             assert index >= 0 : "object cannot be in non-object register " + registerLocation.register;
             setBit(debugInfo.registerRefMap, index);

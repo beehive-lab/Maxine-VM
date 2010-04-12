@@ -752,7 +752,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 if (result != null) {
                     // folding was successful
                     CiKind kind = method.signatureType().returnKind();
-                    setCanonical(new Constant(new CiConstant(kind, result)));
+                    setCanonical(new Constant(CiConstant.get(kind, result)));
                 }
             }
         }
@@ -1347,7 +1347,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 CiKind kind = method.signatureType().returnKind();
                 // set the result of this instruction to be the result of invocation
                 C1XMetrics.MethodsFolded++;
-                return new CiConstant(kind, result);
+                return CiConstant.get(kind, result);
                 // note that for void, we will have a void constant with value null
             } catch (IllegalAccessException e) {
                 // folding failed; too bad

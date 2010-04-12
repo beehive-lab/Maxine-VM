@@ -666,7 +666,7 @@ final class LinearScanWalker extends IntervalWalker {
         }
 
         splitPos = usePos[reg.number];
-        interval.assignLocation(reg.asLocation(interval.kind()));
+        interval.assignLocation(reg.asValue(interval.kind()));
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println("selected register %d", reg.number);
         }
@@ -791,7 +791,7 @@ final class LinearScanWalker extends IntervalWalker {
         assert splitPos > 0 : "invalid splitPos";
         assert needSplit || splitPos > interval.from() : "splitting interval at from";
 
-        interval.assignLocation(reg.asLocation(interval.kind()));
+        interval.assignLocation(reg.asValue(interval.kind()));
         if (needSplit) {
             // register not available for full interval :  so split it
             splitWhenPartialRegisterAvailable(interval, splitPos);

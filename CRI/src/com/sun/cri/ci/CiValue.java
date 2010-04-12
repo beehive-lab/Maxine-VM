@@ -21,6 +21,7 @@
 package com.sun.cri.ci;
 
 
+
 /**
  * Base class for compiler interface values.
  *
@@ -62,7 +63,7 @@ public abstract class CiValue {
     }
 
     public final boolean isVariableOrRegister() {
-        return this instanceof CiVariable || this instanceof CiRegisterLocation;
+        return this instanceof CiVariable || this instanceof CiRegisterValue;
     }
 
     protected Error illegalOperation(String operation) {
@@ -90,7 +91,7 @@ public abstract class CiValue {
     }
 
     public final boolean isRegister() {
-        return this instanceof CiRegisterLocation;
+        return this instanceof CiRegisterValue;
     }
 
     public final boolean isVariable() {

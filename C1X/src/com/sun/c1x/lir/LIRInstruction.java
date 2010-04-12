@@ -106,7 +106,7 @@ public abstract class LIRInstruction {
 
         /**
          * The current value of the operand. After register allocation, this is guaranteed
-         * to be a {@linkplain CiRegisterLocation register},
+         * to be a {@linkplain CiRegisterValue register},
          * a {@linkplain CiConstant constant} or an {@linkplain CiAddress address}.
          */
         private CiValue direct;

@@ -20,11 +20,9 @@
  */
 package com.sun.cri.ci;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import com.sun.cri.ri.RiMethod;
-import com.sun.cri.ri.RiType;
+import com.sun.cri.ri.*;
 
 /**
  * This interface represents the result which encapsulates compiler output, including

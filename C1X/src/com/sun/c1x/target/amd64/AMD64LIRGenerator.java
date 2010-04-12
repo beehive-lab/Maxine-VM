@@ -42,21 +42,21 @@ import com.sun.cri.ci.*;
  */
 public final class AMD64LIRGenerator extends LIRGenerator {
 
-    private static final CiLocation IDIV_IN = AMD64.rax.asLocation(CiKind.Int);
-    private static final CiLocation IDIV_OUT = AMD64.rax.asLocation(CiKind.Int);
-    private static final CiLocation IREM_OUT = AMD64.rdx.asLocation(CiKind.Int);
-    private static final CiLocation IDIV_TMP = AMD64.rdx.asLocation(CiKind.Int);
+    private static final CiLocation IDIV_IN = AMD64.rax.asValue(CiKind.Int);
+    private static final CiLocation IDIV_OUT = AMD64.rax.asValue(CiKind.Int);
+    private static final CiLocation IREM_OUT = AMD64.rdx.asValue(CiKind.Int);
+    private static final CiLocation IDIV_TMP = AMD64.rdx.asValue(CiKind.Int);
 
-    private static final CiLocation LDIV_IN = AMD64.rax.asLocation(CiKind.Long);
-    private static final CiLocation LDIV_OUT = AMD64.rax.asLocation(CiKind.Long);
-    private static final CiLocation LREM_OUT = AMD64.rdx.asLocation(CiKind.Long);
-    private static final CiLocation LDIV_TMP = AMD64.rdx.asLocation(CiKind.Long);
+    private static final CiLocation LDIV_IN = AMD64.rax.asValue(CiKind.Long);
+    private static final CiLocation LDIV_OUT = AMD64.rax.asValue(CiKind.Long);
+    private static final CiLocation LREM_OUT = AMD64.rdx.asValue(CiKind.Long);
+    private static final CiLocation LDIV_TMP = AMD64.rdx.asValue(CiKind.Long);
 
-    private static final CiValue LONG_0_64 = AMD64.rax.asLocation(CiKind.Long);
+    private static final CiValue LONG_0_64 = AMD64.rax.asValue(CiKind.Long);
 
-    private static final CiValue LONG_1_64 = AMD64.rbx.asLocation(CiKind.Long);
+    private static final CiValue LONG_1_64 = AMD64.rbx.asValue(CiKind.Long);
 
-    private static final CiLocation SHIFT_COUNT_IN = AMD64.rcx.asLocation(CiKind.Int);
+    private static final CiLocation SHIFT_COUNT_IN = AMD64.rcx.asValue(CiKind.Int);
     protected static final CiLocation ILLEGAL = CiValue.IllegalLocation;
 
     public AMD64LIRGenerator(C1XCompilation compilation) {
@@ -510,15 +510,15 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         offset.loadNonconstant();
 
         if (kind.isObject()) {
-            cmp.loadItemForce(AMD64.rax.asLocation(CiKind.Object));
+            cmp.loadItemForce(AMD64.rax.asValue(CiKind.Object));
             val.loadItem();
         } else if (kind.isInt()) {
-            cmp.loadItemForce(AMD64.rax.asLocation(CiKind.Int));
+            cmp.loadItemForce(AMD64.rax.asValue(CiKind.Int));
             val.loadItem();
         } else if (kind.isLong()) {
             assert is64 : "32-bit not implemented";
-            cmp.loadItemForce(AMD64.rax.asLocation(CiKind.Long));
-            val.loadItemForce(AMD64.rbx.asLocation(CiKind.Long));
+            cmp.loadItemForce(AMD64.rax.asValue(CiKind.Long));
+            val.loadItemForce(AMD64.rbx.asValue(CiKind.Long));
         } else {
             Util.shouldNotReachHere();
         }

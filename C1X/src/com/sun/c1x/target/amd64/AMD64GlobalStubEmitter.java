@@ -159,7 +159,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     private CiValue newRegister(CiKind kind) {
         assert kind != CiKind.Float && kind != CiKind.Double;
         assert allocatableRegisters.size() > 0;
-        return allocatableRegisters.remove(allocatableRegisters.size() - 1).asLocation(kind);
+        return allocatableRegisters.remove(allocatableRegisters.size() - 1).asValue(kind);
     }
 
     public GlobalStub emit(XirTemplate template, RiRuntime runtime) {

@@ -101,7 +101,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
      */
     @Override
     protected void emitReadPC(CiValue resultOpr) {
-        masm.lea(resultOpr.asRegister(), CiAddress.InternalRelocation);
+        masm.lea(resultOpr.asRegister(), CiAddress.Placeholder);
     }
 
     @Override
@@ -611,10 +611,10 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             masm.lock();
         }
         if (op.code == LIROpcode.CasInt) {
-            masm.cmpxchgl(newval, new CiAddress(CiKind.Int, addr.asLocation(Word), 0));
+            masm.cmpxchgl(newval, new CiAddress(CiKind.Int, addr.asValue(Word), 0));
         } else {
             assert op.code == LIROpcode.CasObj || op.code == LIROpcode.CasLong || op.code == LIROpcode.CasWord;
-            masm.cmpxchgptr(newval, new CiAddress(CiKind.Word, addr.asLocation(Word), 0));
+            masm.cmpxchgptr(newval, new CiAddress(CiKind.Word, addr.asValue(Word), 0));
         }
     }
 
@@ -1252,7 +1252,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
-            moveOp(callAddress, reg.asLocation(callAddress.kind), callAddress.kind, null, false);
+            moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
         masm.indirectCall(reg, target, info);
     }
@@ -1269,7 +1269,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
-            moveOp(callAddress, reg.asLocation(callAddress.kind), callAddress.kind, null, false);
+            moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
         masm.nativeCall(reg, nativeFunction.symbol, info);
     }
@@ -1624,7 +1624,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
                     CiValue result = operands[inst.result.index];
                     CiValue pointer = operands[inst.x().index];
-                    CiRegisterLocation register = assureInRegister(pointer);
+                    CiRegisterValue register = assureInRegister(pointer);
                     moveOp(new CiAddress(inst.kind, register, 0), result, inst.kind, null, false);
                     break;
                 }
@@ -1735,7 +1735,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = compilation.target.registerConfig.getReturnRegister(inst.result.kind);
-                        CiValue resultLocation = returnRegister.asLocation(inst.result.kind);
+                        CiValue resultLocation = returnRegister.asValue(inst.result.kind);
                         moveOp(resultLocation, operands[inst.result.index], inst.result.kind, null, false);
                     }
                     break;
@@ -1805,15 +1805,15 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         }
     }
 
-    private CiRegisterLocation assureInRegister(CiValue pointer) {
+    private CiRegisterValue assureInRegister(CiValue pointer) {
         if (pointer.isConstant()) {
-            CiRegisterLocation register = compilation.target.scratchRegister.asLocation(pointer.kind);
+            CiRegisterValue register = compilation.target.scratchRegister.asValue(pointer.kind);
             moveOp(pointer, register, pointer.kind, null, false);
             return register;
         }
 
         assert pointer.isRegister();
-        return (CiRegisterLocation) pointer;
+        return (CiRegisterValue) pointer;
     }
 
     private void emitXirCompare(XirInstruction inst, Condition condition, ConditionFlag cflag, CiValue[] ops, Label label) {

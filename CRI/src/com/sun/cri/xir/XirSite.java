@@ -20,8 +20,8 @@
  */
 package com.sun.cri.xir;
 
-import com.sun.cri.ci.CiCodePos;
-import com.sun.cri.ri.RiType;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * This interface encapsulates the notion of a site where XIR can be supplied.
