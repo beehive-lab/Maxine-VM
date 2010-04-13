@@ -27,7 +27,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * A chunk of free space in the heap.

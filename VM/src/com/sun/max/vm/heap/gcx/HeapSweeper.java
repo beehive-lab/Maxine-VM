@@ -52,5 +52,5 @@ public abstract class HeapSweeper {
      * @param freeChunk
      * @param size
      */
-    public abstract void recordFreeSpace(Address freeChunk, Size size);
+    public abstract void processDeadSpace(Address freeChunk, Size size);
 }
