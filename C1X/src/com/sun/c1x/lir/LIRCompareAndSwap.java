@@ -40,7 +40,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @param tmp2
      */
     public LIRCompareAndSwap(LIROpcode opcode, CiValue addr, CiValue cmpValue, CiValue newValue, CiValue tmp1, CiValue tmp2) {
-        super(opcode, CiValue.IllegalLocation, null, false, null, 0, 2, addr, cmpValue, newValue);
+        super(opcode, CiValue.IllegalValue, null, false, null, 0, 2, addr, cmpValue, newValue);
     }
 
     /**

@@ -112,7 +112,7 @@ public final class FrameMap {
         assert monitors >= 0 : "not set";
         monitorCount = monitors;
         if (method == null) {
-            incomingArguments = new CallingConvention(new CiLocation[0], compiler.target);
+            incomingArguments = new CallingConvention(new CiValue[0], compiler.target);
         } else {
             incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signatureType(), !method.isStatic()), false, false);
         }
@@ -124,7 +124,7 @@ public final class FrameMap {
      * @return a {@link CallingConvention} instance describing the location of parameters and the return value
      */
     public CallingConvention runtimeCallingConvention(CiKind[] signature) {
-        CiLocation[] locations = compiler.target.registerConfig.getRuntimeParameterLocations(signature, compiler.target);
+        CiValue[] locations = compiler.target.registerConfig.getRuntimeParameterLocations(signature, compiler.target);
         return createCallingConvention(locations, false);
     }
 
@@ -134,7 +134,7 @@ public final class FrameMap {
      * @return a {@link CallingConvention} instance describing the location of parameters and the return value
      */
     public CallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing, boolean reserveOutgoingArgumentsArea) {
-        CiLocation[] locations = compiler.target.registerConfig.getJavaParameterLocations(signature, outgoing, compiler.target);
+        CiValue[] locations = compiler.target.registerConfig.getJavaParameterLocations(signature, outgoing, compiler.target);
         return createCallingConvention(locations, reserveOutgoingArgumentsArea);
     }
 
@@ -188,18 +188,18 @@ public final class FrameMap {
     }
 
     /**
-     * Converts a {@link CiValue} into a {@code CiLocation} within this frame.
+     * Converts a {@link CiValue} into a {@code CiValue} within this frame.
      * @param opr the operand
      * @return a location
      */
-    public CiLocation toLocation(CiValue opr) {
+    public CiValue toLocation(CiValue opr) {
         if (opr.isStackSlot()) {
             CiStackSlot stkOpr = (CiStackSlot) opr;
             int size = compiler.target.sizeInBytes(opr.kind);
             int offset = spOffsetForSlot(stkOpr.index, size);
             return new CiAddress(opr.kind, CiRegister.Frame.asValue(), offset);
         } else if (opr.isRegister()) {
-            return (CiRegisterValue) opr;
+            return opr;
         }
         throw new CiBailout("cannot convert " + opr + "to location");
     }
@@ -226,7 +226,7 @@ public final class FrameMap {
      * @param spillIndex the index into the spill slots
      * @return a representation of the stack location
      */
-    public CiLocation toStackLocation(CiKind kind, int spillIndex) {
+    public CiValue toStackLocation(CiKind kind, int spillIndex) {
         int size = compiler.target.sizeInBytes(kind);
         return new CiAddress(kind, CiRegister.Frame.asValue(), spOffsetForSlot(spillIndex, size));
     }
@@ -246,7 +246,7 @@ public final class FrameMap {
      * @param monitorIndex the monitor index
      * @return a representation of the stack location
      */
-    public CiLocation toMonitorLocation(int monitorIndex) {
+    public CiValue toMonitorLocation(int monitorIndex) {
         return new CiAddress(CiKind.Object, CiRegister.Frame.asValue(), spOffsetForMonitorObject(monitorIndex));
     }
 
@@ -296,7 +296,7 @@ public final class FrameMap {
         return block;
     }
 
-    private CallingConvention createCallingConvention(CiLocation[] locations, boolean reserveOutgoingArgumentsArea) {
+    private CallingConvention createCallingConvention(CiValue[] locations, boolean reserveOutgoingArgumentsArea) {
         final CallingConvention result = new CallingConvention(locations, compiler.target);
         if (reserveOutgoingArgumentsArea) {
             assert frameSize == -1 : "frame size must not yet be fixed!";

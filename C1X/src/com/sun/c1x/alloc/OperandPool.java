@@ -31,7 +31,7 @@ import com.sun.cri.ci.CiRegister.*;
  * An ordered, 0-based indexable pool of instruction operands for a method being compiled.
  * The physical {@linkplain CiRegister registers} of the platform occupy the front of the
  * pool (starting at index 0) followed by {@linkplain CiVariable variable} operands.
- * The index of an operand in the pool is its {@linkplain #operandNumber(CiLocation) operand number}.
+ * The index of an operand in the pool is its {@linkplain #operandNumber(CiValue) operand number}.
  *
  * In the original HotSpot C1 source code, this pool corresponds to the
  * "flat register file" mentioned in c1_LinearScan.cpp.
@@ -50,7 +50,7 @@ public class OperandPool {
     private final CiRegister[] registers;
 
     /**
-     * The variable operands allocated from this pool. The {@linkplain #operandNumber(CiLocation) number}
+     * The variable operands allocated from this pool. The {@linkplain #operandNumber(CiValue) number}
      * of the first variable operand in this pool is one greater than the number of the last
      * register operand in the pool.
      */
@@ -62,7 +62,7 @@ public class OperandPool {
     private final ArrayList<Value> variableDefs;
 
     /**
-     * The {@linkplain #operandNumber(CiLocation) number} of the first variable operand
+     * The {@linkplain #operandNumber(CiValue) number} of the first variable operand
      * {@linkplain #newVariable(CiKind) allocated} from this pool.
      */
     private final int firstVariableNumber;
@@ -78,7 +78,7 @@ public class OperandPool {
     private BitMap mustStartInMemory;
 
     /**
-     * Flags that can be set for {@linkplain CiLocation#isVariable() variable} operands.
+     * Flags that can be set for {@linkplain CiValue#isVariable() variable} operands.
      */
     public enum VariableFlag {
         /**
@@ -164,7 +164,7 @@ public class OperandPool {
      * @param operand an operand
      * @return the unique number for {@code operand} in the range {@code [0 .. size())}
      */
-    public int operandNumber(CiLocation operand) {
+    public int operandNumber(CiValue operand) {
         if (operand.isRegister()) {
             int number = operand.asRegister().number;
             assert number < firstVariableNumber;
@@ -180,7 +180,7 @@ public class OperandPool {
      * @param operandNumber a value that must be in the range {@code [0 .. size())}
      * @return the operand in this pool denoted by {@code operandNumber}
      */
-    public CiLocation operandFor(int operandNumber) {
+    public CiValue operandFor(int operandNumber) {
         if (operandNumber < firstVariableNumber) {
             assert operandNumber >= 0;
             return registers[operandNumber].asValue();
@@ -215,7 +215,7 @@ public class OperandPool {
         return get(mustStartInMemory, operand);
     }
 
-    public boolean mustBeByteRegister(CiLocation operand) {
+    public boolean mustBeByteRegister(CiValue operand) {
         return get(mustBeByteRegister, (CiVariable) operand);
     }
 

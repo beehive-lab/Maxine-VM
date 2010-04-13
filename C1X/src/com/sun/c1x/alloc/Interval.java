@@ -137,17 +137,17 @@ public final class Interval {
     /**
      * The {@linkplain CiRegisterValue register} or {@linkplain CiVariable variable} for this interval prior to register allocation.
      */
-    public final CiLocation operand;
+    public final CiValue operand;
 
     /**
-     * The {@linkplain OperandPool#operandNumber(CiLocation) operand number} for this interval's {@linkplain #operand operand}.
+     * The {@linkplain OperandPool#operandNumber(CiValue) operand number} for this interval's {@linkplain #operand operand}.
      */
     public final int operandNumber;
 
     /**
-     * The {@linkplain CiRegisterValue register} or {@linkplain CiStackSlot spill slot} assigned to this interval during register allocation.
+     * The {@linkplain CiRegisterValue register}, {@linkplain CiStackSlot spill slot} or {@linkplain CiAddress address} assigned to this interval.
      */
-    private CiLocation location;
+    private CiValue location;
 
     /**
      * The stack slot to which all splits of this interval are spilled if necessary.
@@ -222,7 +222,7 @@ public final class Interval {
      */
     private Interval locationHint;
 
-    void assignLocation(CiLocation location) {
+    void assignLocation(CiValue location) {
         if (location.isRegister()) {
             assert this.location == null : "cannot re-assign location for " + this;
             if (location.kind == CiKind.Illegal && kind != CiKind.Illegal) {
@@ -237,7 +237,10 @@ public final class Interval {
         this.location = location;
     }
 
-    CiLocation location() {
+    /**
+     * Gets the {@linkplain CiRegisterValue register}, {@linkplain CiStackSlot spill slot} or {@linkplain CiAddress address} assigned to this interval.
+     */
+    CiValue location() {
         return location;
     }
 
@@ -390,9 +393,9 @@ public final class Interval {
     /**
      * Sentinel interval to denote the end of an interval list.
      */
-    static final Interval EndMarker = new Interval(CiValue.IllegalLocation, -1);
+    static final Interval EndMarker = new Interval(CiValue.IllegalValue, -1);
 
-    Interval(CiLocation operand, int operandNumber) {
+    Interval(CiValue operand, int operandNumber) {
         C1XMetrics.LSRAIntervalsCreated++;
         assert operand != null;
         this.operand = operand;

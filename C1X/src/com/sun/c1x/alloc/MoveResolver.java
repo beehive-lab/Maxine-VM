@@ -107,7 +107,7 @@ final class MoveResolver {
             }
         }
 
-        HashSet<CiLocation> usedRegs = new HashSet<CiLocation>();
+        HashSet<CiValue> usedRegs = new HashSet<CiValue>();
         if (!multipleReadsAllowed) {
             for (i = 0; i < mappingFrom.size(); i++) {
                 Interval interval = mappingFrom.get(i);
@@ -142,7 +142,7 @@ final class MoveResolver {
 
     // mark assignedReg and assignedRegHi of the interval as blocked
     private void blockRegisters(Interval interval) {
-        CiLocation location = interval.location();
+        CiValue location = interval.location();
         if (location.isRegister()) {
             int reg = location.asRegister().number;
             assert multipleReadsAllowed || registerBlocked(reg) == 0 : "register already marked as used";
@@ -152,7 +152,7 @@ final class MoveResolver {
 
     // mark assignedReg and assignedRegHi of the interval as unblocked
     private void unblockRegisters(Interval interval) {
-        CiLocation location = interval.location();
+        CiValue location = interval.location();
         if (location.isRegister()) {
             int reg = location.asRegister().number;
             assert registerBlocked(reg) > 0 : "register already marked as unused";
@@ -162,9 +162,9 @@ final class MoveResolver {
 
     // check if assignedReg and assignedRegHi of the to-interval are not blocked (or only blocked by from)
     private boolean saveToProcessMove(Interval from, Interval to) {
-        CiLocation fromReg = from != null ? from.location() : null;
+        CiValue fromReg = from != null ? from.location() : null;
 
-        CiLocation reg = to.location();
+        CiValue reg = to.location();
         if (reg.isRegister()) {
             if (registerBlocked(reg.asRegister().number) > 1 || (registerBlocked(reg.asRegister().number) == 1 && reg != fromReg)) {
                 return false;
@@ -338,7 +338,7 @@ final class MoveResolver {
 
         assert fromInterval.kind() == toInterval.kind();
         mappingFrom.add(fromInterval);
-        mappingFromOpr.add(CiValue.IllegalLocation);
+        mappingFromOpr.add(CiValue.IllegalValue);
         mappingTo.add(toInterval);
     }
 

@@ -173,11 +173,11 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         return safepointRegister;
     }
 
-    public CiLocation[] getJavaParameterLocations(CiKind[] types, boolean outgoing, CiTarget target) {
+    public CiValue[] getJavaParameterLocations(CiKind[] types, boolean outgoing, CiTarget target) {
         return callingConvention(types, outgoing, target);
     }
 
-    public CiLocation[] getRuntimeParameterLocations(CiKind[] types, CiTarget target) {
+    public CiValue[] getRuntimeParameterLocations(CiKind[] types, CiTarget target) {
         return callingConvention(types, true, target);
     }
 
@@ -212,8 +212,8 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         return integerRegisterRoleMap[id];
     }
 
-    private CiLocation[] callingConvention(CiKind[] types, boolean outgoing, CiTarget target) {
-        CiLocation[] result = new CiLocation[types.length];
+    private CiValue[] callingConvention(CiKind[] types, boolean outgoing, CiTarget target) {
+        CiValue[] result = new CiValue[types.length];
 
         int currentGeneral = 0;
         int currentXMM = 0;

@@ -505,11 +505,11 @@ public abstract class LIRGenerator extends ValueVisitor {
             // address is [pointer + offset]
             if (x.offset().isConstant() && x.offset().kind.isInt()) {
                 int displacement = x.offset().asConstant().asInt();
-                addr = new CiAddress(x.kind, (CiLocation) pointer.result(), displacement);
+                addr = new CiAddress(x.kind, pointer.result(), displacement);
             } else {
                 LIRItem index = new LIRItem(x.offset(), this);
                 index.loadItem();
-                addr = new CiAddress(x.kind, (CiLocation) pointer.result(), (CiLocation) index.result());
+                addr = new CiAddress(x.kind, pointer.result(), index.result());
             }
         } else {
             // address is [pointer + disp + (index * scale)]
@@ -518,7 +518,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             LIRItem index = new LIRItem(x.index(), this);
             index.loadItem();
             Scale scale = Scale.fromInt(compilation.target.sizeInBytes(x.kind));
-            addr = new CiAddress(x.kind, (CiLocation) pointer.result(), (CiLocation) index.result(), scale, displacement);
+            addr = new CiAddress(x.kind, pointer.result(), index.result(), scale, displacement);
         }
         return addr;
     }
@@ -675,7 +675,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitReturn(Return x) {
         if (x.kind.isVoid()) {
-            lir.returnOp(IllegalLocation);
+            lir.returnOp(IllegalValue);
         } else {
             CiValue reg = resultRegisterFor(x.kind);
             LIRItem result = new LIRItem(x.result(), this);
@@ -726,7 +726,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         XirOperand resultOperand = snippet.template.resultOperand;
 
         if (snippet.template.allocateResultOperand) {
-            CiValue outputOperand = IllegalLocation;
+            CiValue outputOperand = IllegalValue;
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
@@ -808,7 +808,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         CiValue allocatedResultOperand = operands[resultOperand.index];
         if (!allocatedResultOperand.isVariableOrRegister()) {
-            allocatedResultOperand = IllegalLocation;
+            allocatedResultOperand = IllegalValue;
         }
 
         if (setInstructionResult && allocatedResultOperand.isLegal()) {
@@ -819,7 +819,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // XIR instruction is only needed when the operand is not a constant!
             lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
                     operandArray, operandIndicesArray,
-                    (operands[resultOperand.index] == IllegalLocation) ? -1 : resultOperand.index,
+                    (operands[resultOperand.index] == IllegalValue) ? -1 : resultOperand.index,
                     info, method);
         }
 
@@ -968,12 +968,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         off.loadItem();
         src.loadItem();
 
-        CiLocation reg = createResultVariable(x);
+        CiValue reg = createResultVariable(x);
 
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membarAcquire();
         }
-        genGetObjectUnsafe(reg, (CiLocation) src.result(), (CiLocation) off.result(), kind, x.isVolatile());
+        genGetObjectUnsafe(reg, src.result(), off.result(), kind, x.isVolatile());
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membar();
         }
@@ -1000,7 +1000,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         assert !x.hasIndex() || idx.value == x.index() : "should match";
 
-        CiLocation baseOp = (CiLocation) base.result();
+        CiValue baseOp = base.result();
 
         if (is32) {
             // XXX: what about floats and doubles and objects? (used in OSR)
@@ -1023,13 +1023,13 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
 
             if (compilation.target.arch.isX86()) {
-                addr = new CiAddress(dstKind, baseOp, (CiLocation) indexOp, CiAddress.Scale.fromInt(2 ^ log2scale), 0);
+                addr = new CiAddress(dstKind, baseOp, indexOp, CiAddress.Scale.fromInt(2 ^ log2scale), 0);
 
             } else if (compilation.target.arch.isSPARC()) {
                 if (indexOp.isIllegal() || log2scale == 0) {
-                    addr = new CiAddress(dstKind, baseOp, (CiLocation) indexOp);
+                    addr = new CiAddress(dstKind, baseOp, indexOp);
                 } else {
-                    CiLocation tmp = newVariable(CiKind.Int);
+                    CiValue tmp = newVariable(CiKind.Int);
                     lir.shiftLeft(indexOp, log2scale, tmp);
                     addr = new CiAddress(dstKind, baseOp, tmp);
                 }
@@ -1072,7 +1072,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membarRelease();
         }
-        genPutObjectUnsafe((CiLocation) src.result(), (CiLocation) off.result(), data.result(), kind, x.isVolatile());
+        genPutObjectUnsafe(src.result(), off.result(), data.result(), kind, x.isVolatile());
     }
 
     @Override
@@ -1099,7 +1099,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         setNoResult(x);
 
-        CiLocation baseOp = (CiLocation) base.result();
+        CiValue baseOp = base.result();
 
         if (is32) {
             // XXX: what about floats and doubles and objects? (used in OSR)
@@ -1110,7 +1110,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 assert x.base().kind.isInt() : "must be";
             }
         }
-        CiLocation indexOp = (CiLocation) idx.result();
+        CiValue indexOp = idx.result();
         if (log2scale != 0) {
             // temporary fix (platform dependent code without shift on Intel would be better)
             indexOp = newVariable(CiKind.Int);
@@ -1143,7 +1143,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         lir.branchDestination(block.label());
         if (block == ir.startBlock) {
-            lir.stdEntry(IllegalLocation);
+            lir.stdEntry(IllegalValue);
             setOperandsForLocals(block.end().stateAfter());
         }
     }
@@ -1193,11 +1193,11 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (md != null) {
                 int takenCountOffset = md.branchTakenCountOffset(bci);
                 int notTakenCountOffset = md.branchNotTakenCountOffset(bci);
-                CiLocation mdReg = newVariable(CiKind.Object);
+                CiValue mdReg = newVariable(CiKind.Object);
                 lir.move(md.encoding(), mdReg);
-                CiLocation dataOffsetReg = newVariable(CiKind.Int);
+                CiValue dataOffsetReg = newVariable(CiKind.Int);
                 lir.cmove(cond, CiConstant.forInt(takenCountOffset), CiConstant.forInt(notTakenCountOffset), dataOffsetReg);
-                CiLocation dataReg = newVariable(CiKind.Int);
+                CiValue dataReg = newVariable(CiKind.Int);
                 CiAddress dataAddr = new CiAddress(CiKind.Int, mdReg, dataOffsetReg);
                 lir.move(dataAddr, dataReg);
                 CiValue fakeIncrValue = new CiAddress(CiKind.Int, dataReg, 1);
@@ -1279,7 +1279,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         setNoResult(x);
 
-        CiAddress addr = genAddress((CiLocation) src.result(), off.result(), 0, 0, CiKind.Byte);
+        CiAddress addr = genAddress(src.result(), off.result(), 0, 0, CiKind.Byte);
         lir.prefetch(addr, isStore);
     }
 
@@ -1379,12 +1379,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected final CiLocation callRuntime(CiRuntimeCall runtimeCall, LIRDebugInfo info, CiValue... args) {
+    protected final CiValue callRuntime(CiRuntimeCall runtimeCall, LIRDebugInfo info, CiValue... args) {
         // get a result register
         CiKind rtype = runtimeCall.resultKind;
         CiKind[] ptypes = runtimeCall.arguments;
 
-        CiLocation physReg = rtype.isVoid() ? IllegalLocation : resultRegisterFor(rtype);
+        CiValue physReg = rtype.isVoid() ? IllegalValue : resultRegisterFor(rtype);
 
         List<CiValue> argumentList;
         if (ptypes.length > 0) {
@@ -1420,7 +1420,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected final CiVariable callRuntimeWithResult(CiRuntimeCall runtimeCall, LIRDebugInfo info, CiValue... args) {
         CiVariable result = newVariable(runtimeCall.resultKind);
-        CiLocation location = callRuntime(runtimeCall, info, args);
+        CiValue location = callRuntime(runtimeCall, info, args);
         lir.move(location, result);
         return result;
     }
@@ -1792,9 +1792,9 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert instr instanceof Constant || instr.operand().isLegal() : "this root has not been visited yet";
     }
 
-    protected CiLocation resultRegisterFor(CiKind kind) {
+    protected CiValue resultRegisterFor(CiKind kind) {
         if (kind == CiKind.Void) {
-            return IllegalLocation;
+            return IllegalValue;
         }
         CiRegister returnRegister = compilation.target.registerConfig.getReturnRegister(kind);
         return returnRegister.asValue(kind);
@@ -1834,15 +1834,15 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract boolean strengthReduceMultiply(CiValue left, int constant, CiValue result, CiValue tmp);
 
-    protected abstract CiAddress genAddress(CiLocation base, CiValue index, int shift, int disp, CiKind kind);
+    protected abstract CiAddress genAddress(CiValue base, CiValue index, int shift, int disp, CiKind kind);
 
-    protected abstract void genCmpMemInt(Condition condition, CiLocation base, int disp, int c, LIRDebugInfo info);
+    protected abstract void genCmpMemInt(Condition condition, CiValue base, int disp, int c, LIRDebugInfo info);
 
-    protected abstract void genCmpRegMem(Condition condition, CiValue reg, CiLocation base, int disp, CiKind kind, LIRDebugInfo info);
+    protected abstract void genCmpRegMem(Condition condition, CiValue reg, CiValue base, int disp, CiKind kind, LIRDebugInfo info);
 
-    protected abstract void genGetObjectUnsafe(CiLocation dest, CiLocation src, CiLocation offset, CiKind kind, boolean isVolatile);
+    protected abstract void genGetObjectUnsafe(CiValue dest, CiValue src, CiValue offset, CiKind kind, boolean isVolatile);
 
-    protected abstract void genPutObjectUnsafe(CiLocation src, CiLocation offset, CiValue data, CiKind kind, boolean isVolatile);
+    protected abstract void genPutObjectUnsafe(CiValue src, CiValue offset, CiValue data, CiKind kind, boolean isVolatile);
 
     protected abstract void genCompareAndSwap(Intrinsic x, CiKind kind);
 

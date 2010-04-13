@@ -42,22 +42,22 @@ import com.sun.cri.ci.*;
  */
 public final class AMD64LIRGenerator extends LIRGenerator {
 
-    private static final CiLocation IDIV_IN = AMD64.rax.asValue(CiKind.Int);
-    private static final CiLocation IDIV_OUT = AMD64.rax.asValue(CiKind.Int);
-    private static final CiLocation IREM_OUT = AMD64.rdx.asValue(CiKind.Int);
-    private static final CiLocation IDIV_TMP = AMD64.rdx.asValue(CiKind.Int);
+    private static final CiValue IDIV_IN = AMD64.rax.asValue(CiKind.Int);
+    private static final CiValue IDIV_OUT = AMD64.rax.asValue(CiKind.Int);
+    private static final CiValue IREM_OUT = AMD64.rdx.asValue(CiKind.Int);
+    private static final CiValue IDIV_TMP = AMD64.rdx.asValue(CiKind.Int);
 
-    private static final CiLocation LDIV_IN = AMD64.rax.asValue(CiKind.Long);
-    private static final CiLocation LDIV_OUT = AMD64.rax.asValue(CiKind.Long);
-    private static final CiLocation LREM_OUT = AMD64.rdx.asValue(CiKind.Long);
-    private static final CiLocation LDIV_TMP = AMD64.rdx.asValue(CiKind.Long);
+    private static final CiValue LDIV_IN = AMD64.rax.asValue(CiKind.Long);
+    private static final CiValue LDIV_OUT = AMD64.rax.asValue(CiKind.Long);
+    private static final CiValue LREM_OUT = AMD64.rdx.asValue(CiKind.Long);
+    private static final CiValue LDIV_TMP = AMD64.rdx.asValue(CiKind.Long);
 
     private static final CiValue LONG_0_64 = AMD64.rax.asValue(CiKind.Long);
 
     private static final CiValue LONG_1_64 = AMD64.rbx.asValue(CiKind.Long);
 
-    private static final CiLocation SHIFT_COUNT_IN = AMD64.rcx.asValue(CiKind.Int);
-    protected static final CiLocation ILLEGAL = CiValue.IllegalLocation;
+    private static final CiValue SHIFT_COUNT_IN = AMD64.rcx.asValue(CiKind.Int);
+    protected static final CiValue ILLEGAL = CiValue.IllegalValue;
 
     public AMD64LIRGenerator(C1XCompilation compilation) {
         super(compilation);
@@ -101,23 +101,23 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected CiAddress genAddress(CiLocation base, CiValue index, int shift, int disp, CiKind kind) {
+    protected CiAddress genAddress(CiValue base, CiValue index, int shift, int disp, CiKind kind) {
         assert base.isVariableOrRegister() : "must be";
         if (index.isConstant()) {
             return new CiAddress(kind, base, (((CiConstant) index).asInt() << shift) + disp);
         } else {
             assert index.isVariableOrRegister();
-            return new CiAddress(kind, base, ((CiLocation) index), CiAddress.Scale.fromShift(shift), disp);
+            return new CiAddress(kind, base, (index), CiAddress.Scale.fromShift(shift), disp);
         }
     }
 
     @Override
-    protected void genCmpMemInt(Condition condition, CiLocation base, int disp, int c, LIRDebugInfo info) {
+    protected void genCmpMemInt(Condition condition, CiValue base, int disp, int c, LIRDebugInfo info) {
         lir.cmpMemInt(condition, base, disp, c, info);
     }
 
     @Override
-    protected void genCmpRegMem(Condition condition, CiValue reg, CiLocation base, int disp, CiKind kind, LIRDebugInfo info) {
+    protected void genCmpRegMem(Condition condition, CiValue reg, CiValue base, int disp, CiKind kind, LIRDebugInfo info) {
         lir.cmpRegMem(condition, reg, new CiAddress(kind, base, disp), info);
     }
 
@@ -662,7 +662,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genGetObjectUnsafe(CiLocation dst, CiLocation src, CiLocation offset, CiKind kind, boolean isVolatile) {
+    protected void genGetObjectUnsafe(CiValue dst, CiValue src, CiValue offset, CiKind kind, boolean isVolatile) {
         if (isVolatile && kind == CiKind.Long) {
             CiAddress addr = new CiAddress(CiKind.Double, src, offset);
             CiValue tmp = newVariable(CiKind.Double);
@@ -677,7 +677,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genPutObjectUnsafe(CiLocation src, CiLocation offset, CiValue data, CiKind kind, boolean isVolatile) {
+    protected void genPutObjectUnsafe(CiValue src, CiValue offset, CiValue data, CiKind kind, boolean isVolatile) {
         if (isVolatile && kind == CiKind.Long) {
             CiAddress addr = new CiAddress(CiKind.Double, src, offset);
             CiValue tmp = newVariable(CiKind.Double);

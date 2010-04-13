@@ -44,7 +44,7 @@ final class RegisterVerifier {
         return allocator.compilation;
     }
 
-    Interval intervalAt(CiLocation operand) {
+    Interval intervalAt(CiValue operand) {
         return allocator.intervalFor(operand);
     }
 
@@ -82,7 +82,7 @@ final class RegisterVerifier {
         for (int n = 0; n < args.operands.length; n++) {
             CiValue operand = args.operands[n];
             if (operand.isRegister()) {
-                CiLocation reg = operand.asLocation();
+                CiValue reg = operand;
                 Interval interval = intervalAt(reg);
                 inputState[reg.asRegister().number] = interval;
             }
@@ -200,7 +200,7 @@ final class RegisterVerifier {
         return inputState.clone();
     }
 
-    void statePut(Interval[] inputState, CiLocation location, Interval interval) {
+    void statePut(Interval[] inputState, CiValue location, Interval interval) {
         if (location != null && location.isRegister()) {
             CiRegister reg = location.asRegister();
             int regNum = reg.number;
@@ -218,7 +218,7 @@ final class RegisterVerifier {
         }
     }
 
-    boolean checkState(Interval[] inputState, CiLocation reg, Interval interval) {
+    boolean checkState(Interval[] inputState, CiValue reg, Interval interval) {
         if (reg != null && reg.isRegister()) {
             if (inputState[reg.asRegister().number] != interval) {
                 throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
@@ -239,7 +239,7 @@ final class RegisterVerifier {
             // check if input operands are correct
             int n = op.operandCount(LIRInstruction.OperandMode.InputMode);
             for (int j = 0; j < n; j++) {
-                CiLocation operand = op.operandAt(LIRInstruction.OperandMode.InputMode, j);
+                CiValue operand = op.operandAt(LIRInstruction.OperandMode.InputMode, j);
                 if (allocator.isProcessed(operand)) {
                     Interval interval = intervalAt(operand);
                     if (op.id != -1) {
@@ -268,8 +268,8 @@ final class RegisterVerifier {
             n = op.operandCount(LIRInstruction.OperandMode.TempMode);
             for (int j = 0; j < n; j++) {
                 CiValue operand = op.operandAt(LIRInstruction.OperandMode.TempMode, j);
-                if (allocator.isProcessed(operand.asLocation())) {
-                    Interval interval = intervalAt(operand.asLocation());
+                if (allocator.isProcessed(operand)) {
+                    Interval interval = intervalAt(operand);
                     if (op.id != -1) {
                         interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.TempMode, allocator);
                     }
@@ -282,8 +282,8 @@ final class RegisterVerifier {
             n = op.operandCount(LIRInstruction.OperandMode.OutputMode);
             for (int j = 0; j < n; j++) {
                 CiValue operand = op.operandAt(LIRInstruction.OperandMode.OutputMode, j);
-                if (allocator.isProcessed(operand.asLocation())) {
-                    Interval interval = intervalAt(operand.asLocation());
+                if (allocator.isProcessed(operand)) {
+                    Interval interval = intervalAt(operand);
                     if (op.id != -1) {
                         interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.OutputMode, allocator);
                     }

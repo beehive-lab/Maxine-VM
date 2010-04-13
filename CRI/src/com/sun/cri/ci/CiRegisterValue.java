@@ -29,7 +29,7 @@ package com.sun.cri.ci;
  * @author Ben L. Titzer
  * @author Doug Simon
  */
-public final class CiRegisterValue extends CiLocation {
+public final class CiRegisterValue extends CiValue {
 
     /**
      * The register.

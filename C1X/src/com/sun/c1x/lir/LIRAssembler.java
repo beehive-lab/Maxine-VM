@@ -276,7 +276,7 @@ public abstract class LIRAssembler {
                 emitNegate(op);
                 break;
             case Leal:
-                emitLeal(((CiAddress) op.operand()), ((CiLocation) op.result()));
+                emitLeal(((CiAddress) op.operand()), (op.result()));
                 break;
             case NullCheck:
                 asm.recordImplicitException(codePos(), op.info);
@@ -454,7 +454,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitAlignment();
 
-    protected abstract void emitLeal(CiAddress inOpr, CiLocation resultOpr);
+    protected abstract void emitLeal(CiAddress inOpr, CiValue resultOpr);
 
     protected abstract void emitNegate(LIROp1 negate);
 

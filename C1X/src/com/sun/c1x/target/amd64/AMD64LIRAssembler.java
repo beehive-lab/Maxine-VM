@@ -1384,7 +1384,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitLeal(CiAddress addr, CiLocation dest) {
+    protected void emitLeal(CiAddress addr, CiValue dest) {
         CiRegister reg = dest.asRegister();
         masm.lea(reg, asAddress(addr));
     }
@@ -1591,11 +1591,11 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     break;
 
                 case Shl:
-                    emitShiftOp(LIROpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalLocation);
+                    emitShiftOp(LIROpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
                     break;
 
                 case Shr:
-                    emitShiftOp(LIROpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalLocation);
+                    emitShiftOp(LIROpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
                     break;
 
                 case And:
@@ -1637,7 +1637,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     CiValue value = operands[inst.y().index];
                     CiValue pointer = operands[inst.x().index];
                     assert pointer.isVariableOrRegister();
-                    moveOp(value, new CiAddress(inst.kind, (CiLocation) pointer, 0), inst.kind, null, false);
+                    moveOp(value, new CiAddress(inst.kind, pointer, 0), inst.kind, null, false);
                     break;
                 }
 
@@ -1661,9 +1661,9 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     CiValue src = null;
                     if (index.isConstant() && index.kind == CiKind.Int) {
                         CiConstant constantIndex = (CiConstant) index;
-                        src = new CiAddress(inst.kind, (CiLocation) pointer, IllegalLocation, scale, constantIndex.asInt() * scale.value + displacement);
+                        src = new CiAddress(inst.kind, pointer, IllegalValue, scale, constantIndex.asInt() * scale.value + displacement);
                     } else {
-                        src = new CiAddress(inst.kind, (CiLocation) pointer, (CiLocation) index, scale, displacement);
+                        src = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
                     moveOp(src, result, inst.kind, null, false);
@@ -1690,9 +1690,9 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     CiValue dst;
                     if (index.isConstant() && index.kind == CiKind.Int) {
                         CiConstant constantIndex = (CiConstant) index;
-                        dst = new CiAddress(inst.kind, (CiLocation) pointer, IllegalLocation, scale, constantIndex.asInt() * scale.value + displacement);
+                        dst = new CiAddress(inst.kind, pointer, IllegalValue, scale, constantIndex.asInt() * scale.value + displacement);
                     } else {
-                        dst = new CiAddress(inst.kind, (CiLocation) pointer, (CiLocation) index, scale, displacement);
+                        dst = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
                     moveOp(value, dst, inst.kind, null, false);

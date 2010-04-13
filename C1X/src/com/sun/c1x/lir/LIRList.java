@@ -202,11 +202,11 @@ public class LIRList {
     }
 
     public void throwException(CiValue exceptionPC, CiValue exceptionOop, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Throw, exceptionPC, exceptionOop, CiValue.IllegalLocation, info, CiKind.Illegal, true));
+        append(new LIROp2(LIROpcode.Throw, exceptionPC, exceptionOop, CiValue.IllegalValue, info, CiKind.Illegal, true));
     }
 
     public void unwindException(CiValue exceptionPC, CiValue exceptionOop, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Unwind, exceptionPC, exceptionOop, CiValue.IllegalLocation, info));
+        append(new LIROp2(LIROpcode.Unwind, exceptionPC, exceptionOop, CiValue.IllegalValue, info));
     }
 
     public void compareTo(CiValue left, CiValue right, CiValue dst) {
@@ -309,11 +309,11 @@ public class LIRList {
     }
 
     public void shiftLeft(CiValue value, int count, CiValue dst) {
-        shiftLeft(value, CiConstant.forInt(count), dst, CiValue.IllegalLocation);
+        shiftLeft(value, CiConstant.forInt(count), dst, CiValue.IllegalValue);
     }
 
     public void shiftRight(CiValue value, int count, CiValue dst) {
-        shiftRight(value, CiConstant.forInt(count), dst, CiValue.IllegalLocation);
+        shiftRight(value, CiConstant.forInt(count), dst, CiValue.IllegalValue);
     }
 
     public void lcmp2int(CiValue left, CiValue right, CiValue dst) {
@@ -360,7 +360,7 @@ public class LIRList {
         append(new LIROp3(LIROpcode.Wremi, left, right, tmp, res, info));
     }
 
-    public void cmpMemInt(Condition condition, CiLocation base, int disp, int c, LIRDebugInfo info) {
+    public void cmpMemInt(Condition condition, CiValue base, int disp, int c, LIRDebugInfo info) {
         append(new LIROp2(LIROpcode.Cmp, condition, new CiAddress(CiKind.Int, base, disp), CiConstant.forInt(c), info));
     }
 

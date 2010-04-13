@@ -36,7 +36,7 @@ public class LIROp0 extends LIRInstruction {
      * @param opcode the opcode of the new instruction
      */
     public LIROp0(LIROpcode opcode) {
-        this(opcode, CiValue.IllegalLocation);
+        this(opcode, CiValue.IllegalValue);
     }
 
     /**
