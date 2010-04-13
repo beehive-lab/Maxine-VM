@@ -27,7 +27,7 @@ package com.sun.cri.ci;
  * 
  * @author Doug Simon
  */
-public class CiVariable extends CiLocation {
+public class CiVariable extends CiValue {
     
     /**
      * The identifier of the variable. This is a non-zero index in a contiguous 0-based name space. 

@@ -81,7 +81,7 @@ public class LIRDebugInfo {
         debugInfo = new CiDebugInfo(state.scope().toCodeSite(bci), null, registerRefMap, stackRefMap);
     }
 
-    public void setOop(CiLocation location, CiTarget target) {
+    public void setOop(CiValue location, CiTarget target) {
         assert debugInfo != null : "debug info not allocated yet";
         if (location.isAddress()) {
             CiAddress stackLocation = (CiAddress) location;

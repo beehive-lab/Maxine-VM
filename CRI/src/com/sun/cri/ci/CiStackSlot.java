@@ -25,7 +25,7 @@ package com.sun.cri.ci;
  *
  * @author Doug Simon
  */
-public final class CiStackSlot extends CiLocation {
+public final class CiStackSlot extends CiValue {
 
     /**
      * The index of this stack slot within the spill area of a method's frame.

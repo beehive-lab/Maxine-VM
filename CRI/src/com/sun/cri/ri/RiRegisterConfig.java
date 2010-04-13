@@ -44,9 +44,9 @@ public interface RiRegisterConfig {
 
     CiRegister getThreadRegister(); // will be deprecated with XIR
 
-    CiLocation[] getJavaParameterLocations(CiKind[] types, boolean outgoing, CiTarget target);
+    CiValue[] getJavaParameterLocations(CiKind[] types, boolean outgoing, CiTarget target);
 
-    CiLocation[] getRuntimeParameterLocations(CiKind[] types, CiTarget target);
+    CiValue[] getRuntimeParameterLocations(CiKind[] types, CiTarget target);
 
     CiRegister[] getAllocatableRegisters();
 

@@ -69,7 +69,7 @@ public abstract class Instruction extends Value {
     public Instruction(CiKind kind) {
         super(kind);
         bci = BCI_NOT_APPENDED;
-        operand = CiValue.IllegalLocation;
+        operand = CiValue.IllegalValue;
     }
 
     /**

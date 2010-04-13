@@ -85,7 +85,7 @@ final class LinearScanWalker extends IntervalWalker {
         }
     }
 
-    void excludeFromUse(CiLocation location) {
+    void excludeFromUse(CiValue location) {
         assert location.isRegister() : "interval must have a register assigned (stack slots not allowed)";
         int i = location.asRegister().number;
         if (i >= availableRegs[0].number && i <= availableRegs[availableRegs.length - 1].number) {
@@ -98,7 +98,7 @@ final class LinearScanWalker extends IntervalWalker {
         excludeFromUse(i.location());
     }
 
-    void setUsePos(CiLocation reg, Interval interval, int usePos, boolean onlyProcessUsePos) {
+    void setUsePos(CiValue reg, Interval interval, int usePos, boolean onlyProcessUsePos) {
         assert usePos != 0 : "must use excludeFromUse to set usePos to 0";
         int i = reg.asRegister().number;
         if (i >= availableRegs[0].number && i <= availableRegs[availableRegs.length - 1].number) {
@@ -118,7 +118,7 @@ final class LinearScanWalker extends IntervalWalker {
         }
     }
 
-    void setBlockPos(CiLocation location, Interval interval, int blockPos) {
+    void setBlockPos(CiValue location, Interval interval, int blockPos) {
         int reg = location.asRegister().number;
         if (reg >= availableRegs[0].number && reg <= availableRegs[availableRegs.length - 1].number) {
             if (this.blockPos[reg] > blockPos) {
@@ -681,7 +681,7 @@ final class LinearScanWalker extends IntervalWalker {
         return true;
     }
 
-    CiRegister findLockedRegister(int regNeededUntil, int intervalTo, CiLocation ignoreReg, boolean[] needSplit) {
+    CiRegister findLockedRegister(int regNeededUntil, int intervalTo, CiValue ignoreReg, boolean[] needSplit) {
         int maxReg = -1;
         CiRegister ignore = ignoreReg.isRegister() ? ignoreReg.asRegister() : null;
 
@@ -923,7 +923,7 @@ final class LinearScanWalker extends IntervalWalker {
             TTY.println("      splitParent: %s, insertMoveWhenActivated: %b", interval.splitParent().operandNumber, interval.insertMoveWhenActivated());
         }
 
-        final CiLocation operand = interval.operand;
+        final CiValue operand = interval.operand;
         if (interval.location() != null && interval.location().isStackSlot()) {
             // activating an interval that has a stack slot assigned . split it at first use position
             // used for method parameters

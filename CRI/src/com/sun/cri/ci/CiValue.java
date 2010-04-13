@@ -23,14 +23,21 @@ package com.sun.cri.ci;
 
 
 /**
- * Base class for compiler interface values.
- *
+ * Base class for compiler values.
+ * 
+ * The VM uses {@link CiConstant} and {@link CiAddress}
+ * to communicate constants and ABI specific stack locations to the compiler.
+ * 
+ * The compiler uses all of these classes. In particular, the register allocator
+ * uses the {@link CiVariable}, {@link CiStackSlot} and {@link CiRegisterValue}
+ * classes when abstract values to machine locations.
+ * 
  * @author Thomas Wuerthinger
  * @author Doug Simon
  */
 public abstract class CiValue {
 
-    public static CiLocation IllegalLocation = new CiLocation(CiKind.Illegal) {
+    public static CiValue IllegalValue = new CiValue(CiKind.Illegal) {
         @Override
         public String name() {
             return "<illegal>";
@@ -74,16 +81,12 @@ public abstract class CiValue {
         throw illegalOperation("asRegister");
     }
 
-    public final CiLocation asLocation() {
-        return (CiLocation) this;
-    }
-
     public final boolean isIllegal() {
-        return this == IllegalLocation;
+        return this == IllegalValue;
     }
     
     public final boolean isLegal() {
-        return this != IllegalLocation;
+        return this != IllegalValue;
     }
 
     public final boolean isStackSlot() {

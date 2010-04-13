@@ -46,7 +46,7 @@ public abstract class LocalStub {
     public int tempInputCount;
 
     public LocalStub(LIRDebugInfo info) {
-        this(info, CiValue.IllegalLocation);
+        this(info, CiValue.IllegalValue);
     }
 
     public LocalStub(LIRDebugInfo info, CiValue result) {

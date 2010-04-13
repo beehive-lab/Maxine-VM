@@ -28,31 +28,31 @@ package com.sun.cri.ci;
  * 
  * @author Doug Simon
  */
-public final class CiAddress extends CiLocation {
+public final class CiAddress extends CiValue {
 
     /**
      * A sentinel value used as a place holder in an instruction stream for an address that will be patched.
      */
     public static final CiAddress Placeholder = new CiAddress(CiKind.Illegal, CiRegister.None.asValue());
     
-    public final CiLocation base;
-    public final CiLocation index;
+    public final CiValue base;
+    public final CiValue index;
     public final Scale scale;
     public final int displacement;
     
-    public CiAddress(CiKind kind, CiLocation base) {
-        this(kind, base, IllegalLocation, Scale.Times1, 0);
+    public CiAddress(CiKind kind, CiValue base) {
+        this(kind, base, IllegalValue, Scale.Times1, 0);
     }
 
-    public CiAddress(CiKind kind, CiLocation base, int displacement) {
-        this(kind, base, IllegalLocation, Scale.Times1, displacement);
+    public CiAddress(CiKind kind, CiValue base, int displacement) {
+        this(kind, base, IllegalValue, Scale.Times1, displacement);
     }
 
-    public CiAddress(CiKind kind, CiLocation base, CiLocation index) {
+    public CiAddress(CiKind kind, CiValue base, CiValue index) {
         this(kind, base, index, Scale.Times1, 0);
     }
     
-    public CiAddress(CiKind kind, CiLocation base, CiLocation index, Scale scale, int displacement) {
+    public CiAddress(CiKind kind, CiValue base, CiValue index, Scale scale, int displacement) {
         super(kind);
         this.base = base;
         this.index = index;
@@ -135,7 +135,7 @@ public final class CiAddress extends CiLocation {
         }
     }
     
-    private static String s(CiLocation location) {
+    private static String s(CiValue location) {
         if (location.isRegister()) {
             return location.asRegister().name;
         }

@@ -38,7 +38,7 @@ import com.sun.cri.ci.*;
  */
 public abstract class LIRInstruction {
 
-    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(CiValue.IllegalLocation);
+    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(CiValue.IllegalValue);
 
     /**
      * The opcode of this instruction.
@@ -87,7 +87,7 @@ public abstract class LIRInstruction {
     private int allocatorInputCount;
     private int allocatorTempCount;
     private int allocatorTempInputCount;
-    private final List<CiLocation> operands = new ArrayList<CiLocation>(3);
+    private final List<CiValue> operands = new ArrayList<CiValue>(3);
 
     /**
      * An indirection to an instruction operand that is constant in the context of register allocation.
@@ -143,8 +143,8 @@ public abstract class LIRInstruction {
                 CiValue result = null;
                 if (direct != null && direct.isAddress()) {
                     CiAddress address = (CiAddress) direct;
-                    CiLocation baseOperand = inst.operands.get(index);
-                    CiLocation indexOperand = CiValue.IllegalLocation;
+                    CiValue baseOperand = inst.operands.get(index);
+                    CiValue indexOperand = CiValue.IllegalValue;
                     if (address.index.isLegal()) {
                         indexOperand = inst.operands.get(index + 1);
                         assert indexOperand.isVariableOrRegister();
@@ -181,7 +181,7 @@ public abstract class LIRInstruction {
         this.hasCall = hasCall;
         this.stub = stub;
 
-        assert opcode != LIROpcode.Move || result != CiValue.IllegalLocation;
+        assert opcode != LIROpcode.Move || result != CiValue.IllegalValue;
         this.result = addOutput(result);
         if (stub != null) {
             stub.setInstruction(this);
@@ -200,13 +200,13 @@ public abstract class LIRInstruction {
 
     private OperandSlot addOutput(CiValue output) {
         assert output != null;
-        if (output != CiValue.IllegalLocation) {
+        if (output != CiValue.IllegalValue) {
             if (output instanceof CiAddress) {
                 return addAddress((CiAddress) output);
             }
 
             assert operands.size() == outputCount;
-            operands.add((CiLocation) output);
+            operands.add(output);
             outputCount++;
             return new OperandSlot(operands.size() - 1);
         } else {
@@ -236,7 +236,7 @@ public abstract class LIRInstruction {
 
     private OperandSlot addOperand(CiValue input, boolean isInput, boolean isTemp) {
         assert input != null;
-        if (input != CiValue.IllegalLocation) {
+        if (input != CiValue.IllegalValue) {
             assert !(input instanceof CiAddress);
             if (input.isStackSlot()) {
                 // no variables to add
@@ -246,7 +246,7 @@ public abstract class LIRInstruction {
                 return new OperandSlot(input);
             } else {
                 assert operands.size() == outputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
-                operands.add((CiLocation) input);
+                operands.add(input);
 
                 if (isInput && isTemp) {
                     allocatorTempInputCount++;
@@ -266,7 +266,7 @@ public abstract class LIRInstruction {
 
     protected final CiValue operand(int index) {
         if (index >= operandSlots.length) {
-            return CiValue.IllegalLocation;
+            return CiValue.IllegalValue;
         }
 
         return operandSlots[index].get(this);
@@ -354,7 +354,7 @@ public abstract class LIRInstruction {
             assert operandSlot != null;
         }
 
-        for (CiLocation operand : this.operands) {
+        for (CiValue operand : this.operands) {
             assert operand != null;
         }
         return true;
@@ -465,7 +465,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public CiLocation operandAt(OperandMode mode, int index) {
+    public CiValue operandAt(OperandMode mode, int index) {
         if (mode == OperandMode.OutputMode) {
             assert index < outputCount;
             return operands.get(index);
@@ -479,7 +479,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public void setOperandAt(OperandMode mode, int index, CiLocation location) {
+    public void setOperandAt(OperandMode mode, int index, CiValue location) {
         assert index < operandCount(mode);
         assert location.kind != CiKind.Illegal;
         if (mode == OperandMode.OutputMode) {

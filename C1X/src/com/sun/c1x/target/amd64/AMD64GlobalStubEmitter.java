@@ -193,7 +193,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         XirOperand resultOperand = template.resultOperand;
 
         if (template.allocateResultOperand) {
-            CiValue outputOperand = CiValue.IllegalLocation;
+            CiValue outputOperand = CiValue.IllegalValue;
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
@@ -447,7 +447,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     private void forwardRuntimeCall(CiRuntimeCall call) {
         // Load arguments
-        CiLocation[] result = target.registerConfig.getRuntimeParameterLocations(call.arguments, target);
+        CiValue[] result = target.registerConfig.getRuntimeParameterLocations(call.arguments, target);
         for (int i = 0; i < call.arguments.length; i++) {
             loadArgument(i, result[i].asRegister());
         }

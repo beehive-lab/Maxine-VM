@@ -46,17 +46,17 @@ public class LIRItem {
 
     public void setInstruction(Value value) {
         this.value = value;
-        this.result = IllegalLocation;
+        this.result = IllegalValue;
         if (value != null) {
             gen.walk(value);
             result = value.operand();
         }
-        newResult = IllegalLocation;
+        newResult = IllegalValue;
     }
 
     public LIRItem(LIRGenerator gen) {
         this.gen = gen;
-        result = IllegalLocation;
+        result = IllegalValue;
         setInstruction(null);
     }
 
@@ -135,7 +135,7 @@ public class LIRItem {
             loadItem();
             CiValue res = result();
 
-            if (!res.isVariable() || !gen.operands().mustBeByteRegister(res.asLocation())) {
+            if (!res.isVariable() || !gen.operands().mustBeByteRegister(res)) {
                 // make sure that it is a byte register
                 assert !value.kind.isFloat() && !value.kind.isDouble() : "can't load floats in byte register";
                 CiValue reg = gen.operands().newVariable(CiKind.Byte, VariableFlag.MustBeByteRegister);

@@ -180,9 +180,9 @@ public abstract class CiXirAssembler {
     }
 
     public class XirFixed extends XirTemp {
-        public final CiLocation location;
+        public final CiValue location;
 
-        XirFixed(String name, CiLocation location) {
+        XirFixed(String name, CiValue location) {
             super(name, location.kind);
             this.location = location;
         }

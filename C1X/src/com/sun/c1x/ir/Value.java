@@ -292,7 +292,7 @@ public abstract class Value {
      * Clears the LIR operand associated with this instruction.
      */
     public final void clearOperand() {
-        this.operand = IllegalLocation;
+        this.operand = IllegalValue;
     }
 
     /**

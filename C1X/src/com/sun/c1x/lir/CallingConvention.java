@@ -32,15 +32,15 @@ import com.sun.cri.ci.*;
 public class CallingConvention {
 
     public final int overflowArgumentSize;
-    public final CiLocation[] locations;
+    public final CiValue[] locations;
     public final CiValue[] operands;
 
-    CallingConvention(CiLocation[] locations, CiTarget target) {
+    CallingConvention(CiValue[] locations, CiTarget target) {
         this.locations = locations;
         this.operands = new CiValue[locations.length];
         int outgoing = 0;
         for (int i = 0; i < locations.length; i++) {
-            CiLocation l = locations[i];
+            CiValue l = locations[i];
             operands[i] = l;
             if (l.isAddress()) {
                 CiAddress s = (CiAddress) l;
