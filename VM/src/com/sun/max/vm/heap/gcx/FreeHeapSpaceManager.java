@@ -37,13 +37,6 @@ import com.sun.max.vm.tele.*;
  * Simple free heap space management.
  * Nothing ambitious, just to get going and test the tracing algorithm of the future hybrid mark-sweep-evacuate.
  *
- * Free space is tracked using linked list(s)  threaded over the heap build by the heap sweeper.
- * Two free lists are used: one for large objects, and one for small object allocations.
- * The sweeper ignore contiguous space of size smaller than minFreeChunkSize bytes -- these
- * are left as dark matter (dead object if parsing the heap is required).
- * Each chunk of free space is at least 4-words large, and holds in its last two words the
- * address to the next free space (or 0 if none) and its size.
- *
  * @author Laurent Daynes.
  */
 public class FreeHeapSpaceManager extends HeapSweeper {
@@ -53,7 +46,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
 
     private static final VMIntOption freeChunkMinSizeOption =
         register(new VMIntOption("-XX:FreeChunkMinSize=", 256,
-                        "Minimum size of contiguous space considered for free space management." +
+                        "Minimum size of contiguous space considered for space reclamation." +
                         "Below this size, the space is ignored (dark matter)"),
                         MaxineVM.Phase.PRISTINE);
 
@@ -62,13 +55,19 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                     "Perform imprecise sweeping phase"),
                     MaxineVM.Phase.PRISTINE);
 
+    // Temporary tracing
+    private static final boolean TraceSweep = true;
+
     /**
      * Minimum size to be treated as a large object.
      */
     @CONSTANT_WHEN_NOT_ZERO
     static Size minLargeObjectSize;
 
-    static int log2MinFreeChunkSize;
+    /**
+     * Log 2 of the maximum size to enter the first bin of free space.
+     */
+    int log2FirstBinSize;
 
     private static  final Size TINY_OBJECT_SIZE = Size.fromInt(Word.size() * 2);
 
@@ -256,7 +255,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
     }
 
     /**
-     * Region describing the currently committed heap space.
+     * The currently committed heap space.
      */
     private final RuntimeMemoryRegion committedHeapSpace;
     private boolean doImpreciseSweep;
@@ -304,6 +303,18 @@ public class FreeHeapSpaceManager extends HeapSweeper {
      */
     long totalFreeChunkSpace;
 
+    @INLINE
+    private int binIndex(Size size) {
+        final long l = size.toLong() >> log2FirstBinSize;
+        return  (l < freeChunkBins.length) ?  (int) l : (freeChunkBins.length - 1);
+    }
+
+    @INLINE
+    private void recordFreeSpace(Address chunk, Size size) {
+        freeChunkBins[binIndex(size)].append(chunk, size);
+        totalFreeChunkSpace += size.toLong();
+    }
+
     /**
      * Recording of free chunk of space.
      * Chunks are recording in different list depending on their size.
@@ -311,11 +322,8 @@ public class FreeHeapSpaceManager extends HeapSweeper {
      * @param size
      */
     @Override
-    public final void recordFreeSpace(Address freeChunk, Size size) {
-        long l = size.toLong() >> log2MinFreeChunkSize;
-        int binIndex =  (l > freeChunkBins.length) ?  (freeChunkBins.length - 1) : (int) l;
-        freeChunkBins[binIndex].append(freeChunk, size);
-        totalFreeChunkSpace += size.toLong();
+    public final void processDeadSpace(Address freeChunk, Size size) {
+        recordFreeSpace(freeChunk, size);
     }
 
     private Size minReclaimableSpace;
@@ -345,11 +353,34 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         return endOfLastVisitedObject;
     }
 
+    private void printNotifiedGap(Pointer leftLiveObject, Pointer rightLiveObject, Pointer gapAddress, Size gapSize) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("Gap between [");
+        Log.print(leftLiveObject);
+        Log.print(", ");
+        Log.print(rightLiveObject);
+        Log.print("] = @");
+        Log.print(gapAddress);
+        Log.print("(");
+        Log.print(gapSize.toLong());
+        Log.print(")");
+
+        if (gapSize.greaterEqual(minReclaimableSpace)) {
+            Log.print("=> bin #");
+            Log.println(binIndex(gapSize));
+        } else {
+            Log.println(" => dark matter");
+        }
+        Log.unlock(lockDisabledSafepoints);
+    }
 
     @Override
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
         Size deadSpace = rightLiveObject.minus(endOfLeftObject).asSize();
+        if (TraceSweep) {
+            printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, deadSpace);
+        }
         if (deadSpace.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(endOfLeftObject, deadSpace);
         } else {
@@ -364,7 +395,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         Log.print("Dark matter: "); Log.print(darkMatter);
         for (int i = 0; i < freeChunkBins.length; i++) {
             Log.print("Bin ["); Log.print(i); Log.print("] (");
-            Log.print(i << log2MinFreeChunkSize); Log.print("<= chunk size < "); Log.print((i + 1) << log2MinFreeChunkSize);
+            Log.print(i << log2FirstBinSize); Log.print("<= chunk size < "); Log.print((i + 1) << log2FirstBinSize);
             Log.print(") total chunks: "); Log.print(freeChunkBins[i].totalChunks);
             Log.print("total space : "); Log.println(freeChunkBins[i].totalSize);
         }
@@ -390,7 +421,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         committedHeapSpace.setSize(initSize);
         // Round down to power of two.
         minLargeObjectSize = Size.fromInt(Integer.highestOneBit(largeObjectsMinSizeOption.getValue()));
-        log2MinFreeChunkSize = Integer.numberOfTrailingZeros(minLargeObjectSize.toInt());
+        log2FirstBinSize = Integer.numberOfTrailingZeros(minLargeObjectSize.toInt());
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
         doImpreciseSweep = doImpreciseSweepOption.getValue();
         smallObjectAllocator.initialize(committedHeapSpace.start(), committedHeapSpace.size(), minLargeObjectSize);

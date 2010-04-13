@@ -322,8 +322,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
     @INLINE
-    final Word bitmapWordAt(int bitIndex) {
-        return base.asPointer().getWord(bitmapWordIndex(bitIndex));
+    final long bitmapWordAt(int bitIndex) {
+        return base.asPointer().getLong(bitmapWordIndex(bitIndex));
     }
 
     /**
@@ -474,8 +474,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     @INLINE
     final boolean isColor_(int bitIndex, long color) {
         FatalError.check(!colorSpanWords(bitIndex), "Color must not cross word boundary.");
-        final Word bitmapWord = bitmapWordAt(bitIndex);
-        return ((bitmapWord.asPointer().toLong() >> bitIndexInWord(bitIndex)) & COLOR_MASK) == color;
+        final long bitmapWord = bitmapWordAt(bitIndex);
+        return ((bitmapWord >>> bitIndexInWord(bitIndex)) & COLOR_MASK) == color;
     }
 
     /**
@@ -488,7 +488,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     @INLINE
     final boolean isWhite(int bitIndex) {
-        return (bitmapWordAt(bitIndex).asPointer().toLong() & bitmaskFor(bitIndex)) == 0;
+        return (bitmapWordAt(bitIndex) & bitmaskFor(bitIndex)) == 0;
     }
 
     @INLINE
@@ -1011,7 +1011,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                         // This is necessary because live objects after the finger are marked black only, so we cannot
                         // distinguish black from grey.
                         bitIndexInWord += 2;
-                        bitmapWord = colorMapBase.getWord(bitmapWordIndex).asPointer().unsignedShiftedRight(bitIndexInWord).toLong();
+                        bitmapWord = colorMapBase.getLong(bitmapWordIndex) >>> bitIndexInWord;
                     } while(bitmapWord != 0);
                     bitmapWordIndex++;
                     final int nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
@@ -1135,7 +1135,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     // right-shift the bitmap word to skip the mark bits already processed and loop back to
                     // find the next black object with this word.
                     bitIndexInWord += 2;
-                    bitmapWord = Pointer.fromLong(bitmapWord).unsignedShiftedRight(bitIndexInWord).toLong();
+                    bitmapWord = bitmapWord >>> bitIndexInWord;
                 } while(bitmapWord != 0);
                 bitmapWordIndex++;
                 final int nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
@@ -1148,6 +1148,18 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
+    /*
+     * Helper instance variable for debugging purposes.
+     */
+    Pointer gapLeftObject;
+    Pointer gapRightObject;
+    int     gapBitmapWordIndex;
+    int     gapBitIndex;
+    // FIXME: make local vars again.
+    int lastLiveMark;
+    int bitIndexInWord;
+    long darkMatterBitCount;
+    long w;
     /**
      * Imprecise sweeping of the heap.
      * The sweeper is notified only when the distance between two live marks is larger than a specified minimum amount of
@@ -1162,19 +1174,27 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         final int minBitsBetweenMark = minReclaimableSpace.toInt() >> log2BytesCoveredPerBit;
         int bitmapWordIndex = 0;
 
+        // Debug helpers. REMOVE
+        gapLeftObject = Pointer.zero();
+        gapRightObject = Pointer.zero();
+        gapBitIndex = 0;
+        gapBitmapWordIndex = 0;
+
         // Indicate the closest position the next live mark should be at to make the space reclaimable.
         int nextReclaimableMark = minBitsBetweenMark;
-        long darkMatterBitCount = 0;
-        int lastLiveMark = firstBlackMark(0, bitIndexOf(rightmost));
+        // long
+        darkMatterBitCount = 0;
+        // int
+        lastLiveMark = firstBlackMark(0, bitIndexOf(rightmost));
         if (lastLiveMark > 0) {
             if (lastLiveMark >=  nextReclaimableMark) {
-                sweeper.recordFreeSpace(coveredAreaStart, Size.fromInt(lastLiveMark << log2BytesCoveredPerBit));
+                sweeper.processDeadSpace(coveredAreaStart, Size.fromInt(lastLiveMark << log2BytesCoveredPerBit));
             }
             bitmapWordIndex =  bitmapWordIndex(lastLiveMark + 2);
             nextReclaimableMark = lastLiveMark + 2 + minBitsBetweenMark;
         } else if (lastLiveMark < 0) {
             // The whole heap is free. (is that ever possible ?)
-            sweeper.recordFreeSpace(coveredAreaStart, rightmost.minus(coveredAreaStart).asSize());
+            sweeper.processDeadSpace(coveredAreaStart, rightmost.minus(coveredAreaStart).asSize());
             return Size.zero();
         }
 
@@ -1183,28 +1203,42 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         int rightmostBitmapWordIndex =  bitmapWordIndex(bitIndexOf(rightmost));
 
         while (bitmapWordIndex <= rightmostBitmapWordIndex) {
-            long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
+            final long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
             if (bitmapWord != 0) {
                 // At least one mark is set.
-                int bitIndexInWord = 0;
+                //int bitIndexInWord = 0;
+                bitIndexInWord = 0;
                 final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;
                 int nextCellBitmapWordIndex = bitmapWordIndex + 1;
+                // long w = bitmapWord;
+                w = bitmapWord;
                 do {
                     // First mark is the least set bit.
-                    bitIndexInWord += Pointer.fromLong(bitmapWord).leastSignificantBitSet();
+                    bitIndexInWord += Pointer.fromLong(w).leastSignificantBitSet();
                     final int bitIndexOfBlackMark = bitmapWordFirstBitIndex + bitIndexInWord;
                     if (bitIndexOfBlackMark < nextReclaimableMark) {
                         darkMatterBitCount += bitIndexOfBlackMark - lastLiveMark;
                         // Too small a gap between two live marks to be worth reporting to the sweeper.
                         // Reset the next mark.
                         lastLiveMark = bitIndexOfBlackMark;
-                        nextReclaimableMark = bitIndexOfBlackMark + 2 + minBitsBetweenMark;
+                        nextReclaimableMark = bitIndexOfBlackMark + minBitsBetweenMark;
+                        if (bitIndexInWord >= 62) {
+                            // next object begins in next word.
+                            break;
+                        }
                     } else {
+                        // Debug helpers. REMOVE
+                        gapBitIndex = bitIndexOfBlackMark;
+                        gapBitmapWordIndex = bitmapWordIndex;
+                        gapLeftObject = addressOf(lastLiveMark).asPointer();
+                        gapRightObject = addressOf(bitIndexOfBlackMark).asPointer();
+
                         final Pointer endOfLastVisitedCell = sweeper.processLargeGap(addressOf(lastLiveMark).asPointer(), addressOf(bitIndexOfBlackMark).asPointer());
                         lastLiveMark  = bitIndexOfBlackMark;
                         nextReclaimableMark = bitIndexOf(endOfLastVisitedCell) + minBitsBetweenMark;
-                        nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
-                        if (nextCellBitmapWordIndex > bitmapWordIndex) {
+                        final int bitIndex =  bitmapWordIndex(endOfLastVisitedCell);
+                        if (bitIndex > bitmapWordIndex) {
+                            nextCellBitmapWordIndex = bitIndex;
                             break;
                         }
                         // End of visited cell is within the same mark word. Just
@@ -1212,12 +1246,17 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                         // find the next black object with this word.
                     }
                     bitIndexInWord += 2;
-                    bitmapWord = Pointer.fromLong(bitmapWord).unsignedShiftedRight(bitIndexInWord).toLong();
-                } while(bitmapWord != 0);
+                    w = bitmapWord >>> bitIndexInWord;
+                } while(w != 0);
                 bitmapWordIndex = nextCellBitmapWordIndex;
             } else {
                 bitmapWordIndex++;
             }
+        }
+        Pointer tail = rightmost.asPointer().plus(Layout.size(Layout.cellToOrigin(rightmost.asPointer())));
+        Size tailSpace = coveredAreaEnd.minus(tail).asSize();
+        if (tailSpace.greaterEqual(minReclaimableSpace)) {
+            sweeper.processDeadSpace(tail, tailSpace);
         }
         return Size.fromLong(darkMatterBitCount << log2BytesCoveredPerBit);
     }

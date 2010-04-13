@@ -1748,7 +1748,6 @@ public final class GraphBuilder {
 
         skipBlock = false;
         assert curState != null;
-        RiMethod method = method();
         BytecodeStream s = scopeData.stream;
         s.setBCI(bci);
 
