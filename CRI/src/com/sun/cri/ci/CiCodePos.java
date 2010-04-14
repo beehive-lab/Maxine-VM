@@ -23,11 +23,11 @@ package com.sun.cri.ci;
 import com.sun.cri.ri.*;
 
 /**
- * This class represents a code position (i.e. a chain of inlined methods with bytecode
- * locations) that is communicated from the compiler to the runtime system. A code position
+ * Represents a code position, that is, a chain of inlined methods with bytecode
+ * locations, that is communicated from the compiler to the runtime system. A code position
  * can be used by the runtime system to reconstruct a source-level stack trace
  * for exceptions and to create stack frames for deoptimization (switching from
- * optimized code to interpreted code).
+ * optimized code to deoptimized code).
  *
  * @author Ben L. Titzer
  */

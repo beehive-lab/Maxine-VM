@@ -26,8 +26,9 @@ import java.util.*;
 
 
 /**
- * This class represents a boxed value, such as integer, floating point number, or object reference,
- * within the compiler and across the compiler/runtime barrier.
+ * Represents a constant (boxed) value, such as integer, floating point number, or object reference,
+ * within the compiler and across the compiler/runtime interface. Exports a set of @{code CiConstant}
+ * instances that represent frequently used constant values, such as {@link #ZERO}.
  *
  * @author Ben L. Titzer
  */
@@ -37,7 +38,7 @@ public final class CiConstant extends CiValue {
      * Cache for non-Object boxed constants.
      */
     private static final Map<Object, CiConstant>[] cache;
-    
+
     @SuppressWarnings("unchecked")
     private static <T> T suppressCastWarning(Object object) {
         return (T) object;
@@ -52,9 +53,9 @@ public final class CiConstant extends CiValue {
             }
         }
     }
-    
+
     /**
-     * 
+     *
      * @param out
      */
     public static void dumpCacheStats(PrintStream out) {
@@ -66,7 +67,7 @@ public final class CiConstant extends CiValue {
             }
         }
     }
-    
+
     public static final CiConstant NULL_OBJECT = get(CiKind.Object, null);
     public static final CiConstant ZERO = get(CiKind.Word, 0L);
     public static final CiConstant INT_MINUS_1 = get(CiKind.Int, -1);
@@ -100,7 +101,7 @@ public final class CiConstant extends CiValue {
     /**
      * Gets a boxed value for a given value of a given kind. For non-object kinds,
      * this operation tries to find a cached copy of the boxed value.
-     * 
+     *
      * @param kind the kind of {@code value}
      * @param value the value to box
      * @return a boxed copy of {@code value}
@@ -122,7 +123,7 @@ public final class CiConstant extends CiValue {
         }
         return constant;
     }
-    
+
     /**
      * Checks whether this constant is non-null.
      * @return {@code true} if this constant is a primitive, or an object constant that is not null
@@ -166,7 +167,7 @@ public final class CiConstant extends CiValue {
     }
 
     private boolean valueEqual(CiConstant other) {
-        // must have equivalent tags to be equal
+        // must have equivalent kinds to be equal
         if (kind != other.kind) {
             return false;
         }
@@ -178,7 +179,7 @@ public final class CiConstant extends CiValue {
         }
         return false;
     }
-    
+
     private static boolean valuesEqual(Object o1, Object o2, CiKind kind) {
         // use == for object references and .equals() for boxed types
         if (o1 == o2) {
