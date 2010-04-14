@@ -21,7 +21,7 @@
 package com.sun.cri.ci;
 
 /**
- * This exception is thrown when C1X refuses to compile a method because of problems with the method.
+ * {@code CiBailout} is thrown when the compiler refuses to compile a method because of problems with the method.
  * e.g. bytecode wouldn't verify, too big, JSR/ret too complicated, etc. This exception is <i>not</i>
  * meant to indicate problems with the compiler itself.
  *
@@ -32,7 +32,7 @@ public class CiBailout extends RuntimeException {
     public static final long serialVersionUID = 8974598793458772L;
 
     /**
-     * Create a new bailout.
+     * Create a new {@code CiBailout}.
      * @param reason a message indicating the reason
      */
     public CiBailout(String reason) {
@@ -40,7 +40,7 @@ public class CiBailout extends RuntimeException {
     }
 
     /**
-     * Create a new bailout due to an internal exception being thrown.
+     * Create a new {@code CiBailout} t due to an internal exception being thrown.
      * @param reason a message indicating the reason
      * @param cause the throwable that was the cause of the bailout
      */

@@ -36,7 +36,7 @@ public final class CiStackSlot extends CiValue {
     /**
      * Gets a {@link CiStackSlot} instance representing a stack slot at a given index
      * holding a value of a given kind.
-     *  
+     *
      * @param kind the kind of the value stored in the stack slot
      * @param index the index of the stack slot
      */
@@ -48,7 +48,7 @@ public final class CiStackSlot extends CiValue {
         }
         return new CiStackSlot(kind, index);
     }
-    
+
     /**
      * Private constructor to enforce use of {@link #get(CiKind, int)} so that the
      * shared instance {@linkplain #cache cache} is used.
@@ -80,7 +80,14 @@ public final class CiStackSlot extends CiValue {
     public String name() {
         return "stack:" + index;
     }
-    
+
+    /**
+     * Creates an array of {@core CiStackSlot} objects for a given {@link CiKind}.
+     * The {@link #index} values range from {@code 0} to {@code count - 1}.
+     * @param kind the {@code CiKind} of the stack slot
+     * @param count the size of the array to create
+     * @return the generated {@code CiStackSlot} array
+     */
     private static CiStackSlot[] generate(CiKind kind, int count) {
         CiStackSlot[] slots = new CiStackSlot[count];
         for (int i = 0; i < count; ++i) {
@@ -88,11 +95,14 @@ public final class CiStackSlot extends CiValue {
         }
         return slots;
     }
-    
-    private static final int CACHE_PER_KIND_SIZE = 100;
-    
+
     /**
-     * A cache of {@link CiStackSlot} objects.
+     * Default size of the cache to generate per kind.
+     */
+    private static final int CACHE_PER_KIND_SIZE = 100;
+
+    /**
+     * The cache of {@link CiStackSlot} objects, all created at startup.
      */
     private static final CiStackSlot[][] cache = new CiStackSlot[CiKind.values().length][];
     static {

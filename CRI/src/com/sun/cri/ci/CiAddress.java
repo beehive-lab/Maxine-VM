@@ -20,12 +20,11 @@
  */
 package com.sun.cri.ci;
 
-
-
 /**
- * Represents an address specified via some combination of a base register,
- * an index register, a displacement and a scale.
- * 
+ * Represents an address in target machine memory, specified via some combination of a base register, an index register,
+ * a displacement and a scale. Note that the base and index registers may be {@link CiVariable virtual}, that is as yet
+ * unassigned to target machine registers.
+ *
  * @author Doug Simon
  */
 public final class CiAddress extends CiValue {
@@ -34,24 +33,63 @@ public final class CiAddress extends CiValue {
      * A sentinel value used as a place holder in an instruction stream for an address that will be patched.
      */
     public static final CiAddress Placeholder = new CiAddress(CiKind.Illegal, CiRegister.None.asValue());
-    
+
+    /**
+     * Base register that defines the start of the address computation; always present.
+     */
     public final CiValue base;
+    /**
+     * Optional index register, the value of which (possibly scaled by {@link #scale}) is added to {@link #base}.
+     * If not present, is denoted by {@link CiValue#IllegalValue}.
+     */
     public final CiValue index;
+    /**
+     * Scaling factor for indexing, dependent on target operand size.
+     */
     public final Scale scale;
+    /**
+     * Optional additive displacement.
+     */
     public final int displacement;
-    
+
+    /**
+     * Creates a {@code CiAddress} with given base register, no scaling and no displacement.
+     * @param kind the kind of the value being addressed
+     * @param base the base register
+     */
     public CiAddress(CiKind kind, CiValue base) {
         this(kind, base, IllegalValue, Scale.Times1, 0);
     }
 
+    /**
+     * Creates a {@code CiAddress} with given base register, no scaling and a given displacement.
+     * @param kind the kind of the value being addressed
+     * @param base the base register
+     * @param displacement the displacement
+     */
     public CiAddress(CiKind kind, CiValue base, int displacement) {
         this(kind, base, IllegalValue, Scale.Times1, displacement);
     }
 
+    /**
+     * Creates a {@code CiAddress} with given base and index registers, no scaling and no displacement.
+     * @param kind the kind of the value being addressed
+     * @param base the base register
+     * @param index the index register
+     */
     public CiAddress(CiKind kind, CiValue base, CiValue index) {
         this(kind, base, index, Scale.Times1, 0);
     }
-    
+
+    /**
+     * Creates a {@code CiAddress} with given base and index registers, scaling and displacement.
+     * This is the most general constructor..
+     * @param kind the kind of the value being addressed
+     * @param base the base register
+     * @param index the index register
+     * @param scale the scaling factor
+     * @param displacement the displacement
+     */
     public CiAddress(CiKind kind, CiValue base, CiValue index, Scale scale, int displacement) {
         super(kind);
         this.base = base;
@@ -59,7 +97,7 @@ public final class CiAddress extends CiValue {
         this.scale = scale;
         this.displacement = displacement;
     }
-    
+
     /**
      * A scaling factor used in complex addressing modes such as those supported by x86 platforms.
      */
@@ -78,12 +116,12 @@ public final class CiAddress extends CiValue {
          * The value (or multiplier) of this scale.
          */
         public final int value;
-        
+
         /**
          * The {@linkplain #value value} of this scale log 2.
          */
         public final int log2;
-        
+
         public static Scale fromInt(int scale) {
             switch (scale) {
                 case 1: return Times1;
@@ -98,15 +136,30 @@ public final class CiAddress extends CiValue {
             return fromInt(1 << shift);
         }
     }
-    
+
+    /**
+     * If the base register is a {@link CiRegisterValue} returns the associated {@link CiRegister}
+     * otherwise raises an exception..
+     * @return the base {@link CiRegister}
+     * @exception Error  if {@code base} is not a {@link CiRegisterValue}
+     */
     public CiRegister base() {
         return base.asRegister();
     }
-    
+
+    /**
+     * If the index register is a {@link CiRegisterValue} returns the associated {@link CiRegister}
+     * otherwise raises an exception..
+     * @return the base {@link CiRegister}
+     * @exception Error  if {@code index} is not a {@link CiRegisterValue}
+     */
     public CiRegister index() {
         return index.asRegister();
     }
-    
+
+    /**
+     * Encodes the possible addressing modes as a simple value.
+     */
     public enum Format {
         BASE,
         BASE_DISP,
@@ -114,7 +167,11 @@ public final class CiAddress extends CiValue {
         BASE_INDEX_DISP,
         PLACEHOLDER;
     }
-    
+
+    /**
+     * Returns the {@link Format encoded addressing mode} that this {@code CiAddress} represents.
+     * @return the encoded addressing mode
+     */
     public Format format() {
         if (this == Placeholder) {
             return Format.PLACEHOLDER;
@@ -134,7 +191,7 @@ public final class CiAddress extends CiValue {
             }
         }
     }
-    
+
     private static String s(CiValue location) {
         if (location.isRegister()) {
             return location.asRegister().name;
@@ -142,7 +199,7 @@ public final class CiAddress extends CiValue {
         assert location.isVariable();
         return "v" + ((CiVariable) location).index;
     }
-    
+
     @Override
     public String name() {
         switch (format()) {
@@ -154,7 +211,7 @@ public final class CiAddress extends CiValue {
             default              : throw new IllegalArgumentException("unknown format: " + format());
         }
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof CiAddress) {
@@ -163,7 +220,7 @@ public final class CiAddress extends CiValue {
         }
         return false;
     }
-    
+
     @Override
     public int hashCode() {
         return (base.hashCode() << 4) | kind.ordinal();

@@ -21,7 +21,7 @@
 package com.sun.cri.ci;
 
 /**
- * This class represents the debugging information for a particular place in the code,
+ * Represents the debugging information for a particular place in the code,
  * which includes the code position, a reference map, and deoptimization information.
  *
  * @author Ben L. Titzer
@@ -49,6 +49,13 @@ public class CiDebugInfo {
      */
     public final byte[] frameRefMap;
 
+    /**
+     * Create a new {@code CiDebugInfo} from the given values.
+     * @param codePos the {@linkplain CiCodePos code position}
+     * @param frame the {@link Frame}, which may be {@code null}
+     * @param registerRefMap the register map, which may be {@code null}
+     * @param frameRefMap the reference map for {@code frame}, which may be {@code null}
+     */
     public CiDebugInfo(CiCodePos codePos, Frame frame, byte[] registerRefMap, byte[] frameRefMap) {
         this.codePos = codePos;
         this.frame = frame;
@@ -79,7 +86,7 @@ public class CiDebugInfo {
     }
 
     /**
-     * This class represents debug and deoptimization information for a frame,
+     * Represents debug and deoptimization information for a frame,
      * including {@link CiValue locations} where to find the values of each local variable
      * and stack slot of the Java frame.
      */

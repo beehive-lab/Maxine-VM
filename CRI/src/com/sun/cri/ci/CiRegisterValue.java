@@ -20,11 +20,10 @@
  */
 package com.sun.cri.ci;
 
-
 /**
- * This class represents a register storing a value of a fixed kind.
- * Use {@link CiRegister#asLocation(CiKind))} to retrieve the canonical
- * {@link CiRegisterValue} instance for a given (register,kind) pair.  
+ * Denotes a register that stores a value of a fixed kind. There is exactly one (canonical) instance of {@code
+ * CiRegisterValue} for each ({@link CiRegister}, {@link CiKind}) pair. Use {@link CiRegister#asValue(CiKind)} to
+ * retrieve the canonical {@link CiRegisterValue} instance for a given (register,kind) pair.
  *
  * @author Ben L. Titzer
  * @author Doug Simon
@@ -58,7 +57,7 @@ public final class CiRegisterValue extends CiValue {
     public String name() {
         return register.name;
     }
-    
+
     @Override
     public CiRegister asRegister() {
         return register;

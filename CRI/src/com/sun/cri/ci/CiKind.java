@@ -23,13 +23,15 @@ package com.sun.cri.ci;
 import static com.sun.cri.ci.CiKind.Flags.*;
 import static com.sun.cri.ci.CiKind.Slots.*;
 
+import com.sun.cri.bytecode.Bytecodes;
+
 /**
- * Denotes the basic kinds of types in C1X, including the all the Java primitive types,
+ * Denotes the basic kinds of types in CRI, including the all the Java primitive types,
  * for example, {@link CiKind#Int} for {@code int} and {@link CiKind#Object}
  * for all object types. {@link CiKind#Jsr} and {@link CiKind#Word} are special cases.
  * A kind has a single character short name, a Java name, a JNI name,
  * the number of (abstract) stack slots the value occupies, and a set of flags
- * further describing its behaviour.
+ * further describing its behavior.
  *
  * @author Ben L. Titzer
  */
@@ -52,7 +54,7 @@ public enum CiKind {
     Illegal('-', "illegal", null,       -1,       0);
 
     public static final CiKind[] VALUES = values();
-    
+
     CiKind(char ch, String name, String jniName, int jvmSlots, int flags) {
         this.typeChar = ch;
         this.javaName = name;
@@ -68,13 +70,21 @@ public enum CiKind {
     }
 
     static class Flags {
-    	/** Can be an object field type .*/
+    	/**
+    	 * Can be an object field type.
+    	 */
         public static final int FIELD_TYPE  = 0x0001;
-        /** Can be result type of a method. */
+        /**
+         * Can be result type of a method.
+         */
         public static final int RETURN_TYPE = 0x0002;
-        /** Behaves as an integer when on Java evaluation stack. */
+        /**
+         * Behaves as an integer when on Java evaluation stack.
+         */
         public static final int STACK_INT   = 0x0004;
-        /** Represents a Java primitive type. */
+        /**
+         * Represents a Java primitive type.
+         */
         public static final int PRIMITIVE   = 0x0008;
     }
 
@@ -192,7 +202,7 @@ public enum CiKind {
 
     /**
      * Gets the kind of array elements for the array type code that appears
-     * in a newarray bytecode.
+     * in a {@link Bytecodes#NEWARRAY} bytecode.
      * @param code the array type code
      * @return the kind from the array type code
      */

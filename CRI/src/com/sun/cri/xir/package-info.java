@@ -18,31 +18,4 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.cri.ci;
-
-import com.sun.cri.ri.*;
-import com.sun.cri.xir.*;
-
-/**
- * Represents a compiler instance which has been configured for a particular runtime system and
- * target machine and is capable of compiling methods.
- *
- * @author Ben L. Titzer
- */
-public abstract class CiCompiler {
-
-    /**
-     * Compile the specified method.
-     * @param method the method to compile
-     * @return a {@link CiResult result} representing the compilation result
-     */
-    public abstract CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator);
-
-    /**
-     * Compile the specified method.
-     * @param method the method to compile
-     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
-     * @return a {@link CiResult result} representing the compilation result
-     */
-    public abstract CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator);
-}
+package com.sun.cri.xir;

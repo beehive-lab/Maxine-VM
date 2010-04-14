@@ -44,6 +44,8 @@ accessor
 affordance
 affordances
 appendable
+bailed
+bailout
 beltway
 bytecode
 bytecodes
@@ -106,6 +108,7 @@ jit
 lexer
 linux
 logo
+malformed
 malloc
 metadata
 misc
