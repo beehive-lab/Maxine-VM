@@ -23,9 +23,9 @@ package com.sun.cri.ri;
 import com.sun.cri.ci.*;
 
 /**
- * This interface represents the runtime representation of the constant pool that is
- * used by the compilers when parsing bytecode. The {@code lookup} methods look up a constant
- * pool entry without performing  resolution, and are used during compilation.
+ * Represents the runtime representation of the constant pool that is
+ * used by the compiler when parsing bytecode. The {@code lookupXXX} methods look up a constant
+ * pool entry without performing resolution, and are used during compilation.
  *
  * @author Ben L. Titzer
  */

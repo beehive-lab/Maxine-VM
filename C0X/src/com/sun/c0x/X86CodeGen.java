@@ -137,7 +137,7 @@ public class X86CodeGen extends CodeGen {
         CiKind kind = field.kind();
         CiRegister objReg = allocSrc(object, CiKind.Object);
         CiRegister valReg = allocSrc(value, kind);
-        if (field.isLoaded()) {
+        if (field.isResolved()) {
             // the field is loaded, emit a single store instruction
             recordImplicitExceptionPoint(NullPointerException.class);
             // XXX: write barrier
@@ -153,7 +153,7 @@ public class X86CodeGen extends CodeGen {
     Location genGetField(RiField field, Location object) {
         CiKind kind = field.kind();
         CiRegister objReg = allocSrc(object, CiKind.Object);
-        if (field.isLoaded()) {
+        if (field.isResolved()) {
             // the field is loaded, emit a single load instruction
             CiRegister valReg = allocDst(kind);
             recordImplicitExceptionPoint(NullPointerException.class);
@@ -169,7 +169,7 @@ public class X86CodeGen extends CodeGen {
     void getPutStatic(RiField field, Location value) {
         CiKind kind = field.kind();
         CiRegister valReg = allocSrc(value, kind);
-        if (field.isLoaded() && field.holder().isInitialized()) {
+        if (field.isResolved() && field.holder().isInitialized()) {
             // TODO: convert CiConstant to object
             Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
             CiRegister objReg = allocSrc(l, CiKind.Object);
@@ -187,7 +187,7 @@ public class X86CodeGen extends CodeGen {
     Location genGetStatic(RiField field) {
         CiKind kind = field.kind();
         CiRegister valReg = allocDst(kind);
-        if (field.isLoaded() && field.holder().isInitialized()) {
+        if (field.isResolved() && field.holder().isInitialized()) {
             // TODO: convert CiConstant to object
             Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
             CiRegister objReg = allocSrc(l, CiKind.Object);

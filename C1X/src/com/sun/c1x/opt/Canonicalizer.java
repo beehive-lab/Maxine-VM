@@ -539,7 +539,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                         clearStoreCheck(i);
                     } else {
                         RiType declaredType = value.declaredType();
-                        if (declaredType != null && declaredType.isLoaded() && declaredType.isSubtypeOf(exactType)) {
+                        if (declaredType != null && declaredType.isResolved() && declaredType.isSubtypeOf(exactType)) {
                             // the value being stored has a known type
                             clearStoreCheck(i);
                         }
@@ -746,7 +746,7 @@ public class Canonicalizer extends DefaultValueVisitor {
     public void visitInvoke(Invoke i) {
         if (C1XOptions.CanonicalizeFoldableMethods) {
             RiMethod method = i.target();
-            if (method.isLoaded()) {
+            if (method.isResolved()) {
                 // only try to fold resolved method invocations
                 CiConstant result = foldInvocation(i.target(), i.arguments());
                 if (result != null) {
@@ -761,13 +761,13 @@ public class Canonicalizer extends DefaultValueVisitor {
     @Override
     public void visitCheckCast(CheckCast i) {
         // we can remove a redundant check cast if it is an object constant or the exact type is known
-        if (i.targetClass().isLoaded()) {
+        if (i.targetClass().isResolved()) {
             Value o = i.object();
             RiType type = o.exactType();
             if (type == null) {
                 type = o.declaredType();
             }
-            if (type != null && type.isLoaded() && type.isSubtypeOf(i.targetClass())) {
+            if (type != null && type.isResolved() && type.isSubtypeOf(i.targetClass())) {
                 // cast is redundant if exact type or declared type is already a subtype of the target type
                 setCanonical(o);
             }
@@ -789,10 +789,10 @@ public class Canonicalizer extends DefaultValueVisitor {
     @Override
     public void visitInstanceOf(InstanceOf i) {
         // we can fold an instanceof if it is an object constant or the exact type is known
-        if (i.targetClass().isLoaded()) {
+        if (i.targetClass().isResolved()) {
             Value o = i.object();
             RiType exact = o.exactType();
-            if (exact != null && exact.isLoaded()) {
+            if (exact != null && exact.isResolved()) {
                 setIntConstant(exact.isSubtypeOf(i.targetClass()) ? 1 : 0);
             }
             if (o.isConstant()) {

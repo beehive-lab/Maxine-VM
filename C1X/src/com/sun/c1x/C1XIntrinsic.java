@@ -278,7 +278,7 @@ public enum C1XIntrinsic {
      */
     public static C1XIntrinsic getIntrinsic(RiMethod method) {
         RiType holder = method.holder();
-        if (method.isLoaded() && holder.isLoaded() && holder.isInitialized()) {
+        if (method.isResolved() && holder.isResolved() && holder.isInitialized()) {
             // note that the map uses internal names to make lookup faster
             HashMap<String, C1XIntrinsic> map = intrinsicMap.get(holder.name());
             if (map != null) {

@@ -828,7 +828,7 @@ public class C0XCompilation {
             // this is a load of class constant which might be unresolved
             RiType ritype = (RiType) con;
             Location r;
-            if (!ritype.isLoaded()) {
+            if (!ritype.isResolved()) {
                 r = codeGen.genResolveClass(ritype);
             } else {
                 r = codeGen.genObjectConstant(ritype.javaClass());

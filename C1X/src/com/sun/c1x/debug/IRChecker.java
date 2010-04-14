@@ -952,7 +952,7 @@ public class IRChecker extends DefaultValueVisitor {
     }
 
     private void assertInstanceType(RiType riType) {
-        if (riType != null && riType.isLoaded()) {
+        if (riType != null && riType.isResolved()) {
             if (riType.isArrayKlass() || riType.isInterface() || riType.kind().isPrimitive()) {
                 fail("RiType " + riType + " must be an instance class");
             }
@@ -960,7 +960,7 @@ public class IRChecker extends DefaultValueVisitor {
     }
 
     private void assertArrayType(RiType riType) {
-        if (riType != null && riType.isLoaded()) {
+        if (riType != null && riType.isResolved()) {
             if (!riType.isArrayKlass()) {
                 fail("RiType " + riType + " must be an array class");
             }
@@ -968,7 +968,7 @@ public class IRChecker extends DefaultValueVisitor {
     }
 
     private void assertNotPrimitive(RiType riType) {
-        if (riType != null && riType.isLoaded()) {
+        if (riType != null && riType.isResolved()) {
             if (riType.kind().isPrimitive()) {
                 fail("RiType " + riType + " must not be a primitive");
             }

@@ -18,4 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+/**
+ * The runtime-provided part of the bi-directional interface between a compiler and a virtual machine (runtime) for the
+ * instruction set defined in {@link com.sun.cri.bytecode.Bytecodes}.
+ * <p>
+ * Unlike the {@link com.sun.cri.ci compiler-provided interface}, the runtime-provided interface is specified largely
+ * using interfaces, that must be implemented by classes provided by a specific virtual machine implementation.
+ * <p>
+ * {@link com.sun.cri.ri.RiRuntime} encapsulates the main functionality of the runtime for the compiler.
+ * <p>
+ * Types (i.e., primitives, classes and interfaces}, fields and methods are represented by {@link com.sun.cri.ri.RiType}, {@link com.sun.cri.ri.RiField} and {@link com.sun.cri.ri.RiMethod}, respectively, with additional support from
+ * {@link com.sun.cri.ri.RiSignature} and {@link com.sun.cri.ri.RiExceptionHandler}. Access to the runtime constant pool
+ * is through {@link com.sun.cri.ri.RiConstantPool}.
+ */
 package com.sun.cri.ri;

@@ -263,7 +263,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     @Override
     public XirSnippet genInvokeInterface(XirSite site, XirArgument receiver, RiMethod method) {
         XirPair pair = invokeInterfaceTemplates;
-        if (method.isLoaded()) {
+        if (method.isResolved()) {
             InterfaceMethodActor methodActor = ((MaxRiMethod) method).asInterfaceMethodActor("invokeinterface");
             XirArgument interfaceID = XirArgument.forInt(methodActor.holder().id);
             XirArgument methodIndex = XirArgument.forInt(methodActor.iIndexInInterface());
@@ -276,7 +276,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     @Override
     public XirSnippet genInvokeVirtual(XirSite site, XirArgument receiver, RiMethod method) {
         XirPair pair = invokeVirtualTemplates;
-        if (method.isLoaded()) {
+        if (method.isResolved()) {
             VirtualMethodActor methodActor = ((MaxRiMethod) method).asVirtualMethodActor("invokevirtual");
             XirArgument vtableOffset = XirArgument.forInt(methodActor.vTableIndex() * wordSize + offsetOfFirstArrayElement);
             return new XirSnippet(pair.resolved, receiver, vtableOffset);
@@ -287,7 +287,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     @Override
     public XirSnippet genInvokeSpecial(XirSite site, XirArgument receiver, RiMethod method) {
-        if (method.isLoaded()) {
+        if (method.isResolved()) {
             if (site.requiresNullCheck()) {
                 return new XirSnippet(invokeSpecialTemplates.resolved, XirArgument.forWord(0), receiver);
             }
@@ -300,7 +300,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     @Override
     public XirSnippet genInvokeStatic(XirSite site, RiMethod method) {
-        if (method.isLoaded()) {
+        if (method.isResolved()) {
             return new XirSnippet(invokeStaticTemplates.resolved, XirArgument.forWord(0));
         }
 
@@ -321,7 +321,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     @Override
     public XirSnippet genGetField(XirSite site, XirArgument receiver, RiField field) {
         XirPair pair = getFieldTemplates[field.kind().ordinal()];
-        if (field.isLoaded()) {
+        if (field.isResolved()) {
             XirArgument offset = XirArgument.forInt(((MaxRiField) field).offset());
             return new XirSnippet(pair.resolved, receiver, offset);
         }
@@ -333,7 +333,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     @Override
     public XirSnippet genPutField(XirSite site, XirArgument receiver, RiField field, XirArgument value) {
         XirPair pair = putFieldTemplates[field.kind().ordinal()];
-        if (field.isLoaded()) {
+        if (field.isResolved()) {
             XirArgument offset = XirArgument.forInt(((MaxRiField) field).offset());
             return new XirSnippet(pair.resolved, receiver, value, offset);
         }
@@ -344,7 +344,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     @Override
     public XirSnippet genGetStatic(XirSite site, XirArgument staticTuple, RiField field) {
         XirPair pair = getStaticFieldTemplates[field.kind().ordinal()];
-        if (field.isLoaded()) {
+        if (field.isResolved()) {
             XirArgument offset = XirArgument.forInt(((MaxRiField) field).offset());
             return new XirSnippet(pair.resolved, staticTuple, offset);
         }
@@ -355,7 +355,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     @Override
     public XirSnippet genPutStatic(XirSite site, XirArgument staticTuple, RiField field, XirArgument value) {
         XirPair pair = putStaticFieldTemplates[field.kind().ordinal()];
-        if (field.isLoaded()) {
+        if (field.isResolved()) {
             XirArgument offset = XirArgument.forInt(((MaxRiField) field).offset());
             return new XirSnippet(pair.resolved, staticTuple, value, offset);
         }
@@ -365,7 +365,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     @Override
     public XirSnippet genNewInstance(XirSite site, RiType type) {
-        if (type.isLoaded() && type.isInitialized()) {
+        if (type.isResolved() && type.isInitialized()) {
             return new XirSnippet(newInstanceTemplate.resolved, XirArgument.forObject(hubFor(type)));
         }
         XirArgument guard = guardFor(type, ResolveClassForNew.SNIPPET);
@@ -380,7 +380,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     public XirSnippet genNewArray(XirSite site, XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType) {
         XirPair pair = newArrayTemplates[elementKind.ordinal()];
         Object hub = arrayHubs[elementKind.ordinal()];
-        if (elementKind == CiKind.Object && arrayType.isLoaded()) {
+        if (elementKind == CiKind.Object && arrayType.isResolved()) {
             hub = hubFor(arrayType);
         } else if (elementKind == CiKind.Object) {
             hub = null;
@@ -396,7 +396,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     @Override
     public XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type) {
         int rank = lengths.length;
-        if (!type.isLoaded() || rank >= SMALL_MULTIANEWARRAY_RANK) {
+        if (!type.isResolved() || rank >= SMALL_MULTIANEWARRAY_RANK) {
             XirArgument guard = guardFor(type, ResolveClass.SNIPPET);
             return new XirSnippet(multiNewArrayTemplate[rank].unresolved, Arrays.append(lengths, guard));
         }
@@ -409,7 +409,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     @Override
     public XirSnippet genCheckCast(XirSite site, XirArgument receiver, XirArgument hub, RiType type) {
-        if (type.isLoaded()) {
+        if (type.isResolved()) {
             XirTemplate template;
             if (type.isInterface()) {
                 // have to use the interface template
@@ -435,7 +435,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     @Override
     public XirSnippet genInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, RiType type) {
-        if (type.isLoaded()) {
+        if (type.isResolved()) {
             XirTemplate template;
             if (type.isInterface()) {
                 template = instanceofForInterfaceTemplate.resolved;
@@ -498,7 +498,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         } else {
             guard = new ResolutionGuard(t.constantPool.constantPool, Integer.MAX_VALUE);
         }
-        if (t.isLoaded()) {
+        if (t.isResolved()) {
             guard.value = t.classActor;
         }
         return XirArgument.forObject(guard);
