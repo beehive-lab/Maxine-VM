@@ -196,12 +196,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     /**
      * Start of the current scan of the color map to recover from a marking stack overflow.
      */
-    Pointer startOfCurrentOverflowScan;
+    Address startOfCurrentOverflowScan;
 
     /**
      * Start of the next scan of the color map to recover from secondary marking stack overflow.
      */
-    Pointer startOfNextOverflowScan;
+    Address startOfNextOverflowScan;
 
 
     @INLINE
@@ -478,6 +478,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return ((bitmapWord >>> bitIndexInWord(bitIndex)) & COLOR_MASK) == color;
     }
 
+    final boolean isGrey(int bitIndex) {
+        int bitIndexInWord = bitIndexInWord(bitIndex);
+        if (bitIndexInWord == LAST_BIT_INDEX_IN_WORD) {
+            return (bitmapWordAt(bitIndex + 1) & 1L) != 0;
+        }
+        return (bitmapWordAt(bitIndex) & bitmaskFor(bitIndexInWord + 1)) != 0;
+    }
+
     /**
      * Check the color map for a white object. Thanks to the color encoding, it only needs to
      * check the lowest bit of the two-bit color, i.e., the bit corresponding to the cell address. As a result, no special care is needed
@@ -735,7 +743,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         @INLINE
         @Override
         public int rightmostBitmapWordIndex() {
-            return bitmapWordIndex(bitIndexOf(rightmost));
+            Address endOfRightmost = rightmost.plus(Layout.size(Layout.cellToOrigin(rightmost)));
+            return bitmapWordIndex(bitIndexOf(endOfRightmost));
         }
 
         @Override
@@ -747,9 +756,15 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     final class OverflowScanState extends ColorMapScanState {
         private int fingerBitmapWordIndex;
+        private Address overflowFinger = Address.zero();
 
         void updateFinger() {
             fingerBitmapWordIndex = bitmapWordIndex(bitIndexOf(finger));
+        }
+
+        @INLINE
+        Address visitedCell() {
+            return overflowFinger;
         }
 
         @INLINE
@@ -760,6 +775,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         @Override
         Pointer markAndVisitCell(Pointer cell) {
+            overflowFinger = cell;
             return  TricolorHeapMarker.this.markAndVisitGreyCell(cell);
         }
 
@@ -822,6 +838,25 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
     /**
+     * Return bit index in the color map of the first grey object in the specified area or -1 if none
+     * is found.
+     * @param start start of the scanned area
+     * @param end end of the scanned area
+     * @return a bit index in the color map, or -1 if no grey object was met during the scan.
+     */
+    public int scanForGrayMark(Address start, Address end) {
+        Pointer p = start.asPointer();
+        while (p.lessThan(end)) {
+            final int bitIndex = bitIndexOf(p);
+            if (isGrey(bitIndex)) {
+                return bitIndex;
+            }
+            p = p.plus(Layout.size(Layout.cellToOrigin(p)));
+        }
+        return -1;
+    }
+
+    /**
      * Search the tricolor mark bitmap for a grey object in a specific region of the heap.
      * @param start start of the heap region.
      * @param end end of the heap region.
@@ -862,11 +897,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param end end of the region
      * @return true if the region has no grey objects, false otherwise.
      */
-    public boolean verifyHasNoGreyMarks(Pointer start, Pointer end) {
-        return firstGreyMark(start, end) < 0;
+    public void verifyHasNoGreyMarks(Address start, Address end) {
+        final int bitIndex = scanForGrayMark(start, end);
+        FatalError.check(bitIndex >= 0, "Must not have any grey marks");
     }
 
-    public void visitGreyObjects(Pointer start, ColorMapScanState scanState) {
+    public void visitGreyObjects(Address start, ColorMapScanState scanState) {
         final Pointer colorMapBase = base.asPointer();
         int rightmostBitmapWordIndex = scanState.rightmostBitmapWordIndex();
 
@@ -1034,13 +1070,15 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         } while(true);
     }
 
+    private int numRecoveryScan = 0;
+
     public void recoverFromOverflow() {
         // First, flush the marking stack, greying all objects in there,
         // and tracking the left most grey.
         // TODO: rescan map.
         markStackCellVisitor.resetLeftmostFlushed();
         markingStack.flush();
-        Pointer leftmostFlushed = markStackCellVisitor.leftmostFlushed;
+        Address leftmostFlushed = markStackCellVisitor.leftmostFlushed;
         // Next, initiate scanning to recover from overflow. This consists of
         // marking grey objects between the leftmost flushed mark and the finger.
         // As for a normal scan, any reference pointing after the finger are marked grey and
@@ -1053,6 +1091,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         if (!recovering) {
             recovering = true;
+            numRecoveryScan++;
             startOfNextOverflowScan = leftmostFlushed;
             overflowScanState.updateFinger();
 
@@ -1062,7 +1101,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 visitGreyObjects(startOfCurrentOverflowScan, overflowScanState);
             } while (startOfNextOverflowScan.lessThan(finger));
             recovering = false;
-        } else if (leftmostFlushed.lessThan(startOfNextOverflowScan)) {
+            verifyHasNoGreyMarks(coveredAreaStart, finger);
+        } else if (leftmostFlushed.lessThan(overflowScanState.visitedCell())) {
+            // Schedule another rescan if the leftmost flushed cell is before the
+            // currently visited cell.
             startOfNextOverflowScan = leftmostFlushed;
         }
     }
@@ -1266,5 +1308,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     public void markAll() {
         markRoots();
         visitAllGreyObjects();
+        verifyHasNoGreyMarks(coveredAreaStart, coveredAreaEnd);
     }
 }
