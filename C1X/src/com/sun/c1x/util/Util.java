@@ -305,7 +305,7 @@ public class Util {
                         break;
                     }
                     case 'f': {
-                        sb.append(!method.isLoaded() ? "unresolved" : method.isStatic() ? "static" : "virtual");
+                        sb.append(!method.isResolved() ? "unresolved" : method.isStatic() ? "static" : "virtual");
                         break;
                     }
                     case '%': {
@@ -380,7 +380,7 @@ public class Util {
                         break;
                     }
                     case 'f': {
-                        sb.append(!field.isLoaded() ? "unresolved" : field.isStatic() ? "static" : "instance");
+                        sb.append(!field.isResolved() ? "unresolved" : field.isStatic() ? "static" : "instance");
                         break;
                     }
                     case '%': {

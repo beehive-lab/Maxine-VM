@@ -43,6 +43,7 @@ abi
 accessor
 affordance
 affordances
+allocatable
 appendable
 bailed
 bailout
@@ -55,6 +56,7 @@ callees
 cannonical
 cannonicalizer
 checkbox
+checkcast
 checkstyle
 classfile
 classloader

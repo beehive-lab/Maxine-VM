@@ -101,7 +101,7 @@ public class MaxRiField implements RiField {
         return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool), holderCpi);
     }
 
-    public boolean isLoaded() {
+    public boolean isResolved() {
         return fieldActor != null;
     }
 

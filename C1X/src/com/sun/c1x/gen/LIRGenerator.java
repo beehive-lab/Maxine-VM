@@ -934,7 +934,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 typeIsExact = false;
                 throwType = x.exception().declaredType();
             }
-            if (throwType != null && throwType.isLoaded() && throwType.isInstanceClass()) {
+            if (throwType != null && throwType.isResolved() && throwType.isInstanceClass()) {
                 unwind = !ExceptionHandler.couldCatch(x.exceptionHandlers(), throwType, typeIsExact);
             }
         }

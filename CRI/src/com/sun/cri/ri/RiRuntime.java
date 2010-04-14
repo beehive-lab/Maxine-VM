@@ -25,7 +25,7 @@ import java.io.*;
 import com.sun.cri.ci.*;
 
 /**
- * This interface encapsulates the main functionality of the runtime for the compiler, including access
+ * Encapsulates the main functionality of the runtime for the compiler, including access
  * to constant pools, OSR frames, inlining requirements, and runtime calls such as checkcast.
  *
  * @author Ben L. Titzer

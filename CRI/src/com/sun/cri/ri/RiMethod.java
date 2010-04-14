@@ -23,10 +23,9 @@ package com.sun.cri.ri;
 import java.util.*;
 
 /**
- * This interface represents resolved and unresolved methods.
- * Methods, like fields and types, are resolved through {@link RiConstantPool constant
- * pools}, and their actual implementation is provided by the {@link RiRuntime runtime}
- * to the compiler. Note that some operations are only available on resolved methods.
+ * Represents resolved and unresolved methods. Methods, like fields and types, are resolved through
+ * {@link RiConstantPool constant pools}, and their actual implementation is provided by the {@link RiRuntime runtime}
+ * to the compiler. Note that most operations are only available on resolved methods.
  *
  * @author Ben L. Titzer
  */
@@ -38,12 +37,6 @@ public interface RiMethod {
      */
     String name();
 
-    /**
-     * Gets the symbol used to link this method if it is native, otherwise {@code null}.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     */
-    String jniSymbol();
-    
     /**
      * Gets the holder of the method as a compiler interface type.
      * @return the holder
@@ -57,122 +50,16 @@ public interface RiMethod {
     RiSignature signatureType();
 
     /**
-     * Gets the bytecode of the method, if the method {@linkplain #hasCode() has code}.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the bytecode of the method
-     */
-    byte[] code();
-
-    /**
      * Checks whether this method has bytecode.
      * @return {@code true} if bytecode is available for the method
      */
     boolean hasCode();
 
     /**
-     * Gets the size of the bytecode of the method, if the method has bytecode.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the size of the bytecode of the method
-     */
-    int codeSize();
-
-    /**
-     * Gets the maximum number of locals used in this method's bytecode.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the maximum number of locals
-     */
-    int maxLocals();
-
-    /**
-     * Gets the maximum number of stack slots used in this method's bytecode.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the maximum number of stack slots
-     */
-    int maxStackSize();
-
-    /**
-     * Checks whether this method has balanced monitor operations.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method has balanced monitor operations
-     */
-    boolean hasBalancedMonitors();
-
-    /**
-     * Checks whether the method has any exception handlers.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method has an exception handlers
-     */
-    boolean hasExceptionHandlers();
-
-    /**
-     * Checks whether this method is loaded (i.e. is resolved).
+     * Checks whether this method is resolved.
      * @return {@code true} if the method is resolved
      */
-    boolean isLoaded();
-
-    /**
-     * Checks whether this method is abstract.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is abstract
-     */
-    boolean isAbstract();
-
-    /**
-     * Checks whether this method is native.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is native
-     */
-    boolean isNative();
-
-    /**
-     * Checks whether this method is a leaf method.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is a leaf method (i.e. is final or private)
-     */
-    boolean isLeafMethod();
-
-    /**
-     * Checks whether this method is synchronized.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is synchronized
-     */
-    boolean isSynchronized();
-
-    /**
-     * Checks whether this method is strict w.r.t. floating point.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is strict
-     */
-    boolean isStrictFP();
-
-    /**
-     * Checks whether this method is static.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is static
-     */
-    boolean isStatic();
-
-    /**
-     * Checks whether this method is a class initializer (i.e. <clinit>).
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is a class initializer
-     */
-    boolean isClassInitializer();
-
-    /**
-     * Checks whether this method is a constructor.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is a constructor
-     */
-    boolean isConstructor();
-
-    /**
-     * Checks whether this method has been overridden. Decisions made based
-     * on a method being overridden must be registered as dependencies.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method has been overridden
-     */
-    boolean isOverridden();
+    boolean isResolved();
 
     /**
      * Gets the {@link RiMethodProfile method data} for this method, which stores instrumentation,
@@ -182,46 +69,162 @@ public interface RiMethod {
     RiMethodProfile methodData();
 
     /**
-     * TODO: Currently this must always return null! Fix me!
-     * Gets the liveness map for local variables at the specified bytecode index, if it exists.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @param bci the bytecode index
-     * @return the liveness map at the specified index, if it is available; {@code null} otherwise
-     */
-    Object liveness(int bci);
-
-    /**
-     * Checks whether this method can be statically bound (i.e. it is final or private or static).
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if this method can be statically bound
-     */
-    boolean canBeStaticallyBound();
-
-    /**
-     * Gets the list of exception handlers for this method.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the list of exception handlers
-     */
-    List<RiExceptionHandler> exceptionHandlers();
-
-    /**
      * Retrieves the Java bytecode at the specified bytecode index.
      * @param bci the bytecode index
      * @return the java bytecode at the specified index
      */
     int javaCodeAtBci(int bci); // TODO: remove
 
+    // N.B. All operations beyond this point are only available on resolved methods.
+
     /**
-     * Gets the interface method ID for this method, if this method is an interface method. NOTE THAT THIS OPERATION IS
-     * ONLY AVAILABLE ON RESOLVED INTERFACE METHODS. On all other methods the result is -1.
+     * Gets the symbol used to link this method if it is native, otherwise {@code null}.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     */
+    String jniSymbol();
+
+    /**
+     * Gets the bytecode of the method, if the method {@linkplain #hasCode() has code}.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the bytecode of the method
+     */
+    byte[] code();
+
+    /**
+     * Gets the size of the bytecode of the method, if the method has bytecode.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the size of the bytecode of the method
+     */
+    int codeSize();
+
+    /**
+     * Gets the maximum number of locals used in this method's bytecode.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the maximum number of locals
+     */
+    int maxLocals();
+
+    /**
+     * Gets the maximum number of stack slots used in this method's bytecode.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the maximum number of stack slots
+     */
+    int maxStackSize();
+
+    /**
+     * Checks whether this method has balanced monitor operations.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method has balanced monitor operations
+     */
+    boolean hasBalancedMonitors();
+
+    /**
+     * Checks whether the method has any exception handlers.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method has an exception handlers
+     */
+    boolean hasExceptionHandlers();
+
+    /**
+     * Checks whether this method is abstract.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is abstract
+     */
+    boolean isAbstract();
+
+    /**
+     * Checks whether this method is native.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is native
+     */
+    boolean isNative();
+
+    /**
+     * Checks whether this method is a leaf method.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is a leaf method (that is, is final or private)
+     */
+    boolean isLeafMethod();
+
+    /**
+     * Checks whether this method is synchronized.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is synchronized
+     */
+    boolean isSynchronized();
+
+    /**
+     * Checks whether this method is strict with respect to floating point.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is strict
+     */
+    boolean isStrictFP();
+
+    /**
+     * Checks whether this method is static.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is static
+     */
+    boolean isStatic();
+
+    /**
+     * Checks whether this method is a class initializer (that is, <code> &lt;clinit&gt;</code>).
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is a class initializer
+     */
+    boolean isClassInitializer();
+
+    /**
+     * Checks whether this method is a constructor.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is a constructor
+     */
+    boolean isConstructor();
+
+    /**
+     * Checks whether this method has been overridden. Decisions made based
+     * on a method being overridden must be registered as dependencies.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method has been overridden
+     */
+    boolean isOverridden();
+
+    /**
+     * TODO: Currently this must always return null! Fix me!
+     * Gets the liveness map for local variables at the specified bytecode index, if it exists.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @param bci the bytecode index
+     * @return the liveness map at the specified index, if it is available; {@code null} otherwise
+     */
+    Object liveness(int bci);
+
+    /**
+     * Checks whether this method can be statically bound (that is, it is final or private or static).
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if this method can be statically bound
+     */
+    boolean canBeStaticallyBound();
+
+    /**
+     * Gets the list of exception handlers for this method.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the list of exception handlers
+     */
+    List<RiExceptionHandler> exceptionHandlers();
+
+    /**
+     * Gets the interface method ID for this method, if this method is an interface method.
+     * NOTE: ONLY AVAILABLE ON RESOLVED INTERFACE METHODS.
+     * On all other methods the result is -1.
      *
      * @return the interface method id
      */
     int interfaceID();
 
     /**
-     * Gets index of the method within its interface. NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED INTERFACE
-     * METHODS. On all other methods the result is -1.
+     * Gets index of the method within its interface.
+     * NOTE: ONLY AVAILABLE ON RESOLVED INTERFACE METHODS.
+     * On all other methods the result is -1.
      *
      * @return the index of the method within the interface
      */
