@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code UnsafeGetRaw} instruction represents an unsafe access of raw memory where

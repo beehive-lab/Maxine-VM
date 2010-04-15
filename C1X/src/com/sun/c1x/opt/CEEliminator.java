@@ -21,10 +21,10 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class implements conditional-expression elimination, which replaces some

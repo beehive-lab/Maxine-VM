@@ -25,8 +25,8 @@ import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveArrayClas
 import static com.sun.max.vm.template.BytecodeTemplate.*;
 import static com.sun.max.vm.template.source.NoninlineTemplateRuntime.*;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.bytecode.Bytecodes.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;

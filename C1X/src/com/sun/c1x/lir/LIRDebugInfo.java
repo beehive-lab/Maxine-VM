@@ -24,7 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class represents debugging and deoptimization information attached to a LIR instruction.
@@ -81,17 +81,22 @@ public class LIRDebugInfo {
         debugInfo = new CiDebugInfo(state.scope().toCodeSite(bci), null, registerRefMap, stackRefMap);
     }
 
-    public void setOop(CiLocation location, CiTarget target) {
+    public void setOop(CiValue location, CiTarget target) {
         assert debugInfo != null : "debug info not allocated yet";
-        if (location.isStack() && !location.isCallerFrame()) {
-            int offset = location.stackOffset();
-            assert offset % target.arch.wordSize == 0 : "must be aligned";
-            int stackMapIndex = offset / target.arch.wordSize;
-            setBit(debugInfo.frameRefMap, stackMapIndex);
+        if (location.isAddress()) {
+            CiAddress stackLocation = (CiAddress) location;
+            assert stackLocation.index.isIllegal();
+            if (stackLocation.base == CiRegister.Frame.asValue()) {
+                int offset = stackLocation.displacement;
+                assert offset % target.arch.wordSize == 0 : "must be aligned";
+                int stackMapIndex = offset / target.arch.wordSize;
+                setBit(debugInfo.frameRefMap, stackMapIndex);
+            }
         } else {
-            int index = target.allocatableRegs.referenceMapIndex[location.register().number];
-            assert index >= 0 : "object cannot be in non-object register " + location.register();
-            assert location.isRegister() : "objects can only be in a single register";
+            assert location.isRegister() : "objects can only be in a register";
+            CiRegisterValue registerLocation = (CiRegisterValue) location;
+            int index = target.allocationSpec.refMapIndexMap[registerLocation.register.number];
+            assert index >= 0 : "object cannot be in non-object register " + registerLocation.register;
             setBit(debugInfo.registerRefMap, index);
         }
     }

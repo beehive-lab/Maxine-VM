@@ -27,9 +27,9 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.xir.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -106,7 +106,7 @@ public class C1XTest {
 
     static {
         // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "C1X");
+        options.addFieldOptions(C1XOptions.class, "C1X", C1XOptions.helpMap);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -355,7 +355,7 @@ public class C1XTest {
     }
 
     private static boolean isCompilable(MethodActor method) {
-        return method instanceof ClassMethodActor && !method.isAbstract() /*&& !method.isNative()*/ && !method.isBuiltin() && !method.isIntrinsic();
+        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative() && !method.isBuiltin() && !method.isIntrinsic();
     }
 
     enum PatternType {
@@ -658,6 +658,7 @@ public class C1XTest {
         if (C1XOptions.PrintMetrics) {
             printClassFields(C1XMetrics.class);
         }
+        CiConstant.dumpCacheStats(out);
         List<String> metrics = metricsOption.getValue();
         if (metrics.size() > 0) {
             for (String s : metrics) {

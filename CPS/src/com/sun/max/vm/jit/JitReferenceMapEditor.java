@@ -22,7 +22,7 @@ package com.sun.max.vm.jit;
 
 import java.util.Arrays;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;

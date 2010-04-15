@@ -541,8 +541,9 @@ public class OptionSet {
      * option set with the specified prefix.
      * @param javaClass the java class containing the fields
      * @param prefix the prefix to add to the options
+     * @param helpMap map from option names to the help message for the option (may be {@code null})
      */
-    public void addFieldOptions(Class<?> javaClass, String prefix) {
+    public void addFieldOptions(Class<?> javaClass, String prefix, Map<String, String> helpMap) {
         for (final Field field : javaClass.getDeclaredFields()) {
             int modifiers = field.getModifiers();
             if (Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers)) {
@@ -554,8 +555,11 @@ public class OptionSet {
                     help = settings.help();
                     name = settings.name().isEmpty() ? field.getName().replace('_', '-') : settings.name();
                 } else {
-                    help = "";
                     name = field.getName().replace('_', '-');
+                    help = helpMap != null ? helpMap.get(name) : "";
+                    if (help == null) {
+                        help = "";
+                    }
                 }
                 addFieldOption(prefix, name, null, field, help);
             }
@@ -726,12 +730,5 @@ public class OptionSet {
 
     public Option<File> newConfigOption(String name, File defaultFile, String help) {
         return addOption(new Option<File>(name, defaultFile, new OptionTypes.ConfigFile(this), help));
-    }
-
-    public static String[] parseArgumentsForClass(String[] args, Class javaClass) {
-        final OptionSet options = new OptionSet(false);
-        options.addFieldOptions(javaClass, "");
-        options.parseArguments(args);
-        return options.getArguments();
     }
 }

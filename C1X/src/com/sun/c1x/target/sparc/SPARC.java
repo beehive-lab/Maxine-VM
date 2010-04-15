@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.target.sparc;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class represents the SPARC architecture.

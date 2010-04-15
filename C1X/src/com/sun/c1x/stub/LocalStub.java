@@ -21,8 +21,8 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
+import com.sun.cri.ci.*;
 
 /**
  * LocalStubs are small sequences of code that handle slow cases of operations.
@@ -38,29 +38,29 @@ public abstract class LocalStub {
 
     protected LIRInstruction instruction;
 
-    public LIROperand[] operands;
-    public LIROperand result;
+    public CiValue[] operands;
+    public CiValue result;
     public LIRInstruction.OperandSlot resultSlot;
 
     public int tempCount;
     public int tempInputCount;
 
     public LocalStub(LIRDebugInfo info) {
-        this(info, LIROperand.IllegalLocation);
+        this(info, CiValue.IllegalValue);
     }
 
-    public LocalStub(LIRDebugInfo info, LIROperand result) {
+    public LocalStub(LIRDebugInfo info, CiValue result) {
         this.info = info;
         this.result = result;
     }
 
-    protected void setOperands(int tempInputCount, int tempCount, LIROperand... operands) {
+    protected void setOperands(int tempInputCount, int tempCount, CiValue... operands) {
         this.tempCount = tempCount;
         this.tempInputCount = tempInputCount;
         this.operands = operands;
     }
 
-    public LIROperand operand(int index) {
+    public CiValue operand(int index) {
         return instruction.stubOperand(index);
     }
 
@@ -75,19 +75,15 @@ public abstract class LocalStub {
 
     public abstract void accept(LocalStubVisitor visitor);
 
-    public void printName(LogStream out) {
-        out.print(name());
-    }
-
     public String name() {
         return this.getClass().getSimpleName();
     }
 
-    public LIROperand originalResult() {
+    public CiValue originalResult() {
         return result;
     }
 
-    public LIROperand result() {
+    public CiValue result() {
         return resultSlot.get(instruction);
     }
 

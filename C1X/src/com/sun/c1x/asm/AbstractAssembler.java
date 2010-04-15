@@ -23,12 +23,12 @@ package com.sun.c1x.asm;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.lir.LIRDebugInfo;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * @author Marcelo Cintra
@@ -44,7 +44,7 @@ public abstract class AbstractAssembler {
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;
-        this.targetMethod = new CiTargetMethod(target.allocatableRegs.registerRefMapSize);
+        this.targetMethod = new CiTargetMethod(target.allocationSpec.refMapSize);
         this.codeBuffer = new Buffer(target.arch.byteOrder);
         this.exceptionInfoList = new ArrayList<ExceptionInfo>();
         this.wordSize = target.arch.wordSize;
@@ -165,7 +165,7 @@ public abstract class AbstractAssembler {
         targetMethod.recordSafepoint(pos, registerMap, stackMap, debugInfo);
     }
 
-    public Address recordDataReferenceInCode(CiConstant data) {
+    public CiAddress recordDataReferenceInCode(CiConstant data) {
         assert data != null;
 
         int pos = codeBuffer.position();
@@ -175,7 +175,7 @@ public abstract class AbstractAssembler {
         }
 
         targetMethod.recordDataReference(pos, data);
-        return Address.InternalRelocation;
+        return CiAddress.Placeholder;
     }
 
     protected int target(Label l) {

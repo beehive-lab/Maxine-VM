@@ -21,8 +21,8 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -143,7 +143,7 @@ public class MaxRiField implements RiField {
             }
             Value v = fieldActor.constantValue();
             if (v != null) {
-                return new CiConstant(MaxRiType.kindToCiKind(v.kind()), v.asBoxedJavaValue());
+                return CiConstant.get(MaxRiType.kindToCiKind(v.kind()), v.asBoxedJavaValue());
             }
             if (C1XOptions.CanonicalizeFinalFields) {
                 if (MaxineVM.isHosted()) {
@@ -151,7 +151,7 @@ public class MaxRiField implements RiField {
                 } else {
                     v = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));
                 }
-                return new CiConstant(MaxRiType.kindToCiKind(v.kind()), v.asBoxedJavaValue());
+                return CiConstant.get(MaxRiType.kindToCiKind(v.kind()), v.asBoxedJavaValue());
             }
         }
         return null;

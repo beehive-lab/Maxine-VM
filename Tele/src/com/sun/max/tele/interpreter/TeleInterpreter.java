@@ -20,14 +20,14 @@
  */
 package com.sun.max.tele.interpreter;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
-import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;

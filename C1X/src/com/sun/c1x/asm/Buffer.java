@@ -24,8 +24,8 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.CiArchitecture.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.CiArchitecture.*;
 
 /**
  *

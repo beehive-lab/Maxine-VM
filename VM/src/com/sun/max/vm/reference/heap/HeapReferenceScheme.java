@@ -21,9 +21,9 @@
 /*VCSID=4db5fb46-e2e9-4aa7-81a5-2a0e13ac9265*/
 package com.sun.max.vm.reference.heap;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;

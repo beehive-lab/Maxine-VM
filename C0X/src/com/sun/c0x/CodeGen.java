@@ -21,15 +21,15 @@
 package com.sun.c0x;
 
 import com.sun.c0x.C0XCompilation.Location;
-import com.sun.c1x.bytecode.BytecodeLookupSwitch;
-import com.sun.c1x.bytecode.BytecodeTableSwitch;
-import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiTarget;
-import com.sun.c1x.ri.RiBytecodeExtension;
-import com.sun.c1x.ri.RiField;
-import com.sun.c1x.ri.RiMethod;
-import com.sun.c1x.ri.RiRuntime;
-import com.sun.c1x.ri.RiType;
+import com.sun.cri.bytecode.BytecodeLookupSwitch;
+import com.sun.cri.bytecode.BytecodeTableSwitch;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ri.RiBytecodeExtension;
+import com.sun.cri.ri.RiField;
+import com.sun.cri.ri.RiMethod;
+import com.sun.cri.ri.RiRuntime;
+import com.sun.cri.ri.RiType;
 
 /**
  * The {@code CodeGen} class definition.

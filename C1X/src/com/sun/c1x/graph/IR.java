@@ -98,7 +98,7 @@ public class IR {
         topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI);
 
         // Graph builder must set the startBlock and the osrEntryBlock
-        new GraphBuilder(compilation, topScope, this);
+        new GraphBuilder(compilation, this).build(topScope);
         assert startBlock != null;
         verifyAndPrint("After graph building");
     }

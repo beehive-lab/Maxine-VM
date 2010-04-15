@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.Iterator;
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * The {@code BlockList} class implements a specialized list data structure for representing

@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.cri.ci.*;
+
 /**
  * The {@code LIROp3} class definition.
  *
@@ -39,7 +41,7 @@ public class LIROp3 extends LIRInstruction {
      * @param result the result operand
      * @param info the debug information, used for deoptimization, associated to this instruction
      */
-    public LIROp3(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand opr3, LIROperand result, LIRDebugInfo info) {
+    public LIROp3(LIROpcode opcode, CiValue opr1, CiValue opr2, CiValue opr3, CiValue result, LIRDebugInfo info) {
         super(opcode, result, info, false, null, 1, 1, opr1, opr2, opr3);
         assert isInRange(opcode, LIROpcode.BeginOp3, LIROpcode.EndOp3) : "The " + opcode + " is not a valid LIROp3 opcode";
     }
@@ -49,7 +51,7 @@ public class LIROp3 extends LIRInstruction {
      *
      * @return the opr1
      */
-    public LIROperand opr1() {
+    public CiValue opr1() {
         return operand(0);
     }
 
@@ -58,7 +60,7 @@ public class LIROp3 extends LIRInstruction {
      *
      * @return the opr2
      */
-    public LIROperand opr2() {
+    public CiValue opr2() {
         return operand(1);
     }
 
@@ -67,7 +69,7 @@ public class LIROp3 extends LIRInstruction {
      *
      * @return the opr3
      */
-    public LIROperand opr3() {
+    public CiValue opr3() {
         return operand(2);
     }
 

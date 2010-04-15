@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.actor.member;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import java.lang.reflect.*;

@@ -22,9 +22,9 @@ package com.sun.c0x;
 
 import java.io.PrintStream;
 
-import com.sun.c1x.bytecode.BytecodeSwitch;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ri.RiMethod;
+import com.sun.cri.bytecode.BytecodeSwitch;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.ri.RiMethod;
 
 /**
  * The {@code Printer} class definition.

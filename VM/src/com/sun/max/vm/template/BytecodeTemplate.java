@@ -22,7 +22,7 @@ package com.sun.max.vm.template;
 
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.type.*;
