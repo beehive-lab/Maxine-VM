@@ -56,7 +56,7 @@ public class MarkingStack {
     private int last;
     private int drainThreshold;
     private int topIndex = 0;
-    private boolean draining = false;
+    private Pointer draining = Pointer.zero();
 
     private OverflowHandler overflowHandler;
     private MarkingStackCellVisitor drainingCellVisitor;
@@ -100,21 +100,21 @@ public class MarkingStack {
             base.asPointer().setWord(topIndex++, cell);
             return;
         }
-        if (draining) {
+        if (!draining.isZero()) {
             // We're already draining. So this is an overflow situation. Store the cell in the last slot of the stack (reserved for overflow).
             base.asPointer().setWord(topIndex++, cell);
             // Set draining back to false. The recovering will empty the marking stack.
-            draining = false;
             overflowHandler.recoverFromOverflow();
         } else {
-            draining = true;
             // Start draining with the cell requested to be pushed.
+            draining = cell;
             drainingCellVisitor.visitPoppedCell(cell);
             // Drain further while we're at it.
             while (topIndex > drainThreshold) {
-                drainingCellVisitor.visitPoppedCell(base.asPointer().getWord(--topIndex).asPointer());
+                draining = base.asPointer().getWord(--topIndex).asPointer();
+                drainingCellVisitor.visitPoppedCell(draining);
             }
-            draining = false;
+            draining = Pointer.zero();
         }
     }
 
@@ -125,9 +125,12 @@ public class MarkingStack {
     }
 
     void flush() {
+        if (!draining.isZero()) {
+            drainingCellVisitor.visitFlushedCell(draining);
+            draining = Pointer.zero();
+        }
         while (topIndex > 0) {
             drainingCellVisitor.visitFlushedCell(base.asPointer().getWord(--topIndex).asPointer());
         }
     }
-
 }
