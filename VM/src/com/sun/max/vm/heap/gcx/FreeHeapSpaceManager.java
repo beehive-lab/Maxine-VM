@@ -218,6 +218,10 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             return cell;
         }
 
+        void makeParsable() {
+            fillUp();
+        }
+
 
         // FIXME: revisit this.
         Pointer allocateAligned(Size size, int alignment) {
@@ -438,6 +442,11 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             heapMarker.sweep(this);
         }
         print();
+    }
+
+    public void makeParsable() {
+        smallObjectAllocator.makeParsable();
+        largeObjectAllocator.makeParsable();
     }
 
     /**

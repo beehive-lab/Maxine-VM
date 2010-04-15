@@ -754,10 +754,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             super(heapMarker);
         }
 
+        Address endOfRightmostVisitedObject() {
+            return rightmost.plus(Layout.size(Layout.cellToOrigin(rightmost.asPointer())));
+        }
+
         @Override
         public int rightmostBitmapWordIndex() {
-            Address endOfRightmost = rightmost.plus(Layout.size(Layout.cellToOrigin(rightmost.asPointer())));
-            return heapMarker.bitmapWordIndex(endOfRightmost);
+            return heapMarker.bitmapWordIndex(endOfRightmostVisitedObject());
         }
 
         @Override
@@ -1374,11 +1377,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return Size.fromLong(darkMatterBitCount << log2BytesCoveredPerBit);
     }
 
-
-
     public void markAll() {
         markRoots();
         visitAllGreyObjects();
-        verifyHasNoGreyMarks(coveredAreaStart, coveredAreaEnd);
+        verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
     }
 }
