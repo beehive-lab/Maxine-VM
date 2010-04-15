@@ -370,7 +370,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         Log.print(")");
 
         if (gapSize.greaterEqual(minReclaimableSpace)) {
-            Log.print("=> bin #");
+            Log.print(" => bin #");
             Log.println(binIndex(gapSize));
         } else {
             Log.println(" => dark matter");
@@ -395,13 +395,13 @@ public class FreeHeapSpaceManager extends HeapSweeper {
 
     void print() {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.print("Min reclaimable space: "); Log.print(minReclaimableSpace);
-        Log.print("Dark matter: "); Log.print(darkMatter);
+        Log.print("Min reclaimable space: "); Log.println(minReclaimableSpace);
+        Log.print("Dark matter: "); Log.println(darkMatter);
         for (int i = 0; i < freeChunkBins.length; i++) {
             Log.print("Bin ["); Log.print(i); Log.print("] (");
-            Log.print(i << log2FirstBinSize); Log.print("<= chunk size < "); Log.print((i + 1) << log2FirstBinSize);
+            Log.print(i << log2FirstBinSize); Log.print(" <= chunk size < "); Log.print((i + 1) << log2FirstBinSize);
             Log.print(") total chunks: "); Log.print(freeChunkBins[i].totalChunks);
-            Log.print("total space : "); Log.println(freeChunkBins[i].totalSize);
+            Log.print("   total space : "); Log.println(freeChunkBins[i].totalSize);
         }
         Log.unlock(lockDisabledSafepoints);
     }
