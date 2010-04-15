@@ -526,7 +526,7 @@ public class SingleBitHeapMarker implements MarkingStack.OverflowHandler {
                 }
             }
             // There might be some objects left in the marking stack. Drain it.
-            markingStack.flush();
+            markingStack.drain();
             // Rightmost may have been updated. Check for this, and loop back if it has.
             final int b = rightmostMark.rightmostBitmapWordIndex();
             if (b <= rightmostBitmapWordIndex) {

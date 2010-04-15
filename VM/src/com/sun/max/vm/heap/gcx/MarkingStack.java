@@ -118,6 +118,12 @@ public class MarkingStack {
         }
     }
 
+    void drain() {
+        while (topIndex > 0) {
+            drainingCellVisitor.visitPoppedCell(base.asPointer().getWord(--topIndex).asPointer());
+        }
+    }
+
     void flush() {
         while (topIndex > 0) {
             drainingCellVisitor.visitFlushedCell(base.asPointer().getWord(--topIndex).asPointer());
