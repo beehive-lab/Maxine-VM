@@ -55,7 +55,7 @@ public class C0XCompiler extends CiCompiler {
      */
     @Override
     public CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator) {
-        C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
+        C0XCompilation comp = new C0XCompilation(runtime, method, target);
         comp.compile();
         return null;
     }
@@ -69,7 +69,7 @@ public class C0XCompiler extends CiCompiler {
      */
     @Override
     public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
-        C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
+        C0XCompilation comp = new C0XCompilation(runtime, method, target);
         comp.compile();
         return null;
     }

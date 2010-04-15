@@ -25,7 +25,6 @@ import com.sun.cri.bytecode.BytecodeLookupSwitch;
 import com.sun.cri.bytecode.BytecodeTableSwitch;
 import com.sun.cri.ci.CiKind;
 import com.sun.cri.ci.CiTarget;
-import com.sun.cri.ri.RiBytecodeExtension;
 import com.sun.cri.ri.RiField;
 import com.sun.cri.ri.RiMethod;
 import com.sun.cri.ri.RiRuntime;
@@ -50,8 +49,6 @@ public abstract class CodeGen {
     abstract void genBreakpoint(int bci);
 
     abstract Location genNewMultiArray(RiType type, Location[] lengths);
-
-    abstract Location genExtendedBytecode(RiBytecodeExtension.Bytecode extcode, Location[] args);
 
     abstract void genMonitorExit(Location object);
 
