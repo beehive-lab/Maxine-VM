@@ -150,7 +150,6 @@ public class C0XCompilation {
     final RiRuntime runtime;
     final RiMethod method;
     final CiTarget target;
-    final RiBytecodeExtension extension;
     final CodeGen codeGen;
     RiConstantPool constantPool;
     final BlockState[] blockState;
@@ -164,11 +163,10 @@ public class C0XCompilation {
     int blockQueuePos;
     int regNum;
 
-    public C0XCompilation(RiRuntime runtime, RiMethod method, CiTarget target, RiBytecodeExtension extension) {
+    public C0XCompilation(RiRuntime runtime, RiMethod method, CiTarget target) {
         this.runtime = runtime;
         this.method = method;
         this.target = target;
-        this.extension = extension;
         this.bytecode = method.code();
         this.blockState = new BlockState[this.bytecode.length];
         List<RiExceptionHandler> hlist = method.exceptionHandlers();
@@ -544,21 +542,7 @@ public class C0XCompilation {
     }
 
     private void doUnknownBytecode(int bci, int opcode) {
-        if (extension != null) {
-            RiBytecodeExtension.Bytecode extcode = extension.getBytecode(opcode, bci, bytecode);
-            if (extcode != null) {
-                doExtendedBytecode(extcode);
-                return;
-            }
-        }
         throw Util.shouldNotReachHere();
-    }
-
-    private void doExtendedBytecode(RiBytecodeExtension.Bytecode extcode) {
-        Location[] args = popN(extcode.signatureType().argumentSlots(false));
-        CiKind retType = extcode.signatureType().returnKind();
-        Location r = codeGen.genExtendedBytecode(extcode, args);
-        pushZ(r, retType);
     }
 
     private void doBreakpoint(int bci) {

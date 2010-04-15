@@ -33,7 +33,6 @@ import com.sun.cri.ci.CiAddress;
 import com.sun.cri.ci.CiKind;
 import com.sun.cri.ci.CiRegister;
 import com.sun.cri.ci.CiTarget;
-import com.sun.cri.ri.RiBytecodeExtension;
 import com.sun.cri.ri.RiField;
 import com.sun.cri.ri.RiMethod;
 import com.sun.cri.ri.RiType;
@@ -46,7 +45,7 @@ import com.sun.cri.ri.RiType;
 public class X86CodeGen extends CodeGen {
 
     // Checkstyle: stop
-    
+
     final AMD64MacroAssembler asm;
     final boolean is64bit;
     int fakeRegisterNum = -1;
@@ -65,11 +64,6 @@ public class X86CodeGen extends CodeGen {
     @Override
     Location genNewMultiArray(RiType type, Location[] lengths) {
         return unimplemented(CiKind.Object);
-    }
-
-    @Override
-    Location genExtendedBytecode(RiBytecodeExtension.Bytecode extcode, Location[] args) {
-        return unimplemented(extcode.signatureType().returnKind());
     }
 
     @Override
