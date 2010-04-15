@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * The compiler-provided part of the bi-directional interface between a compiler and a virtual machine (runtime) for the instruction set defined in
+ * The compiler-provided part of the bi-directional interface between the compiler and the runtime system of a virtual machine for the instruction set defined in
  * {@link com.sun.cri.bytecode.Bytecodes}.
  *
  * The target hardware architecture is represented by {@link com.sun.cri.ci.CiArchitecture} and the specific target machine
@@ -30,7 +30,7 @@
  * {@linkplain com.sun.cri.ci.CiStatistics compilation statistics}, possible {@linkplain com.sun.cri.ci.CiBailout error state}
  * and the {@linkplain com.sun.cri.ci.CiTargetMethod compiled code and metadata}.
  * {@link com.sun.cri.ci.CiCodePos} and {@link com.sun.cri.ci.CiDebugInfo} provide detailed information to the
- * virtual machine to support debugging and deoptimization of the compiled code.
+ * runtime to support debugging and deoptimization of the compiled code.
  * <p>
  * The compiler manipulates {@link com.sun.cri.ci.CiValue} instances that have a {@link com.sun.cri.ci.CiKind}, and are
  * immutable. A concrete {@link com.sun.cri.ci.CiValue value} is one of the following subclasses:
