@@ -22,12 +22,12 @@ package com.sun.c1x.debug;
 
 import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.util.Util;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * A {@link ValueVisitor} for {@linkplain #printInstruction(Value) printing}

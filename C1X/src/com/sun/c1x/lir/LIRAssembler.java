@@ -20,22 +20,20 @@
  */
 package com.sun.c1x.lir;
 
-import static com.sun.c1x.lir.LIROperand.*;
-
 import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.lir.LIRCall.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code LIRAssembler} class definition.
@@ -278,7 +276,7 @@ public abstract class LIRAssembler {
                 emitNegate(op);
                 break;
             case Leal:
-                emitLeal(((LIRAddress) op.operand()), ((LIRLocation) op.result()));
+                emitLeal(((CiAddress) op.operand()), (op.result()));
                 break;
             case NullCheck:
                 asm.recordImplicitException(codePos(), op.info);
@@ -324,31 +322,31 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case Cmp:
                 if (op.info != null) {
-                    assert isAddress(op.opr1()) || isAddress(op.opr2()) : "shouldn't be codeemitinfo for non-address operands";
+                    assert op.operand1().isAddress() || op.operand2().isAddress() : "shouldn't be codeemitinfo for non-address operands";
                     //NullPointerExceptionStub stub = new NullPointerExceptionStub(pcOffset, cinfo);
                     //emitCodeStub(stub);
                     asm.recordImplicitException(codePos(), op.info);
                 }
-                emitCompare(op.condition(), op.opr1(), op.opr2(), op);
+                emitCompare(op.condition(), op.operand1(), op.operand2(), op);
                 break;
 
             case Cmpl2i:
             case Cmpfd2i:
             case Ucmpfd2i:
-                emitCompareFloatInt(op.code, op.opr1(), op.opr2(), op.result(), op);
+                emitCompareFloatInt(op.code, op.operand1(), op.operand2(), op.result(), op);
                 break;
 
             case Cmove:
-                emitConditionalMove(op.condition(), op.opr1(), op.opr2(), op.result());
+                emitConditionalMove(op.condition(), op.operand1(), op.operand2(), op.result());
                 break;
 
             case Shl:
             case Shr:
             case Ushr:
-                if (isConstant(op.opr2())) {
-                    emitShiftOp(op.code, op.opr1(), ((LIRConstant) op.opr2()).asInt(), op.result());
+                if (op.operand2().isConstant()) {
+                    emitShiftOp(op.code, op.operand1(), ((CiConstant) op.operand2()).asInt(), op.result());
                 } else {
-                    emitShiftOp(op.code, op.opr1(), op.opr2(), op.result(), op.tmp());
+                    emitShiftOp(op.code, op.operand1(), op.operand2(), op.result(), op.tmp());
                 }
                 break;
 
@@ -357,7 +355,7 @@ public abstract class LIRAssembler {
             case Mul:
             case Div:
             case Rem:
-                emitArithOp(op.code, op.opr1(), op.opr2(), op.result(), op.info);
+                emitArithOp(op.code, op.operand1(), op.operand2(), op.result(), op.info);
                 break;
 
             case Abs:
@@ -367,18 +365,18 @@ public abstract class LIRAssembler {
             case Cos:
             case Log:
             case Log10:
-                emitIntrinsicOp(op.code, op.opr1(), op.opr2(), op.result(), op);
+                emitIntrinsicOp(op.code, op.operand1(), op.operand2(), op.result(), op);
                 break;
 
             case LogicAnd:
             case LogicOr:
             case LogicXor:
-                emitLogicOp(op.code, op.opr1(), op.opr2(), op.result());
+                emitLogicOp(op.code, op.operand1(), op.operand2(), op.result());
                 break;
 
             case Throw:
             case Unwind:
-                emitThrow(op.opr1(), op.opr2(), op.info, op.code == LIROpcode.Unwind);
+                emitThrow(op.operand1(), op.operand2(), op.info, op.code == LIROpcode.Unwind);
                 break;
 
             default:
@@ -390,47 +388,47 @@ public abstract class LIRAssembler {
         asm.buildFrame(initialFrameSizeInBytes());
     }
 
-    public void moveOp(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
+    public void moveOp(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         if (src.isRegister()) {
             if (dest.isRegister()) {
                 assert info == null : "no patching and info allowed here";
                 reg2reg(src, dest);
-            } else if (dest.isStack()) {
+            } else if (dest.isStackSlot()) {
                 assert info == null : "no patching and info allowed here";
                 reg2stack(src, dest, kind);
-            } else if (isAddress(dest)) {
+            } else if (dest.isAddress()) {
                 reg2mem(src, dest, kind, info, unaligned);
             } else {
                 throw Util.shouldNotReachHere();
             }
 
-        } else if (src.isStack()) {
+        } else if (src.isStackSlot()) {
             assert info == null : "no patching and info allowed here";
             if (dest.isRegister()) {
                 stack2reg(src, dest, kind);
-            } else if (dest.isStack()) {
+            } else if (dest.isStackSlot()) {
                 stack2stack(src, dest, kind);
             } else {
                 throw Util.shouldNotReachHere();
             }
 
-        } else if (isConstant(src)) {
+        } else if (src.isConstant()) {
             if (dest.isRegister()) {
                 const2reg(src, dest, info); // patching is possible
-            } else if (dest.isStack()) {
+            } else if (dest.isStackSlot()) {
                 assert info == null : "no patching and info allowed here";
                 const2stack(src, dest);
-            } else if (isAddress(dest)) {
+            } else if (dest.isAddress()) {
                 const2mem(src, dest, kind, info);
             } else {
                 throw Util.shouldNotReachHere();
             }
 
-        } else if (isAddress(src)) {
-            if (dest.isStack()) {
+        } else if (src.isAddress()) {
+            if (dest.isStackSlot()) {
                 assert info == null && !unaligned;
                 mem2stack(src, dest, kind);
-            } else if (isAddress(dest)) {
+            } else if (dest.isAddress()) {
                 assert info == null && !unaligned;
                 mem2mem(src, dest, kind);
             } else {
@@ -456,41 +454,41 @@ public abstract class LIRAssembler {
 
     protected abstract void emitAlignment();
 
-    protected abstract void emitLeal(LIRAddress inOpr, LIRLocation resultOpr);
+    protected abstract void emitLeal(CiAddress inOpr, CiValue resultOpr);
 
     protected abstract void emitNegate(LIROp1 negate);
 
-    protected abstract void emitReadPC(LIROperand resultOpr);
+    protected abstract void emitReadPC(CiValue resultOpr);
 
-    protected abstract void emitStackAllocate(StackBlock stackBlock, LIROperand resultOpr);
+    protected abstract void emitStackAllocate(StackBlock stackBlock, CiValue resultOpr);
 
-    protected abstract void emitSafepoint(LIROperand inOpr, LIRDebugInfo info);
+    protected abstract void emitSafepoint(CiValue inOpr, LIRDebugInfo info);
 
-    protected abstract void emitReturn(LIROperand inOpr);
+    protected abstract void emitReturn(CiValue inOpr);
 
-    protected abstract void emitReadPrefetch(LIROperand inOpr);
+    protected abstract void emitReadPrefetch(CiValue inOpr);
 
-    protected abstract void emitVolatileMove(LIROperand inOpr, LIROperand result, CiKind kind, LIRDebugInfo info);
+    protected abstract void emitVolatileMove(CiValue inOpr, CiValue result, CiKind kind, LIRDebugInfo info);
 
     protected abstract void emitPrologue();
 
-    protected abstract void emitThrow(LIROperand inOpr1, LIROperand inOpr2, LIRDebugInfo info, boolean unwind);
+    protected abstract void emitThrow(CiValue inOpr1, CiValue inOpr2, LIRDebugInfo info, boolean unwind);
 
-    protected abstract void emitLogicOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr);
+    protected abstract void emitLogicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr);
 
-    protected abstract void emitIntrinsicOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIROp2 op);
+    protected abstract void emitIntrinsicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr, LIROp2 op);
 
-    protected abstract void emitArithOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIRDebugInfo info);
+    protected abstract void emitArithOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr, LIRDebugInfo info);
 
-    protected abstract void emitShiftOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIROperand tmpOpr);
+    protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr, CiValue tmpOpr);
 
-    protected abstract void emitShiftOp(LIROpcode code, LIROperand inOpr1, int asJint, LIROperand resultOpr);
+    protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, int asJint, CiValue resultOpr);
 
-    protected abstract void emitConditionalMove(Condition condition, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr);
+    protected abstract void emitConditionalMove(Condition condition, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr);
 
-    protected abstract void emitCompareFloatInt(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIROp2 op);
+    protected abstract void emitCompareFloatInt(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr, LIROp2 op);
 
-    protected abstract void emitCompare(Condition condition, LIROperand inOpr1, LIROperand inOpr2, LIROp2 op);
+    protected abstract void emitCompare(Condition condition, CiValue inOpr1, CiValue inOpr2, LIROp2 op);
 
     protected abstract void emitBranch(LIRBranch branch);
 
@@ -506,7 +504,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitRuntimeCall(CiRuntimeCall l, LIRDebugInfo info);
 
-    protected abstract void emitIndirectCall(Object target, LIRDebugInfo info, LIROperand operand);
+    protected abstract void emitIndirectCall(Object target, LIRDebugInfo info, CiValue operand);
 
     protected abstract void emitDirectCall(Object target, LIRDebugInfo info);
 
@@ -522,26 +520,26 @@ public abstract class LIRAssembler {
 
     protected abstract void emitOsrEntry();
 
-    protected abstract void reg2stack(LIROperand src, LIROperand dest, CiKind kind);
+    protected abstract void reg2stack(CiValue src, CiValue dest, CiKind kind);
 
-    protected abstract void reg2mem(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info, boolean unaligned);
+    protected abstract void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned);
 
-    protected abstract void mem2reg(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info, boolean unaligned);
+    protected abstract void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned);
 
-    protected abstract void const2mem(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info);
+    protected abstract void const2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info);
 
-    protected abstract void const2stack(LIROperand src, LIROperand dest);
+    protected abstract void const2stack(CiValue src, CiValue dest);
 
-    protected abstract void const2reg(LIROperand src, LIROperand dest, LIRDebugInfo info);
+    protected abstract void const2reg(CiValue src, CiValue dest, LIRDebugInfo info);
 
-    protected abstract void mem2stack(LIROperand src, LIROperand dest, CiKind kind);
+    protected abstract void mem2stack(CiValue src, CiValue dest, CiKind kind);
 
-    protected abstract void mem2mem(LIROperand src, LIROperand dest, CiKind kind);
+    protected abstract void mem2mem(CiValue src, CiValue dest, CiKind kind);
 
-    protected abstract void stack2stack(LIROperand src, LIROperand dest, CiKind kind);
+    protected abstract void stack2stack(CiValue src, CiValue dest, CiKind kind);
 
-    protected abstract void stack2reg(LIROperand src, LIROperand dest, CiKind kind);
+    protected abstract void stack2reg(CiValue src, CiValue dest, CiKind kind);
 
-    protected abstract void reg2reg(LIROperand src, LIROperand dest);
+    protected abstract void reg2reg(CiValue src, CiValue dest);
 
 }

@@ -20,23 +20,26 @@
  */
 package com.sun.c1x.target.amd64;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
-import static com.sun.c1x.lir.LIROperand.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.ci.CiKind.*;
+import static com.sun.cri.ci.CiValue.*;
+import static java.lang.Double.*;
+import static java.lang.Float.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.FrameMap.*;
-import com.sun.c1x.lir.LIRAddress.*;
 import com.sun.c1x.lir.LIRCall.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.xir.*;
-import com.sun.c1x.xir.CiXirAssembler.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
  * This class implements the x86-specific code generation for LIR.
@@ -66,21 +69,12 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         rscratch1 = target.scratchRegister;
     }
 
-    private boolean isLiteralAddress(LIRAddress addr) {
-        return isIllegal(addr.base) && isIllegal(addr.index);
+    private boolean isLiteralAddress(CiAddress addr) {
+        return addr.base.isIllegal() && addr.index.isIllegal();
     }
 
-    private Address asAddress(LIRAddress addr) {
-        assert isLegal(addr.base);
-        CiRegister base = addr.base.asPointerRegister(compilation.target.arch);
-
-        if (isIllegal(addr.index)) {
-            return new Address(base, addr.displacement);
-        } else {
-            assert addr.index.isRegister();
-            CiRegister index = addr.index.asPointerRegister(compilation.target.arch);
-            return new Address(base, index, Address.ScaleFactor.fromLog(addr.scale.ordinal()), addr.displacement);
-        }
+    private CiAddress asAddress(CiAddress addr) {
+        return addr;
     }
 
     @Override
@@ -94,7 +88,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitReturn(LIROperand result) {
+    protected void emitReturn(CiValue result) {
         // Reset the stack pointer
         masm.increment(target.stackPointerRegister, initialFrameSizeInBytes());
         // TODO: Add Safepoint polling at return!
@@ -106,17 +100,17 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
      * This satisfies the requirements for correctly translating the {@link LoadPC} HIR instruction.
      */
     @Override
-    protected void emitReadPC(LIROperand resultOpr) {
-        masm.lea(resultOpr.asRegister(), Address.InternalRelocation);
+    protected void emitReadPC(CiValue resultOpr) {
+        masm.lea(resultOpr.asRegister(), CiAddress.Placeholder);
     }
 
     @Override
-    protected void emitStackAllocate(StackBlock stackBlock, LIROperand resultOpr) {
+    protected void emitStackAllocate(StackBlock stackBlock, CiValue resultOpr) {
         masm.lea(resultOpr.asRegister(), compilation.frameMap().toStackAddress(stackBlock));
     }
 
     @Override
-    protected void emitSafepoint(LIROperand tmp, LIRDebugInfo info) {
+    protected void emitSafepoint(CiValue tmp, LIRDebugInfo info) {
         masm.safepoint(info);
     }
 
@@ -131,27 +125,24 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     private void const2reg(CiRegister dst, int constant) {
-        if (constant == 0) {
-            masm.xorl(dst, dst);
-        } else {
-            masm.movl(dst, constant);
-        }
+        // Do not optimize with an XOR as this instruction may be between
+        // a CMP and a Jcc in which case the XOR will modify the condition
+        // flags and interfere with the Jcc.
+        masm.movl(dst, constant);
     }
 
     private void const2reg(CiRegister dst, long constant) {
-        if (constant == 0L) {
-            masm.xorptr(dst, dst);
-        } else {
-            masm.mov64(dst, constant);
-        }
+        // Do not optimize with an XOR as this instruction may be between
+        // a CMP and a Jcc in which case the XOR will modify the condition
+        // flags and interfere with the Jcc.
+        masm.mov64(dst, constant);
     }
 
     private void const2reg(CiRegister dst, Object constant) {
-        if (constant == null) {
-            masm.xorptr(dst, dst);
-        } else {
-            masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
-        }
+        // Do not optimize with an XOR as this instruction may be between
+        // a CMP and a Jcc in which case the XOR will modify the condition
+        // flags and interfere with the Jcc.
+        masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
     }
 
     private void const2reg(CiRegister dst, float constant) {
@@ -171,10 +162,10 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void const2reg(LIROperand src, LIROperand dest, LIRDebugInfo info) {
-        assert isConstant(src);
+    protected void const2reg(CiValue src, CiValue dest, LIRDebugInfo info) {
+        assert src.isConstant();
         assert dest.isRegister();
-        LIRConstant c = (LIRConstant) src;
+        CiConstant c = (CiConstant) src;
 
         switch (c.kind) {
             case Boolean :
@@ -184,7 +175,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             case Int     : const2reg(dest.asRegister(), c.asInt()); break;
             case Long    : const2reg(dest.asRegister(), c.asLong()); break;
             case Jsr     : const2reg(dest.asRegister(), c.asJsr()); break;
-            case Word    : const2reg(dest.asRegister(), c.asWord()); break;
+            case Word    : const2reg(dest.asRegister(), c.asLong()); break;
             case Object  : const2reg(dest.asRegister(), c.asObject()); break;
             case Float   : const2reg(asXmmFloatReg(dest), c.asFloat()); break;
             case Double  : const2reg(asXmmDoubleReg(dest), c.asDouble()); break;
@@ -193,31 +184,31 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void const2stack(LIROperand src, LIROperand dest) {
-        assert isConstant(src);
-        assert dest.isStack();
-        LIRConstant c = (LIRConstant) src;
+    protected void const2stack(CiValue src, CiValue dest) {
+        assert src.isConstant();
+        assert dest.isStackSlot();
+        CiConstant c = (CiConstant) src;
 
         switch (c.kind) {
             case Boolean :
             case Byte    :
             case Char    :
             case Short   :
-            case Int     :
-            case Float   : masm.movl(frameMap.toStackAddress(dest, 0), c.asIntBits()); break;
+            case Int     : masm.movl(frameMap.toStackAddress(dest, 0), c.asInt()); break;
+            case Float   : masm.movl(frameMap.toStackAddress(dest, 0), floatToRawIntBits(c.asFloat())); break;
             case Object  : masm.movoop(frameMap.toStackAddress(dest, 0), CiConstant.forObject(c.asObject())); break;
-            case Long    :
-            case Double  : masm.movptr(frameMap.toStackAddress(dest, 0), c.asLongBits()); break;
+            case Long    : masm.movptr(frameMap.toStackAddress(dest, 0), c.asLong()); break;
+            case Double  : masm.movptr(frameMap.toStackAddress(dest, 0), doubleToRawLongBits(c.asDouble())); break;
             default      : throw Util.shouldNotReachHere();
         }
     }
 
     @Override
-    protected void const2mem(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info) {
-        assert isConstant(src);
-        assert isAddress(dest);
-        LIRConstant c = (LIRConstant) src;
-        LIRAddress addr = (LIRAddress) dest;
+    protected void const2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
+        assert src.isConstant();
+        assert dest.isAddress();
+        CiConstant c = (CiConstant) src;
+        CiAddress addr = (CiAddress) dest;
 
         int nullCheckHere = codePos();
         switch (kind) {
@@ -225,13 +216,15 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             case Byte    : masm.movb(asAddress(addr), c.asInt() & 0xFF); break;
             case Char    :
             case Short   : masm.movw(asAddress(addr), c.asInt() & 0xFFFF); break;
-            case Int     :
-            case Float   : masm.movl(asAddress(addr), c.asIntBits()); break;
+            case Int     : masm.movl(asAddress(addr), c.asInt()); break;
+            case Float   : masm.movl(asAddress(addr), floatToRawIntBits(c.asFloat())); break;
             case Object  : masm.movoop(asAddress(addr), CiConstant.forObject(c.asObject())); break;
-            case Long    :
-            case Double  : masm.mov64(rscratch1, c.asLongBits());
+            case Long    : masm.mov64(rscratch1, c.asLong());
                            nullCheckHere = codePos();
-                masm.movq(asAddress(addr), rscratch1); break;
+                           masm.movq(asAddress(addr), rscratch1); break;
+            case Double  : masm.mov64(rscratch1, doubleToRawLongBits(c.asDouble()));
+                           nullCheckHere = codePos();
+                           masm.movq(asAddress(addr), rscratch1); break;
             default      : throw Util.shouldNotReachHere();
         }
 
@@ -241,7 +234,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void reg2reg(LIROperand src, LIROperand dest) {
+    protected void reg2reg(CiValue src, CiValue dest) {
         assert src.isRegister();
         assert dest.isRegister();
 
@@ -258,10 +251,10 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void reg2stack(LIROperand src, LIROperand dst, CiKind kind) {
+    protected void reg2stack(CiValue src, CiValue dst, CiKind kind) {
         assert src.isRegister();
-        assert dst.isStack();
-        Address addr = frameMap.toStackAddress(dst, 0);
+        assert dst.isStackSlot();
+        CiAddress addr = frameMap.toStackAddress(dst, 0);
 
         if (src.kind.isObject()) {
             masm.verifyOop(src.asRegister());
@@ -284,8 +277,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void reg2mem(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
-        LIRAddress toAddr = (LIRAddress) dest;
+    protected void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
+        CiAddress toAddr = (CiAddress) dest;
 
         if (kind == CiKind.Object) {
             masm.verifyOop(src.asRegister());
@@ -309,7 +302,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         }
     }
 
-    private static CiRegister asXmmFloatReg(LIROperand src) {
+    private static CiRegister asXmmFloatReg(CiValue src) {
         assert src.kind.isFloat() : "must be float";
         CiRegister result = src.asRegister();
         assert result.isXmm() : "must be xmm";
@@ -317,15 +310,15 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void stack2reg(LIROperand src, LIROperand dest, CiKind kind) {
-        assert src.isStack();
+    protected void stack2reg(CiValue src, CiValue dest, CiKind kind) {
+        assert src.isStackSlot();
         assert dest.isRegister();
 
         if (kind == CiKind.Object) {
             masm.verifyOop(dest.asRegister());
         }
 
-        Address addr = frameMap.toStackAddress(src, 0);
+        CiAddress addr = frameMap.toStackAddress(src, 0);
 
         switch (dest.kind) {
             case Boolean :
@@ -344,29 +337,29 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void mem2mem(LIROperand src, LIROperand dest, CiKind kind) {
+    protected void mem2mem(CiValue src, CiValue dest, CiKind kind) {
         if (dest.kind.isInt()) {
-            masm.pushl(asAddress((LIRAddress) src));
-            masm.popl(asAddress((LIRAddress) dest));
+            masm.pushl(asAddress((CiAddress) src));
+            masm.popl(asAddress((CiAddress) dest));
         } else {
-            masm.pushptr(asAddress((LIRAddress) src));
-            masm.popptr(asAddress((LIRAddress) dest));
+            masm.pushptr(asAddress((CiAddress) src));
+            masm.popptr(asAddress((CiAddress) dest));
         }
     }
 
     @Override
-    protected void mem2stack(LIROperand src, LIROperand dest, CiKind kind) {
+    protected void mem2stack(CiValue src, CiValue dest, CiKind kind) {
         if (dest.kind.isInt()) {
-            masm.pushl(asAddress((LIRAddress) src));
+            masm.pushl(asAddress((CiAddress) src));
             masm.popl(frameMap.toStackAddress(dest, 0));
         } else {
-            masm.pushptr(asAddress((LIRAddress) src));
+            masm.pushptr(asAddress((CiAddress) src));
             masm.popptr(frameMap.toStackAddress(dest, 0));
         }
     }
 
     @Override
-    protected void stack2stack(LIROperand src, LIROperand dest, CiKind kind) {
+    protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
         if (src.kind.isInt()) {
             masm.pushl(frameMap.toStackAddress(src, 0));
             masm.popl(frameMap.toStackAddress(dest, 0));
@@ -377,12 +370,12 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void mem2reg(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
-        assert isAddress(src);
+    protected void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
+        assert src.isAddress();
         assert dest.isRegister();
 
-        LIRAddress addr = (LIRAddress) src;
-        Address fromAddr = asAddress(addr);
+        CiAddress addr = (CiAddress) src;
+        CiAddress fromAddr = asAddress(addr);
 
         if (info != null) {
             asm.recordImplicitException(codePos(), info);
@@ -408,9 +401,9 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitReadPrefetch(LIROperand src) {
-        LIRAddress addr = (LIRAddress) src;
-        Address fromAddr = asAddress(addr);
+    protected void emitReadPrefetch(CiValue src) {
+        CiAddress addr = (CiAddress) src;
+        CiAddress fromAddr = asAddress(addr);
 
         switch (C1XOptions.ReadPrefetchInstr) {
             case 0  : masm.prefetchnta(fromAddr); break;
@@ -440,8 +433,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         if (op.block() != null) {
             branchTargetBlocks.add(op.block());
         }
-        if (op.ublock() != null) {
-            branchTargetBlocks.add(op.ublock());
+        if (op.unorderedBlock() != null) {
+            branchTargetBlocks.add(op.unorderedBlock());
         }
         return true;
     }
@@ -459,8 +452,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         } else {
             ConditionFlag acond = ConditionFlag.zero;
             if (op.code == LIROpcode.CondFloatBranch) {
-                assert op.ublock() != null : "must have unordered successor";
-                masm.jcc(ConditionFlag.parity, op.ublock().label());
+                assert op.unorderedBlock() != null : "must have unordered successor";
+                masm.jcc(ConditionFlag.parity, op.unorderedBlock().label());
                 switch (op.cond()) {
                     case EQ : acond = ConditionFlag.equal; break;
                     case NE : acond = ConditionFlag.notEqual; break;
@@ -489,8 +482,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
     @Override
     protected void emitConvert(LIRConvert op) {
-        LIROperand src = op.operand();
-        LIROperand dest = op.result();
+        CiValue src = op.operand();
+        CiValue dest = op.result();
         Label endLabel = new Label();
         CiRegister srcRegister = src.asRegister();
         CiRegister rscratch1 = compilation.target.scratchRegister;
@@ -564,7 +557,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             case F2L: {
                 assert srcRegister.isXmm() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
                 masm.cvttss2siq(dest.asRegister(), asXmmFloatReg(src));
-                masm.mov64(rscratch1, Long.MIN_VALUE);
+                masm.mov64(rscratch1, java.lang.Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
                 masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
@@ -575,7 +568,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             case D2L: {
                 assert srcRegister.isXmm() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
                 masm.cvttsd2siq(dest.asRegister(), asXmmDoubleReg(src));
-                masm.mov64(rscratch1, Long.MIN_VALUE);
+                masm.mov64(rscratch1, java.lang.Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
                 masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
@@ -618,15 +611,15 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             masm.lock();
         }
         if (op.code == LIROpcode.CasInt) {
-            masm.cmpxchgl(newval, new Address(addr, 0));
+            masm.cmpxchgl(newval, new CiAddress(CiKind.Int, addr.asValue(Word), 0));
         } else {
             assert op.code == LIROpcode.CasObj || op.code == LIROpcode.CasLong || op.code == LIROpcode.CasWord;
-            masm.cmpxchgptr(newval, new Address(addr, 0));
+            masm.cmpxchgptr(newval, new CiAddress(CiKind.Word, addr.asValue(Word), 0));
         }
     }
 
     @Override
-    protected void emitConditionalMove(Condition condition, LIROperand opr1, LIROperand opr2, LIROperand result) {
+    protected void emitConditionalMove(Condition condition, CiValue opr1, CiValue opr2, CiValue result) {
         ConditionFlag acond;
         ConditionFlag ncond;
         switch (condition) {
@@ -674,8 +667,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 throw Util.shouldNotReachHere();
         }
 
-        LIROperand def = opr1; // assume left operand as default
-        LIROperand other = opr2;
+        CiValue def = opr1; // assume left operand as default
+        CiValue other = opr2;
 
         if (opr2.isRegister() && opr2.asRegister() == result.asRegister()) {
             // if the right operand is already in the result register, then use it as the default
@@ -689,14 +682,14 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
         if (def.isRegister()) {
             reg2reg(def, result);
-        } else if (def.isStack()) {
+        } else if (def.isStackSlot()) {
             stack2reg(def, result, result.kind);
         } else {
-            assert isConstant(def);
+            assert def.isConstant();
             const2reg(def, result, null);
         }
 
-        if (!isConstant(other)) {
+        if (!other.isConstant()) {
             // optimized version that does not require a branch
             if (other.isRegister()) {
                 assert other.asRegister() != result.asRegister() : "other already overwritten by previous move";
@@ -706,7 +699,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     masm.cmovq(ncond, result.asRegister(), other.asRegister());
                 }
             } else {
-                assert other.isStack();
+                assert other.isStackSlot();
                 if (other.kind.isInt()) {
                     masm.cmovl(ncond, result.asRegister(), frameMap.toStackAddress(other, 0));
                 } else {
@@ -720,10 +713,10 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             masm.jcc(acond, skip);
             if (other.isRegister()) {
                 reg2reg(other, result);
-            } else if (other.isStack()) {
+            } else if (other.isStackSlot()) {
                 stack2reg(other, result, result.kind);
             } else {
-                assert isConstant(other);
+                assert other.isConstant();
                 const2reg(other, result, null);
             }
             masm.bind(skip);
@@ -731,7 +724,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitArithOp(LIROpcode code, LIROperand left, LIROperand right, LIROperand dest, LIRDebugInfo info) {
+    protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
         assert left.kind == right.kind;
         assert left.equals(dest) : "left and dest must be equal";
@@ -779,18 +772,18 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 }
             } else {
                 if (kind.isInt()) {
-                    if (right.isStack()) {
+                    if (right.isStackSlot()) {
                         // register - stack
-                        Address raddr = frameMap.toStackAddress(right, 0);
+                        CiAddress raddr = frameMap.toStackAddress(right, 0);
                         switch (code) {
                             case Add : masm.addl(lreg, raddr); break;
                             case Sub : masm.subl(lreg, raddr); break;
                             default  : throw Util.shouldNotReachHere();
                         }
-                    } else if (isConstant(right)) {
+                    } else if (right.isConstant()) {
                         // register - constant
                         if (kind.isInt()) {
-                            int delta = ((LIRConstant) right).asInt();
+                            int delta = ((CiConstant) right).asInt();
                             switch (code) {
                                 case Add : masm.increment(lreg, delta); break;
                                 case Sub : masm.decrement(lreg, delta); break;
@@ -800,12 +793,12 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     }
                 } else if (kind.isFloat()) {
                     // register - stack/constant
-                    Address raddr;
-                    if (right.isStack()) {
+                    CiAddress raddr;
+                    if (right.isStackSlot()) {
                         raddr = frameMap.toStackAddress(right, 0);
                     } else {
-                        assert isConstant(right);
-                        raddr = masm.recordDataReferenceInCode(CiConstant.forFloat(((LIRConstant) right).asFloat()));
+                        assert right.isConstant();
+                        raddr = masm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
                     }
                     switch (code) {
                         case Add : masm.addss(lreg, raddr); break;
@@ -816,12 +809,12 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     }
                 } else if (kind.isDouble()) {
                     // register - stack/constant
-                    Address raddr;
-                    if (right.isStack()) {
+                    CiAddress raddr;
+                    if (right.isStackSlot()) {
                         raddr = frameMap.toStackAddress(right, 0);
                     } else {
-                        assert isConstant(right);
-                        raddr = masm.recordDataReferenceInCode(CiConstant.forDouble(((LIRConstant) right).asDouble()));
+                        assert right.isConstant();
+                        raddr = masm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                     }
                     switch (code) {
                         case Add : masm.addsd(lreg, raddr); break;
@@ -833,8 +826,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 } else {
                     // register - constant
                     assert target.sizeInBytes(kind) == 8;
-                    assert isConstant(right);
-                    long c = ((LIRConstant) right).asLongBits();
+                    assert right.isConstant();
+                    long c = ((CiConstant) right).asLong();
                     masm.mov64(rscratch1, c);
                     switch (code) {
                         case Add : masm.addq(lreg, rscratch1); break;
@@ -846,12 +839,12 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
         } else {
             assert kind.isInt();
-            Address laddr;
-            if (left.isStack()) {
+            CiAddress laddr;
+            if (left.isStackSlot()) {
                 laddr = frameMap.toStackAddress(left, 0);
             } else {
-                assert isAddress(left);
-                laddr = asAddress((LIRAddress) left);
+                assert left.isAddress();
+                laddr = asAddress((CiAddress) left);
             }
 
             if (right.isRegister()) {
@@ -862,8 +855,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     default  : throw Util.shouldNotReachHere();
                 }
             } else {
-                assert isConstant(right);
-                int c = ((LIRConstant) right).asInt();
+                assert right.isConstant();
+                int c = ((CiConstant) right).asInt();
                 switch (code) {
                     case Add : masm.incrementl(laddr, c); break;
                     case Sub : masm.decrementl(laddr, c); break;
@@ -874,7 +867,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitIntrinsicOp(LIROpcode code, LIROperand value, LIROperand unused, LIROperand dest, LIROp2 op) {
+    protected void emitIntrinsicOp(LIROpcode code, CiValue value, CiValue unused, CiValue dest, LIROp2 op) {
         assert value.kind.isDouble();
         switch (code) {
             case Abs:
@@ -894,21 +887,21 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitLogicOp(LIROpcode code, LIROperand left, LIROperand right, LIROperand dst) {
+    protected void emitLogicOp(LIROpcode code, CiValue left, CiValue right, CiValue dst) {
         assert left.isRegister();
         if (left.kind.isInt()) {
             CiRegister reg = left.asRegister();
-            if (isConstant(right)) {
-                int val = ((LIRConstant) right).asInt();
+            if (right.isConstant()) {
+                int val = ((CiConstant) right).asInt();
                 switch (code) {
                     case LogicAnd : masm.andl(reg, val); break;
                     case LogicOr  : masm.orl(reg, val); break;
                     case LogicXor : masm.xorl(reg, val); break;
                     default       : throw Util.shouldNotReachHere();
                 }
-            } else if (right.isStack()) {
+            } else if (right.isStackSlot()) {
                 // added support for stack operands
-                Address raddr = frameMap.toStackAddress(right, 0);
+                CiAddress raddr = frameMap.toStackAddress(right, 0);
                 switch (code) {
                     case LogicAnd : masm.andl(reg, raddr); break;
                     case LogicOr  : masm.orl(reg, raddr); break;
@@ -928,8 +921,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         } else {
             assert target.sizeInBytes(left.kind) == 8;
             CiRegister lreg = left.asRegister();
-            if (isConstant(right)) {
-                LIRConstant rightConstant = (LIRConstant) right;
+            if (right.isConstant()) {
+                CiConstant rightConstant = (CiConstant) right;
                 masm.mov64(rscratch1, rightConstant.asLong());
                 switch (code) {
                     case LogicAnd : masm.andq(lreg, rscratch1); break;
@@ -952,16 +945,16 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         }
     }
 
-    void arithmeticIdiv(LIROpcode code, LIROperand left, LIROperand right, LIROperand result, LIRDebugInfo info) {
+    void arithmeticIdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
         assert left.isRegister() : "left must be register";
-        assert right.isRegister() || isConstant(right) : "right must be register or constant";
+        assert right.isRegister() || right.isConstant() : "right must be register or constant";
         assert result.isRegister() : "result must be register";
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
 
-        if (isConstant(right)) {
-            int divisor = ((LIRConstant) right).asInt();
+        if (right.isConstant()) {
+            int divisor = ((CiConstant) right).asInt();
             assert divisor > 0 && Util.isPowerOf2(divisor) : "divisor must be power of two";
             if (code == LIROpcode.Idiv) {
                 assert lreg == AMD64.rax : "dividend must be rax";
@@ -1026,7 +1019,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         }
     }
 
-    void arithmeticLdiv(LIROpcode code, LIROperand left, LIROperand right, LIROperand result, LIRDebugInfo info) {
+    void arithmeticLdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
@@ -1045,7 +1038,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         if (C1XOptions.GenSpecialDivChecks) {
             // check for special case of Long.MIN_VALUE / -1
             Label normalCase = new Label();
-            masm.mov64(AMD64.rdx, Long.MIN_VALUE);
+            masm.mov64(AMD64.rdx, java.lang.Long.MIN_VALUE);
             masm.cmpq(AMD64.rax, AMD64.rdx);
             masm.jcc(ConditionFlag.notEqual, normalCase);
             if (code == LIROpcode.Lrem) {
@@ -1074,7 +1067,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         }
     }
 
-    void arithmeticWdiv(LIROpcode code, LIROperand left, LIROperand right, LIROperand result, LIRDebugInfo info) {
+    void arithmeticWdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
@@ -1108,7 +1101,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitCompare(Condition condition, LIROperand opr1, LIROperand opr2, LIROp2 op) {
+    protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
         assert opr1.kind == opr2.kind;
         if (opr1.isRegister()) {
             CiRegister reg1 = opr1.asRegister();
@@ -1127,7 +1120,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     case Double  : masm.ucomisd(reg1, asXmmDoubleReg(opr2)); break;
                     default      : throw Util.shouldNotReachHere();
                 }
-            } else if (opr2.isStack()) {
+            } else if (opr2.isStackSlot()) {
                 // register - stack
                 switch (opr1.kind) {
                     case Boolean :
@@ -1142,23 +1135,23 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     case Double  : masm.ucomisd(reg1, frameMap.toStackAddress(opr2, 0)); break;
                     default      : throw Util.shouldNotReachHere();
                 }
-            } else if (isConstant(opr2)) {
+            } else if (opr2.isConstant()) {
                 // register - constant
-                LIRConstant c = (LIRConstant) opr2;
+                CiConstant c = (CiConstant) opr2;
                 switch (opr1.kind) {
                     case Boolean :
                     case Byte    :
                     case Char    :
                     case Short   :
                     case Int     : masm.cmpl(reg1, c.asInt()); break;
-                    case Float   : masm.ucomiss(reg1, masm.recordDataReferenceInCode(CiConstant.forFloat(((LIRConstant) opr2).asFloat()))); break;
-                    case Double  : masm.ucomisd(reg1, masm.recordDataReferenceInCode(CiConstant.forDouble(((LIRConstant) opr2).asDouble()))); break;
+                    case Float   : masm.ucomiss(reg1, masm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat()))); break;
+                    case Double  : masm.ucomisd(reg1, masm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble()))); break;
                     case Long    :
                     case Word    : {
-                        if (c.asLongBits() == 0) {
+                        if (c.asLong() == 0) {
                             masm.cmpq(reg1, 0);
                         } else {
-                            masm.mov64(rscratch1, c.asLongBits());
+                            masm.mov64(rscratch1, c.asLong());
                             masm.cmpq(reg1, rscratch1);
 
                         }
@@ -1171,7 +1164,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     }
                     default      : throw Util.shouldNotReachHere();
                 }
-            } else if (isAddress(opr2)) {
+            } else if (opr2.isAddress()) {
                 // register - address
                 if (op != null && op.info != null) {
                     asm.recordImplicitException(codePos(), op.info);
@@ -1181,13 +1174,13 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     case Byte    :
                     case Char    :
                     case Short   :
-                    case Int     : masm.cmpl(reg1, asAddress((LIRAddress) opr2)); break;
+                    case Int     : masm.cmpl(reg1, asAddress((CiAddress) opr2)); break;
                     default      : throw Util.shouldNotReachHere();
                 }
             }
         } else {
-            assert isAddress(opr1) && isConstant(opr2);
-            LIRConstant c = ((LIRConstant) opr2);
+            assert opr1.isAddress() && opr2.isConstant();
+            CiConstant c = ((CiConstant) opr2);
 
             if (c.kind == CiKind.Object) {
                 assert condition == Condition.EQ || condition == Condition.NE : "need to reverse";
@@ -1197,7 +1190,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 asm.recordImplicitException(codePos(), op.info);
             }
             // special case: address - constant
-            LIRAddress addr = (LIRAddress) opr1;
+            CiAddress addr = (CiAddress) opr1;
             if (c.kind == CiKind.Int) {
                 masm.cmpl(asAddress(addr), c.asInt());
             } else {
@@ -1210,7 +1203,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitCompareFloatInt(LIROpcode code, LIROperand left, LIROperand right, LIROperand dst, LIROp2 op) {
+    protected void emitCompareFloatInt(LIROpcode code, CiValue left, CiValue right, CiValue dst, LIROp2 op) {
         if (code == LIROpcode.Cmpfd2i || code == LIROpcode.Ucmpfd2i) {
             if (left.kind.isFloat()) {
                 masm.cmpss2int(asXmmFloatReg(left), asXmmFloatReg(right), dst.asRegister(), code == LIROpcode.Ucmpfd2i);
@@ -1254,12 +1247,12 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitIndirectCall(Object target, LIRDebugInfo info, LIROperand callAddress) {
+    protected void emitIndirectCall(Object target, LIRDebugInfo info, CiValue callAddress) {
         CiRegister reg = compilation.target.scratchRegister;
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
-            moveOp(callAddress, forRegister(callAddress.kind, reg), callAddress.kind, null, false);
+            moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
         masm.indirectCall(reg, target, info);
     }
@@ -1272,17 +1265,17 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     @Override
     protected void emitNativeCall(NativeFunction nativeFunction, LIRDebugInfo info) {
         CiRegister reg = compilation.target.scratchRegister;
-        LIROperand callAddress = nativeFunction.address;
+        CiValue callAddress = nativeFunction.address;
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
-            moveOp(callAddress, forRegister(callAddress.kind, reg), callAddress.kind, null, false);
+            moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
         masm.nativeCall(reg, nativeFunction.symbol, info);
     }
 
     @Override
-    protected void emitThrow(LIROperand exceptionPC, LIROperand exceptionOop, LIRDebugInfo info, boolean unwind) {
+    protected void emitThrow(CiValue exceptionPC, CiValue exceptionOop, LIRDebugInfo info, boolean unwind) {
        // exception object is not added to oop map by LinearScan
        // (LinearScan assumes that no oops are in fixed registers)
        // info.addRegisterOop(exceptionOop);
@@ -1292,14 +1285,14 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitShiftOp(LIROpcode code, LIROperand left, LIROperand count, LIROperand dest, LIROperand tmp) {
+    protected void emitShiftOp(LIROpcode code, CiValue left, CiValue count, CiValue dest, CiValue tmp) {
         // optimized version for linear scan:
         // * count must be already in ECX (guaranteed by LinearScan)
         // * left and dest must be equal
         // * tmp must be unused
         assert count.asRegister() == SHIFTCount : "count must be in ECX";
         assert left == dest : "left and dest must be equal";
-        assert isIllegal(tmp) : "wasting a register if tmp is allocated";
+        assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
 
         if (left.kind.isInt()) {
@@ -1326,7 +1319,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitShiftOp(LIROpcode code, LIROperand left, int count, LIROperand dest) {
+    protected void emitShiftOp(LIROpcode code, CiValue left, int count, CiValue dest) {
         assert dest.isRegister();
         if (dest.kind.isInt()) {
             // first move left into dest so that left is not destroyed by the shift
@@ -1363,8 +1356,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
     @Override
     protected void emitNegate(LIROp1 op) {
-        LIROperand left = op.operand();
-        LIROperand dest = op.result();
+        CiValue left = op.operand();
+        CiValue dest = op.result();
         assert left.isRegister();
         if (left.kind.isInt()) {
             masm.negl(left.asRegister());
@@ -1391,8 +1384,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitLeal(LIRAddress addr, LIRLocation dest) {
-        CiRegister reg = dest.asPointerRegister(compilation.target.arch);
+    protected void emitLeal(CiAddress addr, CiValue dest) {
+        CiRegister reg = dest.asRegister();
         masm.lea(reg, asAddress(addr));
     }
 
@@ -1402,7 +1395,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitVolatileMove(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info) {
+    protected void emitVolatileMove(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
         assert kind == CiKind.Long : "only for volatile long fields";
 
         if (info != null) {
@@ -1412,24 +1405,24 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         if (src.kind.isDouble()) {
             if (dest.isRegister()) {
                 masm.movdq(dest.asRegister(), asXmmDoubleReg(src));
-            } else if (dest.isStack()) {
+            } else if (dest.isStackSlot()) {
                 masm.movsd(frameMap.toStackAddress(dest, 0), asXmmDoubleReg(src));
             } else {
-                assert isAddress(dest);
-                masm.movsd(asAddress((LIRAddress) dest), asXmmDoubleReg(src));
+                assert dest.isAddress();
+                masm.movsd(asAddress((CiAddress) dest), asXmmDoubleReg(src));
             }
         } else {
             assert dest.kind.isDouble();
-            if (src.isStack()) {
+            if (src.isStackSlot()) {
                 masm.movdbl(asXmmDoubleReg(dest), frameMap.toStackAddress(src, 0));
             } else {
-                assert isAddress(src);
-                masm.movdbl(asXmmDoubleReg(dest), asAddress((LIRAddress) src));
+                assert src.isAddress();
+                masm.movdbl(asXmmDoubleReg(dest), asAddress((CiAddress) src));
             }
         }
     }
 
-    private static CiRegister asXmmDoubleReg(LIROperand dest) {
+    private static CiRegister asXmmDoubleReg(CiValue dest) {
         assert dest.kind.isDouble() : "must be double XMM register";
         CiRegister result = dest.asRegister();
         assert result.isXmm() : "must be XMM register";
@@ -1464,31 +1457,31 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         switch (op.code) {
             case Cmp:
                 if (op.info != null) {
-                    assert isAddress(op.opr1()) || isAddress(op.opr2()) : "shouldn't be codeemitinfo for non-Pointer operands";
+                    assert op.operand1().isAddress() || op.operand2().isAddress() : "shouldn't be codeemitinfo for non-Pointer operands";
                     //NullPointerExceptionStub stub = new NullPointerExceptionStub(pcOffset, cinfo);
                     //emitCodeStub(stub);
                     asm.recordImplicitException(codePos(), op.info);
                 }
-                emitCompare(op.condition(), op.opr1(), op.opr2(), op);
+                emitCompare(op.condition(), op.operand1(), op.operand2(), op);
                 break;
 
             case Cmpl2i:
             case Cmpfd2i:
             case Ucmpfd2i:
-                emitCompareFloatInt(op.code, op.opr1(), op.opr2(), op.result(), op);
+                emitCompareFloatInt(op.code, op.operand1(), op.operand2(), op.result(), op);
                 break;
 
             case Cmove:
-                emitConditionalMove(op.condition(), op.opr1(), op.opr2(), op.result());
+                emitConditionalMove(op.condition(), op.operand1(), op.operand2(), op.result());
                 break;
 
             case Shl:
             case Shr:
             case Ushr:
-                if (isConstant(op.opr2())) {
-                    emitShiftOp(op.code, op.opr1(), ((LIRConstant) op.opr2()).asInt(), op.result());
+                if (op.operand2().isConstant()) {
+                    emitShiftOp(op.code, op.operand1(), ((CiConstant) op.operand2()).asInt(), op.result());
                 } else {
-                    emitShiftOp(op.code, op.opr1(), op.opr2(), op.result(), op.tmp());
+                    emitShiftOp(op.code, op.operand1(), op.operand2(), op.result(), op.tmp());
                 }
                 break;
 
@@ -1497,7 +1490,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             case Mul:
             case Div:
             case Rem:
-                emitArithOp(op.code, op.opr1(), op.opr2(), op.result(), op.info);
+                emitArithOp(op.code, op.operand1(), op.operand2(), op.result(), op.info);
                 break;
 
             case Abs:
@@ -1507,18 +1500,18 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             case Cos:
             case Log:
             case Log10:
-                emitIntrinsicOp(op.code, op.opr1(), op.opr2(), op.result(), op);
+                emitIntrinsicOp(op.code, op.operand1(), op.operand2(), op.result(), op);
                 break;
 
             case LogicAnd:
             case LogicOr:
             case LogicXor:
-                emitLogicOp(op.code, op.opr1(), op.opr2(), op.result());
+                emitLogicOp(op.code, op.operand1(), op.operand2(), op.result());
                 break;
 
             case Throw:
             case Unwind:
-                emitThrow(op.opr1(), op.opr2(), op.info, op.code == LIROpcode.Unwind);
+                emitThrow(op.operand1(), op.operand2(), op.info, op.code == LIROpcode.Unwind);
                 break;
 
             default:
@@ -1536,12 +1529,12 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         s.accept(this);
     }
 
-    public static Object asRegisterOrConstant(LIROperand operand) {
+    public static Object asRegisterOrConstant(CiValue operand) {
         if (operand.isRegister()) {
             return operand.asRegister();
         } else {
-            assert isConstant(operand);
-            return ((LIRConstant) operand).value;
+            assert operand.isConstant();
+            return operand;
         }
     }
 
@@ -1565,7 +1558,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         masm.nop();
     }
 
-    public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, LIROperand[] operands) {
+    public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, CiValue[] operands) {
         LIRDebugInfo info = xir == null ? null : xir.info;
 
         for (XirInstruction inst : instructions) {
@@ -1598,11 +1591,11 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     break;
 
                 case Shl:
-                    emitShiftOp(LIROpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalLocation);
+                    emitShiftOp(LIROpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
                     break;
 
                 case Shr:
-                    emitShiftOp(LIROpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalLocation);
+                    emitShiftOp(LIROpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
                     break;
 
                 case And:
@@ -1618,8 +1611,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     break;
 
                 case Mov: {
-                    LIROperand result = operands[inst.result.index];
-                    LIROperand source = operands[inst.x().index];
+                    CiValue result = operands[inst.result.index];
+                    CiValue source = operands[inst.x().index];
                     moveOp(source, result, result.kind, null, false);
                     break;
                 }
@@ -1629,11 +1622,10 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                         asm.recordImplicitException(codePos(), info);
                     }
 
-                    LIROperand result = operands[inst.result.index];
-                    LIROperand pointer = operands[inst.x().index];
-                    pointer = assureInRegister(pointer);
-                    assert pointer.isVariableOrRegister();
-                    moveOp(new LIRAddress((LIRLocation) pointer, 0, inst.kind), result, inst.kind, null, false);
+                    CiValue result = operands[inst.result.index];
+                    CiValue pointer = operands[inst.x().index];
+                    CiRegisterValue register = assureInRegister(pointer);
+                    moveOp(new CiAddress(inst.kind, register, 0), result, inst.kind, null, false);
                     break;
                 }
 
@@ -1642,10 +1634,10 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                         asm.recordImplicitException(codePos(), info);
                     }
 
-                    LIROperand value = operands[inst.y().index];
-                    LIROperand pointer = operands[inst.x().index];
+                    CiValue value = operands[inst.y().index];
+                    CiValue pointer = operands[inst.x().index];
                     assert pointer.isVariableOrRegister();
-                    moveOp(value, new LIRAddress((LIRLocation) pointer, 0, inst.kind), inst.kind, null, false);
+                    moveOp(value, new CiAddress(inst.kind, pointer, 0), inst.kind, null, false);
                     break;
                 }
 
@@ -1656,22 +1648,22 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                         asm.recordImplicitException(codePos(), info);
                     }
 
-                    LIRAddress.Scale scale = (addressInformation.scaling == null) ? Scale.Times1 : Scale.fromLog2(((LIRConstant) operands[addressInformation.scaling.getIndex()]).asInt());
-                    int displacement = (addressInformation.offset == null) ? 0 : ((LIRConstant) operands[addressInformation.offset.getIndex()]).asInt();
+                    CiAddress.Scale scale = (addressInformation.scaling == null) ? Scale.Times1 : Scale.fromShift(((CiConstant) operands[addressInformation.scaling.getIndex()]).asInt());
+                    int displacement = (addressInformation.offset == null) ? 0 : ((CiConstant) operands[addressInformation.offset.getIndex()]).asInt();
 
-                    LIROperand result = operands[inst.result.index];
-                    LIROperand pointer = operands[inst.x().index];
-                    LIROperand index = operands[inst.y().index];
+                    CiValue result = operands[inst.result.index];
+                    CiValue pointer = operands[inst.x().index];
+                    CiValue index = operands[inst.y().index];
 
                     pointer = assureInRegister(pointer);
                     assert pointer.isVariableOrRegister();
 
-                    LIROperand src = null;
-                    if (isConstant(index) && index.kind == CiKind.Int) {
-                        LIRConstant constantDisplacement = (LIRConstant) index;
-                        src = new LIRAddress((LIRLocation) pointer, IllegalLocation, scale, constantDisplacement.asInt() << scale.toInt() + displacement, inst.kind);
+                    CiValue src = null;
+                    if (index.isConstant() && index.kind == CiKind.Int) {
+                        CiConstant constantIndex = (CiConstant) index;
+                        src = new CiAddress(inst.kind, pointer, IllegalValue, scale, constantIndex.asInt() * scale.value + displacement);
                     } else {
-                        src = new LIRAddress((LIRLocation) pointer, (LIRLocation) index, scale, displacement, inst.kind);
+                        src = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
                     moveOp(src, result, inst.kind, null, false);
@@ -1685,22 +1677,22 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                         asm.recordImplicitException(codePos(), info);
                     }
 
-                    LIRAddress.Scale scale = (addressInformation.scaling == null) ? Scale.Times1 : Scale.fromLog2(((LIRConstant) operands[addressInformation.scaling.getIndex()]).asInt());
-                    int displacement = (addressInformation.offset == null) ? 0 : ((LIRConstant) operands[addressInformation.offset.getIndex()]).asInt();
+                    CiAddress.Scale scale = (addressInformation.scaling == null) ? Scale.Times1 : Scale.fromShift(((CiConstant) operands[addressInformation.scaling.getIndex()]).asInt());
+                    int displacement = (addressInformation.offset == null) ? 0 : ((CiConstant) operands[addressInformation.offset.getIndex()]).asInt();
 
-                    LIROperand value = operands[inst.z().index];
-                    LIROperand pointer = operands[inst.x().index];
-                    LIROperand index = operands[inst.y().index];
+                    CiValue value = operands[inst.z().index];
+                    CiValue pointer = operands[inst.x().index];
+                    CiValue index = operands[inst.y().index];
 
                     pointer = assureInRegister(pointer);
                     assert pointer.isVariableOrRegister();
 
-                    LIROperand dst;
-                    if (isConstant(index) && index.kind == CiKind.Int) {
-                        LIRConstant constantDisplacement = (LIRConstant) index;
-                        dst = new LIRAddress((LIRLocation) pointer, IllegalLocation, scale, constantDisplacement.asInt() << scale.toInt() + displacement, inst.kind);
+                    CiValue dst;
+                    if (index.isConstant() && index.kind == CiKind.Int) {
+                        CiConstant constantIndex = (CiConstant) index;
+                        dst = new CiAddress(inst.kind, pointer, IllegalValue, scale, constantIndex.asInt() * scale.value + displacement);
                     } else {
-                        dst = new LIRAddress((LIRLocation) pointer, (LIRLocation) index, scale, displacement, inst.kind);
+                        dst = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
                     moveOp(value, dst, inst.kind, null, false);
@@ -1731,8 +1723,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
                     CallingConvention cc = frameMap.runtimeCallingConvention(signature);
                     for (int i = 0; i < inst.arguments.length; i++) {
-                        LIROperand argumentLocation = cc.operands[i];
-                        LIROperand argumentSourceLocation = operands[inst.arguments[i].index];
+                        CiValue argumentLocation = cc.operands[i];
+                        CiValue argumentSourceLocation = operands[inst.arguments[i].index];
                         if (argumentLocation != argumentSourceLocation) {
                             moveOp(argumentSourceLocation, argumentLocation, argumentLocation.kind, null, false);
                         }
@@ -1743,7 +1735,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = compilation.target.registerConfig.getReturnRegister(inst.result.kind);
-                        LIROperand resultLocation = forRegister(inst.result.kind, returnRegister);
+                        CiValue resultLocation = returnRegister.asValue(inst.result.kind);
                         moveOp(resultLocation, operands[inst.result.index], inst.result.kind, null, false);
                     }
                     break;
@@ -1802,7 +1794,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 }
                 case NullCheck: {
                     asm.recordImplicitException(codePos(), info);
-                    LIROperand pointer = operands[inst.x().index];
+                    CiValue pointer = operands[inst.x().index];
                     asm.nullCheck(pointer.asRegister());
                     break;
                 }
@@ -1813,27 +1805,27 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         }
     }
 
-    private LIROperand assureInRegister(LIROperand pointer) {
-        if (isConstant(pointer)) {
-            LIROperand newPointerOperand = forScratch(pointer.kind, compilation.target);
-            moveOp(pointer, newPointerOperand, pointer.kind, null, false);
-            return newPointerOperand;
+    private CiRegisterValue assureInRegister(CiValue pointer) {
+        if (pointer.isConstant()) {
+            CiRegisterValue register = compilation.target.scratchRegister.asValue(pointer.kind);
+            moveOp(pointer, register, pointer.kind, null, false);
+            return register;
         }
 
         assert pointer.isRegister();
-        return pointer;
+        return (CiRegisterValue) pointer;
     }
 
-    private void emitXirCompare(XirInstruction inst, Condition condition, ConditionFlag cflag, LIROperand[] ops, Label label) {
-        LIROperand x = ops[inst.x().index];
-        LIROperand y = ops[inst.y().index];
+    private void emitXirCompare(XirInstruction inst, Condition condition, ConditionFlag cflag, CiValue[] ops, Label label) {
+        CiValue x = ops[inst.x().index];
+        CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
         masm.jcc(cflag, label);
     }
 
     public void visitThrowStub(ThrowStub stub) {
         masm.bind(stub.entry);
-        LIROperand[] operands = stub.operands;
+        CiValue[] operands = stub.operands;
         Object[] params;
         if (operands != null) {
             params = new Object[operands.length];

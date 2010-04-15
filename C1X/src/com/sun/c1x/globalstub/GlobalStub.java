@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.globalstub;
 
-import static com.sun.c1x.ci.CiKind.*;
+import static com.sun.cri.ci.CiKind.*;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
  * A global stub is a shared routine that performs an operation on behalf of compiled code.

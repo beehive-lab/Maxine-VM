@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.bytecode.*;
 import com.sun.c1x.lir.FrameMap.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
 /**
  * LIR instruction used in translating {@link Bytecodes#ALLOCA}.
@@ -36,7 +37,7 @@ public class LIRStackAllocate extends LIRInstruction {
      * Creates an LIR instruction modelling a stack block allocation.
      * @param result
      */
-    public LIRStackAllocate(LIROperand result, StackBlock stackBlock) {
+    public LIRStackAllocate(CiValue result, StackBlock stackBlock) {
         super(LIROpcode.Alloca, result, null, false, null, 0, 0);
         this.stackBlock = stackBlock;
     }

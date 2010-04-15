@@ -20,14 +20,16 @@
  */
 package com.sun.c1x.target.amd64;
 
+import static com.sun.cri.ci.CiKind.*;
+
 import com.sun.c1x.*;
-import com.sun.c1x.xir.XirTemplate;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 /**
  * This class implements the X86-specific portion of the macro assembler.
@@ -71,7 +73,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         // Clear out parameters
         if (C1XOptions.GenAssertionCode) {
             for (int i = 0; i < args.length; i++) {
-                movptr(new Address(AMD64.rsp, stub.argOffsets[i]), 0);
+                movptr(new CiAddress(CiKind.Word, AMD64.RSP, stub.argOffsets[i]), 0);
             }
         }
         return pos;
@@ -79,9 +81,9 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     void loadResult(CiRegister r, int offset, CiKind kind) {
         if (kind == CiKind.Int || kind == CiKind.Boolean) {
-            movl(r, new Address(AMD64.rsp, offset));
+            movl(r, new CiAddress(CiKind.Int, AMD64.RSP, offset));
         } else {
-            movq(r, new Address(AMD64.rsp, offset));
+            movq(r, new CiAddress(CiKind.Word, AMD64.RSP, offset));
         }
     }
 
@@ -89,12 +91,12 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         if (registerOrConstant instanceof CiConstant) {
             CiConstant c = (CiConstant) registerOrConstant;
             if (c.kind == CiKind.Object) {
-                movoop(new Address(AMD64.rsp, offset), c);
+                movoop(new CiAddress(CiKind.Word, AMD64.RSP, offset), c);
             } else {
-                movptr(new Address(AMD64.rsp, offset), c.asInt());
+                movptr(new CiAddress(CiKind.Word, AMD64.RSP, offset), c.asInt());
             }
         } else if (registerOrConstant instanceof CiRegister) {
-            movq(new Address(AMD64.rsp, offset), ((CiRegister) registerOrConstant));
+            movq(new CiAddress(CiKind.Word, AMD64.RSP, offset), ((CiRegister) registerOrConstant));
         }
     }
 
@@ -115,7 +117,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void movoop(Address dst, CiConstant obj) {
+    void movoop(CiAddress dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
         if (obj.isNull()) {
             xorq(rscratch1, rscratch1);
@@ -126,16 +128,16 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     // src should NEVER be a real pointer. Use AddressLiteral for true pointers
-    void movptr(Address dst, long src) {
+    void movptr(CiAddress dst, long src) {
         mov64(rscratch1, src);
         movq(dst, rscratch1);
     }
 
-    void pushptr(Address src) {
+    void pushptr(CiAddress src) {
         pushq(src);
     }
 
-    void popptr(Address src) {
+    void popptr(CiAddress src) {
         popq(src);
     }
 
@@ -143,7 +145,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         xorq(dst, src);
     }
 
-    void xorptr(CiRegister dst, Address src) {
+    void xorptr(CiRegister dst, CiAddress src) {
         xorq(dst, src);
     }
 
@@ -226,7 +228,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     // These are mostly for initializing null
-    void movptr(Address dst, int src) {
+    void movptr(CiAddress dst, int src) {
         movslq(dst, src);
     }
 
@@ -262,7 +264,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         cmpl(src1, imm);
     }
 
-    public final void cmp32(CiRegister src1, Address src2) {
+    public final void cmp32(CiRegister src1, CiAddress src2) {
         cmpl(src1, src2);
     }
 
@@ -317,7 +319,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         cmpq(src1, src2);
     }
 
-    void cmpptr(CiRegister src1, Address src2) {
+    void cmpptr(CiRegister src1, CiAddress src2) {
         cmpq(src1, src2);
     }
 
@@ -325,11 +327,11 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         cmpq(src1, src2);
     }
 
-    void cmpptr(Address src1, int src2) {
+    void cmpptr(CiAddress src1, int src2) {
         cmpq(src1, src2);
     }
 
-    void cmpxchgptr(CiRegister reg, Address adr) {
+    void cmpxchgptr(CiRegister reg, CiAddress adr) {
         cmpxchgq(reg, adr);
     }
 
@@ -352,7 +354,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void decrementl(Address dst, int value) {
+    void decrementl(CiAddress dst, int value) {
         if (value == Integer.MIN_VALUE) {
             subl(dst, value);
             return;
@@ -390,7 +392,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void incrementl(Address dst, int value) {
+    void incrementl(CiAddress dst, int value) {
         if (value == Integer.MIN_VALUE) {
             addl(dst, value);
             return;
@@ -409,7 +411,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    int loadSignedByte(CiRegister dst, Address src) {
+    int loadSignedByte(CiRegister dst, CiAddress src) {
         int off = codeBuffer.position();
         movsxb(dst, src); // movsxb
         return off;
@@ -419,7 +421,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     // Although the 'w' in x86 opcodes refers to the term "word" in the assembler
     // manual : which means 16 bits : that usage is found nowhere in HotSpot code.
     // The term "word" in HotSpot means a 32- or 64-bit machine word.
-    int loadSignedShort(CiRegister dst, Address src) {
+    int loadSignedShort(CiRegister dst, CiAddress src) {
         // This is dubious to me since it seems safe to do a signed 16 => 64 bit
         // version but this is what 64bit has always done. This seems to imply
         // that users are only using 32bits worth.
@@ -428,7 +430,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         return off;
     }
 
-    int loadUnsignedByte(CiRegister dst, Address src) {
+    int loadUnsignedByte(CiRegister dst, CiAddress src) {
         // According to Intel Doc. AP-526 : "Zero-Extension of Short" : p.16 :
         // and "3.9 Partial Register Penalties" : p. 22.
         int off = codeBuffer.position();
@@ -437,7 +439,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     // Note: loadUnsignedShort used to be called loadUnsignedWord.
-    int loadUnsignedShort(CiRegister dst, Address src) {
+    int loadUnsignedShort(CiRegister dst, CiAddress src) {
         // According to Intel Doc. AP-526, "Zero-Extension of Short", p.16,
         // and "3.9 Partial Register Penalties", p. 22).
         int off = codeBuffer.position();
@@ -450,7 +452,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         // provoke OS null exception if reg = null by
         // accessing M[reg] w/o changing any (non-CC) registers
         // NOTE: cmpl is plenty here to provoke a segv
-        cmpptr(AMD64.rax, new Address(reg, 0));
+        cmpptr(AMD64.rax, new CiAddress(CiKind.Word, reg.asValue(Word), 0));
         // Note: should probably use testl(X86Register.rax, new Address(reg, 0));
         // may be shorter code (however, this version of
         // testl needs to be implemented first)
@@ -488,12 +490,12 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void movflt(CiRegister dst, Address src) {
+    void movflt(CiRegister dst, CiAddress src) {
         assert dst.isXmm();
         movss(dst, src);
     }
 
-    void movflt(Address dst, CiRegister src) {
+    void movflt(CiAddress dst, CiRegister src) {
         assert src.isXmm();
         movss(dst, src);
     }
@@ -507,7 +509,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void movdbl(CiRegister dst, Address src) {
+    void movdbl(CiRegister dst, CiAddress src) {
         assert dst.isXmm();
         if (C1XOptions.UseXmmLoadAndClearUpper) {
             movsd(dst, src);
@@ -560,7 +562,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     private void bangStackWithOffset(int offset) {
         // stack grows down, caller passes positive offset
         assert offset > 0 :  "must bang with negative offset";
-        movq(new Address(AMD64.rsp, (-offset)), AMD64.rax);
+        movq(new CiAddress(CiKind.Word, AMD64.RSP, (-offset)), AMD64.rax);
     }
 
     @Override
@@ -580,7 +582,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     public void safepoint(LIRDebugInfo info) {
         CiRegister safepointRegister = compiler.target.registerConfig.getSafepointRegister();
         recordSafepoint(codeBuffer.position(), info.registerRefMap(), info.stackRefMap(), info.debugInfo());
-        movq(safepointRegister, new Address(safepointRegister));
+        movq(safepointRegister, new CiAddress(CiKind.Word, safepointRegister.asValue(CiKind.Word)));
     }
 
     public void enter(short imm16, byte imm8) {

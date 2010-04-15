@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.Bytecodes.*;
-import com.sun.c1x.ci.*;
+import com.sun.cri.bytecode.Bytecodes.*;
+import com.sun.cri.ci.*;
 
 /**
  * Condition codes used in conditionals.

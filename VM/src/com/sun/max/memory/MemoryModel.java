@@ -20,9 +20,9 @@
  */
 package com.sun.max.memory;
 
-import static com.sun.c1x.bytecode.Bytecodes.MemoryBarriers.*;
+import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 
-import com.sun.c1x.bytecode.Bytecodes.*;
+import com.sun.cri.bytecode.Bytecodes.*;
 
 /**
  * SMP memory models.

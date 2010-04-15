@@ -27,6 +27,7 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class performs basic optimizations on the control flow graph after LIR generation.
@@ -230,7 +231,7 @@ final class ControlFlowOptimizer {
                 assert curLastOp.info == null : "return instructions do not have debug information";
 
                 assert curLastOp instanceof LIROp1 : "return must be LIROp1";
-                LIROperand returnOpr = ((LIROp1) curLastOp).operand();
+                CiValue returnOpr = ((LIROp1) curLastOp).operand();
 
                 for (int j = block.numberOfPreds() - 1; j >= 0; j--) {
                     BlockBegin pred = block.predAt(j);
@@ -260,7 +261,7 @@ final class ControlFlowOptimizer {
                 if (instr instanceof LIRBranch) {
                     LIRBranch opBranch = (LIRBranch) instr;
                     assert opBranch.block() == null || code.contains(opBranch.block()) : "missing successor branch from: " + block + " to: " + opBranch.block();
-                    assert opBranch.ublock() == null || code.contains(opBranch.ublock()) : "missing successor branch from: " + block + " to: " + opBranch.ublock();
+                    assert opBranch.unorderedBlock() == null || code.contains(opBranch.unorderedBlock()) : "missing successor branch from: " + block + " to: " + opBranch.unorderedBlock();
                 }
             }
 

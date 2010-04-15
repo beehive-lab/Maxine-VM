@@ -23,6 +23,7 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.lir.*;
+import com.sun.cri.ci.*;
 
 /**
  *
@@ -96,7 +97,7 @@ public final class LIRInsertionBuffer {
         return ops.get(i);
     }
 
-    void move(int index, LIROperand src, LIROperand dst, LIRDebugInfo info) {
+    void move(int index, CiValue src, CiValue dst, LIRDebugInfo info) {
         append(index, new LIROp1(LIROpcode.Move, src, dst, dst.kind, info));
     }
 

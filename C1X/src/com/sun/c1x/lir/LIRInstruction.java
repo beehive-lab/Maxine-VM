@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -29,6 +28,7 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code LIRInstruction} class definition.
@@ -38,21 +38,31 @@ import com.sun.c1x.util.*;
  */
 public abstract class LIRInstruction {
 
-    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(LIROperand.IllegalLocation);
+    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(CiValue.IllegalValue);
 
-    // the opcode of this instruction
+    /**
+     * The opcode of this instruction.
+     */
     public final LIROpcode code;
 
-    // the result operand for this instruction
-    private OperandSlot result;
+    /**
+     * Slot for the result operand for this instruction.
+     */
+    private final OperandSlot result;
 
-    // used to emit debug information
+    /**
+     * Used to emit debug information.
+     */
     public final LIRDebugInfo info;
 
-    // value id for register allocation
+    /**
+     * Value id for register allocation.
+     */
     public int id;
 
-    // backlink to the HIR instruction for debugging purposes
+    /**
+     * Link to the HIR instruction for debugging purposes.
+     */
     public Value source;
 
     public final boolean hasCall;
@@ -68,65 +78,90 @@ public abstract class LIRInstruction {
         TempMode
     }
 
+    /**
+     * The slots for the input and temp operands of this instruction.
+     */
     protected OperandSlot[] operandSlots;
+
     private int outputCount;
     private int allocatorInputCount;
     private int allocatorTempCount;
     private int allocatorTempInputCount;
-    private List<LIRLocation> operands = new ArrayList<LIRLocation>(3);
+    private final List<CiValue> operands = new ArrayList<CiValue>(3);
 
+    /**
+     * An indirection to an instruction operand that is constant in the context of register allocation.
+     * That is, while the register allocator may modify the underlying operand (e.g. to replace a
+     * variable with a register), an {@link OperandSlot} value can be used to address the operand
+     * for the lifetime of the instruction.
+     */
     public static final class OperandSlot {
-        private int base;
-        private LIROperand direct;
+
+        /**
+         * Index in instruction's {@linkplain LIRInstruction#operands operands} corresponding to this slot.
+         * This will be -1 for operands that are bound to a location prior to register allocation (e.g.
+         * method parameters in registers and stack slots).
+         */
+        private int index;
+
+        /**
+         * The current value of the operand. After register allocation, this is guaranteed
+         * to be a {@linkplain CiRegisterValue register},
+         * a {@linkplain CiConstant constant} or an {@linkplain CiAddress address}.
+         */
+        private CiValue direct;
+
+        /**
+         * Specifies if {@link direct} is a value that will no longer change.
+         */
         private boolean resolved;
 
-        private OperandSlot(int base, LIRAddress address) {
-            this.base = base;
+        private OperandSlot(int base, CiAddress address) {
+            this.index = base;
             this.direct = address;
-            assert !address.isStack();
+            assert !address.isStackSlot();
         }
 
-        private OperandSlot(int base) {
-            this.base = base;
+        private OperandSlot(int index) {
+            this.index = index;
         }
 
-        private OperandSlot(LIROperand direct) {
+        private OperandSlot(CiValue direct) {
+            index = -1;
             resolved = true;
             this.direct = direct;
         }
 
-        public LIROperand get(LIRInstruction inst) {
+        /**
+         * Gets the current value of the operand denoted by this object. This may still be a {@linkplain CiVariable}
+         * if the register allocator has not yet assigned a register or stack address to the operand.
+         *
+         * @param inst the instruction containing the operand denoted by this object
+         */
+        public CiValue get(LIRInstruction inst) {
             if (!resolved) {
-                LIROperand result = null;
-                if (direct != null && LIROperand.isAddress(direct)) {
-                    LIRAddress address = (LIRAddress) direct;
-                    LIRLocation baseOperand = inst.operands.get(base);
-                    LIRLocation indexOperand = LIROperand.IllegalLocation;
-                    if (LIROperand.isLegal(address.index)) {
-                        indexOperand = inst.operands.get(base + 1);
+                CiValue result = null;
+                if (direct != null && direct.isAddress()) {
+                    CiAddress address = (CiAddress) direct;
+                    CiValue baseOperand = inst.operands.get(index);
+                    CiValue indexOperand = CiValue.IllegalValue;
+                    if (address.index.isLegal()) {
+                        indexOperand = inst.operands.get(index + 1);
                         assert indexOperand.isVariableOrRegister();
                     }
                     assert baseOperand.isVariableOrRegister();
-                    result = address.createCopy(baseOperand, indexOperand);
-                } else if (base != -1) {
-                    result = inst.operands.get(base);
+                    result = new CiAddress(address.kind, baseOperand, indexOperand, address.scale, address.displacement);
+                } else if (index != -1) {
+                    result = inst.operands.get(index);
                 }
 
                 assert result != null;
 
                 direct = result;
-                if (result.isVariableOrRegister() && !result.isVariable()) {
+                if (result.isRegister()) {
                     resolved = true;
-                }
-
-                if (LIROperand.isAddress(result) && !((LIRAddress) result).base.isVariable()) {
+                } else if (result.isAddress() && !((CiAddress) result).base.isVariable()) {
                     resolved = true;
-                }
-
-                if (resolved) {
-                    direct = result;
-                } else {
-                    return result;
                 }
             }
             return direct;
@@ -140,12 +175,13 @@ public abstract class LIRInstruction {
      * @param result the operand that holds the operation result of this instruction
      * @param info the object holding information needed to perform deoptimization
      */
-    public LIRInstruction(LIROpcode opcode, LIROperand result, LIRDebugInfo info, boolean hasCall, LocalStub stub, int tempInput, int temp, LIROperand... inputAndTempOperands) {
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall, LocalStub stub, int tempInput, int temp, CiValue... inputAndTempOperands) {
         this.code = opcode;
         this.info = info;
         this.hasCall = hasCall;
         this.stub = stub;
 
+        assert opcode != LIROpcode.Move || result != CiValue.IllegalValue;
         this.result = addOutput(result);
         if (stub != null) {
             stub.setInstruction(this);
@@ -162,15 +198,15 @@ public abstract class LIRInstruction {
         initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
     }
 
-    private OperandSlot addOutput(LIROperand output) {
+    private OperandSlot addOutput(CiValue output) {
         assert output != null;
-        if (output != LIROperand.IllegalLocation) {
-            if (output instanceof LIRAddress) {
-                return addAddress((LIRAddress) output);
+        if (output != CiValue.IllegalValue) {
+            if (output instanceof CiAddress) {
+                return addAddress((CiAddress) output);
             }
 
             assert operands.size() == outputCount;
-            operands.add((LIRLocation) output);
+            operands.add(output);
             outputCount++;
             return new OperandSlot(operands.size() - 1);
         } else {
@@ -178,39 +214,39 @@ public abstract class LIRInstruction {
         }
     }
 
-    private OperandSlot addAddress(LIRAddress address) {
+    private OperandSlot addAddress(CiAddress address) {
         assert address.base.isVariableOrRegister();
 
-        int baseIndex = operands.size();
+        int index = operands.size();
         allocatorInputCount++;
         operands.add(address.base);
 
-        if (LIROperand.isLegal(address.index)) {
+        if (address.index.isLegal()) {
             allocatorInputCount++;
             operands.add(address.index);
         }
 
-        if (address.base.isVariableOrRegister() && !address.base.isVariable()) {
-            assert LIROperand.isIllegal(address.index) || !address.index.isVariable();
+        if (address.base.isRegister()) {
+            assert address.index.isIllegal();
             return new OperandSlot(address);
         }
 
-        return new OperandSlot(baseIndex, address);
+        return new OperandSlot(index, address);
     }
 
-    private OperandSlot addOperand(LIROperand input, boolean isInput, boolean isTemp) {
+    private OperandSlot addOperand(CiValue input, boolean isInput, boolean isTemp) {
         assert input != null;
-        if (input != LIROperand.IllegalLocation) {
-            assert !(input instanceof LIRAddress);
-            if (input.isStack()) {
+        if (input != CiValue.IllegalValue) {
+            assert !(input instanceof CiAddress);
+            if (input.isStackSlot()) {
                 // no variables to add
                 return new OperandSlot(input);
-            } else if (LIROperand.isConstant(input)) {
+            } else if (input.isConstant()) {
                 // no variables to add
                 return new OperandSlot(input);
             } else {
                 assert operands.size() == outputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
-                operands.add((LIRLocation) input);
+                operands.add(input);
 
                 if (isInput && isTemp) {
                     allocatorTempInputCount++;
@@ -228,36 +264,36 @@ public abstract class LIRInstruction {
         }
     }
 
-    protected final LIROperand operand(int index) {
+    protected final CiValue operand(int index) {
         if (index >= operandSlots.length) {
-            return LIROperand.IllegalLocation;
+            return CiValue.IllegalValue;
         }
 
         return operandSlots[index].get(this);
     }
 
-    public final LIROperand stubOperand(int index) {
+    public final CiValue stubOperand(int index) {
         return operandSlots[index + (operandSlots.length - stub.operands.length)].get(this);
     }
 
-    private void initInputsAndTemps(int tempInputCount, int tempCount, LIROperand[] operands, LocalStub stub) {
+    private void initInputsAndTemps(int tempInputCount, int tempCount, CiValue[] operands, LocalStub stub) {
 
-        LIROperand[] stubOperands = stub == null ? null : stub.operands;
+        CiValue[] stubOperands = stub == null ? null : stub.operands;
         this.operandSlots = new OperandSlot[operands.length + (stubOperands == null ? 0 : stubOperands.length)];
         // Addresses in instruction
         for (int i = 0; i < operands.length; i++) {
-            LIROperand op = operands[i];
-            if (LIROperand.isAddress(op)) {
-                operandSlots[i] = addAddress((LIRAddress) op);
+            CiValue op = operands[i];
+            if (op.isAddress()) {
+                operandSlots[i] = addAddress((CiAddress) op);
             }
         }
 
         // Addresses in stub
         if (stubOperands != null) {
             for (int i = 0; i < stubOperands.length; i++) {
-                LIROperand op = stubOperands[i];
-                if (LIROperand.isAddress(op)) {
-                    operandSlots[i + operands.length] = addAddress((LIRAddress) op);
+                CiValue op = stubOperands[i];
+                if (op.isAddress()) {
+                    operandSlots[i + operands.length] = addAddress((CiAddress) op);
                 }
             }
         }
@@ -318,7 +354,7 @@ public abstract class LIRInstruction {
             assert operandSlot != null;
         }
 
-        for (LIRLocation operand : this.operands) {
+        for (CiValue operand : this.operands) {
             assert operand != null;
         }
         return true;
@@ -329,7 +365,7 @@ public abstract class LIRInstruction {
      *
      * @return return the result operand
      */
-    public LIROperand result() {
+    public CiValue result() {
         return result.get(this);
     }
 
@@ -351,35 +387,44 @@ public abstract class LIRInstruction {
     public abstract void emitCode(LIRAssembler masm);
 
     /**
-     * Abstract method to be print information specific to each instruction.
-     *
-     * @param out the LogStream to print into.
+     * Gets the operation performed by this instruction in terms of its operands as a string.
      */
-    public void printInstruction(LogStream out) {
-        out.printf("%s = (", result.get(this), this.code.name());
-        for (OperandSlot operandSlot : operandSlots) {
-            out.printf("%s ", operandSlot.get(this));
+    public String operationString() {
+        StringBuilder buf = new StringBuilder();
+        if (result != ILLEGAL_SLOT) {
+            buf.append(result.get(this)).append(" = ");
         }
-        out.print(")");
+        if (operandSlots.length > 1) {
+            buf.append("(");
+        }
+        boolean first = true;
+        for (OperandSlot operandSlot : operandSlots) {
+            if (!first) {
+                buf.append(' ');
+            } else {
+                first = false;
+            }
+            buf.append(operandSlot.get(this));
+        }
+        if (operandSlots.length > 1) {
+            buf.append(")");
+        }
+        return buf.toString();
     }
 
     /**
-     * Prints information common to all LIR instruction.
+     * Prints this instruction to a log stream.
      *
      * @param st the LogStream to print into.
      */
-    public void printOn(LogStream st) {
+    public final void printOn(LogStream st) {
         if (id != -1 || C1XOptions.PrintCFGToFile) {
             st.printf("%4d ", id);
         } else {
             st.print("     ");
         }
-        st.print(name());
-        st.print(" ");
-        printInstruction(st);
-        if (info != null) {
-            st.printf(" [bci:%d]", info.bci);
-        }
+
+        st.print(toString());
     }
 
     public boolean verify() {
@@ -397,12 +442,6 @@ public abstract class LIRInstruction {
         return start.ordinal() < opcode.ordinal() && opcode.ordinal() < end.ordinal();
     }
 
-    protected static void printCondition(LogStream out, Condition cond) {
-        String operator = cond.operator;
-        assert operator != null;
-        out.print(operator);
-    }
-
     public boolean hasOperands() {
         if (info != null || hasCall || stub != null) {
             return true;
@@ -415,7 +454,7 @@ public abstract class LIRInstruction {
         return hasCall;
     }
 
-    public int oprCount(OperandMode mode) {
+    public int operandCount(OperandMode mode) {
         if (mode == OperandMode.OutputMode) {
             return outputCount;
         } else if (mode == OperandMode.InputMode) {
@@ -426,7 +465,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public LIRLocation oprAt(OperandMode mode, int index) {
+    public CiValue operandAt(OperandMode mode, int index) {
         if (mode == OperandMode.OutputMode) {
             assert index < outputCount;
             return operands.get(index);
@@ -440,18 +479,19 @@ public abstract class LIRInstruction {
         }
     }
 
-    public void setOprAt(OperandMode mode, int index, LIRLocation colorLirOpr) {
-        assert index < oprCount(mode);
+    public void setOperandAt(OperandMode mode, int index, CiValue location) {
+        assert index < operandCount(mode);
+        assert location.kind != CiKind.Illegal;
         if (mode == OperandMode.OutputMode) {
             assert index < outputCount;
-            operands.set(index, colorLirOpr);
+            operands.set(index, location);
         } else if (mode == OperandMode.InputMode) {
             assert index < allocatorInputCount + allocatorTempInputCount;
-            operands.set(index + outputCount, colorLirOpr);
+            operands.set(index + outputCount, location);
         } else {
             assert mode == OperandMode.TempMode;
             assert index < allocatorTempInputCount + allocatorTempCount;
-            operands.set(index + outputCount + allocatorInputCount, colorLirOpr);
+            operands.set(index + outputCount + allocatorInputCount, location);
         }
     }
 
@@ -504,10 +544,10 @@ public abstract class LIRInstruction {
 
     @Override
     public String toString() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        LogStream out = new LogStream(baos);
-        printOn(out);
-        out.flush();
-        return baos.toString();
+        StringBuilder buf = new StringBuilder(name()).append(' ').append(operationString());
+        if (info != null) {
+            buf.append(" [bci:").append(info.bci).append("]");
+        }
+        return buf.toString();
     }
 }

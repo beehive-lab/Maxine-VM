@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.sparc;
 
-import com.sun.c1x.bytecode.Bytecodes.*;
+import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.*;

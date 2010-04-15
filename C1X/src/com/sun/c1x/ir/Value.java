@@ -20,15 +20,12 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XMetrics;
-import com.sun.c1x.C1XCompilation;
+import static com.sun.cri.ci.CiValue.*;
+
+import com.sun.c1x.*;
 import com.sun.c1x.opt.*;
-import com.sun.c1x.ri.RiType;
-import com.sun.c1x.ri.RiRuntime;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiConstant;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class represents a value within the HIR graph, including local variables, phis, and
@@ -77,7 +74,7 @@ public abstract class Value {
 
     private int id;
     private int flags;
-    protected LIROperand lirOperand;
+    protected CiValue operand;
 
     public Object optInfo; // a cache field for analysis information
     public Value subst;    // managed by InstructionSubstituter
@@ -277,25 +274,25 @@ public abstract class Value {
      * Gets the LIR operand associated with this instruction.
      * @return the LIR operand for this instruction
      */
-    public final LIROperand operand() {
-        return lirOperand;
+    public final CiValue operand() {
+        return operand;
     }
 
     /**
      * Sets the LIR operand associated with this instruction.
      * @param operand the operand to associate with this instruction
      */
-    public final void setOperand(LIROperand operand) {
-        assert operand != null && LIROperand.isLegal(operand) : "operand must exist";
+    public final void setOperand(CiValue operand) {
+        assert operand != null && operand.isLegal() : "operand must exist";
         assert operand.kind == this.kind;
-        lirOperand = operand;
+        this.operand = operand;
     }
 
     /**
      * Clears the LIR operand associated with this instruction.
      */
     public final void clearOperand() {
-        lirOperand = LIROperand.IllegalLocation;
+        this.operand = IllegalValue;
     }
 
     /**

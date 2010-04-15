@@ -23,10 +23,9 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.CiRegister;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  *
@@ -41,19 +40,17 @@ final class MoveResolver {
     private LIRInsertionBuffer insertionBuffer; // buffer where moves are inserted
 
     private final List<Interval> mappingFrom;
-    private final List<LIROperand> mappingFromOpr;
+    private final List<CiValue> mappingFromOpr;
     private final List<Interval> mappingTo;
     private boolean multipleReadsAllowed;
     private final int[] registerBlocked;
-    private final CiRegister.AllocationSet allocatableRegisters;
+    private final CiRegister.AllocationSpec allocatableRegisters;
 
     private int registerBlocked(int reg) {
-        assert reg >= 0 && reg < allocatableRegisters.nofRegs : "out of bounds";
         return registerBlocked[reg];
     }
 
     private void setRegisterBlocked(int reg, int direction) {
-        assert reg >= 0 && reg < allocatableRegisters.nofRegs : "out of bounds";
         assert direction == 1 || direction == -1 : "out of bounds";
         registerBlocked[reg] += direction;
     }
@@ -71,12 +68,12 @@ final class MoveResolver {
         this.allocator = allocator;
         this.multipleReadsAllowed = false;
         this.mappingFrom = new ArrayList<Interval>(8);
-        this.mappingFromOpr = new ArrayList<LIROperand>(8);
+        this.mappingFromOpr = new ArrayList<CiValue>(8);
         this.mappingTo = new ArrayList<Interval>(8);
         this.insertIdx = -1;
         this.insertionBuffer = new LIRInsertionBuffer();
-        this.allocatableRegisters = allocator.allocatableRegisters;
-        this.registerBlocked = new int[allocator.allocatableRegisters.nofRegs];
+        this.allocatableRegisters = allocator.allocationSpec;
+        this.registerBlocked = new int[allocator.allocationSpec.nofRegs];
         assert checkEmpty();
     }
 
@@ -110,73 +107,54 @@ final class MoveResolver {
             }
         }
 
-        BitMap usedRegs = new BitMap(allocatableRegisters.nofRegs + allocator.maxSpills);
-        usedRegs.clearAll();
+        HashSet<CiValue> usedRegs = new HashSet<CiValue>();
         if (!multipleReadsAllowed) {
             for (i = 0; i < mappingFrom.size(); i++) {
-                Interval it = mappingFrom.get(i);
-                if (it != null) {
-                    assert !usedRegs.get(it.assignedReg()) : "cannot read from same register twice";
-                    usedRegs.set(it.assignedReg());
-
-                    if (it.assignedRegHi() != LinearScan.getAnyreg()) {
-                        assert !usedRegs.get(it.assignedRegHi()) : "cannot read from same register twice";
-                        usedRegs.set(it.assignedRegHi());
-                    }
+                Interval interval = mappingFrom.get(i);
+                if (interval != null) {
+                    boolean unique = usedRegs.add(interval.location());
+                    assert unique : "cannot read from same register twice";
                 }
             }
         }
 
-        usedRegs.clearAll();
+        usedRegs.clear();
         for (i = 0; i < mappingTo.size(); i++) {
-            Interval it = mappingTo.get(i);
-            assert !usedRegs.get(it.assignedReg()) : "cannot write to same register twice";
-            usedRegs.set(it.assignedReg());
-
-            if (it.assignedRegHi() != LinearScan.getAnyreg()) {
-                assert !usedRegs.get(it.assignedRegHi()) : "cannot write to same register twice";
-                usedRegs.set(it.assignedRegHi());
-            }
+            Interval interval = mappingTo.get(i);
+            boolean unique = usedRegs.add(interval.location());
+            assert unique : "cannot write to same register twice";
         }
 
-        usedRegs.clearAll();
+        usedRegs.clear();
         for (i = 0; i < mappingFrom.size(); i++) {
-            Interval it = mappingFrom.get(i);
-            if (it != null && it.assignedReg() >= allocatableRegisters.nofRegs) {
-                usedRegs.set(it.assignedReg());
+            Interval interval = mappingFrom.get(i);
+            if (interval != null && !interval.location().isRegister()) {
+                usedRegs.add(interval.location());
             }
         }
         for (i = 0; i < mappingTo.size(); i++) {
-            Interval it = mappingTo.get(i);
-            assert !usedRegs.get(it.assignedReg()) || it.assignedReg() == mappingFrom.get(i).assignedReg() : "stack slots used in mappingFrom must be disjoint to mappingTo";
+            Interval interval = mappingTo.get(i);
+            assert !usedRegs.contains(interval.location()) || interval.location() == mappingFrom.get(i).location() : "stack slots used in mappingFrom must be disjoint to mappingTo";
         }
 
         return true;
     }
 
     // mark assignedReg and assignedRegHi of the interval as blocked
-    private void blockRegisters(Interval it) {
-        int reg = it.assignedReg();
-        if (reg < allocatableRegisters.nofRegs) {
-            assert multipleReadsAllowed || registerBlocked(reg) == 0 : "register already marked as used";
-            setRegisterBlocked(reg, 1);
-        }
-        reg = it.assignedRegHi();
-        if (reg != LinearScan.getAnyreg() && reg < allocatableRegisters.nofRegs) {
+    private void blockRegisters(Interval interval) {
+        CiValue location = interval.location();
+        if (location.isRegister()) {
+            int reg = location.asRegister().number;
             assert multipleReadsAllowed || registerBlocked(reg) == 0 : "register already marked as used";
             setRegisterBlocked(reg, 1);
         }
     }
 
     // mark assignedReg and assignedRegHi of the interval as unblocked
-    private void unblockRegisters(Interval it) {
-        int reg = it.assignedReg();
-        if (reg < allocatableRegisters.nofRegs) {
-            assert registerBlocked(reg) > 0 : "register already marked as unused";
-            setRegisterBlocked(reg, -1);
-        }
-        reg = it.assignedRegHi();
-        if (reg != LinearScan.getAnyreg() && reg < allocatableRegisters.nofRegs) {
+    private void unblockRegisters(Interval interval) {
+        CiValue location = interval.location();
+        if (location.isRegister()) {
+            int reg = location.asRegister().number;
             assert registerBlocked(reg) > 0 : "register already marked as unused";
             setRegisterBlocked(reg, -1);
         }
@@ -184,22 +162,11 @@ final class MoveResolver {
 
     // check if assignedReg and assignedRegHi of the to-interval are not blocked (or only blocked by from)
     private boolean saveToProcessMove(Interval from, Interval to) {
-        int fromReg = -1;
-        int fromRegHi = -1;
-        if (from != null) {
-            fromReg = from.assignedReg();
-            fromRegHi = from.assignedRegHi();
-        }
+        CiValue fromReg = from != null ? from.location() : null;
 
-        int reg = to.assignedReg();
-        if (reg < allocatableRegisters.nofRegs) {
-            if (registerBlocked(reg) > 1 || (registerBlocked(reg) == 1 && reg != fromReg && reg != fromRegHi)) {
-                return false;
-            }
-        }
-        reg = to.assignedRegHi();
-        if (reg != LinearScan.getAnyreg() && reg < allocatableRegisters.nofRegs) {
-            if (registerBlocked(reg) > 1 || (registerBlocked(reg) == 1 && reg != fromReg && reg != fromRegHi)) {
+        CiValue reg = to.location();
+        if (reg.isRegister()) {
+            if (registerBlocked(reg.asRegister().number) > 1 || (registerBlocked(reg.asRegister().number) == 1 && reg != fromReg)) {
                 return false;
             }
         }
@@ -223,36 +190,36 @@ final class MoveResolver {
     }
 
     private void insertMove(Interval fromInterval, Interval toInterval) {
-        assert fromInterval.registerNumber() != toInterval.registerNumber() : "from and to interval equal";
+        assert fromInterval.operand != toInterval.operand : "from and to interval equal";
         assert fromInterval.kind() == toInterval.kind() : "move between different types";
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
-        LIROperand fromOpr = LIROperand.forVariable(fromInterval.registerNumber(), fromInterval.kind());
-        LIROperand toOpr = LIROperand.forVariable(toInterval.registerNumber(), toInterval.kind());
+        CiValue fromOpr = fromInterval.operand;
+        CiValue toOpr = toInterval.operand;
 
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
-        // Util.traceLinearScan(4, "MoveResolver: inserted move from register %d (%d, %d) to %d (%d, %d)",
-        //                   fromInterval.regNum(), fromInterval.assignedReg(), fromInterval.assignedRegHi(),
-        //                   toInterval.regNum(), toInterval.assignedReg(), toInterval.assignedRegHi());
+        if (C1XOptions.TraceLinearScanLevel >= 4) {
+            TTY.println("MoveResolver: inserted move from %d (%s) to %d (%s)", fromInterval.operandNumber, fromInterval.location(), toInterval.operandNumber, toInterval.location());
+        }
     }
 
-    private void insertMove(LIROperand fromOpr, Interval toInterval) {
+    private void insertMove(CiValue fromOpr, Interval toInterval) {
         assert fromOpr.kind == toInterval.kind() : "move between different types";
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
-        LIROperand toOpr = LIROperand.forVariable(toInterval.registerNumber(), toInterval.kind());
+        CiValue toOpr = toInterval.operand;
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.print("MoveResolver: inserted move from constant %s to %d (%d, %d)", fromOpr, toInterval.registerNumber(), toInterval.assignedReg(), toInterval.assignedRegHi());
+            TTY.print("MoveResolver: inserted move from constant %s to %d (%s)", fromOpr, toInterval.operandNumber, toInterval.location());
         }
     }
 
     private void resolveMappings() {
-        // Util.traceLinearScan(4, "MoveResolver: resolving mappings for Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
+        //if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: resolving mappings for Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
         assert verifyBeforeResolve();
 
         // Block all registers that are used as input operands of a move.
@@ -287,7 +254,7 @@ final class MoveResolver {
                     mappingTo.remove(i);
 
                     processedInterval = true;
-                } else if (fromInterval != null && fromInterval.assignedReg() < allocatableRegisters.nofRegs) {
+                } else if (fromInterval != null && fromInterval.location().isRegister()) {
                     // this interval cannot be processed now because target is not free
                     // it starts in a register, so it is a possible candidate for spilling
                     spillCandidate = i;
@@ -301,7 +268,7 @@ final class MoveResolver {
 
                 // create a new spill interval and assign a stack slot to it
                 Interval fromInterval = mappingFrom.get(spillCandidate);
-                Interval spillInterval = new Interval(-1);
+                Interval spillInterval = allocator.createDerivedInterval(fromInterval);
                 spillInterval.setKind(fromInterval.kind());
 
                 // add a dummy range because real position is difficult to calculate
@@ -311,15 +278,16 @@ final class MoveResolver {
                 // do not allocate a new spill slot for temporary interval, but
                 // use spill slot assigned to fromInterval. Otherwise moves from
                 // one stack slot to another can happen (not allowed by LIRAssembler
-                int spillSlot = fromInterval.canonicalSpillSlot();
-                if (spillSlot < 0) {
-                    spillSlot = allocator.allocateSpillSlot(allocator.numberOfSpillSlots(spillInterval.kind()) == 2);
+                CiStackSlot spillSlot = fromInterval.canonicalSpillSlot();
+                if (spillSlot == null) {
+                    spillSlot = allocator.allocateSpillSlot(spillInterval.kind());
                     fromInterval.setCanonicalSpillSlot(spillSlot);
                 }
-                spillInterval.assignReg(spillSlot);
-                allocator.appendInterval(spillInterval);
+                spillInterval.assignLocation(spillSlot);
 
-                // Util.traceLinearScan(4, "created new Interval %d for spilling", spillInterval.regNum());
+                if (C1XOptions.TraceLinearScanLevel >= 4) {
+                    TTY.println("created new Interval %s for spilling", spillInterval.operand);
+                }
 
                 // insert a move from register to stack and update the mapping
                 insertMove(fromInterval, spillInterval);
@@ -336,7 +304,7 @@ final class MoveResolver {
     }
 
     void setInsertPosition(LIRList insertList, int insertIdx) {
-        // Util.traceLinearScan(4, "MoveResolver: setting insert position to Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
+        //if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: setting insert position to Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
         assert this.insertList == null && this.insertIdx == -1 : "use moveInsertPosition instead of setInsertPosition when data already set";
 
         createInsertionBuffer(insertList);
@@ -345,7 +313,7 @@ final class MoveResolver {
     }
 
     void moveInsertPosition(LIRList insertList, int insertIdx) {
-        // Util.traceLinearScan(4, "MoveResolver: moving insert position to Block B%d, index %d", (insertList != null && insertList.block() != null) ? insertList.block().blockID : -1, insertIdx);
+        //if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: moving insert position to Block B%d, index %d", (insertList != null && insertList.block() != null) ? insertList.block().blockID : -1, insertIdx);
 
         if (this.insertList != null && (this.insertList != insertList || this.insertIdx != insertIdx)) {
             // insert position changed . resolve current mappings
@@ -364,20 +332,21 @@ final class MoveResolver {
     }
 
     void addMapping(Interval fromInterval, Interval toInterval) {
-        // Util.traceLinearScan(4, "MoveResolver: adding mapping from %d (%d, %d) to %d (%d, %d)", fromInterval.registerNumber(), fromInterval.assignedReg(), fromInterval.assignedRegHi(), toInterval.registerNumber(),
-        //                 toInterval.assignedReg(), toInterval.assignedRegHi());
+        if (C1XOptions.TraceLinearScanLevel >= 4) {
+            TTY.println("MoveResolver: adding mapping from %d (%s) to %d (%s)", fromInterval.operandNumber, fromInterval.location(), toInterval.operandNumber, toInterval.location());
+        }
 
         assert fromInterval.kind() == toInterval.kind();
         mappingFrom.add(fromInterval);
-        mappingFromOpr.add(LIROperand.IllegalLocation);
+        mappingFromOpr.add(CiValue.IllegalValue);
         mappingTo.add(toInterval);
     }
 
-    void addMapping(LIROperand fromOpr, Interval toInterval) {
+    void addMapping(CiValue fromOpr, Interval toInterval) {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("MoveResolver: adding mapping from %s to %d (%d, %d)", fromOpr, toInterval.registerNumber(), toInterval.assignedReg(), toInterval.assignedRegHi());
+            TTY.println("MoveResolver: adding mapping from %s to %d (%s)", fromOpr, toInterval.operandNumber, toInterval.location());
         }
-        assert LIROperand.isConstant(fromOpr) : "only for constants";
+        assert fromOpr.isConstant() : "only for constants";
 
         mappingFrom.add(null);
         mappingFromOpr.add(fromOpr);

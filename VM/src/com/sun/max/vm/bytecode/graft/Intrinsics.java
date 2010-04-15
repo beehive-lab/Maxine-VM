@@ -21,10 +21,10 @@
 
 package com.sun.max.vm.bytecode.graft;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.bytecode.BytecodeIntrinsifier.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.BytecodeIntrinsifier.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
