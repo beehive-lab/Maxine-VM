@@ -41,6 +41,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.Stop.*;
@@ -565,7 +566,7 @@ public abstract class BytecodeToTargetTranslator {
     protected int createReferenceLiteral(Object literal) {
         int literalOffset = computeReferenceLiteralOffset(1 + referenceLiterals.length());
         referenceLiterals.prepend(literal);
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             // Account for the DebugHeap tag in front of the code object:
             literalOffset += VMConfiguration.target().wordWidth().numberOfBytes;
         }
