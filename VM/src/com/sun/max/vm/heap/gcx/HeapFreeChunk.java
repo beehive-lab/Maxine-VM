@@ -28,6 +28,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -87,7 +88,11 @@ final class HeapFreeChunk {
     private static native HeapFreeChunk asHeapFreeChunk(Object freeChunk);
 
     static HeapFreeChunk toHeapFreeChunk(Address address) {
-        return asHeapFreeChunk(Reference.fromOrigin(address.asPointer()).toJava());
+        return asHeapFreeChunk(Reference.fromOrigin(Layout.cellToOrigin(address.asPointer())).toJava());
+    }
+
+    static Address fromHeapFreeChunk(HeapFreeChunk chunk) {
+        return Layout.originToCell(Reference.fromJava(chunk).toOrigin());
     }
 
     /**
