@@ -266,6 +266,13 @@ public interface HeapScheme extends VMScheme {
     GarbageCollectorMXBean getGarbageCollectorMXBean();
 
     /**
+     * Indicates whether this heap scheme supports tagging of heap object for debugging purposes.
+     * @return true if tagging of heap object is supported
+     */
+    @INLINE
+    boolean supportsTagging();
+
+    /**
      * Methods to be called by all implementations when specified events occur, necessary
      * for certain Inspector services to work.
      *

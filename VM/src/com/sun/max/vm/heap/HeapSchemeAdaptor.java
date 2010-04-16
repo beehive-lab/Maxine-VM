@@ -84,18 +84,14 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     @CONSTANT_WHEN_NOT_ZERO
     protected static Size BYTE_ARRAY_HEADER_SIZE;
 
-    private static void plantDeadObject(Pointer cell) {
-        final Pointer origin = Layout.tupleCellToOrigin(cell);
-        Memory.clearWords(cell, MIN_OBJECT_SIZE.dividedBy(Word.size()).toInt());
-        Layout.writeHubReference(origin, Reference.fromJava(OBJECT_HUB));
-    }
-
     /**
      * Plants a dead instance of java.lang.Object at the specified pointer.
      */
-    private static void plantTaggedDeadObject(Pointer cell) {
+    private static void plantDeadObject(Pointer cell) {
         DebugHeap.writeCellTag(cell);
-        plantDeadObject(cell);
+        final Pointer origin = Layout.tupleCellToOrigin(cell);
+        Memory.clearWords(cell, MIN_OBJECT_SIZE.dividedBy(Word.size()).toInt());
+        Layout.writeHubReference(origin, Reference.fromJava(OBJECT_HUB));
     }
 
     /**
@@ -110,10 +106,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         Layout.writeHubReference(origin, Reference.fromJava(BYTE_ARRAY_HUB));
     }
 
-    private static void plantTaggedDeadByteArray(Pointer cell, Size size) {
-        DebugHeap.writeCellTag(cell);
-        plantDeadByteArray(cell, size);
-    }
 
     /**
      * Helper function to fill an area with a (tagged) dead object.
@@ -122,31 +114,13 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
      * @param start start of the dead heap area
      * @param end end of the dead heap area
      */
-    public static void fillWithTaggedDeadObject(Pointer start, Pointer end) {
+    public static void fillWithDeadObject(Pointer start, Pointer end) {
         Pointer cell = DebugHeap.adjustForDebugTag(start);
         Size deadObjectSize = end.minus(cell).asSize();
         if (deadObjectSize.greaterThan(MIN_OBJECT_SIZE)) {
-            plantTaggedDeadByteArray(cell, deadObjectSize);
+            plantDeadByteArray(cell, deadObjectSize);
         } else if (deadObjectSize.equals(MIN_OBJECT_SIZE)) {
-            plantTaggedDeadObject(cell);
-        } else {
-            FatalError.unexpected("Not enough space to fit a dead object");
-        }
-    }
-
-    /**
-     * Helper function to fill an area with a dead object.
-     * Used to make a dead area in the heap parseable by GCs.
-     *
-     * @param start start of the dead heap area
-     * @param end end of the dead heap area
-     */
-    public static void fillWithDeadObject(Pointer start, Pointer end) {
-        Size deadObjectSize = end.minus(start).asSize();
-        if (deadObjectSize.greaterThan(MIN_OBJECT_SIZE)) {
-            plantDeadByteArray(start, deadObjectSize);
-        } else if (deadObjectSize.equals(MIN_OBJECT_SIZE)) {
-            plantDeadObject(start);
+            plantDeadObject(cell);
         } else {
             FatalError.unexpected("Not enough space to fit a dead object");
         }
@@ -193,6 +167,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         return false;
     }
 
+    @INLINE(override = true)
+    public boolean supportsTagging() {
+        return true;
+    }
+
     public void disableImmortalMemoryAllocation() {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
         enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.zero());
@@ -229,4 +208,5 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         Log.println(memoryAreaName);
         MaxineVM.native_exit(1);
     }
+
 }

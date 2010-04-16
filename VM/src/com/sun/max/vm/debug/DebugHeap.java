@@ -52,6 +52,11 @@ public final class DebugHeap {
     private static final int INT_OBJECT_TAG = 0xcccceeee;
     private static final int INT_OBJECT_PAD = 0xeeeecccc;
 
+    @FOLD
+    public static boolean isTagging() {
+        return MaxineVM.isDebug() && MaxineVM.target().configuration.heapScheme().supportsTagging();
+    }
+
     public static byte[] tagBytes(DataModel dataModel) {
         return dataModel.wordWidth == WordWidth.BITS_64 ? dataModel.toBytes(DebugHeap.LONG_OBJECT_TAG) : dataModel.toBytes(DebugHeap.INT_OBJECT_TAG);
     }
@@ -90,7 +95,7 @@ public final class DebugHeap {
 
     @INLINE
     public static void writeCellTag(Pointer cell) {
-        if (MaxineVM.isDebug()) {
+        if (isTagging()) {
             cell.setWord(-1, tagWord());
         }
     }
@@ -106,7 +111,7 @@ public final class DebugHeap {
 
     @INLINE
     public static Pointer checkDebugCellTag(Address from, Pointer cell) {
-        if (MaxineVM.isDebug()) {
+        if (isTagging()) {
             if (!isValidCellTag(cell.getWord(0))) {
                 Log.print("Invalid object tag @ ");
                 Log.print(cell);
@@ -135,7 +140,7 @@ public final class DebugHeap {
     }
 
     private static void checkGripTag(Grip grip) {
-        if (MaxineVM.isDebug()) {
+        if (isTagging()) {
             if (!grip.isZero()) {
                 final Pointer origin = grip.toOrigin();
                 final Pointer cell = Layout.originToCell(origin);
@@ -145,7 +150,7 @@ public final class DebugHeap {
     }
 
     public static void checkNonNullGripTag(Grip grip) {
-        if (MaxineVM.isDebug()) {
+        if (isTagging()) {
             final Pointer origin = grip.toOrigin();
             final Pointer cell = Layout.originToCell(origin);
             checkCellTag(cell, cell.minusWords(1).getWord(0));
@@ -170,7 +175,7 @@ public final class DebugHeap {
         if (grip.isZero()) {
             return;
         }
-        if (MaxineVM.isDebug()) {
+        if (isTagging()) {
             checkNonNullGripTag(grip);
         }
         final Pointer origin = grip.toOrigin();
@@ -298,14 +303,14 @@ public final class DebugHeap {
      */
     @INLINE
     public static Pointer adjustForDebugTag(Pointer mark) {
-        if (MaxineVM.isDebug()) {
+        if (isTagging()) {
             return mark.plusWords(1);
         }
         return mark;
     }
 
     public static boolean isValidNonnullGrip(Grip grip) {
-        if (MaxineVM.isDebug()) {
+        if (isTagging()) {
             final Pointer origin = grip.toOrigin();
             final Pointer cell = Layout.originToCell(origin);
             return isValidCellTag(cell.minusWords(1).getWord(0));

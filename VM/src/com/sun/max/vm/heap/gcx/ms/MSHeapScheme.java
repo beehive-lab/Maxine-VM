@@ -84,9 +84,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         super.initialize(phase);
         if (MaxineVM.isHosted()) {
             // VM-generation time initialization.
-            // Add a word if tagging the heap.
-            TLAB_HEADROOM = MIN_OBJECT_SIZE.plus(MaxineVM.isDebug() ? Word.size() : 0);
-
+            TLAB_HEADROOM = MIN_OBJECT_SIZE;
             // The monitor for the collector must be allocated in the image
             JavaMonitorManager.bindStickyMonitor(this);
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
@@ -207,7 +205,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
             return;
         }
-        fillWithTaggedDeadObject(tlabAllocationMark, hardLimit);
+        fillWithDeadObject(tlabAllocationMark, hardLimit);
     }
 
 
@@ -228,9 +226,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      */
     private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
         Pointer tlab = freeSpace.allocateTLAB(tlabSize);
-        if (MaxineVM.isDebug()) {
-            DebugHeap.writeCellPadding(tlab, tlab.plus(tlabSize));
-        }
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
@@ -290,6 +285,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
         return tlabAllocate(size);
+    }
+
+    @INLINE(override = true)
+    @Override
+    public boolean supportsTagging() {
+        return false;
     }
 }
 
