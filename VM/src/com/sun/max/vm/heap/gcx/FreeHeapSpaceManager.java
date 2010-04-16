@@ -36,6 +36,8 @@ import com.sun.max.vm.tele.*;
 /**
  * Simple free heap space management.
  * Nothing ambitious, just to get going and test the tracing algorithm of the future hybrid mark-sweep-evacuate.
+ * Implement the HeapSweeper abstract class which defines method called by a HeapMarker to notify free space.
+ * The FreeHeapSpace manager records these into an vector of list of free space based on size of the free space.
  *
  * @author Laurent Daynes.
  */
@@ -55,8 +57,14 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                     "Perform imprecise sweeping phase"),
                     MaxineVM.Phase.PRISTINE);
 
-    // Temporary tracing
-    private static final boolean TraceSweep = true;
+
+    private static final VMBooleanXXOption traceSweepingOption =  register(new VMBooleanXXOption("-XX:+",
+                    "TraceSweep",
+                    "Trace heap sweep operations. Do nothing for PRODUCT images"),
+                    MaxineVM.Phase.PRISTINE);
+
+
+    private static boolean TraceSweep = false;
 
     /**
      * Minimum size to be treated as a large object.
@@ -382,13 +390,13 @@ public class FreeHeapSpaceManager extends HeapSweeper {
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
         Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
-        if (TraceSweep) {
+        if (MaxineVM.isDebug() && TraceSweep) {
             printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(endOfLeftObject, numDeadBytes);
         } else {
-            darkMatter.plus(numDeadBytes);
+            darkMatter = darkMatter.plus(numDeadBytes);
         }
         return rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
     }
@@ -396,7 +404,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
     void print() {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Min reclaimable space: "); Log.println(minReclaimableSpace);
-        Log.print("Dark matter: "); Log.println(darkMatter);
+        Log.print("Dark matter: "); Log.println(darkMatter.toLong());
         for (int i = 0; i < freeChunkBins.length; i++) {
             Log.print("Bin ["); Log.print(i); Log.print("] (");
             Log.print(i << log2FirstBinSize); Log.print(" <= chunk size < "); Log.print((i + 1) << log2FirstBinSize);
@@ -428,6 +436,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         log2FirstBinSize = Integer.numberOfTrailingZeros(minLargeObjectSize.toInt());
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
         doImpreciseSweep = doImpreciseSweepOption.getValue();
+        TraceSweep = MaxineVM.isDebug() ? traceSweepingOption.getValue() : false;
         smallObjectAllocator.initialize(committedHeapSpace.start(), committedHeapSpace.size(), minLargeObjectSize);
         largeObjectAllocator.initialize(Address.zero(), Size.zero(), Size.fromLong(Long.MAX_VALUE));
         InspectableHeapInfo.init(smallObjectAllocator, largeObjectAllocator);
@@ -435,13 +444,16 @@ public class FreeHeapSpaceManager extends HeapSweeper {
     }
 
     public void reclaim(TricolorHeapMarker heapMarker) {
+        darkMatter = Size.zero();
         if (doImpreciseSweep) {
-            darkMatter.plus(heapMarker.impreciseSweep(this, minReclaimableSpace));
+            darkMatter =  darkMatter.plus(heapMarker.impreciseSweep(this, minReclaimableSpace));
         } else {
             endOfLastVisitedObject = committedHeapSpace.start().asPointer();
             heapMarker.sweep(this);
         }
-        print();
+        if (MaxineVM.isDebug()) {
+            print();
+        }
     }
 
     public void makeParsable() {
