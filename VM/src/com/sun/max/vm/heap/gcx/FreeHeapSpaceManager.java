@@ -213,7 +213,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         Pointer fillUp() {
             Pointer cell = setTopToEnd();
             if (cell.lessThan(end)) {
-                HeapSchemeAdaptor.fillWithTaggedDeadObject(cell.asPointer(), end.asPointer());
+                HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), end.asPointer());
             }
             return cell;
         }
@@ -252,7 +252,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             } while(mark.compareAndSwap(cell, nextMark) != cell);
             // Make junk before aligned cell a dead object.
             if (alignedCell.greaterThan(cell)) {
-                HeapSchemeAdaptor.fillWithTaggedDeadObject(cell, alignedCell);
+                HeapSchemeAdaptor.fillWithDeadObject(cell, alignedCell);
             }
             return alignedCell;
         }
@@ -314,9 +314,9 @@ public class FreeHeapSpaceManager extends HeapSweeper {
     }
 
     @INLINE
-    private void recordFreeSpace(Address chunk, Size size) {
-        freeChunkBins[binIndex(size)].append(chunk, size);
-        totalFreeChunkSpace += size.toLong();
+    private void recordFreeSpace(Address chunk, Size numBytes) {
+        freeChunkBins[binIndex(numBytes)].append(chunk, numBytes);
+        totalFreeChunkSpace += numBytes.toLong();
     }
 
     /**
@@ -381,14 +381,14 @@ public class FreeHeapSpaceManager extends HeapSweeper {
     @Override
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
         Pointer endOfLeftObject = leftLiveObject.plus(Layout.size(Layout.cellToOrigin(leftLiveObject)));
-        Size deadSpace = rightLiveObject.minus(endOfLeftObject).asSize();
+        Size numDeadBytes = rightLiveObject.minus(endOfLeftObject).asSize();
         if (TraceSweep) {
-            printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, deadSpace);
+            printNotifiedGap(leftLiveObject, rightLiveObject, endOfLeftObject, numDeadBytes);
         }
-        if (deadSpace.greaterEqual(minReclaimableSpace)) {
-            recordFreeSpace(endOfLeftObject, deadSpace);
+        if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
+            recordFreeSpace(endOfLeftObject, numDeadBytes);
         } else {
-            darkMatter.plus(deadSpace);
+            darkMatter.plus(numDeadBytes);
         }
         return rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
     }

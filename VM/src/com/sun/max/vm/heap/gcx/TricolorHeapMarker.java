@@ -33,7 +33,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * A marking algorithm that uses a three-color mark-bitmap with a fixed-size tiny marking stack, a rescan map, and a
+ * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size tiny marking stack, a rescan map, and a
  * finger. The tricolor mark-bitmap encodes three colors using two consecutive bits but consumes as much space overhead as
  * a single-bit mark bitmap, thanks to padding rare tiny objects to guarantee two color bits for every objects.
  * Tracing algorithm uses a single-bit mark bitmap and a fairly large marking stack (from several thousands of references, up
@@ -379,16 +379,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         markBlackFromWhite(bitIndexOf(cell));
     }
 
-    @INLINE
-    final boolean markGreyIfWhite_(Pointer cell) {
-        final int bitIndex = bitIndexOf(cell);
-        if (isWhite(bitIndex)) {
-            markGrey_(bitIndex);
-            return true;
-        }
-        return false;
-    }
-
     final boolean markGreyIfWhite(Pointer cell) {
         final int bitIndex = bitIndexOf(cell);
         if (isWhite(bitIndex)) {
@@ -434,26 +424,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     @INLINE
     final void markBlackFromGrey(Address cell) {
         markBlackFromGrey(bitIndexOf(cell));
-    }
-
-
-    /**
-     * Set a black mark not assuming previous mark in place.
-     *
-     * @param bitIndex an index in the color map corresponding to the first word of an object in the heap.
-     */
-    @INLINE
-    final void markBlack_(int bitIndex) {
-        FatalError.check(!colorSpanWords(bitIndex), "Color must not cross word boundary.");
-        final int wordIndex = bitmapWordIndex(bitIndex);
-        final Pointer basePointer = base.asPointer();
-        final long blackBit = bitmaskFor(bitIndex);
-        // Clear grey bit and set black one.
-        long bitmapWord = basePointer.getLong(wordIndex);
-        // Clear grey bit and set black one.
-        bitmapWord |= blackBit;
-        bitmapWord &= ~(blackBit << 1);
-        basePointer.setLong(wordIndex, bitmapWord);
     }
 
     @INLINE
