@@ -156,6 +156,7 @@ semispace
 semispaces
 settable
 shootout
+snippet
 stderr
 stdout
 struct

@@ -27,8 +27,7 @@ import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.*;
 
 /**
- * This class represents the interface through which the compiler requests the XIR for a given
- * bytecode from the runtime system.
+ * Represents the interface through which the compiler requests the XIR for a given bytecode from the runtime system.
  *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
@@ -79,6 +78,11 @@ public abstract class RiXirGenerator {
 
     public abstract XirSnippet genArrayLength(XirSite site, XirArgument array);
 
+    /**
+     * Construct the list of XIR templates using the given XIR assembler.
+     * @param asm the XIR assembler
+     * @return the list of templates
+     */
     public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
         return null;
     }
