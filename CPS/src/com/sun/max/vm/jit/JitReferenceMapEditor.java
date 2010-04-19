@@ -160,7 +160,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                     Log.print(bcp);
                     Log.print(":");
                     int opc = codeAttribute.code()[bcp] & 0xff;
-                    final String opcode = Bytecodes.nameOf(opc);
+                    final String opcode = Bytecodes.baseNameOf(opc);
                     Log.print(opcode);
                     int chars = Ints.sizeOfBase10String(bcp) + 1 + opcode.length();
                     while (chars++ < 20) {

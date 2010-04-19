@@ -18,39 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * @author Hannes Payer
- */
-package com.sun.max.memory;
+package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
- * Immortal memory region can be used to allocate objects at runtime that are not collected by the GC.
+ * Heap Sweeper abstract class. Passed to HeapMarker instances to sweep the heap.
  *
- * @author Hannes Payer
+ * @author Laurent Daynes.
  */
-public class ImmortalMemoryRegion extends LinearAllocationMemoryRegion {
+public abstract class HeapSweeper {
+    /**
+     * Invoked by the heap marker on the first black object following the pointer last returned by this method.
+     * @param liveObject a pointer to a live cell in the heap
+     * @return a pointer to the position in the heap where to resume sweeping.
+     */
+    public abstract Pointer processLiveObject(Pointer liveObject);
 
-    public ImmortalMemoryRegion(String name) {
-        super(name);
-    }
+    /**
+     * Process potential interesting gap in heap.
+     * Imprecise heap sweeping ignores any space before two live objects smaller than a specified amount of space.
+     * When the distance between two live marks is large enough to indicate a potentially large chunk of free space,
+     * the sweeper invoke this method.
+     *
+     * @param leftLiveObject
+     * @param rightLiveObject
+     * @return
+     */
+    public abstract Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject);
 
-    public void initialize(Size size) {
-        Pointer region = VirtualMemory.allocate(size, VirtualMemory.Type.HEAP);
-        if (region.equals(Pointer.zero())) {
-            FatalError.unexpected("Initialization of immortal memory region failed");
-        }
-        this.size = size;
-        this.start = region;
-        this.mark.set(region);
-    }
-
-    public void initialize(MemoryRegion memoryRegion) {
-        setStart(memoryRegion.start());
-        setSize(memoryRegion.size());
-        mark.set(memoryRegion.start());
-    }
-
+    /**
+     *
+     * @param freeChunk
+     * @param size
+     */
+    public abstract void processDeadSpace(Address freeChunk, Size size);
 }

@@ -43,7 +43,7 @@ public class GripVerifierPointerVisitor  extends PointerIndexVisitor {
     }
 
     public void checkCellTag(Pointer cell) {
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
                 Log.print("Error: ");
                 Log.println(cell);
@@ -57,7 +57,7 @@ public class GripVerifierPointerVisitor  extends PointerIndexVisitor {
     }
 
     public void checkGripTag(Grip grip) {
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             if (!grip.isZero()) {
                 checkCellTag(Layout.originToCell(grip.toOrigin()));
             }

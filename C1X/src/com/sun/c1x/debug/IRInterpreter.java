@@ -185,18 +185,18 @@ public class IRInterpreter {
             int index = 0;
 
             for (CiConstant value : values) {
-                Object obj;
+                CiConstant obj;
                 // These conversions are necessary since the input values are
                 // parsed as integers
                 Value local = state.localAt(index);
                 if (local.kind == CiKind.Float && value.kind == CiKind.Int) {
-                    obj = (float) value.asInt();
+                    obj = CiConstant.forFloat(value.asInt());
                 } else if ((local.kind == CiKind.Double && value.kind == CiKind.Int)) {
-                    obj = (double) value.asInt();
+                    obj = CiConstant.forDouble(value.asInt());
                 } else {
-                    obj = value.boxedValue();
+                    obj = value;
                 }
-                bind(local, CiConstant.get(local.kind, obj), 0);
+                bind(local, obj, 0);
                 performPhiMove(local);
                 index += local.kind.sizeInSlots();
             }
@@ -271,11 +271,11 @@ public class IRInterpreter {
                 if (eh.handler.isCatchAll() || toJavaClass(eh.handler.catchKlass()).isAssignableFrom(e.getClass())) {
                     jump(eh.entryBlock());
                     // bind the exception object to e
-                    environment.bind(eh.entryBlock().next(), CiConstant.get(CiKind.Object, e), instructionCounter);
+                    environment.bind(eh.entryBlock().next(), CiConstant.forObject(e), instructionCounter);
                     return;
                 }
             }
-            environment.bind(i, CiConstant.get(CiKind.Object, e), instructionCounter);
+            environment.bind(i, CiConstant.forObject(e), instructionCounter);
             throwable = e;
         }
 
@@ -785,7 +785,7 @@ public class IRInterpreter {
             final CiConstant object = environment.lookup(i.object());
             assertKind(object.kind, CiKind.Object);
             if (object.isNonNull()) {
-                environment.bind(i, CiConstant.get(CiKind.Object, object.boxedValue()), instructionCounter);
+                environment.bind(i, CiConstant.forObject(object.boxedValue()), instructionCounter);
             } else {
                 unexpected(i, new NullPointerException());
             }
@@ -802,7 +802,7 @@ public class IRInterpreter {
             String methodName = targetMethod.name();
             if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) {
                 Object res = callInitMethod(i);
-                environment.bind(i.arguments()[0], CiConstant.get(CiKind.Object, res), instructionCounter);
+                environment.bind(i.arguments()[0], CiConstant.forObject(res), instructionCounter);
                 jumpNextInstruction();
                 return;
             }
@@ -972,13 +972,13 @@ public class IRInterpreter {
                     unexpected(i, e.getTargetException());
                 }
 
-                environment.bind(i, CiConstant.get(signature.returnKind(), res), instructionCounter);
+                environment.bind(i, CiConstant.forBoxed(signature.returnKind(), res), instructionCounter);
 
             } else {
                 // Call init methods
                 if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) {
                     Object res = callInitMethod(i);
-                    environment.bind(i.arguments()[0], CiConstant.get(CiKind.Object, res), instructionCounter);
+                    environment.bind(i.arguments()[0], CiConstant.forObject(res), instructionCounter);
                     jumpNextInstruction();
                     return;
                 }
@@ -1022,7 +1022,7 @@ public class IRInterpreter {
                 } catch (InvocationTargetException e) {
                     unexpected(i, e.getTargetException());
                 }
-                environment.bind(i, CiConstant.get(signature.returnKind(), res), instructionCounter);
+                environment.bind(i, CiConstant.forBoxed(signature.returnKind(), res), instructionCounter);
             }
             jumpNextInstruction();
         }
@@ -1128,7 +1128,7 @@ public class IRInterpreter {
             Class< ? > javaClass = toJavaClass(type);
             try {
                 // bind the NewInstance instruction to the new allocated object
-                environment.bind(i, CiConstant.get(CiKind.Object, unsafe.allocateInstance(javaClass)), instructionCounter);
+                environment.bind(i, CiConstant.forObject(unsafe.allocateInstance(javaClass)), instructionCounter);
             } catch (InstantiationException e) {
                 unexpected(i, e.getCause());
             }
@@ -1173,7 +1173,7 @@ public class IRInterpreter {
                 default:
                     Util.shouldNotReachHere();
             }
-            environment.bind(i, CiConstant.get(CiKind.Object, newObjectArray), instructionCounter);
+            environment.bind(i, CiConstant.forObject(newObjectArray), instructionCounter);
             jumpNextInstruction();
         }
 
@@ -1185,7 +1185,7 @@ public class IRInterpreter {
                 return;
             }
             Object newObjectArray = Array.newInstance(toJavaClass(i.elementClass()), length);
-            environment.bind(i, CiConstant.get(CiKind.Object, newObjectArray), instructionCounter);
+            environment.bind(i, CiConstant.forObject(newObjectArray), instructionCounter);
             jumpNextInstruction();
         }
 
@@ -1206,7 +1206,7 @@ public class IRInterpreter {
             } catch (Throwable e) {
                 unexpected(i, e);
             }
-            environment.bind(i, CiConstant.get(CiKind.Object, newObjectArray), instructionCounter);
+            environment.bind(i, CiConstant.forObject(newObjectArray), instructionCounter);
             jumpNextInstruction();
         }
 
@@ -1516,7 +1516,7 @@ public class IRInterpreter {
                     fail("Should not reach here");
 
             }
-            environment.bind(i, CiConstant.get(i.unsafeOpKind, result), instructionCounter);
+            environment.bind(i, CiConstant.forBoxed(i.unsafeOpKind, result), instructionCounter);
             jumpNextInstruction();
         }
 
@@ -1596,7 +1596,7 @@ public class IRInterpreter {
                     fail("Should not reach here");
 
             }
-            environment.bind(i, CiConstant.get(i.unsafeOpKind, result), instructionCounter);
+            environment.bind(i, CiConstant.forBoxed(i.unsafeOpKind, result), instructionCounter);
             jumpNextInstruction();
         }
 

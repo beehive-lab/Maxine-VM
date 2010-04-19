@@ -71,7 +71,7 @@ public final class TeleMSHeapScheme extends AbstractTeleVMHolder implements Tele
         // The current MS scheme  linearly allocate over chunk of free space discovered during the past MS.
         // However, it doesn't maintain these as "linearly allocating memory region". This could be done by formatting
         // all reusable free space as such (instead of the chunk of free list as is done now). in any case.
-        return false;
+        return true;
     }
 
     public boolean isObjectForwarded(Pointer origin) {

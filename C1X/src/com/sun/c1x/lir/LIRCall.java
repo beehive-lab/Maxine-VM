@@ -33,15 +33,6 @@ import com.sun.cri.ri.*;
  */
 public class LIRCall extends LIRInstruction {
 
-    public static final class NativeFunction {
-        public final CiValue address;
-        public final String symbol;
-        public NativeFunction(CiValue address, String symbol) {
-            this.address = address;
-            this.symbol = symbol;
-        }
-    }
-
     /**
      * The target of the call. This will be a {@link CiRuntimeCall}, {@link RiMethod} or {@link CiValue}
      * object denoting a call to the runtime, a Java method or a native function respectively.
@@ -80,10 +71,6 @@ public class LIRCall extends LIRInstruction {
 
     public RiMethod method() {
         return (RiMethod) target;
-    }
-
-    public NativeFunction nativeFunction() {
-        return (NativeFunction) target;
     }
 
     public CiRuntimeCall runtimeCall() {

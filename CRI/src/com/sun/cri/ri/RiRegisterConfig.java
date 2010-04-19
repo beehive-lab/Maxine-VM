@@ -44,9 +44,31 @@ public interface RiRegisterConfig {
 
     CiRegister getThreadRegister(); // will be deprecated with XIR
 
-    CiValue[] getJavaParameterLocations(CiKind[] types, boolean outgoing, CiTarget target);
+    /**
+     * Gets the calling convention describing a call to or from Java code.
+     * 
+     * @param parameters the types of the arguments of the call
+     * @param outgoing if {@code true}, this is a call to Java code otherwise it's a call from Java code
+     * @param target the target platform
+     */
+    CiCallingConvention getJavaCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target);
+    
+    /**
+     * Gets the calling convention describing a call to the runtime.
+     * 
+     * @param parameters the types of the arguments of the call
+     * @param target the target platform
+     */
+    CiCallingConvention getRuntimeCallingConvention(CiKind[] parameters, CiTarget target);
 
-    CiValue[] getRuntimeParameterLocations(CiKind[] types, CiTarget target);
+    /**
+     * Gets the calling convention describing a call to or from native code.
+     * 
+     * @param parameters the types of the arguments of the call
+     * @param outgoing if {@code true}, this is a call to native code otherwise it's a call from native code
+     * @param target the target platform
+     */
+    CiCallingConvention getNativeCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target);
 
     CiRegister[] getAllocatableRegisters();
 

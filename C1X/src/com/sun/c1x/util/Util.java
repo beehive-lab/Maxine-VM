@@ -537,9 +537,9 @@ public class Util {
         return ((number + mod - 1) / mod) * mod;
     }
 
-    public static void truncate(List<?> instructions, int length) {
-        while (instructions.size() > length) {
-            instructions.remove(instructions.size() - 1);
+    public static void truncate(List<?> list, int length) {
+        while (list.size() > length) {
+            list.remove(list.size() - 1);
         }
     }
 

@@ -125,6 +125,16 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     /**
+     * Remove once C1X can compile native method stubs.
+     */
+    public static final boolean CAN_COMPILE_NATIVE_METHODS = false;
+
+    /**
+     * Remove once C1X implements the semantics of the ACCESSOR annotation.
+     */
+    private static final boolean CAN_COMPILE_ACCESSOR_METHODS = false;
+
+    /**
      * Checks whether the runtime requires inlining of the specified method.
      * @param method the method to inline
      * @return {@code true} if the method must be inlined; {@code false}
@@ -135,12 +145,10 @@ public class MaxRiRuntime implements RiRuntime {
             return false;
         }
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
-        if (classMethodActor.accessor() != null) {
-            // TODO: Remove once C1X implements the semantics of ACCESSOR
+        if (classMethodActor.accessor() != null && !CAN_COMPILE_ACCESSOR_METHODS) {
             return false;
         }
-        if (classMethodActor.isNative()) {
-            // TODO: Remove once C1X can compile JNICALL
+        if (classMethodActor.isNative() && !CAN_COMPILE_NATIVE_METHODS) {
             return false;
         }
         return classMethodActor.isInline();
@@ -157,14 +165,17 @@ public class MaxRiRuntime implements RiRuntime {
             return false;
         }
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
-        if (classMethodActor.accessor() != null) {
-            // TODO: Remove once C1X implements the semantics of ACCESSOR
+        if (classMethodActor.accessor() != null && !CAN_COMPILE_ACCESSOR_METHODS) {
             return true;
         }
-        if (classMethodActor.isNative()) {
-            // TODO: Remove once C1X can compile JNICALL
+        if (classMethodActor.isNative() && !CAN_COMPILE_NATIVE_METHODS) {
             return true;
         }
+
+        if (classMethodActor.holder().name.string.endsWith(".Log")) {
+            return true;
+        }
+
         return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
     }
 

@@ -160,7 +160,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         this.hub_mTableStartIndex = FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
         this.hub_componentHub = FieldActor.findInstance(Hub.class, "componentHub").offset();
         this.wordSize = vmConfiguration.platform.wordWidth().numberOfBytes;
-        assert wordSize == target.arch.wordSize : "word size mismatch";
+        assert wordSize == target.wordSize : "word size mismatch";
         this.arrayLengthOffset = Layout.arrayHeaderLayout().arrayLengthOffset();
         this.offsetOfFirstArrayElement = Layout.byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
     }
@@ -736,6 +736,36 @@ public class MaxXirGenerator extends RiXirGenerator {
             unresolved = finishTemplate(asm, addr, "invokevirtual-unresolved");
         }
         return new XirPair(resolved, unresolved);
+    }
+
+    private XirPair buildJniCall() {
+        XirTemplate linked;
+        XirTemplate unlinked;
+        {
+            // resolved invokevirtual
+            asm.restart();
+            XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object);
+            XirParameter vtableOffset = asm.createConstantInputParameter("vtableOffset", CiKind.Int);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
+            XirOperand addr = asm.createTemp("addr", CiKind.Word);
+            asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset), true);
+            asm.pload(CiKind.Word, addr, hub, vtableOffset, false);
+            linked = finishTemplate(asm, addr, "invokevirtual");
+        }
+        {
+            // unresolved invokevirtual template
+            asm.restart();
+            XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object); // receiver object
+            XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
+            XirOperand vtableOffset = asm.createTemp("vtableOffset", CiKind.Int);
+            resolve(asm, "resolveVirtualMethod", vtableOffset, guard);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
+            XirOperand addr = asm.createTemp("addr", CiKind.Word);
+            asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset), true);
+            asm.pload(CiKind.Word, addr, hub, vtableOffset, false);
+            unlinked = finishTemplate(asm, addr, "invokevirtual-unresolved");
+        }
+        return new XirPair(linked, unlinked);
     }
 
     private XirPair buildNewArray(CiKind kind) {

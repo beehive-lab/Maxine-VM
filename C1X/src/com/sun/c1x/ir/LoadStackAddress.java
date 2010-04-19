@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,39 +18,50 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * @author Hannes Payer
- */
-package com.sun.max.memory;
+package com.sun.c1x.ir;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
 /**
- * Immortal memory region can be used to allocate objects at runtime that are not collected by the GC.
+ * Instruction implementing the semantics of {@link Bytecodes#LSA}.
  *
- * @author Hannes Payer
+ * @author Doug Simon
  */
-public class ImmortalMemoryRegion extends LinearAllocationMemoryRegion {
+public final class LoadStackAddress extends Instruction {
 
-    public ImmortalMemoryRegion(String name) {
-        super(name);
+    private Value value;
+
+    /**
+     * Creates a new LoadStackAddress instance.
+     */
+    public LoadStackAddress(Value value) {
+        super(CiKind.Word);
+        this.value = value;
     }
 
-    public void initialize(Size size) {
-        Pointer region = VirtualMemory.allocate(size, VirtualMemory.Type.HEAP);
-        if (region.equals(Pointer.zero())) {
-            FatalError.unexpected("Initialization of immortal memory region failed");
-        }
-        this.size = size;
-        this.start = region;
-        this.mark.set(region);
+    /**
+     * Implements this instruction's half of the visitor pattern.
+     * @param v the visitor to accept
+     */
+    @Override
+    public void accept(ValueVisitor v) {
+        v.visitLoadStackAddress(this);
     }
 
-    public void initialize(MemoryRegion memoryRegion) {
-        setStart(memoryRegion.start());
-        setSize(memoryRegion.size());
-        mark.set(memoryRegion.start());
+    /**
+     * Iterates over the input values to this instruction.
+     * @param closure the closure to apply to each instruction
+     */
+    @Override
+    public void inputValuesDo(ValueClosure closure) {
+        value = closure.apply(value);
     }
 
+    /**
+     * Gets the instruction that produced the size argument.
+     */
+    public Value value() {
+        return value;
+    }
 }

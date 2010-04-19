@@ -68,9 +68,6 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion {
             Log.print(end());
             Log.print(", mutable references end=");
             Log.println(start().plus(referenceMapWords * Word.size()));
-        }
-
-        if (Heap.traceRootScanning()) {
             scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, true);
         } else {
             scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, false);

@@ -2023,6 +2023,7 @@ public final class GraphBuilder {
                 case WRETURN        : genMethodReturn(wpop()); break;
                 case READ_PC        : genLoadPC(); break;
                 case JNICALL        : genNativeCall(s.readCPI()); break;
+                case JNIOP          : genJniOp(s.readCPI()); break;
                 case ALLOCA         : genStackAllocate(); break;
 
                 case MOV_I2F        : genConvert(opcode, CiKind.Int, CiKind.Float ); break;
@@ -2032,6 +2033,9 @@ public final class GraphBuilder {
 
                 case UCMP           : genUnsignedCompareOp(CiKind.Int, opcode, s.readCPI()); break;
                 case UWCMP          : genUnsignedCompareOp(CiKind.Word, opcode, s.readCPI()); break;
+
+                case LSA            : genLoadStackAddress(); break;
+                case PAUSE          : genPause(); break;
 
 //                case PCMPSWP: {
 //                    opcode |= readUnsigned2() << 8;
@@ -2145,6 +2149,15 @@ public final class GraphBuilder {
         }
     }
 
+    private void genPause() {
+        append(new Pause());
+    }
+
+    private void genLoadStackAddress() {
+        Value value = curState.xpop();
+        wpush(append(new LoadStackAddress(value)));
+    }
+
     private void genStackAllocate() {
         Value size = pop(CiKind.Word);
         wpush(append(new StackAllocate(size)));
@@ -2171,28 +2184,44 @@ public final class GraphBuilder {
         }
     }
 
+    void genJniOp(int operand) {
+        RiSnippets snippets = compilation.runtime.getSnippets();
+        switch (operand) {
+            case JniOp.LINK: {
+                FrameState stateBefore = curState.immutableCopy();
+                RiMethod nativeMethod = scope().method;
+                RiSnippetCall linkSnippet = snippets.link(nativeMethod);
+                if (linkSnippet.result != null) {
+                    wpush(appendConstant(linkSnippet.result));
+                } else {
+                    appendSnippetCall(linkSnippet, stateBefore);
+                }
+                break;
+            }
+            case JniOp.J2N: {
+                FrameState stateBefore = curState.immutableCopy();
+                RiMethod nativeMethod = scope().method;
+                appendSnippetCall(snippets.enterNative(nativeMethod), stateBefore);
+                break;
+            }
+            case JniOp.N2J: {
+                FrameState stateBefore = curState.immutableCopy();
+                RiMethod nativeMethod = scope().method;
+                appendSnippetCall(snippets.enterVM(nativeMethod), stateBefore);
+                break;
+            }
+        }
+     }
+
     void genNativeCall(char cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiSignature sig = constantPool().lookupSignature(cpi);
+        Value nativeFunctionAddress = wpop();
         Value[] args = curState.popArguments(sig.argumentSlots(false));
 
-
-        RiSnippets snippets = compilation.runtime.getSnippets();
-
         RiMethod nativeMethod = scope().method;
-        RiSnippetCall linkSnippet = snippets.link(nativeMethod);
-        Value nativeFunctionAddress;
-        if (linkSnippet.result != null) {
-            nativeFunctionAddress = appendConstant(linkSnippet.result);
-        } else {
-            appendSnippetCall(linkSnippet, stateBefore);
-            nativeFunctionAddress = pop(CiKind.Word);
-        }
-
-        appendSnippetCall(snippets.enterNative(nativeMethod), stateBefore);
         CiKind returnKind = sig.returnKind();
-        push(returnKind, append(new NativeCall(nativeMethod, returnKind, nativeFunctionAddress, args, stateBefore)));
-        appendSnippetCall(snippets.enterVM(nativeMethod), stateBefore);
+        pushReturn(returnKind, append(new NativeCall(nativeMethod, sig, nativeFunctionAddress, args, stateBefore)));
     }
 
     private void genLoadPC() {

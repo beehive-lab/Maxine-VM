@@ -108,7 +108,7 @@ public final class CharValue extends PrimitiveValue<CharValue> {
 
     @Override
     public Character asBoxedJavaValue() {
-        return new Character(value);
+        return Character.valueOf(value);
     }
 
     @Override
