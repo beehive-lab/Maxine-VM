@@ -28,7 +28,6 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.*;
-import com.sun.c1x.lir.LIRCall.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -236,9 +235,10 @@ public abstract class LIRAssembler {
             case IndirectCall:
                 emitIndirectCall(op.target, op.info, op.lastArgument());
                 break;
-            case NativeCall:
-                emitNativeCall(op.nativeFunction(), op.info);
+            case NativeCall: {
+                emitNativeCall((String) op.target, op.info, op.lastArgument());
                 break;
+            }
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -275,8 +275,8 @@ public abstract class LIRAssembler {
             case Neg:
                 emitNegate(op);
                 break;
-            case Leal:
-                emitLeal(((CiAddress) op.operand()), (op.result()));
+            case Lea:
+                emitLea(((CiAddress) op.operand()), (op.result()));
                 break;
             case NullCheck:
                 asm.recordImplicitException(codePos(), op.info);
@@ -312,6 +312,9 @@ public abstract class LIRAssembler {
                 break;
             case ReadPC:
                 emitReadPC(op.result());
+                break;
+            case Pause:
+                emitPause();
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -454,11 +457,13 @@ public abstract class LIRAssembler {
 
     protected abstract void emitAlignment();
 
-    protected abstract void emitLeal(CiAddress inOpr, CiValue resultOpr);
+    protected abstract void emitLea(CiAddress inOpr, CiValue resultOpr);
 
     protected abstract void emitNegate(LIROp1 negate);
 
     protected abstract void emitReadPC(CiValue resultOpr);
+
+    protected abstract void emitPause();
 
     protected abstract void emitStackAllocate(StackBlock stackBlock, CiValue resultOpr);
 
@@ -504,11 +509,11 @@ public abstract class LIRAssembler {
 
     protected abstract void emitRuntimeCall(CiRuntimeCall l, LIRDebugInfo info);
 
-    protected abstract void emitIndirectCall(Object target, LIRDebugInfo info, CiValue operand);
+    protected abstract void emitIndirectCall(Object target, LIRDebugInfo info, CiValue callAddress);
 
     protected abstract void emitDirectCall(Object target, LIRDebugInfo info);
 
-    protected abstract void emitNativeCall(NativeFunction nativeFunction, LIRDebugInfo info);
+    protected abstract void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress);
 
     protected abstract void emitCallAlignment(LIROpcode code);
 

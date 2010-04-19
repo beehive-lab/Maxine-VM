@@ -278,10 +278,10 @@ final class MoveResolver {
                 // do not allocate a new spill slot for temporary interval, but
                 // use spill slot assigned to fromInterval. Otherwise moves from
                 // one stack slot to another can happen (not allowed by LIRAssembler
-                CiStackSlot spillSlot = fromInterval.canonicalSpillSlot();
+                CiStackSlot spillSlot = fromInterval.spillSlot();
                 if (spillSlot == null) {
                     spillSlot = allocator.allocateSpillSlot(spillInterval.kind());
-                    fromInterval.setCanonicalSpillSlot(spillSlot);
+                    fromInterval.setSpillSlot(spillSlot);
                 }
                 spillInterval.assignLocation(spillSlot);
 

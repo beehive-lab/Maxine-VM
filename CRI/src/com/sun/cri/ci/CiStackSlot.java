@@ -21,42 +21,70 @@
 package com.sun.cri.ci;
 
 /**
- * Represents a spill slot or an outgoing stack-based argument in a method's frame.
+ * Represents a compiler spill slot or an outgoing stack-based argument in a method's frame
+ * or an incoming stack-based argument in a method's {@linkplain #inCallerFrame() caller's frame}.
  *
  * @author Doug Simon
  */
 public final class CiStackSlot extends CiValue {
 
     /**
-     * The index of this stack slot within the spill area of a method's frame.
-     * This index will be converted to an offset relative to {@link CiRegister#Frame}.
+     * @see CiStackSlot#index()
      */
-    public final int index;
+    private final int index;
 
+    /**
+     * Gets a {@link CiStackSlot} instance representing a stack slot in the current frame
+     * at a given index holding a value of a given kind.
+     *  
+     * @param kind the kind of the value stored in the stack slot
+     * @param index the index of the stack slot
+     */
+    public static CiStackSlot get(CiKind kind, int index) {
+        return get(kind, index, false);
+    }
+    
     /**
      * Gets a {@link CiStackSlot} instance representing a stack slot at a given index
      * holding a value of a given kind.
      *  
      * @param kind the kind of the value stored in the stack slot
      * @param index the index of the stack slot
+     * @param inCallerFrame specifies if the slot is in the current frame or in the caller's frame
      */
-    public static CiStackSlot get(CiKind kind, int index) {
+    public static CiStackSlot get(CiKind kind, int index, boolean inCallerFrame) {
         assert kind.stackKind() == kind;
+        CiStackSlot[][] cache = inCallerFrame ? CALLER_FRAME_CACHE : CACHE;
         CiStackSlot[] slots = cache[kind.ordinal()];
+        CiStackSlot slot;
         if (index < slots.length) {
-            return slots[index];
+            slot = slots[index];
+        } else {
+            slot = new CiStackSlot(kind, inCallerFrame ? -(index + 1) : index);
         }
-        return new CiStackSlot(kind, index);
+        assert slot.inCallerFrame() == inCallerFrame;
+        return slot; 
     }
     
     /**
      * Private constructor to enforce use of {@link #get(CiKind, int)} so that the
-     * shared instance {@linkplain #cache cache} is used.
+     * shared instance {@linkplain #CACHE cache} is used.
      */
     private CiStackSlot(CiKind kind, int index) {
         super(kind);
-        assert index >= 0;
         this.index = index;
+    }
+
+    /**
+     * Gets the index of this stack slot. If this is a spill slot or outgoing stack argument to a call,
+     * then the index is relative to the current frame pointer. Otherwise this is an incoming stack
+     * argument and the index is relative to the caller frame pointer.
+     * 
+     * @return the index of this slot
+     * @see #inCallerFrame()
+     */
+    public int index() {
+        return index < 0 ? -(index + 1) : index;
     }
 
     @Override
@@ -78,30 +106,47 @@ public final class CiStackSlot extends CiValue {
 
     @Override
     public String name() {
-        return "stack:" + index;
+        return (inCallerFrame() ? "caller-stack" : "stack:") + index();
     }
     
-    private static CiStackSlot[] generate(CiKind kind, int count) {
-        CiStackSlot[] slots = new CiStackSlot[count];
-        for (int i = 0; i < count; ++i) {
-            slots[i] = new CiStackSlot(kind, i);
-        }
-        return slots;
+    /**
+     * Determines if this is a stack slot in the caller's frame.
+     */
+    public boolean inCallerFrame() {
+        return index < 0;
     }
     
     private static final int CACHE_PER_KIND_SIZE = 100;
     
+    private static final int CALLER_FRAME_CACHE_PER_KIND_SIZE = 10;
+    
     /**
-     * A cache of {@link CiStackSlot} objects.
+     * A cache of {@linkplain #inCallerFrame() non-caller-frame} stack slots.
      */
-    private static final CiStackSlot[][] cache = new CiStackSlot[CiKind.values().length][];
-    static {
-        cache[CiKind.Int.ordinal()]    = generate(CiKind.Int, CACHE_PER_KIND_SIZE);
-        cache[CiKind.Long.ordinal()]   = generate(CiKind.Long, CACHE_PER_KIND_SIZE);
-        cache[CiKind.Float.ordinal()]  = generate(CiKind.Float, CACHE_PER_KIND_SIZE);
-        cache[CiKind.Double.ordinal()] = generate(CiKind.Double, CACHE_PER_KIND_SIZE);
-        cache[CiKind.Word.ordinal()]   = generate(CiKind.Word, CACHE_PER_KIND_SIZE);
-        cache[CiKind.Object.ordinal()] = generate(CiKind.Object, CACHE_PER_KIND_SIZE);
-        cache[CiKind.Jsr.ordinal()]    = generate(CiKind.Jsr, CACHE_PER_KIND_SIZE);
+    private static final CiStackSlot[][] CACHE = makeCache(CACHE_PER_KIND_SIZE, false);
+    
+    /**
+     * A cache of {@linkplain #inCallerFrame() caller-frame} stack slots.
+     */
+    private static final CiStackSlot[][] CALLER_FRAME_CACHE = makeCache(CALLER_FRAME_CACHE_PER_KIND_SIZE, true);
+
+    private static CiStackSlot[][] makeCache(int cachePerKindSize, boolean inCallerFrame) {
+        CiStackSlot[][] cache = new CiStackSlot[CiKind.VALUES.length][];
+        cache[CiKind.Int.ordinal()]    = makeCacheForKind(CiKind.Int, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Long.ordinal()]   = makeCacheForKind(CiKind.Long, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Float.ordinal()]  = makeCacheForKind(CiKind.Float, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Double.ordinal()] = makeCacheForKind(CiKind.Double, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Word.ordinal()]   = makeCacheForKind(CiKind.Word, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Object.ordinal()] = makeCacheForKind(CiKind.Object, cachePerKindSize, inCallerFrame);
+        cache[CiKind.Jsr.ordinal()]    = makeCacheForKind(CiKind.Jsr, cachePerKindSize, inCallerFrame);
+        return cache;
+    }
+    
+    private static CiStackSlot[] makeCacheForKind(CiKind kind, int count, boolean inCallerFrame) {
+        CiStackSlot[] slots = new CiStackSlot[count];
+        for (int i = 0; i < count; ++i) {
+            slots[i] = new CiStackSlot(kind, inCallerFrame ? -(i + 1) : i);
+        }
+        return slots;
     }
 }

@@ -46,27 +46,38 @@ public class CiTarget {
      */
     public final int spillSlotSize;
 
-    public int referenceSize;
-    public int stackAlignment;
-    public int cacheAlignment;
-    public int codeAlignment;
-    public int heapAlignment;
+    public final int wordSize;
+    public final int referenceSize;
+    public final int stackAlignment;
+    public final int cacheAlignment;
+    public final int codeAlignment;
+    public final int heapAlignment;
 
-    public CiTarget(CiArchitecture arch, RiRegisterConfig registerConfig, int pageSize, boolean isMP) {
+    public CiTarget(CiArchitecture arch,
+             RiRegisterConfig registerConfig,
+             boolean isMP,
+             int spillSlotSize,
+             int wordSize,
+             int referenceSize,
+             int stackAlignment,
+             int pageSize,
+             int cacheAlignment,
+             int heapAlignment,
+             int codeAlignment) {
         this.arch = arch;
         this.registerConfig = registerConfig;
-        this.referenceSize = arch.wordSize;
-        this.stackAlignment = arch.wordSize;
-        this.cacheAlignment = arch.wordSize;
-        this.heapAlignment = arch.wordSize;
-        this.spillSlotSize = arch.wordSize;
-        this.codeAlignment = 16;
-
-        this.stackPointerRegister = registerConfig.getStackPointerRegister();
-        this.scratchRegister = registerConfig.getScratchRegister();
-
         this.pageSize = pageSize;
         this.isMP = isMP;
+        this.spillSlotSize = spillSlotSize;
+        this.wordSize = wordSize;
+        this.referenceSize = referenceSize;
+        this.stackAlignment = stackAlignment;
+        this.cacheAlignment = cacheAlignment;
+        this.codeAlignment = codeAlignment;
+        this.heapAlignment = heapAlignment;
+        
+        this.stackPointerRegister = registerConfig.getStackPointerRegister();
+        this.scratchRegister = registerConfig.getScratchRegister();
         this.allocationSpec = new AllocationSpec(registerConfig.getAllocatableRegisters(), registerConfig.getRegisterReferenceMapOrder(), registerConfig.getCallerSaveRegisters());
         this.spillSlotsPerKindMap = new int[CiKind.values().length];
 
@@ -87,7 +98,7 @@ public class CiTarget {
      * @return the size in bytes of {@code kind}
      */
     public int sizeInBytes(CiKind kind) {
-        return kind.sizeInBytes(referenceSize, arch.wordSize);
+        return kind.sizeInBytes(referenceSize, wordSize);
     }
 
     /**

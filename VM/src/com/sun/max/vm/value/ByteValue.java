@@ -105,7 +105,7 @@ public final class ByteValue extends PrimitiveValue<ByteValue> {
 
     @Override
     public Byte asBoxedJavaValue() {
-        return new Byte(value);
+        return Byte.valueOf(value);
     }
 
     @Override

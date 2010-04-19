@@ -112,7 +112,7 @@ public class Intrinsics extends IntrinsifierClient {
             case READ_PC            :
             case FLUSHW             :
             case ALLOCA             :
-            case STACKADDR          :
+            case LSA                :
             case JNICALL            :
             case CALL               :
             case ICMP               :
