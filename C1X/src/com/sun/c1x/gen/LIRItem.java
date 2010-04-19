@@ -20,43 +20,76 @@
  */
 package com.sun.c1x.gen;
 
-import static com.sun.cri.ci.CiValue.*;
-
 import com.sun.c1x.alloc.OperandPool.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
+ * A helper utility for loading the {@linkplain Value#operand() result}
+ * of an instruction for use by another instruction. This helper takes
+ * into account the specifics of the consuming instruction such as whether
+ * it requires the input operand to be in memory or a register, any
+ * register size requirements of the input operand, and whether the
+ * usage has the side-effect of overwriting the input operand. To satisfy
+ * these constraints, an intermediate operand may be created and move
+ * instruction inserted to copy the output of the producer instruction
+ * into the intermediate operand.
+ *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
+ * @author Doug Simon
  */
 public class LIRItem {
 
-    public Value value;
+    /**
+     * The instruction whose usage by another instruction is being modeled by this object.
+     * An instruction {@code x} uses instruction {@code y} if the {@linkplain Value#operand() result}
+     * of {@code y} is an input operand of {@code x}.
+     */
+    public Value instruction;
+
+    /**
+     * The LIR context of this helper object.
+     */
     private final LIRGenerator gen;
-    private CiValue result;
-    private boolean destroysRegister;
-    private CiValue newResult;
+
+    /**
+     * The operand holding the result of this item's {@linkplain #instruction}.
+     */
+    private CiValue resultOperand;
+
+    /**
+     * Denotes if the use of the instruction's {@linkplain #resultOperand result operand}
+     * overwrites the value in the operand. That is, the use both uses and defines the
+     * operand. In this case, an {@linkplain #intermediateOperand intermediate operand}
+     * is created for the use so that other consumers of this item's {@linkplain #instruction}
+     * are not impacted.
+     */
+    private boolean destructive;
+
+    /**
+     * @see #destructive
+     */
+    private CiValue intermediateOperand;
 
     public LIRItem(Value value, LIRGenerator gen) {
         this.gen = gen;
         setInstruction(value);
     }
 
-    public void setInstruction(Value value) {
-        this.value = value;
-        this.result = IllegalValue;
-        if (value != null) {
-            gen.walk(value);
-            result = value.operand();
+    public void setInstruction(Value instruction) {
+        this.instruction = instruction;
+        if (instruction != null) {
+            resultOperand = gen.makeOperand(instruction);
+        } else {
+            resultOperand = CiValue.IllegalValue;
         }
-        newResult = IllegalValue;
+        intermediateOperand = CiValue.IllegalValue;
     }
 
     public LIRItem(LIRGenerator gen) {
         this.gen = gen;
-        result = IllegalValue;
         setInstruction(null);
     }
 
@@ -67,36 +100,42 @@ public class LIRItem {
         return kind;
     }
 
-    public LIRItem loadItemForce(CiValue reg) {
-        CiValue r = result();
-        if (r != reg) {
-            assert r.kind != CiKind.Illegal;
-            if (nonWordKind(r.kind) != nonWordKind(reg.kind)) {
+    /**
+     * Forces the result of this item's {@linkplain #instruction} to be available in a given operand,
+     * inserting move instructions if necessary.
+     *
+     * @param instruction an instruction that produces a {@linkplain Value#operand() result}
+     * @param operand the operand in which the result of {@code instruction} must be available
+     * @return {@code operand}
+     */
+    public void loadItemForce(CiValue operand) {
+        CiValue result = result();
+        if (result != operand) {
+            assert result.kind != CiKind.Illegal;
+            if (nonWordKind(result.kind) != nonWordKind(operand.kind)) {
                 // moves between different types need an intervening spill slot
-                CiValue tmp = gen.forceToSpill(r, reg.kind);
-                gen.lir.move(tmp, reg);
+                CiValue tmp = gen.forceToSpill(result, operand.kind, false);
+                gen.lir.move(tmp, operand);
             } else {
-                gen.lir.move(r, reg);
+                gen.lir.move(result, operand);
             }
-            result = reg;
+            resultOperand = operand;
         }
-        return this;
     }
 
-    public LIRItem loadItem(CiKind kind) {
+    public void loadItem(CiKind kind) {
         if (kind == CiKind.Byte || kind == CiKind.Boolean) {
             loadByteItem();
         } else {
             loadItem();
         }
-        return this;
     }
 
     public void loadForStore(CiKind kind) {
-        if (gen.canStoreAsConstant(value, kind)) {
-            result = value.operand();
-            if (!result.isConstant()) {
-                result = value.asConstant();
+        if (gen.canStoreAsConstant(instruction, kind)) {
+            resultOperand = instruction.operand();
+            if (!resultOperand.isConstant()) {
+                resultOperand = instruction.asConstant();
             }
         } else if (kind == CiKind.Byte || kind == CiKind.Boolean) {
             loadByteItem();
@@ -106,28 +145,35 @@ public class LIRItem {
     }
 
     public CiValue result() {
-        assert !destroysRegister || (!result.isVariableOrRegister() || result.isVariable()) : "shouldn't use setDestroysRegister with physical registers";
-        if (destroysRegister && result.isVariableOrRegister()) {
-            if (newResult.isIllegal()) {
-                newResult = gen.newVariable(value.kind);
-                gen.lir.move(result, newResult);
+        assert !destructive || resultOperand.isVariable() : "shouldn't use setDestroysRegister with physical registers";
+        if (destructive && resultOperand.isVariable()) {
+            if (intermediateOperand.isIllegal()) {
+                intermediateOperand = gen.newVariable(instruction.kind);
+                gen.lir.move(resultOperand, intermediateOperand);
             }
-            return newResult;
+            return intermediateOperand;
         } else {
-            return result;
+            return resultOperand;
         }
     }
 
     public void setDestroysRegister() {
-        destroysRegister = true;
+        destructive = true;
     }
 
+    /**
+     * Determines if the operand is in a stack slot.
+     */
     public boolean isStack() {
-        return result.isStackSlot();
+        return resultOperand.isAddress() || resultOperand.isStackSlot();
     }
 
+    /**
+     * Determines if the operand is in a register or may be
+     * resolved to a register by the register allocator.
+     */
     public boolean isRegister() {
-        return result.isVariableOrRegister();
+        return resultOperand.isVariableOrRegister();
     }
 
     public void loadByteItem() {
@@ -135,12 +181,12 @@ public class LIRItem {
             loadItem();
             CiValue res = result();
 
-            if (!res.isVariable() || !gen.operands().mustBeByteRegister(res)) {
+            if (!res.isVariable() || !gen.operands.mustBeByteRegister(res)) {
                 // make sure that it is a byte register
-                assert !value.kind.isFloat() && !value.kind.isDouble() : "can't load floats in byte register";
-                CiValue reg = gen.operands().newVariable(CiKind.Byte, VariableFlag.MustBeByteRegister);
+                assert !instruction.kind.isFloat() && !instruction.kind.isDouble() : "can't load floats in byte register";
+                CiValue reg = gen.operands.newVariable(CiKind.Byte, VariableFlag.MustBeByteRegister);
                 gen.lir.move(res, reg);
-                result = reg;
+                resultOperand = reg;
             }
         } else if (gen.compilation.target.arch.isSPARC()) {
             loadItem();
@@ -151,19 +197,19 @@ public class LIRItem {
 
     public void loadNonconstant() {
         if (gen.compilation.target.arch.isX86()) {
-            CiValue r = value.operand();
+            CiValue r = instruction.operand();
             if (r.isConstant()) {
-                result = r;
+                resultOperand = r;
             } else {
                 loadItem();
             }
         } else if (gen.compilation.target.arch.isSPARC()) {
-            CiValue r = value.operand();
-            if (gen.canInlineAsConstant(value)) {
+            CiValue r = instruction.operand();
+            if (gen.canInlineAsConstant(instruction)) {
                 if (!r.isConstant()) {
-                    r = value.asConstant();
+                    r = instruction.asConstant();
                 }
-                result = r;
+                resultOperand = r;
             } else {
                 loadItem();
             }
@@ -173,37 +219,41 @@ public class LIRItem {
     }
 
     void setResult(CiVariable operand) {
-        assert value.operand().isIllegal() || value.operand().isConstant() : "operand should never change";
-        value.setOperand(operand);
-        gen.operands().recordResult(operand, value);
-        result = operand;
+        assert instruction.operand().isIllegal() || instruction.operand().isConstant() : "operand should never change";
+        instruction.setOperand(operand);
+        gen.operands.recordResult(operand, instruction);
+        resultOperand = operand;
     }
 
-    public LIRItem loadItem() {
+    /**
+     * Creates an operand containing the result of {@linkplain #instruction input instruction}.
+     */
+    public void loadItem() {
         if (result().isIllegal()) {
-            // update the items result
-            result = value.operand();
+            // update the item's result
+            resultOperand = instruction.operand();
         }
-        if (!result().isVariableOrRegister()) {
-            CiVariable operand = gen.newVariable(value.kind);
-            gen.lir.move(result(), operand);
-            if (result().isConstant()) {
-                result = operand;
+        CiValue result = result();
+        if (!result.isVariableOrRegister()) {
+            CiVariable operand;
+            operand = gen.newVariable(instruction.kind);
+            gen.lir.move(result, operand);
+            if (result.isConstant()) {
+                resultOperand = operand;
             } else {
                 setResult(operand);
             }
         }
-        return this;
     }
 
     public int asInt() {
-        assert value instanceof Constant : "must be a constant";
-        return value.asConstant().asInt();
+        assert instruction instanceof Constant : "must be a constant";
+        return instruction.asConstant().asInt();
     }
 
     public long asLong() {
-        assert value instanceof Constant : "must be a constant";
-        return value.asConstant().asLong();
+        assert instruction instanceof Constant : "must be a constant";
+        return instruction.asConstant().asLong();
     }
 
     @Override

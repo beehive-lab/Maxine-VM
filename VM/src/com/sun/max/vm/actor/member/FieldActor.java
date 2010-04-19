@@ -176,6 +176,11 @@ public class FieldActor extends MemberActor {
         return javaField;
     }
 
+    @Override
+    public String toString() {
+        return format("%H.%n");
+    }
+
     public Pointer pointer(Object object) {
         if (isStatic()) {
             return Pointer.zero();

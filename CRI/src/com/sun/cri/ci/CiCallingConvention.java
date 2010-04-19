@@ -18,49 +18,50 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.cri.ci;
 
-import com.sun.cri.ci.*;
 
 /**
- * This class represents a calling convention instance for a particular method invocation and describes the ABI for
- * outgoing arguments and the return value, both runtime calls and Java calls.
+ * A calling convention describes the locations in which the arguments for a call are placed.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
+ * @author Doug Simon
  */
-public class CallingConvention {
+public class CiCallingConvention {
 
-    public final int overflowArgumentSize;
+    /**
+     * The amount of stack space (in bytes) required for the call.
+     */
+    public final int stackSize;
+
+    /**
+     * The locations in which the arguments are placed. This array ordered by argument index.
+     */
     public final CiValue[] locations;
-    public final CiValue[] operands;
 
-    CallingConvention(CiValue[] locations, CiTarget target) {
+    public CiCallingConvention(CiValue[] locations, int stackSize) {
         this.locations = locations;
-        this.operands = new CiValue[locations.length];
-        int outgoing = 0;
-        for (int i = 0; i < locations.length; i++) {
-            CiValue l = locations[i];
-            operands[i] = l;
-            if (l.isAddress()) {
-                CiAddress s = (CiAddress) l;
-                int spillSize = target.spillSlotSize * target.spillSlots(l.kind);
-                outgoing = Math.max(outgoing, s.displacement + spillSize);
-            }
-        }
-
-        overflowArgumentSize = outgoing;
+        this.stackSize = stackSize;
+        assert verify();
     }
 
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
         result.append("CallingConvention[");
-        for (CiValue op : operands) {
+        for (CiValue op : locations) {
             result.append(op.toString()).append(" ");
         }
         result.append("]");
         return result.toString();
     }
 
+    private boolean verify() {
+        for (int i = 0; i < locations.length; i++) {
+            CiValue location = locations[i];
+            assert location.isStackSlot() || location.isRegister();
+        }
+        return true;
+    }
 }

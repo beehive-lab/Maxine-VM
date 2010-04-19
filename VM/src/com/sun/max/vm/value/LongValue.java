@@ -114,7 +114,7 @@ public final class LongValue extends PrimitiveValue<LongValue> {
 
     @Override
     public Long asBoxedJavaValue() {
-        return new Long(value);
+        return Long.valueOf(value);
     }
 
     @Override

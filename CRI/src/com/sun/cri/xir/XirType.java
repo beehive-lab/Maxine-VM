@@ -63,7 +63,7 @@ public enum XirType {
                 throw new Error("invalid target reference size");
             case Jsr:
             case Word:
-                switch (target.arch.wordSize) {
+                switch (target.wordSize) {
                     case 1: return I8;
                     case 2: return I16;
                     case 4: return I32;

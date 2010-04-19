@@ -738,7 +738,7 @@ public class InstructionPrinter extends ValueVisitor {
             }
             out.print(arguments[i]);
         }
-        out.println(')');
+        out.print(')');
     }
 
     @Override
@@ -771,5 +771,15 @@ public class InstructionPrinter extends ValueVisitor {
     @Override
     public void visitUnsafeCast(UnsafeCast i) {
         out.print("unsafe_cast ").print(i.value());
+    }
+
+    @Override
+    public void visitLoadStackAddress(LoadStackAddress i) {
+        out.print("&(").print(i.value()).print(")");
+    }
+
+    @Override
+    public void visitPause(Pause i) {
+        out.print("pause");
     }
 }

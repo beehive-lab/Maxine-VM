@@ -23,7 +23,6 @@ package com.sun.max.vm.cps.b.c;
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -33,7 +32,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.CreateArraySnippet.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
@@ -806,57 +804,15 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     @Override
     public void visit(CallNative operator) {
-        final ClassMethodActor classMethodActor = operator.classMethodActor();
-        final boolean isCFunction = classMethodActor.isCFunction();
-
-
-
-        final CirSnippet linkNativeMethod = CirSnippet.get(LinkNativeMethod.SNIPPET);
-        final CirSnippet nativeCallPrologue = CirSnippet.get(NativeCallPrologue.SNIPPET);
-        final CirSnippet nativeCallPrologueForC = CirSnippet.get(NativeCallPrologueForC.SNIPPET);
-        final CirSnippet nativeCallEpilogue = CirSnippet.get(NativeCallEpilogue.SNIPPET);
-        final CirSnippet nativeCallEpilogueForC = CirSnippet.get(NativeCallEpilogueForC.SNIPPET);
-
-        CirValue callEntryPoint;
-        if (MaxineVM.isHosted()) {
-            callEntryPoint = variableFactory().createTemporary(Kind.WORD);
-        } else {
-            callEntryPoint = new CirConstant(new WordValue(classMethodActor.nativeFunction.link()));
-        }
-
-        CirCall call;
-
-        assert cc() instanceof CirContinuation;
-        final CirContinuation cc = (CirContinuation) cc();
-        final CirCall ccBody = cc.body();
-
-        if (!isCFunction) {
-            call = call(nativeCallEpilogue, cont(ccBody), ce());
-        } else {
-            call = call(nativeCallEpilogueForC, cont(ccBody), ce());
-        }
-
-        cc.setBody(call);
-        call = call(callEntryPoint, arguments);
+        int callEntryPointIndex = arguments.length - 3;
+        final CirValue callEntryPoint = arguments[callEntryPointIndex];
+        CirValue[] newArguments = CirCall.newArguments(arguments.length - 1);
+        System.arraycopy(arguments, 0, newArguments, 0, callEntryPointIndex);
+        newArguments[newArguments.length - 1] = arguments[arguments.length - 1];
+        newArguments[newArguments.length - 2] = arguments[arguments.length - 2];
+        CirCall call = call(callEntryPoint, newArguments);
         call.setIsNative();
-
-        if (!isCFunction) {
-            call = call(nativeCallPrologue, cont(call), ce());
-        } else {
-            call = call(nativeCallPrologueForC, cont(call), ce());
-        }
-
-        if (callEntryPoint instanceof CirConstant) {
-            set(call);
-        } else {
-            set(call(
-                linkNativeMethod,
-                CirConstant.fromObject(classMethodActor),
-                cont(
-                    (CirVariable) callEntryPoint,
-                    call),
-                    ce()));
-        }
+        set(call);
     }
 
     @Override

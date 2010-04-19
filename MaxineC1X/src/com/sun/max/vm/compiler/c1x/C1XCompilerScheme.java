@@ -95,8 +95,9 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
                 TargetABI<?, ?> targetABI = configuration.targetABIsScheme().optimizedJavaABI;
 
-                c1xTarget = new CiTarget(arch, config, configuration.platform.pageSize, true);
-                c1xTarget.stackAlignment = targetABI.stackFrameAlignment;
+                int wordSize = arch.wordSize;
+
+                c1xTarget = new CiTarget(arch, config, true, wordSize, wordSize, wordSize, targetABI.stackFrameAlignment, configuration.platform.pageSize, wordSize, wordSize, 16);
                 c1xXirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
                 c1xCompiler = new C1XCompiler(c1xRuntime, c1xTarget, c1xXirGenerator);
                 c1xCompiler.init();

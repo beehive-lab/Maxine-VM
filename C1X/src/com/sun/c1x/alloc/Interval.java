@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.alloc;
 
-import static com.sun.c1x.util.Util.*;
-
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -31,41 +29,208 @@ import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
- * Represents an interval in the linear scan register allocator.
+ * Represents an interval in the {@linkplain LinearScan linear scan register allocator}.
+ *
  * @author Thomas Wuerthinger
+ * @author Doug Simon
  */
 public final class Interval {
 
     /**
-     * Constants denoting the register usage requirement for an interval.
-     * The constants are declared in increasing order of priority.
+     * A pair of intervals.
      */
-    enum UseKind {
-        NoUse,
-        LoopEndMarker,
-        ShouldHaveRegister,
-        MustHaveRegister;
-
-        public static final UseKind[] VALUES = values();
+    static class Pair {
+        public final Interval first;
+        public final Interval second;
+        public Pair(Interval first, Interval second) {
+            this.first = first;
+            this.second = second;
+        }
     }
 
     /**
-     * Constants denoting the constraints of an interval with respect to
-     * whether its location is bound to a fixed register or not. This models
-     * any platform dependencies on register usage for certain instructions.
+     * A set of interval lists, one per {@linkplain RegisterBinding binding} type.
      */
-    enum IntervalKind {
+    static class RegisterBindingLists {
+
         /**
-         * Interval has a specific register assigned to it by the platform dependent backend.
+         * List of intervals whose binding is currently {@link RegisterBinding#Fixed}.
+         */
+        public Interval fixed;
+
+        /**
+         * List of intervals whose binding is currently {@link RegisterBinding#Any}.
+         */
+        public Interval any;
+
+        public RegisterBindingLists(Interval fixed, Interval any) {
+            this.fixed = fixed;
+            this.any = any;
+        }
+
+        /**
+         * Gets the list for a specified binding.
+         *
+         * @param binding specifies the list to be returned
+         * @return the list of intervals whose binding is {@code binding}
+         */
+        public Interval get(RegisterBinding binding) {
+            if (binding == RegisterBinding.Any) {
+                return any;
+            }
+            assert binding == RegisterBinding.Fixed;
+            return fixed;
+        }
+
+        /**
+         * Sets the list for a specified binding.
+         *
+         * @param binding specifies the list to be replaced
+         * @param a list of intervals whose binding is {@code binding}
+         */
+        public void set(RegisterBinding binding, Interval list) {
+            assert list != null;
+            if (binding == RegisterBinding.Any) {
+                any = list;
+            } else {
+                assert binding == RegisterBinding.Fixed;
+                fixed = list;
+            }
+        }
+
+        /**
+         * Adds an interval to a list sorted by {@linkplain Interval#currentFrom() current from} positions.
+         *
+         * @param binding specifies the list to be updated
+         * @param interval the interval to add
+         */
+        public void addToListSortedByCurrentFromPositions(RegisterBinding binding, Interval interval) {
+            Interval list = get(binding);
+            Interval prev = null;
+            Interval cur = list;
+            while (cur.currentFrom() < interval.currentFrom()) {
+                prev = cur;
+                cur = cur.next;
+            }
+            Interval result = list;
+            if (prev == null) {
+                // add to head of list
+                result = interval;
+            } else {
+                // add before 'cur'
+                prev.next = interval;
+            }
+            interval.next = cur;
+            set(binding, result);
+        }
+
+        /**
+         * Adds an interval to a list sorted by {@linkplain Interval#from() start} positions and
+         * {@linkplain Interval#firstUsage(RegisterPriority) first usage} positions.
+         *
+         * @param binding specifies the list to be updated
+         * @param interval the interval to add
+         */
+        public void addToListSortedByStartAndUsePositions(RegisterBinding binding, Interval interval) {
+            Interval list = get(binding);
+            Interval prev = null;
+            Interval cur = list;
+            while (cur.from() < interval.from() || (cur.from() == interval.from() && cur.firstUsage(RegisterPriority.None) < interval.firstUsage(RegisterPriority.None))) {
+                prev = cur;
+                cur = cur.next;
+            }
+            if (prev == null) {
+                list = interval;
+            } else {
+                prev.next = interval;
+            }
+            interval.next = cur;
+            set(binding, list);
+        }
+
+        /**
+         * Removes an interval from a list.
+         *
+         * @param binding specifies the list to be updated
+         * @param interval the interval to remove
+         */
+        public void remove(RegisterBinding binding, Interval i) {
+            Interval list = get(binding);
+            Interval prev = null;
+            Interval cur = list;
+            while (cur != i) {
+                assert cur != null && cur != Interval.EndMarker : "interval has not been found in list: " + i;
+                prev = cur;
+                cur = cur.next;
+            }
+            if (prev == null) {
+                set(binding, cur.next);
+            } else {
+                prev.next = cur.next;
+            }
+        }
+    }
+
+    /**
+     * Constants denoting the register usage priority for an interval.
+     * The constants are declared in increasing order of priority are
+     * are used to optimize spilling when multiple overlapping intervals
+     * compete for limited registers.
+     */
+    enum RegisterPriority {
+        /**
+         * No special reason for an interval to be allocated a register.
+         */
+        None,
+
+        /**
+         * Priority level for intervals live at the end of a loop.
+         */
+        LiveAtLoopEnd,
+
+        /**
+         * Priority level for intervals that should be allocated to a register.
+         */
+        ShouldHaveRegister,
+
+        /**
+         * Priority level for intervals that must be allocated to a register.
+         */
+        MustHaveRegister;
+
+        public static final RegisterPriority[] VALUES = values();
+
+        /**
+         * Determines if this priority is higher than or equal to a given priority.
+         */
+        public boolean greaterEqual(RegisterPriority other) {
+            return ordinal() >= other.ordinal();
+        }
+
+        /**
+         * Determines if this priority is lower than a given priority.
+         */
+        public boolean lessThan(RegisterPriority other) {
+            return ordinal() < other.ordinal();
+        }
+    }
+
+    /**
+     * Constants denoting whether an interval is bound to a specific register. This models
+     * platform dependencies on register usage for certain instructions.
+     */
+    enum RegisterBinding {
+        /**
+         * Interval is bound to a specific register as required by the platform.
          */
         Fixed,
 
         /**
-         * Interval has no specific register or memory address assigned to it by the platform dependent backend.
+         * Interval has no specific register requirements.
          */
         Any;
 
-        public static final IntervalKind[] VALUES = values();
+        public static final RegisterBinding[] VALUES = values();
     }
 
     /**
@@ -135,6 +300,104 @@ public final class Interval {
     }
 
     /**
+     * List of use positions. Each entry in the list records the use position and register
+     * priority associated with the use position. The entries in the list are in descending
+     * order of use position.
+     *
+     * @author Doug Simon
+     */
+    static final class UsePosList {
+        private IntList list;
+
+        /**
+         * Creates a use list.
+         *
+         * @param initialCapacity the initial capacity of the list in terms of entries
+         */
+        public UsePosList(int initialCapacity) {
+            list = new IntList(initialCapacity * 2);
+        }
+
+        private UsePosList(IntList list) {
+            this.list = list;
+        }
+
+        /**
+         * Splits this list around a given position. All entries in this list with a use position greater or equal than
+         * {@code splitPos} are removed from this list and added to the returned list.
+         *
+         * @param splitPos the position for the split
+         * @return a use position list containing all entries removed from this list that have a use position greater or equal
+         *         than {@code splitPos}
+         */
+        public UsePosList splitAt(int splitPos) {
+            int i = size() - 1;
+            int len = 0;
+            while (i >= 0 && usePos(i) < splitPos) {
+                --i;
+                len += 2;
+            }
+            int listSplitIndex = (i + 1) * 2;
+            IntList childList = list;
+            list = IntList.copy(this.list, listSplitIndex, len);
+            childList.setSize(listSplitIndex);
+            UsePosList child = new UsePosList(childList);
+            return child;
+        }
+
+        /**
+         * Gets the use position at a specified index in this list.
+         *
+         * @param index the index of the entry for which the use position is returned
+         * @return the use position of entry {@code index} in this list
+         */
+        public int usePos(int index) {
+            return list.get(index << 1);
+        }
+
+        /**
+         * Gets the register priority for the use position at a specified index in this list.
+         *
+         * @param index the index of the entry for which the register priority is returned
+         * @return the register priority of entry {@code index} in this list
+         */
+        public RegisterPriority registerPriority(int index) {
+            return RegisterPriority.VALUES[list.get((index << 1) + 1)];
+        }
+
+        public void add(int usePos, RegisterPriority registerPriority) {
+            assert list.size() == 0 || usePos(size() - 1) > usePos;
+            list.add(usePos);
+            list.add(registerPriority.ordinal());
+        }
+
+        public int size() {
+            return list.size() >> 1;
+        }
+
+        public void removeLowestUsePos() {
+            list.setSize(list.size() - 2);
+        }
+
+        public void setRegisterPriority(int index, RegisterPriority registerPriority) {
+            list.set(index * 2, registerPriority.ordinal());
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder buf = new StringBuilder("[");
+            for (int i = size() - 1; i >= 0; --i) {
+                if (buf.length() != 1) {
+                    buf.append(", ");
+                }
+                RegisterPriority prio = registerPriority(i);
+                buf.append(usePos(i)).append(" -> ").append(prio.ordinal()).append(':').append(prio);
+            }
+            return buf.append("]").toString();
+        }
+    }
+
+    /**
      * The {@linkplain CiRegisterValue register} or {@linkplain CiVariable variable} for this interval prior to register allocation.
      */
     public final CiValue operand;
@@ -152,7 +415,7 @@ public final class Interval {
     /**
      * The stack slot to which all splits of this interval are spilled if necessary.
      */
-    private CiStackSlot canonicalSpillSlot;
+    private CiStackSlot spillSlot;
 
     /**
      * The kind of this interval.
@@ -166,9 +429,9 @@ public final class Interval {
     private Range first;
 
     /**
-     * List of (use-positions, use-kinds) pairs, sorted by use-positions.
+     * List of (use-positions, register-priorities) pairs, sorted by use-positions.
      */
-    private List<Integer> usePosAndKinds;
+    private UsePosList usePosList;
 
     /**
      * Iterator used to traverse the ranges of an interval.
@@ -272,7 +535,7 @@ public final class Interval {
     }
 
     int numUsePositions() {
-        return usePosAndKinds.size() / 2;
+        return usePosList.size();
     }
 
     void setLocationHint(Interval interval) {
@@ -298,13 +561,13 @@ public final class Interval {
     /**
      * Gets the canonical spill slot for this interval.
      */
-    CiStackSlot canonicalSpillSlot() {
-        return splitParent().canonicalSpillSlot;
+    CiStackSlot spillSlot() {
+        return splitParent().spillSlot;
     }
 
-    void setCanonicalSpillSlot(CiStackSlot slot) {
-        assert splitParent().canonicalSpillSlot == null : "overwriting existing value";
-        splitParent().canonicalSpillSlot = slot;
+    void setSpillSlot(CiStackSlot slot) {
+        assert splitParent().spillSlot == null : "connot overwrite existing spill slot";
+        splitParent().spillSlot = slot;
     }
 
     Interval currentSplitChild() {
@@ -348,7 +611,7 @@ public final class Interval {
     }
 
     void removeFirstUsePos() {
-        Util.truncate(usePosAndKinds, usePosAndKinds.size() - 2);
+        usePosList.removeLowestUsePos();
     }
 
     // test intersection
@@ -402,10 +665,12 @@ public final class Interval {
         this.operandNumber = operandNumber;
         if (operand.isRegister()) {
             location = operand;
+        } else {
+            assert operand.isIllegal() || operand.isVariable();
         }
         this.kind = CiKind.Illegal;
         this.first = Range.EndMarker;
-        this.usePosAndKinds = new ArrayList<Integer>(12);
+        this.usePosList = new UsePosList(6);
         this.current = Range.EndMarker;
         this.next = EndMarker;
         this.cachedTo = -1;
@@ -435,7 +700,7 @@ public final class Interval {
 
                 assert i1.splitParent() == this : "not a split child of this interval";
                 assert i1.kind() == kind() : "must be equal for all split children";
-                assert i1.canonicalSpillSlot() == canonicalSpillSlot() : "must be equal for all split children";
+                assert i1.spillSlot() == spillSlot() : "must be equal for all split children";
 
                 for (int j = i + 1; j < splitChildren.size(); j++) {
                     Interval i2 = splitChildren.get(j);
@@ -586,78 +851,80 @@ public final class Interval {
     }
 
     // Note: use positions are sorted descending . first use has highest index
-    int firstUsage(UseKind minUseKind) {
-        assert isVariable() : "cannot access use positions for fixed intervals";
+    int firstUsage(RegisterPriority minRegisterPriority) {
+        assert operand.isVariable() : "cannot access use positions for fixed intervals";
 
-        for (int i = usePosAndKinds.size() - 2; i >= 0; i -= 2) {
-            if (usePosAndKinds.get(i + 1) >= minUseKind.ordinal()) {
-                return usePosAndKinds.get(i);
+        for (int i = usePosList.size() - 1; i >= 0; --i) {
+            RegisterPriority registerPriority = usePosList.registerPriority(i);
+            if (registerPriority.greaterEqual(minRegisterPriority)) {
+                return usePosList.usePos(i);
             }
         }
         return Integer.MAX_VALUE;
     }
 
-    int nextUsage(UseKind minUseKind, int from) {
-        assert isVariable() : "cannot access use positions for fixed intervals";
+    int nextUsage(RegisterPriority minRegisterPriority, int from) {
+        assert operand.isVariable() : "cannot access use positions for fixed intervals";
 
-        for (int i = usePosAndKinds.size() - 2; i >= 0; i -= 2) {
-            if (usePosAndKinds.get(i) >= from && usePosAndKinds.get(i + 1) >= minUseKind.ordinal()) {
-                return usePosAndKinds.get(i);
+        for (int i = usePosList.size() - 1; i >= 0; --i) {
+            int usePos = usePosList.usePos(i);
+            if (usePos >= from && usePosList.registerPriority(i).greaterEqual(minRegisterPriority)) {
+                return usePos;
             }
         }
         return Integer.MAX_VALUE;
     }
 
-    int nextUsageExact(UseKind exactUseKind, int from) {
-        assert isVariable() : "cannot access use positions for fixed intervals";
+    int nextUsageExact(RegisterPriority exactRegisterPriority, int from) {
+        assert operand.isVariable() : "cannot access use positions for fixed intervals";
 
-        for (int i = usePosAndKinds.size() - 2; i >= 0; i -= 2) {
-            if (usePosAndKinds.get(i) >= from && usePosAndKinds.get(i + 1) == exactUseKind.ordinal()) {
-                return usePosAndKinds.get(i);
+        for (int i = usePosList.size() - 1; i >= 0; --i) {
+            int usePos = usePosList.usePos(i);
+            if (usePos >= from && usePosList.registerPriority(i) == exactRegisterPriority) {
+                return usePos;
             }
         }
         return Integer.MAX_VALUE;
     }
 
-    int previousUsage(UseKind minUseKind, int from) {
-        assert isVariable() : "cannot access use positions for fixed intervals";
+    int previousUsage(RegisterPriority minRegisterPriority, int from) {
+        assert operand.isVariable() : "cannot access use positions for fixed intervals";
 
         int prev = 0;
-        for (int i = usePosAndKinds.size() - 2; i >= 0; i -= 2) {
-            if (usePosAndKinds.get(i) > from) {
+        for (int i = usePosList.size() - 1; i >= 0; --i) {
+            int usePos = usePosList.usePos(i);
+            if (usePos > from) {
                 return prev;
             }
-            if (usePosAndKinds.get(i + 1) >= minUseKind.ordinal()) {
-                prev = usePosAndKinds.get(i);
+            if (usePosList.registerPriority(i).greaterEqual(minRegisterPriority)) {
+                prev = usePos;
             }
         }
         return prev;
     }
 
-    void addUsePos(int pos, UseKind useKind) {
+    void addUsePos(int pos, RegisterPriority registerPriority) {
         assert covers(pos, LIRInstruction.OperandMode.InputMode) : "use position not covered by live range";
 
         // do not add use positions for precolored intervals because they are never used
-        if (useKind != UseKind.NoUse && operand.isVariable()) {
+        if (registerPriority != RegisterPriority.None && operand.isVariable()) {
             if (C1XOptions.DetailedAsserts) {
-                assert Util.isEven(usePosAndKinds.size()) : "must be even";
-                for (int i = 0; i < usePosAndKinds.size(); i += 2) {
-                    assert pos <= usePosAndKinds.get(i) : "already added a use-position with lower position";
+                for (int i = 0; i < usePosList.size(); i++) {
+                    assert pos <= usePosList.usePos(i) : "already added a use-position with lower position";
                     if (i > 0) {
-                        assert usePosAndKinds.get(i) < usePosAndKinds.get(i - 2) : "not sorted descending";
+                        assert usePosList.usePos(i) < usePosList.usePos(i - 1) : "not sorted descending";
                     }
                 }
             }
 
             // Note: addUse is called in descending order, so list gets sorted
             // automatically by just appending new use positions
-            int len = usePosAndKinds.size();
-            if (len == 0 || usePosAndKinds.get(len - 2) > pos) {
-                usePosAndKinds.add(pos);
-                usePosAndKinds.add(useKind.ordinal());
-            } else if (usePosAndKinds.get(len - 1) < useKind.ordinal()) {
-                assert usePosAndKinds.get(len - 2) == pos : "list not sorted correctly";
-                usePosAndKinds.set(len - 1, useKind.ordinal());
+            int len = usePosList.size();
+            if (len == 0 || usePosList.usePos(len - 1) > pos) {
+                usePosList.add(pos, registerPriority);
+            } else if (usePosList.registerPriority(len - 1).lessThan(registerPriority)) {
+                assert usePosList.usePos(len - 1) == pos : "list not sorted correctly";
+                usePosList.setRegisterPriority(len - 1, registerPriority);
             }
         }
     }
@@ -699,18 +966,22 @@ public final class Interval {
         return result;
     }
 
-    // split this interval at the specified position and return
-    // the remainder as a new interval.
-    //
-    // when an interval is split, a bi-directional link is established between the original interval
-    // (the split parent) and the intervals that are split off this interval (the split children)
-    // When a split child is split again, the new created interval is also a direct child
-    // of the original parent (there is no tree of split children stored, but a flat list)
-    // All split children are spilled to the same stack slot (stored in canonicalSpillSlot)
-    //
-    // Note: The new interval has no valid regNum
+    /**
+     * Splits this interval at a specified position and returns the remainder as a new <i>child</i> interval
+     * of this interval's {@linkplain #splitParent() parent} interval.
+     * <p>
+     * When an interval is split, a bi-directional link is established between the original <i>parent</i>
+     * interval and the <i>children</i> intervals that are split off this interval.
+     * When a split child is split again, the new created interval is a direct child
+     * of the original parent. That is, there is no tree of split children stored, just a flat list.
+     * All split children are spilled to the same {@linkplain #spillSlot spill slot}.
+     *
+     * @param splitPos the position at which to split this interval
+     * @param allocator the register allocator context
+     * @return the child interval split off from this interval
+     */
     Interval split(int splitPos, LinearScan allocator) {
-        assert isVariable() : "cannot split fixed intervals";
+        assert operand.isVariable() : "cannot split fixed intervals";
 
         // allocate new interval
         Interval result = newSplitChild(allocator);
@@ -738,57 +1009,35 @@ public final class Interval {
         cachedTo = -1; // clear cached value
 
         // split list of use positions
-        int totalLen = usePosAndKinds.size();
-        int startIdx = totalLen - 2;
-        while (startIdx >= 0 && usePosAndKinds.get(startIdx) < splitPos) {
-            startIdx -= 2;
+        result.usePosList = usePosList.splitAt(splitPos);
+
+        if (C1XOptions.DetailedAsserts) {
+            for (int i = 0; i < usePosList.size(); i++) {
+                assert usePosList.usePos(i) < splitPos;
+            }
+            for (int i = 0; i < result.usePosList.size(); i++) {
+                assert result.usePosList.usePos(i) >= splitPos;
+            }
         }
-
-        List<Integer> newUsePosAndKinds = new ArrayList<Integer>(totalLen - startIdx);
-        int i;
-        for (i = startIdx + 2; i < totalLen; i++) {
-            newUsePosAndKinds.add(usePosAndKinds.get(i));
-        }
-
-        Util.truncate(usePosAndKinds, startIdx + 2);
-        result.usePosAndKinds = usePosAndKinds;
-        usePosAndKinds = newUsePosAndKinds;
-
-        assert usePosAndKinds.size() % 2 == 0 : "must have use kind for each use pos";
-        assert result.usePosAndKinds.size() % 2 == 0 : "must have use kind for each use pos";
-        assert usePosAndKinds.size() + result.usePosAndKinds.size() == totalLen : "missed some entries";
-
-        for (i = 0; i < usePosAndKinds.size(); i += 2) {
-            assert usePosAndKinds.get(i) < splitPos : "must be";
-            assert usePosAndKinds.get(i + 1) >= 0 && usePosAndKinds.get(i + 1) < UseKind.VALUES.length : "invalid use kind";
-        }
-        for (i = 0; i < result.usePosAndKinds.size(); i += 2) {
-            assert result.usePosAndKinds.get(i) >= splitPos : "must be";
-            assert result.usePosAndKinds.get(i + 1) >= 0 && result.usePosAndKinds.get(i + 1) < UseKind.VALUES.length : "invalid use kind";
-        }
-
         return result;
     }
 
-    boolean isVariable() {
-        return operand.isVariable();
-    }
-
-    // split this interval at the specified position and return
-    // the head as a new interval (the original interval is the tail)
-    //
-    // Currently, only the first range can be split, and the new interval
-    // must not have split positions
+    /**
+     * Splits this interval at a specified position and returns
+     * the head as a new interval (this interval is the tail).
+     *
+     * Currently, only the first range can be split, and the new interval must not have split positions
+     */
     Interval splitFromStart(int splitPos, LinearScan allocator) {
-        assert isVariable() : "cannot split fixed intervals";
+        assert operand.isVariable() : "cannot split fixed intervals";
         assert splitPos > from() && splitPos < to() : "can only split inside interval";
         assert splitPos > first.from && splitPos <= first.to : "can only split inside first range";
-        assert firstUsage(UseKind.NoUse) > splitPos : "can not split when use positions are present";
+        assert firstUsage(RegisterPriority.None) > splitPos : "can not split when use positions are present";
 
         // allocate new interval
         Interval result = newSplitChild(allocator);
 
-        // the new created interval has only one range (checked by assert on above,
+        // the new interval has only one range (checked by assertion above,
         // so the splitting of the ranges is very simple
         result.addRange(first.from, splitPos);
 
@@ -901,12 +1150,11 @@ public final class Interval {
 
         // print use positions
         int prev = 0;
-        assert isEven(usePosAndKinds.size()) : "must be even";
-        for (int i = usePosAndKinds.size() - 2; i >= 0; i -= 2) {
-            assert prev < usePosAndKinds.get(i) : "use positions not sorted";
+        for (int i = usePosList.size() - 1; i >= 0; --i) {
+            assert prev < usePosList.usePos(i) : "use positions not sorted";
 
-            out.printf("%d %s ", usePosAndKinds.get(i), UseKind.VALUES[usePosAndKinds.get(i + 1)]);
-            prev = usePosAndKinds.get(i);
+            out.printf("%d %s ", usePosList.usePos(i), usePosList.registerPriority(i));
+            prev = usePosList.usePos(i);
         }
 
         out.printf(" \"%s\"", spillState());

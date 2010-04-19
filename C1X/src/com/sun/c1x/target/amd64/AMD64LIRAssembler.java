@@ -31,7 +31,6 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.FrameMap.*;
-import com.sun.c1x.lir.LIRCall.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.*;
 import com.sun.c1x.util.*;
@@ -65,7 +64,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
         masm = (AMD64MacroAssembler) compilation.masm();
         target = compilation.target;
-        wordSize = target.arch.wordSize;
+        wordSize = target.wordSize;
         rscratch1 = target.scratchRegister;
     }
 
@@ -101,12 +100,17 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
      */
     @Override
     protected void emitReadPC(CiValue resultOpr) {
-        masm.lea(resultOpr.asRegister(), CiAddress.Placeholder);
+        masm.leaq(resultOpr.asRegister(), CiAddress.Placeholder);
+    }
+
+    @Override
+    protected void emitPause() {
+        masm.pause();
     }
 
     @Override
     protected void emitStackAllocate(StackBlock stackBlock, CiValue resultOpr) {
-        masm.lea(resultOpr.asRegister(), compilation.frameMap().toStackAddress(stackBlock));
+        masm.leaq(resultOpr.asRegister(), compilation.frameMap().toStackAddress(stackBlock));
     }
 
     @Override
@@ -184,9 +188,10 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void const2stack(CiValue src, CiValue dest) {
+    protected void const2stack(CiValue src, CiValue dst) {
         assert src.isConstant();
-        assert dest.isStackSlot();
+        assert dst.isStackSlot();
+        CiStackSlot slot = (CiStackSlot) dst;
         CiConstant c = (CiConstant) src;
 
         switch (c.kind) {
@@ -194,11 +199,11 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             case Byte    :
             case Char    :
             case Short   :
-            case Int     : masm.movl(frameMap.toStackAddress(dest, 0), c.asInt()); break;
-            case Float   : masm.movl(frameMap.toStackAddress(dest, 0), floatToRawIntBits(c.asFloat())); break;
-            case Object  : masm.movoop(frameMap.toStackAddress(dest, 0), CiConstant.forObject(c.asObject())); break;
-            case Long    : masm.movptr(frameMap.toStackAddress(dest, 0), c.asLong()); break;
-            case Double  : masm.movptr(frameMap.toStackAddress(dest, 0), doubleToRawLongBits(c.asDouble())); break;
+            case Int     : masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
+            case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
+            case Object  : masm.movoop(frameMap.toStackAddress(slot), CiConstant.forObject(c.asObject())); break;
+            case Long    : masm.movptr(frameMap.toStackAddress(slot), c.asLong()); break;
+            case Double  : masm.movptr(frameMap.toStackAddress(slot), doubleToRawLongBits(c.asDouble())); break;
             default      : throw Util.shouldNotReachHere();
         }
     }
@@ -254,7 +259,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     protected void reg2stack(CiValue src, CiValue dst, CiKind kind) {
         assert src.isRegister();
         assert dst.isStackSlot();
-        CiAddress addr = frameMap.toStackAddress(dst, 0);
+        CiAddress addr = frameMap.toStackAddress(((CiStackSlot) dst));
 
         if (src.kind.isObject()) {
             masm.verifyOop(src.asRegister());
@@ -318,7 +323,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             masm.verifyOop(dest.asRegister());
         }
 
-        CiAddress addr = frameMap.toStackAddress(src, 0);
+        CiAddress addr = frameMap.toStackAddress(((CiStackSlot) src));
 
         switch (dest.kind) {
             case Boolean :
@@ -351,21 +356,21 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     protected void mem2stack(CiValue src, CiValue dest, CiKind kind) {
         if (dest.kind.isInt()) {
             masm.pushl(asAddress((CiAddress) src));
-            masm.popl(frameMap.toStackAddress(dest, 0));
+            masm.popl(frameMap.toStackAddress(((CiStackSlot) dest)));
         } else {
             masm.pushptr(asAddress((CiAddress) src));
-            masm.popptr(frameMap.toStackAddress(dest, 0));
+            masm.popptr(frameMap.toStackAddress(((CiStackSlot) dest)));
         }
     }
 
     @Override
     protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
         if (src.kind.isInt()) {
-            masm.pushl(frameMap.toStackAddress(src, 0));
-            masm.popl(frameMap.toStackAddress(dest, 0));
+            masm.pushl(frameMap.toStackAddress(((CiStackSlot) src)));
+            masm.popl(frameMap.toStackAddress(((CiStackSlot) dest)));
         } else {
-            masm.pushptr(frameMap.toStackAddress(src, 0));
-            masm.popptr(frameMap.toStackAddress(dest, 0));
+            masm.pushptr(frameMap.toStackAddress(((CiStackSlot) src)));
+            masm.popptr(frameMap.toStackAddress(((CiStackSlot) dest)));
         }
     }
 
@@ -700,10 +705,11 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 }
             } else {
                 assert other.isStackSlot();
+                CiStackSlot otherSlot = (CiStackSlot) other;
                 if (other.kind.isInt()) {
-                    masm.cmovl(ncond, result.asRegister(), frameMap.toStackAddress(other, 0));
+                    masm.cmovl(ncond, result.asRegister(), frameMap.toStackAddress(otherSlot));
                 } else {
-                    masm.cmovq(ncond, result.asRegister(), frameMap.toStackAddress(other, 0));
+                    masm.cmovq(ncond, result.asRegister(), frameMap.toStackAddress(otherSlot));
                 }
             }
 
@@ -774,7 +780,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 if (kind.isInt()) {
                     if (right.isStackSlot()) {
                         // register - stack
-                        CiAddress raddr = frameMap.toStackAddress(right, 0);
+                        CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                         switch (code) {
                             case Add : masm.addl(lreg, raddr); break;
                             case Sub : masm.subl(lreg, raddr); break;
@@ -795,7 +801,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     // register - stack/constant
                     CiAddress raddr;
                     if (right.isStackSlot()) {
-                        raddr = frameMap.toStackAddress(right, 0);
+                        raddr = frameMap.toStackAddress(((CiStackSlot) right));
                     } else {
                         assert right.isConstant();
                         raddr = masm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
@@ -811,7 +817,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                     // register - stack/constant
                     CiAddress raddr;
                     if (right.isStackSlot()) {
-                        raddr = frameMap.toStackAddress(right, 0);
+                        raddr = frameMap.toStackAddress(((CiStackSlot) right));
                     } else {
                         assert right.isConstant();
                         raddr = masm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
@@ -841,7 +847,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             assert kind.isInt();
             CiAddress laddr;
             if (left.isStackSlot()) {
-                laddr = frameMap.toStackAddress(left, 0);
+                laddr = frameMap.toStackAddress(((CiStackSlot) left));
             } else {
                 assert left.isAddress();
                 laddr = asAddress((CiAddress) left);
@@ -901,7 +907,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 }
             } else if (right.isStackSlot()) {
                 // added support for stack operands
-                CiAddress raddr = frameMap.toStackAddress(right, 0);
+                CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                 switch (code) {
                     case LogicAnd : masm.andl(reg, raddr); break;
                     case LogicOr  : masm.orl(reg, raddr); break;
@@ -1122,17 +1128,18 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 }
             } else if (opr2.isStackSlot()) {
                 // register - stack
+                CiStackSlot opr2Slot = (CiStackSlot) opr2;
                 switch (opr1.kind) {
                     case Boolean :
                     case Byte    :
                     case Char    :
                     case Short   :
-                    case Int     : masm.cmpl(reg1, frameMap.toStackAddress(opr2, 0)); break;
+                    case Int     : masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Long    :
                     case Word    :
-                    case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2, 0)); break;
-                    case Float   : masm.ucomiss(reg1, frameMap.toStackAddress(opr2, 0)); break;
-                    case Double  : masm.ucomisd(reg1, frameMap.toStackAddress(opr2, 0)); break;
+                    case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
+                    case Float   : masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot)); break;
+                    case Double  : masm.ucomisd(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     default      : throw Util.shouldNotReachHere();
                 }
             } else if (opr2.isConstant()) {
@@ -1263,15 +1270,14 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitNativeCall(NativeFunction nativeFunction, LIRDebugInfo info) {
+    protected void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress) {
         CiRegister reg = compilation.target.scratchRegister;
-        CiValue callAddress = nativeFunction.address;
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
             moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
-        masm.nativeCall(reg, nativeFunction.symbol, info);
+        masm.nativeCall(reg, symbol, info);
     }
 
     @Override
@@ -1384,9 +1390,9 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitLeal(CiAddress addr, CiValue dest) {
+    protected void emitLea(CiAddress addr, CiValue dest) {
         CiRegister reg = dest.asRegister();
-        masm.lea(reg, asAddress(addr));
+        masm.leaq(reg, asAddress(addr));
     }
 
     @Override
@@ -1406,7 +1412,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             if (dest.isRegister()) {
                 masm.movdq(dest.asRegister(), asXmmDoubleReg(src));
             } else if (dest.isStackSlot()) {
-                masm.movsd(frameMap.toStackAddress(dest, 0), asXmmDoubleReg(src));
+                masm.movsd(frameMap.toStackAddress(((CiStackSlot) dest)), asXmmDoubleReg(src));
             } else {
                 assert dest.isAddress();
                 masm.movsd(asAddress((CiAddress) dest), asXmmDoubleReg(src));
@@ -1414,7 +1420,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         } else {
             assert dest.kind.isDouble();
             if (src.isStackSlot()) {
-                masm.movdbl(asXmmDoubleReg(dest), frameMap.toStackAddress(src, 0));
+                masm.movdbl(asXmmDoubleReg(dest), frameMap.toStackAddress(((CiStackSlot) src)));
             } else {
                 assert src.isAddress();
                 masm.movdbl(asXmmDoubleReg(dest), asAddress((CiAddress) src));
@@ -1721,9 +1727,9 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                         signature[i] = inst.arguments[i].kind;
                     }
 
-                    CallingConvention cc = frameMap.runtimeCallingConvention(signature);
+                    CiCallingConvention cc = frameMap.runtimeCallingConvention(signature);
                     for (int i = 0; i < inst.arguments.length; i++) {
-                        CiValue argumentLocation = cc.operands[i];
+                        CiValue argumentLocation = cc.locations[i];
                         CiValue argumentSourceLocation = operands[inst.arguments[i].index];
                         if (argumentLocation != argumentSourceLocation) {
                             moveOp(argumentSourceLocation, argumentLocation, argumentLocation.kind, null, false);

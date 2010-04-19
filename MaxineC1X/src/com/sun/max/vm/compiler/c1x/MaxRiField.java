@@ -143,7 +143,7 @@ public class MaxRiField implements RiField {
             }
             Value v = fieldActor.constantValue();
             if (v != null) {
-                return CiConstant.get(MaxRiType.kindToCiKind(v.kind()), v.asBoxedJavaValue());
+                return MaxRiType.toCiConstant(v);
             }
             if (C1XOptions.CanonicalizeFinalFields) {
                 if (MaxineVM.isHosted()) {
@@ -151,7 +151,7 @@ public class MaxRiField implements RiField {
                 } else {
                     v = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));
                 }
-                return CiConstant.get(MaxRiType.kindToCiKind(v.kind()), v.asBoxedJavaValue());
+                return MaxRiType.toCiConstant(v);
             }
         }
         return null;

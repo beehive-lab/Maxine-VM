@@ -21,6 +21,7 @@
 package com.sun.max.vm.cps.b.c;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.JniOp.*;
 import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
@@ -1416,13 +1417,16 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         final CallNative op = new CallNative(constantPool, nativeFunctionDescriptorIndex, methodTranslation.classMethodActor());
         final SignatureDescriptor signatureDescriptor = op.signatureDescriptor();
         final int numberOfParameters = signatureDescriptor.numberOfParameters();
-        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 2);
+        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 3);
+        CirVariable callEntryPoint = pop(Kind.WORD);
+        arguments[numberOfParameters] = callEntryPoint;
         for (int i = numberOfParameters - 1; i >= 0; i--) {
             arguments[i] = stack.pop();
         }
 
         assert isUnsafe || areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
 
+        currentCall.setIsNative();
         completeInvocation(op, signatureDescriptor.resultKind(), arguments);
     }
 
@@ -1864,12 +1868,24 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                 break;
             }
             case JNICALL:                jnicall(operand); break;
+            case JNIOP: {
+                ClassMethodActor classMethodActor = methodTranslation.classMethodActor();
+                if (!classMethodActor.isNative()) {
+                    throw verifyError("Cannot use " + Bytecodes.nameOf(JNIOP) + " instruction in non-native method " + classMethodActor);
+                }
+                switch (operand) {
+                    case LINK: callAndPush(JavaOperator.LINK_OP, CirConstant.fromObject(classMethodActor)); break;
+                    case J2N:  callAndPush(classMethodActor.isCFunction() ? JavaOperator.J2NC_OP : JavaOperator.J2N_OP); break;
+                    case N2J:  callAndPush(classMethodActor.isCFunction() ? JavaOperator.N2JC_OP : JavaOperator.N2J_OP); break;
+                }
+                break;
+            }
 
 
             case READREG:                readreg(Role.VALUES.get(operand)); break;
             case WRITEREG:               writereg(Role.VALUES.get(operand)); break;
             case ALLOCA:                 stackCall(StackAllocate.BUILTIN); break;
-            case STACKADDR:              stackCall(MakeStackVariable.BUILTIN); break;
+            case LSA:                    stackCall(MakeStackVariable.BUILTIN); break;
             case SAFEPOINT:              stackCall(SafepointBuiltin.BUILTIN); break;
             case PAUSE:                  stackCall(Pause.BUILTIN); break;
             case ADD_SP:                 stackCall(AdjustJitStack.BUILTIN); break;

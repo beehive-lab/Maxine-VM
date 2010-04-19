@@ -73,12 +73,8 @@ public abstract class CiValue {
         return this instanceof CiVariable || this instanceof CiRegisterValue;
     }
 
-    protected Error illegalOperation(String operation) {
-        throw new InternalError("Cannot call " + operation + " on " + this);
-    }
-
     public CiRegister asRegister() {
-        throw illegalOperation("asRegister");
+        throw new InternalError("Not a register: " + this);
     }
 
     public final boolean isIllegal() {
@@ -89,6 +85,11 @@ public abstract class CiValue {
         return this != IllegalValue;
     }
 
+    /**
+     * Determines if this value represents a slot on a stack. These values are created
+     * by the register allocator for spill slots. They are also used to model method
+     * parameters passed on the stack according to a specific calling convention.
+     */
     public final boolean isStackSlot() {
         return this instanceof CiStackSlot;
     }

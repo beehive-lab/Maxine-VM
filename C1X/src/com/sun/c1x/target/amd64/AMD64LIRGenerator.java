@@ -52,16 +52,18 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     private static final CiValue LREM_OUT = AMD64.rdx.asValue(CiKind.Long);
     private static final CiValue LDIV_TMP = AMD64.rdx.asValue(CiKind.Long);
 
-    private static final CiValue LONG_0_64 = AMD64.rax.asValue(CiKind.Long);
 
-    private static final CiValue LONG_1_64 = AMD64.rbx.asValue(CiKind.Long);
+    /**
+     * The register in which MUL puts the result for 64-bit multiplication.
+     */
+    private static final CiValue LMUL_OUT = AMD64.rax.asValue(CiKind.Long);
 
     private static final CiValue SHIFT_COUNT_IN = AMD64.rcx.asValue(CiKind.Int);
     protected static final CiValue ILLEGAL = CiValue.IllegalValue;
 
     public AMD64LIRGenerator(C1XCompilation compilation) {
         super(compilation);
-        assert is32 || is64 : "unknown word size: " + compilation.target.arch.wordSize;
+        assert is32 || is64 : "unknown word size: " + compilation.target.wordSize;
         assert is32 != is64 : "can't be both 32 and 64 bit";
     }
 
@@ -155,7 +157,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         setResult(x, reg);
     }
 
-    public void visitArithmeticOpFPU(ArithmeticOp x) {
+    public void visitArithmeticOpFloat(ArithmeticOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         assert !left.isStack() || !right.isStack() : "can't both be memory operands";
@@ -232,10 +234,9 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             left.loadItem();
             right.loadItem();
 
-            CiValue reg = LONG_0_64;
-            arithmeticOpLong(opcode, reg, left.result(), right.result(), null);
+            arithmeticOpLong(opcode, LMUL_OUT, left.result(), right.result(), null);
             CiValue result = createResultVariable(x);
-            lir.move(reg, result);
+            lir.move(LMUL_OUT, result);
         } else {
             LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
@@ -276,7 +277,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             lir.move(resultReg, result);
         } else {
             // emit code for other integer operations
-
             LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
             LIRItem leftArg = left;
@@ -374,7 +374,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             left.loadItem();
             right.loadItem();
 
-            CiValue reg = LONG_0_64;
+            CiValue reg = LMUL_OUT;
             arithmeticOpLong(opcode, reg, left.result(), right.result(), null);
             CiValue result = createResultVariable(x);
             lir.move(reg, result);
@@ -403,7 +403,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         switch (x.kind) {
             case Float:
             case Double:
-                visitArithmeticOpFPU(x);
+                visitArithmeticOpFloat(x);
                 return;
             case Long:
                 visitArithmeticOpLong(x);
@@ -500,10 +500,10 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         LIRItem cmp = new LIRItem(x.argumentAt(2), this); // value to compare with field
         LIRItem val = new LIRItem(x.argumentAt(3), this); // replace field with val if matches cmp
 
-        assert obj.value.kind.isObject() : "invalid type";
+        assert obj.instruction.kind.isObject() : "invalid type";
 
-        assert cmp.value.kind == kind : "invalid type";
-        assert val.value.kind == kind : "invalid type";
+        assert cmp.instruction.kind == kind : "invalid type";
+        assert val.instruction.kind == kind : "invalid type";
 
         // get address of field
         obj.loadItem();
@@ -667,7 +667,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             CiAddress addr = new CiAddress(CiKind.Double, src, offset);
             CiValue tmp = newVariable(CiKind.Double);
             lir.load(addr, tmp, null);
-            CiValue spill = operands().newVariable(CiKind.Long, VariableFlag.MustStartInMemory);
+            CiValue spill = operands.newVariable(CiKind.Long, VariableFlag.MustStartInMemory);
             lir.move(tmp, spill);
             lir.move(spill, dst);
         } else {
@@ -681,7 +681,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         if (isVolatile && kind == CiKind.Long) {
             CiAddress addr = new CiAddress(CiKind.Double, src, offset);
             CiValue tmp = newVariable(CiKind.Double);
-            CiValue spill = operands().newVariable(CiKind.Double, VariableFlag.MustStartInMemory);
+            CiValue spill = operands.newVariable(CiKind.Double, VariableFlag.MustStartInMemory);
             lir.move(data, spill);
             lir.move(spill, tmp);
             lir.move(tmp, addr);
@@ -705,5 +705,4 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     protected CiValue osrBufferPointer() {
         return Util.nonFatalUnimplemented(null);
     }
-
 }
