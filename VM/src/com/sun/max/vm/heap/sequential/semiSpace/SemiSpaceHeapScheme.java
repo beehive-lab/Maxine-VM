@@ -995,14 +995,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             if (Heap.traceGCPhases()) {
                 Log.println("Verifying heap objects...");
             }
-            DebugHeap.verifyRegion(toSpace.description(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
+            DebugHeap.verifyRegion(toSpace.regionName(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
             if (Heap.traceGCPhases()) {
                 Log.println("Verifying code objects...");
             }
 
             CodeRegion codeRegion = Code.getCodeManager().getRuntimeCodeRegion();
             if (!codeRegion.size().isZero()) {
-                DebugHeap.verifyRegion(codeRegion.description(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, gripVerifier);
+                DebugHeap.verifyRegion(codeRegion.regionName(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, gripVerifier);
             }
 
         }
@@ -1021,7 +1021,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     private void zapRegion(MemoryRegion region, String when) {
         if (Heap.traceGCPhases()) {
             Log.print("Zapping region ");
-            Log.print(region.description());
+            Log.print(region.regionName());
             Log.print(' ');
             Log.println(when);
         }
@@ -1039,7 +1039,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     }
 
     private void logSpace(RuntimeMemoryRegion space) {
-        Log.print(space.description());
+        Log.print(space.regionName());
         Log.print(" start "); Log.print(space.start());
         Log.print(", end "); Log.print(space.end());
         Log.print(", size "); Log.print(space.size());

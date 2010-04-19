@@ -34,7 +34,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -197,7 +196,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         @Override
-        public MemoryRegion getMemoryRegion(int row) {
+        public MaxMemoryRegion getMemoryRegion(int row) {
             return teleObject.headerMemoryRegion(headerFields[row]);
         }
 

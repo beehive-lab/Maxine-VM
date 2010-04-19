@@ -102,13 +102,13 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     public TargetMethod(String description, TargetABI abi) {
         this.classMethodActor = null;
         this.abi = abi;
-        setDescription(description);
+        setRegionName(description);
     }
 
     public TargetMethod(ClassMethodActor classMethodActor, TargetABI abi) {
         this.classMethodActor = classMethodActor;
         this.abi = abi;
-        setDescription(classMethodActor.name.toString());
+        setRegionName(classMethodActor.name.toString());
     }
 
     public int registerRestoreEpilogueOffset() {
@@ -529,7 +529,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     @Override
     public final String toString() {
-        return (classMethodActor == null) ? description() : classMethodActor.format("%H.%n(%p)");
+        return (classMethodActor == null) ? regionName() : classMethodActor.format("%H.%n(%p)");
     }
 
     protected final void setABI(TargetABI abi) {
@@ -556,7 +556,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     }
 
     public String name() {
-        return description();
+        return regionName();
     }
 
     public final String traceToString() {

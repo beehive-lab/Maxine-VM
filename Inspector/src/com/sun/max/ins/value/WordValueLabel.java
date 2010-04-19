@@ -27,7 +27,6 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -812,7 +811,7 @@ public class WordValueLabel extends ValueLabel {
                 case DOUBLE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().contains(address)) {
+                    if (vm().findMemoryRegion(address) != null) {
                         action = actions().inspectMemoryWords(address);
                     }
                     break;
@@ -826,7 +825,7 @@ public class WordValueLabel extends ValueLabel {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
-            final MemoryRegion memoryRegion = vm().findMemoryRegion(address);
+            final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(address);
             if (memoryRegion != null) {
                 action = actions().selectMemoryRegion(memoryRegion);
             }
@@ -860,7 +859,7 @@ public class WordValueLabel extends ValueLabel {
                 case OBJECT_REFERENCE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().contains(address)) {
+                    if (vm().findMemoryRegion(address) != null) {
                         transferable = new InspectorTransferable.AddressTransferable(inspection(), address);
                     }
                     break;

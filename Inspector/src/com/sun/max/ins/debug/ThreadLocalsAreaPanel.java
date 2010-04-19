@@ -29,7 +29,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.runtime.*;
 
@@ -91,7 +90,7 @@ public final class ThreadLocalsAreaPanel extends InspectorPanel {
         public ThreadLocalsAreaHeaderPanel(Inspection inspection, MaxThreadLocalsArea threadLocalsArea) {
             super(inspection);
             addInspectorLabel(new TextLabel(inspection, "start: "));
-            final MemoryRegion memoryRegion = threadLocalsArea.memoryRegion();
+            final MaxMemoryRegion memoryRegion = threadLocalsArea.memoryRegion();
             addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, memoryRegion.start(), this));
             add(Box.createHorizontalGlue());
             addInspectorLabel(new TextLabel(inspection, "end: "));

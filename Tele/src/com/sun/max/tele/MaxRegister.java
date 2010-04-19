@@ -27,7 +27,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxRegister {
+public interface MaxRegister extends MaxEntity<MaxRegister> {
 
     /**
      * Gets the name of the register based on the platform specification.

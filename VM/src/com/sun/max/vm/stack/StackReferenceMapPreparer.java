@@ -605,7 +605,7 @@ public final class StackReferenceMapPreparer {
                 Log.print((refMap >>> i) & 1);
             }
             Log.print(", description = ");
-            Log.println(cursor.targetMethod().description());
+            Log.println(cursor.targetMethod().regionName());
             Log.unlock(lockDisabledSafepoints);
         }
         if (!inThisStack(cursor.sp())) {

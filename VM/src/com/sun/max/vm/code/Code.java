@@ -46,6 +46,10 @@ public final class Code {
 
     public static final VMBooleanXXOption traceAllocation = register(new VMBooleanXXOption("-XX:-TraceCodeAllocation", "Trace allocation from the code cache."), MaxineVM.Phase.STARTING);
 
+
+    /**
+     * Used by the Inspector to uniquely identify the special boot code region.
+     */
     @INSPECTED
     private static final String CODE_BOOT_NAME = "Code-Boot";
 

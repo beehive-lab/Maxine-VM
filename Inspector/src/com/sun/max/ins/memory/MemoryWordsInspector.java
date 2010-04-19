@@ -29,11 +29,9 @@ import javax.swing.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -193,7 +191,7 @@ public final class MemoryWordsInspector extends Inspector {
     private final InspectorButton cloneButton;
     private final MemoryWordsViewPreferences instanceViewPreferences;
 
-    private MemoryWordsInspector(Inspection inspection, final MemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryWordsViewPreferences instanceViewPreferences) {
+    private MemoryWordsInspector(Inspection inspection, final MaxMemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryWordsViewPreferences instanceViewPreferences) {
         super(inspection);
         assert viewMode != null;
 
@@ -215,7 +213,7 @@ public final class MemoryWordsInspector extends Inspector {
         final Address alignedStart = start.aligned(wordSize.toInt());
         start = (start.equals(alignedStart)) ? start : alignedStart.minus(wordSize);
         final int wordCount = wordsInRegion(memoryRegion);
-        this.originalMemoryWordRegion = new MemoryWordRegion(start, wordCount, wordSize);
+        this.originalMemoryWordRegion = new MemoryWordRegion(inspection.vm(), start, wordCount, wordSize);
         this.memoryWordRegion = originalMemoryWordRegion;
         this.originalOrigin = (origin == null) ? start : origin;
         this.originalRegionName = regionName;
@@ -247,7 +245,8 @@ public final class MemoryWordsInspector extends Inspector {
                 } else if (newWordCount != oldWordCount) {
                     // User model policy:  any adjustment to the region drops into generic word mode
                     clearViewMode();
-                    setMemoryRegion(new MemoryWordRegion(memoryRegion.start(), newWordCount, wordSize));
+                    final MaxVM vm = MemoryWordsInspector.this.vm();
+                    setMemoryRegion(new MemoryWordRegion(vm, memoryRegion.start(), newWordCount, wordSize));
                     setTitle();
                 }
             }
@@ -345,7 +344,7 @@ public final class MemoryWordsInspector extends Inspector {
      * Create a memory inspector for a designated region of memory, with the view
      * mode set to {@link ViewMode#WORD}.
      */
-    public MemoryWordsInspector(Inspection inspection, MemoryRegion memoryRegion) {
+    public MemoryWordsInspector(Inspection inspection, MaxMemoryRegion memoryRegion) {
         this(inspection, memoryRegion, null, memoryRegion.start(), ViewMode.WORD, null);
     }
 
@@ -353,7 +352,7 @@ public final class MemoryWordsInspector extends Inspector {
      * Create a memory inspector for a designated, named region of memory, with the view
      * mode set to {@link ViewMode#WORD}.
      */
-    public MemoryWordsInspector(Inspection inspection, MemoryRegion memoryRegion, String regionName) {
+    public MemoryWordsInspector(Inspection inspection, MaxMemoryRegion memoryRegion, String regionName) {
         this(inspection, memoryRegion, regionName, memoryRegion.start(), ViewMode.WORD, null);
     }
 
@@ -370,7 +369,7 @@ public final class MemoryWordsInspector extends Inspector {
      * mode set to {@link ViewMode#PAGE}.
      */
     public MemoryWordsInspector(Inspection inspection, Address address) {
-        this(inspection, new TeleMemoryRegion(address, inspection.vm().pageSize(), ""), null, address, ViewMode.PAGE, null);
+        this(inspection, new InspectorMemoryRegion(inspection.vm(), "", address, inspection.vm().pageSize()), null, address, ViewMode.PAGE, null);
     }
 
     @Override
@@ -546,7 +545,7 @@ public final class MemoryWordsInspector extends Inspector {
     /**
      * @return the number of words contained in region of VM memory.
      */
-    private int wordsInRegion(MemoryRegion memoryRegion) {
+    private int wordsInRegion(MaxMemoryRegion memoryRegion) {
         return memoryRegion.size().dividedBy(wordSize.toInt()).toInt();
     }
 
@@ -627,7 +626,7 @@ public final class MemoryWordsInspector extends Inspector {
     private void growRegionUp(int addedRowCount) {
         final int newWordCount = memoryWordRegion.wordCount + addedRowCount;
         final Address newStart = memoryWordRegion.start().minus(wordSize.times(addedRowCount));
-        setMemoryRegion(new MemoryWordRegion(newStart, newWordCount, wordSize));
+        setMemoryRegion(new MemoryWordRegion(vm(), newStart, newWordCount, wordSize));
         table.scrollToBeginning();
         // User model policy:  any adjustment to the region drops into generic word mode
         clearViewMode();
@@ -640,7 +639,7 @@ public final class MemoryWordsInspector extends Inspector {
     private void growRegionDown(int addedRowCount) {
         final int newWordCount = memoryWordRegion.wordCount + addedRowCount;
 
-        setMemoryRegion(new MemoryWordRegion(memoryWordRegion.start(), newWordCount, wordSize));
+        setMemoryRegion(new MemoryWordRegion(vm(), memoryWordRegion.start(), newWordCount, wordSize));
         table.scrollToEnd();
         // User model policy:  any adjustment to the region drops into generic word mode
         clearViewMode();
@@ -650,11 +649,11 @@ public final class MemoryWordsInspector extends Inspector {
     private void moveToCurrentObject() {
         TeleObject teleObject = vm().findObjectAt(origin);
         if (teleObject != null) {
-            MemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
+            MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
             final int newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.wordCount);
-            setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
+            setMemoryRegion(new MemoryWordRegion(vm(), start, newWordCount, wordSize));
             setOrigin(teleObject.origin());
             table.scrollToOrigin();
             setTitle();
@@ -666,11 +665,11 @@ public final class MemoryWordsInspector extends Inspector {
     private void moveToPreviousObject() {
         final TeleObject teleObject = vm().findObjectPreceding(origin, 1000000);
         if (teleObject != null) {
-            MemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
+            MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
             final int newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.wordCount);
-            setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
+            setMemoryRegion(new MemoryWordRegion(vm(), start, newWordCount, wordSize));
             setOrigin(teleObject.origin());
             table.scrollToOrigin();
             setTitle();
@@ -680,7 +679,7 @@ public final class MemoryWordsInspector extends Inspector {
     private void moveToNextObject() {
         final TeleObject teleObject = vm().findObjectFollowing(origin, 1000000);
         if (teleObject != null) {
-            final MemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
+            final MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             // Start stays the same
             final Address start = memoryWordRegion.start();
             // Default is to leave the viewed size the same
@@ -689,7 +688,7 @@ public final class MemoryWordsInspector extends Inspector {
                 // Grow the end of the viewed region if needed to include the newly found object
                 newWordCount = objectMemoryRegion.end().minus(start).dividedBy(wordSize).toInt();
             }
-            setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
+            setMemoryRegion(new MemoryWordRegion(vm(), start, newWordCount, wordSize));
             setOrigin(teleObject.origin());
             // Scroll so that whole object is visible if possible
             table.scrollToRange(origin, objectMemoryRegion.end().minus(wordSize));
@@ -704,7 +703,7 @@ public final class MemoryWordsInspector extends Inspector {
             newOrigin = newOrigin.minus(pageSize);
         }
         setOrigin(newOrigin);
-        setMemoryRegion(new MemoryWordRegion(newOrigin, wordsInPage, wordSize));
+        setMemoryRegion(new MemoryWordRegion(vm(), newOrigin, wordsInPage, wordSize));
         table.scrollToBeginning();
         setTitle();
     }
@@ -716,7 +715,7 @@ public final class MemoryWordsInspector extends Inspector {
             nextOrigin = nextOrigin.plus(pageSize);
         }
         setOrigin(nextOrigin);
-        setMemoryRegion(new MemoryWordRegion(nextOrigin, wordsInPage, wordSize));
+        setMemoryRegion(new MemoryWordRegion(vm(), nextOrigin, wordsInPage, wordSize));
         table.scrollToBeginning();
         setTitle();
     }
@@ -724,7 +723,7 @@ public final class MemoryWordsInspector extends Inspector {
     private void moveToPreviousPage() {
         final Address newOrigin = origin.aligned(pageSize.toInt()).minus(pageSize);
         setOrigin(newOrigin);
-        setMemoryRegion(new MemoryWordRegion(newOrigin, wordsInPage, wordSize));
+        setMemoryRegion(new MemoryWordRegion(vm(), newOrigin, wordsInPage, wordSize));
         table.scrollToBeginning();
         setTitle();
     }
@@ -778,7 +777,7 @@ public final class MemoryWordsInspector extends Inspector {
     /**
      * @return the region of VM memory current in view in this inspector.
      */
-    public MemoryRegion getCurrentMemoryRegion() {
+    public MaxMemoryRegion getCurrentMemoryRegion() {
         return memoryWordRegion;
     }
 

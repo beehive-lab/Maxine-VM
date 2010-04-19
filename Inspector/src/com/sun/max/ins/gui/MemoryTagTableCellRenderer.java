@@ -25,7 +25,6 @@ import javax.swing.table.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 
 /**
@@ -54,7 +53,7 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
      * @param watchpoints the watchpoints at this location, null if none.
      * @return a component for displaying the cell
      */
-    public JLabel getRenderer(MemoryRegion memoryRegion, MaxThread thread, Sequence<MaxWatchpoint> watchpoints) {
+    public final JLabel getRenderer(MaxMemoryRegion memoryRegion, MaxThread thread, Sequence<MaxWatchpoint> watchpoints) {
         JLabel label = this;
         String labelText = "";
         String toolTipText = "";

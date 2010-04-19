@@ -47,7 +47,7 @@ public abstract class AbstractTeleVMHolder implements TeleVMHolder {
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
-    public final TeleVM teleVM() {
+    public final TeleVM vm() {
         return teleVM;
     }
 

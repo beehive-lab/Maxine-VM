@@ -108,8 +108,8 @@ public final class LinuxTeleProcess extends TeleProcess {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws IOException {
-                    final Word primordialThreadLocals = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header.primordialThreadLocalsOffset));
-                    final Word threadLocalsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header.threadLocalsListHeadOffset));
+                    final Word primordialThreadLocals = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.primordialThreadLocalsOffset));
+                    final Word threadLocalsList = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.threadLocalsListHeadOffset));
                     nativeGatherThreads(task.tgid(), threads, threadLocalsList.asAddress().toLong(), primordialThreadLocals.asAddress().toLong());
                     return null;
                 }

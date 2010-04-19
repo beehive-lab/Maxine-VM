@@ -23,12 +23,12 @@ package com.sun.max.tele;
 import com.sun.max.vm.thread.*;
 
 /**
- * Access to a thread in the Maxine VM.
+ * Access to a thread and its state in the VM.
  * This could in the future be merged with the JDWP interface.
  *
  * @author Michael Van De Vanter
  */
-public interface MaxThread {
+public interface MaxThread extends MaxEntity<MaxThread> {
 
     /**
      * Gets the identifier passed to {@link VmThread#run} when the thread was started. Note that this is different from

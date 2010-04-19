@@ -98,7 +98,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
     @Override
     public String name() {
-        return description();
+        return regionName();
     }
 
     @Override

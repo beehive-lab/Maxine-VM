@@ -27,7 +27,7 @@ import java.io.*;
 import javax.activation.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -49,7 +49,7 @@ public abstract class InspectorTransferable<Object_Type> extends AbstractInspect
 
     private static final String MAXINE_MEMORY_REGION_MIME_TYPE = "Maxine VM memory region";
     public static final DataFlavor MEMORY_REGION_FLAVOR =
-        new ActivationDataFlavor(MemoryRegion.class, DataFlavor.javaJVMLocalObjectMimeType, InspectorTransferable.MAXINE_MEMORY_REGION_MIME_TYPE);
+        new ActivationDataFlavor(MaxMemoryRegion.class, DataFlavor.javaJVMLocalObjectMimeType, InspectorTransferable.MAXINE_MEMORY_REGION_MIME_TYPE);
 
     private static final String MAXINE_TELE_OBJECT_MIME_TYPE = "Maxine VM object";
     public static final DataFlavor TELE_OBJECT_FLAVOR =
@@ -112,9 +112,9 @@ public abstract class InspectorTransferable<Object_Type> extends AbstractInspect
      *
      * @author Michael Van De Vanter
      */
-    public static final class MemoryRegionTransferable extends InspectorTransferable<MemoryRegion> {
+    public static final class MemoryRegionTransferable extends InspectorTransferable<MaxMemoryRegion> {
 
-        public MemoryRegionTransferable(Inspection inspection, MemoryRegion memoryRegion) {
+        public MemoryRegionTransferable(Inspection inspection, MaxMemoryRegion memoryRegion) {
             super(inspection, memoryRegion, InspectorTransferable.MEMORY_REGION_FLAVOR, null);
         }
     }

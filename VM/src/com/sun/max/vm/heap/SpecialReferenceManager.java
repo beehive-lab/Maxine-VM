@@ -23,6 +23,7 @@ package com.sun.max.vm.heap;
 import java.lang.ref.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -143,14 +144,20 @@ public class SpecialReferenceManager {
     }
 
     private static void processInspectableWeakReferencesMemory(GripForwarder gripForwarder) {
+        final RootTableMemoryRegion rootsMemoryRegion = InspectableHeapInfo.rootsMemoryRegion();
+        assert rootsMemoryRegion != null;
+        final Pointer rootsPointer = rootsMemoryRegion.start().asPointer();
+        long wordsUsedCounter = 0;
+        assert !rootsPointer.isZero();
         for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
-            final Pointer rootPointer = InspectableHeapInfo.rootsPointer().getWord(i).asPointer();
+            final Pointer rootPointer = rootsPointer.getWord(i).asPointer();
             if (!rootPointer.isZero()) {
                 final Grip referent = Grip.fromOrigin(rootPointer);
                 if (gripForwarder.isReachable(referent)) {
-                    InspectableHeapInfo.rootsPointer().setWord(i, gripForwarder.getForwardGrip(referent).toOrigin());
+                    rootsPointer.setWord(i, gripForwarder.getForwardGrip(referent).toOrigin());
+                    wordsUsedCounter++;
                 } else {
-                    InspectableHeapInfo.rootsPointer().setWord(i, Pointer.zero());
+                    rootsPointer.setWord(i, Pointer.zero());
                 }
                 if (Heap.traceGC()) {
                     final boolean lockDisabledSafepoints = Log.lock();
@@ -159,11 +166,12 @@ public class SpecialReferenceManager {
                     Log.print(": set ");
                     Log.print(rootPointer);
                     Log.print(" to ");
-                    Log.println(InspectableHeapInfo.rootsPointer().getWord(i));
+                    Log.println(rootsPointer.getWord(i));
                     Log.unlock(lockDisabledSafepoints);
                 }
             }
         }
+        rootsMemoryRegion.setWordsUsed(wordsUsedCounter);
     }
 
     /**

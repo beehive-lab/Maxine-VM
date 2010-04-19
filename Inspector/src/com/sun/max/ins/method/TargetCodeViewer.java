@@ -295,14 +295,14 @@ public abstract class TargetCodeViewer extends CodeViewer {
         // For very deep stacks (e.g. when debugging a metacircular related infinite recursion issue),
         // it's faster to loop over the frames and then only loop over the instructions for each
         // frame related to the target code represented by this viewer.
-        final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
+        final MaxMemoryRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
         for (MaxStackFrame frame : frames) {
             final MaxCodeLocation frameCodeLocation = frame.codeLocation();
             if (frameCodeLocation != null) {
                 final boolean isFrameForThisCode =
                     frame instanceof MaxStackFrame.Compiled ?
-                                    targetCodeRegion.overlaps(frame.targetMethod()) :
-                                        targetCodeRegion.contains(frameCodeLocation);
+                                    targetCodeRegion.overlaps(frame.getTargetMethodMemoryRegion()) :
+                                        targetCodeRegion.contains(frameCodeLocation.address());
                 if (isFrameForThisCode) {
                     for (int row = 0; row < instructions.length(); row++) {
                         if (instructions.get(row).address.equals(frameCodeLocation.address())) {

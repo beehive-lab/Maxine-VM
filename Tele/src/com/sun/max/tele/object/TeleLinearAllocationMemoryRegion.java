@@ -29,16 +29,20 @@ import com.sun.max.vm.reference.*;
 
 public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
 
+    /**
+     * Cached mark field from the object in the VM.
+     */
+    private Address mark = Address.zero();
+
     public TeleLinearAllocationMemoryRegion(TeleVM teleVM, Reference linearAllocationMemoryRegionReference) {
         super(teleVM, linearAllocationMemoryRegionReference);
-
     }
 
     /**
      * Reads from the VM the mark field of the {@link LinearAllocationMemoryRegion}.
      */
     public Address mark() {
-        final Reference mark = teleVM().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
+        final Reference mark = vm().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
         return mark.readWord(AtomicWord.valueOffset()).asPointer();
     }
 
@@ -46,13 +50,26 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
      * @return how much memory in region has been allocated to objects, {@link Size#zero()) if memory for region not allocated.
      */
     public Size allocatedSize() {
-        if (isAllocated()) {
-            final Address mark = mark();
-            if (!mark.isZero()) {
-                return mark.minus(start()).asSize();
-            }
+        if (isAllocated() && !mark.isZero()) {
+            return mark.minus(getRegionStart()).asSize();
         }
         return Size.zero();
+    }
+
+    @Override
+    protected void refresh() {
+        if (vm().tryLock()) {
+            try {
+                final Reference markReference = vm().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
+                mark = markReference.readWord(AtomicWord.valueOffset()).asPointer();
+            } catch (DataIOError dataIOError) {
+                // No update; VM not available for some reason.
+                // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
+            } finally {
+                vm().unlock();
+            }
+        }
+        super.refresh();
     }
 
 }
