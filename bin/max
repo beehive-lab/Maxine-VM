@@ -66,6 +66,8 @@ jvm_args_suffix=""
 jvm_dbg_port=""
 maxine_dir=""
 make_arg=
+cp_suffix=
+cp_prefix=
 base_ide_dir=shell
 if [ x${MAXINE_IDE} = xINTELLIJ ]; then
     base_ide_dir=intellij
@@ -123,6 +125,12 @@ while [ "${1:0:1}" = "-" ]; do
         -junit4 )
             shift
             JUNIT4_CP=$1
+            ;;
+        -cp/p:* )
+            cp_prefix="${1/-cp\/p:/}"
+            ;;
+        -cp/a:* )
+            cp_suffix="${1/-cp\/a:/}"
             ;;
         * )
             unknown_option=$1
@@ -256,11 +264,11 @@ for project in ${projects[@]}; do
 done
 
 # create the augmented classpath for the extra projects
-extra_cp=$maxine_cp
+extra_project_cp=$maxine_cp
 # add in any extra projects
 for project in ${extra_projects[@]}; do
     project_dir=${project/:*/}
-    extra_cp=${extra_cp}:${extra_projects_dir}/${project_dir}/bin
+    extra_project_cp=${extra_project_cp}:${extra_projects_dir}/${project_dir}/bin
 done
 
 # now combine the two project lists for build purposes
@@ -275,6 +283,14 @@ if [[ "$junit_version" != 4.* ]]; then
     exit 255
 fi 
 maxine_cp=${maxine_cp}:${JUNIT4_CP}
+
+if [ -n "$cp_prefix" ]; then
+    maxine_cp="$cp_prefix:$maxine_cp"
+fi
+
+if [ -n "$cp_suffix" ]; then
+    maxine_cp="$maxine_cp:$cp_suffix"
+fi
 
 test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/Native/generated/${MAXINE_OS}"
 maxine_vm=$MAXVM_DIR/maxvm
@@ -327,7 +343,7 @@ function set_project_dir_parent() {
     for xproject in ${extra_projects[@]}; do
         if [[ "$xproject" == "$1" ]]; then
             project_dir_parent=$extra_projects_dir
-            project_cp=$extra_cp
+            project_cp=$extra_project_cp
             return
         fi
     done
@@ -918,8 +934,8 @@ c1x_help="process a list of classes and/or methods with the C1X compiler
         Object:wait String HashMap:<init>:(int,float)
 
     will compile all methods in a class whose name matches "Object" where the
-    method name matches \"wait\", all methods in a class whose name
-    contains \"String\" and the single constructor in HashMap that takes an int
+    method name matches 'wait', all methods in a class whose name
+    contains 'String' and the single constructor in HashMap that takes an int
     and float parameter. The classes searched are those on the class path.
     
     The type of matching performed for a given class/method name is determined
@@ -936,8 +952,8 @@ c1x_help="process a list of classes and/or methods with the C1X compiler
     any class whose name start with 'java.util'.
     
     The matching performed on a signature is always a substring test. Signatures can
-    specified either in Java source syntax (e.g. \"int,String\") or JVM internal syntax
-    (e.g. \"IFLjava/lang/String;\"). The latter must always use fully qualified type
+    specified either in Java source syntax (e.g. 'int,String') or JVM internal syntax
+    (e.g. 'IFLjava/lang/String;'). The latter must always use fully qualified type
     names where as the former must not.
     
     The output traced by this command is not guaranteed to be the same as the output
@@ -1475,6 +1491,8 @@ function usage() {
     echo " -v               enable verbose output "
     echo " -d               enable debug output"
     echo " -h               show launcher help"
+    echo " -cp/p:<arg>      class path prefix"           
+    echo " -cp/a:<arg>      class path suffix"            
     echo " -vmdir <path>    directory for VM executable, shared libraries boot image and related files"
     echo "                    (default: $MAXVM_DIR)"
     echo " -java_home <path> JDK installation directory (must be JDK 6 or later)"
