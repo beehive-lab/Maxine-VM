@@ -32,12 +32,11 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.memory.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -92,10 +91,36 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         private final MaxStackFrame stackFrame;
         private final int position;
 
+        // TODO (mlvdv) temp only until TargetMethod class use is eliminated
+        private final MaxMemoryRegion targetMethodMemoryRegion;
+
         TruncatedStackFrame(MaxStack stack, MaxStackFrame stackFrame, int position) {
             this.stack = stack;
             this.stackFrame = stackFrame;
             this.position = position;
+            final TargetMethod targetMethod = stackFrame.targetMethod();
+            this.targetMethodMemoryRegion = targetMethod == null ? null :
+                new InspectorMemoryRegion(stack().vm(), "memory for TargetMethod", targetMethod.start(), targetMethod.size());
+        }
+
+        public MaxVM vm() {
+            return stack.vm();
+        }
+
+        public String entityName() {
+            return toString();
+        }
+
+        public String entityDescription() {
+            return "A pseudo stack frame created to represent a large number of stack frames that couldn't be displayed";
+        }
+
+        public MaxEntityMemoryRegion<MaxStackFrame> memoryRegion() {
+            return null;
+        }
+
+        public boolean contains(Address address) {
+            return false;
         }
 
         public MaxStack stack() {
@@ -122,10 +147,6 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             return stackFrame.fp();
         }
 
-        public MemoryRegion memoryRegion() {
-            return null;
-        }
-
         public MaxCodeLocation codeLocation() {
             return stackFrame.codeLocation();
         }
@@ -134,17 +155,16 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             return stackFrame.targetMethod();
         }
 
+        public MaxMemoryRegion getTargetMethodMemoryRegion() {
+            return targetMethodMemoryRegion;
+        }
+
         public boolean isSameFrame(MaxStackFrame stackFrame) {
             if (stackFrame instanceof TruncatedStackFrame) {
                 final TruncatedStackFrame otherFrame = (TruncatedStackFrame) stackFrame;
                 return stackFrame.isSameFrame(otherFrame.stackFrame);
             }
             return false;
-        }
-
-
-        public String description() {
-            return toString();
         }
 
         @Override
@@ -447,7 +467,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             final MaxStackFrame.Compiled javaStackFrame = (MaxStackFrame.Compiled) stackFrame;
             final int frameSize = javaStackFrame.layout().frameSize();
             final Pointer stackPointer = javaStackFrame.sp();
-            final MemoryRegion memoryRegion = new TeleMemoryRegion(stackPointer, Size.fromInt(frameSize), "");
+            final MaxMemoryRegion memoryRegion = new InspectorMemoryRegion(vm(), "", stackPointer, Size.fromInt(frameSize));
             final String frameName = javaStackFrameName(javaStackFrame);
             menu.add(actions().inspectRegionMemoryWords(memoryRegion, "stack frame for " + frameName, "Inspect memory for frame" + frameName));
         }

@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -44,7 +43,7 @@ public class InspectionFocusAdapter implements ViewFocusListener {
     public void addressFocusChanged(Address oldAddress, Address address) {
     }
 
-    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
+    public void memoryRegionFocusChanged(MaxMemoryRegion oldMemoryRegion, MaxMemoryRegion memoryRegion) {
     }
 
     public void breakpointFocusSet(MaxBreakpoint oldBreakpoint, MaxBreakpoint breakpoint) {

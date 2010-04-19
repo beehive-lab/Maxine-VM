@@ -31,7 +31,6 @@ import javax.swing.table.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -144,7 +143,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                     return true;
                 }
                 if (support.isDataFlavorSupported(InspectorTransferable.MEMORY_REGION_FLAVOR)) {
-                    final MemoryRegion memoryRegion = (MemoryRegion) transferable.getTransferData(InspectorTransferable.MEMORY_REGION_FLAVOR);
+                    final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) transferable.getTransferData(InspectorTransferable.MEMORY_REGION_FLAVOR);
                     Trace.line(TRACE_VALUE, tracePrefix + "memory region dropped on desktop");
                     InspectorMainFrame.this.inspection.actions().inspectMemoryWords(memoryRegion).perform();
                     return true;

@@ -18,23 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.tele.method;
 
-import com.sun.max.memory.*;
-import com.sun.max.tele.memory.*;
+import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
 
 /**
- * Description of the VM memory occupied by the stack for a thread.
+ * Represents a region of VM memory that holds compiled code for native code about which we know little.
  *
- * @author Doug Simon
  * @author Michael Van De Vanter
- */
-public final class TeleNativeStackMemoryRegion extends TeleMemoryRegion {
+  */
+public final class NativeTargetCodeRegion extends TargetCodeRegion {
 
-    public final TeleNativeThread teleNativeThread;
+    private final TeleNativeTargetRoutine teleNativeTargetRoutine;
 
-    public TeleNativeStackMemoryRegion(TeleNativeThread teleNativeThread, MemoryRegion stackRegion) {
-        super(stackRegion, "Thread-" + teleNativeThread.localHandle() + " stack");
-        this.teleNativeThread = teleNativeThread;
+    public NativeTargetCodeRegion(TeleVM teleVM, TeleNativeTargetRoutine teleNativeTargetRoutine, Address start, Size size) {
+        super(teleVM, teleNativeTargetRoutine, start, size, "Native TeleTarget-" + teleNativeTargetRoutine.toString());
+        this.teleNativeTargetRoutine = teleNativeTargetRoutine;
     }
+
 }

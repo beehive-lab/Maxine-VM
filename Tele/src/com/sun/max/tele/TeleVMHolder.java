@@ -34,7 +34,7 @@ public interface TeleVMHolder {
     /**
      * @return the instance of {@link TeleVM} being managed by this code.
      */
-    TeleVM teleVM();
+    TeleVM vm();
 
     /**
      * Gets the manager for locating and managing code related information in the VM.

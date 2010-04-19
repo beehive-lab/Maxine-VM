@@ -85,7 +85,7 @@ public class TeleBreakpointManager extends AbstractTeleVMHolder implements MaxBr
     }
 
     public void writeSummary(PrintStream printStream) {
-        teleVM().teleProcess().targetBreakpointManager().writeSummaryToStream(printStream);
+        vm().teleProcess().targetBreakpointManager().writeSummaryToStream(printStream);
         bytecodeBreakpointManager.writeSummaryToStream(printStream);
     }
 

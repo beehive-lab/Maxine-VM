@@ -29,14 +29,14 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
- * Data describing a single code routine in the {@link TeleVM}, either compiled from a Java method or a block of native code.
+ * Data describing a single code routine in the VM, either compiled from a Java method or a block of native code.
  *
  * @author Michael Van De Vanter
  */
 public interface TeleTargetRoutine extends TargetMethodAccess {
 
     /**
-     * @return the region of memory in the {@link TeleVM} occupied by this target routine:  Java method or native
+     * @return the region of memory in the VM occupied by this target routine:  Java method or native
      */
     TargetCodeRegion targetCodeRegion();
 
@@ -48,7 +48,7 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
     String getName();
 
     /**
-     * @return {@link TeleVM} address of the first instruction in the target code represented by this routine. Note that this
+     * @return VM address of the first instruction in the target code represented by this routine. Note that this
      *         may differ from the designated {@linkplain #callEntryPoint() entry point} of the code.
      *
      */
@@ -84,7 +84,7 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
     Sequence<MaxCodeLocation> labelLocations();
 
     /**
-     * @return Local {@link TeleClassMethodActor} for the target routine in the {@link TeleVM}, if it was
+     * @return Local {@link TeleClassMethodActor} for the target routine in the VM, if it was
      * compiled from a Java method; null otherwise.
      */
     TeleClassMethodActor getTeleClassMethodActor();

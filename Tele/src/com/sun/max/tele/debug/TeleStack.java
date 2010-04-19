@@ -21,9 +21,11 @@
 package com.sun.max.tele.debug;
 
 import java.io.*;
+import java.lang.management.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -31,17 +33,78 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * Description of a stack in the VM.
+ * Access to the state of a teleStack in the VM.
  *
  * @author Michael Van De Vanter
  */
 public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
 
-    private final TeleNativeThread teleNativeThread;
-    private final TeleNativeStackMemoryRegion memoryRegion;
+    private static final int TRACE_LEVEL = 2;
 
     /**
-     * Location of the caller return address relative to the saved location in a stack frame, usually 0 but see SPARC.
+     * Description of the memory region occupied by a {@linkplain MaxStack teleStack}.
+     * <br>
+     * This region has no parent; it is allocated from the OS.
+     * <br>
+     * This region's children are the individual {@linkplain MaxStackFrame teleStack frames}
+     * contained in the teleStack.
+     */
+    private static final class StackMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxStack> {
+
+        private IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children =
+            new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
+        private TeleStack teleStack;
+        private MaxVMState lastUpdatedState = null;
+
+        private StackMemoryRegion(TeleVM teleVM, TeleStack owner, String regionName, Address start, Size size) {
+            super(teleVM, regionName, start, size);
+            this.teleStack = owner;
+        }
+
+        @Override
+        public MemoryUsage getUsage() {
+            return new MemoryUsage(-1, end().minus(teleStack.thread().registers().stackPointer()).toLong(), size().toLong(), -1);
+        }
+
+        public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
+            // Stack memory is allocated from the OS, not part of any other region
+            return null;
+        }
+
+        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+            if (teleStack.lastUpdated().newerThan(this.lastUpdatedState)) {
+                final IndexedSequence<MaxStackFrame> frames = teleStack.frames();
+                final VariableSequence<MaxEntityMemoryRegion<? extends MaxEntity>> regions =
+                    new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(frames.length());
+                for (MaxStackFrame stackFrame : frames) {
+                    regions.append(stackFrame.memoryRegion());
+                }
+                children = regions;
+                this.lastUpdatedState = teleStack.lastUpdated();
+            }
+            return children;
+        }
+
+        public MaxStack owner() {
+            return teleStack;
+        }
+
+        public boolean isBootRegion() {
+            return false;
+        }
+    }
+
+    private final TeleNativeThread teleNativeThread;
+
+    private final String entityDescription;
+
+    /**
+     * The region of VM memory occupied by this teleStack.
+     */
+    private final StackMemoryRegion stackMemoryRegion;
+
+    /**
+     * Location of the caller return address relative to the saved location in a teleStack frame, usually 0 but see SPARC.
      */
     private final int  offsetToReturnPC;
 
@@ -51,74 +114,64 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
     private volatile TeleVMState lastUpdatedState = null;
 
     /**
-     * VM state the last time the stack changed "structurally".
+     * VM state the last time the teleStack changed "structurally".
      */
     private volatile TeleVMState lastChangedState = null;
 
     /**
-     * Most recently updated stack frames; may be empty, but non-null.
+     * Most recently updated teleStack frames; may be empty, but non-null.
      */
     private volatile IndexedSequence<MaxStackFrame> maxStackFrames = IndexedSequence.Static.empty(MaxStackFrame.class);
 
-    public TeleStack(TeleVM teleVM, TeleNativeThread teleNativeThread, TeleNativeStackMemoryRegion memoryRegion) {
+    /**
+     * Creates an object that models a teleStack in the VM.
+     *
+     * @param teleVM the VM
+     * @param teleNativeThread the thread that owns the teleStack
+     * @param teleFixedMemoryRegion description of the memory occupied by the teleStack
+     */
+    public TeleStack(TeleVM teleVM, TeleNativeThread teleNativeThread, String name, Address start, Size size) {
         super(teleVM);
         this.teleNativeThread = teleNativeThread;
-        this.memoryRegion = memoryRegion;
+        this.entityDescription = "The stack in " + vm().entityName() + " for " + teleNativeThread.entityName();
+        this.stackMemoryRegion = new StackMemoryRegion(teleVM, this, name, start, size);
         this.offsetToReturnPC = teleVM.vmConfiguration().platform.processorKind.instructionSet.offsetToReturnPC;
+    }
+
+    public String entityName() {
+        return stackMemoryRegion.regionName();
+    }
+
+    public String entityDescription() {
+        return entityDescription;
+    }
+
+    public MaxEntityMemoryRegion<MaxStack> memoryRegion() {
+        return stackMemoryRegion;
+    }
+
+    public boolean contains(Address address) {
+        return stackMemoryRegion.contains(address);
     }
 
     public MaxThread thread() {
         return teleNativeThread;
     }
 
-    public TeleNativeStackMemoryRegion memoryRegion() {
-        return memoryRegion;
-    }
-
     public MaxStackFrame top() {
         return frames().first();
     }
 
-    public CodeLocation returnLocation() {
-        final StackFrame topFrame = teleNativeThread.frames().first();
-        final StackFrame topFrameCaller = topFrame.callerFrame();
-        if (topFrameCaller == null) {
-            return null;
-        }
-        Pointer instructionPointer = topFrameCaller.ip;
-        if (instructionPointer.isZero()) {
-            return null;
-        }
-        final StackFrame callee = topFrameCaller.calleeFrame();
-        if (callee == null) {
-            // Top frame, not a call return so no adjustment.
-            return codeManager().createMachineCodeLocation(instructionPointer, "top stack frame IP");
-        }
-        // Add a platform-specific offset from the stored code address to the actual call return site.
-        final TargetMethod calleeTargetMethod = callee.targetMethod();
-        if (calleeTargetMethod != null) {
-            final ClassMethodActor calleeClassMethodActor = calleeTargetMethod.classMethodActor();
-            if (calleeClassMethodActor != null) {
-                if (calleeClassMethodActor.isTrapStub()) {
-                    // Special case, where the IP caused a trap; no adjustment.
-                    return codeManager().createMachineCodeLocation(instructionPointer, "stack frame return");
-                }
-            }
-        }
-        // An ordinary call; apply a platform-specific adjustment to get the real return address.
-        return codeManager().createMachineCodeLocation(instructionPointer.plus(offsetToReturnPC), "stack frame return");
-    }
-
     public IndexedSequence<MaxStackFrame> frames() {
-        final TeleVMState currentVmState = teleVM().state();
+        final TeleVMState currentVmState = vm().state();
         if (currentVmState.newerThan(lastUpdatedState)) {
-            if (teleVM().tryLock()) {
+            if (vm().tryLock()) {
                 try {
                     final IndexedSequence<StackFrame> frames = teleNativeThread.frames();
                     final VariableSequence<MaxStackFrame> maxStackFrames = new VectorSequence<MaxStackFrame>(frames.length());
                     int position = 0;
                     for (StackFrame stackFrame : frames) {
-                        maxStackFrames.append(TeleStackFrame.createFrame(teleVM(), this, position, stackFrame));
+                        maxStackFrames.append(TeleStackFrame.createFrame(vm(), this, position, stackFrame));
                         position++;
                     }
                     this.maxStackFrames = maxStackFrames;
@@ -131,7 +184,7 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
                     }
 
                 } finally {
-                    teleVM().unlock();
+                    vm().unlock();
                 }
             }
         }
@@ -160,6 +213,36 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         for (MaxStackFrame maxStackFrame : frames().clone()) {
             printStream.println("  " + maxStackFrame.toString());
         }
+    }
+
+    public CodeLocation returnLocation() {
+        final StackFrame topFrame = teleNativeThread.frames().first();
+        final StackFrame topFrameCaller = topFrame.callerFrame();
+        if (topFrameCaller == null) {
+            return null;
+        }
+        Pointer instructionPointer = topFrameCaller.ip;
+        if (instructionPointer.isZero()) {
+            return null;
+        }
+        final StackFrame callee = topFrameCaller.calleeFrame();
+        if (callee == null) {
+            // Top frame, not a call return so no adjustment.
+            return codeManager().createMachineCodeLocation(instructionPointer, "top teleStack frame IP");
+        }
+        // Add a platform-specific offset from the stored code address to the actual call return site.
+        final TargetMethod calleeTargetMethod = callee.targetMethod();
+        if (calleeTargetMethod != null) {
+            final ClassMethodActor calleeClassMethodActor = calleeTargetMethod.classMethodActor();
+            if (calleeClassMethodActor != null) {
+                if (calleeClassMethodActor.isTrapStub()) {
+                    // Special case, where the IP caused a trap; no adjustment.
+                    return codeManager().createMachineCodeLocation(instructionPointer, "teleStack frame return");
+                }
+            }
+        }
+        // An ordinary call; apply a platform-specific adjustment to get the real return address.
+        return codeManager().createMachineCodeLocation(instructionPointer.plus(offsetToReturnPC), "teleStack frame return");
     }
 
 }

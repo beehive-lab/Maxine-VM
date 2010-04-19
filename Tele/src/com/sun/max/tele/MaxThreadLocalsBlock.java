@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
@@ -29,7 +28,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxThreadLocalsBlock {
+public interface MaxThreadLocalsBlock extends MaxEntity<MaxThreadLocalsBlock> {
 
     /**
      * Gets the thread that owns the thread locals block; doesn't change.
@@ -55,15 +54,5 @@ public interface MaxThreadLocalsBlock {
      * @return the thread locals area in this thread that contains the address, null if none.
      */
     MaxThreadLocalsArea findThreadLocalsArea(Address address);
-
-    /**
-     * Gets description of VM memory containing
-     * all {@linkplain MaxThreadLocalsArea thread locals areas}  for this thread.
-     * <br>
-     * The identity of the result is immutable and thread-safe, although its contents are not.
-     *
-     * @return this thread's thread locals memory
-     */
-    MemoryRegion memoryRegion();
 
 }

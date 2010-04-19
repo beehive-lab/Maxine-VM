@@ -33,7 +33,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
@@ -184,7 +183,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         }
 
         @Override
-        public MemoryRegion getMemoryRegion(int row) {
+        public MaxMemoryRegion getMemoryRegion(int row) {
             return threadLocalsArea.getThreadLocalVariable(row).memoryRegion();
         }
 
@@ -270,8 +269,8 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final MaxThreadLocalVariable threadLocalVariable = (MaxThreadLocalVariable) value;
-            setValue(threadLocalVariable.name());
-            setToolTipText("<html>" + (threadLocalVariable.description().length() > 0 ? threadLocalVariable.description() + "<br>" : "") + "Declaration: " + threadLocalVariable.declaration());
+            setValue(threadLocalVariable.variableName());
+            setToolTipText("<html>" + (threadLocalVariable.entityName().length() > 0 ? threadLocalVariable.entityDescription() + "<br>" : "") + "Declaration: " + threadLocalVariable.declaration());
             if (threadLocalVariable.isReference()) {
                 setForeground(style().wordValidObjectReferenceDataColor());
             } else {

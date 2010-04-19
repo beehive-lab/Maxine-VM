@@ -18,25 +18,40 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.ins.gui;
 
-import com.sun.max.memory.*;
-import com.sun.max.tele.memory.*;
-import com.sun.max.vm.thread.*;
+import com.sun.max.ins.*;
+import com.sun.max.tele.*;
 
 /**
- * Description of the VM memory occupied by the  {@linkplain VmThreadLocal thread locals block} for a thread.
+ * A label that displays the allocation percentage of a known memory region and acts as a drag source.
  *
- * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class TeleThreadLocalsMemoryRegion extends TeleMemoryRegion {
+public final class MemoryRegionSizeLabel extends AbstractMemoryRegionLabel implements Prober {
 
-    public final TeleNativeThread teleNativeThread;
-
-    public TeleThreadLocalsMemoryRegion(TeleNativeThread teleNativeThread, MemoryRegion threadLocalsRegion) {
-        super(threadLocalsRegion, "Thread-" + teleNativeThread.localHandle() + " locals");
-        this.teleNativeThread = teleNativeThread;
+    /**
+     * Returns a that displays the name of a known memory region
+     * and acts as a drag source.
+     *
+     * @param inspection
+     * @param memoryRegion a memory region in the VM
+     */
+    public MemoryRegionSizeLabel(Inspection inspection, MaxMemoryRegion memoryRegion) {
+        super(inspection, memoryRegion);
+        redisplay();
+        refresh(true);
     }
 
+    public void redisplay() {
+        setFont(style().hexDataFont());
+    }
+
+    public void refresh(boolean force) {
+        final long size = memoryRegion.size().toLong();
+        final String hexSize = "0x" + Long.toHexString(size);
+        setText(hexSize);
+        setToolTipText(memoryRegion.regionName() + " size=" + hexSize + "(" + size + ")");
+    }
 }
+

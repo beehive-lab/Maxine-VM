@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
@@ -34,8 +33,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -54,12 +51,7 @@ import com.sun.max.vm.value.*;
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public interface MaxVM {
-
-    /**
-     * @return the display name of the VM
-     */
-    String getName();
+public interface MaxVM extends MaxEntity<MaxVM> {
 
     /**
      * @return the display version of the VM
@@ -97,6 +89,119 @@ public interface MaxVM {
     File bootImageFile();
 
     File programFile();
+
+    /**
+     * @return access to the VM heap.
+     */
+    MaxHeap heap();
+
+    /**
+     * @return access to the VM's cache of compiled code
+     */
+    MaxCodeCache codeCache();
+
+    /**
+     * Gets the manager for locating and managing code related information in the VM.
+     * <br>
+     * Thread-safe
+     *
+     * @return the singleton manager for information about code in the VM.
+     */
+    MaxCodeManager codeManager();
+
+    /**
+     * Gets the manager for creating and managing VM breakpoints.
+     * <br>
+     * Thread-safe
+     *
+     * @return the singleton manager for creating and managing VM breakpoints
+     */
+    MaxBreakpointManager breakpointManager();
+
+    /**
+     * Gets the manager for creating and managing VM watchpoints; null
+     * if watchpoints are not supported on this platform.
+     * <br>
+     * Thread-safe
+     *
+     * @return the singleton manager for creating and managing VM watchpoints, or
+     * null if watchpoints not supported.
+     */
+    MaxWatchpointManager watchpointManager();
+
+    /**
+     * Gets the manager for locating and managing thread-related information in the VM.
+     * <br>
+     * Thread-safe
+     *
+     * @return the singleton manager for information about threads in the VM.
+     */
+    MaxThreadManager threadManager();
+
+    /**
+     * An immutable summary of the VM state as of the most recent state transition.
+     * <br>
+     * Thread-safe.
+     *
+     * @return VM state summary
+     */
+    MaxVMState state();
+
+    /**
+     * Adds a VM state listener.
+     * <br>
+     * Thread-safe.
+     *
+     * @param listener will be notified of changes to {@link #state()}.
+     */
+    void addVMStateListener(MaxVMStateListener listener);
+
+    /**
+     * Removes a VM state listener.
+     * <br>
+     * Thread-safe.
+     */
+    void removeVMStateListener(MaxVMStateListener listener);
+
+    /**
+     * Adds a listener for GC starts in the VM.
+     *
+     * @param listener a listener for GC starts
+     * @throws MaxVMBusyException
+     */
+    void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException;
+
+    /**
+     * Removes a listener for GC starts in the VM.
+     *
+     * @param listener a listener for GC starts
+     * @throws MaxVMBusyException
+     */
+    void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException;
+
+    /**
+     * Adds a listener for GC completions in the VM.
+     *
+     * @param listener a listener for GC completions
+     * @throws MaxVMBusyException
+     */
+    void addGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException;
+
+    /**
+     * Removes a listener for GC completions in the VM.
+     *
+     * @param listener a listener for GC completions
+     * @throws MaxVMBusyException
+     */
+    void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException;
+
+    /**
+     * Finds the allocated region of memory in the VM, if any, that includes an address.
+     *
+     * @param address a memory location in the VM
+     * @return the allocated {@link MaxMemoryRegion} containing the address, null if not in any known region.
+     */
+    MaxMemoryRegion findMemoryRegion(Address address);
 
     /**
      * Determines if the heap and code sections in the boot image have been relocated.
@@ -177,155 +282,6 @@ public interface MaxVM {
      * Low-level read of bytes from memory of the VM.
      */
     void readFully(Address address, byte[] bytes);
-
-    /**
-     * Memory regions currently allocated remotely in the VM.
-     *
-     * <br>See:<ol>
-     *   <li>{@link #findMemoryRegion(Address)}</li>
-     *   <li>{@link #contains(Address)}</li>
-     *   </ol>
-     *   <p>
-     * The Maxine VM allocates memory regions for three main purposes: <i>heap</i> (boot and dynamic regions),
-     * <i>code</i> (boot and dynamic regions), and <i>threads</i> (stack and thread locals).  There may also
-     * be occasional small regions allocated for special purposes.
-     *
-     * <p><b>Heap</b><br>
-     * Heap memory regions are allocated by the instance of {@link HeapScheme} built into the VM.
-     * The VM boot image includes a special "boot heap" region.
-     * <br>See also:<ol>
-     *   <li>{@link HeapScheme}</li>
-     *   <li>{@link #containsInHeap(Address)}</li>
-     *   <li>{@link #teleBootHeapRegion()}</li>
-     *   <li>{@link #teleHeapRegions()}</li>
-     *   <li>{@link #isValidOrigin(Pointer)}</li>
-     *   <li>{@link #teleImmortalHeapRegion()}</li>
-     * </ol>
-     *
-     *
-     * <p><b>Code</b><br>
-     * Code memory regions are allocated by the singleton {@link CodeManager} in the VM,
-     * whose local surrogate is an instance of {@link TeleCodeManager}.  Code memory regions
-     * are created at initialization, but are only allocated as needed.
-     *
-     * <br>See also:<ol>
-     *   <li>{@link CodeManager}</li>
-     *   <li>{@link #containsInCode(Address)}</li>
-     *   <li>{@link #teleBootCodeRegion()}</li>
-     *   <li>{@link #teleCodeRegions()}</li>
-     * </ol>
-     *
-     * <p><b>Threads</b><br>
-     * Each thread is allocated a memory region for the thread's stack and another
-     * memory region for thread-local storage.
-     * <br>See also:<ol>
-     *   <li>{@link TeleProcess}</li>
-     *   <li>{@link TeleNativeStackMemoryRegion}</li>
-     *   <li>{@link TeleThreadLocalsMemoryRegion}</li>
-     * </ol>
-     *
-     * @return all allocated memory regions in the VM.
-     */
-    IndexedSequence<MemoryRegion> allocatedMemoryRegions();
-
-    /**
-     * Finds the allocated region of memory in the VM, if any, that includes an address.
-     *
-     * @param address a memory location in the VM
-     * @return the allocated {@link MemoryRegion} containing the address, null if not in any known region.
-     * @see #allocatedMemoryRegions()
-     */
-    MemoryRegion findMemoryRegion(Address address);
-
-    /**
-     * Returns whether the VM contains any allocated memory regions that include an address.
-     * <br>
-     * <strong>Note:</strong> this is not equivalent to {@code findMemoryRegion(address) != null}.
-     * Early in the startup sequence this test cannot be performed by checking memory
-     * regions, but must instead be done using low level mechanisms.
-     *
-     * @param address a memory location in the VM.
-     * @return whether the location is either in the object heap, the code
-     *         regions, or a stack region of the VM.
-     * @see #allocatedMemoryRegions()
-     */
-    boolean contains(Address address);
-
-    /**
-     * @param address a memory address in the VM.
-     * @return is the address within an allocated heap {@link MemoryRegion}?
-     * @see #containsInDynamicHeap(Address)
-     * @see #allocatedMemoryRegions()
-     */
-    boolean containsInHeap(Address address);
-
-    /**
-     * @param address a memory address in the VM.
-     * @return is the address within a dynamically allocated heap {@link MemoryRegion}?
-     * @see #containsInHeap(Address)
-     * @see #allocatedMemoryRegions()
-     */
-    boolean containsInDynamicHeap(Address address);
-
-    /**
-     * @return surrogate for the special heap {@link MemoryRegion} in the {@link BootImage} of the VM.
-     * @see #teleHeapRegions()
-     * @see #allocatedMemoryRegions()
-     * @see #teleImmortalHeapRegion()
-     */
-    TeleLinearAllocationMemoryRegion teleBootHeapRegion();
-
-    /**
-     * @return surrogate for the immortal heap {@link MemoryRegion}
-     * @see #teleHeapRegions()
-     * @see #allocatedMemoryRegions()
-     * @see #teleBootHeapRegion()
-     */
-    TeleLinearAllocationMemoryRegion teleImmortalHeapRegion();
-
-    /**
-     * @return surrogates for all {@link MemoryRegion}s in the {@link Heap} of the VM.
-     * Sorted in order of allocation.  Does not include the boot heap region.
-     * @see #teleBootHeapRegion()
-     * @see #allocatedMemoryRegions()
-     * @see #teleImmortalHeapRegion()
-     */
-    IndexedSequence<TeleLinearAllocationMemoryRegion> teleHeapRegions();
-
-    /**
-     * @return surrogate for the special memory region allocated for holding
-     * remote copies of addresses being held in {@linkplain Reference references}.
-     */
-    TeleLinearAllocationMemoryRegion teleRootsRegion();
-
-    /**
-     * @param address a memory address in the VM.
-     * @return is the address within an allocated code {@link MemoryRegion}?
-     * @see #allocatedMemoryRegions()
-     */
-    boolean containsInCode(Address address);
-
-    /**
-     * @return surrogate for the special code {@link MemoryRegion} in the {@link BootImage} of the VM.
-     * @see #teleCodeRegions()
-     * @see #allocatedMemoryRegions()
-     */
-    TeleCodeRegion teleBootCodeRegion();
-
-    /**
-     * @return surrogate for the special code runtime {@link MemoryRegion} of the VM.
-     * @see #teleBootCodeRegion()
-     * @see #allocatedMemoryRegions()
-     */
-    TeleCodeRegion teleRuntimeCodeRegion();
-
-    /**
-     * @return surrogates for all {@link CodeRegion}s in the VM.
-     *
-     * @see #teleBootCodeRegion()
-     * @see #teleRuntimeCodeRegion()
-     */
-    IndexedSequence<TeleCodeRegion> teleCodeRegions();
 
     /**
      * @param origin current absolute location of the beginning of a heap object's memory in the VM,
@@ -519,101 +475,6 @@ public interface MaxVM {
      * Writes a textual summary describing all  instances of {@link TeleTargetRoutine} known to the VM.
      */
     void describeTeleTargetRoutines(PrintStream printStream);
-
-    /**
-     * An immutable summary of the VM state as of the most recent state transition.
-     * <br>
-     * Thread-safe.
-     *
-     * @return VM state summary
-     */
-    MaxVMState state();
-
-    /**
-     * Adds a VM state listener.
-     * <br>
-     * Thread-safe.
-     *
-     * @param listener will be notified of changes to {@link #state()}.
-     */
-    void addVMStateListener(MaxVMStateListener listener);
-
-    /**
-     * Removes a VM state listener.
-     * <br>
-     * Thread-safe.
-     */
-    void removeVMStateListener(MaxVMStateListener listener);
-
-    /**
-     * Gets the manager for locating and managing thread-related information in the VM.
-     * <br>
-     * Thread-safe
-     *
-     * @return the singleton manager for information about threads in the VM.
-     */
-    MaxThreadManager threadManager();
-
-    /**
-     * Gets the manager for locating and managing code related information in the VM.
-     * <br>
-     * Thread-safe
-     *
-     * @return the singleton manager for information about code in the VM.
-     */
-    MaxCodeManager codeManager();
-
-    /**
-     * Gets the manager for creating and managing VM breakpoints.
-     * <br>
-     * Thread-safe
-     *
-     * @return the singleton manager for creating and managing VM breakpoints
-     */
-    MaxBreakpointManager breakpointManager();
-
-    /**
-     * Gets the manager for creating and managing VM watchpoints; null
-     * if watchpoints are not supported on this platform.
-     * <br>
-     * Thread-safe
-     *
-     * @return the singleton manager for creating and managing VM watchpoints, or
-     * null if watchpoints not supported.
-     */
-    MaxWatchpointManager watchpointManager();
-
-    /**
-     * Adds a listener for GC starts in the VM.
-     *
-     * @param listener a listener for GC starts
-     * @throws MaxVMBusyException
-     */
-    void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException;
-
-    /**
-     * Removes a listener for GC starts in the VM.
-     *
-     * @param listener a listener for GC starts
-     * @throws MaxVMBusyException
-     */
-    void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException;
-
-    /**
-     * Adds a listener for GC completions in the VM.
-     *
-     * @param listener a listener for GC completions
-     * @throws MaxVMBusyException
-     */
-    void addGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException;
-
-    /**
-     * Removes a listener for GC completions in the VM.
-     *
-     * @param listener a listener for GC completions
-     * @throws MaxVMBusyException
-     */
-    void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException;
 
     /**
      * Sets debugging trace level for the transport

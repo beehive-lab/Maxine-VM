@@ -40,7 +40,7 @@ public class TeleObjectReferenceValue extends TeleTupleObject {
      * @return a local wrapper for the {@link ReferenceValue} in the tele VM.
      */
     public TeleReferenceValue getTeleReferenceValue() {
-        return TeleReferenceValue.from(teleVM(), teleVM().teleFields().ObjectReferenceValue_value.readReference(reference()));
+        return TeleReferenceValue.from(vm(), vm().teleFields().ObjectReferenceValue_value.readReference(reference()));
     }
 
     @Override

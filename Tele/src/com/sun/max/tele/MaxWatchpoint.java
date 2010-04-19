@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
 
@@ -64,7 +63,7 @@ public interface MaxWatchpoint {
      *
      * @return the memory being watched in the VM
      */
-    MemoryRegion memoryRegion();
+    MaxMemoryRegion memoryRegion();
 
     /**
      * Gets current settings.

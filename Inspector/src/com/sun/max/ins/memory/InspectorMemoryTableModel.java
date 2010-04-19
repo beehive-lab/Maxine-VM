@@ -23,7 +23,6 @@ package com.sun.max.ins.memory;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
@@ -61,7 +60,7 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      * @param row a row in the table model of memory
      * @return the first location in VM memory corresponding to a row in the table model
      */
-    public abstract MemoryRegion getMemoryRegion(int row);
+    public abstract MaxMemoryRegion getMemoryRegion(int row);
 
     /**
      * Returns all memory watchpoints, if any, whose coverage intersects memory corresponding

@@ -25,15 +25,47 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
 
+/**
+ * Access to the description and current state (within a particular thread) of a register
+ * in the VM.
+ *
+ * @author Michael Van De Vanter
+ */
 public final class TeleRegister implements MaxRegister {
 
+    private final TeleVM teleVM;
     private final TeleRegisters teleRegisters;
     private final Symbol register;
+    private final String entityName;
+    private final String entityDescription;
 
-    protected TeleRegister(TeleRegisters teleRegisters, Symbol register) {
-
+    protected TeleRegister(TeleRegisters teleRegisters, Symbol register, TeleNativeThread teleNativeThread) {
+        this.teleVM = teleNativeThread.vm();
         this.teleRegisters = teleRegisters;
         this.register = register;
+        this.entityName = "Thread-" + teleNativeThread.localHandle() + " register " + register.name();
+        this.entityDescription = "A machine register, together with current value in the " + vm().entityName() + " for " + teleNativeThread.entityName();
+    }
+
+    public TeleVM vm() {
+        return teleVM;
+    }
+
+    public String entityName() {
+        return entityName;
+    }
+
+    public String entityDescription() {
+        return entityDescription;
+    }
+
+    public MaxEntityMemoryRegion<MaxRegister> memoryRegion() {
+        // A register doesn't occupy a memory region
+        return null;
+    }
+
+    public boolean contains(Address address) {
+        return false;
     }
 
     public String name() {

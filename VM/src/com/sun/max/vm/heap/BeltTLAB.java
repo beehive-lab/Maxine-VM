@@ -48,7 +48,7 @@ public class BeltTLAB extends LinearAllocationMemoryRegion {
 
     public BeltTLAB() {
         mark.set(start());
-        setDescription("TLAB");
+        setRegionName("TLAB");
     }
 
     @INLINE

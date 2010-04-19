@@ -20,9 +20,6 @@
  */
 package com.sun.max.tele.object;
 
-import java.lang.management.*;
-
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -32,75 +29,69 @@ import com.sun.max.vm.reference.*;
  *
  * @author Michael Van De Vanter
  */
-public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRegion {
+public class TeleRuntimeMemoryRegion extends TeleTupleObject {
+
+    private Address regionStart = Address.zero();
+    private Size regionSize = Size.zero();
+    private String regionName = null;
 
     TeleRuntimeMemoryRegion(TeleVM teleVM, Reference runtimeMemoryRegionReference) {
         super(teleVM, runtimeMemoryRegionReference);
     }
 
-    /**
-     * Reads from the VM the start field of the {@link RuntimeMemoryRegion}.
-     */
-    private Address readStart() {
-        return teleVM().teleFields().RuntimeMemoryRegion_start.readWord(reference()).asAddress();
+    public final Address getRegionStart() {
+        return regionStart;
     }
 
-    public Address start() {
-        // No caching for now
-        Address start = Address.zero();
-        try {
-            start = readStart();
-            if (start.isZero() && this == teleVM().teleBootHeapRegion()) {
-                // Ugly special case:  the start field of the static that defines the boot heap region
-                // is set at zero in the boot image, only set to the real value when the VM starts running.
-                // Lie about it.
-                start = teleVM().bootImageStart();
-            }
-        } catch (DataIOError dataIOError) {
-        }
-        return start;
+    public Size getRegionSize() {
+        return regionSize;
+    }
+
+    public final String getRegionName() {
+        return regionName;
     }
 
     /**
      * @return whether memory has been allocated yet in the VM for this region.
      */
-    public boolean isAllocated() {
-        return !start().isZero();
+    public final boolean isAllocated() {
+        return !getRegionStart().isZero();
     }
 
-    /**
-     * Reads from the TeleVM the size field of the {@link RuntimeMemoryRegion}.
-     */
-    public Size size() {
-        return teleVM().teleFields().RuntimeMemoryRegion_size.readWord(reference()).asSize();
+    @Override
+    protected void refresh() {
+        if (vm().tryLock()) {
+            try {
+                final Size newRegionSize = vm().teleFields().RuntimeMemoryRegion_size.readWord(reference()).asSize();
+
+                final Reference regionNameStringReference = vm().teleFields().RuntimeMemoryRegion_regionName.readReference(reference());
+                final TeleString teleString = (TeleString) vm().makeTeleObject(regionNameStringReference);
+                final String newRegionName = teleString.getString();
+
+                Address newRegionStart = vm().teleFields().RuntimeMemoryRegion_start.readWord(reference()).asAddress();
+                if (newRegionStart.isZero() && newRegionName != null) {
+                    if (newRegionName.equals(vm().heap().bootHeapRegionName())) {
+                        // Ugly special case:  the regionStart field of the static that defines the boot heap region
+                        // is set at zero in the boot image, only set to the real value when the VM starts running.
+                        // Lie about it.
+                        newRegionStart = vm().bootImageStart();
+                    }
+                }
+                // Quasi-atomic update
+                this.regionStart = newRegionStart;
+                this.regionSize = newRegionSize;
+                this.regionName = newRegionName;
+            } catch (DataIOError dataIOError) {
+                System.err.println("TeleRuntimeMemoryRegion dataIOError:");
+                dataIOError.printStackTrace();
+                // No update; VM not available for some reason.
+                // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
+            } finally {
+                vm().unlock();
+            }
+        }
+        super.refresh();
     }
 
-    public Address end() {
-        return start().plus(size());
-    }
 
-    public String description() {
-        final Reference descriptionStringReference = teleVM().teleFields().RuntimeMemoryRegion_description.readReference(reference());
-        final TeleString teleString = (TeleString) teleVM().makeTeleObject(descriptionStringReference);
-        return teleString.getString();
-    }
-
-    public boolean contains(Address address) {
-        return address.greaterEqual(start()) && address.lessThan(end());
-    }
-
-    public boolean overlaps(MemoryRegion memoryRegion) {
-        final Address start = start();
-        final Address end = end();
-        return start.greaterEqual(memoryRegion.start()) && start.lessThan(memoryRegion.end()) ||
-            end.greaterEqual(memoryRegion.start()) && end.lessThan(memoryRegion.end());
-    }
-
-    public boolean sameAs(MemoryRegion otherMemoryRegion) {
-        return Util.equal(this, otherMemoryRegion);
-    }
-
-    public MemoryUsage getUsage() {
-        return null;
-    }
 }

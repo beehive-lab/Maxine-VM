@@ -787,7 +787,7 @@ public final class Log {
             if (targetMethod.classMethodActor != null) {
                 printMethod(targetMethod.classMethodActor, withNewline);
             } else {
-                print(targetMethod.description(), withNewline);
+                print(targetMethod.regionName(), withNewline);
             }
         }
 

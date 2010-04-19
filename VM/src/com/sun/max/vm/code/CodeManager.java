@@ -99,7 +99,7 @@ public abstract class CodeManager {
             currentCodeRegion = Code.bootCodeRegion;
         }
 
-        Object allocationTraceDescription = Code.traceAllocation.getValue() ? (targetMethod.classMethodActor() == null ? targetMethod.description() : targetMethod.classMethodActor()) : null;
+        Object allocationTraceDescription = Code.traceAllocation.getValue() ? (targetMethod.classMethodActor() == null ? targetMethod.regionName() : targetMethod.classMethodActor()) : null;
         Pointer start = currentCodeRegion.allocate(allocationSize, false);
         traceChunkAllocation(allocationTraceDescription, allocationSize, start);
         if (start.isZero()) {
