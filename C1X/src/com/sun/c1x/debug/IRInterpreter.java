@@ -806,7 +806,7 @@ public class IRInterpreter {
                 jumpNextInstruction();
                 return;
             }
-            if (!targetMethod.isLoaded()) {
+            if (!targetMethod.isResolved()) {
                 switch (i.opcode()) {
                     case Bytecodes.INVOKEINTERFACE:
                         targetMethod = i.constantPool.resolveInvokeInterface(i.cpi);
@@ -1083,7 +1083,7 @@ public class IRInterpreter {
 
         private Class< ? > toJavaClass(RiType type) {
             Class< ? > resolved = null;
-            if (type.isLoaded()) {
+            if (type.isResolved()) {
                 resolved = type.javaClass();
             } else {
                 try {
@@ -1819,7 +1819,7 @@ public class IRInterpreter {
         }
 
         private void assertArrayType(RiType riType) {
-            if (riType != null && riType.isLoaded()) {
+            if (riType != null && riType.isResolved()) {
                 if (!riType.isArrayKlass()) {
                     fail("RiType " + riType + " must be an array class");
                 }

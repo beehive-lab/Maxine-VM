@@ -25,7 +25,7 @@ import java.util.*;
 /**
  * An expandable and indexable list of {@code int}s.
  *
- * This class avoids the boxing/unboxing of using {@code ArrayList<Integer>}.
+ * This class avoids the boxing/unboxing incurred by {@code ArrayList<Integer>}.
  *
  * @author Doug Simon
  */

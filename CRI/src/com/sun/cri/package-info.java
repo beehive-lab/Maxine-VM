@@ -18,31 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.cri.ci;
-
-import com.sun.cri.ri.*;
-import com.sun.cri.xir.*;
-
 /**
- * Represents a compiler instance which has been configured for a particular runtime system and
- * target machine and is capable of compiling methods.
+ * A virtual machine compiler-runtime interface (CRI).
+ * <p>
+ * Specifically, this package defines an interface between the compiler and the runtime system of a virtual machine for
+ * the instruction set defined in {@link com.sun.cri.bytecode.Bytecodes}. The interface has three components:
+ * <ol>
+ * <li>the {@link com.sun.cri.ci compiler-provided interface} that must be used by the runtime.
+ * <li>the {@link com.sun.cri.ri runtime-provided interface} that must be used by the compiler.
+ * <li>the {@link com.sun.cri.xir XIR interface} for translating object operations.
+ * </ol>
  *
- * @author Ben L. Titzer
+ * The interface is independent of any particular compiler or runtime implementation.
+ * <p>
+ * For more details see <a href="http://wikis.sun.com/download/attachments/173802383/vee2010.pdf">Improving Compiler-Runtime Separation with XIR</a>.
  */
-public abstract class CiCompiler {
-
-    /**
-     * Compile the specified method.
-     * @param method the method to compile
-     * @return a {@link CiResult result} representing the compilation result
-     */
-    public abstract CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator);
-
-    /**
-     * Compile the specified method.
-     * @param method the method to compile
-     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
-     * @return a {@link CiResult result} representing the compilation result
-     */
-    public abstract CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator);
-}
+package com.sun.cri;

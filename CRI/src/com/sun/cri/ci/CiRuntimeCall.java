@@ -23,7 +23,7 @@ package com.sun.cri.ci;
 import static com.sun.cri.ci.CiKind.*;
 
 /**
- * This enumeration lists the calls that must be provided by the runtime system. The compiler
+ * Enumerates the calls that must be provided by the runtime system. The compiler
  * may generate code that calls the runtime services for unresolved and slow cases of some
  * bytecodes.
  *

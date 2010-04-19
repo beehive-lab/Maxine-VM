@@ -471,7 +471,7 @@ public final class GraphBuilder {
         if (con instanceof RiType) {
             // this is a load of class constant which might be unresolved
             RiType ritype = (RiType) con;
-            if (!ritype.isLoaded() || C1XOptions.TestPatching) {
+            if (!ritype.isResolved() || C1XOptions.TestPatching) {
                 push(CiKind.Object, append(new ResolveClass(ritype, RiType.Representation.JavaClass, stateBefore, cpi, constantPool())));
             } else {
                 push(CiKind.Object, append(Constant.forObject(ritype.javaClass())));
@@ -705,7 +705,7 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy();
         char cpi = stream().readCPI();
         RiType type = constantPool().lookupType(cpi);
-        Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isLoaded() && type.isInitialized(), cpi, stateBefore);
+        Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isResolved() && type.isInitialized(), cpi, stateBefore);
         CheckCast c = new CheckCast(type, typeInstruction, apop(), stateBefore);
         apush(append(c));
         if (assumeLeafClass(type) && !type.isArrayKlass()) {
@@ -717,7 +717,7 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy();
         char cpi = stream().readCPI();
         RiType type = constantPool().lookupType(cpi);
-        Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isLoaded() && type.isInitialized(), cpi, stateBefore);
+        Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isResolved() && type.isInitialized(), cpi, stateBefore);
         InstanceOf i = new InstanceOf(type, typeInstruction, apop(), stateBefore);
         ipush(append(i));
         if (assumeLeafClass(type) && !type.isArrayKlass()) {
@@ -762,7 +762,7 @@ public final class GraphBuilder {
     void genGetField(char cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetField(cpi);
-        boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
+        boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
         LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded, cpi, constantPool());
         appendOptimizedLoadField(field.kind(), load);
     }
@@ -770,7 +770,7 @@ public final class GraphBuilder {
     void genPutField(char cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutField(cpi);
-        boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
+        boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
         Value value = pop(field.kind().stackKind());
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded, cpi, constantPool()));
     }
@@ -779,7 +779,7 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetStatic(cpi);
         RiType holder = field.holder();
-        boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
         LoadField load = new LoadField(container, field, true, stateBefore, isInitialized, cpi, constantPool());
         appendOptimizedLoadField(field.kind(), load);
@@ -789,7 +789,7 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutStatic(cpi);
         RiType holder = field.holder();
-        boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
         Value value = pop(field.kind().stackKind());
         StoreField store = new StoreField(container, field, value, true, stateBefore, isInitialized, cpi, constantPool());
@@ -872,7 +872,7 @@ public final class GraphBuilder {
     private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, FrameState stateBefore, char cpi, RiConstantPool constantPool) {
         Value receiver = args[0];
         // attempt to devirtualize the call
-        if (target.isLoaded() && target.holder().isLoaded()) {
+        if (target.isResolved() && target.holder().isResolved()) {
             RiType klass = target.holder();
             // 0. check for trivial cases
             if (target.canBeStaticallyBound() && !target.isAbstract()) {
@@ -882,20 +882,20 @@ public final class GraphBuilder {
             }
             // 1. check if the exact type of the receiver can be determined
             RiType exact = getExactType(klass, receiver);
-            if (exact != null && exact.isLoaded()) {
+            if (exact != null && exact.isResolved()) {
                 // either the holder class is exact, or the receiver object has an exact type
                 invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool, stateBefore);
                 return;
             }
             // 2. check if an assumed leaf method can be found
             RiMethod leaf = getAssumedLeafMethod(target, receiver);
-            if (leaf != null && leaf.isLoaded() && !leaf.isAbstract() && leaf.holder().isLoaded()) {
+            if (leaf != null && leaf.isResolved() && !leaf.isAbstract() && leaf.holder().isResolved()) {
                 invokeDirect(leaf, args, null, cpi, constantPool, stateBefore);
                 return;
             }
             // 3. check if the either of the holder or declared type of receiver can be assumed to be a leaf
             exact = getAssumedLeafType(klass, receiver);
-            if (exact != null && exact.isLoaded()) {
+            if (exact != null && exact.isResolved()) {
                 // either the holder class is exact, or the receiver object has an exact type
                 invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool, stateBefore);
                 return;
@@ -964,7 +964,7 @@ public final class GraphBuilder {
             return target;
         }
         RiType declared = receiver.declaredType();
-        if (declared != null && declared.isLoaded() && !declared.isInterface()) {
+        if (declared != null && declared.isResolved() && !declared.isInterface()) {
             RiMethod impl = declared.resolveMethodImpl(target);
             if (impl != null && (assumeLeafMethod(impl) || assumeLeafClass(declared))) {
                 return impl;
@@ -1338,7 +1338,7 @@ public final class GraphBuilder {
             RiType type = sig.argumentTypeAt(i);
             CiKind vt = type.kind().stackKind();
             Local local = new Local(vt, index);
-            if (type.isLoaded()) {
+            if (type.isResolved()) {
                 local.setDeclaredType(type);
             }
             state.storeLocal(index, local);
@@ -1348,7 +1348,7 @@ public final class GraphBuilder {
     }
 
     boolean tryRemoveCall(RiMethod target, Value[] args, boolean isStatic) {
-        if (target.isLoaded()) {
+        if (target.isResolved()) {
             if (C1XOptions.OptIntrinsify) {
                 // try to create an intrinsic node instead of a call
                 C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(target);
@@ -2358,7 +2358,7 @@ public final class GraphBuilder {
     }
 
     boolean assumeLeafClass(RiType type) {
-        if (!C1XOptions.TestSlowPath && type.isLoaded()) {
+        if (!C1XOptions.TestSlowPath && type.isResolved()) {
             if (type.isFinal()) {
                 return true;
             }
@@ -2372,7 +2372,7 @@ public final class GraphBuilder {
     }
 
     boolean assumeLeafMethod(RiMethod method) {
-        if (!C1XOptions.TestSlowPath && method.isLoaded()) {
+        if (!C1XOptions.TestSlowPath && method.isResolved()) {
             if (method.isLeafMethod()) {
                 return true;
             }

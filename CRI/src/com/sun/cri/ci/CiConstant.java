@@ -23,8 +23,9 @@ package com.sun.cri.ci;
 
 
 /**
- * This class represents a boxed value, such as integer, floating point number, or object reference,
- * within the compiler and across the compiler/runtime barrier.
+ * Represents a constant (boxed) value, such as an integer, floating point number, or object reference,
+ * within the compiler and across the compiler/runtime interface. Exports a set of {@code CiConstant}
+ * instances that represent frequently used constant values, such as {@link #ZERO}.
  *
  * @author Ben L. Titzer
  */
@@ -75,7 +76,16 @@ public final class CiConstant extends CiValue {
         assert NULL_OBJECT.isNull();
     }
     
+    /**
+     * The boxed object value. This is ignored iff {@code !kind.isObject()}.
+     */
     private final Object object;
+    
+    /**
+     * The boxed primitive value as a {@code long}. This is ignored iff {@code kind.isObject()}.
+     * For {@code float} and {@code double} values, this value is the result of
+     * {@link Float#floatToRawIntBits(float)} and {@link Double#doubleToRawLongBits(double)} respectively. 
+     */
     private final long primitive;
 
     /**
@@ -154,7 +164,7 @@ public final class CiConstant extends CiValue {
     }
 
     private boolean valueEqual(CiConstant other) {
-        // must have equivalent tags to be equal
+        // must have equivalent kinds to be equal
         if (kind != other.kind) {
             return false;
         }

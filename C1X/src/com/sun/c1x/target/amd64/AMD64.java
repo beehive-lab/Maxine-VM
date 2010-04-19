@@ -26,7 +26,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiRegister.*;
 
 /**
- * This class represents the AMD64 architecture.
+ * Represents the AMD64 architecture.
  *
  * @author Thomas Wuerthinger
  */

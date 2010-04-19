@@ -47,7 +47,7 @@ public final class CiStackSlot extends CiValue {
     /**
      * Gets a {@link CiStackSlot} instance representing a stack slot at a given index
      * holding a value of a given kind.
-     *  
+     *
      * @param kind the kind of the value stored in the stack slot
      * @param index the index of the stack slot
      * @param inCallerFrame specifies if the slot is in the current frame or in the caller's frame
@@ -65,7 +65,7 @@ public final class CiStackSlot extends CiValue {
         assert slot.inCallerFrame() == inCallerFrame;
         return slot; 
     }
-    
+
     /**
      * Private constructor to enforce use of {@link #get(CiKind, int)} so that the
      * shared instance {@linkplain #CACHE cache} is used.
@@ -115,7 +115,10 @@ public final class CiStackSlot extends CiValue {
     public boolean inCallerFrame() {
         return index < 0;
     }
-    
+
+    /**
+     * Default size of the cache to generate per kind.
+     */
     private static final int CACHE_PER_KIND_SIZE = 100;
     
     private static final int CALLER_FRAME_CACHE_PER_KIND_SIZE = 10;
@@ -142,6 +145,14 @@ public final class CiStackSlot extends CiValue {
         return cache;
     }
     
+    /**
+     * Creates an array of {@code CiStackSlot} objects for a given {@link CiKind}.
+     * The {@link #index} values range from {@code 0} to {@code count - 1}.
+     * 
+     * @param kind the {@code CiKind} of the stack slot
+     * @param count the size of the array to create
+     * @return the generated {@code CiStackSlot} array
+     */
     private static CiStackSlot[] makeCacheForKind(CiKind kind, int count, boolean inCallerFrame) {
         CiStackSlot[] slots = new CiStackSlot[count];
         for (int i = 0; i < count; ++i) {

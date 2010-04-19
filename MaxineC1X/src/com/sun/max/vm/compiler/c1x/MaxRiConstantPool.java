@@ -220,7 +220,7 @@ public class MaxRiConstantPool implements RiConstantPool {
         switch (constantPool.tagAt(cpi)) {
             case CLASS: {
                 MaxRiType type = typeFrom(constantPool.classAt(cpi), cpi);
-                if (type.isLoaded()) {
+                if (type.isResolved()) {
                     return CiConstant.forObject(type.javaClass());
                 }
                 return type;

@@ -21,7 +21,7 @@
 package com.sun.cri.ci;
 
 /**
- * This class contains statistics gathered during the compilation of a method and reported back
+ * Contains statistics gathered during the compilation of a method and reported back
  * from the compiler as the result of compilation.
  *
  * @author Ben L. Titzer

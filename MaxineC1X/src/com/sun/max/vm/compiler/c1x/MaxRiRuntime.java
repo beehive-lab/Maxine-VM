@@ -141,7 +141,7 @@ public class MaxRiRuntime implements RiRuntime {
      * to allow the compiler to use its own heuristics
      */
     public boolean mustInline(RiMethod method) {
-        if (!method.isLoaded()) {
+        if (!method.isResolved()) {
             return false;
         }
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
@@ -161,7 +161,7 @@ public class MaxRiRuntime implements RiRuntime {
      * {@code false} to allow the compiler to use its own heuristics
      */
     public boolean mustNotInline(RiMethod method) {
-        if (!method.isLoaded()) {
+        if (!method.isResolved()) {
             return false;
         }
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
@@ -395,7 +395,7 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public boolean isObjectArrayType(RiType type) {
-        if (type.isLoaded()) {
+        if (type.isResolved()) {
             ClassActor c = ((MaxRiType) type).asClassActor("equals Object[]");
             return c.isArrayClassActor() && c == ClassActor.fromJava(Object[].class);
         }

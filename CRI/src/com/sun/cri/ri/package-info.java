@@ -18,31 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.cri.ci;
-
-import com.sun.cri.ri.*;
-import com.sun.cri.xir.*;
-
 /**
- * Represents a compiler instance which has been configured for a particular runtime system and
- * target machine and is capable of compiling methods.
- *
- * @author Ben L. Titzer
+ * The runtime-provided part of the bi-directional interface between the compiler and the runtime system of a virtual machine for the
+ * instruction set defined in {@link com.sun.cri.bytecode.Bytecodes}.
+ * <p>
+ * Unlike the {@link com.sun.cri.ci compiler-provided interface}, the runtime-provided interface is specified largely
+ * using interfaces, that must be implemented by classes provided by a specific runtime implementation.
+ * <p>
+ * {@link com.sun.cri.ri.RiRuntime} encapsulates the main functionality of the runtime for the compiler.
+ * <p>
+ * Types (i.e., primitives, classes and interfaces}, fields and methods are represented by {@link com.sun.cri.ri.RiType}, {@link com.sun.cri.ri.RiField} and {@link com.sun.cri.ri.RiMethod}, respectively, with additional support from
+ * {@link com.sun.cri.ri.RiSignature} and {@link com.sun.cri.ri.RiExceptionHandler}. Access to the runtime constant pool
+ * is through {@link com.sun.cri.ri.RiConstantPool}.
  */
-public abstract class CiCompiler {
-
-    /**
-     * Compile the specified method.
-     * @param method the method to compile
-     * @return a {@link CiResult result} representing the compilation result
-     */
-    public abstract CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator);
-
-    /**
-     * Compile the specified method.
-     * @param method the method to compile
-     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
-     * @return a {@link CiResult result} representing the compilation result
-     */
-    public abstract CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator);
-}
+package com.sun.cri.ri;

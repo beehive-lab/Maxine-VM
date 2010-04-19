@@ -185,7 +185,7 @@ public class MaxRiType implements RiType {
      * Checks whether this compiler interface type is loaded (i.e. resolved).
      * @return {@code true} if the type is loaded
      */
-    public boolean isLoaded() {
+    public boolean isResolved() {
         return classActor != null;
     }
 

@@ -24,13 +24,13 @@ package com.sun.cri.ci;
  * Represents a value that is yet to be bound to a machine location (such as
  * a {@linkplain CiRegister register} or stack {@linkplain CiAddress address})
  * by a register allocator.
- * 
+ *
  * @author Doug Simon
  */
 public class CiVariable extends CiValue {
-    
+
     /**
-     * The identifier of the variable. This is a non-zero index in a contiguous 0-based name space. 
+     * The identifier of the variable. This is a non-zero index in a contiguous 0-based name space.
      */
     public final int index;
 
@@ -43,7 +43,7 @@ public class CiVariable extends CiValue {
         super(kind);
         this.index = index;
     }
-    
+
     private static CiVariable[] generate(CiKind kind, int count) {
         CiVariable[] variables = new CiVariable[count];
         for (int i = 0; i < count; i++) {
@@ -51,9 +51,9 @@ public class CiVariable extends CiValue {
         }
         return variables;
     }
-    
+
     private static final int CACHE_PER_KIND_SIZE = 100;
-    
+
     /**
      * Cache of common variables.
      */
@@ -63,13 +63,13 @@ public class CiVariable extends CiValue {
             cache[kind.ordinal()] = generate(kind, CACHE_PER_KIND_SIZE);
         }
     }
-    
+
     /**
      * Gets a variable for a given kind and index.
-     * 
+     *
      * @param kind
      * @param index
-     * @return
+     * @return the corresponding {@code CiVariable}
      */
     public static CiVariable get(CiKind kind, int index) {
         assert index >= 0;
@@ -79,7 +79,7 @@ public class CiVariable extends CiValue {
         }
         return new CiVariable(kind, index);
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -91,12 +91,12 @@ public class CiVariable extends CiValue {
         }
         return false;
     }
-    
+
     @Override
     public int hashCode() {
         return (index << 4) | kind.ordinal();
     }
-    
+
     @Override
     public String name() {
         return "v" + index;

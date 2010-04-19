@@ -24,9 +24,8 @@ import com.sun.cri.ci.CiRegister.*;
 import com.sun.cri.ri.*;
 
 /**
- * This class represents the target machine for a compiler, including
- * the CPU architecture, the size of pointers and references, alignment
- * of stacks, caches, etc.
+ * Represents the target machine for a compiler, including the CPU architecture, the size of pointers and references,
+ * alignment of stacks, caches, etc.
  *
  * @author Ben L. Titzer
  */
@@ -40,7 +39,7 @@ public class CiTarget {
     public final int pageSize;
     public final boolean isMP;
     private final int[] spillSlotsPerKindMap;
-    
+
     /**
      * The spill slot size for values that occupy 1 {@linkplain CiKind#sizeInSlots() Java slot}.
      */
@@ -109,7 +108,7 @@ public class CiTarget {
     public int spillSlots(CiKind kind) {
         return spillSlotsPerKindMap[kind.ordinal()];
     }
-    
+
     /**
      * Aligns the given frame size (without return instruction pointer) to the stack
      * alignment size and return the aligned size (without return instruction pointer).
