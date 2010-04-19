@@ -33,16 +33,23 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 
 /**
- * Simple free heap space management.
+ * Free heap space management.
  * Nothing ambitious, just to get going and test the tracing algorithm of the future hybrid mark-sweep-evacuate.
  * Implement the HeapSweeper abstract class which defines method called by a HeapMarker to notify free space.
  * The FreeHeapSpace manager records these into an vector of list of free space based on size of the free space.
+ *
+ * Space allocation is primarily handled via TLABs, which are made of one or more heap chunks.
+ * Request too large to be handled by TLABs are handled by the free space manager directly.
+ * This one keeps a simple table of list of chunks, indexed by a power of 2 of the size requested, such that
+ * Size >> log2FirstBin is an index to that table. The first bin in the table contains a linked list of chunk of any size
+ * between log2FirstBin and minReclaimableSpace and is used primarily for TLAB and small object allocation.
+ * The other bins are used for large object space allocation. "Bin" allocation are synchronized.
  *
  * @author Laurent Daynes.
  */
 public class FreeHeapSpaceManager extends HeapSweeper {
     private static final VMIntOption largeObjectsMinSizeOption =
-        register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(16).toInt(),
+        register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(64).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
 
     private static final VMIntOption freeChunkMinSizeOption =
@@ -65,6 +72,8 @@ public class FreeHeapSpaceManager extends HeapSweeper {
 
     private static boolean TraceSweep = false;
 
+    private static final int REFILL_RATIO =  6;
+
     /**
      * Minimum size to be treated as a large object.
      */
@@ -76,29 +85,9 @@ public class FreeHeapSpaceManager extends HeapSweeper {
      */
     int log2FirstBinSize;
 
-    private static  final Size TINY_OBJECT_SIZE = Size.fromInt(Word.size() * 2);
-
-    static interface AllocationFailureHandler {
-        /**
-         * Handle allocation failure.
-         * API still in flux. Not pretty at the moment: a valid pointer to some allocated space of the requested size may be returned,
-         * or null. The former is typically because allocation was performed by some other allocator. The latter is when the heap ran
-         * out of space and space was reclaimed for the current allocator. The null value indicates that the allocator should retry allocating.
-         *
-         * @param allocator
-         * @param size
-         * @param isTLAB TODO
-         * @return
-         */
-        Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size, boolean isTLAB);
-        Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size, int alignment);
-    }
-
     /**
      * A linear space allocator.
      * Allocate space linearly from a region of the heap.
-     * Delegate to an AllocationFailureHandler when it cannot satisfy a
-     * request.
      *
      * FIXME: needs HEADROOM like semi-space to make sure we're never left with not enough space
      * at the end of a chunk to plant a dead object (for heap parsability).
@@ -110,24 +99,21 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         private Address end;
 
         /**
-         * Allocation failure handler.
-         */
-        private AllocationFailureHandler allocationFailureHandler;
-
-        /**
          * Maximum size one can allocate with this allocator. Request for size larger than this
          * gets delegated to the allocation failure handler.
          */
         @CONSTANT_WHEN_NOT_ZERO
         private Size sizeLimit;
 
-        HeapSpaceAllocator(String description, AllocationFailureHandler allocationFailureHandler) {
+        private Size refillSize;
+
+        HeapSpaceAllocator(String description) {
             super(description);
-            this.allocationFailureHandler = allocationFailureHandler;
         }
 
-        void initialize(Address initialChunk, Size initialChunkSize, Size maxObjectSize) {
-            sizeLimit = maxObjectSize;
+        void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit, Size refillSize) {
+            this.sizeLimit = sizeLimit;
+            this.refillSize = refillSize;
             if (initialChunk.isZero()) {
                 clear();
             } else {
@@ -144,10 +130,31 @@ public class FreeHeapSpaceManager extends HeapSweeper {
 
         // FIXME: concurrency
         void refill(Address chunk, Size chunkSize) {
+            // Make sure we can cause any attempt to allocate to fail, regardless of the
+            // value of the mark.
+            end = Address.zero();
+            // Now refill.
             start = chunk;
             size = chunkSize;
-            end = chunk.plus(chunkSize);
             mark.set(start);
+            end = chunk.plus(chunkSize);
+        }
+
+        private Size refillLimit() {
+            return size().dividedBy(REFILL_RATIO);
+        }
+
+        @INLINE
+        private Pointer setTopToEnd() {
+            Pointer cell;
+            do {
+                cell = top();
+                if (cell.equals(end)) {
+                    // Already at end
+                    return cell;
+                }
+            } while(mark.compareAndSwap(cell, end) != cell);
+            return cell;
         }
 
         Size freeSpaceLeft() {
@@ -163,6 +170,33 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             return size.greaterThan(sizeLimit);
         }
 
+        synchronized Pointer refillOrAllocate(Size size) {
+            if (isLarge(size)) {
+                return binAllocate(size).asPointer();
+            }
+            // We may have raced with another concurrent thread which may have
+            // refilled the allocator.
+            Pointer cell = top();
+
+            if (cell.plus(size).greaterThan(end)) {
+                // Fill up the allocator to bring all mutators to the refill point.
+                Size spaceLeft = end.minus(cell).asSize();
+                if (spaceLeft.greaterThan(refillLimit())) {
+                    // Don't refill, waste would be too high. Allocate from the bin table.
+                    return binAllocate(size).asPointer();
+                }
+                // Refill. First, fill up the allocator to bring everyone to refill synchronization.
+                Pointer start = setTopToEnd();
+
+                Address chunk = binRefill(refillSize, start, end.minus(start).asSize());
+                refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
+                // Fall-off to return zero.
+            }
+            // There was a race for refilling the allocator. Just return to
+            // the non-blocking allocation loop.
+            return Pointer.zero();
+        }
+
         /**
          * Allocate space of the specified size.
          *
@@ -170,7 +204,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
          * @param isTLAB true if this is for a TLAB refill
          * @return
          */
-        final Pointer allocate(Size size, boolean isTLAB) {
+        final Pointer allocate(Size size) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(size.isWordAligned(), "Size must be word aligned");
             }
@@ -184,7 +218,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                 cell = top();
                 nextMark = cell.plus(size);
                 if (nextMark.greaterThan(end)) {
-                    cell = allocationFailureHandler.handleAllocationFailure(this, size, isTLAB);
+                    cell = refillOrAllocate(size);
                     if (!cell.isZero()) {
                         return cell;
                     }
@@ -193,19 +227,6 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                 }
             } while (mark.compareAndSwap(cell, nextMark) != cell);
             return DebugHeap.adjustForDebugTag(cell);
-        }
-
-        @INLINE
-        private Pointer setTopToEnd() {
-            Pointer cell;
-            do {
-                cell = top();
-                if (cell.equals(end)) {
-                    // Already at end
-                    return cell;
-                }
-            } while(mark.compareAndSwap(cell, end) != cell);
-            return cell;
         }
 
         /**
@@ -238,8 +259,8 @@ public class FreeHeapSpaceManager extends HeapSweeper {
      */
     private final RuntimeMemoryRegion committedHeapSpace;
     private boolean doImpreciseSweep;
-    private final HeapSpaceAllocator largeObjectAllocator;
     private final HeapSpaceAllocator smallObjectAllocator;
+    private boolean useTLABBin;
 
     /**
      * Head of a linked list of free space recovered by the Sweeper.
@@ -254,13 +275,18 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         long totalChunks;
 
         FreeSpaceList() {
+            reset();
+        }
+
+        void reset() {
             head = Address.zero();
             last = Address.zero();
             totalSize = 0L;
             totalChunks = 0L;
         }
-        void append(Address chunk, Size size) {
-            HeapFreeChunk.format(chunk, size);
+
+        @INLINE
+        private void appendChunk(Address chunk, Size size) {
             if (last.isZero()) {
                 head = chunk;
             } else {
@@ -271,8 +297,82 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             totalChunks++;
         }
 
+        void append(Address chunk, Size size) {
+            HeapFreeChunk.format(chunk, size);
+            appendChunk(chunk, size);
+        }
+
+        void append(HeapFreeChunk chunk) {
+            appendChunk(HeapFreeChunk.fromHeapFreeChunk(chunk), chunk.size);
+        }
+
+        @INLINE
+        private void remove(HeapFreeChunk prev, HeapFreeChunk chunk) {
+            totalChunks--;
+            totalSize -= chunk.size.toLong();
+            if (prev == null) {
+                head =  HeapFreeChunk.fromHeapFreeChunk(chunk.next);
+            } else {
+                prev.next = chunk.next;
+            }
+            chunk.next = null;
+        }
+
+        /**
+         * Allocate first chunk of the free list fitting the size. Space left-over is re-entered in the appropriate bin, or dismissed as dark matter.
+         * @param size
+         * @return
+         */
+        Address allocateFirsFit(Size size, boolean exactFit) {
+            Size spaceWithHeadRoom = size.plus(HeapSchemeAdaptor.MIN_OBJECT_SIZE);
+            HeapFreeChunk prevChunk = null;
+            HeapFreeChunk chunk = HeapFreeChunk.toHeapFreeChunk(head);
+            do {
+                if (chunk.size.greaterEqual(spaceWithHeadRoom)) {
+                    Address result = HeapFreeChunk.fromHeapFreeChunk(chunk);
+                    if (!exactFit) {
+                        remove(prevChunk, chunk);
+                        return result;
+                    }
+                    Size spaceLeft = chunk.size.minus(size);
+                    if (spaceLeft.greaterEqual(minReclaimableSpace)) {
+                        // Space is allocated at the end of the chunk to avoid reformatting it.
+                        result = result.plus(spaceLeft);
+                        chunk.size = spaceLeft;
+                        FreeSpaceList newFreeList =  freeChunkBins[binIndex(spaceLeft)];
+                        if (newFreeList == this) {
+                            // Chunk remains in its free list.
+                            totalSize -= size.toLong();
+                            return result;
+                        }
+                        // Chunk changes of free list.
+                        remove(prevChunk, chunk);
+                        newFreeList.append(chunk);
+                    } else {
+                        // Chunk is removed.
+                        remove(prevChunk, chunk);
+                        Pointer start = result.asPointer().plus(size);
+                        darkMatter = darkMatter.plus(spaceLeft);
+                        HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(spaceLeft));
+                    }
+                    return result;
+                } else if (chunk.size.equals(size)) {
+                    // Exact fit.
+                    Address result = HeapFreeChunk.fromHeapFreeChunk(chunk);
+                    remove(prevChunk, chunk);
+                    return result;
+                }
+                prevChunk = chunk;
+                chunk = chunk.next;
+            } while(chunk != null);
+            return Address.zero();
+        }
+
+
         Address allocateTLAB(Size size) {
             // Allocate enough chunks to meet TLAB size.
+            // This is very imprecise and we may end up with a TLAB twice the
+            // size initially requested.
             Size allocated = Size.zero();
             HeapFreeChunk nextChunk = HeapFreeChunk.toHeapFreeChunk(head);
             int numAllocatedChunks = 0;
@@ -283,34 +383,11 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             } while(allocated.lessThan(size) && nextChunk != null);
             Address result = head;
             head =  HeapFreeChunk.fromHeapFreeChunk(nextChunk);
-            totalSize -= allocated.toLong();
             totalChunks -= numAllocatedChunks;
+            totalSize -= allocated.toLong();
+            totalFreeChunkSpace -= allocated.toLong();
             return result;
         }
-    }
-
-
-    int lastBinForTLAB;
-
-    synchronized Address binAllocateTLAB(Size size) {
-        long requiredSpace = size.toLong();
-        // First, try to allocate from the small bin.
-        FreeSpaceList freelist = freeChunkBins[lastBinForTLAB];
-
-        if (freelist.totalSize > requiredSpace) {
-            Address chunkAddress = freelist.head;
-            HeapFreeChunk chunk = HeapFreeChunk.toHeapFreeChunk(chunkAddress);
-            Size chunkSize = chunk.size;
-            if (chunkSize.greaterThan(size)) {
-                chunk.size = chunkSize.minus(requiredSpace);
-                Address result = chunkAddress.plus(chunk.size);
-                return result;
-            }
-            return freelist.allocateTLAB(size);
-        }
-        // Find the next bin with enough space and allocate TLAB from it. Put the rest into the
-        // appropriate bin.
-        return Address.zero();
     }
 
     /**
@@ -319,14 +396,84 @@ public class FreeHeapSpaceManager extends HeapSweeper {
     final FreeSpaceList [] freeChunkBins = new FreeSpaceList[10];
 
     /**
+     * Short cut to first bin dedicated to TLAB refills.
+     */
+    private final FreeSpaceList  tlabFreeSpaceList = freeChunkBins[0];
+
+    /**
      * Total space in free chunks. This doesn't include space of chunks allocated to heap space allocator.
      */
     long totalFreeChunkSpace;
 
     @INLINE
     private int binIndex(Size size) {
-        final long l = size.toLong() >> log2FirstBinSize;
+        final long l = size.unsignedShiftedRight(log2FirstBinSize).toLong();
         return  (l < freeChunkBins.length) ?  (int) l : (freeChunkBins.length - 1);
+    }
+
+    synchronized Address binAllocateTLAB(Size size) {
+        long requiredSpace = size.toLong();
+        // First, try to allocate from the TLAB bin.
+        if (tlabFreeSpaceList.totalSize > requiredSpace) {
+            return tlabFreeSpaceList.allocateTLAB(size);
+        }
+        Address initialChunks = tlabFreeSpaceList.head;
+        if (tlabFreeSpaceList.totalSize != 0) {
+            totalFreeChunkSpace -= tlabFreeSpaceList.totalSize;
+            size = size.minus(tlabFreeSpaceList.totalSize);
+            tlabFreeSpaceList.head = Address.zero();
+            tlabFreeSpaceList.totalSize = 0;
+            tlabFreeSpaceList.totalChunks = 0;
+            useTLABBin = false;
+        }
+        // Allocate additional space off higher free space bins.
+        Address additionalChunks = binAllocate(1, size, true);
+        if (additionalChunks.isZero()) {
+            return initialChunks;
+        }
+        HeapFreeChunk.setFreeChunkNext(additionalChunks, initialChunks);
+        return additionalChunks;
+    }
+
+    synchronized Address binAllocate(Size size) {
+        return  binAllocate(binIndex(size), size, true);
+    }
+
+    /* For simplicity at the moment.
+     */
+    private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
+
+    private Address binAllocate(int firstBinIndex, Size size, boolean exactFit) {
+        // Search for a bin with a chunk large enough to satisfy this allocation.
+        // Bin #0 contains chunks of any size between minReclaimableSpace and 1 << log2FirstBinSize,
+        // so it needs to be scanned for a chunk big enough to hold the requested size.
+        do {
+            int index = binIndex(size);
+            // Any chunks in bin larger or equal to index is large enough to contain the requested size.
+            // We may have to re-enter the leftover into another bin.
+            while (index <  freeChunkBins.length) {
+                FreeSpaceList freelist = freeChunkBins[index];
+                if (freelist != null) {
+                    Address result = freelist.allocateFirsFit(size, exactFit);
+                    if (!result.isZero()) {
+                        return result;
+                    }
+                }
+                index++;
+            }
+        } while (Heap.collectGarbage(size));
+        // Not enough freed memory.
+        throw  outOfMemoryError;
+    }
+
+    synchronized Address binRefill(Size refillSize, Pointer topAtRefill, Size spaceLeft) {
+        // First, deal with the left-over.
+        if  (spaceLeft.lessThan(minReclaimableSpace) && spaceLeft.greaterThan(0)) {
+            HeapSchemeAdaptor.fillWithDeadObject(topAtRefill, topAtRefill.plus(spaceLeft));
+        } else {
+            recordFreeSpace(topAtRefill, spaceLeft);
+        }
+        return binAllocate(1, refillSize, false);
     }
 
     @INLINE
@@ -346,19 +493,25 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         recordFreeSpace(freeChunk, size);
     }
 
+    /**
+     * Minimum size to be considered reclaimable.
+     */
     private Size minReclaimableSpace;
-    private Pointer endOfLastVisitedObject;
+    /**
+     * Counter of dark matter.
+     */
     private Size darkMatter = Size.zero();
+
+    /**
+     * Pointer to the end of the last dead object notified by the sweeper. Used  for precise sweeping.
+     */
+    private Pointer endOfLastVisitedObject;
 
     @INLINE
     private Pointer setEndOfLastVisitedObject(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
         endOfLastVisitedObject = cell.plus(Layout.size(origin));
         return endOfLastVisitedObject;
-    }
-
-    void setMinReclaimableSpace(Size size) {
-        minReclaimableSpace = size;
     }
 
     @Override
@@ -432,8 +585,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         for (int i = 0; i < freeChunkBins.length; i++) {
             freeChunkBins[i] = new FreeSpaceList();
         }
-        smallObjectAllocator = new HeapSpaceAllocator("Small Objects Allocator", new SmallObjectAllocationFailureHandler());
-        largeObjectAllocator = new HeapSpaceAllocator("Large Objects Allocator", new LargeObjectAllocationFailureHandler());
+        smallObjectAllocator = new HeapSpaceAllocator("Small Objects Allocator");
     }
 
     public void initialize(Address start, Size initSize) {
@@ -445,20 +597,25 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
         doImpreciseSweep = doImpreciseSweepOption.getValue();
         TraceSweep = MaxineVM.isDebug() ? traceSweepingOption.getValue() : false;
-        smallObjectAllocator.initialize(committedHeapSpace.start(), committedHeapSpace.size(), minLargeObjectSize);
-        largeObjectAllocator.initialize(Address.zero(), Size.zero(), Size.fromLong(Long.MAX_VALUE));
-        InspectableHeapInfo.init(smallObjectAllocator, largeObjectAllocator);
-        // InspectableHeapInfo.init(committedSpace);
+        smallObjectAllocator.initialize(committedHeapSpace.start(), committedHeapSpace.size(), minLargeObjectSize, minLargeObjectSize);
+        useTLABBin = false;
+        InspectableHeapInfo.init(committedHeapSpace);
     }
 
     public void reclaim(TricolorHeapMarker heapMarker) {
         darkMatter = Size.zero();
+        for (int i = 0; i < freeChunkBins.length; i++) {
+            freeChunkBins[i].reset();
+        }
+        totalFreeChunkSpace = 0;
+
         if (doImpreciseSweep) {
             darkMatter =  darkMatter.plus(heapMarker.impreciseSweep(this, minReclaimableSpace));
         } else {
             endOfLastVisitedObject = committedHeapSpace.start().asPointer();
             heapMarker.sweep(this);
         }
+        useTLABBin = tlabFreeSpaceList.totalSize > 0;
         if (MaxineVM.isDebug()) {
             print();
         }
@@ -466,7 +623,6 @@ public class FreeHeapSpaceManager extends HeapSweeper {
 
     public void makeParsable() {
         smallObjectAllocator.makeParsable();
-        largeObjectAllocator.makeParsable();
     }
 
     /**
@@ -474,62 +630,16 @@ public class FreeHeapSpaceManager extends HeapSweeper {
      * @return
      */
     public synchronized Size freeSpaceLeft() {
-        return Size.fromLong(totalFreeChunkSpace).plus(smallObjectAllocator.freeSpaceLeft()).plus(largeObjectAllocator.freeSpaceLeft());
-    }
-
-    /**
-     *
-     */
-    class SmallObjectAllocationFailureHandler implements AllocationFailureHandler {
-
-        public Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size, boolean isTLAB) {
-
-            return handleAllocationFailure(allocator, size, Word.size());
-        }
-
-        @Override
-        public Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size, int alignment) {
-            if (allocator.isLarge(size)) {
-                return allocateLarge(size);
-            }
-            if (!Heap.collectGarbage(size)) {
-                // FIXME: handle the case where there isn't enough memory for this -- put in common the safety zone code of semi-space ?
-                throw new OutOfMemoryError();
-            }
-            return null;
-        }
-    }
-
-    class LargeObjectAllocationFailureHandler implements AllocationFailureHandler {
-
-        @Override
-        public Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size, boolean isTLAB) {
-            return handleAllocationFailure(allocator, size, Word.size());
-        }
-
-        @Override
-        public Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size, int alignment) {
-            if (!Heap.collectGarbage(size)) {
-                // FIXME: handle the case where there isn't enough memory for this -- put in common the safety zone code of semi-space ?
-                throw new OutOfMemoryError();
-            }
-            return null; // Force allocation retry by caller.
-        }
+        return Size.fromLong(totalFreeChunkSpace).plus(smallObjectAllocator.freeSpaceLeft());
     }
 
     @INLINE
     public final Pointer allocate(Size size) {
-        return smallObjectAllocator.allocate(size, false);
+        return smallObjectAllocator.allocate(size);
     }
 
     @INLINE
     public final Pointer allocateTLAB(Size size) {
-        return smallObjectAllocator.allocate(size, true);
-    }
-
-
-    @INLINE
-    public final Pointer allocateLarge(Size size) {
-        return largeObjectAllocator.allocate(size, false);
+        return useTLABBin ? binAllocateTLAB(size).asPointer() : allocate(size);
     }
 }

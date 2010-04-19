@@ -53,7 +53,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      * The headroom is used to compute a soft limit that'll be used as the tlab's top.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    private static Size TLAB_HEADROOM;
+    static Size TLAB_HEADROOM;
 
     /**
      * A marking algorithm for the MSHeapScheme.
@@ -219,6 +219,21 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
     }
 
+    @INLINE
+    private Size setNextTLABChunk(Pointer nextChunk) {
+        Size chunkSize =  HeapFreeChunk.getFreechunkSize(nextChunk);
+        Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
+        nextChunk.setWord(effectiveSize.toInt(), HeapFreeChunk.getFreeChunkNext(nextChunk));
+        return effectiveSize;
+    }
+
+    @INLINE
+    private Size setNextTLABChunk(Pointer enabledVmThreadLocals, Pointer nextChunk) {
+        Size nextChunkEffectiveSize = setNextTLABChunk(nextChunk);
+        fastRefillTLAB(enabledVmThreadLocals, nextChunk, nextChunkEffectiveSize);
+        return nextChunkEffectiveSize;
+    }
+
     /**
      * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
      * @param enabledVmThreadLocals the thread whose TLAB will be refilled
@@ -226,21 +241,24 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      */
     private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
         Pointer tlab = freeSpace.allocateTLAB(tlabSize);
+        Size effectiveSize = setNextTLABChunk(tlab);
+
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
+            Size realTLABSize = effectiveSize.plus(TLAB_HEADROOM);
             Log.printCurrentThread(false);
             Log.print(": Allocated TLAB at ");
             Log.print(tlab);
             Log.print(" [TOP=");
-            Log.print(tlab.plus(tlab.plus(tlabSize.minus(TLAB_HEADROOM)).asAddress()));
+            Log.print(tlab.plus(effectiveSize));
             Log.print(", end=");
-            Log.print(tlab.plus(tlabSize));
+            Log.print(tlab.plus(realTLABSize));
             Log.print(", size=");
-            Log.print(tlabSize.toInt());
+            Log.print(realTLABSize.toInt());
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
-        refillTLAB(enabledVmThreadLocals, tlab, tlabSize.minus(TLAB_HEADROOM));
+        refillTLAB(enabledVmThreadLocals, tlab, effectiveSize);
     }
 
     @Override
@@ -270,12 +288,28 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             return freeSpace.allocate(size);
         }
         final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+        final Pointer nextChunk = tlabEnd.getWord().asPointer();
+
         final Pointer cell = DebugHeap.adjustForDebugTag(tlabMark);
         if (cell.plus(size).equals(hardLimit)) {
-            // Can actually fit the object in the TLAB.
-            setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
+            // Can actually fit the object in space left.
+            if (nextChunk.isZero()) {
+                setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
+            } else {
+                // TLAB has another chunk of free space. Set it.
+                setNextTLABChunk(enabledVmThreadLocals, nextChunk);
+            }
             // allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
             return cell;
+        } else if (!nextChunk.isZero()) {
+            fillWithDeadObject(tlabMark, hardLimit);
+            // TLAB has another chunk of free space. Set it.
+            Size nextChunkEffectiveSize = setNextTLABChunk(enabledVmThreadLocals, nextChunk);
+            if (size.lessEqual(nextChunkEffectiveSize)) {
+                return tlabAllocate(size);
+            }
+            // Don't bother with searching another TLAB chunk that fits. Allocate out of TLAB.
+            return freeSpace.allocate(size);
         }
 
         if (!refillPolicy.shouldRefill(size, tlabMark)) {
