@@ -28,7 +28,7 @@ import com.sun.max.unsafe.*;
 
 
 /**
- * A region of memory in the VM with an allocation mark.
+ * A runtime allocated region of memory in the VM with an allocation mark.
  *
  * @author Michael Van De Vanter
  */
