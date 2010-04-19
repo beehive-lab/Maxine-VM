@@ -196,7 +196,7 @@ public final class MaxineVM {
     }
 
     public static String description() {
-        return "The Maxine Virtual Machine, see <http://kenai.com.projects/maxine>";
+        return "The Maxine Virtual Machine, see <http://kenai.com/projects/maxine>";
     }
 
     @HOSTED_ONLY
