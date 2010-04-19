@@ -74,6 +74,8 @@ editable
 emitting
 enum
 epilogue
+finalizer
+finalizers
 floatable
 generational
 growable
