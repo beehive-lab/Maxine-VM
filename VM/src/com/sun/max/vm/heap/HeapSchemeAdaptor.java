@@ -77,7 +77,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
      * Size of an java.lang.Object instance, presumably the minimum object size.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    protected static Size MIN_OBJECT_SIZE;
+    public static Size MIN_OBJECT_SIZE;
     /**
      * Size of a byte array header.
      */

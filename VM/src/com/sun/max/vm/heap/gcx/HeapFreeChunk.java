@@ -41,7 +41,7 @@ import com.sun.max.vm.reference.*;
  *
  * @author Laurent Daynes
  */
-final class HeapFreeChunk {
+public final class HeapFreeChunk {
 
     private static final DynamicHub HEAP_FREE_CHUNK_HUB = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
 
@@ -51,11 +51,11 @@ final class HeapFreeChunk {
     private static final int NEXT_INDEX = 3; // FIXME: should be obtained via the field actor for the corresponding field
     private static final int SIZE_INDEX = 4; // FIXME: same as above
 
-    static Address getFreeChunkNext(Address chunkAddress) {
+    public static Address getFreeChunkNext(Address chunkAddress) {
         return chunkAddress.asPointer().getWord(NEXT_INDEX).asAddress();
 
     }
-    static Size getFreechunkSize(Address chunkAddress) {
+    public static Size getFreechunkSize(Address chunkAddress) {
         return chunkAddress.asPointer().getWord(SIZE_INDEX).asSize();
     }
 
