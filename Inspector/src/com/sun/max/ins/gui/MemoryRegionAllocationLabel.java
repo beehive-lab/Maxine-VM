@@ -34,12 +34,12 @@ import com.sun.max.tele.*;
  */
 public final class MemoryRegionAllocationLabel extends AbstractMemoryRegionLabel implements Prober {
 
-    private enum DisplayState {
+    private enum DisplayMode {
         PERCENT,
         ALLOCATED;
     }
 
-    private DisplayState displayState = DisplayState.PERCENT;
+    private DisplayMode displayMode = DisplayMode.PERCENT;
     private final Component parent;
 
     /**
@@ -58,7 +58,19 @@ public final class MemoryRegionAllocationLabel extends AbstractMemoryRegionLabel
             public void procedure(MouseEvent mouseEvent) {
                 switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON2: {
-                        cycleDisplayState();
+                        final InspectorAction cycleAction = getCycleDisplayTextAction();
+                        if (cycleAction != null) {
+                            cycleAction.perform();
+                        }
+                        break;
+                    }
+                    case MouseEvent.BUTTON3: {
+                        final InspectorPopupMenu menu = new InspectorPopupMenu();
+                        final InspectorAction cycleAction = getCycleDisplayTextAction();
+                        if (cycleAction != null) {
+                            menu.add(cycleAction);
+                        }
+                        menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         break;
                     }
                     default: {
@@ -71,24 +83,38 @@ public final class MemoryRegionAllocationLabel extends AbstractMemoryRegionLabel
         refresh(true);
     }
 
-    private void cycleDisplayState() {
-        switch(displayState) {
+    private InspectorAction getCycleDisplayTextAction() {
+        DisplayMode alternateDisplayMode = displayMode;
+        switch(displayMode) {
             case ALLOCATED:
-                displayState = DisplayState.PERCENT;
+                alternateDisplayMode = DisplayMode.PERCENT;
                 break;
             case PERCENT:
-                displayState = DisplayState.ALLOCATED;
+                alternateDisplayMode = DisplayMode.ALLOCATED;
                 break;
         }
-        redisplay();
-        refresh(true);
-        if (parent != null) {
-            parent.repaint();
+        if (alternateDisplayMode != displayMode) {
+            final DisplayMode newDisplayMode = alternateDisplayMode;
+            return new InspectorAction(inspection(), "Cycle display (Middle-Button)") {
+
+                @Override
+                public void procedure() {
+                    //Trace.line(TRACE_VALUE, "WVL: " + displayMode.toString() + "->" + newValueKind);
+                    MemoryRegionAllocationLabel label = MemoryRegionAllocationLabel.this;
+                    label.displayMode = newDisplayMode;
+                    label.redisplay();
+                    label.refresh(true);
+                    if (label.parent != null) {
+                        label.parent.repaint();
+                    }
+                }
+            };
         }
+        return null;
     }
 
     public void redisplay() {
-        switch(displayState) {
+        switch(displayMode) {
             case ALLOCATED:
                 setFont(style().hexDataFont());
                 break;
@@ -108,7 +134,7 @@ public final class MemoryRegionAllocationLabel extends AbstractMemoryRegionLabel
             setToolTipText(inspection().nameDisplay().unavailableDataLongText());
         } else {
             final long used = usage.getUsed();
-            switch(displayState) {
+            switch(displayMode) {
                 case ALLOCATED:
                     setText("0x" + Long.toHexString(used));
                     setToolTipText(memoryRegion.regionName() + " allocated=" + Long.toString(100 * used / size) + "% (" + used + "/" + size + ")");
