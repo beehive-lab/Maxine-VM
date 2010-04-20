@@ -29,7 +29,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for a region of memory in the VM used to allocate target code.
+ * Canonical surrogate for a region of memory in the VM used to allocate compiled code.
  *
  * @author Michael Van De Vanter
  */
@@ -69,17 +69,6 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
             return Size.fromInt(vm().bootImage().header.codeSize);
         }
         return super.getRegionSize();
-    }
-
-    /**
-     * @return how much memory in region has been allocated to code, {@link Size#zero()) if memory for region not allocated.
-     */
-    @Override
-    public Size allocatedSize() {
-        if (isAllocated()) {
-            return mark().minus(getRegionStart()).asSize();
-        }
-        return Size.zero();
     }
 
     public List<TeleTargetMethod> teleTargetMethods() {

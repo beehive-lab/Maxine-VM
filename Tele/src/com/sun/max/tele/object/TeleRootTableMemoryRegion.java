@@ -20,11 +20,12 @@
  */
 package com.sun.max.tele.object;
 
+import java.lang.management.*;
+
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
-
 
 /**
  * Access to an instance of {@link RootTableMemoryRegion} in the VM.
@@ -39,14 +40,9 @@ public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion {
         super(teleVM, rootTableMemoryRegionReference);
     }
 
-    /**
-     * @return how much memory in region has been allocated.
-     */
-    public Size allocatedSize() {
-        if (isAllocated()) {
-            return Size.fromLong(vm().wordSize().toLong() * wordsUsed);
-        }
-        return Size.zero();
+    @Override
+    public MemoryUsage getUsage() {
+        return new MemoryUsage(-1, vm().wordSize().toLong() * wordsUsed, getRegionSize().toLong(), -1);
     }
 
     @Override
