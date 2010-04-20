@@ -29,7 +29,7 @@ import com.sun.max.platform.*;
  * based on the target platform. For example, to specify that a method should only be
  * included in an image built for SPARC platform, this annotation is used as follows:
  * <pre>
- *     @PLATFORM(isa = "sparc")
+ *     @PLATFORM(cpu = "sparc")
  *     public native void flushRegisterWindows();
  * </pre>
  *

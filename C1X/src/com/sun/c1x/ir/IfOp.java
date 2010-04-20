@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
 
 /**
  * The {@code IfOp} class represents a comparison that yields one of two values.
@@ -81,7 +81,7 @@ public final class IfOp extends Op2 {
      * @return {@code true} if this comparison is commutative
      */
     public boolean isCommutative() {
-        return cond == Condition.eql || cond == Condition.neq;
+        return cond == Condition.EQ || cond == Condition.NE;
     }
 
     /**

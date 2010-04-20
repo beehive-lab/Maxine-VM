@@ -23,8 +23,8 @@ package com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
@@ -220,7 +220,7 @@ public class MaxRiConstantPool implements RiConstantPool {
         switch (constantPool.tagAt(cpi)) {
             case CLASS: {
                 MaxRiType type = typeFrom(constantPool.classAt(cpi), cpi);
-                if (type.isLoaded()) {
+                if (type.isResolved()) {
                     return CiConstant.forObject(type.javaClass());
                 }
                 return type;

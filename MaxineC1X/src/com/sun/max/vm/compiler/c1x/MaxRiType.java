@@ -21,8 +21,8 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -30,6 +30,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.type.JavaTypeDescriptor.*;
+import com.sun.max.vm.value.*;
 
 /**
  * The {@code MaxRiType} class represents a compiler interface type,
@@ -46,7 +47,7 @@ public class MaxRiType implements RiType {
     final MaxRiConstantPool constantPool;
     ClassActor classActor;
     TypeDescriptor typeDescriptor;
-    final CiKind basicType;
+    final CiKind kind;
     final int cpi;
 
     /**
@@ -58,7 +59,7 @@ public class MaxRiType implements RiType {
         this.constantPool = constantPool;
         this.classActor = classActor;
         this.typeDescriptor = classActor.typeDescriptor;
-        this.basicType = kindToBasicType(typeDescriptor.toKind());
+        this.kind = kindToCiKind(typeDescriptor.toKind());
         this.cpi = cpi;
     }
 
@@ -71,7 +72,7 @@ public class MaxRiType implements RiType {
     public MaxRiType(MaxRiConstantPool constantPool, ClassConstant classRef, int cpi) {
         this.constantPool = constantPool;
         this.typeDescriptor = classRef.typeDescriptor();
-        this.basicType = kindToBasicType(typeDescriptor.toKind());
+        this.kind = kindToCiKind(typeDescriptor.toKind());
         this.cpi = cpi;
     }
 
@@ -94,7 +95,7 @@ public class MaxRiType implements RiType {
         }
 
         this.typeDescriptor = typeDescriptor;
-        this.basicType = kindToBasicType(typeDescriptor.toKind());
+        this.kind = kindToCiKind(typeDescriptor.toKind());
         this.cpi = cpi;
     }
 
@@ -184,7 +185,7 @@ public class MaxRiType implements RiType {
      * Checks whether this compiler interface type is loaded (i.e. resolved).
      * @return {@code true} if the type is loaded
      */
-    public boolean isLoaded() {
+    public boolean isResolved() {
         return classActor != null;
     }
 
@@ -296,11 +297,11 @@ public class MaxRiType implements RiType {
     }
 
     /**
-     * Gets the Kind for this compiler interface type.
+     * Gets the kind for this compiler interface type.
      * @return the kind
      */
     public CiKind kind() {
-        return basicType;
+        return kind;
     }
 
     ClassActor asClassActor(String operation) {
@@ -323,7 +324,7 @@ public class MaxRiType implements RiType {
      * @param kind a Maxine kind
      * @return the associated C1X kind
      */
-    public static CiKind kindToBasicType(Kind kind) {
+    public static CiKind kindToCiKind(Kind kind) {
         switch (kind.asEnum) {
             case BYTE:
                 return CiKind.Byte;
@@ -347,6 +348,33 @@ public class MaxRiType implements RiType {
                 return CiKind.Object;
             case VOID:
                 return CiKind.Void;
+            default:
+                throw ProgramError.unknownCase();
+        }
+    }
+
+    public static CiConstant toCiConstant(Value value) {
+        switch (value.kind().asEnum) {
+            case BYTE:
+                return CiConstant.forByte(value.asByte());
+            case BOOLEAN:
+                return CiConstant.forBoolean(value.asBoolean());
+            case SHORT:
+                return CiConstant.forShort(value.asShort());
+            case CHAR:
+                return CiConstant.forChar(value.asChar());
+            case INT:
+                return CiConstant.forInt(value.asInt());
+            case FLOAT:
+                return CiConstant.forFloat(value.asFloat());
+            case LONG:
+                return CiConstant.forLong(value.asLong());
+            case DOUBLE:
+                return CiConstant.forDouble(value.asDouble());
+            case WORD:
+                return CiConstant.forWord(value.asWord().asAddress().toLong());
+            case REFERENCE:
+                return CiConstant.forObject(value.asObject());
             default:
                 throw ProgramError.unknownCase();
         }

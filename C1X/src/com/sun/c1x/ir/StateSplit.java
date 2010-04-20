@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code StateSplit} class is the abstract base class of all instructions
@@ -35,10 +35,10 @@ public abstract class StateSplit extends Instruction {
 
     /**
      * Creates a new state split with the specified value type.
-     * @param type the type of the value that this instruction produces
+     * @param kind the type of the value that this instruction produces
      */
-    public StateSplit(CiKind type, FrameState stateBefore) {
-        super(type);
+    public StateSplit(CiKind kind, FrameState stateBefore) {
+        super(kind);
         this.stateBefore = stateBefore;
     }
 

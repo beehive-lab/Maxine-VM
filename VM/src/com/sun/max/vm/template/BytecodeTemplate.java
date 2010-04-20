@@ -22,7 +22,7 @@ package com.sun.max.vm.template;
 
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.type.*;
@@ -410,11 +410,6 @@ public enum BytecodeTemplate {
     MOV_L2D,
     MOV_D2L,
 
-    UWLT,
-    UWLTEQ,
-    UWGT,
-    UWGTEQ,
-    UGE,
     WRETURN,
     SAFEPOINT,
     PAUSE,
@@ -440,7 +435,7 @@ public enum BytecodeTemplate {
     MEMBAR_STORE_LOAD,
     MEMBAR_STORE_STORE,
     MEMBAR_MEMOP_STORE,
-    MEMBAR_ALL;
+    MEMBAR_FENCE;
 
 
 

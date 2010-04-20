@@ -22,12 +22,12 @@ package com.sun.c1x.debug;
 
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code IRChecker} class walks over the IR graph and checks
@@ -397,7 +397,7 @@ public class IRChecker extends DefaultValueVisitor {
      */
     @Override
     public void visitLoadField(LoadField i) {
-        assertKind(i, i.field().kind().stackType());
+        assertKind(i, i.field().kind().stackKind());
         Value object = i.object();
         if (object != null) {
             assertKind(object, CiKind.Object);
@@ -414,7 +414,7 @@ public class IRChecker extends DefaultValueVisitor {
      */
     @Override
     public void visitStoreField(StoreField i) {
-        assertKind(i.value(), i.field().kind().stackType());
+        assertKind(i.value(), i.field().kind().stackKind());
         Value object = i.object();
         if (object != null) {
             assertKind(object, CiKind.Object);
@@ -433,7 +433,7 @@ public class IRChecker extends DefaultValueVisitor {
     public void visitLoadIndexed(LoadIndexed i) {
         assertKind(i.array(), CiKind.Object);
         assertKind(i.index(), CiKind.Int);
-        assertKind(i, i.elementKind().stackType());
+        assertKind(i, i.elementKind().stackKind());
         assertArrayType(i.array().exactType());
         assertArrayType(i.array().declaredType());
     }
@@ -446,8 +446,8 @@ public class IRChecker extends DefaultValueVisitor {
     public void visitStoreIndexed(StoreIndexed i) {
         assertKind(i.array(), CiKind.Object);
         assertKind(i.index(), CiKind.Int);
-        assertKind(i.value(), i.elementKind().stackType());
-        assertKind(i, i.elementKind().stackType());
+        assertKind(i.value(), i.elementKind().stackKind());
+        assertKind(i, i.elementKind().stackKind());
         assertArrayType(i.array().exactType());
         assertArrayType(i.array().declaredType());
     }
@@ -689,8 +689,8 @@ public class IRChecker extends DefaultValueVisitor {
             if (i.kind == CiKind.Void) {
                 fail("Return instruction must not be of type void if method returns a value");
             }
-            assertKind(result, retType.stackType());
-            if (i.kind != retType.stackType()) {
+            assertKind(result, retType.stackKind());
+            if (i.kind != retType.stackKind()) {
                 fail("Return value type does not match the method's return type");
             }
         }
@@ -762,7 +762,7 @@ public class IRChecker extends DefaultValueVisitor {
         assertNonNull(i.target(), "Target of invoke cannot be null");
         assertNonNull(i.stateBefore(), "Invoke must have ValueStack");
         RiSignature signatureType = i.target().signatureType();
-        assertKind(i, signatureType.returnKind().stackType());
+        assertKind(i, signatureType.returnKind().stackKind());
         Value[] args = i.arguments();
         if (i.isStatic()) {
             // typecheck a static call (i.e. there should be no receiver)
@@ -796,7 +796,7 @@ public class IRChecker extends DefaultValueVisitor {
                 assertKind(args[j], CiKind.Object);
             } else {
                 CiKind kind = signatureType.argumentKindAt(k);
-                assertKind(args[j], kind.stackType());
+                assertKind(args[j], kind.stackKind());
                 if (kind.sizeInSlots() == 2) {
                     assertNull(args[j + 1], "Second slot of a double operand must be null");
                     j = j + 1;
@@ -952,7 +952,7 @@ public class IRChecker extends DefaultValueVisitor {
     }
 
     private void assertInstanceType(RiType riType) {
-        if (riType != null && riType.isLoaded()) {
+        if (riType != null && riType.isResolved()) {
             if (riType.isArrayKlass() || riType.isInterface() || riType.kind().isPrimitive()) {
                 fail("RiType " + riType + " must be an instance class");
             }
@@ -960,7 +960,7 @@ public class IRChecker extends DefaultValueVisitor {
     }
 
     private void assertArrayType(RiType riType) {
-        if (riType != null && riType.isLoaded()) {
+        if (riType != null && riType.isResolved()) {
             if (!riType.isArrayKlass()) {
                 fail("RiType " + riType + " must be an array class");
             }
@@ -968,7 +968,7 @@ public class IRChecker extends DefaultValueVisitor {
     }
 
     private void assertNotPrimitive(RiType riType) {
-        if (riType != null && riType.isLoaded()) {
+        if (riType != null && riType.isResolved()) {
             if (riType.kind().isPrimitive()) {
                 fail("RiType " + riType + " must not be a primitive");
             }

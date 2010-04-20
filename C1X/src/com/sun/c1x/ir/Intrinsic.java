@@ -21,9 +21,9 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ri.RiMethod;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code Intrinsic} instruction represents a call to a JDK method
@@ -41,7 +41,7 @@ public final class Intrinsic extends StateSplit {
 
     /**
      * Creates a new Intrinsic instruction.
-     * @param type the result type of the instruction
+     * @param kind the result type of the instruction
      * @param intrinsic the actual intrinsic
      * @param target the method for this intrinsic
      * @param args the arguments to the call (including the receiver object)
@@ -50,9 +50,9 @@ public final class Intrinsic extends StateSplit {
      * @param preservesState {@code true} if the implementation of this intrinsic preserves register state
      * @param canTrap {@code true} if this intrinsic can cause a trap
      */
-    public Intrinsic(CiKind type, C1XIntrinsic intrinsic, RiMethod target, Value[] args, boolean isStatic,
+    public Intrinsic(CiKind kind, C1XIntrinsic intrinsic, RiMethod target, Value[] args, boolean isStatic,
                      FrameState stateBefore, boolean preservesState, boolean canTrap) {
-        super(type, stateBefore);
+        super(kind, stateBefore);
         this.intrinsic = intrinsic;
         this.arguments = args;
         this.target = target;

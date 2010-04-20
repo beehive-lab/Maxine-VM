@@ -85,7 +85,7 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
 
     @Override
     public Double asBoxedJavaValue() {
-        return new Double(value);
+        return Double.valueOf(value);
     }
 
     @Override

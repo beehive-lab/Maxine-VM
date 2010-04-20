@@ -29,7 +29,7 @@ import java.lang.reflect.*;
 
 import sun.reflect.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;
@@ -244,6 +244,15 @@ public abstract class MethodActor extends MemberActor {
      */
     public final TypeDescriptor[] checkedExceptions() {
         return holder().classRegistry().get(CHECKED_EXCEPTIONS, this);
+    }
+
+    /**
+     * Gets the value of the {@link ACCESSOR} annotation that was applied to this method.
+     *
+     * @return {@code null} if this method has no {@link ACCESSOR} annotation
+     */
+    public final Class accessor() {
+        return holder().classRegistry().get(ACCESSOR, this);
     }
 
     public static MethodActor fromJava(Method javaMethod) {

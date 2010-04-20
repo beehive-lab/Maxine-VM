@@ -22,12 +22,11 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.lir.LIROperand;
+import com.sun.cri.ci.*;
 
 /**
- * This class represents an instruction node in the IR, which is a {@link Value} that
+ * Denotes an instruction node in the IR, which is a {@link Value} that
  * can be added to a basic block (whereas other {@link Value} nodes such as {@link Phi} and
  * {@link Local} cannot be added to basic blocks).
  *
@@ -35,27 +34,42 @@ import com.sun.c1x.lir.LIROperand;
  * control flow operators, phi statements, method calls, the start of basic blocks, and
  * the end of basic blocks.
  *
+ * Instruction nodes are chained together in a basic block through the embedded
+ * {@link Instruction#next} field. An Instruction may also have a list of {@link ExceptionHandler}s.
+ *
+ *
  * @author Ben L. Titzer
  */
 public abstract class Instruction extends Value {
 
     public static final int BCI_NOT_APPENDED = -99;
-    public static final int INVOCATION_ENTRY_BCI = -1;
+    public static final int INVOCATION_ENTRY_BCI = -1;  // XXX: not currently used
     public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
+    /**
+     * Index of bytecode that generated this node when appended in a basic block.
+     * Negative values indicate special cases.
+     */
     private int bci;
+
+    /**
+     * Link to next Instruction in a basic block.
+     */
     private Instruction next;
 
+    /**
+     * List of associated exception handlers.
+     */
     private List<ExceptionHandler> exceptionHandlers = ExceptionHandler.ZERO_HANDLERS;
 
     /**
      * Constructs a new instruction with the specified value type.
-     * @param type the value type for this instruction
+     * @param kind the value type for this instruction
      */
-    public Instruction(CiKind type) {
-        super(type);
+    public Instruction(CiKind kind) {
+        super(kind);
         bci = BCI_NOT_APPENDED;
-        lirOperand = LIROperand.IllegalLocation;
+        operand = CiValue.IllegalValue;
     }
 
     /**
@@ -71,7 +85,6 @@ public abstract class Instruction extends Value {
      * @param bci the new bytecode index for this instruction
      */
     public final void setBCI(int bci) {
-        // XXX: BCI field may not be needed at all
         assert bci >= 0 || bci == SYNCHRONIZATION_ENTRY_BCI;
         this.bci = bci;
     }

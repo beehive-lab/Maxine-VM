@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code Constant} instruction represents a constant such as an integer value,
@@ -37,7 +37,7 @@ public final class Constant extends Instruction {
      * @param value the constant
      */
     public Constant(CiConstant value) {
-        super(value.kind.stackType());
+        super(value.kind.stackKind());
         this.value = value;
         initFlag(Value.Flag.NonNull, value.isNonNull());
     }

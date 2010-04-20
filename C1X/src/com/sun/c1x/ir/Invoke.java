@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code Invoke} instruction represents all kinds of method calls.
@@ -34,7 +34,6 @@ public final class Invoke extends StateSplit {
 
     final int opcode;
     final Value[] arguments;
-    final int vtableIndex;
     final RiMethod target;
     public final char cpi;
     public final RiConstantPool constantPool;
@@ -46,15 +45,13 @@ public final class Invoke extends StateSplit {
      * @param result the result type
      * @param args the list of instructions producing arguments to the invocation, including the receiver object
      * @param isStatic {@code true} if this call is static (no receiver object)
-     * @param vtableIndex the vtable index for a virtual or interface call
      * @param target the target method being called
      * @param stateBefore the state before executing the invocation
      */
-    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
+    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, RiMethod target, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
         super(result, stateBefore);
         this.opcode = opcode;
         this.arguments = args;
-        this.vtableIndex = vtableIndex;
         this.target = target;
         if (isStatic) {
             setFlag(Flag.IsStatic);
@@ -91,14 +88,6 @@ public final class Invoke extends StateSplit {
     public Value receiver() {
         assert !isStatic();
         return arguments[0];
-    }
-
-    /**
-     * Gets the virtual table index for a virtual invocation.
-     * @return the virtual table index
-     */
-    public int vtableIndex() {
-        return vtableIndex;
     }
 
     /**

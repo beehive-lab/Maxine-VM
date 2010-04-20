@@ -21,8 +21,9 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code ArithmeticOp} class represents arithmetic operations such as addition, subtraction, etc.
@@ -36,13 +37,14 @@ public final class ArithmeticOp extends Op2 {
     /**
      * Creates a new arithmetic operation.
      * @param opcode the bytecode opcode
+     * @param kind the result kind of the operation
      * @param x the first input instruction
      * @param y the second input instruction
      * @param isStrictFP indicates this operation has strict rounding semantics
      * @param stateBefore the value stack for instructions that may trap
      */
-    public ArithmeticOp(int opcode, Value x, Value y, boolean isStrictFP, FrameState stateBefore) {
-        super(x.kind.meet(y.kind), opcode, x, y);
+    public ArithmeticOp(int opcode, CiKind kind, Value x, Value y, boolean isStrictFP, FrameState stateBefore) {
+        super(kind, opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
         if (stateBefore != null) {
             // state before is only used in the case of a division or remainder,

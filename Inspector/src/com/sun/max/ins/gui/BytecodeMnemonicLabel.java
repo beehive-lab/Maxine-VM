@@ -20,7 +20,7 @@
  */
 package com.sun.max.ins.gui;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.ins.*;
 
 /**

@@ -21,10 +21,10 @@
 
 package com.sun.max.vm.bytecode.graft;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.bytecode.BytecodeIntrinsifier.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.BytecodeIntrinsifier.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
@@ -112,7 +112,7 @@ public class Intrinsics extends IntrinsifierClient {
             case READ_PC            :
             case FLUSHW             :
             case ALLOCA             :
-            case STACKADDR          :
+            case LSA                :
             case JNICALL            :
             case CALL               :
             case ICMP               :
@@ -197,6 +197,7 @@ public class Intrinsics extends IntrinsifierClient {
                     bi.intrinsify(opcode, operand);
                 } else {
                     if (!unsafe) {
+                        // The semantics of @INLINE and @FOLD are only implemented by the opto compiler.
                         unsafe = (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
                     }
                     if (holderIsWord && !isStatic) {

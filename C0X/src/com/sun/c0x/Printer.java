@@ -22,10 +22,9 @@ package com.sun.c0x;
 
 import java.io.PrintStream;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.bytecode.BytecodeSwitch;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ri.RiMethod;
+import com.sun.cri.bytecode.BytecodeSwitch;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.ri.RiMethod;
 
 /**
  * The {@code Printer} class definition.
@@ -41,34 +40,30 @@ public class Printer {
     static final String CTRL_LIGHTGRAY = "\u001b[0;37m";
 
     static void printString(String str) {
-        if (C1XOptions.PrintHIR) {
-            out.print(CTRL_GREEN);
-            out.print("    " + str);
-            out.print(CTRL_DEFAULT);
-            out.println("");
-        }
+        out.print(CTRL_GREEN);
+        out.print("    " + str);
+        out.print(CTRL_DEFAULT);
+        out.println("");
     }
 
     static void printOp(C0XCompilation.Location r, String op, C0XCompilation.Location... locs) {
-        if (C1XOptions.PrintHIR) {
-            StringBuilder b = new StringBuilder();
-            if (r != null) {
-                b.append(r);
-                while (b.length() < 10) {
-                    b.append(" ");
-                }
-                b.append(" = ");
+        StringBuilder b = new StringBuilder();
+        if (r != null) {
+            b.append(r);
+            while (b.length() < 10) {
+                b.append(" ");
             }
-            b.append(op).append("(");
-            for (int i = 0; i < locs.length; i++) {
-                if (i > 0) {
-                    b.append(", ");
-                }
-                b.append(locs[i]);
-            }
-            b.append(")");
-            // printString(b.toString());
+            b.append(" = ");
         }
+        b.append(op).append("(");
+        for (int i = 0; i < locs.length; i++) {
+            if (i > 0) {
+                b.append(", ");
+            }
+            b.append(locs[i]);
+        }
+        b.append(")");
+        // printString(b.toString());
     }
 
     static void printSwitch(String op, C0XCompilation.Location key, BytecodeSwitch sw) {
@@ -83,44 +78,38 @@ public class Printer {
     }
 
     static void printBytecodeStart(int bci, int opcode, int depth) {
-        if (C1XOptions.PrintHIR) {
-            out.print(CTRL_LIGHTGRAY);
-            out.print("    " + Bytecodes.nameOf(opcode) + " @ " + bci + " depth = " + depth);
-            out.println("");
-            out.print(CTRL_DEFAULT);
-        }
+        out.print(CTRL_LIGHTGRAY);
+        out.print("    " + Bytecodes.nameOf(opcode) + " @ " + bci + " depth = " + depth);
+        out.println("");
+        out.print(CTRL_DEFAULT);
     }
 
     static void printPrologue(RiMethod method) {
-        if (C1XOptions.PrintHIR) {
-            out.print(CTRL_RED);
-            String s = "====== " + method + " ";
-            out.print(s);
-            out.print(" locals: " + method.maxLocals() + " stack: " + method.maxStackSize() + " ");
-            for (int i = s.length(); i < 100; i++) {
-                out.print('=');
-            }
-            out.print(CTRL_DEFAULT);
-            out.println("");
+        out.print(CTRL_RED);
+        String s = "====== " + method + " ";
+        out.print(s);
+        out.print(" locals: " + method.maxLocals() + " stack: " + method.maxStackSize() + " ");
+        for (int i = s.length(); i < 100; i++) {
+            out.print('=');
         }
+        out.print(CTRL_DEFAULT);
+        out.println("");
     }
 
     static void printBlockPrologue(C0XCompilation compilation, int bci) {
-        if (C1XOptions.PrintHIR) {
-            out.print(CTRL_YELLOW);
-            String s = "  === " + bci + " ";
-            out.print(s);
-            if (BlockMarker.isBackwardBranchTarget(bci, compilation.blockMap)) {
-                out.print("[bw] ");
-            }
-            if (BlockMarker.isExceptionEntry(bci, compilation.blockMap)) {
-                out.print("[ex] ");
-            }
-            for (int i = s.length(); i < 80; i++) {
-                out.print('=');
-            }
-            out.print(CTRL_DEFAULT);
-            out.println("");
+        out.print(CTRL_YELLOW);
+        String s = "  === " + bci + " ";
+        out.print(s);
+        if (BlockMarker.isBackwardBranchTarget(bci, compilation.blockMap)) {
+            out.print("[bw] ");
         }
+        if (BlockMarker.isExceptionEntry(bci, compilation.blockMap)) {
+            out.print("[ex] ");
+        }
+        for (int i = s.length(); i < 80; i++) {
+            out.print('=');
+        }
+        out.print(CTRL_DEFAULT);
+        out.println("");
     }
 }

@@ -20,8 +20,13 @@
  */
 package com.sun.c1x;
 
+import java.util.*;
+
+import com.sun.c1x.debug.TTY.*;
+
 /**
  * This class encapsulates options that control the behavior of the C1X compiler.
+ * The help message for each option is specified by a {@linkplain #helpMap help map}.
  *
  * @author Ben L. Titzer
  */
@@ -67,17 +72,12 @@ public class C1XOptions {
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
-    public static boolean VerifyOopMaps                      = ____;
-    public static boolean VerifyOops                         = ____;
     public static boolean PrintHIR                           = ____;
     public static boolean PrintLIR                           = ____;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
     public static boolean PrintTimers                        = ____;
-    public static boolean PrintCFG                           = ____;
     public static boolean PrintCompilation                   = ____;
-    public static boolean PrintExceptionHandlers             = ____;
-    public static boolean PrintNotLoaded                     = ____;
     public static boolean PrintXirTemplates                  = ____;
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean FatalUnimplemented                 = ____;
@@ -88,7 +88,13 @@ public class C1XOptions {
     public static int     TraceLinearScanLevel               = 0;
     public static boolean TraceRelocation                    = ____;
     public static boolean TraceLIRVisit                      = ____;
+    public static int     TraceBytecodeParserLevel           = 0;
     public static boolean PrintLoopList                      = ____;
+
+    /**
+     * See {@link Filter#matches(String, Object)}.
+     */
+    public static String  PrintFilter                        = null;
 
     // canonicalizer settings
     public static boolean CanonicalizeClassIsInstance        = true;
@@ -162,9 +168,7 @@ public class C1XOptions {
     public static boolean DetailedAsserts               = ____;
 
     // Runtime settings
-    public static boolean UseXIR                        = ____;
     public static boolean UseBiasedLocking              = ____;
-    public static boolean UseTLAB                       = ____;
     public static int     ReadPrefetchInstr             = 0;
     public static boolean UseFastLocking                = ____;
     public static boolean UseSlowPath                   = ____;
@@ -316,5 +320,37 @@ public class C1XOptions {
         OptDeadCodeElimination1         = true;
         OptDeadCodeElimination2         = true;
         OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
+    }
+
+    /**
+     * A map from option field names to some text describing the meaning and
+     * usage of the corresponding option.
+     */
+    public static final Map<String, String> helpMap;
+
+    static {
+        HashMap<String, String> map = new HashMap<String, String>();
+        map.put("PrintFilter",
+                "Filter compiler tracing to methods whose fully qualified name " +
+                "matches <arg>. If <arg> starts with \"~\", then <arg> (without " +
+                "the \"~\") is interpreted as a regular expression. Otherwise, " +
+                "<arg> is interpreted as a simple substring.");
+
+        map.put("TraceBytecodeParserLevel",
+                "Trace frontend bytecode parser at level <n> where 0 means no " +
+                "tracing, 1 means instruction tracing and 2 means instruction " +
+                "plus frame state tracing.");
+
+        map.put("DetailedAsserts",
+                "Turn on detailed error checking that has a noticeable performance impact.");
+
+        for (String name : map.keySet()) {
+            try {
+                C1XOptions.class.getField(name);
+            } catch (Exception e) {
+                throw new InternalError("The name '" + name + "' does not denote a field in " + C1XOptions.class);
+            }
+        }
+        helpMap = Collections.unmodifiableMap(map);
     }
 }

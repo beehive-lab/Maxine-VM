@@ -219,7 +219,11 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         if (teleThreadLocalVariable == null) {
             return Word.zero();
         }
-        return teleThreadLocalVariable.value().toWord();
+        final Value value = teleThreadLocalVariable.value();
+        if (value.equals(VoidValue.VOID)) {
+            return Word.zero();
+        }
+        return value.toWord();
     }
 
     @Override

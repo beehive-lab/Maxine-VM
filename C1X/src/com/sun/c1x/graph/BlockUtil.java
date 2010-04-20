@@ -30,26 +30,6 @@ import com.sun.c1x.ir.*;
 public class BlockUtil {
 
     /**
-     * Remove an edge between two basic blocks.
-     * @param from the origin block of the edge
-     * @param to the destination block of the edge
-     */
-    public static void disconnectEdge(BlockBegin from, BlockBegin to) {
-        from.end().successors().remove(to);
-        to.removePredecessor(from);
-    }
-
-    /**
-     * Adds an edge between two basic blocks.
-     * @param from the origin of the edge
-     * @param to the destination of the edge
-     */
-    public static void addEdge(BlockBegin from, BlockBegin to) {
-        from.end().successors().add(to);
-        to.addPredecessor(from);
-    }
-
-    /**
      * Disconnects the specified block from all other blocks.
      * @param block the block to remove from the graph
      */

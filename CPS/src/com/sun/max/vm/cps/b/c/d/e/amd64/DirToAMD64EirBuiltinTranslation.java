@@ -20,10 +20,7 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.amd64;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
-import com.sun.max.memory.*;
-import com.sun.max.program.*;
+import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
 import com.sun.max.vm.compiler.builtin.IEEE754Builtin.*;
@@ -250,8 +247,8 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
             final EirValue dividend = dirToEirValue(dirArguments[0]);
             assign(dividendKind, result, dividend);
             final EirValue divisor = dirToEirValue(dirArguments[1]);
-            final EirVariable rd = createEirVariable(dividendKind);
-            createOperation(rd, result, divisor);
+            final EirVariable rdx = createEirVariable(dividendKind);
+            createOperation(rdx, result, divisor);
         }
 
         protected Division(Kind kind, DirValue dirResult, DirValue[] dirArguments) {
@@ -263,9 +260,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitIntDivided(IntDivided builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Division(Kind.INT, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                addInstruction(new CDQ(eirBlock(), rd, ra));
-                addInstruction(new IDIV_I32(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                addInstruction(new CDQ(eirBlock(), rdx, rax));
+                addInstruction(new IDIV_I32(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -274,9 +271,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitLongDivided(LongDivided builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Division(Kind.LONG, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                addInstruction(new CQO(eirBlock(), rd, ra));
-                addInstruction(new IDIV_I64(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                addInstruction(new CQO(eirBlock(), rdx, rax));
+                addInstruction(new IDIV_I64(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -326,9 +323,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitIntRemainder(IntRemainder builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Remainder(Kind.INT, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                addInstruction(new CDQ(eirBlock(), rd, ra));
-                addInstruction(new IDIV_I32(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                addInstruction(new CDQ(eirBlock(), rdx, rax));
+                addInstruction(new IDIV_I32(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -337,9 +334,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitLongRemainder(LongRemainder builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Remainder(Kind.LONG, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                addInstruction(new CQO(eirBlock(), rd, ra));
-                addInstruction(new IDIV_I64(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                addInstruction(new CQO(eirBlock(), rdx, rax));
+                addInstruction(new IDIV_I64(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -796,9 +793,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitDividedByAddress(DividedByAddress builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Division(Kind.LONG, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                instructionTranslation().assignZero(Kind.LONG, rd);
-                addInstruction(new DIV_I64(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                instructionTranslation().assignZero(Kind.LONG, rdx);
+                addInstruction(new DIV_I64(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -807,11 +804,11 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitDividedByInt(DividedByInt builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Division(Kind.LONG, Kind.INT, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                instructionTranslation().assignZero(Kind.LONG, rd);
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                instructionTranslation().assignZero(Kind.LONG, rdx);
                 final EirVariable zeroExtendedDivisor = createEirVariable(Kind.LONG);
                 addInstruction(new MOVZXD(eirBlock(), zeroExtendedDivisor, divisor));
-                addInstruction(new DIV_I64(eirBlock(), rd, ra, zeroExtendedDivisor));
+                addInstruction(new DIV_I64(eirBlock(), rdx, rax, zeroExtendedDivisor));
             }
         };
     }
@@ -820,9 +817,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitRemainderByAddress(RemainderByAddress builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Remainder(Kind.LONG, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                instructionTranslation().assignZero(Kind.LONG, rd);
-                addInstruction(new DIV_I64(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                instructionTranslation().assignZero(Kind.LONG, rdx);
+                addInstruction(new DIV_I64(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -831,11 +828,11 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitRemainderByInt(RemainderByInt builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Remainder(Kind.LONG, Kind.INT, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                instructionTranslation().assignZero(Kind.LONG, rd);
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                instructionTranslation().assignZero(Kind.LONG, rdx);
                 final EirVariable zeroExtendedDivisor = createEirVariable(Kind.LONG);
                 addInstruction(new MOVZXD(eirBlock(), zeroExtendedDivisor, divisor));
-                addInstruction(new DIV_I64(eirBlock(), rd, ra, zeroExtendedDivisor));
+                addInstruction(new DIV_I64(eirBlock(), rdx, rax, zeroExtendedDivisor));
             }
         };
     }
@@ -1331,8 +1328,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue b = dirToEirValue(dirArguments[1]);
         addInstruction(new CMP_I32(eirBlock(), a, b));
     }
+
     @Override
-    public void visitUnsignedIntGreaterEqual(UnsignedIntGreaterEqual builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitAboveEqual(AboveEqual builtin, DirValue dirResult, DirValue[] dirArguments) {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);
@@ -1346,6 +1344,46 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
+    public void visitAboveThan(AboveThan builtin, DirValue dirResult, DirValue[] dirArguments) {
+        final EirValue result = dirToEirValue(dirResult);
+        final EirValue a = dirToEirValue(dirArguments[0]);
+        final EirValue b = dirToEirValue(dirArguments[1]);
+        final EirValue one = createEirVariable(Kind.INT);
+
+        addInstruction(new ZERO(eirBlock(), Kind.WORD, result));
+        assign(Kind.INT, one, createEirConstant(IntValue.ONE));
+        addInstruction(new CMP_I32(eirBlock(), a, b));
+        addInstruction(new CMOVA_I32(eirBlock(), result, one));
+    }
+
+    @Override
+    public void visitBelowEqual(BelowEqual builtin, DirValue dirResult, DirValue[] dirArguments) {
+        final EirValue result = dirToEirValue(dirResult);
+        final EirValue a = dirToEirValue(dirArguments[0]);
+        final EirValue b = dirToEirValue(dirArguments[1]);
+        final EirValue one = createEirVariable(Kind.INT);
+
+        addInstruction(new ZERO(eirBlock(), Kind.WORD, result));
+        assign(Kind.INT, one, createEirConstant(IntValue.ONE));
+        addInstruction(new CMP_I32(eirBlock(), a, b));
+        addInstruction(new CMOVBE_I32(eirBlock(), result, one));
+
+    }
+
+    @Override
+    public void visitBelowThan(BelowThan builtin, DirValue dirResult, DirValue[] dirArguments) {
+        final EirValue result = dirToEirValue(dirResult);
+        final EirValue a = dirToEirValue(dirArguments[0]);
+        final EirValue b = dirToEirValue(dirArguments[1]);
+        final EirValue one = createEirVariable(Kind.INT);
+
+        addInstruction(new ZERO(eirBlock(), Kind.WORD, result));
+        assign(Kind.INT, one, createEirConstant(IntValue.ONE));
+        addInstruction(new CMP_I32(eirBlock(), a, b));
+        addInstruction(new CMOVB_I32(eirBlock(), result, one));
+    }
+
+    @Override
     public void visitCompareWords(CompareWords builtin, DirValue dirResult, DirValue[] dirArguments) {
         assert dirResult == null;
         final EirValue a = dirToEirValue(dirArguments[0]);
@@ -1356,26 +1394,20 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     @Override
     public void visitBarMemory(BarMemory builtin, DirValue dirResult, DirValue[] dirArguments) {
         assert dirResult == null;
-        if (!dirArguments[0].isConstant()) {
-            ProgramWarning.message("optimizer failed to determine a memory barrier argument as a known constant => emitting a full barrier just in case");
-            addInstruction(new MFENCE(eirBlock()));
-            return;
-        }
+        assert dirArguments[0].isConstant();
         final DirConstant dirConstant = (DirConstant) dirArguments[0];
-        final Class<PoolSet<MemoryBarrier>> type = null;
-        final PoolSet<MemoryBarrier> memoryBarriers = StaticLoophole.cast(type, dirConstant.value().asObject());
-        if (methodTranslation().memoryModel.barriers.containsAll(memoryBarriers)) {
+        assert dirConstant.value().kind() == Kind.INT;
+        final int explicitMemoryBarriers = dirConstant.value().asInt() & ~methodTranslation().memoryModel.impliedBarriers;
+        if (0 == explicitMemoryBarriers) {
             return;
         }
-        if (memoryBarriers.length() == 1) {
-            if (memoryBarriers.contains(MemoryBarrier.LOAD_LOAD)) {
-                addInstruction(new LFENCE(eirBlock()));
-                return;
-            }
-            if (memoryBarriers.contains(MemoryBarrier.STORE_STORE)) {
-                addInstruction(new SFENCE(eirBlock()));
-                return;
-            }
+        if (explicitMemoryBarriers == MemoryBarriers.LOAD_LOAD) {
+            addInstruction(new LFENCE(eirBlock()));
+            return;
+        }
+        if (explicitMemoryBarriers == MemoryBarriers.STORE_STORE) {
+            addInstruction(new SFENCE(eirBlock()));
+            return;
         }
         addInstruction(new MFENCE(eirBlock()));
     }

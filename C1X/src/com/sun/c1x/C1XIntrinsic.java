@@ -23,8 +23,8 @@ package com.sun.c1x;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ri.*;
 
 /**
  * This enum represents all of the intrinsics, i.e. a library methods that
@@ -119,10 +119,6 @@ public enum C1XIntrinsic {
     // sun.reflect.Reflection
     sun_reflect_Reflection$getClassAccessFlags ("(Ljava/lang/Class;)I"),
     sun_reflect_Reflection$getCallerClass      ("(I)Ljava/lang/Class;"),
-
-    // sun.misc.AtomicLongCSImpl
-    sun_misc_AtomicLongCSImpl$get ("()J"),
-    sun_misc_AtomicLongCSImpl$attemptUpdate ("(JJ)Z"),
 
     // sun.misc.Unsafe
     sun_misc_Unsafe$allocateInstance ("(Ljava/lang/Class;)Ljava/lang/Object;"),
@@ -282,7 +278,7 @@ public enum C1XIntrinsic {
      */
     public static C1XIntrinsic getIntrinsic(RiMethod method) {
         RiType holder = method.holder();
-        if (method.isLoaded() && holder.isLoaded() && holder.isInitialized()) {
+        if (method.isResolved() && holder.isResolved() && holder.isInitialized()) {
             // note that the map uses internal names to make lookup faster
             HashMap<String, C1XIntrinsic> map = intrinsicMap.get(holder.name());
             if (map != null) {

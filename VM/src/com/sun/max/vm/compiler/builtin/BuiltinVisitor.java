@@ -186,7 +186,10 @@ public interface BuiltinVisitor<IR_Type> {
     void visitCall(Call builtin, IR_Type result, IR_Type[] arguments);
 
     void visitCompareInts(CompareInts builtin, IR_Type result, IR_Type[] arguments);
-    void visitUnsignedIntGreaterEqual(UnsignedIntGreaterEqual builtin, IR_Type result, IR_Type[] arguments);
+    void visitAboveEqual(AboveEqual builtin, IR_Type result, IR_Type[] arguments);
+    void visitAboveThan(AboveThan builtin, IR_Type result, IR_Type[] arguments);
+    void visitBelowEqual(BelowEqual builtin, IR_Type result, IR_Type[] arguments);
+    void visitBelowThan(BelowThan builtin, IR_Type result, IR_Type[] arguments);
     void visitCompareWords(CompareWords builtin, IR_Type result, IR_Type[] arguments);
 
     void visitBarMemory(BarMemory builtin, IR_Type result, IR_Type[] arguments);

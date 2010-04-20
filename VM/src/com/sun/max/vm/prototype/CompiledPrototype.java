@@ -33,12 +33,12 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jdk.*;
@@ -347,9 +347,10 @@ public class CompiledPrototype extends Prototype {
                 return false;
             }
         }
-        if (methodActor.isBuiltin() && !SpecialBuiltin.class.isAssignableFrom(methodActor.holder().toJava())) {
-//            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
-//            addMethods(methodActor, stubClassActor.localVirtualMethodActors(), Relationship.INTERFACE_CALL);
+        if (Actor.isDeclaredFoldable(methodActor.flags())) {
+            // All foldable methods must have their stubs precompiled in the image
+            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
+            addMethods(referrer, stubClassActor.localVirtualMethodActors(), relationship);
         }
         methodActors.put(methodActor, new Link(methodActor, referrer, relationship));
         worklist.add(methodActor);
@@ -582,15 +583,19 @@ public class CompiledPrototype extends Prototype {
         return ProgramError.unexpected("Error occurred while compiling " + classMethodActor, error);
     }
 
-    public void compileUnsafeMethods() {
-        Trace.begin(1, "compiling unsafe methods");
-        for (ClassMethodActor classMethodActor : UNSAFE.Static.methods()) {
-            if (!(classMethodActor.isNative() && classMethodActor.isVmEntryPoint())) {
-                worklist.add(classMethodActor);
-            }
+    public void compileFoldableMethods() {
+        Trace.begin(1, "compiling foldable methods");
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+            classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
+                public void run(ClassMethodActor classMethodActor) {
+                    if (classMethodActor.isDeclaredFoldable()) {
+                        add(classMethodActor, null, null);
+                    }
+                }
+            });
         }
         compileWorklist();
-        Trace.end(1, "compiling unsafe methods");
+        Trace.end(1, "compiling foldable methods");
     }
 
     private boolean hasCode(MethodActor methodActor) {

@@ -25,9 +25,9 @@ import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveArrayClas
 import static com.sun.max.vm.template.BytecodeTemplate.*;
 import static com.sun.max.vm.template.source.NoninlineTemplateRuntime.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -2574,46 +2574,6 @@ public class BytecodeTemplateSource {
         JitStackFrameOperation.pokeLong(0, SpecialBuiltin.doubleToLong(value));
     }
 
-    @BYTECODE_TEMPLATE(UWLT)
-    public static void uwlt() {
-        Address value2 = JitStackFrameOperation.peekWord(0).asAddress();
-        Address value1 = JitStackFrameOperation.peekWord(1).asAddress();
-        JitStackFrameOperation.removeSlots(1);
-        JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(value1.lessThan(value2)));
-    }
-
-    @BYTECODE_TEMPLATE(UWLTEQ)
-    public static void uwlteq() {
-        Address value2 = JitStackFrameOperation.peekWord(0).asAddress();
-        Address value1 = JitStackFrameOperation.peekWord(1).asAddress();
-        JitStackFrameOperation.removeSlots(1);
-        JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(value1.lessEqual(value2)));
-    }
-
-    @BYTECODE_TEMPLATE(UWGT)
-    public static void uwgt() {
-        Address value2 = JitStackFrameOperation.peekWord(0).asAddress();
-        Address value1 = JitStackFrameOperation.peekWord(1).asAddress();
-        JitStackFrameOperation.removeSlots(1);
-        JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(value1.greaterThan(value2)));
-    }
-
-    @BYTECODE_TEMPLATE(UWGTEQ)
-    public static void uwgteq() {
-        Address value2 = JitStackFrameOperation.peekWord(0).asAddress();
-        Address value1 = JitStackFrameOperation.peekWord(1).asAddress();
-        JitStackFrameOperation.removeSlots(1);
-        JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(value1.greaterEqual(value2)));
-    }
-
-    @BYTECODE_TEMPLATE(UGE)
-    public static void uge() {
-        int value2 = JitStackFrameOperation.peekInt(0);
-        int value1 = JitStackFrameOperation.peekInt(1);
-        JitStackFrameOperation.removeSlots(1);
-        JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(SpecialBuiltin.unsignedIntGreaterEqual(value1, value2)));
-    }
-
     @BYTECODE_TEMPLATE(LSB)
     public static void lsb() {
         Word value2 = JitStackFrameOperation.peekWord(0);
@@ -2628,32 +2588,32 @@ public class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(MEMBAR_LOAD_LOAD)
     public static void membar_load_load() {
-        MemoryBarrier.loadLoad();
+        MemoryBarriers.loadLoad();
     }
 
     @BYTECODE_TEMPLATE(MEMBAR_LOAD_STORE)
     public static void membar_load_store() {
-        MemoryBarrier.loadStore();
+        MemoryBarriers.loadStore();
     }
 
     @BYTECODE_TEMPLATE(MEMBAR_STORE_STORE)
     public static void membar_store_store() {
-        MemoryBarrier.loadStore();
+        MemoryBarriers.loadStore();
     }
 
     @BYTECODE_TEMPLATE(MEMBAR_STORE_LOAD)
     public static void membar_store_load() {
-        MemoryBarrier.storeLoad();
+        MemoryBarriers.storeLoad();
     }
 
     @BYTECODE_TEMPLATE(MEMBAR_MEMOP_STORE)
     public static void membar_memop_store() {
-        MemoryBarrier.memopStore();
+        MemoryBarriers.memopStore();
     }
 
-    @BYTECODE_TEMPLATE(MEMBAR_ALL)
-    public static void membar_all() {
-        MemoryBarrier.all();
+    @BYTECODE_TEMPLATE(MEMBAR_FENCE)
+    public static void membar_fence() {
+        MemoryBarriers.fence();
     }
 
     @BYTECODE_TEMPLATE(SAFEPOINT)

@@ -35,4 +35,9 @@ public class Package extends VMPackage {
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return OperatingSystem.UNIX.contains(vmConfiguration.platform().operatingSystem);
     }
+
+    @Override
+    public boolean containsMethodSubstitutions() {
+        return true;
+    }
 }

@@ -692,6 +692,7 @@ javadoc_help="run javadoc over the Maxine Java source files
    
 options:
  -clean     removes existing generated javadoc first
+ -projects p1,p2,... limit to listed projects
  <any other javadoc option>
     
     Use \"max javadoc -help\" to see what other options this command accepts."
@@ -700,17 +701,36 @@ function run_javadoc() {
     javadoc=${JAVA_HOME}/bin/javadoc
     clean=false
     extra_javadoc_options=""
+    projects_to_build=""
     while [ "$1" != "" ]; do
         case $1 in
             -clean )
                 clean=true
                 ;;
-            * )
+            -projects )
+                shift
+                projects_to_build="$projects_to_build ${1//,/ }"
+                ;;
+            -* )
                 extra_javadoc_options="$extra_javadoc_options $1"
+                ;;
+            * )
+                break
                 ;;
         esac
         shift
     done
+    
+    if [ $# -ne 0 ]; then
+        echo "Ignoring trailing args: $@"
+    fi
+    
+    if [ -z "$projects_to_build" ]; then
+        for project in ${projects[@]}; do
+            project_dir=${project/:*/}
+            projects_to_build="$projects_to_build $project_dir"
+        done
+    fi
     
     javadoc_output_dir=${maxine_dir}/javadoc
     if $clean ; then
@@ -724,6 +744,15 @@ function run_javadoc() {
     
     for project in ${projects[@]}; do
         project_dir=${project/:*/}
+        project_build_match=0
+        for project_to_build in ${projects_to_build[@]}; do
+            if [[ "$project_to_build" == ${project_dir} ]]; then
+                project_build_match=1
+            fi
+        done
+        if [ $project_build_match -eq 0 ] ; then
+            continue
+        fi
 
         source_dirs_spec=${project/*:/}
         source_dirs=${source_dirs_spec//,/ }
@@ -744,7 +773,7 @@ function run_javadoc() {
         -sourcepath $source_path \
         -d $javadoc_output_dir \
         -link http://java.sun.com/javase/6/docs/api \
-         $extra_javadoc_options $(<$package_list)
+     $extra_javadoc_options $(<$package_list)
     result=$?
     rm $package_list
     if [ $result -ne 0 ]; then
@@ -759,13 +788,9 @@ function run_javadoc() {
 image_configs=( \
     java#-run=java \
     c1x-opt0#--C1X:OptLevel=0,-opt=com.sun.max.vm.compiler.c1x \
-    c1x-opt0x#--C1X:OptLevel=0,-opt=com.sun.max.vm.compiler.c1x,--C1X:+UseXIR \
-    c1x-opt1#--C1X:OptLevel=1,-opt=com.sun.max.vm.compiler.c1x,--C1X:-UseXIR \
-    c1x-opt1x#--C1X:OptLevel=1,-opt=com.sun.max.vm.compiler.c1x,--C1X:+UseXIR \
-    c1x-opt2#--C1X:OptLevel=2,-opt=com.sun.max.vm.compiler.c1x,--C1X:-UseXIR \
-    c1x-opt2x#--C1X:OptLevel=2,-opt=com.sun.max.vm.compiler.c1x,--C1X:+UseXIR \
-    c1x-opt3#--C1X:OptLevel=3,-opt=com.sun.max.vm.compiler.c1x,--C1X:-UseXIR \
-    c1x-opt3x#--C1X:OptLevel=3,-opt=com.sun.max.vm.compiler.c1x,--C1X:+UseXIR \
+    c1x-opt1#--C1X:OptLevel=1,-opt=com.sun.max.vm.compiler.c1x \
+    c1x-opt2#--C1X:OptLevel=2,-opt=com.sun.max.vm.compiler.c1x \
+    c1x-opt3#--C1X:OptLevel=3,-opt=com.sun.max.vm.compiler.c1x \
     cpsc1x#-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.all \
     cpscps#-run=test.com.sun.max.vm.jtrun.all,-native-tests \
     cpsjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
@@ -869,7 +894,7 @@ compile_help="compile a list of classes and/or methods using the VM's compiler
     Use \"max compile -help\" to see what other options this command accepts."
 
 function run_compile() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.compiler.CompilerRunner $@
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.cps.CompilerRunner $@
 }
 
 #=======================================
@@ -884,13 +909,18 @@ c1x_help="process a list of classes and/or methods with the C1X compiler
     leading '!') is excuded from further processing.
 
     A compilation spec is a class name pattern followed by an optional method name
-    pattern separated by a ':'. For example:
+    pattern separated by a ':' further followed by an optional signature:
+    
+    <class name>[:<method name>[:<signature>]]
+    
+    For example:
 
-        Object:wait String
+        Object:wait String HashMap:<init>:(int,float)
 
     will compile all methods in a class whose name matches "Object" where the
-    method name matches "wait" as well as all methods in a class whose name
-    contains "String". The classes searched are those on the class path.
+    method name matches \"wait\", all methods in a class whose name
+    contains \"String\" and the single constructor in HashMap that takes an int
+    and float parameter. The classes searched are those on the class path.
     
     The type of matching performed for a given class/method name is determined
     by the position of '^' in the pattern name as follows:
@@ -904,6 +934,11 @@ c1x_help="process a list of classes and/or methods with the C1X compiler
     
     For example, '^java.util:^toString^' matches all methods named 'toString' in
     any class whose name start with 'java.util'.
+    
+    The matching performed on a signature is always a substring test. Signatures can
+    specified either in Java source syntax (e.g. \"int,String\") or JVM internal syntax
+    (e.g. \"IFLjava/lang/String;\"). The latter must always use fully qualified type
+    names where as the former must not.
     
     The output traced by this command is not guaranteed to be the same as the output
     for a compilation done at runtime. The code produced by a compiler is sensitive

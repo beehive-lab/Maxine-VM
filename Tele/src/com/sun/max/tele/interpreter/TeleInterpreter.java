@@ -20,13 +20,14 @@
  */
 package com.sun.max.tele.interpreter;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -37,7 +38,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.layout.*;
@@ -1328,41 +1328,34 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
             case SAFEPOINT:              machine.skipBytes(2); break;
             case PAUSE:                  machine.skipBytes(2); break;
             case FLUSHW:                 machine.skipBytes(2); break;
-            case LSB:   machine.skipBytes(2); push((int) Long.lowestOneBit(pop().asLong())); break;
-            case MSB:   machine.skipBytes(2); push((int) Long.highestOneBit(pop().asLong())); break;
-            case UWGT: {
-                machine.skipBytes(2);
+            case LSB:                    machine.skipBytes(2); push((int) Long.lowestOneBit(pop().asLong())); break;
+            case MSB:                    machine.skipBytes(2); push((int) Long.highestOneBit(pop().asLong())); break;
+            case UWCMP: {
+                int operand = readU2();
                 Address value2 = pop().asWord().asAddress();
                 Address value1 = pop().asWord().asAddress();
-                push(value1.greaterThan(value2) ? 1 : 0);
+                switch (operand) {
+                    case ABOVE_EQUAL: push(value1.greaterEqual(value2) ? 1 : 0); break;
+                    case ABOVE_THAN:  push(value1.greaterThan(value2) ? 1 : 0); break;
+                    case BELOW_EQUAL: push(value1.lessEqual(value2) ? 1 : 0); break;
+                    case BELOW_THAN:  push(value1.lessThan(value2) ? 1 : 0); break;
+                    default:
+                        machine.raiseException(new ClassFormatError("Unsupported UWCMP operand: " + operand));
+                }
                 break;
             }
-            case UWGTEQ: {
-                machine.skipBytes(2);
-                Address value2 = pop().asWord().asAddress();
-                Address value1 = pop().asWord().asAddress();
-                push(value1.greaterEqual(value2) ? 1 : 0);
-                break;
-            }
-            case UWLT: {
-                machine.skipBytes(2);
-                Address value2 = pop().asWord().asAddress();
-                Address value1 = pop().asWord().asAddress();
-                push(value1.lessThan(value2) ? 1 : 0);
-                break;
-            }
-            case UWLTEQ: {
-                machine.skipBytes(2);
-                Address value2 = pop().asWord().asAddress();
-                Address value1 = pop().asWord().asAddress();
-                push(value1.lessEqual(value2) ? 1 : 0);
-                break;
-            }
-            case UGE: {
-                machine.skipBytes(2);
-                int value2 = pop().asInt();
-                int value1 = pop().asInt();
-                push(SpecialBuiltin.unsignedIntGreaterEqual(value1, value2) ? 1 : 0);
+            case UCMP: {
+                int operand = readU2();
+                long value2 = pop().toLong() & 0xFFFFFFFFL;
+                long value1 = pop().toLong() & 0xFFFFFFFFL;
+                switch (operand) {
+                    case ABOVE_EQUAL: push(value1 >= value2 ? 1 : 0); break;
+                    case ABOVE_THAN:  push(value1 >  value2 ? 1 : 0); break;
+                    case BELOW_EQUAL: push(value1 <= value2 ? 1 : 0); break;
+                    case BELOW_THAN:  push(value1 <  value2 ? 1 : 0); break;
+                    default:
+                        machine.raiseException(new ClassFormatError("Unsupported UCMP operand: " + operand));
+                }
                 break;
             }
             default:                     machine.raiseException(new ClassFormatError("Unsupported bytecode: " + opcode + " [" + Bytecodes.nameOf(opcode) + "]"));

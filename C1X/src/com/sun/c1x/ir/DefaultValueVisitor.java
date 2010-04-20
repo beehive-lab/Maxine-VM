@@ -45,6 +45,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitBlockBegin(BlockBegin i) { visit(i); }
     @Override public void visitCheckCast(CheckCast i) { visit(i); }
     @Override public void visitCompareOp(CompareOp i) { visit(i); }
+    @Override public void visitUnsignedCompareOp(UnsignedCompareOp i) { visit(i); }
     @Override public void visitConstant(Constant i) { visit(i); }
     @Override public void visitConvert(Convert i) { visit(i); }
     @Override public void visitExceptionObject(ExceptionObject i) { visit(i); }
@@ -60,6 +61,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitLoadPC(LoadPC i) { visit(i); }
     @Override public void visitLoadPointer(LoadPointer i) { visit(i); }
     @Override public void visitLoadRegister(LoadRegister i) { visit(i); }
+    @Override public void visitLoadStackAddress(LoadStackAddress i) { visit(i); }
     @Override public void visitLocal(Local i) { visit(i); }
     @Override public void visitLogicOp(LogicOp i) { visit(i); }
     @Override public void visitLookupSwitch(LookupSwitch i) { visit(i); }
@@ -73,6 +75,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitNewTypeArray(NewTypeArray i) { visit(i); }
     @Override public void visitNullCheck(NullCheck i) { visit(i); }
     @Override public void visitOsrEntry(OsrEntry i) { visit(i); }
+    @Override public void visitPause(Pause i) { visit(i); }
     @Override public void visitPhi(Phi i) { visit(i); }
     @Override public void visitResolveClass(ResolveClass i) { visit(i); }
     @Override public void visitReturn(Return i) { visit(i); }
@@ -85,6 +88,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitStoreRegister(StoreRegister i) { visit(i); }
     @Override public void visitTableSwitch(TableSwitch i) { visit(i); }
     @Override public void visitThrow(Throw i) { visit(i); }
+    @Override public void visitUnsafeCast(UnsafeCast i) { visit(i); }
     @Override public void visitUnsafeGetObject(UnsafeGetObject i) { visit(i); }
     @Override public void visitUnsafeGetRaw(UnsafeGetRaw i) { visit(i); }
     @Override public void visitUnsafePrefetchRead(UnsafePrefetchRead i) { visit(i); }
@@ -92,4 +96,5 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitUnsafePutObject(UnsafePutObject i) { visit(i); }
     @Override public void visitUnsafePutRaw(UnsafePutRaw i) { visit(i); }
    // Checkstyle: resume
+
 }

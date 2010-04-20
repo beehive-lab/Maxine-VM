@@ -51,6 +51,7 @@ public class MaxineTesterConfiguration {
     static final Expectation RAND_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
 
     static final Expectation PASS_SOLARIS_AMD64 = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.AMD64, ExpectedResult.PASS);
+    static final Expectation PASS_DARWIN_AMD64 = new Expectation(OperatingSystem.DARWIN, ProcessorModel.AMD64, ExpectedResult.PASS);
 
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapoTests = new LinkedList<String>();
@@ -104,11 +105,17 @@ public class MaxineTesterConfiguration {
         jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
         jtt(jtt.except.BC_invokespecial01.class, RAND_ALL);      // may fail due to incorrect invokevirtual / invokespecial optimization
         jtt(jtt.except.BC_invokevirtual02.class, RAND_ALL);      // may fail due to incorrect invokevirtual / invokespecial optimization
+        jtt(jtt.optimize.NCE_FlowSensitive02.class, RAND_ALL);   // Fails on all but C1X due to missing explicit null pointer checks
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
+        jtt(jtt.threads.Thread_isInterrupted05.class,     RAND_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                      RAND_ALL);
         jtt(jtt.jdk.EnumMap02.class,                      RAND_ALL);
         jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitcps, @cpscps
         jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:  @jitcps, @cpscps
+
+        jtt(jtt.except.Catch_StackOverflowError_01.class, FAIL_LINUX);  // For some reason, the mprotect of the yellow
+        jtt(jtt.except.Catch_StackOverflowError_02.class, FAIL_LINUX);  // stack guard page is not working (at least
+        jtt(jtt.except.Catch_StackOverflowError_03.class, FAIL_LINUX);  // on the linux gate machine - diy-3-18)
 
         dacapo("antlr");
         dacapo("bloat");
@@ -190,7 +197,7 @@ public class MaxineTesterConfiguration {
         imageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
         imageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
         imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x");
+        imageConfig("cpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
 
         String c1xPackage = "com.sun.max.vm.compiler.c1x";
         String c1xClass = c1xPackage + ".C1XCompilerScheme";
@@ -215,23 +222,15 @@ public class MaxineTesterConfiguration {
         maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
         maxvmConfig("GC", "-Xmx2g");
 
-        imageConfig("jit-c1x0",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=0");
-        imageConfig("jit-c1x0x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=0 -C1X:+UseXIR");
-        imageConfig("jit-c1x1",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=1");
-        imageConfig("jit-c1x1x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=1 -C1X:+UseXIR");
-        imageConfig("jit-c1x2",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=2");
-        imageConfig("jit-c1x2x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=2 -C1X:+UseXIR");
-        imageConfig("jit-c1x3",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=3");
-        imageConfig("jit-c1x3x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=3 -C1X:+UseXIR");
+        imageConfig("jit-c1x0",  "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=0");
+        imageConfig("jit-c1x1",  "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=1");
+        imageConfig("jit-c1x2",  "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=2");
+        imageConfig("jit-c1x3",  "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=3");
 
         imageConfig("opt-c1x0",  "-opt=c1x", "-vmargs=-C1X:OptLevel=0");
-        imageConfig("opt-c1x0x", "-opt=c1x", "-vmargs=-C1X:OptLevel=0 -C1X:+UseXIR");
         imageConfig("opt-c1x1",  "-opt=c1x", "-vmargs=-C1X:OptLevel=1");
-        imageConfig("opt-c1x1x", "-opt=c1x", "-vmargs=-C1X:OptLevel=1 -C1X:+UseXIR");
         imageConfig("opt-c1x2",  "-opt=c1x", "-vmargs=-C1X:OptLevel=2");
-        imageConfig("opt-c1x2x", "-opt=c1x", "-vmargs=-C1X:OptLevel=2 -C1X:+UseXIR");
         imageConfig("opt-c1x3",  "-opt=c1x", "-vmargs=-C1X:OptLevel=3");
-        imageConfig("opt-c1x3x", "-opt=c1x", "-vmargs=-C1X:OptLevel=3 -C1X:+UseXIR");
     }
 
     private static void output(Class javaClass, Expectation... results) {
@@ -267,17 +266,28 @@ public class MaxineTesterConfiguration {
         addExpectedResults(name, results);
     }
 
-    private static void imageConfig(String name, String... params) {
+    private static void imageConfig(String name, Object... spec) {
+        String[] params = {};
+        Expectation[] results = {};
+        for (Object o : spec) {
+            if (o instanceof String) {
+                params = Arrays.copyOf(params, params.length + 1);
+                params[params.length - 1] = (String) o;
+            } else {
+                assert o instanceof Expectation;
+                results = Arrays.copyOf(results, results.length + 1);
+                results[results.length - 1] = (Expectation) o;
+            }
+        }
+
         imageParams.put(name, params);
+        if (results.length != 0) {
+            configResultMap.put(name, results);
+        }
     }
 
     private static void jtLoadConfig(String name, String... params) {
         jtLoadParams.put(name, params);
-    }
-
-    private static void imageConfig(String name, Expectation result, String... params) {
-        configResultMap.put(name, new Expectation[]{result});
-        imageParams.put(name, params);
     }
 
     private static void maxvmConfig(String name, String... params) {

@@ -620,7 +620,19 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
-    public void visitUnsignedIntGreaterEqual(UnsignedIntGreaterEqual builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitAboveEqual(AboveEqual builtin, IR_Type result, IR_Type[] arguments) {
+        visitSpecialBuiltin(builtin, result, arguments);
+    }
+
+    public void visitAboveThan(AboveThan builtin, IR_Type result, IR_Type[] arguments) {
+        visitSpecialBuiltin(builtin, result, arguments);
+    }
+
+    public void visitBelowEqual(BelowEqual builtin, IR_Type result, IR_Type[] arguments) {
+        visitSpecialBuiltin(builtin, result, arguments);
+    }
+
+    public void visitBelowThan(BelowThan builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 

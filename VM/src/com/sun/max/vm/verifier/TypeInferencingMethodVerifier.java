@@ -25,7 +25,7 @@ import static com.sun.max.vm.verifier.types.VerificationType.*;
 import java.io.*;
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;

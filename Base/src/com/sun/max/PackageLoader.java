@@ -34,8 +34,8 @@ import com.sun.max.program.*;
  */
 public class PackageLoader {
 
-    private final Classpath classpath;
-    private final ClassLoader classLoader;
+    public final Classpath classpath;
+    public final ClassLoader classLoader;
     private int traceLevel = 1;
 
     public PackageLoader(ClassLoader classLoader, Classpath classpath) {
@@ -70,19 +70,34 @@ public class PackageLoader {
     public Sequence<Class> load(final String packageName, final boolean recursive) {
         Trace.line(traceLevel, "loading: " + packageName);
         final AppendableSequence<Class> classes = new ArrayListSequence<Class>();
-        final Set<String> classNames = new HashSet<String>();
+        String[] classNames = listClassesInPackage(packageName, recursive);
+        for (String className : classNames) {
+            final Class javaClass = loadClass(className);
+            if (javaClass != null) {
+                Classes.link(javaClass);
+                classes.append(javaClass);
+            }
+        }
+        ProgramWarning.check(classNames.length != 0, "no classes found in package: " + packageName);
+        return classes;
+    }
+
+    /**
+     * Lists the classes under a given package.
+     *
+     * @param packageName the name of the package to search
+     * @param recursive if true, then classes in sub-packages are listed as well
+     * @return the class names
+     */
+    public String[] listClassesInPackage(final String packageName, final boolean recursive) {
+        final HashSet<String> classNames = new HashSet<String>();
         final ClassSearch classSearch = new ClassSearch() {
             @Override
             protected boolean visitClass(boolean isArchiveEntry, String className) {
                 if (!className.endsWith("package-info")) {
                     if (!classNames.contains(className)) {
                         if (recursive || Classes.getPackageName(className).equals(packageName)) {
-                            final Class javaClass = loadClass(className);
-                            if (javaClass != null) {
-                                Classes.link(javaClass);
-                                classNames.add(className);
-                                classes.append(javaClass);
-                            }
+                            classNames.add(className);
                         }
                     }
                 }
@@ -90,8 +105,7 @@ public class PackageLoader {
             }
         };
         classSearch.run(classpath, packageName.replace('.', '/'));
-        ProgramWarning.check(!classNames.isEmpty(), "no classes found in package: " + packageName);
-        return classes;
+        return classNames.toArray(new String[classNames.size()]);
     }
 
     /**

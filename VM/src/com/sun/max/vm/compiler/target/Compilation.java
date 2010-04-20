@@ -104,7 +104,9 @@ public class Compilation implements Future<TargetMethod> {
      * Returns whether this compilation is done.
      */
     public boolean isDone() {
-        return done;
+        synchronized (classMethodActor) {
+            return done;
+        }
     }
 
     /**
@@ -113,18 +115,17 @@ public class Compilation implements Future<TargetMethod> {
      * @return the target method that resulted from this compilation
      */
     public TargetMethod get() throws InterruptedException {
-        if (!done) {
-            synchronized (classMethodActor) {
+        synchronized (classMethodActor) {
+            if (!done) {
                 if (compilingThread == Thread.currentThread()) {
                     throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive, current compilation scheme: " + this.compilationScheme);
                 }
 
                 // the class method actor is used here as the condition variable
                 classMethodActor.wait();
-                return classMethodActor.currentTargetMethod();
             }
+            return classMethodActor.currentTargetMethod();
         }
-        return classMethodActor.currentTargetMethod();
     }
 
     /**
@@ -133,14 +134,13 @@ public class Compilation implements Future<TargetMethod> {
      * @return the target method that resulted from this compilation
      */
     public TargetMethod get(long timeout, TimeUnit unit) throws InterruptedException {
-        if (!done) {
-            synchronized (classMethodActor) {
+        synchronized (classMethodActor) {
+            if (!done) {
                 // the class method actor is used here as the condition variable
                 classMethodActor.wait(timeout); // TODO: convert timeout to milliseconds
-                return classMethodActor.currentTargetMethod();
             }
+            return classMethodActor.currentTargetMethod();
         }
-        return classMethodActor.currentTargetMethod();
     }
 
     /**
@@ -274,5 +274,4 @@ public class Compilation implements Future<TargetMethod> {
             }
         }
     }
-
 }

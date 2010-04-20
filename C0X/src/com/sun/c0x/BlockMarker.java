@@ -22,13 +22,13 @@ package com.sun.c0x;
 
 import java.util.List;
 
-import com.sun.c1x.bytecode.BytecodeLookupSwitch;
-import com.sun.c1x.bytecode.BytecodeSwitch;
-import com.sun.c1x.bytecode.BytecodeTableSwitch;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ri.RiExceptionHandler;
-import com.sun.c1x.ri.RiMethod;
-import com.sun.c1x.util.Bytes;
+import com.sun.cri.bytecode.BytecodeLookupSwitch;
+import com.sun.cri.bytecode.BytecodeSwitch;
+import com.sun.cri.bytecode.BytecodeTableSwitch;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.bytecode.Bytes;
+import com.sun.cri.ri.RiExceptionHandler;
+import com.sun.cri.ri.RiMethod;
 
 /**
  * The {@code BlockMarker} class computes the starts of all basic blocks by iterating over the bytecodes,

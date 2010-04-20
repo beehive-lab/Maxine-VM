@@ -70,7 +70,7 @@ public interface MemoryRegion {
     String regionName();
 
     /**
-     * @return an @see MemoryUsage object for this region or null if not available.
+     * @return a {@link MemoryUsage} object for this region or null if not available.
      */
     MemoryUsage getUsage();
 

@@ -25,9 +25,9 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ir.Value;
 import com.sun.c1x.ir.Instruction;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code Util} class contains a motley collection of utility methods used throughout the compiler.
@@ -75,6 +75,14 @@ public class Util {
             }
         }
         return false;
+    }
+
+    public static boolean isOdd(int n) {
+        return (n & 1) == 1;
+    }
+
+    public static boolean isEven(int n) {
+        return (n & 1) == 0;
     }
 
     /**
@@ -297,7 +305,7 @@ public class Util {
                         break;
                     }
                     case 'f': {
-                        sb.append(!method.isLoaded() ? "unresolved" : method.isStatic() ? "static" : "virtual");
+                        sb.append(!method.isResolved() ? "unresolved" : method.isStatic() ? "static" : "virtual");
                         break;
                     }
                     case '%': {
@@ -372,7 +380,7 @@ public class Util {
                         break;
                     }
                     case 'f': {
-                        sb.append(!field.isLoaded() ? "unresolved" : field.isStatic() ? "static" : "instance");
+                        sb.append(!field.isResolved() ? "unresolved" : field.isStatic() ? "static" : "instance");
                         break;
                     }
                     case '%': {
@@ -525,20 +533,13 @@ public class Util {
         return (int) l;
     }
 
-    public static boolean traceLinearScan(int level, String string, Object... objects) {
-        if (C1XOptions.TraceLinearScanLevel >= level) {
-            TTY.println(String.format(string, objects));
-        }
-        return true;
-    }
-
     public static int roundUp(int number, int mod) {
         return ((number + mod - 1) / mod) * mod;
     }
 
-    public static void truncate(List<?> instructions, int length) {
-        while (instructions.size() > length) {
-            instructions.remove(instructions.size() - 1);
+    public static void truncate(List<?> list, int length) {
+        while (list.size() > length) {
+            list.remove(list.size() - 1);
         }
     }
 
@@ -575,7 +576,7 @@ public class Util {
             }
         }
 
-        if (length % bytesPerLine != bytesPerLine - 1) {
+        if (length % bytesPerLine != bytesPerLine) {
             TTY.println();
         }
     }
@@ -676,7 +677,7 @@ public class Util {
 
     /**
      * Converts a given instruction to a value string. The representation of an instruction as
-     * a value is formed by concatenating the {@linkplain com.sun.c1x.ci.CiKind#typeChar character} denoting its
+     * a value is formed by concatenating the {@linkplain com.sun.cri.ci.CiKind#typeChar character} denoting its
      * {@linkplain com.sun.c1x.ir.Instruction#kind kind} and its {@linkplain com.sun.c1x.ir.Instruction#id}. For example,
      * "i13".
      *

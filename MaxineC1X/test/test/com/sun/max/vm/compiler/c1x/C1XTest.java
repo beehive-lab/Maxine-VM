@@ -27,9 +27,9 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.xir.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -61,7 +61,7 @@ public class C1XTest {
         "Set the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1,
         "Set the verbosity level of the testing framework.");
-    private static final Option<Boolean> printBailoutOption = options.newBooleanOption("print-bailout", false,
+    private static final Option<Boolean> printBailoutOption = options.newBooleanOption("print-bailout", true,
         "Print bailout exceptions.");
     private static final Option<Boolean> printBailoutSizeOption = options.newBooleanOption("print-bailout-size", false,
         "Print the size of bailed out methods, which helps choosing the simplest failure case for debugging..");
@@ -71,7 +71,7 @@ public class C1XTest {
         "Do not print ClassNotFoundException warnings.");
     private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
         "Compile class initializer (<clinit>) methods");
-    private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", true,
+    private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", false,
         "Stop compilation upon the first bailout.");
     private static final Option<String> compilerOption = options.newStringOption("compiler-name", "c1x",
         "Select the compiler; boot,jit,opt,c1x");
@@ -106,7 +106,7 @@ public class C1XTest {
 
     static {
         // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "C1X");
+        options.addFieldOptions(C1XOptions.class, "C1X", C1XOptions.helpMap);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -355,7 +355,10 @@ public class C1XTest {
     }
 
     private static boolean isCompilable(MethodActor method) {
-        return method instanceof ClassMethodActor && !method.isAbstract() /*&& !method.isNative()*/ && !method.isBuiltin() && !method.isIntrinsic();
+        if (method.isNative() && !MaxRiRuntime.CAN_COMPILE_NATIVE_METHODS) {
+            return false;
+        }
+        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isBuiltin() && !method.isIntrinsic();
     }
 
     enum PatternType {
@@ -504,15 +507,17 @@ public class C1XTest {
                         }
                     } else {
                         // a method pattern was specified, find matching methods
-                        final int parenIndex = argument.indexOf('(', colonIndex + 1);
+                        final int secondColonIndex = argument.indexOf(':', colonIndex + 1);
                         final PatternMatcher methodNamePattern;
-                        final SignatureDescriptor signature;
-                        if (parenIndex == -1) {
+                        String signature;
+                        if (secondColonIndex == -1) {
                             methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1));
                             signature = null;
                         } else {
-                            methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1, parenIndex));
-                            signature = SignatureDescriptor.create(argument.substring(parenIndex));
+                            methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1, secondColonIndex));
+                            signature = argument.substring(secondColonIndex + 1);
+                            // Normalize specified signature to have only a single space after any commas
+                            signature = signature.replaceAll(", *", ", ");
                         }
                         addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localStaticMethodActors(), exclusions);
                         addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localVirtualMethodActors(), exclusions);
@@ -559,11 +564,20 @@ public class C1XTest {
         return classActor;
     }
 
-    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final SignatureDescriptor signature, MethodActor[] methodActors, Set<String> exclusions) {
+    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final String signature, MethodActor[] methodActors, Set<String> exclusions) {
         for (final MethodActor method : methodActors) {
             if (methodNamePattern.matches(method.name.toString())) {
-                final SignatureDescriptor methodSignature = method.descriptor();
-                if (signature == null || signature.equals(methodSignature)) {
+                if (signature != null) {
+                    final SignatureDescriptor methodSignature = method.descriptor();
+                    if (methodSignature.string.contains(signature)) {
+                        addMethod(methods, method, exclusions);
+                    } else {
+                        String javaSignature = methodSignature.toJavaString(false, true);
+                        if (javaSignature.contains(signature)) {
+                            addMethod(methods, method, exclusions);
+                        }
+                    }
+                } else {
                     addMethod(methods, method, exclusions);
                 }
             }

@@ -83,5 +83,8 @@ public class LinearAllocationMemoryRegion extends RuntimeMemoryRegion {
         return mark.get().asAddress();
     }
 
+    protected Size used() {
+        return getAllocationMark().minus(start).asSize();
+    }
 
 }

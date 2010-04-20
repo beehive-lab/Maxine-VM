@@ -38,7 +38,7 @@ import java.util.Arrays;
 import java.util.jar.*;
 import java.util.zip.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -56,6 +56,7 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.type.ClassRegistry.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -858,6 +859,7 @@ public final class ClassfileReader {
 
                 int substituteeIndex = -1;
                 int intrinsic = 0;
+                Class accessor = null;
 
                 if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
                     for (Annotation annotation : getAnnotations(name, descriptor)) {
@@ -875,6 +877,9 @@ public final class ClassfileReader {
                             flags |= NO_SAFEPOINTS;
                         } else if (annotation.annotationType() == BUILTIN.class) {
                             flags |= BUILTIN | UNSAFE;
+                        } else if (annotation.annotationType() == ACCESSOR.class) {
+                            accessor = ((ACCESSOR) annotation).value();
+                            flags |= UNSAFE;
                         } else if (annotation.annotationType() == PLATFORM.class) {
                             if (!Platform.target().isAcceptedBy((PLATFORM) annotation)) {
                                 continue nextMethod;
@@ -922,7 +927,8 @@ public final class ClassfileReader {
                                         final int accessFlagsMask = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED;
                                         flags &= ~accessFlagsMask;
                                         flags |= substituteeActor.flags() & accessFlagsMask;
-                                        substituteeActor.beUnsafe();
+
+                                        flags |= substituteeActor.flags() & SUBSTITUTION_ADOPTED_FLAGS;
                                         break;
                                     }
                                 }
@@ -962,6 +968,7 @@ public final class ClassfileReader {
 
                 classRegistry.set(GENERIC_SIGNATURE, methodActor, genericSignature);
                 classRegistry.set(CHECKED_EXCEPTIONS, methodActor, checkedExceptions);
+                classRegistry.set(Property.ACCESSOR, methodActor, accessor);
                 classRegistry.set(RUNTIME_VISIBLE_ANNOTATION_BYTES, methodActor, runtimeVisibleAnnotationsBytes);
                 classRegistry.set(RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES, methodActor, runtimeVisibleParameterAnnotationsBytes);
                 classRegistry.set(ANNOTATION_DEFAULT_BYTES, methodActor, annotationDefaultBytes);
@@ -1299,15 +1306,6 @@ public final class ClassfileReader {
         if (superClassActor != null) {
             superClassActor.checkAccessBy(classActor);
         }
-
-        if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
-            for (Annotation annotation : getAnnotations(name, classDescriptor)) {
-                if (annotation.annotationType() == METHOD_SUBSTITUTIONS.class) {
-                    METHOD_SUBSTITUTIONS.Static.processAnnotationInfo((METHOD_SUBSTITUTIONS) annotation, classActor);
-                }
-            }
-        }
-
         return classActor;
     }
 

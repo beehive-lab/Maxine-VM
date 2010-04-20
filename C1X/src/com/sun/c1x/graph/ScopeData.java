@@ -23,10 +23,10 @@ package com.sun.c1x.graph;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code ScopeData} class represents inlining context when parsing the bytecodes
@@ -68,17 +68,6 @@ public class ScopeData {
 
     // Without return value of inlined method on stack
     FrameState continuationState;
-
-    // Number of returns seen in this scope
-    int numReturns;
-
-    // In order to generate better code while inlining, we currently
-    // have to perform an optimization for single-block inlined
-    // methods where we continue parsing into the same block. This
-    // allows us to perform LVN and folding across inlined scopes.
-    BlockBegin cleanupBlock;       // The block to which the return was added
-    Instruction cleanupReturnPrev; // Instruction before return instruction
-    FrameState cleanupState;       // State of that block (not yet pinned)
 
     // We track the destination bci of the jsr only to determine
     // bailout conditions, since we only handle a subset of all of the
@@ -313,64 +302,6 @@ public class ScopeData {
      */
     public void setJsrContinuation(BlockBegin block) {
         jsrContinuation = block;
-    }
-
-    /**
-     * Gets the number of returns, in this scope or (if parsing a JSR) the parent scope.
-     * @return the number of returns
-     */
-    public int numberOfReturns() {
-        if (parsingJsr()) {
-            return parent.numberOfReturns();
-        }
-        return numReturns;
-    }
-
-    /**
-     * Increments the number of returns, in this scope or (if parsing a JSR) the parent scope.
-     */
-    public void incrementNumberOfReturns() {
-        if (parsingJsr()) {
-            parent.incrementNumberOfReturns();
-        } else {
-            numReturns++;
-        }
-    }
-
-    /**
-     * Sets the information for cleaning up after a failed inlining.
-     * @param block the cleanup block
-     * @param returnPrev the previous return
-     * @param returnState the state at the previous return
-     */
-    public void setInlineCleanupInfo(BlockBegin block, Instruction returnPrev, FrameState returnState) {
-        cleanupBlock = block;
-        cleanupReturnPrev = returnPrev;
-        cleanupState = returnState;
-    }
-
-    /**
-     * Gets the cleanup block for when inlining fails.
-     * @return the cleanup block
-     */
-    public BlockBegin inlineCleanupBlock() {
-        return cleanupBlock;
-    }
-
-    /**
-     * Gets the previous return for when inlining fails.
-     * @return the previous return
-     */
-    public Instruction inlineCleanupReturnPrev() {
-        return cleanupReturnPrev;
-    }
-
-    /**
-     * Gets the state for when inlining fails.
-     * @return the state
-     */
-    public FrameState inlineCleanupState() {
-        return cleanupState;
     }
 
     /**

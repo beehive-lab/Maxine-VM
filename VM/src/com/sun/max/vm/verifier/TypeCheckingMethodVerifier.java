@@ -22,7 +22,7 @@ package com.sun.max.vm.verifier;
 
 import static com.sun.max.vm.verifier.types.VerificationType.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -1280,6 +1280,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         @Override
         public void jnicall(int nativeFunctionDescriptorIndex) {
             final SignatureDescriptor nativeFunctionDescriptor = SignatureDescriptor.create(constantPool().utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
+            frame.pop(VerificationType.WORD); // the native function address
             popMethodParameters(nativeFunctionDescriptor);
             pushMethodResult(nativeFunctionDescriptor);
         }

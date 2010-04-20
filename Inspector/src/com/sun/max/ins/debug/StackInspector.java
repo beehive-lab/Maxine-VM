@@ -213,7 +213,13 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
                 if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
                     name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
-                    toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+                    try {
+                        toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+                    } catch (Exception e) {
+                        // There's corner cases where we can't obtain detailed information for the tool tip (e.g., the method we're trying to get the substitution info about
+                        //  is being constructed. Instead of propagating the exception, just use a default tool tip. [Laurent].
+                        toolTip = "?";
+                    }
                 }
             } else if (stackFrame instanceof TruncatedStackFrame) {
                 name = "*select here to extend the display*";

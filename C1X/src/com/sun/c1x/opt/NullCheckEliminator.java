@@ -23,10 +23,10 @@ package com.sun.c1x.opt;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class implements a data-flow analysis to remove redundant null checks
@@ -458,16 +458,16 @@ public class NullCheckEliminator extends DefaultValueVisitor {
     }
 
     private void compareAgainstNonNull(If i, Value use) {
-        if (i.condition() == Condition.eql) {
+        if (i.condition() == Condition.EQ) {
             propagateNonNull(i, use, i.trueSuccessor());
         }
     }
 
     private void compareAgainstNull(If i, Value use) {
-        if (i.condition() == Condition.eql) {
+        if (i.condition() == Condition.EQ) {
             propagateNonNull(i, use, i.falseSuccessor());
         }
-        if (i.condition() == Condition.neq) {
+        if (i.condition() == Condition.NE) {
             propagateNonNull(i, use, i.trueSuccessor());
         }
     }

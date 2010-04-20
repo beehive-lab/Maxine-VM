@@ -22,8 +22,8 @@ package com.sun.c1x.debug;
 
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.util.Util;
 
 /**
  * Prints a listing for a {@linkplain BlockBegin block}.
