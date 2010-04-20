@@ -20,14 +20,15 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * A chunk of free space in the heap.
@@ -41,7 +42,7 @@ import com.sun.max.vm.runtime.*;
  */
 final class HeapFreeChunk {
 
-    private static final  Hub heapFreeChunkHub = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
+    private static final DynamicHub HEAP_FREE_CHUNK_HUB = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
 
     /**
      * Index of the word storing the address to the next free space within the current free heap space.
@@ -67,14 +68,17 @@ final class HeapFreeChunk {
 
     /**
      * Format dead space into a free chunk.
-     * @param deadSpace
-     * @param size
-     * @return
+     * @param deadSpace pointer to  the first word of the dead space
+     * @param numBytes size of the dead space in bytes
+     * @return a reference to HeapFreeChunk object just planted at the beginning of the free chunk.
      */
-    static HeapFreeChunk format(Address deadSpace, Size size) {
-        Cell.plantTuple(deadSpace.asPointer(), heapFreeChunkHub);
+    static HeapFreeChunk format(Address deadSpace, Size numBytes) {
+        if (MaxineVM.isDebug()) {
+            DebugHeap.writeCellPadding(deadSpace.asPointer(), numBytes.toInt() >> Word.widthValue().log2numberOfBytes);
+        }
+        Cell.plantTuple(deadSpace.asPointer(), HEAP_FREE_CHUNK_HUB);
         HeapFreeChunk freeChunk = toHeapFreeChunk(deadSpace);
-        freeChunk.size = size;
+        freeChunk.size = numBytes;
         freeChunk.next = null;
         return freeChunk;
     }
@@ -83,7 +87,6 @@ final class HeapFreeChunk {
     private static native HeapFreeChunk asHeapFreeChunk(Object freeChunk);
 
     static HeapFreeChunk toHeapFreeChunk(Address address) {
-        FatalError.check(Safepoint.isDisabled(), "leaking a HeapFreeChunk");
         return asHeapFreeChunk(Reference.fromOrigin(address.asPointer()).toJava());
     }
 
@@ -93,7 +96,13 @@ final class HeapFreeChunk {
     private HeapFreeChunk() {
     }
 
+    /**
+     * Size of the chunk in bytes (including the size of the instance of HeapFreeChunk prefixing the chunk).
+     */
     Size size;
+    /**
+     * A link to a next free chunk in a linked list.
+     */
     HeapFreeChunk next;
 
 }

@@ -23,10 +23,10 @@ package com.sun.max.vm.compiler.c1x;
 import java.io.*;
 import java.util.*;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ci.CiTargetMethod.*;
-import com.sun.c1x.ci.CiTargetMethod.ExceptionHandler;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
@@ -656,7 +656,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         // iterate over all the calls and append them to the appropriate lists
         for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.indirectCalls) {
             assert site.method != null;
-            if (site.method.isLoaded()) {
+            if (site.method.isResolved()) {
                 MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
                 if (site.method.holder().isInterface()) {
                     interfaceCalls.add(methodActor);
@@ -844,6 +844,14 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         int stopIndex = findClosestStopIndex(ip);
         if (stopIndex < 0) {
+            return null;
+        }
+        return decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, stopIndex);
+    }
+
+    @Override
+    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
+        if (classMethodActor == null) {
             return null;
         }
         return decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, stopIndex);

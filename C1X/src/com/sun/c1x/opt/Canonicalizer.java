@@ -20,16 +20,16 @@
  */
 package com.sun.c1x.opt;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
 import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code Canonicalizer} reduces instructions to a canonical form by folding constants,
@@ -417,21 +417,21 @@ public class Canonicalizer extends DefaultValueVisitor {
         return true;
     }
 
-    private Value eliminateNarrowing(CiKind type, Convert c) {
+    private Value eliminateNarrowing(CiKind kind, Convert c) {
         Value nv = null;
         switch (c.opcode()) {
             case I2B:
-                if (type == CiKind.Byte) {
+                if (kind == CiKind.Byte) {
                     nv = c.value();
                 }
                 break;
             case I2S:
-                if (type == CiKind.Short || type == CiKind.Byte) {
+                if (kind == CiKind.Short || kind == CiKind.Byte) {
                     nv = c.value();
                 }
                 break;
             case I2C:
-                if (type == CiKind.Char || type == CiKind.Byte) {
+                if (kind == CiKind.Char || kind == CiKind.Byte) {
                     nv = c.value();
                 }
                 break;
@@ -445,8 +445,8 @@ public class Canonicalizer extends DefaultValueVisitor {
             // only try to canonicalize static field loads
             RiField field = i.field();
             if (field.isConstant()) {
-                if (method.isStatic() && method.isInitializer()) {
-                    // don't do canonicalization in the initializer method
+                if (method.isClassInitializer()) {
+                    // don't do canonicalization in the <clinit> method
                     return;
                 }
 
@@ -539,7 +539,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                         clearStoreCheck(i);
                     } else {
                         RiType declaredType = value.declaredType();
-                        if (declaredType != null && declaredType.isLoaded() && declaredType.isSubtypeOf(exactType)) {
+                        if (declaredType != null && declaredType.isResolved() && declaredType.isSubtypeOf(exactType)) {
                             // the value being stored has a known type
                             clearStoreCheck(i);
                         }
@@ -669,38 +669,38 @@ public class Canonicalizer extends DefaultValueVisitor {
             // Checkstyle: resume
         }
 
-        CiKind type = CiKind.Illegal;
+        CiKind kind = CiKind.Illegal;
         if (v instanceof LoadField) {
             // remove redundant conversions from field loads of the correct type
-            type = ((LoadField) v).field().kind();
+            kind = ((LoadField) v).field().kind();
         } else if (v instanceof LoadIndexed) {
             // remove redundant conversions from array loads of the correct type
-            type = ((LoadIndexed) v).elementKind();
+            kind = ((LoadIndexed) v).elementKind();
         } else if (v instanceof Convert) {
             // remove chained redundant conversions
             Convert c = (Convert) v;
             switch (c.opcode()) {
-                case I2B: type = CiKind.Byte; break;
-                case I2S: type = CiKind.Short; break;
-                case I2C: type = CiKind.Char; break;
+                case I2B: kind = CiKind.Byte; break;
+                case I2S: kind = CiKind.Short; break;
+                case I2C: kind = CiKind.Char; break;
             }
         }
 
-        if (type != CiKind.Illegal) {
+        if (kind != CiKind.Illegal) {
             // if any of the above matched
             switch (i.opcode()) {
                 case I2B:
-                    if (type == CiKind.Byte) {
+                    if (kind == CiKind.Byte) {
                         setCanonical(v);
                     }
                     break;
                 case I2S:
-                    if (type == CiKind.Byte || type == CiKind.Short) {
+                    if (kind == CiKind.Byte || kind == CiKind.Short) {
                         setCanonical(v);
                     }
                     break;
                 case I2C:
-                    if (type == CiKind.Char) {
+                    if (kind == CiKind.Char) {
                         setCanonical(v);
                     }
                     break;
@@ -746,13 +746,12 @@ public class Canonicalizer extends DefaultValueVisitor {
     public void visitInvoke(Invoke i) {
         if (C1XOptions.CanonicalizeFoldableMethods) {
             RiMethod method = i.target();
-            if (method.isLoaded()) {
+            if (method.isResolved()) {
                 // only try to fold resolved method invocations
                 CiConstant result = foldInvocation(i.target(), i.arguments());
                 if (result != null) {
                     // folding was successful
-                    CiKind kind = method.signatureType().returnKind();
-                    setCanonical(new Constant(new CiConstant(kind, result)));
+                    setCanonical(new Constant(result));
                 }
             }
         }
@@ -761,13 +760,13 @@ public class Canonicalizer extends DefaultValueVisitor {
     @Override
     public void visitCheckCast(CheckCast i) {
         // we can remove a redundant check cast if it is an object constant or the exact type is known
-        if (i.targetClass().isLoaded()) {
+        if (i.targetClass().isResolved()) {
             Value o = i.object();
             RiType type = o.exactType();
             if (type == null) {
                 type = o.declaredType();
             }
-            if (type != null && type.isLoaded() && type.isSubtypeOf(i.targetClass())) {
+            if (type != null && type.isResolved() && type.isSubtypeOf(i.targetClass())) {
                 // cast is redundant if exact type or declared type is already a subtype of the target type
                 setCanonical(o);
             }
@@ -789,10 +788,10 @@ public class Canonicalizer extends DefaultValueVisitor {
     @Override
     public void visitInstanceOf(InstanceOf i) {
         // we can fold an instanceof if it is an object constant or the exact type is known
-        if (i.targetClass().isLoaded()) {
+        if (i.targetClass().isResolved()) {
             Value o = i.object();
             RiType exact = o.exactType();
-            if (exact != null && exact.isLoaded()) {
+            if (exact != null && exact.isResolved()) {
                 setIntConstant(exact.isSubtypeOf(i.targetClass()) ? 1 : 0);
             }
             if (o.isConstant()) {
@@ -1019,8 +1018,9 @@ public class Canonicalizer extends DefaultValueVisitor {
         Value l = i.x();
         Value r = i.y();
 
-        if (l == r) {
+        if (l == r && !l.kind.isFloatOrDouble()) {
             // this is a comparison of x op x
+            // No opt for float/double due to NaN case
             reduceReflexiveIf(i);
             return;
         }
@@ -1047,10 +1047,10 @@ public class Canonicalizer extends DefaultValueVisitor {
 
         if (isNullConstant(r) && l.isNonNull()) {
             // this is a comparison of null against something that is not null
-            if (ifcond == Condition.eql) {
+            if (ifcond == Condition.EQ) {
                 // new() == null is always false
                 setCanonical(new Goto(i.falseSuccessor(), i.stateAfter(), i.isSafepoint()));
-            } else if (ifcond == Condition.neq) {
+            } else if (ifcond == Condition.NE) {
                 // new() != null is always true
                 setCanonical(new Goto(i.trueSuccessor(), i.stateAfter(), i.isSafepoint()));
             }
@@ -1083,15 +1083,15 @@ public class Canonicalizer extends DefaultValueVisitor {
             BlockBegin tsux;
             BlockBegin fsux;
             if (lssSucc == eqlSucc) {
-                cond = Condition.leq;
+                cond = Condition.LE;
                 tsux = lssSucc;
                 fsux = gtrSucc;
             } else if (lssSucc == gtrSucc) {
-                cond = Condition.neq;
+                cond = Condition.NE;
                 tsux = lssSucc;
                 fsux = eqlSucc;
             } else if (eqlSucc == gtrSucc) {
-                cond = Condition.geq;
+                cond = Condition.GE;
                 tsux = eqlSucc;
                 fsux = lssSucc;
             } else {
@@ -1112,12 +1112,12 @@ public class Canonicalizer extends DefaultValueVisitor {
         // simplify reflexive comparisons If (x op x) to Goto
         BlockBegin succ;
         switch (i.condition()) {
-            case eql: succ = i.successor(true); break;
-            case neq: succ = i.successor(false); break;
-            case lss: succ = i.successor(false); break;
-            case leq: succ = i.successor(true); break;
-            case gtr: succ = i.successor(false); break;
-            case geq: succ = i.successor(true); break;
+            case EQ: succ = i.successor(true); break;
+            case NE: succ = i.successor(false); break;
+            case LT: succ = i.successor(false); break;
+            case LE: succ = i.successor(true); break;
+            case GT: succ = i.successor(false); break;
+            case GE: succ = i.successor(true); break;
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -1150,7 +1150,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         if (max == 1) {
             // replace switch with If
             Constant key = intInstr(i.lowKey());
-            If newIf = new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
+            If newIf = new If(v, Condition.EQ, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
             newIf.setStateAfter(i.stateAfter());
             setCanonical(newIf);
         }
@@ -1184,7 +1184,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         if (max == 1) {
             // replace switch with If
             Constant key = intInstr(i.keyAt(0));
-            If newIf = new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
+            If newIf = new If(v, Condition.EQ, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
             newIf.setStateAfter(i.stateAfter());
             setCanonical(newIf);
         }
@@ -1346,7 +1346,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 CiKind kind = method.signatureType().returnKind();
                 // set the result of this instruction to be the result of invocation
                 C1XMetrics.MethodsFolded++;
-                return new CiConstant(kind, result);
+                return CiConstant.forBoxed(kind, result);
                 // note that for void, we will have a void constant with value null
             } catch (IllegalAccessException e) {
                 // folding failed; too bad

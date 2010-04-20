@@ -30,7 +30,7 @@ package jtt.max;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 
 public final class ImmortalHeap_allocation {
@@ -49,7 +49,7 @@ public final class ImmortalHeap_allocation {
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
         Pointer oldMark = immortalMemoryRegion.mark();
         ImmortalHeap.allocate(Size.fromInt(size), true);
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             size += Word.size();
         }
         if (immortalMemoryRegion.mark().equals(oldMark.plus(Size.fromInt(size).wordAligned()))) {

@@ -21,15 +21,14 @@
 package com.sun.c0x;
 
 import com.sun.c0x.C0XCompilation.Location;
-import com.sun.c1x.bytecode.BytecodeLookupSwitch;
-import com.sun.c1x.bytecode.BytecodeTableSwitch;
-import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiTarget;
-import com.sun.c1x.ri.RiBytecodeExtension;
-import com.sun.c1x.ri.RiField;
-import com.sun.c1x.ri.RiMethod;
-import com.sun.c1x.ri.RiRuntime;
-import com.sun.c1x.ri.RiType;
+import com.sun.cri.bytecode.BytecodeLookupSwitch;
+import com.sun.cri.bytecode.BytecodeTableSwitch;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ri.RiField;
+import com.sun.cri.ri.RiMethod;
+import com.sun.cri.ri.RiRuntime;
+import com.sun.cri.ri.RiType;
 
 /**
  * The {@code CodeGen} class definition.
@@ -50,8 +49,6 @@ public abstract class CodeGen {
     abstract void genBreakpoint(int bci);
 
     abstract Location genNewMultiArray(RiType type, Location[] lengths);
-
-    abstract Location genExtendedBytecode(RiBytecodeExtension.Bytecode extcode, Location[] args);
 
     abstract void genMonitorExit(Location object);
 
@@ -87,7 +84,7 @@ public abstract class CodeGen {
 
     abstract void genThrow(Location thrown);
 
-    abstract void genReturn(CiKind basicType, Location value);
+    abstract void genReturn(CiKind kind, Location value);
 
     abstract void genTableswitch(BytecodeTableSwitch bytecodeTableSwitch, Location key);
 
@@ -107,13 +104,13 @@ public abstract class CodeGen {
 
     abstract Location genIncrement(Location l);
 
-    abstract Location genCompareOp(CiKind basicType, int opcode, Location x, Location y);
+    abstract Location genCompareOp(CiKind kind, int opcode, Location x, Location y);
 
     abstract Location genConvert(int opcode, CiKind from, CiKind to, Location value);
 
-    abstract Location genArrayLoad(CiKind basicType, Location array, Location index);
+    abstract Location genArrayLoad(CiKind kind, Location array, Location index);
 
-    abstract void genArrayStore(CiKind basicType, Location array, Location index, Location value);
+    abstract void genArrayStore(CiKind kind, Location array, Location index, Location value);
 
     abstract Location genIntOp2(int opcode, Location x, Location y);
 

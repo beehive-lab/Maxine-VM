@@ -59,6 +59,11 @@ public class VMOption {
         NON_STANDARD(22, 92),
 
         /**
+         * Constant denoting options that start with "C1X".
+         */
+        C1X_SPECIFIC(42, 122),
+
+        /**
          * Constant denoting options that start with "-XX".
          */
         IMPLEMENTATION_SPECIFIC(42, 122);
@@ -74,6 +79,9 @@ public class VMOption {
         public static Category from(String prefix) {
             if (prefix.startsWith("-XX")) {
                 return Category.IMPLEMENTATION_SPECIFIC;
+            }
+            if (prefix.startsWith("-C1X")) {
+                return Category.C1X_SPECIFIC;
             }
             if (prefix.startsWith("-X")) {
                 return Category.NON_STANDARD;

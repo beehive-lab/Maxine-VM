@@ -20,13 +20,16 @@
  */
 package com.sun.c1x.target;
 
+import java.lang.reflect.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.xir.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 /**
  * The {@code Backend} class represents a compiler backend for C1X.
@@ -38,6 +41,17 @@ public abstract class Backend {
 
     protected Backend(C1XCompiler compiler) {
         this.compiler = compiler;
+    }
+
+    public static Backend create(CiArchitecture arch, C1XCompiler compiler) {
+        String className = arch.getClass().getName() + "Backend";
+        try {
+            Class<?> c = Class.forName(className);
+            Constructor<?> cons = c.getDeclaredConstructor(C1XCompiler.class);
+            return (Backend) cons.newInstance(compiler);
+        } catch (Exception e) {
+            throw new Error("Could instantiate " + className, e);
+        }
     }
 
     public abstract FrameMap newFrameMap(RiMethod method, int numberOfLocks);

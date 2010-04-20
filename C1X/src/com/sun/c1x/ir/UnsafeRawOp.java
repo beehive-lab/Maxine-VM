@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code UnsafeRawOp} class is the base class of all unsafe raw operations.

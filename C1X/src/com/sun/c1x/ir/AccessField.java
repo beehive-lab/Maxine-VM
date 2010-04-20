@@ -21,8 +21,8 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ri.*;
 
 /**
  * The base class of all instructions that access fields.
@@ -32,7 +32,6 @@ import com.sun.c1x.value.*;
 public abstract class AccessField extends StateSplit {
 
     Value object;
-    final int offset;
     final RiField field;
     public final char cpi;
     public final RiConstantPool constantPool;
@@ -46,11 +45,10 @@ public abstract class AccessField extends StateSplit {
      * @param isLoaded indicates if the class is loaded
      */
     public AccessField(Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
-        super(field.kind().stackType(), stateBefore);
+        super(field.kind().stackKind(), stateBefore);
         this.cpi = cpi;
         this.constantPool = constantPool;
         this.object = object;
-        this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
         if (!isLoaded || C1XOptions.TestPatching && !field.isVolatile()) {
             // require patching if the field is not loaded (i.e. resolved),
@@ -72,14 +70,6 @@ public abstract class AccessField extends StateSplit {
      */
     public Value object() {
         return object;
-    }
-
-    /**
-     * Gets the offset of the field from the start of the object, in bytes.
-     * @return the offset of the field within the object
-     */
-    public int offset() {
-        return offset;
     }
 
     /**

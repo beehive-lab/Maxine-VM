@@ -24,7 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.type.*;
 
@@ -60,7 +60,7 @@ public class BeltTLAB extends LinearAllocationMemoryRegion {
         setStart(newAddress);
         setSize(BeltwayHeapSchemeConfiguration.TLAB_SIZE);
         mark.set(newAddress);
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             endAllocationMark = end().asPointer().minusWords(4);
         } else {
             endAllocationMark = end().asPointer().minusWords(3);
@@ -71,12 +71,12 @@ public class BeltTLAB extends LinearAllocationMemoryRegion {
 
     public void initializeTLAB(Address newAddress, Address allocationMark, Size size) {
         setStart(newAddress);
-        // Add one word in case of debugging, because we pass the parameter of the start
+        // Add one word in case of heap tagging, because we pass the parameter of the start
         // address without the taking account the debug word
         setSize(size);
         mark.set(allocationMark);
         previousAllocationMark = allocationMark;
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             endAllocationMark = end().asPointer().minusWords(4);
         } else {
             endAllocationMark = end().asPointer().minusWords(3);
@@ -153,7 +153,7 @@ public class BeltTLAB extends LinearAllocationMemoryRegion {
     public final Pointer allocate(Size size) {
         Pointer cell;
         final Pointer oldAllocationMark = mark();
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
             cell = oldAllocationMark;

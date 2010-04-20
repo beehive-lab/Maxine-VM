@@ -20,14 +20,14 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The {@code CheckCast} instruction represents a checkcast bytecode.
+ * The {@code CheckCast} instruction represents a {@link Bytecodes#CHECKCAST}.
  *
  * @author Ben L. Titzer
  */
@@ -73,7 +73,7 @@ public final class CheckCast extends TypeCheck {
 
     @Override
     public int valueNumber() {
-        return targetClass.isLoaded() ? Util.hash1(Bytecodes.CHECKCAST, object) : 0;
+        return targetClass.isResolved() ? Util.hash1(Bytecodes.CHECKCAST, object) : 0;
     }
 
     @Override

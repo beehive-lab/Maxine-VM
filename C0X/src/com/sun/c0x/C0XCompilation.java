@@ -23,13 +23,13 @@ package com.sun.c0x;
 import java.util.Arrays;
 import java.util.List;
 
-import com.sun.c1x.bytecode.BytecodeLookupSwitch;
-import com.sun.c1x.bytecode.BytecodeStream;
-import com.sun.c1x.bytecode.BytecodeTableSwitch;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.Util;
+import com.sun.cri.bytecode.BytecodeLookupSwitch;
+import com.sun.cri.bytecode.BytecodeStream;
+import com.sun.cri.bytecode.BytecodeTableSwitch;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code C0XCompiler} class is a sketch of a new baseline compiler design which borrows
@@ -72,16 +72,16 @@ public class C0XCompilation {
 
     static class Register extends Location {
         final int num;
-        final CiKind type;
+        final CiKind kind;
 
-        Register(int num, CiKind type) {
+        Register(int num, CiKind kind) {
             this.num = num;
-            this.type = type;
+            this.kind = kind;
         }
 
         @Override
         public String toString() {
-            return "R" + num + ":" + type;
+            return "R" + num + ":" + kind;
         }
     }
 
@@ -132,8 +132,8 @@ public class C0XCompilation {
     }
 
     abstract class RegisterAllocator {
-        abstract Register allocate(CiKind basicType);
-        abstract Register allocate(int physNum, CiKind basicType);
+        abstract Register allocate(CiKind kind);
+        abstract Register allocate(int physNum, CiKind kind);
         abstract void release(Register r);
         abstract void spill();
 
@@ -150,7 +150,6 @@ public class C0XCompilation {
     final RiRuntime runtime;
     final RiMethod method;
     final CiTarget target;
-    final RiBytecodeExtension extension;
     final CodeGen codeGen;
     RiConstantPool constantPool;
     final BlockState[] blockState;
@@ -164,11 +163,10 @@ public class C0XCompilation {
     int blockQueuePos;
     int regNum;
 
-    public C0XCompilation(RiRuntime runtime, RiMethod method, CiTarget target, RiBytecodeExtension extension) {
+    public C0XCompilation(RiRuntime runtime, RiMethod method, CiTarget target) {
         this.runtime = runtime;
         this.method = method;
         this.target = target;
-        this.extension = extension;
         this.bytecode = method.code();
         this.blockState = new BlockState[this.bytecode.length];
         List<RiExceptionHandler> hlist = method.exceptionHandlers();
@@ -228,7 +226,7 @@ public class C0XCompilation {
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
             RiType type = sig.argumentTypeAt(i);
-            CiKind vt = type.kind().stackType();
+            CiKind vt = type.kind().stackKind();
             frameState.state[index] = produce(vt);
             index += vt.sizeInSlots();
         }
@@ -544,21 +542,7 @@ public class C0XCompilation {
     }
 
     private void doUnknownBytecode(int bci, int opcode) {
-        if (extension != null) {
-            RiBytecodeExtension.Bytecode extcode = extension.getBytecode(opcode, bci, bytecode);
-            if (extcode != null) {
-                doExtendedBytecode(extcode);
-                return;
-            }
-        }
         throw Util.shouldNotReachHere();
-    }
-
-    private void doExtendedBytecode(RiBytecodeExtension.Bytecode extcode) {
-        Location[] args = popN(extcode.signatureType().argumentSlots(false));
-        CiKind retType = extcode.signatureType().returnKind();
-        Location r = codeGen.genExtendedBytecode(extcode, args);
-        pushZ(r, retType);
     }
 
     private void doBreakpoint(int bci) {
@@ -677,8 +661,8 @@ public class C0XCompilation {
         codeGen.genThrow(thrown);
     }
 
-    private void doReturn(CiKind basicType, Location value) {
-        codeGen.genReturn(basicType, value);
+    private void doReturn(CiKind kind, Location value) {
+        codeGen.genReturn(kind, value);
     }
 
     private void doTableswitch(BytecodeTableSwitch bytecodeTableSwitch) {
@@ -714,9 +698,9 @@ public class C0XCompilation {
         enqueue(targetBCI, currentState.copy());
     }
 
-    private void doIfSame(CiKind basicType, Condition cond, int nextBCI, int targetBCI) {
-        Location y = popX(basicType);
-        Location x = popX(basicType);
+    private void doIfSame(CiKind kind, Condition cond, int nextBCI, int targetBCI) {
+        Location y = popX(kind);
+        Location x = popX(kind);
         codeGen.genIfSame(cond, x, y, nextBCI, targetBCI);
         enqueue(nextBCI, currentState);
         enqueue(targetBCI, currentState.copy());
@@ -735,10 +719,10 @@ public class C0XCompilation {
         currentState.state[index] = r;
     }
 
-    private void doCompareOp(CiKind basicType, int opcode) {
-        Location y = popX(basicType);
-        Location x = popX(basicType);
-        Location r = codeGen.genCompareOp(basicType, opcode, x, y);
+    private void doCompareOp(CiKind kind, int opcode) {
+        Location y = popX(kind);
+        Location x = popX(kind);
+        Location r = codeGen.genCompareOp(kind, opcode, x, y);
         push1(r);
     }
 
@@ -748,18 +732,18 @@ public class C0XCompilation {
         pushX(r, to);
     }
 
-    private void doArrayLoad(CiKind basicType) {
+    private void doArrayLoad(CiKind kind) {
         Location index = pop1();
         Location array = pop1();
-        Location r = codeGen.genArrayLoad(basicType, array, index);
-        pushX(r, basicType);
+        Location r = codeGen.genArrayLoad(kind, array, index);
+        pushX(r, kind);
     }
 
-    private void doArrayStore(CiKind basicType) {
-        Location value = popX(basicType);
+    private void doArrayStore(CiKind kind) {
+        Location value = popX(kind);
         Location index = pop1();
         Location array = pop1();
-        codeGen.genArrayStore(basicType, array, index, value);
+        codeGen.genArrayStore(kind, array, index, value);
     }
 
     private void doIntOp2(int opcode) {
@@ -828,7 +812,7 @@ public class C0XCompilation {
             // this is a load of class constant which might be unresolved
             RiType ritype = (RiType) con;
             Location r;
-            if (!ritype.isLoaded()) {
+            if (!ritype.isResolved()) {
                 r = codeGen.genResolveClass(ritype);
             } else {
                 r = codeGen.genObjectConstant(ritype.javaClass());
@@ -837,7 +821,7 @@ public class C0XCompilation {
             return;
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
-            switch (constant.kind.stackType()) {
+            switch (constant.kind.stackKind()) {
                 case Int:    push1(codeGen.genIntConstant(constant.asInt())); return;
                 case Long:   push2(codeGen.genLongConstant(constant.asLong())); return;
                 case Float:  push1(codeGen.genFloatConstant(constant.asFloat())); return;
@@ -950,8 +934,8 @@ public class C0XCompilation {
         currentState.state[currentState.stackIndex++] = val;
     }
 
-    void pushX(Location val, CiKind basicType) {
-        if (basicType.isDoubleWord()) {
+    void pushX(Location val, CiKind kind) {
+        if (kind.isDoubleWord()) {
             push2(val);
         } else {
             push1(val);
@@ -987,8 +971,8 @@ public class C0XCompilation {
         return result;
     }
 
-    Location popX(CiKind basicType) {
-        return basicType.isDoubleWord() ? pop2() : pop1();
+    Location popX(CiKind kind) {
+        return kind.isDoubleWord() ? pop2() : pop1();
     }
 
     void push2(Location val) {
@@ -1001,8 +985,8 @@ public class C0XCompilation {
         return currentState.state[--currentState.stackIndex];
     }
 
-    Location produce(CiKind basicType) {
-        return new Register(regNum++, basicType);
+    Location produce(CiKind kind) {
+        return new Register(regNum++, kind);
     }
 
     RiConstantPool constantPool() {

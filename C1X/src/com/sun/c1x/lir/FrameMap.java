@@ -20,13 +20,14 @@
  */
 package com.sun.c1x.lir;
 
+import static com.sun.cri.ci.CiKind.*;
+
 import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class is used to build the stack frame layout for a compiled method.
@@ -48,18 +49,18 @@ import com.sun.c1x.util.*;
  *          | monitor n                      |                   |
  *          :     ...                        :                   |
  *          | monitor 0                      | Current frame     |
- *          +--------------------------------+                   |
- *          | spill slot n                   |                 frame
- *          :     ...                        :                 size
- *          | spill slot 0                   |                   |
- *          +--------------------------------+                   |
- *          | outgoing overflow argument n   |                   |
- *          |     ...                        |                   |
- *    %sp   | outgoing overflow argument 0   |                   v
+ *          +--------------------------------+    ---            |
+ *          | spill slot n                   |     ^           frame
+ *          :     ...                        :     |           size
+ *          | spill slot 0                   |  shared           |
+ *          +- - - - - - - - - - - - - - - - +   slot            |
+ *          | outgoing overflow argument n   |  indexes          |
+ *          |     ...                        |     |             |
+ *    %sp   | outgoing overflow argument 0   |     v             v
  *   -------+--------------------------------+----------------  ---
  *
  * </pre>
- * Note that size {@code ALLOCA block}s and {@code monitor}s in the frame may be greater
+ * Note that the size {@link Bytecodes#ALLOCA ALLOCA} blocks and {@code monitor}s in the frame may be greater
  * than the size of a {@linkplain CiTarget#spillSlotSize spill slot}.
  *
  * @author Thomas Wuerthinger
@@ -68,10 +69,8 @@ import com.sun.c1x.util.*;
  */
 public final class FrameMap {
 
-    private static final int DOUBLE_SIZE = 8;
-
     private final C1XCompiler compiler;
-    private final CallingConvention incomingArguments;
+    private final CiCallingConvention incomingArguments;
 
     /**
      * Number of monitors used in this frame.
@@ -84,6 +83,14 @@ public final class FrameMap {
      */
     private int frameSize;
 
+    /**
+     * The number of spill slots allocated by the register allocator.
+     * The value {@code -2} means that the size of outgoing argument stack slots
+     * is not yet fixed. The value {@code -1} means that the register
+     * allocator has started allocating spill slots and so the size of
+     * outgoing stack slots cannot change as outgoing stack slots and
+     * spill slots share the same slot index address space.
+     */
     private int spillSlotCount;
 
     /**
@@ -106,12 +113,12 @@ public final class FrameMap {
     public FrameMap(C1XCompiler compiler, RiMethod method, int monitors) {
         this.compiler = compiler;
         this.frameSize = -1;
-        this.spillSlotCount = -1;
+        this.spillSlotCount = -2;
 
         assert monitors >= 0 : "not set";
         monitorCount = monitors;
         if (method == null) {
-            incomingArguments = new CallingConvention(new CiLocation[0]);
+            incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
             incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signatureType(), !method.isStatic()), false, false);
         }
@@ -120,28 +127,31 @@ public final class FrameMap {
     /**
      * Gets the calling convention for calling runtime methods with the specified signature.
      * @param signature the signature of the arguments and return value
-     * @return a {@link CallingConvention} instance describing the location of parameters and the return value
+     * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
      */
-    public CallingConvention runtimeCallingConvention(CiKind[] signature) {
-        CiLocation[] locations = compiler.target.registerConfig.getRuntimeParameterLocations(signature);
-        return createCallingConvention(locations, false);
+    public CiCallingConvention runtimeCallingConvention(CiKind[] signature) {
+        return compiler.target.registerConfig.getRuntimeCallingConvention(signature, compiler.target);
     }
 
     /**
      * Gets the calling convention for calling Java methods with the specified signature.
      * @param signature the signature of the arguments and return value
-     * @return a {@link CallingConvention} instance describing the location of parameters and the return value
+     * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
      */
-    public CallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing, boolean reserveOutgoingArgumentsArea) {
-        CiLocation[] locations = compiler.target.registerConfig.getJavaParameterLocations(signature, outgoing);
-        return createCallingConvention(locations, reserveOutgoingArgumentsArea);
+    public CiCallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing, boolean reserveOutgoingArgumentsArea) {
+        CiCallingConvention cc = compiler.target.registerConfig.getJavaCallingConvention(signature, outgoing, compiler.target);
+        if (reserveOutgoingArgumentsArea) {
+            assert frameSize == -1 : "frame size must not yet be fixed!";
+            reserveOutgoing(cc.stackSize);
+        }
+        return cc;
     }
 
     /**
      * Gets the calling convention for the incoming arguments to the compiled method.
      * @return the calling convention for incoming arguments
      */
-    public CallingConvention incomingArguments() {
+    public CiCallingConvention incomingArguments() {
         return incomingArguments;
     }
 
@@ -187,50 +197,20 @@ public final class FrameMap {
     }
 
     /**
-     * Converts a {@link LIROperand} into a {@code CiLocation} within this frame.
-     * @param opr the operand
-     * @return a location
+     * Converts a stack slot into a stack address.
+     *
+     * @param slot a stack slot
+     * @return a stack address
      */
-    public CiLocation toLocation(LIROperand opr) {
-        if (opr.isStack()) {
-            // create a stack location
-            int size = compiler.target.spillSlotSize(opr.kind);
-            int offset = spOffsetForSlot(opr.stackIndex(), size);
-            return new CiStackLocation(opr.kind, offset, size, false);
-        } else if (opr.isSingleCpu() || opr.isSingleXmm()) {
-            // create a single register location
-            return new CiRegisterLocation(opr.kind, opr.asRegister());
-        } else if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
-            // create a double register location
-            return new CiRegisterLocation(opr.kind, opr.asRegisterLow(), opr.asRegisterHigh());
+    public CiAddress toStackAddress(CiStackSlot slot) {
+        int size = compiler.target.sizeInBytes(slot.kind);
+        if (slot.inCallerFrame()) {
+            int offset = slot.index() * compiler.target.spillSlotSize;
+            return new CiAddress(slot.kind, CiRegister.CallerFrame.asValue(), offset);
+        } else {
+            int offset = spOffsetForOutgoingOrSpillSlot(slot.index(), size);
+            return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
         }
-        throw new CiBailout("cannot convert " + opr + "to location");
-    }
-
-    /**
-     * Converts a LIR stack operand into a stack address within this frame.
-     *
-     * @param opr the operand to convert
-     * @param offset an offset within the spill slot allocated for {@code opr}
-     * @return the address of the operand + offset
-     */
-    public Address toStackAddress(LIROperand opr, int offset) {
-        assert opr.isStack();
-        int spillIndex = opr.stackIndex();
-        int size = compiler.target.spillSlotSize(opr.kind);
-        return new Address(compiler.target.stackPointerRegister, spOffsetForSlot(spillIndex, size) + offset);
-    }
-
-    /**
-     * Converts a spill index into a stack location.
-     *
-     * @param kind the type of the spill slot
-     * @param spillIndex the index into the spill slots
-     * @return a representation of the stack location
-     */
-    public CiLocation toStackLocation(CiKind kind, int spillIndex) {
-        int size = compiler.target.spillSlotSize(kind);
-        return new CiStackLocation(kind, spOffsetForSlot(spillIndex, size), size, false);
     }
 
     /**
@@ -239,17 +219,17 @@ public final class FrameMap {
      * @param stackBlock the value returned from {@link #reserveStackBlock(int)} identifying the stack block
      * @return a representation of the stack location
      */
-    public Address toStackAddress(StackBlock stackBlock) {
-        return new Address(compiler.target.stackPointerRegister, spOffsetForStackBlock(stackBlock));
+    public CiAddress toStackAddress(StackBlock stackBlock) {
+        return new CiAddress(CiKind.Word, compiler.target.stackPointerRegister.asValue(Word), spOffsetForStackBlock(stackBlock));
     }
 
     /**
-     * Converts the monitor index into a stack location.
+     * Converts the monitor index into a stack address.
      * @param monitorIndex the monitor index
-     * @return a representation of the stack location
+     * @return a representation of the stack address
      */
-    public CiLocation toMonitorLocation(int monitorIndex) {
-        return new CiStackLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), compiler.target.spillSlotSize, false);
+    public CiAddress toMonitorStackAddress(int monitorIndex) {
+        return new CiAddress(CiKind.Object, CiRegister.Frame.asValue(), spOffsetForMonitorObject(monitorIndex));
     }
 
     /**
@@ -258,8 +238,9 @@ public final class FrameMap {
      * @param argsSize the amount of space to reserve for stack-based outgoing arguments
      */
     private void reserveOutgoing(int argsSize) {
+        assert spillSlotCount == -2 : "cannot reserve outgoing stack slot space once register allocation has started";
         if (argsSize > outgoingSize) {
-            outgoingSize = Util.roundUp(argsSize, DOUBLE_SIZE);
+            outgoingSize = Util.roundUp(argsSize, compiler.target.spillSlotSize);
         }
     }
 
@@ -292,32 +273,30 @@ public final class FrameMap {
      */
     public StackBlock reserveStackBlock(int size) {
         int wordSize = compiler.target.sizeInBytes(CiKind.Word);
-        assert (size & ~(wordSize - 1)) == 0;
+        assert (size % wordSize) == 0;
         StackBlock block = new StackBlock(size, stackBlocksSize);
         stackBlocksSize += size;
         return block;
     }
 
-    private CallingConvention createCallingConvention(CiLocation[] locations, boolean reserveOutgoingArgumentsArea) {
-        final CallingConvention result = new CallingConvention(locations);
-        if (reserveOutgoingArgumentsArea) {
-            assert frameSize == -1 : "frame size must not yet be fixed!";
-            reserveOutgoing(result.overflowArgumentSize);
-        }
-        return result;
-    }
-
     private int spOffsetForStackBlock(StackBlock stackBlock) {
-        assert stackBlock.offset >= 0 && stackBlock.offset + stackBlock.size < stackBlocksSize : "invalid stack block";
+        assert stackBlock.offset >= 0 && stackBlock.offset + stackBlock.size <= stackBlocksSize : "invalid stack block";
         int offset = stackBlocksStart() + stackBlock.offset;
         assert offset <= (frameSize() - stackBlock.size) : "spill outside of frame";
         return offset;
     }
 
-    private int spOffsetForSlot(int spillIndex, int size) {
-        assert spillIndex >= 0 && spillIndex < spillSlotCount : "invalid spill slot";
-        int offset = spillStart() + spillIndex * compiler.target.spillSlotSize;
-        assert offset <= (frameSize() - size) : "spill outside of frame";
+    /**
+     * Gets the stack pointer offset for a outgoing stack argument or compiler spill slot.
+     *
+     * @param slotIndex the index of the stack slot within the slot index space reserved for
+     * @param size
+     * @return
+     */
+    private int spOffsetForOutgoingOrSpillSlot(int slotIndex, int size) {
+        assert slotIndex >= 0 && slotIndex < (initialSpillSlot() + spillSlotCount) : "invalid spill slot";
+        int offset = slotIndex * compiler.target.spillSlotSize;
+        assert offset <= (frameSize() - size) : "slot outside of frame";
         return offset;
     }
 
@@ -355,6 +334,19 @@ public final class FrameMap {
 
     private int spOffsetForMonitorObject(int index)  {
         return spOffsetForMonitorBase(index) + compiler.runtime.basicObjectLockOffsetInBytes();
+    }
+
+    /**
+     * Gets the index of the first available spill slot relative to the base of the frame.
+     * After this call, no further outgoing stack slots can be {@linkplain #reserveOutgoing(int) reserved}.
+     *
+     * @return the index of the first available spill slot
+     */
+    public int initialSpillSlot() {
+        if (spillSlotCount == -2) {
+            spillSlotCount = -1;
+        }
+        return outgoingSize / compiler.target.spillSlotSize;
     }
 
 }

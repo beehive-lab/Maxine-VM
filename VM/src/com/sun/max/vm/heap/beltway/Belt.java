@@ -230,7 +230,7 @@ public class Belt extends LinearAllocationMemoryRegion {
         Address end;
         do {
             oldAllocationMark = mark();
-            if (MaxineVM.isDebug()) {
+            if (DebugHeap.isTagging()) {
                 cell = oldAllocationMark.plusWords(1);
             } else {
                 cell = oldAllocationMark;
@@ -247,7 +247,7 @@ public class Belt extends LinearAllocationMemoryRegion {
         Pointer cell;
         final Pointer oldAllocationMark = mark();
 
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
             cell = oldAllocationMark;

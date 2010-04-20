@@ -49,12 +49,6 @@ public final class ResolutionGuard {
         assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
     }
 
-    public ResolutionGuard(Actor value) {
-        this.value = value;
-        this.constantPool = null;
-        this.constantPoolIndex = -1;
-    }
-
     /**
      * @return the pool constant whose resolution is guarded by this object.
      */

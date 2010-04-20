@@ -122,7 +122,7 @@ public interface MaxVMState  {
      *  for example a thread reported here (which is live at this state transition)
      *  may have died by the time a reader examines this state transition.
      *
-     *  @see #threads()
+     * @see #threads()
      * @see #threadsDied()
      */
     Sequence<MaxThread> threadsStarted();
@@ -139,7 +139,7 @@ public interface MaxVMState  {
      *
      * @return threads died since the previous state in the history; empty if none.
      * @see #threads()
-     *  @see #threadsStarted()
+     * @see #threadsStarted()
      */
     Sequence<MaxThread> threadsDied();
 

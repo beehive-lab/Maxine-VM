@@ -27,7 +27,7 @@ import com.sun.max.unsafe.*;
 
 /**
  * Support for the (repeatable) agent command line options.
- * Implemented using delegation to a list of @see VMStringOption
+ * Implemented using delegation to a list of {@link VMStringOption}
  * This could be genericized if necessary.
  *
  * @author Mick Jordan

@@ -69,7 +69,7 @@ public enum WordWidth {
         this.min = min;
         this.max = max;
         this.log2numberOfBits = log2numberOfBits;
-        this.log2numberOfBytes = log2numberOfBits >> 3;
+        this.log2numberOfBytes = log2numberOfBits - 3;
     }
 
     public boolean lessThan(WordWidth other) {

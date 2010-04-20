@@ -35,6 +35,7 @@ public abstract class ValueVisitor {
     public abstract void visitBlockBegin(BlockBegin i);
     public abstract void visitCheckCast(CheckCast i);
     public abstract void visitCompareOp(CompareOp i);
+    public abstract void visitUnsignedCompareOp(UnsignedCompareOp i);
     public abstract void visitConstant(Constant i);
     public abstract void visitConvert(Convert i);
     public abstract void visitExceptionObject(ExceptionObject i);
@@ -49,6 +50,7 @@ public abstract class ValueVisitor {
     public abstract void visitLoadIndexed(LoadIndexed i);
     public abstract void visitLoadPC(LoadPC i);
     public abstract void visitLoadPointer(LoadPointer i);
+    public abstract void visitLoadStackAddress(LoadStackAddress i);
     public abstract void visitLoadRegister(LoadRegister i);
     public abstract void visitLocal(Local i);
     public abstract void visitLogicOp(LogicOp i);
@@ -63,6 +65,7 @@ public abstract class ValueVisitor {
     public abstract void visitNewTypeArray(NewTypeArray i);
     public abstract void visitNullCheck(NullCheck i);
     public abstract void visitOsrEntry(OsrEntry i);
+    public abstract void visitPause(Pause i);
     public abstract void visitPhi(Phi i);
     public abstract void visitResolveClass(ResolveClass i);
     public abstract void visitReturn(Return i);
@@ -75,11 +78,11 @@ public abstract class ValueVisitor {
     public abstract void visitStoreRegister(StoreRegister i);
     public abstract void visitTableSwitch(TableSwitch i);
     public abstract void visitThrow(Throw i);
+    public abstract void visitUnsafeCast(UnsafeCast i);
     public abstract void visitUnsafeGetObject(UnsafeGetObject i);
     public abstract void visitUnsafeGetRaw(UnsafeGetRaw i);
     public abstract void visitUnsafePrefetchRead(UnsafePrefetchRead i);
     public abstract void visitUnsafePrefetchWrite(UnsafePrefetchWrite i);
     public abstract void visitUnsafePutObject(UnsafePutObject i);
     public abstract void visitUnsafePutRaw(UnsafePutRaw i);
-   // Checkstyle: resume
 }

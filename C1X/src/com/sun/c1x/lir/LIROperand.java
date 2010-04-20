@@ -20,226 +20,109 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ir.Value;
-import com.sun.c1x.C1XMetrics;
+import com.sun.cri.ci.*;
 
 /**
- * The {@code LIROperand} class represents an operand, either
- * a constant, an address calculation, a register, or a stack slot.
+ * An instruction operand. If the register allocator can modify this operand (e.g. to replace a
+ * variable with a register), then it will have a corresponding entry in the {@link LIRInstruction#allocatorOperands}
+ * list of an instruction.
  *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public class LIROperand {
-    public final CiKind kind;
-    public static final LIRLocation IllegalLocation = new LIRLocation(CiKind.Illegal, CiRegister.None);
 
-    protected LIROperand(CiKind kind) {
-        this.kind = kind;
+    /**
+     * The value of the operand.
+     */
+    CiValue value;
+
+    LIROperand(CiValue value) {
+        this.value = value;
+    }
+
+    /**
+     * Gets the value of this operand. This may still be a {@linkplain CiVariable}
+     * if the register allocator has not yet assigned a register or stack address to the operand.
+     *
+     * @param inst the instruction containing this operand
+     */
+    public CiValue value(LIRInstruction inst) {
+        return value;
     }
 
     @Override
     public String toString() {
-        if (isIllegal(this)) {
-            return "illegal";
+        return value.toString();
+    }
+
+    static class LIRVariableOperand extends LIROperand {
+        /**
+         * Index into an instruction's {@linkplain LIRInstruction#allocatorOperands allocator operands}.
+         * This will be -1 for operands that are bound to a location prior to register allocation (e.g.
+         * method parameters in registers and stack slots).
+         */
+        final int index;
+
+        LIRVariableOperand(int index) {
+            super(null);
+            this.index = index;
         }
 
-        final StringBuilder out = new StringBuilder();
-        out.append("[");
-        if (isSingleStack()) {
-            out.append("stack:").append(singleStackIndex());
-        } else if (isDoubleStack()) {
-            out.append("dblStack:").append(doubleStackIndex());
-        } else if (isVariable()) {
-            out.append("V").append(variableNumber());
-        } else if (isSingleCpu()) {
-            out.append(asRegister().name);
-        } else if (isDoubleCpu()) {
-            out.append(asRegisterHigh().name);
-            out.append(asRegisterLow().name);
-        } else if (isSingleXmm()) {
-            out.append(asRegister().name);
-        } else if (isDoubleXmm()) {
-            out.append(asRegister().name);
-        } else {
-            out.append("Unknown Operand");
+        @Override
+        public CiValue value(LIRInstruction inst) {
+            if (value == null) {
+                CiValue value = inst.allocatorOperands.get(index);
+                if (value.isVariable()) {
+                    return value;
+                }
+                this.value = value;
+            }
+            return value;
         }
-        if (isLegal(this)) {
-            out.append(String.format("|%c", this.kind.typeChar));
+
+        @Override
+        public String toString() {
+            if (value == null) {
+                return "operands[" + index + "]";
+            }
+            return value.toString();
         }
-        out.append("]");
-        return out.toString();
     }
 
-    public boolean isVariableOrRegister() {
-        return false;
-    }
+    static class LIRAddressOperand extends LIROperand {
+        int base;
 
-    public boolean isStack() {
-        return false;
-    }
-
-    public boolean isSingleStack() {
-        return false;
-    }
-
-    public boolean isDoubleStack() {
-        return false;
-    }
-
-    public boolean isVariable() {
-        return false;
-    }
-
-    public boolean isFixedCpu() {
-        return false;
-    }
-
-    public boolean isSingleCpu() {
-        return false;
-    }
-
-    public boolean isDoubleCpu() {
-        return false;
-    }
-
-    public boolean isSingleXmm() {
-        return false;
-    }
-
-    public boolean isDoubleXmm() {
-        return false;
-    }
-
-    public int stackIndex() {
-        throw new Error(getClass().getSimpleName() + " does not have a stackIndex");
-    }
-
-    public int singleStackIndex() {
-        throw new Error(getClass().getSimpleName() + " does not have a singleStackIndex");
-    }
-
-    public int doubleStackIndex() {
-        throw new Error(getClass().getSimpleName() + " does not have a doubleStackIndex");
-    }
-
-    public int cpuRegNumber() {
-        throw new Error(getClass().getSimpleName() + " does not have a cpuRegNumber");
-    }
-
-    public int cpuRegNumberLow() {
-        throw new Error(getClass().getSimpleName() + " does not have a cpuRegNumberLow");
-    }
-
-    public int cpuRegNumberHigh() {
-        throw new Error(getClass().getSimpleName() + " does not have a cpuRegNumberHigh");
-    }
-
-    public int variableNumber() {
-        throw new Error(getClass().getSimpleName() + " does not have a variableNumber");
-    }
-
-    public CiRegister asRegister() {
-        if (isIllegal(this)) {
-            return CiRegister.None;
+        LIRAddressOperand(int index, CiAddress address) {
+            super(address);
+            this.base = index;
         }
-        throw new Error(getClass().getSimpleName() + " cannot be a register");
-    }
 
-    public CiRegister asRegisterLow() {
-        throw new Error(getClass().getSimpleName() + " cannot be a register");
-    }
-
-    public CiRegister asRegisterHigh() {
-        throw new Error(getClass().getSimpleName() + " cannot be a register");
-    }
-
-    public CiRegister asPointerRegister(CiArchitecture architecture) {
-        if (architecture.is64bit() && isDoubleCpu()) {
-            assert asRegisterLow() == asRegisterHigh() : "should be a single register";
-            return asRegisterLow();
+        @Override
+        public CiValue value(LIRInstruction inst) {
+            if (base != -1) {
+                CiAddress address = (CiAddress) value;
+                CiValue baseOperand = inst.allocatorOperands.get(base);
+                CiValue indexOperand = CiValue.IllegalValue;
+                if (address.index.isLegal()) {
+                    indexOperand = inst.allocatorOperands.get(base + 1);
+                    assert indexOperand.isVariableOrRegister();
+                    if (baseOperand.isVariable() || indexOperand.isVariable()) {
+                        return address;
+                    }
+                } else {
+                    if (baseOperand.isVariable()) {
+                        return address;
+                    }
+                }
+                value = new CiAddress(address.kind, baseOperand, indexOperand, address.scale, address.displacement);
+                base = -1;
+            }
+            return value;
         }
-        return asRegister();
-    }
 
-    public static LIRLocation forRegister(CiKind type, CiRegister reg) {
-        return new LIRLocation(type, reg);
+        @Override
+        public String toString() {
+            return value.toString();
+        }
     }
-
-    public static LIRLocation forRegisters(CiKind type, CiRegister reg1, CiRegister reg2) {
-        return new LIRLocation(type, reg1, reg2);
-    }
-
-    public static LIRLocation forVariable(int index, CiKind type) {
-        C1XMetrics.LIRVariables++;
-        return new LIRLocation(type, index);
-    }
-
-    public static LIRLocation forStack(int index, CiKind type) {
-        assert index >= 0;
-        return new LIRLocation(type, -index - 1);
-    }
-
-    public static LIRConstant forInt(int i) {
-        return new LIRConstant(CiConstant.forInt(i));
-    }
-
-    public static LIROperand forLong(long l) {
-        return new LIRConstant(CiConstant.forLong(l));
-    }
-
-    public static LIROperand forFloat(float f) {
-        return new LIRConstant(CiConstant.forFloat(f));
-    }
-
-    public static LIROperand forDouble(double d) {
-        return new LIRConstant(CiConstant.forDouble(d));
-    }
-
-    public static LIROperand forObject(Object o) {
-        return new LIRConstant(CiConstant.forObject(o));
-    }
-
-    public static LIROperand forConstant(Value type) {
-        return new LIRConstant(type.asConstant());
-    }
-
-    public static LIROperand forAddress(LIRLocation register, int disp, CiKind t) {
-        return new LIRAddress(register, disp, t);
-    }
-
-    public static LIROperand forAddress(CiRegister rsp, int disp, CiKind t) {
-        return forAddress(new LIRLocation(CiKind.Int, rsp), disp, t);
-    }
-
-    public static LIROperand forConstant(CiConstant value) {
-        return new LIRConstant(value);
-    }
-
-    public static LIROperand forScratch(CiKind type, CiTarget target) {
-        return forRegister(type, target.scratchRegister);
-    }
-
-    public static boolean isIllegal(LIROperand operand) {
-        return operand == IllegalLocation;
-    }
-
-    public static boolean isLegal(LIROperand operand) {
-        return operand != null && operand != IllegalLocation;
-    }
-
-    public static boolean isConstant(LIROperand operand) {
-        return operand instanceof LIRConstant;
-    }
-
-    public static boolean isAddress(LIROperand operand) {
-        return operand instanceof LIRAddress;
-    }
-
-    public static boolean isLocation(LIROperand operand) {
-        return operand instanceof LIRLocation;
-    }
-
 }

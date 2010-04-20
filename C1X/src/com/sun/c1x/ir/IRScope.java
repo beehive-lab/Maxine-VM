@@ -21,10 +21,10 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.CiCodePos;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code IRScope} class represents an inlining context in the compilation
@@ -125,7 +125,7 @@ public class IRScope {
         if (caller == null) {
             return "root-scope: " + method;
         } else {
-            return "inline-scope @ " + callerBCI + ": " + method;
+            return "inlined-scope: " + method + " [caller bci: " + callerBCI + "]";
         }
     }
 

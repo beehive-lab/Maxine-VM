@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code AccessIndexed} class is the base class of instructions that read or write
@@ -44,7 +44,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @param stateBefore the state before executing this instruction
      */
     AccessIndexed(Value array, Value index, Value length, CiKind elementType, FrameState stateBefore) {
-        super(elementType.stackType(), array, stateBefore);
+        super(elementType.stackKind(), array, stateBefore);
         this.index = index;
         this.length = length;
         this.elementType = elementType;

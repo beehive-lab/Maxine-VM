@@ -21,13 +21,13 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.xir.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 public class LIRXirInstruction extends LIRInstruction {
 
-    public final LIROperand[] originalOperands;
+    public final CiValue[] originalOperands;
     public final int outputOperandIndex;
     public final int[] operandIndices;
     public final XirSnippet snippet;
@@ -36,7 +36,7 @@ public class LIRXirInstruction extends LIRInstruction {
     public final int tempCount;
     public final int inputCount;
 
-    public LIRXirInstruction(XirSnippet snippet, LIROperand[] originalOperands, LIROperand outputOperand, int inputTempCount, int tempCount, LIROperand[] operands, int[] operandIndices, int outputOperandIndex, LIRDebugInfo info, RiMethod method) {
+    public LIRXirInstruction(XirSnippet snippet, CiValue[] originalOperands, CiValue outputOperand, int inputTempCount, int tempCount, CiValue[] operands, int[] operandIndices, int outputOperandIndex, LIRDebugInfo info, RiMethod method) {
         super(LIROpcode.Xir, outputOperand, info, false, null, inputTempCount, tempCount, operands);
         this.method = method;
         this.snippet = snippet;
@@ -50,7 +50,7 @@ public class LIRXirInstruction extends LIRInstruction {
         C1XMetrics.LIRXIRInstructions++;
     }
 
-    public LIROperand[] getOperands() {
+    public CiValue[] getOperands() {
         for (int i = 0; i < operandIndices.length; i++) {
             originalOperands[operandIndices[i]] = operand(i);
         }
@@ -72,17 +72,16 @@ public class LIRXirInstruction extends LIRInstruction {
 
      /**
      * Prints this instruction.
-     *
-     * @param out the output stream
      */
     @Override
-    public void printInstruction(LogStream out) {
-        out.print(toString());    }
+    public String operationString() {
+        return toString();
+    }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("LIRXIR ");
+        sb.append("XIR ");
 
         sb.append(snippet.toString());
 
@@ -97,9 +96,9 @@ public class LIRXirInstruction extends LIRInstruction {
 
         sb.append(result().toString() + " = ");
 
-        for (OperandSlot opSlot : super.operandSlots) {
+        for (LIROperand opSlot : super.inputAndTempOperands) {
 
-            LIROperand op = opSlot.get(this);
+            CiValue op = opSlot.value(this);
 
             if (op != null) {
                 sb.append(" ");

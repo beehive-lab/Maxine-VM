@@ -23,7 +23,7 @@ package com.sun.c1x.graph;
 import java.util.*;
 
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code MemoryMap} class is an approximation of memory that is used redundant load and

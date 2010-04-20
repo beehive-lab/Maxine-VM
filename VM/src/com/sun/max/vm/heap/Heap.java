@@ -514,7 +514,7 @@ public final class Heap {
         if (!bootHeapRegion.contains(origin) && !heapScheme().contains(origin) && !Code.contains(origin) && !ImmortalHeap.getImmortalHeap().contains(origin)) {
             return false;
         }
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             return DebugHeap.isValidNonnullGrip(grip);
         }
         return true;

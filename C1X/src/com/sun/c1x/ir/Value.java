@@ -20,14 +20,12 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XMetrics;
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.ri.RiType;
-import com.sun.c1x.ri.RiRuntime;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiConstant;
+import static com.sun.cri.ci.CiValue.*;
+
+import com.sun.c1x.*;
+import com.sun.c1x.opt.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class represents a value within the HIR graph, including local variables, phis, and
@@ -76,23 +74,23 @@ public abstract class Value {
 
     private int id;
     private int flags;
-    protected LIROperand lirOperand;
+    protected CiValue operand;
 
     public Object optInfo; // a cache field for analysis information
     public Value subst;    // managed by InstructionSubstituter
 
     /**
      * Creates a new value with the specified kind.
-     * @param type the type of this value
+     * @param kind the type of this value
      */
-    public Value(CiKind type) {
-        kind = type;
+    public Value(CiKind kind) {
+        this.kind = kind;
     }
 
     /**
      * Checks whether this instruction is live (i.e. code should be generated for it).
-     * This is computed in a dedicated pass by {@link com.sun.c1x.opt.LivenessMarker}.
-     * An instruction be live because its value is needed by another live instruction,
+     * This is computed in a dedicated pass by {@link LivenessMarker}.
+     * An instruction is live because its value is needed by another live instruction,
      * because its value is needed for deoptimization, or the program is control dependent
      * upon it.
      * @return {@code true} if this instruction should be considered live
@@ -276,25 +274,25 @@ public abstract class Value {
      * Gets the LIR operand associated with this instruction.
      * @return the LIR operand for this instruction
      */
-    public final LIROperand operand() {
-        return lirOperand;
+    public final CiValue operand() {
+        return operand;
     }
 
     /**
      * Sets the LIR operand associated with this instruction.
      * @param operand the operand to associate with this instruction
      */
-    public final void setOperand(LIROperand operand) {
-        assert operand != null && LIROperand.isLegal(operand) : "operand must exist";
+    public final void setOperand(CiValue operand) {
+        assert operand != null && operand.isLegal() : "operand must exist";
         assert operand.kind == this.kind;
-        lirOperand = operand;
+        this.operand = operand;
     }
 
     /**
      * Clears the LIR operand associated with this instruction.
      */
     public final void clearOperand() {
-        lirOperand = LIROperand.IllegalLocation;
+        this.operand = IllegalValue;
     }
 
     /**
@@ -331,19 +329,21 @@ public abstract class Value {
             builder.append(" @ ");
             builder.append(((Instruction) this).bci());
         }
-        builder.append(" [");
-        boolean hasFlag = false;
+        builder.append(" [").append(flagsToString()).append("]");
+        return builder.toString();
+    }
+
+    public String flagsToString() {
+        StringBuilder sb = new StringBuilder();
         for (Flag f : Flag.values()) {
             if (checkFlag(f)) {
-                if (hasFlag) {
-                    builder.append(' ');
+                if (sb.length() != 0) {
+                    sb.append(' ');
                 }
-                builder.append(f.name());
-                hasFlag = true;
+                sb.append(f.name());
             }
         }
-        builder.append("]");
-        return builder.toString();
+        return sb.toString();
     }
 
     public final boolean isDeadPhi() {

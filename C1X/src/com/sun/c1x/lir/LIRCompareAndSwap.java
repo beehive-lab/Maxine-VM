@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.cri.ci.*;
+
 /**
  * The {@code LIRCompareAndSwap} class definition.
  *
@@ -37,8 +39,8 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @param tmp1
      * @param tmp2
      */
-    public LIRCompareAndSwap(LIROpcode opcode, LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand tmp1, LIROperand tmp2) {
-        super(opcode, LIROperand.IllegalLocation, null, false, null, 0, 2, addr, cmpValue, newValue);
+    public LIRCompareAndSwap(LIROpcode opcode, CiValue addr, CiValue cmpValue, CiValue newValue, CiValue tmp1, CiValue tmp2) {
+        super(opcode, CiValue.IllegalValue, null, false, null, 0, 2, addr, cmpValue, newValue);
     }
 
     /**
@@ -46,7 +48,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      *
      * @return the address
      */
-    public LIROperand address() {
+    public CiValue address() {
         return operand(0);
     }
 
@@ -55,7 +57,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      *
      * @return the cmpValue
      */
-    public LIROperand cmpValue() {
+    public CiValue cmpValue() {
         return operand(1);
     }
 
@@ -64,7 +66,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      *
      * @return the newValue
      */
-    public LIROperand newValue() {
+    public CiValue newValue() {
         return operand(2);
     }
 

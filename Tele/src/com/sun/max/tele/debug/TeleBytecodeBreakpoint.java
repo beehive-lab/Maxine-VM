@@ -624,7 +624,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 address = teleTargetMethod.getCodeStart().plus(targetCodePosition);
                 Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint for offset " + targetCodePosition + " in " + teleTargetMethod);
             } else {
-                if (bytecodePosition == 0) {
+                if (bytecodePosition == -1) {
+                    // Specifies the code start, at the beginning of the method prologue
                     address = teleTargetMethod.callEntryPoint();
                     Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint at method entry in " + teleTargetMethod);
                 } else {

@@ -24,13 +24,13 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.alloc.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * Utility for printing the control flow graph of a method being compiled by C1X at various compilation phases.
@@ -73,6 +73,13 @@ public class CFGPrinter {
     public CFGPrinter(OutputStream os, CiTarget target) {
         out = new LogStream(os);
         this.target = target;
+    }
+
+    /**
+     * Flushes all buffered output to the stream passed to {@link #CFGPrinter(OutputStream, CiTarget)}.
+     */
+    public void flush() {
+        out.flush();
     }
 
     private void begin(String string) {
@@ -202,7 +209,7 @@ public class CFGPrinter {
               Value value = state.stackAt(i);
               out.disableIndentation();
               out.print(InstructionPrinter.stateString(i, value, block));
-              printLirOperand(value);
+              printCiValue(value);
               out.println();
               out.enableIndentation();
               i += value.kind.sizeInSlots();
@@ -218,7 +225,7 @@ public class CFGPrinter {
                 Value value = state.lockAt(i);
                 out.disableIndentation();
                 out.print(InstructionPrinter.stateString(i, value, block));
-                printLirOperand(value);
+                printCiValue(value);
                 out.println();
                 out.enableIndentation();
             }
@@ -235,7 +242,7 @@ public class CFGPrinter {
                 if (value != null) {
                     out.disableIndentation();
                     out.print(InstructionPrinter.stateString(i, value, block));
-                    printLirOperand(value);
+                    printCiValue(value);
                     out.println();
                     out.enableIndentation();
                     // also ignore illegal HiWords
@@ -283,7 +290,7 @@ public class CFGPrinter {
         }
     }
 
-    private void printLirOperand(Value i) {
+    private void printCiValue(Value i) {
         if (i != null && i.operand() != null && i.operand().isVariable()) {
             out.print(" \"").print(i.operand().toString()).print("\" ");
         }
@@ -300,7 +307,7 @@ public class CFGPrinter {
         }
         int useCount = 0;
         out.print(i.bci()).print(' ').print(useCount).print(' ');
-        printLirOperand(i);
+        printCiValue(i);
         out.print(i).print(' ');
         new InstructionPrinter(out, true, target).printInstruction(i);
 
@@ -354,7 +361,7 @@ public class CFGPrinter {
 
         for (Interval i : intervals) {
             if (i != null) {
-                i.print(out, allocator);
+                i.print(out, allocator, true);
             }
         }
 

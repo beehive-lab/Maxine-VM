@@ -546,7 +546,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
             final Pointer toCell = gcAllocate(size);
-            if (MaxineVM.isDebug()) {
+            if (DebugHeap.isTagging()) {
                 DebugHeap.writeCellTag(toCell);
             }
 
@@ -776,7 +776,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      */
     private Pointer gcAllocate(Size size) {
         Pointer cell = allocationMark().asPointer();
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             cell = cell.plusWords(1);
         }
         toSpace.mark.set(cell.plus(size));

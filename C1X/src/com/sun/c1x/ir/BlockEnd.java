@@ -22,35 +22,40 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code BlockEnd} instruction is a base class for all instructions that end a basic
- * block, including branches, switches, throws, and gotos.
+ * block, including branches, switches, throws, and goto's.
  *
  * @author Ben L. Titzer
  */
 public abstract class BlockEnd extends Instruction {
 
     BlockBegin begin;
-    List<BlockBegin> successors;
+    final List<BlockBegin> successors;
     FrameState stateAfter;
 
     /**
      * Constructs a new block end with the specified value type.
-     * @param type the type of the value produced by this instruction
+     * @param kind the type of the value produced by this instruction
      * @param stateAfter the value stack after the end of this block
      * @param isSafepoint {@code true} if this instruction is a safepoint instruction
+     * @param successors the list of successor blocks. If {@code null}, a new one will be created.
      */
-    public BlockEnd(CiKind type, FrameState stateAfter, boolean isSafepoint) {
-        super(type);
-        this.successors = new ArrayList<BlockBegin>(2);
+    public BlockEnd(CiKind kind, FrameState stateAfter, boolean isSafepoint, List<BlockBegin> successors) {
+        super(kind);
+        this.successors = successors == null ? new ArrayList<BlockBegin>(2) : successors;
         this.stateAfter = stateAfter;
         if (isSafepoint) {
             setFlag(Value.Flag.IsSafepoint);
         }
+    }
+
+    public BlockEnd(CiKind kind, FrameState stateAfter, boolean isSafepoint) {
+        this(kind, stateAfter, isSafepoint, null);
     }
 
     /**

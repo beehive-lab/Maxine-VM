@@ -122,7 +122,7 @@ public final class IntValue extends PrimitiveValue<IntValue> {
 
     @Override
     public Object asBoxedJavaValue() {
-        return new Integer(value);
+        return Integer.valueOf(value);
     }
 
     @Override

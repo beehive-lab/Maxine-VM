@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code LoadField} instruction represents a read of a static or instance field.

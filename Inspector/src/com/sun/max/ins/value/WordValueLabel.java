@@ -577,15 +577,15 @@ public class WordValueLabel extends ValueLabel {
             case FLOAT: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(null);
-                setText(Float.toString(Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL))));
-                setToolTipText("0x" + hexString);
+                setText(Float.toString(Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL))) + "f");
+                setToolTipText("0x" + hexString + "  (as double = " + Double.toString(Double.longBitsToDouble(value.toLong())) + ")");
                 break;
             }
             case DOUBLE: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(null);
-                setText(Double.toString(Double.longBitsToDouble(value.toLong())));
-                setToolTipText("0x" + hexString);
+                setText(Double.toString(Double.longBitsToDouble(value.toLong())) + "d");
+                setToolTipText("0x" + hexString + "(as float = " + Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL)) + ")");
                 break;
             }
         }

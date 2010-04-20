@@ -22,12 +22,12 @@ package com.sun.c1x.debug;
 
 import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.util.Util;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * A {@link ValueVisitor} for {@linkplain #printInstruction(Value) printing}
@@ -114,7 +114,7 @@ public class InstructionPrinter extends ValueVisitor {
          * @param out the print stream
          */
         public void printLabel(LogStream out) {
-            out.fillTo(position + out.indentation(), '_');
+            out.fillTo(position + out.indentationLevel(), '_');
             out.print(label);
         }
 
@@ -124,7 +124,7 @@ public class InstructionPrinter extends ValueVisitor {
          * @param out the print stream
          */
         public void advance(LogStream out) {
-            out.fillTo(position + out.indentation(), ' ');
+            out.fillTo(position + out.indentationLevel(), ' ');
         }
     }
 
@@ -178,7 +178,7 @@ public class InstructionPrinter extends ValueVisitor {
             out.print('.');
         }
 
-        int indentation = out.indentation();
+        int indentation = out.indentationLevel();
         out.fillTo(BCI.position + indentation, ' ').
              print(instruction instanceof Instruction ? ((Instruction) instruction).bci() : 0).
              fillTo(USE.position + indentation, ' ').
@@ -187,6 +187,10 @@ public class InstructionPrinter extends ValueVisitor {
              print(instruction).
              fillTo(INSTRUCTION.position + indentation, ' ');
         printInstruction(instruction);
+        String flags = instruction.flagsToString();
+        if (!flags.isEmpty()) {
+            out.print("  [flags: " + flags + "]");
+        }
         out.println();
     }
 
@@ -375,6 +379,15 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitCompareOp(CompareOp compareOp) {
+        out.print(compareOp.x()).
+             print(' ').
+             print(Bytecodes.operator(compareOp.opcode())).
+             print(' ').
+             print(compareOp.y());
+    }
+
+    @Override
+    public void visitUnsignedCompareOp(UnsignedCompareOp compareOp) {
         out.print(compareOp.x()).
              print(' ').
              print(Bytecodes.operator(compareOp.opcode())).
@@ -725,7 +738,7 @@ public class InstructionPrinter extends ValueVisitor {
             }
             out.print(arguments[i]);
         }
-        out.println(')');
+        out.print(')');
     }
 
     @Override
@@ -753,5 +766,20 @@ public class InstructionPrinter extends ValueVisitor {
     @Override
     public void visitStackAllocate(StackAllocate i) {
         out.print("alloca(").print(i.size()).print(")");
+    }
+
+    @Override
+    public void visitUnsafeCast(UnsafeCast i) {
+        out.print("unsafe_cast ").print(i.value());
+    }
+
+    @Override
+    public void visitLoadStackAddress(LoadStackAddress i) {
+        out.print("&(").print(i.value()).print(")");
+    }
+
+    @Override
+    public void visitPause(Pause i) {
+        out.print("pause");
     }
 }

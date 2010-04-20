@@ -25,14 +25,14 @@ import java.io.*;
 
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class encapsulates global information about the compilation of a particular method,
@@ -59,7 +59,18 @@ public class C1XCompilation {
 
     private IR hir;
 
-    private CFGPrinter cfgPrinter;
+    /**
+     * Object used to generate the trace output that can be fed to the
+     * <a href="https://c1visualizer.dev.java.net/">C1 Visualizer</a>.
+     */
+    private final CFGPrinter cfgPrinter;
+
+    /**
+     * Buffer that {@link #cfgPrinter} writes to. Using a buffer allows writing to the
+     * relevant {@linkplain CFGPrinter#cfgFileStream() file} to be serialized so that
+     * traces for independent compilations are not interleaved.
+     */
+    private ByteArrayOutputStream cfgPrinterBuffer;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -77,6 +88,14 @@ public class C1XCompilation {
         this.method = method;
         this.osrBCI = osrBCI;
         this.stats = new CiStatistics();
+
+        CFGPrinter cfgPrinter = null;
+        if (C1XOptions.PrintCFGToFile && method != null && TTY.Filter.matches(C1XOptions.PrintFilter, method)) {
+            cfgPrinterBuffer = new ByteArrayOutputStream();
+            cfgPrinter = new CFGPrinter(cfgPrinterBuffer, target);
+            cfgPrinter.printCompilation(method);
+        }
+        this.cfgPrinter = cfgPrinter;
     }
 
     /**
@@ -200,9 +219,8 @@ public class C1XCompilation {
         if (!map.build(!isOsrCompilation && C1XOptions.PhiLoopStores)) {
             throw new CiBailout("build of BlockMap failed for " + method);
         } else {
-            if (C1XOptions.PrintCFGToFile) {
-                CFGPrinter cfgPrinter = this.cfgPrinter();
-                cfgPrinter.printCFG(method, map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
+            if (cfgPrinter() != null) {
+                cfgPrinter().printCFG(method, map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
             }
         }
         map.cleanup();
@@ -232,17 +250,11 @@ public class C1XCompilation {
     }
 
     public CiResult compile() {
-        setCurrent(this);
-
-        if (C1XOptions.PrintCompilation) {
-            TTY.println();
-            TTY.println("Compiling method: " + method.toString());
-        }
-
         CiTargetMethod targetMethod;
+        TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
         try {
-            hir = new IR(this);
-            hir.build();
+
+            emitHIR();
             emitLIR();
             targetMethod = emitCode();
 
@@ -253,9 +265,28 @@ public class C1XCompilation {
             return new CiResult(null, b, stats);
         } catch (Throwable t) {
             return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
+        } finally {
+            filter.remove();
+            flushCfgPrinterToFile();
         }
 
         return new CiResult(targetMethod, null, stats);
+    }
+
+    private void flushCfgPrinterToFile() {
+        if (cfgPrinter != null) {
+            cfgPrinter.flush();
+            OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
+            if (cfgFileStream != null) {
+                synchronized (cfgFileStream) {
+                    try {
+                        cfgFileStream.write(cfgPrinterBuffer.toByteArray());
+                    } catch (IOException e) {
+                        TTY.println("WARNING: Error writing CFGPrinter output for %s to disk: %s", method, e);
+                    }
+                }
+            }
+        }
     }
 
     public IR emitHIR() {
@@ -265,13 +296,8 @@ public class C1XCompilation {
             TTY.println();
             TTY.println("Compiling method: " + method.toString());
         }
-        try {
-            hir = new IR(this);
-            hir.build();
-        } catch (Throwable t) {
-            CiBailout bailout = new CiBailout("Unexpected exception while compiling: " + method, t);
-            throw bailout;
-        }
+        hir = new IR(this);
+        hir.build();
         return hir;
     }
 
@@ -297,11 +323,6 @@ public class C1XCompilation {
             }
 
             new LinearScan(this, hir, lirGenerator, frameMap()).allocate();
-
-            CFGPrinter printer = cfgPrinter();
-            if (printer != null) {
-                printer.printCFG(hir.startBlock, "After generation of LIR", false, true);
-            }
         }
     }
 
@@ -316,9 +337,10 @@ public class C1XCompilation {
             // generate exception adapters
             lirAssembler.emitExceptionEntries();
 
-            CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, -1);
+            CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, -1);
 
-            if (C1XOptions.PrintCFGToFile) {
+            if (cfgPrinter() != null) {
+                cfgPrinter().printCFG(hir.startBlock, "After code generation", false, true);
                 cfgPrinter().printMachineCode(runtime.disassemble(targetMethod));
             }
 
@@ -332,14 +354,6 @@ public class C1XCompilation {
     }
 
     public CFGPrinter cfgPrinter() {
-        if (C1XOptions.PrintCFGToFile && cfgPrinter == null) {
-            OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
-            if (cfgFileStream != null) {
-                cfgPrinter = new CFGPrinter(cfgFileStream, target);
-                cfgPrinter.printCompilation(method);
-            }
-        }
-
         return cfgPrinter;
     }
 

@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.cri.ci.*;
+
 /**
  * The {@code LIROp0} class definition.
  *
@@ -34,7 +36,7 @@ public class LIROp0 extends LIRInstruction {
      * @param opcode the opcode of the new instruction
      */
     public LIROp0(LIROpcode opcode) {
-        this(opcode, LIROperand.IllegalLocation);
+        this(opcode, CiValue.IllegalValue);
     }
 
     /**
@@ -43,7 +45,7 @@ public class LIROp0 extends LIRInstruction {
      * @param opcode the opcode of the new instruction
      * @param result the result operand to the new instruction
      */
-    public LIROp0(LIROpcode opcode, LIROperand result) {
+    public LIROp0(LIROpcode opcode, CiValue result) {
         this(opcode, result, null);
     }
 
@@ -54,7 +56,7 @@ public class LIROp0 extends LIRInstruction {
      * @param result the result operand to the new instruction
      * @param info used to emit debug information associated to this instruction
      */
-    public LIROp0(LIROpcode opcode, LIROperand result, LIRDebugInfo info) {
+    public LIROp0(LIROpcode opcode, CiValue result, LIRDebugInfo info) {
         super(opcode, result, info, false, null, 0, 0);
         assert isInRange(opcode, LIROpcode.BeginOp0, LIROpcode.EndOp0) : "Opcode " + opcode + " is invalid for a LIROP0 instruction";
     }

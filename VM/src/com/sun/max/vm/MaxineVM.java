@@ -320,7 +320,6 @@ public final class MaxineVM {
      * the current VM context via this method.
      * @return
      */
-    @UNSAFE
     @FOLD
     public static MaxineVM hostOrTarget() {
         if (isHosted()) {
@@ -337,12 +336,10 @@ public final class MaxineVM {
      *
      * @return {@code true} if being executed on another JVM, {@code false} if executing the bootstrapped/target VM.
      */
-    @UNSAFE
     public static boolean isHosted() {
         return true;
     }
 
-    @UNSAFE
     @LOCAL_SUBSTITUTION
     @FOLD
     public static boolean isHosted_() {
@@ -353,7 +350,6 @@ public final class MaxineVM {
      * Determines if this is a {@link BuildLevel#DEBUG debug} build of the VM.
      * @return {@code true} if this is a debug build
      */
-    @UNSAFE
     @FOLD
     public static boolean isDebug() {
         return target().configuration.debugging();

@@ -20,11 +20,12 @@
  */
 package com.sun.max.unsafe;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import java.math.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -201,7 +202,7 @@ public abstract class Address extends Word {
     }
 
     @BUILTIN(value = AddressBuiltin.GreaterThan.class)
-    @INTRINSIC(UWGT)
+    @INTRINSIC(UWCMP | (ABOVE_THAN << 8))
     public final boolean greaterThan(Address other) {
         assert Word.isBoxed();
         final long a = toLong();
@@ -213,46 +214,46 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
-    @INTRINSIC(UWGT)
+    @INTRINSIC(UWCMP | (ABOVE_THAN << 8))
     public final boolean greaterThan(int other) {
         return greaterThan(fromInt(other));
     }
 
     @BUILTIN(value = AddressBuiltin.GreaterEqual.class)
-    @INTRINSIC(UWGTEQ)
+    @INTRINSIC(UWCMP | (ABOVE_EQUAL << 8))
     public final boolean greaterEqual(Address other) {
         assert Word.isBoxed();
         return !other.greaterThan(this);
     }
 
     @INLINE(override = true)
-    @INTRINSIC(UWGTEQ)
+    @INTRINSIC(UWCMP | (ABOVE_EQUAL << 8))
     public final boolean greaterEqual(int other) {
         return greaterEqual(fromInt(other));
     }
 
     @BUILTIN(value = AddressBuiltin.LessThan.class)
-    @INTRINSIC(UWLT)
+    @INTRINSIC(UWCMP | (BELOW_THAN << 8))
     public final boolean lessThan(Address other) {
         assert Word.isBoxed();
         return other.greaterThan(this);
     }
 
     @INLINE(override = true)
-    @INTRINSIC(UWLT)
+    @INTRINSIC(UWCMP | (BELOW_THAN << 8))
     public final boolean lessThan(int other) {
         return lessThan(fromInt(other));
     }
 
     @BUILTIN(value = AddressBuiltin.LessEqual.class)
-    @INTRINSIC(UWLTEQ)
+    @INTRINSIC(UWCMP | (BELOW_EQUAL << 8))
     public final boolean lessEqual(Address other) {
         assert Word.isBoxed();
         return !greaterThan(other);
     }
 
     @INLINE(override = true)
-    @INTRINSIC(UWLTEQ)
+    @INTRINSIC(UWCMP | (BELOW_EQUAL << 8))
     public final boolean lessEqual(int other) {
         return lessEqual(fromInt(other));
     }

@@ -21,7 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.debug.*;
+import com.sun.cri.ci.*;
 
 /**
  * The {@code LIRLabel} class definition.
@@ -37,7 +37,7 @@ public class LIRLabel extends LIROp0 {
      * @param label the label
      */
     public LIRLabel(Label label) {
-        super(LIROpcode.Label, LIROperand.IllegalLocation, null);
+        super(LIROpcode.Label, CiValue.IllegalValue, null);
         assert label != null;
         this.label = label;
     }
@@ -61,10 +61,9 @@ public class LIRLabel extends LIROp0 {
 
     /**
      * Prints this instruction to a LogStream.
-     * @param out the output stream
      */
     @Override
-    public void printInstruction(LogStream out) {
-        out.printf("[label:%s]", label);
+    public String operationString() {
+        return label.isBound() ? String.valueOf(label.position()) : "?";
     }
 }

@@ -26,6 +26,7 @@ import static com.sun.max.vm.prototype.HostedBootClassLoader.*;
 
 import java.io.*;
 import java.lang.reflect.*;
+import java.security.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -105,6 +106,8 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final FieldActor Thread_inheritedAccessControlContext = findField(Thread.class, "inheritedAccessControlContext");
     public static final FieldActor ClassLoader_loadedLibraryNames = findField(ClassLoader.class, "loadedLibraryNames");
     public static final FieldActor ClassLoader_nativeLibraries = findField(ClassLoader.class, "nativeLibraries");
+    public static final FieldActor AccessControlContext_privilegedContext = findField(AccessControlContext.class, "privilegedContext");
+    public static final FieldActor Throwable_stackTrace = findField(Throwable.class, "stackTrace");
 
     public static final MethodActor ThreadGroup_add_Thread = findMethod(ThreadGroup.class, "add", Thread.class);
     public static final MethodActor Thread_init = findMethod("init", Thread.class);
@@ -119,6 +122,8 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final MethodActor VmThread_run = findMethod("run", VmThread.class);
     public static final MethodActor VmThread_attach = findMethod("attach", VmThread.class);
     public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
+    public static final MethodActor AccessControlContext_init = findMethod(AccessControlContext.class, "<init>", ProtectionDomain[].class, boolean.class);
+    public static final MethodActor DirectByteBuffer_init = findMethod(Classes.forName("java.nio.DirectByteBuffer"), "<init>", long.class, int.class);
 
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded
@@ -259,6 +264,8 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
 
     /**
      * Finds the method actor denoted by a given name and declaring class.
+     * A side effect of this is that the method is compiled into the image as is it invocation stub
+     * if it is not a VM entry point.
      *
      * @param declaringClass the class to search for a method named {@code name}
      * @param name the name of the method to find
@@ -448,6 +455,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         CHECKED_EXCEPTIONS(MethodActor.class, TypeDescriptor[].class, MethodActor.NO_CHECKED_EXCEPTIONS),
         CONSTANT_VALUE(FieldActor.class, Value.class, null),
         ANNOTATION_DEFAULT_BYTES(MethodActor.class, byte[].class, MethodActor.NO_ANNOTATION_DEFAULT_BYTES),
+        ACCESSOR(MethodActor.class, Class.class, null),
         INVOCATION_STUB(false, MethodActor.class, GeneratedStub.class, null),
         RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES(MethodActor.class, byte[].class, MethodActor.NO_RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES);
 

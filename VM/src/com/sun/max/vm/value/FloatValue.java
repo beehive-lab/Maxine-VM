@@ -86,7 +86,7 @@ public final class FloatValue extends PrimitiveValue<FloatValue> {
 
     @Override
     public Float asBoxedJavaValue() {
-        return new Float(value);
+        return Float.valueOf(value);
     }
 
     @Override

@@ -45,13 +45,18 @@ final class Range {
      */
     public Range next;
 
-    // used only by class Interval, so hide them
     boolean intersects(Range r) {
         return intersectsAt(r) != -1;
     }
 
-    // * Implementation of Range *
 
+    /**
+     * Creates a new range.
+     *
+     * @param from the start of the range, inclusive
+     * @param to the end of the range, exclusive
+     * @param next link to the next range in a linked list
+     */
     Range(int from, int to, Range next) {
         this.from = from;
         this.to = to;

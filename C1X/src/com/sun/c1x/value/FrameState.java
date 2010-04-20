@@ -22,11 +22,11 @@ package com.sun.c1x.value;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code FrameState} class encapsulates the frame state (i.e. local variables and
@@ -44,26 +44,31 @@ public class FrameState {
     private ArrayList<Value> locks;
 
     /**
-     * The number of extra stack slots required for doing IR wrangling during
+     * Specifies if operand stack accesses should be checked for type safety.
+     */
+    public boolean unsafe;
+
+    /**
+     * The number of minimum stack slots required for doing IR wrangling during
      * {@linkplain GraphBuilder bytecode parsing}. While this may hide stack
      * overflow issues in the original bytecode, the assumption is that such
      * issues must be caught by the verifier.
      */
-    private static final int EXTRA_STACK_SLOTS = 1;
+    private static final int MINIMUM_STACK_SLOTS = 1;
 
     public FrameState(IRScope irScope, int maxLocals, int maxStack) {
         this.scope = irScope;
-        this.values = new Value[maxLocals + maxStack + EXTRA_STACK_SLOTS];
+        this.values = new Value[maxLocals + Math.max(maxStack, MINIMUM_STACK_SLOTS)];
         this.maxLocals = maxLocals;
     }
 
     /**
-     * Copies the contents of this value stack so that further updates to either stack aren't reflected in the other.
+     * Copies the contents of this frame state so that further updates to either stack aren't reflected in the other.
      *
      * @param withLocals indicates whether to copy the local state
      * @param withStack indicates whether to copy the stack state
      * @param withLocks indicates whether to copy the lock state
-     * @return a new value stack with the specified components
+     * @return a new frame state with the specified components
      */
     public FrameState copy(boolean withLocals, boolean withStack, boolean withLocks) {
         final FrameState other = new FrameState(scope, localsSize(), maxStackSize());
@@ -82,6 +87,7 @@ public class FrameState {
         if (withLocks) {
             other.replaceLocks(this);
         }
+        other.unsafe = unsafe;
         return other;
     }
 
@@ -95,6 +101,7 @@ public class FrameState {
         s.replaceLocals(this);
         s.replaceStack(this);
         s.stackIndex = size; // trim stack back to lockstack size
+        s.unsafe = unsafe;
         return s;
     }
 
@@ -128,11 +135,11 @@ public class FrameState {
     }
 
     /**
-     * Returns the inlining context associated with this value stack.
+     * Returns the inlining context associated with this frame state.
      *
      * @return the inlining context
      */
-    public final IRScope scope() {
+    public IRScope scope() {
         return scope;
     }
 
@@ -141,7 +148,7 @@ public class FrameState {
      *
      * @return the size of the local variables
      */
-    public final int localsSize() {
+    public int localsSize() {
         return maxLocals;
     }
 
@@ -150,7 +157,7 @@ public class FrameState {
      *
      * @return the size of the locks
      */
-    public final int locksSize() {
+    public int locksSize() {
         return locks == null ? 0 : locks.size();
     }
 
@@ -159,7 +166,7 @@ public class FrameState {
      *
      * @return the size of the stack
      */
-    public final int stackSize() {
+    public int stackSize() {
         return stackIndex;
     }
 
@@ -168,7 +175,7 @@ public class FrameState {
      *
      * @return the maximum size of the stack
      */
-    public final int maxStackSize() {
+    public int maxStackSize() {
         return values.length - maxLocals;
     }
 
@@ -177,7 +184,7 @@ public class FrameState {
      *
      * @return {@code true} the stack is currently empty
      */
-    public final boolean stackEmpty() {
+    public boolean stackEmpty() {
         return stackIndex == 0;
     }
 
@@ -186,7 +193,7 @@ public class FrameState {
      *
      * @return {@code true} if there are <i>no</i> active locks
      */
-    public final boolean noActiveLocks() {
+    public boolean noActiveLocks() {
         return locksSize() == 0;
     }
 
@@ -221,8 +228,8 @@ public class FrameState {
     }
 
     /**
-     * Store the local variable at the specified index. If the value is a doubleword, then also overwrite the next local
-     * variable position.
+     * Stores a given local variable at the specified index. If the value is a {@linkplain CiKind#isDoubleWord() double word},
+     * then the next local variable index is also overwritten.
      *
      * @param i the index at which to store
      * @param x the instruction which produces the value for the local
@@ -241,13 +248,16 @@ public class FrameState {
                 values[i - 1] = null;
             }
         }
+        if (x.kind.isWord()) {
+            unsafe = true;
+        }
     }
 
     /**
-     * Replace the local variables in this value stack with the local variables from the specified value stack. This is
+     * Replace the local variables in this frame state with the local variables from the specified frame state. This is
      * used in inlining.
      *
-     * @param with the value stack containing the new local variables
+     * @param with the frame state containing the new local variables
      */
     public void replaceLocals(FrameState with) {
         assert with.maxLocals == maxLocals;
@@ -255,9 +265,9 @@ public class FrameState {
     }
 
     /**
-     * Replace the stack in this value stack with the stack from the specified value stack. This is used in inlining.
+     * Replace the stack in this frame state with the stack from the specified frame state. This is used in inlining.
      *
-     * @param with the value stack containing the new local variables
+     * @param with the frame state containing the new local variables
      */
     public void replaceStack(FrameState with) {
         System.arraycopy(with.values, with.maxLocals, values, maxLocals, with.stackIndex);
@@ -265,9 +275,9 @@ public class FrameState {
     }
 
     /**
-     * Replace the locks in this value stack with the locks from the specified value stack. This is used in inlining.
+     * Replace the locks in this frame state with the locks from the specified frame state. This is used in inlining.
      *
-     * @param with the value stack containing the new local variables
+     * @param with the frame state containing the new local variables
      */
     public void replaceLocks(FrameState with) {
         if (with.locks == null) {
@@ -322,13 +332,17 @@ public class FrameState {
 
     /**
      * Pushes an instruction onto the stack with the expected type.
-     * @param type the type expected for this instruction
+     * @param kind the type expected for this instruction
      * @param x the instruction to push onto the stack
      */
-    public void push(CiKind type, Value x) {
-        xpush(assertKind(type, x));
-        if (type.sizeInSlots() == 2) {
+    public void push(CiKind kind, Value x) {
+        assert kind != CiKind.Void;
+        xpush(assertKind(kind, x));
+        if (kind.sizeInSlots() == 2) {
             xpush(null);
+        }
+        if (kind.isWord()) {
+            unsafe = true;
         }
     }
 
@@ -338,6 +352,7 @@ public class FrameState {
      */
     public void xpush(Value x) {
         assert stackIndex >= 0;
+        assert maxLocals + stackIndex < values.length;
         values[maxLocals + stackIndex++] = x;
     }
 
@@ -370,6 +385,7 @@ public class FrameState {
      * @param x the instruction to push onto the stack
      */
     public void wpush(Value x) {
+        unsafe = true;
         xpush(assertWord(x));
     }
 
@@ -487,7 +503,11 @@ public class FrameState {
     public Value[] popArguments(int size) {
         int base = stackIndex - size;
         Value[] r = new Value[size];
-        System.arraycopy(values, maxLocals + base, r, 0, size);
+        int y = maxLocals + base;
+        for (int i = 0; i < size; ++i) {
+            assert values[y] != null || values[y - 1].kind.jvmSlots == 2;
+            r[i] = values[y++];
+        }
         stackIndex = base;
         return r;
     }
@@ -527,9 +547,9 @@ public class FrameState {
     }
 
     /**
-     * Creates a new ValueStack corresponding to inlining the specified method into this point in this value stack.
+     * Creates a new {@code FrameState} corresponding to inlining the specified method into this point in this frame state.
      * @param scope the IRScope representing the inlined method
-     * @return a new value stack representing the state at the beginning of inlining the specified method into this one
+     * @return a new frame state representing the state at the beginning of inlining the specified method into this one
      */
     public FrameState pushScope(IRScope scope) {
         assert scope.caller == this.scope;
@@ -537,13 +557,14 @@ public class FrameState {
         FrameState res = new FrameState(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
         res.replaceStack(this);
         res.replaceLocks(this);
+        res.unsafe = unsafe;
         return res;
     }
 
     /**
-     * Creates a new ValueStack corresponding to the state upon returning from this inlined method into the outer
+     * Creates a new {@code FrameState} corresponding to the state upon returning from this inlined method into the outer
      * IRScope.
-     * @return a new value stack representing the state at exit from this value stack
+     * @return a new frame state representing the state at exit from this frame state
      */
     public FrameState popScope() {
         IRScope callingScope = scope.caller;
@@ -553,6 +574,7 @@ public class FrameState {
         res.replaceStack(this);
         res.replaceLocks(this);
         res.replaceLocals(scope.callerState());
+        res.unsafe = unsafe;
         return res;
     }
 
@@ -589,14 +611,18 @@ public class FrameState {
     }
 
     /**
-     * Iterates over all the values in this value stack, including the stack, locals, and locks.
+     * Iterates over all the values in this frame state, including the stack, locals, and locks.
      * @param closure the closure to apply to each value
      */
     public void valuesDo(ValueClosure closure) {
         final int max = valuesSize();
         for (int i = 0; i < max; i++) {
             if (values[i] != null) {
-                values[i] = closure.apply(values[i]);
+                Value newValue = closure.apply(values[i]);
+                if (!unsafe && newValue.kind.isWord()) {
+                    unsafe = true;
+                }
+                values[i] = newValue;
             }
         }
         if (locks != null) {
@@ -686,43 +712,43 @@ public class FrameState {
         return y == null || x.kind != y.kind;
     }
 
-    private static Value assertKind(CiKind kind, Value x) {
-        assert x != null && x.kind == kind;
+    private Value assertKind(CiKind kind, Value x) {
+        assert x != null && (unsafe || x.kind == kind);
         return x;
     }
 
-    private static Value assertLong(Value x) {
-        assert x != null && x.kind == CiKind.Long;
+    private Value assertLong(Value x) {
+        assert x != null && (unsafe || x.kind == CiKind.Long);
         return x;
     }
 
-    private static Value assertJsr(Value x) {
-        assert x != null && x.kind == CiKind.Jsr;
+    private Value assertJsr(Value x) {
+        assert x != null && (unsafe || x.kind == CiKind.Jsr);
         return x;
     }
 
-    private static Value assertInt(Value x) {
-        assert x != null && x.kind == CiKind.Int;
+    private Value assertInt(Value x) {
+        assert x != null && (unsafe || x.kind == CiKind.Int);
         return x;
     }
 
-    private static Value assertFloat(Value x) {
-        assert x != null && x.kind == CiKind.Float;
+    private Value assertFloat(Value x) {
+        assert x != null && (unsafe || x.kind == CiKind.Float);
         return x;
     }
 
-    private static Value assertObject(Value x) {
-        assert x != null && x.kind == CiKind.Object;
+    private Value assertObject(Value x) {
+        assert x != null && (unsafe || x.kind == CiKind.Object);
         return x;
     }
 
-    private static Value assertWord(Value x) {
-        assert x != null && x.kind == CiKind.Word;
+    private Value assertWord(Value x) {
+        assert x != null && (unsafe || x.kind == CiKind.Word);
         return x;
     }
 
-    private static Value assertDouble(Value x) {
-        assert x != null && x.kind == CiKind.Double;
+    private Value assertDouble(Value x) {
+        assert x != null && (unsafe || x.kind == CiKind.Double);
         return x;
     }
 
@@ -735,7 +761,7 @@ public class FrameState {
     }
 
     /**
-     * This is a helper method for iterating over all phis in this value stack.
+     * This is a helper method for iterating over all phis in this frame state.
      * @return an iterator over all phis
      */
     public Iterable<Phi> allPhis(BlockBegin block) {
@@ -755,7 +781,7 @@ public class FrameState {
     }
 
     /**
-     * This is a helper method for iterating over all phis in this value stack.
+     * This is a helper method for iterating over all phis in this frame state.
      * @return an iterator over all phis
      */
     public Iterable<Phi> allLivePhis(BlockBegin block) {
@@ -774,9 +800,9 @@ public class FrameState {
         return phis;
     }
     /**
-     * Checks whether this value stack has any phi statements that refer to the specified block.
+     * Checks whether this frame state has any phi statements that refer to the specified block.
      * @param block the block to check
-     * @return {@code true} if this value stack has phis for the specified block
+     * @return {@code true} if this frame state has phis for the specified block
      */
     public boolean hasPhisFor(BlockBegin block) {
         int max = valuesSize();
@@ -792,8 +818,8 @@ public class FrameState {
     }
 
     /**
-     * This is a helper method for iterating over all stack values and local variables in this value stack.
-     * @return an interator over all state values
+     * This is a helper method for iterating over all stack values and local variables in this frame state.
+     * @return an iterator over all state values
      */
     public Iterable<Value> allLiveStateValues() {
         // TODO: implement a more efficient iterator for use in linear scan
@@ -814,6 +840,6 @@ public class FrameState {
 
     @Override
     public String toString() {
-        return "state [locals = " + maxLocals + ", stack = " + stackSize() + "] " + scope;
+        return "state [nr locals = " + maxLocals + ", stack depth = " + stackSize() + "] " + scope;
     }
 }
