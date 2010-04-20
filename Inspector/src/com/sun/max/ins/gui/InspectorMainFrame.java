@@ -39,7 +39,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
 /**
- * The main GUI window for an inspection of a Maxine VM, with related GUI services.
+ * The main GUI window for an inspection of a VM, with related GUI services.
  * Contains multiple instances of {@link Inspector} in a {@link JDesktopPane}.
  *
  * @author Michael Van De Vanter
@@ -174,7 +174,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private final JDesktopPane desktopPane;
     private final JScrollPane scrollPane;
     private final InspectorMainMenuBar menuBar;
-    private final InspectorPopupMenu desktopMenu = new InspectorPopupMenu("Maxine Inspector");
+    private final InspectorPopupMenu desktopMenu;
     private final JLabel unavailableDataTableCellRenderer;
 
     /**
@@ -183,7 +183,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private Point mostRecentMouseLocation = DEFAULT_LOCATION;
 
     /**
-     * Creates a new main window frame for the Maxine VM inspection session.
+     * Creates a new main window frame for the VM inspection session.
      *
      * @param inspection the inspection's main state: {@link Inspection#actions()} and
      * {@link Inspection#settings()} must already be initialized.
@@ -197,6 +197,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         this.inspection = inspection;
         this.nameDisplay = nameDisplay;
+        this.desktopMenu = new InspectorPopupMenu(inspection.vm().entityName() + " Inspector");
 
         setDefaultLookAndFeelDecorated(true);
         Toolkit.getDefaultToolkit().addAWTEventListener(new MouseLocationListener(), AWTEvent.MOUSE_EVENT_MASK);

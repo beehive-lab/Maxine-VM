@@ -29,7 +29,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.vm.classfile.constant.*;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level heap object in the VM that implements a {@link StringConstant}.
+ * An object inspector specialized for displaying a low-level heap object in the VM that implements a {@link StringConstant}.
  *
  * @author Michael Van De Vanter
  */

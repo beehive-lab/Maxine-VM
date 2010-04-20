@@ -24,6 +24,9 @@ import java.awt.*;
 
 import javax.swing.*;
 
+/**
+ * A generator for simple geometric icons.
+ */
 public final class IconFactory {
 
     private IconFactory() {

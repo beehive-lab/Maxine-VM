@@ -28,14 +28,15 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.reference.*;
 
-
 /**
- * Access to the compiled code cache in the VM.  Much of the important state
- * about the code cache is contained in a singleton heap object.
+ * Access to compiled code in the VM.
+ * <br>
+ * Much of the important state
+ * about the code cache is contained in a singleton heap object, an instance
+ * of {@link CodeManger}.
  *
  * @see com.sun.max.vm.code.CodeManager
  * @author Michael Van De Vanter
- *
  */
 public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCodeCache {
 
@@ -98,8 +99,6 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     }
 
     public MaxEntityMemoryRegion<MaxCodeCache> memoryRegion() {
-        // TODO (mlvdv) this should perhaps return the memory region of the CodeManager object;
-        // we don't have the interfaces in place for that yet.
         return null;
     }
 

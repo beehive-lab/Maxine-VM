@@ -29,7 +29,8 @@ import com.sun.max.tele.object.*;
 import com.sun.max.vm.type.*;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level heap object in the VM that implements a {@link Descriptor}.
+ * An object inspector specialized for displaying a low-level heap object
+ * in the VM that implements a {@link Descriptor}.
  *
  * @author Michael Van De Vanter
  */

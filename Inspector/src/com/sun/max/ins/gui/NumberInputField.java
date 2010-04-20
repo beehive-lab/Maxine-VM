@@ -28,7 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.vm.*;
 
 /**
- * An editable JTextField that lets you enter a positive integer number
+ * An editable {@link JTextField} that permits entering a positive integer number
  * in a specified range, using digits of a specified radix/base.
  *
  * @author Bernd Mathiske

@@ -38,7 +38,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table that displays Maxine VM thread local variable names and values in a thread locals area, to be used within an
+ * A table that displays VM thread local variable names and values in a thread locals area, to be used within an
  * instance of {@link ThreadLocalsInspector}.
  *
  * @author Michael Van De Vanter
@@ -49,7 +49,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
     private final ThreadLocalsAreaTableColumnModel columnModel;
 
     /**
-     * A table specialized to display Maxine thread local fields.
+     * A table specialized to display thread local fields.
      */
     public ThreadLocalsAreaTable(Inspection inspection, final MaxThreadLocalsArea threadLocalsArea, ThreadLocalsViewPreferences viewPreferences) {
         super(inspection);

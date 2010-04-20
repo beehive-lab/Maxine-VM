@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * GUI utilities for the MaxineInspector.
- * 
+ * GUI utilities for the VM Inspector.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.ins.gui;
