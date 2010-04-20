@@ -135,15 +135,15 @@ public class WordValueLabel extends ValueLabel {
      * Content of label is supplied by override {@link ValueLabel#fetchValue()}, which
      * gets called initially and when the label is refreshed.
      * <br>
-     * Display state can be toggled between alternate presentations in some situations.
+     * Display state can be cycled among alternate presentations in some situations.
      * <br>
      * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
-     * when the display state is toggled; this will be done automatically if the table is passed in
+     * when the display state is cycled; this will be done automatically if the table is passed in
      * as the parent component.
      *
      * @param inspection
      * @param valueMode presumed type of value for the word, influences display modes
-     * @param parent a component that should be repainted when the display state is toggled;
+     * @param parent a component that should be repainted when the display state is cycled;
      */
     public WordValueLabel(Inspection inspection, ValueMode valueMode, Component parent) {
         this(inspection, valueMode, Word.zero(), parent);
@@ -155,16 +155,16 @@ public class WordValueLabel extends ValueLabel {
      * Content of label is set initially by parameter.  It can be updated by overriding{@link ValueLabel#fetchValue()}, which
      * gets called initially and when the label is refreshed.
      * <br>
-     * Display state can be toggled between alternate presentations in some situations.
+     * Display state can be cycled among alternate presentations in some situations.
      * <br>
      * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
-     * when the display state is toggled; this will be done automatically if the table is passed in
+     * when the display state is cycled; this will be done automatically if the table is passed in
      * as the parent component.
      *
      * @param inspection
      * @param valueMode presumed type of value for the word, influences display modes
      * @param word initial value for content.
-     * @param parent a component that should be repainted when the display state is toggled;
+     * @param parent a component that should be repainted when the display state is cycled;
      */
     public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent) {
         super(inspection, null);
@@ -190,9 +190,9 @@ public class WordValueLabel extends ValueLabel {
                         break;
                     }
                     case MouseEvent.BUTTON2: {
-                        final InspectorAction toggleAction = getToggleDisplayTextAction();
-                        if (toggleAction != null) {
-                            toggleAction.perform();
+                        final InspectorAction cycleAction = getCycleDisplayTextAction();
+                        if (cycleAction != null) {
+                            cycleAction.perform();
                         }
                         break;
                     }
@@ -600,7 +600,7 @@ public class WordValueLabel extends ValueLabel {
         }
     }
 
-    private InspectorAction getToggleDisplayTextAction() {
+    private InspectorAction getCycleDisplayTextAction() {
         DisplayMode alternateValueKind = displayMode;
         if (valueMode == ValueMode.FLAGS_REGISTER) {
             switch (displayMode) {
@@ -708,7 +708,7 @@ public class WordValueLabel extends ValueLabel {
         }
         if (alternateValueKind != displayMode) {
             final DisplayMode newValueKind = alternateValueKind;
-            return new InspectorAction(inspection(), "Toggle alternate display text") {
+            return new InspectorAction(inspection(), "Cycle alternate display text") {
 
                 @Override
                 public void procedure() {
@@ -905,19 +905,19 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
-        private final class MenuToggleDisplayAction extends InspectorAction {
+        private final class MenuCycleDisplayAction extends InspectorAction {
 
-            private final InspectorAction toggleAction;
+            private final InspectorAction cycleAction;
 
-            private MenuToggleDisplayAction() {
-                super(inspection(), "Toggle display (Middle-Button)");
-                toggleAction = getToggleDisplayTextAction();
-                setEnabled(toggleAction != null);
+            private MenuCycleDisplayAction() {
+                super(inspection(), "Cycle display (Middle-Button)");
+                cycleAction = getCycleDisplayTextAction();
+                setEnabled(cycleAction != null);
             }
 
             @Override
             public void procedure() {
-                toggleAction.perform();
+                cycleAction.perform();
             }
         }
 
@@ -966,7 +966,7 @@ public class WordValueLabel extends ValueLabel {
         public WordValueMenuItems(Inspection inspection, Value value) {
             add(actions().copyValue(value, "Copy value to clipboard"));
             add(new MenuInspectObjectAction(value));
-            add(new MenuToggleDisplayAction());
+            add(new MenuCycleDisplayAction());
             add(new MenuInspectMemoryWordsAction(value));
             add(new MenuShowMemoryRegionAction(value));
         }
