@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.object;
 
+import java.lang.management.*;
+
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -34,22 +36,54 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
     private Address regionStart = Address.zero();
     private Size regionSize = Size.zero();
     private String regionName = null;
+    private MemoryUsage memoryUsage = null;
 
     TeleRuntimeMemoryRegion(TeleVM teleVM, Reference runtimeMemoryRegionReference) {
         super(teleVM, runtimeMemoryRegionReference);
     }
 
+    /**
+     * @return the descriptive name assigned to the memory region object in the VM.
+     */
+    public final String getRegionName() {
+        return regionName;
+    }
+
+    /**
+     * @return starting location in VM memory of the region; zero if not yet allocated.
+     */
     public final Address getRegionStart() {
         return regionStart;
     }
 
+    /**
+     * @return the size of the VM memory, as described by the memory region object in the VM.
+     */
     public Size getRegionSize() {
         return regionSize;
     }
 
-    public final String getRegionName() {
-        return regionName;
+    /**
+     * Computes the usage of the memory region, if available; default is to assume 100% utilized,
+     * but specific subclasses may have more refined information available.
+     */
+    public MemoryUsage getUsage() {
+        return memoryUsage;
     }
+
+    /**
+     * Determines whether an address is in the allocated portion of the memory region.
+     * The default is to assume that all of the region is allocated, but
+     * specific subclasses may have more refined information available.
+     */
+    public boolean containsInAllocated(Address address) {
+        if (!isAllocated()) {
+            return false;
+        }
+        // Default:  is the address anywhere in the region
+        return address.greaterEqual(getRegionStart()) && address.lessThan(getRegionStart().plus(getRegionSize()));
+    }
+
 
     /**
      * @return whether memory has been allocated yet in the VM for this region.
@@ -81,6 +115,8 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
                 this.regionStart = newRegionStart;
                 this.regionSize = newRegionSize;
                 this.regionName = newRegionName;
+                final long sizeAsLong = this.regionSize.toLong();
+                this.memoryUsage = new MemoryUsage(-1, sizeAsLong, sizeAsLong, -1);
             } catch (DataIOError dataIOError) {
                 System.err.println("TeleRuntimeMemoryRegion dataIOError:");
                 dataIOError.printStackTrace();

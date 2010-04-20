@@ -34,6 +34,8 @@ import com.sun.max.vm.reference.*;
  * Much of the important state
  * about the code cache is contained in a singleton heap object, an instance
  * of {@link CodeManger}.
+ * <br>
+ * The cache allocates memory in one or more memory regions.
  *
  * @see com.sun.max.vm.code.CodeManager
  * @author Michael Van De Vanter
@@ -99,6 +101,9 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     }
 
     public MaxEntityMemoryRegion<MaxCodeCache> memoryRegion() {
+        // The code cache has no memory allocation of its own, but
+        // rather owns one or more code regions that have memory
+        // allocated from the OS.
         return null;
     }
 

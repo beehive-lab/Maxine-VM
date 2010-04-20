@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.memory;
 
+import java.lang.management.*;
+
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -49,6 +51,16 @@ public abstract class TeleDelegatedMemoryRegion extends TeleMemoryRegion {
 
     public Size size() {
         return teleRuntimeMemoryRegion.getRegionSize();
+    }
+
+    @Override
+    public MemoryUsage getUsage() {
+        return teleRuntimeMemoryRegion.getUsage();
+    }
+
+    @Override
+    public boolean containsInAllocated(Address address) {
+        return teleRuntimeMemoryRegion.containsInAllocated(address);
     }
 
 }
