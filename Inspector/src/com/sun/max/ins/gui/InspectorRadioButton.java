@@ -25,14 +25,15 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 
 /**
- * A radio button specialized for use in the Maxine Inspector.
+ * A radio button specialized for use in the VM Inspector.
  *
  * @author Michael Van De Vanter
  */
 public final class InspectorRadioButton extends JRadioButton {
 
     /**
-     *  Creates a new {@JRadioButton} specialized for use in the Maxine Inspector.
+     *  Creates a new {@link JRadioButton} specialized for use in the VM Inspector.
+     *
      * @param inspection
      * @param text the text to appear in the label
      * @param selected whether the check box is currently selected.

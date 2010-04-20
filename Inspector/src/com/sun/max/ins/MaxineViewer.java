@@ -29,7 +29,7 @@ import com.sun.max.tele.TeleVM.*;
 import com.sun.max.vm.prototype.*;
 
 /**
- * Interactive, visual tool for browsing the object and memory contents of a Maxine VM boot image.
+ * Interactive, visual tool for browsing the object and memory contents of a VM boot image.
  *
  * @author Doug Simon
  */

@@ -37,11 +37,10 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
- * <p>
- * An inspector combines an aggregation of {@link Prober}s in a displayed frame.</p>
- * <p>
+ * An {@link Inspector} combines an aggregation of {@link Prober}s in a displayed frame.
+ * <br>
  * <b>Event Notification</b>:
- * This abstract class ensures that very Inspector listens for {@linkplain InspectionListener Inspection Events}
+ * This abstract class ensures that every Inspector listens for {@linkplain InspectionListener Inspection Events}
  * as well as {@linkplain ViewFocusListener Focus Events}.  Any Inspector implementation
  * that wishes to receive such notifications must do so by overriding the appropriate
  * methods in interfaces {@link InspectionListener} and {@link ViewFocusListener},
@@ -507,7 +506,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         return new InspectorAction(inspection(), "Print") {
             @Override
             public void procedure() {
-                final MessageFormat footer = new MessageFormat("Maxine: " + getTextForTitle() + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
+                final MessageFormat footer = new MessageFormat(vm().entityName() + ": " + getTextForTitle() + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
                 try {
                     final InspectorTable inspectorTable = getTable();
                     assert inspectorTable != null;

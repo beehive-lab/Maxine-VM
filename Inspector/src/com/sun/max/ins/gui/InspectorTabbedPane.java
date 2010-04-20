@@ -26,7 +26,7 @@ import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
 /**
- * A tabbed pane specialized for use in the Maxine Inspector.
+ * A tabbed pane specialized for use in the VM Inspector.
  *
  * @author Michael Van De Vanter
  */
@@ -36,7 +36,7 @@ public abstract class InspectorTabbedPane extends JTabbedPane implements Inspect
     private final String tracePrefix;
 
     /**
-     * Creates a new {@JTabbedPane} specialized for use in the Maxine Inspector.
+     * Creates a new {@link JTabbedPane} specialized for use in the VM Inspector.
      */
     protected InspectorTabbedPane(Inspection inspection) {
         this.inspection = inspection;

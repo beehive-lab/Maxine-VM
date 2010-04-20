@@ -97,7 +97,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      *
      * @param prefix an optional string to precede everything else
      * @param teleObject an optional surrogate for the tele object being named, null if local
-     * @param role an optional "role" name for low level Maxine objects whose implementation types aren't too interesting
+     * @param role an optional "role" name for low level VM objects whose implementation types aren't too interesting
      * @param type a name to describe the object, type name in simple cases
      * @return human readable string identifying an object in a standard format
      */

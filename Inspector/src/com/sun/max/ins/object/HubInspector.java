@@ -32,7 +32,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level {@link Hybrid} object in the VM,
+ * An object inspector specialized for displaying a low-level {@link Hybrid} object in the VM,
  * constructed using {@link HybridLayout}, representing a {@link Hub}.
  *
  * @author Michael Van De Vanter

@@ -26,7 +26,7 @@ import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
 /**
- * A dialog specialized for use in the Maxine Inspector.
+ * A dialog specialized for use in the VM Inspector.
  *
  * @author Michael Van De Vanter
  */
@@ -36,7 +36,7 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
     private final String tracePrefix;
 
     /**
-     * Creates an instance of {@link JDialog}, specialized for use in the Maxine Inspector.
+     * Creates an instance of {@link JDialog}, specialized for use in the VM Inspector.
      *
      * @param frameTitle title of the dialog, appears in frame
      * @param modal should the dialog be modal, i.e. capture all user input when visible?
