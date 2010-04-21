@@ -1446,7 +1446,7 @@ public class Bytecodes {
 
     @INTRINSIC(WREMI)
     public static native long unsignedRemainderByInt(long x, int y);
-
+    
     /**
      * Attempts to fold a binary operation on two constant word inputs.
      *

@@ -366,7 +366,7 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     private String nameOf(RiType type) {
-        return Util.toJavaName(type);
+        return CiUtil.toJavaName(type);
     }
 
     @Override
@@ -397,21 +397,21 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitConstant(Constant constant) {
-        CiConstant type = constant.value;
-        if (type == CiConstant.NULL_OBJECT) {
+        CiConstant value = constant.value;
+        if (value == CiConstant.NULL_OBJECT) {
             out.print("null");
-        } else if (type.kind.isPrimitive()) {
+        } else if (value.kind.isPrimitive()) {
             out.print(constant.asConstant().valueString());
-        } else if (type.kind.isObject()) {
+        } else if (value.kind.isObject()) {
             Object object = constant.asConstant().asObject();
             if (object == null) {
                 out.print("null");
             } else if (object instanceof String) {
                 out.print('"').print(object.toString()).print('"');
             } else {
-                out.print("<object: ").print(object.getClass().getName()).print('@').print(System.identityHashCode(object)).print('>');
+                out.print("<object: ").print(value.kind.format(object)).print('>');
             }
-        } else if (type.kind.isJsr()) {
+        } else if (value.kind.isJsr()) {
             out.print("bci:").print(constant.asConstant().valueString());
         } else {
             out.print("???");
@@ -505,7 +505,7 @@ public class InstructionPrinter extends ValueVisitor {
             }
             out.print(arguments[i]);
         }
-        out.print(Util.format(") [method: %H.%n(%p):%r]", target, false));
+        out.print(CiUtil.format(") [method: %H.%n(%p):%r]", target, false));
     }
 
     @Override
@@ -514,7 +514,7 @@ public class InstructionPrinter extends ValueVisitor {
              print(".").
              print(i.field().name()).
              print(" [field: ").
-             print(Util.format("%h.%n:%t", i.field(), false)).
+             print(CiUtil.format("%h.%n:%t", i.field(), false)).
              print("]");
     }
 
@@ -637,7 +637,7 @@ public class InstructionPrinter extends ValueVisitor {
             print(store.field().name()).
             print(" := ").
             print(store.value()).
-            print(" [type: ").print(Util.format("%h.%n:%t", store.field(), false)).
+            print(" [type: ").print(CiUtil.format("%h.%n:%t", store.field(), false)).
             print(']');
     }
 
@@ -717,7 +717,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = Util.log2(target.sizeInBytes(i.kind));
+            int scale = CiUtil.log2(target.sizeInBytes(i.kind));
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(")");
@@ -752,7 +752,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = Util.log2(target.sizeInBytes(i.kind));
+            int scale = CiUtil.log2(target.sizeInBytes(i.kind));
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(" := ").print(i.value());

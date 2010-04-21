@@ -551,9 +551,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue src = forceToSpill(value.result(), x.value().kind, true);
         CiValue dst = createResultVariable(x);
         lir.lea(src, dst);
-
-        // TODO: Make the register allocator keep 'src' pinned to the stack
-        throw Util.unimplemented();
     }
 
     @Override
@@ -1374,9 +1371,9 @@ public abstract class LIRGenerator extends ValueVisitor {
                 if (right.isConstant()) {
                     CiConstant rightConstant = (CiConstant) right;
                     int c = rightConstant.asInt();
-                    if (Util.isPowerOf2(c)) {
+                    if (CiUtil.isPowerOf2(c)) {
                         // do not need tmp here
-                        lir.shiftLeft(leftOp, Util.log2(c), result);
+                        lir.shiftLeft(leftOp, CiUtil.log2(c), result);
                         didStrengthReduce = true;
                     } else {
                         didStrengthReduce = strengthReduceMultiply(leftOp, c, result, tmp);
@@ -1803,7 +1800,6 @@ public abstract class LIRGenerator extends ValueVisitor {
                 if (operand.isRegister()) {
                     param.loadItemForce(operand);
                 } else {
-                    //CiStackSlot slot = (CiStackSlot) operand;
                     CiValue slot = operand;
                     param.loadForStore(slot.kind);
                     if (slot.kind == CiKind.Long || slot.kind == CiKind.Double) {

@@ -37,6 +37,6 @@ public class JNI_Nop {
         return false;
     }
 
-    private static synchronized native void nop();
+    private static native void nop();
     private static synchronized native void sync_nop();
 }

@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.graph.ScopeData.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.util.*;
@@ -59,8 +60,16 @@ public final class GraphBuilder {
     final C1XCompilation compilation;
     final CiStatistics stats;
 
-    final ValueMap localValueMap;          // map of values for local value numbering
-    final MemoryMap memoryMap;             // map of field values for local load elimination
+    /**
+     * Map used to implement local value numbering for the current block.
+     */
+    final ValueMap localValueMap;
+
+    /**
+     * Map used for local load elimination (i.e. within the current block).
+     */
+    final MemoryMap memoryMap;
+
     final Canonicalizer canonicalizer;     // canonicalizer which does strength reduction + constant folding
     ScopeData scopeData;                   // Per-scope data; used for inlining
     BlockBegin curBlock;                   // the current block
@@ -1048,6 +1057,8 @@ public final class GraphBuilder {
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
+            scopeData.updateSimpleInlineInfo(curBlock, lastInstr, curState);
+
             // State at end of inlined method is the state of the caller
             // without the method parameters on stack, including the
             // return value, if any, of the inlined method on operand stack.
@@ -1488,13 +1499,13 @@ public final class GraphBuilder {
     }
 
     void inline(RiMethod target, Value[] args, RiType knownHolder, FrameState stateBefore) {
+        BlockBegin orig = curBlock;
         if (!target.isStatic()) {
             // the receiver object must be null-checked for instance methods
             Value receiver = args[0];
             if (!receiver.isNonNull() && !receiver.kind.isWord()) {
                 NullCheck check = new NullCheck(receiver, stateBefore);
-                args[0] = check;
-                append(check);
+                args[0] = append(check);
             }
         }
 
@@ -1557,16 +1568,31 @@ public final class GraphBuilder {
             iterateAllBlocks();
         } else {
             // ready to resume parsing inlined method into this block
-            inlineIntoCurrentBlock();
+            iterateBytecodesForBlock(0, true);
             // now iterate over the rest of the blocks
             iterateAllBlocks();
         }
 
         assert continuationExisted || !continuationBlock.wasVisited() : "continuation should not have been parsed if we created it";
 
-        if (continuationPredecessors == continuationBlock.predecessors().size()) {
-            // Inlining caused that the instructions after the invoke in the
-            // caller are not reachable any more (i.e. not one control flow path
+        ReturnBlock simpleInlineInfo = scopeData.simpleInlineInfo();
+        if (simpleInlineInfo != null && curBlock == orig) {
+            // Optimization: during parsing of the callee we
+            // generated at least one Goto to the continuation block. If we
+            // generated exactly one, and if the inlined method spanned exactly
+            // one block (and we didn't have to Goto its entry), then we snip
+            // off the Goto to the continuation, allowing control to fall
+            // through back into the caller block and effectively performing
+            // block merging. This allows local load elimination and local value numbering
+            // to take place across multiple callee scopes if they are relatively simple, and
+            // is currently essential to making inlining profitable. It also reduces the
+            // number of blocks in the CFG
+            lastInstr = simpleInlineInfo.returnPredecessor;
+            curState = simpleInlineInfo.returnState.popScope();
+            lastInstr.setNext(null, -1);
+        } else if (continuationPredecessors == continuationBlock.predecessors().size()) {
+            // Inlining caused the instructions after the invoke in the
+            // caller to not reachable any more (i.e. no control flow path
             // in the callee was terminated by a return instruction).
             // So skip filling this block with instructions!
             assert continuationBlock == scopeData.continuation();
@@ -1657,10 +1683,6 @@ public final class GraphBuilder {
         lastInstr = origLast;
     }
 
-    void inlineIntoCurrentBlock() {
-        iterateBytecodesForBlock(0);
-    }
-
     void iterateAllBlocks() {
         BlockBegin b;
         while ((b = scopeData.removeFromWorkList()) != null) {
@@ -1677,7 +1699,7 @@ public final class GraphBuilder {
                 curBlock = b;
                 curState = b.stateBefore().copy();
                 lastInstr = b;
-                iterateBytecodesForBlock(b.bci());
+                iterateBytecodesForBlock(b.bci(), false);
             }
         }
     }
@@ -1749,8 +1771,7 @@ public final class GraphBuilder {
         target.merge(ir.osrEntryBlock.end().stateAfter());
     }
 
-    BlockEnd iterateBytecodesForBlock(int bci) {
-        // Temporary variable for constant pool index
+    BlockEnd iterateBytecodesForBlock(int bci, boolean inliningIntoCurrentBlock) {
         char cpi;
 
         skipBlock = false;
@@ -1766,6 +1787,13 @@ public final class GraphBuilder {
 
         while (bci < endBCI) {
             BlockBegin nextBlock = blockAt(bci);
+            if (bci == 0 && inliningIntoCurrentBlock) {
+                if (!nextBlock.isParserLoopHeader()) {
+                    // Ignore the block boundary of the entry block of a method
+                    // being inlined unless the block is a loop header.
+                    nextBlock = null;
+                }
+            }
             if (nextBlock != null && nextBlock != block) {
                 // we fell through to the next block, add a goto and break
                 end = new Goto(nextBlock, null, false);

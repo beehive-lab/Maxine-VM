@@ -244,7 +244,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 }
                 if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
-                    return setCanonical(new ShiftOp(ISHL, x, intInstr(Util.log2(y))));
+                    return setCanonical(new ShiftOp(ISHL, x, intInstr(CiUtil.log2(y))));
                 }
                 return y == 0 ? setIntConstant(0) : null;
             }
@@ -333,7 +333,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 }
                 if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
-                    return setCanonical(new ShiftOp(LSHL, x, intInstr(Util.log2(y))));
+                    return setCanonical(new ShiftOp(LSHL, x, intInstr(CiUtil.log2(y))));
                 }
                 return y == 0 ? setLongConstant(0) : null;
             }
@@ -382,8 +382,8 @@ public class Canonicalizer extends DefaultValueVisitor {
                 if (y == 1) {
                     return setCanonical(x);
                 }
-                if (Util.isPowerOf2(y)) {
-                    return setCanonical(new ShiftOp(target.arch.is64bit() ? LUSHR : IUSHR, x, intInstr(Util.log2(y))));
+                if (CiUtil.isPowerOf2(y)) {
+                    return setCanonical(new ShiftOp(target.arch.is64bit() ? LUSHR : IUSHR, x, intInstr(CiUtil.log2(y))));
                 }
             }
             case WREMI:
@@ -391,7 +391,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 if (y == 1) {
                     return setCanonical(wordInstr(0));
                 }
-                if (Util.isPowerOf2(y)) {
+                if (CiUtil.isPowerOf2(y)) {
                     if (target.arch.is64bit()) {
                         long mask = y - 1L;
                         return setCanonical(new LogicOp(LAND, x, longInstr(mask)));
@@ -441,16 +441,27 @@ public class Canonicalizer extends DefaultValueVisitor {
 
     @Override
     public void visitLoadField(LoadField i) {
-        if (i.isStatic() && i.isLoaded() && C1XOptions.CanonicalizeConstantFields) {
-            // only try to canonicalize static field loads
-            RiField field = i.field();
-            if (field.isConstant()) {
-                if (method.isClassInitializer()) {
-                    // don't do canonicalization in the <clinit> method
-                    return;
-                }
+        if (i.isStatic()) {
+            if (i.isLoaded() && C1XOptions.CanonicalizeConstantFields) {
 
-                CiConstant value = field.constantValue();
+                // only try to canonicalize static field loads
+                RiField field = i.field();
+                if (field.isConstant()) {
+                    if (method.isClassInitializer()) {
+                        // don't do canonicalization in the <clinit> method
+                        return;
+                    }
+
+                    CiConstant value = field.constantValue(null);
+                    if (value != null) {
+                        setConstant(value);
+                    }
+                }
+            }
+        } else {
+            RiField field = i.field();
+            if (i.object().isConstant() && field.isConstant()) {
+                CiConstant value = field.constantValue(i.object().asConstant().asObject());
                 if (value != null) {
                     setConstant(value);
                 }
@@ -496,7 +507,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             // the array is a load of a field; check if it is a constant
             RiField field = ((LoadField) array).field();
             if (field.isConstant() && field.isStatic()) {
-                CiConstant cons = field.constantValue();
+                CiConstant cons = field.constantValue(null);
                 if (cons != null) {
                     Object obj = cons.asObject();
                     if (obj != null) {

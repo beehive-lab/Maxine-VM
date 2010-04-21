@@ -1107,7 +1107,7 @@ public class IRInterpreter {
                             arrayDimensions--;
                         }
                     } else {
-                        String name = Util.toJavaName(type);
+                        String name = CiUtil.toJavaName(type);
                         resolved = Class.forName(name);
                     }
                 } catch (ClassNotFoundException e) {
@@ -1657,7 +1657,7 @@ public class IRInterpreter {
 
         public CiConstant run() throws InvocationTargetException {
             if (C1XOptions.PrintStateInInterpreter) {
-                System.out.println("\n********** Running " + Util.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " **********\n");
+                System.out.println("\n********** Running " + CiUtil.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " **********\n");
                 System.out.println("Initial state");
                 printState(currentInstruction.stateBefore());
                 System.out.println("");
@@ -1670,7 +1670,7 @@ public class IRInterpreter {
                 }
             }
             if (C1XOptions.PrintStateInInterpreter) {
-                System.out.println("********** " + Util.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " ended  **********");
+                System.out.println("********** " + CiUtil.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " ended  **********");
             }
             if (result != null) {
                 assert method.signatureType().returnKind() != CiKind.Void;

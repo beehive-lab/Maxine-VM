@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.graph;
 
+import static com.sun.c1x.graph.ScopeData.ReturnBlock.*;
+
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -69,12 +71,23 @@ public class ScopeData {
     // Without return value of inlined method on stack
     FrameState continuationState;
 
-    // We track the destination bci of the jsr only to determine
-    // bailout conditions, since we only handle a subset of all of the
-    // possible jsr-ret control structures. Recursive invocations of a
-    // jsr are disallowed by the verifier. > 0 indicates parsing
-    // of a jsr.
+    /**
+     * Field used to generate fewer blocks when inlining. If this value is {@code null},
+     * then no {@code return}s have been encountered during inlining. If it is an instance
+     * of {@link ReturnBlock}, then it is the block info for the single {@code return}
+     * encountered. Otherwise, it will be {@link ReturnBlock#MULTIPLE_RETURNS}.
+     */
+    ReturnBlock inlinedReturnBlock;
+
+    /**
+     * Tracks the destination bci of the jsr. This is (currently) only used to determine
+     * bailout conditions, since only a subset of all of the possible jsr-ret control
+     * structures can (currently) be compiled.
+     *
+     * A value > 0 for this field indicates parsing of a jsr.
+     */
     final int jsrEntryBci;
+
     // We need to track the local variable in which the return address
     // was stored to ensure we can handle inlining the jsr, because we
     // don't handle arbitrary jsr/ret constructs.
@@ -302,6 +315,63 @@ public class ScopeData {
      */
     public void setJsrContinuation(BlockBegin block) {
         jsrContinuation = block;
+    }
+
+    /**
+     * A block delimited by a return instruction in an inlined method.
+     */
+    public static class ReturnBlock {
+        /**
+         * The inlined block.
+         */
+        final BlockBegin block;
+
+        /**
+         * The second last instruction in the block. That is, the one before the return instruction.
+         */
+        final Instruction returnPredecessor;
+
+        /**
+         * The frame state at the end of the block.
+         */
+        final FrameState returnState;
+
+        ReturnBlock(BlockBegin block, Instruction returnPredecessor, FrameState returnState) {
+            super();
+            this.block = block;
+            this.returnPredecessor = returnPredecessor;
+            this.returnState = returnState;
+        }
+
+        public static final ReturnBlock MULTIPLE_RETURNS = new ReturnBlock(null, null, null);
+    }
+
+    /**
+     * Updates the info about blocks in this scope delimited by a return instruction.
+     *
+     * @param block a block delimited by a {@code return} instruction
+     * @param returnPredecessor the second last instruction in the block. That is, the one before the return instruction.
+     * @param returnState the frame state after the return instruction
+     */
+    public void updateSimpleInlineInfo(BlockBegin block, Instruction returnPredecessor, FrameState returnState) {
+        if (inlinedReturnBlock == null) {
+            inlinedReturnBlock = new ReturnBlock(block, returnPredecessor, returnState);
+        } else {
+            inlinedReturnBlock = MULTIPLE_RETURNS;
+        }
+    }
+
+    /**
+     * Gets the return block info for a simple inline scope. That is, a scope that contains only a
+     * single block delimited by a {@code return} instruction.
+     *
+     * @return the return block info for a simple inline scope or {@code null} if this is not a simple inline scope
+     */
+    public ReturnBlock simpleInlineInfo() {
+        if (inlinedReturnBlock == MULTIPLE_RETURNS) {
+            return null;
+        }
+        return inlinedReturnBlock;
     }
 
     /**
