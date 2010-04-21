@@ -977,8 +977,8 @@ final class LinearScanWalker extends IntervalWalker {
 
         // load spilled values that become active from stack slot to register
         if (interval.insertMoveWhenActivated()) {
-            assert interval.isSplitChild() : "must be";
-            assert interval.currentSplitChild() != null : "must be";
+            assert interval.isSplitChild();
+            assert interval.currentSplitChild() != null;
             assert interval.currentSplitChild().operand != operand : "cannot insert move between same interval";
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println("Inserting move from interval %d to %d because insertMoveWhenActivated is set", interval.currentSplitChild().operandNumber, interval.operandNumber);

@@ -104,7 +104,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     protected CiAddress genAddress(CiValue base, CiValue index, int shift, int disp, CiKind kind) {
-        assert base.isVariableOrRegister() : "must be";
+        assert base.isVariableOrRegister();
         if (index.isConstant()) {
             return new CiAddress(kind, base, (((CiConstant) index).asInt() << shift) + disp);
         } else {
@@ -162,17 +162,15 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         LIRItem right = new LIRItem(x.y(), this);
         assert !left.isStack() || !right.isStack() : "can't both be memory operands";
         boolean mustLoadBoth = (x.opcode() == Bytecodes.FREM || x.opcode() == Bytecodes.DREM);
-        if (left.isRegister() || x.x().isConstant() || mustLoadBoth) {
+        if (left.isRegisterOrVariable() || x.x().isConstant() || mustLoadBoth) {
             left.loadItem();
         }
-
-        assert C1XOptions.SSEVersion >= 2;
 
         if (mustLoadBoth) {
             // frem and drem destroy also right operand, so move it to a new register
             right.setDestroysRegister();
             right.loadItem();
-        } else if (right.isRegister()) {
+        } else if (right.isRegisterOrVariable()) {
             right.loadItem();
         }
 
@@ -281,7 +279,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             LIRItem right = new LIRItem(x.y(), this);
             LIRItem leftArg = left;
             LIRItem rightArg = right;
-            if (x.isCommutative() && left.isStack() && right.isRegister()) {
+            if (x.isCommutative() && left.isStack() && right.isRegisterOrVariable()) {
                 // swap them if left is real stack (or cached) and right is real register(not cached)
                 leftArg = right;
                 rightArg = left;
@@ -588,7 +586,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitConvert(Convert x) {
-        assert C1XOptions.SSEVersion >= 2 : "no fpu stack";
         CiValue input = load(x.value());
         CiVariable result = newVariable(x.kind);
 

@@ -1481,11 +1481,6 @@ public class IRInterpreter {
         }
 
         @Override
-        public void visitRoundFP(RoundFP i) {
-            jumpNextInstruction();
-        }
-
-        @Override
         public void visitUnsafeGetRaw(UnsafeGetRaw i) {
             Object address = environment.lookup(i.base()).asObject();
             long index = i.index() == null ? 0 : environment.lookup(i.index()).asLong();

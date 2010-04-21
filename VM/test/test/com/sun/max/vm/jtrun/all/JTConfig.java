@@ -563,6 +563,7 @@ public class JTConfig {
         jtt.optimize.BC_lshr_C24.class,
         jtt.optimize.BC_lshr_C32.class,
         jtt.optimize.BlockSkip01.class,
+        jtt.optimize.Cmov01.class,
         jtt.optimize.DeadCode01.class,
         jtt.optimize.Fold_Cast01.class,
         jtt.optimize.Fold_Convert01.class,
