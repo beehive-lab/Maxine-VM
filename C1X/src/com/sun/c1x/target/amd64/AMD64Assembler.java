@@ -465,17 +465,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         return before;
     }
 
-    public final int indirectCall(CiAddress addr, Object target, LIRDebugInfo info) {
-        int before = codeBuffer.position();
-        prefix(addr);
-        emitByte(0xFF);
-        emitOperand(AMD64.rdx, addr);
-        int after = codeBuffer.position();
-        recordIndirectCall(before, after, target, info);
-        recordExceptionHandlers(after, info);
-        return before;
-    }
-
     public final void cdql() {
         emitByte(0x99);
     }

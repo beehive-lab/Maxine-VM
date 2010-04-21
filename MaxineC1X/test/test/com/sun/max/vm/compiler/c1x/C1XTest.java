@@ -644,7 +644,7 @@ public class C1XTest {
                 out.print(ibcps + " bytes/s   ");
             }
             if (totalIps > 0) {
-                out.print(ips + " insts/s");
+                out.print(ips + " insts/s   ");
             }
             if (totalFailures > 0) {
                 out.print("  (" + totalFailures + " failures)   ");

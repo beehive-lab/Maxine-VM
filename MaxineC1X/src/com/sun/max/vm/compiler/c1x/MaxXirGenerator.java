@@ -20,12 +20,13 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.cri.ci.CiUtil.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.target.amd64.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.*;
@@ -572,7 +573,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
         asm.bindInline(store);
         int elemSize = target.sizeInBytes(kind);
-        asm.pstore(kind, array, index, value, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(elemSize)), !genBoundsCheck && !genStoreCheck);
+        asm.pstore(kind, array, index, value, asm.i(offsetOfFirstArrayElement), asm.i(log2(elemSize)), !genBoundsCheck && !genStoreCheck);
         if (genWriteBarrier) {
             addWriteBarrier(asm, array, value);
         }
@@ -601,7 +602,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.jugteq(fail, index, length);
         }
         int elemSize = target.sizeInBytes(kind);
-        asm.pload(kind, result, array, index, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(elemSize)), !genBoundsCheck);
+        asm.pload(kind, result, array, index, asm.i(offsetOfFirstArrayElement), asm.i(log2(elemSize)), !genBoundsCheck);
         if (genBoundsCheck) {
             asm.bindOutOfLine(fail);
             callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, index);
@@ -675,10 +676,10 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.mod(a, interfaceID, mtableLengthOrStartIndex);
             asm.pload(CiKind.Int, mtableLengthOrStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.add(a, a, mtableLengthOrStartIndex);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(CiUtil.log2(Ints.SIZE)), false);
             asm.add(a, a, methodIndex);
             XirOperand result = asm.createTemp("result", CiKind.Word);
-            asm.pload(CiKind.Word, result, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
+            asm.pload(CiKind.Word, result, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(CiUtil.log2(wordSize)), false);
             resolved = finishTemplate(asm, result, "invokeinterface");
         }
         {
@@ -699,10 +700,10 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.mod(a, interfaceID, mtableLengthOrStartIndex);
             asm.pload(CiKind.Int, mtableLengthOrStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.add(a, a, mtableLengthOrStartIndex);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(CiUtil.log2(Ints.SIZE)), false);
             asm.add(a, a, methodIndex);
             XirOperand result = asm.createTemp("result", CiKind.Word);
-            asm.pload(CiKind.Word, result, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
+            asm.pload(CiKind.Word, result, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(CiUtil.log2(wordSize)), false);
             unresolved = finishTemplate(asm, result, "invokeinterface");
         }
         return new XirPair(resolved, unresolved);
@@ -991,8 +992,8 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(log2(Ints.SIZE)), false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(log2(wordSize)), false);
             asm.jneq(fail, a, interfaceID);
             asm.bindInline(pass);
             asm.bindOutOfLine(fail);
@@ -1076,8 +1077,8 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(log2(Ints.SIZE)), false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(log2(wordSize)), false);
             asm.jneq(fail, a, interfaceID);
             asm.bindInline(pass);
             asm.mov(result, asm.b(true));

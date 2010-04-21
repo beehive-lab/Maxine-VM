@@ -136,20 +136,27 @@ public class MaxRiField implements RiField {
         throw unresolved("offset()");
     }
 
-    public CiConstant constantValue() {
+    public CiConstant constantValue(Object object) {
         if (fieldActor != null && fieldActor.isConstant()) {
-            if (!fieldActor.isStatic()) {
-                throw new IllegalArgumentException("constantValue() is only defined for static fields");
-            }
-            Value v = fieldActor.constantValue();
-            if (v != null) {
-                return MaxRiType.toCiConstant(v);
+            Value v;
+            if (fieldActor.isStatic()) {
+                v = fieldActor.constantValue();
+                if (v != null) {
+                    return MaxRiType.toCiConstant(v);
+                }
             }
             if (C1XOptions.CanonicalizeFinalFields) {
-                if (MaxineVM.isHosted()) {
-                    v = HostTupleAccess.readValue(null, fieldActor);
+                if (fieldActor.isStatic()) {
+                    assert object == null;
+                    object = fieldActor.holder().staticTuple();
                 } else {
-                    v = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));
+                    assert object != null;
+                }
+
+                if (MaxineVM.isHosted()) {
+                    v = HostTupleAccess.readValue(object, fieldActor);
+                } else {
+                    v = fieldActor.readValue(Reference.fromJava(object));
                 }
                 return MaxRiType.toCiConstant(v);
             }

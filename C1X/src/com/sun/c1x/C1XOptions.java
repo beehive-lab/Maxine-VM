@@ -63,10 +63,6 @@ public class C1XOptions {
     public static boolean IntrinsifyAtomic                   = true;
     public static boolean IntrinsifyUnsafe                   = true;
 
-    // floating point settings
-    public static int     SSEVersion                         = 2;
-    public static boolean RoundFPResults                     = ____;
-
     // debugging and printing settings
     public static boolean IRChecking                         = ____;
     public static boolean PinAllInstructions                 = ____;
@@ -298,7 +294,7 @@ public class C1XOptions {
         OptCSEArrayLength               = true;
 
         // turn on state merging optimizations
-        PhiLoopStores = true;
+        PhiLoopStores                   = true;
 
         // turn on speculative optimizations
         OptCHA                          = true;

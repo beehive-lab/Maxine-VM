@@ -172,7 +172,7 @@ public class LIRItem {
      * Determines if the operand is in a register or may be
      * resolved to a register by the register allocator.
      */
-    public boolean isRegister() {
+    public boolean isRegisterOrVariable() {
         return resultOperand.isVariableOrRegister();
     }
 
