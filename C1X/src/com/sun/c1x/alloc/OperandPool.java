@@ -78,6 +78,11 @@ public class OperandPool {
     private BitMap mustStartInMemory;
 
     /**
+     * Records which variable operands have the {@link VariableFlag#MustStayInMemory} flag set.
+     */
+    private BitMap mustStayInMemory;
+
+    /**
      * Flags that can be set for {@linkplain CiValue#isVariable() variable} operands.
      */
     public enum VariableFlag {
@@ -86,6 +91,12 @@ public class OperandPool {
          * at the beginning, but may then be loaded in a register.
          */
         MustStartInMemory,
+
+        /**
+         * Denotes a variable that needs to be assigned a memory location
+         * at the beginning and never subsequently loaded in a register.
+         */
+        MustStayInMemory,
 
         /**
          * Denotes a variable that must be assigned to a byte-sized register.
@@ -152,6 +163,10 @@ public class OperandPool {
             mustBeByteRegister = set(mustBeByteRegister, var);
         } else if (flag == VariableFlag.MustStartInMemory) {
             mustStartInMemory = set(mustStartInMemory, var);
+        } else if (flag == VariableFlag.MustStayInMemory) {
+            mustStayInMemory = set(mustStayInMemory, var);
+        } else {
+            assert flag == null;
         }
         variables.add(var);
         return var;
@@ -212,7 +227,11 @@ public class OperandPool {
     }
 
     public boolean mustStartInMemory(CiVariable operand) {
-        return get(mustStartInMemory, operand);
+        return get(mustStartInMemory, operand) || get(mustStayInMemory, operand);
+    }
+
+    public boolean mustStayInMemory(CiVariable operand) {
+        return get(mustStayInMemory, operand);
     }
 
     public boolean mustBeByteRegister(CiValue operand) {

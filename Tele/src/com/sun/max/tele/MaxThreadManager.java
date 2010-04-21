@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele;
 
+import java.io.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 
@@ -81,4 +83,12 @@ public interface MaxThreadManager {
      */
     MaxThread getThread(long threadID);
 
+    /**
+     * Writes a textual description of each thread.
+     * <br>
+     * Thread-safe
+     *
+     * @param printStream
+     */
+    void writeSummary(PrintStream printStream);
 }

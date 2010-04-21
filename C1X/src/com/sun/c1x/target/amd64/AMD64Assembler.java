@@ -836,9 +836,15 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         }
     }
 
-    public final void leal(CiRegister dst, CiAddress src) {
-        emitByte(0x67); // addr32
-        prefix(src, dst);
+//    public final void leal(CiRegister dst, CiAddress src) {
+//        emitByte(0x67); // addr32
+//        prefix(src, dst);
+//        emitByte(0x8D);
+//        emitOperand(dst, src);
+//    }
+
+    public final void leaq(CiRegister dst, CiAddress src) {
+        prefixq(src, dst);
         emitByte(0x8D);
         emitOperand(dst, src);
     }
@@ -1732,6 +1738,11 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         }
     }
 
+    public final void pause() {
+        emitByte(0xF3);
+        emitByte(0x90);
+    }
+
     // copies data from [esi] to [edi] using X86.rcx pointer sized words
     // generic
     public final void repMov() {
@@ -2099,10 +2110,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xFF);
         emitByte(0xC0 | encode);
-    }
-
-    public final void lea(CiRegister dst, CiAddress src) {
-        leaq(dst, src);
     }
 
     int prefixAndEncode(int regEnc) {
@@ -2511,12 +2518,6 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         prefixq(dst);
         emitByte(0xFF);
         emitOperand(AMD64.rax, dst);
-    }
-
-    public final void leaq(CiRegister dst, CiAddress src) {
-        prefixq(src, dst);
-        emitByte(0x8D);
-        emitOperand(dst, src);
     }
 
     public final void mov64(CiRegister dst, long imm64) {

@@ -84,7 +84,7 @@ public final class BooleanValue extends PrimitiveValue<BooleanValue> {
 
     @Override
     public Boolean asBoxedJavaValue() {
-        return new Boolean(value);
+        return Boolean.valueOf(value);
     }
 
     @Override

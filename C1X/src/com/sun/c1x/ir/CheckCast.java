@@ -73,7 +73,7 @@ public final class CheckCast extends TypeCheck {
 
     @Override
     public int valueNumber() {
-        return targetClass.isLoaded() ? Util.hash1(Bytecodes.CHECKCAST, object) : 0;
+        return targetClass.isResolved() ? Util.hash1(Bytecodes.CHECKCAST, object) : 0;
     }
 
     @Override

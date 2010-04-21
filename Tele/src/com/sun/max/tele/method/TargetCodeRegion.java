@@ -25,16 +25,16 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Represents a region of memory in the {@link TeleVM} that holds compiled target code.
+ * Represents a region of VM memory that holds compiled code.
  *
  * @author Michael Van De Vanter
   */
-public class TargetCodeRegion extends TeleMemoryRegion {
+public abstract class TargetCodeRegion extends TeleFixedMemoryRegion {
 
     private final TeleTargetRoutine teleTargetRoutine;
 
-    public TargetCodeRegion(TeleTargetRoutine teleTargetRoutine, Address start, Size size) {
-        super(start, size, "TeleTarget-" + teleTargetRoutine.toString());
+    public TargetCodeRegion(TeleVM teleVM, TeleTargetRoutine teleTargetRoutine, Address start, Size size, String description) {
+        super(teleVM, description, start, size);
         this.teleTargetRoutine = teleTargetRoutine;
     }
 

@@ -52,7 +52,6 @@ import com.sun.max.tele.*;
  *  updated the internal state of the preferences.</li>
  *  </ol>
  *
- *
  * @author Doug Simon
  * @author Michael Van De Vanter
  */

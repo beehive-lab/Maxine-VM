@@ -21,7 +21,6 @@
 package com.sun.max.tele.debug;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -36,6 +35,8 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
 
     private static final int TRACE_LEVEL = 2;
 
+    private final String entityName;
+    private final String entityDescription;
     final TeleNativeThread teleNativeThread;
     boolean live = true;
     private long lastRefreshedEpoch = -1L;
@@ -50,6 +51,8 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
 
     public TeleRegisterSet(TeleVM teleVM, TeleNativeThread teleNativeThread) {
         super(teleVM);
+        this.entityName = "Thread-" + teleNativeThread.localHandle() + " register set";
+        this.entityDescription = "The machine registers, together with their current value in the " + vm().entityName() + " for " + teleNativeThread.entityName();
         this.teleNativeThread = teleNativeThread;
         this.teleIntegerRegisters = new TeleIntegerRegisters(teleVM.vmConfiguration());
         this.teleFloatingPointRegisters = new TeleFloatingPointRegisters(teleVM.vmConfiguration());
@@ -62,22 +65,39 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
         this.allRegisters = new ArrayListSequence<MaxRegister>(integerRegisterCount + floatingPointRegisterCount + stateRegisterCount);
         this.integerRegisters = new ArrayListSequence<MaxRegister>(integerRegisterCount);
         for (Symbol register : teleIntegerRegisters.symbolizer()) {
-            final TeleRegister teleRegister = new TeleRegister(teleIntegerRegisters, register);
+            final TeleRegister teleRegister = new TeleRegister(teleIntegerRegisters, register, teleNativeThread);
             integerRegisters.append(teleRegister);
             allRegisters.append(teleRegister);
         }
         this.floatingPointRegisters = new ArrayListSequence<MaxRegister>(floatingPointRegisterCount);
         for (Symbol register : teleFloatingPointRegisters.symbolizer()) {
-            final TeleRegister teleRegister = new TeleRegister(teleFloatingPointRegisters, register);
+            final TeleRegister teleRegister = new TeleRegister(teleFloatingPointRegisters, register, teleNativeThread);
             floatingPointRegisters.append(teleRegister);
             allRegisters.append(teleRegister);
         }
         this.stateRegisters = new ArrayListSequence<MaxRegister>(stateRegisterCount);
         for (Symbol register : teleStateRegisters.symbolizer()) {
-            final TeleRegister teleRegister = new TeleRegister(teleStateRegisters, register);
+            final TeleRegister teleRegister = new TeleRegister(teleStateRegisters, register, teleNativeThread);
             stateRegisters.append(teleRegister);
             allRegisters.append(teleRegister);
         }
+    }
+
+    public String entityName() {
+        return entityName;
+    }
+
+    public String entityDescription() {
+        return entityDescription;
+    }
+
+    public MaxEntityMemoryRegion<MaxRegisterSet> memoryRegion() {
+        // A register set does not occupy a region of memory
+        return null;
+    }
+
+    public boolean contains(Address address) {
+        return false;
     }
 
     public MaxThread thread() {
@@ -104,7 +124,7 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
         return live ? teleIntegerRegisters.getCallRegisterValue() : Pointer.zero();
     }
 
-    public Sequence<MaxRegister> find(MemoryRegion memoryRegion) {
+    public Sequence<MaxRegister> find(MaxMemoryRegion memoryRegion) {
         refresh();
         AppendableSequence<MaxRegister> registers = null;
         if (live && memoryRegion != null) {
@@ -113,7 +133,7 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
                     if (registers == null) {
                         registers = new ArrayListSequence<MaxRegister>(4);
                     }
-                    registers.append(new TeleRegister(teleIntegerRegisters, symbol));
+                    registers.append(new TeleRegister(teleIntegerRegisters, symbol, teleNativeThread));
                 }
             }
         }
@@ -167,9 +187,9 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
 
     private void refresh() {
         live = teleNativeThread.isLive();
-        final long processEpoch = teleVM().teleProcess().epoch();
+        final long processEpoch = vm().teleProcess().epoch();
         if (live && lastRefreshedEpoch < processEpoch) {
-            if (teleVM().tryLock()) {
+            if (vm().tryLock()) {
                 try {
                     Trace.line(TRACE_LEVEL, tracePrefix() + "refreshRegisters (epoch=" + processEpoch + ") for " + this);
                     if (!teleNativeThread.readRegisters(
@@ -183,7 +203,7 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
                     teleStateRegisters.refresh();
                     lastRefreshedEpoch = processEpoch;
                 } finally {
-                    teleVM().unlock();
+                    vm().unlock();
                 }
             }
 

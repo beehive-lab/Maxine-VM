@@ -67,7 +67,7 @@ public abstract class CompiledStackFrame extends StackFrame {
         if (classMethodActor != null) {
             return classMethodActor.format("%H.%n(%p)@") + ip.toHexString();
         }
-        return targetMethod.description() + "@" + ip.toHexString();
+        return targetMethod.regionName() + "@" + ip.toHexString();
     }
 
 }

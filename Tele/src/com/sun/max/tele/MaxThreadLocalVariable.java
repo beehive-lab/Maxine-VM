@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.memory.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
@@ -29,7 +28,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxThreadLocalVariable {
+public interface MaxThreadLocalVariable extends MaxEntity<MaxThreadLocalVariable> {
 
     /**
      * Gets the thread with which this thread local variable is associated in the VM.
@@ -55,27 +54,17 @@ public interface MaxThreadLocalVariable {
      * Thread-safe
      *
      * @return the name
-     *
      */
-    String name();
+    String variableName();
 
     /**
-     * Specifies if this thread local variable is a {@link Reference}.
+     * Specifies if this thread local variable is a reference type.
      * <br>
      * Thread-safe
      *
      * @return whether this thread local variable contains a reference
      */
     boolean isReference();
-
-    /**
-     * Gets a description of the VM memory occupied by this thread local variable.
-     * <br>
-     * Thread-safe
-     *
-     * @return the memory in the VM occupied by this thread local variable.
-     */
-    MemoryRegion memoryRegion();
 
     /**
      * Gets the index of this thread local variable in its thread locals area in the VM.
@@ -110,14 +99,5 @@ public interface MaxThreadLocalVariable {
      * @return the stack trace element where this thread local variable is declared.
      */
     StackTraceElement declaration();
-
-    /**
-     * Gets a string documenting the purpose of the thread local variable.
-     * <br>
-     * Thread-safe
-     *
-     * @return a very short string describing the thread local variable, useful for debugging.
-     */
-    String description();
 
 }

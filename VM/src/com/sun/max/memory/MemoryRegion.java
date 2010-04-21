@@ -67,7 +67,7 @@ public interface MemoryRegion {
     /**
      * @return an optional, short string that describes the role being played by the region, useful for debugging.
      */
-    String description();
+    String regionName();
 
     /**
      * @return a {@link MemoryUsage} object for this region or null if not available.
@@ -76,7 +76,7 @@ public interface MemoryRegion {
 
     public static class Util {
         /**
-         * Gets a string representation for a memory region composed of its {@linkplain MemoryRegion#description() description}
+         * Gets a string representation for a memory region composed of its {@linkplain MemoryRegion#regionName() description}
          * and {@linkplain MemoryRegion#start()} - {@linkplain MemoryRegion#end()} address range.
          */
         public static String asString(MemoryRegion memoryRegion) {
@@ -84,8 +84,8 @@ public interface MemoryRegion {
                 return "null";
             }
             final StringBuilder sb = new StringBuilder();
-            if (memoryRegion.description() != null) {
-                sb.append(memoryRegion.description()).append(":");
+            if (memoryRegion.regionName() != null) {
+                sb.append(memoryRegion.regionName()).append(":");
             }
             sb.append("[").append(memoryRegion.start().toHexString()).append(" - ").append(memoryRegion.end().minus(1).toHexString()).append("]");
             return sb.toString();

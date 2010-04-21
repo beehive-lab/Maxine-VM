@@ -21,6 +21,7 @@
 package com.sun.cri.bytecode;
 
 import static com.sun.cri.bytecode.Bytecodes.Flags.*;
+import static com.sun.cri.bytecode.Bytecodes.JniOp.*;
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 
 import java.io.*;
@@ -252,42 +253,71 @@ public class Bytecodes {
 
     // Start extended bytecodes
 
+    /**
+     * Native function call.
+     *
+     * The 'function_address' value on the top of the stack is the result of
+     * linking a native function. Typically, a {@link #JNIOP_LINK} operation
+     * is used to obtain this address.
+     * 
+     * <pre>
+     * Format: { u1 opcode;  // JNICALL
+     *           u2 sig;     // Constant pool index of a CONSTANT_Utf8_info representing the signature of the call
+     *         }
+     *
+     * Operand Stack:
+     *     ..., [arg1, [arg2 ... ]] function_address => [return value, ]...,
+     * </pre>
+     *
+     * @see #JNIOP_LINK
+     * @see #JNIOP_J2N
+     * @see #JNIOP_N2J
+     */
     public static final int JNICALL              = 203;
-    public static final int CALL                 = 204;
+    
+    /**
+     * @see #JNIOP_LINK
+     * @see #JNIOP_J2N
+     * @see #JNIOP_N2J
+     */
+    public static final int JNIOP                = 204;
+    
+    
+    public static final int CALL                 = 205;
 
-    public static final int WLOAD                = 205;
-    public static final int WLOAD_0              = 206;
-    public static final int WLOAD_1              = 207;
-    public static final int WLOAD_2              = 208;
-    public static final int WLOAD_3              = 209;
+    public static final int WLOAD                = 206;
+    public static final int WLOAD_0              = 207;
+    public static final int WLOAD_1              = 208;
+    public static final int WLOAD_2              = 209;
+    public static final int WLOAD_3              = 210;
 
-    public static final int WSTORE               = 210;
-    public static final int WSTORE_0             = 211;
-    public static final int WSTORE_1             = 212;
-    public static final int WSTORE_2             = 213;
-    public static final int WSTORE_3             = 214;
+    public static final int WSTORE               = 211;
+    public static final int WSTORE_0             = 212;
+    public static final int WSTORE_1             = 213;
+    public static final int WSTORE_2             = 214;
+    public static final int WSTORE_3             = 215;
 
-    public static final int WCONST_0             = 215;
-    public static final int WDIV                 = 216;
-    public static final int WDIVI                = 217; // Divisor is an int
-    public static final int WREM                 = 218;
-    public static final int WREMI                = 219; // Divisor is an int
+    public static final int WCONST_0             = 216;
+    public static final int WDIV                 = 217;
+    public static final int WDIVI                = 218; // Divisor is an int
+    public static final int WREM                 = 219;
+    public static final int WREMI                = 220; // Divisor is an int
 
-    public static final int ICMP                 = 220; // Signed int compare, sets condition flags (for template JIT)
-    public static final int WCMP                 = 221; // Word compare, sets condition flags (for template JIT)
+    public static final int ICMP                 = 221; // Signed int compare, sets condition flags (for template JIT)
+    public static final int WCMP                 = 222; // Word compare, sets condition flags (for template JIT)
 
-    public static final int PREAD                = 222;
-    public static final int PWRITE               = 223;
+    public static final int PREAD                = 223;
+    public static final int PWRITE               = 224;
 
-    public static final int PGET                 = 224;
-    public static final int PSET                 = 225;
+    public static final int PGET                 = 225;
+    public static final int PSET                 = 226;
 
-    public static final int PCMPSWP              = 226; // Pointer compare-and-swap
+    public static final int PCMPSWP              = 227; // Pointer compare-and-swap
 
-    public static final int MOV_I2F              = 227;
-    public static final int MOV_F2I              = 228;
-    public static final int MOV_L2D              = 229;
-    public static final int MOV_D2L              = 230;
+    public static final int MOV_I2F              = 228;
+    public static final int MOV_F2I              = 229;
+    public static final int MOV_L2D              = 230;
+    public static final int MOV_D2L              = 231;
 
     /**
      * Unsigned integer comparison.
@@ -303,7 +333,7 @@ public class Bytecodes {
      *
      * @see UnsignedComparisons
      */
-    public static final int UCMP                 = 231;
+    public static final int UCMP                 = 232;
 
     /**
      * Unsigned word comparison.
@@ -319,7 +349,7 @@ public class Bytecodes {
      *
      * @see UnsignedComparisons
      */
-    public static final int UWCMP                = 232;
+    public static final int UWCMP                = 233;
 
     /**
      * Reads the value of a register playing a runtime-defined role.
@@ -333,7 +363,7 @@ public class Bytecodes {
      *     ... => ..., value
      * </pre>
      */
-    public static final int READREG              = 233;
+    public static final int READREG              = 234;
 
     /**
      * Writes the value of a register playing a runtime-defined role.
@@ -347,7 +377,7 @@ public class Bytecodes {
      *     ..., value => ...
      * </pre>
      */
-    public static final int WRITEREG             = 234;
+    public static final int WRITEREG             = 235;
 
     /**
      * Unsafe cast of top value on stack. The valid type characters and their corresponding kinds are:
@@ -374,9 +404,9 @@ public class Bytecodes {
      *     ..., value => ..., value
      * </pre>
      */
-    public static final int UNSAFE_CAST          = 235;
-    public static final int WRETURN              = 236;
-    public static final int SAFEPOINT            = 237;
+    public static final int UNSAFE_CAST          = 236;
+    public static final int WRETURN              = 237;
+    public static final int SAFEPOINT            = 238;
 
     /**
      * Allocates a requested block of memory within the current activation frame.
@@ -399,7 +429,7 @@ public class Bytecodes {
      * The value on the top of the stack is the size in bytes to allocate.
      * The result is the address of the allocated block. <b>N.B.</b> The contents of the block are uninitialized.
      */
-    public static final int ALLOCA               = 238;
+    public static final int ALLOCA               = 239;
 
     /**
      * Inserts a memory barrier.
@@ -413,14 +443,32 @@ public class Bytecodes {
      *     ... => ...
      * </pre>
      */
-    public static final int MEMBAR               = 239;
-    public static final int STACKADDR            = 240;
-    public static final int PAUSE                = 241;
-    public static final int ADD_SP               = 242;
-    public static final int READ_PC              = 243;
-    public static final int FLUSHW               = 244;
-    public static final int LSB                  = 245;
-    public static final int MSB                  = 246;
+    public static final int MEMBAR               = 240;
+    
+    /**
+     * Pins a value to the native stack.
+     * 
+     * Forces the compiler to ensure the value on the top of the stack is allocated
+     * on the frame of the compiled method. The top value on the stack is replaced
+     * with the address of the value in the frame. This address is valid for the
+     * remainder of the method.
+     * 
+     * <pre>
+     * Format: { u1 opcode;   // STACKADDR
+     *           u2 unused;
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., value
+     */
+    public static final int LSA                  = 241;
+    
+    public static final int PAUSE                = 242;
+    public static final int ADD_SP               = 243;
+    public static final int READ_PC              = 244;
+    public static final int FLUSHW               = 245;
+    public static final int LSB                  = 246;
+    public static final int MSB                  = 247;
 
     // End extended bytecodes
 
@@ -504,6 +552,77 @@ public class Bytecodes {
     public static final int MEMBAR_FENCE       = MEMBAR   | FENCE << 8;
 
     /**
+     * Links a native function.
+     * 
+     * This instruction can only be used in a stub generated for a {@code native} method.
+     * It causes the VM linker to find the address for the native function
+     * corresponding to the native method.
+     *
+     * <pre>
+     * Format: { u1 opcode;  // JNIOP
+     *           u2 op;      // JniOp.LINK
+     *         }
+     *
+     * Operand Stack:
+     *     ... => ...
+     * </pre>
+     */
+    public static final int JNIOP_LINK         = JNIOP | LINK << 8;
+    
+    /**
+     * Effects a transition from compiled Java code to native code.
+     * 
+     * This instruction must appear immediately before {@link #JNICALL} in the instruction stream.
+     *
+     * <pre>
+     * Format: { u1 opcode;  // JNIOP
+     *           u2 op;      // JniOp.J2N
+     *         }
+     *
+     * Operand Stack:
+     *     ... => ...
+     * </pre>
+     */
+    public static final int JNIOP_J2N          = JNIOP | J2N << 8;
+
+    /**
+     * Effects a transition from native code to compiled Java code.
+     * 
+     * This instruction must appear immediately after {@link #JNICALL} in the instruction stream.
+     *
+     * <pre>
+     * Format: { u1 opcode;  // JNIOP
+     *           u2 op;      // JniOp.N2J
+     *         }
+     *
+     * Operand Stack:
+     *     ... => ...
+     * </pre>
+     */
+    public static final int JNIOP_N2J          = JNIOP | N2J << 8;
+    
+    /**
+     * Constants for the operations performed as part of JNI call from compiled Java code
+     * to native code or vice versa.
+     */
+    public static class JniOp {
+        /**
+         * @see Bytecodes#JNIOP_LINK
+         */
+        public static final int LINK = 1;
+        
+        /**
+         * @see Bytecodes#JNIOP_N2J
+         */
+        public static final int N2J = 2;
+
+        /**
+         * @see Bytecodes#JNIOP_J2N
+         */
+        public static final int J2N = 3;
+    }
+    
+    /**
      * Constants and {@link INTRINSIC} definitions for unsigned comparisons.
      */
     public static class UnsignedComparisons {
@@ -528,9 +647,8 @@ public class Bytecodes {
     /**
      * Constants for memory barriers.
      *
-     * The documentation for each constant is taken from the
-     * <a href="http://gee.cs.oswego.edu/dl/jmm/cookbook.html">The JSR-133 Cookbook for Compiler Writers</a>
-     * written by Doug Lea.
+     * The documentation for each constant is taken from Doug Lea's
+     * <a href="http://gee.cs.oswego.edu/dl/jmm/cookbook.html">The JSR-133 Cookbook for Compiler Writers</a>.
      */
     public static class MemoryBarriers {
 
@@ -962,8 +1080,9 @@ public class Bytecodes {
         def("mov_l2d"         , "bii"  , EXTENSION | TRAP);
         def("mov_d2l"         , "bii"  , EXTENSION | TRAP);
         def("ucmp"            , "bii"  , EXTENSION);
-        def("uwcmp"            , "bii"  , EXTENSION);
+        def("uwcmp"           , "bii"  , EXTENSION);
         def("jnicall"         , "bii"  , EXTENSION | TRAP);
+        def("jniop"           , "bii"  , EXTENSION);
         def("call"            , "bii"  , EXTENSION | TRAP);
         def("readreg"         , "bii"  , EXTENSION);
         def("writereg"        , "bii"  , EXTENSION);
@@ -972,7 +1091,7 @@ public class Bytecodes {
         def("safepoint"       , "bii"  , EXTENSION | TRAP);
         def("alloca"          , "bii"  , EXTENSION);
         def("membar"          , "bii"  , EXTENSION);
-        def("stackaddr"       , "bii"  , EXTENSION);
+        def("lsa"             , "bii"  , EXTENSION);
         def("pause"           , "bii"  , EXTENSION);
         def("add_sp"          , "bii"  , EXTENSION);
         def("read_pc"         , "bii"  , EXTENSION);

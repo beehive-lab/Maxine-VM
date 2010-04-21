@@ -18,8 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.cri.ci;
-
 /**
+ * The compiler-provided part of the bi-directional interface between the compiler and the runtime system of a virtual machine for the instruction set defined in
+ * {@link com.sun.cri.bytecode.Bytecodes}.
+ *
+ * The target hardware architecture is represented by {@link com.sun.cri.ci.CiArchitecture} and the specific target machine
+ * environment for a compiler instance is represented by {@link com.sun.cri.ci.CiTarget}.
+ * <p>
+ * A compiler instance is represented by {@link com.sun.cri.ci.CiCompiler} which can compile a single method,
+ * but with possible inlining, and returns a {@link com.sun.cri.ci.CiResult}. A {@code CiResult} encapsulates
+ * {@linkplain com.sun.cri.ci.CiStatistics compilation statistics}, possible {@linkplain com.sun.cri.ci.CiBailout error state}
+ * and the {@linkplain com.sun.cri.ci.CiTargetMethod compiled code and metadata}.
+ * {@link com.sun.cri.ci.CiCodePos} and {@link com.sun.cri.ci.CiDebugInfo} provide detailed information to the
+ * runtime to support debugging and deoptimization of the compiled code.
+ * <p>
+ * The compiler manipulates {@link com.sun.cri.ci.CiValue} instances that have a {@link com.sun.cri.ci.CiKind}, and are
+ * immutable. A concrete {@link com.sun.cri.ci.CiValue value} is one of the following subclasses:
+ * <ul>
+ * <li>{@link com.sun.cri.ci.CiConstant}: a constant value.
+ * <li>{@link com.sun.cri.ci.CiRegisterValue}: a value stored in a {@linkplain com.sun.cri.ci.CiRegister target machine register}.
+ * <li>{@link com.sun.cri.ci.CiStackSlot}: a spill slot or an outgoing stack-based argument in a method's frame.
+ * <li>{@link com.sun.cri.ci.CiAddress}: an address in target machine memory.
+ * <li>{@link com.sun.cri.ci.CiVariable}: a value (cf. virtual register) that is yet to be bound to a target machine location (physical register or memory address).
+ *</ul>
+ *
  * @author Ben Titzer
  */
+package com.sun.cri.ci;
+

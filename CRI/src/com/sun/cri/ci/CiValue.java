@@ -23,15 +23,8 @@ package com.sun.cri.ci;
 
 
 /**
- * Base class for compiler values.
- * 
- * The VM uses {@link CiConstant} and {@link CiAddress}
- * to communicate constants and ABI specific stack locations to the compiler.
- * 
- * The compiler uses all of these classes. In particular, the register allocator
- * uses the {@link CiVariable}, {@link CiStackSlot} and {@link CiRegisterValue}
- * classes when abstract values to machine locations.
- * 
+ * Abstract base class for values manipulated by the compiler. All values have a {@linkplain CiKind kind} and are immutable.
+ *
  * @author Thomas Wuerthinger
  * @author Doug Simon
  */
@@ -55,7 +48,7 @@ public abstract class CiValue {
             return obj == this;
         }
     };
-    
+
     /**
      * The kind of this value.
      */
@@ -73,22 +66,23 @@ public abstract class CiValue {
         return this instanceof CiVariable || this instanceof CiRegisterValue;
     }
 
-    protected Error illegalOperation(String operation) {
-        throw new InternalError("Cannot call " + operation + " on " + this);
-    }
-
     public CiRegister asRegister() {
-        throw illegalOperation("asRegister");
+        throw new InternalError("Not a register: " + this);
     }
 
     public final boolean isIllegal() {
         return this == IllegalValue;
     }
-    
+
     public final boolean isLegal() {
         return this != IllegalValue;
     }
 
+    /**
+     * Determines if this value represents a slot on a stack. These values are created
+     * by the register allocator for spill slots. They are also used to model method
+     * parameters passed on the stack according to a specific calling convention.
+     */
     public final boolean isStackSlot() {
         return this instanceof CiStackSlot;
     }
@@ -108,23 +102,23 @@ public abstract class CiValue {
     public final boolean isConstant() {
         return this instanceof CiConstant;
     }
-    
+
     /**
      * Gets a string name for this value without indicating its {@linkplain #kind kind}.
      */
     public abstract String name();
-    
+
     @Override
     public abstract boolean equals(Object obj);
-    
+
     @Override
     public abstract int hashCode();
-    
+
     @Override
     public final String toString() {
         return name() + kindSuffix();
     }
-    
+
     private final String kindSuffix() {
         if (kind == CiKind.Illegal) {
             return "";

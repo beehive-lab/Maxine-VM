@@ -88,8 +88,8 @@ public class LIRDebugInfo {
             assert stackLocation.index.isIllegal();
             if (stackLocation.base == CiRegister.Frame.asValue()) {
                 int offset = stackLocation.displacement;
-                assert offset % target.arch.wordSize == 0 : "must be aligned";
-                int stackMapIndex = offset / target.arch.wordSize;
+                assert offset % target.wordSize == 0 : "must be aligned";
+                int stackMapIndex = offset / target.wordSize;
                 setBit(debugInfo.frameRefMap, stackMapIndex);
             }
         } else {

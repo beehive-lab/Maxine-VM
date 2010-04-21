@@ -39,7 +39,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * A label specialized for displaying the contents of the "misc." word value in
- * the header of a Maxine object in the VM.
+ * the header of an object in the VM.
  *
  * @author Michael Van De Vanter
  */

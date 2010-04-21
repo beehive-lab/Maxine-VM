@@ -53,6 +53,6 @@ public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvi
     }
 
     public ReferenceTypeProvider[] visibleClasses() {
-        return teleVM().vmAccess().getAllReferenceTypes();
+        return vm().vmAccess().getAllReferenceTypes();
     }
 }

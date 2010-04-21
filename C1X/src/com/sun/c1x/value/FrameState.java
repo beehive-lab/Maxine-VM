@@ -336,6 +336,7 @@ public class FrameState {
      * @param x the instruction to push onto the stack
      */
     public void push(CiKind kind, Value x) {
+        assert kind != CiKind.Void;
         xpush(assertKind(kind, x));
         if (kind.sizeInSlots() == 2) {
             xpush(null);

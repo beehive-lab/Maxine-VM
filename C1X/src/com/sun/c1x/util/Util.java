@@ -305,7 +305,7 @@ public class Util {
                         break;
                     }
                     case 'f': {
-                        sb.append(!method.isLoaded() ? "unresolved" : method.isStatic() ? "static" : "virtual");
+                        sb.append(!method.isResolved() ? "unresolved" : method.isStatic() ? "static" : "virtual");
                         break;
                     }
                     case '%': {
@@ -380,7 +380,7 @@ public class Util {
                         break;
                     }
                     case 'f': {
-                        sb.append(!field.isLoaded() ? "unresolved" : field.isStatic() ? "static" : "instance");
+                        sb.append(!field.isResolved() ? "unresolved" : field.isStatic() ? "static" : "instance");
                         break;
                     }
                     case '%': {
@@ -537,9 +537,9 @@ public class Util {
         return ((number + mod - 1) / mod) * mod;
     }
 
-    public static void truncate(List<?> instructions, int length) {
-        while (instructions.size() > length) {
-            instructions.remove(instructions.size() - 1);
+    public static void truncate(List<?> list, int length) {
+        while (list.size() > length) {
+            list.remove(list.size() - 1);
         }
     }
 

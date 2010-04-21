@@ -390,7 +390,7 @@ public abstract class StackFrameWalker {
             if (cursor.targetMethod != null) {
                 Log.print("StackFrameWalk: Frame for ");
                 if (cursor.targetMethod.classMethodActor() == null) {
-                    Log.print(cursor.targetMethod.description());
+                    Log.print(cursor.targetMethod.regionName());
                 } else {
                     Log.printMethod(cursor.targetMethod, false);
                 }
@@ -420,9 +420,9 @@ public abstract class StackFrameWalker {
             final ClassMethodActor classMethodActor = lastJavaCallee.classMethodActor();
             if (classMethodActor.isVmEntryPoint() && !classMethodActor.isTrapStub()) {
                 Log.print("Caller of VM entry point (@VM_ENTRY_POINT annotated method) \"");
-                Log.print(lastJavaCallee.description());
+                Log.print(lastJavaCallee.regionName());
                 Log.print("\" is not native code: ");
-                Log.print(targetMethod.description());
+                Log.print(targetMethod.regionName());
                 Log.print(targetMethod.classMethodActor().descriptor().string);
                 Log.print(" in ");
                 Log.println(targetMethod.classMethodActor().holder().name.string);

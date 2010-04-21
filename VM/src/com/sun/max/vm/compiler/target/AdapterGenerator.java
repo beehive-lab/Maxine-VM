@@ -256,7 +256,7 @@ public abstract class AdapterGenerator {
                 if (verboseOption.verboseCompilation) {
                     Log.printCurrentThread(false);
                     Log.print(": Created adapter  ");
-                    Log.println(adapter.description());
+                    Log.println(adapter.regionName());
                 }
                 adapters.put(sig, adapter);
             }

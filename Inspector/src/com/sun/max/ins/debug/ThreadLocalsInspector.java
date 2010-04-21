@@ -155,7 +155,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
             public void procedure() {
                 final ThreadLocalsAreaPanel threadLocalsAreaPanel = (ThreadLocalsAreaPanel) tabbedPane.getSelectedComponent();
                 final String name = getTextForTitle() + " " + threadLocalsAreaPanel.getSafepointState().toString();
-                final MessageFormat footer = new MessageFormat("Maxine: " + name + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
+                final MessageFormat footer = new MessageFormat(vm().entityName() + ": " + name + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
                 try {
                     final InspectorTable inspectorTable = threadLocalsAreaPanel.getTable();
                     assert inspectorTable != null;

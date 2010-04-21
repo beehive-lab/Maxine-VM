@@ -24,7 +24,7 @@ import java.util.*;
 
 
 /**
- * This class represents a CPU architecture, including information such as its endianness, CPU
+ * Represents a CPU architecture, including information such as its endianness, CPU
  * registers, word width, etc.
  *
  * @author Ben L. Titzer
@@ -32,6 +32,9 @@ import java.util.*;
  */
 public abstract class CiArchitecture {
 
+    /**
+     * The endianness of the architecture.
+     */
     public static enum ByteOrder {
         LittleEndian,
         BigEndian
@@ -67,11 +70,11 @@ public abstract class CiArchitecture {
      * array is equal to its {@linkplain CiRegister#number number}.
      */
     public final CiRegister[] registers;
-    
+
     public final HashMap<String, CiRegister> registersByName;
 
     /**
-     * The bit ordering can be either little or big endian.
+     * The byte ordering can be either little or big endian.
      */
     public final ByteOrder byteOrder;
 
@@ -98,7 +101,7 @@ public abstract class CiArchitecture {
             this.lowWordOffset = wordSize;
             this.highWordOffset = 0;
         }
-        
+
         registersByName = new HashMap<String, CiRegister>(registers.length);
         for (CiRegister register : registers) {
             registersByName.put(register.name, register);
@@ -111,7 +114,7 @@ public abstract class CiArchitecture {
      * @return the string representation of this architecture
      */
     @Override
-    public String toString() {
+    public final String toString() {
         return name.toLowerCase();
     }
 
@@ -119,7 +122,7 @@ public abstract class CiArchitecture {
      * Checks whether this is a 32-bit architecture.
      * @return {@code true} if this architecture is 32-bit
      */
-    public boolean is32bit() {
+    public final boolean is32bit() {
         return wordSize == 4;
     }
 
@@ -127,25 +130,12 @@ public abstract class CiArchitecture {
      * Checks whether this is a 64-bit architecture.
      * @return {@code true} if this architecture is 64-bit
      */
-    public boolean is64bit() {
+    public final boolean is64bit() {
         return wordSize == 8;
     }
 
-    /**
-     * Checks whether the backend is x86.
-     * @return {@code true} if the backend of this architecture is x86
-     */
-    public boolean isX86() {
-        return false;
-    }
-
-    /**
-     * Checks whether the backend is SPARC.
-     * @return {@code true} if the backend of this architecture is SPARC
-     */
-    public boolean isSPARC() {
-        return false;
-    }
+    // The following methods are architecture specific and not dependent on state
+    // stored in this class. They have convenient default implementations.
 
     /**
      * Checks whether this architecture's normal arithmetic instructions use a two-operand form
@@ -155,4 +145,24 @@ public abstract class CiArchitecture {
     public boolean twoOperandMode() {
         return false;
     }
+
+    // TODO: Why enumerate the concrete subclasses here rather
+    // than use instanceof comparisons in code that cares?
+
+    /**
+     * Checks whether the architecture is x86.
+     * @return {@code true} if the architecture is x86
+     */
+    public boolean isX86() {
+        return false;
+    }
+
+    /**
+     * Checks whether the architecture is SPARC.
+     * @return {@code true} if the architecture is SPARC
+     */
+    public boolean isSPARC() {
+        return false;
+    }
+
 }

@@ -78,9 +78,9 @@ final class RegisterVerifier {
     void verify(BlockBegin start) {
         // setup input registers (method arguments) for first block
         Interval[] inputState = new Interval[stateSize()];
-        CallingConvention args = compilation().frameMap().incomingArguments();
-        for (int n = 0; n < args.operands.length; n++) {
-            CiValue operand = args.operands[n];
+        CiCallingConvention args = compilation().frameMap().incomingArguments();
+        for (int n = 0; n < args.locations.length; n++) {
+            CiValue operand = args.locations[n];
             if (operand.isRegister()) {
                 CiValue reg = operand;
                 Interval interval = intervalAt(reg);

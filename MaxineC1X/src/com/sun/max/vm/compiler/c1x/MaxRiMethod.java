@@ -140,7 +140,7 @@ public class MaxRiMethod implements RiMethod {
         return false;
     }
 
-    public boolean isLoaded() {
+    public boolean isResolved() {
         return methodActor != null;
     }
 

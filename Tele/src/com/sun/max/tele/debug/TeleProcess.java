@@ -29,7 +29,6 @@ import java.util.concurrent.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -155,7 +154,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     }
 
                     // Read VM memory and update various bits of cached state about the VM state
-                    teleVM().refresh(++epoch);
+                    vm().refresh(++epoch);
                     refreshThreads();
                     targetBreakpointManager().setActiveAll(false);
 
@@ -295,14 +294,14 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             while (true) {
                 try {
                     final TeleEventRequest request = requests.takeLast();
-                    teleVM().lock();
+                    vm().lock();
                     Trace.begin(TRACE_VALUE, tracePrefix() + "handling execution request: " + request);
                     execute(request, false);
                     Trace.end(TRACE_VALUE, tracePrefix() + "handling execution request: " + request);
                 } catch (InterruptedException interruptedException) {
                     ProgramWarning.message(tracePrefix() + "Could not take request from sceduling queue: " + interruptedException);
                 } finally {
-                    teleVM().unlock();
+                    vm().unlock();
                 }
             }
         }
@@ -398,7 +397,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * any requests.
      */
     public final void initializeState() {
-        teleVM().refresh(epoch);
+        vm().refresh(epoch);
         updateState(processState);
     }
 
@@ -754,7 +753,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             this.threadsDied.isEmpty() ? EMPTY_THREAD_SEQUENCE : new ArrayListSequence<TeleNativeThread>(this.threadsDied);
         this.threadsStarted.clear();
         this.threadsDied.clear();
-        teleVM().notifyStateChange(processState, epoch, lastSingleStepThread, handleToThreadMap.values(), threadsStarted, threadsDied, breakpointEvents, teleWatchpointEvent);
+        vm().notifyStateChange(processState, epoch, lastSingleStepThread, handleToThreadMap.values(), threadsStarted, threadsDied, breakpointEvents, teleWatchpointEvent);
     }
 
     private void updateState(ProcessState newState) {
@@ -780,12 +779,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             // Executed a return
             return null;
         }
-        final TeleTargetMethod oldTeleTargetMethod = TeleTargetMethod.make(teleVM(), oldInstructionPointer);
+        final TeleTargetMethod oldTeleTargetMethod = TeleTargetMethod.make(vm(), oldInstructionPointer);
         if (oldTeleTargetMethod == null) {
             // Stepped from native code:
             return null;
         }
-        final TeleTargetMethod newTeleTargetMethod = TeleTargetMethod.make(teleVM(), newInstructionPointer);
+        final TeleTargetMethod newTeleTargetMethod = TeleTargetMethod.make(vm(), newInstructionPointer);
         if (newTeleTargetMethod == null) {
             // Stepped into native code:
             return null;
@@ -908,9 +907,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         assert state >= 0 && state < MaxThreadState.VALUES.length() : state;
         TeleNativeThread thread = handleToThreadMap.get(localHandle);
 
-        final MemoryRegion stackRegion = new TeleMemoryRegion(Address.fromLong(stackBase), Size.fromLong(stackSize), "stack region");
-        MemoryRegion threadLocalsRegion =
-            (tlb == 0) ? null :  new TeleMemoryRegion(Address.fromLong(tlb), Size.fromLong(tlbSize), "thread locals region");
+        final TeleFixedMemoryRegion stackRegion = new TeleFixedMemoryRegion(vm(), "stack region", Address.fromLong(stackBase), Size.fromLong(stackSize));
+        TeleFixedMemoryRegion threadLocalsRegion =
+            (tlb == 0) ? null :  new TeleFixedMemoryRegion(vm(), "thread locals region", Address.fromLong(tlb), Size.fromLong(tlbSize));
 
         Params params = new Params();
         params.id = id;

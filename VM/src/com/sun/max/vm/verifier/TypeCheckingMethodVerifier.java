@@ -1280,6 +1280,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         @Override
         public void jnicall(int nativeFunctionDescriptorIndex) {
             final SignatureDescriptor nativeFunctionDescriptor = SignatureDescriptor.create(constantPool().utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
+            frame.pop(VerificationType.WORD); // the native function address
             popMethodParameters(nativeFunctionDescriptor);
             pushMethodResult(nativeFunctionDescriptor);
         }

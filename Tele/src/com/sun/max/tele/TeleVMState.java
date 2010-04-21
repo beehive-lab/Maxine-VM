@@ -38,21 +38,22 @@ public final class TeleVMState implements MaxVMState {
     private static final Sequence<MaxThread> EMPTY_MAXTHREAD_SEQUENCE  = Sequence.Static.empty(MaxThread.class);
     private static final Sequence<MaxBreakpointEvent>   EMPTY_MAXBREAKPOINTEVENT_SEQUENCE = Sequence.Static.empty(MaxBreakpointEvent.class);
 
-
-    public static final TeleVMState NONE = new TeleVMState(ProcessState.UNKNOWN,
+    public static final TeleVMState NONE = new TeleVMState(
+        ProcessState.UNKNOWN,
         -1L,
+        Sequence.Static.empty(MaxMemoryRegion.class),
         EMPTY_THREAD_COLLECTION,
         (TeleNativeThread) null,
         EMPTY_THREAD_SEQUENCE,
         EMPTY_THREAD_SEQUENCE,
         Sequence.Static.empty(TeleBreakpointEvent.class),
         (TeleWatchpointEvent) null,
-        false,
-        (TeleVMState) null);
+        false, (TeleVMState) null);
 
     private final ProcessState processState;
     private final long serialID;
     private final long epoch;
+    private final Sequence<MaxMemoryRegion> memoryRegions;
     private final Sequence<MaxThread> threads;
     private final MaxThread singleStepThread;
     private final Sequence<MaxThread> threadsStarted;
@@ -65,6 +66,7 @@ public final class TeleVMState implements MaxVMState {
     /**
      * @param processState current state of the VM
      * @param epoch current process epoch counter
+     * @param memoryRegions memory regions the VM has allocated from the OS
      * @param threads threads currently active in the VM
      * @param singleStepThread thread just single-stepped, null if none
      * @param threadsStarted threads created since the previous state
@@ -74,19 +76,28 @@ public final class TeleVMState implements MaxVMState {
      * @param isInGC is the VM, when paused, in a GC
      * @param previous previous state
      */
-    public TeleVMState(ProcessState processState,
+    public TeleVMState(
+                    ProcessState processState,
                     long epoch,
+                    Sequence<MaxMemoryRegion> memoryRegions,
                     Collection<TeleNativeThread> threads,
                     TeleNativeThread singleStepThread,
                     Sequence<TeleNativeThread> threadsStarted,
                     Sequence<TeleNativeThread> threadsDied,
                     Sequence<TeleBreakpointEvent> breakpointEvents,
                     TeleWatchpointEvent teleWatchpointEvent,
-                    boolean isInGC,
-                    TeleVMState previous) {
+                    boolean isInGC, TeleVMState previous) {
         this.processState = processState;
         this.serialID = previous == null ? 0 : previous.serialID() + 1;
         this.epoch = epoch;
+
+        // Reuse old list of memory regions if unchanged
+        if (previous != null && Sequence.Static.equals(previous.memoryRegions, memoryRegions)) {
+            this.memoryRegions = previous.memoryRegions;
+        } else {
+            this.memoryRegions = new VectorSequence<MaxMemoryRegion>(memoryRegions);
+        }
+
         this.singleStepThread = singleStepThread;
         this.threadsStarted = threadsStarted.length() == 0 ? EMPTY_MAXTHREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsStarted);
         this.threadsDied = threadsDied.length() == 0 ? EMPTY_MAXTHREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsDied);
@@ -118,6 +129,10 @@ public final class TeleVMState implements MaxVMState {
 
     public long epoch() {
         return epoch;
+    }
+
+    public Sequence<MaxMemoryRegion> memoryRegions() {
+        return memoryRegions;
     }
 
     public Sequence<MaxThread> threads() {
@@ -183,7 +198,15 @@ public final class TeleVMState implements MaxVMState {
             sb.append("gc=").append(state.isInGC()).append(" ");
             printStream.println(sb.toString());
             if (state.singleStepThread() != null) {
-                printStream.println("\tstep=" + state.singleStepThread().toShortString());
+                printStream.println("\tsingle-stepped=" + state.singleStepThread().toShortString());
+            }
+            if (state.previous() != null && state.memoryRegions() == state.previous().memoryRegions()) {
+                printStream.println("\tmemory regions: <unchanged>");
+            } else {
+                printStream.println("\tmemory regions:");
+                for (MaxMemoryRegion memoryRegion : state.memoryRegions()) {
+                    printStream.println("\t\t" + memoryRegion.getClass().getName() + "(\"" + memoryRegion.regionName() + "\" @ 0x" + memoryRegion.start().toHexString() + ")");
+                }
             }
             if (state.previous() != null && state.threads() == state.previous().threads()) {
                 printStream.println("\tthreads active: <unchanged>");

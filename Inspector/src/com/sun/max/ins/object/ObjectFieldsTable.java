@@ -35,7 +35,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -44,7 +43,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table that displays Maxine object fields; for use in an instance of {@link ObjectInspector}.
+ * A table that displays object fields; for use in an instance of {@link ObjectInspector}.
  *
  * @author Michael Van De Vanter
  */
@@ -65,7 +64,7 @@ public final class ObjectFieldsTable extends InspectorTable {
     private final ObjectViewPreferences instanceViewPreferences;
 
     /**
-     * A {@link JTable} specialized to display Maxine object fields.
+     * A {@link JTable} specialized to display object fields.
      *
      * @param objectInspector parent that contains this panel
      * @param fieldActors description of the fields to be displayed
@@ -219,7 +218,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         @Override
-        public MemoryRegion getMemoryRegion(int row) {
+        public MaxMemoryRegion getMemoryRegion(int row) {
             return teleObject.fieldMemoryRegion(fieldActors[row]);
         }
 

@@ -23,8 +23,9 @@ package com.sun.max.ins.gui;
 import com.sun.max.collect.*;
 
 /**
- * Callback interface for views that incorporate of row-based searching and
- * allow forward and backward navigation among the most recent set of matching rows.
+ * Callback interface for views that incorporate of row-based searching.
+ * <br>
+ * Supports forward and backward navigation among the most recent set of matching rows.
  *
  * @author Michael Van De Vanter
  */

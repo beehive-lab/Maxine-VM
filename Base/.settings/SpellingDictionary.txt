@@ -43,7 +43,10 @@ abi
 accessor
 affordance
 affordances
+allocatable
 appendable
+bailed
+bailout
 beltway
 bytecode
 bytecodes
@@ -53,6 +56,7 @@ callees
 cannonical
 cannonicalizer
 checkbox
+checkcast
 checkstyle
 classfile
 classloader
@@ -76,6 +80,8 @@ emitting
 entrypoint
 enum
 epilogue
+finalizer
+finalizers
 floatable
 generational
 growable
@@ -106,6 +112,7 @@ jit
 lexer
 linux
 logo
+malformed
 malloc
 metadata
 misc
@@ -151,6 +158,7 @@ semispace
 semispaces
 settable
 shootout
+snippet
 stderr
 stdout
 struct

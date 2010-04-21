@@ -23,7 +23,7 @@ package com.sun.cri.ri;
 import com.sun.cri.ci.*;
 
 /**
- * This interface represents method profiling information from the runtime system, including the
+ * Represents method profiling information from the runtime system, including the
  * locations for invocation counters, bytecode location counters, etc.
  *
  * @author Ben L. Titzer

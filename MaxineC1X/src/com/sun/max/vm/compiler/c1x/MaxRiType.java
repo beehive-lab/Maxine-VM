@@ -30,6 +30,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.type.JavaTypeDescriptor.*;
+import com.sun.max.vm.value.*;
 
 /**
  * The {@code MaxRiType} class represents a compiler interface type,
@@ -184,7 +185,7 @@ public class MaxRiType implements RiType {
      * Checks whether this compiler interface type is loaded (i.e. resolved).
      * @return {@code true} if the type is loaded
      */
-    public boolean isLoaded() {
+    public boolean isResolved() {
         return classActor != null;
     }
 
@@ -347,6 +348,33 @@ public class MaxRiType implements RiType {
                 return CiKind.Object;
             case VOID:
                 return CiKind.Void;
+            default:
+                throw ProgramError.unknownCase();
+        }
+    }
+
+    public static CiConstant toCiConstant(Value value) {
+        switch (value.kind().asEnum) {
+            case BYTE:
+                return CiConstant.forByte(value.asByte());
+            case BOOLEAN:
+                return CiConstant.forBoolean(value.asBoolean());
+            case SHORT:
+                return CiConstant.forShort(value.asShort());
+            case CHAR:
+                return CiConstant.forChar(value.asChar());
+            case INT:
+                return CiConstant.forInt(value.asInt());
+            case FLOAT:
+                return CiConstant.forFloat(value.asFloat());
+            case LONG:
+                return CiConstant.forLong(value.asLong());
+            case DOUBLE:
+                return CiConstant.forDouble(value.asDouble());
+            case WORD:
+                return CiConstant.forWord(value.asWord().asAddress().toLong());
+            case REFERENCE:
+                return CiConstant.forObject(value.asObject());
             default:
                 throw ProgramError.unknownCase();
         }

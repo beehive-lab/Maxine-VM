@@ -30,7 +30,6 @@ import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.*;
-import com.sun.c1x.lir.LIRCall.*;
 import com.sun.c1x.stub.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -90,7 +89,7 @@ public class LIRList {
     }
 
     public void callNative(CiValue address, String symbol, CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
-        append(new LIRCall(LIROpcode.NativeCall, new NativeFunction(address, symbol), result, arguments, info, false));
+        append(new LIRCall(LIROpcode.NativeCall, symbol, result, arguments, info, true));
     }
 
     public void membar(LIROpcode opcode) {
@@ -121,22 +120,18 @@ public class LIRList {
         append(new LIRLabel(lbl));
     }
 
-    public void negate(CiValue from, CiValue to, GlobalStub globalStub) {
-        LIROp1 op = new LIROp1(LIROpcode.Neg, from, to);
+    public void negate(CiValue src, CiValue dst, GlobalStub globalStub) {
+        LIROp1 op = new LIROp1(LIROpcode.Neg, src, dst);
         op.globalStub = globalStub;
         append(op);
     }
 
-    public void leal(CiValue from, CiValue resultReg) {
-        append(new LIROp1(LIROpcode.Leal, from, resultReg));
+    public void lea(CiValue src, CiValue dst) {
+        append(new LIROp1(LIROpcode.Lea, src, dst));
     }
 
-    public void unalignedMove(CiAddress src, CiValue dst) {
+    public void unalignedMove(CiValue src, CiValue dst) {
         append(new LIROp1(LIROp1.LIRMoveKind.Unaligned, src, dst, dst.kind, null));
-    }
-
-    public void unalignedMove(CiValue src, CiAddress dst) {
-        append(new LIROp1(LIROp1.LIRMoveKind.Unaligned, src, dst, src.kind, null));
     }
 
     public void move(CiAddress src, CiValue dst, LIRDebugInfo info) {
@@ -322,6 +317,10 @@ public class LIRList {
 
     public void callRuntime(CiRuntimeCall rtCall, CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
         append(new LIRCall(LIROpcode.DirectCall, rtCall, result, arguments, info, false));
+    }
+
+    public void pause() {
+        append(new LIROp0(LIROpcode.Pause));
     }
 
     public void prefetch(CiAddress addr, boolean isStore) {

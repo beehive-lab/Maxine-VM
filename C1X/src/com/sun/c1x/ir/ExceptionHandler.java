@@ -134,7 +134,7 @@ public class ExceptionHandler {
 
     public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, RiType klass, boolean typeIsExact) {
         // the type is unknown so be conservative
-        if (!klass.isLoaded()) {
+        if (!klass.isResolved()) {
             return true;
         }
 
@@ -146,7 +146,7 @@ public class ExceptionHandler {
             }
             RiType handlerKlass = handler.handler.catchKlass();
             // if it's unknown it might be catchable
-            if (!handlerKlass.isLoaded()) {
+            if (!handlerKlass.isResolved()) {
                 return true;
             }
             // if the throw type is definitely a subtype of the catch type

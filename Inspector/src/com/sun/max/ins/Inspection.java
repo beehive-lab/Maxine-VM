@@ -45,7 +45,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 
 /**
- * Holds the user interaction state for the inspection of a Maxine VM, which is accessed via a surrogate implementing {@link MaxVM}.
+ * Holds the user interaction state for the inspection of a VM, which is accessed via a surrogate implementing {@link MaxVM}.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
