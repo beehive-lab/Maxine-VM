@@ -41,7 +41,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Canonical surrogate for several possible kinds of compilation of a Java {@link ClassMethod} in the {@link TeleVM}.
+ * Canonical surrogate for several possible kinds of compilation of a Java {@link ClassMethod} in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -67,7 +67,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         TeleTargetMethod teleTargetMethod = teleVM.findTeleTargetRoutine(TeleTargetMethod.class, address);
         if (teleTargetMethod == null
                         && teleVM.findTeleTargetRoutine(TeleTargetRoutine.class, address) == null
-                        && teleVM.containsInCode(address)) {
+                        && teleVM.codeCache().contains(address)) {
             // Not a known java target method, and not some other kind of known target code, but in a code region
             // See if the code manager in the VM knows about it.
             try {
@@ -91,7 +91,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      *
      * @param teleVM the VM to search
      * @param methodKey the key denoting a method for which the target methods are being requested
-     * @return local surrogates for all {@link TargetMethod}s in the {@link TeleVM} that include code compiled for the
+     * @return local surrogates for all {@link TargetMethod}s in the VM that include code compiled for the
      *         method matching {@code methodKey}
      */
     public static Sequence<TeleTargetMethod> get(TeleVM teleVM, MethodKey methodKey) {
@@ -127,7 +127,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         // Exception to the general policy of not performing VM i/o during object
         // construction.  This is needed for the code registry.
         // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
-        targetCodeRegion = new TargetCodeRegion(this, start(), size());
+        targetCodeRegion = new MethodTargetCodeRegion(teleVM, this);
         // Register every method compilation, so that they can be located by code address.
         teleVM.registerTeleTargetRoutine(this);
     }
@@ -163,8 +163,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      */
     public TeleClassMethodActor getTeleClassMethodActor() {
         if (teleClassMethodActor == null) {
-            final Reference classMethodActorReference = teleVM().teleFields().TargetMethod_classMethodActor.readReference(reference());
-            teleClassMethodActor = (TeleClassMethodActor) teleVM().makeTeleObject(classMethodActorReference);
+            final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
+            teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
         }
         return teleClassMethodActor;
     }
@@ -194,8 +194,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         if (codeStart.isZero()) {
             return Address.zero();
         }
-        final Reference callEntryPointReference = TeleInstanceReferenceFieldAccess.readPath(reference(), teleVM().teleFields().TargetMethod_abi, teleVM().teleFields().TargetABI_callEntryPoint);
-        final TeleObject teleCallEntryPoint = teleVM().makeTeleObject(callEntryPointReference);
+        final Reference callEntryPointReference = TeleInstanceReferenceFieldAccess.readPath(reference(), vm().teleFields().TargetMethod_abi, vm().teleFields().TargetABI_callEntryPoint);
+        final TeleObject teleCallEntryPoint = vm().makeTeleObject(callEntryPointReference);
         if (teleCallEntryPoint == null) {
             return codeStart;
         }
@@ -213,8 +213,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         if (codeStart.isZero()) {
             return null;
         }
-        final Reference callEntryPointReference = TeleInstanceReferenceFieldAccess.readPath(reference(), teleVM().teleFields().TargetMethod_abi, teleVM().teleFields().TargetABI_callEntryPoint);
-        final TeleObject teleCallEntryPoint = teleVM().makeTeleObject(callEntryPointReference);
+        final Reference callEntryPointReference = TeleInstanceReferenceFieldAccess.readPath(reference(), vm().teleFields().TargetMethod_abi, vm().teleFields().TargetABI_callEntryPoint);
+        final TeleObject teleCallEntryPoint = vm().makeTeleObject(callEntryPointReference);
         if (teleCallEntryPoint == null) {
             return getCodeStartLocation();
         }
@@ -224,7 +224,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     /**
-     * Gets the byte array containing the target-specific machine code of this target method in the {@link TeleVM}.
+     * Gets the byte array containing the target-specific machine code of this target method in the VM.
      * @see TargetMethod#code()
      */
     public final byte[] getCode() {
@@ -232,15 +232,15 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     /**
-     * Gets the length of the byte array containing the target-specific machine code of this target method in the {@link TeleVM}.
+     * Gets the length of the byte array containing the target-specific machine code of this target method in the VM.
      * @see TargetMethod#codeLength()
      */
     public final int getCodeLength() {
-        final Reference codeReference = teleVM().teleFields().TargetMethod_code.readReference(reference());
+        final Reference codeReference = vm().teleFields().TargetMethod_code.readReference(reference());
         if (codeReference.isZero()) {
             return 0;
         }
-        final TeleArrayObject teleCodeArrayObject = (TeleArrayObject) teleVM().makeTeleObject(codeReference);
+        final TeleArrayObject teleCodeArrayObject = (TeleArrayObject) vm().makeTeleObject(codeReference);
         return teleCodeArrayObject.getLength();
     }
 
@@ -251,7 +251,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         if (instructions == null) {
             final byte[] code = getCode();
             if (code != null) {
-                instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind, getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
+                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
             }
         }
         return instructions;
@@ -359,8 +359,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
 
     public TargetABI getAbi() {
         if (abi == null) {
-            final Reference abiReference = teleVM().teleFields().TargetMethod_abi.readReference(reference());
-            final TeleObject teleTargetABI = teleVM().makeTeleObject(abiReference);
+            final Reference abiReference = vm().teleFields().TargetMethod_abi.readReference(reference());
+            final TeleObject teleTargetABI = vm().makeTeleObject(abiReference);
             if (teleTargetABI != null) {
                 synchronized (abiCache) {
                     abi = abiCache.get(teleTargetABI);
@@ -430,7 +430,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      */
     class ReducedDeepCopier extends DeepCopier {
         public ReducedDeepCopier() {
-            TeleFields teleFields = teleVM().teleFields();
+            TeleFields teleFields = vm().teleFields();
             omit(teleFields.TargetMethod_scalarLiterals.fieldActor());
             omit(teleFields.TargetMethod_referenceLiterals.fieldActor());
             abi = teleFields.TargetMethod_abi.fieldActor();
@@ -453,7 +453,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
 
     @Override
     public ReferenceTypeProvider getReferenceType() {
-        return teleVM().vmAccess().getReferenceType(getClass());
+        return vm().vmAccess().getReferenceType(getClass());
     }
 
     /**

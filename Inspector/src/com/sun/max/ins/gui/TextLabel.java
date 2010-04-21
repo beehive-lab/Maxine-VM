@@ -23,7 +23,7 @@ package com.sun.max.ins.gui;
 import com.sun.max.ins.*;
 
 /**
- * A textual label specialized for use in the Maxine Inspector.
+ * A textual label specialized for use in the VM Inspector.
  *
  * @author Michael Van De Vanter
   */

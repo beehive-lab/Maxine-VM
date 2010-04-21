@@ -20,21 +20,38 @@
  */
 package com.sun.max.ins.gui;
 
-import java.awt.*;
+import com.sun.max.ins.*;
+import com.sun.max.tele.*;
 
-public final class Components {
+/**
+ * A label that displays the name of a known VM memory region and acts as a drag source.
+ *
+ * @author Michael Van De Vanter
+ */
+public final class MemoryRegionNameLabel extends AbstractMemoryRegionLabel implements Prober {
 
-    private Components() {
+    /**
+     * Creates a label that displays the name of a known memory region and
+     * acts as a drag source.
+     *
+     * @param inspection
+     * @param memoryRegion a memory region in the VM
+     * @return a component for displaying the cell
+     */
+    public MemoryRegionNameLabel(Inspection inspection, MaxMemoryRegion memoryRegion) {
+        super(inspection, memoryRegion);
+        redisplay();
+        refresh(true);
     }
 
-    public static int getIndex(Component component) {
-        final Container parent = component.getParent();
-        for (int i = 0; i < parent.getComponentCount(); i++) {
-            if (parent.getComponent(i) == component) {
-                return i;
-            }
-        }
-        return -1;
+    public void redisplay() {
+        setFont(style().javaNameFont());
     }
 
+    public void refresh(boolean force) {
+        final String regionName = memoryRegion.regionName();
+        setText(regionName);
+        setToolTipText("Memory region: " + regionName);
+    }
 }
+

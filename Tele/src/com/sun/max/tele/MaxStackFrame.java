@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
@@ -31,7 +30,7 @@ import com.sun.max.vm.stack.StackFrameWalker.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxStackFrame {
+public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
 
     /**
      * Gets the stack containing this frame.
@@ -92,15 +91,6 @@ public interface MaxStackFrame {
     Pointer fp();
 
     /**
-     * Gets a description of the memory occupied by this frame in the VM.
-     * <br>
-     * Thread-safe
-     *
-     * @return the memory occupied by this frame; null if unknown or unavailable
-     */
-    MemoryRegion memoryRegion();
-
-    /**
      * Get's the conceptual location in code for each frame, independent of underlying
      * stack representation.
      * <br>
@@ -113,6 +103,7 @@ public interface MaxStackFrame {
      */
     MaxCodeLocation codeLocation();
 
+    // TODO (mlvdv) eliminate use of the VM class return type TargetMethod
     /**
      * Gets the compiled method enclosing the {@linkplain #ip() execution point} in this frame, if any.
      * <br>
@@ -121,6 +112,11 @@ public interface MaxStackFrame {
      * @return null if this is a frame of a native function or other special frame not associated with a method
      */
     TargetMethod targetMethod();
+
+
+    // TODO (mlvdv) temporary method; replace with a call to get memory region on the method class
+    // when there is one to replace use of TargetMethod.
+    MaxMemoryRegion getTargetMethodMemoryRegion();
 
     /**
      * Determines if this frame and another refer to the same frame.
@@ -131,11 +127,6 @@ public interface MaxStackFrame {
      * @return whether the two refer to the same frame
      */
     boolean isSameFrame(MaxStackFrame stackFrame);
-
-    /**
-     * @return a human-readable description of this frame, suitable for debugging
-     */
-    String description();
 
     /**
      * A stack frame holding the activation of a compiled method.

@@ -28,7 +28,7 @@ import com.sun.max.unsafe.*;
 
 
 /**
- * A region of memory in the VM with an allocation mark.
+ * A runtime allocated region of memory in the VM with an allocation mark.
  *
  * @author Michael Van De Vanter
  */
@@ -74,7 +74,8 @@ public class LinearAllocationMemoryRegion extends RuntimeMemoryRegion {
 
     @Override
     public MemoryUsage getUsage() {
-        return new MemoryUsage(size.toLong(), used().toLong(), size.toLong(), size.toLong());
+        final long sizeAsLong = size.toLong();
+        return new MemoryUsage(sizeAsLong, getAllocationMark().minus(start).toLong(), sizeAsLong, sizeAsLong);
     }
 
     @INLINE

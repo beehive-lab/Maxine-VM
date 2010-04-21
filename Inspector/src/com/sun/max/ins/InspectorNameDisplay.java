@@ -24,10 +24,8 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -99,7 +97,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      *
      * @param prefix an optional string to precede everything else
      * @param teleObject an optional surrogate for the tele object being named, null if local
-     * @param role an optional "role" name for low level Maxine objects whose implementation types aren't too interesting
+     * @param role an optional "role" name for low level VM objects whose implementation types aren't too interesting
      * @param type a name to describe the object, type name in simple cases
      * @return human readable string identifying an object in a standard format
      */
@@ -209,14 +207,14 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. "Element.foo()[0]"
      */
     public String veryShortName(TeleTargetMethod teleTargetMethod) {
-        return teleTargetMethod.classMethodActor() == null ? teleTargetMethod.description() : teleTargetMethod.classMethodActor().format("%h.%n()" + methodCompilationID(teleTargetMethod));
+        return teleTargetMethod.classMethodActor() == null ? teleTargetMethod.getRegionName() : teleTargetMethod.classMethodActor().format("%h.%n()" + methodCompilationID(teleTargetMethod));
     }
 
     /**
      * E.g. "foo(Pointer, Word, int[])[0]"
      */
     public String shortName(TeleTargetMethod teleTargetMethod) {
-        return teleTargetMethod.classMethodActor() == null ? teleTargetMethod.description() : teleTargetMethod.classMethodActor().format("%n(%p)" + methodCompilationID(teleTargetMethod));
+        return teleTargetMethod.classMethodActor() == null ? teleTargetMethod.getRegionName() : teleTargetMethod.classMethodActor().format("%n(%p)" + methodCompilationID(teleTargetMethod));
     }
 
     /**
@@ -228,7 +226,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final ClassMethodActor classMethodActor = teleTargetMethod.classMethodActor();
 
         if (classMethodActor == null) {
-            return teleTargetMethod.description();
+            return teleTargetMethod.getRegionName();
         }
 
         switch (returnTypeSpecification) {
@@ -380,41 +378,51 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         return name.toString();
     }
 
-    public String shortName(MemoryRegion memoryRegion) {
-        return memoryRegion.description();
+    public String shortName(MaxMemoryRegion memoryRegion) {
+        return memoryRegion.regionName();
     }
 
-    public String longName(MemoryRegion memoryRegion) {
-        final String description = memoryRegion.description();
-        if (memoryRegion == vm().teleBootHeapRegion()) {
+    public String longName(MaxMemoryRegion memoryRegion) {
+        assert memoryRegion != null;
+        final String regionName = memoryRegion.regionName();
+
+        // Is it a heap region?
+        if (memoryRegion.sameAs(vm().heap().bootHeapRegion().memoryRegion())) {
             return "Boot heap region";
         }
-        if (Sequence.Static.containsIdentical(vm().teleHeapRegions(), memoryRegion)) {
-            return "Dynamic heap region:  " + description + heapSchemeSuffix;
+        for (MaxHeapRegion heapRegion : vm().heap().heapRegions()) {
+            if (memoryRegion.sameAs(heapRegion.memoryRegion())) {
+                return "Dynamic heap region:  " + regionName + heapSchemeSuffix;
+            }
         }
-        if (memoryRegion == vm().teleImmortalHeapRegion()) {
-            return "Immortal heap: " + description;
+        final MaxHeapRegion immortalHeapRegion = vm().heap().immortalHeapRegion();
+        if (immortalHeapRegion != null && memoryRegion.sameAs(immortalHeapRegion.memoryRegion())) {
+            return "Immortal heap: " + regionName;
+        }
+        if (memoryRegion.sameAs(vm().heap().rootsMemoryRegion())) {
+            return "Inspector roots region: " + regionName;
         }
 
-        if (memoryRegion == vm().teleRootsRegion()) {
-            return "Inspector roots region: " + description;
+        // Is it a compiled code region?
+        if (memoryRegion.sameAs(vm().codeCache().bootCodeRegion().memoryRegion())) {
+            return "Boot code region: " + regionName;
+        }
+        for (MaxCompiledCodeRegion codeRegion : vm().codeCache().compiledCodeRegions()) {
+            if (memoryRegion.sameAs(codeRegion.memoryRegion())) {
+                return "Dynamic code region: " + regionName;
+            }
         }
 
-        if (memoryRegion == vm().teleBootCodeRegion()) {
-            return "Boot code region: " + description;
+        // Is it a thread-related region?
+        for (MaxThread thread : vm().threadManager().threads()) {
+            if (memoryRegion.sameAs(thread.stack().memoryRegion())) {
+                return "Thread stack region: " + longName(thread);
+            }
+            if (memoryRegion.sameAs(thread.localsBlock().memoryRegion())) {
+                return "Thread locals region: " + longName(thread);
+            }
         }
-        if (memoryRegion == vm().teleRuntimeCodeRegion()) {
-            return "Dynamic code region: " + description;
-        }
-        if (memoryRegion instanceof TeleNativeStackMemoryRegion) {
-            final TeleNativeStackMemoryRegion stackRegion = (TeleNativeStackMemoryRegion) memoryRegion;
-            return "Thread stack region: " + longName(stackRegion.teleNativeThread);
-        }
-        if (memoryRegion instanceof TeleThreadLocalsMemoryRegion) {
-            final TeleThreadLocalsMemoryRegion threadLocalsRegion = (TeleThreadLocalsMemoryRegion) memoryRegion;
-            return "Thread locals region: " + longName(threadLocalsRegion.teleNativeThread);
-        }
-        return "Unknown region: " + description;
+        return regionName;
     }
 
     /**

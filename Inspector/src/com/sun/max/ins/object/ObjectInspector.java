@@ -35,7 +35,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
- * An inspector that displays the content of a Maxine low level heap object in the VM.
+ * An inspector that displays the content of a low level heap object in the VM.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter

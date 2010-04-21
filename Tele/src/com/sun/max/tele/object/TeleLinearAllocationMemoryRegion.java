@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.object;
 
+import java.lang.management.*;
+
 import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
@@ -29,30 +31,59 @@ import com.sun.max.vm.reference.*;
 
 public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
 
+    /**
+     * Cached mark field from the object in the VM.
+     */
+    private Address mark = Address.zero();
+
+    private MemoryUsage memoryUsage = null;
+
     public TeleLinearAllocationMemoryRegion(TeleVM teleVM, Reference linearAllocationMemoryRegionReference) {
         super(teleVM, linearAllocationMemoryRegionReference);
+    }
 
+    @Override
+    public MemoryUsage getUsage() {
+        if (memoryUsage == null) {
+            if (isAllocated() && !mark.isZero()) {
+                memoryUsage = new MemoryUsage(-1, mark.minus(getRegionStart()).toLong(), getRegionSize().toLong(), -1);
+            }
+        }
+        if (memoryUsage != null) {
+            return memoryUsage;
+        }
+        return super.getUsage();
+    }
+
+    @Override
+    public boolean containsInAllocated(Address address) {
+        if (isAllocated()) {
+            return address.greaterEqual(getRegionStart()) && address.lessThan(mark);
+        }
+        return super.containsInAllocated(address);
     }
 
     /**
      * Reads from the VM the mark field of the {@link LinearAllocationMemoryRegion}.
      */
     public Address mark() {
-        final Reference mark = teleVM().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
-        return mark.readWord(AtomicWord.valueOffset()).asPointer();
+        return mark;
     }
 
-    /**
-     * @return how much memory in region has been allocated to objects, {@link Size#zero()) if memory for region not allocated.
-     */
-    public Size allocatedSize() {
-        if (isAllocated()) {
-            final Address mark = mark();
-            if (!mark.isZero()) {
-                return mark.minus(start()).asSize();
+    @Override
+    protected void refresh() {
+        if (vm().tryLock()) {
+            try {
+                final Reference markReference = vm().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
+                mark = markReference.readWord(AtomicWord.valueOffset()).asPointer();
+            } catch (DataIOError dataIOError) {
+                // No update; VM not available for some reason.
+                // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
+            } finally {
+                vm().unlock();
             }
         }
-        return Size.zero();
+        super.refresh();
     }
 
 }

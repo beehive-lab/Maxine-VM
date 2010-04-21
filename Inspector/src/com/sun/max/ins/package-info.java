@@ -20,7 +20,7 @@
  */
 
 /**
- * Maxine inspector.
+ * VM inspector.
  * Maps a boot image into virtual memory and then probes around in it,
  * displaying objects and memory contents.
  * Planned to become similar to an SA.

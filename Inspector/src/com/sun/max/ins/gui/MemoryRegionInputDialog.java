@@ -29,7 +29,7 @@ import com.sun.max.ins.*;
 import com.sun.max.unsafe.*;
 
 /**
- * A dialog that permits entering of a hex-specified memory address.
+ * A dialog that permits entering of a hex-specified VM memory address.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter

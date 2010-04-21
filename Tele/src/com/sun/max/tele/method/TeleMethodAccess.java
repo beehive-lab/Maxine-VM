@@ -85,7 +85,7 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
      * @return surrogate for the descriptor for this method in the VM.
      */
     public TeleClassMethodActor teleClassMethodActor() {
-        return teleVM().findTeleMethodActor(TeleClassMethodActor.class, methodActor);
+        return vm().findTeleMethodActor(TeleClassMethodActor.class, methodActor);
     }
 
     /**
@@ -99,6 +99,6 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
      */
     public Value interpret(Value... arguments) throws TeleInterpreterException {
         ProgramError.check(methodActor instanceof ClassMethodActor, "cannot interpret interface method");
-        return TeleInterpreter.execute(teleVM(), (ClassMethodActor) methodActor, arguments);
+        return TeleInterpreter.execute(vm(), (ClassMethodActor) methodActor, arguments);
     }
 }

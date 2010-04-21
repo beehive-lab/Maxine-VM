@@ -490,7 +490,7 @@ public final class WatchpointsTable extends InspectorTable {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
             final TeleObject teleObject = watchpoint.getTeleObject();
             final StringBuilder sb = new StringBuilder();
-            sb.append(watchpoint.memoryRegion().description());
+            sb.append(watchpoint.memoryRegion().regionName());
             if (teleObject != null) {
                 sb.append(": ").append(inspection().nameDisplay().referenceLabelText(teleObject));
             }

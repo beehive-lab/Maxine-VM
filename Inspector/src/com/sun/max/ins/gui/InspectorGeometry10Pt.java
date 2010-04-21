@@ -23,7 +23,7 @@ package com.sun.max.ins.gui;
 import java.awt.*;
 
 /**
- * Standard choices and policies for layout, tiled for use with 10 pt. font.
+ * Standard choices and policies for inspection window layout, tiled for use with 10 pt. font.
  *
  * @author Michael Van De Vanter
  */

@@ -60,7 +60,7 @@ public abstract class TeleHybridObject extends TeleObject {
     public Size objectSize() {
         // A hybrid object is sized as if it were all one big array, even though the memory will
         // be used differently in different parts.
-        return teleVM().layoutScheme().hybridLayout.getArraySize(readArrayLength());
+        return vm().layoutScheme().hybridLayout.getArraySize(readArrayLength());
     }
 
     @Override
@@ -81,7 +81,7 @@ public abstract class TeleHybridObject extends TeleObject {
     @Override
     public Value readFieldValue(FieldActor fieldActor) {
         if (fieldActor.kind.isReference) {
-            return TeleReferenceValue.from(teleVM(), teleVM().wordToReference(reference().readWord(fieldActor.offset())));
+            return TeleReferenceValue.from(vm(), vm().wordToReference(reference().readWord(fieldActor.offset())));
         }
         return fieldActor.readValue(reference());
     }
@@ -90,28 +90,28 @@ public abstract class TeleHybridObject extends TeleObject {
      * @return length of the word array part of this hybrid in the tele VM
      */
     private int readWordArrayLength() {
-        return teleVM().layoutScheme().wordArrayLayout.readLength(reference());
+        return vm().layoutScheme().wordArrayLayout.readLength(reference());
     }
 
     /**
      * @return an element of the word array part of this hybrid in the tele VM
      */
     public Word readWord(int wordIndex) {
-        return teleVM().layoutScheme().wordArrayLayout.getWord(reference(), wordIndex);
+        return vm().layoutScheme().wordArrayLayout.getWord(reference(), wordIndex);
     }
 
     /**
      * @return length of the int array part of this hybrid in the tele VM
      */
     public int readArrayLength() {
-        return  teleVM().layoutScheme().arrayHeaderLayout.readLength(reference());
+        return  vm().layoutScheme().arrayHeaderLayout.readLength(reference());
     }
 
     /**
      * @return an element of the int array part of this hybrid in the tele VM
      */
     public int readArrayInt(int intIndex) {
-        return teleVM().layoutScheme().intArrayLayout.getInt(reference(), intIndex);
+        return vm().layoutScheme().intArrayLayout.getInt(reference(), intIndex);
     }
 
     @Override

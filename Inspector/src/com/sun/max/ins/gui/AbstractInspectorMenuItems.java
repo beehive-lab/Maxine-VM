@@ -23,8 +23,7 @@ package com.sun.max.ins.gui;
 import com.sun.max.ins.*;
 
 /**
- * A default implementation of menu items that makes unnecessary some of the methods
- * that are seldom needed.
+ * A default implementation of menu items that makes unnecessary some seldom needed methods.
  *
  * @author Michael Van De Vanter
  */

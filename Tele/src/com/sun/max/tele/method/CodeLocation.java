@@ -185,13 +185,13 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      */
     protected MethodKey teleClassMethodActorToMethodKey(TeleClassMethodActor teleClassMethodActor) {
         assert teleClassMethodActor != null;
-        if (!teleVM().tryLock()) {
+        if (!vm().tryLock()) {
             return null;
         }
         try {
             return new MethodKey.DefaultMethodKey(teleClassMethodActor().methodActor());
         } finally {
-            teleVM().unlock();
+            vm().unlock();
         }
     }
 
@@ -204,11 +204,11 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @return a description of the method loaded in the VM
      */
     protected TeleClassMethodActor methodKeyToTeleClassMethodActor(MethodKey methodKey) {
-        if (!teleVM().tryLock()) {
+        if (!vm().tryLock()) {
             return null;
         }
         try {
-            final TeleClassActor teleClassActor = teleVM().findTeleClassActor(methodKey.holder());
+            final TeleClassActor teleClassActor = vm().findTeleClassActor(methodKey.holder());
             if (teleClassActor != null) {
                 // find a matching method
                 final String methodKeyString = methodKey.signature().toJavaString(true, true);
@@ -222,13 +222,13 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             }
             // TODO (mlvdv) when the class registry is complete, this should not be necessary
             // Try to locate TeleClassMethodActor via compiled methods in the tele VM.
-            final Sequence<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(teleVM(), methodKey);
+            final Sequence<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(vm(), methodKey);
             if (teleTargetMethods.length() > 0) {
                 return teleTargetMethods.first().getTeleClassMethodActor();
             }
             return null;
         } finally {
-            teleVM().unlock();
+            vm().unlock();
         }
     }
 
@@ -249,17 +249,17 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @return  a description of the location expressed in terms of the method loaded in the VM
      */
     protected TeleClassMethodActor addressToTeleClassMethodActor(Address address) {
-        if (!teleVM().tryLock()) {
+        if (!vm().tryLock()) {
             return null;
         }
         TeleClassMethodActor teleClassMethodActor = null;
         try {
-            final TeleTargetMethod teleTargetMethod = teleVM().makeTeleTargetMethod(address);
+            final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
             }
         } finally {
-            teleVM().unlock();
+            vm().unlock();
         }
         return teleClassMethodActor;
     }
@@ -273,13 +273,13 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @return a new location
      */
     protected TeleClassMethodActor methodAccessToTeleClassMethodActor(TeleMethodAccess teleMethodAccess) {
-        if (!teleVM().tryLock()) {
+        if (!vm().tryLock()) {
             return null;
         }
         try {
             return teleMethodAccess.teleClassMethodActor();
         } finally {
-            teleVM().unlock();
+            vm().unlock();
         }
     }
 
@@ -292,7 +292,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @return a non-zero address, null if not available
      */
     protected Address teleClassMethodActorToFirstCompilationCallEntry(TeleClassMethodActor teleClassMethodActor) {
-        if (!teleVM().tryLock()) {
+        if (!vm().tryLock()) {
             return null;
         }
         try {
@@ -301,7 +301,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
                 return javaTargetMethod.callEntryPoint();
             }
         } finally {
-            teleVM().unlock();
+            vm().unlock();
         }
         return null;
     }

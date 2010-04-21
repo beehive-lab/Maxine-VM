@@ -18,25 +18,51 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.memory;
 
-import com.sun.max.memory.*;
-import com.sun.max.tele.memory.*;
-import com.sun.max.vm.thread.*;
+import java.lang.management.*;
+
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+
 
 /**
- * Description of the VM memory occupied by the  {@linkplain VmThreadLocal thread locals block} for a thread.
+ * A runtime allocated region of memory used to hold roots; usage is
+ * counted in number of words allocated as of the most recent GC.
  *
- * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class TeleThreadLocalsMemoryRegion extends TeleMemoryRegion {
+public final class RootTableMemoryRegion extends RuntimeMemoryRegion {
 
-    public final TeleNativeThread teleNativeThread;
+    public RootTableMemoryRegion(String description) {
+        super(description);
+    }
 
-    public TeleThreadLocalsMemoryRegion(TeleNativeThread teleNativeThread, MemoryRegion threadLocalsRegion) {
-        super(threadLocalsRegion, "Thread-" + teleNativeThread.localHandle() + " locals");
-        this.teleNativeThread = teleNativeThread;
+    /**
+     * The number of words in the table that are used, current
+     * as of most recent GC.
+     */
+    @INSPECTED
+    public volatile long wordsUsed = 0;
+
+    /**
+     * Records in this region the number of words that are actually being used in the table.
+     */
+    public void setWordsUsed(long wordsUsed) {
+        this.wordsUsed = wordsUsed;
+    }
+
+    /**
+     * Gets the number of words used, current as of the most recent GC.
+     */
+    public long wordsUsed() {
+        return wordsUsed;
+    }
+
+    @Override
+    public MemoryUsage getUsage() {
+        final long sizeAsLong = size.toLong();
+        return new MemoryUsage(sizeAsLong, wordsUsed * Word.size(), sizeAsLong, sizeAsLong);
     }
 
 }

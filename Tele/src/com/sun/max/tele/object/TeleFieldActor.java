@@ -66,12 +66,12 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
         final Pointer pointer = this.getTeleHolder().getTeleStaticTuple().getReference().toOrigin();
         final int offset = fieldActor().offset();
         final Kind kind = fieldActor().kind;
-        return teleVM().maxineValueToJDWPValue(teleVM().readValue(kind, pointer, offset));
+        return vm().maxineValueToJDWPValue(vm().readValue(kind, pointer, offset));
     }
 
     public VMValue getValue(ObjectProvider object) {
         final Reference reference = ((TeleObject) object).getReference();
-        return teleVM().maxineValueToJDWPValue(teleVM().readValue(fieldActor().kind, reference.toOrigin(), fieldActor().offset()));
+        return vm().maxineValueToJDWPValue(vm().readValue(fieldActor().kind, reference.toOrigin(), fieldActor().offset()));
     }
 
     public void setStaticValue(VMValue value) {

@@ -23,7 +23,7 @@ package com.sun.max.ins.gui;
 import java.awt.*;
 
 /**
- * Preferences and policies for layout out inspector windows.
+ * Preferences and policies for layout out inspection windows.
  *
  * @author Michael Van De Vanter
  */

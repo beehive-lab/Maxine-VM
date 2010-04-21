@@ -18,23 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.tele;
 
-import com.sun.max.memory.*;
-import com.sun.max.tele.memory.*;
+import java.util.*;
+
+import com.sun.max.tele.object.*;
+
 
 /**
- * Description of the VM memory occupied by the stack for a thread.
+ * Access to an individual allocation area of the compiled code cache.
  *
- * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class TeleNativeStackMemoryRegion extends TeleMemoryRegion {
+public interface MaxCompiledCodeRegion extends MaxEntity<MaxCompiledCodeRegion> {
 
-    public final TeleNativeThread teleNativeThread;
+    /**
+     * @return whether this compiled code region is in the boot image.
+     */
+    boolean isBootRegion();
 
-    public TeleNativeStackMemoryRegion(TeleNativeThread teleNativeThread, MemoryRegion stackRegion) {
-        super(stackRegion, "Thread-" + teleNativeThread.localHandle() + " stack");
-        this.teleNativeThread = teleNativeThread;
-    }
+    /**
+     * @return all known compilations in the region
+     */
+    // TODO (mlvdv) create an interface for target methods
+    List<TeleTargetMethod> teleTargetMethods();
+
 }

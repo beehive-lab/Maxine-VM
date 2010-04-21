@@ -25,12 +25,12 @@ import java.awt.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A label that displays the name of the {@link MemoryRegion} to which a {@link Value}
+ * A label that displays the name of the {@linkplain MaxMemoryRegion memory region} to which a {@link Value}
  * might point; blank if no such region.  Updated with every refresh.
  *
  * @author Michael Van De Vanter
@@ -40,7 +40,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
     private Address address;
     private String regionName;
     private String toolTipText;
-    private MemoryRegion memoryRegion = null;
+    private MaxMemoryRegion memoryRegion = null;
 
     private final class MemoryRegionMouseClickAdapter extends InspectorMouseClickAdapter {
 
@@ -88,7 +88,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
         memoryRegion = null;
         regionName = null;
         toolTipText = null;
-        if (value() != null && !value().isZero()) {
+        if (value() != null) {
             address = value().toWord().asAddress();
             memoryRegion = vm().findMemoryRegion(address);
         }

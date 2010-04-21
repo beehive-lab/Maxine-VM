@@ -69,7 +69,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
      */
     public int getLength() {
         if (length < 0) {
-            length = teleVM().layoutScheme().arrayHeaderLayout.readLength(reference());
+            length = vm().layoutScheme().arrayHeaderLayout.readLength(reference());
         }
         return length;
     }
@@ -84,7 +84,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public Size objectSize() {
-        return teleVM().layoutScheme().arrayHeaderLayout.getArraySize(componentKind(), length);
+        return vm().layoutScheme().arrayHeaderLayout.getArraySize(componentKind(), length);
     }
 
     @Override
@@ -97,11 +97,11 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
      * @return the value read from the specified field in this array in the {@link TeleVM}
      */
     public Value readElementValue(int index) {
-        return teleVM().getElementValue(componentKind(), reference(), index);
+        return vm().getElementValue(componentKind(), reference(), index);
     }
 
     public void copyElements(int srcIndex, Object dst, int dstIndex, int length) {
-        teleVM().copyElements(componentKind(), reference(), srcIndex, dst, dstIndex, length);
+        vm().copyElements(componentKind(), reference(), srcIndex, dst, dstIndex, length);
     }
 
     @Override
@@ -151,7 +151,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
                 Object[] referenceArray = (Object[]) newArray;
                 for (int index = 0; index < length; index++) {
                     final Value value = readElementValue(index);
-                    final TeleObject teleValueObject = teleVM().makeTeleObject(value.asReference());
+                    final TeleObject teleValueObject = vm().makeTeleObject(value.asReference());
                     if (teleValueObject != null) {
                         referenceArray[index] = teleValueObject.makeDeepCopy(context);
                     }
@@ -166,7 +166,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     public VMValue getValue(int i) {
-        return teleVM().maxineValueToJDWPValue(readElementValue(i));
+        return vm().maxineValueToJDWPValue(readElementValue(i));
     }
 
     public int length() {

@@ -35,13 +35,13 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
     }
 
     public int[] bytecodeToTargetCodePositionMap() {
-        final Reference intArrayReference = teleVM().teleFields().JitTargetMethod_bytecodeToTargetCodePositionMap.readReference(reference());
-        final TeleArrayObject teleIntArray = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
+        final Reference intArrayReference = vm().teleFields().JitTargetMethod_bytecodeToTargetCodePositionMap.readReference(reference());
+        final TeleArrayObject teleIntArray = (TeleArrayObject) vm().makeTeleObject(intArrayReference);
         return teleIntArray == null ? null : (int[]) teleIntArray.shallowCopy();
     }
 
     @Override
     protected DeepCopier newDeepCopier() {
-        return new ReducedDeepCopier().omit(teleVM().teleFields().JitTargetMethod_referenceMapEditor.fieldActor());
+        return new ReducedDeepCopier().omit(vm().teleFields().JitTargetMethod_referenceMapEditor.fieldActor());
     }
 }
