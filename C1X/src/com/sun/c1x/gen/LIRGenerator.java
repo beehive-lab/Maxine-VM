@@ -551,9 +551,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue src = forceToSpill(value.result(), x.value().kind, true);
         CiValue dst = createResultVariable(x);
         lir.lea(src, dst);
-
-        // TODO: Make the register allocator keep 'src' pinned to the stack
-        throw Util.unimplemented();
     }
 
     @Override
@@ -717,12 +714,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             lir.returnOp(result.result());
         }
         setNoResult(x);
-    }
-
-    @Override
-    public void visitRoundFP(RoundFP x) {
-        // No longer necessary with SSE
-        throw Util.shouldNotReachHere();
     }
 
     XirArgument toXirArgument(Value i) {
@@ -1041,7 +1032,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 baseOp = newVariable(CiKind.Int);
                 lir.convert(L2I, base.result(), baseOp, null);
             } else {
-                assert x.base().kind.isInt() : "must be";
+                assert x.base().kind.isInt();
             }
         }
 
@@ -1140,7 +1131,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 baseOp = newVariable(CiKind.Int);
                 lir.convert(L2I, base.result(), baseOp, null);
             } else {
-                assert x.base().kind.isInt() : "must be";
+                assert x.base().kind.isInt();
             }
         }
         CiValue indexOp = idx.result();
@@ -1194,7 +1185,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert value.isLegal() : "value should not be illegal";
         assert kind.jvmSlots == value.kind.jvmSlots : "size mismatch";
         if (!value.isVariableOrRegister()) {
-            // force into a register
+            // force into a variable that must start in memory
             CiValue operand = operands.newVariable(value.kind, mustStayOnStack ? VariableFlag.MustStayInMemory : VariableFlag.MustStartInMemory);
             lir.move(value, operand);
             return operand;
@@ -1374,9 +1365,9 @@ public abstract class LIRGenerator extends ValueVisitor {
                 if (right.isConstant()) {
                     CiConstant rightConstant = (CiConstant) right;
                     int c = rightConstant.asInt();
-                    if (Util.isPowerOf2(c)) {
+                    if (CiUtil.isPowerOf2(c)) {
                         // do not need tmp here
-                        lir.shiftLeft(leftOp, Util.log2(c), result);
+                        lir.shiftLeft(leftOp, CiUtil.log2(c), result);
                         didStrengthReduce = true;
                     } else {
                         didStrengthReduce = strengthReduceMultiply(leftOp, c, result, tmp);
@@ -1697,7 +1688,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             value = resultOp;
         }
 
-        assert count.isConstant() || count.isVariableOrRegister() : "must be";
+        assert count.isConstant() || count.isVariableOrRegister();
         switch (code) {
             case ISHL:
             case LSHL:
@@ -1803,7 +1794,6 @@ public abstract class LIRGenerator extends ValueVisitor {
                 if (operand.isRegister()) {
                     param.loadItemForce(operand);
                 } else {
-                    //CiStackSlot slot = (CiStackSlot) operand;
                     CiValue slot = operand;
                     param.loadForStore(slot.kind);
                     if (slot.kind == CiKind.Long || slot.kind == CiKind.Double) {

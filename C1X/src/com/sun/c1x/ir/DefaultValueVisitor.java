@@ -79,7 +79,6 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitPhi(Phi i) { visit(i); }
     @Override public void visitResolveClass(ResolveClass i) { visit(i); }
     @Override public void visitReturn(Return i) { visit(i); }
-    @Override public void visitRoundFP(RoundFP i) { visit(i); }
     @Override public void visitShiftOp(ShiftOp i) { visit(i); }
     @Override public void visitStackAllocate(StackAllocate i) { visit(i); }
     @Override public void visitStoreField(StoreField i) { visit(i); }

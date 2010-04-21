@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,24 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
+package jtt.optimize;
 
-import java.lang.annotation.*;
-
-/**
- * Every thus annotated method is never to be inlined by the compiler.
- *
- * This annotation exists primarily for annotating methods that <b>must never</b> be inlined
- * for semantic reasons. Typically, this is to ensure that a separate activation frame is
- * always used for a call to the method.
- *
- * This annotation can also be applied to a class in which is equivalent to applying
- * it to all the methods in the class <b>except</b> for those explicitly annotated with
- * {@link INLINE}.
- *
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: (-1, -1)=true; (1, 10)=true; (1, 0)=false
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface NEVER_INLINE {
+public class Cmov01 {
+    public static boolean test(int a, int b) {
+        boolean result = a < b || a == b;
+        return result;
+    }
 }

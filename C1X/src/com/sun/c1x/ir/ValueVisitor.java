@@ -69,7 +69,6 @@ public abstract class ValueVisitor {
     public abstract void visitPhi(Phi i);
     public abstract void visitResolveClass(ResolveClass i);
     public abstract void visitReturn(Return i);
-    public abstract void visitRoundFP(RoundFP i);
     public abstract void visitShiftOp(ShiftOp i);
     public abstract void visitStackAllocate(StackAllocate i);
     public abstract void visitStoreField(StoreField i);

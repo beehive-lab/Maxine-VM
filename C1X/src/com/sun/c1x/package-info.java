@@ -54,6 +54,11 @@
  * {@code emitHR}, which then calls the {{@link com.sun.c1x.graph.IR#build}} method and returns the result. The {@code C1XCompilation} and {@code IR}
  * instances are are bi-directionally linked.
  *
+ * <H3>Supported backends</H3>
+ *
+ * <ul>
+ * <li>AMD64/x64 with SSE2</li>
+ * </ul>
  *
  * <H2>Notes and Todos</H2> This is a collection of notes about the C1X compiler, including future directions,
  * refactorings, missing features, broken features, etc.

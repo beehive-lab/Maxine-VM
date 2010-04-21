@@ -114,9 +114,9 @@ public abstract class Instruction extends Value {
      * @return the new next instruction
      */
     public final Instruction setNext(Instruction next, int bci) {
+        this.next = next;
         if (next != null) {
             assert !(this instanceof BlockEnd);
-            this.next = next;
             next.setBCI(bci);
         }
         return next;

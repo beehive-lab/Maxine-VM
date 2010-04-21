@@ -84,9 +84,10 @@ public interface RiField {
     boolean isStatic();
 
     /**
-     * Gets the constant value of this field, if it is a constant (that is, {@code static final} and <i>initialized</i>).
+     * Gets the constant value of this field if available.
      * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.
+     * @param object the constant object for a non-static field
      * @return the constant value of this field
      */
-    CiConstant constantValue();
+    CiConstant constantValue(Object object);
 }

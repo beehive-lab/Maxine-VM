@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.alloc;
 
-import static com.sun.c1x.util.Util.*;
+import static com.sun.cri.ci.CiUtil.*;
 
 import java.util.*;
 
@@ -938,17 +938,19 @@ final class LinearScanWalker extends IntervalWalker {
 
         } else {
             if (operand.isVariable() && allocator.operands.mustStartInMemory((CiVariable) operand)) {
-                // activating an interval that must start in a stack slot : but may get a register later
-                // used for lirRoundfp: rounding is done by store to stack and reload later
-                if (C1XOptions.TraceLinearScanLevel >= 4) {
-                    TTY.println("      interval must start in stack slot . split it before first use");
-                }
                 assert interval.location() == null : "register already assigned";
-
                 allocator.assignSpillSlot(interval);
-                splitStackInterval(interval);
-                result = false;
 
+                if (!allocator.operands.mustStayInMemory((CiVariable) operand)) {
+                    // activating an interval that must start in a stack slot but may get a register later
+                    // used for lirRoundfp: rounding is done by store to stack and reload later
+                    if (C1XOptions.TraceLinearScanLevel >= 4) {
+                        TTY.println("      interval must start in stack slot . split it before first use");
+                    }
+                    splitStackInterval(interval);
+                }
+
+                result = false;
             } else if (interval.location() == null) {
                 // interval has not assigned register . normal allocation
                 // (this is the normal case for most intervals)
@@ -975,8 +977,8 @@ final class LinearScanWalker extends IntervalWalker {
 
         // load spilled values that become active from stack slot to register
         if (interval.insertMoveWhenActivated()) {
-            assert interval.isSplitChild() : "must be";
-            assert interval.currentSplitChild() != null : "must be";
+            assert interval.isSplitChild();
+            assert interval.currentSplitChild() != null;
             assert interval.currentSplitChild().operand != operand : "cannot insert move between same interval";
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println("Inserting move from interval %d to %d because insertMoveWhenActivated is set", interval.currentSplitChild().operandNumber, interval.operandNumber);
