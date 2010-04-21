@@ -23,9 +23,11 @@ package com.sun.max.vm.heap.gcx;
 import static com.sun.cri.bytecode.Bytecodes.*;
 
 import com.sun.cri.bytecode.*;
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
@@ -38,7 +40,9 @@ import com.sun.max.vm.reference.*;
  * heap walking.
  * Reference to HeapFreeChunk must never be stored in object and must never be used
  * when safepoint is enabled, otherwise they become visible to GC and will be considered live.
+ * Similarly, direct updates to HeapFreeChunk.next may cause unwanted write-barrier executions.
  *
+ * FIXME: need to revisit the visibility of this class.
  * @author Laurent Daynes
  */
 public final class HeapFreeChunk {
@@ -46,24 +50,36 @@ public final class HeapFreeChunk {
     private static final DynamicHub HEAP_FREE_CHUNK_HUB = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
 
     /**
-     * Index of the word storing the address to the next free space within the current free heap space.
+     * Index of the word storing "next" field of the heap free chunk.
      */
-    private static final int NEXT_INDEX = 3; // FIXME: should be obtained via the field actor for the corresponding field
-    private static final int SIZE_INDEX = 4; // FIXME: same as above
+    private static final int NEXT_INDEX;
+    /**
+     * Index of the word storing "size" field of the heap free chunk.
+     */
+    private static final int SIZE_INDEX;
 
+    static {
+        NEXT_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("next")).offset() >> Word.widthValue().log2numberOfBytes;
+        SIZE_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("size")).offset() >> Word.widthValue().log2numberOfBytes;
+    }
+
+    @INLINE
     public static Address getFreeChunkNext(Address chunkAddress) {
         return chunkAddress.asPointer().getWord(NEXT_INDEX).asAddress();
 
     }
+    @INLINE
     public static Size getFreechunkSize(Address chunkAddress) {
         return chunkAddress.asPointer().getWord(SIZE_INDEX).asSize();
     }
 
-    static void setFreeChunkNext(Address chunkAddress, Address nextChunkAddress) {
+    @INLINE
+    public static void setFreeChunkNext(Address chunkAddress, Address nextChunkAddress) {
         chunkAddress.asPointer().setWord(NEXT_INDEX, nextChunkAddress);
     }
 
-    static void setFreechunkSize(Address chunkAddress, Size size) {
+    @INLINE
+    public static void setFreeChunkSize(Address chunkAddress, Size size) {
         chunkAddress.asPointer().setWord(SIZE_INDEX, size);
     }
 
@@ -74,11 +90,13 @@ public final class HeapFreeChunk {
      * @return a reference to HeapFreeChunk object just planted at the beginning of the free chunk.
      */
     static HeapFreeChunk format(Address deadSpace, Size numBytes) {
+        final Pointer cell = deadSpace.asPointer();
         if (MaxineVM.isDebug()) {
-            DebugHeap.writeCellPadding(deadSpace.asPointer(), numBytes.toInt() >> Word.widthValue().log2numberOfBytes);
+            DebugHeap.writeCellPadding(cell, numBytes.toInt() >> Word.widthValue().log2numberOfBytes);
         }
-        Cell.plantTuple(deadSpace.asPointer(), HEAP_FREE_CHUNK_HUB);
-        HeapFreeChunk freeChunk = toHeapFreeChunk(deadSpace);
+        Cell.plantTuple(cell, HEAP_FREE_CHUNK_HUB);
+        Layout.writeMisc(Layout.cellToOrigin(cell), Word.zero());
+        HeapFreeChunk freeChunk = toHeapFreeChunk(cell);
         freeChunk.size = numBytes;
         freeChunk.next = null;
         return freeChunk;
@@ -87,10 +105,12 @@ public final class HeapFreeChunk {
     @INTRINSIC(UNSAFE_CAST)
     private static native HeapFreeChunk asHeapFreeChunk(Object freeChunk);
 
-    static HeapFreeChunk toHeapFreeChunk(Address address) {
+    @INLINE
+    public static HeapFreeChunk toHeapFreeChunk(Address address) {
         return asHeapFreeChunk(Reference.fromOrigin(Layout.cellToOrigin(address.asPointer())).toJava());
     }
 
+    @INLINE
     static Address fromHeapFreeChunk(HeapFreeChunk chunk) {
         return Layout.originToCell(Reference.fromJava(chunk).toOrigin());
     }
