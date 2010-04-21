@@ -25,6 +25,8 @@ import com.sun.max.jdwp.vm.data.*;
 
 /**
  * Class representing a compiled version of the method. This interface is not needed for the JDWP protocol.
+ * <br>
+ * These method are unused and are now deprecated:  mlvdv April, 2010
  *
  * @author Thomas Wuerthinger
  *
@@ -35,6 +37,7 @@ public interface TargetMethodAccess {
     /**
      * @return an object that allows access to the machine code instructions of this compiled method
      */
+    @Deprecated
     @ConstantReturnValue
     MachineCodeInstructionArray getTargetCodeInstructions();
 
@@ -43,6 +46,7 @@ public interface TargetMethodAccess {
      *
      * @return the JDWP method object of this target method
      */
+    @Deprecated
     @ConstantReturnValue
     MethodProvider getMethodProvider();
 }

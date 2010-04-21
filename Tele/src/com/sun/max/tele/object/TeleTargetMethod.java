@@ -398,6 +398,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     // [tw] Warning: duplicated code!
+    @Deprecated
     public MachineCodeInstructionArray getTargetCodeInstructions() {
         final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
         final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
@@ -408,6 +409,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return new MachineCodeInstructionArray(result);
     }
 
+    @Deprecated
     public MethodProvider getMethodProvider() {
         return this.teleClassMethodActor;
     }
