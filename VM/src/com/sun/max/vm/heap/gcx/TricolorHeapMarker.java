@@ -904,11 +904,22 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     public void markRoots() {
         rootCellVisitor.reset();
+        if (Heap.traceGCPhases()) {
+            Log.println("Scanning external roots...");
+        }
         // Mark all out of heap roots first (i.e., thread).
         // This only needs setting grey marks blindly (there are no black mark at this stage).
         heapRootsScanner.run();
+
         // Next, mark all reachable from the boot area.
+        if (Heap.traceGCPhases()) {
+            Log.println("Scanning boot heap...");
+        }
         markBootHeap();
+
+        if (Heap.traceGCPhases()) {
+            Log.println("Scanning immortal heap...");
+        }
         markImmortalHeap();
     }
 
@@ -1349,6 +1360,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     public void markAll() {
         markRoots();
+        if (Heap.traceGCPhases()) {
+            Log.println("Tracing grey objects...");
+        }
         visitAllGreyObjects();
         verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
     }
