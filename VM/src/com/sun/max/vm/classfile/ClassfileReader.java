@@ -695,10 +695,16 @@ public final class ClassfileReader {
 
     @HOSTED_ONLY
     private Annotation[] getAnnotations(Utf8Constant name, Descriptor descriptor) {
-        Class holder = Classes.forName(classDescriptor.toJavaString(), false, ClassfileReader.class.getClassLoader());
         if (name == null) {
-            return holder.getAnnotations();
+            try {
+                Class holder = Classes.forName(classDescriptor.toJavaString(), false, ClassfileReader.class.getClassLoader());
+                return holder.getAnnotations();
+            } catch (NoClassDefFoundError e) {
+                // This occurs for synthesized classes that are not available on the class path
+                return new Annotation[0];
+            }
         }
+        Class holder = Classes.forName(classDescriptor.toJavaString(), false, ClassfileReader.class.getClassLoader());
         Annotation[] annotations;
         if (name.equals(SymbolTable.INIT)) {
             SignatureDescriptor sig = (SignatureDescriptor) descriptor;
