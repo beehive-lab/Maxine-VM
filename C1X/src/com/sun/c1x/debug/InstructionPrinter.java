@@ -750,7 +750,7 @@ public class InstructionPrinter extends ValueVisitor {
             int scale = CiUtil.log2(target.sizeInBytes(i.kind));
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
-        out.print(" := ").print(i.value());
+        out.print(") := ").print(i.value());
     }
 
     @Override
