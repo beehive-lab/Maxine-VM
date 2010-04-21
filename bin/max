@@ -909,13 +909,18 @@ c1x_help="process a list of classes and/or methods with the C1X compiler
     leading '!') is excuded from further processing.
 
     A compilation spec is a class name pattern followed by an optional method name
-    pattern separated by a ':'. For example:
+    pattern separated by a ':' further followed by an optional signature:
+    
+    <class name>[:<method name>[:<signature>]]
+    
+    For example:
 
-        Object:wait String
+        Object:wait String HashMap:<init>:(int,float)
 
     will compile all methods in a class whose name matches "Object" where the
-    method name matches "wait" as well as all methods in a class whose name
-    contains "String". The classes searched are those on the class path.
+    method name matches \"wait\", all methods in a class whose name
+    contains \"String\" and the single constructor in HashMap that takes an int
+    and float parameter. The classes searched are those on the class path.
     
     The type of matching performed for a given class/method name is determined
     by the position of '^' in the pattern name as follows:
@@ -929,6 +934,11 @@ c1x_help="process a list of classes and/or methods with the C1X compiler
     
     For example, '^java.util:^toString^' matches all methods named 'toString' in
     any class whose name start with 'java.util'.
+    
+    The matching performed on a signature is always a substring test. Signatures can
+    specified either in Java source syntax (e.g. \"int,String\") or JVM internal syntax
+    (e.g. \"IFLjava/lang/String;\"). The latter must always use fully qualified type
+    names where as the former must not.
     
     The output traced by this command is not guaranteed to be the same as the output
     for a compilation done at runtime. The code produced by a compiler is sensitive

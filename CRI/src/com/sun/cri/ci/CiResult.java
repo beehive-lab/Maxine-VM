@@ -21,10 +21,9 @@
 package com.sun.cri.ci;
 
 /**
- * This class represents the result of compiling a method. The result
- * can include a target method with machine code and metadata, and/or statistics. If the
- * compiler bailed out due to malformed bytecode, an internal error, or other cause,
- * it will supply the bailout object.
+ * Represents the result of compiling a method. The result can include a target method with machine code and metadata,
+ * and/or statistics. If the compiler bailed out due to malformed bytecode, an internal error, or other cause, it will
+ * supply the bailout object.
  *
  * @author Ben L. Titzer
  */
@@ -49,7 +48,7 @@ public class CiResult {
      * Gets the target method that was produced by this compilation. If no target method was
      * produced, but a bailout occured, then the bailout exception will be thrown at this point.
      * @return the target method produced
-     * @throws CiBailout if a bailout occurred
+     * @throws {@link CiBailout} if a bailout occurred
      */
     public CiTargetMethod targetMethod() {
         if (bailout != null) {

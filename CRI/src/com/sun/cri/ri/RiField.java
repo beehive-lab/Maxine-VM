@@ -23,11 +23,9 @@ package com.sun.cri.ri;
 import com.sun.cri.ci.*;
 
 /**
- * This interface represents a reference to a field, including both
- * resolved and unresolved fields. Fields, like methods and types, are resolved through
- * {@link RiConstantPool constant pools}, and their actual implementation is provided
- * by the {@link RiRuntime runtime} to the compiler. Note that some operations are only
- * available on resolved fields.
+ * Represents a reference to a field, including both resolved and unresolved fields. Fields, like methods and types, are
+ * resolved through {@link RiConstantPool constant pools}, and their actual implementation is provided by the
+ * {@link RiRuntime runtime} to the compiler. Note that most operations are only available on resolved fields.
  *
  * @author Ben L. Titzer
  */
@@ -39,7 +37,7 @@ public interface RiField {
     String name();
 
     /**
-     * Gets the type of this field as a compiler interface type.
+     * Gets the type of this field as a compiler-runtime interface type.
      * @return the type of this field
      */
     RiType type();
@@ -51,41 +49,43 @@ public interface RiField {
     CiKind kind();
 
     /**
-     * Gets the holder of this field as a compiler interface type.
+     * Gets the holder of this field as a compiler-runtime interface type.
      * @return the holder of this field
      */
     RiType holder();
 
     /**
-     * Checks whether this field is loaded (i.e. resolved).
+     * Checks whether this field is resolved.
      * @return {@code true} if this field is resolved
      */
-    boolean isLoaded();
+    boolean isResolved();
+
+    // NOTE: All operations beyond this point are only available on resolved fields..
 
     /**
      * Checks whether this field is volatile.
-     * ONLY AVAILABLE FOR RESOLVED FIELDS.
+     * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.
      * @return {@code true} if this field is volatile
      */
     boolean isVolatile();
 
     /**
      * Checks whether this field is constant.
-     * ONLY AVAILABLE FOR RESOLVED FIELDS.
+     * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.
      * @return {@code true} if this field is constant
      */
     boolean isConstant();
 
     /**
-     * Checks whether this field is static
-     * ONLY AVAILABLE FOR RESOLVED FIELDS.
+     * Checks whether this field is static.
+     * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.
      * @return {@code true} if this field is static
      */
     boolean isStatic();
 
     /**
-     * Gets the constant value of this field, if it is a constant (i.e. {@code static final} and <i>initialized</i>).
-     * ONLY AVAILABLE FOR RESOLVED FIELDS.
+     * Gets the constant value of this field, if it is a constant (that is, {@code static final} and <i>initialized</i>).
+     * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.
      * @return the constant value of this field
      */
     CiConstant constantValue();

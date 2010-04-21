@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -57,9 +56,9 @@ public interface ViewFocusListener {
     void addressFocusChanged(Address oldAddress, Address address);
 
     /**
-     * Notifies that the global {@link MemoryRegion} focus has been changed (view state only).
+     * Notifies that the global {@linkplain MaxMemoryRegion memory region} focus has been changed (view state only).
      */
-    void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion);
+    void memoryRegionFocusChanged(MaxMemoryRegion oldMemoryRegion, MaxMemoryRegion memoryRegion);
 
     /**
      * Notifies that the breakpoint focus has been changed (view state only), possibly to null.

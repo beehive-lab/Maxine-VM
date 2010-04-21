@@ -23,7 +23,8 @@ package com.sun.cri.xir;
 import com.sun.cri.ci.*;
 
 /**
- * This class represents an argument to an {@link XirSnippet}.
+ * Represents an argument to an {@link XirSnippet}.
+ * Currently, this is a <i>union </i> type; it is either a {@link CiConstant} or an {@code Object}.
  *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
@@ -58,7 +59,7 @@ public class XirArgument {
     public static XirArgument forObject(Object o) {
         return new XirArgument(CiConstant.forObject(o));
     }
-    
+
     @Override
     public String toString() {
     	if (constant != null) {

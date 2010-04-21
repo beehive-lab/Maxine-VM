@@ -25,7 +25,7 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 
 /**
- * A button specialized for use in the Maxine Inspector.
+ * A button specialized for use in the VM Inspector.
  *
  * @author Michael Van De Vanter
  */

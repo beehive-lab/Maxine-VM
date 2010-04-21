@@ -28,7 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
 /**
- * A panel specialized for use in the Maxine Inspector.
+ * A panel specialized for use in the VM Inspector.
  *
  * @author Michael Van De Vanter
  */
@@ -38,7 +38,7 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
     private final String tracePrefix;
 
     /**
-     * Creates a new {@JPanel} for use in the {@link Inspection}.
+     * Creates a new {@link JPanel} for use in the {@link Inspection}.
      */
     public InspectorPanel(Inspection inspection) {
         this.inspection = inspection;
@@ -46,7 +46,8 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
     }
 
     /**
-     * Creates a new {@JPanel} specialized for use in the Maxine Inspector.
+     * Creates a new {@link JPanel} specialized for use in the VM Inspector.
+     *
      * @param inspection
      * @param layoutManager specifies layout for the panel.
      */

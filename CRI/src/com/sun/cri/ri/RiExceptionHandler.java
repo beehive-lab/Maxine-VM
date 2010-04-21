@@ -21,7 +21,7 @@
 package com.sun.cri.ri;
 
 /**
- * This interface represents an exception handler within the bytecode.
+ * Represents an exception handler within the bytecode.
  *
  * @author Ben L. Titzer
  */

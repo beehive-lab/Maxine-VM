@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.asm;
 
-import java.util.*;
+import com.sun.c1x.util.*;
 
 /**
  * This class represents a label within assembly code.
@@ -34,7 +34,7 @@ public final class Label {
     // References to instructions that jump to this unresolved label.
     // These instructions need to be patched when the label is bound
     // using the platform-specific patchInstruction() method.
-    private List<Integer> patchPositions = new ArrayList<Integer>(4);
+    private IntList patchPositions = new IntList(4);
 
     /**
      * Returns the position of this label in the code buffer.
@@ -69,7 +69,8 @@ public final class Label {
     public void patchInstructions(AbstractAssembler masm) {
         assert isBound() : "Label should be bound";
         int target = position;
-        for (int pos : patchPositions) {
+        for (int i = 0; i < patchPositions.size(); ++i) {
+            int pos = patchPositions.get(i);
             masm.patchJumpTarget(pos, target);
         }
     }

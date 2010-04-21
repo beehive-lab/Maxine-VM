@@ -28,7 +28,7 @@ import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.tele.*;
 
 /**
- * A menu bar specialized for use in the Maxine Inspector.
+ * A menu bar specialized for use in the VM Inspector.
  * <br>
  * Instances of {@link InspectorMenu} can be added, and they can be retrieved by name.
  *
@@ -44,7 +44,7 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     private final AppendableSequence<InspectorMenu> menus = new ArrayListSequence<InspectorMenu>(10);
 
     /**
-     * Creates a new {@JMenuBar}, specialized for use in the Maxine Inspector.
+     * Creates a new {@JMenuBar}, specialized for use in the VM Inspector.
      */
     protected InspectorMenuBar(Inspection inspection) {
         this.inspection = inspection;

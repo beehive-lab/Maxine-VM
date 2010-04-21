@@ -25,9 +25,9 @@ import java.util.*;
 import com.sun.cri.ri.*;
 
 /**
- * This interface represents the result which encapsulates compiler output, including
- * the compiled machine code, associated data and references, relocation information,
- * deoptimization information, etc.
+ * Represents the output from compiling a method, including the compiled machine code, associated data and references,
+ * relocation information, deoptimization information, etc. It is the essential component of a {@link CiResult}, which also includes
+ * {@linkplain CiStatistics compilation statistics} and {@linkplain CiBailout failure information}.
  *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer

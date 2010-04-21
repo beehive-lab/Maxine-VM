@@ -24,7 +24,7 @@ import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
 /**
- * This class represents a compiler instance which has been configured for a particular runtime system and
+ * Represents a compiler instance which has been configured for a particular runtime system and
  * target machine and is capable of compiling methods.
  *
  * @author Ben L. Titzer

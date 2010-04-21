@@ -23,8 +23,8 @@ package com.sun.cri.ri;
 import com.sun.cri.ci.*;
 
 /**
- * This interface represents a method signature provided by the runtime.
- * 
+ * Represents a method signature provided by the runtime.
+ *
  * @see <a href="http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#7035">Method Descriptors</a>
  * @author Ben L. Titzer
  */

@@ -21,7 +21,6 @@
 package com.sun.max.tele;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -29,7 +28,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxRegisterSet {
+public interface MaxRegisterSet extends MaxEntity<MaxRegisterSet> {
 
     /**
      * Gets the thread that owns these registers; doesn't change.
@@ -83,7 +82,7 @@ public interface MaxRegisterSet {
      * @param memoryRegion description of a region of memory in the VM
      * @return all registers that currently point into the region; empty if none.
      */
-    Sequence<MaxRegister> find(MemoryRegion memoryRegion);
+    Sequence<MaxRegister> find(MaxMemoryRegion memoryRegion);
 
     /**
      * This threads registers:  integer, floating point, and state.

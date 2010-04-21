@@ -83,7 +83,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
             if (callerFrameContainsArguments) {
                 argOffsets[i] = argsSize;
             } else {
-                argOffsets[i] = -(ARGUMENT_SIZE + target.arch.wordSize) - (i * ARGUMENT_SIZE);
+                argOffsets[i] = -(ARGUMENT_SIZE + target.wordSize) - (i * ARGUMENT_SIZE);
             }
             argsSize += ARGUMENT_SIZE;
         }
@@ -95,7 +95,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
             if (callerFrameContainsArguments) {
                 resultOffset = 0;
             } else {
-                resultOffset = -(ARGUMENT_SIZE + target.arch.wordSize);
+                resultOffset = -(ARGUMENT_SIZE + target.wordSize);
             }
         }
     }
@@ -367,7 +367,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     private void partialSavePrologue(CiRegister... registersToSave) {
         this.registersSaved = registersToSave;
-        this.saveSize = registersToSave.length * target.arch.wordSize;
+        this.saveSize = registersToSave.length * target.wordSize;
         this.localSize = reservedSize();
 
         // align to code size
@@ -431,7 +431,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
             // saved only select registers
             for (int index = 0; index < registersSaved.length; index++) {
                 CiRegister r = registersSaved[index];
-                asm.movq(r, new CiAddress(CiKind.Word, AMD64.RSP, index * target.arch.wordSize));
+                asm.movq(r, new CiAddress(CiKind.Word, AMD64.RSP, index * target.wordSize));
             }
             registersSaved = null;
         }
@@ -447,9 +447,10 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     private void forwardRuntimeCall(CiRuntimeCall call) {
         // Load arguments
-        CiValue[] result = target.registerConfig.getRuntimeParameterLocations(call.arguments, target);
-        for (int i = 0; i < call.arguments.length; i++) {
-            loadArgument(i, result[i].asRegister());
+        CiCallingConvention cc = target.registerConfig.getRuntimeCallingConvention(call.arguments, target);
+        for (int i = 0; i < cc.locations.length; ++i) {
+            CiValue location = cc.locations[i];
+            loadArgument(i, location.asRegister());
         }
 
         // Call to the runtime

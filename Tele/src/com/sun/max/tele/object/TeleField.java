@@ -43,8 +43,8 @@ public class TeleField extends TeleTupleObject {
      */
     public Field toJava() {
         if (field == null) {
-            final Reference fieldActorReference = teleVM().teleFields().Field_fieldActor.readReference(reference());
-            final TeleFieldActor teleFieldActor = (TeleFieldActor) teleVM().makeTeleObject(fieldActorReference);
+            final Reference fieldActorReference = vm().teleFields().Field_fieldActor.readReference(reference());
+            final TeleFieldActor teleFieldActor = (TeleFieldActor) vm().makeTeleObject(fieldActorReference);
             field = teleFieldActor.fieldActor().toJava();
         }
         return field;

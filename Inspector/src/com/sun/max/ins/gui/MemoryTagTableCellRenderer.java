@@ -25,11 +25,11 @@ import javax.swing.table.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 
 /**
- * A renderer suitable for a table "Tag" cell in an Inspector display where each row corresponds to a memory region.
+ * A renderer suitable for a table "Tag" cell in an {@link Inspector} display where each row corresponds to a memory region.
+ * <br>
  * Displays text identifying registers, if any, that point into this region; displays a special border if there is a
  * watchpoint at the location, and displays a pointer icon if a watchpoint is currently triggered at this location.
  *
@@ -47,14 +47,13 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
      * to a memory region.  The text and tooltip text of this label/renderer to display informative strings
      * if one or more integer registers in the specified thread point at this location.
      * The text is empty if no registers point at this location.
-     * <br>
      *
      * @param memoryRegion a memory location in the VM
      * @param thread the thread from which to read registers
      * @param watchpoints the watchpoints at this location, null if none.
      * @return a component for displaying the cell
      */
-    public JLabel getRenderer(MemoryRegion memoryRegion, MaxThread thread, Sequence<MaxWatchpoint> watchpoints) {
+    public final JLabel getRenderer(MaxMemoryRegion memoryRegion, MaxThread thread, Sequence<MaxWatchpoint> watchpoints) {
         JLabel label = this;
         String labelText = "";
         String toolTipText = "";

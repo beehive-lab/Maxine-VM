@@ -109,7 +109,7 @@ public final class ShortValue extends PrimitiveValue<ShortValue> {
 
     @Override
     public Short asBoxedJavaValue() {
-        return new Short(value);
+        return Short.valueOf(value);
     }
 
     @Override

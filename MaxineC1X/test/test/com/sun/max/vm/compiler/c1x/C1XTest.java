@@ -71,7 +71,7 @@ public class C1XTest {
         "Do not print ClassNotFoundException warnings.");
     private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
         "Compile class initializer (<clinit>) methods");
-    private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", true,
+    private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", false,
         "Stop compilation upon the first bailout.");
     private static final Option<String> compilerOption = options.newStringOption("compiler-name", "c1x",
         "Select the compiler; boot,jit,opt,c1x");
@@ -355,7 +355,10 @@ public class C1XTest {
     }
 
     private static boolean isCompilable(MethodActor method) {
-        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative() && !method.isBuiltin() && !method.isIntrinsic();
+        if (method.isNative() && !MaxRiRuntime.CAN_COMPILE_NATIVE_METHODS) {
+            return false;
+        }
+        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isBuiltin() && !method.isIntrinsic();
     }
 
     enum PatternType {
@@ -504,15 +507,17 @@ public class C1XTest {
                         }
                     } else {
                         // a method pattern was specified, find matching methods
-                        final int parenIndex = argument.indexOf('(', colonIndex + 1);
+                        final int secondColonIndex = argument.indexOf(':', colonIndex + 1);
                         final PatternMatcher methodNamePattern;
-                        final SignatureDescriptor signature;
-                        if (parenIndex == -1) {
+                        String signature;
+                        if (secondColonIndex == -1) {
                             methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1));
                             signature = null;
                         } else {
-                            methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1, parenIndex));
-                            signature = SignatureDescriptor.create(argument.substring(parenIndex));
+                            methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1, secondColonIndex));
+                            signature = argument.substring(secondColonIndex + 1);
+                            // Normalize specified signature to have only a single space after any commas
+                            signature = signature.replaceAll(", *", ", ");
                         }
                         addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localStaticMethodActors(), exclusions);
                         addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localVirtualMethodActors(), exclusions);
@@ -559,11 +564,20 @@ public class C1XTest {
         return classActor;
     }
 
-    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final SignatureDescriptor signature, MethodActor[] methodActors, Set<String> exclusions) {
+    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final String signature, MethodActor[] methodActors, Set<String> exclusions) {
         for (final MethodActor method : methodActors) {
             if (methodNamePattern.matches(method.name.toString())) {
-                final SignatureDescriptor methodSignature = method.descriptor();
-                if (signature == null || signature.equals(methodSignature)) {
+                if (signature != null) {
+                    final SignatureDescriptor methodSignature = method.descriptor();
+                    if (methodSignature.string.contains(signature)) {
+                        addMethod(methods, method, exclusions);
+                    } else {
+                        String javaSignature = methodSignature.toJavaString(false, true);
+                        if (javaSignature.contains(signature)) {
+                            addMethod(methods, method, exclusions);
+                        }
+                    }
+                } else {
                     addMethod(methods, method, exclusions);
                 }
             }
@@ -658,7 +672,6 @@ public class C1XTest {
         if (C1XOptions.PrintMetrics) {
             printClassFields(C1XMetrics.class);
         }
-        CiConstant.dumpCacheStats(out);
         List<String> metrics = metricsOption.getValue();
         if (metrics.size() > 0) {
             for (String s : metrics) {

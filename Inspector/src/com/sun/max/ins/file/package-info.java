@@ -28,7 +28,7 @@
  */
 
 /**
- * Maxine VM inspector.
+ * VM inspector.
  * Support viewing of text files
  *
  * @author Michael Van De Vanter

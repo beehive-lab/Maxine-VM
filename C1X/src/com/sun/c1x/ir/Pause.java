@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,23 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.c1x.ir;
 
-import com.sun.max.memory.*;
-import com.sun.max.tele.memory.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
 /**
- * Description of the VM memory occupied by the stack for a thread.
+ * Instruction implementing the semantics of {@link Bytecodes#LSA}.
  *
  * @author Doug Simon
- * @author Michael Van De Vanter
  */
-public final class TeleNativeStackMemoryRegion extends TeleMemoryRegion {
+public final class Pause extends Instruction {
 
-    public final TeleNativeThread teleNativeThread;
+    /**
+     * Creates a {@link Pause} instance.
+     */
+    public Pause() {
+        super(CiKind.Void);
+    }
 
-    public TeleNativeStackMemoryRegion(TeleNativeThread teleNativeThread, MemoryRegion stackRegion) {
-        super(stackRegion, "Thread-" + teleNativeThread.localHandle() + " stack");
-        this.teleNativeThread = teleNativeThread;
+    /**
+     * Implements this instruction's half of the visitor pattern.
+     * @param v the visitor to accept
+     */
+    @Override
+    public void accept(ValueVisitor v) {
+        v.visitPause(this);
     }
 }

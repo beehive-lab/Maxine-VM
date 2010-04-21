@@ -47,7 +47,7 @@ public abstract class AbstractAssembler {
         this.targetMethod = new CiTargetMethod(target.allocationSpec.refMapSize);
         this.codeBuffer = new Buffer(target.arch.byteOrder);
         this.exceptionInfoList = new ArrayList<ExceptionInfo>();
-        this.wordSize = target.arch.wordSize;
+        this.wordSize = target.wordSize;
     }
 
     public final void bind(Label l) {

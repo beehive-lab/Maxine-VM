@@ -29,7 +29,6 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -313,11 +312,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.REGION.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final MemoryRegion memoryRegion = focus().memoryRegion();
+                    final MaxMemoryRegion memoryRegion = focus().memoryRegion();
                     if (memoryRegion == null) {
                         setValue(null, "No memory region focus");
                     } else {
-                        setValue(memoryRegion.description(), "Memory region focus = " + memoryRegion.description());
+                        setValue(memoryRegion.regionName(), "Memory region focus = " + memoryRegion.regionName());
                     }
                 }
             };
@@ -363,7 +362,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         refresh(true);
     }
 
-    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
+    public void memoryRegionFocusChanged(MaxMemoryRegion oldMemoryRegion, MaxMemoryRegion memoryRegion) {
         refresh(true);
     }
 

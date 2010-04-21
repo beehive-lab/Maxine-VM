@@ -18,19 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
+package com.sun.max.tele.method;
 
-import com.sun.max.ins.*;
+import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
 
 /**
- * An inspector that displays in an internal window frame.
+ * Represents a region of VM memory that holds compiled code for native code about which we know little.
+ *
  * @author Michael Van De Vanter
- */
-public abstract class FramedInspector extends Inspector {
+  */
+public final class NativeTargetCodeRegion extends TargetCodeRegion {
 
-    public FramedInspector(Inspection inspection) {
-        super(inspection);
+    private final TeleNativeTargetRoutine teleNativeTargetRoutine;
 
+    public NativeTargetCodeRegion(TeleVM teleVM, TeleNativeTargetRoutine teleNativeTargetRoutine, Address start, Size size) {
+        super(teleVM, teleNativeTargetRoutine, start, size, "Native TeleTarget-" + teleNativeTargetRoutine.toString());
+        this.teleNativeTargetRoutine = teleNativeTargetRoutine;
     }
 
 }

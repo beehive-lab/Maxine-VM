@@ -28,7 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
 /**
- * A scroll pane specialized for use in the Maxine Inspector.
+ * A scroll pane specialized for use in the VM Inspector.
  * By default uses policies VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER
  *
  * @author Michael Van De Vanter
@@ -39,7 +39,7 @@ public class InspectorScrollPane extends JScrollPane implements Prober, Inspecti
     private final String tracePrefix;
 
     /**
-     * Creates a new {@JScrollPane} for use in the {@link Inspection}.
+     * Creates a new {@link JScrollPane} for use in the {@link Inspection}.
      * By default uses policies VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER.
      *
      * @param inspection

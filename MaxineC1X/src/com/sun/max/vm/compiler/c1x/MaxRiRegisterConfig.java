@@ -173,12 +173,19 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         return safepointRegister;
     }
 
-    public CiValue[] getJavaParameterLocations(CiKind[] types, boolean outgoing, CiTarget target) {
-        return callingConvention(types, outgoing, target);
+    @Override
+    public CiCallingConvention getJavaCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target) {
+        return callingConvention(parameters, outgoing, target);
     }
 
-    public CiValue[] getRuntimeParameterLocations(CiKind[] types, CiTarget target) {
-        return callingConvention(types, true, target);
+    @Override
+    public CiCallingConvention getRuntimeCallingConvention(CiKind[] parameters, CiTarget target) {
+        return callingConvention(parameters, true, target);
+    }
+
+    @Override
+    public CiCallingConvention getNativeCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target) {
+        return callingConvention(parameters, outgoing, target);
     }
 
     public CiRegister[] getAllocatableRegisters() {
@@ -212,12 +219,12 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         return integerRegisterRoleMap[id];
     }
 
-    private CiValue[] callingConvention(CiKind[] types, boolean outgoing, CiTarget target) {
-        CiValue[] result = new CiValue[types.length];
+    private CiCallingConvention callingConvention(CiKind[] types, boolean outgoing, CiTarget target) {
+        CiValue[] locations = new CiValue[types.length];
 
         int currentGeneral = 0;
         int currentXMM = 0;
-        int currentStackSlot = 0;
+        int currentStackIndex = 0;
 
         for (int i = 0; i < types.length; i++) {
             final CiKind kind = types[i];
@@ -233,7 +240,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                 case Object:
                     if (currentGeneral < generalParameterRegisters.length) {
                         CiRegister register = generalParameterRegisters[currentGeneral++];
-                        result[i] = register.asValue(kind);
+                        locations[i] = register.asValue(kind);
                     }
                     break;
 
@@ -241,7 +248,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                 case Double:
                     if (currentXMM < xmmParameterRegisters.length) {
                         CiRegister register = xmmParameterRegisters[currentXMM++];
-                        result[i] = register.asValue(kind);
+                        locations[i] = register.asValue(kind);
                     }
                     break;
 
@@ -249,13 +256,13 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                     throw Util.shouldNotReachHere();
             }
 
-            if (result[i] == null) {
-                result[i] = new CiAddress(kind, outgoing ? CiRegister.Frame.asValue() : CiRegister.CallerFrame.asValue(), currentStackSlot);
-                currentStackSlot += target.spillSlots(kind) * target.spillSlotSize;
+            if (locations[i] == null) {
+                locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !outgoing);
+                currentStackIndex += target.spillSlots(kind);
             }
         }
 
-        return result;
+        return new CiCallingConvention(locations, currentStackIndex * target.spillSlotSize);
     }
 
     @HOSTED_ONLY

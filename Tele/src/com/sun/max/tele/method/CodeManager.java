@@ -39,19 +39,19 @@ public final class CodeManager extends AbstractTeleVMHolder implements MaxCodeMa
     }
 
     public BytecodeLocation createBytecodeLocation(MethodKey methodKey, String description) throws ProgramError {
-        return CodeLocation.createBytecodeLocation(teleVM(), methodKey, description);
+        return CodeLocation.createBytecodeLocation(vm(), methodKey, description);
     }
 
     public  BytecodeLocation createBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) {
-        return CodeLocation.createBytecodeLocation(teleVM(), teleClassMethodActor, bytecodePosition, description);
+        return CodeLocation.createBytecodeLocation(vm(), teleClassMethodActor, bytecodePosition, description);
     }
 
     public MachineCodeLocation createMachineCodeLocation(Address address, String description) throws ProgramError {
-        return CodeLocation.createMachineCodeLocation(teleVM(), address, description);
+        return CodeLocation.createMachineCodeLocation(vm(), address, description);
     }
 
     public MachineCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position, String description) throws ProgramError {
-        return CodeLocation.createMachineCodeLocation(teleVM(), address, teleClassMethodActor, position, description);
+        return CodeLocation.createMachineCodeLocation(vm(), address, teleClassMethodActor, position, description);
     }
 
 }

@@ -81,7 +81,7 @@ public class LIRXirInstruction extends LIRInstruction {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("LIRXIR ");
+        sb.append("XIR ");
 
         sb.append(snippet.toString());
 
@@ -96,9 +96,9 @@ public class LIRXirInstruction extends LIRInstruction {
 
         sb.append(result().toString() + " = ");
 
-        for (OperandSlot opSlot : super.operandSlots) {
+        for (LIROperand opSlot : super.inputAndTempOperands) {
 
-            CiValue op = opSlot.get(this);
+            CiValue op = opSlot.value(this);
 
             if (op != null) {
                 sb.append(" ");

@@ -31,7 +31,7 @@ public class RuntimeMemoryRegion implements MemoryRegion {
      * An optional, short string that describes the role being played by the region, useful for debugging.
      */
     @INSPECTED
-    private String description = "?";
+    private String regionName = "<unnamed>";
 
     @INSPECTED
     protected Address start;
@@ -59,8 +59,8 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         size = memoryRegion.size();
     }
 
-    public RuntimeMemoryRegion(String description) {
-        this.description = description;
+    public RuntimeMemoryRegion(String regionName) {
+        this.regionName = regionName;
         start = Address.zero();
         size = Size.zero();
     }
@@ -86,15 +86,15 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         size = end.minus(start).asSize();
     }
 
-    public final String description() {
-        return description;
+    public final String regionName() {
+        return regionName;
     }
 
     /**
-     * Sets a description of the role being played by this region.
+     * Sets the name that describes role being played by this region.
      */
-    public final void setDescription(String description) {
-        this.description = description;
+    public final void setRegionName(String regionName) {
+        this.regionName = regionName;
     }
 
     public final Address end() {

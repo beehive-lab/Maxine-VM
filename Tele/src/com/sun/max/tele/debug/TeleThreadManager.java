@@ -21,6 +21,8 @@
 package com.sun.max.tele.debug;
 
 
+import java.io.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -37,7 +39,7 @@ public class TeleThreadManager extends AbstractTeleVMHolder implements MaxThread
     }
 
     public Sequence<MaxThread> threads() {
-        return teleVM().state().threads();
+        return vm().state().threads();
     }
 
     public MaxThread findThread(Address address) {
@@ -79,6 +81,22 @@ public class TeleThreadManager extends AbstractTeleVMHolder implements MaxThread
             }
         }
         return null;
+    }
+
+
+    /**
+     * Writes a description of every thread to the stream,
+     * with more detail than typically displayed.
+     * <br>
+     * Thread-safe
+     *
+     * @param printStream
+     */
+    public void writeSummary(PrintStream printStream) {
+        printStream.println("Threads :" + vm().state());
+        for (MaxThread maxThread : threads()) {
+            printStream.println("  " + maxThread);
+        }
     }
 
 }

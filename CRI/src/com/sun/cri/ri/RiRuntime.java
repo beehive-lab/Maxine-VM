@@ -25,7 +25,7 @@ import java.io.*;
 import com.sun.cri.ci.*;
 
 /**
- * This interface encapsulates the main functionality of the runtime for the compiler, including access
+ * Encapsulates the main functionality of the runtime for the compiler, including access
  * to constant pools, OSR frames, inlining requirements, and runtime calls such as checkcast.
  *
  * @author Ben L. Titzer
@@ -130,14 +130,14 @@ public interface RiRuntime {
      * a designated offset in the compiled code of a callee. If necessary, there will be code at these special
      * offsets that moves the outgoing arguments of the caller to the locations expected by the callee.
      * This method emits the adapter code if it is required.
-     * 
+     *
      * TODO: Parameterize this method with the calling convention in use by the code currently being compiled.
-     * 
+     *
      * @param method the callee method being compiled that may need an adapter code prologue
      * @param out where the prologue code (if any) will be emitted
      */
     void codePrologue(RiMethod method, OutputStream out);
-    
+
     /**
      * Returns the disassembly of the given code bytes. Used for debugging purposes only.
      *
@@ -149,7 +149,7 @@ public interface RiRuntime {
     /**
      * Returns the disassembly of the given code bytes. Used for debugging purposes only.
      *
-     * @param code the code bytes that should be disassembled
+     * @param targetMethod the {@link CiTargetMethod} containing the code bytes that should be disassembled
      * @return the disassembly as a String object
      */
     String disassemble(CiTargetMethod targetMethod);
@@ -187,7 +187,7 @@ public interface RiRuntime {
      * @return {@code true} if the tested type represents {@code Object[]}.
      */
     boolean isObjectArrayType(RiType type);
-    
+
     /**
      * Gets the {@linkplain RiSnippets snippets} provided by the runtime.
      */

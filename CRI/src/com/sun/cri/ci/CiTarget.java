@@ -24,9 +24,8 @@ import com.sun.cri.ci.CiRegister.*;
 import com.sun.cri.ri.*;
 
 /**
- * This class represents the target machine for a compiler, including
- * the CPU architecture, the size of pointers and references, alignment
- * of stacks, caches, etc.
+ * Represents the target machine for a compiler, including the CPU architecture, the size of pointers and references,
+ * alignment of stacks, caches, etc.
  *
  * @author Ben L. Titzer
  */
@@ -40,33 +39,44 @@ public class CiTarget {
     public final int pageSize;
     public final boolean isMP;
     private final int[] spillSlotsPerKindMap;
-    
+
     /**
      * The spill slot size for values that occupy 1 {@linkplain CiKind#sizeInSlots() Java slot}.
      */
     public final int spillSlotSize;
 
-    public int referenceSize;
-    public int stackAlignment;
-    public int cacheAlignment;
-    public int codeAlignment;
-    public int heapAlignment;
+    public final int wordSize;
+    public final int referenceSize;
+    public final int stackAlignment;
+    public final int cacheAlignment;
+    public final int codeAlignment;
+    public final int heapAlignment;
 
-    public CiTarget(CiArchitecture arch, RiRegisterConfig registerConfig, int pageSize, boolean isMP) {
+    public CiTarget(CiArchitecture arch,
+             RiRegisterConfig registerConfig,
+             boolean isMP,
+             int spillSlotSize,
+             int wordSize,
+             int referenceSize,
+             int stackAlignment,
+             int pageSize,
+             int cacheAlignment,
+             int heapAlignment,
+             int codeAlignment) {
         this.arch = arch;
         this.registerConfig = registerConfig;
-        this.referenceSize = arch.wordSize;
-        this.stackAlignment = arch.wordSize;
-        this.cacheAlignment = arch.wordSize;
-        this.heapAlignment = arch.wordSize;
-        this.spillSlotSize = arch.wordSize;
-        this.codeAlignment = 16;
-
-        this.stackPointerRegister = registerConfig.getStackPointerRegister();
-        this.scratchRegister = registerConfig.getScratchRegister();
-
         this.pageSize = pageSize;
         this.isMP = isMP;
+        this.spillSlotSize = spillSlotSize;
+        this.wordSize = wordSize;
+        this.referenceSize = referenceSize;
+        this.stackAlignment = stackAlignment;
+        this.cacheAlignment = cacheAlignment;
+        this.codeAlignment = codeAlignment;
+        this.heapAlignment = heapAlignment;
+        
+        this.stackPointerRegister = registerConfig.getStackPointerRegister();
+        this.scratchRegister = registerConfig.getScratchRegister();
         this.allocationSpec = new AllocationSpec(registerConfig.getAllocatableRegisters(), registerConfig.getRegisterReferenceMapOrder(), registerConfig.getCallerSaveRegisters());
         this.spillSlotsPerKindMap = new int[CiKind.values().length];
 
@@ -87,7 +97,7 @@ public class CiTarget {
      * @return the size in bytes of {@code kind}
      */
     public int sizeInBytes(CiKind kind) {
-        return kind.sizeInBytes(referenceSize, arch.wordSize);
+        return kind.sizeInBytes(referenceSize, wordSize);
     }
 
     /**
@@ -98,7 +108,7 @@ public class CiTarget {
     public int spillSlots(CiKind kind) {
         return spillSlotsPerKindMap[kind.ordinal()];
     }
-    
+
     /**
      * Aligns the given frame size (without return instruction pointer) to the stack
      * alignment size and return the aligned size (without return instruction pointer).

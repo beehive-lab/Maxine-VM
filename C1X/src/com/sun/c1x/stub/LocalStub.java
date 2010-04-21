@@ -40,7 +40,7 @@ public abstract class LocalStub {
 
     public CiValue[] operands;
     public CiValue result;
-    public LIRInstruction.OperandSlot resultSlot;
+    public LIROperand resultSlot;
 
     public int tempCount;
     public int tempInputCount;
@@ -84,10 +84,10 @@ public abstract class LocalStub {
     }
 
     public CiValue result() {
-        return resultSlot.get(instruction);
+        return resultSlot.value(instruction);
     }
 
-    public void setResultSlot(LIRInstruction.OperandSlot resultSlot) {
+    public void setResultSlot(LIROperand resultSlot) {
         this.resultSlot = resultSlot;
     }
 

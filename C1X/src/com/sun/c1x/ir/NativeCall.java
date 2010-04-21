@@ -21,7 +21,6 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
-import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -42,6 +41,12 @@ public final class NativeCall extends StateSplit {
     public final RiMethod nativeMethod;
 
     /**
+     * The signature of the call which is derived from {@link #nativeMethod} but is not
+     * the same as its {@linkplain RiMethod#signatureType() signature}.
+     */
+    public final RiSignature signature;
+
+    /**
      * The list of instructions that produce the arguments for this native call.
      */
     public final Value[] arguments;
@@ -53,11 +58,12 @@ public final class NativeCall extends StateSplit {
      * @param args the list of instructions producing arguments to the invocation
      * @param stateBefore the state before executing the invocation
      */
-    public NativeCall(RiMethod nativeMethod, CiKind result, Value address, Value[] args, FrameState stateBefore) {
-        super(result, stateBefore);
+    public NativeCall(RiMethod nativeMethod, RiSignature signature, Value address, Value[] args, FrameState stateBefore) {
+        super(signature.returnKind(), stateBefore);
         this.address = address;
         this.nativeMethod = nativeMethod;
         this.arguments = args;
+        this.signature = signature;
         assert nativeMethod.jniSymbol() != null;
     }
 

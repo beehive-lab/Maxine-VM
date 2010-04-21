@@ -169,6 +169,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         final InspectorMenu menu = new InspectorMenu("Test");
         menu.add(actions.viewFocus());
         menu.add(actions.listVMStateHistory());
+        menu.add(actions.listThreads());
         menu.add(actions.listStackFrames());
         menu.add(actions.listCodeRegistry());
         menu.add(actions.listCodeRegistryToFile());
