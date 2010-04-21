@@ -276,7 +276,7 @@ public abstract class LIRAssembler {
                 emitNegate(op);
                 break;
             case Lea:
-                emitLea(((CiAddress) op.operand()), (op.result()));
+                emitLea(op.operand(), op.result());
                 break;
             case NullCheck:
                 asm.recordImplicitException(codePos(), op.info);
@@ -457,15 +457,15 @@ public abstract class LIRAssembler {
 
     protected abstract void emitAlignment();
 
-    protected abstract void emitLea(CiAddress inOpr, CiValue resultOpr);
+    protected abstract void emitLea(CiValue src, CiValue dst);
 
     protected abstract void emitNegate(LIROp1 negate);
 
-    protected abstract void emitReadPC(CiValue resultOpr);
+    protected abstract void emitReadPC(CiValue dst);
 
     protected abstract void emitPause();
 
-    protected abstract void emitStackAllocate(StackBlock stackBlock, CiValue resultOpr);
+    protected abstract void emitStackAllocate(StackBlock src, CiValue dst);
 
     protected abstract void emitSafepoint(CiValue inOpr, LIRDebugInfo info);
 
@@ -479,19 +479,19 @@ public abstract class LIRAssembler {
 
     protected abstract void emitThrow(CiValue inOpr1, CiValue inOpr2, LIRDebugInfo info, boolean unwind);
 
-    protected abstract void emitLogicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr);
+    protected abstract void emitLogicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
-    protected abstract void emitIntrinsicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr, LIROp2 op);
+    protected abstract void emitIntrinsicOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, LIROp2 op);
 
-    protected abstract void emitArithOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr, LIRDebugInfo info);
+    protected abstract void emitArithOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, LIRDebugInfo info);
 
-    protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr, CiValue tmpOpr);
+    protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, CiValue tmpOpr);
 
-    protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, int asJint, CiValue resultOpr);
+    protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, int asJint, CiValue dst);
 
-    protected abstract void emitConditionalMove(Condition condition, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr);
+    protected abstract void emitConditionalMove(Condition condition, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
-    protected abstract void emitCompareFloatInt(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue resultOpr, LIROp2 op);
+    protected abstract void emitCompareFloatInt(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, LIROp2 op);
 
     protected abstract void emitCompare(Condition condition, CiValue inOpr1, CiValue inOpr2, LIROp2 op);
 

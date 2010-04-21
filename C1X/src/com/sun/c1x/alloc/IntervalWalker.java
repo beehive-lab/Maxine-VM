@@ -81,11 +81,18 @@ public class IntervalWalker {
         walkTo(Integer.MAX_VALUE);
     }
 
-    IntervalWalker(LinearScan allocator, Interval unhandledFixedFirst, Interval unhandledAnyFirst) {
+    /**
+     * Creates a new interval walker.
+     *
+     * @param allocator the register allocator context
+     * @param unhandledFixed the list of unhandled {@linkplain RegisterBinding#Fixed fixed} intervals
+     * @param unhandledAny the list of unhandled {@linkplain RegisterBinding#Any non-fixed} intervals
+     */
+    IntervalWalker(LinearScan allocator, Interval unhandledFixed, Interval unhandledAny) {
         this.compilation = allocator.compilation;
         this.allocator = allocator;
 
-        unhandledLists = new RegisterBindingLists(unhandledFixedFirst, unhandledAnyFirst);
+        unhandledLists = new RegisterBindingLists(unhandledFixed, unhandledAny);
         activeLists = new RegisterBindingLists(Interval.EndMarker, Interval.EndMarker);
         inactiveLists = new RegisterBindingLists(Interval.EndMarker, Interval.EndMarker);
         currentPosition = -1;

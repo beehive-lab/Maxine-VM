@@ -27,7 +27,6 @@ import com.sun.c1x.alloc.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -55,7 +54,7 @@ public class CFGPrinter {
             try {
                 cfgFileStream = new FileOutputStream(cfgFile);
             } catch (FileNotFoundException e) {
-                TTY.println("WARNING: Cound not open " + cfgFile.getAbsolutePath());
+                TTY.println("WARNING: Could not open " + cfgFile.getAbsolutePath());
             }
         }
         return cfgFileStream;
@@ -99,8 +98,8 @@ public class CFGPrinter {
      */
     public void printCompilation(RiMethod method) {
         begin("compilation");
-        out.print("name \" ").print(Util.format("%H::%n", method, true)).println('"');
-        out.print("method \"").print(Util.format("%f %r %H.%n(%p)", method, true)).println('"');
+        out.print("name \" ").print(CiUtil.format("%H::%n", method, true)).println('"');
+        out.print("method \"").print(CiUtil.format("%f %r %H.%n(%p)", method, true)).println('"');
         out.print("date ").println(System.currentTimeMillis());
         end("compilation");
     }
@@ -209,7 +208,7 @@ public class CFGPrinter {
               Value value = state.stackAt(i);
               out.disableIndentation();
               out.print(InstructionPrinter.stateString(i, value, block));
-              printCiValue(value);
+              printOperand(value);
               out.println();
               out.enableIndentation();
               i += value.kind.sizeInSlots();
@@ -225,7 +224,7 @@ public class CFGPrinter {
                 Value value = state.lockAt(i);
                 out.disableIndentation();
                 out.print(InstructionPrinter.stateString(i, value, block));
-                printCiValue(value);
+                printOperand(value);
                 out.println();
                 out.enableIndentation();
             }
@@ -235,14 +234,14 @@ public class CFGPrinter {
         do {
             begin("locals");
             out.print("size ").println(state.localsSize());
-            out.print("method \"").print(Util.format("%f %h.%n(%p):%r", state.scope().method, false)).println('"');
+            out.print("method \"").print(CiUtil.format("%f %h.%n(%p):%r", state.scope().method, false)).println('"');
             int i = 0;
             while (i < state.localsSize()) {
                 Value value = state.localAt(i);
                 if (value != null) {
                     out.disableIndentation();
                     out.print(InstructionPrinter.stateString(i, value, block));
-                    printCiValue(value);
+                    printOperand(value);
                     out.println();
                     out.enableIndentation();
                     // also ignore illegal HiWords
@@ -290,7 +289,7 @@ public class CFGPrinter {
         }
     }
 
-    private void printCiValue(Value i) {
+    private void printOperand(Value i) {
         if (i != null && i.operand() != null && i.operand().isVariable()) {
             out.print(" \"").print(i.operand().toString()).print("\" ");
         }
@@ -307,7 +306,7 @@ public class CFGPrinter {
         }
         int useCount = 0;
         out.print(i.bci()).print(' ').print(useCount).print(' ');
-        printCiValue(i);
+        printOperand(i);
         out.print(i).print(' ');
         new InstructionPrinter(out, true, target).printInstruction(i);
 

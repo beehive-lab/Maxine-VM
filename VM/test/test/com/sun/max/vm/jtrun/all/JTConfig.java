@@ -225,6 +225,8 @@ public class JTConfig {
         jtt.bytecode.BC_tableswitch4.class,
         jtt.bytecode.BC_wide01.class,
         jtt.bytecode.BC_wide02.class,
+        jtt.exbytecode.EBC_lsa01.class,
+        jtt.exbytecode.EBC_lsa02.class,
         jtt.exbytecode.EBC_movd2l_01.class,
         jtt.exbytecode.EBC_movd2l_02.class,
         jtt.exbytecode.EBC_movd2l_03.class,

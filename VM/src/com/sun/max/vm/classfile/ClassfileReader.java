@@ -696,17 +696,15 @@ public final class ClassfileReader {
     @HOSTED_ONLY
     private Annotation[] getAnnotations(Utf8Constant name, Descriptor descriptor) {
         Class holder = Classes.forName(classDescriptor.toJavaString(), false, ClassfileReader.class.getClassLoader());
+        if (name == null) {
+            return holder.getAnnotations();
+        }
         Annotation[] annotations;
         if (name.equals(SymbolTable.INIT)) {
             SignatureDescriptor sig = (SignatureDescriptor) descriptor;
             annotations = Classes.getDeclaredConstructor(holder, sig.resolveParameterTypes(ClassfileReader.class.getClassLoader())).getAnnotations();
         } else if (descriptor instanceof TypeDescriptor) {
-            TypeDescriptor type = (TypeDescriptor) descriptor;
-            if (name.equals(type.toJavaString())) {
-                annotations = holder.getAnnotations();
-            } else {
-                annotations = Classes.getDeclaredField(holder, name.string).getAnnotations();
-            }
+            annotations = Classes.getDeclaredField(holder, name.string).getAnnotations();
         } else {
             SignatureDescriptor sig = (SignatureDescriptor) descriptor;
             annotations = Classes.getDeclaredMethod(holder, name.string, sig.resolveParameterTypes(ClassfileReader.class.getClassLoader())).getAnnotations();
@@ -861,6 +859,16 @@ public final class ClassfileReader {
                 int intrinsic = 0;
                 Class accessor = null;
 
+                boolean classHasNeverInlineAnnotation = false;
+                if (MaxineVM.isHosted()) {
+                    for (Annotation annotation : getAnnotations(null, null)) {
+                        if (annotation.annotationType() == NEVER_INLINE.class) {
+                            classHasNeverInlineAnnotation = true;
+                            break;
+                        }
+                    }
+                }
+
                 if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
                     for (Annotation annotation : getAnnotations(name, descriptor)) {
                         if (annotation.annotationType() == HOSTED_ONLY.class) {
@@ -942,6 +950,10 @@ public final class ClassfileReader {
                             codeAttribute = null;
                         }
                     }
+                }
+
+                if (classHasNeverInlineAnnotation && !isInline(flags) && !isInlineAfterSnippetsAreCompiled(flags)) {
+                    flags |= NEVER_INLINE;
                 }
 
                 if (isNative(flags)) {
@@ -1259,7 +1271,7 @@ public final class ClassfileReader {
         classfileStream.checkEndOfFile();
 
         if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
-            for (Annotation annotation : getAnnotations(name, classDescriptor)) {
+            for (Annotation annotation : getAnnotations(null, null)) {
                 if (annotation.annotationType() == HOSTED_ONLY.class) {
                     throw new HostOnlyClassError(name.string);
                 }

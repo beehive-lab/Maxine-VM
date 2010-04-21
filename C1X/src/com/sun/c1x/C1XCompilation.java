@@ -30,7 +30,6 @@ import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -220,7 +219,7 @@ public class C1XCompilation {
             throw new CiBailout("build of BlockMap failed for " + method);
         } else {
             if (cfgPrinter() != null) {
-                cfgPrinter().printCFG(method, map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
+                cfgPrinter().printCFG(method, map, method.codeSize(), "BlockListBuilder " + CiUtil.format("%f %r %H.%n(%p)", method, true), false, false);
             }
         }
         map.cleanup();

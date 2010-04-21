@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.alloc;
 
-import static com.sun.c1x.util.Util.*;
+import static com.sun.cri.ci.CiUtil.*;
 
 import java.util.*;
 
@@ -137,21 +137,21 @@ public class LinearScan {
         return operands.operandNumber(operand);
     }
 
-    static final IntervalPredicate isPrecoloredInterval = new IntervalPredicate() {
+    static final IntervalPredicate IS_PRECOLORED_INTERVAL = new IntervalPredicate() {
         @Override
         public boolean apply(Interval i) {
             return i.operand.isRegister();
         }
     };
 
-    static final IntervalPredicate isVariableInterval = new IntervalPredicate() {
+    static final IntervalPredicate IS_VARIABLE_INTERVAL = new IntervalPredicate() {
         @Override
         public boolean apply(Interval i) {
             return i.operand.isVariable();
         }
     };
 
-    static final IntervalPredicate isOopInterval = new IntervalPredicate() {
+    static final IntervalPredicate IS_OOP_INTERVAL = new IntervalPredicate() {
         @Override
         public boolean apply(Interval i) {
             return !i.operand.isRegister() && i.kind() == CiKind.Object;
@@ -526,9 +526,9 @@ public class LinearScan {
         }
     }
 
-    // * Phase 1: number all instructions in all blocks
-    // Compute depth-first and linear scan block orders, and number LIRInstruction nodes for linear scan.
-
+    /**
+     * Numbers all instructions in all blocks. The numbering follows the {@linkplain ComputeLinearScanOrder linear scan order}.
+     */
     void numberInstructions() {
         // Assign IDs to LIR nodes and build a mapping, lirOps, from ID to LIRInstruction node.
         int numBlocks = blockCount();
@@ -895,7 +895,12 @@ public class LinearScan {
             interval.setKind(kind);
         }
 
-        interval.addRange(from, to);
+        if (operand.isVariable() && gen.operands.mustStayInMemory((CiVariable) operand)) {
+            interval.addRange(from, maxOpId());
+        } else {
+            interval.addRange(from, to);
+        }
+
         interval.addUsePos(to, registerPriority);
     }
 
@@ -975,7 +980,7 @@ public class LinearScan {
     }
 
     /**
-     * Determines the priority which with an instruction's output/result operand will be allocated a register.
+     * Determines the register priority for an instruction's output/result operand.
      */
     RegisterPriority registerPriorityOfOutputOperand(LIRInstruction op, CiValue operand) {
         if (op.code == LIROpcode.Move) {
@@ -1223,8 +1228,6 @@ public class LinearScan {
             for (int j = instructions.size() - 1; j >= 1; j--) {
                 LIRInstruction op = instructions.get(j);
                 int opId = op.id;
-
-                // visit operation to collect all operands
 
                 // add a temp range for each register if operation destroys caller-save registers
                 if (op.hasCall()) {
@@ -1482,15 +1485,15 @@ public class LinearScan {
     };
 
     public void allocateRegisters() {
-        Interval precoloredCpuIntervals;
-        Interval notPrecoloredCpuIntervals;
+        Interval precoloredIntervals;
+        Interval notPrecoloredIntervals;
 
-        Interval.Pair result = createUnhandledLists(isPrecoloredInterval, isVariableInterval);
-        precoloredCpuIntervals = result.first;
-        notPrecoloredCpuIntervals = result.second;
+        Interval.Pair result = createUnhandledLists(IS_PRECOLORED_INTERVAL, IS_VARIABLE_INTERVAL);
+        precoloredIntervals = result.first;
+        notPrecoloredIntervals = result.second;
 
         // allocate cpu registers
-        LinearScanWalker lsw = new LinearScanWalker(this, precoloredCpuIntervals, notPrecoloredCpuIntervals);
+        LinearScanWalker lsw = new LinearScanWalker(this, precoloredIntervals, notPrecoloredIntervals);
         lsw.walk();
         lsw.finishAllocation();
     }
@@ -1940,7 +1943,7 @@ public class LinearScan {
         Interval oopIntervals;
         Interval nonOopIntervals;
 
-        oopIntervals = createUnhandledLists(isOopInterval, null).first;
+        oopIntervals = createUnhandledLists(IS_OOP_INTERVAL, null).first;
 
         // intervals that have no oops inside need not to be processed
         // to ensure a walking until the last instruction id, add a dummy interval
@@ -2267,6 +2270,8 @@ public class LinearScan {
 
                 // compute reference map and debug information
                 computeDebugInfo(iw, op);
+            } else {
+                System.console();
             }
 
             // make sure we haven't made the op invalid.
@@ -2540,7 +2545,7 @@ public class LinearScan {
     void verifyNoOopsInFixedIntervals() {
         Interval fixedIntervals;
         Interval otherIntervals;
-        fixedIntervals = createUnhandledLists(isPrecoloredInterval, null).first;
+        fixedIntervals = createUnhandledLists(IS_PRECOLORED_INTERVAL, null).first;
         // to ensure a walking until the last instruction id, add a dummy interval
         // with a high operation id
         otherIntervals = new Interval(CiValue.IllegalValue, -1);

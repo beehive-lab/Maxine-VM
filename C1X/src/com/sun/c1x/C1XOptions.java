@@ -298,7 +298,7 @@ public class C1XOptions {
         OptCSEArrayLength               = true;
 
         // turn on state merging optimizations
-        PhiLoopStores = true;
+        PhiLoopStores                   = true;
 
         // turn on speculative optimizations
         OptCHA                          = true;

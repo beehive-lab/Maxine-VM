@@ -172,10 +172,6 @@ public class MaxRiRuntime implements RiRuntime {
             return true;
         }
 
-        if (classMethodActor.holder().name.string.endsWith(".Log")) {
-            return true;
-        }
-
         return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
     }
 
