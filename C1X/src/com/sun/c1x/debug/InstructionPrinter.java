@@ -621,11 +621,6 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
-    public void visitRoundFP(RoundFP i) {
-        out.print("roundfp ").print(i.value());
-    }
-
-    @Override
     public void visitShiftOp(ShiftOp shiftOp) {
         out.print(shiftOp.x()).print(' ').print(Bytecodes.operator(shiftOp.opcode())).print(' ').print(shiftOp.y());
     }

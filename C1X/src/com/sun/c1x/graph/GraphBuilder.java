@@ -373,12 +373,11 @@ public final class GraphBuilder {
         }
     }
 
+    /**
+     * Adds extra node to round a floating point value if necessary to comply with the requirements of the {@code strictfp} keyword.
+     */
     Value roundFp(Value x) {
-        if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 2) {
-            if (x.kind.isDouble() && !(x instanceof Constant) && !(x instanceof Local) && !(x instanceof RoundFP)) {
-                return append(new RoundFP(x));
-            }
-        }
+        // C1X assumes that all X86 backends support SSE2
         return x;
     }
 
@@ -609,9 +608,6 @@ public final class GraphBuilder {
         Value y = pop(kind);
         Value x = pop(kind);
         Value result = append(new ArithmeticOp(opcode, kind, x, y, method().isStrictFP(), state));
-        if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
-            result = roundFp(result);
-        }
         push(kind, result);
     }
 
@@ -928,11 +924,7 @@ public final class GraphBuilder {
     private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
         CiKind resultType = returnKind(target);
         Value result = append(new Invoke(opcode, resultType.stackKind(), args, isStatic, target, cpi, constantPool, stateBefore));
-        if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
-            pushReturn(resultType, roundFp(result));
-        } else {
-            pushReturn(resultType, result);
-        }
+        pushReturn(resultType, result);
     }
 
     private RiType getExactType(RiType staticType, Value receiver) {

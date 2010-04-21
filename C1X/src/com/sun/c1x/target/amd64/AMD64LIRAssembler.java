@@ -1394,11 +1394,6 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitRuntimeCall(CiRuntimeCall dest, LIRDebugInfo info) {
-        masm.directCall(dest, info);
-    }
-
-    @Override
     protected void emitVolatileMove(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
         assert kind == CiKind.Long : "only for volatile long fields";
 
@@ -1454,73 +1449,6 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     @Override
     protected void doPeephole(LIRList list) {
         // Do nothing for now
-    }
-
-    @Override
-    protected void emitLIROp2(LIROp2 op) {
-        switch (op.code) {
-            case Cmp:
-                if (op.info != null) {
-                    assert op.operand1().isAddress() || op.operand2().isAddress() : "shouldn't be codeemitinfo for non-Pointer operands";
-                    //NullPointerExceptionStub stub = new NullPointerExceptionStub(pcOffset, cinfo);
-                    //emitCodeStub(stub);
-                    asm.recordImplicitException(codePos(), op.info);
-                }
-                emitCompare(op.condition(), op.operand1(), op.operand2(), op);
-                break;
-
-            case Cmpl2i:
-            case Cmpfd2i:
-            case Ucmpfd2i:
-                emitCompareFloatInt(op.code, op.operand1(), op.operand2(), op.result(), op);
-                break;
-
-            case Cmove:
-                emitConditionalMove(op.condition(), op.operand1(), op.operand2(), op.result());
-                break;
-
-            case Shl:
-            case Shr:
-            case Ushr:
-                if (op.operand2().isConstant()) {
-                    emitShiftOp(op.code, op.operand1(), ((CiConstant) op.operand2()).asInt(), op.result());
-                } else {
-                    emitShiftOp(op.code, op.operand1(), op.operand2(), op.result(), op.tmp());
-                }
-                break;
-
-            case Add:
-            case Sub:
-            case Mul:
-            case Div:
-            case Rem:
-                emitArithOp(op.code, op.operand1(), op.operand2(), op.result(), op.info);
-                break;
-
-            case Abs:
-            case Sqrt:
-            case Sin:
-            case Tan:
-            case Cos:
-            case Log:
-            case Log10:
-                emitIntrinsicOp(op.code, op.operand1(), op.operand2(), op.result(), op);
-                break;
-
-            case LogicAnd:
-            case LogicOr:
-            case LogicXor:
-                emitLogicOp(op.code, op.operand1(), op.operand2(), op.result());
-                break;
-
-            case Throw:
-            case Unwind:
-                emitThrow(op.operand1(), op.operand2(), op.info, op.code == LIROpcode.Unwind);
-                break;
-
-            default:
-                throw Util.shouldNotReachHere();
-        }
     }
 
     @Override

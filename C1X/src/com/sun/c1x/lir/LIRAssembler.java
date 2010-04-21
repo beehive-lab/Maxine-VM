@@ -499,15 +499,11 @@ public abstract class LIRAssembler {
 
     protected abstract void emitConvert(LIRConvert convert);
 
-    protected abstract void emitLIROp2(LIROp2 op2);
-
     protected abstract void emitOp3(LIROp3 op3);
 
     protected abstract void emitCompareAndSwap(LIRCompareAndSwap compareAndSwap);
 
     protected abstract void emitXir(LIRXirInstruction xirInstruction);
-
-    protected abstract void emitRuntimeCall(CiRuntimeCall l, LIRDebugInfo info);
 
     protected abstract void emitIndirectCall(Object target, LIRDebugInfo info, CiValue callAddress);
 
