@@ -69,7 +69,7 @@ public final class Throw {
                 final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
                 if (classMethodActor == null) {
-                    Log.print(targetMethod.description());
+                    Log.print(targetMethod.regionName());
                 } else {
                     Log.print(classMethodActor.holder().name);
                     Log.print(".");

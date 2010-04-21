@@ -46,7 +46,7 @@ public class TelePrimitiveClassActor extends TeleClassActor implements ClassProv
     }
 
     public ClassProvider getSuperClass() {
-        return (ClassProvider) teleVM().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
+        return (ClassProvider) vm().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
     }
 
 }

@@ -130,6 +130,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         classToTeleTupleObjectConstructor.put(CodeManager.class, getConstructor(TeleCodeManager.class));
         classToTeleTupleObjectConstructor.put(RuntimeMemoryRegion.class, getConstructor(TeleRuntimeMemoryRegion.class));
         classToTeleTupleObjectConstructor.put(LinearAllocationMemoryRegion.class, getConstructor(TeleLinearAllocationMemoryRegion.class));
+        classToTeleTupleObjectConstructor.put(RootTableMemoryRegion.class, getConstructor(TeleRootTableMemoryRegion.class));
         // Other Maxine support
         classToTeleTupleObjectConstructor.put(Kind.class, getConstructor(TeleKind.class));
         classToTeleTupleObjectConstructor.put(ObjectReferenceValue.class, getConstructor(TeleObjectReferenceValue.class));
@@ -202,7 +203,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             return teleObject;
         }
         // Keep all the VM traffic outside of synchronization.
-        if (!teleVM().isValidOrigin(reference.toOrigin())) {
+        if (!vm().isValidOrigin(reference.toOrigin())) {
             return null;
         }
 
@@ -228,9 +229,9 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         try {
             // If the location in fact points to a well-formed object in the VM, we will be able to determine the
             // meta-information necessary to understanding how to access information in the object.
-            hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
-            classActorReference = teleVM().teleFields().Hub_classActor.readReference(hubReference);
-            classActor = teleVM().makeClassActor(classActorReference);
+            hubReference = vm().wordToReference(vm().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
+            classActorReference = vm().teleFields().Hub_classActor.readReference(hubReference);
+            classActor = vm().makeClassActor(classActorReference);
         } catch (InvalidReferenceException invalidReferenceException) {
             Log.println("InvalidReferenceException reference: " + reference + "/" + reference.toOrigin() +
                 " hubReference: " + hubReference + "/" + hubReference.toOrigin() + " classActorReference: " +
@@ -239,21 +240,21 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         }
 
         // Must check for the static tuple case first; it doesn't follow the usual rules
-        final Reference hubhubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(hubReference));
-        final Reference hubClassActorReference = teleVM().teleFields().Hub_classActor.readReference(hubhubReference);
-        final ClassActor hubClassActor = teleVM().makeClassActor(hubClassActorReference);
+        final Reference hubhubReference = vm().wordToReference(vm().layoutScheme().generalLayout.readHubReferenceAsWord(hubReference));
+        final Reference hubClassActorReference = vm().teleFields().Hub_classActor.readReference(hubhubReference);
+        final ClassActor hubClassActor = vm().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
             //teleObject = new TeleStaticTuple(teleVM(), reference);       ?????????
             teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
             if (teleObject == null) {
-                teleObject = new TeleStaticTuple(teleVM(), reference);
+                teleObject = new TeleStaticTuple(vm(), reference);
             }
         } else if (classActor.isArrayClassActor()) {
             // Check map again, just in case there's a race
             teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
             if (teleObject == null) {
-                teleObject = new TeleArrayObject(teleVM(), reference, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
+                teleObject = new TeleArrayObject(vm(), reference, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
             }
         } else if (classActor.isHybridClassActor()) {
             final Class javaClass = classActor.toJava();
@@ -261,9 +262,9 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
             if (teleObject == null) {
                 if (DynamicHub.class.isAssignableFrom(javaClass)) {
-                    teleObject = new TeleDynamicHub(teleVM(), reference);
+                    teleObject = new TeleDynamicHub(vm(), reference);
                 } else if (StaticHub.class.isAssignableFrom(javaClass)) {
-                    teleObject = new TeleStaticHub(teleVM(), reference);
+                    teleObject = new TeleStaticHub(vm(), reference);
                 } else {
                     throw FatalError.unexpected("invalid hybrid implementation type");
                 }
@@ -274,12 +275,13 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             if (teleObject == null) {
                 final Constructor constructor = lookupTeleTupleObjectConstructor(classActor);
                 try {
-                    teleObject = (TeleObject) constructor.newInstance(teleVM(), reference);
+                    teleObject = (TeleObject) constructor.newInstance(vm(), reference);
                 } catch (InstantiationException e) {
                     throw ProgramError.unexpected();
                 } catch (IllegalAccessException e) {
                     throw ProgramError.unexpected();
                 } catch (InvocationTargetException e) {
+                    e.printStackTrace();
                     throw ProgramError.unexpected();
                 }
             }
@@ -294,6 +296,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         assert oidToTeleObject.containsKey(teleObject.getOID());
 
         referenceToTeleObject.put(reference,  new WeakReference<TeleObject>(teleObject));
+        teleObject.refresh();
         return teleObject;
     }
 
@@ -330,7 +333,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             if (teleObjectRef != null) {
                 TeleObject teleObject = teleObjectRef.get();
                 if (teleObject != null) {
-                    teleObject.refresh(processEpoch);
+                    teleObject.refresh();
                 }
             }
         }

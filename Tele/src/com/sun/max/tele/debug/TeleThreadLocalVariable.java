@@ -20,31 +20,93 @@
  */
 package com.sun.max.tele.debug;
 
-import com.sun.max.memory.*;
+import com.sun.max.collect.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Wrapper for an individual thread local variable in the VM.
+ * Access to an individual thread local variable in the VM.
  *
  * @author Michael Van De Vanter
  */
-public class TeleThreadLocalVariable implements MaxThreadLocalVariable {
+public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements MaxThreadLocalVariable {
+
+    private static final int TRACE_LEVEL = 2;
+
+    /**
+     * Description of the memory region occupied by a {@linkplain MaxThreadLocalVariable thread local variable} in the VM.
+     * <br>
+     * The parent of this region is the {@linkplain MaxThreadLocalsArea thread locals area} in which it is contained.
+     * <br>
+     * This region has no children.
+     */
+    private static final class ThreadLocalVariableMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxThreadLocalVariable> {
+
+        private static final IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY =
+            new ArrayListSequence<MaxEntityMemoryRegion< ? extends MaxEntity>>(0);
+
+        private final MaxThreadLocalVariable owner;
+
+        protected ThreadLocalVariableMemoryRegion(TeleVM teleVM, MaxThreadLocalVariable owner, String regionName, Address start, Size size) {
+            super(teleVM, regionName, start, size);
+            this.owner = owner;
+        }
+
+        public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
+            final MaxThreadLocalVariable threadLocalVariable = owner();
+            return threadLocalVariable.thread().localsBlock().threadLocalsAreaFor(threadLocalVariable.safepointState()).memoryRegion();
+        }
+
+        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+            return EMPTY;
+        }
+
+        public MaxThreadLocalVariable owner() {
+            return owner;
+        }
+
+        public boolean isBootRegion() {
+            return false;
+        }
+    }
 
     private final VmThreadLocal vmThreadLocal;
     private final TeleNativeThread teleNativeThread;
     private final Safepoint.State safepointState;
-    private final MemoryRegion memoryRegion;
+    private final ThreadLocalVariableMemoryRegion threadLocalVariableMemoryRegion;
+    private final String entityDescription;
     private volatile Value value;
 
-    public TeleThreadLocalVariable(VmThreadLocal vmThreadLocal, TeleNativeThread teleNativeThread, Safepoint.State safepointState, MemoryRegion threadLocalMemoryRegion) {
+
+    public TeleThreadLocalVariable(VmThreadLocal vmThreadLocal, TeleNativeThread teleNativeThread, Safepoint.State safepointState, Address start, Size size) {
+        super(teleNativeThread.vm());
         this.vmThreadLocal = vmThreadLocal;
         this.teleNativeThread = teleNativeThread;
         this.safepointState = safepointState;
-        this.memoryRegion = threadLocalMemoryRegion;
+        final String entityName = teleNativeThread.entityName() + " local=" + vmThreadLocal.name + " (" + safepointState + ")";
+        this.threadLocalVariableMemoryRegion = new ThreadLocalVariableMemoryRegion(teleNativeThread.vm(), this, entityName, start, size);
         this.value = VoidValue.VOID;
+        this.entityDescription = "thread-local variable:  " + vmThreadLocal.description;
+    }
+
+    public String entityName() {
+        return threadLocalVariableMemoryRegion.regionName();
+    }
+
+    public String entityDescription() {
+        return entityDescription;
+    }
+
+    public MaxEntityMemoryRegion<MaxThreadLocalVariable> memoryRegion() {
+        return threadLocalVariableMemoryRegion;
+    }
+
+    public boolean contains(Address address) {
+        return threadLocalVariableMemoryRegion.contains(address);
     }
 
     public TeleNativeThread thread() {
@@ -55,16 +117,12 @@ public class TeleThreadLocalVariable implements MaxThreadLocalVariable {
         return safepointState;
     }
 
-    public String name() {
+    public String variableName() {
         return vmThreadLocal.name;
     }
 
     public boolean isReference() {
         return vmThreadLocal.isReference;
-    }
-
-    public MemoryRegion memoryRegion() {
-        return memoryRegion;
     }
 
     public int index() {
@@ -83,16 +141,12 @@ public class TeleThreadLocalVariable implements MaxThreadLocalVariable {
         return vmThreadLocal.declaration;
     }
 
-    public String description() {
-        return vmThreadLocal.description;
-    }
-
     /**
      * Sets the cache of the current value of this thread local in the VM.
      *
      * @param value the current value.
      */
-    public void setValue(Value value) {
+    void setValue(Value value) {
         this.value = value;
     }
 

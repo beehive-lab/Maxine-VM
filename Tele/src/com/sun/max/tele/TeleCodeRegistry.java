@@ -22,8 +22,8 @@ package com.sun.max.tele;
 
 import java.io.*;
 
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;

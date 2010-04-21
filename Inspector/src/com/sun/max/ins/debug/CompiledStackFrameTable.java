@@ -34,9 +34,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.memory.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -82,7 +80,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
-                    final MemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
+                    final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
                     final String regionDescription =  "Stack: thread="  + inspection().nameDisplay().shortName(compiledStackFrame.stack().thread());
                     actions().setRegionWatchpoint(memoryRegion, "Set memory watchpoint", regionDescription).perform();
                     final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
@@ -100,7 +98,7 @@ public class CompiledStackFrameTable extends InspectorTable {
     protected InspectorPopupMenu getPopupMenu(final int row, final int col, MouseEvent mouseEvent) {
         if (vm().watchpointManager() != null && col == CompiledStackFrameColumnKind.TAG.ordinal()) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
-            final MemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
+            final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
             final Slot slot = (Slot) tableModel.getValueAt(row, col);
             final String regionDescription =  "Stack slot : " + slot.name;
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
@@ -175,17 +173,17 @@ public class CompiledStackFrameTable extends InspectorTable {
         private final MaxStackFrame.Compiled javaStackFrame;
         private final int frameSize;
         private final Slots slots;
-        private final MemoryRegion[] regions;
+        private final MaxMemoryRegion[] regions;
 
         public CompiledStackFrameTableModel(Inspection inspection,  MaxStackFrame.Compiled javaStackFrame) {
             super(inspection, javaStackFrame.slotBase());
             this.javaStackFrame = javaStackFrame;
             frameSize = javaStackFrame.layout().frameSize();
             slots = javaStackFrame.layout().slots();
-            regions = new MemoryRegion[slots.length()];
+            regions = new MaxMemoryRegion[slots.length()];
             int index = 0;
             for (Slot slot : slots) {
-                regions[index] = new TeleMemoryRegion(getOrigin().plus(slot.offset), vm().wordSize(), "");
+                regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().wordSize());
                 index++;
             }
         }
@@ -214,7 +212,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         }
 
         @Override
-        public MemoryRegion getMemoryRegion(int row) {
+        public MaxMemoryRegion getMemoryRegion(int row) {
             return regions[row];
         }
 

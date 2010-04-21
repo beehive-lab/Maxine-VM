@@ -23,7 +23,6 @@ package com.sun.max.tele;
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
@@ -53,8 +52,8 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
 
     public Sequence<MaxCodeLocation> inspectableMethods() {
         final AppendableSequence<MaxCodeLocation> locations = new LinkSequence<MaxCodeLocation>();
-        locations.append(CodeLocation.createMachineCodeLocation(teleVM(), teleVM().teleMethods().SemiSpaceHeapScheme_increaseMemory, heapSchemeClass().getSimpleName() + ": increase memory"));
-        locations.append(CodeLocation.createMachineCodeLocation(teleVM(), teleVM().teleMethods().SemiSpaceHeapScheme_decreaseMemory, heapSchemeClass().getSimpleName() + ": decrease memory"));
+        locations.append(CodeLocation.createMachineCodeLocation(vm(), vm().teleMethods().SemiSpaceHeapScheme_increaseMemory, heapSchemeClass().getSimpleName() + ": increase memory"));
+        locations.append(CodeLocation.createMachineCodeLocation(vm(), vm().teleMethods().SemiSpaceHeapScheme_decreaseMemory, heapSchemeClass().getSimpleName() + ": decrease memory"));
         return locations;
     }
 
@@ -64,19 +63,20 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
 
     public boolean isInLiveMemory(Address address) {
 
-        if (teleVM().isInGC()) { // this assumption needs to be proofed; basically it means that during GC both heaps are valid
+        if (vm().isInGC()) { // this assumption needs to be proofed; basically it means that during GC both heaps are valid
             return true;
         }
 
-        for (TeleLinearAllocationMemoryRegion teleHeapRegion : teleVM().teleHeapRegions()) {
-            if (teleHeapRegion.contains(address)) {
-                if (teleHeapRegion.description().equals(SemiSpaceHeapScheme.FROM_REGION_NAME)) { // everything in from-space is dead
+        for (MaxHeapRegion heapRegion : vm().heap().heapRegions()) {
+            if (heapRegion.memoryRegion().contains(address)) {
+                if (heapRegion.entityName().equals(SemiSpaceHeapScheme.FROM_REGION_NAME)) { // everything in from-space is dead
                     return false;
                 }
-                if (address.greaterEqual(teleHeapRegion.mark())) { // everything in to-space after the global allocation mark is dead
+                if (!heapRegion.memoryRegion().containsInAllocated(address)) {
+                    // everything in to-space after the global allocation mark is dead
                     return false;
                 }
-                for (TeleNativeThread teleNativeThread : teleVM().teleProcess().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
+                for (TeleNativeThread teleNativeThread : vm().teleProcess().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
                     TeleThreadLocalsArea teleThreadLocalsArea = teleNativeThread.localsBlock().threadLocalsAreaFor(Safepoint.State.ENABLED);
                     if (teleThreadLocalsArea != null) {
                         Word tlabDisabledWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME);
@@ -98,7 +98,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
     @Override
     public boolean isObjectForwarded(Pointer origin) {
         if (!origin.isZero()) {
-            Pointer possibleForwardingPointer = teleVM().dataAccess().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
+            Pointer possibleForwardingPointer = vm().dataAccess().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
             if (isForwardingPointer(possibleForwardingPointer)) {
                 return true;
             }
@@ -116,7 +116,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
 
     public Pointer getForwardedOrigin(Pointer origin) {
         if (!origin.isZero()) {
-            Pointer possibleForwardingPointer = teleVM().dataAccess().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
+            Pointer possibleForwardingPointer = vm().dataAccess().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
             if (isForwardingPointer(possibleForwardingPointer)) {
                 final Pointer newCell = getTrueLocationFromPointer(possibleForwardingPointer);
                 if (!newCell.isZero()) {

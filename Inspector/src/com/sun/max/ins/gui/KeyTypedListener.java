@@ -23,10 +23,9 @@ package com.sun.max.ins.gui;
 import java.awt.event.*;
 
 /**
- * A narrowed KeyListener.
- * 
- * @author Bernd Mathiske
+ * A narrowed {@link KeyListener}.
  *
+ * @author Bernd Mathiske
  */
 abstract class KeyTypedListener implements KeyListener {
 

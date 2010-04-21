@@ -61,7 +61,7 @@ public class MemoryPoolMXBeanAdaptor implements MemoryPoolMXBean {
     }
 
     public String getName() {
-        return region.description();
+        return region.regionName();
     }
 
     public MemoryUsage getPeakUsage() {

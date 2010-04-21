@@ -43,8 +43,8 @@ public final class TeleUtf8Constant extends TelePoolConstant {
      */
     public Utf8Constant utf8Constant() {
         if (utf8Constant == null) {
-            Reference reference = teleVM().teleFields().Utf8Constant_string.readReference(reference());
-            TeleString teleString = (TeleString) teleVM().makeTeleObject(reference);
+            Reference reference = vm().teleFields().Utf8Constant_string.readReference(reference());
+            TeleString teleString = (TeleString) vm().makeTeleObject(reference);
             if (teleString != null) {
                 utf8Constant = SymbolTable.makeSymbol(teleString.getString());
             }

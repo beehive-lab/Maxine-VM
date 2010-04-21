@@ -33,9 +33,9 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.tele.*;
 
 /**
- * A table specialized for use in the Maxine Inspector.
+ * A table specialized for use in the VM Inspector.
  * <br>
- * Dispatches mouse events to table cell renderers, after first giving
+ * This table dispatches mouse events to table cell renderers, after first giving
  * implementations an opportunity to respond in the case of left
  * or middle-clicks.  A right click pops up a menu, if provided by
  * an implementation, over the cell where the click took place.
@@ -44,7 +44,7 @@ import com.sun.max.tele.*;
  * along to the renderer for the cell where the click took place.
  * <br>
  * Table cells can act as sources for drag and drop operations, but
- * only for Copy (not Move).  The request for something that can
+ * only for <code>Copy</code> (not <code>Move</code>).  The request for something that can
  * be dragged is by default delegated to the specific table renderer,
  * if it is an instance of {@link InspectorLabel}. Subclasses can customize
  * how transferables are created by overriding {@link #getTransferable(int, int)}.
@@ -76,7 +76,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     private boolean showSelectionWithBox = false;
 
     /**
-     * Creates a new {@JTable} for use in the {@link Inspection}.
+     * Creates a new {@link JTable} for use in the {@link Inspection}.
      * <br>
      * Used only at this time by the two code viewers, all of which is
      * subject to further refactoring.
@@ -96,7 +96,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
     /**
-     * Creates a new {@JTable} for use in the {@link Inspection}.
+     * Creates a new {@link JTable} for use in the {@link Inspection}.
      */
     protected InspectorTable(Inspection inspection) {
         this.inspection = inspection;

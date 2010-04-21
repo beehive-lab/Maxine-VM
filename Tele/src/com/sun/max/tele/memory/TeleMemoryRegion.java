@@ -22,80 +22,57 @@ package com.sun.max.tele.memory;
 
 import java.lang.management.*;
 
-import com.sun.max.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Representation of a span of memory in the VM.
+ * Abstract representation of a span of memory in the VM.
  *
- * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public class TeleMemoryRegion implements MemoryRegion {
+public abstract class TeleMemoryRegion implements MaxMemoryRegion {
 
-    private final Address start;
+    protected final TeleVM teleVM;
+    private MemoryUsage memoryUsage = null;
 
-    public Address start() {
-        return start;
+    protected TeleMemoryRegion(TeleVM teleVM) {
+        this.teleVM = teleVM;
     }
 
-    private final Size size;
-
-    public Size size() {
-        return size;
+    public final TeleVM vm() {
+        return teleVM;
     }
 
-    private final Address end;
-
-    public Address end() {
-        return end;
+    public final Address end() {
+        return start().plus(size());
     }
 
-    public Pointer mark() {
-        return end().asPointer();
+    public final boolean contains(Address address) {
+        return MaxMemoryRegion.Util.contains(this, address);
     }
 
-    private String description;
-
-    public String description() {
-        return description;
+    public boolean containsInAllocated(Address address) {
+        // By default, assume that the whole region is allocated.
+        // Override this for specific region that have internal
+        // allocation that can be checked.
+        return contains(address);
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public final boolean overlaps(MaxMemoryRegion memoryRegion) {
+        return MaxMemoryRegion.Util.overlaps(this, memoryRegion);
     }
 
-    public TeleMemoryRegion(Address start, Size size, String description) {
-        this.start = start;
-        this.size = size;
-        this.end = start.plus(size);
-        this.description = description;
-    }
-
-    public TeleMemoryRegion(MemoryRegion memoryRegion, String description) {
-        start = memoryRegion.start();
-        size = memoryRegion.size();
-        end = memoryRegion.end();
-        this.description = description;
-    }
-
-    public TeleMemoryRegion(MemoryRegion memoryRegion) {
-        this(memoryRegion, memoryRegion.description());
-    }
-
-    public boolean contains(Address address) {
-        return address.greaterEqual(start()) && address.lessThan(end());
-    }
-
-    public boolean overlaps(MemoryRegion memoryRegion) {
-        return start.lessThan(memoryRegion.end()) && end.greaterThan(memoryRegion.start());
-    }
-
-    public boolean sameAs(MemoryRegion otherMemoryRegion) {
-        return Util.equal(this, otherMemoryRegion);
+    public final boolean sameAs(MaxMemoryRegion otherMemoryRegion) {
+        return MaxMemoryRegion.Util.equal(this, otherMemoryRegion);
     }
 
     public MemoryUsage getUsage() {
-        return null;
+        if (memoryUsage == null) {
+            // Lazy initialization to avoid object creation circularities
+            // The default usage is 100%, i.e. the region is completely used.
+            this.memoryUsage = MaxMemoryRegion.Util.defaultUsage(this);
+        }
+        return memoryUsage;
     }
+
 }

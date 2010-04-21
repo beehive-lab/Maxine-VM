@@ -59,7 +59,7 @@ public final class InspectableHeapInfo {
      * Inspectable description the memory allocated for the Inspector's root table.
      */
     @INSPECTED
-    private static LinearAllocationMemoryRegion rootsRegion;
+    private static RootTableMemoryRegion rootTableMemoryRegion;
 
     /**
      * Inspectable location of the memory allocated for the Inspector's root table.
@@ -115,34 +115,28 @@ public final class InspectableHeapInfo {
         if (Inspectable.isVmInspected()) {
             InspectableHeapInfo.memoryRegions = memoryRegions;
 
+            // Create the roots region, but allocate the descriptor object
+            // in non-collected memory so that we don't lose track of it
+            // during GC.
             try {
                 Heap.enableImmortalMemoryAllocation();
-                rootsRegion = new LinearAllocationMemoryRegion("Heap-TeleRoots");
+                rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
             } finally {
                 Heap.disableImmortalMemoryAllocation();
             }
 
-            initRootsRegion();
+            final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);
+            rootsPointer = Memory.allocate(size);
+            rootTableMemoryRegion.setStart(rootsPointer);
+            rootTableMemoryRegion.setSize(size);
         }
     }
 
     /**
-     * Allocates a special area of memory for references held by the Inspector.
-     * The Inspector writes values into the array, and each GC implementation is obliged to
-     * relocate them at the conclusion of each collection.
+     * @return the specially allocated memory region containing inspectable root pointers
      */
-    private static void initRootsRegion() {
-        final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);
-        rootsPointer = Memory.allocate(size);
-        rootsRegion.setStart(rootsPointer);
-        rootsRegion.setSize(size);
-    }
-
-    /**
-     * @return base of the specially allocated memory region containing inspectable root pointers
-     */
-    public static Pointer rootsPointer() {
-        return rootsPointer;
+    public static RootTableMemoryRegion rootsMemoryRegion() {
+        return rootTableMemoryRegion;
     }
 
     /**
@@ -163,7 +157,7 @@ public final class InspectableHeapInfo {
         collectionEpoch++;
         // From the Inspector's perspective, a GC begins when
         // the epoch counter gets incremented.  So the following
-        // method call makes iit possible
+        // method call makes it possible
         // for the inspector to take an interrupt, if needed, just
         // as the GC begins.
         inspectableGCStarted(collectionEpoch);

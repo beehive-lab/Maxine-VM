@@ -23,12 +23,10 @@ package com.sun.max.ins.gui;
 import com.sun.max.ins.*;
 
 /**
- *  A bold label for displaying target code from the VM.
+ * A bold label for displaying target code from the VM.
  *
  * @author Michael Van De Vanter
- *
  */
-
 public class TargetCodeLabel extends InspectorLabel {
 
     public TargetCodeLabel(Inspection inspection, String text) {

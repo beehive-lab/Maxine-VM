@@ -26,12 +26,12 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 
 /**
- * A singleton inspector that displays a list of {@link MemoryRegion}s that have been allocated in the VM.
+ * A singleton inspector that displays a list of {@linkplain MaxMemoryRegion memory regions} that have been allocated in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -124,7 +124,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     }
 
     @Override
-    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
+    public void memoryRegionFocusChanged(MaxMemoryRegion oldMemoryRegion, MaxMemoryRegion memoryRegion) {
         if (table != null) {
             table.updateFocusSelection();
         }
