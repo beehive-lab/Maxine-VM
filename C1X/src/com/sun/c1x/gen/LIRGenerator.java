@@ -1753,7 +1753,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     private void walkStateInstruction(Value instruction) {
         if (instruction != null) {
             assert !instruction.hasSubst() : "missed substitution";
-            assert instruction.isLive() : "value must be marked live in ValueStack";
+            assert instruction.isLive() : "value must be marked live in frame state";
             if (instruction instanceof Phi && !instruction.isIllegal()) {
                 // phi's are special
                 operandForPhi((Phi) instruction);
