@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.type.*;
