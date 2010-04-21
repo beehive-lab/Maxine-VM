@@ -207,6 +207,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
 
             HeapScheme.Static.notifyGCStarted();
+
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
             heapMarker.markAll();
@@ -218,6 +219,9 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     private Size setNextTLABChunk(Pointer chunk) {
+        if (MaxineVM.isDebug()) {
+            FatalError.check(!chunk.isZero(), "TLAB chunk must not be null");
+        }
         Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
         Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
         Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
@@ -232,6 +236,33 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         Size nextChunkEffectiveSize = setNextTLABChunk(nextChunk);
         fastRefillTLAB(enabledVmThreadLocals, nextChunk, nextChunkEffectiveSize);
         return nextChunkEffectiveSize;
+    }
+
+    /**
+     * Check if changing TLAB chunks may satisfy the allocation request. If not, allocated directly from the underlying free space manager,
+     * otherwise, refills the TLAB with the next TLAB chunk and allocated from it.
+     *
+     * @param enabledVmThreadLocals Pointer to enabled VMThreadLocals
+     * @param tlabMark current mark of the TLAB
+     * @param tlabHardLimit hard limit of the current TLAB
+     * @param chunk next chunk of this TLAB
+     * @param size requested amount of memory
+     * @return a pointer to the allocated memory
+     */
+    private Pointer changeTLABChunkOrAllocate(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabHardLimit, Pointer chunk, Size size) {
+        Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
+        Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
+        if (size.greaterThan(effectiveSize))  {
+            // Don't bother with searching another TLAB chunk that fits. Allocate out of TLAB.
+            return freeSpace.allocate(size);
+        }
+        Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
+        fillWithDeadObject(tlabMark, tlabHardLimit);
+        // Zap chunk data to leave allocation area clean.
+        Memory.clearWords(chunk, effectiveSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+        chunk.plus(effectiveSize).setWord(nextChunk);
+        fastRefillTLAB(enabledVmThreadLocals, chunk, effectiveSize);
+        return tlabAllocate(size);
     }
 
     /**
@@ -282,6 +313,8 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the tlab.
             return tlabAllocate(size);
         }
+        // FIXME:
+        // Want to first test against size of next chunk of this TLAB (if any).
         final Size nextTLABSize = refillPolicy.nextTlabSize();
         if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
@@ -303,14 +336,8 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             return cell;
         } else if (!(cell.equals(hardLimit) || nextChunk.isZero())) {
-            fillWithDeadObject(tlabMark, hardLimit);
-            // TLAB has another chunk of free space. Set it.
-            Size nextChunkEffectiveSize = setNextTLABChunk(enabledVmThreadLocals, nextChunk);
-            if (size.lessEqual(nextChunkEffectiveSize)) {
-                return tlabAllocate(size);
-            }
-            // Don't bother with searching another TLAB chunk that fits. Allocate out of TLAB.
-            return freeSpace.allocate(size);
+            // We have another chunk, and we're not to limit yet. So we may change of TLAB chunk to satisfy the request.
+            return changeTLABChunkOrAllocate(enabledVmThreadLocals, tlabMark, hardLimit, nextChunk, size);
         }
 
         if (!refillPolicy.shouldRefill(size, tlabMark)) {

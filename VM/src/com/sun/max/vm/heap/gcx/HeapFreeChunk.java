@@ -89,17 +89,21 @@ public final class HeapFreeChunk {
      * @param numBytes size of the dead space in bytes
      * @return a reference to HeapFreeChunk object just planted at the beginning of the free chunk.
      */
-    static HeapFreeChunk format(Address deadSpace, Size numBytes) {
+    static HeapFreeChunk format(Address deadSpace, Size numBytes, Address nextChunk) {
         final Pointer cell = deadSpace.asPointer();
         if (MaxineVM.isDebug()) {
             DebugHeap.writeCellPadding(cell, numBytes.toInt() >> Word.widthValue().log2numberOfBytes);
         }
         Cell.plantTuple(cell, HEAP_FREE_CHUNK_HUB);
         Layout.writeMisc(Layout.cellToOrigin(cell), Word.zero());
-        HeapFreeChunk freeChunk = toHeapFreeChunk(cell);
-        freeChunk.size = numBytes;
-        freeChunk.next = null;
-        return freeChunk;
+        setFreeChunkSize(cell, numBytes);
+        setFreeChunkNext(cell, nextChunk);
+        return toHeapFreeChunk(cell);
+    }
+
+    @INLINE
+    static HeapFreeChunk format(Address deadSpace, Size numBytes) {
+        return format(deadSpace, numBytes, Address.zero());
     }
 
     @INTRINSIC(UNSAFE_CAST)
