@@ -36,16 +36,16 @@ import com.sun.max.vm.compiler.target.*;
 public interface TeleTargetRoutine extends TargetMethodAccess {
 
     /**
+     * @return a name assigned in the Tele layer for identification purposes.
+     */
+    String getName();
+
+    /**
      * @return the region of memory in the VM occupied by this target routine:  Java method or native
      */
     TargetCodeRegion targetCodeRegion();
 
     TeleRoutine teleRoutine();
-
-    /**
-     * @return a name assigned in the Tele layer for identification purposes.
-     */
-    String getName();
 
     /**
      * @return VM address of the first instruction in the target code represented by this routine. Note that this

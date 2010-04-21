@@ -50,7 +50,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     public static TeleNativeTargetRoutine create(TeleVM teleVM, Address codeStart, Size codeSize, String name) {
         TeleNativeTargetRoutine teleNativeTargetRoutine = null;
         try {
-            // Fail if the region specified by 'address' and 'size' overlaps an existing native  entry
+            // Fail if the region specified by 'address' and 'size' overlaps an existing native entry
             teleNativeTargetRoutine = new TeleNativeTargetRoutine(teleVM, codeStart, codeSize, name);
         } catch (IllegalArgumentException illegalArgumentException) {
             ProgramError.unexpected("Native code region is overlapping an existing code region");
@@ -67,26 +67,11 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         return teleVM.findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
     }
 
-    private final TeleRoutine teleRoutine;
-
-    /**
-     * @return surrogate that represents the (implied) code body from which the code was compiled.
-     */
-    public TeleRoutine teleRoutine() {
-        return teleRoutine;
-    }
-
-    private final TargetCodeRegion targetCodeRegion;
-
-    public TargetCodeRegion targetCodeRegion() {
-        return targetCodeRegion;
-    }
-
     private final String name;
-
-    public String getName() {
-        return name;
-    }
+    private final TeleRoutine teleRoutine;
+    private final TargetCodeRegion targetCodeRegion;
+    private IndexedSequence<TargetCodeInstruction> instructions;
+    private IndexedSequence<MachineCodeLocation> instructionLocations;
 
     private TeleNativeTargetRoutine(TeleVM teleVM, Address start, Size size, String name) {
         super(teleVM);
@@ -101,25 +86,40 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         vm().registerTeleTargetRoutine(this);
     }
 
-    public Address getCodeStart() {
-        return targetCodeRegion.start();
+    public String getName() {
+        return name;
     }
 
-    public Size codeSize() {
-        return targetCodeRegion.size();
+    public TargetCodeRegion targetCodeRegion() {
+        return targetCodeRegion;
+    }
+
+    /**
+     * @return surrogate that represents the (implied) code body from which the code was compiled.
+     */
+    public TeleRoutine teleRoutine() {
+        return teleRoutine;
+    }
+
+    public Address getCodeStart() {
+        return targetCodeRegion.start();
     }
 
     public Address callEntryPoint() {
         return getCodeStart();
     }
 
-    private IndexedSequence<TargetCodeInstruction> instructions;
-    private IndexedSequence<MachineCodeLocation> instructionLocations;
-
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
-        if (instructions == null) {
-            final byte[] code = vm().dataAccess().readFully(getCodeStart(), codeSize().toInt());
-            instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, null);
+        if (instructions == null && vm().tryLock()) {
+            byte[] code = null;
+            try {
+                code = vm().dataAccess().readFully(getCodeStart(), codeSize().toInt());
+            } finally {
+                vm().unlock();
+            }
+            if (code != null) {
+                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, null);
+            }
         }
         return instructions;
     }
@@ -164,6 +164,11 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         return -1;
     }
 
+    public Size codeSize() {
+        return targetCodeRegion.size();
+    }
+
+    @Deprecated
     public MachineCodeInstructionArray getTargetCodeInstructions() {
         final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
         final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
@@ -174,6 +179,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         return new MachineCodeInstructionArray(result);
     }
 
+    @Deprecated
     public MethodProvider getMethodProvider() {
         return this.getTeleClassMethodActor();
     }

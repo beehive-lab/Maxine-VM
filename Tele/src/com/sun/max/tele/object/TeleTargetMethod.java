@@ -116,11 +116,27 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return Sequence.Static.empty(TeleTargetMethod.class);
     }
 
-    private final TargetCodeRegion targetCodeRegion;
+    private static final Map<TeleObject, TargetABI> abiCache = new HashMap<TeleObject, TargetABI>();
 
-    public TargetCodeRegion targetCodeRegion() {
-        return targetCodeRegion;
-    }
+    private final TargetCodeRegion targetCodeRegion;
+    private CodeLocation codeStartLocation = null;
+    private IndexedSequence<TargetCodeInstruction> instructions;
+    private IndexedSequence<MachineCodeLocation> instructionLocations;
+
+    /**
+     * @see  StopPositions
+     * @see  TargetMethod#stopPositions()
+     */
+    protected StopPositions stopPositions;
+
+    private TeleClassMethodActor teleClassMethodActor;
+
+    /**
+     * Cache for {@link #targetMethod()}.
+     */
+    private TargetMethod targetMethod;
+
+    private TargetABI abi;
 
     TeleTargetMethod(TeleVM teleVM, Reference targetMethodReference) {
         super(teleVM, targetMethodReference);
@@ -132,41 +148,12 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         teleVM.registerTeleTargetRoutine(this);
     }
 
-    private CodeLocation codeStartLocation = null;
-    /**
-     * @see TargetMethod#codeStart()
-     */
-    public Pointer getCodeStart() {
-        return targetMethod().codeStart();
-    }
-
-    /**
-     * @see TargetMethod#codeStart()
-     */
-    public CodeLocation getCodeStartLocation() {
-        if (codeStartLocation == null && getCodeStart() != null) {
-            codeStartLocation = codeManager().createMachineCodeLocation(getCodeStart(), "code start location in method");
-        }
-        return codeStartLocation;
-    }
-
     public String getName() {
         return getClass().getSimpleName() + " for " + classMethodActor().simpleName();
     }
 
-    private TeleClassMethodActor teleClassMethodActor;
-
-    /**
-     * Gets the tele class method actor for this target method.
-     *
-     * @return {@code null} if the class method actor is null the target method
-     */
-    public TeleClassMethodActor getTeleClassMethodActor() {
-        if (teleClassMethodActor == null) {
-            final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
-            teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
-        }
-        return teleClassMethodActor;
+    public TargetCodeRegion targetCodeRegion() {
+        return targetCodeRegion;
     }
 
     public TeleRoutine teleRoutine() {
@@ -174,14 +161,10 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     /**
-     * Gets the local mirror of the class method actor associated with this target method. This may be null.
+     * @see TargetMethod#codeStart()
      */
-    public ClassMethodActor classMethodActor() {
-        final TeleClassMethodActor teleClassMethodActor = getTeleClassMethodActor();
-        if (teleClassMethodActor == null) {
-            return null;
-        }
-        return teleClassMethodActor.classMethodActor();
+    public Pointer getCodeStart() {
+        return targetMethod().codeStart();
     }
 
     /**
@@ -201,6 +184,108 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         }
         final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
         return codeStart.plus(callEntryPoint.offset());
+    }
+
+    public final  IndexedSequence<TargetCodeInstruction> getInstructions() {
+        if (instructions == null) {
+            final byte[] code = getCode();
+            if (code != null) {
+                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
+            }
+        }
+        return instructions;
+    }
+
+    public IndexedSequence<MachineCodeLocation> getInstructionLocations() {
+        if (instructionLocations == null) {
+            getInstructions();
+            final int length = instructions.length();
+            final CodeManager codeManager = codeManager();
+            final VariableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
+            for (int i = 0; i < length; i++) {
+                locations.append(codeManager.createMachineCodeLocation(instructions.get(i).address, "native target code instruction"));
+            }
+            instructionLocations = locations;
+        }
+        return instructionLocations;
+    }
+
+    public CodeLocation entryLocation() {
+        final Address callEntryPoint = callEntryPoint();
+        if (callEntryPoint.isZero()) {
+            return null;
+        }
+        return codeManager().createMachineCodeLocation(callEntryPoint, "Method entry");
+    }
+
+    public Sequence<MaxCodeLocation> labelLocations() {
+        final AppendableSequence<MaxCodeLocation> locations = new ArrayListSequence<MaxCodeLocation>();
+        for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
+            if (targetCodeInstruction.label != null) {
+                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + getName();
+                locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, description));
+            }
+        }
+        return locations;
+    }
+
+    /**
+     * Gets the tele class method actor for this target method.
+     *
+     * @return {@code null} if the class method actor is null the target method
+     */
+    public TeleClassMethodActor getTeleClassMethodActor() {
+        if (teleClassMethodActor == null) {
+            final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
+            teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
+        }
+        return teleClassMethodActor;
+    }
+
+    /**
+     * @see TargetMethod#stopPositions()
+     */
+    public StopPositions getStopPositions() {
+        if (stopPositions == null) {
+            if (targetMethod().stopPositions() != null) {
+                stopPositions = new StopPositions(targetMethod().stopPositions());
+            }
+        }
+        return stopPositions;
+    }
+
+    public int getJavaStopIndex(Address address) {
+        final StopPositions stopPositions = getStopPositions();
+        if (stopPositions != null) {
+            final int targetCodePosition = address.minus(getCodeStart()).toInt();
+            for (int i = 0; i < stopPositions.length(); i++) {
+                if (stopPositions.get(i) == targetCodePosition) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @see TargetMethod#codeStart()
+     */
+    public CodeLocation getCodeStartLocation() {
+        if (codeStartLocation == null && getCodeStart() != null) {
+            codeStartLocation = codeManager().createMachineCodeLocation(getCodeStart(), "code start location in method");
+        }
+        return codeStartLocation;
+    }
+
+    /**
+     * Gets the local mirror of the class method actor associated with this target method. This may be null.
+     */
+    public ClassMethodActor classMethodActor() {
+        final TeleClassMethodActor teleClassMethodActor = getTeleClassMethodActor();
+        if (teleClassMethodActor == null) {
+            return null;
+        }
+        return teleClassMethodActor.classMethodActor();
     }
 
     /**
@@ -244,69 +329,11 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return teleCodeArrayObject.getLength();
     }
 
-    private IndexedSequence<TargetCodeInstruction> instructions;
-    private IndexedSequence<MachineCodeLocation> instructionLocations;
-
-    public final  IndexedSequence<TargetCodeInstruction> getInstructions() {
-        if (instructions == null) {
-            final byte[] code = getCode();
-            if (code != null) {
-                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
-            }
-        }
-        return instructions;
-    }
-
-    public IndexedSequence<MachineCodeLocation> getInstructionLocations() {
-        if (instructionLocations == null) {
-            getInstructions();
-            final int length = instructions.length();
-            final CodeManager codeManager = codeManager();
-            final VariableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
-            for (int i = 0; i < length; i++) {
-                locations.append(codeManager.createMachineCodeLocation(instructions.get(i).address, "native target code instruction"));
-            }
-            instructionLocations = locations;
-        }
-        return instructionLocations;
-    }
-
-    /**
-     * @see  StopPositions
-     * @see  TargetMethod#stopPositions()
-     */
-    protected StopPositions stopPositions;
-
-    /**
-     * @see TargetMethod#stopPositions()
-     */
-    public StopPositions getStopPositions() {
-        if (stopPositions == null) {
-            if (targetMethod().stopPositions() != null) {
-                stopPositions = new StopPositions(targetMethod().stopPositions());
-            }
-        }
-        return stopPositions;
-    }
-
     /**
      * @see TargetMethod#numberOfStopPositions()
      */
     public int getNumberOfStopPositions() {
         return targetMethod().numberOfStopPositions();
-    }
-
-    public int getJavaStopIndex(Address address) {
-        final StopPositions stopPositions = getStopPositions();
-        if (stopPositions != null) {
-            final int targetCodePosition = address.minus(getCodeStart()).toInt();
-            for (int i = 0; i < stopPositions.length(); i++) {
-                if (stopPositions.get(i) == targetCodePosition) {
-                    return i;
-                }
-            }
-        }
-        return -1;
     }
 
     public boolean isAtJavaStop(Address address) {
@@ -353,10 +380,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return targetMethod.getBytecodeLocationFor(stopIndex);
     }
 
-    private TargetABI abi;
-
-    private static final Map<TeleObject, TargetABI> abiCache = new HashMap<TeleObject, TargetABI>();
-
     public TargetABI getAbi() {
         if (abi == null) {
             final Reference abiReference = vm().teleFields().TargetMethod_abi.readReference(reference());
@@ -388,30 +411,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     public MethodProvider getMethodProvider() {
         return this.teleClassMethodActor;
     }
-
-    public CodeLocation entryLocation() {
-        final Address callEntryPoint = callEntryPoint();
-        if (callEntryPoint.isZero()) {
-            return null;
-        }
-        return codeManager().createMachineCodeLocation(callEntryPoint, "Method entry");
-    }
-
-    public Sequence<MaxCodeLocation> labelLocations() {
-        final AppendableSequence<MaxCodeLocation> locations = new ArrayListSequence<MaxCodeLocation>();
-        for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
-            if (targetCodeInstruction.label != null) {
-                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + getName();
-                locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, description));
-            }
-        }
-        return locations;
-    }
-
-    /**
-     * Cache for {@link #targetMethod()}.
-     */
-    private TargetMethod targetMethod;
 
     public TargetMethod targetMethod() {
         if (targetMethod == null) {

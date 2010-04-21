@@ -24,7 +24,7 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for a Jit compilation of a Java {@link ClassMethod} in the {@link TeleVM}.
+ * Canonical surrogate for a Jit compilation of a Java {@link ClassMethod} in the VM.
  *
  * @author Michael Van De Vanter
  */
