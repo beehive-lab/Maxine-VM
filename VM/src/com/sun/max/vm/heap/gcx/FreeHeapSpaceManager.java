@@ -36,7 +36,7 @@ import com.sun.max.vm.tele.*;
  * Free heap space management.
  * Nothing ambitious, just to get going and test the tracing algorithm of the future hybrid mark-sweep-evacuate.
  * Implement the HeapSweeper abstract class which defines method called by a HeapMarker to notify free space.
- * The FreeHeapSpace manager records these into an vector of list of free space based on size of the free space.
+ * The FreeHeapSpace manager records these into an vector of list of free space based on size of the freed space.
  *
  * Space allocation is primarily handled via TLABs, which are made of one or more heap chunks.
  * Request too large to be handled by TLABs are handled by the free space manager directly.
@@ -300,8 +300,9 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         Address last;
         long totalSize;
         long totalChunks;
-
-        FreeSpaceList() {
+        final int binIndex;
+        FreeSpaceList(int binIndex) {
+            this.binIndex = binIndex;
             reset();
         }
 
@@ -403,7 +404,41 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             return Address.zero();
         }
 
+        private void printChunk(Address chunk) {
+            int size = HeapFreeChunk.getFreechunkSize(chunk).toInt();
+            Log.print('[');
+            Log.print(chunk);
+            Log.print(',');
+            Log.print(chunk.plus(size));
+            Log.print("] (");
+            Log.print(size);
+            Log.print(')');
+        }
 
+        private void printAllocatedChunk(Address first, Address last, int numAllocated) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            if (numAllocated == 1) {
+                Log.print("Allocate 1 chunk from bin #0:   ");
+                printChunk(first);
+            } else {
+                Log.print("Allocate ");
+                Log.print(numAllocated);
+                Log.print(" chunks from bin #0: first = ");
+                printChunk(first);
+                Log.print(" last = ");
+                printChunk(last);
+            }
+
+            Log.print("\n chunk list: h = ");
+            Log.print(head);
+            Log.print("l = ");
+            Log.print(last);
+            Log.print(", totalSize = ");
+            Log.print(tlabFreeSpaceList.totalSize);
+            Log.print(", totalChunks = ");
+            Log.println(tlabFreeSpaceList.totalChunks);
+            Log.unlock(lockDisabledSafepoints);
+        }
         Address allocateChunks(Size size) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(!head.isZero(), "Head of free list must not be null");
@@ -423,7 +458,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             Address result = head;
             head =  HeapFreeChunk.fromHeapFreeChunk(lastChunk.next);
             Address lastChunkAddress = HeapFreeChunk.fromHeapFreeChunk(lastChunk);
-            // To escape any write-barrier when nulling out lastChunk.next
+            // To escape any write-barrier when zeroing out lastChunk.next
             HeapFreeChunk.setFreeChunkNext(lastChunkAddress, Address.zero());
             totalChunks -= numAllocatedChunks;
             totalSize -= allocated.toLong();
@@ -434,6 +469,11 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                 }
                 last = Address.zero();
             }
+
+            if (MaxineVM.isDebug() && TraceTLAB) {
+                printAllocatedChunk(result, lastChunkAddress, numAllocatedChunks);
+            }
+
             return result;
         }
     }
@@ -463,16 +503,6 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         long requiredSpace = size.toLong();
         // First, try to allocate from the TLAB bin.
         if (tlabFreeSpaceList.totalSize > requiredSpace) {
-            if (MaxineVM.isDebug() && TraceTLAB) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("binAllocateTLAB from TLAB bin #0: first chunk = ");
-                Log.print(tlabFreeSpaceList.head);
-                Log.print(", totalSize = ");
-                Log.print(tlabFreeSpaceList.totalSize);
-                Log.print(", totalChunks = ");
-                Log.println(tlabFreeSpaceList.totalChunks);
-                Log.unlock(lockDisabledSafepoints);
-            }
             return tlabFreeSpaceList.allocateChunks(size);
         }
         // In any case, after this call, there will be no more TLAB chunks left.
@@ -503,8 +533,8 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                     Log.print(", initial chunk ");
                     Log.println(initialChunks);
                     Log.unlock(lockDisabledSafepoints);
-                    return additionalChunks;
                 }
+                return additionalChunks;
             }
         }
         return initialChunks;
@@ -550,10 +580,10 @@ public class FreeHeapSpaceManager extends HeapSweeper {
 
     synchronized Address binRefill(Size refillSize, Pointer topAtRefill, Size spaceLeft) {
         // First, deal with the left-over.
-        if  (spaceLeft.lessThan(minReclaimableSpace) && spaceLeft.greaterThan(0)) {
-            HeapSchemeAdaptor.fillWithDeadObject(topAtRefill, topAtRefill.plus(spaceLeft));
-        } else {
+        if  (spaceLeft.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(topAtRefill, spaceLeft);
+        } else if (spaceLeft.greaterThan(0)) {
+            HeapSchemeAdaptor.fillWithDeadObject(topAtRefill, topAtRefill.plus(spaceLeft));
         }
         return binAllocate(1, refillSize, false);
     }
@@ -665,7 +695,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         committedHeapSpace = new LinearAllocationMemoryRegion("Heap");
         totalFreeChunkSpace = 0;
         for (int i = 0; i < freeChunkBins.length; i++) {
-            freeChunkBins[i] = new FreeSpaceList();
+            freeChunkBins[i] = new FreeSpaceList(i);
         }
         tlabFreeSpaceList = freeChunkBins[0];
         smallObjectAllocator = new HeapSpaceAllocator("Small Objects Allocator");

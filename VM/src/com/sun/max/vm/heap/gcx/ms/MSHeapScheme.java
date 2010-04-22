@@ -205,14 +205,13 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         @Override
         public void collect(int invocationCount) {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
-
             HeapScheme.Static.notifyGCStarted();
 
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
-
+            freeSpace.makeParsable();
             heapMarker.markAll();
+            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
             freeSpace.reclaim(heapMarker);
-
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
             HeapScheme.Static.notifyGCCompleted();
         }
