@@ -139,7 +139,7 @@ public class TeleMethods extends AbstractTeleVMHolder {
                 final SignatureDescriptor signature = SignatureDescriptor.fromJava(method);
                 final String inspectorFieldName = holder + (name.charAt(0) == '_' ? name : '_' + name);
                 final String inspectorFieldType = "Tele" + (isStatic ? "Static" : "Virtual") + "MethodAccess";
-                writer.println("public final " + inspectorFieldType + " " + inspectorFieldName + " = new " + inspectorFieldType + "(teleVM(), " +
+                writer.println("public final " + inspectorFieldType + " " + inspectorFieldName + " = new " + inspectorFieldType + "(vm(), " +
                                 holder.replace('$', '.') + ".class, \"" + name + "\", SignatureDescriptor.create(\"" + signature + "\"));");
             }
         };
