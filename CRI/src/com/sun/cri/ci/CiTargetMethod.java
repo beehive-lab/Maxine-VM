@@ -69,7 +69,7 @@ public class CiTargetMethod {
 
     /**
      * Represents a call in the code and includes a stack reference map and optionally a register reference map. The
-     * call can either be a runtime call, a global stub call or a call to a normal method.
+     * call can either be a runtime call, a global stub call, a native call or a call to a normal method.
      */
     public static final class Call extends Site {
         public final CiRuntimeCall runtimeCall;
