@@ -30,11 +30,11 @@ import com.sun.cri.ci.*;
 
 /**
  * This class implements a data-flow analysis to remove redundant null checks
- * and deoptimization info for instructions that cannot ever produce {@code NullPointerException}.
+ * and deoptimization info for instructions that cannot ever produce {@code NullPointerException}s.
  *
  * This implementation uses an optimistic dataflow analysis by attempting to visit all predecessors
  * of a block before visiting the block itself. For this purpose it uses the block numbers computed by
- * the {@link com.sun.c1x.graph.BlockMap} during graph construction, which may not actually be
+ * the {@link BlockMap} during graph construction, which may not actually be
  * a valid reverse post-order number (due to inlining and any previous optimizations).
  *
  * When loops are encountered, or if the blocks are not visited in the optimal order, this implementation
@@ -46,7 +46,7 @@ import com.sun.cri.ci.*;
  * a second time.
  *
  * Note that the iterative phase is actually optional, because the first pass is conservative.
- * Iteration can be disabled by setting {@link com.sun.c1x.C1XOptions#OptIterativeNCE} to
+ * Iteration can be disabled by setting {@link C1XOptions#OptIterativeNCE} to
  * {@code false}. Iteration is rarely necessary for acyclic graphs.
  *
  * @author Ben L. Titzer
@@ -362,10 +362,26 @@ public class NullCheckEliminator extends DefaultValueVisitor {
     }
 
     @Override
+    public void visitLoadPointer(LoadPointer i) {
+        Value pointer = i.pointer();
+        if (pointer != null) {
+            processUse(i, pointer, true);
+        }
+    }
+
+    @Override
     public void visitLoadField(LoadField i) {
         Value object = i.object();
         if (object != null) {
             processUse(i, object, true);
+        }
+    }
+
+    @Override
+    public void visitStorePointer(StorePointer i) {
+        Value pointer = i.pointer();
+        if (pointer != null) {
+            processUse(i, pointer, true);
         }
     }
 

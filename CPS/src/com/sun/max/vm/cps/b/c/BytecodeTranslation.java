@@ -1885,7 +1885,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case READREG:                readreg(Role.VALUES.get(operand)); break;
             case WRITEREG:               writereg(Role.VALUES.get(operand)); break;
             case ALLOCA:                 stackCall(StackAllocate.BUILTIN); break;
-            case LSA:                    stackCall(MakeStackVariable.BUILTIN); break;
+            case ALLOCSTKVAR:            stackCall(MakeStackVariable.BUILTIN); break;
             case SAFEPOINT:              stackCall(SafepointBuiltin.BUILTIN); break;
             case PAUSE:                  stackCall(Pause.BUILTIN); break;
             case ADD_SP:                 stackCall(AdjustJitStack.BUILTIN); break;

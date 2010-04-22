@@ -59,45 +59,45 @@ public class MakeStackVariable extends SpecialBuiltin {
      * @return the address of the stack slot where {@code value} resides
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(LSA)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(int value);
 
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(LSA)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(byte value);
 
     /**
      * @see #makeStackVariable(int)
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(LSA)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(float value);
 
     /**
      * @see #makeStackVariable(int)
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(LSA)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(long value);
 
     /**
      * @see #makeStackVariable(int)
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(LSA)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(double value);
 
     /**
      * @see #makeStackVariable(int)
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(LSA)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(Reference value);
 
     /**
      * @see #makeStackVariable(int)
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(LSA)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(Word value);
 }

@@ -84,6 +84,7 @@ public abstract class Value {
      * @param kind the type of this value
      */
     public Value(CiKind kind) {
+        assert kind == kind.stackKind();
         this.kind = kind;
     }
 

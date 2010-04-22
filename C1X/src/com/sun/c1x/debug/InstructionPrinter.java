@@ -769,7 +769,7 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
-    public void visitLoadStackAddress(LoadStackAddress i) {
+    public void visitLoadStackAddress(AllocateStackVariable i) {
         out.print("&(").print(i.value()).print(")");
     }
 

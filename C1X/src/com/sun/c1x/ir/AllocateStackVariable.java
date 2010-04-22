@@ -24,18 +24,21 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
- * Instruction implementing the semantics of {@link Bytecodes#LSA}.
+ * Instruction implementing the semantics of {@link Bytecodes#ALLOCSTKVAR}.
  *
  * @author Doug Simon
  */
-public final class LoadStackAddress extends Instruction {
+public final class AllocateStackVariable extends Instruction {
 
+    /**
+     * The value that will be used to initialize the stack slot by allocated by this instruction.
+     */
     private Value value;
 
     /**
      * Creates a new LoadStackAddress instance.
      */
-    public LoadStackAddress(Value value) {
+    public AllocateStackVariable(Value value) {
         super(CiKind.Word);
         this.value = value;
     }

@@ -998,7 +998,7 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.READ_PC            :
                 case Bytecodes.FLUSHW             :
                 case Bytecodes.ALLOCA             :
-                case Bytecodes.LSA                :
+                case Bytecodes.ALLOCSTKVAR        :
                 case Bytecodes.JNICALL            :
                 case Bytecodes.CALL               :
                 case Bytecodes.ICMP               :

@@ -61,7 +61,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitLoadPC(LoadPC i) { visit(i); }
     @Override public void visitLoadPointer(LoadPointer i) { visit(i); }
     @Override public void visitLoadRegister(LoadRegister i) { visit(i); }
-    @Override public void visitLoadStackAddress(LoadStackAddress i) { visit(i); }
+    @Override public void visitLoadStackAddress(AllocateStackVariable i) { visit(i); }
     @Override public void visitLocal(Local i) { visit(i); }
     @Override public void visitLogicOp(LogicOp i) { visit(i); }
     @Override public void visitLookupSwitch(LookupSwitch i) { visit(i); }

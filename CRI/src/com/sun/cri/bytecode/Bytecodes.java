@@ -29,6 +29,8 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.sun.cri.ci.*;
+
 /**
  * The definitions of the bytecodes that are valid input to the compiler and
  * related utility methods. This comprises two groups: the standard Java
@@ -446,22 +448,28 @@ public class Bytecodes {
     public static final int MEMBAR               = 240;
     
     /**
-     * Pins a value to the native stack.
+     * Allocates and initializes a slot on the native stack frame.
+     * <p>
+     * Forces the compiler to allocate a native frame slot and initialize it with the value of
+     * ensure the value on the top of the JVM stack. The top value on the JVM stack is replaced
+     * with a {@linkplain CiKind#Word word} value representing the address of the native frame slot.
+     * The native frame slot will be live
+     * for the rest of the method. The value used to initialize the native frame slot determines
+     * if it is a GC root. If the initial value is a reference, any subsequent value written to the slot
+     * (via the address produced by this instruction) must be a reference. If the initial
+     * value is not a reference, any subsequent value written to the slot must not be a reference.
      * 
-     * Forces the compiler to ensure the value on the top of the stack is allocated
-     * on the frame of the compiled method. The top value on the stack is replaced
-     * with the address of the value in the frame. This address is valid for the
-     * remainder of the method.
+     * <b>The compiler is not required enforce this type safety.</b>
      * 
      * <pre>
-     * Format: { u1 opcode;   // STACKADDR
+     * Format: { u1 opcode;   // ALLOCSTKVAR
      *           u2 unused;
      *         }
      *
      * Operand Stack:
      *     ..., value => ..., value
      */
-    public static final int LSA                  = 241;
+    public static final int ALLOCSTKVAR          = 241;
     
     public static final int PAUSE                = 242;
     public static final int ADD_SP               = 243;
@@ -1091,7 +1099,7 @@ public class Bytecodes {
         def("safepoint"       , "bii"  , EXTENSION | TRAP);
         def("alloca"          , "bii"  , EXTENSION);
         def("membar"          , "bii"  , EXTENSION);
-        def("lsa"             , "bii"  , EXTENSION);
+        def("allocstkvar"     , "bii"  , EXTENSION);
         def("pause"           , "bii"  , EXTENSION);
         def("add_sp"          , "bii"  , EXTENSION);
         def("read_pc"         , "bii"  , EXTENSION);

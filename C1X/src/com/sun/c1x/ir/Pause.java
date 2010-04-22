@@ -24,7 +24,7 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
- * Instruction implementing the semantics of {@link Bytecodes#LSA}.
+ * Instruction implementing the semantics of {@link Bytecodes#PAUSE}.
  *
  * @author Doug Simon
  */
