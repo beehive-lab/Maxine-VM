@@ -844,7 +844,7 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signatureType().argumentSlots(false));
         if (!tryRemoveCall(target, args, true)) {
-            if (!tryInline(target, args, null, stateBefore)) {
+            if (!tryInline(target, args, stateBefore)) {
                 appendInvoke(INVOKESTATIC, target, args, true, cpi, constantPool, stateBefore);
             }
         }
@@ -915,7 +915,7 @@ public final class GraphBuilder {
     }
 
     private void invokeDirect(RiMethod target, Value[] args, RiType knownHolder, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
-        if (!tryInline(target, args, knownHolder, stateBefore)) {
+        if (!tryInline(target, args, stateBefore)) {
             // could not optimize or inline the method call
             appendInvoke(INVOKESPECIAL, target, args, false, cpi, constantPool, stateBefore);
         }
@@ -1407,8 +1407,12 @@ public final class GraphBuilder {
         return false;
     }
 
-    boolean tryInline(RiMethod target, Value[] args, RiType knownHolder, FrameState stateBefore) {
-        if (checkInliningConditions(target)) {
+    boolean tryInline(RiMethod target, Value[] args, FrameState stateBefore) {
+        boolean forcedInline = compilation.runtime.mustInline(target);
+        if (forcedInline) {
+            C1XMetrics.InlineForcedMethods++;
+        }
+        if (forcedInline || checkInliningConditions(target)) {
             if (traceLevel > 0) {
                 log.adjustIndentation(1);
                 log.println("\\");
@@ -1418,7 +1422,7 @@ public final class GraphBuilder {
                     log.println("|");
                 }
             }
-            inline(target, args, knownHolder, stateBefore);
+            inline(target, args, forcedInline, stateBefore);
             if (traceLevel > 0) {
                 if (traceLevel < TRACELEVEL_STATE) {
                     log.println("|");
@@ -1434,10 +1438,6 @@ public final class GraphBuilder {
     }
 
     boolean checkInliningConditions(RiMethod target) {
-        if (compilation.runtime.mustInline(target)) {
-            C1XMetrics.InlineForcedMethods++;
-            return true;
-        }
         if (!C1XOptions.OptInline) {
             return false; // all inlining is turned off
         }
@@ -1490,9 +1490,9 @@ public final class GraphBuilder {
         return false;
     }
 
-    void inline(RiMethod target, Value[] args, RiType knownHolder, FrameState stateBefore) {
+    void inline(RiMethod target, Value[] args, boolean forcedInline, FrameState stateBefore) {
         BlockBegin orig = curBlock;
-        if (!target.isStatic()) {
+        if (!forcedInline && !target.isStatic()) {
             // the receiver object must be null-checked for instance methods
             Value receiver = args[0];
             if (!receiver.isNonNull() && !receiver.kind.isWord()) {
@@ -2198,7 +2198,7 @@ public final class GraphBuilder {
         }
 
         if (!tryRemoveCall(snippet, args, true)) {
-            if (!tryInline(snippet, args, null, stateBefore)) {
+            if (!tryInline(snippet, args, stateBefore)) {
                 appendInvoke(snippetCall.opcode, snippet, args, true, (char) 0, constantPool(), stateBefore);
             }
         }
