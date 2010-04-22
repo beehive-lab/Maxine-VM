@@ -274,7 +274,12 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
+    }
 
+    @INLINE
+    protected final void fastRefillTLAB(Pointer enabledVmThreadLocals, Pointer tlab, Size size) {
+        enabledVmThreadLocals.setWord(TLAB_TOP.index, tlab.plus(size));
+        enabledVmThreadLocals.setWord(TLAB_MARK.index, tlab);
     }
 
     /**
