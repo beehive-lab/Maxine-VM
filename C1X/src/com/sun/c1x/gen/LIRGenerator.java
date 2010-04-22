@@ -476,7 +476,8 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         CiValue destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
         CiValue resultOperand = resultOperandFor(x.kind);
-        List<CiValue> argList = visitInvokeArguments(x.signature(), x.arguments());
+        CiCallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true);
+        List<CiValue> argList = visitInvokeArguments(cc, x.arguments());
 
         // emit direct or indirect call to the destination address
         if (destinationAddress instanceof CiConstant) {
@@ -500,7 +501,9 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
         CiValue resultOperand = resultOperandFor(x.kind);
         CiValue callAddress = load(x.address());
-        List<CiValue> argList = visitInvokeArguments(Util.signatureToKinds(x.signature, false), x.arguments);
+        CiKind[] signature = Util.signatureToKinds(x.signature, false);
+        CiCallingConvention cc = compilation.frameMap().nativeCallingConvention(signature, true);
+        List<CiValue> argList = visitInvokeArguments(cc, x.arguments);
         argList.add(callAddress);
         lir.callNative(callAddress, x.nativeMethod.jniSymbol(), resultOperand, argList, info);
         if (resultOperand.isLegal()) {
@@ -1782,9 +1785,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         return new LIRDebugInfo(state, x.bci(), ignoreXhandler ? null : x.exceptionHandlers());
     }
 
-    List<CiValue> visitInvokeArguments(CiKind[] signature, Value[] args) {
+    List<CiValue> visitInvokeArguments(CiCallingConvention cc, Value[] args) {
         // for each argument, load it into the correct location
-        CiCallingConvention cc = compilation.frameMap().javaCallingConvention(signature, true, true);
         List<CiValue> argList = new ArrayList<CiValue>(args.length);
         int j = 0;
         for (Value arg : args) {

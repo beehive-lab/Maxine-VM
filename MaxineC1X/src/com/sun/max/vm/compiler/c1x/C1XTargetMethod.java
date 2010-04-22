@@ -655,13 +655,14 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         // iterate over all the calls and append them to the appropriate lists
         for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.indirectCalls) {
-            assert site.method != null;
-            if (site.method.isResolved()) {
-                MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
-                if (site.method.holder().isInterface()) {
-                    interfaceCalls.add(methodActor);
-                } else {
-                    virtualCalls.add(methodActor);
+            if (site.method != null) {
+                if (site.method.isResolved()) {
+                    MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
+                    if (site.method.holder().isInterface()) {
+                        interfaceCalls.add(methodActor);
+                    } else {
+                        virtualCalls.add(methodActor);
+                    }
                 }
             }
         }

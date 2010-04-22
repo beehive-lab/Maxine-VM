@@ -127,7 +127,7 @@ public class MaxRiRuntime implements RiRuntime {
     /**
      * Remove once C1X can compile native method stubs.
      */
-    public static final boolean CAN_COMPILE_NATIVE_METHODS = false;
+    public static final boolean CAN_COMPILE_NATIVE_METHODS = System.getProperty("c1x.can_compile_native") != null;
 
     /**
      * Remove once C1X implements the semantics of the ACCESSOR annotation.

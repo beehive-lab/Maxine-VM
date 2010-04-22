@@ -641,7 +641,7 @@ public class C1XTest {
             out.print("Time: " + secs + " seconds   ");
             out.print(bcps + " bytes/s   ");
             if (totalIBcps > 0) {
-                out.print(ibcps + " bytes/s   ");
+                out.print(ibcps + " inlined bytes/s   ");
             }
             if (totalIps > 0) {
                 out.print(ips + " insts/s   ");
