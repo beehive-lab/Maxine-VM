@@ -40,6 +40,7 @@ public final class AllocateStackVariable extends Instruction {
      */
     public AllocateStackVariable(Value value) {
         super(CiKind.Word);
+        setFlag(Flag.NonNull);
         this.value = value;
     }
 

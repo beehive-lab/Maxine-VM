@@ -140,7 +140,7 @@ public class MaxRiSignature implements RiSignature {
     }
 
     private CiKind descriptorToKind(TypeDescriptor typeDescriptor) {
-        return MaxRiType.kindToCiKind(typeDescriptor.toKind());
+        return typeDescriptor.toKind().ciKind;
     }
 
     private MaxRiType descriptorToRiType(TypeDescriptor typeDescriptor) {

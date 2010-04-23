@@ -2341,7 +2341,7 @@ public final class GraphBuilder {
             displacement = ipop();
         }
         Value pointer = wpop();
-        push(kind.stackKind(), append(new LoadPointer(kind.stackKind(), opcode, pointer, displacement, offsetOrIndex, true, stateBefore, false)));
+        push(kind.stackKind(), append(new LoadPointer(kind.stackKind(), opcode, pointer, displacement, offsetOrIndex, stateBefore, false)));
     }
 
     private void genStorePointer(int opcode) {
@@ -2358,7 +2358,7 @@ public final class GraphBuilder {
             displacement = ipop();
         }
         Value pointer = wpop();
-        append(new StorePointer(opcode, pointer, displacement, offsetOrIndex, value, true, stateBefore, false));
+        append(new StorePointer(opcode, pointer, displacement, offsetOrIndex, value, stateBefore, false));
     }
 
     private void genArrayLength() {

@@ -56,7 +56,7 @@ public class MaxRiField implements RiField {
     public MaxRiField(MaxRiConstantPool constantPool, FieldActor fieldActor, int cpi) {
         this.constantPool = constantPool;
         this.fieldActor = fieldActor;
-        this.kind = MaxRiType.kindToCiKind(fieldActor.kind);
+        this.kind = fieldActor.kind.ciKind;
         this.fieldRef = null;
         this.cpi = cpi;
     }
@@ -70,7 +70,7 @@ public class MaxRiField implements RiField {
     public MaxRiField(MaxRiConstantPool constantPool, FieldRefConstant fieldRef, int cpi) {
         this.constantPool = constantPool;
         this.fieldRef = fieldRef;
-        this.kind = MaxRiType.kindToCiKind(fieldRef.type(constantPool.constantPool).toKind());
+        this.kind = fieldRef.type(constantPool.constantPool).toKind().ciKind;
         this.cpi = cpi;
     }
 

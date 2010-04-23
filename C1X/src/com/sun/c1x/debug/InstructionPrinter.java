@@ -747,7 +747,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = CiUtil.log2(target.sizeInBytes(i.kind));
+            int scale = CiUtil.log2(target.sizeInBytes(i.pointer().kind));
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(") := ").print(i.value());

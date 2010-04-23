@@ -93,7 +93,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     @Override
     protected void emitReturn(CiValue result) {
         // Reset the stack pointer
-        masm.increment(target.stackPointerRegister, initialFrameSizeInBytes());
+        masm.incrementq(target.stackPointerRegister, initialFrameSizeInBytes());
         // TODO: Add Safepoint polling at return!
         masm.ret(0);
     }
@@ -795,8 +795,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                         if (kind.isInt()) {
                             int delta = ((CiConstant) right).asInt();
                             switch (code) {
-                                case Add : masm.increment(lreg, delta); break;
-                                case Sub : masm.decrement(lreg, delta); break;
+                                case Add : masm.incrementl(lreg, delta); break;
+                                case Sub : masm.decrementl(lreg, delta); break;
                                 default  : throw Util.shouldNotReachHere();
                             }
                         }
@@ -977,9 +977,9 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
                 masm.mov(dreg, lreg);
                 masm.andl(dreg, 0x80000000 | (divisor - 1));
                 masm.jcc(ConditionFlag.positive, done);
-                masm.decrement(dreg, 1);
+                masm.decrementl(dreg, 1);
                 masm.orl(dreg, ~(divisor - 1));
-                masm.increment(dreg, 1);
+                masm.incrementl(dreg, 1);
                 masm.bind(done);
             }
         } else {
@@ -1106,7 +1106,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
     @Override
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
-        assert opr1.kind == opr2.kind;
+        assert opr1.kind.stackKind() == opr2.kind.stackKind();
         if (opr1.isRegister()) {
             CiRegister reg1 = opr1.asRegister();
             if (opr2.isRegister()) {
@@ -1208,7 +1208,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
-    protected void emitCompareFloatInt(LIROpcode code, CiValue left, CiValue right, CiValue dst, LIROp2 op) {
+    protected void emitCompare2Int(LIROpcode code, CiValue left, CiValue right, CiValue dst, LIROp2 op) {
         if (code == LIROpcode.Cmpfd2i || code == LIROpcode.Ucmpfd2i) {
             if (left.kind.isFloat()) {
                 masm.cmpss2int(asXmmFloatReg(left), asXmmFloatReg(right), dst.asRegister(), code == LIROpcode.Ucmpfd2i);
@@ -1227,11 +1227,11 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             masm.jcc(ConditionFlag.equal, isEqual);
             masm.jcc(ConditionFlag.greater, high);
             masm.xorptr(dest, dest);
-            masm.decrement(dest, 1);
+            masm.decrementl(dest, 1);
             masm.jmp(done);
             masm.bind(high);
             masm.xorptr(dest, dest);
-            masm.increment(dest, 1);
+            masm.incrementl(dest, 1);
             masm.jmp(done);
             masm.bind(isEqual);
             masm.xorptr(dest, dest);
