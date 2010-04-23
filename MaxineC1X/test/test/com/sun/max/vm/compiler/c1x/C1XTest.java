@@ -215,7 +215,7 @@ public class C1XTest {
                 }
                 doTimingRun(compilerScheme, methods);
                 // only aggressively resolve on the first run
-                C1XOptions.AggressivelyResolveCPEs = false;
+                C1XOptions.NormalCPEResolution = false;
             }
         } else {
             // compile all the methods and report progress

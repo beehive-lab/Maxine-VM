@@ -90,14 +90,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected boolean canInlineAsConstant(CiConstant c) {
-        if (c.kind == CiKind.Long) {
-            return false;
-        }
-        return c.kind != CiKind.Object || c.asObject() == null;
-    }
-
-    @Override
     protected CiValue safepointPollRegister() {
         return ILLEGAL;
     }
@@ -473,7 +465,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     public void visitUnsignedCompareOp(UnsignedCompareOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
-        left.setDestroysRegister();  // are we sure? why? copied from visitCompareOp
         left.loadItem();
         right.loadItem();
         Condition condition = null;

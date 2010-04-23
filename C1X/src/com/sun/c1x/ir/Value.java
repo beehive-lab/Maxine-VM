@@ -84,7 +84,7 @@ public abstract class Value {
      * @param kind the type of this value
      */
     public Value(CiKind kind) {
-        assert kind == kind.stackKind();
+        assert kind == kind.stackKind() : kind + " != " + kind.stackKind();
         this.kind = kind;
     }
 
@@ -285,7 +285,7 @@ public abstract class Value {
      */
     public final void setOperand(CiValue operand) {
         assert operand != null && operand.isLegal() : "operand must exist";
-        assert operand.kind == this.kind;
+        assert operand.kind.stackKind() == this.kind;
         this.operand = operand;
     }
 
