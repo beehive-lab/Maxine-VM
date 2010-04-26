@@ -139,6 +139,7 @@ while [ "${1:0:1}" = "-" ]; do
     esac
     shift
 done
+
 command=$1
 shift
 if [ -n "$jvm_dbg_port" ]; then
