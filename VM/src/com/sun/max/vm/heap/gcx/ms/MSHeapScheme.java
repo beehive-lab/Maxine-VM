@@ -71,13 +71,15 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     private StopTheWorldGCDaemon collectorThread;
 
+    final AfterMarkSweepVerifier afterGCVerifier;
+
     public MSHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
         freeSpace = new FreeHeapSpaceManager();
         totalUsedSpace = Size.zero();
+        afterGCVerifier = MaxineVM.isDebug() ? new AfterMarkSweepVerifier(heapMarker, freeSpace) : null;
     }
-
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
@@ -212,6 +214,9 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             heapMarker.markAll();
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
             freeSpace.reclaim(heapMarker);
+            if (MaxineVM.isDebug()) {
+                afterGCVerifier.run();
+            }
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
             HeapScheme.Static.notifyGCCompleted();
         }
@@ -353,5 +358,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     public boolean supportsTagging() {
         return false;
     }
+
 }
 

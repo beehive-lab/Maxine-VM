@@ -47,7 +47,7 @@ import com.sun.max.vm.reference.*;
  */
 public final class HeapFreeChunk {
 
-    private static final DynamicHub HEAP_FREE_CHUNK_HUB = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
+    public static final DynamicHub HEAP_FREE_CHUNK_HUB = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
 
     /**
      * Index of the word storing "next" field of the heap free chunk.

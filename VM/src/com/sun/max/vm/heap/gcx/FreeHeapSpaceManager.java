@@ -394,7 +394,6 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                         totalFreeChunkSpace -=  chunk.size.toLong();
                         remove(prevChunk, chunk);
                         Pointer start = result.asPointer().plus(size);
-                        darkMatter = darkMatter.plus(spaceLeft);
                         HeapSchemeAdaptor.fillWithDeadObject(start, start.plus(spaceLeft));
                     }
                     return result;
@@ -625,10 +624,6 @@ public class FreeHeapSpaceManager extends HeapSweeper {
      * Minimum size to be considered reclaimable.
      */
     private Size minReclaimableSpace;
-    /**
-     * Counter of dark matter.
-     */
-    private Size darkMatter = Size.zero();
 
     /**
      * Pointer to the end of the last dead object notified by the sweeper. Used  for precise sweeping.
@@ -647,8 +642,6 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         final Size deadSpace = liveObject.minus(endOfLastVisitedObject).asSize();
         if (deadSpace.greaterThan(minReclaimableSpace)) {
             recordFreeSpace(endOfLastVisitedObject, deadSpace);
-        } else {
-            darkMatter.plus(deadSpace);
         }
         endOfLastVisitedObject = liveObject.plus(Layout.size(Layout.cellToOrigin(liveObject)));
         return endOfLastVisitedObject;
@@ -684,8 +677,6 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         }
         if (numDeadBytes.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(endOfLeftObject, numDeadBytes);
-        } else {
-            darkMatter = darkMatter.plus(numDeadBytes);
         }
         return rightLiveObject.plus(Layout.size(Layout.cellToOrigin(rightLiveObject)));
     }
@@ -693,7 +684,6 @@ public class FreeHeapSpaceManager extends HeapSweeper {
     void print() {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Min reclaimable space: "); Log.println(minReclaimableSpace);
-        Log.print("Dark matter: "); Log.println(darkMatter.toLong());
         for (int i = 0; i < freeChunkBins.length; i++) {
             Log.print("Bin ["); Log.print(i); Log.print("] (");
             Log.print(i << log2FirstBinSize); Log.print(" <= chunk size < "); Log.print((i + 1) << log2FirstBinSize);
@@ -734,7 +724,6 @@ public class FreeHeapSpaceManager extends HeapSweeper {
     }
 
     public void reclaim(TricolorHeapMarker heapMarker) {
-        darkMatter = Size.zero();
         for (int i = 0; i < freeChunkBins.length; i++) {
             freeChunkBins[i].reset();
         }
@@ -744,7 +733,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             if (Heap.traceGCPhases()) {
                 Log.println("Imprecise sweeping of the heap...");
             }
-            darkMatter =  darkMatter.plus(heapMarker.impreciseSweep(this, minReclaimableSpace));
+            heapMarker.impreciseSweep(this, minReclaimableSpace);
         } else {
             if (Heap.traceGCPhases()) {
                 Log.println("Precise sweeping of the heap...");
@@ -756,6 +745,14 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         if (MaxineVM.isDebug()) {
             checkBinFreeSpace();
             print();
+        }
+    }
+
+    public void walkCommittedSpace(CellVisitor cellVisitor) {
+        Pointer p = committedHeapSpace.start().asPointer();
+        Address end = committedHeapSpace.end();
+        while (p.lessThan(end)) {
+            p = cellVisitor.visitCell(p);
         }
     }
 
@@ -780,6 +777,12 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             }
             FatalError.check(totalSpaceInFreelists == totalFreeChunkSpace, "Inconsistent free space counts");
         }
+    }
+
+    void verifyUsage(long freeChunksByteCount, long darkMatterByteCount, long liveDataByteCount) {
+        FatalError.check(freeChunksByteCount == totalFreeChunkSpace, "Inconsistent free chunk space");
+        final long total = darkMatterByteCount + freeChunksByteCount + liveDataByteCount;
+        FatalError.check(total == committedHeapSpace.size().toLong(), "Inconsistent committed space size");
     }
 
     /**
