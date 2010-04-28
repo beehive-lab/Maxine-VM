@@ -150,8 +150,7 @@ public abstract class SpecialBuiltin extends Builtin {
         if (l == 0) {
             return -1;
         }
-        long lowestOneBit = Long.lowestOneBit(l);
-        return Long.numberOfTrailingZeros(lowestOneBit);
+        return Long.numberOfTrailingZeros(l);
     }
 
     public static class LeastSignificantBit extends SpecialBuiltin {
@@ -176,8 +175,7 @@ public abstract class SpecialBuiltin extends Builtin {
         if (l == 0) {
             return -1;
         }
-        long highestOneBit = Long.highestOneBit(l);
-        return Long.numberOfTrailingZeros(highestOneBit);
+        return Long.numberOfTrailingZeros(l);
     }
 
     public static class MostSignificantBit extends SpecialBuiltin {
