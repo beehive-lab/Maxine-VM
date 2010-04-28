@@ -247,15 +247,18 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             // against the current chunk limit.
             Pointer cell;
             Pointer nextMark;
+            Size chunkSize;
             do {
+                chunkSize = size;
                 cell = top();
-                nextMark = cell.plus(size);
+                nextMark = cell.plus(chunkSize);
                 while (nextMark.greaterThan(end)) {
                     // FIXME: should use a ratio of TLAB size instead here.
                     if (nextMark.minus(end).lessThan(minReclaimableSpace)) {
                         nextMark = end.asPointer();
+                        chunkSize = nextMark.minus(cell).asSize();
                     } else {
-                        cell = refillOrAllocate(size, true);
+                        cell = refillOrAllocate(chunkSize, true);
                         if (!cell.isZero()) {
                             if (MaxineVM.isDebug()) {
                                 // Check cell is formated as chunk
@@ -265,12 +268,13 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                         }
                         // loop back to retry.
                         cell = top();
-                        nextMark = cell.plus(size);
+                        nextMark = cell.plus(chunkSize);
                     }
                 }
             } while (mark.compareAndSwap(cell, nextMark) != cell);
+
             // Format as a chunk.
-            HeapFreeChunk.setFreeChunkSize(cell, size);
+            HeapFreeChunk.setFreeChunkSize(cell, chunkSize);
             HeapFreeChunk.setFreeChunkNext(cell, null);
             return cell;
         }
@@ -333,6 +337,24 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             last = Address.zero();
             totalSize = 0L;
             totalChunks = 0L;
+        }
+
+        private void fillWithDeadObject() {
+            Address chunkAddress = head;
+            while (!chunkAddress.isZero()) {
+                Pointer start = chunkAddress.asPointer();
+                Pointer end = start.plus(HeapFreeChunk.getFreechunkSize(chunkAddress));
+                chunkAddress =  HeapFreeChunk.getFreeChunkNext(chunkAddress);
+                HeapSchemeAdaptor.fillWithDeadObject(start, end);
+            }
+            reset();
+        }
+
+        @INLINE
+        void makeParsable() {
+            if (!head.isZero()) {
+                fillWithDeadObject();
+            }
         }
 
         @INLINE
@@ -783,6 +805,9 @@ public class FreeHeapSpaceManager extends HeapSweeper {
 
     public void makeParsable() {
         smallObjectAllocator.makeParsable();
+        for (FreeSpaceList fsp : freeChunkBins) {
+            fsp.makeParsable();
+        }
     }
 
     /**
