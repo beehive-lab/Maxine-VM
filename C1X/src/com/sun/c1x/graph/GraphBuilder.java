@@ -2058,6 +2058,8 @@ public final class GraphBuilder {
 
                 case ALLOCSTKVAR    : genLoadStackAddress(); break;
                 case PAUSE          : genPause(); break;
+                case LSB            : genLeastSignificantBit();throw new CiBailout("LSB extended bytecode not implemented [bci" + bci +"]");
+                case MSB            : genMostSignificantBit(); throw new CiBailout("MSB extended bytecode not implemented [bci" + bci +"]");
 
 //                case PCMPSWP: {
 //                    opcode |= readUnsigned2() << 8;
@@ -2184,6 +2186,12 @@ public final class GraphBuilder {
     private void genStackAllocate() {
         Value size = pop(CiKind.Word);
         wpush(append(new StackAllocate(size)));
+    }
+
+    private void genLeastSignificantBit() {
+    }
+
+    private void genMostSignificantBit() {
     }
 
     private void appendSnippetCall(RiSnippetCall snippetCall, FrameState stateBefore) {
