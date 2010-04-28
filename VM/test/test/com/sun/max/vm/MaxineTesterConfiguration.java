@@ -100,6 +100,7 @@ public class MaxineTesterConfiguration {
         output(test.output.JavacTest.class,                RAND_LINUX);
         output(test.output.GCTest7.class,                  RAND_ALL);
         output(test.output.MegaThreads.class,              RAND_ALL);
+	output(test.output.SafepointWhileInJava.class,     RAND_LINUX);
 
 
         jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
