@@ -18,31 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+package com.sun.max.vm.prototype;
 
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
+import com.sun.max.vm.actor.holder.*;
 
 /**
- * Instruction implementing the semantics of {@link Bytecodes#PAUSE}.
+ * Error thrown when an attempt is made to load a class that is in a
+ * {@linkplain ClassActor#prohibitPackagePrefix(com.sun.max.MaxPackage) prohibited} package.
  *
  * @author Doug Simon
  */
-public final class Pause extends Instruction {
+public class ProhibitedPackageError extends Error {
 
-    /**
-     * Creates a {@link Pause} instance.
-     */
-    public Pause() {
-        super(CiKind.Void);
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitPause(this);
+    public ProhibitedPackageError(String className) {
+        super("Class is in prohibited package: " + className);
     }
 }

@@ -42,7 +42,7 @@ public final class StoreIndexed extends AccessIndexed {
      * @param stateBefore the state before executing this instruction
      */
     public StoreIndexed(Value array, Value index, Value length, CiKind elementType, Value value, FrameState stateBefore) {
-        super(array, index, length, elementType, stateBefore);
+        super(CiKind.Void, array, index, length, elementType, stateBefore);
         this.value = value;
         setFlag(Flag.LiveStore);
     }

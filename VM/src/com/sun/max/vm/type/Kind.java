@@ -22,6 +22,7 @@ package com.sun.max.vm.type;
 
 import static com.sun.max.vm.classfile.ErrorContext.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -58,6 +59,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     public final int stackSlots;
     public final boolean isWord;
     public final boolean isReference;
+    public final CiKind ciKind;
 
     @HOSTED_ONLY
     protected Kind(KindEnum kindEnum, String name, Class javaClass, Class javaArrayClass, Class<Value_Type> valueClass, char character,
@@ -80,6 +82,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         if (typeDescriptor instanceof AtomicTypeDescriptor) {
             ((AtomicTypeDescriptor) typeDescriptor).setKind(this);
         }
+        String ciKindName = isReference ? "Object" : Strings.capitalizeFirst(name, true);
+        this.ciKind = CiKind.valueOf(ciKindName);
     }
 
     @Override

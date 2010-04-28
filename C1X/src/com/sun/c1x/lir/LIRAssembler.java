@@ -336,7 +336,7 @@ public abstract class LIRAssembler {
             case Cmpl2i:
             case Cmpfd2i:
             case Ucmpfd2i:
-                emitCompareFloatInt(op.code, op.operand1(), op.operand2(), op.result(), op);
+                emitCompare2Int(op.code, op.operand1(), op.operand2(), op.result(), op);
                 break;
 
             case Cmove:
@@ -491,7 +491,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitConditionalMove(Condition condition, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 
-    protected abstract void emitCompareFloatInt(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, LIROp2 op);
+    protected abstract void emitCompare2Int(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, LIROp2 op);
 
     protected abstract void emitCompare(Condition condition, CiValue inOpr1, CiValue inOpr2, LIROp2 op);
 
