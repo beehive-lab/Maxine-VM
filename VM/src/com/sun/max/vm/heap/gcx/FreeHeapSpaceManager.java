@@ -36,7 +36,7 @@ import com.sun.max.vm.tele.*;
  * Free heap space management.
  * Nothing ambitious, just to get going and test the tracing algorithm of the future hybrid mark-sweep-evacuate.
  * Implement the HeapSweeper abstract class which defines method called by a HeapMarker to notify free space.
- * The FreeHeapSpace manager records these into an vector of list of free space based on size of the free space.
+ * The FreeHeapSpace manager records these into an vector of list of free space based on size of the freed space.
  *
  * Space allocation is primarily handled via TLABs, which are made of one or more heap chunks.
  * Request too large to be handled by TLABs are handled by the free space manager directly.
@@ -176,7 +176,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             return size.greaterThan(sizeLimit);
         }
 
-        synchronized Pointer refillOrAllocate(Size size) {
+        synchronized Pointer refillOrAllocate(Size size, boolean forTLAB) {
             if (isLarge(size)) {
                 return binAllocate(size).asPointer();
             }
@@ -188,8 +188,9 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                 // Fill up the allocator to bring all mutators to the refill point.
                 Size spaceLeft = end.minus(cell).asSize();
                 if (spaceLeft.greaterThan(refillLimit())) {
-                    // Don't refill, waste would be too high. Allocate from the bin table.
-                    return binAllocate(size).asPointer();
+                      // Don't refill, waste would be too high. Allocate from the bin table.
+                    final int bindex = forTLAB ? 0 : binIndex(size);
+                    return binAllocate(bindex, size, forTLAB).asPointer();
                 }
                 // Refill. First, fill up the allocator to bring everyone to refill synchronization.
                 Pointer start = setTopToEnd();
@@ -227,7 +228,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                     if (forTLAB && nextMark.minus(end).lessThan(minReclaimableSpace)) {
                         nextMark = end.asPointer();
                     } else {
-                        cell = refillOrAllocate(size);
+                        cell = refillOrAllocate(size, forTLAB);
                         if (!cell.isZero()) {
                             return cell;
                         }
@@ -300,8 +301,9 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         Address last;
         long totalSize;
         long totalChunks;
-
-        FreeSpaceList() {
+        final int binIndex;
+        FreeSpaceList(int binIndex) {
+            this.binIndex = binIndex;
             reset();
         }
 
@@ -331,6 +333,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
 
         void append(HeapFreeChunk chunk) {
             appendChunk(HeapFreeChunk.fromHeapFreeChunk(chunk), chunk.size);
+            useTLABBin = tlabFreeSpaceList.totalSize > 0;
         }
 
         @INLINE
@@ -365,6 +368,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                 if (chunk.size.greaterEqual(spaceWithHeadRoom)) {
                     Address result = HeapFreeChunk.fromHeapFreeChunk(chunk);
                     if (!exactFit) {
+                        totalFreeChunkSpace -= chunk.size.toLong();
                         remove(prevChunk, chunk);
                         return result;
                     }
@@ -377,14 +381,17 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                             // Chunk remains in its free list.
                             chunk.size = spaceLeft;
                             totalSize -= size.toLong();
+                            totalFreeChunkSpace -= size.toLong();
                             return result;
                         }
                         // Chunk changes of free list.
                         remove(prevChunk, chunk);
                         chunk.size = spaceLeft;
                         newFreeList.append(chunk);
+                        totalFreeChunkSpace -= size.toLong();
                     } else {
                         // Chunk is removed.
+                        totalFreeChunkSpace -=  chunk.size.toLong();
                         remove(prevChunk, chunk);
                         Pointer start = result.asPointer().plus(size);
                         darkMatter = darkMatter.plus(spaceLeft);
@@ -394,6 +401,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                 } else if (chunk.size.equals(size)) {
                     // Exact fit.
                     Address result = HeapFreeChunk.fromHeapFreeChunk(chunk);
+                    totalFreeChunkSpace -= size.toLong();
                     remove(prevChunk, chunk);
                     return result;
                 }
@@ -403,7 +411,41 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             return Address.zero();
         }
 
+        private void printChunk(Address chunk) {
+            int size = HeapFreeChunk.getFreechunkSize(chunk).toInt();
+            Log.print('[');
+            Log.print(chunk);
+            Log.print(',');
+            Log.print(chunk.plus(size));
+            Log.print("] (");
+            Log.print(size);
+            Log.print(')');
+        }
 
+        private void printAllocatedChunk(Address first, Address last, int numAllocated) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            if (numAllocated == 1) {
+                Log.print("Allocate 1 chunk from bin #0:   ");
+                printChunk(first);
+            } else {
+                Log.print("Allocate ");
+                Log.print(numAllocated);
+                Log.print(" chunks from bin #0: first = ");
+                printChunk(first);
+                Log.print(" last = ");
+                printChunk(last);
+            }
+
+            Log.print("\n chunk list: h = ");
+            Log.print(head);
+            Log.print("l = ");
+            Log.print(last);
+            Log.print(", totalSize = ");
+            Log.print(tlabFreeSpaceList.totalSize);
+            Log.print(", totalChunks = ");
+            Log.println(tlabFreeSpaceList.totalChunks);
+            Log.unlock(lockDisabledSafepoints);
+        }
         Address allocateChunks(Size size) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(!head.isZero(), "Head of free list must not be null");
@@ -423,7 +465,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             Address result = head;
             head =  HeapFreeChunk.fromHeapFreeChunk(lastChunk.next);
             Address lastChunkAddress = HeapFreeChunk.fromHeapFreeChunk(lastChunk);
-            // To escape any write-barrier when nulling out lastChunk.next
+            // To escape any write-barrier when zeroing out lastChunk.next
             HeapFreeChunk.setFreeChunkNext(lastChunkAddress, Address.zero());
             totalChunks -= numAllocatedChunks;
             totalSize -= allocated.toLong();
@@ -434,6 +476,11 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                 }
                 last = Address.zero();
             }
+
+            if (MaxineVM.isDebug() && TraceTLAB) {
+                printAllocatedChunk(result, lastChunkAddress, numAllocatedChunks);
+            }
+
             return result;
         }
     }
@@ -463,33 +510,26 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         long requiredSpace = size.toLong();
         // First, try to allocate from the TLAB bin.
         if (tlabFreeSpaceList.totalSize > requiredSpace) {
-            if (MaxineVM.isDebug() && TraceTLAB) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("binAllocateTLAB from TLAB bin #0: first chunk = ");
-                Log.print(tlabFreeSpaceList.head);
-                Log.print(", totalSize = ");
-                Log.print(tlabFreeSpaceList.totalSize);
-                Log.print(", totalChunks = ");
-                Log.println(tlabFreeSpaceList.totalChunks);
-                Log.unlock(lockDisabledSafepoints);
-            }
-            return tlabFreeSpaceList.allocateChunks(size);
+            Address result = tlabFreeSpaceList.allocateChunks(size);
+            checkBinFreeSpace();
+            return result;
         }
         // In any case, after this call, there will be no more TLAB chunks left.
         // Let future TLAB allocation not use this until filled again by GC.
-        useTLABBin = false;
         Address initialChunks = tlabFreeSpaceList.head;
         if (initialChunks.isZero()) {
             // No chunk left in bin #0.
-            return binAllocate(1, size, true);
+            Address result = binAllocate(1, size, true);
+            // Chunk may have been appended to bin #0
+            useTLABBin = tlabFreeSpaceList.totalSize > 0;
+            return result;
         }
-
+        size = size.minus(tlabFreeSpaceList.totalSize);
         totalFreeChunkSpace -= tlabFreeSpaceList.totalSize;
         tlabFreeSpaceList.head = Address.zero();
         tlabFreeSpaceList.last = Address.zero();
         tlabFreeSpaceList.totalSize = 0;
         tlabFreeSpaceList.totalChunks = 0;
-        size = size.minus(tlabFreeSpaceList.totalSize);
 
         if (size.greaterThan(minReclaimableSpace)) {
             // Try allocate additional space off higher free space bins.
@@ -498,15 +538,20 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                 HeapFreeChunk.format(additionalChunks, size, initialChunks);
                 if (MaxineVM.isDebug() && TraceTLAB) {
                     final boolean lockDisabledSafepoints = Log.lock();
-                    Log.print("binAllocateTLAB from TLAB bin #1: additional space = ");
+                    Log.print("binAllocateTLAB from TLAB bin #1: additional chunk = ");
+                    Log.print(additionalChunks);
+                    Log.print("(");
                     Log.print(size.toLong());
-                    Log.print(", initial chunk ");
+                    Log.print("), initial chunk ");
                     Log.println(initialChunks);
                     Log.unlock(lockDisabledSafepoints);
-                    return additionalChunks;
                 }
+                useTLABBin = tlabFreeSpaceList.totalSize > 0;
+                return additionalChunks;
             }
         }
+        checkBinFreeSpace();
+        useTLABBin = false;
         return initialChunks;
     }
 
@@ -526,6 +571,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             if (!freelist.head.isZero()) {
                 Address result = freelist.allocateFirstFit(size, exactFit);
                 if (!result.isZero()) {
+                    checkBinFreeSpace();
                     return result;
                 }
             }
@@ -550,10 +596,10 @@ public class FreeHeapSpaceManager extends HeapSweeper {
 
     synchronized Address binRefill(Size refillSize, Pointer topAtRefill, Size spaceLeft) {
         // First, deal with the left-over.
-        if  (spaceLeft.lessThan(minReclaimableSpace) && spaceLeft.greaterThan(0)) {
-            HeapSchemeAdaptor.fillWithDeadObject(topAtRefill, topAtRefill.plus(spaceLeft));
-        } else {
+        if  (spaceLeft.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(topAtRefill, spaceLeft);
+        } else if (spaceLeft.greaterThan(0)) {
+            HeapSchemeAdaptor.fillWithDeadObject(topAtRefill, topAtRefill.plus(spaceLeft));
         }
         return binAllocate(1, refillSize, false);
     }
@@ -665,7 +711,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         committedHeapSpace = new LinearAllocationMemoryRegion("Heap");
         totalFreeChunkSpace = 0;
         for (int i = 0; i < freeChunkBins.length; i++) {
-            freeChunkBins[i] = new FreeSpaceList();
+            freeChunkBins[i] = new FreeSpaceList(i);
         }
         tlabFreeSpaceList = freeChunkBins[0];
         smallObjectAllocator = new HeapSpaceAllocator("Small Objects Allocator");
@@ -708,6 +754,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         }
         useTLABBin = tlabFreeSpaceList.totalSize > 0;
         if (MaxineVM.isDebug()) {
+            checkBinFreeSpace();
             print();
         }
     }
@@ -722,6 +769,17 @@ public class FreeHeapSpaceManager extends HeapSweeper {
      */
     public synchronized Size freeSpaceLeft() {
         return Size.fromLong(totalFreeChunkSpace).plus(smallObjectAllocator.freeSpaceLeft());
+    }
+
+    @INLINE
+    private void checkBinFreeSpace() {
+        if (MaxineVM.isDebug()) {
+            long totalSpaceInFreelists = 0L;
+            for (FreeSpaceList fsp : freeChunkBins) {
+                totalSpaceInFreelists += fsp.totalSize;
+            }
+            FatalError.check(totalSpaceInFreelists == totalFreeChunkSpace, "Inconsistent free space counts");
+        }
     }
 
     /**

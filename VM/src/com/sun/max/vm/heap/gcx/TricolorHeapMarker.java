@@ -490,6 +490,39 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
     /**
+     * Only used when tracing is completed. There should be no grey objects left.
+     * @param bitIndex
+     * @return true if the mark at the specified bit index is black
+     */
+    @INLINE
+    final boolean isBlackWhenNoGreys(int bitIndex) {
+        final Pointer basePointer = base.asPointer();
+        final int wordIndex = bitmapWordIndex(bitIndex);
+        final long bitmask = bitmaskFor(bitIndex);
+        final long bitmapWord = basePointer.getLong(wordIndex);
+        if ((bitmapWord & bitmask) == 0L) {
+            return false;
+        }
+        if (MaxineVM.isDebug()) {
+            // Mustn't be grey
+            final int greyBitIndex = bitIndex + 1;
+            final long greymask =  bitmaskFor(greyBitIndex);
+            FatalError.check((bitmapWordAt(greyBitIndex) & greymask) == 0L, "Must have no grey marks");
+        }
+        return true;
+    }
+
+    /**
+     * Only used when tracing is completed. There should be no grey objects left.
+     * @param cell
+     * @return true if the object at the specified address is black
+     */
+    @INLINE
+    final boolean isBlackWhenNoGreys(Pointer cell) {
+        return isBlackWhenNoGreys(bitIndexOf(cell));
+    }
+
+    /**
      * Clear the color map, i.e., turn all bits to white.
      */
     void clear() {
@@ -1366,4 +1399,28 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         visitAllGreyObjects();
         verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
     }
+
+    private static  final class GripForwarder implements SpecialReferenceManager.GripForwarder {
+        final TricolorHeapMarker heapMarker;
+
+        GripForwarder(TricolorHeapMarker heapMarker) {
+            this.heapMarker = heapMarker;
+        }
+
+        public boolean isReachable(Grip grip) {
+            return heapMarker.isBlackWhenNoGreys(grip.toOrigin());
+        }
+
+        public Grip getForwardGrip(Grip grip) {
+            // We aren't relocating object (for now).
+            return grip;
+        }
+    }
+
+    private final GripForwarder specialReferenceGripForwarder = new GripForwarder(this);
+
+    public SpecialReferenceManager.GripForwarder getSpecialReferenceGripForwarder() {
+        return specialReferenceGripForwarder;
+    }
+
 }
