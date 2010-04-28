@@ -139,6 +139,7 @@ while [ "${1:0:1}" = "-" ]; do
     esac
     shift
 done
+
 command=$1
 shift
 if [ -n "$jvm_dbg_port" ]; then
@@ -610,8 +611,8 @@ function run_check() {
     done
     
     if [ -z "$CHECKSTYLE_JAR" ]; then
-        if [ -f /proj/maxwell/bin/checkstyle-4.jar ]; then
-            CHECKSTYLE_JAR=/proj/maxwell/bin/checkstyle-4.jar
+        if [ -f /import/maxwell/bin/checkstyle-4.jar ]; then
+            CHECKSTYLE_JAR=/import/maxwell/bin/checkstyle-4.jar
         else
             echo "Need to use '-cs' option or CHECKSTYLE_JAR environment variable to specify location of Checkstyle jar file"
             exit 1
