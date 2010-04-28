@@ -31,6 +31,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 import com.sun.max.collect.*;
+import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -121,7 +122,20 @@ public class C1XTest {
     private static long lastRunNs;
     private static final double ONE_BILLION = 1000000000;
 
-    public static void main(String[] args) {
+    private static String[] expandArguments(String[] args) throws IOException {
+        List<String> result = new ArrayList<String>(args.length);
+        for (String arg : args) {
+            if (arg.charAt(0) == '@') {
+                File file = new File(arg.substring(1));
+                result.addAll(Files.readLines(file).toCollection());
+            } else {
+                result.add(arg);
+            }
+        }
+        return result.toArray(new String[result.size()]);
+    }
+
+    public static void main(String[] args) throws IOException {
         // set the default optimization level before parsing options
         options.parseArguments(args);
         Integer optLevel = c1xOptLevel.getValue();
@@ -131,7 +145,7 @@ public class C1XTest {
 
         options.setValuesAgain();
         reportC1XOptions();
-        final String[] arguments = options.getArguments();
+        final String[] arguments = expandArguments(options.getArguments());
 
         if (helpOption.getValue()) {
             options.printHelp(System.out, 80);
@@ -456,22 +470,26 @@ public class C1XTest {
                 out.print("Classes " + classNamePattern.type + " '" + classNamePattern.pattern + "'... ");
             }
 
-            new ClassSearch() {
-                @Override
-                protected boolean visitClass(String className) {
-                    if (!className.endsWith("package-info")) {
-                        if (classNamePattern.matches(className)) {
-                            for (String exclusion : exclusions) {
-                                if (className.contains(exclusion)) {
-                                    return true;
+            if (classNamePattern.type == EXACT) {
+                matchingClasses.append(classNamePattern.pattern);
+            } else {
+                new ClassSearch() {
+                    @Override
+                    protected boolean visitClass(String className) {
+                        if (!className.endsWith("package-info")) {
+                            if (classNamePattern.matches(className)) {
+                                for (String exclusion : exclusions) {
+                                    if (className.contains(exclusion)) {
+                                        return true;
+                                    }
                                 }
+                                matchingClasses.append(className);
                             }
-                            matchingClasses.append(className);
                         }
+                        return true;
                     }
-                    return true;
-                }
-            }.run(classpath);
+                }.run(classpath);
+            }
 
             if (verboseOption.getValue() > 0) {
                 out.println(matchingClasses.length());
