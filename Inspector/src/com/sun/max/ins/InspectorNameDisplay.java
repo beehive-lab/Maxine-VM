@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  * Standardized ways to display textual names of common entities during Inspection sessions.
@@ -251,25 +252,29 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         return position == 0 ? "" : "+0x" + Long.toHexString(position);
     }
 
+    private static String name(TargetMethod targetMethod) {
+        return targetMethod == null ? "<no method actor>" : targetMethod.name();
+    }
+
     /**
      * E.g. "int foo(Pointer, Word, int[])[0] in com.sun.max.ins.Bar"
      */
     public String longName(TeleTargetMethod teleTargetMethod) {
-        return teleTargetMethod.classMethodActor() == null ? "<no method actor>" : teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + " in %H");
+        return teleTargetMethod.classMethodActor() == null ? name(teleTargetMethod.targetMethod()) : teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + " in %H");
     }
 
     /**
      * E.g. "foo()[0]+0x7"
      */
     public String veryShortName(TeleTargetMethod teleTargetMethod, Address address) {
-        return teleTargetMethod.classMethodActor() == null ? "<no method actor>" : teleTargetMethod.classMethodActor().format("%n()" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address));
+        return teleTargetMethod.classMethodActor() == null ? name(teleTargetMethod.targetMethod()) : teleTargetMethod.classMethodActor().format("%n()" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address));
     }
 
     /**
      * E.g. "int foo(Pointer, Word, int[])[0]+0x7"
      */
     public String shortName(TeleTargetMethod teleTargetMethod, Address address) {
-        return teleTargetMethod.classMethodActor() == null ? "<no method actor>" : teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address));
+        return teleTargetMethod.classMethodActor() == null ? name(teleTargetMethod.targetMethod()) : teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address));
     }
 
     /**
@@ -279,7 +284,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (teleTargetMethod.classMethodActor() != null) {
             return teleTargetMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(teleTargetMethod) + positionString(teleTargetMethod, address) + " in %H");
         }
-        return "<no method actor>";
+        return name(teleTargetMethod.targetMethod());
     }
 
     /**

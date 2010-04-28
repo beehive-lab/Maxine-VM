@@ -151,7 +151,13 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     public String getName() {
-        return getClass().getSimpleName() + " for " + classMethodActor().simpleName();
+        String name;
+        if (classMethodActor() == null) {
+            name = targetMethod().name();
+        } else {
+            name = classMethodActor().simpleName();
+        }
+        return getClass().getSimpleName() + " for " + name;
     }
 
     private TeleClassMethodActor teleClassMethodActor;

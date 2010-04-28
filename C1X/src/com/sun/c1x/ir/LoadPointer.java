@@ -41,14 +41,12 @@ public final class LoadPointer extends PointerOp {
      * @param pointer the value producing the pointer
      * @param displacement the value producing the displacement. This may be {@code null}.
      * @param offsetOrIndex the value producing the scaled-index of the byte offset depending on whether {@code displacement} is {@code null}
-     * @param canTrap {@code true} if the access can cause a trap
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
-     *
-     * @see PointerOp#PointerOp(CiKind, int, Value, Value, Value, boolean, FrameState, boolean)
+     * @see PointerOp#PointerOp(CiKind, int, Value, Value, Value, FrameState, boolean)
      */
-    public LoadPointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, boolean canTrap, FrameState stateBefore, boolean isVolatile) {
-        super(kind, opcode, pointer, displacement, offsetOrIndex, canTrap, stateBefore, isVolatile);
+    public LoadPointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
+        super(kind, opcode, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
     }
 
     /**

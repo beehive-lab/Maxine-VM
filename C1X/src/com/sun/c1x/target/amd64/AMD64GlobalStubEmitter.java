@@ -306,9 +306,9 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     private void emitCOMISSD(boolean isDouble, boolean isInt) {
         convertPrologue();
         if (isDouble) {
-            asm.ucomisd(convertArgument, asm.recordDataReferenceInCode(CiConstant.forDouble(0.0d)));
+            asm.ucomisd(convertArgument, asm.recordDataReferenceInCode(CiConstant.DOUBLE_0));
         } else {
-            asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.forFloat(0.0f)));
+            asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.FLOAT_0));
         }
         Label nan = new Label();
         Label ret = new Label();
@@ -317,7 +317,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
         // input is > 0 -> return maxInt
         // result register already contains 0x80000000, so subtracting 1 gives 0x7fffffff
-        asm.decrement(convertResult, 1);
+        asm.decrementl(convertResult, 1);
         asm.jmpb(ret);
 
         // input is NaN -> return 0
