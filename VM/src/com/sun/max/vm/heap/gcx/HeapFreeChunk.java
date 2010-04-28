@@ -148,5 +148,4 @@ public final class HeapFreeChunk {
      * A link to a next free chunk in a linked list.
      */
     HeapFreeChunk next;
-
 }
