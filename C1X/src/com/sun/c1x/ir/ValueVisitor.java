@@ -50,7 +50,7 @@ public abstract class ValueVisitor {
     public abstract void visitLoadIndexed(LoadIndexed i);
     public abstract void visitLoadPC(LoadPC i);
     public abstract void visitLoadPointer(LoadPointer i);
-    public abstract void visitLoadStackAddress(LoadStackAddress i);
+    public abstract void visitLoadStackAddress(AllocateStackVariable i);
     public abstract void visitLoadRegister(LoadRegister i);
     public abstract void visitLocal(Local i);
     public abstract void visitLogicOp(LogicOp i);

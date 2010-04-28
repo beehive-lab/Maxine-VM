@@ -51,8 +51,8 @@ import com.sun.max.vm.value.*;
 
 /**
  * Template from which (parts of) {@link JniFunctions} is generated. The static initializer of
- * {@link JniFunctions} includes a call to {@link #generate()} to double-check that the source
- * is up-to-date with respect to any edits made to this class.
+ * {@link JniFunctions} includes a call to {@link JniFunctionsGenerator#generate(boolean, Class, Class)}
+ * to double-check that the source is up-to-date with respect to any edits made to this class.
  *
  * All the methods annotated by {@link VM_ENTRY_POINT} appear in the exact same order as specified in
  * jni.h. In addition, any methods annotated by {@link VM_ENTRY_POINT} that are declared

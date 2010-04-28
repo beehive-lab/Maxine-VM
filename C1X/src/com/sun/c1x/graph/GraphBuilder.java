@@ -1776,6 +1776,7 @@ public final class GraphBuilder {
         boolean pushException = block.isExceptionEntry() && block.next() == null;
         int prevBCI = bci;
         int endBCI = s.endBCI();
+        boolean blockStart = true;
 
         while (bci < endBCI) {
             BlockBegin nextBlock = blockAt(bci);
@@ -1784,6 +1785,7 @@ public final class GraphBuilder {
                     // Ignore the block boundary of the entry block of a method
                     // being inlined unless the block is a loop header.
                     nextBlock = null;
+                    blockStart = false;
                 }
             }
             if (nextBlock != null && nextBlock != block) {
@@ -1807,7 +1809,7 @@ public final class GraphBuilder {
             }
 
             traceState();
-            traceInstruction(bci, s, opcode);
+            traceInstruction(bci, s, opcode, blockStart);
 
             // Checkstyle: stop
             switch (opcode) {
@@ -2054,7 +2056,7 @@ public final class GraphBuilder {
                 case UCMP           : genUnsignedCompareOp(CiKind.Int, opcode, s.readCPI()); break;
                 case UWCMP          : genUnsignedCompareOp(CiKind.Word, opcode, s.readCPI()); break;
 
-                case LSA            : genLoadStackAddress(); break;
+                case ALLOCSTKVAR    : genLoadStackAddress(); break;
                 case PAUSE          : genPause(); break;
 
 //                case PCMPSWP: {
@@ -2107,6 +2109,7 @@ public final class GraphBuilder {
                 break;
             }
             bci = s.currentBCI();
+            blockStart = false;
         }
 
         // stop processing of this block
@@ -2152,10 +2155,10 @@ public final class GraphBuilder {
         }
     }
 
-    private void traceInstruction(int bci, BytecodeStream s, int opcode) {
+    private void traceInstruction(int bci, BytecodeStream s, int opcode, boolean blockStart) {
         if (traceLevel >= TRACELEVEL_INSTRUCTIONS) {
             StringBuilder sb = new StringBuilder(40);
-            sb.append('|');
+            sb.append(blockStart ? '+' : '|');
             if (bci < 10) {
                 sb.append("  ");
             } else if (bci < 100) {
@@ -2175,7 +2178,7 @@ public final class GraphBuilder {
 
     private void genLoadStackAddress() {
         Value value = curState.xpop();
-        wpush(append(new LoadStackAddress(value)));
+        wpush(append(new AllocateStackVariable(value)));
     }
 
     private void genStackAllocate() {
@@ -2338,7 +2341,7 @@ public final class GraphBuilder {
             displacement = ipop();
         }
         Value pointer = wpop();
-        push(kind, append(new LoadPointer(kind, opcode, pointer, displacement, offsetOrIndex, true, stateBefore, false)));
+        push(kind.stackKind(), append(new LoadPointer(kind.stackKind(), opcode, pointer, displacement, offsetOrIndex, stateBefore, false)));
     }
 
     private void genStorePointer(int opcode) {
@@ -2355,7 +2358,7 @@ public final class GraphBuilder {
             displacement = ipop();
         }
         Value pointer = wpop();
-        push(kind, append(new StorePointer(kind, opcode, pointer, displacement, offsetOrIndex, value, true, stateBefore, false)));
+        append(new StorePointer(opcode, pointer, displacement, offsetOrIndex, value, stateBefore, false));
     }
 
     private void genArrayLength() {

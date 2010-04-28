@@ -38,6 +38,8 @@ public final class StackAllocate extends Instruction {
     public StackAllocate(Value size) {
         super(CiKind.Word);
         this.size = size;
+        setFlag(Flag.NonNull);
+        redundantNullCheck();
     }
 
     /**

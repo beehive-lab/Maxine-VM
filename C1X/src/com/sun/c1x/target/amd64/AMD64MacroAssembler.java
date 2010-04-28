@@ -100,14 +100,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void increment(CiRegister reg, int value) {
-        incrementq(reg, value);
-    }
-
-    void decrement(CiRegister reg, int value) {
-        decrementq(reg, value);
-    }
-
     void movoop(CiRegister dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
         if (obj.isNull()) {
@@ -279,7 +271,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
             jcc(AMD64Assembler.ConditionFlag.below, l);
             movl(dst, 0);
             jcc(AMD64Assembler.ConditionFlag.equal, l);
-            increment(dst, 1);
+            incrementl(dst, 1);
         } else { // unordered is greater
             movl(dst, 1);
             jcc(AMD64Assembler.ConditionFlag.parity, l);
@@ -303,7 +295,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
             jcc(AMD64Assembler.ConditionFlag.below, l);
             movl(dst, 0);
             jcc(AMD64Assembler.ConditionFlag.equal, l);
-            increment(dst, 1);
+            incrementl(dst, 1);
         } else { // unordered is greater
             movl(dst, 1);
             jcc(AMD64Assembler.ConditionFlag.parity, l);
@@ -567,7 +559,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     @Override
     public void buildFrame(int frameSizeInBytes) {
-        decrement(AMD64.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
+        decrementq(AMD64.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
         int framePages = frameSizeInBytes / target.pageSize;
         // emit multiple stack bangs for methods with frames larger than a page
         for (int i = 0; i <= framePages; i++) {

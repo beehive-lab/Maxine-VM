@@ -211,7 +211,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
                         final BytecodeLocation bytecodeLocation = teleTargetMethod.getBytecodeLocation(stopIndex);
                         rowToBytecodeLocation[row] = bytecodeLocation;
                         // TODO (mlvdv) only works for non-inlined calls
-                        if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor())) {
+                        if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor()) && bytecodeLocation.bytecodePosition >= 0) {
                             rowToCalleeIndex[row] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
                         }
                     }

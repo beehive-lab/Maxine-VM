@@ -251,6 +251,7 @@ public class JavaPrototype extends Prototype {
 
         // Need all of C1X
         loadPackage("com.sun.cri", true);
+        loadPackage("com.sun.c1x", true);
 
         // These classes need to be compiled and in the boot image in order to be able to
         // run the optimizing compiler at run time (amongst other reasons)
