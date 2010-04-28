@@ -24,10 +24,9 @@ import com.sun.cri.ci.*;
 import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
- * This class represents a {@link XirTemplate template of XIR} along with the
- * {@link XirArgument arguments} to be passed to the template. The runtime generates
- * such snippets for each bytecode being compiled at the request of the compiler,
- * and the compiler can generate machine code for the XIR snippet.
+ * Represents a {@link XirTemplate template of XIR} along with the {@link XirArgument arguments} to be passed to the
+ * template. The runtime generates such snippets for each bytecode being compiled at the request of the compiler, and
+ * the compiler can generate machine code for the XIR snippet.
  *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer

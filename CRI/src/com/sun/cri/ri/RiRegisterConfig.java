@@ -23,7 +23,7 @@ package com.sun.cri.ri;
 import com.sun.cri.ci.*;
 
 /**
- * This interface represents the register configuration specified by the runtime system
+ * Represents the register configuration specified by the runtime system
  * to the compiler, including such information as the return value register, the set
  * of allocatable registers, the order of registers within a reference map, calling
  * convention, etc.

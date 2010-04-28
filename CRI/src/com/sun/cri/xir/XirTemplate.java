@@ -25,36 +25,92 @@ import java.io.*;
 import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
- * This class represents a completed template of XIR code that has been first assembled by
- * the runtime, and then verified and preprocessed by the compiler.
+ * Represents a completed template of XIR code that has been first assembled by
+ * the runtime, and then verified and preprocessed by the compiler. An {@code XirTemplate}
+ * instance is immutable.
  *
  * @author Ben L. Titzer
  */
 public class XirTemplate {
 
+    /**
+     * Flags that indicate key features of the template for quick checking.
+     */
     public enum GlobalFlags {
-    	HAS_JAVA_CALL,
+    	/**
+    	 * Contains a call to a {@link GlobalFlags#GLOBAL_STUB} template.
+    	 */
     	HAS_STUB_CALL,
+    	/**
+    	 * Contains a call to the runtime.
+    	 */
     	HAS_RUNTIME_CALL,
+    	/**
+    	 * Not simply a linear sequence of instructions, contains control transfers.
+    	 */
     	HAS_CONTROL_FLOW,
+    	/**
+    	 * Is a shared instruction sequence for use by other templates.
+    	 */
     	GLOBAL_STUB;
 
     	public final int mask = 1 << ordinal();
     }
 
+    /**
+     * Name of the template.
+     */
     public final String name;
+    /**
+     * TBD.
+     */
     public final XirOperand resultOperand;
+    /**
+     * The sequence of instructions for the fast (inline) path.
+     */
     public final CiXirAssembler.XirInstruction[] fastPath;
+    /**
+     * The sequence of instructions for the slow (out of line) path.
+     */
     public final CiXirAssembler.XirInstruction[] slowPath;
+    /**
+     * Labels used in control transfers.
+     */
     public final XirLabel[] labels;
+    /**
+     * Parameters to the template.
+     */
     public final XirParameter[] parameters;
+    /**
+     * An array of same length as {@link #parameters} where {@code parameterDestroyed[i]} is {@code true}
+     * iff {@code parameters[i]} is the {@link XirInstruction#result result} of any {@link XirInstruction} in either
+     * {@link #fastPath} or {@link #slowPath}.
+     */
     public final boolean[] parameterDestroyed;
+    /**
+     * Temporary variables used by the template.
+     */
     public final XirTemp[] temps;
+    /**
+     * Constant5s used in the template.
+     */
     public final XirConstant[] constants;
+    /**
+     * The total number of variables. (relation to temps/parameters???)
+     */
     public final int variableCount;
+    /**
+     * TBD.
+     */
     public final boolean allocateResultOperand;
+    /**
+     * TBD.
+     */
     public final XirTemplate[] calleeTemplates;
 
+    /**
+     * The {@link GlobalFlags} associated with the template.
+     */
     public final int flags;
 
     public XirTemplate(String name, int variableCount, boolean allocateResultOperand, XirOperand resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constantValues, int flags, XirTemplate[] calleeTemplates) {
@@ -94,12 +150,13 @@ public class XirTemplate {
         }
     }
 
+    /**
+     * Convenience getter that returns the value at a given index in the {@link #parameterDestroyed} array.
+     * @param index
+     * @return the value at {@code parameterDestroyed[index]}
+     */
     public boolean isParameterDestroyed(int index) {
         return parameterDestroyed[index];
-    }
-
-    public boolean hasJavaCall() {
-    	return (flags & GlobalFlags.HAS_JAVA_CALL.mask) != 0;
     }
 
     @Override

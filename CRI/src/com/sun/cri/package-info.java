@@ -30,5 +30,7 @@
  * </ol>
  *
  * The interface is independent of any particular compiler or runtime implementation.
+ * <p>
+ * For more details see <a href="http://wikis.sun.com/download/attachments/173802383/vee2010.pdf">Improving Compiler-Runtime Separation with XIR</a>.
  */
 package com.sun.cri;
