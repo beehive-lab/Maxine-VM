@@ -18,4 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+/**
+ * XIR defines a domain specific instruction set for expressing the lowering of bytecode operations. The details of the
+ * lowering operations are entirely encapsulated in the runtime and are provided to the compiler on request using
+ * {@link com.sun.cri.xir.XirSnippet XIR snippets}. A snippet is a combination of a {@link com.sun.cri.xir.XirTemplate
+ * template}, which is a sequence of {@link com.sun.cri.xir.CiXirAssembler.XirInstruction XIR instructions} that has
+ * unbound {@link com.sun.cri.xir.CiXirAssembler.XirParameter parameters}, and site-specific
+ * {@link com.sun.cri.xir.XirArgument arguments} that are bound to the parameters.
+ * <p>
+ * The runtime is responsible for creating the {@link com.sun.cri.xir.XirTemplate templates} and provides these to the
+ * compiler as part of the initialization process.
+ * <p>
+ * The XIR instruction set has no textual representation, and therefore no parser. An assembly is represented by an
+ * instance of {@link com.sun.cri.xir.CiXirAssembler}, which provides methods to create instructions and operands.
+ */
 package com.sun.cri.xir;

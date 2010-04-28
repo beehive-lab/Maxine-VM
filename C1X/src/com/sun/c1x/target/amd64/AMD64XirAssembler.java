@@ -27,7 +27,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
 
 /**
- * X86 specific preprocessing of XIR.
+ * AMD64 version of {@link CiXirAssembler}.
  *
  * @author Thomas Wuerthinger
  *

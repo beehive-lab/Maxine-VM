@@ -24,20 +24,18 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
- * This interface encapsulates the notion of a site where XIR can be supplied.
- * It is supplied to the {@link RiXirGenerator} by the compiler for each place where XIR
- * can be generated.
- * This interface allows a number of queries, including the bytecode-level location and
- * optimization hints computed by the compiler.
+ * Encapsulates the notion of a site where XIR can be supplied. It is supplied to the {@link RiXirGenerator} by the
+ * compiler for each place where XIR can be generated. This interface allows a number of queries, including the
+ * bytecode-level location and optimization hints computed by the compiler.
  *
  * @author Ben L. Titzer
  */
 public interface XirSite {
 
     /**
-     * Gets the code position associated with this site. This is useful for inserting
+     * Gets the {@link CiCodePos code position} associated with this site. This is useful for inserting
      * instrumentation at the XIR level.
-     * @return the code position if it is availabe; {@code null} otherwise
+     * @return the code position if it is available; {@code null} otherwise
      */
     CiCodePos getCodePos();
 
