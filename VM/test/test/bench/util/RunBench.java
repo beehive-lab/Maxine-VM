@@ -49,9 +49,20 @@ public class RunBench implements Runnable {
         void runBareLoop(long count);
     }
 
+    /**
+     * Base class that has an empty bare loop, which is the common case.
+     */
+    protected abstract static class SimpleLoopRunnable implements LoopRunnable {
+        public void runBareLoop(long loopCount) {
+            for (long i = 0; i < loopCount; i++) {
+            }
+        }
+    }
+
     private final LoopRunnable bench;
     private long elapsed;
     private long loopCount;
+    private boolean failed;
     private static long defaultLoopCount = 1000000;
     private static final String LOOPCOUNT_PROPERTY = "test.bench.loopcount";
 
@@ -75,12 +86,16 @@ public class RunBench implements Runnable {
         return loopCount;
     }
 
+    protected long elapsedTime() {
+        return elapsed;
+    }
+
     /*
      * Run the benchmark for the default number of iterations.
      * @param report  report the results iff true
      * @return the elapsed time in nanoseconds
      */
-    public long runBench(boolean report) throws InterruptedException {
+    public boolean runBench(boolean report) throws InterruptedException {
         return runBench(defaultLoopCount, report);
     }
 
@@ -88,9 +103,10 @@ public class RunBench implements Runnable {
      * Run the benchmark for the given number of iterations.
      * @param loopCount the number of iterations
      * @param report  report the results iff true
+     * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
      * @return the elapsed time in nanoseconds
      */
-    public long runBench(long loopCount, boolean report) throws InterruptedException {
+    public boolean runBench(long loopCount, boolean report) throws InterruptedException {
         this.loopCount = loopCount;
         final long start = System.nanoTime();
         bench.runBareLoop(loopCount);
@@ -102,15 +118,15 @@ public class RunBench implements Runnable {
         if (report) {
             final long count = loopCount();
             final long benchElapsed = elapsed - loopTime;
-            Trace.line(0, "Benchmark results (nanoseconds)");
-            Trace.line(0, "  loopcount: " + count + ", loop overhead " + loopTime);
-            Trace.line(0, "  elapsed: " + elapsed +  ", corrected elapsed: " + benchElapsed);
+            System.out.println("Benchmark results (nanoseconds)");
+            System.out.println("  loopcount: " + count + ", loop overhead " + loopTime);
+            System.out.println("  elapsed: " + elapsed +  ", corrected elapsed: " + benchElapsed);
             final long x = benchElapsed / count;
             final long y = benchElapsed % count;
              // loopCount assumed to be a power of 10 for simplicity.
-            Trace.line(0, "  nanoseconds per iteration: " + x + "." + y);
+            System.out.println("  nanoseconds per iteration: " + x + "." + y);
         }
-        return elapsed;
+        return !failed;
     }
 
     public void run() {
@@ -118,9 +134,23 @@ public class RunBench implements Runnable {
         try {
             bench.run(loopCount);
         } catch (Exception ex) {
-            Trace.line(0, "benchmark threw " + ex);
+            System.err.println("benchmark threw " + ex);
+            failed = true;
         }
         elapsed = System.nanoTime() - startTime;
+    }
+
+    protected String getProperty(String name, boolean mustExist) {
+        final String result = System.getProperty(name);
+        if (result == null && mustExist) {
+            System.err.println("property " + name + " must be set");
+            throw new IllegalArgumentException();
+        }
+        return result;
+    }
+
+    protected String getRequiredProperty(String name) {
+        return getProperty(name, true);
     }
 
 }
