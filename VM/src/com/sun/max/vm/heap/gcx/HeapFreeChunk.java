@@ -24,6 +24,7 @@ import static com.sun.cri.bytecode.Bytecodes.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -81,6 +82,20 @@ public final class HeapFreeChunk {
     @INLINE
     public static void setFreeChunkSize(Address chunkAddress, Size size) {
         chunkAddress.asPointer().setWord(SIZE_INDEX, size);
+    }
+
+    public static boolean isValidChunk(Pointer cell, LinearAllocationMemoryRegion chunkRegion) {
+        final Address hub = Layout.originToCell(Reference.fromJava(HEAP_FREE_CHUNK_HUB).toOrigin());
+        if (cell.readWord(0).asAddress().equals(hub)) {
+            Pointer nextChunk = getFreeChunkNext(cell).asPointer();
+            if (nextChunk.isZero()) {
+                return true;
+            }
+            if (chunkRegion.contains(nextChunk)) {
+                return nextChunk.readWord(0).asAddress().equals(hub);
+            }
+        }
+        return false;
     }
 
     /**

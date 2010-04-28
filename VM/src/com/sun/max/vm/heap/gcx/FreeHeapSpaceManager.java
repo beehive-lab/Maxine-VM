@@ -26,7 +26,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
@@ -178,6 +177,9 @@ public class FreeHeapSpaceManager extends HeapSweeper {
 
         synchronized Pointer refillOrAllocate(Size size, boolean forTLAB) {
             if (isLarge(size)) {
+                if (MaxineVM.isDebug()) {
+                    FatalError.check(!forTLAB, "must not be for TLAB");
+                }
                 return binAllocate(size).asPointer();
             }
             // We may have raced with another concurrent thread which may have
@@ -189,8 +191,8 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                 Size spaceLeft = end.minus(cell).asSize();
                 if (spaceLeft.greaterThan(refillLimit())) {
                       // Don't refill, waste would be too high. Allocate from the bin table.
-                    final int bindex = forTLAB ? 0 : binIndex(size);
-                    return binAllocate(bindex, size, forTLAB).asPointer();
+                    Address result = forTLAB ? binAllocateTLAB(size) : binAllocate(size);
+                    return result.asPointer();
                 }
                 // Refill. First, fill up the allocator to bring everyone to refill synchronization.
                 Pointer start = setTopToEnd();
@@ -204,13 +206,13 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             return Pointer.zero();
         }
 
-        /**
+       /**
          * Allocate space of the specified size.
          *
          * @param size size requested in bytes.
          * @return
          */
-        final Pointer allocate(Size size, boolean forTLAB) {
+        final Pointer allocateCleared(Size size) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(size.isWordAligned(), "Size must be word aligned");
             }
@@ -219,17 +221,46 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             // against the current chunk limit.
             Pointer cell;
             Pointer nextMark;
-            size = DebugHeap.adjustForDebugTag(size.asPointer()).asSize();
+            do {
+                cell = top();
+                nextMark = cell.plus(size);
+                while (nextMark.greaterThan(end)) {
+                    cell = refillOrAllocate(size, false);
+                    if (!cell.isZero()) {
+                        return cell;
+                    }
+                    // loop back to retry.
+                    cell = top();
+                    nextMark = cell.plus(size);
+                }
+            } while (mark.compareAndSwap(cell, nextMark) != cell);
+            Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+            return cell;
+        }
+
+        final Pointer allocateTLAB(Size size) {
+            if (MaxineVM.isDebug()) {
+                FatalError.check(size.isWordAligned(), "Size must be word aligned");
+            }
+            // Try first a non-blocking allocation out of the current chunk.
+            // This may fail for a variety of reasons, all captured by the test
+            // against the current chunk limit.
+            Pointer cell;
+            Pointer nextMark;
             do {
                 cell = top();
                 nextMark = cell.plus(size);
                 while (nextMark.greaterThan(end)) {
                     // FIXME: should use a ratio of TLAB size instead here.
-                    if (forTLAB && nextMark.minus(end).lessThan(minReclaimableSpace)) {
+                    if (nextMark.minus(end).lessThan(minReclaimableSpace)) {
                         nextMark = end.asPointer();
                     } else {
-                        cell = refillOrAllocate(size, forTLAB);
+                        cell = refillOrAllocate(size, true);
                         if (!cell.isZero()) {
+                            if (MaxineVM.isDebug()) {
+                                // Check cell is formated as chunk
+                                FatalError.check(HeapFreeChunk.isValidChunk(cell, committedHeapSpace), "must be a valid heap chunk format");
+                            }
                             return cell;
                         }
                         // loop back to retry.
@@ -238,22 +269,12 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                     }
                 }
             } while (mark.compareAndSwap(cell, nextMark) != cell);
-            return DebugHeap.adjustForDebugTag(cell);
+            // Format as a chunk.
+            HeapFreeChunk.setFreeChunkSize(cell, size);
+            HeapFreeChunk.setFreeChunkNext(cell, null);
+            return cell;
         }
 
-        @INLINE
-        final Pointer allocateCleared(Size size) {
-            Pointer allocated = allocate(size, false);
-            Memory.clearWords(allocated, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
-            return allocated;
-        }
-
-        final Pointer allocateTLAB(Size size) {
-            Pointer tlab = allocate(size, true);
-            HeapFreeChunk.setFreeChunkSize(tlab, size);
-            HeapFreeChunk.setFreeChunkNext(tlab, null);
-            return tlab;
-        }
         /**
          * Fill up the allocator and return address of its allocation mark
          * before filling.
@@ -374,8 +395,12 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                     }
                     Size spaceLeft = chunk.size.minus(size);
                     if (spaceLeft.greaterEqual(minReclaimableSpace)) {
-                        // Space is allocated at the end of the chunk to avoid reformatting it.
+                        // Space is allocated at the end of the chunk to avoid reformatting the leftover
+                        // if it doesn't change bins.
+                        // FIXME: need to revisit the API to clear distinguish the cases when what's needed is formatted chunks
+                        // (e.g., when allocating for allocators, like TLABs), or when all that is needed is bytes (i.e., for direct object allocation)
                         result = result.plus(spaceLeft);
+                        HeapFreeChunk.format(result, size);
                         FreeSpaceList newFreeList =  freeChunkBins[binIndex(spaceLeft)];
                         if (newFreeList == this) {
                             // Chunk remains in its free list.

@@ -27,7 +27,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.heap.gcx.*;
@@ -204,12 +203,17 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      * This is the {@link StopTheWorldGCDaemon}'s entry point to garbage collection.
      */
     final class Collect extends Collector {
+        private long collectionCount = 0;
+
         @Override
         public void collect(int invocationCount) {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
             HeapScheme.Static.notifyGCStarted();
 
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+
+            collectionCount++;
+
             freeSpace.makeParsable();
             heapMarker.markAll();
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
@@ -327,7 +331,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
         final Pointer nextChunk = tlabEnd.getWord().asPointer();
 
-        final Pointer cell = DebugHeap.adjustForDebugTag(tlabMark);
+        final Pointer cell = tlabMark;
         if (cell.plus(size).equals(hardLimit)) {
             // Can actually fit the object in space left.
             // zero-fill the headroom we left.
