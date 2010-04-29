@@ -71,27 +71,38 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
         return super.getRegionSize();
     }
 
-    public List<TeleTargetMethod> teleTargetMethods() {
-        return teleTargetMethods;
-    }
-
     @Override
     public void refresh() {
-        Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
-        final long startTimeMillis = System.currentTimeMillis();
-        Reference targetMethods = vm().teleFields().CodeRegion_targetMethods.readReference(reference());
-        int size = vm().teleFields().SortedMemoryRegionList_size.readInt(targetMethods);
-        Reference regions = vm().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethods);
-        int index = teleTargetMethods.size();
-        final int delta = size - index;
-        while (index < size) {
-            Reference ref = vm().getElementValue(Kind.REFERENCE, regions, index).asReference();
-            TeleTargetMethod teleTargetMethod = (TeleTargetMethod) vm().makeTeleObject(ref);
-            assert teleTargetMethod != null;
-            teleTargetMethods.add(teleTargetMethod);
-            index++;
+        // Register any new compiled methods that have appeared since the previous refresh
+        // Don't try this until the code cache is ready, which it isn't early in the startup sequence.
+        if (vm().codeCache().isInitialized() && vm().tryLock()) {
+            try {
+                Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
+                final long startTimeMillis = System.currentTimeMillis();
+                Reference targetMethodsReference = vm().teleFields().CodeRegion_targetMethods.readReference(reference());
+                int size = vm().teleFields().SortedMemoryRegionList_size.readInt(targetMethodsReference);
+                Reference regionsReference = vm().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethodsReference);
+                int index = teleTargetMethods.size();
+                final int delta = size - index;
+                while (index < size) {
+                    Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, regionsReference, index).asReference();
+                    TeleTargetMethod teleTargetMethod = (TeleTargetMethod) vm().makeTeleObject(targetMethodReference);
+                    assert teleTargetMethod != null;
+                    teleTargetMethods.add(teleTargetMethod);
+                    index++;
+                }
+                Trace.end(TRACE_VALUE, tracePrefix() + "refreshing: new target methods =" + delta, startTimeMillis);
+            } finally {
+                vm().unlock();
+            }
         }
         super.refresh();
-        Trace.end(TRACE_VALUE, tracePrefix() + "refreshing: new target methods =" + delta, startTimeMillis);
+    }
+
+    /**
+     * @return all compiled methods known to be in the region.
+     */
+    public List<TeleTargetMethod> teleTargetMethods() {
+        return teleTargetMethods;
     }
 }

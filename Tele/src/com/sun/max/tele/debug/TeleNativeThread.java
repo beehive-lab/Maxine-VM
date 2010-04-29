@@ -725,7 +725,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                 z++;
 
                 final Address address = stackFrame.ip;
-                TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(vm(), address);
+                TeleTargetMethod teleTargetMethod = vm().codeCache().makeTeleTargetMethod(address);
                 if (teleTargetMethod == null) {
                     if (stackFrame.targetMethod() == null) {
                         LOGGER.warning("Target method of stack frame (" + stackFrame + ") was null!");
@@ -738,7 +738,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                         ProgramWarning.message("Could not find tele class method actor for " + classMethodActor);
                         continue;
                     }
-                    teleTargetMethod = vm().findTeleTargetRoutine(TeleTargetMethod.class, targetMethod.codeStart().asAddress());
+                    teleTargetMethod = vm().codeCache().findTeleTargetRoutine(TeleTargetMethod.class, targetMethod.codeStart().asAddress());
                     if (teleTargetMethod == null) {
                         ProgramWarning.message("Could not find tele target method actor for " + classMethodActor);
                         continue;

@@ -618,7 +618,7 @@ public final class BreakpointsTable extends InspectorTable {
         TargetBreakpointData(MaxBreakpoint targetBreakpoint) {
             super(targetBreakpoint);
             final Address address = codeLocation().address();
-            final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
+            final TeleTargetMethod teleTargetMethod = vm().codeCache().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 shortName = inspection().nameDisplay().shortName(teleTargetMethod);
                 final StringBuilder sb = new StringBuilder();
@@ -634,12 +634,12 @@ public final class BreakpointsTable extends InspectorTable {
                 codeStart = teleTargetMethod.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
-                if (teleNativeTargetRoutine != null) {
-                    codeStart = teleNativeTargetRoutine.getCodeStart();
+                final TeleCompiledNativeCode teleCompiledNativeCode = vm().codeCache().findTeleTargetRoutine(TeleCompiledNativeCode.class, address);
+                if (teleCompiledNativeCode != null) {
+                    codeStart = teleCompiledNativeCode.getCodeStart();
                     location = address.minus(codeStart.asAddress()).toInt();
-                    shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
-                    longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
+                    shortName = inspection().nameDisplay().shortName(teleCompiledNativeCode);
+                    longName = inspection().nameDisplay().longName(teleCompiledNativeCode);
                 } else {
                     // Must be an address in an unknown area of native code
                     shortName = "0x" + address.toHexString();

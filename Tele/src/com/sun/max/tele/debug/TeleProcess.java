@@ -779,12 +779,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             // Executed a return
             return null;
         }
-        final TeleTargetMethod oldTeleTargetMethod = TeleTargetMethod.make(vm(), oldInstructionPointer);
+        final TeleTargetMethod oldTeleTargetMethod = vm().codeCache().makeTeleTargetMethod(oldInstructionPointer);
         if (oldTeleTargetMethod == null) {
             // Stepped from native code:
             return null;
         }
-        final TeleTargetMethod newTeleTargetMethod = TeleTargetMethod.make(vm(), newInstructionPointer);
+        final TeleTargetMethod newTeleTargetMethod = vm().codeCache().makeTeleTargetMethod(newInstructionPointer);
         if (newTeleTargetMethod == null) {
             // Stepped into native code:
             return null;

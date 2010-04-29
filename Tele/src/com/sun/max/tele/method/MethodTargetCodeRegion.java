@@ -30,8 +30,9 @@ import com.sun.max.unsafe.*;
  * TEMPORARY:  this very awkward class gets rewritten when all the memory region work gets completed.
  *
  * @author Michael Van De Vanter
-  */
-public final class MethodTargetCodeRegion extends TargetCodeRegion {
+ */
+@Deprecated
+public final class MethodTargetCodeRegion extends CompiledMethodMemoryRegion {
 
     private final TeleTargetMethod teleTargetMethod;
     private Address regionStart = Address.zero();

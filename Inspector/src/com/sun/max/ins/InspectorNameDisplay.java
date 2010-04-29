@@ -318,17 +318,17 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. user supplied name or "@0xffffffffffffffff"
      */
-    public String shortName(TeleNativeTargetRoutine teleNativeTargetRoutine) {
-        final String title = teleNativeTargetRoutine.getName();
-        return title == null ? "@0x" + teleNativeTargetRoutine.getCodeStart().toHexString() : title;
+    public String shortName(TeleCompiledNativeCode teleCompiledNativeCode) {
+        final String title = teleCompiledNativeCode.entityName();
+        return title == null ? "@0x" + teleCompiledNativeCode.getCodeStart().toHexString() : title;
     }
 
     /**
      * E.g. user supplied name or "Native code @0xffffffffffffffff"
      */
-    public String longName(TeleNativeTargetRoutine teleNativeTargetRoutine) {
-        final String title = teleNativeTargetRoutine.getName();
-        return title == null ? "Native code @0x" + teleNativeTargetRoutine.getCodeStart().toHexString() : "Native code: " + title;
+    public String longName(TeleCompiledNativeCode teleCompiledNativeCode) {
+        final String title = teleCompiledNativeCode.entityName();
+        return title == null ? "Native code @0x" + teleCompiledNativeCode.getCodeStart().toHexString() : "Native code: " + title;
     }
 
     /**
@@ -358,11 +358,11 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
             name.append("Target{0x").append(address.toHexString());
-            if (vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address) != null) {
+            if (vm().codeCache().findTeleTargetRoutine(TeleCompiledNativeCode.class, address) != null) {
                 // a native routine that's already been registered.
                 name.append("}");
             } else {
-                final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
+                final TeleTargetMethod teleTargetMethod = vm().codeCache().makeTeleTargetMethod(address);
                 if (teleTargetMethod != null) {
                     name.append(",  ").append(longName(teleTargetMethod, address)).append("} ");
                 } else {

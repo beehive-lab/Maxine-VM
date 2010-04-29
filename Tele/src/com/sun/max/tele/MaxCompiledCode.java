@@ -21,7 +21,6 @@
 package com.sun.max.tele;
 
 import com.sun.max.collect.*;
-import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
@@ -33,19 +32,7 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @author Michael Van De Vanter
  */
-public interface TeleTargetRoutine extends TargetMethodAccess {
-
-    /**
-     * @return a name assigned in the Tele layer for identification purposes.
-     */
-    String getName();
-
-    /**
-     * @return the region of memory in the VM occupied by this target routine:  Java method or native
-     */
-    TargetCodeRegion targetCodeRegion();
-
-    TeleRoutine teleRoutine();
+public interface MaxCompiledCode extends MaxEntity<MaxCompiledCode> {
 
     /**
      * @return VM address of the first instruction in the target code represented by this routine. Note that this

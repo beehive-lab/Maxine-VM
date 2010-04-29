@@ -307,7 +307,7 @@ public class WordValueLabel extends ValueLabel {
                             displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         } else {
                             try {
-                                teleTargetMethod = vm().makeTeleTargetMethod(newValue.toWord().asAddress());
+                                teleTargetMethod = vm().codeCache().makeTeleTargetMethod(newValue.toWord().asAddress());
                                 if (teleTargetMethod != null) {
                                     final Address codeStart = teleTargetMethod.getCodeStart();
                                     final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offset());

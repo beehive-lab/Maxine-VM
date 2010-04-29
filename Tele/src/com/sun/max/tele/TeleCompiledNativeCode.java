@@ -37,7 +37,7 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @author Michael Van De Vanter
  */
-public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implements TeleTargetRoutine {
+public final class TeleCompiledNativeCode extends TeleCompiledCode {
 
     public static final Size DEFAULT_NATIVE_CODE_LENGTH = Size.fromInt(200);
 
@@ -47,62 +47,48 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
      * about which little more is known than its location.  The location must not overlap any code
      * region already known.
      */
-    public static TeleNativeTargetRoutine create(TeleVM teleVM, Address codeStart, Size codeSize, String name) {
-        TeleNativeTargetRoutine teleNativeTargetRoutine = null;
+    public static TeleCompiledNativeCode create(TeleVM teleVM, Address codeStart, Size codeSize, String name) {
+        TeleCompiledNativeCode teleCompiledNativeCode = null;
         try {
             // Fail if the region specified by 'address' and 'size' overlaps an existing native entry
-            teleNativeTargetRoutine = new TeleNativeTargetRoutine(teleVM, codeStart, codeSize, name);
+            teleCompiledNativeCode = new TeleCompiledNativeCode(teleVM, codeStart, codeSize, name);
         } catch (IllegalArgumentException illegalArgumentException) {
             ProgramError.unexpected("Native code region is overlapping an existing code region");
         }
-        return teleNativeTargetRoutine;
-    }
-
-    /**
-     * @return an already existing surrogate for a block of native code discovered in the VM
-     * whose location includes the specified address, null if not known to be a native routine
-     * or if known to be a Java method.
-     */
-    public static TeleNativeTargetRoutine make(TeleVM teleVM, Address address) {
-        return teleVM.findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
+        return teleCompiledNativeCode;
     }
 
     private final String name;
-    private final TeleRoutine teleRoutine;
-    private final TargetCodeRegion targetCodeRegion;
+    private final CompiledMethodMemoryRegion compiledMethodMemoryRegion;
     private IndexedSequence<TargetCodeInstruction> instructions;
     private IndexedSequence<MachineCodeLocation> instructionLocations;
 
-    private TeleNativeTargetRoutine(TeleVM teleVM, Address start, Size size, String name) {
+    private TeleCompiledNativeCode(TeleVM teleVM, Address start, Size size, String name) {
         super(teleVM);
-        this.teleRoutine = new TeleRoutine() {
-            public String getUniqueName() {
-                return "native method @ " + targetCodeRegion().start().toHexString();
-            }
-        };
-        this.targetCodeRegion = new NativeTargetCodeRegion(teleVM, this, start, size);
+        this.compiledMethodMemoryRegion = new NativeTargetCodeRegion(teleVM, this, start, size);
         this.name = name;
         // Register so that it can be located by address.
-        vm().registerTeleTargetRoutine(this);
+        vm().codeCache().register(this);
     }
 
-    public String getName() {
+    public String entityName() {
         return name;
     }
 
-    public TargetCodeRegion targetCodeRegion() {
-        return targetCodeRegion;
+    public String entityDescription() {
+        return "A discovered block of native code not managed by the VM";
     }
 
-    /**
-     * @return surrogate that represents the (implied) code body from which the code was compiled.
-     */
-    public TeleRoutine teleRoutine() {
-        return teleRoutine;
+    public MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion() {
+        return compiledMethodMemoryRegion;
+    }
+
+    public boolean contains(Address address) {
+        return compiledMethodMemoryRegion.contains(address);
     }
 
     public Address getCodeStart() {
-        return targetCodeRegion.start();
+        return compiledMethodMemoryRegion.start();
     }
 
     public Address callEntryPoint() {
@@ -128,9 +114,9 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         if (instructionLocations == null) {
             getInstructions();
             final int length = instructions.length();
-            final MutableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
+            final VariableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
             for (int i = 0; i < length; i++) {
-                locations.set(i, codeManager().createMachineCodeLocation(instructions.get(i).address, "native target code instruction"));
+                locations.append(codeManager().createMachineCodeLocation(instructions.get(i).address, "native target code instruction"));
             }
             instructionLocations = locations;
         }
@@ -138,14 +124,14 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     }
 
     public CodeLocation entryLocation() {
-        return codeManager().createMachineCodeLocation(callEntryPoint(), "entry for native routine " + getName());
+        return codeManager().createMachineCodeLocation(callEntryPoint(), "entry for native routine " + entityName());
     }
 
     public Sequence<MaxCodeLocation> labelLocations() {
         final AppendableSequence<MaxCodeLocation> locations = new ArrayListSequence<MaxCodeLocation>();
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label != null) {
-                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + getName();
+                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + entityName();
                 locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, description));
             }
         }
@@ -165,7 +151,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     }
 
     public Size codeSize() {
-        return targetCodeRegion.size();
+        return compiledMethodMemoryRegion.size();
     }
 
     @Deprecated

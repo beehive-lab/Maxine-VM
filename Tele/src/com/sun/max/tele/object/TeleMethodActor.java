@@ -39,7 +39,7 @@ import com.sun.max.vm.type.*;
  * @author Michael Van De Vanter
  *
  */
-public abstract class TeleMethodActor extends TeleMemberActor implements TeleRoutine, MethodProvider {
+public abstract class TeleMethodActor extends TeleMemberActor implements MethodProvider {
 
     /**
      * @return local {@link MethodActor} corresponding the the {@link TeleVM}'s {@link MethodActor} for this method.
@@ -100,10 +100,6 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
     @Override
     public String maxineTerseRole() {
         return "MethodActor";
-    }
-
-    public String getUniqueName() {
-        return "TeleJavaMethod: " + methodActor().format("%R %H.%n(%P)");
     }
 
     public VMValue invoke(ObjectProvider object, VMValue[] args, ThreadProvider threadProvider, boolean singleThreaded, boolean nonVirtual) {

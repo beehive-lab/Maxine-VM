@@ -70,7 +70,7 @@ import com.sun.max.vm.value.*;
  */
 public final class TeleObjectFactory extends AbstractTeleVMHolder{
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
 
     private static TeleObjectFactory teleObjectFactory;
 

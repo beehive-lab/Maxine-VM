@@ -70,12 +70,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     private final Color defaultBackgroundColor;
     private final Color stopBackgroundColor;
 
-    public JTableTargetCodeViewer(Inspection inspection, MethodInspector parent, TeleTargetRoutine teleTargetRoutine) {
-        super(inspection, parent, teleTargetRoutine);
+    public JTableTargetCodeViewer(Inspection inspection, MethodInspector parent, MaxCompiledCode maxCompiledCode) {
+        super(inspection, parent, maxCompiledCode);
         this.inspection = inspection;
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
-        this.tableModel = new TargetCodeTableModel(inspection, teleTargetRoutine);
+        this.tableModel = new TargetCodeTableModel(inspection, maxCompiledCode);
         this.columns = new TableColumn[TargetCodeColumnKind.VALUES.length()];
         instanceViewPreferences = new TargetCodeViewPreferences(TargetCodeViewPreferences.globalPreferences(inspection())) {
             @Override
@@ -285,7 +285,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             final int oldSelectedRow = getSelectedRow();
             if (codeLocation.hasAddress()) {
                 final Address targetCodeInstructionAddress = focus().codeLocation().address();
-                if (teleTargetRoutine().targetCodeRegion().contains(targetCodeInstructionAddress)) {
+                if (maxCompiledCode().contains(targetCodeInstructionAddress)) {
                     final TargetCodeTableModel model = (TargetCodeTableModel) getModel();
                     final int row = model.findRow(targetCodeInstructionAddress);
                     if (row >= 0) {
@@ -329,12 +329,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      */
     private final class TargetCodeTableModel extends InspectorTableModel {
 
-        final TeleTargetRoutine teleTargetRoutine;
+        final MaxCompiledCode maxCompiledCode;
 
-        public TargetCodeTableModel(Inspection inspection, TeleTargetRoutine teleTargetRoutine) {
+        public TargetCodeTableModel(Inspection inspection, MaxCompiledCode maxCompiledCode) {
             super(inspection);
-            assert teleTargetRoutine != null;
-            this.teleTargetRoutine = teleTargetRoutine;
+            assert maxCompiledCode != null;
+            this.maxCompiledCode = maxCompiledCode;
         }
 
         public int getColumnCount() {
@@ -342,7 +342,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public int getRowCount() {
-            return teleTargetRoutine.getInstructions().length();
+            return maxCompiledCode.getInstructions().length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -396,11 +396,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public TargetCodeInstruction rowToInstruction(int row) {
-            return teleTargetRoutine.getInstructions().get(row);
+            return maxCompiledCode.getInstructions().get(row);
         }
 
         public MaxCodeLocation rowToLocation(int row) {
-            return teleTargetRoutine.getInstructionLocations().get(row);
+            return maxCompiledCode.getInstructionLocations().get(row);
         }
 
         /**
@@ -409,7 +409,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
          */
         public int findRow(Address address) {
             int row = 0;
-            for (TargetCodeInstruction targetCodeInstruction : teleTargetRoutine.getInstructions()) {
+            for (TargetCodeInstruction targetCodeInstruction : maxCompiledCode.getInstructions()) {
                 if (targetCodeInstruction.address.equals(address)) {
                     return row;
                 }
@@ -753,7 +753,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             if (renderer == null) {
                 final TargetCodeInstruction targetCodeInstruction = tableModel.rowToInstruction(row);
                 final String text = targetCodeInstruction.operands;
-                if (targetCodeInstruction.targetAddress != null && !teleTargetRoutine().targetCodeRegion().contains(targetCodeInstruction.targetAddress)) {
+                if (targetCodeInstruction.targetAddress != null && !maxCompiledCode().contains(targetCodeInstruction.targetAddress)) {
                     renderer = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction.targetAddress, table);
                     inspectorLabels[row] = renderer;
                 } else if (targetCodeInstruction.literalSourceAddress != null) {
@@ -766,7 +766,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     renderer = poolConstantLabel;
                     renderer.setForeground(getRowTextColor(row));
                 } else {
-                    final StopPositions stopPositions = teleTargetRoutine().getStopPositions();
+                    final StopPositions stopPositions = maxCompiledCode().getStopPositions();
                     if (stopPositions != null && stopPositions.isNativeFunctionCallPosition(targetCodeInstruction.position)) {
                         final TextLabel textLabel = new TextLabel(inspection, "<native function>", text);
                         renderer = textLabel;

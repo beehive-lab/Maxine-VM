@@ -35,28 +35,28 @@ import com.sun.max.tele.object.*;
  */
 public final class NativeMethodInspector extends MethodInspector {
 
-    private final TeleTargetRoutine teleTargetRoutine;
+    private final MaxCompiledCode maxCompiledCode;
     private TargetCodeViewer targetCodeViewer = null;
     private final String shortName;
     private final String longName;
 
-    public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetRoutine teleTargetRoutine) {
+    public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledCode maxCompiledCode) {
         super(inspection, parent);
-        this.teleTargetRoutine = teleTargetRoutine;
-        if (teleTargetRoutine instanceof TeleNativeTargetRoutine) {
-            final TeleNativeTargetRoutine teleNativeTargetRoutine  = (TeleNativeTargetRoutine) teleTargetRoutine;
-            shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
-            longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
+        this.maxCompiledCode = maxCompiledCode;
+        if (maxCompiledCode instanceof TeleCompiledNativeCode) {
+            final TeleCompiledNativeCode teleCompiledNativeCode  = (TeleCompiledNativeCode) maxCompiledCode;
+            shortName = inspection().nameDisplay().shortName(teleCompiledNativeCode);
+            longName = inspection().nameDisplay().longName(teleCompiledNativeCode);
         } else {
-            shortName = teleTargetRoutine.getName();
+            shortName = maxCompiledCode.entityName();
             longName = shortName;
         }
         createTabFrame(parent);
     }
 
     @Override
-    public TeleTargetRoutine teleTargetRoutine() {
-        return teleTargetRoutine;
+    public MaxCompiledCode maxCompiledCode() {
+        return maxCompiledCode;
     }
 
     @Override
@@ -76,7 +76,7 @@ public final class NativeMethodInspector extends MethodInspector {
 
     @Override
     public void createView() {
-        targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, teleTargetRoutine);
+        targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, maxCompiledCode);
         getContentPane().add(targetCodeViewer);
         pack();
     }

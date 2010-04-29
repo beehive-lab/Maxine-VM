@@ -192,7 +192,7 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
-    public TeleTargetRoutine teleTargetRoutine() {
+    public MaxCompiledCode maxCompiledCode() {
         return teleTargetMethod;
     }
 
