@@ -1354,6 +1354,29 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     }
 
     @Override
+    protected void emitSignificantBitOp(boolean most, CiValue inOpr1, CiValue dst) {
+        assert dst.isRegister();
+        CiRegister result = dst.asRegister();
+        masm.xorl(result, result);
+        masm.notq(result);
+        if (inOpr1.isRegister()) {
+            CiRegister value = inOpr1.asRegister();
+            if (most) {
+                masm.bsrl(result, value);
+            } else {
+                masm.bsfl(result, value);
+            }
+        } else {
+            CiAddress laddr = asAddress(inOpr1);
+            if (most) {
+                masm.bsrl(result, laddr);
+            } else {
+                masm.bsfl(result, laddr);
+            }
+        }
+    }
+
+    @Override
     protected void emitAlignment() {
         masm.align(wordSize);
     }

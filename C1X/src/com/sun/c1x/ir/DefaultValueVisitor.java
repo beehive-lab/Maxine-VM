@@ -80,6 +80,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitResolveClass(ResolveClass i) { visit(i); }
     @Override public void visitReturn(Return i) { visit(i); }
     @Override public void visitShiftOp(ShiftOp i) { visit(i); }
+    @Override public void visitSignificantBit(SignificantBitOp i) { visit(i); }
     @Override public void visitStackAllocate(StackAllocate i) { visit(i); }
     @Override public void visitStoreField(StoreField i) { visit(i); }
     @Override public void visitStoreIndexed(StoreIndexed i) { visit(i); }

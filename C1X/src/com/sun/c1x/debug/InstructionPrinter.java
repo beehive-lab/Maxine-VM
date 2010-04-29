@@ -566,6 +566,11 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
+    public void visitSignificantBit(SignificantBitOp significantBit) {
+        out.print(significantBit.returnsMostSignificantBit() ? "msb [" : "lsb [").print(significantBit).print("] ");
+    }
+
+    @Override
     public void visitNewInstance(NewInstance newInstance) {
         out.print("new instance ").print(nameOf(newInstance.instanceClass()));
     }

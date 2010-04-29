@@ -343,6 +343,14 @@ public class LIRList {
         append(new LIROp3(LIROpcode.Lrem, left, right, tmp, res, info));
     }
 
+    public void lsb(CiValue left, CiValue dst) {
+        append(new LIROp1(LIROpcode.Lsb, left, dst));
+    }
+
+    public void msb(CiValue left, CiValue dst) {
+        append(new LIROp1(LIROpcode.Msb, left, dst));
+    }
+
     public void wdiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Wdiv, left, right, tmp, res, info));
     }

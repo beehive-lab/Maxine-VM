@@ -149,6 +149,19 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         setResult(x, reg);
     }
 
+    @Override
+    public void visitSignificantBit(SignificantBitOp x) {
+        LIRItem value = new LIRItem(x.x(), this);
+        value.setDestroysRegister();
+        value.loadItem();
+        CiValue reg = createResultVariable(x);
+        if (x.returnsMostSignificantBit()) {
+            lir.lsb(value.result(), reg);
+        } else {
+            lir.msb(value.result(), reg);
+        }
+ }
+
     public void visitArithmeticOpFloat(ArithmeticOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);

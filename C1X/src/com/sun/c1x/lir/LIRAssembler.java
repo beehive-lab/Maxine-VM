@@ -283,7 +283,13 @@ public abstract class LIRAssembler {
                 assert op.operand().isRegister();
                 asm.nullCheck(op.operand().asRegister());
                 break;
-            default:
+            case Lsb:
+                emitSignificantBitOp(false,  op.operand(), op.result());
+                break;
+            case Msb:
+                emitSignificantBitOp(true,  op.operand(), op.result());
+                break;
+           default:
                 throw Util.shouldNotReachHere();
         }
     }
@@ -488,6 +494,8 @@ public abstract class LIRAssembler {
     protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, CiValue inOpr2, CiValue dst, CiValue tmpOpr);
 
     protected abstract void emitShiftOp(LIROpcode code, CiValue inOpr1, int asJint, CiValue dst);
+
+    protected abstract void emitSignificantBitOp(boolean most, CiValue inOpr1, CiValue dst);
 
     protected abstract void emitConditionalMove(Condition condition, CiValue inOpr1, CiValue inOpr2, CiValue dst);
 

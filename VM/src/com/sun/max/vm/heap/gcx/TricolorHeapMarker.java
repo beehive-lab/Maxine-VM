@@ -29,7 +29,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -476,16 +475,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return isGrey_(bitIndexOf(cell));
     }
 
-    @INLINE
-    final boolean isBlack_(Object o) {
-        return isBlack_(Reference.fromJava(o));
-    }
-
-    @INLINE
-    final boolean isGrey_(Object o) {
-        return isGrey_(Reference.fromJava(o));
-    }
-
     /**
      * Only used when tracing is completed. There should be no grey objects left.
      * @param bitIndex
@@ -772,7 +761,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 while (bitmapWordIndex <= rightmostBitmapWordIndex) {
                     long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
                     if (bitmapWord != 0) {
-                        final long greyMarksInWord = bitmapWord & (bitmapWord >> 1);
+                        final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
                         if (greyMarksInWord != 0) {
                             // First grey mark is the least set bit.
                             final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
@@ -782,7 +771,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                             // when marking objects crossing multiple mark bitmap words.
                             bitmapWordIndex = heapMarker.bitmapWordIndex(p);
                             continue;
-                        } else if ((bitmapWord >> LAST_BIT_INDEX_IN_WORD) == 1) {
+                        } else if ((bitmapWord >>> LAST_BIT_INDEX_IN_WORD) == 1L) {
                             // Mark span two words. Check first bit of next word to decide if mark is grey.
                             bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
                             if ((bitmapWord & 1) != 0) {
@@ -840,9 +829,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             int bitmapWordIndex = heapMarker.bitmapWordIndex(finger);
             while (bitmapWordIndex <= rightmostBitmapWordIndex) {
                 long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
-                if (bitmapWord != 0) {
-                    final long greyMarksInWord = bitmapWord & (bitmapWord >> 1);
-                    if (greyMarksInWord != 0) {
+                if (bitmapWord != 0L) {
+                    final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
+                    if (greyMarksInWord != 0L) {
                         // First grey mark is the least set bit.
                         final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
                         final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
@@ -855,7 +844,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                         // when marking objects crossing multiple mark bitmap words.
                         bitmapWordIndex = heapMarker.bitmapWordIndex(p);
                         continue;
-                    } else if ((bitmapWord >> LAST_BIT_INDEX_IN_WORD) == 1) {
+                    } else if ((bitmapWord >>> LAST_BIT_INDEX_IN_WORD) == 1L) {
                         // Mark span two words. Check first bit of next word to decide if mark is grey.
                         bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
                         if ((bitmapWord & 1) != 0) {
@@ -1002,13 +991,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         while (bitmapWordIndex <= lastBitmapWordIndex) {
             long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
             if (bitmapWord != 0) {
-                final long greyMarksInWord = bitmapWord & (bitmapWord >> 1);
+                final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
                 if (greyMarksInWord != 0) {
                     // First grey mark is the least set bit.
                     final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
                     final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
                     return bitIndexOfGreyCell < lastBitIndex ? bitIndexOfGreyCell : -1;
-                } else if ((bitmapWord >> LAST_BIT_INDEX_IN_WORD) == 1) {
+                } else if ((bitmapWord >>> LAST_BIT_INDEX_IN_WORD) == 1L) {
                     // Mark span two words. Check first bit of next word to decide if mark is grey.
                     bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
                     if ((bitmapWord & 1) != 0) {
@@ -1133,7 +1122,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                         // distinguish black from grey.
                         bitIndexInWord += 2;
                         bitmapWord = colorMapBase.getLong(bitmapWordIndex) >>> bitIndexInWord;
-                    } while(bitmapWord != 0);
+                    } while(bitmapWord != 0L);
                     bitmapWordIndex++;
                     final int nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
                     if (nextCellBitmapWordIndex > bitmapWordIndex) {
@@ -1279,7 +1268,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     // find the next black object with this word.
                     bitIndexInWord += 2;
                     bitmapWord = bitmapWord >>> bitIndexInWord;
-                } while(bitmapWord != 0);
+                } while(bitmapWord != 0L);
                 bitmapWordIndex++;
                 final int nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
                 if (nextCellBitmapWordIndex > bitmapWordIndex) {
@@ -1386,7 +1375,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     }
                     bitIndexInWord += 2;
                     w = bitmapWord >>> bitIndexInWord;
-                } while(w != 0);
+                } while(w != 0L);
                 bitmapWordIndex = nextCellBitmapWordIndex;
             } else {
                 bitmapWordIndex++;
