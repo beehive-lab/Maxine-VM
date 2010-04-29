@@ -845,7 +845,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         if (setInstructionResult && allocatedResultOperand.isLegal()) {
-            x.setOperand(allocatedResultOperand);
+            setResult(x, (CiVariable)allocatedResultOperand);
         }
 
         if (!operands[resultOperand.index].isConstant() || snippet.template.fastPath.length != 0) {

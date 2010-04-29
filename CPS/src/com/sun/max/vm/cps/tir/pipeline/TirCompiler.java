@@ -30,7 +30,6 @@ import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.cps.tir.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.*;
 
@@ -76,7 +75,7 @@ public class TirCompiler {
         if (DISSASSEMBLE) {
             Visualizer.print(dirTranslator.method());
             Trace.stream().println(eirMethod.traceToString());
-            Disassemble.disassemble(System.out, targetMethod);
+            targetMethod.disassemble(System.out);
             final IndexedSequence<TargetJavaFrameDescriptor> descriptors = TargetJavaFrameDescriptor.inflate(((CPSTargetMethod) targetMethod).compressedJavaFrameDescriptors());
             for (TargetJavaFrameDescriptor descriptor : descriptors) {
                 if (descriptor != null) {
