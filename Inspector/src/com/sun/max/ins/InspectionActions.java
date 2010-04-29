@@ -1272,45 +1272,45 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class InspectTargetRegionMemoryWordsAction extends InspectorAction {
 
         private static final String  DEFAULT_TITLE = "Inspect Target Code memory region";
-        private final TeleTargetRoutine teleTargetRoutine;
+        private final MaxCompiledCode maxCompiledCode;
 
-        private InspectTargetRegionMemoryWordsAction(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+        private InspectTargetRegionMemoryWordsAction(MaxCompiledCode maxCompiledCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleTargetRoutine = teleTargetRoutine;
+            this.maxCompiledCode = maxCompiledCode;
         }
 
         @Override
         protected void procedure() {
             final String description;
-            if (teleTargetRoutine instanceof TeleTargetMethod) {
-                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
+            if (maxCompiledCode instanceof TeleTargetMethod) {
+                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) maxCompiledCode;
                 description = "Target Method " + inspection().nameDisplay().shortName(teleTargetMethod);
             } else {
-                description = "Native Target Method: " + teleTargetRoutine.getName();
+                description = "Native Target Method: " + maxCompiledCode.entityName();
             }
-            actions().inspectRegionMemoryWords(teleTargetRoutine.targetCodeRegion(), description).perform();
+            actions().inspectRegionMemoryWords(maxCompiledCode.memoryRegion(), description).perform();
         }
     }
 
     /**
      * Creates an action that will inspect memory containing a block of target code.
      *
-     * @param teleTargetRoutine a block of target code in the VM, either a Java method or native
+     * @param maxCompiledCode a block of target code in the VM, either a Java method or native
      * @param actionTitle a name for the action
      * @return an Action that will create a Memory Words Inspector for the code
      */
-    public final InspectorAction inspectTargetRegionMemoryWords(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
-        return new InspectTargetRegionMemoryWordsAction(teleTargetRoutine, actionTitle);
+    public final InspectorAction inspectTargetRegionMemoryWords(MaxCompiledCode maxCompiledCode, String actionTitle) {
+        return new InspectTargetRegionMemoryWordsAction(maxCompiledCode, actionTitle);
     }
 
     /**
      * Creates an action that will inspect memory containing a block of target code.
      *
-     * @param teleTargetRoutine a block of target code in the VM, either a Java method or native
+     * @param maxCompiledCode a block of target code in the VM, either a Java method or native
      * @return an Action that will create a Memory Words Inspector for the code
      */
-    public final InspectorAction inspectTargetRegionMemoryWords(TeleTargetRoutine teleTargetRoutine) {
-        return new InspectTargetRegionMemoryWordsAction(teleTargetRoutine, null);
+    public final InspectorAction inspectTargetRegionMemoryWords(MaxCompiledCode maxCompiledCode) {
+        return new InspectTargetRegionMemoryWordsAction(maxCompiledCode, null);
     }
 
     /**
@@ -1989,7 +1989,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 @Override
                 public String validateInput(Address address) {
-                    if (vm().makeTeleTargetMethod(address) != null) {
+                    if (vm().codeCache().makeTeleTargetMethod(address) != null) {
                         return null;
                     }
                     return "There is no method containing the address " + address.toHexString();
@@ -2428,7 +2428,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private final TeleTargetMethod teleTargetMethod;
 
         /**
-         * @param teleTargetRoutine
+         * @param maxCompiledCode
          */
         private CopyTargetMethodCodeToClipboardAction(TeleTargetMethod teleTargetMethod, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2972,9 +2972,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Set breakpoint at every target code label";
         private final Sequence<MaxCodeLocation> locations;
 
-        SetTargetCodeLabelBreakpointsAction(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+        SetTargetCodeLabelBreakpointsAction(MaxCompiledCode maxCompiledCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.locations = teleTargetRoutine.labelLocations();
+            this.locations = maxCompiledCode.labelLocations();
             setEnabled(inspection().hasProcess() && locations.length() > 0);
         }
 
@@ -2994,8 +2994,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @return an Action that will set a breakpoint at every label in a target routine
      */
-    public final InspectorAction setTargetCodeLabelBreakpoints(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
-        return new SetTargetCodeLabelBreakpointsAction(teleTargetRoutine, actionTitle);
+    public final InspectorAction setTargetCodeLabelBreakpoints(MaxCompiledCode maxCompiledCode, String actionTitle) {
+        return new SetTargetCodeLabelBreakpointsAction(maxCompiledCode, actionTitle);
     }
 
     /**
@@ -3006,9 +3006,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Remove breakpoint at every target code label";
         private final Sequence<MaxCodeLocation> labelLocations;
 
-        RemoveTargetCodeLabelBreakpointsAction(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+        RemoveTargetCodeLabelBreakpointsAction(MaxCompiledCode maxCompiledCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            labelLocations = teleTargetRoutine.labelLocations();
+            labelLocations = maxCompiledCode.labelLocations();
             setEnabled(inspection().hasProcess() && labelLocations.length() > 0);
         }
 
@@ -3030,8 +3030,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @return an Action that will remove any breakpoints labels in a target method.
      */
-    public final InspectorAction removeTargetCodeLabelBreakpoints(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
-        return new RemoveTargetCodeLabelBreakpointsAction(teleTargetRoutine, actionTitle);
+    public final InspectorAction removeTargetCodeLabelBreakpoints(MaxCompiledCode maxCompiledCode, String actionTitle) {
+        return new RemoveTargetCodeLabelBreakpointsAction(maxCompiledCode, actionTitle);
     }
 
      /**
@@ -4278,7 +4278,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxCodeLocation maxCodeLocation = focus().codeLocation();
             if (maxCodeLocation != null && !maxCodeLocation.hasAddress()) {
-                final TeleTargetMethod teleTargetMethod = vm().findTeleTargetRoutine(TeleTargetMethod.class, maxCodeLocation.address());
+                final TeleTargetMethod teleTargetMethod = vm().codeCache().findTeleTargetRoutine(TeleTargetMethod.class, maxCodeLocation.address());
                 if (teleTargetMethod != null) {
                     final MaxCodeLocation nextCallLocation = teleTargetMethod.getNextCallLocation(maxCodeLocation);
                     if (nextCallLocation != null) {
@@ -4325,7 +4325,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxCodeLocation maxCodeLocation = focus().codeLocation();
             assert maxCodeLocation.hasAddress();
-            final TeleTargetMethod teleTargetMethod = vm().findTeleTargetRoutine(TeleTargetMethod.class, maxCodeLocation.address());
+            final TeleTargetMethod teleTargetMethod = vm().codeCache().findTeleTargetRoutine(TeleTargetMethod.class, maxCodeLocation.address());
             if (teleTargetMethod != null) {
                 final MaxCodeLocation nextCallLocation = teleTargetMethod.getNextCallLocation(maxCodeLocation);
                 if (nextCallLocation != null) {
@@ -4564,7 +4564,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (focus().hasCodeLocation()) {
                 final Address instructionAddress = focus().codeLocation().address();
                 if (instructionAddress != null && !instructionAddress.isZero()) {
-                    final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(instructionAddress);
+                    final TeleTargetMethod teleTargetMethod = vm().codeCache().makeTeleTargetMethod(instructionAddress);
                     if (teleTargetMethod != null) {
                         final int stopIndex = teleTargetMethod.getJavaStopIndex(instructionAddress);
                         if (stopIndex >= 0) {
@@ -4710,7 +4710,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  lists to the console all entries in the {@link TeleCodeRegistry}.
+     * Action:  lists to the console all entries in the {@link MaxCodeCache}.
      */
     final class ListCodeRegistryAction extends InspectorAction {
 
@@ -4722,21 +4722,21 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            vm().describeTeleTargetRoutines(System.out);
+            vm().codeCache().writeSummary(System.out);
         }
     }
 
     private InspectorAction listCodeRegistry = new ListCodeRegistryAction(null);
 
     /**
-     * @return an Action that will list to the console the entries in the {@link TeleCodeRegistry}.
+     * @return an Action that will list to the console the entries in the {@link MaxCodeCache}.
      */
     public final InspectorAction listCodeRegistry() {
         return listCodeRegistry;
     }
 
     /**
-     * Action:  lists to the console all entries in the {@link TeleCodeRegistry} to an interactively specified file.
+     * Action:  lists to the console all entries in the {@link MaxCodeCache} to an interactively specified file.
      */
     final class ListCodeRegistryToFileAction extends InspectorAction {
 
@@ -4762,7 +4762,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
             try {
                 final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));
-                vm().describeTeleTargetRoutines(printStream);
+                vm().codeCache().writeSummary(printStream);
             } catch (FileNotFoundException fileNotFoundException) {
                 gui().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
             }
@@ -4772,7 +4772,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private InspectorAction listCodeRegistryToFile = new ListCodeRegistryToFileAction(null);
 
     /**
-     * @return an interactive Action that will list to a specified file the entries in the {@link TeleCodeRegistry}.
+     * @return an interactive Action that will list to a specified file the entries in the {@link MaxCodeCache}.
      */
     public final InspectorAction listCodeRegistryToFile() {
         return listCodeRegistryToFile;

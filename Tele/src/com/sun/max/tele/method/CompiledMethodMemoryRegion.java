@@ -20,26 +20,46 @@
  */
 package com.sun.max.tele.method;
 
+import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
  * Represents a region of VM memory that holds compiled code.
+ * <br>
+ * The parent of this region is the {@link TeleCompiledCodeRegion} in which it is allocated.
+ * <br>
+ * This region has no children (although it could if we decided to subdivide it further);
  *
  * @author Michael Van De Vanter
   */
-public abstract class TargetCodeRegion extends TeleFixedMemoryRegion {
+public abstract class CompiledMethodMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCode>{
 
-    private final TeleTargetRoutine teleTargetRoutine;
+    private static final IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY =
+        new ArrayListSequence<MaxEntityMemoryRegion< ? extends MaxEntity>>(0);
+    private final MaxCompiledCode maxCompiledCode;
 
-    public TargetCodeRegion(TeleVM teleVM, TeleTargetRoutine teleTargetRoutine, Address start, Size size, String description) {
-        super(teleVM, description, start, size);
-        this.teleTargetRoutine = teleTargetRoutine;
+    public CompiledMethodMemoryRegion(TeleVM teleVM, MaxCompiledCode maxCompiledCode, Address start, Size size, String regionName) {
+        super(teleVM, regionName, start, size);
+        this.maxCompiledCode = maxCompiledCode;
     }
 
-    public TeleTargetRoutine teleTargetRoutine() {
-        return teleTargetRoutine;
+    public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
+        // TODO (mlvdv) fix
+        return null;
+    }
+
+    public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+        return EMPTY;
+    }
+
+    public MaxCompiledCode owner() {
+        return maxCompiledCode;
+    }
+
+    public boolean isBootRegion() {
+        return false;
     }
 
     /**

@@ -26,10 +26,8 @@ import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
-import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.unsafe.*;
@@ -38,50 +36,13 @@ import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.value.*;
 
 /**
  * Canonical surrogate for several possible kinds of compilation of a Java {@link ClassMethod} in the VM.
  *
  * @author Michael Van De Vanter
  */
-public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTargetRoutine {
-
-    // TODO (mlvdv) implement a sensible and consistent caching strategy
-
-    /**
-     * Gets a {@code TeleTargetMethod} instance representing the {@link TargetMethod} in the tele VM that contains a
-     * given instruction pointer. If the instruction pointer's address does not lie within a target method, then null is returned.
-     * If the instruction pointer is within a target method but there is no {@code TeleTargetMethod} instance existing
-     * for it in the {@linkplain TeleCodeRegistry tele code registry}, then a new instance is created and returned.
-     *
-     * @param address an instruction pointer in the tele VM's address space
-     * @return {@code TeleTargetMethod} instance representing the {@code TargetMethod} containing {@code
-     *         instructionPointer} or null if there is no {@code TargetMethod} containing {@code instructionPointer}
-     */
-    public static TeleTargetMethod make(TeleVM teleVM, Address address) {
-        ProgramError.check(!address.isZero());
-        if (!teleVM.isBootImageRelocated()) {
-            return null;
-        }
-        TeleTargetMethod teleTargetMethod = teleVM.findTeleTargetRoutine(TeleTargetMethod.class, address);
-        if (teleTargetMethod == null
-                        && teleVM.findTeleTargetRoutine(TeleTargetRoutine.class, address) == null
-                        && teleVM.codeCache().contains(address)) {
-            // Not a known java target method, and not some other kind of known target code, but in a code region
-            // See if the code manager in the VM knows about it.
-            try {
-                final Reference targetMethodReference = teleVM.teleMethods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
-                // Possible that the address points to an unallocated area of a code region.
-                if (targetMethodReference != null && !targetMethodReference.isZero()) {
-                    teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);  // Constructor will add to register.
-                }
-            } catch (TeleInterpreterException e) {
-                throw ProgramError.unexpected(e);
-            }
-        }
-        return teleTargetMethod;
-    }
+public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements MaxCompiledCode, TargetMethodAccess {
 
     /**
      * Gets all target methods that encapsulate code compiled for a given method, either as a top level compilation or
@@ -118,7 +79,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
 
     private static final Map<TeleObject, TargetABI> abiCache = new HashMap<TeleObject, TargetABI>();
 
-    private final TargetCodeRegion targetCodeRegion;
+    private final CompiledMethodMemoryRegion compiledMethodMemoryRegion;
     private CodeLocation codeStartLocation = null;
     private IndexedSequence<TargetCodeInstruction> instructions;
     private IndexedSequence<MachineCodeLocation> instructionLocations;
@@ -143,21 +104,36 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         // Exception to the general policy of not performing VM i/o during object
         // construction.  This is needed for the code registry.
         // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
-        targetCodeRegion = new MethodTargetCodeRegion(teleVM, this);
+        compiledMethodMemoryRegion = new MethodTargetCodeRegion(teleVM, this);
         // Register every method compilation, so that they can be located by code address.
-        teleVM.registerTeleTargetRoutine(this);
+        teleVM.codeCache().register(this);
     }
 
-    public String getName() {
-        return getClass().getSimpleName() + " for " + classMethodActor().simpleName();
+    @Deprecated
+    public String entityName() {
+        final ClassMethodActor classMethodActor = classMethodActor();
+        if (classMethodActor != null) {
+            return "Code " + classMethodActor.simpleName();
+        }
+        return "Unknown compiled code";
     }
 
-    public TargetCodeRegion targetCodeRegion() {
-        return targetCodeRegion;
+    @Deprecated
+    public String entityDescription() {
+        final ClassMethodActor classMethodActor = classMethodActor();
+        final String description = getClass().getSimpleName() + " for method ";
+        if (classMethodActor != null) {
+            return description + classMethodActor.simpleName();
+        }
+        return description + "Unknown compiled code";
     }
 
-    public TeleRoutine teleRoutine() {
-        return getTeleClassMethodActor();
+    public MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion() {
+        return compiledMethodMemoryRegion;
+    }
+
+    public boolean contains(Address address) {
+        return compiledMethodMemoryRegion.contains(address);
     }
 
     /**
@@ -196,6 +172,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return instructions;
     }
 
+    @Deprecated
     public IndexedSequence<MachineCodeLocation> getInstructionLocations() {
         if (instructionLocations == null) {
             getInstructions();
@@ -210,6 +187,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return instructionLocations;
     }
 
+    // TODO (mlvdv)  move this to {@link TeleCompiledMethod}
     public CodeLocation entryLocation() {
         final Address callEntryPoint = callEntryPoint();
         if (callEntryPoint.isZero()) {
@@ -218,11 +196,12 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return codeManager().createMachineCodeLocation(callEntryPoint, "Method entry");
     }
 
+    @Deprecated
     public Sequence<MaxCodeLocation> labelLocations() {
         final AppendableSequence<MaxCodeLocation> locations = new ArrayListSequence<MaxCodeLocation>();
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label != null) {
-                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + getName();
+                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + entityName();
                 locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, description));
             }
         }
@@ -230,21 +209,23 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     /**
-     * Gets the tele class method actor for this target method.
+     * Gets the method actor in the VM for this target method.
      *
      * @return {@code null} if the class method actor is null the target method
      */
     public TeleClassMethodActor getTeleClassMethodActor() {
-        if (teleClassMethodActor == null) {
-            final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
-            teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
+        if (teleClassMethodActor == null && vm().tryLock()) {
+            try {
+                final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
+                teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
+            } finally {
+                vm().unlock();
+            }
         }
         return teleClassMethodActor;
     }
 
-    /**
-     * @see TargetMethod#stopPositions()
-     */
+    // TODO (mlvdv) move this to {@link TeleCompiledMethod}
     public StopPositions getStopPositions() {
         if (stopPositions == null) {
             if (targetMethod().stopPositions() != null) {
@@ -254,6 +235,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return stopPositions;
     }
 
+    @Deprecated
     public int getJavaStopIndex(Address address) {
         final StopPositions stopPositions = getStopPositions();
         if (stopPositions != null) {
@@ -336,10 +318,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return targetMethod().numberOfStopPositions();
     }
 
-    public boolean isAtJavaStop(Address address) {
-        return getJavaStopIndex(address) >= 0;
-    }
-
     /**
      * @return position of the closest following call instruction, direct or indirect; -1 if none.
      */
@@ -398,7 +376,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     // [tw] Warning: duplicated code!
-    @Deprecated
     public MachineCodeInstructionArray getTargetCodeInstructions() {
         final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
         final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
@@ -409,7 +386,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return new MachineCodeInstructionArray(result);
     }
 
-    @Deprecated
     public MethodProvider getMethodProvider() {
         return this.teleClassMethodActor;
     }

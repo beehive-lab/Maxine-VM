@@ -617,9 +617,9 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         private String describeLocation(TeleTargetBreakpoint teleTargetBreakpoint) {
-            final TeleTargetRoutine teleTargetRoutine = vm().findTeleTargetRoutine(TeleTargetRoutine.class, teleTargetBreakpoint.address());
-            if (teleTargetRoutine != null) {
-                return " in " + teleTargetRoutine.getName();
+            final MaxCompiledCode maxCompiledCode = vm().codeCache().findTeleTargetRoutine(MaxCompiledCode.class, teleTargetBreakpoint.address());
+            if (maxCompiledCode != null) {
+                return " in " + maxCompiledCode.entityName();
             }
             return "";
         }

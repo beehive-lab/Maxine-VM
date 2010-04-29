@@ -103,7 +103,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
-        final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM, instructionPointer);
+        final TeleTargetMethod teleTargetMethod = teleVM.codeCache().makeTeleTargetMethod(instructionPointer);
         if (teleTargetMethod != null) {
             return teleTargetMethod.targetMethod();
         }

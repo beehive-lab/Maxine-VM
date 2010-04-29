@@ -28,13 +28,13 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
   */
-public final class NativeTargetCodeRegion extends TargetCodeRegion {
+public final class NativeTargetCodeRegion extends CompiledMethodMemoryRegion {
 
-    private final TeleNativeTargetRoutine teleNativeTargetRoutine;
+    private final TeleCompiledNativeCode teleCompiledNativeCode;
 
-    public NativeTargetCodeRegion(TeleVM teleVM, TeleNativeTargetRoutine teleNativeTargetRoutine, Address start, Size size) {
-        super(teleVM, teleNativeTargetRoutine, start, size, "Native TeleTarget-" + teleNativeTargetRoutine.toString());
-        this.teleNativeTargetRoutine = teleNativeTargetRoutine;
+    public NativeTargetCodeRegion(TeleVM teleVM, TeleCompiledNativeCode teleCompiledNativeCode, Address start, Size size) {
+        super(teleVM, teleCompiledNativeCode, start, size, "Native TeleTarget-" + teleCompiledNativeCode.toString());
+        this.teleCompiledNativeCode = teleCompiledNativeCode;
     }
 
 }

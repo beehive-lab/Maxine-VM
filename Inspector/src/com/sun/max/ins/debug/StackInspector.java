@@ -207,7 +207,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             String toolTip = null;
             Component component;
             if (stackFrame instanceof MaxStackFrame.Compiled) {
-                final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(stackFrame.targetMethod().codeStart());
+                final TeleTargetMethod teleTargetMethod = vm().codeCache().makeTeleTargetMethod(stackFrame.targetMethod().codeStart());
                 name = inspection().nameDisplay().veryShortName(teleTargetMethod);
                 toolTip = inspection().nameDisplay().longName(teleTargetMethod, stackFrame.ip());
                 final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
@@ -230,11 +230,11 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             } else {
                 ProgramWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.ip();
-                final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
-                if (teleNativeTargetRoutine != null) {
+                final TeleCompiledNativeCode teleCompiledNativeCode = vm().codeCache().findTeleTargetRoutine(TeleCompiledNativeCode.class, instructionPointer);
+                if (teleCompiledNativeCode != null) {
                     // native that we know something about
-                    name = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
-                    toolTip = inspection().nameDisplay().longName(teleNativeTargetRoutine);
+                    name = inspection().nameDisplay().shortName(teleCompiledNativeCode);
+                    toolTip = inspection().nameDisplay().longName(teleCompiledNativeCode);
                 } else {
                     name = "nativeMethod:0x" + instructionPointer.toHexString();
                     toolTip = "nativeMethod";
@@ -445,7 +445,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     private String javaStackFrameName(MaxStackFrame.Compiled javaStackFrame) {
         final Address address = javaStackFrame.ip();
-        final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
+        final TeleTargetMethod teleTargetMethod = vm().codeCache().makeTeleTargetMethod(address);
         String name;
         if (teleTargetMethod != null) {
             name = inspection().nameDisplay().veryShortName(teleTargetMethod);
@@ -479,8 +479,8 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         }
         if (stackFrame instanceof MaxStackFrame.Native) {
             final Pointer instructionPointer = stackFrame.ip();
-            final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
-            if (teleNativeTargetRoutine == null) {
+            final TeleCompiledNativeCode teleCompiledNativeCode = vm().codeCache().findTeleTargetRoutine(TeleCompiledNativeCode.class, instructionPointer);
+            if (teleCompiledNativeCode == null) {
                 menu.add(new InspectorAction(inspection(), "Open native code dialog...") {
                     @Override
                     protected void procedure() {

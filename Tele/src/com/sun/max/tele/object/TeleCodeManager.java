@@ -60,18 +60,25 @@ public final class TeleCodeManager extends TeleTupleObject {
      */
     private void initialize() {
         if (teleBootCodeRegion == null) {
-            Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
-            final long startTimeMillis = System.currentTimeMillis();
-            final Reference bootCodeRegionReference = vm().teleFields().Code_bootCodeRegion.readReference(vm());
-            teleBootCodeRegion = (TeleCodeRegion) vm().makeTeleObject(bootCodeRegionReference);
+            if (!vm().tryLock()) {
+                ProgramError.unexpected("Unable to initialize from the code manager in VM");
+            }
+            try {
+                Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
+                final long startTimeMillis = System.currentTimeMillis();
+                final Reference bootCodeRegionReference = vm().teleFields().Code_bootCodeRegion.readReference(vm());
+                teleBootCodeRegion = (TeleCodeRegion) vm().makeTeleObject(bootCodeRegionReference);
 
-            final Reference runtimeCodeRegionReference = vm().teleFields().CodeManager_runtimeCodeRegion.readReference(vm());
-            teleRuntimeCodeRegion = (TeleCodeRegion) vm().makeTeleObject(runtimeCodeRegionReference);
+                final Reference runtimeCodeRegionReference = vm().teleFields().CodeManager_runtimeCodeRegion.readReference(vm());
+                teleRuntimeCodeRegion = (TeleCodeRegion) vm().makeTeleObject(runtimeCodeRegionReference);
 
-            teleBootCodeRegion.refresh();
-            teleRuntimeCodeRegion.refresh();
+                teleBootCodeRegion.refresh();
+                teleRuntimeCodeRegion.refresh();
 
-            Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
+                Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
+            } finally {
+                vm().unlock();
+            }
         }
     }
 

@@ -20,7 +20,10 @@
  */
 package com.sun.max.tele;
 
+import java.io.*;
+
 import com.sun.max.collect.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -51,5 +54,39 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @return the code cache region, if any, that includes that location
      */
     MaxCompiledCodeRegion findCompiledCodeRegion(Address address);
+
+    /**
+     * Get the TeleTargetMethod, newly created if needed, that contains a given address in the VM.
+     *
+     * @param address address in target code memory in the VM
+     * @return a possibly newly created target method whose code contains the address.
+     */
+    TeleTargetMethod makeTeleTargetMethod(Address address);
+
+    /**
+     * Create a new TeleCompiledNativeCode for a block of native code in the VM that has not yet been registered.
+     *
+     * @param codeStart starting address of the code in VM memory
+     * @param codeSize presumed size of the code
+     * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
+     * @return a newly created TeleCompiledNativeCode
+     */
+    TeleCompiledNativeCode createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name);
+
+    /**
+     * Gets the existing MaxCompiledCode, if registered, that contains a given address in the VM, possibly filtering by subtype.
+     *
+     * @param <TeleTargetRoutine_Type> the type of the requested MaxCompiledCode
+     * @param teleTargetRoutineType the {@link Class} instance representing {@code TeleTargetRoutine_Type}
+     * @param address the look up address
+     * @return the tele target routine of type {@code TeleTargetRoutine_Type} in this registry that contains {@code
+     *         address} or null if no such tele target routine of the requested type exists
+     */
+    <TeleTargetRoutine_Type extends MaxCompiledCode> TeleTargetRoutine_Type findTeleTargetRoutine(Class<TeleTargetRoutine_Type> teleTargetRoutineType, Address address);
+
+    /**
+     * Writes a textual summary describing all instances of {@link MaxCompiledCode} known to the VM.
+     */
+    void writeSummary(PrintStream printStream);
 
 }

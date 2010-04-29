@@ -262,7 +262,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     focusRow = model.findRowAtPosition(0);
                 }
             } else if (codeLocation.hasAddress()) {
-                if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(codeLocation.address())) {
+                if (teleTargetMethod() != null && teleTargetMethod().contains(codeLocation.address())) {
                     focusRow = model.findRow(codeLocation.address());
                 }
             }

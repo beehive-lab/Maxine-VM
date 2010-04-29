@@ -54,13 +54,13 @@ public abstract class TargetCodeViewer extends CodeViewer {
         return "Target Code";
     }
 
-    private final TeleTargetRoutine teleTargetRoutine;
+    private final MaxCompiledCode maxCompiledCode;
 
     /**
      * @return surrogate for the {@link TargetRoutine} in the VM for the method being viewed.
      */
-    protected TeleTargetRoutine teleTargetRoutine() {
-        return teleTargetRoutine;
+    protected MaxCompiledCode maxCompiledCode() {
+        return maxCompiledCode;
     }
 
     private final IndexedSequence<TargetCodeInstruction> instructions;
@@ -123,12 +123,12 @@ public abstract class TargetCodeViewer extends CodeViewer {
      */
     private final int[] rowToCalleeIndex;
 
-    protected TargetCodeViewer(Inspection inspection, MethodInspector parent, TeleTargetRoutine teleTargetRoutine) {
+    protected TargetCodeViewer(Inspection inspection, MethodInspector parent, MaxCompiledCode maxCompiledCode) {
         super(inspection, parent);
-        this.teleTargetRoutine = teleTargetRoutine;
-        instructions = teleTargetRoutine.getInstructions();
-        instructionLocations = new VectorSequence<MaxCodeLocation>(teleTargetRoutine.getInstructionLocations());
-        final TeleClassMethodActor teleClassMethodActor = teleTargetRoutine.getTeleClassMethodActor();
+        this.maxCompiledCode = maxCompiledCode;
+        instructions = maxCompiledCode.getInstructions();
+        instructionLocations = new VectorSequence<MaxCodeLocation>(maxCompiledCode.getInstructionLocations());
+        final TeleClassMethodActor teleClassMethodActor = maxCompiledCode.getTeleClassMethodActor();
         if (teleClassMethodActor != null) {
             final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
             bytecodes = teleCodeAttribute.readBytecodes();
@@ -151,10 +151,10 @@ public abstract class TargetCodeViewer extends CodeViewer {
         isStopRow = new boolean[targetInstructionCount];
         Arrays.fill(isStopRow, false);
 
-        final int targetCodeLength = teleTargetRoutine.targetCodeRegion().size().toInt();
+        final int targetCodeLength = maxCompiledCode.memoryRegion().size().toInt();
         final int[] positionToStopIndex = new int[targetCodeLength];
         Arrays.fill(positionToStopIndex, -1);
-        final StopPositions stopPositions = teleTargetRoutine.getStopPositions();
+        final StopPositions stopPositions = maxCompiledCode.getStopPositions();
         if (stopPositions != null) {
             for (int stopPositionIndex = 0; stopPositionIndex < stopPositions.length(); ++stopPositionIndex) {
                 final int stopPosition = stopPositions.get(stopPositionIndex);
@@ -163,8 +163,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
             }
         }
 
-        if (teleTargetRoutine instanceof TeleJitTargetMethod) { // JIT method
-            final int[] bytecodeToTargetCodePositionMap = ((TeleJitTargetMethod) teleTargetRoutine).bytecodeToTargetCodePositionMap();
+        if (maxCompiledCode instanceof TeleJitTargetMethod) { // JIT method
+            final int[] bytecodeToTargetCodePositionMap = ((TeleJitTargetMethod) maxCompiledCode).bytecodeToTargetCodePositionMap();
             boolean alternate = false;
             int bytecodeIndex = 0; // position in the original bytecode stream.
             for (int row = 0; row < targetInstructionCount; row++) {
@@ -206,8 +206,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
                 if (stopIndex >= 0) {
                     // the row is at a stop point
                     isStopRow[row] = true;
-                    if (teleTargetRoutine instanceof TeleTargetMethod) {
-                        final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
+                    if (maxCompiledCode instanceof TeleTargetMethod) {
+                        final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) maxCompiledCode;
                         final BytecodeLocation bytecodeLocation = teleTargetMethod.getBytecodeLocation(stopIndex);
                         rowToBytecodeLocation[row] = bytecodeLocation;
                         // TODO (mlvdv) only works for non-inlined calls
@@ -294,7 +294,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         // For very deep stacks (e.g. when debugging a metacircular related infinite recursion issue),
         // it's faster to loop over the frames and then only loop over the instructions for each
         // frame related to the target code represented by this viewer.
-        final MaxMemoryRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
+        final MaxMemoryRegion targetCodeRegion = maxCompiledCode().memoryRegion();
         for (MaxStackFrame frame : frames) {
             final MaxCodeLocation frameCodeLocation = frame.codeLocation();
             if (frameCodeLocation != null) {

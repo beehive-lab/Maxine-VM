@@ -18,20 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
+package com.sun.max.tele.method;
+
+import com.sun.max.tele.*;
 
 /**
- * Abstracts over instances of {@link TeleMethodActor} and native code
- * routine for which there is nothing to reference in the tele VM.
- * 
+ * Representation for a body of compiled code in the VM, either a compiled method or
+ * native code about which little is known.
+ *
  * @author Michael Van De Vanter
  */
-public interface TeleRoutine {
+public abstract class TeleCompiledCode extends AbstractTeleVMHolder implements MaxCompiledCode {
 
-    /**
-     * @return A unique, informative name about the particular tele object.
-     * It is also used as a key for uniqueness.
-     */
-    String getUniqueName();
+    public TeleCompiledCode(TeleVM teleVM) {
+        super(teleVM);
+    }
 
 }

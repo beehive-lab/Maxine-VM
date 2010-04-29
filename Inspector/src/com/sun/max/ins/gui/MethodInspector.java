@@ -88,30 +88,30 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      */
     private static MethodInspector make(final Inspection inspection, Address address, boolean interactive) {
         MethodInspector methodInspector = null;
-        final TeleTargetMethod teleTargetMethod = inspection.vm().makeTeleTargetMethod(address);
+        final TeleTargetMethod teleTargetMethod = inspection.vm().codeCache().makeTeleTargetMethod(address);
         if (teleTargetMethod != null) {
             // Java method
             methodInspector = make(inspection, teleTargetMethod, MethodCodeKind.TARGET_CODE);
         } else {
-            final TeleTargetRoutine teleTargetRoutine = inspection.vm().findTeleTargetRoutine(TeleTargetRoutine.class, address);
-            if (teleTargetRoutine != null) {
+            final MaxCompiledCode maxCompiledCode = inspection.vm().codeCache().findTeleTargetRoutine(MaxCompiledCode.class, address);
+            if (maxCompiledCode != null) {
                 // Some other kind of known target code
-                methodInspector = make(inspection, teleTargetRoutine);
+                methodInspector = make(inspection, maxCompiledCode);
             } else if (interactive) {
                 // Code location is not in a Java method or runtime stub and has not yet been viewed in a native routine.
                 // Give the user a chance to guess at its length so we can register and view it
                 final MutableInnerClassGlobal<MethodInspector> result = new MutableInnerClassGlobal<MethodInspector>();
                 final String defaultDescription = "Native code @0x" + address.toHexString();
-                new NativeLocationInputDialog(inspection, "Describe unknown native code", address, TeleNativeTargetRoutine.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
+                new NativeLocationInputDialog(inspection, "Name unknown native code", address, TeleCompiledNativeCode.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
                     @Override
-                    public void entered(Address nativeAddress, Size codeSize, String enteredDescription) {
+                    public void entered(Address nativeAddress, Size codeSize, String enteredName) {
                         try {
-                            String description = enteredDescription;
-                            if (description == null || description.equals("")) {
-                                description = "Native code @0x" + nativeAddress.toHexString();
+                            String name = enteredName;
+                            if (name == null || name.equals("")) {
+                                name = "Native code @0x" + nativeAddress.toHexString();
                             }
-                            final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().createTeleNativeTargetRoutine(nativeAddress, codeSize, description);
-                            result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));
+                            final TeleCompiledNativeCode teleCompiledNativeCode = vm().codeCache().createTeleNativeTargetRoutine(nativeAddress, codeSize, name);
+                            result.setValue(MethodInspector.make(inspection, teleCompiledNativeCode));
                             // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                         } catch (IllegalArgumentException illegalArgumentException) {
                             inspection.gui().errorMessage("Specified native code range overlaps region already registered in Inpsector");
@@ -128,7 +128,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         return methodInspector;
     }
 
-    private static final VariableMapping<TeleTargetRoutine, MethodInspector> teleTargetRoutineToMethodInspector = new IdentityHashMapping<TeleTargetRoutine, MethodInspector>();
+    private static final VariableMapping<MaxCompiledCode, MethodInspector> teleTargetRoutineToMethodInspector = new IdentityHashMapping<MaxCompiledCode, MethodInspector>();
     private static final VariableMapping<TeleClassMethodActor, MethodInspector> teleClassMethodActorToMethodInspector = new IdentityHashMapping<TeleClassMethodActor, MethodInspector>();
 
     /**
@@ -215,14 +215,14 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     /**
      * @return A possibly new inspector for a block of native code in the VM already known to the inspector.
      */
-    private static NativeMethodInspector make(Inspection inspection, TeleTargetRoutine teleTargetRoutine) {
+    private static NativeMethodInspector make(Inspection inspection, MaxCompiledCode maxCompiledCode) {
         NativeMethodInspector nativeMethodInspector = null;
-        MethodInspector methodInspector = teleTargetRoutineToMethodInspector.get(teleTargetRoutine);
+        MethodInspector methodInspector = teleTargetRoutineToMethodInspector.get(maxCompiledCode);
         if (methodInspector == null) {
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
-            nativeMethodInspector = new NativeMethodInspector(inspection, parent, teleTargetRoutine);
+            nativeMethodInspector = new NativeMethodInspector(inspection, parent, maxCompiledCode);
             parent.add(nativeMethodInspector);
-            teleTargetRoutineToMethodInspector.put(teleTargetRoutine, nativeMethodInspector);
+            teleTargetRoutineToMethodInspector.put(maxCompiledCode, nativeMethodInspector);
         } else {
             nativeMethodInspector = (NativeMethodInspector) methodInspector;
         }
@@ -244,7 +244,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         frame.makeMenu(MenuKind.EDIT_MENU);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectTargetRegionMemoryWords(teleTargetRoutine()));
+        memoryMenu.add(actions().inspectTargetRegionMemoryWords(maxCompiledCode()));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");
@@ -284,9 +284,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     }
 
     /**
-     * @return Local {@link TeleTargetRoutine} for the method in the VM; null if not bound to target code yet.
+     * @return Local {@link MaxCompiledCode} for the method in the VM; null if not bound to target code yet.
      */
-    public abstract TeleTargetRoutine teleTargetRoutine();
+    public abstract MaxCompiledCode maxCompiledCode();
 
     /**
      * @return Java method information; null if not known to be associated with a Java method.
@@ -312,7 +312,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing for " + getTitle());
-        teleTargetRoutineToMethodInspector.remove(teleTargetRoutine());
+        teleTargetRoutineToMethodInspector.remove(maxCompiledCode());
         teleClassMethodActorToMethodInspector.remove(teleClassMethodActor());
         super.inspectorClosing();
     }
