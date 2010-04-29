@@ -209,7 +209,7 @@ public final class GraphBuilder {
     }
 
     private RiExceptionHandler newDefaultExceptionHandler(RiMethod method) {
-        return constantPool().newExceptionHandler(0, method.codeSize(), -1, 0);
+        return constantPool().newExceptionHandler(0, method.code().length, -1, 0);
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
@@ -1447,7 +1447,7 @@ public final class GraphBuilder {
         if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
             return cannotInline(target, "recursive inlining too deep");
         }
-        if (target.codeSize() > scopeData.maxInlineSize()) {
+        if (target.code().length > scopeData.maxInlineSize()) {
             return cannotInline(target, "inlinee too large for this level");
         }
         if (scopeData.scope.level > C1XOptions.MaximumInlineLevel) {

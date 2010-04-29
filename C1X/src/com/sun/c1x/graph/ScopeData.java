@@ -141,7 +141,7 @@ public class ScopeData {
         assert jsrEntryBci > 0 : "jsr cannot jump to BCI 0";
         assert parent != null : "jsr must have parent scope";
         this.jsrEntryBci = jsrEntryBci;
-        this.jsrDuplicatedBlocks = new BlockBegin[scope.method.codeSize()];
+        this.jsrDuplicatedBlocks = new BlockBegin[scope.method.code().length];
         this.jsrRetAddrLocal = -1;
 
         maxInlineSize = (int) (C1XOptions.MaximumInlineRatio * parent.maxInlineSize());

@@ -91,13 +91,6 @@ public interface RiMethod {
     byte[] code();
 
     /**
-     * Gets the size of the bytecode of the method, if the method has bytecode.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the size of the bytecode of the method
-     */
-    int codeSize();
-
-    /**
      * Gets the maximum number of locals used in this method's bytecode.
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
      * @return the maximum number of locals

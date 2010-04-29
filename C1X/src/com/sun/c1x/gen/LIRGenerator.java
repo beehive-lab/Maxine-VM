@@ -614,7 +614,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         XirSnippet snippet = x.isStatic() ? xir.genGetStatic(site(x), receiver, field) : xir.genGetField(site(x), receiver, field);
         emitXir(snippet, x, info, null, true);
 
-        if (x.isVolatile() && compilation.runtime.isMP()) {
+        if (x.isVolatile() && compilation.target.isMP) {
             lir.membarAcquire();
         }
     }
@@ -905,7 +905,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             info = stateFor(x, x.stateBefore());
         }
 
-        if (x.isVolatile() && compilation.runtime.isMP()) {
+        if (x.isVolatile() && compilation.target.isMP) {
             lir.membarRelease();
         }
 
@@ -914,7 +914,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         XirSnippet snippet = x.isStatic() ? xir.genPutStatic(site(x), receiver, field, value) : xir.genPutField(site(x), receiver, field, value);
         emitXir(snippet, x, info, null, true);
 
-        if (x.isVolatile() && compilation.runtime.isMP()) {
+        if (x.isVolatile() && compilation.target.isMP) {
             lir.membar();
         }
     }
@@ -972,12 +972,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        if (compilation.runtime.jvmtiCanPostExceptions() && !currentBlock.checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler)) {
-            // we need to go through the exception lookup path to get JVMTI
-            // notification done
-            unwind = false;
-        }
-
         assert !currentBlock.checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler) || unwind : "should be no more handlers to dispatch to";
 
         // move exception oop into fixed register
@@ -1003,11 +997,11 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         CiValue reg = createResultVariable(x);
 
-        if (x.isVolatile() && compilation.runtime.isMP()) {
+        if (x.isVolatile() && compilation.target.isMP) {
             lir.membarAcquire();
         }
         genGetObjectUnsafe(reg, src.result(), off.result(), kind, x.isVolatile());
-        if (x.isVolatile() && compilation.runtime.isMP()) {
+        if (x.isVolatile() && compilation.target.isMP) {
             lir.membar();
         }
     }
@@ -1102,7 +1096,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         setNoResult(x);
 
-        if (x.isVolatile() && compilation.runtime.isMP()) {
+        if (x.isVolatile() && compilation.target.isMP) {
             lir.membarRelease();
         }
         genPutObjectUnsafe(src.result(), off.result(), data.result(), kind, x.isVolatile());

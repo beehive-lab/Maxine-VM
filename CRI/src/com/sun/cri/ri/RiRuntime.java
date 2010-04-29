@@ -78,26 +78,6 @@ public interface RiRuntime {
     int threadExceptionOffset();
 
     /**
-     * Checks whether an explicit null check is needed with the given offset of accessing an object.
-     * If this the offset is low, then an implicit null check will work.
-     * @param offset the offset at which the object is accessed
-     * @return true if an explicit null check is needed, false otherwise
-     */
-    boolean needsExplicitNullCheck(int offset);
-
-    /**
-     * Checks whether we are on a multiprocessor system.
-     * @return true if we are on a multiprocessor system, false otherwise
-     */
-    boolean isMP();
-
-    /**
-     * Checks whether jvmti can post exceptions.
-     * @return true if jvmti can post exceptions, false otherwise.
-     */
-    boolean jvmtiCanPostExceptions();
-
-    /**
      * Resolves a given identifier to a type.
      * @param string the name of the type
      * @return the resolved type

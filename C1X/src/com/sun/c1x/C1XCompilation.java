@@ -220,7 +220,7 @@ public class C1XCompilation {
             throw new CiBailout("build of BlockMap failed for " + method);
         } else {
             if (cfgPrinter() != null) {
-                cfgPrinter().printCFG(method, map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
+                cfgPrinter().printCFG(method, map, method.code().length, "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
             }
         }
         map.cleanup();
@@ -259,7 +259,7 @@ public class C1XCompilation {
             targetMethod = emitCode();
 
             if (C1XOptions.PrintMetrics) {
-                C1XMetrics.BytecodesCompiled += method.codeSize();
+                C1XMetrics.BytecodesCompiled += method.code().length;
             }
         } catch (CiBailout b) {
             return new CiResult(null, b, stats);

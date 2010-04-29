@@ -2613,7 +2613,7 @@ public class LinearScan {
                 CiValue operand = operands.operandFor(operandNum);
                 assert operand.isVariable() : "value must have variable operand";
                 Value value = gen.instructionForVariable((CiVariable) operand);
-                assert value != null : "all intervals live across block boundaries must have Value";
+                assert value != null : "all intervals live across block boundaries must have Value (block=" + block.blockID + ")";
                 // TKR assert value.asConstant() == null || value.isPinned() :
                 // "only pinned constants can be alive accross block boundaries";
             }

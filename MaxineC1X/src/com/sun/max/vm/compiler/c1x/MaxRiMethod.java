@@ -197,10 +197,6 @@ public class MaxRiMethod implements RiMethod {
         return false;
     }
 
-    public int codeSize() {
-        return codeAttribute("codeSize()").code().length;
-    }
-
     public List<RiExceptionHandler> exceptionHandlers() {
         if (exceptionHandlers != null) {
             // return the cached exception handlers

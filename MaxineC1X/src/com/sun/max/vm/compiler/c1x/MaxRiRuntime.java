@@ -196,20 +196,6 @@ public class MaxRiRuntime implements RiRuntime {
         throw new MaxRiUnresolved("invalid RiMethod instance: " + method.getClass());
     }
 
-    public boolean isMP() {
-        return true;
-    }
-
-    public boolean jvmtiCanPostExceptions() {
-        // TODO: Check what to return here
-        return false;
-    }
-
-    public boolean needsExplicitNullCheck(int offset) {
-        // TODO: Return false if implicit null check is possible for this offset!
-        return offset >= 4096;
-    }
-
     public int threadExceptionOffset() {
         return VmThreadLocal.EXCEPTION_OBJECT.offset;
     }
