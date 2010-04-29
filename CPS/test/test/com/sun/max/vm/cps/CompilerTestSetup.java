@@ -32,7 +32,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
-import com.sun.max.vm.debug.*;
 
 public abstract class CompilerTestSetup<Method_Type> extends VmTestSetup {
 
@@ -61,7 +60,7 @@ public abstract class CompilerTestSetup<Method_Type> extends VmTestSetup {
      * @return a disassembler for the ISA specific code in {@code targetMethod} or null if no such disassembler is available
      */
     public final Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return Disassemble.createDisassembler(VMConfiguration.target().platform().processorKind, targetMethod.codeStart(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
+        return Disassemble.createDisassembler(VMConfiguration.target().platform().processorKind.instructionSet, VMConfiguration.target().platform.wordWidth(), targetMethod.codeStart().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
     }
 
     public static BootstrapCompilerScheme compilerScheme() {
