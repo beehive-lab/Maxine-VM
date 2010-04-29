@@ -51,6 +51,8 @@ public enum LIROpcode {
         Prefetchr,
         Prefetchw,
         Convert,
+        Lsb,
+        Msb,
     Safepoint,
     EndOp1,
     BeginOp2,

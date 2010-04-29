@@ -70,6 +70,7 @@ public abstract class ValueVisitor {
     public abstract void visitResolveClass(ResolveClass i);
     public abstract void visitReturn(Return i);
     public abstract void visitShiftOp(ShiftOp i);
+    public abstract void visitSignificantBit(SignificantBitOp i);
     public abstract void visitStackAllocate(StackAllocate i);
     public abstract void visitStoreField(StoreField i);
     public abstract void visitStoreIndexed(StoreIndexed i);
