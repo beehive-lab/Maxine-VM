@@ -227,6 +227,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
                 while (nextMark.greaterThan(end)) {
                     cell = refillOrAllocate(size, false);
                     if (!cell.isZero()) {
+                        Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
                         return cell;
                     }
                     // loop back to retry.
