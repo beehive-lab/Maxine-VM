@@ -297,6 +297,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             return true;
         }
 
+        public boolean isForwarding() {
+            return true;
+        }
+
         public Grip getForwardGrip(Grip grip) {
             final Pointer origin = grip.toOrigin();
             if (fromSpace.contains(origin)) {

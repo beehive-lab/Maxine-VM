@@ -1411,6 +1411,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         public boolean isReachable(Grip grip) {
             return heapMarker.isBlackWhenNoGreys(grip.toOrigin());
         }
+        public boolean isForwarding() {
+            return false;
+        }
 
         public Grip getForwardGrip(Grip grip) {
             // We aren't relocating object (for now).

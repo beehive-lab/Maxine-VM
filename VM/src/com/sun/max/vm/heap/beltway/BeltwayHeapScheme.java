@@ -109,6 +109,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             return true;
         }
 
+        public boolean isForwarding() {
+            return true;
+        }
+
         public Grip getForwardGrip(Grip grip) {
             final Pointer origin = grip.toOrigin();
             if (evacuatedBelt.contains(origin)) {
