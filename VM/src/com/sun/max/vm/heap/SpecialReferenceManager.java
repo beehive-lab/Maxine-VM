@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import java.lang.ref.*;
 
 import com.sun.max.annotate.*;
@@ -51,6 +53,11 @@ import com.sun.max.vm.value.*;
  */
 public class SpecialReferenceManager {
 
+    private static final VMBooleanXXOption traceReferenceOption = register(new VMBooleanXXOption("-XX:-TraceReferenceGC",
+        "Trace Handling of soft/weak/final/phantom references."), MaxineVM.Phase.STARTING);
+
+    private static boolean traceReferenceGC = false;
+
     private static final boolean FINALIZERS_SUPPORTED = true;
 
     /**
@@ -62,6 +69,7 @@ public class SpecialReferenceManager {
      */
     public interface GripForwarder {
         boolean isReachable(Grip grip);
+        boolean isForwarding();
         Grip getForwardGrip(Grip grip);
     }
 
@@ -99,18 +107,20 @@ public class SpecialReferenceManager {
         // the first pass over the list finds the references that have referents that are no longer reachable
         java.lang.ref.Reference ref = UnsafeCast.asJDKReference(discoveredList.toJava());
         java.lang.ref.Reference last = UnsafeCast.asJDKReference(TupleAccess.readObject(pendingField.holder().staticTuple(), pendingField.offset()));
+        final boolean isForwardingGC = gripForwarder.isForwarding();
+
         while (ref != null) {
             final Grip referent = Grip.fromJava(ref).readGrip(referentField.offset());
-            if (gripForwarder.isReachable(referent)) {
-                // this object is reachable, however the "referent" field was not scanned.
-                // we need to update this field manually
-                TupleAccess.writeObject(ref, referentField.offset(), gripForwarder.getForwardGrip(referent));
-            } else {
+            if (!gripForwarder.isReachable(referent)) {
                 TupleAccess.writeObject(ref, referentField.offset(), null);
                 TupleAccess.writeObject(ref, nextField.offset(), last);
                 last = ref;
+            } else if (isForwardingGC) {
+                // this object is reachable, however the "referent" field was not scanned.
+                // we need to update this field manually
+                TupleAccess.writeObject(ref, referentField.offset(), gripForwarder.getForwardGrip(referent));
             }
-            if (Heap.traceGC()) {
+            if (traceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Processed ");
                 Log.print(ObjectAccess.readClassActor(ref).name.string);
@@ -127,7 +137,9 @@ public class SpecialReferenceManager {
                 }
                 Log.unlock(lockDisabledSafepoints);
             }
+            java.lang.ref.Reference r = ref;
             ref = UnsafeCast.asJDKReference(TupleAccess.readObject(ref, discoveredField.offset()));
+            TupleAccess.writeObject(r, discoveredField.offset(), null);
         }
         TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
         discoveredList = Grip.fromOrigin(Pointer.zero());
@@ -159,7 +171,7 @@ public class SpecialReferenceManager {
                 } else {
                     rootsPointer.setWord(i, Pointer.zero());
                 }
-                if (Heap.traceGC()) {
+                if (traceReferenceGC) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Processed root table entry ");
                     Log.print(i);
@@ -184,9 +196,15 @@ public class SpecialReferenceManager {
     public static void discoverSpecialReference(Grip grip) {
         if (grip.readGrip(nextField.offset()).isZero()) {
             // the "next" field of this object is null, queue it for later processing
+            if (MaxineVM.isDebug()) {
+                boolean hasNullDiscoveredField = grip.readGrip(discoveredField.offset()).isZero();
+                boolean isHeadOfDiscoveredList = grip.equals(discoveredList);
+                FatalError.check(hasNullDiscoveredField && !isHeadOfDiscoveredList,
+                                "Discovered reference already discovered");
+            }
             grip.writeGrip(discoveredField.offset(), discoveredList);
             discoveredList = grip;
-            if (Heap.traceGC()) {
+            if (traceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(grip).toJava());
@@ -223,6 +241,7 @@ public class SpecialReferenceManager {
      */
     public static void initialize(Phase phase) {
         if (phase == Phase.STARTING) {
+            traceReferenceGC = traceReferenceOption.getValue();
             startReferenceHandlerThread();
             startFinalizerThread();
         }
