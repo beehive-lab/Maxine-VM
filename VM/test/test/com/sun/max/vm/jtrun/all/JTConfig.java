@@ -509,6 +509,8 @@ public class JTConfig {
         jtt.max.ImmortalHeap_switching.class,
         jtt.max.Inline01.class,
         jtt.max.Invoke_except01.class,
+        jtt.max.LeastSignificantBit.class,
+        jtt.max.MostSignificantBit.class,
         jtt.max.Prototyping01.class,
         jtt.max.Unsigned_idiv01.class,
         jtt.max.Unsigned_irem01.class,
