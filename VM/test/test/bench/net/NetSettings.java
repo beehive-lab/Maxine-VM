@@ -35,8 +35,8 @@ public class NetSettings extends RunBench {
     private static String host;
     private static int port;
 
-    protected NetSettings(LoopRunnable bench) {
-        super(bench);
+    protected NetSettings(MicroBenchmark bench) {
+        super(bench, null);
         host = getRequiredProperty(HOST_NAME_PROPERTY);
         port = Integer.parseInt(getRequiredProperty(HOST_PORT_PROPERTY));
     }
