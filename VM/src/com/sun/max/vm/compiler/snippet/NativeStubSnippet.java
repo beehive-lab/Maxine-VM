@@ -58,7 +58,7 @@ public abstract class NativeStubSnippet extends Snippet {
         public static final LinkNativeMethod SNIPPET = new LinkNativeMethod();
     }
 
-    private static final VmThreadLocal NATIVE_CALLS_DISABLED = new VmThreadLocal("NATIVE_CALLS_DISABLED", false, "");
+    static final VmThreadLocal NATIVE_CALLS_DISABLED = new VmThreadLocal("NATIVE_CALLS_DISABLED", false, "");
 
     /**
      * Disables calling native methods on the current thread. This state is recursive. That is,

@@ -44,7 +44,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table that displays the header in a Maxine heap object; for use in an instance of {@link ObjectInspector}.
+ * A table that displays the header in a heap object; for use in an instance of {@link ObjectInspector}.
  *
  * @author Michael Van De Vanter
  */
@@ -80,7 +80,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     private final ObjectViewPreferences instanceViewPreferences;
 
     /**
-     * A {@link JTable} specialized to display Maxine object header fields.
+     * A {@link JTable} specialized to display object header fields.
      *
      * @param objectInspector parent that contains this panel
      */

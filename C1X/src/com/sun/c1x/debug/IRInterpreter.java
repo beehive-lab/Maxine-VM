@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.debug;
 
+import static java.lang.reflect.Modifier.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -824,7 +826,7 @@ public class IRInterpreter {
             }
             // native methods are invoked using reflection.
             // some special methods/classes are also always called using reflection
-            if (targetMethod.isNative() || "newInstance".equals(methodName) || "newInstance0".equals(methodName) ||
+            if (isNative(targetMethod.accessFlags()) || "newInstance".equals(methodName) || "newInstance0".equals(methodName) ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Unsafe")                     ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Reflection")                 ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.FieldAccessor")) {
@@ -1107,7 +1109,7 @@ public class IRInterpreter {
                             arrayDimensions--;
                         }
                     } else {
-                        String name = Util.toJavaName(type);
+                        String name = CiUtil.toJavaName(type);
                         resolved = Class.forName(name);
                     }
                 } catch (ClassNotFoundException e) {
@@ -1481,11 +1483,6 @@ public class IRInterpreter {
         }
 
         @Override
-        public void visitRoundFP(RoundFP i) {
-            jumpNextInstruction();
-        }
-
-        @Override
         public void visitUnsafeGetRaw(UnsafeGetRaw i) {
             Object address = environment.lookup(i.base()).asObject();
             long index = i.index() == null ? 0 : environment.lookup(i.index()).asLong();
@@ -1657,7 +1654,7 @@ public class IRInterpreter {
 
         public CiConstant run() throws InvocationTargetException {
             if (C1XOptions.PrintStateInInterpreter) {
-                System.out.println("\n********** Running " + Util.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " **********\n");
+                System.out.println("\n********** Running " + CiUtil.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " **********\n");
                 System.out.println("Initial state");
                 printState(currentInstruction.stateBefore());
                 System.out.println("");
@@ -1670,7 +1667,7 @@ public class IRInterpreter {
                 }
             }
             if (C1XOptions.PrintStateInInterpreter) {
-                System.out.println("********** " + Util.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " ended  **********");
+                System.out.println("********** " + CiUtil.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " ended  **********");
             }
             if (result != null) {
                 assert method.signatureType().returnKind() != CiKind.Void;
@@ -1832,7 +1829,7 @@ public class IRInterpreter {
     }
 
     public CiConstant execute(IR hir, CiConstant... arguments) throws InvocationTargetException {
-        if (hir.compilation.method.isNative()) {
+        if (isNative(hir.compilation.method.accessFlags())) {
             // TODO: invoke the native method via reflection?
             return null;
         }

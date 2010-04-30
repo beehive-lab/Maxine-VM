@@ -32,7 +32,8 @@ import com.sun.max.ins.*;
 import com.sun.max.program.*;
 
 /**
- * An abstract base class for a dialog that presents the user a list that can be refined with a text field that can be used to filter the list.
+ * An abstract class for a dialog that presents the user a list that can
+ * be refined with a text field which is used as a pattern to filter the list.
  *
  * @author Doug Simon
  */

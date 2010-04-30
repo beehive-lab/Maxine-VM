@@ -626,14 +626,6 @@ public class LoopPeeler extends DefaultValueVisitor {
     }
 
     @Override
-    public void visitRoundFP(RoundFP i) {
-        RoundFP other = new RoundFP(lookup(i.value()));
-        other.setBCI(i.bci());
-        bind(i, other);
-        addInstruction(other);
-    }
-
-    @Override
     public void visitUnsafeGetRaw(UnsafeGetRaw i) {
         UnsafeGetRaw other = new UnsafeGetRaw(i.kind, lookup(i.base()), i.mayBeUnaligned());
         other.setBCI(i.bci());

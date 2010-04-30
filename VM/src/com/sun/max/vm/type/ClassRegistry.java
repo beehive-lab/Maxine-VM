@@ -264,8 +264,9 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
 
     /**
      * Finds the method actor denoted by a given name and declaring class.
-     * A side effect of this is that the method is compiled into the image as is it invocation stub
-     * if it is not a VM entry point.
+     * A side effect of this is that the method is compiled into the image.
+     * If the method is not a VM entry point (and hence not subject to reflective
+     * invocation) its invocation stub is also compiled into the image.
      *
      * @param declaringClass the class to search for a method named {@code name}
      * @param name the name of the method to find

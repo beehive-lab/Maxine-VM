@@ -431,7 +431,7 @@ public enum CiKind {
                 if (s.isEmpty()) {
                     s = "@" + System.identityHashCode(value);
                 }
-                sb.append(value.getClass().getSimpleName()).append(s);
+                sb.append(CiUtil.getSimpleName(value.getClass(), true)).append(s);
             }
         } else {
             sb.append(value);

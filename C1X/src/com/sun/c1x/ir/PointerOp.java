@@ -35,7 +35,6 @@ public abstract class PointerOp extends StateSplit {
     protected Value displacement;
     protected Value offsetOrIndex;
     protected final boolean isVolatile;
-    protected final boolean canTrap;
     final boolean isPrefetch;
 
     /**
@@ -47,25 +46,21 @@ public abstract class PointerOp extends StateSplit {
      * @param opcode the opcode of the instruction
      * @param pointer the value producing the pointer
      * @param displacement the value producing the displacement. This may be {@code null}.
-     * @param offsetOrIndex the value producing the scaled-index of the byte offset depending on whether {@code displacement} is {@code null}
-     * @param canTrap {@code true} if the access can cause a trap
+     * @param offsetOrIndex the value producing the scaled-index or the byte offset depending on whether {@code displacement} is {@code null}
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public PointerOp(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, boolean canTrap, FrameState stateBefore, boolean isVolatile) {
+    public PointerOp(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
         super(kind, stateBefore);
         this.opcode = opcode;
         this.pointer = pointer;
         this.displacement = displacement;
         this.offsetOrIndex = offsetOrIndex;
         this.isVolatile = isVolatile;
-        this.canTrap = canTrap;
         this.isPrefetch = false;
-    }
-
-    @Override
-    public boolean canTrap() {
-        return canTrap;
+        if (pointer.isNonNull()) {
+            redundantNullCheck();
+        }
     }
 
     public Value pointer() {
@@ -82,6 +77,22 @@ public abstract class PointerOp extends StateSplit {
 
     public Value displacement() {
         return displacement;
+    }
+
+    @Override
+    public boolean internalClearNullCheck() {
+        stateBefore = null;
+        return true;
+    }
+
+    /**
+     * Checks whether this field access may cause a trap or an exception, which
+     * is if it either requires a null check or needs patching.
+     * @return {@code true} if this field access can cause a trap
+     */
+    @Override
+    public boolean canTrap() {
+        return needsNullCheck();
     }
 
     /**

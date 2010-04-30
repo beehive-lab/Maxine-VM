@@ -126,7 +126,7 @@ public class MaxRiRuntime implements RiRuntime {
     /**
      * Remove once C1X can compile native method stubs.
      */
-    public static final boolean CAN_COMPILE_NATIVE_METHODS = false;
+    public static final boolean CAN_COMPILE_NATIVE_METHODS = "true".equals(System.getenv("C1X_CAN_COMPILE_NATIVE_METHODS"));
 
     /**
      * Remove once C1X implements the semantics of the ACCESSOR annotation.
@@ -168,10 +168,6 @@ public class MaxRiRuntime implements RiRuntime {
             return true;
         }
         if (classMethodActor.isNative() && !CAN_COMPILE_NATIVE_METHODS) {
-            return true;
-        }
-
-        if (classMethodActor.holder().name.string.endsWith(".Log")) {
             return true;
         }
 
@@ -236,7 +232,7 @@ public class MaxRiRuntime implements RiRuntime {
             final InlineDataDecoder inlineDataDecoder = null;
             final Pointer startAddress = Pointer.fromInt(0);
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false);
-            Disassemble.disassemble(byteArrayOutputStream, code, processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+            Disassembler.disassemble(byteArrayOutputStream, code, processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }
         return "";
@@ -299,7 +295,7 @@ public class MaxRiRuntime implements RiRuntime {
                 }
             };
             byte[] code = Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize());
-            Disassemble.disassemble(byteArrayOutputStream, code, processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+            Disassembler.disassemble(byteArrayOutputStream, code, processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }
         return "";

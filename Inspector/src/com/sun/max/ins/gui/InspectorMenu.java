@@ -29,7 +29,8 @@ import com.sun.max.program.*;
 /**
  * A menu that can be manifest in the GUI by a {@linkplain JMenu standard menu}.
  * <br>
- * The important characteristic of this menu is that it can be refreshed, in case it depends on any state (e.g. for being enabled).
+ * The important characteristic of this menu is that it can be refreshed,
+ * in case it depends on any state (e.g. for being enabled).
  *
  * @author Michael Van De Vanter
  */

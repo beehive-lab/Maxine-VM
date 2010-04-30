@@ -27,7 +27,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -127,8 +126,8 @@ public class MockType implements RiType {
 	}
 
 	@Override
-	public boolean isFinal() {
-		return (klass.getModifiers() & Modifier.FINAL) != 0;
+	public int accessFlags() {
+		return klass.getModifiers();
 	}
 
 	@Override

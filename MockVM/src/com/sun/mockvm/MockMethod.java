@@ -20,10 +20,6 @@
  */
 package com.sun.mockvm;
 
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.bcel.classfile.ExceptionTable;
 
 import com.sun.cri.ri.RiExceptionHandler;
@@ -63,17 +59,17 @@ public class MockMethod implements RiMethod {
 	}
 
 	@Override
-	public List<RiExceptionHandler> exceptionHandlers() {
-		
+	public RiExceptionHandler[] exceptionHandlers() {
 
 		if (fileMethod == null) {
 			throw new UnsupportedOperationException();
 		}
 		
-		final List<RiExceptionHandler> handlers = new ArrayList<RiExceptionHandler>();
+		RiExceptionHandler[] handlers = new RiExceptionHandler[0];
 		final ExceptionTable table = fileMethod.getExceptionTable();
 		
 		if (table != null) {
+		    handlers = new RiExceptionHandler[table.getNumberOfExceptions()];
 			for (int i=0; i<table.getNumberOfExceptions(); i++) {
 				throw new UnsupportedOperationException();
 			}
@@ -89,45 +85,15 @@ public class MockMethod implements RiMethod {
 	}
 
 	@Override
-	public boolean hasCode() {
-		return code() != null;
-	}
-
-	@Override
-	public boolean hasExceptionHandlers() {
-
-		if (fileMethod == null) {
-			throw new UnsupportedOperationException();
-		}
-		
-		if (fileMethod.getExceptionTable() == null) {
-			return false;
-		}
-
-		return fileMethod.getExceptionTable().getNumberOfExceptions() != 0;
-	}
-
-	@Override
 	public RiType holder() {
 		return MockUniverse.lookupType(method.declaringClass);
 	}
 
 	@Override
-	public int indexInInterface() {
-		throw new UnsupportedOperationException();
+	public int accessFlags() {
+	    return method.modifiers;
 	}
-
-	@Override
-	public int interfaceID() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isAbstract() {
-		// TODO Auto-generated method stub
-		return (method.modifiers & Modifier.ABSTRACT) != 0;
-	}
-
+	
 	@Override
 	public boolean isClassInitializer() {
 		return method.name.equals("<cinit>");
@@ -144,11 +110,6 @@ public class MockMethod implements RiMethod {
 	}
 
 	@Override
-	public boolean isNative() {
-		return Modifier.isNative(method.modifiers);
-	}
-
-	@Override
 	public boolean isOverridden() {
 		return true;
 	}
@@ -156,26 +117,6 @@ public class MockMethod implements RiMethod {
 	@Override
 	public boolean isResolved() {
 		return true;
-	}
-
-	@Override
-	public boolean isStatic() {
-		return Modifier.isStatic(method.modifiers);
-	}
-
-	@Override
-	public boolean isStrictFP() {
-		return Modifier.isStrict(method.modifiers);
-	}
-
-	@Override
-	public boolean isSynchronized() {
-		return Modifier.isSynchronized(method.modifiers);
-	}
-
-	@Override
-	public int javaCodeAtBci(int bci) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

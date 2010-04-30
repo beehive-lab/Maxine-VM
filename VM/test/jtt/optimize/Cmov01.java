@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,23 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
+package jtt.optimize;
 
-import java.awt.*;
-
-public final class Components {
-
-    private Components() {
+/*
+ * @Harness: java
+ * @Runs: (-1, -1)=true; (1, 10)=true; (1, 0)=false
+ */
+public class Cmov01 {
+    public static boolean test(int a, int b) {
+        boolean result = a < b || a == b;
+        return result;
     }
-
-    public static int getIndex(Component component) {
-        final Container parent = component.getParent();
-        for (int i = 0; i < parent.getComponentCount(); i++) {
-            if (parent.getComponent(i) == component) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
 }

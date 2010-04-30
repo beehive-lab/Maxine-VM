@@ -29,7 +29,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -188,7 +187,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     Address startOfNextOverflowScan;
 
-
     @INLINE
     public final boolean isCovered(Address address) {
         return address.greaterEqual(coveredAreaStart) && address.lessThan(coveredAreaEnd);
@@ -274,8 +272,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         baseBias = coveredArea.start().unsignedShiftedRight(log2BitmapWord).toInt();
         biasedBitmapBase = colorMap.start().minus(baseBias);
         markingStack.initialize();
-
-        clear();
     }
 
     // Address to bitmap word / bit index operations.
@@ -479,20 +475,43 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return isGrey_(bitIndexOf(cell));
     }
 
+    /**
+     * Only used when tracing is completed. There should be no grey objects left.
+     * @param bitIndex
+     * @return true if the mark at the specified bit index is black
+     */
     @INLINE
-    final boolean isBlack_(Object o) {
-        return isBlack_(Reference.fromJava(o));
+    final boolean isBlackWhenNoGreys(int bitIndex) {
+        final Pointer basePointer = base.asPointer();
+        final int wordIndex = bitmapWordIndex(bitIndex);
+        final long bitmask = bitmaskFor(bitIndex);
+        final long bitmapWord = basePointer.getLong(wordIndex);
+        if ((bitmapWord & bitmask) == 0L) {
+            return false;
+        }
+        if (MaxineVM.isDebug()) {
+            // Mustn't be grey
+            final int greyBitIndex = bitIndex + 1;
+            final long greymask =  bitmaskFor(greyBitIndex);
+            FatalError.check((bitmapWordAt(greyBitIndex) & greymask) == 0L, "Must have no grey marks");
+        }
+        return true;
     }
 
+    /**
+     * Only used when tracing is completed. There should be no grey objects left.
+     * @param cell
+     * @return true if the object at the specified address is black
+     */
     @INLINE
-    final boolean isGrey_(Object o) {
-        return isGrey_(Reference.fromJava(o));
+    final boolean isBlackWhenNoGreys(Pointer cell) {
+        return isBlackWhenNoGreys(bitIndexOf(cell));
     }
 
     /**
      * Clear the color map, i.e., turn all bits to white.
      */
-    void clear() {
+    void clearColorMap() {
         Memory.clearWords(colorMap.start().asPointer(), colorMap.size().toInt() >> Word.widthValue().log2numberOfBytes);
     }
 
@@ -742,7 +761,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 while (bitmapWordIndex <= rightmostBitmapWordIndex) {
                     long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
                     if (bitmapWord != 0) {
-                        final long greyMarksInWord = bitmapWord & (bitmapWord >> 1);
+                        final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
                         if (greyMarksInWord != 0) {
                             // First grey mark is the least set bit.
                             final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
@@ -752,7 +771,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                             // when marking objects crossing multiple mark bitmap words.
                             bitmapWordIndex = heapMarker.bitmapWordIndex(p);
                             continue;
-                        } else if ((bitmapWord >> LAST_BIT_INDEX_IN_WORD) == 1) {
+                        } else if ((bitmapWord >>> LAST_BIT_INDEX_IN_WORD) == 1L) {
                             // Mark span two words. Check first bit of next word to decide if mark is grey.
                             bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
                             if ((bitmapWord & 1) != 0) {
@@ -810,9 +829,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             int bitmapWordIndex = heapMarker.bitmapWordIndex(finger);
             while (bitmapWordIndex <= rightmostBitmapWordIndex) {
                 long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
-                if (bitmapWord != 0) {
-                    final long greyMarksInWord = bitmapWord & (bitmapWord >> 1);
-                    if (greyMarksInWord != 0) {
+                if (bitmapWord != 0L) {
+                    final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
+                    if (greyMarksInWord != 0L) {
                         // First grey mark is the least set bit.
                         final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
                         final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
@@ -825,7 +844,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                         // when marking objects crossing multiple mark bitmap words.
                         bitmapWordIndex = heapMarker.bitmapWordIndex(p);
                         continue;
-                    } else if ((bitmapWord >> LAST_BIT_INDEX_IN_WORD) == 1) {
+                    } else if ((bitmapWord >>> LAST_BIT_INDEX_IN_WORD) == 1L) {
                         // Mark span two words. Check first bit of next word to decide if mark is grey.
                         bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
                         if ((bitmapWord & 1) != 0) {
@@ -874,6 +893,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     void markCode() {
         // References in the boot code region are immutable and only ever refer
         // to objects in the boot heap region.
+        // Setting includeBootCode to false tells to scan non-boot code regions only.
         boolean includeBootCode = false;
         Code.visitCells(rootCellVisitor, includeBootCode);
     }
@@ -904,11 +924,26 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     public void markRoots() {
         rootCellVisitor.reset();
+        if (Heap.traceGCPhases()) {
+            Log.println("Scanning external roots...");
+        }
         // Mark all out of heap roots first (i.e., thread).
         // This only needs setting grey marks blindly (there are no black mark at this stage).
         heapRootsScanner.run();
+
         // Next, mark all reachable from the boot area.
+        if (Heap.traceGCPhases()) {
+            Log.println("Marking roots from boot heap...");
+        }
         markBootHeap();
+        if (Heap.traceGCPhases()) {
+            Log.println("Marking roots from code...");
+        }
+        markCode();
+
+        if (Heap.traceGCPhases()) {
+            Log.println("Marking roots from immortal heap...");
+        }
         markImmortalHeap();
     }
 
@@ -919,9 +954,20 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param end end of the scanned area
      * @return a bit index in the color map, or -1 if no grey object was met during the scan.
      */
-    public int scanForGrayMark(Address start, Address end) {
+    public int scanForGreyMark(Address start, Address end) {
         Pointer p = start.asPointer();
         while (p.lessThan(end)) {
+            if (MaxineVM.isDebug()) {
+                final Pointer origin = Layout.cellToOrigin(p);
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
+                if (hub == HeapFreeChunk.HEAP_FREE_CHUNK_HUB) {
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("Found chunk at ");
+                    Log.println(p);
+                    Log.unlock(lockDisabledSafepoints);
+                    FatalError.unexpected("Must not have FreeHeapChunk when tracing");
+                }
+            }
             final int bitIndex = bitIndexOf(p);
             if (isGrey(bitIndex)) {
                 return bitIndex;
@@ -945,13 +991,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         while (bitmapWordIndex <= lastBitmapWordIndex) {
             long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
             if (bitmapWord != 0) {
-                final long greyMarksInWord = bitmapWord & (bitmapWord >> 1);
+                final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
                 if (greyMarksInWord != 0) {
                     // First grey mark is the least set bit.
                     final int bitIndexInWord = Pointer.fromLong(greyMarksInWord).leastSignificantBitSet();
                     final int bitIndexOfGreyCell = (bitmapWordIndex << Word.widthValue().log2numberOfBits) + bitIndexInWord;
                     return bitIndexOfGreyCell < lastBitIndex ? bitIndexOfGreyCell : -1;
-                } else if ((bitmapWord >> LAST_BIT_INDEX_IN_WORD) == 1) {
+                } else if ((bitmapWord >>> LAST_BIT_INDEX_IN_WORD) == 1L) {
                     // Mark span two words. Check first bit of next word to decide if mark is grey.
                     bitmapWord = colorMapBase.getLong(bitmapWordIndex + 1);
                     if ((bitmapWord & 1) != 0) {
@@ -973,7 +1019,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @return true if the region has no grey objects, false otherwise.
      */
     public void verifyHasNoGreyMarks(Address start, Address end) {
-        final int bitIndex = scanForGrayMark(start, end);
+        final int bitIndex = scanForGreyMark(start, end);
         FatalError.check(bitIndex < 0, "Must not have any grey marks");
     }
 
@@ -1076,7 +1122,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                         // distinguish black from grey.
                         bitIndexInWord += 2;
                         bitmapWord = colorMapBase.getLong(bitmapWordIndex) >>> bitIndexInWord;
-                    } while(bitmapWord != 0);
+                    } while(bitmapWord != 0L);
                     bitmapWordIndex++;
                     final int nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
                     if (nextCellBitmapWordIndex > bitmapWordIndex) {
@@ -1222,7 +1268,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     // find the next black object with this word.
                     bitIndexInWord += 2;
                     bitmapWord = bitmapWord >>> bitIndexInWord;
-                } while(bitmapWord != 0);
+                } while(bitmapWord != 0L);
                 bitmapWordIndex++;
                 final int nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
                 if (nextCellBitmapWordIndex > bitmapWordIndex) {
@@ -1244,7 +1290,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     // FIXME: make local vars again.
     int lastLiveMark;
     int bitIndexInWord;
-    long darkMatterBitCount;
     long w;
     /**
      * Imprecise sweeping of the heap.
@@ -1255,7 +1300,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param sweeper
      * @param minReclaimableSpace
      */
-    public Size impreciseSweep(HeapSweeper sweeper, Size minReclaimableSpace) {
+    public void impreciseSweep(HeapSweeper sweeper, Size minReclaimableSpace) {
         final Pointer colorMapBase = base.asPointer();
         final int minBitsBetweenMark = minReclaimableSpace.toInt() >> log2BytesCoveredPerBit;
         int bitmapWordIndex = 0;
@@ -1268,8 +1313,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         // Indicate the closest position the next live mark should be at to make the space reclaimable.
         int nextReclaimableMark = minBitsBetweenMark;
-        // long
-        darkMatterBitCount = 0;
         // int
         lastLiveMark = firstBlackMark(0, bitIndexOf(rightmost));
         if (lastLiveMark > 0) {
@@ -1281,7 +1324,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         } else if (lastLiveMark < 0) {
             // The whole heap is free. (is that ever possible ?)
             sweeper.processDeadSpace(coveredAreaStart, rightmost.minus(coveredAreaStart).asSize());
-            return Size.zero();
+            return;
         }
 
         // Loop over the color map and call the sweeper only when the distance between two live mark is larger than
@@ -1303,7 +1346,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     bitIndexInWord += Pointer.fromLong(w).leastSignificantBitSet();
                     final int bitIndexOfBlackMark = bitmapWordFirstBitIndex + bitIndexInWord;
                     if (bitIndexOfBlackMark < nextReclaimableMark) {
-                        darkMatterBitCount += bitIndexOfBlackMark - lastLiveMark;
                         // Too small a gap between two live marks to be worth reporting to the sweeper.
                         // Reset the next mark.
                         lastLiveMark = bitIndexOfBlackMark;
@@ -1333,7 +1375,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     }
                     bitIndexInWord += 2;
                     w = bitmapWord >>> bitIndexInWord;
-                } while(w != 0);
+                } while(w != 0L);
                 bitmapWordIndex = nextCellBitmapWordIndex;
             } else {
                 bitmapWordIndex++;
@@ -1344,12 +1386,42 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         if (tailSpace.greaterEqual(minReclaimableSpace)) {
             sweeper.processDeadSpace(tail, tailSpace);
         }
-        return Size.fromLong(darkMatterBitCount << log2BytesCoveredPerBit);
     }
 
     public void markAll() {
+        clearColorMap();
+        if (MaxineVM.isDebug()) {
+            FatalError.check(markingStack.isEmpty(), "Marking stack must be empty");
+        }
         markRoots();
+        if (Heap.traceGCPhases()) {
+            Log.println("Tracing grey objects...");
+        }
         visitAllGreyObjects();
         verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
     }
+
+    private static  final class GripForwarder implements SpecialReferenceManager.GripForwarder {
+        final TricolorHeapMarker heapMarker;
+
+        GripForwarder(TricolorHeapMarker heapMarker) {
+            this.heapMarker = heapMarker;
+        }
+
+        public boolean isReachable(Grip grip) {
+            return heapMarker.isBlackWhenNoGreys(grip.toOrigin());
+        }
+
+        public Grip getForwardGrip(Grip grip) {
+            // We aren't relocating object (for now).
+            return grip;
+        }
+    }
+
+    private final GripForwarder specialReferenceGripForwarder = new GripForwarder(this);
+
+    public SpecialReferenceManager.GripForwarder getSpecialReferenceGripForwarder() {
+        return specialReferenceGripForwarder;
+    }
+
 }

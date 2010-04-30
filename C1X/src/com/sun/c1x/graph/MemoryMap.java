@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.graph;
 
+import static java.lang.reflect.Modifier.*;
+
 import java.util.*;
 
 import com.sun.c1x.ir.*;
@@ -146,7 +148,7 @@ public class MemoryMap {
             Value obj = objectMap.get(field);
             if (obj == store.object()) {
                 // is this a redundant store?
-                if (value == valueMap.get(field) && !field.isVolatile()) {
+                if (value == valueMap.get(field) && !isVolatile(field.accessFlags())) {
                     return null;
                 }
             }

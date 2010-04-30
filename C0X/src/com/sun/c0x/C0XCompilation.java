@@ -20,16 +20,26 @@
  */
 package com.sun.c0x;
 
+import static java.lang.reflect.Modifier.isStatic;
+
 import java.util.Arrays;
-import java.util.List;
 
 import com.sun.c1x.util.Util;
 import com.sun.cri.bytecode.BytecodeLookupSwitch;
 import com.sun.cri.bytecode.BytecodeStream;
 import com.sun.cri.bytecode.BytecodeTableSwitch;
 import com.sun.cri.bytecode.Bytecodes;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import com.sun.cri.ci.CiBailout;
+import com.sun.cri.ci.CiConstant;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ri.RiConstantPool;
+import com.sun.cri.ri.RiExceptionHandler;
+import com.sun.cri.ri.RiField;
+import com.sun.cri.ri.RiMethod;
+import com.sun.cri.ri.RiRuntime;
+import com.sun.cri.ri.RiSignature;
+import com.sun.cri.ri.RiType;
 
 /**
  * The {@code C0XCompiler} class is a sketch of a new baseline compiler design which borrows
@@ -145,7 +155,7 @@ public class C0XCompilation {
 
     final byte[] bytecode;
     byte[] blockMap;
-    final List<RiExceptionHandler> handlers;
+    final RiExceptionHandler[] handlers;
 
     final RiRuntime runtime;
     final RiMethod method;
@@ -169,8 +179,8 @@ public class C0XCompilation {
         this.target = target;
         this.bytecode = method.code();
         this.blockState = new BlockState[this.bytecode.length];
-        List<RiExceptionHandler> hlist = method.exceptionHandlers();
-        this.handlers = hlist == null || hlist.size() == 0 ? null : hlist;
+        RiExceptionHandler[] hlist = method.exceptionHandlers();
+        this.handlers = hlist.length == 0 ? null : hlist;
         this.maxLocals = method.maxLocals();
         this.maxStack = method.maxStackSize();
         codeGen = new X86CodeGen(this, target); // TODO: make portable
@@ -218,7 +228,7 @@ public class C0XCompilation {
         FrameState frameState = new FrameState();
         // TODO: should initialize frame state from calling convention
         int index = 0;
-        if (!method.isStatic()) {
+        if (!isStatic(method.accessFlags())) {
             frameState.state[index] = produce(CiKind.Object);
             index = 1;
         }

@@ -18,50 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+package jtt.exbytecode;
 
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.reference.*;
 
-/**
- * Instruction implementing the semantics of {@link Bytecodes#LSA}.
- *
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: null=true; "AAA"=true
  */
-public final class LoadStackAddress extends Instruction {
+public class EBC_lsa02 {
+    public static boolean test(Object o) {
+        Reference ref = Reference.fromJava(o);
+        Reference ref2 = Reference.fromJava(o + "BBB");
+        Pointer addr = MakeStackVariable.makeStackVariable(ref);
+        Pointer addr2 = MakeStackVariable.makeStackVariable(ref2);
 
-    private Value value;
-
-    /**
-     * Creates a new LoadStackAddress instance.
-     */
-    public LoadStackAddress(Value value) {
-        super(CiKind.Word);
-        this.value = value;
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitLoadStackAddress(this);
-    }
-
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each instruction
-     */
-    @Override
-    public void inputValuesDo(ValueClosure closure) {
-        value = closure.apply(value);
-    }
-
-    /**
-     * Gets the instruction that produced the size argument.
-     */
-    public Value value() {
-        return value;
+        if (addr.readReference(0) != ref) {
+            return false;
+        }
+        if (addr2.readReference(0) != ref2) {
+            return false;
+        }
+        return true;
     }
 }

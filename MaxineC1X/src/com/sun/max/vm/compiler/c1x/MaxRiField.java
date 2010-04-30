@@ -24,6 +24,7 @@ import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.object.host.*;
@@ -56,7 +57,7 @@ public class MaxRiField implements RiField {
     public MaxRiField(MaxRiConstantPool constantPool, FieldActor fieldActor, int cpi) {
         this.constantPool = constantPool;
         this.fieldActor = fieldActor;
-        this.kind = MaxRiType.kindToCiKind(fieldActor.kind);
+        this.kind = fieldActor.kind.ciKind;
         this.fieldRef = null;
         this.cpi = cpi;
     }
@@ -70,7 +71,7 @@ public class MaxRiField implements RiField {
     public MaxRiField(MaxRiConstantPool constantPool, FieldRefConstant fieldRef, int cpi) {
         this.constantPool = constantPool;
         this.fieldRef = fieldRef;
-        this.kind = MaxRiType.kindToCiKind(fieldRef.type(constantPool.constantPool).toKind());
+        this.kind = fieldRef.type(constantPool.constantPool).toKind().ciKind;
         this.cpi = cpi;
     }
 
@@ -105,18 +106,11 @@ public class MaxRiField implements RiField {
         return fieldActor != null;
     }
 
-    public boolean isStatic() {
+    public int accessFlags() {
         if (fieldActor != null) {
-            return fieldActor.isStatic();
+            return fieldActor.flags() & Actor.JAVA_FIELD_FLAGS;
         }
-        throw unresolved("isStatic()");
-    }
-
-    public boolean isVolatile() {
-        if (fieldActor != null) {
-            return fieldActor.isVolatile();
-        }
-        throw unresolved("isVolatile()");
+        throw unresolved("accessFlags()");
     }
 
     public boolean isConstant()  {
@@ -136,20 +130,27 @@ public class MaxRiField implements RiField {
         throw unresolved("offset()");
     }
 
-    public CiConstant constantValue() {
+    public CiConstant constantValue(Object object) {
         if (fieldActor != null && fieldActor.isConstant()) {
-            if (!fieldActor.isStatic()) {
-                throw new IllegalArgumentException("constantValue() is only defined for static fields");
-            }
-            Value v = fieldActor.constantValue();
-            if (v != null) {
-                return MaxRiType.toCiConstant(v);
+            Value v;
+            if (fieldActor.isStatic()) {
+                v = fieldActor.constantValue();
+                if (v != null) {
+                    return MaxRiType.toCiConstant(v);
+                }
             }
             if (C1XOptions.CanonicalizeFinalFields) {
-                if (MaxineVM.isHosted()) {
-                    v = HostTupleAccess.readValue(null, fieldActor);
+                if (fieldActor.isStatic()) {
+                    assert object == null;
+                    object = fieldActor.holder().staticTuple();
                 } else {
-                    v = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));
+                    assert object != null;
+                }
+
+                if (MaxineVM.isHosted()) {
+                    v = HostTupleAccess.readValue(object, fieldActor);
+                } else {
+                    v = fieldActor.readValue(Reference.fromJava(object));
                 }
                 return MaxRiType.toCiConstant(v);
             }

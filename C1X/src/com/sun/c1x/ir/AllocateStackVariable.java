@@ -20,42 +20,28 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
 /**
- * The {@code RoundFP} class instruction is used for rounding on Intel.
+ * Instruction implementing the semantics of {@link Bytecodes#ALLOCSTKVAR}.
  *
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public final class RoundFP extends Instruction {
-
-    Value value;
+public final class AllocateStackVariable extends Instruction {
 
     /**
-     * Creates a new RoundFP instruction.
-      * @param value the instruction generating the input value
+     * The value that will be used to initialize the stack slot by allocated by this instruction.
      */
-    public RoundFP(Value value) {
-        super(value.kind);
+    private Value value;
+
+    /**
+     * Creates a new LoadStackAddress instance.
+     */
+    public AllocateStackVariable(Value value) {
+        super(CiKind.Word);
+        setFlag(Flag.NonNull);
         this.value = value;
-    }
-
-    /**
-     * Gets the instruction producing the input value to this round instruction.
-     * @return the instruction that generates the input value
-     */
-    public Value value() {
-        return value;
-    }
-
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply
-     */
-    @Override
-    public void inputValuesDo(ValueClosure closure) {
-        value = closure.apply(value);
     }
 
     /**
@@ -64,20 +50,22 @@ public final class RoundFP extends Instruction {
      */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitRoundFP(this);
+        v.visitLoadStackAddress(this);
     }
 
+    /**
+     * Iterates over the input values to this instruction.
+     * @param closure the closure to apply to each instruction
+     */
     @Override
-    public int valueNumber() {
-        return Util.hash1(Bytecodes.D2F, value); // just use d2f for the hash code
+    public void inputValuesDo(ValueClosure closure) {
+        value = closure.apply(value);
     }
 
-    @Override
-    public boolean valueEqual(Instruction i) {
-        if (i instanceof RoundFP) {
-            RoundFP o = (RoundFP) i;
-            return value == o.value;
-        }
-        return false;
+    /**
+     * Gets the instruction that produced the size argument.
+     */
+    public Value value() {
+        return value;
     }
 }

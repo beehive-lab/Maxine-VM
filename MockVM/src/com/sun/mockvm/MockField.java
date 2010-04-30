@@ -22,7 +22,6 @@
 package com.sun.mockvm;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 import com.sun.cri.ci.CiConstant;
 import com.sun.cri.ci.CiKind;
@@ -44,7 +43,7 @@ public class MockField implements RiField {
 	}
 
 	@Override
-	public CiConstant constantValue() {
+	public CiConstant constantValue(Object object) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -64,13 +63,8 @@ public class MockField implements RiField {
 	}
 
 	@Override
-	public boolean isStatic() {
-		return Modifier.isStatic(field.getModifiers());
-	}
-
-	@Override
-	public boolean isVolatile() {
-		return Modifier.isVolatile(field.getModifiers());
+	public int accessFlags() {
+		return field.getModifiers();
 	}
 
 	@Override

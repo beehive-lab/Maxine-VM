@@ -50,6 +50,9 @@ public interface RiRuntime {
 
     /**
      * Checks whether the specified method is required to be inlined (for semantic reasons).
+     * If this method returns true, then the null-check of the receiver emitted during
+     * inlining is omitted.
+     * 
      * @param method the method being called
      * @return {@code true} if the method must be inlined; {@code false} to let the compiler
      * use its own heuristics

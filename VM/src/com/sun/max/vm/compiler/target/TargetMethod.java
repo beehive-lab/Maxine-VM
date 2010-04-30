@@ -616,7 +616,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
                 return string;
             }
         };
-        Disassemble.disassemble(out, code(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+        Disassembler.disassemble(out, code(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
     }
 
     /**

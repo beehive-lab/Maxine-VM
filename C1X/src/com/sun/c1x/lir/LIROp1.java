@@ -90,13 +90,13 @@ public class LIROp1 extends LIRInstruction {
      * Constructs a new LIROp1 instruction.
      *
      * @param moveKind the kind of move the instruction represents
-     * @param opr the first input operand
+     * @param operand the single input operand
      * @param result the operand that holds the result of this instruction
      * @param kind the kind of this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIRMoveKind moveKind, CiValue opr, CiValue result, CiKind kind, LIRDebugInfo info) {
-        super(LIROpcode.Move, result, info, false, null, 0, 0, opr);
+    public LIROp1(LIRMoveKind moveKind, CiValue operand, CiValue result, CiKind kind, LIRDebugInfo info) {
+        super(LIROpcode.Move, result, info, false, null, 0, 0, operand);
         this.kind = kind;
         this.moveKind = moveKind;
     }

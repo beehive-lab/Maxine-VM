@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins;
 
+import static com.sun.max.asm.dis.Disassembler.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.math.*;
@@ -2462,7 +2464,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     return string;
                 }
             };
-            Disassemble.disassemble(byteArrayOutputStream, teleTargetMethod.getCode(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+            disassemble(byteArrayOutputStream, teleTargetMethod.getCode(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             gui().postToClipboard(byteArrayOutputStream.toString());
         }
     }

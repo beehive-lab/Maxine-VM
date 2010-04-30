@@ -290,7 +290,7 @@ public class MaxRiConstantPool implements RiConstantPool {
     }
 
     private boolean attemptResolution(ResolvableConstant constant) {
-        if (C1XOptions.AggressivelyResolveCPEs) {
+        if (C1XOptions.NormalCPEResolution) {
             C1XMetrics.ResolveCPEAttempts++;
             return constant.isResolvableWithoutClassLoading(constantPool);
         }
@@ -310,18 +310,6 @@ public class MaxRiConstantPool implements RiConstantPool {
             signatures.put(descriptor, signature);
         }
         return signature;
-    }
-
-    /**
-     * Creates new a new compiler interface exception handler.
-     * @param startBCI the start bytecode index of the protected range
-     * @param endBCI the end bytecode index of the protected range
-     * @param catchBCI the bytecode index of the handler block
-     * @param classCPI the index into the constant pool for the catch class
-     * @return a compiler interface exception handler object
-     */
-    public RiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI) {
-        return new MaxRiExceptionHandler(startBCI, endBCI, catchBCI, classCPI, (classCPI == 0) ? null : resolveType((char) classCPI));
     }
 
     public CiConstant encoding() {

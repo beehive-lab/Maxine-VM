@@ -531,24 +531,6 @@ public class IRChecker extends DefaultValueVisitor {
     }
 
     /**
-     * Typechecks a RoundFP instruction.
-     * @param i the RoundFP instruction to be verified
-     */
-    @Override
-    public void visitRoundFP(RoundFP i) {
-        switch (i.kind) {
-            case Float:
-                assertKind(i.value(), CiKind.Float);
-                break;
-            case Double:
-                assertKind(i.value(), CiKind.Double);
-                break;
-            default:
-                fail("type of RoundFP must be floating point");
-        }
-    }
-
-    /**
      * Typechecks a MonitorEnter instruction.
      * @param i the MonitorEnter instruction to be verified
      */

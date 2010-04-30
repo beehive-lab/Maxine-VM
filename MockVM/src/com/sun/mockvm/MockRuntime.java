@@ -35,7 +35,6 @@ import com.sun.cri.ri.RiRuntime;
 import com.sun.cri.ri.RiSnippets;
 import com.sun.cri.ri.RiType;
 import com.sun.max.asm.InstructionSet;
-import com.sun.max.asm.dis.Disassemble;
 import com.sun.max.asm.dis.DisassembledObject;
 import com.sun.max.asm.dis.Disassembler;
 import com.sun.max.asm.dis.DisassemblyPrinter;
@@ -68,7 +67,7 @@ public class MockRuntime implements RiRuntime {
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
         writer.flush();
         final InstructionSet instructionSet = InstructionSet.AMD64;;
-        Disassemble.disassemble(byteArrayOutputStream, code, instructionSet, WordWidth.BITS_64, 0, null, disassemblyPrinter);
+        Disassembler.disassemble(byteArrayOutputStream, code, instructionSet, WordWidth.BITS_64, 0, null, disassemblyPrinter);
         return byteArrayOutputStream.toString();
 	}
 

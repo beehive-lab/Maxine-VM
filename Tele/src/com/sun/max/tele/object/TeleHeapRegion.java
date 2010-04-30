@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele.object;
 
-import java.lang.management.*;
-
 import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
@@ -48,55 +46,13 @@ public class TeleHeapRegion extends AbstractTeleVMHolder implements MaxHeapRegio
 
         private final TeleHeapRegion owner;
 
-        // The VM object that describes the region
-        private final TeleRuntimeMemoryRegion teleRuntimeMemoryRegion;
-
-        // The VM object that defines this region of memory, if it is a type
-        // for which we know something about allocation.
-        private final TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion;
-
-        // The VM object that defines this region of memory, if it is a distinguished
-        // type used for tracking inspection roots.
-        private final TeleRootTableMemoryRegion teleRootTableMemoryRegion;
-
         private final boolean isBootRegion;
 
         protected DelegatedHeapRegionMemoryRegion(TeleVM teleVM, TeleHeapRegion owner, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion, boolean isBootRegion) {
             super(teleVM, teleRuntimeMemoryRegion);
             this.owner = owner;
             assert teleRuntimeMemoryRegion != null;
-            this.teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
-            if (teleRuntimeMemoryRegion instanceof TeleLinearAllocationMemoryRegion) {
-                this.teleLinearAllocationMemoryRegion = (TeleLinearAllocationMemoryRegion) teleRuntimeMemoryRegion;
-            } else {
-                this.teleLinearAllocationMemoryRegion = null;
-            }
-            if (teleRuntimeMemoryRegion instanceof TeleRootTableMemoryRegion) {
-                this.teleRootTableMemoryRegion = (TeleRootTableMemoryRegion) teleRuntimeMemoryRegion;
-            } else {
-                this.teleRootTableMemoryRegion = null;
-            }
-
             this.isBootRegion = isBootRegion;
-        }
-
-        @Override
-        public MemoryUsage getUsage() {
-            if (teleLinearAllocationMemoryRegion != null) {
-                return new MemoryUsage(-1, teleLinearAllocationMemoryRegion.mark().minus(start()).toLong(), size().toLong(), -1);
-            } else if (teleRootTableMemoryRegion != null) {
-                return new MemoryUsage(-1, teleRootTableMemoryRegion.allocatedSize().toLong(), size().toLong(), -1);
-            } else {
-                return super.getUsage();
-            }
-        }
-
-        @Override
-        public boolean containsInAllocated(Address address) {
-            if (teleLinearAllocationMemoryRegion == null) {
-                return contains(address);
-            }
-            return address.greaterEqual(start()) && address.lessThan(teleLinearAllocationMemoryRegion.mark());
         }
 
         public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {

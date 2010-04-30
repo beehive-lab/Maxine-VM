@@ -36,8 +36,8 @@ public class LivenessMarker {
 
     final IR ir;
 
-    final InstrMarker deoptMarker = new InstrMarker(Value.Flag.LiveDeopt);
-    final InstrMarker valueMarker = new InstrMarker(Value.Flag.LiveValue);
+    final InstructionMarker deoptMarker = new InstructionMarker(Value.Flag.LiveDeopt);
+    final InstructionMarker valueMarker = new InstructionMarker(Value.Flag.LiveValue);
 
     int count;
 
@@ -101,12 +101,12 @@ public class LivenessMarker {
         }
     }
 
-    private class InstrMarker implements ValueClosure {
+    private class InstructionMarker implements ValueClosure {
         final Value.Flag reason;
         Link head;
         Link tail;
 
-        public InstrMarker(Value.Flag reason) {
+        public InstructionMarker(Value.Flag reason) {
             this.reason = reason;
         }
 

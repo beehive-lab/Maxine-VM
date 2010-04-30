@@ -131,7 +131,7 @@ public class BlockMap {
     private class ExceptionMap {
         private final BitMap canTrap;
         private final boolean isObjectInit;
-        private final List<RiExceptionHandler> allHandlers;
+        private final RiExceptionHandler[] allHandlers;
         private final ArrayMap<HashSet<BlockBegin>> handlerMap;
 
         ExceptionMap(RiMethod method, byte[] code) {
@@ -221,7 +221,7 @@ public class BlockMap {
         blockMap = new BlockBegin[code.length];
         successorMap = new BlockBegin[code.length][];
         storesInLoops = new BitMap(method.maxLocals());
-        if (method.hasExceptionHandlers()) {
+        if (method.exceptionHandlers().length != 0) {
             exceptionMap = new ExceptionMap(method, code);
         }
     }

@@ -23,24 +23,22 @@ package com.sun.mockvm;
 
 import org.apache.bcel.classfile.Constant;
 import org.apache.bcel.classfile.ConstantClass;
+import org.apache.bcel.classfile.ConstantDouble;
+import org.apache.bcel.classfile.ConstantFieldref;
+import org.apache.bcel.classfile.ConstantFloat;
+import org.apache.bcel.classfile.ConstantInteger;
 import org.apache.bcel.classfile.ConstantMethodref;
 import org.apache.bcel.classfile.ConstantNameAndType;
 import org.apache.bcel.classfile.ConstantPool;
+import org.apache.bcel.classfile.ConstantString;
 import org.apache.bcel.classfile.ConstantUtf8;
 
 import com.sun.cri.ci.CiConstant;
 import com.sun.cri.ri.RiConstantPool;
-import com.sun.cri.ri.RiExceptionHandler;
 import com.sun.cri.ri.RiField;
 import com.sun.cri.ri.RiMethod;
 import com.sun.cri.ri.RiSignature;
 import com.sun.cri.ri.RiType;
-import org.apache.bcel.classfile.ConstantInteger;
-import org.apache.bcel.classfile.ConstantString;
-import org.apache.bcel.classfile.ConstantFloat;
-import org.apache.bcel.classfile.ConstantDouble;
-
-import org.apache.bcel.classfile.ConstantFieldref;
 
 /**
  * 
@@ -152,11 +150,6 @@ public class MockConstantPool implements RiConstantPool {
 		ConstantUtf8 utf = (ConstantUtf8)name;
 		String klassName = utf.getBytes().replace('/', '.');
 		return MockUniverse.lookupType(klassName);
-	}
-
-	@Override
-	public RiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

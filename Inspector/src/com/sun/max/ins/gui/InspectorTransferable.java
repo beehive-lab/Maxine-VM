@@ -43,17 +43,17 @@ public abstract class InspectorTransferable<Object_Type> extends AbstractInspect
 
     private static final int TRACE_VALUE = 1;
 
-    private static final String MAXINE_ADDRESS_MIME_TYPE = "Maxine VM address";
+    private static final String VM_ADDRESS_MIME_TYPE = "VM address";
     public static final DataFlavor ADDRESS_FLAVOR =
-        new ActivationDataFlavor(Address.class, DataFlavor.javaJVMLocalObjectMimeType, InspectorTransferable.MAXINE_ADDRESS_MIME_TYPE);
+        new ActivationDataFlavor(Address.class, DataFlavor.javaJVMLocalObjectMimeType, InspectorTransferable.VM_ADDRESS_MIME_TYPE);
 
-    private static final String MAXINE_MEMORY_REGION_MIME_TYPE = "Maxine VM memory region";
+    private static final String VM_MEMORY_REGION_MIME_TYPE = "VM memory region";
     public static final DataFlavor MEMORY_REGION_FLAVOR =
-        new ActivationDataFlavor(MaxMemoryRegion.class, DataFlavor.javaJVMLocalObjectMimeType, InspectorTransferable.MAXINE_MEMORY_REGION_MIME_TYPE);
+        new ActivationDataFlavor(MaxMemoryRegion.class, DataFlavor.javaJVMLocalObjectMimeType, InspectorTransferable.VM_MEMORY_REGION_MIME_TYPE);
 
-    private static final String MAXINE_TELE_OBJECT_MIME_TYPE = "Maxine VM object";
+    private static final String VM_TELE_OBJECT_MIME_TYPE = "VM object";
     public static final DataFlavor TELE_OBJECT_FLAVOR =
-        new ActivationDataFlavor(TeleObject.class, DataFlavor.javaJVMLocalObjectMimeType, InspectorTransferable.MAXINE_TELE_OBJECT_MIME_TYPE);
+        new ActivationDataFlavor(TeleObject.class, DataFlavor.javaJVMLocalObjectMimeType, InspectorTransferable.VM_TELE_OBJECT_MIME_TYPE);
 
     private final Object_Type object;
     private final DataFlavor[] supportedDataFlavors;

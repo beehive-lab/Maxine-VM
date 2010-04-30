@@ -934,10 +934,11 @@ public final class Interval {
         assert first() == Range.EndMarker || to < first().next.from : "not inserting at begin of interval";
         assert from <= first().to : "not inserting at begin of interval";
 
-        if (first().from <= to) {
+        if (first.from <= to) {
+            assert first != Range.EndMarker;
             // join intersecting ranges
-            first().from = Math.min(from, first().from);
-            first().to = Math.max(to, first().to);
+            first.from = Math.min(from, first().from);
+            first.to = Math.max(to, first().to);
         } else {
             // insert new range
             first = new Range(from, to, first());
@@ -1105,13 +1106,17 @@ public final class Interval {
 
     @Override
     public String toString() {
-        String to;
-        if (cachedTo == -1) {
-            to = "?";
-        } else {
-            to = String.valueOf(to());
+        String from = "?";
+        String to = "?";
+        if (first != null && first != Range.EndMarker) {
+            from = String.valueOf(from());
+            if (cachedTo == -1) {
+                to = String.valueOf(calcTo());
+            } else {
+                to = String.valueOf(to());
+            }
         }
-        return operand.name() + ":" + (operand.isRegister() ? "fixed" : kind().name()) + "[" + from() + "," + to + "]";
+        return operand.name() + ":" + (operand.isRegister() ? "fixed" : kind().name()) + "[" + from + "," + to + "]";
     }
 
     public void print(LogStream out, LinearScan allocator) {

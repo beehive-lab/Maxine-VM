@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,19 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
+package jtt.exbytecode;
 
-import com.sun.max.ins.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
 
-/**
- * An inspector that displays in an internal window frame.
- * @author Michael Van De Vanter
+/*
+ * @Harness: java
+ * @Runs: 1=true; 34=true
  */
-public abstract class FramedInspector extends Inspector {
-
-    public FramedInspector(Inspection inspection) {
-        super(inspection);
-
+public class EBC_lsa01 {
+    public static boolean test(int i) {
+        Pointer addr = MakeStackVariable.makeStackVariable(i);
+        Pointer addr2 = MakeStackVariable.makeStackVariable(i + 1);
+        if (addr.readInt(0) != i) {
+            return false;
+        }
+        if (addr2.readInt(0) != i + 1) {
+            return false;
+        }
+        return true;
     }
-
 }

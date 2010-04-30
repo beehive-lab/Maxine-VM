@@ -159,7 +159,7 @@ public abstract class LocationLabel extends InspectorLabel {
     /**
      * A label that displays, in hex, an address with non-negative position relative to an origin.
      * A right-button menu is available with some useful commands.
-     * Maxine positions are non-negative and displayed without a '+' prefix.
+     * VM positions are non-negative and displayed without a '+' prefix.
      * The address does not update if contents at location get moved.
      */
     public static class AsAddressWithPosition extends LocationLabel {
@@ -186,7 +186,7 @@ public abstract class LocationLabel extends InspectorLabel {
      * A label that displays, in decimal, a non-negative position relative to some (optionally specified) origin.
      * If an origin is specified, then a ToolTip shows that actual address and a right-button
      * menu is available with some useful commands.
-     * Maxine positions are non-negative and displayed without a '+' prefix.
+     * VM positions are non-negative and displayed without a '+' prefix.
      * The address does not update if contents at location get moved.
      */
     public static class AsPosition extends LocationLabel {

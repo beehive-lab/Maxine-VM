@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.cps.eir;
 
+import static com.sun.max.asm.dis.Disassembler.*;
+
 import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -272,7 +273,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
                 if (MaxineVM.isHosted()) {
                     ProcessorKind kind = VMConfiguration.hostOrTarget().platform().processorKind;
-                    Disassemble.disassemble(System.out, code, kind.instructionSet, kind.dataModel.wordWidth, startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
+                    disassemble(System.out, code, kind.instructionSet, kind.dataModel.wordWidth, startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }
@@ -281,7 +282,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
                 if (MaxineVM.isHosted()) {
                     ProcessorKind kind = VMConfiguration.hostOrTarget().platform().processorKind;
-                    Disassemble.disassemble(System.out, code, kind.instructionSet, kind.dataModel.wordWidth, startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
+                    disassemble(System.out, code, kind.instructionSet, kind.dataModel.wordWidth, startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }

@@ -90,21 +90,13 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected boolean canInlineAsConstant(CiConstant c) {
-        if (c.kind == CiKind.Long) {
-            return false;
-        }
-        return c.kind != CiKind.Object || c.asObject() == null;
-    }
-
-    @Override
     protected CiValue safepointPollRegister() {
         return ILLEGAL;
     }
 
     @Override
     protected CiAddress genAddress(CiValue base, CiValue index, int shift, int disp, CiKind kind) {
-        assert base.isVariableOrRegister() : "must be";
+        assert base.isVariableOrRegister();
         if (index.isConstant()) {
             return new CiAddress(kind, base, (((CiConstant) index).asInt() << shift) + disp);
         } else {
@@ -126,14 +118,14 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     @Override
     protected boolean strengthReduceMultiply(CiValue left, int c, CiValue result, CiValue tmp) {
         if (tmp.isLegal()) {
-            if (Util.isPowerOf2(c + 1)) {
+            if (CiUtil.isPowerOf2(c + 1)) {
                 lir.move(left, tmp);
-                lir.shiftLeft(left, Util.log2(c + 1), left);
+                lir.shiftLeft(left, CiUtil.log2(c + 1), left);
                 lir.sub(left, tmp, result, null);
                 return true;
-            } else if (Util.isPowerOf2(c - 1)) {
+            } else if (CiUtil.isPowerOf2(c - 1)) {
                 lir.move(left, tmp);
-                lir.shiftLeft(left, Util.log2(c - 1), left);
+                lir.shiftLeft(left, CiUtil.log2(c - 1), left);
                 lir.add(left, tmp, result);
                 return true;
             }
@@ -157,22 +149,33 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         setResult(x, reg);
     }
 
+    @Override
+    public void visitSignificantBit(SignificantBitOp x) {
+        LIRItem value = new LIRItem(x.x(), this);
+        value.setDestroysRegister();
+        value.loadItem();
+        CiValue reg = createResultVariable(x);
+        if (x.returnsMostSignificantBit()) {
+            lir.lsb(value.result(), reg);
+        } else {
+            lir.msb(value.result(), reg);
+        }
+ }
+
     public void visitArithmeticOpFloat(ArithmeticOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         assert !left.isStack() || !right.isStack() : "can't both be memory operands";
         boolean mustLoadBoth = (x.opcode() == Bytecodes.FREM || x.opcode() == Bytecodes.DREM);
-        if (left.isRegister() || x.x().isConstant() || mustLoadBoth) {
+        if (left.isRegisterOrVariable() || x.x().isConstant() || mustLoadBoth) {
             left.loadItem();
         }
-
-        assert C1XOptions.SSEVersion >= 2;
 
         if (mustLoadBoth) {
             // frem and drem destroy also right operand, so move it to a new register
             right.setDestroysRegister();
             right.loadItem();
-        } else if (right.isRegister()) {
+        } else if (right.isRegisterOrVariable()) {
             right.loadItem();
         }
 
@@ -281,7 +284,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             LIRItem right = new LIRItem(x.y(), this);
             LIRItem leftArg = left;
             LIRItem rightArg = right;
-            if (x.isCommutative() && left.isStack() && right.isRegister()) {
+            if (x.isCommutative() && left.isStack() && right.isRegisterOrVariable()) {
                 // swap them if left is real stack (or cached) and right is real register(not cached)
                 leftArg = right;
                 rightArg = left;
@@ -297,9 +300,9 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 if (rightArg.result().isConstant()) {
                     int iconst = rightArg.asInt();
                     if (iconst > 0) {
-                        if (Util.isPowerOf2(iconst)) {
+                        if (CiUtil.isPowerOf2(iconst)) {
                             useConstant = true;
-                        } else if (Util.isPowerOf2(iconst - 1) || Util.isPowerOf2(iconst + 1)) {
+                        } else if (CiUtil.isPowerOf2(iconst - 1) || CiUtil.isPowerOf2(iconst + 1)) {
                             useConstant = true;
                             useTmp = true;
                         }
@@ -475,7 +478,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     public void visitUnsignedCompareOp(UnsignedCompareOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
-        left.setDestroysRegister();  // are we sure? why? copied from visitCompareOp
         left.loadItem();
         right.loadItem();
         Condition condition = null;
@@ -588,7 +590,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitConvert(Convert x) {
-        assert C1XOptions.SSEVersion >= 2 : "no fpu stack";
         CiValue input = load(x.value());
         CiVariable result = newVariable(x.kind);
 

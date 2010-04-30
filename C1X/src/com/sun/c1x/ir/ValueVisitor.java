@@ -50,7 +50,7 @@ public abstract class ValueVisitor {
     public abstract void visitLoadIndexed(LoadIndexed i);
     public abstract void visitLoadPC(LoadPC i);
     public abstract void visitLoadPointer(LoadPointer i);
-    public abstract void visitLoadStackAddress(LoadStackAddress i);
+    public abstract void visitLoadStackAddress(AllocateStackVariable i);
     public abstract void visitLoadRegister(LoadRegister i);
     public abstract void visitLocal(Local i);
     public abstract void visitLogicOp(LogicOp i);
@@ -69,8 +69,8 @@ public abstract class ValueVisitor {
     public abstract void visitPhi(Phi i);
     public abstract void visitResolveClass(ResolveClass i);
     public abstract void visitReturn(Return i);
-    public abstract void visitRoundFP(RoundFP i);
     public abstract void visitShiftOp(ShiftOp i);
+    public abstract void visitSignificantBit(SignificantBitOp i);
     public abstract void visitStackAllocate(StackAllocate i);
     public abstract void visitStoreField(StoreField i);
     public abstract void visitStoreIndexed(StoreIndexed i);

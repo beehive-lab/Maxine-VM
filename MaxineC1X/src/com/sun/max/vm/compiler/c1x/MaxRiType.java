@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -59,7 +59,7 @@ public class MaxRiType implements RiType {
         this.constantPool = constantPool;
         this.classActor = classActor;
         this.typeDescriptor = classActor.typeDescriptor;
-        this.kind = kindToCiKind(typeDescriptor.toKind());
+        this.kind = typeDescriptor.toKind().ciKind;
         this.cpi = cpi;
     }
 
@@ -72,7 +72,7 @@ public class MaxRiType implements RiType {
     public MaxRiType(MaxRiConstantPool constantPool, ClassConstant classRef, int cpi) {
         this.constantPool = constantPool;
         this.typeDescriptor = classRef.typeDescriptor();
-        this.kind = kindToCiKind(typeDescriptor.toKind());
+        this.kind = typeDescriptor.toKind().ciKind;
         this.cpi = cpi;
     }
 
@@ -95,7 +95,7 @@ public class MaxRiType implements RiType {
         }
 
         this.typeDescriptor = typeDescriptor;
-        this.kind = kindToCiKind(typeDescriptor.toKind());
+        this.kind = typeDescriptor.toKind().ciKind;
         this.cpi = cpi;
     }
 
@@ -177,8 +177,8 @@ public class MaxRiType implements RiType {
      * @return {@code true} if this class is final
      * @throws MaxRiUnresolved if the class is not resolved
      */
-    public boolean isFinal() {
-        return asClassActor("isFinal()").isFinal();
+    public int accessFlags() {
+        return asClassActor("isFinal()").flags() & Actor.JAVA_CLASS_FLAGS;
     }
 
     /**
@@ -317,40 +317,6 @@ public class MaxRiType implements RiType {
 
     private static boolean isFinalOrPrimitive(ClassActor classActor) {
         return classActor.isFinal() || classActor.isPrimitiveClassActor();
-    }
-
-    /**
-     * Converts a Maxine kind to a C1X kind.
-     * @param kind a Maxine kind
-     * @return the associated C1X kind
-     */
-    public static CiKind kindToCiKind(Kind kind) {
-        switch (kind.asEnum) {
-            case BYTE:
-                return CiKind.Byte;
-            case BOOLEAN:
-                return CiKind.Boolean;
-            case SHORT:
-                return CiKind.Short;
-            case CHAR:
-                return CiKind.Char;
-            case INT:
-                return CiKind.Int;
-            case FLOAT:
-                return CiKind.Float;
-            case LONG:
-                return CiKind.Long;
-            case DOUBLE:
-                return CiKind.Double;
-            case WORD:
-                return C1XOptions.SupportWordTypes ? CiKind.Word : CiKind.Object;
-            case REFERENCE:
-                return CiKind.Object;
-            case VOID:
-                return CiKind.Void;
-            default:
-                throw ProgramError.unknownCase();
-        }
     }
 
     public static CiConstant toCiConstant(Value value) {

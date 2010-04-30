@@ -162,16 +162,6 @@ public interface RiConstantPool {
     Object lookupConstant(char cpi);
 
     /**
-     * Creates an exception handler with the specified properties.
-     * @param startBCI the start bytecode index of the protected range
-     * @param endBCI the end bytecode index of the protected range
-     * @param catchBCI the bytecode index of the catch block
-     * @param classCPI the constant pool index of the class of the caught exception
-     * @return a new exception handler object
-     */
-    RiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI);
-
-    /**
      * Constant object that can be used to identify this constant pool when it is referenced from the code.
      *
      * @return a constant object representing this constant pool

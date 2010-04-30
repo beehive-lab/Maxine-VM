@@ -23,7 +23,7 @@ package com.sun.c1x;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -260,7 +260,7 @@ public enum C1XIntrinsic {
         // iterate through all the intrinsics and add them to the map
         for (C1XIntrinsic i : C1XIntrinsic.values()) {
             // note that the map uses internal names to map lookup faster
-            String className = Util.toInternalName(i.className());
+            String className = CiUtil.toInternalName(i.className());
             HashMap<String, C1XIntrinsic> map = intrinsicMap.get(className);
             if (map == null) {
                 map = new HashMap<String, C1XIntrinsic>();

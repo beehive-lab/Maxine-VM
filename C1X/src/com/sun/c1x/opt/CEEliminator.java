@@ -166,7 +166,7 @@ public class CEEliminator implements BlockClosure {
 
         Value result;
         if (tValue == fValue) {
-            // conditional choses the same value regardless
+            // conditional chooses the same value regardless
             result = tValue;
             C1XMetrics.RedundantConditionals++;
         } else {
