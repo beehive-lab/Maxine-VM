@@ -31,34 +31,34 @@ import java.net.*;
 
 public class NewSocket extends NetSettings {
 
-    protected NewSocket(LoopRunnable bench) {
+    protected NewSocket(MicroBenchmark bench) {
         super(bench);
     }
-    public static boolean test(int i) throws InterruptedException {
+
+    public static boolean test(int i) {
         return new NewSocket(new Bench()).runBench(true);
     }
 
-    static class Bench extends SimpleLoopRunnable {
-        public void run(long loopCount) {
+    static class Bench implements MicroBenchmark {
+        public void run(boolean warmup) {
             Socket s = null;
-            final String host = host();
-            final int port = port();
-            for (long i = 0; i < loopCount; i++) {
-                try {
-                    s = new Socket(host, port);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                } finally {
-                    if (s != null) {
-                        try {
-                            s.close();
-                        } catch (Exception ex) {
-                        }
+            try {
+                s = new Socket(host(), port());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            } finally {
+                if (s != null) {
+                    try {
+                        s.close();
+                    } catch (Exception ex) {
                     }
                 }
             }
         }
-
     }
 
+    // for running stand-alone
+    public static void main(String[] args) {
+        test(0);
+    }
 }
