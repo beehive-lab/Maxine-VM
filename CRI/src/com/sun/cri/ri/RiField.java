@@ -20,6 +20,8 @@
  */
 package com.sun.cri.ri;
 
+import java.lang.reflect.*;
+
 import com.sun.cri.ci.*;
 
 /**
@@ -63,25 +65,20 @@ public interface RiField {
     // NOTE: All operations beyond this point are only available on resolved fields..
 
     /**
-     * Checks whether this field is volatile.
-     * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.
-     * @return {@code true} if this field is volatile
+     * Gets the access flags for this field. Only the flags specified in the JVM specification
+     * will be included in the returned mask. The utility methods in the {@link Modifier} class
+     * should be used to query the returned mask for the presence/absence of individual flags.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the mask of JVM defined field access flags defined for this field
      */
-    boolean isVolatile();
-
+    int accessFlags();
+    
     /**
      * Checks whether this field is constant.
      * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.
      * @return {@code true} if this field is constant
      */
     boolean isConstant();
-
-    /**
-     * Checks whether this field is static.
-     * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.
-     * @return {@code true} if this field is static
-     */
-    boolean isStatic();
 
     /**
      * Gets the constant value of this field if available.

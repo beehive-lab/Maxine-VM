@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.cri.ci.CiUtil.*;
+import static java.lang.reflect.Modifier.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -418,7 +419,7 @@ public class MaxXirGenerator extends RiXirGenerator {
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
                 return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), hub);
-            } else if (type.isFinal() && !type.isArrayKlass()) {
+            } else if (isFinal(type.accessFlags()) && !type.isArrayKlass()) {
                 // can use the leaf class test
                 template = checkcastForLeafTemplate.resolved;
             } else {
@@ -445,7 +446,7 @@ public class MaxXirGenerator extends RiXirGenerator {
                 return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), hub);
             }
 
-            if (type.isFinal() && !type.isArrayKlass()) {
+            if (isFinal(type.accessFlags()) && !type.isArrayKlass()) {
                 template = instanceofForLeafTemplate.resolved;
             } else {
                 template = instanceofForClassTemplate.resolved;

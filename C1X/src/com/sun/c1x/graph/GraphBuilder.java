@@ -21,7 +21,9 @@
 package com.sun.c1x.graph;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static java.lang.reflect.Modifier.*;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -128,7 +130,7 @@ public final class GraphBuilder {
         lastInstr = startBlock;
         curState = initialState;
 
-        if (rootMethod.isSynchronized()) {
+        if (isSynchronized(rootMethod.accessFlags())) {
             // 4A.1 add a monitor enter to the start block
             rootMethodSynchronizedObject = synchronizedObject(initialState, compilation.method);
             genMonitorEnter(rootMethodSynchronizedObject, Instruction.SYNCHRONIZATION_ENTRY_BCI);
@@ -159,7 +161,7 @@ public final class GraphBuilder {
             lastInstr = curBlock;
             if (C1XOptions.OptIntrinsify) {
                 // try to inline an Intrinsic node
-                boolean isStatic = rootMethod.isStatic();
+                boolean isStatic = Modifier.isStatic(rootMethod.accessFlags());
                 int argsSize = rootMethod.signatureType().argumentSlots(!isStatic);
                 Value[] args = new Value[argsSize];
                 for (int i = 0; i < args.length; i++) {
@@ -218,7 +220,7 @@ public final class GraphBuilder {
     }
 
     private RiExceptionHandler newDefaultExceptionHandler(RiMethod method) {
-        return constantPool().newExceptionHandler(0, method.codeSize(), -1, 0);
+        return new CiExceptionHandler(0, method.code().length, -1, 0, null);
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
@@ -607,7 +609,7 @@ public final class GraphBuilder {
     void genArithmeticOp(CiKind kind, int opcode, FrameState state) {
         Value y = pop(kind);
         Value x = pop(kind);
-        Value result = append(new ArithmeticOp(opcode, kind, x, y, method().isStrictFP(), state));
+        Value result = append(new ArithmeticOp(opcode, kind, x, y, isStrict(method().accessFlags()), state));
         push(kind, result);
     }
 
@@ -652,7 +654,7 @@ public final class GraphBuilder {
         int delta = stream().readIncrement();
         Value x = curState.localAt(index);
         Value y = append(Constant.forInt(delta));
-        curState.storeLocal(index, append(new ArithmeticOp(IADD, CiKind.Int, x, y, method().isStrictFP(), null)));
+        curState.storeLocal(index, append(new ArithmeticOp(IADD, CiKind.Int, x, y, isStrict(method().accessFlags()), null)));
     }
 
     void genGoto(int fromBCI, int toBCI) {
@@ -880,7 +882,7 @@ public final class GraphBuilder {
         if (target.isResolved() && target.holder().isResolved()) {
             RiType klass = target.holder();
             // 0. check for trivial cases
-            if (target.canBeStaticallyBound() && !target.isAbstract()) {
+            if (target.canBeStaticallyBound() && !isAbstract(target.accessFlags())) {
                 // check for trivial cases (e.g. final methods, nonvirtual methods)
                 invokeDirect(target, args, target.holder(), cpi, constantPool, stateBefore);
                 return;
@@ -894,7 +896,7 @@ public final class GraphBuilder {
             }
             // 2. check if an assumed leaf method can be found
             RiMethod leaf = getAssumedLeafMethod(target, receiver);
-            if (leaf != null && leaf.isResolved() && !leaf.isAbstract() && leaf.holder().isResolved()) {
+            if (leaf != null && leaf.isResolved() && !isAbstract(leaf.accessFlags()) && leaf.holder().isResolved()) {
                 invokeDirect(leaf, args, null, cpi, constantPool, stateBefore);
                 return;
             }
@@ -1026,7 +1028,7 @@ public final class GraphBuilder {
 
         // If inlining, then returns become gotos to the continuation point.
         if (scopeData.continuation() != null) {
-            if (method().isSynchronized()) {
+            if (isSynchronized(method().accessFlags())) {
                 // if the inlined method is synchronized, then the monitor
                 // must be released before jumping to the continuation point
                 assert C1XOptions.OptInlineSynchronized;
@@ -1067,7 +1069,7 @@ public final class GraphBuilder {
         }
 
         curState.truncateStack(0);
-        if (method().isSynchronized()) {
+        if (Modifier.isSynchronized(method().accessFlags())) {
             FrameState stateBefore = curState.immutableCopy();
             // unlock before exiting the method
             append(new MonitorExit(rootMethodSynchronizedObject, curState.unlock(), stateBefore));
@@ -1327,7 +1329,7 @@ public final class GraphBuilder {
     FrameState stateAtEntry(RiMethod method) {
         FrameState state = new FrameState(scope(), method.maxLocals(), method.maxStackSize());
         int index = 0;
-        if (!method.isStatic()) {
+        if (!isStatic(method.accessFlags())) {
             // add the receiver and assume it is non null
             Local local = new Local(method.holder().kind(), index);
             local.setFlag(Value.Flag.NonNull, true);
@@ -1339,13 +1341,13 @@ public final class GraphBuilder {
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
             RiType type = sig.argumentTypeAt(i);
-            CiKind vt = type.kind().stackKind();
-            Local local = new Local(vt, index);
+            CiKind kind = type.kind().stackKind();
+            Local local = new Local(kind, index);
             if (type.isResolved()) {
                 local.setDeclaredType(type);
             }
             state.storeLocal(index, local);
-            index += vt.sizeInSlots();
+            index += kind.sizeInSlots();
         }
         return state;
     }
@@ -1441,7 +1443,7 @@ public final class GraphBuilder {
         if (!C1XOptions.OptInline) {
             return false; // all inlining is turned off
         }
-        if (!target.hasCode()) {
+        if (target.code() == null) {
             return cannotInline(target, "method has no code");
         }
         if (!target.holder().isInitialized()) {
@@ -1450,7 +1452,7 @@ public final class GraphBuilder {
         if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
             return cannotInline(target, "recursive inlining too deep");
         }
-        if (target.codeSize() > scopeData.maxInlineSize()) {
+        if (target.code().length > scopeData.maxInlineSize()) {
             return cannotInline(target, "inlinee too large for this level");
         }
         if (scopeData.scope.level > C1XOptions.MaximumInlineLevel) {
@@ -1466,10 +1468,10 @@ public final class GraphBuilder {
         if (compilation.runtime.mustNotCompile(target)) {
             return cannotInline(target, "compile excluded by runtime");
         }
-        if (target.isSynchronized() && !C1XOptions.OptInlineSynchronized) {
+        if (isSynchronized(target.accessFlags()) && !C1XOptions.OptInlineSynchronized) {
             return cannotInline(target, "is synchronized");
         }
-        if (target.hasExceptionHandlers() && !C1XOptions.OptInlineExcept) {
+        if (target.exceptionHandlers().length != 0 && !C1XOptions.OptInlineExcept) {
             return cannotInline(target, "has exception handlers");
         }
         if (!target.hasBalancedMonitors()) {
@@ -1492,7 +1494,7 @@ public final class GraphBuilder {
 
     void inline(RiMethod target, Value[] args, boolean forcedInline, FrameState stateBefore) {
         BlockBegin orig = curBlock;
-        if (!forcedInline && !target.isStatic()) {
+        if (!forcedInline && !isStatic(target.accessFlags())) {
             // the receiver object must be null-checked for instance methods
             Value receiver = args[0];
             if (!receiver.isNonNull() && !receiver.kind.isWord()) {
@@ -1538,7 +1540,7 @@ public final class GraphBuilder {
         Value lock = null;
         BlockBegin syncHandler = null;
         // inline the locking code if the target method is synchronized
-        if (target.isSynchronized()) {
+        if (Modifier.isSynchronized(target.accessFlags())) {
             // lock the receiver object if it is an instance method, the class object otherwise
             lock = synchronizedObject(curState, target);
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, ir.nextBlockNumber());
@@ -1603,7 +1605,7 @@ public final class GraphBuilder {
         }
 
         // fill the exception handler for synchronized methods with instructions
-        if (target.isSynchronized()) {
+        if (Modifier.isSynchronized(target.accessFlags())) {
             fillSyncHandler(lock, syncHandler, true);
         } else {
             popScope();
@@ -1613,7 +1615,7 @@ public final class GraphBuilder {
     }
 
     private Value synchronizedObject(FrameState state, RiMethod target) {
-        if (target.isStatic()) {
+        if (isStatic(target.accessFlags())) {
             Constant classConstant = Constant.forObject(target.holder().javaClass());
             return appendWithoutOptimization(classConstant, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         } else {
@@ -2197,7 +2199,7 @@ public final class GraphBuilder {
         Value[] args = new Value[snippetCall.arguments.length];
         RiMethod snippet = snippetCall.snippet;
         RiSignature signature = snippet.signatureType();
-        assert signature.argumentCount(!snippet.isStatic()) == args.length;
+        assert signature.argumentCount(!isStatic(snippet.accessFlags())) == args.length;
         for (int i = args.length - 1; i >= 0; --i) {
             CiKind argKind = signature.argumentKindAt(i);
             if (snippetCall.arguments[i] == null) {
@@ -2389,7 +2391,7 @@ public final class GraphBuilder {
 
     boolean assumeLeafClass(RiType type) {
         if (!C1XOptions.TestSlowPath && type.isResolved()) {
-            if (type.isFinal()) {
+            if (isFinal(type.accessFlags())) {
                 return true;
             }
             if (C1XOptions.UseDeopt && C1XOptions.OptCHA) {

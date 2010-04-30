@@ -18,23 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.sun.cri.ci;
 
 import com.sun.cri.ri.*;
 
 /**
- * The {@code MaxRiExceptionHandler} represents an exception handler
- * in the compiler interface.
+ * An implementation of the {@link RiExceptionHandler} interface.
  *
  * @author Ben L. Titzer
  */
-public class MaxRiExceptionHandler implements RiExceptionHandler {
+public class CiExceptionHandler implements RiExceptionHandler {
 
-    private final int startBCI;
-    private final int endBCI;
-    private final int handlerBCI;
-    private final int classCPI;
-    private final RiType classType;
+    public final int startBCI;
+    public final int endBCI;
+    public final int handlerBCI;
+    public final int classCPI;
+    public final RiType classType;
 
     /**
      * Creates a new exception handler with the specified ranges.
@@ -44,7 +43,7 @@ public class MaxRiExceptionHandler implements RiExceptionHandler {
      * @param classCPI the index of the throwable class in the constant pool
      * @param classType the type caught by this exception handler
      */
-    public MaxRiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI, RiType classType) {
+    public CiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI, RiType classType) {
         this.startBCI = startBCI;
         this.endBCI = endBCI;
         this.handlerBCI = catchBCI;
@@ -52,42 +51,22 @@ public class MaxRiExceptionHandler implements RiExceptionHandler {
         this.classType = classType;
     }
 
-    /**
-     * Gets the start index of the protected range.
-     * @return the start index
-     */
     public int startBCI() {
         return startBCI;
     }
 
-    /**
-     * Gets the end index of the protected range.
-     * @return the end index
-     */
     public int endBCI() {
         return endBCI;
     }
 
-    /**
-     * Gets the bytecode index of the handler block.
-     * @return the handler block index
-     */
     public int handlerBCI() {
         return handlerBCI;
     }
 
-    /**
-     * Gets the constant pool index of the throwable type this handler catches.
-     * @return the constant pool index of the throwable type
-     */
     public int catchClassIndex() {
         return classCPI;
     }
 
-    /**
-     * Checks whether this is a handler for all exceptions.
-     * @return {@code true} if this handler catches all exceptions
-     */
     public boolean isCatchAll() {
         return classCPI == 0;
     }

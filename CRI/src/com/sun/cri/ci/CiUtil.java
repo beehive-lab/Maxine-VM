@@ -20,6 +20,8 @@
  */
 package com.sun.cri.ci;
 
+import static java.lang.reflect.Modifier.*;
+
 import java.util.*;
 
 import com.sun.cri.ri.*;
@@ -31,7 +33,7 @@ import com.sun.cri.ri.*;
  * @author Doug Simon
  */
 public class CiUtil {
-
+    
     /**
      * Extends the functionality of {@link Class#getSimpleName()} to include a non-empty string for anonymous and local
      * classes.
@@ -270,7 +272,7 @@ public class CiUtil {
                         break;
                     }
                     case 'f': {
-                        sb.append(!method.isResolved() ? "unresolved" : method.isStatic() ? "static" : "virtual");
+                        sb.append(!method.isResolved() ? "unresolved" : isStatic(method.accessFlags()) ? "static" : "virtual");
                         break;
                     }
                     case '%': {
@@ -344,7 +346,7 @@ public class CiUtil {
                         break;
                     }
                     case 'f': {
-                        sb.append(!field.isResolved() ? "unresolved" : field.isStatic() ? "static" : "instance");
+                        sb.append(!field.isResolved() ? "unresolved" : isStatic(field.accessFlags()) ? "static" : "instance");
                         break;
                     }
                     case '%': {
@@ -370,5 +372,4 @@ public class CiUtil {
     public static String toInternalName(String className) {
         return "L" + className.replace('.', '/') + ";";
     }
-
 }

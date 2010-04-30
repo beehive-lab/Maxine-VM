@@ -219,6 +219,13 @@ public enum CiKind {
         }
         throw new IllegalArgumentException("unknown array type code: " + code);
     }
+    
+    public static CiKind fromTypeString(String typeString) {
+        assert typeString.length() > 0;
+        final char first = typeString.charAt(0);
+        if (first == '[' || first == 'L') return CiKind.Object;
+        return CiKind.fromPrimitiveOrVoidTypeChar(first);
+    }
 
     /**
      * Gets the kind from the character describing a primitive or void.
@@ -280,6 +287,19 @@ public enum CiKind {
             case Long:    return long[].class;
         }
         throw new IllegalArgumentException("not a primitive kind");
+    }
+    
+    public static CiKind fromJavaClass(Class<?> c) {
+        if (c == java.lang.Void.TYPE) return Void;
+        if (c == java.lang.Integer.TYPE) return Int;
+        if (c == java.lang.Byte.TYPE) return Byte;
+        if (c == java.lang.Character.TYPE) return Char;
+        if (c == java.lang.Double.TYPE) return Double;
+        if (c == java.lang.Float.TYPE) return Float;
+        if (c == java.lang.Long.TYPE) return Long;
+        if (c == java.lang.Short.TYPE) return Short;
+        if (c == java.lang.Boolean.TYPE) return Boolean;
+        return CiKind.Object;
     }
 
     /**

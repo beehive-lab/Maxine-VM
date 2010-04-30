@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import static com.sun.cri.ci.CiKind.*;
+import static java.lang.reflect.Modifier.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.globalstub.*;
@@ -120,7 +121,7 @@ public final class FrameMap {
         if (method == null) {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
-            incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signatureType(), !method.isStatic()), false);
+            incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signatureType(), !isStatic(method.accessFlags())), false);
         }
     }
 

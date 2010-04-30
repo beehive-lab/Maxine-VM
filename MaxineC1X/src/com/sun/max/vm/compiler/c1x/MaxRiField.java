@@ -24,6 +24,7 @@ import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.object.host.*;
@@ -105,18 +106,11 @@ public class MaxRiField implements RiField {
         return fieldActor != null;
     }
 
-    public boolean isStatic() {
+    public int accessFlags() {
         if (fieldActor != null) {
-            return fieldActor.isStatic();
+            return fieldActor.flags() & Actor.JAVA_FIELD_FLAGS;
         }
-        throw unresolved("isStatic()");
-    }
-
-    public boolean isVolatile() {
-        if (fieldActor != null) {
-            return fieldActor.isVolatile();
-        }
-        throw unresolved("isVolatile()");
+        throw unresolved("accessFlags()");
     }
 
     public boolean isConstant()  {

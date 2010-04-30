@@ -21,6 +21,7 @@
 package com.sun.c1x.opt;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static java.lang.reflect.Modifier.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -506,7 +507,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         } else if (array instanceof LoadField) {
             // the array is a load of a field; check if it is a constant
             RiField field = ((LoadField) array).field();
-            if (field.isConstant() && field.isStatic()) {
+            if (field.isConstant() && isStatic(field.accessFlags())) {
                 CiConstant cons = field.constantValue(null);
                 if (cons != null) {
                     Object obj = cons.asObject();
@@ -1325,7 +1326,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             // build the argument list
             Object recvr;
             Object[] argArray = NO_ARGUMENTS;
-            if (method.isStatic()) {
+            if (isStatic(method.accessFlags())) {
                 // static method invocation
                 recvr = null;
                 if (args.length > 0) {

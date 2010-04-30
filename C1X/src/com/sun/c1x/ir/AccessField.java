@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ir;
 
+import java.lang.reflect.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
@@ -52,7 +54,7 @@ public abstract class AccessField extends StateSplit {
         this.constantPool = constantPool;
         this.object = object;
         this.field = field;
-        if (!isLoaded || C1XOptions.TestPatching && !field.isVolatile()) {
+        if (!isLoaded || C1XOptions.TestPatching && !Modifier.isVolatile(field.accessFlags())) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
             setFlag(Flag.NeedsPatching);
@@ -103,7 +105,7 @@ public abstract class AccessField extends StateSplit {
      * @return {@code true} if the field is resolved and declared volatile
      */
     public boolean isVolatile() {
-        return isLoaded() && field.isVolatile();
+        return isLoaded() && Modifier.isVolatile(field.accessFlags());
     }
 
     @Override

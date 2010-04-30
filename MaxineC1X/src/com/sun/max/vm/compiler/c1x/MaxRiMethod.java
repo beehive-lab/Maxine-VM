@@ -20,13 +20,12 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import java.util.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.collect.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -46,7 +45,7 @@ public class MaxRiMethod implements RiMethod {
     final MaxRiConstantPool constantPool;
     final MethodRefConstant methodRef;
     final MethodActor methodActor;
-    List<RiExceptionHandler> exceptionHandlers;
+    RiExceptionHandler[] exceptionHandlers;
     final int cpi;
 
     /**
@@ -108,7 +107,13 @@ public class MaxRiMethod implements RiMethod {
     }
 
     public byte[] code() {
-        return codeAttribute("code()").code();
+        if (methodActor instanceof ClassMethodActor) {
+            CodeAttribute codeAttribute = codeAttribute("code()");
+            if (codeAttribute != null) {
+                return codeAttribute.code();
+            }
+        }
+        return null;
     }
 
     public boolean hasCode() {
@@ -131,42 +136,17 @@ public class MaxRiMethod implements RiMethod {
         return true; // TODO: do the required analysis
     }
 
-    public boolean hasExceptionHandlers() {
-        final CodeAttribute codeAttribute = codeAttribute("hasExceptionHandlers()");
-        if (codeAttribute != null) {
-            final Sequence<ExceptionHandlerEntry> handlerTable = codeAttribute.exceptionHandlerTable();
-            return handlerTable != null && handlerTable.length() > 0;
-        }
-        return false;
-    }
-
     public boolean isResolved() {
         return methodActor != null;
     }
 
-    public boolean isAbstract() {
-        return asMethodActor("isAbstract()").isAbstract();
-    }
-
-    public boolean isNative() {
-        return asMethodActor("isNative()").isNative();
+    public int accessFlags() {
+        return asClassMethodActor("accessFlags()").flags() & Actor.JAVA_METHOD_FLAGS;
     }
 
     public boolean isLeafMethod() {
         MethodActor methodActor = asMethodActor("isLeafMethod()");
         return methodActor.isFinal() || methodActor.isPrivate() || methodActor.holder().isFinal();
-    }
-
-    public boolean isSynchronized() {
-        return asMethodActor("isSynchronized()").isSynchronized();
-    }
-
-    public boolean isStrictFP() {
-        return asMethodActor("isStrictFP()").isStrict();
-    }
-
-    public boolean isStatic() {
-        return asMethodActor("isStatic()").isStatic();
     }
 
     public boolean isClassInitializer() {
@@ -197,29 +177,38 @@ public class MaxRiMethod implements RiMethod {
         return false;
     }
 
-    public int codeSize() {
-        return codeAttribute("codeSize()").code().length;
-    }
-
-    public List<RiExceptionHandler> exceptionHandlers() {
+    public RiExceptionHandler[] exceptionHandlers() {
         if (exceptionHandlers != null) {
             // return the cached exception handlers
             return exceptionHandlers;
         }
-        exceptionHandlers = new ArrayList<RiExceptionHandler>();
-        CodeAttribute codeAttribute = codeAttribute("exceptionHandlers()");
-        for (ExceptionHandlerEntry entry : codeAttribute.exceptionHandlerTable()) {
-            RiType catchType;
-            if (entry.catchTypeIndex() == 0) {
-                catchType = null;
-            } else {
-                RiConstantPool riConstantPool = constantPool.runtime.getConstantPool(this);
-                catchType = riConstantPool.resolveType((char) entry.catchTypeIndex());
+
+        Sequence<ExceptionHandlerEntry> exceptionHandlerTable = Sequence.Static.empty(ExceptionHandlerEntry.class);
+        if (methodActor instanceof ClassMethodActor) {
+            CodeAttribute codeAttribute = codeAttribute("exceptionHandlers()");
+            if (codeAttribute != null) {
+                exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
             }
-            exceptionHandlers.add(new MaxRiExceptionHandler((char) entry.startPosition(),
-                                                             (char) entry.endPosition(),
-                                                             (char) entry.handlerPosition(),
-                                                             (char) entry.catchTypeIndex(), catchType));
+        }
+        if (exceptionHandlerTable.length() == 0) {
+            exceptionHandlers = RiExceptionHandler.NONE;
+        } else {
+            exceptionHandlers = new RiExceptionHandler[exceptionHandlerTable.length()];
+            int i = 0;
+            for (ExceptionHandlerEntry entry : exceptionHandlerTable) {
+                RiType catchType;
+                if (entry.catchTypeIndex() == 0) {
+                    catchType = null;
+                } else {
+                    RiConstantPool riConstantPool = constantPool.runtime.getConstantPool(this);
+                    catchType = riConstantPool.resolveType((char) entry.catchTypeIndex());
+                }
+                exceptionHandlers[i++] = new CiExceptionHandler(
+                                (char) entry.startPosition(),
+                                (char) entry.endPosition(),
+                                (char) entry.handlerPosition(),
+                                (char) entry.catchTypeIndex(), catchType);
+            }
         }
         return exceptionHandlers;
     }
@@ -306,26 +295,5 @@ public class MaxRiMethod implements RiMethod {
             return methodActor.toString();
         }
         return methodRef.toString() + " [unresolved]";
-    }
-
-    public int javaCodeAtBci(int bci) {
-        return code()[bci] & 0xff;
-    }
-
-    public int interfaceID() {
-
-        if (methodActor.holder() instanceof InterfaceActor) {
-            return ((InterfaceActor) methodActor.holder()).id;
-        }
-
-        return -1;
-    }
-
-    public int indexInInterface() {
-        if (methodActor instanceof InterfaceMethodActor) {
-            return ((InterfaceMethodActor) methodActor).iIndexInInterface();
-        }
-
-        return -1;
     }
 }

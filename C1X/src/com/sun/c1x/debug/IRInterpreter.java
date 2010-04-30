@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.debug;
 
+import static java.lang.reflect.Modifier.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -824,7 +826,7 @@ public class IRInterpreter {
             }
             // native methods are invoked using reflection.
             // some special methods/classes are also always called using reflection
-            if (targetMethod.isNative() || "newInstance".equals(methodName) || "newInstance0".equals(methodName) ||
+            if (isNative(targetMethod.accessFlags()) || "newInstance".equals(methodName) || "newInstance0".equals(methodName) ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Unsafe")                     ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Reflection")                 ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.FieldAccessor")) {
@@ -1827,7 +1829,7 @@ public class IRInterpreter {
     }
 
     public CiConstant execute(IR hir, CiConstant... arguments) throws InvocationTargetException {
-        if (hir.compilation.method.isNative()) {
+        if (isNative(hir.compilation.method.accessFlags())) {
             // TODO: invoke the native method via reflection?
             return null;
         }

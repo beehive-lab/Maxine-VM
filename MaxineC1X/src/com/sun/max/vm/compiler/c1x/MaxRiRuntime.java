@@ -41,7 +41,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -192,20 +191,6 @@ public class MaxRiRuntime implements RiRuntime {
         throw new MaxRiUnresolved("invalid RiMethod instance: " + method.getClass());
     }
 
-    public boolean isMP() {
-        return true;
-    }
-
-    public boolean jvmtiCanPostExceptions() {
-        // TODO: Check what to return here
-        return false;
-    }
-
-    public boolean needsExplicitNullCheck(int offset) {
-        // TODO: Return false if implicit null check is possible for this offset!
-        return offset >= 4096;
-    }
-
     public int threadExceptionOffset() {
         return VmThreadLocal.EXCEPTION_OBJECT.offset;
     }
@@ -247,7 +232,7 @@ public class MaxRiRuntime implements RiRuntime {
             final InlineDataDecoder inlineDataDecoder = null;
             final Pointer startAddress = Pointer.fromInt(0);
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false);
-            Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+            Disassembler.disassemble(byteArrayOutputStream, code, processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }
         return "";
@@ -310,7 +295,7 @@ public class MaxRiRuntime implements RiRuntime {
                 }
             };
             byte[] code = Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize());
-            Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+            Disassembler.disassemble(byteArrayOutputStream, code, processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }
         return "";

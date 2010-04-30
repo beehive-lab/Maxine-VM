@@ -616,7 +616,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         assert cmpval != newval : "cmp and new values must be in different registers";
         assert cmpval != addr : "cmp and addr must be in different registers";
         assert newval != addr : "new value and addr must be in different registers";
-        if (compilation.runtime.isMP()) {
+        if (compilation.target.isMP) {
             masm.lock();
         }
         if (op.code == LIROpcode.CasInt) {

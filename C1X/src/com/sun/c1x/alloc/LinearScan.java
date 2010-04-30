@@ -21,6 +21,7 @@
 package com.sun.c1x.alloc;
 
 import static com.sun.cri.ci.CiUtil.*;
+import static java.lang.reflect.Modifier.*;
 
 import java.util.*;
 
@@ -1107,7 +1108,7 @@ public class LinearScan {
             if (move.operand().isStackSlot()) {
                 CiStackSlot slot = (CiStackSlot) move.operand();
                 if (C1XOptions.DetailedAsserts) {
-                    int argSlots = compilation.method.signatureType().argumentSlots(!compilation.method.isStatic());
+                    int argSlots = compilation.method.signatureType().argumentSlots(!isStatic(compilation.method.accessFlags()));
                     assert slot.index() >= 0 && slot.index() < argSlots;
                     assert move.id > 0 : "invalid id";
                     assert blockForId(move.id).numberOfPreds() == 0 : "move from stack must be in first block";
@@ -2601,7 +2602,7 @@ public class LinearScan {
                 CiValue operand = operands.operandFor(operandNum);
                 assert operand.isVariable() : "value must have variable operand";
                 Value value = gen.instructionForVariable((CiVariable) operand);
-                assert value != null : "all intervals live across block boundaries must have Value";
+                assert value != null : "all intervals live across block boundaries must have Value (block=" + block.blockID + ", operandNum=" + operandNum + ", operand=" + operand + ")";
                 // TKR assert value.asConstant() == null || value.isPinned() :
                 // "only pinned constants can be alive accross block boundaries";
             }

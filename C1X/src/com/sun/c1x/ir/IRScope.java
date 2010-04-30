@@ -139,7 +139,7 @@ public class IRScope {
         }
         IRScope curScope = this;
         // TODO: should this calculation be done in ScopeData (because of synchronized handler)?
-        while (curScope != null && curScope.method.exceptionHandlers().size() > 0) {
+        while (curScope != null && curScope.method.exceptionHandlers().length > 0) {
             curScope = curScope.caller;
         }
         lockStackSize = curScope == null ? 0 : curScope.callerState() == null ? 0 : curScope.callerState().stackSize();

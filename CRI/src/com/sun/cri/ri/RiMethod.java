@@ -20,7 +20,8 @@
  */
 package com.sun.cri.ri;
 
-import java.util.*;
+import java.lang.reflect.*;
+
 
 /**
  * Represents resolved and unresolved methods. Methods, like fields and types, are resolved through
@@ -50,16 +51,16 @@ public interface RiMethod {
     RiSignature signatureType();
 
     /**
-     * Checks whether this method has bytecode.
-     * @return {@code true} if bytecode is available for the method
-     */
-    boolean hasCode();
-
-    /**
      * Checks whether this method is resolved.
      * @return {@code true} if the method is resolved
      */
     boolean isResolved();
+
+    /**
+     * Gets the bytecode of the method, if the method {@linkplain #isResolved()} and has code.
+     * @return the bytecode of the method or {@code null} if none is available
+     */
+    byte[] code();
 
     /**
      * Gets the {@link RiMethodProfile method data} for this method, which stores instrumentation,
@@ -68,13 +69,6 @@ public interface RiMethod {
      */
     RiMethodProfile methodData();
 
-    /**
-     * Retrieves the Java bytecode at the specified bytecode index.
-     * @param bci the bytecode index
-     * @return the java bytecode at the specified index
-     */
-    int javaCodeAtBci(int bci); // TODO: remove
-
     // N.B. All operations beyond this point are only available on resolved methods.
 
     /**
@@ -82,20 +76,6 @@ public interface RiMethod {
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
      */
     String jniSymbol();
-
-    /**
-     * Gets the bytecode of the method, if the method {@linkplain #hasCode() has code}.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the bytecode of the method
-     */
-    byte[] code();
-
-    /**
-     * Gets the size of the bytecode of the method, if the method has bytecode.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the size of the bytecode of the method
-     */
-    int codeSize();
 
     /**
      * Gets the maximum number of locals used in this method's bytecode.
@@ -119,53 +99,20 @@ public interface RiMethod {
     boolean hasBalancedMonitors();
 
     /**
-     * Checks whether the method has any exception handlers.
+     * Gets the access flags for this method. Only the flags specified in the JVM specification
+     * will be included in the returned mask. The utility methods in the {@link Modifier} class
+     * should be used to query the returned mask for the presence/absence of individual flags.
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method has an exception handlers
+     * @return the mask of JVM defined method access flags defined for this method
      */
-    boolean hasExceptionHandlers();
-
-    /**
-     * Checks whether this method is abstract.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is abstract
-     */
-    boolean isAbstract();
-
-    /**
-     * Checks whether this method is native.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is native
-     */
-    boolean isNative();
-
+    int accessFlags();
+    
     /**
      * Checks whether this method is a leaf method.
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
      * @return {@code true} if the method is a leaf method (that is, is final or private)
      */
     boolean isLeafMethod();
-
-    /**
-     * Checks whether this method is synchronized.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is synchronized
-     */
-    boolean isSynchronized();
-
-    /**
-     * Checks whether this method is strict with respect to floating point.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is strict
-     */
-    boolean isStrictFP();
-
-    /**
-     * Checks whether this method is static.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is static
-     */
-    boolean isStatic();
 
     /**
      * Checks whether this method is a class initializer (that is, <code> &lt;clinit&gt;</code>).
@@ -210,23 +157,5 @@ public interface RiMethod {
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
      * @return the list of exception handlers
      */
-    List<RiExceptionHandler> exceptionHandlers();
-
-    /**
-     * Gets the interface method ID for this method, if this method is an interface method.
-     * NOTE: ONLY AVAILABLE ON RESOLVED INTERFACE METHODS.
-     * On all other methods the result is -1.
-     *
-     * @return the interface method id
-     */
-    int interfaceID();
-
-    /**
-     * Gets index of the method within its interface.
-     * NOTE: ONLY AVAILABLE ON RESOLVED INTERFACE METHODS.
-     * On all other methods the result is -1.
-     *
-     * @return the index of the method within the interface
-     */
-    int indexInInterface();
+    RiExceptionHandler[] exceptionHandlers();
 }

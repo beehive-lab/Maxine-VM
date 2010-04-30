@@ -24,6 +24,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -176,8 +177,8 @@ public class MaxRiType implements RiType {
      * @return {@code true} if this class is final
      * @throws MaxRiUnresolved if the class is not resolved
      */
-    public boolean isFinal() {
-        return asClassActor("isFinal()").isFinal();
+    public int accessFlags() {
+        return asClassActor("isFinal()").flags() & Actor.JAVA_CLASS_FLAGS;
     }
 
     /**
