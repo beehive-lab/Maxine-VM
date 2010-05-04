@@ -359,7 +359,7 @@ public abstract class SignatureDescriptor extends Descriptor implements RiSignat
     }
 
     public RiType argumentTypeAt(int index, RiType accessingClass) {
-        return TypeDescriptor.toRiType(parameterDescriptorAt(index), accessingClass);
+        return UnresolvedType.toRiType(parameterDescriptorAt(index), accessingClass);
     }
 
     public CiKind argumentKindAt(int index) {
@@ -367,7 +367,7 @@ public abstract class SignatureDescriptor extends Descriptor implements RiSignat
     }
 
     public final RiType returnType(RiType accessingClass) {
-        return TypeDescriptor.toRiType(resultDescriptor(), accessingClass);
+        return UnresolvedType.toRiType(resultDescriptor(), accessingClass);
     }
 
     public final CiKind returnKind() {
