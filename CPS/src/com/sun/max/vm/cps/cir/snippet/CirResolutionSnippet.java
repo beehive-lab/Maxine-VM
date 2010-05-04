@@ -49,15 +49,15 @@ public final class CirResolutionSnippet extends CirSnippet {
             // This occurs when compiling the stub for folding a snippet
             return false;
         }
-        final ResolutionGuard guard = (ResolutionGuard) arguments[Parameter.guard.ordinal()].value().asObject();
+        final ResolutionGuard.InPool guard = (ResolutionGuard.InPool) arguments[Parameter.guard.ordinal()].value().asObject();
         if (guard.value != null) {
             return true;
         }
-        final ConstantPool constantPool = guard.constantPool;
-        final ResolvableConstant resolvableConstant = constantPool.resolvableAt(guard.constantPoolIndex);
+        final ConstantPool constantPool = guard.pool;
+        final ResolvableConstant resolvableConstant = constantPool.resolvableAt(guard.cpi);
         if (resolvableConstant.isResolvableWithoutClassLoading(constantPool)) {
             try {
-                resolvableConstant.resolve(constantPool, guard.constantPoolIndex);
+                resolvableConstant.resolve(constantPool, guard.cpi);
                 return true;
             } catch (LinkageError linkageError) {
                 // Whatever went wrong here is supposed to show up at runtime, too.

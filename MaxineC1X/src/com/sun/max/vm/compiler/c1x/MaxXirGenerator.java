@@ -42,6 +42,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.classfile.constant.UnresolvedType.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
@@ -72,24 +73,6 @@ public class MaxXirGenerator extends RiXirGenerator {
         XirPair(XirTemplate resolved, XirTemplate unresolved) {
             this.resolved = resolved;
             this.unresolved = unresolved;
-        }
-    }
-
-    static class ClassResolutionTemplates {
-        final XirTemplate unresolved;
-        final XirTemplate unresolvedWithoutGuard;
-        ClassResolutionTemplates(XirTemplate unresolved, XirTemplate unresolvedWithoutGuard) {
-            this.unresolved = unresolved;
-            this.unresolvedWithoutGuard = unresolvedWithoutGuard;
-        }
-
-    }
-
-    static class XirTriple extends XirPair {
-        final XirTemplate unresolvedWithoutGuard;
-        XirTriple(XirTemplate resolved, XirTemplate unresolved, XirTemplate unresolvedWithoutGuard) {
-            super(resolved, unresolved);
-            this.unresolvedWithoutGuard = unresolvedWithoutGuard;
         }
     }
 
@@ -129,14 +112,14 @@ public class MaxXirGenerator extends RiXirGenerator {
     private XirTemplate arraylengthTemplate;
     private XirTemplate monitorEnterTemplate;
     private XirTemplate monitorExitTemplate;
-    private ClassResolutionTemplates[] resolveClassTemplates;
-    private XirTriple newInstanceTemplate;
-    private XirTriple checkcastForLeafTemplate;
-    private XirTriple checkcastForClassTemplate;
-    private XirTriple checkcastForInterfaceTemplate;
-    private XirTriple instanceofForLeafTemplate;
-    private XirTriple instanceofForClassTemplate;
-    private XirTriple instanceofForInterfaceTemplate;
+    private XirTemplate[] resolveClassTemplates;
+    private XirPair newInstanceTemplate;
+    private XirPair checkcastForLeafTemplate;
+    private XirPair checkcastForClassTemplate;
+    private XirPair checkcastForInterfaceTemplate;
+    private XirPair instanceofForLeafTemplate;
+    private XirPair instanceofForClassTemplate;
+    private XirPair instanceofForInterfaceTemplate;
 
     private List<XirTemplate> stubs = new ArrayList<XirTemplate>();
 
@@ -219,7 +202,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             multiNewArrayTemplate[i] = buildNewMultiArray(i);
         }
 
-        resolveClassTemplates = new ClassResolutionTemplates[Representation.values().length];
+        resolveClassTemplates = new XirTemplate[Representation.values().length];
         for (Representation representation : Representation.values()) {
             resolveClassTemplates[representation.ordinal()] = buildResolveClass(representation);
         }
@@ -254,14 +237,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     @Override
     public XirSnippet genResolveClass(XirSite site, RiType type, Representation representation) {
-        assert !type.isResolved();
-        if (type instanceof TypeDescriptor) {
-            XirArgument loader = XirArgument.forObject(site.resolutionLoader());
-            TypeDescriptor typeDescriptor = (TypeDescriptor) type;
-            XirArgument t = XirArgument.forObject(typeDescriptor);
-            return new XirSnippet(resolveClassTemplates[representation.ordinal()].unresolvedWithoutGuard, loader, t);
-        }
-        return new XirSnippet(resolveClassTemplates[representation.ordinal()].unresolved, guardFor(type, ResolveClass.SNIPPET));
+        return new XirSnippet(resolveClassTemplates[representation.ordinal()], guardFor(type, ResolveClass.SNIPPET));
     }
 
     @Override
@@ -376,12 +352,6 @@ public class MaxXirGenerator extends RiXirGenerator {
         if (type.isResolved() && type.isInitialized()) {
             return new XirSnippet(newInstanceTemplate.resolved, XirArgument.forObject(hubFor(type)));
         }
-        if (type instanceof TypeDescriptor) {
-            XirArgument loader = XirArgument.forObject(site.resolutionLoader());
-            TypeDescriptor typeDescriptor = (TypeDescriptor) type;
-            XirArgument t = XirArgument.forObject(typeDescriptor);
-            return new XirSnippet(newInstanceTemplate.unresolvedWithoutGuard, loader, t);
-        }
         XirArgument guard = guardFor(type, ResolveClassForNew.SNIPPET);
         return new XirSnippet(newInstanceTemplate.unresolved, guard);
     }
@@ -446,13 +416,6 @@ public class MaxXirGenerator extends RiXirGenerator {
             }
             return new XirSnippet(template, object, hub);
         }
-        if (type instanceof TypeDescriptor) {
-            XirArgument loader = XirArgument.forObject(site.resolutionLoader());
-            TypeDescriptor typeDescriptor = (TypeDescriptor) type;
-            XirArgument t = XirArgument.forObject(typeDescriptor);
-            return new XirSnippet(checkcastForLeafTemplate.unresolvedWithoutGuard, object, loader, t);
-        }
-
         XirArgument guard = guardFor(type, ResolveClass.SNIPPET);
         return new XirSnippet(checkcastForInterfaceTemplate.unresolved, object, guard);
     }
@@ -478,13 +441,6 @@ public class MaxXirGenerator extends RiXirGenerator {
             }
             return new XirSnippet(template, object, hub);
         }
-        if (type instanceof TypeDescriptor) {
-            XirArgument loader = XirArgument.forObject(site.resolutionLoader());
-            TypeDescriptor typeDescriptor = (TypeDescriptor) type;
-            XirArgument t = XirArgument.forObject(typeDescriptor);
-            return new XirSnippet(checkcastForLeafTemplate.unresolvedWithoutGuard, object, loader, t);
-        }
-
         XirArgument guard = guardFor(type, ResolveClass.SNIPPET);
         return new XirSnippet(instanceofForInterfaceTemplate.unresolved, object, guard);
     }
@@ -516,22 +472,25 @@ public class MaxXirGenerator extends RiXirGenerator {
         return makeResolutionGuard(m.constantPool, m.cpi, snippet);
     }
 
-    private XirArgument guardForComponentType(RiType unresolvedType) {
-        UnresolvedType type = (UnresolvedType) unresolvedType;
-        return XirArgument.forObject(makeResolutionGuard(type.constantPool, type.cpi, ResolveArrayClass.SNIPPET));
+    private XirArgument guardForComponentType(RiType type) {
+        if (type instanceof InPool) {
+            InPool unresolvedType = (InPool) type;
+            return XirArgument.forObject(makeResolutionGuard(unresolvedType.pool, unresolvedType.cpi, ResolveArrayClass.SNIPPET));
+        }
+        return XirArgument.forObject(new ResolutionGuard.InAccessingClass((ByAccessingClass) type));
     }
 
     private XirArgument guardFor(RiType type, ResolutionSnippet snippet) {
         ResolutionGuard guard;
         if (!type.isResolved()) {
-            UnresolvedType unresolvedType = (UnresolvedType) type;
-            if (unresolvedType.cpi > 0) {
-                guard = makeResolutionGuard(unresolvedType.constantPool, unresolvedType.cpi, snippet);
+            if (type instanceof InPool) {
+                InPool unresolvedType = (InPool) type;
+                guard = makeResolutionGuard(unresolvedType.pool, unresolvedType.cpi, snippet);
             } else {
-                guard = new ResolutionGuard(null, Integer.MAX_VALUE);
+                guard = new ResolutionGuard.InAccessingClass((ByAccessingClass) type);
             }
         } else {
-            guard = new ResolutionGuard(null, Integer.MAX_VALUE);
+            guard = new ResolutionGuard.InPool(null, Integer.MAX_VALUE);
             guard.value = (ClassActor) type;
         }
         return XirArgument.forObject(guard);
@@ -542,42 +501,20 @@ public class MaxXirGenerator extends RiXirGenerator {
         return pool.makeResolutionGuard(cpi, snippet);
     }
 
-    private ClassResolutionTemplates buildResolveClass(Representation representation) {
-        XirTemplate unresolved;
-        XirTemplate unresolvedWithoutGuard;
-
-        {
-            XirOperand result = asm.restart(CiKind.Object);
-            XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
-            String resolver = null;
-            switch (representation) {
-                // Checkstyle: stop
-                case JavaClass    : resolver = "resolveClassObject"; break;
-                case ObjectHub    : resolver = "resolveHub"; break;
-                case StaticFields : resolver = "resolveStaticTuple"; break;
-                case TypeInfo     : resolver = "resolveClassActor"; break;
-                // Checkstyle: resume
-            }
-            callRuntimeThroughStub(asm, resolver, result, guard);
-            unresolved = finishTemplate(asm, resolver);
+    private XirTemplate buildResolveClass(Representation representation) {
+        XirOperand result = asm.restart(CiKind.Object);
+        XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
+        String resolver = null;
+        switch (representation) {
+            // Checkstyle: stop
+            case JavaClass    : resolver = "resolveClassObject"; break;
+            case ObjectHub    : resolver = "resolveHub"; break;
+            case StaticFields : resolver = "resolveStaticTuple"; break;
+            case TypeInfo     : resolver = "resolveClassActor"; break;
+            // Checkstyle: resume
         }
-        {
-            XirOperand result = asm.restart(CiKind.Object);
-            XirParameter loader = asm.createConstantInputParameter("loader", CiKind.Object);
-            XirParameter type = asm.createConstantInputParameter("type", CiKind.Object);
-            String resolver = null;
-            switch (representation) {
-                // Checkstyle: stop
-                case JavaClass    : resolver = "resolveClassObjectWithoutGuard"; break;
-                case ObjectHub    : resolver = "resolveHubWithoutGuard"; break;
-                case StaticFields : resolver = "resolveStaticTupleWithoutGuard"; break;
-                case TypeInfo     : resolver = "resolveClassActorWithoutGuard"; break;
-                // Checkstyle: resume
-            }
-            callRuntimeThroughStub(asm, resolver, result, loader, type);
-            unresolvedWithoutGuard = finishTemplate(asm, resolver);
-        }
-        return new ClassResolutionTemplates(unresolved, unresolvedWithoutGuard);
+        callRuntimeThroughStub(asm, resolver, result, guard);
+        return finishTemplate(asm, resolver);
     }
 
     private XirTemplate buildSafepoint() {
@@ -887,10 +824,9 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirPair(resolved == null ? unresolved : resolved, unresolved);
     }
 
-    private XirTriple buildNewInstance() {
+    private XirPair buildNewInstance() {
         XirTemplate resolved;
         XirTemplate unresolved;
-        XirTemplate unresolvedWithoutGuard;
         {
             // resolved new instance
             XirOperand result = asm.restart(CiKind.Object);
@@ -907,18 +843,8 @@ public class MaxXirGenerator extends RiXirGenerator {
             callRuntimeThroughStub(asm, "allocateObject", result, hub);
             unresolved = finishTemplate(asm, "new-unresolved");
         }
-        {
-            // unresolved new instance
-            XirOperand result = asm.restart(CiKind.Object);
-            XirParameter loader = asm.createConstantInputParameter("loader", CiKind.Object);
-            XirParameter type = asm.createConstantInputParameter("type", CiKind.Object);
-            XirOperand hub = asm.createTemp("hub", CiKind.Object);
-            callRuntimeThroughStub(asm, "resolveNewWithoutGuard", hub, loader, type);
-            callRuntimeThroughStub(asm, "allocateObject", result, hub);
-            unresolvedWithoutGuard = finishTemplate(asm, "new-unresolved");
-        }
 
-        return new XirTriple(resolved, unresolved, unresolvedWithoutGuard);
+        return new XirPair(resolved, unresolved);
     }
 
     private XirPair buildPutFieldTemplate(CiKind kind, boolean genWriteBarrier, boolean isStatic) {
@@ -998,8 +924,9 @@ public class MaxXirGenerator extends RiXirGenerator {
         return finishTemplate(asm, "monitorenter");
     }
 
-    private XirTriple buildCheckcastForLeaf(boolean nonnull) {
+    private XirPair buildCheckcastForLeaf(boolean nonnull) {
         XirTemplate resolved;
+        XirTemplate unresolved;
         {
             // resolved checkcast for a leaf class
             asm.restart();
@@ -1019,12 +946,16 @@ public class MaxXirGenerator extends RiXirGenerator {
             callRuntimeThroughStub(asm, "throwClassCastException", null);
             resolved = finishTemplate(asm, object, "checkcast-leaf<" + nonnull + ">");
         }
-        ClassResolutionTemplates unresolved = buildUnresolvedCheckcast(nonnull);
-        return new XirTriple(resolved, unresolved.unresolved, unresolved.unresolvedWithoutGuard);
+        {
+            // unresolved checkcast
+            unresolved = buildUnresolvedCheckcast(nonnull);
+        }
+        return new XirPair(resolved, unresolved);
     }
 
-    private XirTriple buildCheckcastForInterface(boolean nonnull) {
+    private XirPair buildCheckcastForInterface(boolean nonnull) {
         XirTemplate resolved;
+        XirTemplate unresolved;
         {
             // resolved checkcast against an interface class
             asm.restart();
@@ -1056,45 +987,29 @@ public class MaxXirGenerator extends RiXirGenerator {
             callRuntimeThroughStub(asm, "throwClassCastException", null);
             resolved = finishTemplate(asm, object, "checkcast-interface<" + nonnull + ">");
         }
-        ClassResolutionTemplates unresolved = buildUnresolvedCheckcast(nonnull);
-        return new XirTriple(resolved, unresolved.unresolved, unresolved.unresolvedWithoutGuard);
+        {
+            unresolved = buildUnresolvedCheckcast(nonnull);
+        }
+        return new XirPair(resolved, unresolved);
     }
 
-    private ClassResolutionTemplates buildUnresolvedCheckcast(boolean nonnull) {
-        XirTemplate unresolved;
-        XirTemplate unresolvedWithoutGuard;
-        {
-            asm.restart();
-            XirParameter object = asm.createInputParameter("object", CiKind.Object);
-            XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
-            XirLabel pass = asm.createInlineLabel("pass");
-            if (!nonnull) {
-                // XXX: build a version that does not include a null check
-                asm.jeq(pass, object, asm.o(null));
-            }
-            callRuntimeThroughStub(asm, "unresolvedCheckcast", null, object, guard);
-            asm.bindInline(pass);
-            unresolved = finishTemplate(asm, object, "checkcast-unresolved<" + nonnull + ">");
+    private XirTemplate buildUnresolvedCheckcast(boolean nonnull) {
+        asm.restart();
+        XirParameter object = asm.createInputParameter("object", CiKind.Object);
+        XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
+        XirLabel pass = asm.createInlineLabel("pass");
+        if (!nonnull) {
+            // XXX: build a version that does not include a null check
+            asm.jeq(pass, object, asm.o(null));
         }
-        {
-            asm.restart();
-            XirParameter object = asm.createInputParameter("object", CiKind.Object);
-            XirParameter loader = asm.createInputParameter("loader", CiKind.Object);
-            XirParameter type = asm.createInputParameter("type", CiKind.Object);
-            XirLabel pass = asm.createInlineLabel("pass");
-            if (!nonnull) {
-                // XXX: build a version that does not include a null check
-                asm.jeq(pass, object, asm.o(null));
-            }
-            callRuntimeThroughStub(asm, "unresolvedCheckcastWithoutGuard", null, object, loader, type);
-            asm.bindInline(pass);
-            unresolvedWithoutGuard = finishTemplate(asm, object, "checkcast-unresolved<" + nonnull + ">");
-        }
-        return new ClassResolutionTemplates(unresolved, unresolvedWithoutGuard);
+        callRuntimeThroughStub(asm, "unresolvedCheckcast", null, object, guard);
+        asm.bindInline(pass);
+        return finishTemplate(asm, object, "checkcast-unresolved<" + nonnull + ">");
     }
 
-    private XirTriple buildInstanceofForLeaf(boolean nonnull) {
+    private XirPair buildInstanceofForLeaf(boolean nonnull) {
         XirTemplate resolved;
+        XirTemplate unresolved;
         {
             XirOperand result = asm.restart(CiKind.Boolean);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
@@ -1114,12 +1029,16 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.bindInline(fail);
             resolved = finishTemplate(asm, "instanceof-leaf<" + nonnull + ">");
         }
-        ClassResolutionTemplates unresolved = buildUnresolvedInstanceOf(nonnull);
-        return new XirTriple(resolved, unresolved.unresolved, unresolved.unresolvedWithoutGuard);
+        {
+            // unresolved instanceof
+            unresolved = buildUnresolvedInstanceOf(nonnull);
+        }
+        return new XirPair(resolved, unresolved);
     }
 
-    private XirTriple buildInstanceofForInterface(boolean nonnull) {
+    private XirPair buildInstanceofForInterface(boolean nonnull) {
         XirTemplate resolved;
+        XirTemplate unresolved;
         {
             // resolved instanceof for interface
             XirOperand result = asm.restart(CiKind.Boolean);
@@ -1152,57 +1071,35 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.bindInline(fail);
             resolved = finishTemplate(asm, "instanceof-interface<" + nonnull + ">");
         }
-        ClassResolutionTemplates unresolved = buildUnresolvedInstanceOf(nonnull);
-        return new XirTriple(resolved, unresolved.unresolved, unresolved.unresolvedWithoutGuard);
+        {
+            // unresolved instanceof
+            unresolved = buildUnresolvedInstanceOf(nonnull);
+        }
+        return new XirPair(resolved, unresolved);
     }
 
-    private ClassResolutionTemplates buildUnresolvedInstanceOf(boolean nonnull) {
+    private XirTemplate buildUnresolvedInstanceOf(boolean nonnull) {
         XirTemplate unresolved;
-        XirTemplate unresolvedWithoutGuard;
-        {
-            XirOperand result = asm.restart(CiKind.Boolean);
-            XirParameter object = asm.createInputParameter("object", CiKind.Object);
-            XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
-            XirLabel fail = null;
-            if (!nonnull) {
-                // first check failed
-                fail = asm.createInlineLabel("fail");
-                asm.jeq(fail, object, asm.o(null));
-            }
-            callRuntimeThroughStub(asm, "unresolvedInstanceOf", result, object, guard);
-            if (!nonnull) {
-                // null check failed
-                XirLabel pass = asm.createInlineLabel("pass");
-                asm.jmp(pass);
-                asm.bindInline(fail);
-                asm.mov(result, asm.b(false));
-                asm.bindInline(pass);
-            }
-            unresolved = finishTemplate(asm, "instanceof-unresolved<" + nonnull + ">");
+        XirOperand result = asm.restart(CiKind.Boolean);
+        XirParameter object = asm.createInputParameter("object", CiKind.Object);
+        XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
+        XirLabel fail = null;
+        if (!nonnull) {
+            // first check failed
+            fail = asm.createInlineLabel("fail");
+            asm.jeq(fail, object, asm.o(null));
         }
-        {
-            XirOperand result = asm.restart(CiKind.Boolean);
-            XirParameter object = asm.createInputParameter("object", CiKind.Object);
-            XirParameter loader = asm.createInputParameter("loader", CiKind.Object);
-            XirParameter type = asm.createInputParameter("type", CiKind.Object);
-            XirLabel fail = null;
-            if (!nonnull) {
-                // first check failed
-                fail = asm.createInlineLabel("fail");
-                asm.jeq(fail, object, asm.o(null));
-            }
-            callRuntimeThroughStub(asm, "unresolvedInstanceOfWithoutGuard", result, object, loader, type);
-            if (!nonnull) {
-                // null check failed
-                XirLabel pass = asm.createInlineLabel("pass");
-                asm.jmp(pass);
-                asm.bindInline(fail);
-                asm.mov(result, asm.b(false));
-                asm.bindInline(pass);
-            }
-            unresolvedWithoutGuard = finishTemplate(asm, "instanceof-unresolved<" + nonnull + ">");
+        callRuntimeThroughStub(asm, "unresolvedInstanceOf", result, object, guard);
+        if (!nonnull) {
+            // null check failed
+            XirLabel pass = asm.createInlineLabel("pass");
+            asm.jmp(pass);
+            asm.bindInline(fail);
+            asm.mov(result, asm.b(false));
+            asm.bindInline(pass);
         }
-        return new ClassResolutionTemplates(unresolved, unresolvedWithoutGuard);
+        unresolved = finishTemplate(asm, "instanceof-unresolved<" + nonnull + ">");
+        return unresolved;
     }
 
     private XirTemplate finishTemplate(CiXirAssembler asm, XirOperand result, String name) {
@@ -1311,24 +1208,12 @@ public class MaxXirGenerator extends RiXirGenerator {
             return ResolutionSnippet.ResolveClass.resolveClass(guard);
         }
 
-        public static ClassActor resolveClassActorWithoutGuard(ClassLoader loader, TypeDescriptor type) {
-            return type.resolve(loader);
-        }
-
         public static Class resolveClassObject(ResolutionGuard guard) {
             return ResolutionSnippet.ResolveClass.resolveClass(guard).javaClass();
         }
 
-        public static Class resolveClassObjectWithoutGuard(ClassLoader loader, TypeDescriptor type) {
-            return type.resolve(loader).javaClass();
-        }
-
         public static Object resolveHub(ResolutionGuard guard) {
             return ResolutionSnippet.ResolveClass.resolveClass(guard).dynamicHub();
-        }
-
-        public static Object resolveHubWithoutGuard(ClassLoader loader, TypeDescriptor type) {
-            return type.resolve(loader).dynamicHub();
         }
 
         public static Object resolveNew(ResolutionGuard guard) {
@@ -1337,34 +1222,25 @@ public class MaxXirGenerator extends RiXirGenerator {
             return classActor.dynamicHub();
         }
 
-        public static Object resolveNewWithoutGuard(ClassLoader loader, TypeDescriptor type) {
-            final ClassActor classActor = type.resolve(loader);
-            if (classActor.isAbstract() || classActor.isArrayClass()) {
-                // Covers abstract classes and interfaces
-                throw new InstantiationError();
-            }
-            return classActor.dynamicHub();
-        }
-
         public static Object resolveNewArray(ResolutionGuard guard) {
             return ResolutionSnippet.ResolveArrayClass.resolveArrayClass(guard).dynamicHub();
         }
 
-        public static int resolveGetField(ResolutionGuard guard) {
+        public static int resolveGetField(ResolutionGuard.InPool guard) {
             return ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard).offset();
         }
 
-        public static int resolvePutField(ResolutionGuard guard) {
+        public static int resolvePutField(ResolutionGuard.InPool guard) {
             return ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard).offset();
         }
 
-        public static int resolveGetStatic(ResolutionGuard guard) {
+        public static int resolveGetStatic(ResolutionGuard.InPool guard) {
             FieldActor fieldActor = ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard);
             fieldActor.holder().makeInitialized();
             return fieldActor.offset();
         }
 
-        public static int resolvePutStatic(ResolutionGuard guard) {
+        public static int resolvePutStatic(ResolutionGuard.InPool guard) {
             FieldActor fieldActor = ResolutionSnippet.ResolveStaticFieldForWriting.resolveStaticFieldForWriting(guard);
             fieldActor.holder().makeInitialized();
             return fieldActor.offset();
@@ -1376,31 +1252,25 @@ public class MaxXirGenerator extends RiXirGenerator {
             return classActor.staticTuple();
         }
 
-        public static Object resolveStaticTupleWithoutGuard(ClassLoader loader, TypeDescriptor type) {
-            ClassActor classActor = type.resolve(loader);
-            classActor.makeInitialized();
-            return classActor.staticTuple();
-        }
-
         @UNSAFE
-        public static Word resolveStaticMethod(ResolutionGuard guard) {
+        public static Word resolveStaticMethod(ResolutionGuard.InPool guard) {
             return CompilationScheme.Static.compile(ResolutionSnippet.ResolveStaticMethod.resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
 
-        public static int resolveVirtualMethod(ResolutionGuard guard) {
+        public static int resolveVirtualMethod(ResolutionGuard.InPool guard) {
             return ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard).vTableIndex() * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
         }
 
         @UNSAFE
-        public static Word resolveSpecialMethod(ResolutionGuard guard) {
+        public static Word resolveSpecialMethod(ResolutionGuard.InPool guard) {
             return CompilationScheme.Static.compile(ResolutionSnippet.ResolveSpecialMethod.resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
 
-        public static int resolveInterfaceMethod(ResolutionGuard guard) {
+        public static int resolveInterfaceMethod(ResolutionGuard.InPool guard) {
             return ResolutionSnippet.ResolveInterfaceMethod.resolveInterfaceMethod(guard).iIndexInInterface();
         }
 
-        public static int resolveInterfaceID(ResolutionGuard guard) {
+        public static int resolveInterfaceID(ResolutionGuard.InPool guard) {
             return ResolutionSnippet.ResolveInterfaceMethod.resolveInterfaceMethod(guard).holder().id;
         }
 
@@ -1520,20 +1390,8 @@ public class MaxXirGenerator extends RiXirGenerator {
             }
         }
 
-        public static void unresolvedCheckcastWithoutGuard(Object object, ClassLoader loader, TypeDescriptor type) {
-            ClassActor classActor = type.resolve(loader);
-            if (!ObjectAccess.readHub(object).isSubClassHub(classActor)) {
-                Throw.classCastException(classActor, object);
-            }
-        }
-
         public static boolean unresolvedInstanceOf(Object object, ResolutionGuard guard) {
             final ClassActor classActor = ResolutionSnippet.ResolveClass.resolveClass(guard);
-            return ObjectAccess.readHub(object).isSubClassHub(classActor);
-        }
-
-        public static boolean unresolvedInstanceOfWithoutGuard(Object object, ClassLoader loader, TypeDescriptor type) {
-            ClassActor classActor = type.resolve(loader);
             return ObjectAccess.readHub(object).isSubClassHub(classActor);
         }
 
