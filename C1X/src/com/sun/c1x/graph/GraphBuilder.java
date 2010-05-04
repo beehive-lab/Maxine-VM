@@ -480,11 +480,11 @@ public final class GraphBuilder {
 
         if (con instanceof RiType) {
             // this is a load of class constant which might be unresolved
-            RiType ritype = (RiType) con;
-            if (!ritype.isResolved() || C1XOptions.TestPatching) {
-                push(CiKind.Object, append(new ResolveClass(ritype, RiType.Representation.JavaClass, stateBefore, cpi, constantPool())));
+            RiType riType = (RiType) con;
+            if (!riType.isResolved() || C1XOptions.TestPatching) {
+                push(CiKind.Object, append(new ResolveClass(riType, RiType.Representation.JavaClass, stateBefore)));
             } else {
-                push(CiKind.Object, append(Constant.forObject(ritype.javaClass())));
+                push(CiKind.Object, append(Constant.forObject(riType.javaClass())));
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
@@ -814,7 +814,7 @@ public final class GraphBuilder {
         if (initialized) {
             holderInstr = appendConstant(holder.getEncoding(representation));
         } else {
-            holderInstr = append(new ResolveClass(holder, representation, stateBefore, cpi, constantPool()));
+            holderInstr = append(new ResolveClass(holder, representation, stateBefore));
         }
         return holderInstr;
     }
@@ -2070,8 +2070,8 @@ public final class GraphBuilder {
 
                 case ALLOCSTKVAR    : genLoadStackAddress(); break;
                 case PAUSE          : genPause(); break;
-                case LSB            : genSignificantBit(false);break;
-                case MSB            : genSignificantBit(true);break;
+                case LSB            : // fall through
+                case MSB            : genSignificantBit(opcode);break;
 
 //                case PCMPSWP: {
 //                    opcode |= readUnsigned2() << 8;
@@ -2200,9 +2200,9 @@ public final class GraphBuilder {
         wpush(append(new StackAllocate(size)));
     }
 
-    private void genSignificantBit(boolean most) {
+    private void genSignificantBit(int opcode) {
         Value value = pop(CiKind.Word);
-        push(CiKind.Int, append(new SignificantBitOp(value, most)));
+        push(CiKind.Int, append(new SignificantBitOp(value, opcode)));
     }
 
     private void appendSnippetCall(RiSnippetCall snippetCall, FrameState stateBefore) {

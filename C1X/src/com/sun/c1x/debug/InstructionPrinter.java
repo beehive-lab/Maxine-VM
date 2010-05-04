@@ -198,7 +198,7 @@ public class InstructionPrinter extends ValueVisitor {
     public void visitArithmeticOp(ArithmeticOp arithOp) {
         out.print(arithOp.x()).
              print(' ').
-             print(Bytecodes.operator(arithOp.opcode())).
+             print(Bytecodes.operator(arithOp.opcode)).
              print(' ').
              print(arithOp.y());
     }
@@ -381,7 +381,7 @@ public class InstructionPrinter extends ValueVisitor {
     public void visitCompareOp(CompareOp compareOp) {
         out.print(compareOp.x()).
              print(' ').
-             print(Bytecodes.operator(compareOp.opcode())).
+             print(Bytecodes.operator(compareOp.opcode)).
              print(' ').
              print(compareOp.y());
     }
@@ -390,7 +390,7 @@ public class InstructionPrinter extends ValueVisitor {
     public void visitUnsignedCompareOp(UnsignedCompareOp compareOp) {
         out.print(compareOp.x()).
              print(' ').
-             print(Bytecodes.operator(compareOp.opcode())).
+             print(Bytecodes.operator(compareOp.opcode)).
              print(' ').
              print(compareOp.y());
     }
@@ -420,7 +420,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitConvert(Convert convert) {
-        out.print(Bytecodes.nameOf(convert.opcode())).print('(').print(convert.value()).print(')');
+        out.print(Bytecodes.nameOf(convert.opcode)).print('(').print(convert.value()).print(')');
     }
 
     @Override
@@ -530,7 +530,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitLogicOp(LogicOp logicOp) {
-        out.print(logicOp.x()).print(' ').print(Bytecodes.operator(logicOp.opcode())).print(' ').print(logicOp.y());
+        out.print(logicOp.x()).print(' ').print(Bytecodes.operator(logicOp.opcode)).print(' ').print(logicOp.y());
     }
 
     @Override
@@ -567,7 +567,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitSignificantBit(SignificantBitOp significantBit) {
-        out.print(significantBit.returnsMostSignificantBit() ? "msb [" : "lsb [").print(significantBit).print("] ");
+        out.print(Bytecodes.nameOf(significantBit.op) + " [").print(significantBit).print("] ");
     }
 
     @Override
@@ -627,7 +627,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitShiftOp(ShiftOp shiftOp) {
-        out.print(shiftOp.x()).print(' ').print(Bytecodes.operator(shiftOp.opcode())).print(' ').print(shiftOp.y());
+        out.print(shiftOp.x()).print(' ').print(Bytecodes.operator(shiftOp.opcode)).print(' ').print(shiftOp.y());
     }
 
     @Override

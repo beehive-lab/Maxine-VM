@@ -454,7 +454,7 @@ public class IRInterpreter {
 
             assertKind(xval.kind.stackKind(), yval.kind.stackKind(), i.kind.stackKind());
 
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case Bytecodes.IADD:
                     environment.bind(i, CiConstant.forInt((xval.asInt() + yval.asInt())), instructionCounter);
                     break;
@@ -547,7 +547,7 @@ public class IRInterpreter {
             CiConstant yval = environment.lookup(i.y());
             int s;
 
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case Bytecodes.ISHL:
                     assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
@@ -607,7 +607,7 @@ public class IRInterpreter {
             final CiConstant xval = environment.lookup(i.x());
             final CiConstant yval = environment.lookup(i.y());
 
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case Bytecodes.IAND:
                     assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() & yval.asInt())), instructionCounter);
@@ -643,19 +643,19 @@ public class IRInterpreter {
             final CiConstant xval = environment.lookup(i.x());
             final CiConstant yval = environment.lookup(i.y());
 
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case Bytecodes.LCMP:
                     environment.bind(i, CiConstant.forInt(compareLongs(xval.asLong(), yval.asLong())), instructionCounter);
                     break;
 
                 case Bytecodes.FCMPG:
                 case Bytecodes.FCMPL:
-                    environment.bind(i, CiConstant.forInt(compareFloats(i.opcode(), xval.asFloat(), yval.asFloat())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt(compareFloats(i.opcode, xval.asFloat(), yval.asFloat())), instructionCounter);
                     break;
 
                 case Bytecodes.DCMPG:
                 case Bytecodes.DCMPL:
-                    environment.bind(i, CiConstant.forInt(compareDoubles(i.opcode(), xval.asDouble(), yval.asDouble())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt(compareDoubles(i.opcode, xval.asDouble(), yval.asDouble())), instructionCounter);
                     break;
 
                 default:
@@ -710,7 +710,7 @@ public class IRInterpreter {
         @Override
         public void visitConvert(Convert i) {
             final CiConstant value = environment.lookup(i.value());
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case Bytecodes.I2L:
                     assertKind(value.kind, CiKind.Int);
                     environment.bind(i, CiConstant.forLong(value.asInt()), instructionCounter);

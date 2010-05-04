@@ -166,6 +166,8 @@ public class C1XTest {
             verboseOption.setValue(0);
             failFastOption.setValue(false);
             printBailoutOption.setValue(false);
+            C1XOptions.DetailedAsserts = false;
+            C1XOptions.IRChecking = false;
         }
 
         Trace.on(traceOption.getValue());
