@@ -758,7 +758,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             RiMethod method = i.target();
             if (method.isResolved()) {
                 // only try to fold resolved method invocations
-                CiConstant result = foldInvocation(i.target(), i.arguments());
+                CiConstant result = foldInvocation(runtime, i.target(), i.arguments());
                 if (result != null) {
                     // folding was successful
                     setCanonical(new Constant(result));
@@ -1312,8 +1312,9 @@ public class Canonicalizer extends DefaultValueVisitor {
         return args[index].asConstant().asLong();
     }
 
-    public static CiConstant foldInvocation(RiMethod method, Value[] args) {
-        Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
+    public static CiConstant foldInvocation(RiRuntime runtime, RiMethod method, Value[] args) {
+        Method reflectMethod = runtime.getFoldingMethod(method);
+//        Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
         if (reflectMethod != null) {
             // the method is foldable. check that all input arguments are constants
             for (Value a : args) {

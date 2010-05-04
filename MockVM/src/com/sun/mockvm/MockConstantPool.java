@@ -59,7 +59,7 @@ public class MockConstantPool implements RiConstantPool {
 	}
 
 	@Override
-	public Object lookupConstant(char cpi) {
+	public Object lookupConstant(int cpi) {
 		
 		Constant c = cp.getConstant(cpi);
 		if (c instanceof ConstantString) {
@@ -77,26 +77,26 @@ public class MockConstantPool implements RiConstantPool {
 	}
 
 	@Override
-	public RiField lookupGetField(char cpi) {
+	public RiField lookupGetField(int cpi) {
 		return lookupField(cpi);
 	}
 
 	@Override
-	public RiField lookupGetStatic(char cpi) {
+	public RiField lookupGetStatic(int cpi) {
 		return lookupField(cpi);
 	}
 
 	@Override
-	public RiMethod lookupInvokeInterface(char cpi) {
+	public RiMethod lookupInvokeInterface(int cpi) {
 		return lookupInvoke(cpi);
 	}
 
 	@Override
-	public RiMethod lookupInvokeSpecial(char cpi) {
+	public RiMethod lookupInvokeSpecial(int cpi) {
 		return lookupInvoke(cpi);
 	}
 	
-	private RiMethod lookupInvoke(char cpi) {
+	private RiMethod lookupInvoke(int cpi) {
 		ConstantMethodref c = (ConstantMethodref)cp.getConstant(cpi);
 		MockType type = (MockType)lookupType((char)c.getClassIndex());
 		ConstantNameAndType methodConstant = (ConstantNameAndType)cp.getConstant(c.getNameAndTypeIndex());
@@ -107,31 +107,31 @@ public class MockConstantPool implements RiConstantPool {
 	}
 
 	@Override
-	public RiMethod lookupInvokeStatic(char cpi) {
+	public RiMethod lookupInvokeStatic(int cpi) {
 		return lookupInvoke(cpi);
 	}
 
 	@Override
-	public RiMethod lookupInvokeVirtual(char cpi) {
+	public RiMethod lookupInvokeVirtual(int cpi) {
 		return lookupInvoke(cpi);
 	}
 
 	@Override
-	public RiMethod lookupMethod(char cpi) {
+	public RiMethod lookupMethod(int cpi) {
             return lookupInvoke(cpi);
 	}
 	
 	@Override
-	public RiField lookupPutField(char cpi) {
+	public RiField lookupPutField(int cpi) {
 		return lookupField(cpi);
 	}
 
 	@Override
-	public RiField lookupPutStatic(char cpi) {
+	public RiField lookupPutStatic(int cpi) {
 		return lookupField(cpi);
 	}
 	
-	private RiField lookupField(char cpi) {
+	private RiField lookupField(int cpi) {
 		ConstantFieldref c = (ConstantFieldref)cp.getConstant(cpi);
 		MockType type = (MockType)lookupType((char)c.getClassIndex());
 		ConstantNameAndType methodConstant = (ConstantNameAndType)cp.getConstant(c.getNameAndTypeIndex());
@@ -142,12 +142,12 @@ public class MockConstantPool implements RiConstantPool {
 	}
 
 	@Override
-	public RiSignature lookupSignature(char cpi) {
+	public RiSignature lookupSignature(int cpi) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public RiType lookupType(char cpi) {
+	public RiType lookupType(int cpi) {
 		Constant c = cp.getConstant(cpi);
 		ConstantClass cc = (ConstantClass)c;
 		int nameIndex = cc.getNameIndex();
@@ -158,27 +158,27 @@ public class MockConstantPool implements RiConstantPool {
 	}
 
 	@Override
-	public RiMethod resolveInvokeInterface(char cpi) {
+	public RiMethod resolveInvokeInterface(int cpi) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public RiMethod resolveInvokeSpecial(char cpi) {
+	public RiMethod resolveInvokeSpecial(int cpi) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public RiMethod resolveInvokeStatic(char cpi) {
+	public RiMethod resolveInvokeStatic(int cpi) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public RiMethod resolveInvokeVirtual(char cpi) {
+	public RiMethod resolveInvokeVirtual(int cpi) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public RiType resolveType(char cpi) {
+	public RiType resolveType(int cpi) {
 		throw new UnsupportedOperationException();
 	}
 

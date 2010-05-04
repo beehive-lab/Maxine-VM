@@ -390,7 +390,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         if (type instanceof ClassActor) {
             return ((ClassActor) type).dynamicHub();
         }
-        throw ((MaxUnresolvedType) type).unresolved("new instance");
+        throw ((UnresolvedType) type).unresolved("new instance");
     }
 
     @Override
@@ -507,24 +507,24 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     private ResolutionGuard guardFor(RiField unresolvedField, ResolutionSnippet snippet) {
-        MaxUnresolvedField f = (MaxUnresolvedField) unresolvedField;
+        UnresolvedField f = (UnresolvedField) unresolvedField;
         return makeResolutionGuard(f.constantPool, f.cpi, snippet);
     }
 
     private ResolutionGuard guardFor(RiMethod unresolvedMethod, ResolutionSnippet snippet) {
-        MaxUnresolvedMethod m = (MaxUnresolvedMethod) unresolvedMethod;
+        UnresolvedMethod m = (UnresolvedMethod) unresolvedMethod;
         return makeResolutionGuard(m.constantPool, m.cpi, snippet);
     }
 
     private XirArgument guardForComponentType(RiType unresolvedType) {
-        MaxUnresolvedType type = (MaxUnresolvedType) unresolvedType;
+        UnresolvedType type = (UnresolvedType) unresolvedType;
         return XirArgument.forObject(makeResolutionGuard(type.constantPool, type.cpi, ResolveArrayClass.SNIPPET));
     }
 
     private XirArgument guardFor(RiType type, ResolutionSnippet snippet) {
         ResolutionGuard guard;
         if (!type.isResolved()) {
-            MaxUnresolvedType unresolvedType = (MaxUnresolvedType) type;
+            UnresolvedType unresolvedType = (UnresolvedType) type;
             if (unresolvedType.cpi > 0) {
                 guard = makeResolutionGuard(unresolvedType.constantPool, unresolvedType.cpi, snippet);
             } else {

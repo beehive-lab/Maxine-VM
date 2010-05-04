@@ -23,6 +23,7 @@ package com.sun.mockvm;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Method;
 
 import com.sun.cri.ci.CiTargetMethod;
 import com.sun.cri.ci.CiTargetMethod.Call;
@@ -185,6 +186,9 @@ public class MockRuntime implements RiRuntime {
 	public int threadExceptionOffset() {
 		throw new UnsupportedOperationException();
 	}
-
-
+	
+	@Override
+	public Method getFoldingMethod(RiMethod method) {
+            throw new UnsupportedOperationException();
+	}
 }

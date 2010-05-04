@@ -474,7 +474,7 @@ public final class GraphBuilder {
         return h.isCatchAll();
     }
 
-    void genLoadConstant(char cpi) {
+    void genLoadConstant(int cpi) {
         FrameState stateBefore = curState.copy();
         Object con = constantPool().lookupConstant(cpi);
 
@@ -716,7 +716,7 @@ public final class GraphBuilder {
 
     void genCheckCast() {
         FrameState stateBefore = curState.immutableCopy();
-        char cpi = stream().readCPI();
+        int cpi = stream().readCPI();
         RiType type = constantPool().lookupType(cpi);
         Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isResolved() && type.isInitialized(), cpi, stateBefore);
         CheckCast c = new CheckCast(type, typeInstruction, apop(), stateBefore);
@@ -728,7 +728,7 @@ public final class GraphBuilder {
 
     void genInstanceOf() {
         FrameState stateBefore = curState.immutableCopy();
-        char cpi = stream().readCPI();
+        int cpi = stream().readCPI();
         RiType type = constantPool().lookupType(cpi);
         Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isResolved() && type.isInitialized(), cpi, stateBefore);
         InstanceOf i = new InstanceOf(type, typeInstruction, apop(), stateBefore);
@@ -738,7 +738,7 @@ public final class GraphBuilder {
         }
     }
 
-    void genNewInstance(char cpi) {
+    void genNewInstance(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiType type = constantPool().lookupType(cpi);
         NewInstance n = new NewInstance(type, cpi, constantPool(), stateBefore);
@@ -753,14 +753,14 @@ public final class GraphBuilder {
         apush(append(new NewTypeArray(ipop(), CiKind.fromArrayTypeCode(typeCode), stateBefore)));
     }
 
-    void genNewObjectArray(char cpi) {
+    void genNewObjectArray(int cpi) {
         RiType type = constantPool().lookupType(cpi);
         FrameState stateBefore = curState.immutableCopy();
         NewArray n = new NewObjectArray(type, ipop(), stateBefore, cpi, constantPool());
         apush(append(n));
     }
 
-    void genNewMultiArray(char cpi) {
+    void genNewMultiArray(int cpi) {
         RiType type = constantPool().lookupType(cpi);
         FrameState stateBefore = curState.immutableCopy();
         int rank = stream().readUByte(stream().currentBCI() + 3);
@@ -772,7 +772,7 @@ public final class GraphBuilder {
         apush(append(n));
     }
 
-    void genGetField(char cpi) {
+    void genGetField(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
@@ -780,7 +780,7 @@ public final class GraphBuilder {
         appendOptimizedLoadField(field.kind(), load);
     }
 
-    void genPutField(char cpi) {
+    void genPutField(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
@@ -788,7 +788,7 @@ public final class GraphBuilder {
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded, cpi, constantPool()));
     }
 
-    void genGetStatic(char cpi) {
+    void genGetStatic(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetStatic(cpi);
         RiType holder = field.holder();
@@ -798,7 +798,7 @@ public final class GraphBuilder {
         appendOptimizedLoadField(field.kind(), load);
     }
 
-    void genPutStatic(char cpi) {
+    void genPutStatic(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutStatic(cpi);
         RiType holder = field.holder();
@@ -809,7 +809,7 @@ public final class GraphBuilder {
         appendOptimizedStoreField(store);
     }
 
-    private Value genResolveClass(RiType.Representation representation, RiType holder, boolean initialized, char cpi, FrameState stateBefore) {
+    private Value genResolveClass(RiType.Representation representation, RiType holder, boolean initialized, int cpi, FrameState stateBefore) {
         Value holderInstr;
         if (initialized) {
             holderInstr = appendConstant(holder.getEncoding(representation));
@@ -848,7 +848,7 @@ public final class GraphBuilder {
         push(kind.stackKind(), optimized);
     }
 
-    void genInvokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
+    void genInvokeStatic(RiMethod target, int cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signature().argumentSlots(false));
         if (!tryRemoveCall(target, args, true)) {
@@ -858,7 +858,7 @@ public final class GraphBuilder {
         }
     }
 
-    void genInvokeInterface(RiMethod target, char cpi, RiConstantPool constantPool) {
+    void genInvokeInterface(RiMethod target, int cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
@@ -866,7 +866,7 @@ public final class GraphBuilder {
         }
     }
 
-    void genInvokeVirtual(RiMethod target, char cpi, RiConstantPool constantPool) {
+    void genInvokeVirtual(RiMethod target, int cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
@@ -874,7 +874,7 @@ public final class GraphBuilder {
         }
     }
 
-    void genInvokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
+    void genInvokeSpecial(RiMethod target, RiType knownHolder, int cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
@@ -882,7 +882,7 @@ public final class GraphBuilder {
         }
     }
 
-    private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, FrameState stateBefore, char cpi, RiConstantPool constantPool) {
+    private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, FrameState stateBefore, int cpi, RiConstantPool constantPool) {
         Value receiver = args[0];
         // attempt to devirtualize the call
         if (target.isResolved() && target.holder().isResolved()) {
@@ -922,14 +922,14 @@ public final class GraphBuilder {
         return target.signature().returnKind();
     }
 
-    private void invokeDirect(RiMethod target, Value[] args, RiType knownHolder, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
+    private void invokeDirect(RiMethod target, Value[] args, RiType knownHolder, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
         if (!tryInline(target, args, stateBefore)) {
             // could not optimize or inline the method call
             appendInvoke(INVOKESPECIAL, target, args, false, cpi, constantPool, stateBefore);
         }
     }
 
-    private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
+    private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
         CiKind resultType = returnKind(target);
         Value result = append(new Invoke(opcode, resultType.stackKind(), args, isStatic, target, cpi, constantPool, stateBefore));
         pushReturn(resultType, result);
@@ -1402,7 +1402,7 @@ public final class GraphBuilder {
     }
 
     private boolean tryFoldable(RiMethod target, Value[] args) {
-        CiConstant result = Canonicalizer.foldInvocation(target, args);
+        CiConstant result = Canonicalizer.foldInvocation(compilation.runtime, target, args);
         if (result != null) {
             if (traceLevel > 0) {
                 log.println("|");
@@ -1776,7 +1776,7 @@ public final class GraphBuilder {
     }
 
     BlockEnd iterateBytecodesForBlock(int bci, boolean inliningIntoCurrentBlock) {
-        char cpi;
+        int cpi;
 
         skipBlock = false;
         assert curState != null;
@@ -2255,7 +2255,7 @@ public final class GraphBuilder {
         }
      }
 
-    void genNativeCall(char cpi) {
+    void genNativeCall(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiSignature sig = constantPool().lookupSignature(cpi);
         Value nativeFunctionAddress = wpop();

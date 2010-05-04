@@ -21,8 +21,10 @@
 package com.sun.max.vm.compiler.c1x;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
@@ -35,10 +37,10 @@ import com.sun.max.io.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -63,27 +65,13 @@ public class MaxRiRuntime implements RiRuntime {
     private static final CiRegister[] generalParameterRegisters = new CiRegister[]{AMD64.rdi, AMD64.rsi, AMD64.rdx, AMD64.rcx, AMD64.r8, AMD64.r9};
     private static final CiRegister[] xmmParameterRegisters = new CiRegister[]{AMD64.xmm0, AMD64.xmm1, AMD64.xmm2, AMD64.xmm3, AMD64.xmm4, AMD64.xmm5, AMD64.xmm6, AMD64.xmm7};
 
-    final HashMap<ConstantPool, MaxRiConstantPool> constantPools = new HashMap<ConstantPool, MaxRiConstantPool>();
-
     /**
      * Gets the constant pool for a specified method.
      * @param method the compiler interface method
      * @return the compiler interface constant pool for the specified method
      */
     public RiConstantPool getConstantPool(RiMethod method) {
-        return getConstantPool(asClassMethodActor(method, "getConstantPool()"));
-    }
-
-    private MaxRiConstantPool getConstantPool(ClassMethodActor classMethodActor) {
-        final ConstantPool cp = classMethodActor.compilee().codeAttribute().constantPool;
-        synchronized (this) {
-            MaxRiConstantPool constantPool = constantPools.get(cp);
-            if (constantPool == null) {
-                constantPool = new MaxRiConstantPool(cp);
-                constantPools.put(cp, constantPool);
-            }
-            return constantPool;
-        }
+        return asClassMethodActor(method, "getConstantPool()").compilee().codeAttribute().constantPool;
     }
 
     /**
@@ -272,6 +260,16 @@ public class MaxRiRuntime implements RiRuntime {
             return byteArrayOutputStream.toString();
         }
         return "";
+    }
+
+    public Method getFoldingMethod(RiMethod method) {
+        if (C1XOptions.CanonicalizeFoldableMethods && method.isResolved()) {
+            MethodActor methodActor = (MethodActor) method;
+            if (Actor.isDeclaredFoldable(methodActor.flags())) {
+                return methodActor.toJava();
+            }
+        }
+        return null;
     }
 
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {

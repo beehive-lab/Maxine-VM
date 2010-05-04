@@ -214,7 +214,6 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
-    @INTRINSIC(UWCMP | (ABOVE_THAN << 8))
     public final boolean greaterThan(int other) {
         return greaterThan(fromInt(other));
     }
@@ -227,7 +226,6 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
-    @INTRINSIC(UWCMP | (ABOVE_EQUAL << 8))
     public final boolean greaterEqual(int other) {
         return greaterEqual(fromInt(other));
     }
@@ -240,7 +238,6 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
-    @INTRINSIC(UWCMP | (BELOW_THAN << 8))
     public final boolean lessThan(int other) {
         return lessThan(fromInt(other));
     }
@@ -253,7 +250,6 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
-    @INTRINSIC(UWCMP | (BELOW_EQUAL << 8))
     public final boolean lessEqual(int other) {
         return lessEqual(fromInt(other));
     }

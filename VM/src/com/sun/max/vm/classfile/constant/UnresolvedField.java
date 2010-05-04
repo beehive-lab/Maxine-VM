@@ -18,25 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.sun.max.vm.classfile.constant;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.max.vm.classfile.constant.*;
 
 /**
- * An {@linkplain RiField#isResolved() unresolved} method with a back reference
+ * An {@linkplain RiField#isResolved() unresolved} field with a back reference
  * to the constant pool entry from which it was derived.
  *
  * @author Doug Simon
  */
-public class MaxUnresolvedMethod extends CiUnresolvedMethod {
+public class UnresolvedField extends CiUnresolvedField {
 
     public final ConstantPool constantPool;
     public final int cpi;
 
-    public MaxUnresolvedMethod(ConstantPool constantPool, int cpi, RiType holder, String name, RiSignature signature) {
-        super(holder, name, signature);
+    public UnresolvedField(ConstantPool constantPool, int cpi, RiType holder, String name, RiType type) {
+        super(holder, name, type);
         this.constantPool = constantPool;
         this.cpi = cpi;
     }

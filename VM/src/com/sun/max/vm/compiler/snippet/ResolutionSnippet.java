@@ -289,11 +289,7 @@ public abstract class ResolutionSnippet extends Snippet {
         private static void resolve(ResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool;
             final int index = guard.constantPoolIndex;
-            final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
-            if (staticMethodActor.isInitializer()) {
-                throw new VerifyError("<init> must be invoked with invokespecial");
-            }
-            guard.value = staticMethodActor;
+            guard.value = constantPool.resolveInvokeStatic(index);
         }
 
         @SNIPPET
@@ -319,17 +315,7 @@ public abstract class ResolutionSnippet extends Snippet {
         private static void resolve(ResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool;
             final int index = guard.constantPoolIndex;
-            VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
-            if (isSpecial(virtualMethodActor, constantPool.holder())) {
-                virtualMethodActor = constantPool.holder().superClassActor.findVirtualMethodActor(virtualMethodActor);
-                if (virtualMethodActor == null) {
-                    throw new AbstractMethodError();
-                }
-            }
-            if (virtualMethodActor.isAbstract()) {
-                throw new AbstractMethodError();
-            }
-            guard.value = virtualMethodActor;
+            guard.value = constantPool.resolveInvokeSpecial(index);
         }
 
         @SNIPPET
@@ -350,11 +336,12 @@ public abstract class ResolutionSnippet extends Snippet {
         private static void resolve(ResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool;
             final int index = guard.constantPoolIndex;
-            final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
-            if (virtualMethodActor.isInitializer()) {
+
+            final MethodActor methodActor = constantPool.resolveInvokeVirtual(index);
+            if (methodActor.isInitializer()) {
                 throw new VerifyError("<init> must be invoked with invokespecial");
             }
-            guard.value = virtualMethodActor;
+            guard.value = methodActor;
         }
 
         @SNIPPET
@@ -384,12 +371,7 @@ public abstract class ResolutionSnippet extends Snippet {
         public static void resolve(ResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool;
             final int index = guard.constantPoolIndex;
-            final InterfaceMethodRefConstant methodConstant = constantPool.interfaceMethodAt(index);
-            final MethodActor declaredMethod = methodConstant.resolve(constantPool, index);
-            if (!(declaredMethod instanceof InterfaceMethodActor)) {
-                throw new InternalError("Use of INVOKEINTERFACE for a method in java.lang.Object should have been rewritten");
-            }
-            guard.value = declaredMethod;
+            guard.value = constantPool.resolveInvokeInterface(index);
         }
 
         @SNIPPET
