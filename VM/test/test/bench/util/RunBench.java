@@ -20,82 +20,147 @@
  */
 package test.bench.util;
 
+import java.util.*;
 import com.sun.max.program.*;
 
 /**
- * A micro-benchmark (to be run under the testing framework) must subclass
- * this utility class, which guarantees that this code will be included in the vm image.
- * The micro-benchmark is encapsulated as a LoopRunnable, with the actual benchmark
- * defined by the run method, The loop that encapsulates the actual operation being
- * tested is defined by the runBareLoop method, that is used to approximate the loop overhead
- * which is removed from the reported result. The benchmark is run in a new thread.
+ * A framework for running (micro) benchmarks that factors out timing and startup issues, leaving the benchmark writer
+ * to concentrate on the essentials. The framework is designed to run under the Maxine testing framework, thus allowing
+ * several benchmarks to be executed in succession.
+ * <p>
+ * The framework assumes that the benchmark will be compiled by the optimising compiler at VM image build time and
+ * included in the image, along with this class. A simple way to ensure that is for the benchmark to subclass this class
+ * and include the actual benchmark as a nested class of that class.
+ * <p>
+ * The benchmark proper is encapsulated as a {@link MicroBenchmark}, with the actual benchmark defined by the
+ * {@link MicroBenchmark#run} method. For truly micro (nano) benchmarks the overhead of invoking the {@code run} method
+ * (and any setup code, e.g. taking a lock), can dominate the timings, so a second instance of {@link MicroBenchmark}
+ * can be provided that captures that. This <i>encapsulating<i> benchmark is run first and the timings are subtracted
+ * from the full benchmark run timings.
+ *
+ * The benchmark is executed a given number of times, with a default of {@value #DEFAULT_LOOP_COUNT}. This can be
+ * changed at run-time by setting the property {@value #LOOP_COUNT_PROPERTY}. It is also possible to explicitly pass in
+ * the loop count at benchmark execution time if required. A warming phase can also be include
+ * <p>
+ * Once an instance of the subclass of {@code RunBench} has been created, the benchmark may be run by invoking
+ * {@link #runBench}. There are three variants of {@link #runBench}; the first two use the {@value #DEFAULT_LOOP_COUNT default loop count},
+ * and differ in whether result reporting defaults to {@code true} or is specified as an argument. The third variant allows the
+ * default loop count to be overridden. If result reporting is enabled the results are reported to
+ * the standard output on completion. If it is disabled the caller can later invoke methods,
+ * such as {@link #elapsedTime} to get the relevant information, and report it in a custom manner.
+ * <p>
+ * {@link #runBench} returns {@code true} if the benchmark completed successfully and {@code false} if an exception was
+ * thrown.
+ *
+ * @author Mick Jordan
  */
-public class RunBench implements Runnable {
+public class RunBench {
 
     /*
      * The benchmark must implement this interface.
      */
-    protected static interface LoopRunnable {
-        /**
-         * Runs the benchmark for {@code count} iterations.
-         * @param count number of iterations
+    protected static interface MicroBenchmark {
+        /*
+         * Run one iteration of the benchmark.
+         * @param warmup {@code true} if this is a warm up run
          */
-        void run(long count) throws Exception;
-
-        /**
-         * Runs the empty loop that encapsulates the benchmark for {@code count} iterations.
-         * @param count number of iterations
-         */
-        void runBareLoop(long count);
+        void run(boolean warmup) throws Exception;
     }
 
     /**
-     * Base class that has an empty bare loop, which is the common case.
+     * Base class that has no encapsulating code, which is the common case.
      */
-    protected abstract static class SimpleLoopRunnable implements LoopRunnable {
-        public void runBareLoop(long loopCount) {
-            for (long i = 0; i < loopCount; i++) {
-            }
+    private static class EmptyEncap implements MicroBenchmark {
+        public void run(boolean warmup) {
         }
     }
 
-    private final LoopRunnable bench;
-    private long elapsed;
-    private long loopCount;
-    private boolean failed;
-    private static long defaultLoopCount = 1000000;
-    private static final String LOOPCOUNT_PROPERTY = "test.bench.loopcount";
+    private final MicroBenchmark bench;
+    private final MicroBenchmark encapBench;
+    private long[] elapsed;
+    private long[] encapElapsed;
+    private int loopCount;
+    private static int warmupCount;
+    private static final int DEFAULT_LOOP_COUNT = 100;
+    private static final int DEFAULT_WARMUP_COUNT = 10;
+    private static int defaultLoopCount = DEFAULT_LOOP_COUNT;
+    private static final String LOOP_COUNT_PROPERTY = "test.bench.loopcount";
+    private static final String WARMUP_COUNT_PROPERTY = "test.bench.warmupcount";
+    private static final String DISPLAY_INDIVIDUAL_PROPERTY = "test.bench.displayall";
+    private static final MicroBenchmark emptyEncap = new EmptyEncap();
 
-    private static void getLoopCount() {
-        final String lps = System.getProperty(LOOPCOUNT_PROPERTY);
-        if (lps != null) {
-            try {
-                defaultLoopCount = Long.parseLong(lps);
-            }  catch (NumberFormatException ex) {
-                ProgramError.unexpected("test.bench.loopcount " + lps + " did not parse");
+    /**
+     * Check if any control properties are set.
+     */
+    private static void getBenchProperties() {
+        final String lps = System.getProperty(LOOP_COUNT_PROPERTY);
+        final String wps = System.getProperty(WARMUP_COUNT_PROPERTY);
+        try {
+            if (lps != null) {
+                defaultLoopCount = Integer.parseInt(lps);
             }
+            if (wps != null) {
+                warmupCount = Integer.parseInt(wps);
+            }
+        } catch (NumberFormatException ex) {
+            ProgramError.unexpected("test.bench.loopcount " + lps + " did not parse");
         }
     }
 
-    protected RunBench(LoopRunnable bench) {
-        getLoopCount();
+    /*
+     * Create an instance that will run {@code bench}.
+     */
+    protected RunBench(MicroBenchmark bench) {
+        this(bench, null);
+    }
+
+    /*
+     * Create an instance that will run {@code bench}. {@code encap} should be a variant that just contains any encapsulating
+     * code that is necessary for the benchmark. For example, setting up a {@code synchronized} block to test {@link Object#wait}.
+     * This is used to factor out timing of code that should not be measured.
+     */
+    protected RunBench(MicroBenchmark bench, MicroBenchmark encap) {
+        getBenchProperties();
         this.bench = bench;
+        encapBench = encap == null ? emptyEncap : encap;
     }
 
-    protected long loopCount() {
-        return loopCount;
+    private void zeroArray(long[] values) {
+        for (int i = 0; i < values.length; i++) {
+            values[i] = 0;
+        }
     }
 
-    protected long elapsedTime() {
+    /**
+     * Gets the number of iterations associated with this benchmark.
+     * Note that is this called before {@link #runBench} in invoked, it
+     * will return the {@link #defaultLoopCount default loop count}, otherwise
+     * it will return either the value passed to {@link #runBench} (if any), or
+     * {@link #defaultLoopCount default loop count}.
+     * @return the number of iterations
+     */
+    public int loopCount() {
+        return loopCount == 0 ? defaultLoopCount : loopCount;
+    }
+
+    public long[] elapsedTime() {
         return elapsed;
+    }
+
+    /**
+     * Run the benchmark for the default number of iterations and report the results to the standard output.
+     * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
+     */
+    public boolean runBench() {
+        return runBench(defaultLoopCount, true);
     }
 
     /*
      * Run the benchmark for the default number of iterations.
      * @param report  report the results iff true
-     * @return the elapsed time in nanoseconds
+     * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
      */
-    public boolean runBench(boolean report) throws InterruptedException {
+    public boolean runBench(boolean report) {
         return runBench(defaultLoopCount, report);
     }
 
@@ -104,43 +169,83 @@ public class RunBench implements Runnable {
      * @param loopCount the number of iterations
      * @param report  report the results iff true
      * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
-     * @return the elapsed time in nanoseconds
-     */
-    public boolean runBench(long loopCount, boolean report) throws InterruptedException {
+      */
+    public boolean runBench(int loopCount, boolean report) {
         this.loopCount = loopCount;
-        final long start = System.nanoTime();
-        bench.runBareLoop(loopCount);
-        final long loopTime = System.nanoTime() - start;
-
-        final Thread thread = new Thread(this);
-        thread.start();
-        thread.join();
-        if (report) {
-            final long count = loopCount();
-            final long benchElapsed = elapsed - loopTime;
-            System.out.println("Benchmark results (nanoseconds)");
-            System.out.println("  loopcount: " + count + ", loop overhead " + loopTime);
-            System.out.println("  elapsed: " + elapsed +  ", corrected elapsed: " + benchElapsed);
-            final long x = benchElapsed / count;
-            final long y = benchElapsed % count;
-             // loopCount assumed to be a power of 10 for simplicity.
-            System.out.println("  nanoseconds per iteration: " + x + "." + y);
-        }
-        return !failed;
-    }
-
-    public void run() {
-        final long startTime = System.nanoTime();
+        elapsed = new long[loopCount];
+        zeroArray(elapsed);
+        encapElapsed = new long[loopCount];
+        zeroArray(encapElapsed);
         try {
-            bench.run(loopCount);
-        } catch (Exception ex) {
-            System.err.println("benchmark threw " + ex);
-            failed = true;
+            // Do an encapsulating run to factor out overheads
+            doRun(loopCount, encapBench, encapElapsed);
+            // Now the real thing
+            doRun(loopCount, bench, elapsed);
+        } catch (Throwable t) {
+            System.err.println("benchmark threw " + t);
+            report = false;
         }
-        elapsed = System.nanoTime() - startTime;
+        if (report) {
+            final long avgEncapElapsed = average(encapElapsed);
+            final long avgElapsed = average(elapsed);
+            final long benchElapsed = avgElapsed - avgEncapElapsed;
+
+            System.out.println("Benchmark results (nanoseconds)");
+            System.out.println("  loopcount: " + loopCount);
+            System.out.println("  averge overhead per iteration: " + avgEncapElapsed);
+            System.out.println("  average elapsed per iteration: " + benchElapsed);
+            System.out.println("  median elapsed: " + median(elapsed));
+
+            if (getProperty(DISPLAY_INDIVIDUAL_PROPERTY, false) != null) {
+                displayElapsed();
+            }
+        }
+        this.loopCount = 0;
+        return true;
     }
 
-    protected String getProperty(String name, boolean mustExist) {
+    private void doRun(long loopCount, MicroBenchmark bench, long[] timings) throws Throwable {
+        // do warmup and discard results
+        for (int i = 0; i < warmupCount; i++) {
+            bench.run(true);
+        }
+        for (int i = 0; i < loopCount; i++) {
+            final long start = System.nanoTime();
+            bench.run(false);
+            timings[i] = System.nanoTime() - start;
+        }
+    }
+
+    public void displayElapsed() {
+        System.out.print("  elapsed values: ");
+        for (int i = 0; i < loopCount; i++) {
+            if (i % 8 == 0) {
+                System.out.println();
+            }
+            System.out.print("  ");
+            System.out.print(elapsed[i]);
+        }
+        System.out.println();
+    }
+
+    public long median(long[] array) {
+        final long[] values = new long[array.length];
+        System.arraycopy(array, 0, values, 0, array.length);
+        Arrays.sort(values);
+
+        final int lendiv2 = values.length / 2;
+        return (lendiv2 & 1) != 0 ? values[lendiv2] : (values[lendiv2] + values[lendiv2 - 1]) / 2;
+    }
+
+    public long average(long[] values) {
+        long result = 0;
+        for (int i = 0; i < loopCount; i++) {
+            result += values[i];
+        }
+        return result / loopCount;
+    }
+
+    public static String getProperty(String name, boolean mustExist) {
         final String result = System.getProperty(name);
         if (result == null && mustExist) {
             System.err.println("property " + name + " must be set");
@@ -149,7 +254,8 @@ public class RunBench implements Runnable {
         return result;
     }
 
-    protected String getRequiredProperty(String name) {
+
+    public static String getRequiredProperty(String name) {
         return getProperty(name, true);
     }
 
