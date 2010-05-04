@@ -134,6 +134,16 @@ public final class HeapFreeChunk {
         return Layout.originToCell(Reference.fromJava(chunk).toOrigin());
     }
 
+    public static void makeParsable(Address headOfFreeChunkListAddress) {
+        Address chunkAddress = headOfFreeChunkListAddress;
+        while (!chunkAddress.isZero()) {
+            Pointer start = chunkAddress.asPointer();
+            Pointer end = start.plus(HeapFreeChunk.getFreechunkSize(chunkAddress));
+            chunkAddress =  HeapFreeChunk.getFreeChunkNext(chunkAddress);
+            HeapSchemeAdaptor.fillWithDeadObject(start, end);
+        }
+    }
+
     /**
      * Heap Free Chunk are never allocated.
      */

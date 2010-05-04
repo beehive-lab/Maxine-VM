@@ -340,21 +340,11 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
             totalChunks = 0L;
         }
 
-        private void fillWithDeadObject() {
-            Address chunkAddress = head;
-            while (!chunkAddress.isZero()) {
-                Pointer start = chunkAddress.asPointer();
-                Pointer end = start.plus(HeapFreeChunk.getFreechunkSize(chunkAddress));
-                chunkAddress =  HeapFreeChunk.getFreeChunkNext(chunkAddress);
-                HeapSchemeAdaptor.fillWithDeadObject(start, end);
-            }
-            reset();
-        }
-
         @INLINE
         void makeParsable() {
             if (!head.isZero()) {
-                fillWithDeadObject();
+                HeapFreeChunk.makeParsable(head);
+                reset();
             }
         }
 
