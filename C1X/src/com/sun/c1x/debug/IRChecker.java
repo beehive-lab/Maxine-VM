@@ -37,7 +37,7 @@ import com.sun.cri.ri.*;
  * @author Marcelo Cintra
  * @author Ben L. Titzer
  */
-public class IRChecker extends DefaultValueVisitor {
+public class IRChecker extends ValueVisitor {
 
     /**
      * The {@code IRCheckException} class is thrown when the IRChecker detects
@@ -128,8 +128,7 @@ public class IRChecker extends DefaultValueVisitor {
         }
     }
 
-    @Override
-    protected void visit(Value value) {
+    protected void unimplented(Value value) {
         fail("unimplemented: visiting value of type " + value.getClass().getSimpleName());
     }
 
@@ -143,7 +142,7 @@ public class IRChecker extends DefaultValueVisitor {
         Value x = i.x();
         Value y = i.y();
 
-        switch (i.opcode()) {
+        switch (i.opcode) {
             case Bytecodes.IADD:
             case Bytecodes.ISUB:
             case Bytecodes.IMUL:
@@ -199,7 +198,7 @@ public class IRChecker extends DefaultValueVisitor {
         Value x = i.x();
         Value y = i.y();
 
-        switch (i.opcode()) {
+        switch (i.opcode) {
             case Bytecodes.IAND:
             case Bytecodes.IOR:
             case Bytecodes.IXOR:
@@ -239,7 +238,7 @@ public class IRChecker extends DefaultValueVisitor {
         Value x = i.x();
         Value y = i.y();
 
-        switch (i.opcode()) {
+        switch (i.opcode) {
             case Bytecodes.LCMP:
                 assertKind(i, CiKind.Int);
                 assertKind(x, CiKind.Long);
@@ -268,7 +267,7 @@ public class IRChecker extends DefaultValueVisitor {
      */
     @Override
     public void visitIfOp(IfOp i) {
-        if (i.opcode() != Bytecodes.ILLEGAL) {
+        if (i.opcode != Bytecodes.ILLEGAL) {
             fail("Opcode for IfOp instruction must be ILLEGAL");
         }
 
@@ -286,21 +285,39 @@ public class IRChecker extends DefaultValueVisitor {
      */
     @Override
     public void visitShiftOp(ShiftOp i) {
-        switch (i.opcode()) {
+        switch (i.opcode) {
             case Bytecodes.ISHL:
             case Bytecodes.ISHR:
-            case Bytecodes.IUSHR:
                 assertKind(i, CiKind.Int);
                 assertKind(i.x(), CiKind.Int);
                 assertKind(i.y(), CiKind.Int);
                 break;
+            case Bytecodes.IUSHR:
+                if (i.kind.isWord()) {
+                    assertKind(i.x(), CiKind.Word);
+                    assertKind(i.y(), CiKind.Int);
+                } else {
+                    assertKind(i, CiKind.Int);
+                    assertKind(i.x(), CiKind.Int);
+                    assertKind(i.y(), CiKind.Int);
+                }
+                break;
 
             case Bytecodes.LSHL:
             case Bytecodes.LSHR:
-            case Bytecodes.LUSHR:
                 assertKind(i, CiKind.Long);
                 assertKind(i.x(), CiKind.Long);
                 assertKind(i.y(), CiKind.Int);
+                break;
+            case Bytecodes.LUSHR:
+                if (i.kind.isWord()) {
+                    assertKind(i.x(), CiKind.Word);
+                    assertKind(i.y(), CiKind.Int);
+                } else {
+                    assertKind(i, CiKind.Long);
+                    assertKind(i.x(), CiKind.Long);
+                    assertKind(i.y(), CiKind.Int);
+                }
                 break;
             default:
                 fail("Illegal ShiftOp opcode");
@@ -314,7 +331,7 @@ public class IRChecker extends DefaultValueVisitor {
      */
     @Override
     public void visitConvert(Convert i) {
-        switch (i.opcode()) {
+        switch (i.opcode) {
             case Bytecodes.I2L:
                 assertKind(i, CiKind.Long);
                 assertKind(i.value(), CiKind.Int);
@@ -372,8 +389,24 @@ public class IRChecker extends DefaultValueVisitor {
                 assertKind(i, CiKind.Float);
                 assertKind(i.value(), CiKind.Double);
                 break;
+            case Bytecodes.MOV_F2I:
+                assertKind(i, CiKind.Int);
+                assertKind(i.value(), CiKind.Float);
+                break;
+            case Bytecodes.MOV_I2F:
+                assertKind(i, CiKind.Float);
+                assertKind(i.value(), CiKind.Int);
+                break;
+            case Bytecodes.MOV_D2L:
+                assertKind(i, CiKind.Long);
+                assertKind(i.value(), CiKind.Double);
+                break;
+            case Bytecodes.MOV_L2D:
+                assertKind(i, CiKind.Double);
+                assertKind(i.value(), CiKind.Long);
+                break;
             default:
-                fail("invalid opcode in Convert");
+                fail("invalid opcode in Convert: " + Bytecodes.nameOf(i.opcode));
         }
     }
 
@@ -447,7 +480,6 @@ public class IRChecker extends DefaultValueVisitor {
         assertKind(i.array(), CiKind.Object);
         assertKind(i.index(), CiKind.Int);
         assertKind(i.value(), i.elementKind().stackKind());
-        assertKind(i, i.elementKind().stackKind());
         assertArrayType(i.array().exactType());
         assertArrayType(i.array().declaredType());
     }
@@ -742,7 +774,7 @@ public class IRChecker extends DefaultValueVisitor {
     @Override
     public void visitInvoke(Invoke i) {
         assertNonNull(i.target(), "Target of invoke cannot be null");
-        assertNonNull(i.stateBefore(), "Invoke must have ValueStack");
+        assertNonNull(i.stateBefore(), "Invoke must have FrameState");
         RiSignature signatureType = i.target().signature();
         assertKind(i, signatureType.returnKind().stackKind());
         Value[] args = i.arguments();
@@ -917,7 +949,113 @@ public class IRChecker extends DefaultValueVisitor {
         }
     }
 
+    @Override
+    public void visitIfInstanceOf(IfInstanceOf i) {
+        unimplented(i);
+    }
 
+    @Override
+    public void visitLoadPC(LoadPC i) {
+    }
+
+    @Override
+    public void visitLoadPointer(LoadPointer i) {
+        assertKind(i.pointer(), CiKind.Word);
+        if (i.displacement() == null) {
+            if (!i.offset().kind.isWord()) {
+                assertKind(i.offset(), CiKind.Int);
+            }
+        } else {
+            assertKind(i.index(), CiKind.Int);
+            assertKind(i.displacement(), CiKind.Int);
+        }
+    }
+
+    @Override
+    public void visitLoadRegister(LoadRegister i) {
+        assertNonNull(i.register(), "Register must not be null");
+    }
+
+    @Override
+    public void visitLoadStackAddress(AllocateStackVariable i) {
+        assertNonNull(i.value(), "Value must not be null");
+    }
+
+    @Override
+    public void visitNativeCall(NativeCall i) {
+        assertNonNull(i.address(), "Address of native call cannot be null");
+        assertNonNull(i.stateBefore(), "Invoke must have FrameState");
+        RiSignature signatureType = i.signature;
+        assertKind(i, signatureType.returnKind().stackKind());
+        Value[] args = i.arguments;
+        int argSize = signatureType.argumentSlots(false);
+        if (argSize != args.length) {
+            fail("Size of Arguments does not match invoke signature");
+        }
+        typeCheckArguments(true, args, signatureType);
+    }
+
+    @Override
+    public void visitPause(Pause i) {
+    }
+
+    @Override
+    public void visitResolveClass(ResolveClass i) {
+    }
+
+    @Override
+    public void visitSignificantBit(SignificantBitOp i) {
+        assertNonNull(i.value(), "Value must not be null");
+    }
+
+    @Override
+    public void visitStackAllocate(StackAllocate i) {
+        if (!i.size().isConstant()) {
+            fail("Size operand of StackAllocate instruction must be constant");
+        }
+    }
+
+    @Override
+    public void visitStorePointer(StorePointer i) {
+        assertKind(i.pointer(), CiKind.Word);
+        if (i.displacement() == null) {
+            if (!i.offset().kind.isWord()) {
+                assertKind(i.offset(), CiKind.Int);
+            }
+        } else {
+            assertKind(i.index(), CiKind.Int);
+            assertKind(i.displacement(), CiKind.Int);
+        }
+    }
+
+    @Override
+    public void visitStoreRegister(StoreRegister i) {
+    }
+
+    @Override
+    public void visitUnsafeCast(UnsafeCast i) {
+    }
+
+    @Override
+    public void visitUnsignedCompareOp(UnsignedCompareOp i) {
+        Value x = i.x();
+        Value y = i.y();
+
+        switch (i.opcode) {
+            case Bytecodes.UCMP:
+                assertKind(i, CiKind.Int);
+                assertKind(x, CiKind.Int);
+                assertKind(y, CiKind.Int);
+                break;
+            case Bytecodes.UWCMP:
+                assertKind(i, CiKind.Int);
+                assertKind(x, CiKind.Word);
+                assertKind(y, CiKind.Word);
+                break;
+            default:
+                fail("Illegal UnsignedCompareOp opcode: " + Bytecodes.nameOf(i.opcode));
+        }
+    }
 
     private void assertKind(Value i, CiKind kind) {
         assertNonNull(i, "Value should not be null");

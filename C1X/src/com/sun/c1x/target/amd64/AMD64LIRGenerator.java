@@ -151,11 +151,11 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitSignificantBit(SignificantBitOp x) {
-        LIRItem value = new LIRItem(x.x(), this);
+        LIRItem value = new LIRItem(x.value(), this);
         value.setDestroysRegister();
         value.loadItem();
         CiValue reg = createResultVariable(x);
-        if (x.returnsMostSignificantBit()) {
+        if (x.op == Bytecodes.LSB) {
             lir.lsb(value.result(), reg);
         } else {
             lir.msb(value.result(), reg);
@@ -166,7 +166,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         assert !left.isStack() || !right.isStack() : "can't both be memory operands";
-        boolean mustLoadBoth = (x.opcode() == Bytecodes.FREM || x.opcode() == Bytecodes.DREM);
+        boolean mustLoadBoth = (x.opcode == Bytecodes.FREM || x.opcode == Bytecodes.DREM);
         if (left.isRegisterOrVariable() || x.x().isConstant() || mustLoadBoth) {
             left.loadItem();
         }
@@ -181,20 +181,20 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
         CiVariable reg;
 
-        if (x.opcode() == Bytecodes.FREM) {
+        if (x.opcode == Bytecodes.FREM) {
             reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticFrem, null, left.result(), right.result());
-        } else if (x.opcode() == Bytecodes.DREM) {
+        } else if (x.opcode == Bytecodes.DREM) {
             reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticDrem, null, left.result(), right.result());
         } else {
             reg = newVariable(x.kind);
-            arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), ILLEGAL);
+            arithmeticOpFpu(x.opcode, reg, left.result(), right.result(), ILLEGAL);
         }
 
         setResult(x, reg);
     }
 
     public void visitArithmeticOpLong(ArithmeticOp x) {
-        int opcode = x.opcode();
+        int opcode = x.opcode;
         if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM) {
             // emit code for long division or modulus
             if (is64) {
@@ -253,7 +253,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     public void visitArithmeticOpInt(ArithmeticOp x) {
-        int opcode = x.opcode();
+        int opcode = x.opcode;
         if (opcode == Bytecodes.IDIV || opcode == Bytecodes.IREM) {
             // emit code for integer division or modulus
 
@@ -327,7 +327,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     public void visitArithmeticOpWord(ArithmeticOp x) {
-        int opcode = x.opcode();
+        int opcode = x.opcode;
         if (opcode == Bytecodes.WDIV || opcode == Bytecodes.WREM || opcode == Bytecodes.WDIVI || opcode == Bytecodes.WREMI) {
             // emit code for long division or modulus
             if (is64) {
@@ -433,7 +433,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         value.loadItem();
         CiValue reg = createResultVariable(x);
 
-        shiftOp(x.opcode(), reg, value.result(), count.result(), ILLEGAL);
+        shiftOp(x.opcode, reg, value.result(), count.result(), ILLEGAL);
     }
 
     @Override
@@ -447,7 +447,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         right.loadNonconstant();
         CiValue reg = createResultVariable(x);
 
-        logicOp(x.opcode(), reg, left.result(), right.result());
+        logicOp(x.opcode, reg, left.result(), right.result());
     }
 
     private void trySwap(Op2 x) {
@@ -465,7 +465,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         CiValue reg = createResultVariable(x);
 
         if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
-            int code = x.opcode();
+            int code = x.opcode;
             lir.fcmp2int(left.result(), right.result(), reg, (code == Bytecodes.FCMPL || code == Bytecodes.DCMPL));
         } else if (x.x().kind.isLong()) {
             lir.lcmp2int(left.result(), right.result(), reg);
@@ -595,13 +595,13 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
         // arguments of lirConvert
         GlobalStub globalStub = null;
-        switch (x.opcode()) {
+        switch (x.opcode) {
             case Bytecodes.F2I: globalStub = stubFor(GlobalStub.Id.f2i); break;
             case Bytecodes.F2L: globalStub = stubFor(GlobalStub.Id.f2l); break;
             case Bytecodes.D2I: globalStub = stubFor(GlobalStub.Id.d2i); break;
             case Bytecodes.D2L: globalStub = stubFor(GlobalStub.Id.d2l); break;
         }
-        lir.convert(x.opcode(), input, result, globalStub);
+        lir.convert(x.opcode, input, result, globalStub);
         setResult(x, result);
     }
 

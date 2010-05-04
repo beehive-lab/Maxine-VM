@@ -456,6 +456,7 @@ public class Bytecodes {
      *
      * Operand Stack:
      *     ..., value => ..., value
+     * </pre>
      */
     public static final int ALLOCSTKVAR          = 241;
     
@@ -463,7 +464,33 @@ public class Bytecodes {
     public static final int ADD_SP               = 243;
     public static final int READ_PC              = 244;
     public static final int FLUSHW               = 245;
+    
+    /**
+     * Produces the index of the least significant bit within {@code value} or {@code -1} if {@code value == 0}.
+     * 
+     * <pre>
+     * Format: { u1 opcode;  // LSB
+     *           u2 ignore;
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., index
+     * </pre>
+     */
     public static final int LSB                  = 246;
+    
+    /**
+     * Produces the index of the most significant bit within {@code value} or {@code -1} if {@code value == 0}.
+     * 
+     * <pre>
+     * Format: { u1 opcode;  // MSB
+     *           u2 ignore;
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., index
+     * </pre>
+     */
     public static final int MSB                  = 247;
 
     // End extended bytecodes
