@@ -166,7 +166,7 @@ public interface RiType {
      * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
      * @return {@code true} if this type is an array class
      */
-    boolean isArrayKlass();
+    boolean isArrayClass();
 
     /**
      * Gets the access flags for this type. Only the flags specified in the JVM specification

@@ -770,7 +770,10 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitUnsafeCast(UnsafeCast i) {
-        out.print("unsafe_cast ").print(i.value());
+        out.print("unsafe_cast(").
+        print(i.value()).
+        print(") ").
+        print(nameOf(i.toType));
     }
 
     @Override

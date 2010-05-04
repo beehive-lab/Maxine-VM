@@ -162,15 +162,7 @@ public class CiUtil {
         if (kind.isPrimitive() || kind == CiKind.Void) {
             return kind.javaName;
         }
-        String string = internalNameToJava(riType.name());
-        if (qualified) {
-            return string;
-        }
-        final int lastDot = string.lastIndexOf('.');
-        if (lastDot != -1) {
-            string = string.substring(lastDot + 1);
-        }
-        return string;
+        return internalNameToJava(riType.name(), qualified);
     }
     /**
      * Converts a given type to its Java programming language name. The following are examples of strings returned by
@@ -186,14 +178,24 @@ public class CiUtil {
      * @return the Java name corresponding to {@code riType}
      */
     public static String toJavaName(RiType riType) {
-        return internalNameToJava(riType.name());
+        return internalNameToJava(riType.name(), true);
     }
-    public static String internalNameToJava(String name) {
+    
+    public static String internalNameToJava(String name, boolean qualified) {
         switch (name.charAt(0)) {
-            case 'L':
-                return name.substring(1, name.length() - 1).replace('/', '.');
+            case 'L': {
+                String result = name.substring(1, name.length() - 1).replace('/', '.');
+                if (!qualified) {
+                    final int lastDot = result.lastIndexOf('.');
+                    if (lastDot != -1) {
+                        result = result.substring(lastDot + 1);
+                    }
+                }
+                return result;
+
+            }
             case '[':
-                return internalNameToJava(name.substring(1)) + "[]";
+                return internalNameToJava(name.substring(1), qualified) + "[]";
             default:
                 if (name.length() != 1) {
                     throw new IllegalArgumentException("Illegal internal name: " + name);
@@ -231,7 +233,7 @@ public class CiUtil {
     public static String format(String format, RiMethod method, boolean kinds) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;
-        RiSignature sig = method.signatureType();
+        RiSignature sig = method.signature();
         while (index < format.length()) {
             final char ch = format.charAt(index++);
             if (ch == '%') {
@@ -245,7 +247,7 @@ public class CiUtil {
                         qualified = true;
                         // fall through
                     case 'r': {
-                        sb.append(kinds ? sig.returnKind().jniName : toJavaName(sig.returnType(), qualified));
+                        sb.append(kinds ? sig.returnKind().jniName : toJavaName(sig.returnType(null), qualified));
                         break;
                     }
                     case 'H':
@@ -267,7 +269,7 @@ public class CiUtil {
                             if (i != 0) {
                                 sb.append(", ");
                             }
-                            sb.append(kinds ? sig.argumentKindAt(i).jniName : toJavaName(sig.argumentTypeAt(i), qualified));
+                            sb.append(kinds ? sig.argumentKindAt(i).jniName : toJavaName(sig.argumentTypeAt(i, null), qualified));
                         }
                         break;
                     }

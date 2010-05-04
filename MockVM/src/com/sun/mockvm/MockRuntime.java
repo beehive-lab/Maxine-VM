@@ -143,16 +143,11 @@ public class MockRuntime implements RiRuntime {
 
 	@Override
 	public RiType getRiType(Class<?> javaClass) {
-		throw new UnsupportedOperationException();
+	        return MockUniverse.lookupType(javaClass);
 	}
 
 	@Override
 	public RiSnippets getSnippets() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isObjectArrayType(RiType type) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -174,11 +169,6 @@ public class MockRuntime implements RiRuntime {
 	@Override
 	public Object registerTargetMethod(CiTargetMethod targetMethod, String name) {
 		return targetMethod;
-	}
-
-	@Override
-	public RiType resolveType(String name) {
-		return MockUniverse.lookupType(name);
 	}
 
 	@Override

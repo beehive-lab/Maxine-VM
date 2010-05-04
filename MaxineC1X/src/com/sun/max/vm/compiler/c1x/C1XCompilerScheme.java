@@ -110,7 +110,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     public final TargetMethod compile(final ClassMethodActor classMethodActor) {
         return MaxineVM.usingTarget(new Function<TargetMethod>() {
             public TargetMethod call() {
-                RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
+                RiMethod method = classMethodActor;
                 CiTargetMethod compiledMethod = c1xCompiler.compileMethod(method, c1xXirGenerator).targetMethod();
                 if (compiledMethod != null) {
                     C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);

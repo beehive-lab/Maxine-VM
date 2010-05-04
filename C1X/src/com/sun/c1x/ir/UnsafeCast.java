@@ -21,18 +21,16 @@
 package com.sun.c1x.ir;
 
 import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The {@code UnsafeCast} instruction represents a {@link Bytecodes#UNSAFE_CAST}
- * where the kind of the value being cast is not the same size (in terms {@linkplain CiKind#jvmSlots} JVM
- * slots) as the kind being cast to. All other applications of {@link Bytecodes#UNSAFE_CAST}
- * are translated by simply using the input value as the output value. That is,
- * in these cases, the frame state is simply left as is.
+ * The {@code UnsafeCast} instruction represents a {@link Bytecodes#UNSAFE_CAST}.
  *
  * @author Doug Simon
  */
 public final class UnsafeCast extends Instruction {
+
+    public final RiType toType;
 
     /**
      * The instruction that produced the value being unsafe cast.
@@ -45,8 +43,9 @@ public final class UnsafeCast extends Instruction {
      * @param toKind the the being cast to
      * @param value the value being cast
      */
-    public UnsafeCast(CiKind toKind, Value value) {
-        super(toKind);
+    public UnsafeCast(RiType toType, Value value) {
+        super(toType.kind());
+        this.toType = toType;
         this.value = value;
     }
 
@@ -57,6 +56,15 @@ public final class UnsafeCast extends Instruction {
         return value;
     }
 
+    @Override
+    public RiType declaredType() {
+        return toType;
+    }
+
+    @Override
+    public RiType exactType() {
+        return declaredType().exactType();
+    }
 
     /**
      * Implements this instruction's half of the visitor pattern.

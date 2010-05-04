@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -20,14 +20,24 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.max.vm.classfile.constant.*;
+
 /**
- * The {@code MaxRiUnresolved} exception is thrown if the user of the compiler interface (e.g. C1X)
- * queries a compiler interface object in a way that is not appropriate for an unresolved object.
+ * An {@linkplain RiField#isResolved() unresolved} field with a back reference
+ * to the constant pool entry from which it was derived.
  *
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public class MaxRiUnresolved extends RuntimeException {
-    public MaxRiUnresolved(String msg) {
-        super(msg);
+public class MaxUnresolvedField extends CiUnresolvedField {
+
+    public final ConstantPool constantPool;
+    public final int cpi;
+
+    public MaxUnresolvedField(ConstantPool constantPool, int cpi, RiType holder, String name, RiType type) {
+        super(holder, name, type);
+        this.constantPool = constantPool;
+        this.cpi = cpi;
     }
 }

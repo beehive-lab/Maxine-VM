@@ -117,6 +117,11 @@ public class MockConstantPool implements RiConstantPool {
 	}
 
 	@Override
+	public RiMethod lookupMethod(char cpi) {
+            return lookupInvoke(cpi);
+	}
+	
+	@Override
 	public RiField lookupPutField(char cpi) {
 		return lookupField(cpi);
 	}

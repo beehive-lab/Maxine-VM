@@ -1108,7 +1108,7 @@ public class LinearScan {
             if (move.operand().isStackSlot()) {
                 CiStackSlot slot = (CiStackSlot) move.operand();
                 if (C1XOptions.DetailedAsserts) {
-                    int argSlots = compilation.method.signatureType().argumentSlots(!isStatic(compilation.method.accessFlags()));
+                    int argSlots = compilation.method.signature().argumentSlots(!isStatic(compilation.method.accessFlags()));
                     assert slot.index() >= 0 && slot.index() < argSlots;
                     assert move.id > 0 : "invalid id";
                     assert blockForId(move.id).numberOfPreds() == 0 : "move from stack must be in first block";

@@ -121,7 +121,7 @@ public final class FrameMap {
         if (method == null) {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
-            incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signatureType(), !isStatic(method.accessFlags())), false);
+            incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signature(), !isStatic(method.accessFlags())), false);
         }
     }
 

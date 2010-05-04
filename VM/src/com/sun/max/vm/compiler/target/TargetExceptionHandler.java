@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -101,9 +100,6 @@ public class TargetExceptionHandler {
             declaredExceptionResolutionGuard.value = constantPool.classAt(index).resolve(constantPool, index);
         }
         final ClassActor declaredExceptionClassActor = (ClassActor) declaredExceptionResolutionGuard.value;
-        if (MaxineVM.isHosted()) {
-            return declaredExceptionClassActor.toJava().isInstance(throwable);
-        }
         return declaredExceptionClassActor.isInstance(throwable);
     }
 

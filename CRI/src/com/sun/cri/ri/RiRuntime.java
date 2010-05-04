@@ -32,6 +32,7 @@ import com.sun.cri.ci.*;
  * @author Thomas Wuerthinger
  */
 public interface RiRuntime {
+    
     /**
      * Gets the constant pool for a method.
      * @param method the method
@@ -75,17 +76,13 @@ public interface RiRuntime {
     boolean mustNotCompile(RiMethod method);
 
     /**
-     * Byte offset of the field of the internal thread representation that contains the pointer to the thread exception object.
+     * Byte offset of the field of the internal thread representation that contains
+     * the pointer to the thread exception object.
+     * 
+     * TODO: replace with ExceptionObject XIR
      * @return the byte offset of the exception object field
      */
     int threadExceptionOffset();
-
-    /**
-     * Resolves a given identifier to a type.
-     * @param string the name of the type
-     * @return the resolved type
-     */
-    RiType resolveType(String string);
 
     /**
      * Offset of the lock within the lock object.
@@ -163,13 +160,6 @@ public interface RiRuntime {
      * @return the runtime interface representation
      */
     RiType getRiType(Class<?> javaClass);
-
-    /**
-     * Checks whether the specified runtime type is the same as for {@code Object[]}.
-     * @param type the runtime type to test
-     * @return {@code true} if the tested type represents {@code Object[]}.
-     */
-    boolean isObjectArrayType(RiType type);
 
     /**
      * Gets the {@linkplain RiSnippets snippets} provided by the runtime.

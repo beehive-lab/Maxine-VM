@@ -165,7 +165,7 @@ public class VerifierTest extends VmTestCase {
             while (true) {
                 while (classActorIndex != classActors.length) {
                     final ClassActor classActor = classActors[classActorIndex++];
-                    if (classActor.isTupleClassActor()) {
+                    if (classActor.isTupleClass()) {
                         final String name = classActor.name.toString();
                         if (!verifiedClasses.contains(name) && name.startsWith("com.") || name.startsWith("java.")) {
                             verify(name, true);

@@ -42,7 +42,7 @@ public final class NativeCall extends StateSplit {
 
     /**
      * The signature of the call which is derived from {@link #nativeMethod} but is not
-     * the same as its {@linkplain RiMethod#signatureType() signature}.
+     * the same as its {@linkplain RiMethod#signature() signature}.
      */
     public final RiSignature signature;
 

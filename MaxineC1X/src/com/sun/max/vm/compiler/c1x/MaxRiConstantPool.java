@@ -20,12 +20,11 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import java.util.*;
-
 import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
@@ -47,17 +46,13 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  */
 public class MaxRiConstantPool implements RiConstantPool {
-    final MaxRiRuntime runtime;
     public final ConstantPool constantPool;
-    final HashMap<SignatureDescriptor, MaxRiSignature> signatures = new HashMap<SignatureDescriptor, MaxRiSignature>();
 
     /**
      * Creates a new constant pool inside of the specified runtime for the specified constant pool.
-     * @param runtime the runtime implementation
      * @param constantPool the actual constant pool contents
      */
-    MaxRiConstantPool(MaxRiRuntime runtime, ConstantPool constantPool) {
-        this.runtime = runtime;
+    MaxRiConstantPool(ConstantPool constantPool) {
         this.constantPool = constantPool;
     }
 
@@ -179,12 +174,12 @@ public class MaxRiConstantPool implements RiConstantPool {
         return methodFrom(constantPool.methodAt(cpi), cpi);
     }
 
-    private MaxRiField resolveField(char cpi) {
-        return runtime.canonicalRiField(constantPool.fieldAt(cpi).resolve(constantPool, cpi), this, cpi);
+    public RiMethod lookupMethod(char cpi) {
+        return methodFrom(constantPool.methodAt(cpi), cpi);
     }
 
-    private MaxRiMethod resolveMethod(char cpi) {
-        return runtime.canonicalRiMethod(constantPool.methodAt(cpi).resolve(constantPool, cpi), this, cpi);
+    private RiMethod resolveMethod(char cpi) {
+        return constantPool.methodAt(cpi).resolve(constantPool, cpi);
     }
 
     /**
@@ -193,7 +188,7 @@ public class MaxRiConstantPool implements RiConstantPool {
      * @return the compiler interface type resolved at that index
      */
     public RiType resolveType(char cpi) {
-        return runtime.canonicalRiType(constantPool.classAt(cpi).resolve(constantPool, cpi), this, cpi);
+        return constantPool.classAt(cpi).resolve(constantPool, cpi);
     }
 
     /**
@@ -207,8 +202,7 @@ public class MaxRiConstantPool implements RiConstantPool {
     }
 
     public RiSignature lookupSignature(char cpi) {
-        SignatureDescriptor descriptor = SignatureDescriptor.create(constantPool.utf8At(cpi).string);
-        return cacheSignature(descriptor);
+        return SignatureDescriptor.create(constantPool.utf8At(cpi).string);
     }
 
     /**
@@ -219,7 +213,7 @@ public class MaxRiConstantPool implements RiConstantPool {
     public Object lookupConstant(char cpi) {
         switch (constantPool.tagAt(cpi)) {
             case CLASS: {
-                MaxRiType type = typeFrom(constantPool.classAt(cpi), cpi);
+                RiType type = typeFrom(constantPool.classAt(cpi), cpi);
                 if (type.isResolved()) {
                     return CiConstant.forObject(type.javaClass());
                 }
@@ -245,48 +239,47 @@ public class MaxRiConstantPool implements RiConstantPool {
         }
     }
 
-    private MaxRiField fieldFrom(FieldRefConstant constant, int cpi) {
-        if (constant instanceof FieldRefConstant.Resolved) {
-            // already resolved
-            return runtime.canonicalRiField(((FieldRefConstant.Resolved) constant).fieldActor(), this, cpi);
-        } else if (attemptResolution(constant)) {
+    private RiField fieldFrom(FieldRefConstant constant, int cpi) {
+        if (constant.isResolved() || attemptResolution(constant)) {
             // the resolution can occur without side effects
             try {
-                return runtime.canonicalRiField(constant.resolve(constantPool, cpi), this, cpi);
+                return constant.resolve(constantPool, cpi);
             } catch (HostOnlyFieldError hostOnlyFieldError) {
                 // Treat as unresolved
             }
         }
-        return new MaxRiField(this, constant, cpi); // unresolved
+        RiType holder = TypeDescriptor.toRiType(constant.holder(constantPool), constantPool.holder());
+        RiType type = TypeDescriptor.toRiType(constant.type(constantPool), constantPool.holder());
+        String name = constant.name(constantPool).string;
+        return new MaxUnresolvedField(constantPool, cpi, holder, name, type);
     }
 
-    private MaxRiMethod methodFrom(MethodRefConstant constant, int cpi) {
-        if (constant instanceof ClassMethodRefConstant.Resolved) {
-            // already resolved
-            return runtime.canonicalRiMethod(((ClassMethodRefConstant.Resolved) constant).methodActor(), this, cpi);
-        } else if (constant instanceof InterfaceMethodRefConstant.Resolved) {
-            // already resolved
-            return runtime.canonicalRiMethod(((InterfaceMethodRefConstant.Resolved) constant).methodActor(), this, cpi);
-        } else if (attemptResolution(constant)) {
+    private RiMethod methodFrom(MethodRefConstant constant, int cpi) {
+        if (constant.isResolved() || attemptResolution(constant)) {
             // the resolution can occur without side effects
             try {
-                return runtime.canonicalRiMethod(constant.resolve(constantPool, cpi), this, cpi);
+                MethodActor methodActor = constant.resolve(constantPool, cpi);
+                if (methodActor instanceof ClassMethodActor && ((ClassMethodActor) methodActor).isDeclaredFoldable()) {
+                    C1XIntrinsic.registerFoldableMethod(methodActor, methodActor.toJava());
+                }
+                return methodActor;
             } catch (HostOnlyMethodError hostOnlyMethodError) {
                 // Treat as unresolved
             }
         }
-        return new MaxRiMethod(this, constant, cpi); // unresolved
+        RiType holder = TypeDescriptor.toRiType(constant.holder(constantPool), constantPool.holder());
+        RiSignature signature = constant.signature(constantPool);
+        String name = constant.name(constantPool).string;
+
+        return new MaxUnresolvedMethod(constantPool, cpi, holder, name, signature);
     }
 
-    private MaxRiType typeFrom(ClassConstant constant, int cpi) {
-        if (constant instanceof ClassConstant.Resolved) {
-            // already resolved
-            return runtime.canonicalRiType(((ClassConstant.Resolved) constant).classActor, this, cpi);
-        } else if (attemptResolution(constant)) {
+    private RiType typeFrom(ClassConstant constant, int cpi) {
+        if (constant.isResolved() || attemptResolution(constant)) {
             // the resolution can occur without side effects
-            return runtime.canonicalRiType(constant.resolve(constantPool, cpi), this, cpi);
+            return constant.resolve(constantPool, cpi);
         }
-        return new MaxRiType(this, constant, cpi); // unresolved
+        return new MaxUnresolvedType(constant.typeDescriptor(), constantPool, cpi);
     }
 
     private boolean attemptResolution(ResolvableConstant constant) {
@@ -295,21 +288,6 @@ public class MaxRiConstantPool implements RiConstantPool {
             return constant.isResolvableWithoutClassLoading(constantPool);
         }
         return false;
-    }
-
-    /**
-     * Caches the compiler interface signature objects (per constant pool), to
-     * reduce the amount of decoding done for repeated uses of the same signature.
-     * @param descriptor the signature descriptor.
-     * @return the cached compiler interface signature object
-     */
-    public synchronized MaxRiSignature cacheSignature(SignatureDescriptor descriptor) {
-        MaxRiSignature signature = signatures.get(descriptor);
-        if (signature == null) {
-            signature = new MaxRiSignature(this, descriptor);
-            signatures.put(descriptor, signature);
-        }
-        return signature;
     }
 
     public CiConstant encoding() {

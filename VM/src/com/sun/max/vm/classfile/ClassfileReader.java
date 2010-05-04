@@ -1122,7 +1122,7 @@ public final class ClassfileReader {
             /*
              * Cannot inherit from an array class.
              */
-            if (superClassActor.isArrayClassActor()) {
+            if (superClassActor.isArrayClass()) {
                 throw classFormatError("Cannot inherit from array class");
             }
 
@@ -1134,7 +1134,7 @@ public final class ClassfileReader {
              *   superclass of C is in fact an interface, loading
              *   throws an IncompatibleClassChangeError.
              */
-            if (superClassActor.isInterfaceActor()) {
+            if (superClassActor.isInterface()) {
                 throw classFormatError("Cannot extend an interface class");
             }
 

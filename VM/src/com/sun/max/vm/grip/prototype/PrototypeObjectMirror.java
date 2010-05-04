@@ -52,7 +52,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
     }
 
     public boolean isArray() {
-        return classActor.isArrayClassActor();
+        return classActor.isArrayClass();
     }
 
     public ClassActor classActor() {
@@ -165,7 +165,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
     }
 
     public int firstWordIndex() {
-        if (classActor.isHybridClassActor()) {
+        if (classActor.isHybridClass()) {
             final Hybrid hybrid = (Hybrid) object;
             return hybrid.firstWordIndex();
         }
@@ -173,7 +173,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
     }
 
     public int firstIntIndex() {
-        if (classActor.isHybridClassActor()) {
+        if (classActor.isHybridClass()) {
             final Hybrid hybrid = (Hybrid) object;
             return hybrid.firstIntIndex();
         }

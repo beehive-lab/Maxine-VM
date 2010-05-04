@@ -22,6 +22,7 @@ package com.sun.max.vm.value;
 
 import java.io.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -197,4 +198,10 @@ public final class WordValue extends Value<WordValue> {
     public void write(DataOutput stream) throws IOException {
         value.write(stream);
     }
+
+    @Override
+    public CiConstant asCiConstant() {
+        return CiConstant.forWord(value.asAddress().toLong());
+    }
+
 }

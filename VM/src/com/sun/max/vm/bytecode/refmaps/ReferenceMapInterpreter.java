@@ -30,7 +30,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.stackmap.*;
@@ -1360,8 +1359,16 @@ public abstract class ReferenceMapInterpreter {
 
 
                 case UNSAFE_CAST: {
-                    pop(Intrinsics.toUnsafeCastOperand((char) readUnsigned1()));
-                    push(Intrinsics.toUnsafeCastOperand((char) readUnsigned1()));
+                    final int index = readUnsigned2();
+                    final MethodRefConstant methodConstant = constantPool.methodAt(index);
+                    final SignatureDescriptor methodSignature = methodConstant.signature(constantPool);
+                    if (methodSignature.numberOfParameters() == 1) {
+                        final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(0);
+                        pop(parameter.toKind());
+                    } else {
+                        assert methodSignature.numberOfParameters() == 0;
+                    }
+                    push(methodSignature.resultKind());
                     break;
                 }
                 case WLOAD: {

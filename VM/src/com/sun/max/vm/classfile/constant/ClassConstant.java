@@ -142,7 +142,7 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
         }
 
         public boolean isResolvableWithoutClassLoading(ConstantPool pool) {
-            return typeDescriptor.isResolvableWithoutClassLoading(pool.holder(), pool.classLoader());
+            return typeDescriptor.isResolvableWithoutClassLoading(pool.classLoader());
         }
 
         @Override

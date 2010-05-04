@@ -250,13 +250,13 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             if (teleObject == null) {
                 teleObject = new TeleStaticTuple(vm(), reference);
             }
-        } else if (classActor.isArrayClassActor()) {
+        } else if (classActor.isArrayClass()) {
             // Check map again, just in case there's a race
             teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
             if (teleObject == null) {
                 teleObject = new TeleArrayObject(vm(), reference, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
             }
-        } else if (classActor.isHybridClassActor()) {
+        } else if (classActor.isHybridClass()) {
             final Class javaClass = classActor.toJava();
             // Check map again, just in case there's a race
             teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
@@ -269,7 +269,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
                     throw FatalError.unexpected("invalid hybrid implementation type");
                 }
             }
-        } else if (classActor.isTupleClassActor()) {
+        } else if (classActor.isTupleClass()) {
             // Check map again, just in case there's a race
             teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
             if (teleObject == null) {

@@ -121,7 +121,7 @@ public class MockType implements RiType {
 	}
 
 	@Override
-	public boolean isArrayKlass() {
+	public boolean isArrayClass() {
 		return klass.isArray();
 	}
 

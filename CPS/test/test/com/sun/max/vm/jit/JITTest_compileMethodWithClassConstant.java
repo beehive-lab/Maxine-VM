@@ -113,7 +113,7 @@ public class JITTest_compileMethodWithClassConstant extends JitCompilerTestCase 
             public Boolean call() {
                 final TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(classname);
                 final ClassActor classActor = ClassActor.fromJava(getClass());
-                return !typeDescriptor.isResolvableWithoutClassLoading(classActor, classActor.constantPool().classLoader());
+                return !typeDescriptor.isResolvableWithoutClassLoading(classActor.constantPool().classLoader());
             }
         });
     }

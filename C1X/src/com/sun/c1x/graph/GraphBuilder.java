@@ -162,7 +162,7 @@ public final class GraphBuilder {
             if (C1XOptions.OptIntrinsify) {
                 // try to inline an Intrinsic node
                 boolean isStatic = Modifier.isStatic(rootMethod.accessFlags());
-                int argsSize = rootMethod.signatureType().argumentSlots(!isStatic);
+                int argsSize = rootMethod.signature().argumentSlots(!isStatic);
                 Value[] args = new Value[argsSize];
                 for (int i = 0; i < args.length; i++) {
                     args[i] = curState.localAt(i);
@@ -696,16 +696,22 @@ public final class GraphBuilder {
         appendWithoutOptimization(t, bci);
     }
 
-    void genUnsafeCast(int operand) {
-        curState.unsafe = true;
-        char fromTypeChar = (char) (operand >> 8);
-        char toTypeChar = (char) (operand & 0xff);
-        CiKind from = CiKind.fromTypeChar(fromTypeChar);
-        CiKind to = CiKind.fromTypeChar(toTypeChar);
-        if (from.sizeInSlots() != to.sizeInSlots()) {
-            assert from.isWord() || to.isWord() : "cannot use UNSAFE_CAST between two types that have a different JVM slot size";
-            curState.push(to, append(new UnsafeCast(to, curState.pop(from))));
+    void genUnsafeCast(RiMethod method) {
+        RiSignature signature = method.signature();
+        int argCount = signature.argumentCount(false);
+        RiType accessingClass = scope().method.holder();
+        RiType fromType;
+        RiType toType = signature.returnType(accessingClass);
+        if (argCount == 1) {
+            fromType = signature.argumentTypeAt(0, accessingClass);
+        } else {
+            assert argCount == 0 : "method with @UNSAFE_CAST must have exactly 1 argument";
+            fromType = method.holder();
         }
+        curState.unsafe = true;
+        CiKind from = fromType.kind();
+        CiKind to = toType.kind();
+        curState.push(to, append(new UnsafeCast(toType, curState.pop(from))));
     }
 
     void genCheckCast() {
@@ -715,7 +721,7 @@ public final class GraphBuilder {
         Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isResolved() && type.isInitialized(), cpi, stateBefore);
         CheckCast c = new CheckCast(type, typeInstruction, apop(), stateBefore);
         apush(append(c));
-        if (assumeLeafClass(type) && !type.isArrayKlass()) {
+        if (assumeLeafClass(type) && !type.isArrayClass()) {
             c.setDirectCompare();
         }
     }
@@ -727,7 +733,7 @@ public final class GraphBuilder {
         Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isResolved() && type.isInitialized(), cpi, stateBefore);
         InstanceOf i = new InstanceOf(type, typeInstruction, apop(), stateBefore);
         ipush(append(i));
-        if (assumeLeafClass(type) && !type.isArrayKlass()) {
+        if (assumeLeafClass(type) && !type.isArrayClass()) {
             i.setDirectCompare();
         }
     }
@@ -786,7 +792,7 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetStatic(cpi);
         RiType holder = field.holder();
-        boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching && holder.isResolved() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
         LoadField load = new LoadField(container, field, true, stateBefore, isInitialized, cpi, constantPool());
         appendOptimizedLoadField(field.kind(), load);
@@ -844,7 +850,7 @@ public final class GraphBuilder {
 
     void genInvokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
-        Value[] args = curState.popArguments(target.signatureType().argumentSlots(false));
+        Value[] args = curState.popArguments(target.signature().argumentSlots(false));
         if (!tryRemoveCall(target, args, true)) {
             if (!tryInline(target, args, stateBefore)) {
                 appendInvoke(INVOKESTATIC, target, args, true, cpi, constantPool, stateBefore);
@@ -854,7 +860,7 @@ public final class GraphBuilder {
 
     void genInvokeInterface(RiMethod target, char cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
-        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
             genInvokeIndirect(INVOKEINTERFACE, target, args, stateBefore, cpi, constantPool);
         }
@@ -862,7 +868,7 @@ public final class GraphBuilder {
 
     void genInvokeVirtual(RiMethod target, char cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
-        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
             genInvokeIndirect(INVOKEVIRTUAL, target, args, stateBefore, cpi, constantPool);
         }
@@ -870,7 +876,7 @@ public final class GraphBuilder {
 
     void genInvokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
-        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
             invokeDirect(target, args, knownHolder, cpi, constantPool, stateBefore);
         }
@@ -913,7 +919,7 @@ public final class GraphBuilder {
     }
 
     private CiKind returnKind(RiMethod target) {
-        return target.signatureType().returnKind();
+        return target.signature().returnKind();
     }
 
     private void invokeDirect(RiMethod target, Value[] args, RiType knownHolder, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
@@ -1337,10 +1343,11 @@ public final class GraphBuilder {
             state.storeLocal(index, local);
             index = 1;
         }
-        RiSignature sig = method.signatureType();
+        RiSignature sig = method.signature();
         int max = sig.argumentCount(false);
+        RiType accessingClass = method.holder();
         for (int i = 0; i < max; i++) {
-            RiType type = sig.argumentTypeAt(i);
+            RiType type = sig.argumentTypeAt(i, accessingClass);
             CiKind kind = type.kind().stackKind();
             Local local = new Local(kind, index);
             if (type.isResolved()) {
@@ -1442,6 +1449,9 @@ public final class GraphBuilder {
     boolean checkInliningConditions(RiMethod target) {
         if (!C1XOptions.OptInline) {
             return false; // all inlining is turned off
+        }
+        if (!target.isResolved()) {
+            return cannotInline(target, "unresolved method");
         }
         if (target.code() == null) {
             return cannotInline(target, "method has no code");
@@ -2017,7 +2027,7 @@ public final class GraphBuilder {
                 case JSR_W          : genJsr(s.readFarBranchDest()); break;
 
 
-                case UNSAFE_CAST    : genUnsafeCast(s.readCPI()); break;
+                case UNSAFE_CAST    : genUnsafeCast(constantPool().lookupMethod(s.readCPI())); break;
                 case WLOAD          : loadLocal(s.readLocalIndex(), CiKind.Word); break;
                 case WLOAD_0        : loadLocal(0, CiKind.Word); break;
                 case WLOAD_1        : loadLocal(1, CiKind.Word); break;
@@ -2033,8 +2043,8 @@ public final class GraphBuilder {
                 case WCONST_0       : wpush(appendConstant(CiConstant.ZERO)); break;
                 case WDIV           : // fall through
                 case WDIVI          : // fall through
-                case WREM           : // fall through
-                case WREMI          : genArithmeticOp(CiKind.Word, opcode, curState.copy()); break;
+                case WREM           : genArithmeticOp(CiKind.Word, opcode, curState.copy()); break;
+                case WREMI          : genArithmeticOp(CiKind.Int, opcode, curState.copy()); break;
 
                 case READREG        : genLoadRegister(s.readCPI()); break;
                 case WRITEREG       : genStoreRegister(s.readCPI()); break;
@@ -2198,7 +2208,7 @@ public final class GraphBuilder {
     private void appendSnippetCall(RiSnippetCall snippetCall, FrameState stateBefore) {
         Value[] args = new Value[snippetCall.arguments.length];
         RiMethod snippet = snippetCall.snippet;
-        RiSignature signature = snippet.signatureType();
+        RiSignature signature = snippet.signature();
         assert signature.argumentCount(!isStatic(snippet.accessFlags())) == args.length;
         for (int i = args.length - 1; i >= 0; --i) {
             CiKind argKind = signature.argumentKindAt(i);
