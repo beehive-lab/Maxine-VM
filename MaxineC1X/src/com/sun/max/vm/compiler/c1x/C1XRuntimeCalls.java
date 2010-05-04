@@ -182,7 +182,7 @@ public class C1XRuntimeCalls {
                 throw ProgramError.unexpected(instantiationException);
             }
         }
-        if (classActor.isHybridClassActor()) {
+        if (classActor.isHybridClass()) {
             return Heap.createHybrid(classActor.dynamicHub());
         }
         final Object object = Heap.createTuple(classActor.dynamicHub());

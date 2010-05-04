@@ -43,7 +43,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * The {@code MaxRiRuntime} class implements the runtime interface needed by C1X.
@@ -64,8 +63,6 @@ public class MaxRiRuntime implements RiRuntime {
     private static final CiRegister[] generalParameterRegisters = new CiRegister[]{AMD64.rdi, AMD64.rsi, AMD64.rdx, AMD64.rcx, AMD64.r8, AMD64.r9};
     private static final CiRegister[] xmmParameterRegisters = new CiRegister[]{AMD64.xmm0, AMD64.xmm1, AMD64.xmm2, AMD64.xmm3, AMD64.xmm4, AMD64.xmm5, AMD64.xmm6, AMD64.xmm7};
 
-    final MaxRiConstantPool globalConstantPool = new MaxRiConstantPool(this, null);
-
     final HashMap<ConstantPool, MaxRiConstantPool> constantPools = new HashMap<ConstantPool, MaxRiConstantPool>();
 
     /**
@@ -82,35 +79,11 @@ public class MaxRiRuntime implements RiRuntime {
         synchronized (this) {
             MaxRiConstantPool constantPool = constantPools.get(cp);
             if (constantPool == null) {
-                constantPool = new MaxRiConstantPool(this, cp);
+                constantPool = new MaxRiConstantPool(cp);
                 constantPools.put(cp, constantPool);
             }
             return constantPool;
         }
-    }
-
-    /**
-     * Resolves a compiler interface type by its name. Note that this
-     * method should only be called for globally available classes (e.g. java.lang.*),
-     * since it does not supply a constant pool.
-     * @param name the name of the class
-     * @return the compiler interface type for the class
-     */
-    public RiType resolveType(String name) {
-        final ClassActor classActor = ClassRegistry.get((ClassLoader) null, JavaTypeDescriptor.getDescriptorForJavaString(name), false);
-        if (classActor != null) {
-            return canonicalRiType(classActor, globalConstantPool, -1);
-        }
-        return null;
-    }
-
-    /**
-     * Gets the {@code RiMethod} for a given method actor.
-     * @param methodActor the method actor
-     * @return the canonical compiler interface method for the method actor
-     */
-    public RiMethod getRiMethod(ClassMethodActor methodActor) {
-        return canonicalRiMethod(methodActor, getConstantPool(methodActor), -1);
     }
 
     /**
@@ -185,10 +158,10 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     ClassMethodActor asClassMethodActor(RiMethod method, String operation) {
-        if (method instanceof MaxRiMethod) {
-            return ((MaxRiMethod) method).asClassMethodActor(operation);
+        if (method instanceof ClassMethodActor) {
+            return (ClassMethodActor) method;
         }
-        throw new MaxRiUnresolved("invalid RiMethod instance: " + method.getClass());
+        throw new CiUnresolvedException("invalid RiMethod instance: " + method.getClass());
     }
 
     public int threadExceptionOffset() {
@@ -305,82 +278,8 @@ public class MaxRiRuntime implements RiRuntime {
         return new C1XTargetMethod(name, ciTargetMethod);
     }
 
-    /**
-     * Canonicalizes resolved {@code MaxRiMethod} instances (per runtime), so
-     * that the same {@code MaxRiMethod} instance is always returned for the
-     * same {@code MethodActor}.
-     * @param methodActor the method actor for which to get the canonical type
-     * @param maxRiConstantPool the constant pool
-     * @param cpi the constant pool index
-     * @return the canonical compiler interface method for the method actor
-     */
-    public MaxRiMethod canonicalRiMethod(MethodActor methodActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
-        // TODO: is synchronization necessary here or are duplicates harmless?
-
-        // all resolved methods are canonicalized per runtime instance
-        final MaxRiMethod previous = (MaxRiMethod) methodActor.ciObject;
-        if (previous == null) {
-            final MaxRiMethod method = new MaxRiMethod(maxRiConstantPool, methodActor, cpi);
-            methodActor.ciObject = method;
-            return method;
-        }
-        return previous;
-    }
-
-    /**
-     * Canonicalizes resolved {@code MaxRiFielde} instances (per runtime), so
-     * that the same {@code MaxRiField} instance is always returned for the
-     * same {@code FieldActor}.
-     * @param fieldActor the field actor for which to get the canonical type
-     * @param maxRiConstantPool the constant pool
-     * @param cpi the constant pool index
-     * @return the canonical compiler interface field for the field actor
-     */
-    public MaxRiField canonicalRiField(FieldActor fieldActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
-        // TODO: is synchronization necessary here or are duplicates harmless?
-
-        // all resolved fields are canonicalized per runtime instance
-        final MaxRiField previous = (MaxRiField) fieldActor.ciObject;
-        if (previous == null) {
-            final MaxRiField field = new MaxRiField(maxRiConstantPool, fieldActor, cpi);
-            fieldActor.ciObject = field;
-            return field;
-        }
-        return previous;
-    }
-
-    /**
-     * Canonicalizes resolved {@code MaxRiType} instances (per runtime), so
-     * that the same {@code MaxRiType} instance is always returned for the
-     * same {@code ClassActor}.
-     * @param classActor the class actor for which to get the canonical type
-     * @param maxRiConstantPool
-     * @return the canonical compiler interface type for the class actor
-     */
-    public MaxRiType canonicalRiType(ClassActor classActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
-        // TODO: is synchronization necessary here or are duplicates harmless?
-
-        // all resolved types are canonicalized per runtime instance
-        final MaxRiType previous = (MaxRiType) classActor.ciObject;
-        if (previous == null) {
-            final MaxRiType type = new MaxRiType(maxRiConstantPool, classActor, cpi);
-            classActor.ciObject = type;
-            return type;
-        }
-        return previous;
-    }
-
     public RiType getRiType(Class<?> javaClass) {
-        // TODO: using target is probably necessary here
-        return canonicalRiType(ClassActor.fromJava(javaClass), globalConstantPool, -1);
-    }
-
-    public boolean isObjectArrayType(RiType type) {
-        if (type.isResolved()) {
-            ClassActor c = ((MaxRiType) type).asClassActor("equals Object[]");
-            return c.isArrayClassActor() && c == ClassActor.fromJava(Object[].class);
-        }
-        return false;
+        return ClassActor.fromJava(javaClass);
     }
 
     @Override

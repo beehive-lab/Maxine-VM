@@ -658,7 +658,7 @@ public class IRChecker extends DefaultValueVisitor {
     public void visitReturn(Return i) {
         final Value result = i.result();
 
-        CiKind retType = ir.compilation.method.signatureType().returnKind();
+        CiKind retType = ir.compilation.method.signature().returnKind();
         if (result == null) {
             assertKind(i, CiKind.Void);
             if (retType != CiKind.Void) {
@@ -743,7 +743,7 @@ public class IRChecker extends DefaultValueVisitor {
     public void visitInvoke(Invoke i) {
         assertNonNull(i.target(), "Target of invoke cannot be null");
         assertNonNull(i.stateBefore(), "Invoke must have ValueStack");
-        RiSignature signatureType = i.target().signatureType();
+        RiSignature signatureType = i.target().signature();
         assertKind(i, signatureType.returnKind().stackKind());
         Value[] args = i.arguments();
         if (i.isStatic()) {
@@ -935,7 +935,7 @@ public class IRChecker extends DefaultValueVisitor {
 
     private void assertInstanceType(RiType riType) {
         if (riType != null && riType.isResolved()) {
-            if (riType.isArrayKlass() || riType.isInterface() || riType.kind().isPrimitive()) {
+            if (riType.isArrayClass() || riType.isInterface() || riType.kind().isPrimitive()) {
                 fail("RiType " + riType + " must be an instance class");
             }
         }
@@ -943,7 +943,7 @@ public class IRChecker extends DefaultValueVisitor {
 
     private void assertArrayType(RiType riType) {
         if (riType != null && riType.isResolved()) {
-            if (!riType.isArrayKlass()) {
+            if (!riType.isArrayClass()) {
                 fail("RiType " + riType + " must be an array class");
             }
         }

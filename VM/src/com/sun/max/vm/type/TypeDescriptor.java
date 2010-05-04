@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.type;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -41,7 +43,7 @@ import com.sun.max.vm.type.JavaTypeDescriptor.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class TypeDescriptor extends Descriptor {
+public abstract class TypeDescriptor extends Descriptor implements RiType {
 
     /**
      * The only concrete subclass of {@link TypeDescriptor}.
@@ -220,7 +222,7 @@ public abstract class TypeDescriptor extends Descriptor {
         if (!MaxineVM.isHosted()) {
             ClassActor classActor = ClassRegistry.get(classLoader, this, true);
             if (classActor != null) {
-                return classActor.mirror();
+                return classActor.javaClass();
             }
         }
         return JavaTypeDescriptor.resolveToJavaClass(this, classLoader);
@@ -228,10 +230,8 @@ public abstract class TypeDescriptor extends Descriptor {
 
     /**
      * Determines if this constant can be resolved without causing class loading.
-     *
-     * @param holder the class that contains this type descriptor as a reference to another class
      */
-    public boolean isResolvableWithoutClassLoading(final ClassActor holder, final ClassLoader classLoader) {
+    public boolean isResolvableWithoutClassLoading(final ClassLoader classLoader) {
         TypeDescriptor typeDescriptor = this;
         if (MaxineVM.isHosted()) {
             // When running the compiler in a prototype environment (e.g. for JUnit testing), it's
@@ -293,5 +293,120 @@ public abstract class TypeDescriptor extends Descriptor {
     @HOSTED_ONLY
     public ClassActor resolveHosted(final ClassLoader classLoader) {
         return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(this);
+    }
+
+    public CiUnresolvedException unresolved(String operation) {
+        throw new CiUnresolvedException(operation + " not defined for unresolved type " + this);
+    }
+
+    public final int accessFlags() {
+        throw unresolved("accessFlags()");
+    }
+
+    public final RiType arrayOf() {
+        return JavaTypeDescriptor.getArrayDescriptorForDescriptor(this, 1);
+    }
+
+    public final RiType componentType() {
+        return componentTypeDescriptor();
+    }
+
+    public final RiType exactType() {
+        return null;
+    }
+
+    public final CiConstant getEncoding(RiType.Representation r) {
+        throw unresolved("getEncoding()");
+    }
+
+    public final CiKind getRepresentationKind(RiType.Representation r) {
+        // all portions of a type are represented by objects in Maxine
+        return CiKind.Object;
+    }
+
+    public final boolean hasSubclass() {
+        throw unresolved("hasSubclass()");
+    }
+
+    public final boolean hasFinalizer() {
+        throw unresolved("hasFinalizer()");
+    }
+
+    public final boolean hasFinalizableSubclass() {
+        throw unresolved("hasFinalizableSubclass()");
+    }
+
+    public final boolean isInterface() {
+        throw unresolved("isInterface()");
+    }
+
+    public final boolean isArrayClass() {
+        return JavaTypeDescriptor.isArray(this);
+    }
+
+    public final boolean isInitialized() {
+        throw unresolved("isInitialized()");
+    }
+
+    public final boolean isInstance(Object obj) {
+        throw unresolved("isInstance()");
+    }
+
+    public final boolean isInstanceClass() {
+        throw unresolved("isInstanceClass()");
+    }
+
+    public final boolean isResolved() {
+        return false;
+    }
+
+    public final boolean isSubtypeOf(RiType other) {
+        throw unresolved("isSubtypeOf()");
+    }
+
+    public final Class<?> javaClass() {
+        throw unresolved("javaClass()");
+    }
+
+    public final CiKind kind() {
+        return toKind().ciKind;
+    }
+
+    public final String name() {
+        return string;
+    }
+
+    public final RiMethod resolveMethodImpl(RiMethod method) {
+        throw unresolved("resolveMethodImpl()");
+    }
+
+    /**
+     * Gets a {@link RiType}. This method will return a {@linkplain RiType#isResolved() resolved}
+     * type if possible but without triggering any class loading or resolution.
+     *
+     * @param typeDescriptor a type descriptor
+     * @param accessingClass the context of the type lookup. If accessing class is resolved, its class loader
+     *        is used to retrieve an existing resolved type. This value can be {@code null} if the caller does
+     *        not care for a resolved type.
+     * @return a {@link RiType} object for {@code typeDescriptor}
+     */
+    public static RiType toRiType(TypeDescriptor typeDescriptor, RiType accessingClass) {
+        if (typeDescriptor instanceof AtomicTypeDescriptor) {
+            final AtomicTypeDescriptor atom = (AtomicTypeDescriptor) typeDescriptor;
+            return ClassActor.fromJava(atom.toKind().javaClass);
+        } else if (typeDescriptor instanceof WordTypeDescriptor) {
+            final WordTypeDescriptor word = (WordTypeDescriptor) typeDescriptor;
+            if (word.javaClass instanceof Class) {
+                return ClassActor.fromJava((Class) word.javaClass);
+            }
+        } else if (accessingClass != null) {
+            if (accessingClass instanceof ClassActor) {
+                ClassLoader loader = ((ClassActor) accessingClass).classLoader;
+                if (typeDescriptor.isResolvableWithoutClassLoading(loader)) {
+                    return typeDescriptor.resolve(loader);
+                }
+            }
+        }
+        return typeDescriptor;
     }
 }

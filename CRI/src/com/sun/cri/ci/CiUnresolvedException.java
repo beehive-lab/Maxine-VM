@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,28 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.verifier.types;
-
-import com.sun.max.vm.actor.holder.*;
+package com.sun.cri.ci;
 
 /**
- * Represents object types for which the corresponding ClassActor already exists. That is,
- * {@linkplain #resolve() resolving} this verification type is guaranteed not to cause class loading.
+ * The {@code CiUnresolved} exception is thrown if the user of the compiler interface
+ * queries a compiler interface object in a way that is not appropriate for an unresolved object.
  *
- * @author Doug Simon
+ * @author Ben L. Titzer
  */
-public class ResolvedObjectType extends ObjectType implements ResolvedType {
-
-    private final ClassActor classActor;
-
-    public ResolvedObjectType(ClassActor classActor) {
-        super(classActor.typeDescriptor, null);
-        assert !classActor.isArrayClass();
-        this.classActor = classActor;
-    }
-
-    @Override
-    public ClassActor resolve() {
-        return classActor;
+public class CiUnresolvedException extends RuntimeException {
+    public CiUnresolvedException(String msg) {
+        super(msg);
     }
 }

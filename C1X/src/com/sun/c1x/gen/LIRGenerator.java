@@ -123,7 +123,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         this.compilation = compilation;
         this.ir = compilation.hir();
         this.xir = compilation.compiler.xir;
-        this.xirSupport = new XirSupport(xir);
+        ClassLoader loader = compilation.method.holder().isResolved() ? compilation.method.holder().javaClass().getClassLoader() : null;
+        this.xirSupport = new XirSupport(loader);
         this.is32 = compilation.target.arch.is32bit();
         this.is64 = compilation.target.arch.is64bit();
         this.isTwoOperand = compilation.target.arch.twoOperandMode();
@@ -1898,11 +1899,11 @@ public abstract class LIRGenerator extends ValueVisitor {
      * Implements site-specific information for the XIR interface.
      */
     static class XirSupport implements XirSite {
-        final RiXirGenerator xir;
         Value current;
+        final ClassLoader loader;
 
-        XirSupport(RiXirGenerator xir) {
-            this.xir = xir;
+        XirSupport(ClassLoader loader) {
+            this.loader = loader;
         }
 
         public CiCodePos getCodePos() {
@@ -1944,6 +1945,10 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         public RiType getExactType(XirArgument argument) {
             return current == null ? null : current.exactType();
+        }
+
+        public ClassLoader resolutionLoader() {
+            return loader;
         }
 
         XirSupport site(Value v) {

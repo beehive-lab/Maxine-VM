@@ -139,6 +139,13 @@ public interface RiConstantPool {
     RiMethod lookupInvokeStatic(char cpi);
 
     /**
+     * Looks up a reference to a method at compile time (does not perform resolution).
+     * @param cpi the constant pool index
+     * @return a reference to the compiler interface method
+     */
+    RiMethod lookupMethod(char cpi);
+    
+    /**
      * Looks up a reference to a compiler interface type at compile time (does not
      * perform resolution). If a resolution of this constant would fail
      * at run time, the compiler expects this method to return an unresolved constant.

@@ -48,7 +48,7 @@ public abstract class BuiltinsSnippet extends Snippet {
         @SNIPPET
         @INLINE
         public static Class getMirror(ClassActor classActor) {
-            return classActor.mirror();
+            return classActor.javaClass();
         }
         public static final GetMirror SNIPPET = new GetMirror();
     }

@@ -368,12 +368,12 @@ public class NoninlineTemplateRuntime {
 
     @NEVER_INLINE
     public static Object resolveMirror(ResolutionGuard guard) {
-        return resolveClass(guard).mirror();
+        return resolveClass(guard).javaClass();
     }
 
     @NEVER_INLINE
     public static Object getClassMirror(ClassActor classActor) {
-        return classActor.mirror();
+        return classActor.javaClass();
     }
 
     @NEVER_INLINE

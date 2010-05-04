@@ -171,10 +171,10 @@ public class C1XCompilation {
     /**
      * Gets the {@code RiType} corresponding to {@code java.lang.Throwable}.
      *
-     * @return the compiler interface type for Throwable
+     * @return the compiler interface type for {@link Throwable}
      */
     public RiType throwableType() {
-        return runtime.resolveType("java.lang.Throwable");
+        return runtime.getRiType(Throwable.class);
     }
 
     /**

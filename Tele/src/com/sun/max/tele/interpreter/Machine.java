@@ -386,7 +386,7 @@ public final class Machine extends AbstractTeleVMHolder{
 
         if (remoteReferenceClassActor.typeDescriptor.equals(JavaTypeDescriptor.STRING)) {
             return Reference.fromJava(vm().getString(remoteReference));
-        } else if (remoteReferenceClassActor.isArrayClassActor() && remoteReferenceClassActor.componentClassActor().isPrimitiveClassActor()) {
+        } else if (remoteReferenceClassActor.isArrayClass() && remoteReferenceClassActor.componentClassActor().isPrimitiveClassActor()) {
             final int arrayLength = Layout.readArrayLength(remoteReference);
             return Reference.fromJava(readRemoteArray(remoteReference, arrayLength, remoteReferenceClassActor.componentClassActor().typeDescriptor));
         } else {

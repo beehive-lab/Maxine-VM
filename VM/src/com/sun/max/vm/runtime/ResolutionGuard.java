@@ -34,7 +34,7 @@ import com.sun.max.vm.classfile.constant.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public final class ResolutionGuard {
+public class ResolutionGuard {
 
     public final ConstantPool constantPool;
 
@@ -49,19 +49,12 @@ public final class ResolutionGuard {
         assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
     }
 
-    /**
-     * @return the pool constant whose resolution is guarded by this object.
-     */
-    public PoolConstant poolConstant() {
-        return constantPool.at(constantPoolIndex);
-    }
-
     @Override
     public String toString() {
         if (value != null) {
             return getClass().getSimpleName() + "[" + value + "]";
         }
 
-        return getClass().getSimpleName() + "[" + poolConstant().valueString(constantPool) + "]";
+        return getClass().getSimpleName() + "[" + constantPool.at(constantPoolIndex).valueString(constantPool) + "]";
     }
 }

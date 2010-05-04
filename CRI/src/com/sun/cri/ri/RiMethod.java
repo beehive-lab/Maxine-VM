@@ -39,8 +39,8 @@ public interface RiMethod {
     String name();
 
     /**
-     * Gets the holder of the method as a compiler interface type.
-     * @return the holder
+     * Gets the type in which this method is declared.
+     * @return the type in which this method is declared
      */
     RiType holder();
 
@@ -48,7 +48,7 @@ public interface RiMethod {
      * Gets the signature of the method.
      * @return the signature of the method
      */
-    RiSignature signatureType();
+    RiSignature signature();
 
     /**
      * Checks whether this method is resolved.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,28 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.verifier.types;
+package com.sun.max.vm.compiler.c1x;
 
-import com.sun.max.vm.actor.holder.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.max.vm.classfile.constant.*;
 
 /**
- * Represents object types for which the corresponding ClassActor already exists. That is,
- * {@linkplain #resolve() resolving} this verification type is guaranteed not to cause class loading.
+ * An {@linkplain RiField#isResolved() unresolved} method with a back reference
+ * to the constant pool entry from which it was derived.
  *
  * @author Doug Simon
  */
-public class ResolvedObjectType extends ObjectType implements ResolvedType {
+public class MaxUnresolvedMethod extends CiUnresolvedMethod {
 
-    private final ClassActor classActor;
+    public final ConstantPool constantPool;
+    public final int cpi;
 
-    public ResolvedObjectType(ClassActor classActor) {
-        super(classActor.typeDescriptor, null);
-        assert !classActor.isArrayClass();
-        this.classActor = classActor;
-    }
-
-    @Override
-    public ClassActor resolve() {
-        return classActor;
+    public MaxUnresolvedMethod(ConstantPool constantPool, int cpi, RiType holder, String name, RiSignature signature) {
+        super(holder, name, signature);
+        this.constantPool = constantPool;
+        this.cpi = cpi;
     }
 }

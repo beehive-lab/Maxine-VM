@@ -158,7 +158,7 @@ public class MockMethod implements RiMethod {
 	}
 
 	@Override
-	public RiSignature signatureType() {
+	public RiSignature signature() {
 		return signature;
 	}
 

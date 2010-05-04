@@ -113,7 +113,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
 //    }
 
     public TeleClass getTeleClass() {
-        final Reference reference = vm().teleFields().ClassActor_mirror.readReference(reference());
+        final Reference reference = vm().teleFields().ClassActor_javaClass.readReference(reference());
         if (reference.isZero()) {
             // TODO: assert that this class is the object class!
             return null;
@@ -142,9 +142,9 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
      * @return Reference to the constants in the {@link TeleVM}'s constant pool for the class, null if an array type
      */
     public TeleConstantPool getTeleConstantPool() {
-        if (classActor().isTupleClassActor()) {
+        if (classActor().isTupleClass()) {
             return (TeleConstantPool) vm().makeTeleObject(vm().teleFields().TupleClassActor_constantPool.readReference(reference()));
-        } else if (classActor().isHybridClassActor()) {
+        } else if (classActor().isHybridClass()) {
             return (TeleConstantPool) vm().makeTeleObject(vm().teleFields().HybridClassActor_constantPool.readReference(reference()));
         }
         return null;

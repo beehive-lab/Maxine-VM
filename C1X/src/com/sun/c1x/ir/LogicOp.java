@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.cri.ci.*;
+
 /**
  * The {@code LogicOp} class definition.
  *
@@ -35,6 +37,10 @@ public final class LogicOp extends Op2 {
      */
     public LogicOp(int opcode, Value x, Value s) {
         super(x.kind, opcode, x, s);
+    }
+
+    public LogicOp(CiKind kind, int opcode, Value x, Value s) {
+        super(kind, opcode, x, s);
     }
 
     /**

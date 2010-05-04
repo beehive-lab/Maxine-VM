@@ -28,7 +28,6 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
@@ -348,10 +347,8 @@ public class C1XTest {
     }
 
     private static boolean compile(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
-        // compile a single method
-        RiMethod riMethod = runtime.getRiMethod((ClassMethodActor) method);
         final long startNs = System.nanoTime();
-        CiResult result = compiler.compileMethod(riMethod, xirGenerator);
+        CiResult result = compiler.compileMethod(method, xirGenerator);
         if (timing && result.bailout() == null) {
             long timeNs = System.nanoTime() - startNs;
             recordTime(method, result.statistics().byteCount, result.statistics().nodeCount, timeNs);
@@ -563,7 +560,7 @@ public class C1XTest {
             if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(methodActor.flags())) {
                 final Method method = methodActor.toJava();
                 assert method != null;
-                C1XIntrinsic.registerFoldableMethod(C1XCompilerScheme.globalRuntime.getRiMethod((ClassMethodActor) methodActor), method);
+                C1XIntrinsic.registerFoldableMethod(methodActor, method);
             }
             methods.add(methodActor);
             if ((methods.size() % 1000) == 0 && verboseOption.getValue() >= 1) {

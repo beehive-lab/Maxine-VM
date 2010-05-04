@@ -360,16 +360,6 @@ public class Canonicalizer extends DefaultValueVisitor {
         return null;
     }
 
-    /*
-     *                 final int shift = Long.numberOfTrailingZeros(divisor.toLong());
-                if (shift == 0) {
-                    return new CirCall(normalContinuation, dividendValue);
-                }
-                final Builtin bltin = (Word.width() == 64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
-                return new CirCall(CirBuiltin.get(bltin), dividendValue, new CirConstant(IntValue.from(shift)), normalContinuation, exceptionContinuation);
-
-     * */
-
     private Value reduceWordOp2(Op2 original, Value x, long y) {
         if (y == 0) {
             // Defer to arithmetic exception at runtime
@@ -387,7 +377,15 @@ public class Canonicalizer extends DefaultValueVisitor {
                     return setCanonical(new ShiftOp(target.arch.is64bit() ? LUSHR : IUSHR, x, intInstr(CiUtil.log2(y))));
                 }
             }
-            case WREMI:
+            case WREMI: {
+                if (y == 1) {
+                    return setCanonical(intInstr(0));
+                }
+                if (CiUtil.isPowerOf2(y)) {
+                    int mask = (int) y - 1;
+                    return setCanonical(new LogicOp(CiKind.Int, IAND, x, intInstr(mask)));
+                }
+            }
             case WREM: {
                 if (y == 1) {
                     return setCanonical(wordInstr(0));
@@ -546,7 +544,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             } else {
                 RiType exactType = Value.exactType(array, runtime);
                 if (exactType != null) {
-                    if (runtime.isObjectArrayType(exactType)) {
+                    if (runtime.getRiType(Object[].class).equals(exactType)) {
                         // the exact type of the array is Object[] => no check is necessary
                         clearStoreCheck(i);
                     } else {
@@ -1355,7 +1353,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             try {
                 // attempt to invoke the method
                 Object result = reflectMethod.invoke(recvr, argArray);
-                CiKind kind = method.signatureType().returnKind();
+                CiKind kind = method.signature().returnKind();
                 // set the result of this instruction to be the result of invocation
                 C1XMetrics.MethodsFolded++;
                 return CiConstant.forBoxed(kind, result);

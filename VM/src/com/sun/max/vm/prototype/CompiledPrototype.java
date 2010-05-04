@@ -236,7 +236,7 @@ public class CompiledPrototype extends Prototype {
             }
             superClassActor = superClassActor.superClassActor;
         }
-        if (!classActor.isInterfaceActor()) {
+        if (!classActor.isInterface()) {
             // for each interface that this class implements, add this class's implementation of its methods used so far
             for (InterfaceActor interfaceActor : classActor.getAllInterfaceActors()) {
                 final ClassInfo interfaceInfo = getInfo(interfaceActor);

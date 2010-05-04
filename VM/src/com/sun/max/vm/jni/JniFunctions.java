@@ -605,7 +605,7 @@ public final class JniFunctions {
 
     private static Object allocObject(Class javaClass) throws InstantiationException {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        if (classActor.isTupleClassActor() && !classActor.isAbstract()) {
+        if (classActor.isTupleClass() && !classActor.isAbstract()) {
             return Heap.createTuple(classActor.dynamicHub());
         }
         throw new InstantiationException();

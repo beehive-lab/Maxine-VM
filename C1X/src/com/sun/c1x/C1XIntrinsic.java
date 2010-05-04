@@ -282,7 +282,7 @@ public enum C1XIntrinsic {
             // note that the map uses internal names to make lookup faster
             HashMap<String, C1XIntrinsic> map = intrinsicMap.get(holder.name());
             if (map != null) {
-                return map.get(method.name() + method.signatureType().asString());
+                return map.get(method.name() + method.signature().asString());
             }
         }
         return null;
@@ -298,9 +298,10 @@ public enum C1XIntrinsic {
      */
     public static void registerFoldableMethod(RiMethod riMethod, Method reflectMethod) {
         reflectMethod.setAccessible(true);
-        foldableMap.put(riMethod, reflectMethod);
+        if (foldableMap.put(riMethod, reflectMethod) == null) {
+            C1XMetrics.FoldableMethodsRegistered++;
+        }
         anyFoldables = true;
-        C1XMetrics.FoldableMethodsRegistered++;
     }
 
     /**

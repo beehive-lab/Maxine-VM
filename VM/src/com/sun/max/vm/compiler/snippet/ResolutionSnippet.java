@@ -129,7 +129,7 @@ public abstract class ResolutionSnippet extends Snippet {
             final ConstantPool constantPool = guard.constantPool;
             final int index = guard.constantPoolIndex;
             final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
-            if (classActor.isAbstract() || classActor.isArrayClassActor()) {
+            if (classActor.isAbstract() || classActor.isArrayClass()) {
                 // Covers abstract classes and interfaces
                 throw new InstantiationError();
             }

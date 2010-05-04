@@ -25,7 +25,10 @@ import static com.sun.max.vm.VMOptions.*;
 
 import java.lang.reflect.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -85,6 +88,8 @@ public abstract class ClassMethodActor extends MethodActor {
      * This value is {@code null} if this method is not {@linkplain #isNative() native}
      */
     public final NativeFunction nativeFunction;
+
+    private RiExceptionHandler[] exceptionHandlers;
 
     public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, int intrinsic) {
         super(name, descriptor, flags, intrinsic);
@@ -156,6 +161,77 @@ public abstract class ClassMethodActor extends MethodActor {
         compilee();
 
         return originalCodeAttribute;
+    }
+
+    @Override
+    public final byte[] code() {
+        CodeAttribute codeAttribute = originalCodeAttribute();
+        if (codeAttribute != null) {
+            return codeAttribute.code();
+        }
+        return null;
+    }
+
+    @Override
+    public RiExceptionHandler[] exceptionHandlers() {
+        if (exceptionHandlers != null) {
+            // return the cached exception handlers
+            return exceptionHandlers;
+        }
+
+        Sequence<ExceptionHandlerEntry> exceptionHandlerTable = Sequence.Static.empty(ExceptionHandlerEntry.class);
+        CodeAttribute codeAttribute = originalCodeAttribute();
+        if (codeAttribute != null) {
+            exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
+        }
+        if (exceptionHandlerTable.length() == 0) {
+            exceptionHandlers = RiExceptionHandler.NONE;
+        } else {
+            exceptionHandlers = new RiExceptionHandler[exceptionHandlerTable.length()];
+            int i = 0;
+            for (ExceptionHandlerEntry entry : exceptionHandlerTable) {
+                RiType catchType;
+                int catchTypeIndex = entry.catchTypeIndex();
+                if (catchTypeIndex == 0) {
+                    catchType = null;
+                } else {
+                    ConstantPool pool = codeAttribute.constantPool;
+                    catchType = pool.classAt(catchTypeIndex).resolve(pool, catchTypeIndex);
+                }
+                exceptionHandlers[i++] = new CiExceptionHandler(
+                                (char) entry.startPosition(),
+                                (char) entry.endPosition(),
+                                (char) entry.handlerPosition(),
+                                (char) catchTypeIndex, catchType);
+            }
+        }
+        return exceptionHandlers;
+    }
+
+    @Override
+    public String jniSymbol() {
+        if (nativeFunction != null) {
+            return nativeFunction.makeSymbol();
+        }
+        return null;
+    }
+
+    @Override
+    public int maxLocals() {
+        CodeAttribute codeAttribute = originalCodeAttribute();
+        if (codeAttribute != null) {
+            return codeAttribute.maxLocals;
+        }
+        return 0;
+    }
+
+    @Override
+    public int maxStackSize() {
+        CodeAttribute codeAttribute = originalCodeAttribute();
+        if (codeAttribute != null) {
+            return codeAttribute.maxStack;
+        }
+        return 0;
     }
 
     /**

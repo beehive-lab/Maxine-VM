@@ -62,7 +62,7 @@ public final class JavaTypeDescriptor {
         }
 
         @Override
-        public boolean isResolvableWithoutClassLoading(ClassActor holder, ClassLoader classLoader) {
+        public boolean isResolvableWithoutClassLoading(ClassLoader classLoader) {
             return true;
         }
 
@@ -108,7 +108,7 @@ public final class JavaTypeDescriptor {
         }
 
         @Override
-        public boolean isResolvableWithoutClassLoading(ClassActor holder, ClassLoader classLoader) {
+        public boolean isResolvableWithoutClassLoading(ClassLoader classLoader) {
             return javaClass instanceof Class;
         }
 

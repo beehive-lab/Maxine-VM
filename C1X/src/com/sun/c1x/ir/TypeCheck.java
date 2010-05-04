@@ -75,15 +75,6 @@ public abstract class TypeCheck extends StateSplit {
     }
 
     /**
-     * Checks whether this instruction is a direct compare.
-     * @return {@code true} if this cast or check is a direct compare
-     */
-    public boolean directCompare() {
-        // XXX: what does direct compare mean? leaf class?
-        return checkFlag(Flag.DirectCompare);
-    }
-
-    /**
      * Checks whether this instruction can trap.
      * @return {@code true}, conservatively assuming the cast may fail
      */
@@ -119,6 +110,7 @@ public abstract class TypeCheck extends StateSplit {
      * @return {@code true} if this typecheck is a direct compare
      */
     public boolean isDirectCompare() {
+        // XXX: what does direct compare mean? leaf class?
         return checkFlag(Flag.DirectCompare);
     }
 }

@@ -232,13 +232,12 @@ public class C0XCompilation {
             frameState.state[index] = produce(CiKind.Object);
             index = 1;
         }
-        RiSignature sig = method.signatureType();
+        RiSignature sig = method.signature();
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
-            RiType type = sig.argumentTypeAt(i);
-            CiKind vt = type.kind().stackKind();
-            frameState.state[index] = produce(vt);
-            index += vt.sizeInSlots();
+            CiKind kind = sig.argumentKindAt(index).stackKind();
+            frameState.state[index] = produce(kind);
+            index += kind.sizeInSlots();
         }
         return frameState;
     }
@@ -617,29 +616,29 @@ public class C0XCompilation {
     }
 
     private void doInvokeInterface(RiMethod riMethod) {
-        Location[] args = popN(riMethod.signatureType().argumentSlots(true));
-        CiKind retType = riMethod.signatureType().returnKind();
+        Location[] args = popN(riMethod.signature().argumentSlots(true));
+        CiKind retType = riMethod.signature().returnKind();
         Location r = codeGen.genInvokeInterface(riMethod, args);
         pushZ(r, retType);
     }
 
     private void doInvokeStatic(RiMethod riMethod) {
-        Location[] args = popN(riMethod.signatureType().argumentSlots(false));
-        CiKind retType = riMethod.signatureType().returnKind();
+        Location[] args = popN(riMethod.signature().argumentSlots(false));
+        CiKind retType = riMethod.signature().returnKind();
         Location r = codeGen.genInvokeStatic(riMethod, args);
         pushZ(r, retType);
     }
 
     private void doInvokeSpecial(RiMethod riMethod) {
-        Location[] args = popN(riMethod.signatureType().argumentSlots(true));
-        CiKind retType = riMethod.signatureType().returnKind();
+        Location[] args = popN(riMethod.signature().argumentSlots(true));
+        CiKind retType = riMethod.signature().returnKind();
         Location r = codeGen.genInvokeSpecial(riMethod, args);
         pushZ(r, retType);
     }
 
     private void doInvokeVirtual(RiMethod riMethod) {
-        Location[] args = popN(riMethod.signatureType().argumentSlots(true));
-        CiKind retType = riMethod.signatureType().returnKind();
+        Location[] args = popN(riMethod.signature().argumentSlots(true));
+        CiKind retType = riMethod.signature().returnKind();
         Location r = codeGen.genInvokeVirtual(riMethod, args);
         pushZ(r, retType);
     }

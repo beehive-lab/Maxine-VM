@@ -163,7 +163,7 @@ public class MockSignature implements RiSignature {
 	}
 
 	@Override
-	public RiType argumentTypeAt(int index) {
+	public RiType argumentTypeAt(int index, RiType accessingClass) {
 		return MockUniverse.lookupTypeBySignature(arguments.get(index));
 	}
 
@@ -178,7 +178,7 @@ public class MockSignature implements RiSignature {
 	}
 
 	@Override
-	public RiType returnType() {
+	public RiType returnType(RiType accessingClass) {
 		return MockUniverse.lookupTypeBySignature(returnType);
 	}
 

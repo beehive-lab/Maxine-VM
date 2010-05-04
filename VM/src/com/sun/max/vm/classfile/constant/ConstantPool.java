@@ -20,14 +20,15 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
+import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
-import static com.sun.max.vm.classfile.ErrorContext.*;
-import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
-import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;

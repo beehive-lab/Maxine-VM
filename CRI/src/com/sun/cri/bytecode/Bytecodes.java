@@ -382,24 +382,12 @@ public class Bytecodes {
     public static final int WRITEREG             = 235;
 
     /**
-     * Unsafe cast of top value on stack. The valid type characters and their corresponding kinds are:
-     * <pre>
-     *  'z' = boolean
-     *  'c' = char
-     *  'f' = float
-     *  'd' = double
-     *  'b' = byte
-     *  's' = short
-     *  'i' = int
-     *  'l' = long
-     *  'a' = Object
-     *  'w' = Word
-     * </pre>
+     * Unsafe cast of top value on stack.
      *
      * <pre>
      * Format: { u1 opcode;   // UNSAFE_CAST
-     *           u1 from;     // type char denoting input type
-     *           u1 to;       // type char denoting output type
+     *           u2 method;   // Constant pool index to method (CONSTANT_Methodref_info) whose signature
+     *                        // describes the source and target types of the cast
      *         }
      *
      * Operand Stack:
