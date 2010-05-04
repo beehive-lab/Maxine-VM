@@ -21,6 +21,7 @@
 package com.sun.cri.ri;
 
 import java.io.*;
+import java.lang.reflect.*;
 
 import com.sun.cri.ci.*;
 
@@ -165,4 +166,15 @@ public interface RiRuntime {
      * Gets the {@linkplain RiSnippets snippets} provided by the runtime.
      */
     RiSnippets getSnippets();
+
+    /**
+     * Gets the Java reflection object that can be used to compile-time evaluate or "fold"
+     * a call to a given method. A foldable method is a pure function that has no side effects.
+     * Such methods can be executed via reflection when all their inputs are constants,
+     * and the resulting value is substituted for the method call.
+     * 
+     * @param method the compiler interface method for which a foldable is being requested
+     * @return the reflection method to execute for folding or {@code null} if {@code method} is not foldable
+     */
+    Method getFoldingMethod(RiMethod method);
 }

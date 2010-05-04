@@ -36,7 +36,6 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -557,11 +556,6 @@ public class C1XTest {
             }
         }
         if (isCompilable(methodActor)) {
-            if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(methodActor.flags())) {
-                final Method method = methodActor.toJava();
-                assert method != null;
-                C1XIntrinsic.registerFoldableMethod(methodActor, method);
-            }
             methods.add(methodActor);
             if ((methods.size() % 1000) == 0 && verboseOption.getValue() >= 1) {
                 out.print('.');

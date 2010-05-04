@@ -341,7 +341,7 @@ public class Bytecodes {
      * Unsigned word comparison.
      *
      * <pre>
-     * Format: { u1 opcode;   // UCMP
+     * Format: { u1 opcode;   // UWCMP
      *           u2 op;       // ABOVE_EQUAL, ABOVE_THAN, BELOW_EQUAL or BELOW_THAN
      *         }
      *

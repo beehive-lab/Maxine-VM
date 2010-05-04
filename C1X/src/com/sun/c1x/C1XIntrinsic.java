@@ -20,7 +20,6 @@
  */
 package com.sun.c1x;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -196,8 +195,6 @@ public enum C1XIntrinsic {
     sun_misc_Unsafe$prefetchWriteStatic  ("(Ljava/lang/Object;J)V");
 
     private static HashMap<String, HashMap<String, C1XIntrinsic>> intrinsicMap = new HashMap<String, HashMap<String, C1XIntrinsic>>(100);
-    private static HashMap<RiMethod, Method> foldableMap = new HashMap<RiMethod, Method>();
-    private static boolean anyFoldables;
 
     private final String className;
     private final String simpleClassName;
@@ -286,34 +283,5 @@ public enum C1XIntrinsic {
             }
         }
         return null;
-    }
-
-    /**
-     * Allows users of the C1X compiler to register particular methods that are "foldable"--
-     * i.e. they are pure functions that have no side effects. Such methods can be executed
-     * with reflection when all their inputs are constants, and the resulting value substituted
-     * for the method call.
-     * @param riMethod the compiler interface method for matching
-     * @param reflectMethod the reflection method to execute for folding
-     */
-    public static void registerFoldableMethod(RiMethod riMethod, Method reflectMethod) {
-        reflectMethod.setAccessible(true);
-        if (foldableMap.put(riMethod, reflectMethod) == null) {
-            C1XMetrics.FoldableMethodsRegistered++;
-        }
-        anyFoldables = true;
-    }
-
-    /**
-     * Looks up the foldable reflective method for a compiler interface method, if it one is registered.
-     * @param riMethod the compiler interface method
-     * @return the reflective method for the compiler interface method, if one is register; {@code null}
-     * otherwise
-     */
-    public static Method getFoldableMethod(RiMethod riMethod) {
-        if (anyFoldables) {
-            return foldableMap.get(riMethod);
-        }
-        return null; // don't even bother checking the map if none are registered
     }
 }

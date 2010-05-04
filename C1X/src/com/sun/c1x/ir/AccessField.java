@@ -36,7 +36,7 @@ public abstract class AccessField extends StateSplit {
 
     Value object;
     final RiField field;
-    public final char cpi;
+    public final int cpi;
     public final RiConstantPool constantPool;
 
     /**
@@ -48,7 +48,7 @@ public abstract class AccessField extends StateSplit {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public AccessField(CiKind kind, Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
+    public AccessField(CiKind kind, Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded, int cpi, RiConstantPool constantPool) {
         super(kind, stateBefore);
         this.cpi = cpi;
         this.constantPool = constantPool;

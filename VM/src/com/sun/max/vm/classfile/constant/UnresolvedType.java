@@ -18,12 +18,11 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.sun.max.vm.classfile.constant;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -33,7 +32,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Doug Simon
  */
-public final class MaxUnresolvedType implements RiType {
+public final class UnresolvedType implements RiType {
 
     public final ConstantPool constantPool;
     public final TypeDescriptor typeDescriptor;
@@ -46,7 +45,7 @@ public final class MaxUnresolvedType implements RiType {
      * @param constantPool the constant pool containing the unresolved type reference
      * @param cpi the index in {@code constantPool} of the unresolved type reference
      */
-    public MaxUnresolvedType(TypeDescriptor typeDescriptor, ConstantPool constantPool, int cpi) {
+    public UnresolvedType(TypeDescriptor typeDescriptor, ConstantPool constantPool, int cpi) {
         this.constantPool = constantPool;
         this.typeDescriptor = typeDescriptor;
         this.cpi = cpi;
