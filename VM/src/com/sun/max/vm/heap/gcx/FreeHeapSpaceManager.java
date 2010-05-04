@@ -46,7 +46,7 @@ import com.sun.max.vm.tele.*;
  *
  * @author Laurent Daynes.
  */
-public class FreeHeapSpaceManager extends HeapSweeper {
+public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace {
     private static final VMIntOption largeObjectsMinSizeOption =
         register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(64).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
@@ -771,7 +771,19 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         InspectableHeapInfo.init(committedHeapSpace);
     }
 
-    public void reclaim(TricolorHeapMarker heapMarker) {
+    private Size lockedFreeSpaceLeft() {
+        return Size.fromLong(totalFreeChunkSpace).plus(smallObjectAllocator.freeSpaceLeft());
+    }
+
+    /**
+     * Estimated free space left.
+     * @return an estimation of the space available for allocation (in bytes).
+     */
+    public synchronized Size freeSpaceLeft() {
+        return lockedFreeSpaceLeft();
+    }
+
+    public Size reclaim(TricolorHeapMarker heapMarker) {
         for (int i = 0; i < freeChunkBins.length; i++) {
             freeChunkBins[i].reset();
         }
@@ -794,6 +806,7 @@ public class FreeHeapSpaceManager extends HeapSweeper {
             checkBinFreeSpace();
             print();
         }
+        return lockedFreeSpaceLeft();
     }
 
     public void walkCommittedSpace(CellVisitor cellVisitor) {
@@ -809,14 +822,6 @@ public class FreeHeapSpaceManager extends HeapSweeper {
         for (FreeSpaceList fsp : freeChunkBins) {
             fsp.makeParsable();
         }
-    }
-
-    /**
-     * Estimated free space left.
-     * @return
-     */
-    public synchronized Size freeSpaceLeft() {
-        return Size.fromLong(totalFreeChunkSpace).plus(smallObjectAllocator.freeSpaceLeft());
     }
 
     @INLINE
@@ -849,5 +854,32 @@ public class FreeHeapSpaceManager extends HeapSweeper {
     @INLINE
     public final Pointer allocateTLAB(Size size) {
         return useTLABBin ? binAllocateTLAB(size).asPointer() : smallObjectAllocator.allocateTLAB(size);
+    }
+
+    public Size growAfterGC(Size delta) {
+        Address oldMark = committedHeapSpace.mark();
+        Address newMark = oldMark.plus(delta);
+        Size actualGrowth = delta;
+        if (newMark.greaterThan(committedHeapSpace.end())) {
+            newMark = committedHeapSpace.end();
+            actualGrowth = newMark.minus(oldMark).asSize();
+        }
+        committedHeapSpace.mark.set(newMark);
+        freeChunkBins[binIndex(actualGrowth)].append(HeapFreeChunk.format(oldMark, actualGrowth));
+        return actualGrowth;
+    }
+    public Size shrinkAfterGC(Size delta) {
+        // FIXME: Can't do much without evacuation or regions apart from freeing the chunk that is at the end of
+        // committed heap space. Don't bother with this for now.
+        return Size.zero();
+    }
+
+    public Size totalSpace() {
+        return committedHeapSpace.mark().minus(committedHeapSpace.start()).asSize();
+    }
+
+    public Size maxCapacity() {
+        return committedHeapSpace.size();
+
     }
 }

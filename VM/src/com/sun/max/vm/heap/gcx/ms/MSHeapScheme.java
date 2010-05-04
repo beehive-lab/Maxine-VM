@@ -54,6 +54,16 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     @CONSTANT_WHEN_NOT_ZERO
     static Size TLAB_HEADROOM;
 
+    private static void fillTLABWithDeadObject(Pointer tlabAllocationMark, Pointer tlabEnd) {
+        // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
+        Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+        if (tlabAllocationMark.greaterThan(tlabEnd)) {
+            FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
+            return;
+        }
+        fillWithDeadObject(tlabAllocationMark, hardLimit);
+    }
+
     /**
      * A marking algorithm for the MSHeapScheme.
      */
@@ -133,6 +143,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
+        collect.requestedSize = requestedFreeSpace;
+        boolean forcedGC = requestedFreeSpace.toInt() == 0;
+        if (forcedGC) {
+            collectorThread.execute();
+            return true;
+        }
         // FIXME: need to revisit this.
         if (requestedFreeSpace.greaterThan(freeSpace.freeSpaceLeft())) {
             collectorThread.execute();
@@ -162,7 +178,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public Size reportFreeSpace() {
-        return null;
+        return freeSpace.freeSpaceLeft();
     }
 
     public Size reportUsedSpace() {
@@ -182,46 +198,48 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     @Override
     protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
-        // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
-        Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
-        if (tlabAllocationMark.greaterThan(tlabEnd)) {
-            FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
-            return;
-        }
-        fillWithDeadObject(tlabAllocationMark, hardLimit);
+        fillTLABWithDeadObject(tlabAllocationMark, tlabEnd);
     }
 
-    private ResetTLAB resetTLAB = new ResetTLAB() {
+    static class TLABFiller extends ResetTLAB {
         @Override
         protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
-            doBeforeTLABRefill(tlabMark, tlabTop);
+            fillTLABWithDeadObject(tlabMark, tlabTop);
         }
-    };
+    }
 
     /**
      * Class implementing the garbage collection routine.
      * This is the {@link StopTheWorldGCDaemon}'s entry point to garbage collection.
+     * Heap resizing is perfoed
      */
     final class Collect extends Collector {
         private long collectionCount = 0;
+        private TLABFiller tlabFiller = new TLABFiller();
+
+        private Size requestedSize;
+
+        private HeapResizingPolicy heapResizingPolicy = new HeapResizingPolicy();
 
         @Override
         public void collect(int invocationCount) {
-            VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
+
             HeapScheme.Static.notifyGCStarted();
 
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
             collectionCount++;
-
             freeSpace.makeParsable();
             heapMarker.markAll();
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
-            freeSpace.reclaim(heapMarker);
+            Size freeSpaceAfterGC = freeSpace.reclaim(heapMarker);
             if (MaxineVM.isDebug()) {
                 afterGCVerifier.run();
             }
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+
+            heapResizingPolicy.resizeAfterCollection(freeSpace.totalSpace(), freeSpaceAfterGC, freeSpace);
             HeapScheme.Static.notifyGCCompleted();
         }
     }
