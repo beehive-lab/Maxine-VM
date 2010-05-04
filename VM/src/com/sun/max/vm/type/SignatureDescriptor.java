@@ -80,6 +80,11 @@ public abstract class SignatureDescriptor extends Descriptor implements RiSignat
      */
     private static final GrowableMapping<String, SignatureDescriptorEntry> canonicalSignatureDescriptors = new ChainingValueChainedHashMapping<String, SignatureDescriptorEntry>();
 
+    static {
+        // Ensures Kind is initialized
+        Kind.fromJava(Object.class);
+    }
+
     SignatureDescriptor(String value, TypeDescriptor[] typeDescriptors) {
         super(value);
         assert getClass() == SignatureDescriptorEntry.class;
