@@ -1,32 +1,31 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 /**
  * Measures the opening of a client-side TCP socket.
  */
 /*
  * @Harness: java
+ *
  * @Runs: 0 = true
  */
 package test.bench.net;
 
+import java.io.*;
 import java.net.*;
 
 public class NewSocket extends NetSettings {
@@ -35,11 +34,26 @@ public class NewSocket extends NetSettings {
         super(bench);
     }
 
-    public static boolean test(int i) {
-        return new NewSocket(new Bench()).runBench(true);
+    public static boolean test() {
+        return new NewSocket(new OpenCloseBench()).runBench(true);
     }
 
-    static class Bench implements MicroBenchmark {
+    public static boolean testall() {
+        boolean result = new NewSocket(new OpenCloseBench()).runBench(true);
+        result = result && new NewSocket(new OpenBench()).runBench(true);
+        return result && new NewSocket(new CloseBench()).runBench(true);
+    }
+
+    public static boolean testOpen() {
+        return new NewSocket(new OpenBench()).runBench(true);
+    }
+
+    public static boolean testClose() {
+        return new NewSocket(new CloseBench()).runBench(true);
+    }
+
+    static class OpenCloseBench extends AbstractMicroBenchmark {
+
         public void run(boolean warmup) {
             Socket s = null;
             try {
@@ -57,8 +71,58 @@ public class NewSocket extends NetSettings {
         }
     }
 
+    static class OpenBench extends AbstractMicroBenchmark {
+
+        private Socket _socket;
+
+        @Override
+        public void run(boolean warmup) {
+            try {
+                _socket = new Socket(host(), port());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        @Override
+        public void postrun() {
+            if (_socket != null) {
+                try {
+                    _socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    static class CloseBench extends AbstractMicroBenchmark {
+
+        private Socket _socket;
+
+        @Override
+        public void prerun() throws Exception {
+            try {
+                _socket = new Socket(host(), port());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        @Override
+        public void run(boolean warmup) {
+            try {
+                if (_socket != null) {
+                    _socket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     // for running stand-alone
     public static void main(String[] args) {
-        test(0);
+        test();
     }
 }

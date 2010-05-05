@@ -468,6 +468,7 @@ public final class DataPrototype extends Prototype {
             // For example, calling "toString()" on a HashMap instance in the graph may cause the "entrySet"
             // field to change from null to a new instance.
             if (cell == null) {
+                graphPrototype.printPath(object, System.err);
                 throw new MissingCellException(object);
             }
             return objectToOrigin(object);
