@@ -1419,6 +1419,11 @@ public final class GraphBuilder {
     boolean tryInline(RiMethod target, Value[] args, FrameState stateBefore) {
         boolean forcedInline = compilation.runtime.mustInline(target);
         if (forcedInline) {
+            for (IRScope scope = scope().caller; scope != null; scope = scope.caller) {
+                if (scope.method.equals(target)) {
+                    throw new CiBailout("Cannot recursively inline method that is force-inlined");
+                }
+            }
             C1XMetrics.InlineForcedMethods++;
         }
         if (forcedInline || checkInliningConditions(target)) {
@@ -2049,10 +2054,11 @@ public final class GraphBuilder {
                 case READREG        : genLoadRegister(s.readCPI()); break;
                 case WRITEREG       : genStoreRegister(s.readCPI()); break;
 
-                case PREAD          : genLoadPointer(PREAD   | (s.readCPI() << 8)); break;
-                case PGET           : genLoadPointer(PGET    | (s.readCPI() << 8)); break;
-                case PWRITE         : genStorePointer(PWRITE | (s.readCPI() << 8)); break;
-                case PSET           : genStorePointer(PSET   | (s.readCPI() << 8)); break;
+                case PREAD          : genLoadPointer(PREAD      | (s.readCPI() << 8)); break;
+                case PGET           : genLoadPointer(PGET       | (s.readCPI() << 8)); break;
+                case PWRITE         : genStorePointer(PWRITE    | (s.readCPI() << 8)); break;
+                case PSET           : genStorePointer(PSET      | (s.readCPI() << 8)); break;
+                case PCMPSWP        : getCompareAndSwap(PCMPSWP | (s.readCPI() << 8)); break;
 
                 case WRETURN        : genMethodReturn(wpop()); break;
                 case READ_PC        : genLoadPC(); break;
@@ -2379,6 +2385,30 @@ public final class GraphBuilder {
         Value pointer = wpop();
         append(new StorePointer(opcode, pointer, displacement, offsetOrIndex, value, stateBefore, false));
     }
+
+    private static CiKind kindForCompareAndSwap(int opcode) {
+        switch (opcode) {
+            case PCMPSWP_INT        :
+            case PCMPSWP_INT_I      : return CiKind.Int;
+            case PCMPSWP_WORD       :
+            case PCMPSWP_WORD_I     : return CiKind.Word;
+            case PCMPSWP_REFERENCE  :
+            case PCMPSWP_REFERENCE_I: return CiKind.Object;
+            default:
+                throw new CiBailout("Unsupported compare-and-swap opcode " + opcode + "(" + nameOf(opcode) + ")");
+        }
+    }
+
+    private void getCompareAndSwap(int opcode) {
+        FrameState stateBefore = curState.immutableCopy();
+        CiKind kind = kindForCompareAndSwap(opcode);
+        Value newValue = pop(kind);
+        Value expectedValue = pop(kind);
+        Value offset = (opcode >= PCMPSWP_INT_I && opcode <= PCMPSWP_REFERENCE_I) ? ipop() : wpop();
+        Value pointer = wpop();
+        append(new CompareAndSwap(opcode, pointer, offset, expectedValue, newValue, stateBefore, false));
+    }
+
 
     private void genArrayLength() {
         ipush(append(new ArrayLength(apop(), curState.copy())));

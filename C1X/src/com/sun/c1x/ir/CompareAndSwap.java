@@ -21,34 +21,41 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
-import com.sun.cri.ci.*;
+import com.sun.cri.bytecode.*;
 
 /**
- * The {@code StorePointer} instruction represents a write of a pointer.
- * This instruction is part of the HIR support for low-level operations, such as safepoints,
- * stack banging, etc, and does not correspond to a Java operation.
+ * Atomic update of a value in memory. Implements the {@link Bytecodes#PCMPSWP} family of instructions.
  *
- * @author Ben L. Titzer
+ * Compares a suspected value with the actual value in a memory location.
+ * Iff they are same, a new value is placed into the location and the expected value is returned.
+ * Otherwise, the actual value is returned.
+ *
  * @author Doug Simon
  */
-public final class StorePointer extends PointerOp {
+public final class CompareAndSwap extends PointerOp {
 
-    Value value;
+    /**
+     * The value to store.
+     */
+    Value expectedValue;
+
+    Value newValue;
 
     /**
      * Creates an instruction for a pointer store. If {@code displacement != null}, the effective of the address of the store is
      * computed as the pointer plus a byte displacement plus a scaled index. Otherwise, the effective address is computed as the
      * pointer plus a byte offset.
      * @param pointer the value producing the pointer
-     * @param displacement the value producing the displacement. This may be {@code null}.
-     * @param offsetOrIndex the value producing the scaled-index or the byte offset depending on whether {@code displacement} is {@code null}
-     * @param value the value to write to the pointer
+     * @param offset the value producing the byte offset
+     * @param expectedValue the value that must currently being in memory location for the swap to occur
+     * @param newValue the new value to store if the precondition is satisfied
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public StorePointer(int opcode, Value pointer, Value displacement, Value offsetOrIndex, Value value, FrameState stateBefore, boolean isVolatile) {
-        super(CiKind.Void, opcode, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
-        this.value = value;
+    public CompareAndSwap(int opcode, Value pointer, Value offset, Value expectedValue, Value newValue, FrameState stateBefore, boolean isVolatile) {
+        super(expectedValue.kind, opcode, pointer, offset, null, stateBefore, isVolatile);
+        this.expectedValue = expectedValue;
+        this.newValue = newValue;
         setFlag(Flag.LiveStore);
     }
 
@@ -58,16 +65,21 @@ public final class StorePointer extends PointerOp {
      */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitStorePointer(this);
+//        v.visitCompareAndSwap(this);
     }
 
-    public Value value() {
-        return value;
+    public Value expectedValue() {
+        return expectedValue;
+    }
+
+    public Value newValue() {
+        return newValue;
     }
 
     @Override
     public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
-        value = closure.apply(value);
+        expectedValue = closure.apply(expectedValue);
+        newValue = closure.apply(newValue);
     }
 }

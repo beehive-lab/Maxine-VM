@@ -826,7 +826,7 @@ public class LinearScan {
         for (int operandNum = 0; operandNum < ir.startBlock.lirBlock.liveIn.size(); operandNum++) {
             if (ir.startBlock.lirBlock.liveIn.get(operandNum)) {
                 CiValue operand = operands.operandFor(operandNum);
-                Value instr = operand.isVariable() ? gen.instructionForVariable((CiVariable) operand) : null;
+                Value instr = operand.isVariable() ? gen.operands.instructionForResult(((CiVariable) operand)) : null;
                 TTY.println(" var %d (HIR instruction %s)", operandNum, instr == null ? " " : instr.toString());
 
                 for (int j = 0; j < numBlocks; j++) {
@@ -2346,7 +2346,9 @@ public class LinearScan {
 
         sortIntervalsAfterAllocation();
 
-        assert verify();
+        if (C1XOptions.DetailedAsserts) {
+            verify();
+        }
 
         eliminateSpillMoves();
         assignLocations();
@@ -2601,8 +2603,8 @@ public class LinearScan {
                 }
                 CiValue operand = operands.operandFor(operandNum);
                 assert operand.isVariable() : "value must have variable operand";
-                Value value = gen.instructionForVariable((CiVariable) operand);
-                assert value != null : "all intervals live across block boundaries must have Value (block=" + block.blockID + ", operandNum=" + operandNum + ", operand=" + operand + ")";
+                Value value = gen.operands.instructionForResult(((CiVariable) operand));
+                assert value != null : "all intervals live across block boundaries must have Value";
                 // TKR assert value.asConstant() == null || value.isPinned() :
                 // "only pinned constants can be alive accross block boundaries";
             }
