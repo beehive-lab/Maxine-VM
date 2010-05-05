@@ -71,7 +71,7 @@ static Address check_mmap_result(Word result) {
  * Use MAP_NORESERVE if reserveSwap is true
  * Use PROT_NONE if protNone is true, otherwise set all protection (i.e., allow any type of access).
  */
-Address virtualMemory_allocatePrivateAnon(Size size, Address address, jboolean reserveSwap, jboolean protNone, int type) {
+Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean reserveSwap, jboolean protNone, int type) {
   int flags = MAP_PRIVATE | MAP_ANON;
   int prot = protNone == JNI_TRUE ? PROT_NONE : PROT;
   if (reserveSwap == JNI_FALSE) {
@@ -175,9 +175,9 @@ void virtualMemory_protectPages(Address address, int count) {
 void virtualMemory_unprotectPages(Address address, int count) {
 	c_ASSERT(virtualMemory_pageAlign(address) == address);
 #if os_SOLARIS || os_DARWIN || os_LINUX
-	if (mprotect((Word) address, count * virtualMemory_getPageSize(), PROT_READ| PROT_WRITE) != 0){
+	if (mprotect((Word) address, count * virtualMemory_getPageSize(), PROT_READ| PROT_WRITE) != 0) {
          int error = errno;
-		 log_exit(error, "unprotectPages: mprotect(%p) failed: %s", address, strerror(error));
+	 log_exit(error, "unprotectPages: mprotect(%p) failed: %s", address, strerror(error));
 	}
 #elif os_GUESTVMXEN
 	guestvmXen_virtualMemory_unProtectPages(address, count);
@@ -188,7 +188,7 @@ void virtualMemory_unprotectPages(Address address, int count) {
 
 static unsigned int pageSize = 0;
 
-unsigned int virtualMemory_getPageSize(void){
+unsigned int virtualMemory_getPageSize(void) {
 #if os_GUESTVMXEN
     return guestvmXen_virtualMemory_pageSize();
 #else
@@ -202,7 +202,7 @@ unsigned int virtualMemory_getPageSize(void){
 /*
  * Aligns a given address up to the next page-aligned address if it is not already page-aligned.
  */
-Address virtualMemory_pageAlign(Address address){
+Address virtualMemory_pageAlign(Address address) {
     long alignment = virtualMemory_getPageSize() - 1;
     return ((long)(address + alignment) & ~alignment);
 }
