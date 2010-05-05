@@ -1145,7 +1145,7 @@ public final class JniFunctionsSource {
         try {
             return JniHandles.createLocalHandle(CString.utf8ToJava(utf));
         } catch (Utf8Exception utf8Exception) {
-            return null;
+            return JniHandle.zero();
         }
     }
 
@@ -1717,7 +1717,7 @@ public final class JniFunctionsSource {
         if (arrayObject instanceof double[]) {
             return getDoubleArrayElements(array, isCopy);
         }
-        return null;
+        return Pointer.zero();
     }
 
     @VM_ENTRY_POINT

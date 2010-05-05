@@ -183,8 +183,25 @@ public class IRChecker extends ValueVisitor {
                 assertKind(y, CiKind.Double);
                 break;
 
+            case Bytecodes.WREM:
+            case Bytecodes.WDIV:
+                assertKind(i, CiKind.Word);
+                assertKind(x, CiKind.Word);
+                assertKind(y, CiKind.Word);
+                break;
+            case Bytecodes.WDIVI:
+                assertKind(i, CiKind.Word);
+                assertKind(x, CiKind.Word);
+                assertKind(y, CiKind.Int);
+                break;
+            case Bytecodes.WREMI:
+                assertKind(i, CiKind.Int);
+                assertKind(x, CiKind.Word);
+                assertKind(y, CiKind.Int);
+                break;
+
             default:
-                fail("Arithmetic operation instruction has an illegal opcode");
+                fail("Arithmetic operation instruction has an illegal opcode: " + Bytecodes.nameOf(i.opcode));
         }
     }
 
@@ -200,6 +217,14 @@ public class IRChecker extends ValueVisitor {
 
         switch (i.opcode) {
             case Bytecodes.IAND:
+                assertKind(i, CiKind.Int);
+                assertKind(y, CiKind.Int);
+                if (!x.kind.isWord()) {
+                    assertKind(x, CiKind.Int);
+                } else {
+                    // Result of strength reduction on Bytecodes.WREMI
+                }
+                break;
             case Bytecodes.IOR:
             case Bytecodes.IXOR:
                 assertKind(i, CiKind.Int);
@@ -207,6 +232,15 @@ public class IRChecker extends ValueVisitor {
                 assertKind(y, CiKind.Int);
                 break;
             case Bytecodes.LAND:
+                assertKind(y, CiKind.Long);
+                if (!x.kind.isWord()) {
+                    assertKind(x, CiKind.Long);
+                    assertKind(i, CiKind.Long);
+                } else {
+                    // Result of strength reduction on Bytecodes.WREM
+                    assertKind(i, CiKind.Word);
+                }
+                break;
             case Bytecodes.LOR:
             case Bytecodes.LXOR:
                 assertKind(i, CiKind.Long);
@@ -294,6 +328,7 @@ public class IRChecker extends ValueVisitor {
                 break;
             case Bytecodes.IUSHR:
                 if (i.kind.isWord()) {
+                    // Result of strength reduction on Bytecodes.WDIVI
                     assertKind(i.x(), CiKind.Word);
                     assertKind(i.y(), CiKind.Int);
                 } else {
@@ -311,6 +346,7 @@ public class IRChecker extends ValueVisitor {
                 break;
             case Bytecodes.LUSHR:
                 if (i.kind.isWord()) {
+                    // Result of strength reduction on Bytecodes.WDIV
                     assertKind(i.x(), CiKind.Word);
                     assertKind(i.y(), CiKind.Int);
                 } else {
@@ -787,27 +823,27 @@ public class IRChecker extends ValueVisitor {
             if (argSize != args.length) {
                 fail("Size of Arguments does not match invoke signature");
             }
-            typeCheckArguments(true, args, signatureType);
+            typeCheckArguments(null, args, signatureType);
         } else {
             // typecheck a non-static call (i.e. there should be a receiver)
             assertNonNull(i.receiver(), "Receiver object should not be null");
             if (i.opcode() != Bytecodes.INVOKEVIRTUAL && i.opcode() != Bytecodes.INVOKESPECIAL && i.opcode() != Bytecodes.INVOKEINTERFACE) {
                 fail("Nonstatic Invoke must use proper invoke bytecode");
             }
-            typeCheckArguments(false, args, signatureType);
+            typeCheckArguments(i.target().holder().kind(), args, signatureType);
         }
     }
 
-    private void typeCheckArguments(boolean isStatic, Value[] args, RiSignature signatureType) {
-        int argSize = signatureType.argumentSlots(!isStatic);
+    private void typeCheckArguments(CiKind receiverKind, Value[] args, RiSignature signatureType) {
+        int argSize = signatureType.argumentSlots(receiverKind != null);
         if (argSize != args.length) {
             fail("Size of arguments does not match invoke signature");
         }
         int k = 0; // loops over signature positions
         int j = 0; // loops over argument positions
         for (; j < argSize; j++) {
-            if (!isStatic && j == 0) {
-                assertKind(args[j], CiKind.Object);
+            if (j == 0 && receiverKind != null) {
+                assertKind(args[j], receiverKind);
             } else {
                 CiKind kind = signatureType.argumentKindAt(k);
                 assertKind(args[j], kind.stackKind());
@@ -992,7 +1028,7 @@ public class IRChecker extends ValueVisitor {
         if (argSize != args.length) {
             fail("Size of Arguments does not match invoke signature");
         }
-        typeCheckArguments(true, args, signatureType);
+        typeCheckArguments(null, args, signatureType);
     }
 
     @Override

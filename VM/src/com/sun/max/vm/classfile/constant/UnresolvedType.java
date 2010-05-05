@@ -165,7 +165,7 @@ public abstract class UnresolvedType implements RiType {
     }
 
     public RiType exactType() {
-        return null;
+        throw unresolved("exactType()");
     }
 
     /**

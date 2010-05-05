@@ -552,7 +552,7 @@ public class SingleBitHeapMarker implements MarkingStack.OverflowHandler {
             if (markIfNotMarked(cell) && cell.lessThan(leftmostFlushed)) {
                 leftmostFlushed = cell;
             }
-            return null; // doesn't matter what we return here.
+            return Pointer.zero(); // doesn't matter what we return here.
         }
     }
     final FlushMarkingStackCellVisitor flushMarkingStackCellVisitor = new FlushMarkingStackCellVisitor();

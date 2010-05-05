@@ -59,7 +59,7 @@ public final class CheckCast extends TypeCheck {
      */
     @Override
     public RiType exactType() {
-        return targetClass.exactType();
+        return targetClass.isResolved() ? targetClass.exactType() : null;
     }
 
     /**
