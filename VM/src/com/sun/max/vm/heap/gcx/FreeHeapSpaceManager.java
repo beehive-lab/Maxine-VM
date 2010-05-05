@@ -745,10 +745,20 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         smallObjectAllocator = new HeapSpaceAllocator("Small Objects Allocator");
     }
 
+
+
     public void initialize(Address start, Size initSize, Size maxSize) {
+        // Reserve address space immediately after the code region up to max heap size.
+        Pointer reservedHeapSpace = VirtualMemory.reserveMemory(start, maxSize, VirtualMemory.Type.HEAP);
+        if (reservedHeapSpace.isZero()) {
+            MaxineVM.reportPristineMemoryFailure("object heap", "reserve", maxSize);
+        }
         committedHeapSpace.setStart(start);
-        committedHeapSpace.mark.set(start.plus(initSize));
+        committedHeapSpace.mark.set(start);
         committedHeapSpace.setSize(maxSize);
+        if (!growCommittedSpace(initSize)) {
+            MaxineVM.reportPristineMemoryFailure("object heap", "commit", maxSize);
+        }
         // Round down to power of two.
         minLargeObjectSize = Size.fromInt(Integer.highestOneBit(largeObjectsMinSizeOption.getValue()));
         log2FirstBinSize = Integer.numberOfTrailingZeros(minLargeObjectSize.toInt());
@@ -846,18 +856,31 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         return useTLABBin ? binAllocateTLAB(size).asPointer() : smallObjectAllocator.allocateTLAB(size);
     }
 
+    private boolean growCommittedSpace(Size growth) {
+        Address oldMark = committedHeapSpace.mark();
+        Address newMark = oldMark.plus(growth);
+        if (MaxineVM.isDebug()) {
+            FatalError.check(newMark.lessEqual(committedHeapSpace.end()), "Cannot grow beyond reserved space");
+        }
+        if (VirtualMemory.commitMemory(oldMark, growth, VirtualMemory.Type.HEAP)) {
+            committedHeapSpace.mark.set(newMark);
+            return true;
+        }
+        return false;
+    }
+
     public Size growAfterGC(Size delta) {
         Address oldMark = committedHeapSpace.mark();
-        Address newMark = oldMark.plus(delta);
         Size actualGrowth = delta;
-        if (newMark.greaterThan(committedHeapSpace.end())) {
-            newMark = committedHeapSpace.end();
-            actualGrowth = newMark.minus(oldMark).asSize();
+        if (oldMark.plus(delta).greaterThan(committedHeapSpace.end())) {
+            actualGrowth = committedHeapSpace.end().minus(oldMark).asSize();
         }
-        committedHeapSpace.mark.set(newMark);
+        boolean res = growCommittedSpace(actualGrowth);
+        FatalError.check(res, "Committing over reserved space should always succeed");
         freeChunkBins[binIndex(actualGrowth)].append(HeapFreeChunk.format(oldMark, actualGrowth));
         return actualGrowth;
     }
+
     public Size shrinkAfterGC(Size delta) {
         // FIXME: Can't do much without evacuation or regions apart from freeing the chunk that is at the end of
         // committed heap space. Don't bother with this for now.

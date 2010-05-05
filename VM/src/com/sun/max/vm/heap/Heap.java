@@ -520,5 +520,13 @@ public final class Heap {
         return true;
     }
 
+    public static void checkHeapSizeOptions() {
+        Size initSize = initialSize();
+        Size maxSize = maxSize();
+        if (initSize.greaterThan(maxSize)) {
+            Log.println("Incompatible minimum and maximum heap sizes specified");
+            MaxineVM.native_exit(1);
+        }
+    }
 
 }

@@ -42,7 +42,7 @@ extern boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, 
 
 extern Address virtualMemory_allocate(Size size, int type);
 extern Address virtualMemory_allocateIn31BitSpace(Size size, int type);
-extern Address virtualMemory_allocatePrivateAnon(Size size, Address address, jboolean reserveSwap, jboolean protNone, int type);
+extern Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean reserveSwap, jboolean protNone, int type);
 extern Address virtualMemory_deallocate(Address start, Size size, int type);
 
 extern unsigned int virtualMemory_getPageSize(void);

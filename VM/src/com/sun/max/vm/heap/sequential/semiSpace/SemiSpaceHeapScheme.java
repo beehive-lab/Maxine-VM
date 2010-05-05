@@ -257,7 +257,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         }
 
         if (!heapAllocationOk) {
-            reportPristineMemoryFailure("object heap", heapAllocationSize);
+            MaxineVM.reportPristineMemoryFailure("object heap", "allocate", heapAllocationSize);
         } else {
             if (Heap.verbose()) {
                 Log.print("Allocated ");

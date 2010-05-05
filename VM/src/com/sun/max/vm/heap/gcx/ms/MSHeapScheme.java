@@ -108,7 +108,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
-     * We only require that the heap is contiguous with the
      */
     private void allocateHeapAndGCStorage() {
         final Size initSize = Heap.initialSize();
@@ -121,20 +120,16 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         } else {
             FatalError.unimplemented();
         }
-
-        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(endOfCodeRegion, initSize, VirtualMemory.Type.HEAP)) {
-            reportPristineMemoryFailure("object heap", initSize);
-        }
-
-        freeSpace.initialize(endOfCodeRegion, initSize, maxSize);
+        final Address heapStart = endOfCodeRegion;
+        freeSpace.initialize(heapStart, initSize, maxSize);
 
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
-        final Address endOfHeap = endOfCodeRegion.plus(maxSize);
+        final Address heapEnd = heapStart.plus(maxSize);
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
-        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(endOfHeap, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
-            reportPristineMemoryFailure("heap marker data", heapMarkerDatasize);
+        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapEnd, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
+            MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
         }
-        heapMarker.initialize(freeSpace.committedHeapSpace(), endOfHeap, heapMarkerDatasize);
+        heapMarker.initialize(freeSpace.committedHeapSpace(), heapEnd, heapMarkerDatasize);
     }
 
 
