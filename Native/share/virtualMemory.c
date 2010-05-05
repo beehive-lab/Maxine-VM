@@ -65,6 +65,33 @@ static Address check_mmap_result(Word result) {
     return ((Address) (result == (Word) MAP_FAILED ? ALLOC_FAILED : result));
 }
 
+
+/* Generic virtual space allocator.
+ * If the address parameters is specified, allocate at the specified address and fail if it cannot be allocated.
+ * Use MAP_NORESERVE if reserveSwap is true
+ * Use PROT_NONE if protNone is true, otherwise set all protection (i.e., allow any type of access).
+ */
+Address virtualMemory_allocatePrivateAnon(Size size, Address address, jboolean reserveSwap, jboolean protNone, int type) {
+  int flags = MAP_PRIVATE | MAP_ANON;
+  int prot = protNone == JNI_TRUE ? PROT_NONE : PROT;
+  if (reserveSwap == JNI_FALSE) {
+     flags |= MAP_NORESERVE;
+  }
+  if (address != 0) {
+	  flags |= MAP_FIXED;
+  }
+  void * result = mmap((void*) address, (size_t) size, prot, flags, -1, 0);
+#if log_LOADER
+	log_println("virtualMemory_allocatePrivateAnon(address=%p, size=%p, swap=%s, prot=%s) allocated at %p", 
+					address, size, 
+					reserveSwap==JNI_TRUE ? "true" : "false",
+					protNone==JNI_TRUE ? "none" : "all",
+					result);
+#endif
+  return check_mmap_result(result);
+}
+
+
 Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
 	return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset));
  }
@@ -85,14 +112,6 @@ Java_com_sun_max_memory_VirtualMemory_mapFileIn31BitSpace(JNIEnv *env, jclass c,
 
 Address virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd, Size offset) {
     return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_PRIVATE | MAP_FIXED, fd, (off_t) offset));
-}
-
-Address virtualMemory_allocateNoSwap(Size size, int type) {
-	void *result = mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_NORESERVE, -1, (off_t) 0);
-#if log_LOADER
-	log_println("virtualMemory_allocateNoSwap allocated %p bytes at %p", size, result);
-#endif
-	return check_mmap_result(result);
 }
 
 // end of conditional exclusion of mmap stuff not available (or used) on GUESTVMXEN
