@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import static com.sun.cri.ci.CiValue.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.opt.*;
 import com.sun.cri.ci.*;
@@ -74,7 +72,7 @@ public abstract class Value {
 
     private int id;
     private int flags;
-    protected CiValue operand;
+    protected CiValue operand = CiValue.IllegalValue;
 
     public Object optInfo; // a cache field for analysis information
     public Value subst;    // managed by InstructionSubstituter
@@ -284,7 +282,8 @@ public abstract class Value {
      * @param operand the operand to associate with this instruction
      */
     public final void setOperand(CiValue operand) {
-        assert operand != null && operand.isLegal() : "operand must exist";
+        assert this.operand.isIllegal() : "operand cannot be set twice";
+        assert operand != null && operand.isLegal() : "operand must be legal";
         assert operand.kind.stackKind() == this.kind;
         this.operand = operand;
     }
@@ -293,7 +292,7 @@ public abstract class Value {
      * Clears the LIR operand associated with this instruction.
      */
     public final void clearOperand() {
-        this.operand = IllegalValue;
+        this.operand = CiValue.IllegalValue;
     }
 
     /**

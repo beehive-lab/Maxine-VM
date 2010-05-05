@@ -153,10 +153,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         blockDoEpilog(block);
     }
 
-    public Value instructionForVariable(CiVariable operand) {
-        return operands.instructionForResult(operand);
-    }
-
     @Override
     public void visitArrayLength(ArrayLength x) {
         XirArgument array = toXirArgument(x.array());
@@ -195,8 +191,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             CiKind kind = src.kind.stackKind();
             assert kind == local.kind.stackKind() : "local type check failed";
             if (local.isLive()) {
-                local.setOperand(dest);
-                operands.recordResult(dest, local);
+                setResult(local, dest);
             }
             javaIndex += kind.jvmSlots;
         }
@@ -847,6 +842,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (setInstructionResult && allocatedResultOperand.isLegal()) {
             if (x.operand().isIllegal()) {
                 setResult(x, (CiVariable) allocatedResultOperand);
+            } else {
+                assert x.operand() == allocatedResultOperand;
             }
         }
 
@@ -1588,7 +1585,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                     operandForPhi((Phi) curVal);
                 }
                 CiValue operand = curVal.operand();
-                if (operand == null || operand.isIllegal()) {
+                if (operand.isIllegal()) {
                     assert curVal instanceof Constant || curVal instanceof Local : "these can be produced lazily";
                     operand = operandForInstruction(curVal);
                 }
@@ -1642,9 +1639,8 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     CiValue operandForInstruction(Value x) {
         CiValue operand = x.operand();
-        if (operand == null || operand.isIllegal()) {
+        if (operand.isIllegal()) {
             if (x instanceof Constant) {
-                // XXX: why isn't this put in the instructionForOperand map?
                 x.setOperand(x.asConstant());
             } else {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
@@ -1656,11 +1652,10 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private CiValue operandForPhi(Phi phi) {
-        if (phi.operand() == null || phi.operand().isIllegal()) {
+        if (phi.operand().isIllegal()) {
             // allocate a variable for this phi
             CiVariable operand = newVariable(phi.kind);
-            phi.setOperand(operand);
-            operands.recordResult(operand, phi);
+            setResult(phi, operand);
         }
         return phi.operand();
     }
@@ -1677,11 +1672,10 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected CiValue setResult(Value x, CiVariable operand) {
-        assert operand.isLegal() : "must set to valid value";
-        assert x.operand().isIllegal() : "operand should never change";
-        assert !operand.isRegister() : "should never set result to a physical register";
         x.setOperand(operand);
-        operands.recordResult(operand, x);
+        if (C1XOptions.DetailedAsserts) {
+            operands.recordResult(operand, x);
+        }
         return operand;
     }
 
@@ -1824,15 +1818,14 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected CiValue makeOperand(Value instruction) {
         assert instruction.isLive();
         CiValue operand = instruction.operand();
-        if (instruction instanceof Phi) {
-            // a phi may not have an operand yet if it is for an exception block
-            if (operand == null) {
+        if (operand.isIllegal()) {
+            if (instruction instanceof Phi) {
+                // a phi may not have an operand yet if it is for an exception block
                 operand = operandForPhi((Phi) instruction);
+            } else if (instruction instanceof Constant) {
+                operand = operandForInstruction(instruction);
             }
-        } else if (instruction instanceof Constant) {
-            operand = operandForInstruction(instruction);
         }
-
         // the value must be a constant or have a valid operand
         assert operand.isLegal() : "this root has not been visited yet";
         return operand;
