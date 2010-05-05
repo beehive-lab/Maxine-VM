@@ -950,7 +950,7 @@ public final class GraphBuilder {
                 }
                 if (exact == null) {
                     RiType declared = receiver.declaredType();
-                    exact = declared == null ? null : declared.exactType();
+                    exact = declared == null || !declared.isResolved() ? null : declared.exactType();
                 }
             }
         }

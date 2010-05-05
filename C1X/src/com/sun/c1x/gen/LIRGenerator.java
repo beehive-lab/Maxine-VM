@@ -350,7 +350,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiKind xtype = x.x().kind;
         CiKind ttype = x.trueValue().kind;
         assert xtype.isInt() || xtype.isObject() : "cannot handle others";
-        assert ttype.isInt() || ttype.isObject() || ttype.isLong() : "cannot handle others";
+        assert ttype.isInt() || ttype.isObject() || ttype.isLong() || ttype.isWord() : "cannot handle others";
         assert ttype.equals(x.falseValue().kind) : "cannot handle others";
 
         LIRItem left = new LIRItem(x.x(), this);
@@ -501,7 +501,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
         CiValue resultOperand = resultOperandFor(x.kind);
         CiValue callAddress = load(x.address());
-        CiKind[] signature = Util.signatureToKinds(x.signature, false);
+        CiKind[] signature = Util.signatureToKinds(x.signature, null);
         CiCallingConvention cc = compilation.frameMap().nativeCallingConvention(signature, true);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments);
         argList.add(callAddress);

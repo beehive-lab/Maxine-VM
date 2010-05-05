@@ -330,7 +330,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         int opcode = x.opcode;
         if (opcode == Bytecodes.WDIV || opcode == Bytecodes.WREM || opcode == Bytecodes.WDIVI || opcode == Bytecodes.WREMI) {
             // emit code for long division or modulus
-            if (is64) {
                 // emit inline 64-bit code
                 LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
                 CiValue dividend = force(x.x(), LDIV_IN); // dividend must be in RAX
@@ -360,12 +359,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 }
 
                 lir.move(resultReg, result);
-            } else {
-                // emit direct call into the runtime
-                CiRuntimeCall runtimeCall = opcode == Bytecodes.LREM ? CiRuntimeCall.ArithmethicLrem : CiRuntimeCall.ArithmeticLdiv;
-                LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-                setResult(x, callRuntimeWithResult(runtimeCall, info, x.x().operand(), x.y().operand()));
-            }
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
@@ -397,12 +390,12 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     public void visitArithmeticOp(ArithmeticOp x) {
         trySwap(x);
 
-        if (x.kind.isWord()) {
+        if (x.kind.isWord() || x.opcode == Bytecodes.WREMI) {
             visitArithmeticOpWord(x);
             return;
         }
 
-        assert x.x().kind == x.kind && x.y().kind == x.kind : "wrong parameter types";
+        assert x.x().kind == x.kind && x.y().kind == x.kind : "wrong parameter types: " + Bytecodes.nameOf(x.opcode);
         switch (x.kind) {
             case Float:
             case Double:
