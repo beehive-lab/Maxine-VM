@@ -748,7 +748,6 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
 
 
     public void initialize(Address start, Size initSize, Size maxSize) {
-        // Reserve address space immediately after the code region up to max heap size.
         Pointer reservedHeapSpace = VirtualMemory.reserveMemory(start, maxSize, VirtualMemory.Type.HEAP);
         if (reservedHeapSpace.isZero()) {
             MaxineVM.reportPristineMemoryFailure("object heap", "reserve", maxSize);
@@ -861,6 +860,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         Address newMark = oldMark.plus(growth);
         if (MaxineVM.isDebug()) {
             FatalError.check(newMark.lessEqual(committedHeapSpace.end()), "Cannot grow beyond reserved space");
+            FatalError.check(growth.isAligned(VMConfiguration.target().platform.pageSize), "Heap Growth must be page-aligned");
         }
         if (VirtualMemory.commitMemory(oldMark, growth, VirtualMemory.Type.HEAP)) {
             committedHeapSpace.mark.set(newMark);
@@ -871,7 +871,11 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
 
     public Size growAfterGC(Size delta) {
         Address oldMark = committedHeapSpace.mark();
-        Size actualGrowth = delta;
+        if (oldMark.equals(committedHeapSpace.end())) {
+            return Size.zero();
+        }
+        int pageSize = VMConfiguration.target().platform.pageSize;
+        Size actualGrowth = delta.roundedUpBy(pageSize).asSize();
         if (oldMark.plus(delta).greaterThan(committedHeapSpace.end())) {
             actualGrowth = committedHeapSpace.end().minus(oldMark).asSize();
         }

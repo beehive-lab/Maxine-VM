@@ -145,10 +145,11 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             return true;
         }
         // FIXME: need to revisit this.
-        if (requestedFreeSpace.greaterThan(freeSpace.freeSpaceLeft())) {
-            collectorThread.execute();
+        if (requestedFreeSpace.lessThan(freeSpace.freeSpaceLeft())) {
+            return true;
         }
-        return true;
+        collectorThread.execute();
+        return requestedFreeSpace.lessThan(freeSpace.freeSpaceLeft());
     }
 
     public boolean contains(Address address) {
@@ -209,7 +210,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     /**
      * Class implementing the garbage collection routine.
      * This is the {@link StopTheWorldGCDaemon}'s entry point to garbage collection.
-     * Heap resizing is perfoed
      */
     final class Collect extends Collector {
         private long collectionCount = 0;
