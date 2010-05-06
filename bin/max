@@ -813,6 +813,8 @@ image_configs=( \
     cpsjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
     jitcps#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit \
     jitjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit,-test-callee-jit \
+    ms#-run=java,-heap=gcx.ms \
+    msd#-run=java,-build=DEBUG,-heap=gcx.ms \
 )
 
 image_usage="[options]"
