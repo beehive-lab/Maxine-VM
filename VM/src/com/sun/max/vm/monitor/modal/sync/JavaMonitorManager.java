@@ -292,7 +292,7 @@ public class JavaMonitorManager {
                     System.gc();
                 }
                 // If we didn't free up enough such that we are at least midway between min and hwm, expand
-                if (numberOfUnboundMonitors < (unboundMonitorsHwm - UNBOUNDLIST_MIN_QTY) >> 1) {
+                if (numberOfUnboundMonitors < (unboundMonitorsHwm + UNBOUNDLIST_MIN_QTY) >> 1) {
                     expandUnboundList();
                 }
                 monitor = takeFromUnboundList();
