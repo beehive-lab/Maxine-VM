@@ -84,7 +84,7 @@ public final class HeapFreeChunk {
         chunkAddress.asPointer().setWord(SIZE_INDEX, size);
     }
 
-    public static boolean isValidChunk(Pointer cell, LinearAllocationMemoryRegion chunkRegion) {
+    public static boolean isValidChunk(Pointer cell, MemoryRegion chunkRegion) {
         final Address hub = Layout.originToCell(Reference.fromJava(HEAP_FREE_CHUNK_HUB).toOrigin());
         if (cell.readWord(0).asAddress().equals(hub)) {
             Pointer nextChunk = getFreeChunkNext(cell).asPointer();

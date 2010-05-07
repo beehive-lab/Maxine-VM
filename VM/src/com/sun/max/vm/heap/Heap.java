@@ -506,6 +506,16 @@ public final class Heap {
         }
     }
 
+    /**
+     * Currently, a number of memory regions containing object are treated as "permanent" root by the GC.
+     * This method checks whether an address points into one of these regions.
+     * @param address an address
+     * @return true if the address points to one of the root regions of the heap.
+     */
+    public static boolean isInHeapRootRegion(Address address) {
+        return bootHeapRegion.contains(address) || Code.contains(address) || ImmortalHeap.getImmortalHeap().contains(address);
+    }
+
     public static boolean isValidGrip(Grip grip) {
         if (grip.isZero()) {
             return true;

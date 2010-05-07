@@ -124,12 +124,14 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         freeSpace.initialize(heapStart, initSize, maxSize);
 
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
-        final Address heapEnd = heapStart.plus(maxSize);
+        final Address heapMarkerDataStart = heapStart.plus(maxSize);
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
-        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapEnd, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
+        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
             MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
         }
-        heapMarker.initialize(freeSpace.committedHeapSpace(), heapEnd, heapMarkerDatasize);
+
+        ContiguousHeapSpace markedSpace = freeSpace.committedHeapSpace();
+        heapMarker.initialize(markedSpace.start(), markedSpace.committedEnd(), heapMarkerDataStart, heapMarkerDatasize);
     }
 
 
@@ -153,7 +155,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean contains(Address address) {
-        return freeSpace.committedHeapSpace().contains(address);
+        return freeSpace.committedHeapSpace().inCommittedSpace(address);
     }
 
     public final void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
@@ -237,7 +239,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
-            heapResizingPolicy.resizeAfterCollection(freeSpace.totalSpace(), freeSpaceAfterGC, freeSpace);
+            if (heapResizingPolicy.resizeAfterCollection(freeSpace.totalSpace(), freeSpaceAfterGC, freeSpace)) {
+                // Heap was resized.
+                // Update heapMarker's coveredArea.
+                ContiguousHeapSpace markedSpace = freeSpace.committedHeapSpace();
+                heapMarker.setCoveredArea(markedSpace.start(), markedSpace.committedEnd());
+            }
             HeapScheme.Static.notifyGCCompleted();
         }
     }
