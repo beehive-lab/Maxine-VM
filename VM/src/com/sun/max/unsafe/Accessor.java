@@ -528,7 +528,7 @@ public interface Accessor {
     /**
      * Atomic compare and swap.
      *
-     * Compares a suspected value with the actual value in a location denoted by this accessor and a given offset.
+     * Compares an expected value with the actual value in a location denoted by this accessor and a given offset.
      * Iff they are same, {@code newValue} is placed into the location and the {@code expectedValue} is returned.
      * Otherwise, the actual value is returned.
      * All of the above is performed in one atomic hardware transaction.

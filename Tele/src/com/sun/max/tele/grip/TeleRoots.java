@@ -98,7 +98,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         if (WordArray.get(cachedRoots, index).equals(Word.zero())) {
             System.out.println("Word at " + index + " is zero");
         }*/
-        return WordArray.get(cachedRoots, index);
+        return WordArray.get(cachedRoots, index).asAddress();
     }
 
     /**

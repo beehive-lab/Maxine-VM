@@ -25,42 +25,37 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
- * The {@code SignificantBitOp} instruction produces the bit index of a significant bit of its operand.
- * What significant bit it produces (most or least) is specified in its constructor.
+ * Implements the {@link Bytecodes#LSB} and {@link Bytecodes#MSB} instructions.
  *
  * @author Laurent Daynes
  */
 public class SignificantBitOp extends Instruction {
-    Value x;
+    Value value;
+
     /**
-     * True if this instruction returns the most significant bit.
-     * Otherwise, this instruction returns the least significant bit.
+     * This will be {@link Bytecodes#LSB} or {@link Bytecodes#MSB}.
      */
-    boolean most;
+    public final int op;
 
     /**
      * Create a a new SignificantBitOp instance.
      *
-     * @param x the instruction producing the value that is input to this instruction
-     * @param most true if this instruction produces the most significant bit of its input.
-     * Otherwise, it produces the least significant bit.
+     * @param value the instruction producing the value that is input to this instruction
+     * @param opcodeop either {@link Bytecodes#LSB} or {@link Bytecodes#MSB}
      */
-    public SignificantBitOp(Value x, boolean most) {
+    public SignificantBitOp(Value value, int opcodeop) {
         super(CiKind.Int);
-        this.x = x;
-        this.most = most;
+        assert opcodeop == Bytecodes.LSB || opcodeop == Bytecodes.MSB;
+        this.value = value;
+        this.op = opcodeop;
     }
 
     /**
      * Gets the instruction producing input to this instruction.
      * @return the instruction that produces this instruction's input
      */
-    public Value x() {
-        return x;
-    }
-
-    public boolean returnsMostSignificantBit() {
-        return most;
+    public Value value() {
+        return value;
     }
 
     /**
@@ -69,7 +64,7 @@ public class SignificantBitOp extends Instruction {
      */
     @Override
     public void inputValuesDo(ValueClosure closure) {
-        x = closure.apply(x);
+        value = closure.apply(value);
     }
 
     @Override
@@ -79,7 +74,7 @@ public class SignificantBitOp extends Instruction {
 
     @Override
     public int valueNumber() {
-        return Util.hash1(most ? Bytecodes.MSB : Bytecodes.LSB, x);
+        return Util.hash1(op, value);
     }
 
     @Override
@@ -88,7 +83,7 @@ public class SignificantBitOp extends Instruction {
             SignificantBitOp o = (SignificantBitOp) i;
             // FIXME: this is a conservative estimate. If x is a single-bit value
             // (i.e., a power of 2), then the values are equal regardless of the value of the most field.
-            return x == o.x && most == o.most;
+            return value == o.value && op == o.op;
         }
         return false;
     }

@@ -195,7 +195,7 @@ public final class ConstantPool implements RiConstantPool {
      */
     int length;
 
-    private final IntHashMap<ResolutionGuard> guards;
+    private final IntHashMap<ResolutionGuard.InPool> guards;
     private final ClassLoader classLoader;
 
     /**
@@ -360,7 +360,7 @@ public final class ConstantPool implements RiConstantPool {
         }
 
         this.constants = poolConstants;
-        guards = new IntHashMap<ResolutionGuard>(numberOfResolvableConstants);
+        guards = new IntHashMap<ResolutionGuard.InPool>(numberOfResolvableConstants);
 
         // Pass 3: second verification pass - checks the strings are of the right format
         i = 1;
@@ -401,7 +401,7 @@ public final class ConstantPool implements RiConstantPool {
     public ConstantPool(ClassLoader classLoader) {
         this.classLoader = classLoader;
         this.constants = new PoolConstant[INITIAL_CAPACITY];
-        this.guards = new IntHashMap<ResolutionGuard>();
+        this.guards = new IntHashMap<ResolutionGuard.InPool>();
 
         // Index 0 is always invalid
         this.constants[length++] = InvalidConstant.VALUE;
@@ -422,7 +422,7 @@ public final class ConstantPool implements RiConstantPool {
         }
         this.constants = constants;
         this.length = length;
-        this.guards = new IntHashMap<ResolutionGuard>(length);
+        this.guards = new IntHashMap<ResolutionGuard.InPool>(length);
     }
 
     /**
@@ -431,11 +431,11 @@ public final class ConstantPool implements RiConstantPool {
      *
      * @param index the index of a resolvable entry in this constant pool
      */
-    public ResolutionGuard makeResolutionGuard(int index, ResolutionSnippet snippet) {
+    public ResolutionGuard.InPool makeResolutionGuard(int index, ResolutionSnippet snippet) {
         synchronized (guards) {
             assert (snippet.serial() & 0xffff) == snippet.serial();
             final int key = snippet.serial() << 16 | index;
-            ResolutionGuard guard = guards.get(key);
+            ResolutionGuard.InPool guard = guards.get(key);
             if (guard == null) {
                 guard = snippet.createGuard(this, index);
                 guards.put(key, guard);
@@ -894,8 +894,8 @@ public final class ConstantPool implements RiConstantPool {
                 // Treat as unresolved
             }
         }
-        RiType holder = TypeDescriptor.toRiType(constant.holder(this), holder());
-        RiType type = TypeDescriptor.toRiType(constant.type(this), holder());
+        RiType holder = UnresolvedType.toRiType(constant.holder(this), holder());
+        RiType type = UnresolvedType.toRiType(constant.type(this), holder());
         String name = constant.name(this).string;
         return new UnresolvedField(this, cpi, holder, name, type);
     }
@@ -909,7 +909,7 @@ public final class ConstantPool implements RiConstantPool {
                 // Treat as unresolved
             }
         }
-        RiType holder = TypeDescriptor.toRiType(constant.holder(this), holder());
+        RiType holder = UnresolvedType.toRiType(constant.holder(this), holder());
         RiSignature signature = constant.signature(this);
         String name = constant.name(this).string;
 
@@ -921,7 +921,7 @@ public final class ConstantPool implements RiConstantPool {
             // the resolution can occur without side effects
             return constant.resolve(this, cpi);
         }
-        return new UnresolvedType(constant.typeDescriptor(), this, cpi);
+        return new UnresolvedType.InPool(constant.typeDescriptor(), this, cpi);
     }
 
     private boolean attemptResolution(ResolvableConstant constant) {

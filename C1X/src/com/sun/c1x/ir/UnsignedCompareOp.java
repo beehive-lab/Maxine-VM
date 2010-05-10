@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.cri.ci.*;
 
@@ -50,6 +51,7 @@ public final class UnsignedCompareOp extends Op2 {
      */
     public UnsignedCompareOp(int opcode, int op, Value x, Value y, FrameState stateBefore) {
         super(CiKind.Int, opcode, x, y);
+        assert opcode == Bytecodes.UWCMP || opcode == Bytecodes.UCMP;
         this.op = op;
         this.stateBefore = stateBefore;
     }

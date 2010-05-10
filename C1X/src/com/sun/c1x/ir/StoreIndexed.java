@@ -30,6 +30,9 @@ import com.sun.cri.ci.*;
  */
 public final class StoreIndexed extends AccessIndexed {
 
+    /**
+     * The value to store.
+     */
     Value value;
 
     /**

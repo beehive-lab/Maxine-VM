@@ -20,12 +20,14 @@
  */
 package com.sun.max.vm.grip.prototype;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.grip.*;
 
 /**
  * @author Bernd Mathiske
  */
+@HOSTED_ONLY
 public class Package extends VMPackage {
     public Package() {
         registerScheme(GripScheme.class, PrototypeGripScheme.class);
