@@ -10,7 +10,7 @@
 <mapEntry key="JAVA_HOME" value="/usr/lang/JAVA/jdk1.6_14/solaris-amd64"/>
 </mapAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.ins.MaxineInspector"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-a=&quot;-XX:+TraceTLAB -XX:+TraceGCPhases -Xmx256m -Xms256m -classpath /export/maxine/workspaces/gc-dev/maxine/VM/bin test.output.GCTest3&quot;"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-a=&quot;-Xmx150m -XX:-TraceTLAB -XX:-TraceSweep -Xmx150m -classpath /export/maxine/workspaces/gc-dev/maxine/VM/bin test.output.GCTest3&quot;"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Inspector"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xss2m -Xms1g -Xmx1g"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:VM}"/>

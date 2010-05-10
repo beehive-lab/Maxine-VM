@@ -146,12 +146,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             collectorThread.execute();
             return true;
         }
-        // FIXME: need to revisit this.
-        if (requestedFreeSpace.lessThan(freeSpace.freeSpaceLeft())) {
+        // We may reach here after a race. Don't run GC if request can be satisfied.
+        if (freeSpace.canSatisfyAllocation(requestedFreeSpace)) {
             return true;
         }
         collectorThread.execute();
-        return requestedFreeSpace.lessThan(freeSpace.freeSpaceLeft());
+        return freeSpace.canSatisfyAllocation(requestedFreeSpace);
     }
 
     public boolean contains(Address address) {
@@ -230,6 +230,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
             collectionCount++;
+            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
+                Log.print("Begin mark-sweep #");
+                Log.println(collectionCount);
+            }
             freeSpace.makeParsable();
             heapMarker.markAll();
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
@@ -244,6 +248,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
                 // Update heapMarker's coveredArea.
                 ContiguousHeapSpace markedSpace = freeSpace.committedHeapSpace();
                 heapMarker.setCoveredArea(markedSpace.start(), markedSpace.committedEnd());
+            }
+            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
+                Log.print("End mark-sweep #");
+                Log.println(collectionCount);
             }
             HeapScheme.Static.notifyGCCompleted();
         }
