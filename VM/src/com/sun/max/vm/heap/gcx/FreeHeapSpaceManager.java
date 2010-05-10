@@ -428,6 +428,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
                         chunk.size = spaceLeft;
                         newFreeList.append(chunk);
                         totalFreeChunkSpace -= size.toLong();
+                        useTLABBin = tlabFreeSpaceList.totalSize > 0;
                     } else {
                         // Chunk is removed.
                         totalFreeChunkSpace -=  chunk.size.toLong();
@@ -447,6 +448,17 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
                 chunk = chunk.next;
             } while(chunk != null);
             return Address.zero();
+        }
+
+        boolean canFit(Size size) {
+            HeapFreeChunk chunk = HeapFreeChunk.toHeapFreeChunk(head);
+            while (chunk != null) {
+                if (size.lessThan(chunk.size)) {
+                    return true;
+                }
+                chunk = chunk.next;
+            }
+            return false;
         }
 
         private void printChunk(Address chunk) {
@@ -604,7 +616,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
     private Address binTryAllocate(int index, Size size, boolean exactFit) {
         // Any chunks in bin larger or equal to index is large enough to contain the requested size.
         // We may have to re-enter the leftover into another bin.
-        while (index <  freeChunkBins.length) {
+        while (index < freeChunkBins.length) {
             FreeSpaceList freelist = freeChunkBins[index];
             if (!freelist.head.isZero()) {
                 Address result = freelist.allocateFirstFit(size, exactFit);
@@ -618,6 +630,30 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         return Address.zero();
     }
 
+    public boolean canSatisfyAllocation(Size size) {
+        // assert: must hold this class lock and must only be called from GC
+        if (invokeGCForExactFitRequest) {
+            int index = binIndex(size);
+            // Any chunks in bin larger or equal to index is large enough to contain the requested size.
+            // We may have to re-enter the leftover into another bin.
+            while (index < freeChunkBins.length) {
+                FreeSpaceList freelist = freeChunkBins[index];
+                if (!freelist.head.isZero() && freelist.canFit(size)) {
+                    return true;
+                }
+                index++;
+            }
+            return false;
+        }
+        return size.lessThan(lockedFreeSpaceLeft());
+    }
+
+    /**
+     * Inform GC whether the invoking request is for exact fit. Just an ugly hack to indirectly pass
+     * information that cannot be passed via the collectGarbage method.
+     */
+    private boolean invokeGCForExactFitRequest = false;
+
     private Address binAllocate(int firstBinIndex, Size size, boolean exactFit) {
         // Search for a bin with a chunk large enough to satisfy this allocation.
         // Bin #0 contains chunks of any size between minReclaimableSpace and 1 << log2FirstBinSize,
@@ -627,15 +663,17 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
             if (!result.isZero()) {
                 return result;
             }
+            invokeGCForExactFitRequest = exactFit;
         } while (Heap.collectGarbage(size));
         // Not enough freed memory.
-        throw  outOfMemoryError;
+        throw outOfMemoryError;
     }
 
     synchronized Address binRefill(Size refillSize, Pointer topAtRefill, Size spaceLeft) {
         // First, deal with the left-over.
         if  (spaceLeft.greaterEqual(minReclaimableSpace)) {
             recordFreeSpace(topAtRefill, spaceLeft);
+            useTLABBin = tlabFreeSpaceList.totalSize > 0;
         } else if (spaceLeft.greaterThan(0)) {
             HeapSchemeAdaptor.fillWithDeadObject(topAtRefill, topAtRefill.plus(spaceLeft));
         }

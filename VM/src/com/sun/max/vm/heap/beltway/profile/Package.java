@@ -32,4 +32,9 @@ public class Package extends VMPackage {
     public Package() {
         super();
     }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.heapPackage.name().startsWith("com.sun.max.vm.heap.beltway");
+    }
 }
