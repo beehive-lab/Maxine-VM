@@ -68,29 +68,14 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
     }
 
     @Override
-    public int readByte(long address) {
-        return nativeReadByte(address);
-    }
-
-    @Override
     public int readBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length) {
         return nativeReadBytes(src, dst, isDirectByteBuffer, dstOffset, length);
-    }
-
-    @Override
-    public long readInt(long address) {
-        return nativeReadInt(address);
     }
 
     @Override
     public boolean readRegisters(int threadId, byte[] integerRegisters, int integerRegistersSize, byte[] floatingPointRegisters, int floatingPointRegistersSize, byte[] stateRegisters,
                     int stateRegistersSize) {
         return nativeReadRegisters(threadId, integerRegisters, integerRegistersSize, floatingPointRegisters, floatingPointRegistersSize, stateRegisters, stateRegistersSize);
-    }
-
-    @Override
-    public int readShort(long address) {
-        return nativeReadShort(address);
     }
 
     @Override
@@ -134,11 +119,6 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
     }
 
     @Override
-    public boolean writeByte(long address, byte value) {
-        return nativeWriteByte(address, value);
-    }
-
-    @Override
     public int writeBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length) {
         return nativeWriteBytes(dst, src, isDirectByteBuffer, srcOffset, length);
     }
@@ -151,10 +131,6 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
     private static native int nativeMaxByteBufferSize();
     private static native boolean nativeGatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
     private static native int nativeResume();
-    private static native int nativeReadByte(long address);
-    private static native long nativeReadInt(long address);
-    private static native int nativeReadShort(long address);
-    private static native boolean nativeWriteByte(long address, byte value);
     private static native int nativeSetInstructionPointer(int threadId, long ip);
     private static native boolean nativeSingleStep(int threadId);
     private static native boolean nativeSuspendAll();
