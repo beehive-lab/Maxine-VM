@@ -30,7 +30,12 @@ import com.sun.cri.ci.*;
  * @author Ben L. Titzer
  */
 public abstract class Op2 extends Instruction {
-    final int opcode;
+
+    /**
+     * The opcode of this instruction.
+     */
+    public final int opcode;
+
     Value x;
     Value y;
 
@@ -46,16 +51,6 @@ public abstract class Op2 extends Instruction {
         this.opcode = opcode;
         this.x = x;
         this.y = y;
-    }
-
-    /**
-     * Gets the opcode of this instruction.
-     *
-     * @return the opcode of this instruction
-     * @see Bytecodes
-     */
-    public int opcode() {
-        return opcode;
     }
 
     /**

@@ -29,8 +29,6 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.regex.*;
 
-import com.sun.cri.ci.*;
-
 /**
  * The definitions of the bytecodes that are valid input to the compiler and
  * related utility methods. This comprises two groups: the standard Java
@@ -314,7 +312,30 @@ public class Bytecodes {
     public static final int PGET                 = 225;
     public static final int PSET                 = 226;
 
-    public static final int PCMPSWP              = 227; // Pointer compare-and-swap
+    /**
+     * Atomic update of a value in memory.
+     * 
+     * Compares {@code expectedValue} value with the actual value in a memory location (given by {@code pointer + offset}).
+     * Iff they are same, {@code newValue} is stored into the memory location and the {@code expectedValue} is returned.
+     * Otherwise, the actual value is returned.
+     * All of the above is performed in one atomic hardware transaction.
+     * 
+     * <pre>
+     * Format: { u3 opcode;   // PCMPSWP_INT, PCMPSWP_WORD, PCMPSWP_REFERENCE,
+     *                        // PCMPSWP_INT_I, PCMPSWP_WORD_I or PCMPSWP_REFERENCE_I
+     *         }
+     *         
+     * Operand Stack:
+     *     ... pointer, offset, expectedValue, newValue => ..., result
+     * </pre>
+     *
+     * @param pointer base of denoted memory location
+     * @param offset offset from {@code pointer} of the memory location
+     * @param expectedValue if this value is currently in the memory location, perform the swap
+     * @param newValue the new value to store into the memory location
+     * @return either {@code expectedValue} or the actual value
+     */
+    public static final int PCMPSWP              = 227;
 
     public static final int MOV_I2F              = 228;
     public static final int MOV_F2I              = 229;
@@ -330,7 +351,7 @@ public class Bytecodes {
      *         }
      *
      * Operand Stack:
-     *     ..., value, value => ..., value
+     *     ..., left, right => ..., result
      * </pre>
      *
      * @see UnsignedComparisons
@@ -346,7 +367,7 @@ public class Bytecodes {
      *         }
      *
      * Operand Stack:
-     *     ..., value, value => ..., value
+     *     ..., left, right => ..., result
      * </pre>
      *
      * @see UnsignedComparisons
@@ -413,7 +434,7 @@ public class Bytecodes {
      *         }
      *
      * Operand Stack:
-     *     ..., value => ..., value
+     *     ..., size => ..., address
      * </pre>
      *
      * The value on the top of the stack is the size in bytes to allocate.
@@ -438,14 +459,12 @@ public class Bytecodes {
     /**
      * Allocates and initializes a slot on the native stack frame.
      * <p>
-     * Forces the compiler to allocate a native frame slot and initialize it with the value of
-     * ensure the value on the top of the JVM stack. The top value on the JVM stack is replaced
-     * with a {@linkplain CiKind#Word word} value representing the address of the native frame slot.
-     * The native frame slot will be live
-     * for the rest of the method. The value used to initialize the native frame slot determines
-     * if it is a GC root. If the initial value is a reference, any subsequent value written to the slot
-     * (via the address produced by this instruction) must be a reference. If the initial
-     * value is not a reference, any subsequent value written to the slot must not be a reference.
+     * Forces the compiler to allocate a native frame slot and initializes it with {@code value}
+     * The result is the address of the native frame slot.
+     * The native frame slot will be live for the rest of the method. The type of {@code value} determines
+     * if it is a GC root. If {@code value} is an object, any subsequent value written to the slot
+     * (via {@code address}) must be an object. If {@code value} is not an object, any subsequent value
+     * written to the slot must not be an object.
      * 
      * <b>The compiler is not required enforce this type safety.</b>
      * 
@@ -455,7 +474,8 @@ public class Bytecodes {
      *         }
      *
      * Operand Stack:
-     *     ..., value => ..., value
+     *     ..., value => ..., address
+     * </pre>
      */
     public static final int ALLOCSTKVAR          = 241;
     
@@ -463,7 +483,33 @@ public class Bytecodes {
     public static final int ADD_SP               = 243;
     public static final int READ_PC              = 244;
     public static final int FLUSHW               = 245;
+    
+    /**
+     * Produces the index of the least significant bit within {@code value} or {@code -1} if {@code value == 0}.
+     * 
+     * <pre>
+     * Format: { u1 opcode;  // LSB
+     *           u2 ignore;
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., index
+     * </pre>
+     */
     public static final int LSB                  = 246;
+    
+    /**
+     * Produces the index of the most significant bit within {@code value} or {@code -1} if {@code value == 0}.
+     * 
+     * <pre>
+     * Format: { u1 opcode;  // MSB
+     *           u2 ignore;
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., index
+     * </pre>
+     */
     public static final int MSB                  = 247;
 
     // End extended bytecodes

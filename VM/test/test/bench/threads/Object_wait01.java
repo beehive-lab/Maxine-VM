@@ -27,37 +27,40 @@ package test.bench.threads;
 import test.bench.util.*;
 
 public class Object_wait01  extends RunBench {
-    static volatile int count = 0;
+    static int count = 0;
     static volatile boolean done;
     static final Object object = new Object();
 
-    protected Object_wait01(LoopRunnable bench) {
-        super(bench);
+    protected Object_wait01() {
+        super(new Bench(), new EncapBench());
     }
 
-    public static boolean test(int i) throws InterruptedException {
+    public static boolean test(int i) {
         new Thread(new Notifier()).start();
-        new Object_wait01(new Bench()).runBench(true);
-        return true;
+        final boolean result = new Object_wait01().runBench(true);
+        done = true;
+        return result;
+
     }
 
-    static class Bench implements LoopRunnable {
+    static class Bench implements MicroBenchmark {
 
-        public void run(long loopCount) throws InterruptedException {
-            for (long i = 0; i < loopCount; i++) {
-                synchronized (object) {
+        public void run(boolean warmup) {
+            synchronized (object) {
+                try {
                     object.wait();
-                    count++;
+                } catch (InterruptedException ex) {
                 }
+                count++;
             }
-            done = true;
         }
+    }
 
-        public void runBareLoop(long loopCount) {
-            for (long i = 0; i < loopCount; i++) {
-                synchronized (object) {
-                    count++;
-                }
+    static class EncapBench implements MicroBenchmark {
+
+        public void run(boolean warmup) {
+            synchronized (object) {
+                count++;
             }
         }
     }
@@ -70,5 +73,10 @@ public class Object_wait01  extends RunBench {
                 }
             }
         }
+    }
+
+    // for running stand-alone
+    public static void main(String[] args) {
+        test(0);
     }
 }

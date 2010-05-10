@@ -2204,7 +2204,7 @@ public final class JniFunctions {
             try {
                 return JniHandles.createLocalHandle(CString.utf8ToJava(utf));
             } catch (Utf8Exception utf8Exception) {
-                return null;
+                return JniHandle.zero();
             }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
@@ -3235,7 +3235,7 @@ public final class JniFunctions {
             if (arrayObject instanceof double[]) {
                 return getDoubleArrayElements(array, isCopy);
             }
-            return null;
+            return Pointer.zero();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
             return asPointer(0);

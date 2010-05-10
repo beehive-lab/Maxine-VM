@@ -24,76 +24,63 @@
  */
 package test.bench.threads;
 
-import com.sun.max.program.*;
-
-import test.bench.util.*;
-
 /**
- * This benchmark runs a given number of threads, each of which
- * increments a global counter, for a given number of milliseconds
- * specified by the loopCount value. It reports the final value of the count.
  *
- * The counter is, of course, protected by a lock.
- *
- * The number of threads defaults the the value passed into the
- * test method (default 1) but can be changed by setting
- * -Dtest.bench.threads.threadcount=N at runtime.
- *
- * Unlike Thread_counter02, the counter is heavily contended for,
- * so we do not expect linear scaling.
+ * This code is a variant of Thread_counter01 where the counter is shared,
+ * therefore we expect contention and not linear scaling.
  *
  * @author Mick Jordan
  */
-public class Thread_counter03  extends RunBench {
+public class Thread_counter03  extends Thread_counter01 {
 
-    private static volatile long count;
-    private static Object object = new Object();
-    private static int threadCount;
+    private static Object lock = new Object();
+    private static long sharedCount;
 
-    protected Thread_counter03(LoopRunnable bench) {
+    protected Thread_counter03(MicroBenchmark bench) {
         super(bench);
     }
 
-    public static boolean test(int i, int t) throws InterruptedException {
-        threadCount = t;
-        count = 0;
-        final String threadCountProp = System.getProperty("test.bench.threads.threadcount");
-        if (threadCountProp != null) {
-            threadCount = Integer.parseInt(threadCountProp);
+    static class SharedLockedRunnerFactory extends RunnerFactory {
+        @Override
+        CountingRunner createRunner(int threadCount) {
+            sharedCount = 0;
+            return new SharedLockedRunner(threadCount);
         }
-        new Thread_counter03(new Bench()).runBench(false);
-        Trace.line(0, "  count: " + count);
-        return true;
     }
 
-    static class Bench implements LoopRunnable, Runnable {
+    static class SharedLockedRunner extends CountingRunner {
+        private int theThreadCount;
 
-        private static Thread_counter01.Timer benchTimer;
-
-        public void run(long loopCount) throws InterruptedException {
-            final Thread[] threads = new Thread[threadCount];
-            for (int i = 0; i < threadCount; i++) {
-                threads[i] = new Thread(new Bench());
-            }
-            benchTimer = new Thread_counter01.Timer(loopCount);
-            new Thread(benchTimer).start();
-            for (int i = 0; i < threadCount; i++) {
-                threads[i].start();
-            }
-            for (int i = 0; i < threadCount; i++) {
-                threads[i].join();
-            }
+        SharedLockedRunner(int threadCount) {
+            this.theThreadCount = threadCount;
         }
 
+        @Override
         public void run() {
-            while (benchTimer.running()) {
-                synchronized (object) {
-                    count++;
+            while (!done) {
+                synchronized (lock) {
+                    sharedCount++;
                 }
             }
         }
 
-        public void runBareLoop(long loopCount) {
+        @Override
+        public long getCount() {
+            return sharedCount / theThreadCount;
         }
     }
+
+    public static boolean test(int t, int r) {
+        threadCount = t;
+        runTime = r;
+        final boolean result = new Thread_counter03(new Bench(new SharedLockedRunnerFactory())).runBench(true);
+        displayCounts();
+        return result;
+    }
+
+    // for running stand-alone
+    public static void main(String[] args) {
+        test(2, 1000);
+    }
+
 }

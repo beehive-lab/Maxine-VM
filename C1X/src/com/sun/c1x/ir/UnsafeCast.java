@@ -44,7 +44,7 @@ public final class UnsafeCast extends Instruction {
      * @param value the value being cast
      */
     public UnsafeCast(RiType toType, Value value) {
-        super(toType.kind());
+        super(toType.kind().stackKind());
         this.toType = toType;
         this.value = value;
     }

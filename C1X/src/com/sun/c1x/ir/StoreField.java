@@ -30,6 +30,10 @@ import com.sun.cri.ri.*;
  * @author Ben L. Titzer
  */
 public final class StoreField extends AccessField {
+
+    /**
+     * The value to store.
+     */
     Value value;
 
     /**
