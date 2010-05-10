@@ -63,11 +63,12 @@ typedef struct ps_prochandle *ProcessHandle;
 #define readProcessMemory(ph, src, dst, size) Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
 #define writeProcessMemory(ph, dst, src, size) Pwrite(ph, src, length, (uintptr_t) dst);
 #elif os_GUESTVMXEN
-extern unsigned short readbytes(unsigned long src, char *dst, unsigned short n);
-extern unsigned short writebytes(unsigned long dst, char *src, unsigned short n);
+#include <stdint.h>
+extern unsigned short readbytes(uint64_t src, char *dst, unsigned short n);
+extern unsigned short writebytes(uint64_t st, char *src, unsigned short n);
 typedef void *ProcessHandle;
-#define readProcessMemory(ph, src, dst, size) readbytes((unsigned long) src, (char *) dst, (unsigned short) size)
-#define writeProcessMemory(ph, dst, src, size) writebytes((unsigned long) dst, (char *) src, (unsigned short) size);
+#define readProcessMemory(ph, src, dst, size) readbytes((uint64_t) src, (char *) dst, (unsigned short) size)
+#define writeProcessMemory(ph, dst, src, size) writebytes((uint64_t) dst, (char *) src, (unsigned short) size);
 #else
 #error
 #endif
