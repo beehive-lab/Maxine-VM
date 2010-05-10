@@ -110,18 +110,34 @@ ifeq ($(findstring CYGWIN,$(TARGETOS)),CYGWIN)
     ISA := ia32
 endif
 
+# There are three variants for Guest VM, owing to the 32/64 dom0 variants
+# GuestVM: 64 bit dom0, Inspector running in dom0, with libtele referencing 64-bit libguk/libxen*
+# GuestVM64H: Inspector running in domU, with 64 bit libtele not referencing libguk/libxen
+# GuestVM32T: 32 bit dom0, Inspector agent running in dom0, with 32 bit libtele referencing 32 bit libguk/libxen
+
 ifeq ($(TARGETOS),GuestVM)
     HYP := xen
     OS := guestvm
-    DOM0 := 64
+    TELEBITS := 64
+    GUK := 1
     ISA := amd64
     ARCH := amd64
 endif
 
-ifeq ($(TARGETOS),GuestVM32)
+ifeq ($(TARGETOS),GuestVM64H)
     HYP := xen
     OS := guestvm
-    DOM0 := 32
+    TELEBITS := 64
+    GUK := 0
+    ISA := amd64
+    ARCH := amd64
+endif
+
+ifeq ($(TARGETOS),GuestVM32T)
+    HYP := xen
+    OS := guestvm
+    TELEBITS := 32
+    GUK := 1
     ISA := amd64
     ARCH := amd64
 endif
@@ -216,10 +232,11 @@ endif
 
 ifeq ($(OS),guestvm)
     # assume Xen hypervisor
-    ifeq ($(DOM0),64)
+    ifeq ($(TELEBITS),64)
       mf = -m64
     else
       mf = -m32
+      tdir = /32bit
     endif
     ifneq "$(findstring def, $(origin CC))" ""
         # origin of CC is either undefined or default, so set it here
@@ -246,8 +263,11 @@ ifeq ($(OS),guestvm)
     endif
     
     LINK_AR = $(AR) r $(LIB_PREFIX)$(LIB)$(LIBA_SUFFIX)
-#    LINK_LIB = $(CC) -shared -lc -lm -m64  -lguk_db
-     LINK_LIB = $(CC) -shared -lc -lm $(mf)
+    ifeq ($(GUK),1)
+        LINK_LIB = $(CC) -shared -lc -lm $(mf)  -L ../../../../../guk/tools/db-front$(tdir) -lguk_db
+    else
+        LINK_LIB = $(CC) -shared -lc -lm $(mf)
+    endif
 endif
 
 ifndef JAVA_HOME

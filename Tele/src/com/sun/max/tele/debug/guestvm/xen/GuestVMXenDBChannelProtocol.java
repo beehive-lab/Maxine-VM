@@ -71,39 +71,6 @@ public interface GuestVMXenDBChannelProtocol {
      */
     int writeBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
     /**
-     * Reads one byte from target VM.
-     * @param address address from where to read the byte
-     * @return the byte at the given address
-     * @deprecated should be handled at a higher level with {@link #readBytes}
-     */
-    @Deprecated
-    int readByte(long address);
-    /**
-     * Reads an {@code int} from the target VM.
-     * @param address address from where to read the {@code int}
-     * @return the integer at the given address
-     * @deprecated should be handled at a higher level with {@link #readBytes}
-     */
-    @Deprecated
-    int readShort(long address);
-    /**
-     * Reads an {@code short} from the target VM.
-     * @param address address from where to read the {@code short}
-     * @return the short at the given address
-     * @deprecated should be handled at a higher level with {@link #readBytes}
-     */
-    @Deprecated
-    long readInt(long address);
-    /**
-     * Write one byte to the target VM.
-     * @param address address at which to wrtie the byte
-     * @param value the byte value to write
-     * @return {@code true} if the write was successful, {@code false} otherwise
-     * @deprecated should be handled at a higher level with {@link #writeBytes}
-     */
-    @Deprecated
-    boolean writeByte(long address, byte value);
-    /**
      * Gets the registers of the given thread from the target VM.
      * @param threadId id of the thread for which the registers are requested
      * @param integerRegisters byte array to place the integer registers
