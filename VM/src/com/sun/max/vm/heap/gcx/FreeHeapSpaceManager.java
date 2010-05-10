@@ -279,24 +279,24 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
                 cell = top();
                 nextMark = cell.plus(chunkSize);
                 while (nextMark.greaterThan(end)) {
-                    // FIXME: should use a ratio of TLAB size instead here.
-                    Pointer hardLimit = hardLimit().asPointer();
-                    if (nextMark.minus(hardLimit).lessThan(minReclaimableSpace)) {
-                        nextMark = hardLimit;
+                    // FIXME: should use some ratio of TLAB size instead here.
+                    if (nextMark.minus(end).lessThan(minReclaimableSpace)) {
+                        // Can use what's left in the allocator for the TLAB.
+                        nextMark = hardLimit().asPointer();
                         chunkSize = nextMark.minus(cell).asSize();
-                    } else {
-                        cell = refillOrAllocate(chunkSize, true);
-                        if (!cell.isZero()) {
-                            if (MaxineVM.isDebug()) {
-                                // Check cell is formated as chunk
-                                FatalError.check(HeapFreeChunk.isValidChunk(cell, committedHeapSpace), "must be a valid heap chunk format");
-                            }
-                            return cell;
-                        }
-                        // loop back to retry.
-                        cell = top();
-                        nextMark = cell.plus(chunkSize);
+                        break;
                     }
+                    cell = refillOrAllocate(chunkSize, true);
+                    if (!cell.isZero()) {
+                        if (MaxineVM.isDebug()) {
+                            // Check cell is formated as chunk
+                            FatalError.check(HeapFreeChunk.isValidChunk(cell, committedHeapSpace), "must be a valid heap chunk format");
+                        }
+                        return cell;
+                    }
+                    // loop back to retry.
+                    cell = top();
+                    nextMark = cell.plus(chunkSize);
                 }
             } while (mark.compareAndSwap(cell, nextMark) != cell);
 
