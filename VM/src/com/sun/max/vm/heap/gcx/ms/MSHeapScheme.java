@@ -124,12 +124,14 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         freeSpace.initialize(heapStart, initSize, maxSize);
 
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
-        final Address heapEnd = heapStart.plus(maxSize);
+        final Address heapMarkerDataStart = heapStart.plus(maxSize);
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
-        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapEnd, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
+        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
             MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
         }
-        heapMarker.initialize(freeSpace.committedHeapSpace(), heapEnd, heapMarkerDatasize);
+
+        ContiguousHeapSpace markedSpace = freeSpace.committedHeapSpace();
+        heapMarker.initialize(markedSpace.start(), markedSpace.committedEnd(), heapMarkerDataStart, heapMarkerDatasize);
     }
 
 
@@ -144,16 +146,16 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             collectorThread.execute();
             return true;
         }
-        // FIXME: need to revisit this.
-        if (requestedFreeSpace.lessThan(freeSpace.freeSpaceLeft())) {
+        // We may reach here after a race. Don't run GC if request can be satisfied.
+        if (freeSpace.canSatisfyAllocation(requestedFreeSpace)) {
             return true;
         }
         collectorThread.execute();
-        return requestedFreeSpace.lessThan(freeSpace.freeSpaceLeft());
+        return freeSpace.canSatisfyAllocation(requestedFreeSpace);
     }
 
     public boolean contains(Address address) {
-        return freeSpace.committedHeapSpace().contains(address);
+        return freeSpace.committedHeapSpace().inCommittedSpace(address);
     }
 
     public final void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
@@ -228,6 +230,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
             collectionCount++;
+            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
+                Log.print("Begin mark-sweep #");
+                Log.println(collectionCount);
+            }
             freeSpace.makeParsable();
             heapMarker.markAll();
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
@@ -237,7 +243,16 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
-            heapResizingPolicy.resizeAfterCollection(freeSpace.totalSpace(), freeSpaceAfterGC, freeSpace);
+            if (heapResizingPolicy.resizeAfterCollection(freeSpace.totalSpace(), freeSpaceAfterGC, freeSpace)) {
+                // Heap was resized.
+                // Update heapMarker's coveredArea.
+                ContiguousHeapSpace markedSpace = freeSpace.committedHeapSpace();
+                heapMarker.setCoveredArea(markedSpace.start(), markedSpace.committedEnd());
+            }
+            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
+                Log.print("End mark-sweep #");
+                Log.println(collectionCount);
+            }
             HeapScheme.Static.notifyGCCompleted();
         }
     }

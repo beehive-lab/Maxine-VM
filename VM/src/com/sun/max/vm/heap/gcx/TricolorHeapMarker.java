@@ -199,10 +199,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     Address biasedBitmapBase;
 
     /**
-     * Bias to the first word of the heap.
-     */
-    int baseBias;
-    /**
      * Memory where the color map is stored.
      */
     final RuntimeMemoryRegion colorMap;
@@ -240,6 +236,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return bitmapSize(maxHeapSize);
     }
 
+    public void setCoveredArea(Address start, Address end) {
+        coveredAreaStart = start;
+        coveredAreaEnd = end;
+    }
+
     /**
      *
      */
@@ -259,17 +260,16 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param bitmapStorage
      * @param coveredArea
      */
-    public void initialize(RuntimeMemoryRegion coveredArea, Address bitmapStorage, Size bitmapSize) {
+    public void initialize(Address start, Address end, Address bitmapStorage, Size bitmapSize) {
         if (MaxineVM.isDebug()) {
-            FatalError.check(bitmapSize.toLong() >= bitmapSize(coveredArea.size()).toLong(), "Mark bitmap too small to cover heap");
+            Size coveredAreaSize = end.minus(start).asSize();
+            FatalError.check(bitmapSize.toLong() >= bitmapSize(coveredAreaSize).toLong(), "Mark bitmap too small to cover heap");
         }
-        coveredAreaStart = coveredArea.start();
-        coveredAreaEnd = coveredArea.end();
-
+        setCoveredArea(start, end);
         colorMap.setStart(bitmapStorage);
         colorMap.setSize(bitmapSize);
         base = bitmapStorage;
-        baseBias = coveredArea.start().unsignedShiftedRight(log2BitmapWord).toInt();
+        int baseBias = start.unsignedShiftedRight(log2BitmapWord).toInt();
         biasedBitmapBase = colorMap.start().minus(baseBias);
         markingStack.initialize();
     }
@@ -1409,7 +1409,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         public boolean isReachable(Grip grip) {
-            return heapMarker.isBlackWhenNoGreys(grip.toOrigin());
+            Pointer origin = grip.toOrigin();
+            if (heapMarker.isCovered(origin)) {
+                return heapMarker.isBlackWhenNoGreys(origin);
+            }
+            // If not in the covered area, it must be in one of the regions treated as permanent roots.
+            // We cannot easily check that here because of NativeMutex which store the address of a NativeMutex
+            // in there reference field (nasty piece of work...).
+            return true;
         }
         public boolean isForwarding() {
             return false;
