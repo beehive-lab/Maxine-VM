@@ -139,22 +139,6 @@ public final class GuestVMXenDBChannel {
         return channelProtocol.resume();
     }
 
-    public static synchronized int readByte(long domainId, long address) {
-        return channelProtocol.readByte(address);
-    }
-
-    public static synchronized long readInt(int domainId, long address) {
-        return channelProtocol.readInt(address);
-    }
-
-    public static synchronized int readShort(int domainId, long address) {
-        return channelProtocol.readShort(address);
-    }
-
-    public static synchronized boolean writeByte(int domainId, long address, byte value) {
-        return channelProtocol.writeByte(address, value);
-    }
-
     public static synchronized int setInstructionPointer(int threadId, long ip) {
         return channelProtocol.setInstructionPointer(threadId, ip);
     }

@@ -113,20 +113,8 @@ public class GuestVMXenDBTCPNativeChannelProtocol extends GuestVMXenDBChannelPro
     }
 
     @Override
-    public int readByte(long address) {
-        unimplemented("readByte");
-        return 0;
-    }
-
-    @Override
     public int readBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length) {
         unimplemented("readBytes");
-        return 0;
-    }
-
-    @Override
-    public long readInt(long address) {
-        unimplemented("readInt");
         return 0;
     }
 
@@ -135,12 +123,6 @@ public class GuestVMXenDBTCPNativeChannelProtocol extends GuestVMXenDBChannelPro
                     int stateRegistersSize) {
         unimplemented("readRegisters");
         return false;
-    }
-
-    @Override
-    public int readShort(long address) {
-        unimplemented("readShort");
-        return 0;
     }
 
     @Override
@@ -188,12 +170,6 @@ public class GuestVMXenDBTCPNativeChannelProtocol extends GuestVMXenDBChannelPro
     @Override
     public boolean suspendAll() {
         unimplemented("suspendAll");
-        return false;
-    }
-
-    @Override
-    public boolean writeByte(long address, byte value) {
-        unimplemented("writeByte");
         return false;
     }
 
