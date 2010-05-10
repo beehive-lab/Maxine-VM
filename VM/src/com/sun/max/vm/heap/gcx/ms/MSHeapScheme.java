@@ -202,6 +202,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     static class TLABFiller extends ResetTLAB {
         @Override
         protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
+            if (tlabMark.greaterThan(tlabTop)) {
+                // Already filled-up (mark is at the limit).
+                return;
+            }
             // Before filling the current TLAB chunk, save link to next pointer.
             final Pointer nextChunk = tlabTop.getWord().asPointer();
             fillTLABWithDeadObject(tlabMark, tlabTop);

@@ -122,6 +122,14 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         } else if (deadObjectSize.equals(MIN_OBJECT_SIZE)) {
             plantDeadObject(cell);
         } else {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("[");
+            Log.print(start);
+            Log.print(",");
+            Log.print(end);
+            Log.print(" ("); Log.print(end.minus(start));
+            Log.print(")");
+            Log.unlock(lockDisabledSafepoints);
             FatalError.unexpected("Not enough space to fit a dead object");
         }
     }

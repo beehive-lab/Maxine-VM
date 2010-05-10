@@ -217,6 +217,8 @@ public class SpecialReferenceManager {
             if (traceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
+                Log.print(grip.toOrigin());
+                Log.print(" ");
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(grip).toJava());
                 Log.print(hub.classActor.name.string);
                 Log.println(" to list of discovered references");
