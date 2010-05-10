@@ -36,13 +36,11 @@ public final class AboutDialog extends SimpleDialog {
         "a research virtual machine written in and for the Java(TM) Programming Language.\n" +
         "\n" +
         "Maxine and the Maxine Inspector are produced by the Maxine Open Source Project,\n" +
-        "which is backed by the Maxine Research Project at Sun Labs,\n" +
-        "the research organization of Sun Microsystems, Inc.:\n" +
+        "which is backed by the Maxine Research Project at Oracle Sun Labs:\n" +
         "\n" +
         "     Doug Simon (Principal Investigator)\n" +
-        "     Paul Caprioli\n" +
         "     Laurent Daynes\n" +
-        "     Ben Titzer\n" +
+        "     Mick Jordan\n" +
         "     Michael Van De Vanter\n" +
         "\n" +
         "For more information please visit:\n" +

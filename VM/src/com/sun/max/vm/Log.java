@@ -43,6 +43,7 @@ import com.sun.max.vm.thread.*;
  * @author Ben L. Titzer
  * @author Doug Simon
  */
+@NEVER_INLINE
 public final class Log {
 
     private Log() {
@@ -787,7 +788,7 @@ public final class Log {
             if (targetMethod.classMethodActor != null) {
                 printMethod(targetMethod.classMethodActor, withNewline);
             } else {
-                print(targetMethod.description(), withNewline);
+                print(targetMethod.regionName(), withNewline);
             }
         }
 

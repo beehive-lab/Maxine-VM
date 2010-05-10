@@ -60,8 +60,8 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
          * @return surrogate for the {@FieldActor} in the {@link TeleVM} to which the constant was resolved
          */
         public TeleFieldActor getTeleFieldActor() {
-            final Reference fieldActorReference = teleVM().teleFields().FieldRefConstant$Resolved_fieldActor.readReference(reference());
-            return (TeleFieldActor) teleVM().makeTeleObject(fieldActorReference);
+            final Reference fieldActorReference = vm().teleFields().FieldRefConstant$Resolved_fieldActor.readReference(reference());
+            return (TeleFieldActor) vm().makeTeleObject(fieldActorReference);
         }
 
         @Override

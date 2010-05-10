@@ -24,7 +24,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 
 /**
- * The <code>ValueMap</code> class implements a nested hashtable data structure
+ * The {@code ValueMap} class implements a nested hashtable data structure
  * for use in local and global value numbering.
  *
  * @author Ben L. Titzer

@@ -29,8 +29,8 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -62,7 +62,7 @@ public final class MemoryBytesInspector extends Inspector {
      * Displays a new inspector for the currently allocated memory of a heap object in the VM.
      */
     public static MemoryBytesInspector create(Inspection inspection, TeleObject teleObject) {
-        final MemoryRegion region = teleObject.memoryRegion();
+        final MaxMemoryRegion region = teleObject.objectMemoryRegion();
         return create(inspection, region.start(), region.size().toInt(), 1, 16);
     }
 

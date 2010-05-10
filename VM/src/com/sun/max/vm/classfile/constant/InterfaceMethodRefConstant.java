@@ -130,7 +130,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
         }
 
         static MethodActor resolve(ConstantPool pool, int index, ClassActor classActor, Utf8Constant name, SignatureDescriptor signature) {
-            if (!classActor.isInterfaceActor()) {
+            if (!classActor.isInterface()) {
                 throw new IncompatibleClassChangeError();
             }
             final InterfaceActor interfaceActor = (InterfaceActor) classActor;

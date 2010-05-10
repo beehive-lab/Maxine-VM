@@ -27,7 +27,6 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -136,15 +135,15 @@ public class WordValueLabel extends ValueLabel {
      * Content of label is supplied by override {@link ValueLabel#fetchValue()}, which
      * gets called initially and when the label is refreshed.
      * <br>
-     * Display state can be toggled between alternate presentations in some situations.
+     * Display state can be cycled among alternate presentations in some situations.
      * <br>
      * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
-     * when the display state is toggled; this will be done automatically if the table is passed in
+     * when the display state is cycled; this will be done automatically if the table is passed in
      * as the parent component.
      *
      * @param inspection
      * @param valueMode presumed type of value for the word, influences display modes
-     * @param parent a component that should be repainted when the display state is toggled;
+     * @param parent a component that should be repainted when the display state is cycled;
      */
     public WordValueLabel(Inspection inspection, ValueMode valueMode, Component parent) {
         this(inspection, valueMode, Word.zero(), parent);
@@ -156,16 +155,16 @@ public class WordValueLabel extends ValueLabel {
      * Content of label is set initially by parameter.  It can be updated by overriding{@link ValueLabel#fetchValue()}, which
      * gets called initially and when the label is refreshed.
      * <br>
-     * Display state can be toggled between alternate presentations in some situations.
+     * Display state can be cycled among alternate presentations in some situations.
      * <br>
      * Can be used as a cell renderer in a table, but the enclosing table must be explicitly repainted
-     * when the display state is toggled; this will be done automatically if the table is passed in
+     * when the display state is cycled; this will be done automatically if the table is passed in
      * as the parent component.
      *
      * @param inspection
      * @param valueMode presumed type of value for the word, influences display modes
      * @param word initial value for content.
-     * @param parent a component that should be repainted when the display state is toggled;
+     * @param parent a component that should be repainted when the display state is cycled;
      */
     public WordValueLabel(Inspection inspection, ValueMode valueMode, Word word, Component parent) {
         super(inspection, null);
@@ -191,9 +190,9 @@ public class WordValueLabel extends ValueLabel {
                         break;
                     }
                     case MouseEvent.BUTTON2: {
-                        final InspectorAction toggleAction = getToggleDisplayTextAction();
-                        if (toggleAction != null) {
-                            toggleAction.perform();
+                        final InspectorAction cycleAction = getCycleDisplayTextAction();
+                        if (cycleAction != null) {
+                            cycleAction.perform();
                         }
                         break;
                     }
@@ -301,7 +300,7 @@ public class WordValueLabel extends ValueLabel {
                     thread = vm().threadManager().findThread(address);
                     if (thread != null && thread.stack().memoryRegion().contains(address)) {
                         displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
-                    } else if (thread != null && thread.locals().memoryRegion() != null && thread.locals().memoryRegion().contains(address)) {
+                    } else if (thread != null && thread.localsBlock().memoryRegion() != null && thread.localsBlock().memoryRegion().contains(address)) {
                         displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                     } else {
                         if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
@@ -471,7 +470,7 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordThreadLocalsBlockLocationDataColor());
                 setText(hexString);
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.locals().memoryRegion().start()).toLong();
+                final long offset = value().asWord().asAddress().minus(thread.localsBlock().memoryRegion().start()).toLong();
                 final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
                 setToolTipText("Thread locals:  thread=" + threadName + ", offset=" + hexOffsetString);
                 break;
@@ -480,7 +479,7 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordThreadLocalsBlockLocationDataColor());
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.locals().memoryRegion().start()).toLong();
+                final long offset = value().asWord().asAddress().minus(thread.localsBlock().memoryRegion().start()).toLong();
                 final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
                 setText(threadName + " " + decimalOffsetString);
                 setToolTipText("Thread locals:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));
@@ -578,15 +577,15 @@ public class WordValueLabel extends ValueLabel {
             case FLOAT: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(null);
-                setText(Float.toString(Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL))));
-                setToolTipText("0x" + hexString);
+                setText(Float.toString(Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL))) + "f");
+                setToolTipText("0x" + hexString + "  (as double = " + Double.toString(Double.longBitsToDouble(value.toLong())) + ")");
                 break;
             }
             case DOUBLE: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(null);
-                setText(Double.toString(Double.longBitsToDouble(value.toLong())));
-                setToolTipText("0x" + hexString);
+                setText(Double.toString(Double.longBitsToDouble(value.toLong())) + "d");
+                setToolTipText("0x" + hexString + "(as float = " + Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL)) + ")");
                 break;
             }
         }
@@ -601,7 +600,7 @@ public class WordValueLabel extends ValueLabel {
         }
     }
 
-    private InspectorAction getToggleDisplayTextAction() {
+    private InspectorAction getCycleDisplayTextAction() {
         DisplayMode alternateValueKind = displayMode;
         if (valueMode == ValueMode.FLAGS_REGISTER) {
             switch (displayMode) {
@@ -709,7 +708,7 @@ public class WordValueLabel extends ValueLabel {
         }
         if (alternateValueKind != displayMode) {
             final DisplayMode newValueKind = alternateValueKind;
-            return new InspectorAction(inspection(), "Toggle alternate display text") {
+            return new InspectorAction(inspection(), "Cycle alternate display text") {
 
                 @Override
                 public void procedure() {
@@ -812,7 +811,7 @@ public class WordValueLabel extends ValueLabel {
                 case DOUBLE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().contains(address)) {
+                    if (vm().findMemoryRegion(address) != null) {
                         action = actions().inspectMemoryWords(address);
                     }
                     break;
@@ -826,7 +825,7 @@ public class WordValueLabel extends ValueLabel {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
-            final MemoryRegion memoryRegion = vm().findMemoryRegion(address);
+            final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(address);
             if (memoryRegion != null) {
                 action = actions().selectMemoryRegion(memoryRegion);
             }
@@ -860,7 +859,7 @@ public class WordValueLabel extends ValueLabel {
                 case OBJECT_REFERENCE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().contains(address)) {
+                    if (vm().findMemoryRegion(address) != null) {
                         transferable = new InspectorTransferable.AddressTransferable(inspection(), address);
                     }
                     break;
@@ -906,19 +905,19 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
-        private final class MenuToggleDisplayAction extends InspectorAction {
+        private final class MenuCycleDisplayAction extends InspectorAction {
 
-            private final InspectorAction toggleAction;
+            private final InspectorAction cycleAction;
 
-            private MenuToggleDisplayAction() {
-                super(inspection(), "Toggle display (Middle-Button)");
-                toggleAction = getToggleDisplayTextAction();
-                setEnabled(toggleAction != null);
+            private MenuCycleDisplayAction() {
+                super(inspection(), "Cycle display (Middle-Button)");
+                cycleAction = getCycleDisplayTextAction();
+                setEnabled(cycleAction != null);
             }
 
             @Override
             public void procedure() {
-                toggleAction.perform();
+                cycleAction.perform();
             }
         }
 
@@ -967,7 +966,7 @@ public class WordValueLabel extends ValueLabel {
         public WordValueMenuItems(Inspection inspection, Value value) {
             add(actions().copyValue(value, "Copy value to clipboard"));
             add(new MenuInspectObjectAction(value));
-            add(new MenuToggleDisplayAction());
+            add(new MenuCycleDisplayAction());
             add(new MenuInspectMemoryWordsAction(value));
             add(new MenuShowMemoryRegionAction(value));
         }

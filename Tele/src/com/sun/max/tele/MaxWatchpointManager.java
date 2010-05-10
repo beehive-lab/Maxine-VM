@@ -23,7 +23,6 @@ package com.sun.max.tele;
 import java.io.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.MaxWatchpoint.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.object.*;
@@ -71,7 +70,7 @@ public interface MaxWatchpointManager {
      * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
      * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
      */
-    MaxWatchpoint createRegionWatchpoint(String description, MemoryRegion memoryRegion, WatchpointSettings settings)
+    MaxWatchpoint createRegionWatchpoint(String description, MaxMemoryRegion memoryRegion, WatchpointSettings settings)
         throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException;
 
     /**
@@ -177,7 +176,7 @@ public interface MaxWatchpointManager {
      * @param memoryRegion an area of memory in the VM
      * @return the watchpoints whose memory region overlaps, empty sequence if none.
      */
-    Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion);
+    Sequence<MaxWatchpoint> findWatchpoints(MaxMemoryRegion memoryRegion);
 
     /**
      * Writes a textual description of each existing watchpoint.

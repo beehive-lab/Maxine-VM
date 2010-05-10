@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 /**
- * The <code>UnsafePrefetchRead</code> instruction represents a prefetch operation on an object field.
+ * The {@code UnsafePrefetchRead} instruction represents a prefetch operation on an object field.
  *
  * @author Ben L. Titzer
  */

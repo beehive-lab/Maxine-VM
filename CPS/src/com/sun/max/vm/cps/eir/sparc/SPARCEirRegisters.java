@@ -31,7 +31,7 @@ import com.sun.max.asm.sparc.SFPR;
 import com.sun.max.asm.sparc.DFPR;
 
 /**
- * The <code>SPARCRegisters</code> class definition.
+ * The {@code SPARCRegisters} class definition.
  * @author Ben L. Titzer
  */
 public class SPARCEirRegisters {

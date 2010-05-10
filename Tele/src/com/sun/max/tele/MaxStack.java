@@ -23,14 +23,14 @@ package com.sun.max.tele;
 import java.io.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
 
 /**
- * The stack for a thread in the VM.
+ * Access to the stack for a thread in the VM.
  *
  * @author Michael Van De Vanter
  */
-public interface MaxStack {
+public interface MaxStack extends MaxEntity<MaxStack> {
 
     /**
      * Gets the thread that owns the stack; doesn't change.
@@ -40,15 +40,6 @@ public interface MaxStack {
      * @return the thread that owns this stack.
      */
     MaxThread thread();
-
-    /**
-     * Gets the allocated memory region.
-     * <br>
-     * Thread-safe
-     *
-     * @return the memory in the VM allocated for this stack.
-     */
-    MemoryRegion memoryRegion();
 
     /**
      * Gets the top frame from the currently updated stack.  If the VM is busy,
@@ -69,6 +60,14 @@ public interface MaxStack {
      * @return the frames in the stack
      */
     IndexedSequence<MaxStackFrame> frames();
+
+    /**
+     * Gets the frame, if any, whose memory location in the VM includes an address.
+     *
+     * @param address a memory location in the VM
+     * @return the stack frame whose location includes the address, null if none.
+     */
+    MaxStackFrame findStackFrame(Address address);
 
     /**
      * Identifies the point in VM state history where this information was most recently updated.

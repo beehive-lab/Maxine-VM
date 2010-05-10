@@ -140,7 +140,7 @@ public abstract class AdapterGenerator {
      * @param slotSize the adapter frame slot size of a {@linkplain Kind#isCategory1() category 1} kind
      */
     public static int frameSizeFor(Kind kind, int slotSize) {
-        return kind.isCategory1 ? slotSize : 2 * slotSize;
+        return kind.stackSlots * slotSize;
     }
 
     /**
@@ -256,7 +256,7 @@ public abstract class AdapterGenerator {
                 if (verboseOption.verboseCompilation) {
                     Log.printCurrentThread(false);
                     Log.print(": Created adapter  ");
-                    Log.println(adapter.description());
+                    Log.println(adapter.regionName());
                 }
                 adapters.put(sig, adapter);
             }

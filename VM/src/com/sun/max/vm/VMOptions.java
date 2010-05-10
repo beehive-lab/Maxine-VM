@@ -23,6 +23,8 @@ package com.sun.max.vm;
 import java.lang.reflect.*;
 import java.util.*;
 
+import sun.misc.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -143,6 +145,22 @@ public final class VMOptions {
             }
         }, MaxineVM.Phase.PRISTINE);
 
+        register(new VMOption("-C1X ", "Print help on C1X options") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                printUsage(Category.C1X_SPECIFIC);
+                return true;
+            }
+            @Override
+            protected boolean haltsVM() {
+                return true;
+            }
+            @Override
+            public Category category() {
+                return Category.NON_STANDARD;
+            }
+        }, MaxineVM.Phase.PRISTINE);
+
         register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exit") {
             @Override
             public boolean parseValue(Pointer optionValue) {
@@ -214,9 +232,10 @@ public final class VMOptions {
      *
      * @param prefix
      * @param javaClass the java class containing the fields for which VM options are to be created
+     * @param helpMap map from option names to the help message for the option (may be {@code null})
      */
     @HOSTED_ONLY
-    public static void addFieldOptions(String prefix, Class<?> javaClass) {
+    public static void addFieldOptions(String prefix, Class<?> javaClass, Map<String, String> helpMap) {
         for (final Field field : javaClass.getDeclaredFields()) {
             int modifiers = field.getModifiers();
             if (Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers)) {
@@ -227,8 +246,9 @@ public final class VMOptions {
                     help = settings.help();
                     name = settings.name().isEmpty() ? field.getName().replace('_', '-') : settings.name();
                 } else {
-                    help = null;
+                    assert !field.getName().contains("_");
                     name = field.getName().replace('_', '-');
+                    help = helpMap != null ? helpMap.get(name) : null;
                 }
                 try {
                     addFieldOption(prefix, name, field, help);
@@ -403,6 +423,11 @@ public final class VMOptions {
         }
         if (category == Category.NON_STANDARD) {
             Log.println("Non-standard options:");
+            printOptions(pristinePhaseOptions, category);
+            printOptions(startingPhaseOptions, category);
+        }
+        if (category == Category.C1X_SPECIFIC) {
+            Log.println("C1X options:");
             printOptions(pristinePhaseOptions, category);
             printOptions(startingPhaseOptions, category);
         }
@@ -633,7 +658,7 @@ public final class VMOptions {
     }
 
     /**
-     * Support for @see sun.misc.VMSupport.initAgentProperties.
+     * Support for {@link VMSupport#initAgentProperties}.
      * @return space separated string of main class and arguments.
      */
     public static String mainClassAndArguments() {

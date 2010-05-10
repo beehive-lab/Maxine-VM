@@ -27,14 +27,11 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * Immortal memory region can be used for objects, which are not collected by the GC.
+ * Immortal memory region can be used to allocate objects at runtime that are not collected by the GC.
  *
  * @author Hannes Payer
  */
-public class ImmortalMemoryRegion extends LinearAllocationMemoryRegion{
-
-    public ImmortalMemoryRegion() {
-    }
+public class ImmortalMemoryRegion extends LinearAllocationMemoryRegion {
 
     public ImmortalMemoryRegion(String name) {
         super(name);
@@ -49,4 +46,11 @@ public class ImmortalMemoryRegion extends LinearAllocationMemoryRegion{
         this.start = region;
         this.mark.set(region);
     }
+
+    public void initialize(MemoryRegion memoryRegion) {
+        setStart(memoryRegion.start());
+        setSize(memoryRegion.size());
+        mark.set(memoryRegion.start());
+    }
+
 }

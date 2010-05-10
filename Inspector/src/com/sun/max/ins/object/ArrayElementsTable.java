@@ -34,16 +34,14 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table that displays Maxine array elements; for use in an instance of {@link ObjectInspector}.
+ * A table that displays VM array elements; for use in an instance of {@link ObjectInspector}.
  * <br>
  * Null array elements can be hidden from the display.
  * <br>
@@ -71,13 +69,13 @@ public final class ArrayElementsTable extends InspectorTable {
     private final ObjectViewPreferences instanceViewPreferences;
 
     /**
-     * A {@link JTable} specialized to display Maxine array elements.
+     * A {@link JTable} specialized to display VM array elements.
      * This table is somewhat complex so that it can serve for both ordinary array elements
      * as well as the various array subsets (tables) in hybrid objects (hubs).
      *
      * @param inspection
-     * @param teleObject the object being inspected, of which the array elements arepart.
-     * @param elementKind the Maxine value "kind" of the array elements.
+     * @param teleObject the object being inspected, of which the array elements are part.
+     * @param elementKind the VM value "kind" of the array elements.
      * @param startOffset memory position relative to the object origin where the displayed array starts
      * @param startIndex index into the array where the display starts
      * @param length number of elements to display
@@ -241,8 +239,8 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         @Override
-        public MemoryRegion getMemoryRegion(int row) {
-            return new TeleMemoryRegion(getAddress(row), Size.fromInt(elementSize), "");
+        public MaxMemoryRegion getMemoryRegion(int row) {
+            return new InspectorMemoryRegion(vm(), "", getAddress(row), Size.fromInt(elementSize));
         }
 
         @Override

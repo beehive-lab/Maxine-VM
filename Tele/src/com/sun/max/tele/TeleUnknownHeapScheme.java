@@ -21,7 +21,6 @@
 package com.sun.max.tele;
 
 import com.sun.max.collect.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -53,11 +52,11 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
     }
 
     public boolean isInLiveMemory(Address address) {
-        if (teleVM().isInGC()) {
+        if (vm().isInGC()) {
             return true;
         }
-        for (TeleRuntimeMemoryRegion teleHeapRegion : teleVM().teleHeapRegions()) {
-            if (teleHeapRegion.contains(address)) {
+        for (MaxHeapRegion heapRegion : vm().heap().heapRegions()) {
+            if (heapRegion.memoryRegion().contains(address)) {
                 return true;
             }
         }

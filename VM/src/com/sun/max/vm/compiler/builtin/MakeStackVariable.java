@@ -20,9 +20,9 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -59,45 +59,45 @@ public class MakeStackVariable extends SpecialBuiltin {
      * @return the address of the stack slot where {@code value} resides
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(STACKADDR)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(int value);
 
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(STACKADDR)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(byte value);
 
     /**
      * @see #makeStackVariable(int)
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(STACKADDR)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(float value);
 
     /**
      * @see #makeStackVariable(int)
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(STACKADDR)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(long value);
 
     /**
      * @see #makeStackVariable(int)
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(STACKADDR)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(double value);
 
     /**
      * @see #makeStackVariable(int)
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(STACKADDR)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(Reference value);
 
     /**
      * @see #makeStackVariable(int)
      */
     @BUILTIN(value = MakeStackVariable.class)
-    @INTRINSIC(STACKADDR)
+    @INTRINSIC(ALLOCSTKVAR)
     public static native Pointer makeStackVariable(Word value);
 }

@@ -25,7 +25,7 @@ import java.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LookupSwitch</code> instruction represents a lookup switch bytecode, which has a sorted
+ * The {@code LookupSwitch} instruction represents a lookup switch bytecode, which has a sorted
  * array of key values.
  *
  * @author Ben L. Titzer
@@ -40,9 +40,9 @@ public final class LookupSwitch extends Switch {
      * @param successors the list of successors
      * @param keys the list of keys, sorted
      * @param stateBefore the state before the switch
-     * @param isSafepoint <code>true</code> if this instruction is a safepoint
+     * @param isSafepoint {@code true} if this instruction is a safepoint
      */
-    public LookupSwitch(Value value, List<BlockBegin> successors, int[] keys, ValueStack stateBefore, boolean isSafepoint) {
+    public LookupSwitch(Value value, List<BlockBegin> successors, int[] keys, FrameState stateBefore, boolean isSafepoint) {
         super(value, successors, stateBefore, isSafepoint);
         this.keys = keys;
     }

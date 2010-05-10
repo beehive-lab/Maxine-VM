@@ -20,15 +20,15 @@
  */
 package com.sun.c0x;
 
-import com.sun.c1x.ci.CiCompiler;
-import com.sun.c1x.ci.CiResult;
-import com.sun.c1x.ci.CiTarget;
-import com.sun.c1x.ri.RiMethod;
-import com.sun.c1x.ri.RiRuntime;
-import com.sun.c1x.xir.RiXirGenerator;
+import com.sun.cri.ci.CiCompiler;
+import com.sun.cri.ci.CiResult;
+import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ri.RiMethod;
+import com.sun.cri.ri.RiRuntime;
+import com.sun.cri.xir.RiXirGenerator;
 
 /**
- * The <code>C0XCompiler</code> class definition.
+ * The {@code C0XCompiler} class definition.
  *
  * @author Ben L. Titzer
  */
@@ -51,11 +51,11 @@ public class C0XCompiler extends CiCompiler {
      * Compile the specified method.
      *
      * @param method the method to compile
-     * @return a {@link com.sun.c1x.ci.CiTargetMethod target method} representing the compiled method
+     * @return a {@link com.sun.cri.ci.CiTargetMethod target method} representing the compiled method
      */
     @Override
     public CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator) {
-        C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
+        C0XCompilation comp = new C0XCompilation(runtime, method, target);
         comp.compile();
         return null;
     }
@@ -65,11 +65,11 @@ public class C0XCompiler extends CiCompiler {
      *
      * @param method the method to compile
      * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
-     * @return a {@link com.sun.c1x.ci.CiTargetMethod target method} representing the compiled method
+     * @return a {@link com.sun.cri.ci.CiTargetMethod target method} representing the compiled method
      */
     @Override
     public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
-        C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
+        C0XCompilation comp = new C0XCompilation(runtime, method, target);
         comp.compile();
         return null;
     }

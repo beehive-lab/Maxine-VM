@@ -52,7 +52,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
     }
 
     public boolean isArray() {
-        return classActor.isArrayClassActor();
+        return classActor.isArrayClass();
     }
 
     public ClassActor classActor() {
@@ -146,7 +146,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
         field.setAccessible(true);
         final TypeDescriptor fieldDescriptor = fieldActor.descriptor();
         try {
-            if (KindTypeDescriptor.isWord(fieldDescriptor)) {
+            if (fieldDescriptor.toKind().isWord) {
                 final Class<Class<? extends Word>> type = null;
                 final Word word = value.toWord().as(StaticLoophole.cast(type, field.getType()));
                 field.set(object, word);
@@ -165,7 +165,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
     }
 
     public int firstWordIndex() {
-        if (classActor.isHybridClassActor()) {
+        if (classActor.isHybridClass()) {
             final Hybrid hybrid = (Hybrid) object;
             return hybrid.firstWordIndex();
         }
@@ -173,7 +173,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
     }
 
     public int firstIntIndex() {
-        if (classActor.isHybridClassActor()) {
+        if (classActor.isHybridClass()) {
             final Hybrid hybrid = (Hybrid) object;
             return hybrid.firstIntIndex();
         }

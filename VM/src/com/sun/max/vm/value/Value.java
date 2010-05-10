@@ -22,6 +22,7 @@ package com.sun.max.vm.value;
 
 import java.io.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
@@ -459,4 +460,6 @@ public abstract class Value<Value_Type extends Value<Value_Type>> implements Cla
     public abstract byte[] toBytes(DataModel dataModel);
 
     public abstract void write(DataOutput stream) throws IOException;
+
+    public abstract CiConstant asCiConstant();
 }

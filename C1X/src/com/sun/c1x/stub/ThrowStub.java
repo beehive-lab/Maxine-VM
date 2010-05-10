@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.globalstub.GlobalStub;
-import com.sun.c1x.lir.LIROperand;
-import com.sun.c1x.lir.LIRDebugInfo;
+import com.sun.c1x.globalstub.*;
+import com.sun.c1x.lir.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class implements a local stub that simply throws an exception, typically
@@ -34,7 +34,7 @@ public class ThrowStub extends LocalStub {
 
     public final GlobalStub globalStub;
 
-    public ThrowStub(GlobalStub globalStub, LIRDebugInfo info, LIROperand... args) {
+    public ThrowStub(GlobalStub globalStub, LIRDebugInfo info, CiValue... args) {
         super(info);
         this.globalStub = globalStub;
         if (args != null && args.length > 0) {

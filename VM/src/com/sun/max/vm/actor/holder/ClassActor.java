@@ -29,6 +29,8 @@ import java.lang.annotation.*;
 import java.security.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -61,7 +63,7 @@ import com.sun.max.vm.verifier.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class ClassActor extends Actor {
+public abstract class ClassActor extends Actor implements RiType {
 
     public static final Deferrable.Queue DEFERRABLE_QUEUE_1 = Deferrable.createDeferred();
     public static final Deferrable.Queue DEFERRABLE_QUEUE_2 = Deferrable.createDeferred();
@@ -100,7 +102,7 @@ public abstract class ClassActor extends Actor {
 
     @INSPECTED
     @CONSTANT_WHEN_NOT_ZERO
-    private Class mirror;
+    private Class javaClass;
 
     public final ClassActor superClassActor;
 
@@ -257,7 +259,7 @@ public abstract class ClassActor extends Actor {
                 Sequence<VirtualMethodActor> virtualMethodActors = gatherVirtualMethodActors(allInterfaceActors, methodLookup);
                 ClassActor.this.allVirtualMethodActors = Sequence.Static.toArray(virtualMethodActors, new VirtualMethodActor[virtualMethodActors.length()]);
                 assignHolderToLocalMethodActors();
-                if (isReferenceClassActor() || isInterfaceActor()) {
+                if (isReferenceClassActor() || isInterface()) {
                     final Size dynamicTupleSize = layoutFields(specificLayout);
                     final BitSet superClassActorSerials = getSuperClassActorSerials();
                     TupleReferenceMap dynamicReferenceMap;
@@ -267,7 +269,7 @@ public abstract class ClassActor extends Actor {
                         dynamicReferenceMap = new TupleReferenceMap(ClassActor.this);
                         vTableLength = ClassActor.this.allVirtualMethodActors.length;
                     } else {
-                        assert isInterfaceActor();
+                        assert isInterface();
                         dynamicReferenceMap = TupleReferenceMap.EMPTY;
                         vTableLength = 0;
                     }
@@ -324,7 +326,7 @@ public abstract class ClassActor extends Actor {
     }
 
     @INLINE
-    public final boolean isInterfaceActor() {
+    public final boolean isInterface() {
         return isInterface(flags());
     }
 
@@ -337,17 +339,17 @@ public abstract class ClassActor extends Actor {
     }
 
     @INLINE
-    public final boolean isArrayClassActor() {
+    public final boolean isArrayClass() {
         return this instanceof ArrayClassActor;
     }
 
     @INLINE
-    public final boolean isTupleClassActor() {
+    public final boolean isTupleClass() {
         return this instanceof TupleClassActor;
     }
 
     @INLINE
-    public final boolean isHybridClassActor() {
+    public final boolean isHybridClass() {
         return this instanceof HybridClassActor;
     }
 
@@ -1082,11 +1084,17 @@ public abstract class ClassActor extends Actor {
 
     @HOSTED_ONLY
     private void checkProhibited(Utf8Constant typeName) {
-        if (MaxineVM.isHosted()) {
-            if (prohibitedPackagePrefix != null && !isArrayClassActor() && !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString())) {
-                ProgramError.check(!typeName.toString().startsWith(prohibitedPackagePrefix), "attempt to load from prohibited package: " + typeName);
-            }
+        if (prohibitedPackagePrefix != null &&
+            !isArrayClass() &&
+            !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString()) &&
+            typeName.string.startsWith(prohibitedPackagePrefix)) {
+            throw new ProhibitedPackageError(typeName.string);
         }
+    }
+
+    @HOSTED_ONLY
+    public static boolean isInProhibitedPackage(String className) {
+        return prohibitedPackagePrefix != null && className.startsWith(prohibitedPackagePrefix);
     }
 
     /**
@@ -1247,7 +1255,7 @@ public abstract class ClassActor extends Actor {
      */
     public final IdentityHashSet<InterfaceActor> getAllInterfaceActors() {
         final IdentityHashSet<InterfaceActor> result = new IdentityHashSet<InterfaceActor>();
-        if (isInterfaceActor()) {
+        if (isInterface()) {
             result.add((InterfaceActor) this);
         }
         for (InterfaceActor interfaceActor : localInterfaceActors) {
@@ -1292,36 +1300,37 @@ public abstract class ClassActor extends Actor {
     }
 
     @INLINE
-    public final Class mirror() {
-        if (mirror == null) {
+    public final Class<?> javaClass() {
+        if (javaClass == null) {
             if (MaxineVM.isHosted()) {
-                mirror = JavaPrototype.javaPrototype().toJava(this);
+                javaClass = JavaPrototype.javaPrototype().toJava(this);
             } else {
-                return noninlineCreateMirror();
+                return noninlineCreateJavaClass();
             }
         }
-        return mirror;
+        return javaClass;
     }
 
-    private Class noninlineCreateMirror() {
+    @NEVER_INLINE
+    private Class noninlineCreateJavaClass() {
         // Non-blocking synchronization is used here to swap in the mirror reference.
         // This could lead to some extra Class objects being created that become garbage, but should be harmless.
-        final Class newMirror = (Class) Heap.createTuple(ClassRegistry.CLASS.dynamicHub());
-        TupleAccess.writeObject(newMirror, Class_classActor.offset(), this);
-        final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(ClassRegistry.ClassActor_mirror.offset(), null,  Reference.fromJava(newMirror));
+        final Class newJavaClass = (Class) Heap.createTuple(ClassRegistry.CLASS.dynamicHub());
+        TupleAccess.writeObject(newJavaClass, Class_classActor.offset(), this);
+        final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(ClassRegistry.ClassActor_javaClass.offset(), null,  Reference.fromJava(newJavaClass));
         if (oldValue == null) {
-            return newMirror;
+            return newJavaClass;
         }
         return UnsafeCast.asClass(oldValue.toJava());
     }
 
     @HOSTED_ONLY
-    public final void setMirror(Class javaClass) {
-        if (mirror == null) {
-            mirror = javaClass;
+    public final void setJavaClass(Class javaClass) {
+        if (this.javaClass == null) {
+            this.javaClass = javaClass;
         } else {
-            if (mirror != javaClass) {
-                ProgramError.unexpected("setMirror called with different value, old=" + mirror + ", new=" + javaClass);
+            if (this.javaClass != javaClass) {
+                ProgramError.unexpected("setMirror called with different value, old=" + this.javaClass + ", new=" + javaClass);
             }
         }
     }
@@ -1358,7 +1367,7 @@ public abstract class ClassActor extends Actor {
      */
     @INLINE
     public final Class<?> toJava() {
-        return mirror();
+        return javaClass();
     }
 
     @Override
@@ -1499,6 +1508,15 @@ public abstract class ClassActor extends Actor {
     }
 
     /**
+     * Modifies the initialization state of this class actor if necessary to prevent it being verified.
+     */
+    public void doNotVerify() {
+        if (isPrepared(initializationState)) {
+            initializationState = VERIFIED;
+        }
+    }
+
+    /**
      * See #2.17.5.
      */
     public void makeInitialized() {
@@ -1543,6 +1561,9 @@ public abstract class ClassActor extends Actor {
 
     @INLINE
     public final boolean isInstance(Object object) {
+        if (MaxineVM.isHosted()) {
+            return toJava().isInstance(object);
+        }
         final Hub hub = ObjectAccess.readHub(object);
         return hub.isSubClassHub(this);
     }
@@ -1552,8 +1573,7 @@ public abstract class ClassActor extends Actor {
         if (object == null) {
             return true;
         }
-        final Hub hub = ObjectAccess.readHub(object);
-        return hub.isSubClassHub(this);
+        return isInstance(object);
     }
 
     @INLINE
@@ -1588,5 +1608,94 @@ public abstract class ClassActor extends Actor {
 
     public int[] iToV() {
         return iToV;
+    }
+
+    public final int accessFlags() {
+        return flags() & JAVA_CLASS_FLAGS;
+    }
+
+    public final RiType arrayOf() {
+        return ArrayClassActor.forComponentClassActor(this);
+    }
+
+    public final RiType componentType() {
+        return componentClassActor;
+    }
+
+    public final RiType exactType() {
+        ClassActor elementClassActor = elementClassActor();
+        if (elementClassActor.isFinal() || elementClassActor.isPrimitiveClassActor()) {
+            return this;
+        }
+        return null;
+    }
+
+    public final CiConstant getEncoding(Representation r) {
+        switch (r) {
+            case StaticFields:
+                return CiConstant.forObject(staticTuple);
+            case JavaClass:
+                return CiConstant.forObject(javaClass());
+            case ObjectHub:
+                return CiConstant.forObject(dynamicHub());
+            case TypeInfo:
+                return CiConstant.forObject(this);
+            default:
+                throw ProgramError.unknownCase(r.toString());
+        }
+    }
+
+    public final CiKind getRepresentationKind(Representation r) {
+        return CiKind.Object;
+    }
+
+    public final boolean hasFinalizableSubclass() {
+        return hasFinalizer(flags()); // TODO: is this correct?
+    }
+
+    public final boolean hasSubclass() {
+        // TODO: leaf type assumptions
+        return !isFinal();
+    }
+
+    public final boolean isInstanceClass() {
+        return isTupleClass() || isHybridClass();
+    }
+
+    public final boolean isResolved() {
+        return true;
+    }
+
+    public final boolean isSubtypeOf(RiType other) {
+        if (other instanceof ClassActor) {
+            ClassActor otherClassActor = (ClassActor) other;
+            return otherClassActor.isAssignableFrom(this);
+        }
+        return false;
+    }
+
+    public final CiKind kind() {
+        return kind.ciKind;
+    }
+
+    public final String name() {
+        return typeDescriptor.string;
+    }
+
+    public RiMethod resolveMethodImpl(RiMethod method) {
+        final MethodActor methodActor = (MethodActor) method;
+        if (methodActor instanceof InterfaceMethodActor) {
+            InterfaceMethodActor interfaceActor = (InterfaceMethodActor) methodActor;
+            final int interfaceIIndex = dynamicHub().getITableIndex(interfaceActor.holder().id) - dynamicHub().iTableStartIndex;
+            final VirtualMethodActor implementation = getVirtualMethodActorByIIndex(interfaceIIndex + interfaceActor.iIndexInInterface());
+            return implementation;
+        } else if (methodActor instanceof VirtualMethodActor) {
+            final int index = ((VirtualMethodActor) methodActor).vTableIndex();
+            final VirtualMethodActor implementation = getVirtualMethodActorByVTableIndex(index);
+            return implementation;
+        } else {
+            assert methodActor.isFinal() || methodActor.isPrivate();
+            return method;
+        }
     }
 }

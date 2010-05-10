@@ -22,8 +22,7 @@ package com.sun.max.ins.method;
 
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -212,7 +211,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
                         final BytecodeLocation bytecodeLocation = teleTargetMethod.getBytecodeLocation(stopIndex);
                         rowToBytecodeLocation[row] = bytecodeLocation;
                         // TODO (mlvdv) only works for non-inlined calls
-                        if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor())) {
+                        if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor()) && bytecodeLocation.bytecodePosition >= 0) {
                             rowToCalleeIndex[row] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
                         }
                     }
@@ -295,14 +294,14 @@ public abstract class TargetCodeViewer extends CodeViewer {
         // For very deep stacks (e.g. when debugging a metacircular related infinite recursion issue),
         // it's faster to loop over the frames and then only loop over the instructions for each
         // frame related to the target code represented by this viewer.
-        final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
+        final MaxMemoryRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
         for (MaxStackFrame frame : frames) {
             final MaxCodeLocation frameCodeLocation = frame.codeLocation();
             if (frameCodeLocation != null) {
                 final boolean isFrameForThisCode =
                     frame instanceof MaxStackFrame.Compiled ?
-                                    targetCodeRegion.overlaps(frame.targetMethod()) :
-                                        targetCodeRegion.contains(frameCodeLocation);
+                                    targetCodeRegion.overlaps(frame.getTargetMethodMemoryRegion()) :
+                                        targetCodeRegion.contains(frameCodeLocation.address());
                 if (isFrameForThisCode) {
                     for (int row = 0; row < instructions.length(); row++) {
                         if (instructions.get(row).address.equals(frameCodeLocation.address())) {

@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
  * This the base class of all array operations.
@@ -34,12 +34,12 @@ public abstract class AccessArray extends StateSplit {
 
     /**
      * Creates a new AccessArray instruction.
-     * @param type the type of the result of this instruction
+     * @param kind the type of the result of this instruction
      * @param array the instruction that produces the array object value
      * @param stateBefore the lock stack
      */
-    public AccessArray(CiKind type, Value array, ValueStack stateBefore) {
-        super(type, stateBefore);
+    public AccessArray(CiKind kind, Value array, FrameState stateBefore) {
+        super(kind, stateBefore);
         this.array = array;
         if (array.isNonNull()) {
             redundantNullCheck();
@@ -76,7 +76,7 @@ public abstract class AccessArray extends StateSplit {
 
     /**
      * Checks whether this instruction can cause a trap.
-     * @return <code>true</code> if this instruction can cause a trap
+     * @return {@code true} if this instruction can cause a trap
      */
     @Override
     public boolean canTrap() {

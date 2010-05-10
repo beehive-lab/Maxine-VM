@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;

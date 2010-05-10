@@ -60,7 +60,9 @@ public class CallNative extends JavaOperator {
 
     @Override
     public Kind[] parameterKinds() {
-        return signatureDescriptor.copyParameterKinds(null, 0);
+        Kind[] kinds = new Kind[signatureDescriptor.numberOfParameters() + 1];
+        signatureDescriptor.copyParameterKinds(kinds, 0);
+        return kinds;
     }
 
     @Override

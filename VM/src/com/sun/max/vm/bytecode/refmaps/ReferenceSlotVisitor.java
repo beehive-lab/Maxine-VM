@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.bytecode.refmaps;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 
 /**
  * Implemented by clients interested in knowing which local variables and operand stack slots contain a reference at the

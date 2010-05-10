@@ -68,14 +68,14 @@ public class BlockMerger implements BlockClosure {
     }
 
     private void skipBlock(BlockBegin block, BlockBegin sux, BlockEnd oldEnd) {
-        final ValueStack oldState = oldEnd.stateAfter();
+        final FrameState oldState = oldEnd.stateAfter();
         assert sux.stateBefore().scope() == oldState.scope();
         if (block.stateBefore().hasPhisFor(block)) {
             // can't skip a block that has phis
             return;
         }
         for (BlockBegin pred : block.predecessors()) {
-            final ValueStack predState = pred.end().stateAfter();
+            final FrameState predState = pred.end().stateAfter();
             if (predState.scope() != oldState.scope() || predState.stackSize() != oldState.stackSize()) {
                 // scopes would not match after skipping this block
                 // XXX: if phi's were smarter about scopes, this would not be necessary

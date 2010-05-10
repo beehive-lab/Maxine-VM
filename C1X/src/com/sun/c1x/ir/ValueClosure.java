@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 /**
- * The <code>ValueClosure</code> interface represents a first-class
+ * The {@code ValueClosure} interface represents a first-class
  * function that can be applied to a value.
  *
  * @author Ben L. Titzer

@@ -28,7 +28,7 @@ import com.sun.max.ins.object.StringPane.*;
 import com.sun.max.tele.object.*;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level heap object in the VM that implements a {@link String}.
+ * An object inspector specialized for displaying a low-level heap object in the VM that implements a {@link String}.
  *
  * @author Michael Van De Vanter
  */

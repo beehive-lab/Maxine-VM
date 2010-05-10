@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>NewTypeArray</code> class definition.
+ * The {@code NewTypeArray} class definition.
  *
  * @author Ben L. Titzer
  */
@@ -32,7 +32,7 @@ public final class NewTypeArray extends NewArray {
 
     final CiKind elementType;
 
-    public NewTypeArray(Value length, CiKind elementType, ValueStack stateBefore) {
+    public NewTypeArray(Value length, CiKind elementType, FrameState stateBefore) {
         super(length, stateBefore);
         this.elementType = elementType;
     }

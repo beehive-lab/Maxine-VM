@@ -20,24 +20,100 @@
  */
 package com.sun.c1x.graph;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
+import com.sun.c1x.ir.BlockBegin.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>BlockMap</code> class builds a mapping between bytecodes and basic blocks
- * and builds a conservative control flow graph. Note that this class serves a similar role
- * to <code>BlockListBuilder</code>, but makes fewer assumptions about what the compiler
- * interface provides. It builds all basic blocks for the control flow graph without requiring
- * the compiler interface to provide a bitmap of the beginning of basic blocks. It makes
- * two linear passes; one over the bytecodes to build block starts and successor lists,
- * and one pass over the block map to build the CFG. Note that the CFG built by this class
- * is <i>not</i> connected to the actual <code>BlockBegin</code> instances; this class does,
- * however, compute and assign the reverse postorder number of the blocks.
+ * Builds a mapping between bytecodes and basic blocks and builds a conservative control flow
+ * graph. Note that this class serves a similar role to C1's {@code BlockListBuilder}, but makes fewer assumptions about
+ * what the compiler interface provides. It builds all basic blocks for the control flow graph without requiring the
+ * compiler interface to provide a bitmap of the beginning of basic blocks. It makes two linear passes; one over the
+ * bytecodes to build block starts and successor lists, and one pass over the block map to build the CFG.
+ *
+ * Note that the CFG built by this class is <i>not</i> connected to the actual {@code BlockBegin} instances; this class
+ * does, however, compute and assign the reverse postorder number of the blocks. This comment needs refinement. (MJJ)
+ *
+ * <H2>More Details on {@link BlockMap#build}</H2>
+ *
+ * If the method has any exception handlers the {@linkplain #exceptionMap exception map} will be created (TBD).
+ *
+ * A {@link BlockBegin} node with the {@link BlockFlag#StandardEntry} flag is created with bytecode index 0.
+ * Note this is distinct from the similar {@link BlockBegin} node assigned to {@link IR#startBlock} by
+ * {@link GraphBuilder}.
+ *
+ * The bytecodes are then scanned linearly looking for bytecodes that contain control transfers, e.g., {@code GOTO},
+ * {@code RETURN}, {@code IFGE}, and creating the corresponding entries in {@link #successorMap} and {@link #blockMap}.
+ * In addition, if {@link #exceptionMap} is not null, entries are made for any bytecode that can cause an exception.
+ * More TBD.
+ *
+ * Observe that this process finds bytecodes that terminate basic blocks, so the {@link #moveSuccessorLists} method is
+ * called to reassign the successors to the {@code BlockBegin} node that actually starts the block.
+ *
+ * <H3>Example</H3>
+ *
+ * Consider the following source code:
+ *
+ * <pre>
+ * <code>
+ *     public static int test(int arg1, int arg2) {
+ *         int x = 0;
+ *         while (arg2 > 0) {
+ *             if (arg1 > 0) {
+ *                 x += 1;
+ *             } else if (arg1 < 0) {
+ *                 x -= 1;
+ *             }
+ *         }
+ *         return x;
+ *     }
+ * </code>
+ * </pre>
+ *
+ * This is translated by javac to the following bytecode:
+ *
+ * <pre>
+ * <code>
+ *    0:   iconst_0
+ *    1:   istore_2
+ *    2:   goto    22
+ *    5:   iload_0
+ *    6:   ifle    15
+ *    9:   iinc    2, 1
+ *    12:  goto    22
+ *    15:  iload_0
+ *    16:  ifge    22
+ *    19:  iinc    2, -1
+ *    22:  iload_1
+ *    23:  ifgt    5
+ *    26:  iload_2
+ *    27:  ireturn
+ *    </code>
+ * </pre>
+ *
+ * There are seven basic blocks in this method, 0..2, 5..6, 9..12, 15..16, 19..19, 22..23 and 26..27. Therefore, before
+ * the call to {@code moveSuccessorLists}, the {@code blockMap} array has {@code BlockBegin} nodes at indices 0, 5, 9,
+ * 15, 19, 22 and 26. The {@code successorMap} array has entries at 2, 6, 12, 16, 23, 27 corresponding to the control
+ * transfer bytecodes. The entry at index 6, for example, is a length two array of {@code BlockBegin} nodes for indices
+ * 9 and 15, which are the successors for the basic block 5..6. After the call to {@code moveSuccessors}, {@code
+ * successorMap} has entries at 0, 5, 9, 15, 19, 22 and 26, i.e, matching {@code blockMap}.
+ * <p>
+ * Next the blocks are numbered using <a href="http://en.wikipedia.org/wiki/Depth-first_search#Vertex_orderings">reverse
+ * post-order</a>. For the above example this results in the numbering 2, 4, 7, 5, 6, 3, 8. Also loop header blocks are
+ * detected during the traversal by detecting a repeat visit to a block that is still being processed. This causes the
+ * block to be flagged as a loop header and also added to the {@link #loopBlocks} list. The {@code loopBlocks} list
+ * contains the blocks at 0, 5, 9, 15, 19, 22, with 22 as the loop header. (N.B. the loop header block is added multiple
+ * (4) times to this list). (Should 0 be in? It's not inside the loop).
+ *
+ * If the {@code computeStoresInLoops} argument to {@code build} is true, the {@code loopBlocks} list is processed to
+ * mark all local variables that are stored in the blocks in the list.
  *
  * @author Ben L. Titzer
  */
@@ -47,7 +123,7 @@ public class BlockMap {
     private static final List<BlockBegin> NONE_LIST = Util.uncheckedCast(Collections.EMPTY_LIST);
 
     /**
-     * The <code>ExceptionMap</code> class is used internally to track exception handlers
+     * The {@code ExceptionMap} class is used internally to track exception handlers
      * while iterating over the bytecode and the control flow graph. Since methods with
      * exception handlers are much less frequent than those without, the common case
      * does not need to construct an exception map.
@@ -55,7 +131,7 @@ public class BlockMap {
     private class ExceptionMap {
         private final BitMap canTrap;
         private final boolean isObjectInit;
-        private final List<RiExceptionHandler> allHandlers;
+        private final RiExceptionHandler[] allHandlers;
         private final ArrayMap<HashSet<BlockBegin>> handlerMap;
 
         ExceptionMap(RiMethod method, byte[] code) {
@@ -107,19 +183,35 @@ public class BlockMap {
         }
     }
 
+    /** The bytecodes for the associated method. */
     private final byte[] code;
+    /**
+     * Every {@link BlockBegin} node created by {@link BlockMap#build} has an entry in this
+     * array at the corresponding bytecode index. Length is same as {@link BlockMap#code}.
+     */
     private final BlockBegin[] blockMap;
+    /**
+     * TBD.
+     */
     private final BitMap storesInLoops;
+    /**
+     * Every bytecode instruction that has zero, one or more successor nodes (e.g. {@link Bytecodes#GOTO} has one) has
+     * an entry in this array at the corresponding bytecode index. The value is another array of {@code BlockBegin} nodes,
+     * with length equal to the number of successors, whose entries are the {@code BlockBegin} nodes for the successor
+     * blocks. Length is same as {@link BlockMap#code}.
+     */
     private BlockBegin[][] successorMap;
+    /** List of {@code BlockBegin} nodes that are inside loops. */
     private ArrayList<BlockBegin> loopBlocks;
     private ExceptionMap exceptionMap;
     private final int firstBlock;
-    private int blockNum; // used for initial block ID (count up) and post-order number (count down)
+    /** Used for initial block ID (count up) and post-order number (count down). */
+    private int blockNum; //
 
     /**
-     * Creates a new BlockMap instance from the specified bytecode.
+     * Creates a new BlockMap instance from bytecode of the given method .
      * @param method the compiler interface method containing the code
-     * @param firstBlockNum the first block number to use
+     * @param firstBlockNum the first block number to use when creating {@link BlockBegin} nodes
      */
     public BlockMap(RiMethod method, int firstBlockNum) {
         byte[] code = method.code();
@@ -129,7 +221,7 @@ public class BlockMap {
         blockMap = new BlockBegin[code.length];
         successorMap = new BlockBegin[code.length][];
         storesInLoops = new BitMap(method.maxLocals());
-        if (method.hasExceptionHandlers()) {
+        if (method.exceptionHandlers().length != 0) {
             exceptionMap = new ExceptionMap(method, code);
         }
     }
@@ -147,7 +239,7 @@ public class BlockMap {
     /**
      * Gets the block that begins at the specified bytecode index.
      * @param bci the bytecode index of the start of the block
-     * @return the block starting at the specified index, if it exists; <code>null</code> otherwise
+     * @return the block starting at the specified index, if it exists; {@code null} otherwise
      */
     public BlockBegin get(int bci) {
         if (bci < blockMap.length) {
@@ -192,9 +284,9 @@ public class BlockMap {
 
     /**
      * Builds the block map and conservative CFG and numbers blocks.
-     * @param computeStoresInLoops <code>true</code> if the block map builder should
+     * @param computeStoresInLoops {@code true} if the block map builder should
      * make a second pass over the bytecodes for blocks in loops
-     * @return <code>true</code> if the block map was built successfully; <code>false</code> otherwise
+     * @return {@code true} if the block map was built successfully; {@code false} otherwise
      */
     public boolean build(boolean computeStoresInLoops) {
         if (exceptionMap != null) {
@@ -258,17 +350,18 @@ public class BlockMap {
         while (bci < code.length) {
             int opcode = Bytes.beU1(code, bci);
             switch (opcode) {
-                case Bytecodes.ATHROW:
+                case ATHROW:
                     if (exceptionMap != null) {
                         exceptionMap.setCanTrap(bci);
                     }
                     // fall through
-                case Bytecodes.IRETURN: // fall through
-                case Bytecodes.LRETURN: // fall through
-                case Bytecodes.FRETURN: // fall through
-                case Bytecodes.DRETURN: // fall through
-                case Bytecodes.ARETURN: // fall through
-                case Bytecodes.RETURN:
+                case IRETURN: // fall through
+                case LRETURN: // fall through
+                case FRETURN: // fall through
+                case DRETURN: // fall through
+                case ARETURN: // fall through
+                case WRETURN: // fall through
+                case RETURN:
                     if (exceptionMap != null && exceptionMap.isObjectInit) {
                         exceptionMap.setCanTrap(bci);
                     }
@@ -276,45 +369,45 @@ public class BlockMap {
                     bci += 1; // these are all 1 byte opcodes
                     break;
 
-                case Bytecodes.RET:
+                case RET:
                     successorMap[bci] = NONE; // end of control flow
                     bci += 2; // ret is 2 bytes
                     break;
 
-                case Bytecodes.IFEQ:      // fall through
-                case Bytecodes.IFNE:      // fall through
-                case Bytecodes.IFLT:      // fall through
-                case Bytecodes.IFGE:      // fall through
-                case Bytecodes.IFGT:      // fall through
-                case Bytecodes.IFLE:      // fall through
-                case Bytecodes.IF_ICMPEQ: // fall through
-                case Bytecodes.IF_ICMPNE: // fall through
-                case Bytecodes.IF_ICMPLT: // fall through
-                case Bytecodes.IF_ICMPGE: // fall through
-                case Bytecodes.IF_ICMPGT: // fall through
-                case Bytecodes.IF_ICMPLE: // fall through
-                case Bytecodes.IF_ACMPEQ: // fall through
-                case Bytecodes.IF_ACMPNE: // fall through
-                case Bytecodes.IFNULL:    // fall through
-                case Bytecodes.IFNONNULL: {
+                case IFEQ:      // fall through
+                case IFNE:      // fall through
+                case IFLT:      // fall through
+                case IFGE:      // fall through
+                case IFGT:      // fall through
+                case IFLE:      // fall through
+                case IF_ICMPEQ: // fall through
+                case IF_ICMPNE: // fall through
+                case IF_ICMPLT: // fall through
+                case IF_ICMPGE: // fall through
+                case IF_ICMPGT: // fall through
+                case IF_ICMPLE: // fall through
+                case IF_ACMPEQ: // fall through
+                case IF_ACMPNE: // fall through
+                case IFNULL:    // fall through
+                case IFNONNULL: {
                     succ2(bci, bci + 3, bci + Bytes.beS2(code, bci + 1));
                     bci += 3; // these are all 3 byte opcodes
                     break;
                 }
 
-                case Bytecodes.GOTO: {
+                case GOTO: {
                     succ1(bci, bci + Bytes.beS2(code, bci + 1));
                     bci += 3; // goto is 3 bytes
                     break;
                 }
 
-                case Bytecodes.GOTO_W: {
+                case GOTO_W: {
                     succ1(bci, bci + Bytes.beS4(code, bci + 1));
                     bci += 5; // goto_w is 5 bytes
                     break;
                 }
 
-                case Bytecodes.JSR: {
+                case JSR: {
                     int target = bci + Bytes.beS2(code, bci + 1);
                     succ2(bci, bci + 3, target); // make JSR's a successor or not?
                     addEntrypoint(target, BlockBegin.BlockFlag.SubroutineEntry);
@@ -322,7 +415,7 @@ public class BlockMap {
                     break;
                 }
 
-                case Bytecodes.JSR_W: {
+                case JSR_W: {
                     int target = bci + Bytes.beS4(code, bci + 1);
                     succ2(bci, bci + 5, target);
                     addEntrypoint(target, BlockBegin.BlockFlag.SubroutineEntry);
@@ -330,29 +423,29 @@ public class BlockMap {
                     break;
                 }
 
-                case Bytecodes.TABLESWITCH: {
+                case TABLESWITCH: {
                     BytecodeSwitch sw = new BytecodeTableSwitch(code, bci);
                     makeSwitchSuccessors(bci, sw);
                     bci += sw.size();
                     break;
                 }
 
-                case Bytecodes.LOOKUPSWITCH: {
+                case LOOKUPSWITCH: {
                     BytecodeSwitch sw = new BytecodeLookupSwitch(code, bci);
                     makeSwitchSuccessors(bci, sw);
                     bci += sw.size();
                     break;
                 }
-                case Bytecodes.WIDE: {
-                    bci += Bytecodes.lengthOf(code, bci);
+                case WIDE: {
+                    bci += lengthOf(code, bci);
                     break;
                 }
 
                 default: {
-                    if (exceptionMap != null && Bytecodes.canTrap(opcode)) {
+                    if (exceptionMap != null && canTrap(opcode)) {
                         exceptionMap.setCanTrap(bci);
                     }
-                    bci += Bytecodes.lengthOf(opcode); // all variable length instructions are handled above
+                    bci += lengthOf(opcode); // all variable length instructions are handled above
                 }
             }
         }
@@ -464,12 +557,12 @@ public class BlockMap {
             while (true) {
                 // iterate over the bytecodes in this block
                 int opcode = code[bci] & 0xff;
-                if (opcode == Bytecodes.WIDE) {
+                if (opcode == WIDE) {
                     bci += processWideStore(code[bci + 1] & 0xff, code, bci);
-                } else if (Bytecodes.isStore(opcode)) {
+                } else if (isStore(opcode)) {
                     bci += processStore(opcode, code, bci);
                 } else {
-                    bci += Bytecodes.lengthOf(code, bci);
+                    bci += lengthOf(code, bci);
                 }
                 if (bci >= code.length || blockMap[bci] != null) {
                     // stop when we reach the next block
@@ -481,44 +574,44 @@ public class BlockMap {
 
     int processWideStore(int opcode, byte[] code, int bci) {
         switch (opcode) {
-            case Bytecodes.IINC:     storeOne(Bytes.beU2(code, bci + 2)); return 6;
-            case Bytecodes.ISTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
-            case Bytecodes.LSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
-            case Bytecodes.FSTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
-            case Bytecodes.DSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
-            case Bytecodes.ASTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
+            case IINC:     storeOne(Bytes.beU2(code, bci + 2)); return 6;
+            case ISTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
+            case LSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
+            case FSTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
+            case DSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
+            case ASTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
         }
-        return Bytecodes.lengthOf(code, bci);
+        return lengthOf(code, bci);
     }
 
     int processStore(int opcode, byte[] code, int bci) {
         switch (opcode) {
-            case Bytecodes.IINC:     storeOne(code[bci + 1] & 0xff); return 3;
-            case Bytecodes.ISTORE:   storeOne(code[bci + 1] & 0xff); return 2;
-            case Bytecodes.LSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
-            case Bytecodes.FSTORE:   storeOne(code[bci + 1] & 0xff); return 2;
-            case Bytecodes.DSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
-            case Bytecodes.ASTORE:   storeOne(code[bci + 1] & 0xff); return 2;
-            case Bytecodes.ISTORE_0: storeOne(0); return 1;
-            case Bytecodes.ISTORE_1: storeOne(1); return 1;
-            case Bytecodes.ISTORE_2: storeOne(2); return 1;
-            case Bytecodes.ISTORE_3: storeOne(3); return 1;
-            case Bytecodes.LSTORE_0: storeTwo(0); return 1;
-            case Bytecodes.LSTORE_1: storeTwo(1); return 1;
-            case Bytecodes.LSTORE_2: storeTwo(2); return 1;
-            case Bytecodes.LSTORE_3: storeTwo(3); return 1;
-            case Bytecodes.FSTORE_0: storeOne(0); return 1;
-            case Bytecodes.FSTORE_1: storeOne(1); return 1;
-            case Bytecodes.FSTORE_2: storeOne(2); return 1;
-            case Bytecodes.FSTORE_3: storeOne(3); return 1;
-            case Bytecodes.DSTORE_0: storeTwo(0); return 1;
-            case Bytecodes.DSTORE_1: storeTwo(1); return 1;
-            case Bytecodes.DSTORE_2: storeTwo(2); return 1;
-            case Bytecodes.DSTORE_3: storeTwo(3); return 1;
-            case Bytecodes.ASTORE_0: storeOne(0); return 1;
-            case Bytecodes.ASTORE_1: storeOne(1); return 1;
-            case Bytecodes.ASTORE_2: storeOne(2); return 1;
-            case Bytecodes.ASTORE_3: storeOne(3); return 1;
+            case IINC:     storeOne(code[bci + 1] & 0xff); return 3;
+            case ISTORE:   storeOne(code[bci + 1] & 0xff); return 2;
+            case LSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
+            case FSTORE:   storeOne(code[bci + 1] & 0xff); return 2;
+            case DSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
+            case ASTORE:   storeOne(code[bci + 1] & 0xff); return 2;
+            case ISTORE_0: storeOne(0); return 1;
+            case ISTORE_1: storeOne(1); return 1;
+            case ISTORE_2: storeOne(2); return 1;
+            case ISTORE_3: storeOne(3); return 1;
+            case LSTORE_0: storeTwo(0); return 1;
+            case LSTORE_1: storeTwo(1); return 1;
+            case LSTORE_2: storeTwo(2); return 1;
+            case LSTORE_3: storeTwo(3); return 1;
+            case FSTORE_0: storeOne(0); return 1;
+            case FSTORE_1: storeOne(1); return 1;
+            case FSTORE_2: storeOne(2); return 1;
+            case FSTORE_3: storeOne(3); return 1;
+            case DSTORE_0: storeTwo(0); return 1;
+            case DSTORE_1: storeTwo(1); return 1;
+            case DSTORE_2: storeTwo(2); return 1;
+            case DSTORE_3: storeTwo(3); return 1;
+            case ASTORE_0: storeOne(0); return 1;
+            case ASTORE_1: storeOne(1); return 1;
+            case ASTORE_2: storeOne(2); return 1;
+            case ASTORE_3: storeOne(3); return 1;
         }
         throw Util.shouldNotReachHere();
     }

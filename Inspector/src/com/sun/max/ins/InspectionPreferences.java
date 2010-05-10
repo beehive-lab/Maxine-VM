@@ -131,7 +131,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     private KeyBindingMap keyBindingMap = InspectorKeyBindings.DEFAULT_KEY_BINDINGS;
 
     /**
-     * Creates a new, global instance for managing Maxine VM inspection preferences.
+     * Creates a new, global instance for managing VM inspection preferences.
      *
      * @param inspection the inspection session state
      * @param settings the manager for settings, already initialized.

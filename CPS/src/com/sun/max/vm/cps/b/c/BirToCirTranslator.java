@@ -22,9 +22,10 @@ package com.sun.max.vm.cps.b.c;
 
 import static com.sun.max.vm.cps.cir.CirTraceObserver.TransformationType.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.b.c.HCirToLCirTranslation.*;
@@ -139,11 +140,10 @@ public class BirToCirTranslator extends CirGenerator {
 
         if (compilerScheme().optimizing()) {
             CirInliningPolicy cirInliningPolicy = CirInliningPolicy.DYNAMIC;
-            if (MaxineVM.isHosted() && !cirMethod.classMethodActor().isHiddenToReflection()) {
-                final ACCESSOR accessorAnnotation = cirMethod.classMethodActor().getAnnotation(ACCESSOR.class);
-                if (accessorAnnotation != null) {
-                    cirInliningPolicy = new CirInliningPolicy(accessorAnnotation.value());
-                }
+            Class<Class<? extends Accessor>> type = null;
+            Class<? extends Accessor> accessor = StaticLoophole.cast(type, cirMethod.classMethodActor().accessor());
+            if (accessor != null) {
+                cirInliningPolicy = new CirInliningPolicy(accessor);
             }
             notifyBeforeTransformation(cirMethod, cirClosure, OPTIMIZATION);
             CirOptimizer.apply(this, cirMethod, cirClosure, cirInliningPolicy);

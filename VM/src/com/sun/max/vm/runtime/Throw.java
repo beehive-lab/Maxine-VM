@@ -44,12 +44,12 @@ public final class Throw {
     private Throw() {
     }
 
-    public static VMStringOption dumpStackOnThrowOfOption = register(new VMStringOption("-XX:DumpStackOnThrowOf=", false, null,
-        "Report a stack trace for every throw of an exception whose class name contains <value> " +
+    public static VMStringOption traceTheseExceptionsOption = register(new VMStringOption("-XX:TraceTheseExceptions=", false, null,
+        "Report a stack trace for every exception thrown whose class name contains <value> " +
         "(or does not contain <value> if <value> starts with '!'), " +
         "regardless of whether the exception is caught or uncaught."), MaxineVM.Phase.PRISTINE);
-    public static VMBooleanXXOption dumpStackOnThrowOption = register(new VMBooleanXXOption("-XX:-DumpStackOnThrow",
-        "Report a stack trace for every throw operation, regardless of whether the exception is " +
+    public static VMBooleanXXOption traceExceptionsOption = register(new VMBooleanXXOption("-XX:-TraceExceptions",
+        "Report a stack trace for every exception thrown, regardless of whether the exception is " +
         "caught or uncaught."), MaxineVM.Phase.PRISTINE);
     public static VMBooleanXXOption scanStackOnFatalError = register(new VMBooleanXXOption("-XX:-ScanStackOnFatalError",
         "Report a stack trace scan when a fatal VM occurs."), MaxineVM.Phase.PRISTINE);
@@ -69,7 +69,7 @@ public final class Throw {
                 final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
                 if (classMethodActor == null) {
-                    Log.print(targetMethod.description());
+                    Log.print(targetMethod.regionName());
                 } else {
                     Log.print(classMethodActor.holder().name);
                     Log.print(".");
@@ -153,10 +153,10 @@ public final class Throw {
             FatalError.unexpected("exception thrown while raising another exception");
         }
 
-        if (dumpStackOnThrowOption.getValue()) {
+        if (traceExceptionsOption.getValue()) {
             throwable.printStackTrace(Log.out);
         } else {
-            String filter = dumpStackOnThrowOfOption.getValue();
+            String filter = traceTheseExceptionsOption.getValue();
             if (filter != null) {
                 boolean match = false;
                 if (filter.startsWith("!")) {

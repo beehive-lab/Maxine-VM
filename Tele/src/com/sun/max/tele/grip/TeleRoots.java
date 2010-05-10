@@ -42,7 +42,7 @@ import com.sun.max.vm.tele.*;
  * @author Hannes Payer
  *
  * @see InspectableHeapInfo
- * @see TeleHeapManager
+ * @see TeleHeap
  */
 public final class TeleRoots extends AbstractTeleVMHolder{
 
@@ -55,7 +55,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         this.wordArrayLayout = teleGripScheme.teleVM().layoutScheme().wordArrayLayout;
     }
 
-    // Points to the static field {@link TeleHeap#_roots TeleHeap._roots} in the {@link TeleVM}, assuming that the
+    // Points to the static field {@link TeleHeap#_roots TeleHeap._roots} in the VM, assuming that the
     // static tuple of the class will not be relocated because it is in the boot image.
     private Pointer teleRootsPointer = Pointer.zero();
 
@@ -63,7 +63,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
     private final BitSet usedIndices = new BitSet();
 
     private RemoteTeleGrip teleRootsGrip() {
-        return teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(teleVM().teleRootsPointer()).asAddress());
+        return teleGripScheme.createTemporaryRemoteTeleGrip(vm().dataAccess().readWord(vm().heap().teleRootsPointer()).asAddress());
     }
 
     /**
@@ -98,7 +98,7 @@ public final class TeleRoots extends AbstractTeleVMHolder{
         if (WordArray.get(cachedRoots, index).equals(Word.zero())) {
             System.out.println("Word at " + index + " is zero");
         }*/
-        return WordArray.get(cachedRoots, index);
+        return WordArray.get(cachedRoots, index).asAddress();
     }
 
     /**

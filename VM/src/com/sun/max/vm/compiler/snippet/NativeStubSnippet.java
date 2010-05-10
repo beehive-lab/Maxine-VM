@@ -25,8 +25,8 @@ import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.stack.JavaFrameAnchor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -58,7 +58,7 @@ public abstract class NativeStubSnippet extends Snippet {
         public static final LinkNativeMethod SNIPPET = new LinkNativeMethod();
     }
 
-    private static final VmThreadLocal NATIVE_CALLS_DISABLED = new VmThreadLocal("NATIVE_CALLS_DISABLED", false, "");
+    static final VmThreadLocal NATIVE_CALLS_DISABLED = new VmThreadLocal("NATIVE_CALLS_DISABLED", false, "");
 
     /**
      * Disables calling native methods on the current thread. This state is recursive. That is,
@@ -125,7 +125,7 @@ public abstract class NativeStubSnippet extends Snippet {
             if (Safepoint.UseCASBasedGCMutatorSynchronization) {
                 enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
             } else {
-                MemoryBarrier.memopStore();
+                MemoryBarriers.memopStore();
                 // The following store must be last:
                 enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
             }
@@ -181,7 +181,7 @@ public abstract class NativeStubSnippet extends Snippet {
                     enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_JAVA);
 
                     // Ensure that the GC sees the above state transition:
-                    MemoryBarrier.storeLoad();
+                    MemoryBarriers.storeLoad();
 
                     // Ask if GC is in progress:
                     if (enabledVmThreadLocals.getWord(GC_STATE.index).isZero()) {

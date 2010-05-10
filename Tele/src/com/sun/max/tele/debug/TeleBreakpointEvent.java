@@ -37,7 +37,7 @@ public class TeleBreakpointEvent implements MaxBreakpointEvent {
     public TeleBreakpointEvent(TeleBreakpoint teleBreakpoint, TeleNativeThread teleNativeThread) {
         this.teleBreakpoint = teleBreakpoint;
         this.teleNativeThread = teleNativeThread;
-        this.address = teleNativeThread.instructionPointer();
+        this.address = teleNativeThread.registers().instructionPointer();
     }
 
     public MaxThread thread() {

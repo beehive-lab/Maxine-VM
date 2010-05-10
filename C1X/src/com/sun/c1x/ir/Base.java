@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>Base</code> instruction represents the end of the entry block of the procedure that has
+ * The {@code Base} instruction represents the end of the entry block of the procedure that has
  * both the standard entry and the OSR entry as successors.
  *
  * @author Ben L. Titzer
@@ -55,7 +55,7 @@ public final class Base extends BlockEnd {
 
     /**
      * Gets the OSR entrypoint block, if it exists.
-     * @return the OSR entrypoint bock, if it exists; <code>null</code> otherwise
+     * @return the OSR entrypoint bock, if it exists; {@code null} otherwise
      */
     public BlockBegin osrEntry() {
         return successors.size() < 2 ? null : successors.get(0);

@@ -22,10 +22,12 @@ package com.sun.max.vm.runtime;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.type.*;
 
 /**
- * A token that "guards" the resolution of a constant pool entry to an {@link Actor}.
+ * A token that "guards" the resolution of a symbol to an {@link Actor}.
  *
  * This pattern of use is intended:
  *
@@ -34,40 +36,64 @@ import com.sun.max.vm.classfile.constant.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public final class ResolutionGuard {
+public class ResolutionGuard {
 
-    public final ConstantPool constantPool;
+    /**
+     * A resolution guard for a symbol read from a constant pool. The constant pool is
+     * used to provide the correct class loader and protection domain for resolving
+     * the symbol.
+     */
+    public static class InPool extends ResolutionGuard {
+        public final ConstantPool pool;
+        public final int cpi;
 
-    public final int constantPoolIndex;
+        public InPool(ConstantPool constantPool, int cpi) {
+            this.pool = constantPool;
+            this.cpi = cpi;
+            assert cpi >= 0 : "must be a valid constant pool index!";
+        }
+        @Override
+        public String toString() {
+            if (value != null) {
+                return getClass().getSimpleName() + "[" + value + "]";
+            }
 
-    @CONSTANT_WHEN_NOT_ZERO
-    public Actor value;
-
-    public ResolutionGuard(ConstantPool constantPool, int constantPoolIndex) {
-        this.constantPool = constantPool;
-        this.constantPoolIndex = constantPoolIndex;
-        assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
-    }
-
-    public ResolutionGuard(Actor value) {
-        this.value = value;
-        this.constantPool = null;
-        this.constantPoolIndex = -1;
+            return getClass().getSimpleName() + "[" + pool.at(cpi).valueString(pool) + "]";
+        }
     }
 
     /**
-     * @return the pool constant whose resolution is guarded by this object.
+     * A class symbol resolution guard. The symbol is resolved using the loader and
+     * protection domain of in the context of an accessing class.
      */
-    public PoolConstant poolConstant() {
-        return constantPool.at(constantPoolIndex);
-    }
+    public static class InAccessingClass extends ResolutionGuard {
+        public final TypeDescriptor type;
+        public final ClassActor accessingClass;
 
-    @Override
-    public String toString() {
-        if (value != null) {
-            return getClass().getSimpleName() + "[" + value + "]";
+        public InAccessingClass(TypeDescriptor type, ClassActor accessingClass) {
+            this.type = type;
+            this.accessingClass = accessingClass;
         }
 
-        return getClass().getSimpleName() + "[" + poolConstant().valueString(constantPool) + "]";
+        public InAccessingClass(UnresolvedType.ByAccessingClass unresolvedType) {
+            this.type = unresolvedType.typeDescriptor;
+            this.accessingClass = unresolvedType.accessingClass;
+        }
+
+        public ClassActor resolve() {
+            return type.resolve(accessingClass.classLoader);
+        }
+
+        @Override
+        public String toString() {
+            if (value != null) {
+                return getClass().getSimpleName() + "[" + value + "]";
+            }
+
+            return getClass().getSimpleName() + "[" + type + "]";
+        }
     }
+
+    @CONSTANT_WHEN_NOT_ZERO
+    public Actor value;
 }

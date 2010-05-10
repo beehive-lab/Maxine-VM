@@ -51,7 +51,7 @@ final class JDK_java_lang_Object {
     @SUBSTITUTE("getClass")
     @INLINE
     public Class getClass_SUBSTITUTE() {
-        return ObjectAccess.readClassActor(this).mirror();
+        return ObjectAccess.readClassActor(this).javaClass();
     }
 
     /**

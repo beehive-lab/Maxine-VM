@@ -27,6 +27,7 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class performs basic optimizations on the control flow graph after LIR generation.
@@ -107,7 +108,11 @@ final class ControlFlowOptimizer {
     // only blocks with exactly one successor can be deleted. Such blocks
     // must always end with an unconditional branch to this successor
     private boolean canDeleteBlock(BlockBegin block) {
-        if (block.numberOfSux() != 1 || block.numberOfExceptionHandlers() != 0 || block == ir.startBlock || block.isExceptionEntry()) {
+        if (block.numberOfSux() != 1 ||
+            block.numberOfExceptionHandlers() != 0 ||
+            block == ir.startBlock ||
+            block.isExceptionEntry() ||
+            block.suxAt(0) == block) {
             return false;
         }
 
@@ -116,7 +121,7 @@ final class ControlFlowOptimizer {
         assert instructions.size() >= 2 : "block must have label and branch";
         assert instructions.get(0).code == LIROpcode.Label : "first instruction must always be a label";
         assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "last instruction must always be a branch";
-        assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == LIRCondition.Always : "branch must be unconditional";
+        assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == Condition.TRUE : "branch must be unconditional";
         assert ((LIRBranch) instructions.get(instructions.size() - 1)).block() == block.suxAt(0) : "branch target must be the successor";
 
         // block must have exactly one successor
@@ -226,7 +231,7 @@ final class ControlFlowOptimizer {
                 assert curLastOp.info == null : "return instructions do not have debug information";
 
                 assert curLastOp instanceof LIROp1 : "return must be LIROp1";
-                LIROperand returnOpr = ((LIROp1) curLastOp).operand();
+                CiValue returnOpr = ((LIROp1) curLastOp).operand();
 
                 for (int j = block.numberOfPreds() - 1; j >= 0; j--) {
                     BlockBegin pred = block.predAt(j);
@@ -237,7 +242,7 @@ final class ControlFlowOptimizer {
                         assert predLastOp instanceof LIRBranch : "branch must be LIRBranch";
                         LIRBranch predLastBranch = (LIRBranch) predLastOp;
 
-                        if (predLastBranch.block() == block && predLastBranch.cond() == LIRCondition.Always && predLastBranch.info == null) {
+                        if (predLastBranch.block() == block && predLastBranch.cond() == Condition.TRUE && predLastBranch.info == null) {
                             // replace the jump to a return with a direct return
                             // Note: currently the edge between the blocks is not deleted
                             predInstructions.set(predInstructions.size() - 1, new LIROp1(LIROpcode.Return, returnOpr));
@@ -256,7 +261,7 @@ final class ControlFlowOptimizer {
                 if (instr instanceof LIRBranch) {
                     LIRBranch opBranch = (LIRBranch) instr;
                     assert opBranch.block() == null || code.contains(opBranch.block()) : "missing successor branch from: " + block + " to: " + opBranch.block();
-                    assert opBranch.ublock() == null || code.contains(opBranch.ublock()) : "missing successor branch from: " + block + " to: " + opBranch.ublock();
+                    assert opBranch.unorderedBlock() == null || code.contains(opBranch.unorderedBlock()) : "missing successor branch from: " + block + " to: " + opBranch.unorderedBlock();
                 }
             }
 

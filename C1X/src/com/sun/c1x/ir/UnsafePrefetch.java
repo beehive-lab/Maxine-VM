@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>UnsafePrefetch</code> class is the base of prefetch reads and prefetch writes.
+ * The {@code UnsafePrefetch} class is the base of prefetch reads and prefetch writes.
  *
  * @author Ben L. Titzer
  */

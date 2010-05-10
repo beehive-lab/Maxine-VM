@@ -25,7 +25,6 @@ import java.nio.*;
 import javax.swing.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -75,7 +74,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
         final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize;
         final long stackBottom = pageAlign(params.stackRegion.start().toLong(), pageSize) + pageSize;
         final long adjStackSize = params.stackRegion.size().toLong() - (stackBottom - params.stackRegion.start().toLong());
-        final MemoryRegion adjStack = new TeleMemoryRegion(Address.fromLong(stackBottom), Size.fromLong(adjStackSize), params.stackRegion.description());
+        final TeleFixedMemoryRegion adjStack = new TeleFixedMemoryRegion(vm(), params.stackRegion.regionName(), Address.fromLong(stackBottom), Size.fromLong(adjStackSize));
         params.stackRegion = adjStack;
         return new GuestVMXenNativeThread(this, params);
     }
@@ -130,8 +129,8 @@ public class GuestVMXenTeleDomain extends TeleProcess {
 
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        final Word primordialThreadLocals = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header.primordialThreadLocalsOffset));
-        final Word threadLocalsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header.threadLocalsListHeadOffset));
+        final Word primordialThreadLocals = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.primordialThreadLocalsOffset));
+        final Word threadLocalsList = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.threadLocalsListHeadOffset));
         GuestVMXenDBChannel.gatherThreads(threads, threadLocalsList.asAddress().toLong(), primordialThreadLocals.asAddress().toLong());
     }
 
@@ -148,7 +147,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
 
     @Override
     protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
-        return GuestVMXenDBChannel.deactivateWatchpoint(domainId, teleWatchpoint);
+        return GuestVMXenDBChannel.deactivateWatchpoint(domainId, teleWatchpoint.memoryRegion());
     }
 
     @Override

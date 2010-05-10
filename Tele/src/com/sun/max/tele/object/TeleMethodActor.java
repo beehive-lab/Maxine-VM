@@ -108,7 +108,7 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
 
     public VMValue invoke(ObjectProvider object, VMValue[] args, ThreadProvider threadProvider, boolean singleThreaded, boolean nonVirtual) {
         final VMValue[] newArgs = new VMValue[args.length + 1];
-        newArgs[0] = teleVM().vmAccess().createObjectProviderValue(object);
+        newArgs[0] = vm().vmAccess().createObjectProviderValue(object);
         System.arraycopy(args, 0, newArgs, 1, args.length);
 
         // TODO: Currently the nonVirtual parameter is ignored.
@@ -119,11 +119,11 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
         // TODO: Check ClassMethodActor / MethodActor relationship
         final com.sun.max.vm.value.Value[] realArgs = new com.sun.max.vm.value.Value[args.length];
         for (int i = 0; i < args.length; i++) {
-            realArgs[i] = teleVM().jdwpValueToMaxineValue(args[i]);
+            realArgs[i] = vm().jdwpValueToMaxineValue(args[i]);
         }
         try {
-            final com.sun.max.vm.value.Value result = TeleInterpreter.execute(teleVM(), (ClassMethodActor) methodActor(), realArgs);
-            return teleVM().maxineValueToJDWPValue(result);
+            final com.sun.max.vm.value.Value result = TeleInterpreter.execute(vm(), (ClassMethodActor) methodActor(), realArgs);
+            return vm().maxineValueToJDWPValue(result);
         } catch (TeleInterpreterException teleInterpreterException) {
             ProgramError.unexpected("method interpretation failed", teleInterpreterException);
             return null;

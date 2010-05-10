@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>MonitorEnter</code> instruction represents the acquisition of a monitor.
+ * The {@code MonitorEnter} instruction represents the acquisition of a monitor.
  *
  * @author Ben L. Titzer
  */
@@ -35,7 +35,7 @@ public final class MonitorEnter extends AccessMonitor {
      * @param lockNumber the number of the lock
      * @param stateBefore the state before
      */
-    public MonitorEnter(Value object, int lockNumber, ValueStack stateBefore) {
+    public MonitorEnter(Value object, int lockNumber, FrameState stateBefore) {
         super(object, stateBefore, lockNumber);
         if (object.isNonNull()) {
             redundantNullCheck();
@@ -44,7 +44,7 @@ public final class MonitorEnter extends AccessMonitor {
 
     /**
      * Checks whether this instruction can trap.
-     * @return <code>true</code>, conservatively assuming the instruction may cause an exception
+     * @return {@code true}, conservatively assuming the instruction may cause an exception
      */
     @Override
     public boolean canTrap() {

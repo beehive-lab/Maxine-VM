@@ -20,14 +20,14 @@
  */
 package com.sun.max.vm.cps.b.c;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.JniOp.*;
+import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.max.collect.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -1417,13 +1417,16 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         final CallNative op = new CallNative(constantPool, nativeFunctionDescriptorIndex, methodTranslation.classMethodActor());
         final SignatureDescriptor signatureDescriptor = op.signatureDescriptor();
         final int numberOfParameters = signatureDescriptor.numberOfParameters();
-        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 2);
+        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 3);
+        CirVariable callEntryPoint = pop(Kind.WORD);
+        arguments[numberOfParameters] = callEntryPoint;
         for (int i = numberOfParameters - 1; i >= 0; i--) {
             arguments[i] = stack.pop();
         }
 
         assert isUnsafe || areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
 
+        currentCall.setIsNative();
         completeInvocation(op, signatureDescriptor.resultKind(), arguments);
     }
 
@@ -1741,9 +1744,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             assert !isWide;
             assert length == 1;
         }
-        if (hasOpcode3(opcode)) {
-            opcode = opcode | operand << 8;
-        }
         isUnsafe = true;
         switch (opcode) {
             // Checkstyle: stop
@@ -1758,104 +1758,142 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case WSTORE_1:               localStoreReferenceOrWord(1); break;
             case WSTORE_2:               localStoreReferenceOrWord(2); break;
             case WSTORE_3:               localStoreReferenceOrWord(3); break;
-            case WCONST_0:                   push(WordValue.ZERO); break;
+            case WCONST_0:               push(WordValue.ZERO); break;
             case WDIV:                   stackCall(DividedByAddress.BUILTIN); break;
             case WDIVI:                  stackCall(DividedByInt.BUILTIN); break;
             case WREM:                   stackCall(RemainderByAddress.BUILTIN); break;
             case WREMI:                  stackCall(RemainderByInt.BUILTIN); break;
             case ICMP:                   stackCall(CompareInts.BUILTIN); break;
             case WCMP:                   stackCall(CompareWords.BUILTIN); break;
-            case PREAD_BYTE:             stackCall(ReadByte.BUILTIN); break;
-            case PREAD_CHAR:             stackCall(ReadChar.BUILTIN); break;
-            case PREAD_SHORT:            stackCall(ReadShort.BUILTIN); break;
-            case PREAD_INT:              stackCall(ReadInt.BUILTIN); break;
-            case PREAD_FLOAT:            stackCall(ReadFloat.BUILTIN); break;
-            case PREAD_LONG:             stackCall(ReadLong.BUILTIN); break;
-            case PREAD_DOUBLE:           stackCall(ReadDouble.BUILTIN); break;
-            case PREAD_WORD:             stackCall(ReadWord.BUILTIN); break;
-            case PREAD_REFERENCE:        stackCall(ReadReference.BUILTIN); break;
-            case PREAD_BYTE_I:           stackCall(ReadByteAtIntOffset.BUILTIN); break;
-            case PREAD_CHAR_I:           stackCall(ReadCharAtIntOffset.BUILTIN); break;
-            case PREAD_SHORT_I:          stackCall(ReadShortAtIntOffset.BUILTIN); break;
-            case PREAD_INT_I:            stackCall(ReadIntAtIntOffset.BUILTIN); break;
-            case PREAD_FLOAT_I:          stackCall(ReadFloatAtIntOffset.BUILTIN); break;
-            case PREAD_LONG_I:           stackCall(ReadLongAtIntOffset.BUILTIN); break;
-            case PREAD_DOUBLE_I:         stackCall(ReadDoubleAtIntOffset.BUILTIN); break;
-            case PREAD_WORD_I:           stackCall(ReadWordAtIntOffset.BUILTIN); break;
-            case PREAD_REFERENCE_I:      stackCall(ReadReferenceAtIntOffset.BUILTIN); break;
-            case PWRITE_BYTE:            stackCall(WriteByte.BUILTIN); break;
-            case PWRITE_SHORT:           stackCall(WriteShort.BUILTIN); break;
-            case PWRITE_INT:             stackCall(WriteInt.BUILTIN); break;
-            case PWRITE_FLOAT:           stackCall(WriteFloat.BUILTIN); break;
-            case PWRITE_LONG:            stackCall(WriteLong.BUILTIN); break;
-            case PWRITE_DOUBLE:          stackCall(WriteDouble.BUILTIN); break;
-            case PWRITE_WORD:            stackCall(WriteWord.BUILTIN); break;
-            case PWRITE_REFERENCE:       stackCall(WriteReference.BUILTIN); break;
-            case PWRITE_BYTE_I:          stackCall(WriteByteAtIntOffset.BUILTIN); break;
-            case PWRITE_SHORT_I:         stackCall(WriteShortAtIntOffset.BUILTIN); break;
-            case PWRITE_INT_I:           stackCall(WriteIntAtIntOffset.BUILTIN); break;
-            case PWRITE_FLOAT_I:         stackCall(WriteFloatAtIntOffset.BUILTIN); break;
-            case PWRITE_LONG_I:          stackCall(WriteLongAtIntOffset.BUILTIN); break;
-            case PWRITE_DOUBLE_I:        stackCall(WriteDoubleAtIntOffset.BUILTIN); break;
-            case PWRITE_WORD_I:          stackCall(WriteWordAtIntOffset.BUILTIN); break;
-            case PWRITE_REFERENCE_I:     stackCall(WriteReferenceAtIntOffset.BUILTIN); break;
-            case PGET_BYTE:              stackCall(GetByte.BUILTIN); break;
-            case PGET_CHAR:              stackCall(GetChar.BUILTIN); break;
-            case PGET_SHORT:             stackCall(GetShort.BUILTIN); break;
-            case PGET_INT:               stackCall(GetInt.BUILTIN); break;
-            case PGET_FLOAT:             stackCall(GetFloat.BUILTIN); break;
-            case PGET_LONG:              stackCall(GetLong.BUILTIN); break;
-            case PGET_DOUBLE:            stackCall(GetDouble.BUILTIN); break;
-            case PGET_WORD:              stackCall(GetWord.BUILTIN); break;
-            case PGET_REFERENCE:         stackCall(GetReference.BUILTIN); break;
-            case PSET_BYTE:              stackCall(SetByte.BUILTIN); break;
-            case PSET_SHORT:             stackCall(SetShort.BUILTIN); break;
-            case PSET_INT:               stackCall(SetInt.BUILTIN); break;
-            case PSET_FLOAT:             stackCall(SetFloat.BUILTIN); break;
-            case PSET_LONG:              stackCall(SetLong.BUILTIN); break;
-            case PSET_DOUBLE:            stackCall(SetDouble.BUILTIN); break;
-            case PSET_WORD:              stackCall(SetWord.BUILTIN); break;
-            case PSET_REFERENCE:         stackCall(SetReference.BUILTIN); break;
-            case PCMPSWP_INT:            stackCall(CompareAndSwapInt.BUILTIN); break;
-            case PCMPSWP_WORD:           stackCall(CompareAndSwapWord.BUILTIN); break;
-            case PCMPSWP_REFERENCE:      stackCall(CompareAndSwapReference.BUILTIN); break;
-            case PCMPSWP_INT_I:          stackCall(CompareAndSwapIntAtIntOffset.BUILTIN); break;
-            case PCMPSWP_WORD_I:         stackCall(CompareAndSwapWordAtIntOffset.BUILTIN); break;
-            case PCMPSWP_REFERENCE_I:    stackCall(CompareAndSwapReferenceAtIntOffset.BUILTIN); break;
+
+            case Bytecodes.PCMPSWP:
+            case Bytecodes.MEMBAR:
+            case Bytecodes.PGET:
+            case Bytecodes.PSET:
+            case Bytecodes.PREAD:
+            case Bytecodes.PWRITE: {
+                opcode = opcode | (operand << 8);
+                switch (opcode) {
+                    case PREAD_BYTE:             stackCall(ReadByte.BUILTIN); break;
+                    case PREAD_CHAR:             stackCall(ReadChar.BUILTIN); break;
+                    case PREAD_SHORT:            stackCall(ReadShort.BUILTIN); break;
+                    case PREAD_INT:              stackCall(ReadInt.BUILTIN); break;
+                    case PREAD_FLOAT:            stackCall(ReadFloat.BUILTIN); break;
+                    case PREAD_LONG:             stackCall(ReadLong.BUILTIN); break;
+                    case PREAD_DOUBLE:           stackCall(ReadDouble.BUILTIN); break;
+                    case PREAD_WORD:             stackCall(ReadWord.BUILTIN); break;
+                    case PREAD_REFERENCE:        stackCall(ReadReference.BUILTIN); break;
+                    case PREAD_BYTE_I:           stackCall(ReadByteAtIntOffset.BUILTIN); break;
+                    case PREAD_CHAR_I:           stackCall(ReadCharAtIntOffset.BUILTIN); break;
+                    case PREAD_SHORT_I:          stackCall(ReadShortAtIntOffset.BUILTIN); break;
+                    case PREAD_INT_I:            stackCall(ReadIntAtIntOffset.BUILTIN); break;
+                    case PREAD_FLOAT_I:          stackCall(ReadFloatAtIntOffset.BUILTIN); break;
+                    case PREAD_LONG_I:           stackCall(ReadLongAtIntOffset.BUILTIN); break;
+                    case PREAD_DOUBLE_I:         stackCall(ReadDoubleAtIntOffset.BUILTIN); break;
+                    case PREAD_WORD_I:           stackCall(ReadWordAtIntOffset.BUILTIN); break;
+                    case PREAD_REFERENCE_I:      stackCall(ReadReferenceAtIntOffset.BUILTIN); break;
+                    case PWRITE_BYTE:            stackCall(WriteByte.BUILTIN); break;
+                    case PWRITE_SHORT:           stackCall(WriteShort.BUILTIN); break;
+                    case PWRITE_INT:             stackCall(WriteInt.BUILTIN); break;
+                    case PWRITE_FLOAT:           stackCall(WriteFloat.BUILTIN); break;
+                    case PWRITE_LONG:            stackCall(WriteLong.BUILTIN); break;
+                    case PWRITE_DOUBLE:          stackCall(WriteDouble.BUILTIN); break;
+                    case PWRITE_WORD:            stackCall(WriteWord.BUILTIN); break;
+                    case PWRITE_REFERENCE:       stackCall(WriteReference.BUILTIN); break;
+                    case PWRITE_BYTE_I:          stackCall(WriteByteAtIntOffset.BUILTIN); break;
+                    case PWRITE_SHORT_I:         stackCall(WriteShortAtIntOffset.BUILTIN); break;
+                    case PWRITE_INT_I:           stackCall(WriteIntAtIntOffset.BUILTIN); break;
+                    case PWRITE_FLOAT_I:         stackCall(WriteFloatAtIntOffset.BUILTIN); break;
+                    case PWRITE_LONG_I:          stackCall(WriteLongAtIntOffset.BUILTIN); break;
+                    case PWRITE_DOUBLE_I:        stackCall(WriteDoubleAtIntOffset.BUILTIN); break;
+                    case PWRITE_WORD_I:          stackCall(WriteWordAtIntOffset.BUILTIN); break;
+                    case PWRITE_REFERENCE_I:     stackCall(WriteReferenceAtIntOffset.BUILTIN); break;
+                    case PGET_BYTE:              stackCall(GetByte.BUILTIN); break;
+                    case PGET_CHAR:              stackCall(GetChar.BUILTIN); break;
+                    case PGET_SHORT:             stackCall(GetShort.BUILTIN); break;
+                    case PGET_INT:               stackCall(GetInt.BUILTIN); break;
+                    case PGET_FLOAT:             stackCall(GetFloat.BUILTIN); break;
+                    case PGET_LONG:              stackCall(GetLong.BUILTIN); break;
+                    case PGET_DOUBLE:            stackCall(GetDouble.BUILTIN); break;
+                    case PGET_WORD:              stackCall(GetWord.BUILTIN); break;
+                    case PGET_REFERENCE:         stackCall(GetReference.BUILTIN); break;
+                    case PSET_BYTE:              stackCall(SetByte.BUILTIN); break;
+                    case PSET_SHORT:             stackCall(SetShort.BUILTIN); break;
+                    case PSET_INT:               stackCall(SetInt.BUILTIN); break;
+                    case PSET_FLOAT:             stackCall(SetFloat.BUILTIN); break;
+                    case PSET_LONG:              stackCall(SetLong.BUILTIN); break;
+                    case PSET_DOUBLE:            stackCall(SetDouble.BUILTIN); break;
+                    case PSET_WORD:              stackCall(SetWord.BUILTIN); break;
+                    case PSET_REFERENCE:         stackCall(SetReference.BUILTIN); break;
+                    case PCMPSWP_INT:            stackCall(CompareAndSwapInt.BUILTIN); break;
+                    case PCMPSWP_WORD:           stackCall(CompareAndSwapWord.BUILTIN); break;
+                    case PCMPSWP_REFERENCE:      stackCall(CompareAndSwapReference.BUILTIN); break;
+                    case PCMPSWP_INT_I:          stackCall(CompareAndSwapIntAtIntOffset.BUILTIN); break;
+                    case PCMPSWP_WORD_I:         stackCall(CompareAndSwapWordAtIntOffset.BUILTIN); break;
+                    case PCMPSWP_REFERENCE_I:    stackCall(CompareAndSwapReferenceAtIntOffset.BUILTIN); break;
+                    case MEMBAR_LOAD_LOAD:       membar(MemoryBarriers.LOAD_LOAD); break;
+                    case MEMBAR_LOAD_STORE:      membar(MemoryBarriers.LOAD_STORE); break;
+                    case MEMBAR_STORE_LOAD:      membar(MemoryBarriers.STORE_STORE); break;
+                    case MEMBAR_STORE_STORE:     membar(MemoryBarriers.STORE_STORE); break;
+                    case MEMBAR_MEMOP_STORE:     membar(MemoryBarriers.MEMOP_STORE); break;
+                    case MEMBAR_FENCE:           membar(MemoryBarriers.FENCE); break;
+                    default:                     throw verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
+                }
+                break;
+            }
+
             case MOV_I2F:                stackCall(IntToFloat.BUILTIN); break;
             case MOV_F2I:                stackCall(FloatToInt.BUILTIN); break;
             case MOV_L2D:                stackCall(LongToDouble.BUILTIN); break;
             case MOV_D2L:                stackCall(DoubleToLong.BUILTIN); break;
-            case UWLT:                   stackCall(LessThan.BUILTIN); break;
-            case UWLTEQ:                 stackCall(LessEqual.BUILTIN); break;
-            case UWGT:                   stackCall(GreaterThan.BUILTIN); break;
-            case UWGTEQ:                 stackCall(GreaterEqual.BUILTIN); break;
-            case UGE:                    stackCall(UnsignedIntGreaterEqual.BUILTIN); break;
+
+            case UWCMP: {
+                switch (operand) {
+                    case ABOVE_EQUAL: stackCall(GreaterEqual.BUILTIN); break;
+                    case ABOVE_THAN:  stackCall(GreaterThan.BUILTIN); break;
+                    case BELOW_EQUAL: stackCall(LessEqual.BUILTIN); break;
+                    case BELOW_THAN:  stackCall(LessThan.BUILTIN); break;
+                    default:          throw verifyError("Unsupported UWCMP operand: " + operand);
+                }
+                break;
+            }
+            case UCMP: {
+                switch (operand) {
+                    case ABOVE_EQUAL: stackCall(AboveEqual.BUILTIN); break;
+                    case ABOVE_THAN : stackCall(AboveThan.BUILTIN); break;
+                    case BELOW_EQUAL: stackCall(BelowEqual.BUILTIN); break;
+                    case BELOW_THAN : stackCall(BelowThan.BUILTIN); break;
+                    default:          throw verifyError("Unsupported UCMP operand: " + operand);
+                }
+                break;
+            }
             case JNICALL:                jnicall(operand); break;
-            case READGPR_FP_CPU:         readgpr(Role.CPU_FRAME_POINTER); break;
-            case READGPR_SP_CPU:         readgpr(Role.CPU_STACK_POINTER); break;
-            case READGPR_FP_ABI:         readgpr(Role.ABI_FRAME_POINTER); break;
-            case READGPR_SP_ABI:         readgpr(Role.ABI_STACK_POINTER); break;
-            case READGPR_LATCH:          readgpr(Role.SAFEPOINT_LATCH); break;
-            case WRITEGPR_FP_CPU:        writegpr(Role.CPU_FRAME_POINTER); break;
-            case WRITEGPR_SP_CPU:        writegpr(Role.CPU_STACK_POINTER); break;
-            case WRITEGPR_FP_ABI:        writegpr(Role.ABI_FRAME_POINTER); break;
-            case WRITEGPR_SP_ABI:        writegpr(Role.ABI_STACK_POINTER); break;
-            case WRITEGPR_LATCH:         writegpr(Role.SAFEPOINT_LATCH); break;
-            case WRITEGPR_LINK:          writegpr(Role.LINK_ADDRESS); break;
-            case MEMBAR_LOAD_LOAD:       membar(MemoryBarrier.loadLoad); break;
-            case MEMBAR_LOAD_STORE:      membar(MemoryBarrier.loadStore); break;
-            case MEMBAR_STORE_LOAD:      membar(MemoryBarrier.storeLoad); break;
-            case MEMBAR_STORE_STORE:     membar(MemoryBarrier.storeStore); break;
-            case MEMBAR_MEMOP_STORE:     membar(MemoryBarrier.memopStore); break;
-            case MEMBAR_ALL:             membar(MemoryBarrier.all); break;
+            case JNIOP: {
+                ClassMethodActor classMethodActor = methodTranslation.classMethodActor();
+                if (!classMethodActor.isNative()) {
+                    throw verifyError("Cannot use " + Bytecodes.nameOf(JNIOP) + " instruction in non-native method " + classMethodActor);
+                }
+                switch (operand) {
+                    case LINK: callAndPush(JavaOperator.LINK_OP, CirConstant.fromObject(classMethodActor)); break;
+                    case J2N:  callAndPush(classMethodActor.isCFunction() ? JavaOperator.J2NC_OP : JavaOperator.J2N_OP); break;
+                    case N2J:  callAndPush(classMethodActor.isCFunction() ? JavaOperator.N2JC_OP : JavaOperator.N2J_OP); break;
+                }
+                break;
+            }
+
+
+            case READREG:                readreg(Role.VALUES.get(operand)); break;
+            case WRITEREG:               writereg(Role.VALUES.get(operand)); break;
             case ALLOCA:                 stackCall(StackAllocate.BUILTIN); break;
-            case STACKADDR:              stackCall(MakeStackVariable.BUILTIN); break;
+            case ALLOCSTKVAR:            stackCall(MakeStackVariable.BUILTIN); break;
             case SAFEPOINT:              stackCall(SafepointBuiltin.BUILTIN); break;
             case PAUSE:                  stackCall(Pause.BUILTIN); break;
             case ADD_SP:                 stackCall(AdjustJitStack.BUILTIN); break;
             case READ_PC:                stackCall(GetInstructionPointer.BUILTIN); break;
             case FLUSHW:                 stackCall(FlushRegisterWindows.BUILTIN); break;
+            case LSB:                    stackCall(LeastSignificantBit.BUILTIN); break;
+            case MSB:                    stackCall(MostSignificantBit.BUILTIN); break;
+
             case CALL: {
                 Invocation inv = invoke(operand, 0);
                 completeInvocation(new Call(inv.sig), inv.sig.resultKind(), inv.args);
@@ -1876,15 +1914,15 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         return true;
     }
 
-    private void membar(PoolSet<MemoryBarrier> barrier) {
-        callAndPush(new JavaBuiltinOperator(BarMemory.BUILTIN), CirConstant.fromObject(barrier));
+    private void membar(int barriers) {
+        callAndPush(new JavaBuiltinOperator(BarMemory.BUILTIN), CirConstant.fromInt(barriers));
     }
 
-    private void readgpr(VMRegister.Role role) {
+    private void readreg(VMRegister.Role role) {
         callAndPush(new JavaBuiltinOperator(GetIntegerRegister.BUILTIN), CirConstant.fromObject(role));
     }
 
-    private void writegpr(VMRegister.Role role) {
+    private void writereg(VMRegister.Role role) {
         callAndPush(new JavaBuiltinOperator(SetIntegerRegister.BUILTIN), CirConstant.fromObject(role), pop(Kind.WORD));
     }
 }

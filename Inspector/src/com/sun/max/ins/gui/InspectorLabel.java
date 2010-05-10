@@ -99,6 +99,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     private final Inspection inspection;
     private boolean dragSourceEnabled = false;
     private final String tracePrefix;
+
     /**
      * A label for use in the inspector, by default not opaque.
      *

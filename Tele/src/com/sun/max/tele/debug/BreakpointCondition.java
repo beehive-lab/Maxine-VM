@@ -52,14 +52,14 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
     }
 
     public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-        return evaluate(teleVM().teleProcess(), teleNativeThread);
+        return evaluate(vm().teleProcess(), teleNativeThread);
     }
 
     public boolean evaluate(TeleProcess teleProcess, TeleNativeThread teleNativeThread) {
         if (expression == null) {
             return false;
         }
-        integerRegisters = teleNativeThread.integerRegisters();
+        integerRegisters = teleNativeThread.registers().teleIntegerRegisters();
         if (integerRegisters == null) {
             return false;
         }
@@ -386,7 +386,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
 
         @Override
         Expression evaluate() {
-            return new NumberExpression(integerRegisters.get(register).toLong());
+            return new NumberExpression(integerRegisters.getValue(register).toLong());
         }
 
         @Override
@@ -498,7 +498,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
 
         @Override
         Expression evaluate() {
-            return new NumberExpression(teleVM().dataAccess().readLong(address));
+            return new NumberExpression(vm().dataAccess().readLong(address));
         }
     }
 

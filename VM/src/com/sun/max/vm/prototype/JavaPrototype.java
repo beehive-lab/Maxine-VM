@@ -42,6 +42,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.jdk.Package;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -248,10 +249,9 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.util.jar", false); // needed to load classes from jar files
         loadClass(sun.misc.VM.class);
 
-        // Needed for bytecode definitions and utilities
-        loadPackage("com.sun.c1x.bytecode", false);
-        loadClass(com.sun.c1x.util.Bytes.class);
-
+        // Need all of C1X
+        loadPackage("com.sun.cri", true);
+        loadPackage("com.sun.c1x", true);
 
         // These classes need to be compiled and in the boot image in order to be able to
         // run the optimizing compiler at run time (amongst other reasons)
@@ -303,6 +303,43 @@ public class JavaPrototype extends Prototype {
                 }
             }
         }
+    }
+
+    /**
+     * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
+     */
+    void loadMethodSubstitutions(final VMConfiguration vmConfiguration, final PackageLoader pl) {
+        new ClassSearch(true) {
+            @Override
+            protected boolean visitClass(String className) {
+                if (className.endsWith(".Package")) {
+                    try {
+                        Class<?> packageClass = Class.forName(className);
+                        if (VMPackage.class.isAssignableFrom(packageClass)) {
+                            VMPackage vmPackage = (VMPackage) packageClass.newInstance();
+                            if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
+                                String[] classes = pl.listClassesInPackage(vmPackage.name(), false);
+                                for (String cn : classes) {
+                                    try {
+                                        Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
+                                        METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
+                                        if (annotation != null) {
+                                            loadClass(c);
+                                            METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
+                                        }
+                                    } catch (Exception e) {
+                                        throw ProgramError.unexpected(e);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        throw ProgramError.unexpected(e);
+                    }
+                }
+                return true;
+            }
+        }.run(pl.classpath);
     }
 
     /**
@@ -366,6 +403,8 @@ public class JavaPrototype extends Prototype {
                 vmConfiguration.bootCompilerScheme().createSnippets(packageLoader);
                 Snippet.register();
 
+                loadMethodSubstitutions(vmConfiguration, packageLoader);
+
                 if (loadPackages) {
 
                     // TODO: Load the following package groups in parallel
@@ -382,9 +421,6 @@ public class JavaPrototype extends Prototype {
                     //
                     // This enables detection of violations of said requirement:
                     ClassActor.prohibitPackagePrefix(new com.sun.max.Package());
-
-                    // The logic for determining unsafeness is now in Intrinsics.java and Actor.<init>()
-                    // UNSAFE.Static.determineMethods();
 
                     VmThreadLocal.completeInitialization();
 

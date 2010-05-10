@@ -25,14 +25,13 @@ import static com.sun.max.vm.template.BytecodeTemplate.*;
 
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
+import com.sun.max.lang.Bytes;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -42,12 +41,14 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.Stop.*;
 import com.sun.max.vm.jit.Stops.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
+import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
@@ -565,7 +566,7 @@ public abstract class BytecodeToTargetTranslator {
     protected int createReferenceLiteral(Object literal) {
         int literalOffset = computeReferenceLiteralOffset(1 + referenceLiterals.length());
         referenceLiterals.prepend(literal);
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             // Account for the DebugHeap tag in front of the code object:
             literalOffset += VMConfiguration.target().wordWidth().numberOfBytes;
         }
@@ -668,8 +669,6 @@ public abstract class BytecodeToTargetTranslator {
             if (opcode == Bytecodes.WIDE) {
                 opcode = code[bci++] & 0xff;
                 wide = true;
-            } else if (Bytecodes.hasOpcode3(opcode)) {
-                opcode = opcode | readU2() << 8;
             }
 
             if (shouldInsertHotpathCounters() && branchTargets.contains(opcodeBci)) {
@@ -889,113 +888,117 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.WSTORE_1           : emitVarAccess(WSTORE, 1, Kind.WORD); break;
                 case Bytecodes.WSTORE_2           : emitVarAccess(WSTORE, 2, Kind.WORD); break;
                 case Bytecodes.WSTORE_3           : emitVarAccess(WSTORE, 3, Kind.WORD); break;
+
                 case Bytecodes.WCONST_0           : emit(WCONST_0); skip(2); break;
                 case Bytecodes.WDIV               : emit(WDIV); skip(2); break;
                 case Bytecodes.WDIVI              : emit(WDIVI); skip(2); break;
                 case Bytecodes.WREM               : emit(WREM); skip(2); break;
                 case Bytecodes.WREMI              : emit(WREMI); skip(2); break;
 
-                case Bytecodes.PREAD_BYTE         : emit(PREAD_BYTE); break;
-                case Bytecodes.PREAD_CHAR         : emit(PREAD_CHAR); break;
-                case Bytecodes.PREAD_SHORT        : emit(PREAD_SHORT); break;
-                case Bytecodes.PREAD_INT          : emit(PREAD_INT); break;
-                case Bytecodes.PREAD_LONG         : emit(PREAD_LONG); break;
-                case Bytecodes.PREAD_FLOAT        : emit(PREAD_FLOAT); break;
-                case Bytecodes.PREAD_DOUBLE       : emit(PREAD_DOUBLE); break;
-                case Bytecodes.PREAD_WORD         : emit(PREAD_WORD); break;
-                case Bytecodes.PREAD_REFERENCE    : emit(PREAD_REFERENCE); break;
+                case Bytecodes.PCMPSWP:
+                case Bytecodes.MEMBAR:
+                case Bytecodes.PGET:
+                case Bytecodes.PSET:
+                case Bytecodes.PREAD:
+                case Bytecodes.PWRITE: {
+                    opcode = opcode | (readU2() << 8);
+                    switch (opcode) {
+                        case Bytecodes.PREAD_BYTE         : emit(PREAD_BYTE); break;
+                        case Bytecodes.PREAD_CHAR         : emit(PREAD_CHAR); break;
+                        case Bytecodes.PREAD_SHORT        : emit(PREAD_SHORT); break;
+                        case Bytecodes.PREAD_INT          : emit(PREAD_INT); break;
+                        case Bytecodes.PREAD_LONG         : emit(PREAD_LONG); break;
+                        case Bytecodes.PREAD_FLOAT        : emit(PREAD_FLOAT); break;
+                        case Bytecodes.PREAD_DOUBLE       : emit(PREAD_DOUBLE); break;
+                        case Bytecodes.PREAD_WORD         : emit(PREAD_WORD); break;
+                        case Bytecodes.PREAD_REFERENCE    : emit(PREAD_REFERENCE); break;
 
-                case Bytecodes.PREAD_BYTE_I       : emit(PREAD_BYTE_I); break;
-                case Bytecodes.PREAD_CHAR_I       : emit(PREAD_CHAR_I); break;
-                case Bytecodes.PREAD_SHORT_I      : emit(PREAD_SHORT_I); break;
-                case Bytecodes.PREAD_INT_I        : emit(PREAD_INT_I); break;
-                case Bytecodes.PREAD_LONG_I       : emit(PREAD_LONG_I); break;
-                case Bytecodes.PREAD_FLOAT_I      : emit(PREAD_FLOAT_I); break;
-                case Bytecodes.PREAD_DOUBLE_I     : emit(PREAD_DOUBLE_I); break;
-                case Bytecodes.PREAD_WORD_I       : emit(PREAD_WORD_I); break;
-                case Bytecodes.PREAD_REFERENCE_I  : emit(PREAD_REFERENCE_I); break;
+                        case Bytecodes.PREAD_BYTE_I       : emit(PREAD_BYTE_I); break;
+                        case Bytecodes.PREAD_CHAR_I       : emit(PREAD_CHAR_I); break;
+                        case Bytecodes.PREAD_SHORT_I      : emit(PREAD_SHORT_I); break;
+                        case Bytecodes.PREAD_INT_I        : emit(PREAD_INT_I); break;
+                        case Bytecodes.PREAD_LONG_I       : emit(PREAD_LONG_I); break;
+                        case Bytecodes.PREAD_FLOAT_I      : emit(PREAD_FLOAT_I); break;
+                        case Bytecodes.PREAD_DOUBLE_I     : emit(PREAD_DOUBLE_I); break;
+                        case Bytecodes.PREAD_WORD_I       : emit(PREAD_WORD_I); break;
+                        case Bytecodes.PREAD_REFERENCE_I  : emit(PREAD_REFERENCE_I); break;
 
-                case Bytecodes.PWRITE_BYTE        : emit(PWRITE_BYTE); break;
-                case Bytecodes.PWRITE_SHORT       : emit(PWRITE_SHORT); break;
-                case Bytecodes.PWRITE_INT         : emit(PWRITE_INT); break;
-                case Bytecodes.PWRITE_LONG        : emit(PWRITE_LONG); break;
-                case Bytecodes.PWRITE_FLOAT       : emit(PWRITE_FLOAT); break;
-                case Bytecodes.PWRITE_DOUBLE      : emit(PWRITE_DOUBLE); break;
-                case Bytecodes.PWRITE_WORD        : emit(PWRITE_WORD); break;
-                case Bytecodes.PWRITE_REFERENCE   : emit(PWRITE_REFERENCE); break;
+                        case Bytecodes.PWRITE_BYTE        : emit(PWRITE_BYTE); break;
+                        case Bytecodes.PWRITE_SHORT       : emit(PWRITE_SHORT); break;
+                        case Bytecodes.PWRITE_INT         : emit(PWRITE_INT); break;
+                        case Bytecodes.PWRITE_LONG        : emit(PWRITE_LONG); break;
+                        case Bytecodes.PWRITE_FLOAT       : emit(PWRITE_FLOAT); break;
+                        case Bytecodes.PWRITE_DOUBLE      : emit(PWRITE_DOUBLE); break;
+                        case Bytecodes.PWRITE_WORD        : emit(PWRITE_WORD); break;
+                        case Bytecodes.PWRITE_REFERENCE   : emit(PWRITE_REFERENCE); break;
 
-                case Bytecodes.PWRITE_BYTE_I      : emit(PWRITE_BYTE_I); break;
-                case Bytecodes.PWRITE_SHORT_I     : emit(PWRITE_SHORT_I); break;
-                case Bytecodes.PWRITE_INT_I       : emit(PWRITE_INT_I); break;
-                case Bytecodes.PWRITE_LONG_I      : emit(PWRITE_LONG_I); break;
-                case Bytecodes.PWRITE_FLOAT_I     : emit(PWRITE_FLOAT_I); break;
-                case Bytecodes.PWRITE_DOUBLE_I    : emit(PWRITE_DOUBLE_I); break;
-                case Bytecodes.PWRITE_WORD_I      : emit(PWRITE_WORD_I); break;
-                case Bytecodes.PWRITE_REFERENCE_I : emit(PWRITE_REFERENCE_I); break;
+                        case Bytecodes.PWRITE_BYTE_I      : emit(PWRITE_BYTE_I); break;
+                        case Bytecodes.PWRITE_SHORT_I     : emit(PWRITE_SHORT_I); break;
+                        case Bytecodes.PWRITE_INT_I       : emit(PWRITE_INT_I); break;
+                        case Bytecodes.PWRITE_LONG_I      : emit(PWRITE_LONG_I); break;
+                        case Bytecodes.PWRITE_FLOAT_I     : emit(PWRITE_FLOAT_I); break;
+                        case Bytecodes.PWRITE_DOUBLE_I    : emit(PWRITE_DOUBLE_I); break;
+                        case Bytecodes.PWRITE_WORD_I      : emit(PWRITE_WORD_I); break;
+                        case Bytecodes.PWRITE_REFERENCE_I : emit(PWRITE_REFERENCE_I); break;
 
-                case Bytecodes.PGET_BYTE          : emit(PGET_BYTE); break;
-                case Bytecodes.PGET_CHAR          : emit(PGET_CHAR); break;
-                case Bytecodes.PGET_SHORT         : emit(PGET_SHORT); break;
-                case Bytecodes.PGET_INT           : emit(PGET_INT); break;
-                case Bytecodes.PGET_LONG          : emit(PGET_LONG); break;
-                case Bytecodes.PGET_FLOAT         : emit(PGET_FLOAT); break;
-                case Bytecodes.PGET_DOUBLE        : emit(PGET_DOUBLE); break;
-                case Bytecodes.PGET_WORD          : emit(PGET_WORD); break;
-                case Bytecodes.PGET_REFERENCE     : emit(PGET_REFERENCE); break;
+                        case Bytecodes.PGET_BYTE          : emit(PGET_BYTE); break;
+                        case Bytecodes.PGET_CHAR          : emit(PGET_CHAR); break;
+                        case Bytecodes.PGET_SHORT         : emit(PGET_SHORT); break;
+                        case Bytecodes.PGET_INT           : emit(PGET_INT); break;
+                        case Bytecodes.PGET_LONG          : emit(PGET_LONG); break;
+                        case Bytecodes.PGET_FLOAT         : emit(PGET_FLOAT); break;
+                        case Bytecodes.PGET_DOUBLE        : emit(PGET_DOUBLE); break;
+                        case Bytecodes.PGET_WORD          : emit(PGET_WORD); break;
+                        case Bytecodes.PGET_REFERENCE     : emit(PGET_REFERENCE); break;
 
-                case Bytecodes.PSET_BYTE          : emit(PSET_BYTE); break;
-                case Bytecodes.PSET_SHORT         : emit(PSET_SHORT); break;
-                case Bytecodes.PSET_INT           : emit(PSET_INT); break;
-                case Bytecodes.PSET_LONG          : emit(PSET_LONG); break;
-                case Bytecodes.PSET_FLOAT         : emit(PSET_FLOAT); break;
-                case Bytecodes.PSET_DOUBLE        : emit(PSET_DOUBLE); break;
-                case Bytecodes.PSET_WORD          : emit(PSET_WORD); break;
-                case Bytecodes.PSET_REFERENCE     : emit(PSET_REFERENCE); break;
+                        case Bytecodes.PSET_BYTE          : emit(PSET_BYTE); break;
+                        case Bytecodes.PSET_SHORT         : emit(PSET_SHORT); break;
+                        case Bytecodes.PSET_INT           : emit(PSET_INT); break;
+                        case Bytecodes.PSET_LONG          : emit(PSET_LONG); break;
+                        case Bytecodes.PSET_FLOAT         : emit(PSET_FLOAT); break;
+                        case Bytecodes.PSET_DOUBLE        : emit(PSET_DOUBLE); break;
+                        case Bytecodes.PSET_WORD          : emit(PSET_WORD); break;
+                        case Bytecodes.PSET_REFERENCE     : emit(PSET_REFERENCE); break;
 
-                case Bytecodes.PCMPSWP_INT        : emit(PCMPSWP_INT); break;
-                case Bytecodes.PCMPSWP_WORD       : emit(PCMPSWP_WORD); break;
-                case Bytecodes.PCMPSWP_REFERENCE  : emit(PCMPSWP_REFERENCE); break;
-                case Bytecodes.PCMPSWP_INT_I      : emit(PCMPSWP_INT_I); break;
-                case Bytecodes.PCMPSWP_WORD_I     : emit(PCMPSWP_WORD_I); break;
-                case Bytecodes.PCMPSWP_REFERENCE_I: emit(PCMPSWP_REFERENCE_I); break;
+                        case Bytecodes.PCMPSWP_INT        : emit(PCMPSWP_INT); break;
+                        case Bytecodes.PCMPSWP_WORD       : emit(PCMPSWP_WORD); break;
+                        case Bytecodes.PCMPSWP_REFERENCE  : emit(PCMPSWP_REFERENCE); break;
+                        case Bytecodes.PCMPSWP_INT_I      : emit(PCMPSWP_INT_I); break;
+                        case Bytecodes.PCMPSWP_WORD_I     : emit(PCMPSWP_WORD_I); break;
+                        case Bytecodes.PCMPSWP_REFERENCE_I: emit(PCMPSWP_REFERENCE_I); break;
+
+                        case Bytecodes.MEMBAR_LOAD_LOAD   : emit(MEMBAR_LOAD_LOAD); break;
+                        case Bytecodes.MEMBAR_LOAD_STORE  : emit(MEMBAR_LOAD_STORE); break;
+                        case Bytecodes.MEMBAR_STORE_LOAD  : emit(MEMBAR_STORE_LOAD); break;
+                        case Bytecodes.MEMBAR_STORE_STORE : emit(MEMBAR_STORE_STORE); break;
+                        case Bytecodes.MEMBAR_MEMOP_STORE : emit(MEMBAR_MEMOP_STORE); break;
+                        case Bytecodes.MEMBAR_FENCE         : emit(MEMBAR_FENCE); break;
+
+                        default                           : throw new InternalError("Unsupported opcode" + errorSuffix());
+                    }
+                    break;
+                }
 
                 case Bytecodes.MOV_I2F            : emit(MOV_I2F); skip(2); break;
                 case Bytecodes.MOV_F2I            : emit(MOV_F2I); skip(2); break;
                 case Bytecodes.MOV_L2D            : emit(MOV_L2D); skip(2); break;
                 case Bytecodes.MOV_D2L            : emit(MOV_D2L); skip(2); break;
-                case Bytecodes.UWLT               : emit(UWLT); skip(2); break;
-                case Bytecodes.UWLTEQ             : emit(UWLTEQ); skip(2); break;
-                case Bytecodes.UWGT               : emit(UWGT); skip(2); break;
-                case Bytecodes.UWGTEQ             : emit(UWGTEQ); skip(2); break;
-                case Bytecodes.UGE                : emit(UGE); skip(2); break;
-                case Bytecodes.MEMBAR_LOAD_LOAD   : emit(MEMBAR_LOAD_LOAD); break;
-                case Bytecodes.MEMBAR_LOAD_STORE  : emit(MEMBAR_LOAD_STORE); break;
-                case Bytecodes.MEMBAR_STORE_LOAD  : emit(MEMBAR_STORE_LOAD); break;
-                case Bytecodes.MEMBAR_STORE_STORE : emit(MEMBAR_STORE_STORE); break;
-                case Bytecodes.MEMBAR_MEMOP_STORE : emit(MEMBAR_MEMOP_STORE); break;
-                case Bytecodes.MEMBAR_ALL         : emit(MEMBAR_ALL); break;
+
 
                 case Bytecodes.WRETURN            : emitReturn(WRETURN); break;
                 case Bytecodes.SAFEPOINT          : emit(SAFEPOINT); skip(2); break;
                 case Bytecodes.PAUSE              : emit(PAUSE); skip(2); break;
+                case Bytecodes.LSB                : emit(LSB); skip(2); break;
+                case Bytecodes.MSB                : emit(MSB); skip(2); break;
 
-                case Bytecodes.READGPR_FP_CPU     : emit(READGPR_FP_CPU); skip(2); break;
-                case Bytecodes.READGPR_SP_CPU     : emit(READGPR_SP_CPU); skip(2); break;
-                case Bytecodes.READGPR_FP_ABI     : emit(READGPR_FP_ABI); skip(2); break;
-                case Bytecodes.READGPR_SP_ABI     : emit(READGPR_SP_ABI); skip(2); break;
-                case Bytecodes.READGPR_LATCH      : emit(READGPR_LATCH); skip(2); break;
-                case Bytecodes.WRITEGPR_FP_CPU    : emit(WRITEGPR_FP_CPU); skip(2); break;
-                case Bytecodes.WRITEGPR_SP_CPU    : emit(WRITEGPR_SP_CPU); skip(2); break;
-                case Bytecodes.WRITEGPR_FP_ABI    : emit(WRITEGPR_FP_ABI); skip(2); break;
-                case Bytecodes.WRITEGPR_SP_ABI    : emit(WRITEGPR_SP_ABI); skip(2); break;
-                case Bytecodes.WRITEGPR_LATCH     : emit(WRITEGPR_LATCH); skip(2); break;
-                case Bytecodes.WRITEGPR_LINK      : emit(WRITEGPR_LINK); skip(2); break;
+                case Bytecodes.READREG            : emit(READREGS.get(Role.VALUES.get(readU2()))); break;
+                case Bytecodes.WRITEREG           : emit(WRITEREGS.get(Role.VALUES.get(readU2()))); break;
 
                 case Bytecodes.ADD_SP             :
                 case Bytecodes.READ_PC            :
                 case Bytecodes.FLUSHW             :
                 case Bytecodes.ALLOCA             :
-                case Bytecodes.STACKADDR          :
+                case Bytecodes.ALLOCSTKVAR        :
                 case Bytecodes.JNICALL            :
                 case Bytecodes.CALL               :
                 case Bytecodes.ICMP               :
@@ -1269,20 +1272,6 @@ public abstract class BytecodeToTargetTranslator {
         return index;
     }
 
-    /**
-     * Checks if a given method invocation can be correctly compiled by this compiler.
-     *
-     * @param callee a method being invoked
-     * @param opcode the invoke instruction
-     * @throws UnsupportedInstructionError if a compiler that performs more analysis and/or optimization is required to compile the given method invocation
-     */
-    private void checkInvocation(MethodActor callee) {
-        final int badFlags = Actor.FOLD | Actor.INLINE;
-        if ((callee.flags() & badFlags) != 0) {
-            throw new InternalError("Invocation of method " + callee + " cannot be compiled with JIT" + errorSuffix());
-        }
-    }
-
     private void emitInvokevirtual(int index) {
         ClassMethodRefConstant classMethodRef = constantPool.classMethodAt(index);
         SignatureDescriptor signature = classMethodRef.signature(constantPool);
@@ -1292,7 +1281,6 @@ public abstract class BytecodeToTargetTranslator {
             if (isResolved(classMethodRef, index)) {
                 try {
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
-                    checkInvocation(virtualMethodActor);
                     if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal()) {
                         // this is an invokevirtual to a private or final method, treat it like invokespecial
                         emitInvokespecial(index);
@@ -1338,7 +1326,6 @@ public abstract class BytecodeToTargetTranslator {
             if (isResolved(interfaceMethodRef, index)) {
                 try {
                     InterfaceMethodActor interfaceMethodActor = (InterfaceMethodActor) interfaceMethodRef.resolve(constantPool, index);
-                    checkInvocation(interfaceMethodActor);
                     if (shouldProfileMethodCall(interfaceMethodActor)) {
                         TargetMethod code = getCode(template.instrumented);
                         beginBytecode(template.opcode);
@@ -1376,7 +1363,6 @@ public abstract class BytecodeToTargetTranslator {
         try {
             if (isResolved(classMethodRef, index)) {
                 VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
-                checkInvocation(virtualMethodActor);
                 TargetMethod code = getCode(template.resolved);
                 beginBytecode(template.opcode);
                 recordDirectBytecodeCall(code, virtualMethodActor);
@@ -1399,7 +1385,6 @@ public abstract class BytecodeToTargetTranslator {
         try {
             if (isResolved(classMethodRef, index)) {
                 StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(constantPool, index);
-                checkInvocation(staticMethodActor);
                 if (staticMethodActor.holder().isInitialized()) {
                     TargetMethod code = getCode(template.initialized);
                     beginBytecode(template.opcode);
@@ -1429,7 +1414,7 @@ public abstract class BytecodeToTargetTranslator {
                 if (isResolved(classConstant, index)) {
                     TargetMethod code = getCode(LDC$reference$resolved);
                     beginBytecode(bytecode);
-                    Object mirror = ((ClassActor) classConstant.value(constantPool, index).asObject()).mirror();
+                    Object mirror = ((ClassActor) classConstant.value(constantPool, index).asObject()).javaClass();
                     assignReferenceLiteralTemplateArgument(0, mirror);
                     emitAndRecordStops(code);
                 } else {
@@ -1509,7 +1494,7 @@ public abstract class BytecodeToTargetTranslator {
             TargetMethod code = getCode(MULTIANEWARRAY$resolved);
             beginBytecode(Bytecodes.MULTIANEWARRAY);
             ClassActor arrayClassActor = classRef.resolve(constantPool, index);
-            assert arrayClassActor.isArrayClassActor();
+            assert arrayClassActor.isArrayClass();
             assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
             assignReferenceLiteralTemplateArgument(0, arrayClassActor);
             assignReferenceLiteralTemplateArgument(1, new int[numberOfDimensions]);

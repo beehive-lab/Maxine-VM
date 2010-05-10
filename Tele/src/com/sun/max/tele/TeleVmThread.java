@@ -50,9 +50,9 @@ public class TeleVmThread extends TeleTupleObject {
     }
 
     public String name() {
-        if (teleVM().teleProcess().epoch() > lastRefreshedEpoch) {
+        if (vm().teleProcess().epoch() > lastRefreshedEpoch) {
             try {
-                final Reference nameReference = teleVM().teleFields().VmThread_name.readReference(reference());
+                final Reference nameReference = vm().teleFields().VmThread_name.readReference(reference());
                 if (this.nameReference == null || !nameReference.equals(this.nameReference)) {
                     if (nameReference.isZero()) {
                         name = "*unset*";
@@ -61,13 +61,13 @@ public class TeleVmThread extends TeleTupleObject {
                         // if we've already seen the string (depends on canonical references).
                         this.nameReference = nameReference;
                         try {
-                            name = teleVM().getString(this.nameReference);
+                            name = vm().getString(this.nameReference);
                         } catch (InvalidReferenceException invalidReferenceExceptoin) {
                             name = "?";
                         }
                     }
                 }
-                lastRefreshedEpoch = teleVM().teleProcess().epoch();
+                lastRefreshedEpoch = vm().teleProcess().epoch();
             } catch (DataIOError dataIOError) {
                 name = "?";
             }
@@ -82,7 +82,7 @@ public class TeleVmThread extends TeleTupleObject {
      * @return the thread associated with this Java thread.
      */
     public MaxThread maxThread() {
-        for (MaxThread maxThread : teleVM().state().threads()) {
+        for (MaxThread maxThread : vm().state().threads()) {
             if (maxThread.teleVmThread() == this) {
                 return maxThread;
             }

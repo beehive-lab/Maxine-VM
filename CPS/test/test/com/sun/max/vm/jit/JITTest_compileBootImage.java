@@ -56,7 +56,7 @@ public class JITTest_compileBootImage extends JitCompilerTestCase {
             }
         });
         for (TargetMethod targetMethod : toDo) {
-            Trace.line(1,  targetMethod.description());
+            Trace.line(1,  targetMethod.regionName());
             traceBundleAndDisassemble((CPSTargetMethod) targetMethod);
         }
     }

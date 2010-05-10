@@ -22,6 +22,7 @@ package com.sun.max.vm.type;
 
 import static com.sun.max.vm.classfile.ErrorContext.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -31,6 +32,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.JavaTypeDescriptor.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -57,10 +59,13 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     public final int stackSlots;
     public final boolean isWord;
     public final boolean isReference;
+    public final CiKind ciKind;
 
+    @HOSTED_ONLY
     protected Kind(KindEnum kindEnum, String name, Class javaClass, Class javaArrayClass, Class<Value_Type> valueClass, char character,
                    final Class boxedClass, TypeDescriptor typeDescriptor, WordWidth width) {
         this.asEnum = kindEnum;
+        kindEnum.setKind(this);
         this.name = SymbolTable.makeSymbol(name);
         this.javaClass = javaClass;
         this.javaArrayClass = javaArrayClass;
@@ -74,6 +79,11 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         this.stackSlots = !isCategory1 ? 2 : (character == 'V' ? 0 : 1);
         this.isWord = kindEnum == KindEnum.WORD;
         this.isReference = kindEnum == KindEnum.REFERENCE;
+        if (typeDescriptor instanceof AtomicTypeDescriptor) {
+            ((AtomicTypeDescriptor) typeDescriptor).setKind(this);
+        }
+        String ciKindName = isReference ? "Object" : Strings.capitalizeFirst(name, true);
+        this.ciKind = CiKind.valueOf(ciKindName);
     }
 
     @Override
