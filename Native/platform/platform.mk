@@ -113,6 +113,15 @@ endif
 ifeq ($(TARGETOS),GuestVM)
     HYP := xen
     OS := guestvm
+    DOM0 := 64
+    ISA := amd64
+    ARCH := amd64
+endif
+
+ifeq ($(TARGETOS),GuestVM32)
+    HYP := xen
+    OS := guestvm
+    DOM0 := 32
     ISA := amd64
     ARCH := amd64
 endif
@@ -207,6 +216,11 @@ endif
 
 ifeq ($(OS),guestvm)
     # assume Xen hypervisor
+    ifeq ($(DOM0),64)
+      mf = -m64
+    else
+      mf = -m32
+    endif
     ifneq "$(findstring def, $(origin CC))" ""
         # origin of CC is either undefined or default, so set it here
         CC = gcc 
@@ -214,7 +228,7 @@ ifeq ($(OS),guestvm)
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
         CFLAGS = -g -Wall -Wno-format -Wpointer-arith -Winline \
-                  -m64 -mno-red-zone -fpic -fno-reorder-blocks \
+                  $(mf) -mno-red-zone -fpic -fno-reorder-blocks \
                   -fno-asynchronous-unwind-tables -fno-builtin \
                   -DGUESTVMXEN -D$(ISA) -D$(TARGET)
     endif
@@ -232,7 +246,8 @@ ifeq ($(OS),guestvm)
     endif
     
     LINK_AR = $(AR) r $(LIB_PREFIX)$(LIB)$(LIBA_SUFFIX)
-    LINK_LIB = $(CC) -shared -lc -lm -m64  -lguk_db
+#    LINK_LIB = $(CC) -shared -lc -lm -m64  -lguk_db
+     LINK_LIB = $(CC) -shared -lc -lm $(mf)
 endif
 
 ifndef JAVA_HOME

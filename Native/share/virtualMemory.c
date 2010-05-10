@@ -61,8 +61,8 @@
 #define PROT                (PROT_EXEC | PROT_READ | PROT_WRITE)
 
 /* mmap returns MAP_FAILED on error, we convert to ALLOC_FAILED */
-static Address check_mmap_result(Word result) {
-    return ((Address) (result == (Word) MAP_FAILED ? ALLOC_FAILED : result));
+static Address check_mmap_result(void *result) {
+    return ((Address) (result == (void *) MAP_FAILED ? ALLOC_FAILED : result));
 }
 
 Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
@@ -142,7 +142,7 @@ void virtualMemory_protectPages(Address address, int count) {
     c_ASSERT(virtualMemory_pageAlign(address) == address);
 
 #if os_SOLARIS || os_DARWIN || os_LINUX
-    if (mprotect((Word) address, count * virtualMemory_getPageSize(), PROT_NONE) != 0) {
+    if (mprotect((void *) address, count * virtualMemory_getPageSize(), PROT_NONE) != 0) {
          int error = errno;
          log_exit(error, "protectPages: mprotect(%p) failed: %s", address, strerror(error));
     }
@@ -156,7 +156,7 @@ void virtualMemory_protectPages(Address address, int count) {
 void virtualMemory_unprotectPages(Address address, int count) {
 	c_ASSERT(virtualMemory_pageAlign(address) == address);
 #if os_SOLARIS || os_DARWIN || os_LINUX
-	if (mprotect((Word) address, count * virtualMemory_getPageSize(), PROT_READ| PROT_WRITE) != 0){
+	if (mprotect((void *) address, count * virtualMemory_getPageSize(), PROT_READ| PROT_WRITE) != 0){
          int error = errno;
 		 log_exit(error, "unprotectPages: mprotect(%p) failed: %s", address, strerror(error));
 	}
