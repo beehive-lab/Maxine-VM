@@ -62,19 +62,7 @@ public class GuestVMXenDBTraceChannelProtocol extends GuestVMXenDBChannelProtoco
     }
 
     @Override
-    public int readByte(long address) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
     public int readBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public long readInt(long address) {
         // TODO Auto-generated method stub
         return 0;
     }
@@ -84,12 +72,6 @@ public class GuestVMXenDBTraceChannelProtocol extends GuestVMXenDBChannelProtoco
                     int stateRegistersSize) {
         // TODO Auto-generated method stub
         return false;
-    }
-
-    @Override
-    public int readShort(long address) {
-        // TODO Auto-generated method stub
-        return 0;
     }
 
     @Override
@@ -136,12 +118,6 @@ public class GuestVMXenDBTraceChannelProtocol extends GuestVMXenDBChannelProtoco
 
     @Override
     public boolean suspendAll() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public boolean writeByte(long address, byte value) {
         // TODO Auto-generated method stub
         return false;
     }
