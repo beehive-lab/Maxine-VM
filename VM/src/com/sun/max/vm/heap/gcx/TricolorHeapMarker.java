@@ -1287,10 +1287,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     Pointer gapRightObject;
     int     gapBitmapWordIndex;
     int     gapBitIndex;
-    // FIXME: make local vars again.
-    int lastLiveMark;
-    int bitIndexInWord;
-    long w;
+
     /**
      * Imprecise sweeping of the heap.
      * The sweeper is notified only when the distance between two live marks is larger than a specified minimum amount of
@@ -1313,8 +1310,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         // Indicate the closest position the next live mark should be at to make the space reclaimable.
         int nextReclaimableMark = minBitsBetweenMark;
-        // int
-        lastLiveMark = firstBlackMark(0, bitIndexOf(rightmost));
+        int lastLiveMark = firstBlackMark(0, bitIndexOf(rightmost));
         if (lastLiveMark > 0) {
             if (lastLiveMark >=  nextReclaimableMark) {
                 sweeper.processDeadSpace(coveredAreaStart, Size.fromInt(lastLiveMark << log2BytesCoveredPerBit));
@@ -1336,11 +1332,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             if (bitmapWord != 0) {
                 // At least one mark is set.
                 //int bitIndexInWord = 0;
-                bitIndexInWord = 0;
+                int bitIndexInWord = 0;
                 final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;
                 int nextCellBitmapWordIndex = bitmapWordIndex + 1;
                 // long w = bitmapWord;
-                w = bitmapWord;
+                long w = bitmapWord;
                 do {
                     // First mark is the least set bit.
                     bitIndexInWord += Pointer.fromLong(w).leastSignificantBitSet();
