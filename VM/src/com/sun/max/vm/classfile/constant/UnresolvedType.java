@@ -24,31 +24,88 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.type.JavaTypeDescriptor.*;
 
 /**
- * An {@linkplain RiType#isResolved() unresolved} type with a back reference to the
- * constant pool entry from which it was derived.
+ * An {@linkplain RiType#isResolved() unresolved} type. An unresolved type is
+ * derived from a {@linkplain UnresolvedType.InPool constant pool entry} or
+ * from a {@linkplain TypeDescriptor type descriptor} and an associated
+ * accessing class.
  *
  * @author Ben L. Titzer
  * @author Doug Simon
  */
-public final class UnresolvedType implements RiType {
+public abstract class UnresolvedType implements RiType {
 
-    public final ConstantPool constantPool;
+    /**
+     * Gets a {@link RiType}. This method will return a {@linkplain RiType#isResolved() resolved}
+     * type if possible but without triggering any class loading or resolution.
+     *
+     * @param typeDescriptor a type descriptor
+     * @param accessingClass the context of the type lookup. If accessing class is resolved, its class loader
+     *        is used to retrieve an existing resolved type. This value can be {@code null} if the caller does
+     *        not care for a resolved type.
+     * @return a {@link RiType} object for {@code typeDescriptor}
+     */
+    public static RiType toRiType(TypeDescriptor typeDescriptor, RiType accessingClass) {
+        if (typeDescriptor instanceof AtomicTypeDescriptor) {
+            final AtomicTypeDescriptor atom = (AtomicTypeDescriptor) typeDescriptor;
+            return ClassActor.fromJava(atom.toKind().javaClass);
+        } else if (typeDescriptor instanceof WordTypeDescriptor) {
+            final WordTypeDescriptor word = (WordTypeDescriptor) typeDescriptor;
+            if (word.javaClass instanceof Class) {
+                return ClassActor.fromJava((Class) word.javaClass);
+            }
+        } else if (accessingClass != null) {
+            if (accessingClass instanceof ClassActor) {
+                ClassLoader loader = ((ClassActor) accessingClass).classLoader;
+                if (typeDescriptor.isResolvableWithoutClassLoading(loader)) {
+                    return typeDescriptor.resolve(loader);
+                }
+            }
+        }
+        return new ByAccessingClass(typeDescriptor, (ClassActor) accessingClass);
+    }
+
+    /**
+     * An unresolved type corresponding to a constant pool entry.
+     */
+    public static final class InPool extends UnresolvedType {
+        public final ConstantPool pool;
+        public final int cpi;
+        public InPool(TypeDescriptor typeDescriptor, ConstantPool pool, int cpi) {
+            super(typeDescriptor);
+            this.pool = pool;
+            this.cpi = cpi;
+        }
+
+    }
+
+    /**
+     * An unresolved type corresponding to a type descriptor and an accessing class.
+     */
+    public static final class ByAccessingClass extends UnresolvedType {
+        public final ClassActor accessingClass;
+        public ByAccessingClass(TypeDescriptor typeDescriptor, ClassActor accessingClass) {
+            super(typeDescriptor);
+            this.accessingClass = accessingClass;
+        }
+    }
+
+    /**
+     * The symbol for the unresolved type.
+     */
     public final TypeDescriptor typeDescriptor;
-    public final int cpi;
 
     /**
      * Creates a new unresolved type for a specified type descriptor.
      *
      * @param typeDescriptor the type's descriptor
-     * @param constantPool the constant pool containing the unresolved type reference
+     * @param pool the constant pool containing the unresolved type reference
      * @param cpi the index in {@code constantPool} of the unresolved type reference
      */
-    public UnresolvedType(TypeDescriptor typeDescriptor, ConstantPool constantPool, int cpi) {
-        this.constantPool = constantPool;
+    public UnresolvedType(TypeDescriptor typeDescriptor) {
         this.typeDescriptor = typeDescriptor;
-        this.cpi = cpi;
     }
 
     public String name() {
@@ -104,11 +161,11 @@ public final class UnresolvedType implements RiType {
     }
 
     public RiType componentType() {
-        return TypeDescriptor.toRiType(typeDescriptor.componentTypeDescriptor(), null);
+        return UnresolvedType.toRiType(typeDescriptor.componentTypeDescriptor(), null);
     }
 
     public RiType exactType() {
-        return null;
+        throw unresolved("exactType()");
     }
 
     /**
@@ -116,7 +173,7 @@ public final class UnresolvedType implements RiType {
      * @return the compiler interface type representing an array with elements of this compiler interface type
      */
     public RiType arrayOf() {
-        return TypeDescriptor.toRiType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1), null);
+        return UnresolvedType.toRiType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1), null);
     }
 
     public RiMethod resolveMethodImpl(RiMethod method) {

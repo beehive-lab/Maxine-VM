@@ -494,69 +494,69 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$reference)
-    public static void getfieldReference(ResolutionGuard guard) {
+    public static void getfieldReference(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeReference(0, resolveAndGetFieldReference(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$word)
-    public static void getfieldWord(ResolutionGuard guard) {
+    public static void getfieldWord(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeWord(0, resolveAndGetFieldWord(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$byte)
-    public static void getfieldByte(ResolutionGuard guard) {
+    public static void getfieldByte(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, resolveAndGetFieldByte(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$char)
-    public static void getfieldChar(ResolutionGuard guard) {
+    public static void getfieldChar(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, resolveAndGetFieldChar(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$double)
-    public static void getfieldDouble(ResolutionGuard guard) {
+    public static void getfieldDouble(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeDouble(0, resolveAndGetFieldDouble(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$float)
-    public static void getfieldFloat(ResolutionGuard guard) {
+    public static void getfieldFloat(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeFloat(0, resolveAndGetFieldFloat(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$int)
-    public static void getfieldInt(ResolutionGuard guard) {
+    public static void getfieldInt(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, resolveAndGetFieldInt(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$long)
-    public static void getfieldLong(ResolutionGuard guard) {
+    public static void getfieldLong(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeLong(0, resolveAndGetFieldLong(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$short)
-    public static void getfieldShort(ResolutionGuard guard) {
+    public static void getfieldShort(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, resolveAndGetFieldShort(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$boolean)
-    public static void getfieldBoolean(ResolutionGuard guard) {
+    public static void getfieldBoolean(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, UnsafeCast.asByte(resolveAndGetFieldBoolean(guard, object)));
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$reference)
-    public static void putfieldReference(ResolutionGuard guard) {
+    public static void putfieldReference(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(1);
         Object value = JitStackFrameOperation.peekObject(0);
         resolveAndPutFieldReference(guard, object, value);
@@ -564,7 +564,7 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$word)
-    public static void putfieldWord(ResolutionGuard guard) {
+    public static void putfieldWord(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(1);
         Word value = JitStackFrameOperation.peekWord(0);
         resolveAndPutFieldWord(guard, object, value);
@@ -572,7 +572,7 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$byte)
-    public static void putfieldByte(ResolutionGuard guard) {
+    public static void putfieldByte(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(1);
         byte value = (byte) JitStackFrameOperation.peekInt(0);
         resolveAndPutFieldByte(guard, object, value);
@@ -580,7 +580,7 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$char)
-    public static void putfieldChar(ResolutionGuard guard) {
+    public static void putfieldChar(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(1);
         char value = (char) JitStackFrameOperation.peekInt(0);
         resolveAndPutFieldChar(guard, object, value);
@@ -588,7 +588,7 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$double)
-    public static void putfieldDouble(ResolutionGuard guard) {
+    public static void putfieldDouble(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(2);
         double value = JitStackFrameOperation.peekDouble(0);
         resolveAndPutFieldDouble(guard, object, value);
@@ -596,7 +596,7 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$float)
-    public static void putfieldFloat(ResolutionGuard guard) {
+    public static void putfieldFloat(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(1);
         float value = JitStackFrameOperation.peekFloat(0);
         resolveAndPutFieldFloat(guard, object, value);
@@ -604,7 +604,7 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$int)
-    public static void putfieldInt(ResolutionGuard guard) {
+    public static void putfieldInt(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(1);
         int value = JitStackFrameOperation.peekInt(0);
         resolveAndPutFieldInt(guard, object, value);
@@ -612,7 +612,7 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$long)
-    public static void putfieldLong(ResolutionGuard guard) {
+    public static void putfieldLong(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(2);
         long value = JitStackFrameOperation.peekLong(0);
         resolveAndPutFieldLong(guard, object, value);
@@ -620,7 +620,7 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$short)
-    public static void putfieldShort(ResolutionGuard guard) {
+    public static void putfieldShort(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(1);
         short value = (short) JitStackFrameOperation.peekInt(0);
         resolveAndPutFieldShort(guard, object, value);
@@ -628,7 +628,7 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$boolean)
-    public static void putfieldBoolean(ResolutionGuard guard) {
+    public static void putfieldBoolean(ResolutionGuard.InPool guard) {
         Object object = JitStackFrameOperation.peekObject(1);
         boolean value = UnsafeCast.asBoolean((byte) JitStackFrameOperation.peekInt(0));
         resolveAndPutFieldBoolean(guard, object, value);
@@ -636,104 +636,104 @@ public class BytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$byte)
-    public static void getstaticByte(ResolutionGuard guard) {
+    public static void getstaticByte(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.pushInt(resolveAndGetStaticByte(guard));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$char)
-    public static void getstaticChar(ResolutionGuard guard) {
+    public static void getstaticChar(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.pushInt(resolveAndGetStaticChar(guard));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$double)
-    public static void getstaticDouble(ResolutionGuard guard) {
+    public static void getstaticDouble(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.pushDouble(resolveAndGetStaticDouble(guard));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$float)
-    public static void getstaticFloat(ResolutionGuard guard) {
+    public static void getstaticFloat(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.pushFloat(resolveAndGetStaticFloat(guard));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$int)
-    public static void getstaticInt(ResolutionGuard guard) {
+    public static void getstaticInt(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.pushInt(resolveAndGetStaticInt(guard));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$long)
-    public static void getstaticLong(ResolutionGuard guard) {
+    public static void getstaticLong(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.pushLong(resolveAndGetStaticLong(guard));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$reference)
-    public static void getstaticReference(ResolutionGuard guard) {
+    public static void getstaticReference(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.pushObject(resolveAndGetStaticReference(guard));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$word)
-    public static void getstaticWord(ResolutionGuard guard) {
+    public static void getstaticWord(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.pushWord(resolveAndGetStaticWord(guard));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$short)
-    public static void getstaticShort(ResolutionGuard guard) {
+    public static void getstaticShort(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.pushInt(resolveAndGetStaticShort(guard));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$boolean)
-    public static void getstaticBoolean(ResolutionGuard guard) {
+    public static void getstaticBoolean(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.pushInt(UnsafeCast.asByte(resolveAndGetStaticBoolean(guard)));
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$byte)
-    public static void putstaticByte(ResolutionGuard guard) {
+    public static void putstaticByte(ResolutionGuard.InPool guard) {
         resolveAndPutStaticByte(guard, (byte) JitStackFrameOperation.popInt());
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$char)
-    public static void putstaticChar(ResolutionGuard guard) {
+    public static void putstaticChar(ResolutionGuard.InPool guard) {
         resolveAndPutStaticChar(guard, (char) JitStackFrameOperation.popInt());
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$double)
-    public static void putstaticDouble(ResolutionGuard guard) {
+    public static void putstaticDouble(ResolutionGuard.InPool guard) {
         resolveAndPutStaticDouble(guard, JitStackFrameOperation.popDouble());
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$float)
-    public static void putstaticFloat(ResolutionGuard guard) {
+    public static void putstaticFloat(ResolutionGuard.InPool guard) {
         resolveAndPutStaticFloat(guard, JitStackFrameOperation.popFloat());
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$int)
-    public static void putstaticInt(ResolutionGuard guard) {
+    public static void putstaticInt(ResolutionGuard.InPool guard) {
         resolveAndPutStaticInt(guard, JitStackFrameOperation.popInt());
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$long)
-    public static void putstaticLong(ResolutionGuard guard) {
+    public static void putstaticLong(ResolutionGuard.InPool guard) {
         resolveAndPutStaticLong(guard, JitStackFrameOperation.popLong());
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$reference)
-    public static void putstaticReference(ResolutionGuard guard) {
+    public static void putstaticReference(ResolutionGuard.InPool guard) {
         resolveAndPutStaticReference(guard, JitStackFrameOperation.peekObject(0));
         JitStackFrameOperation.removeSlots(1);
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$word)
-    public static void putstaticWord(ResolutionGuard guard) {
+    public static void putstaticWord(ResolutionGuard.InPool guard) {
         resolveAndPutStaticWord(guard, JitStackFrameOperation.peekWord(0));
         JitStackFrameOperation.removeSlots(1);
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$short)
-    public static void putstaticShort(ResolutionGuard guard) {
+    public static void putstaticShort(ResolutionGuard.InPool guard) {
         resolveAndPutStaticShort(guard, (short) JitStackFrameOperation.popInt());
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$boolean)
-    public static void putstaticBoolean(ResolutionGuard guard) {
+    public static void putstaticBoolean(ResolutionGuard.InPool guard) {
         resolveAndPutStaticBoolean(guard, UnsafeCast.asBoolean((byte) JitStackFrameOperation.popInt()));
     }
 
@@ -895,128 +895,128 @@ public class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(INSTANCEOF)
     public static void instanceof_(ResolutionGuard guard) {
-        ClassActor classActor = UnsafeCast.asClassActor(NoninlineTemplateRuntime.resolveClass(guard));
+        ClassActor classActor = UnsafeCast.asClassActor(ResolveClass.resolveClass(guard));
         Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, UnsafeCast.asByte(Snippet.InstanceOf.instanceOf(classActor, object)));
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$void)
-    public static void invokevirtualVoid(ResolutionGuard guard, int receiverStackIndex) {
+    public static void invokevirtualVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
         Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$float)
-    public static void invokevirtualFloat(ResolutionGuard guard, int receiverStackIndex) {
+    public static void invokevirtualFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
         Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$long)
-    public static void invokevirtualLong(ResolutionGuard guard, int receiverStackIndex) {
+    public static void invokevirtualLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
         Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$double)
-    public static void invokevirtualDouble(ResolutionGuard guard, int receiverStackIndex) {
+    public static void invokevirtualDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
         Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$word)
-    public static void invokevirtualWord(ResolutionGuard guard, int receiverStackIndex) {
+    public static void invokevirtualWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
         Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$void)
-    public static void invokeinterfaceVoid(ResolutionGuard guard, int receiverStackIndex) {
+    public static void invokeinterfaceVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
         Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$float)
-    public static void invokeinterfaceFloat(ResolutionGuard guard, int receiverStackIndex) {
+    public static void invokeinterfaceFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
         Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$long)
-    public static void invokeinterfaceLong(ResolutionGuard guard, int receiverStackIndex) {
+    public static void invokeinterfaceLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
         Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$double)
-    public static void invokeinterfaceDouble(ResolutionGuard guard, int receiverStackIndex) {
+    public static void invokeinterfaceDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
         Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$word)
-    public static void invokeinterfaceWord(ResolutionGuard guard, int receiverStackIndex) {
+    public static void invokeinterfaceWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
         Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
         Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKESPECIAL$void)
-    public static void invokespecialVoid(ResolutionGuard guard) {
+    public static void invokespecialVoid(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.indirectCallVoid(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(INVOKESPECIAL$float)
-    public static void invokespecialFloat(ResolutionGuard guard) {
+    public static void invokespecialFloat(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.indirectCallFloat(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(INVOKESPECIAL$long)
-    public static void invokespecialLong(ResolutionGuard guard) {
+    public static void invokespecialLong(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.indirectCallLong(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(INVOKESPECIAL$double)
-    public static void invokespecialDouble(ResolutionGuard guard) {
+    public static void invokespecialDouble(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.indirectCallDouble(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(INVOKESPECIAL$word)
-    public static void invokespecialWord(ResolutionGuard guard) {
+    public static void invokespecialWord(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.indirectCallWord(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(INVOKESTATIC$void)
-    public static void invokestaticVoid(ResolutionGuard guard) {
+    public static void invokestaticVoid(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.indirectCallVoid(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(INVOKESTATIC$float)
-    public static void invokestaticFloat(ResolutionGuard guard) {
+    public static void invokestaticFloat(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.indirectCallFloat(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(INVOKESTATIC$long)
-    public static void invokestaticLong(ResolutionGuard guard) {
+    public static void invokestaticLong(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.indirectCallLong(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(INVOKESTATIC$double)
-    public static void invokestaticDouble(ResolutionGuard guard) {
+    public static void invokestaticDouble(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.indirectCallDouble(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(INVOKESTATIC$word)
-    public static void invokestaticWord(ResolutionGuard guard) {
+    public static void invokestaticWord(ResolutionGuard.InPool guard) {
         JitStackFrameOperation.indirectCallWord(resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
@@ -1114,7 +1114,7 @@ public class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(LDC$reference)
     public static void unresolved_class_ldc(ResolutionGuard guard) {
-        ClassActor classActor = NoninlineTemplateRuntime.resolveClass(guard);
+        ClassActor classActor = ResolveClass.resolveClass(guard);
         Object mirror = NoninlineTemplateRuntime.getClassMirror(classActor);
         JitStackFrameOperation.pushObject(mirror);
     }
@@ -1305,7 +1305,7 @@ public class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(MULTIANEWARRAY)
     public static void multianewarray(ResolutionGuard guard, int[] lengthsShared) {
-        ClassActor arrayClassActor = NoninlineTemplateRuntime.resolveClass(guard);
+        ClassActor arrayClassActor = ResolveClass.resolveClass(guard);
 
         // Need to use an unsafe cast to remove the checkcast inserted by javac as that causes this
         // template to have a reference literal in its compiled form.

@@ -29,6 +29,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
+import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
@@ -166,6 +167,8 @@ public class C1XTest {
             verboseOption.setValue(0);
             failFastOption.setValue(false);
             printBailoutOption.setValue(false);
+            C1XOptions.DetailedAsserts = false;
+            C1XOptions.IRChecking = false;
         }
 
         Trace.on(traceOption.getValue());
@@ -368,6 +371,12 @@ public class C1XTest {
         if (method.isNative() && !MaxRiRuntime.CAN_COMPILE_NATIVE_METHODS) {
             return false;
         }
+        if (method.accessor() != null && !MaxRiRuntime.CAN_COMPILE_ACCESSOR_METHODS) {
+            return false;
+        }
+        if (method.isInline()) {
+            return false;
+        }
         return method instanceof ClassMethodActor && !method.isAbstract() && !method.isBuiltin() && !method.isIntrinsic();
     }
 
@@ -567,6 +576,11 @@ public class C1XTest {
         ClassActor classActor = null;
         try {
             classActor = ClassActor.fromJava(javaClass);
+
+            MaxPackage maxPackage = MaxPackage.fromClass(javaClass);
+            if (maxPackage != null && maxPackage.name().contains(".prototype")) {
+                return null;
+            }
         } catch (Throwable t) {
             // do nothing.
         }

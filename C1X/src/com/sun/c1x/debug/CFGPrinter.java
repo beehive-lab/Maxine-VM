@@ -290,7 +290,7 @@ public class CFGPrinter {
     }
 
     private void printOperand(Value i) {
-        if (i != null && i.operand() != null && i.operand().isVariable()) {
+        if (i != null && i.operand().isVariable()) {
             out.print(" \"").print(i.operand().toString()).print("\" ");
         }
     }

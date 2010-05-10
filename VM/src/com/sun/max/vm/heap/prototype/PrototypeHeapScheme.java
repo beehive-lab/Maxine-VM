@@ -142,11 +142,11 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
     }
 
     public Pointer gcAllocate(RuntimeMemoryRegion region, Size size) {
-        return null;
+        return Pointer.zero();
     }
 
     public Pointer gcBumpAllocate(RuntimeMemoryRegion region, Size size) {
-        return null;
+        return Pointer.zero();
     }
 
     @Override

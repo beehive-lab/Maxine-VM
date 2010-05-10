@@ -91,9 +91,4 @@ public interface XirSite {
      * {@code null} if no particular type is known
      */
     RiType getExactType(XirArgument argument);
-    
-    /**
-     * Gets the class loader to be used to perform any symbolic resolution at the size.
-     */
-    ClassLoader resolutionLoader();
 }

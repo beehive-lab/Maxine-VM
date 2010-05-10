@@ -18,26 +18,47 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.stack.exp;
-
-import com.sun.max.unsafe.Pointer;
-
 /**
- * This interface represents a callback for each frame to record its reference map.
- *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
+ * Measures the opening of a client-side TCP socket.
  */
-public interface ExpReferenceMapPreparer {
-    /**
-     * This method is called by each frame as it prepares its reference map, informing the preparer
-     * of the words within its frame that contain references.
-     *
-     * @param layout the stack frame layout object (for debugging)
-     * @param cursor the stack frame cursor (for debugging)
-     * @param start the pointer at which these reference map bits start
-     * @param bitMap the bits of the bitmap, with bit 0 corresponding to word at offset 0 from the start
-     * @param numBits the number of bits to consider in the map
-     */
-    void recordReferenceBits(ExpStackFrameLayout layout, ExpStackWalker.Cursor cursor, Pointer start, int bitMap, int numBits);
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.net;
+
+import java.net.*;
+
+public class NewSocket extends NetSettings {
+
+    protected NewSocket(MicroBenchmark bench) {
+        super(bench);
+    }
+
+    public static boolean test(int i) {
+        return new NewSocket(new Bench()).runBench(true);
+    }
+
+    static class Bench implements MicroBenchmark {
+        public void run(boolean warmup) {
+            Socket s = null;
+            try {
+                s = new Socket(host(), port());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            } finally {
+                if (s != null) {
+                    try {
+                        s.close();
+                    } catch (Exception ex) {
+                    }
+                }
+            }
+        }
+    }
+
+    // for running stand-alone
+    public static void main(String[] args) {
+        test(0);
+    }
 }

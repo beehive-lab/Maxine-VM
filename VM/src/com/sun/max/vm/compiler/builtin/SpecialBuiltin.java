@@ -138,10 +138,10 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     /**
-     * Returns the index to the least significant bit set in a given value.
+     * Returns the index of the least significant bit set in a given value.
      *
      * @param value the value to scan for the least significant bit
-     * @return the index to the least significant bit within {@code value} or {@code -1} if {@code value == 0}
+     * @return the index of the least significant bit within {@code value} or {@code -1} if {@code value == 0}
      */
     @INTRINSIC(LSB)
     @BUILTIN(LeastSignificantBit.class)

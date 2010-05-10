@@ -155,6 +155,7 @@ public final class Invoke extends StateSplit {
     }
 
     public CiKind[] signature() {
-        return Util.signatureToKinds(target.signature(), !isStatic());
+        CiKind receiver = isStatic() ? null : target.holder().kind();
+        return Util.signatureToKinds(target.signature(), receiver);
     }
 }

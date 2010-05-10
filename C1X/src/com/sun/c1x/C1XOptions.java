@@ -64,7 +64,7 @@ public class C1XOptions {
     public static boolean IntrinsifyUnsafe                   = true;
 
     // debugging and printing settings
-    public static boolean IRChecking                         = ____;
+    public static boolean IRChecking                         = true;
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
@@ -161,7 +161,7 @@ public class C1XOptions {
     public static boolean GenTableRanges                = ____;
 
     public static int     InitialCodeBufferSize         = 232;
-    public static boolean DetailedAsserts               = ____;
+    public static boolean DetailedAsserts               = true;
 
     // Runtime settings
     public static boolean UseBiasedLocking              = ____;

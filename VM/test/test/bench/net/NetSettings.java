@@ -18,24 +18,34 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.stack.exp;
-
-import com.sun.max.vm.stack.exp.ExpStackWalker.*;
 
 /**
- * This class represents a raw stack frame, including the instruction pointer, stack pointer, frame
- * pointer, and stack frame layout.
- *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
- */
-public class ExpRawStackFrame {
+ * Support for tests that require a server program listening on the port given by the property {@code test.bench.net.port}.
+ * on the host given by the property {@code test.bench.net.host}.
 
-    public ExpRawStackFrame(ExpStackFrameLayout layout, Cursor cursor) {
-        this.layout = layout;
-        this.cursor = cursor;
+ */
+package test.bench.net;
+
+import test.bench.util.*;
+
+public class NetSettings extends RunBench {
+    private static final String HOST_NAME_PROPERTY = "test.bench.net.host";
+    private static final String HOST_PORT_PROPERTY = "test.bench.net.port";
+
+    private static String host;
+    private static int port;
+
+    protected NetSettings(MicroBenchmark bench) {
+        super(bench, null);
+        host = getRequiredProperty(HOST_NAME_PROPERTY);
+        port = Integer.parseInt(getRequiredProperty(HOST_PORT_PROPERTY));
     }
 
-    public final ExpStackFrameLayout layout;
-    public final Cursor cursor;
+    protected static String host() {
+        return host;
+    }
+
+    protected static int port() {
+        return port;
+    }
 }
