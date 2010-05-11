@@ -224,8 +224,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     /**
      * Counter of the number of recovery overflow scheduled during the current mark. For statistics purposes.
      */
-    private int recoveryScanCount = 0;
     private int totalRecoveryScanCount = 0;
+    private long totalRecoveryElapsedTime = 0L;
 
     private boolean traceGCTimes = false;
 
@@ -250,10 +250,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         Log.print(", marking=");
         Log.print(heapMarkingTimer.getLastElapsedTime());
         Log.print(", marking stack overflow (");
-        Log.print(recoveryScanCount);
+        Log.print(recoveryScanTimer.getCount());
         Log.print(") =");
-        Log.print(recoveryScanTimer.getLastElapsedTime());
-
+        Log.print(recoveryScanTimer.getElapsedTime());
     }
 
     public void reportTotalElapsedTimes() {
@@ -265,6 +264,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         Log.print(codeScanTimer.getElapsedTime());
         Log.print(", marking=");
         Log.print(heapMarkingTimer.getElapsedTime());
+        Log.print(", marking stack overflow (");
+        Log.print(totalRecoveryScanCount);
+        Log.print(") =");
+        Log.print(totalRecoveryElapsedTime);
     }
 
     /**
@@ -1268,7 +1271,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         if (!isRecovering()) {
             startTimer(recoveryScanTimer);
             currentScanState = overflowScanState;
-            recoveryScanCount++;
             startOfNextOverflowScan = leftmostFlushed;
             overflowScanState.initialize(forwardScanState);
             markStackCellVisitor.setScanState(overflowScanState);
@@ -1483,7 +1485,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     public void markAll() {
         traceGCTimes = Heap.traceGCTime();
-        recoveryScanCount = 0;
+        if (traceGCTimes) {
+            recoveryScanTimer.reset();
+        }
 
         clearColorMap();
         if (MaxineVM.isDebug()) {
@@ -1496,8 +1500,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         startTimer(heapMarkingTimer);
         visitAllGreyObjects();
         stopTimer(heapMarkingTimer);
-        totalRecoveryScanCount += recoveryScanCount;
-
+        if (traceGCTimes) {
+            totalRecoveryScanCount += recoveryScanTimer.getCount();
+            totalRecoveryElapsedTime += recoveryScanTimer.getElapsedTime();
+        }
         verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
     }
 
