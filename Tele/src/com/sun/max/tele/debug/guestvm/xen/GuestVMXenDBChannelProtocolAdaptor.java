@@ -22,9 +22,14 @@ package com.sun.max.tele.debug.guestvm.xen;
 
 import java.lang.reflect.*;
 import java.util.*;
-
 import com.sun.max.program.*;
 
+/**
+ * An adaptor that provides a mechanism for reflective invocation of the {@link GuestVMXenDBChannelProtocol} methods.
+ *
+ * @author Mick Jordan
+ *
+ */
 
 public abstract class GuestVMXenDBChannelProtocolAdaptor implements GuestVMXenDBChannelProtocol {
     static class MethodInfo {
