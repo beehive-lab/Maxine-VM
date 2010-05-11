@@ -731,6 +731,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         void markAndVisitPoppedCell(Pointer cell) {
+            if (MaxineVM.isDebug() && Heap.traceGC()) {
+                Log.print("Visiting popped cell ");
+                Log.println(cell);
+            }
             visitGreyCell(cell);
             heapMarker.markBlackFromGrey(cell);
         }

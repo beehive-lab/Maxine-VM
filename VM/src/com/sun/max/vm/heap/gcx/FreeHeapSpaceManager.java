@@ -692,8 +692,26 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
                 return result;
             }
             invokeGCForExactFitRequest = exactFit;
-            if (MaxineVM.isDebug() && ++gcCount > 5) {
-                FatalError.unexpected("Suspiscious repeating GC calls detected");
+            if (MaxineVM.isDebug()) {
+                gcCount++;
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Allocation failure: ");
+                Log.print("firstBinIndex ");
+                Log.print(firstBinIndex);
+                Log.print("size: ");
+                Log.print(size.toLong());
+                Log.print(",  fit: ");
+                Log.println(exactFit ? "exact" : "not exact");
+                Log.print("TLAB freelist: #chunks = ");
+                Log.print(tlabFreeSpaceList.totalChunks);
+                Log.print(", size = ");
+                Log.print(tlabFreeSpaceList.totalSize);
+                Log.print(" useTLABBin = ");
+                Log.println(useTLABBin);
+                Log.unlock(lockDisabledSafepoints);
+                if (gcCount > 5) {
+                    FatalError.unexpected("Suspiscious repeating GC calls detected");
+                }
             }
         } while (Heap.collectGarbage(size));
         // Not enough freed memory.
