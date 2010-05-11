@@ -25,6 +25,7 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
@@ -222,11 +223,53 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         private TLABFiller tlabFiller = new TLABFiller();
 
         private Size requestedSize;
+        private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+        private final TimerMetric reclaimTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+        private final TimerMetric totalPauseTime = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+
+        private boolean traceGCTimes = false;
+
+        private void startTimer(Timer timer) {
+            if (traceGCTimes) {
+                timer.start();
+            }
+        }
+        private void stopTimer(Timer timer) {
+            if (traceGCTimes) {
+                timer.stop();
+            }
+        }
+
+        private void reportLastGCTimes() {
+            final boolean lockDisabledSafepoints = Log.lock();
+            heapMarker.reportLastElapsedTimes();
+            Log.print(", weak refs=");
+            Log.print(weakRefTimer.getLastElapsedTime());
+            Log.print(", sweeping=");
+            Log.print(reclaimTimer.getLastElapsedTime());
+            Log.print(", total=");
+            Log.println(totalPauseTime.getLastElapsedTime());
+            Log.unlock(lockDisabledSafepoints);
+        }
+
+        private void reportTotalGCTimes() {
+            final boolean lockDisabledSafepoints = Log.lock();
+            heapMarker.reportTotalElapsedTimes();
+            Log.print(", weak refs=");
+            Log.print(weakRefTimer.getElapsedTime());
+            Log.print(", sweeping=");
+            Log.print(reclaimTimer.getElapsedTime());
+            Log.print(", total=");
+            Log.println(totalPauseTime.getElapsedTime());
+            Log.unlock(lockDisabledSafepoints);
+        }
 
         private HeapResizingPolicy heapResizingPolicy = new HeapResizingPolicy();
 
         @Override
         public void collect(int invocationCount) {
+            traceGCTimes = Heap.traceGCTime();
+            startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
             HeapScheme.Static.notifyGCStarted();
@@ -240,8 +283,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             freeSpace.makeParsable();
             heapMarker.markAll();
+            startTimer(weakRefTimer);
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
+            stopTimer(weakRefTimer);
+            startTimer(reclaimTimer);
             Size freeSpaceAfterGC = freeSpace.reclaim(heapMarker);
+            stopTimer(reclaimTimer);
             if (MaxineVM.isDebug()) {
                 afterGCVerifier.run();
             }
@@ -258,6 +305,11 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
                 Log.println(collectionCount);
             }
             HeapScheme.Static.notifyGCCompleted();
+            stopTimer(totalPauseTime);
+
+            if (traceGCTimes) {
+                reportLastGCTimes();
+            }
         }
     }
 
@@ -402,5 +454,13 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         return false;
     }
 
+    @Override
+    public void finalize(MaxineVM.Phase phase) {
+        if (MaxineVM.Phase.RUNNING == phase) {
+            if (Heap.traceGCTime()) {
+                collect.reportTotalGCTimes();
+            }
+        }
+    }
 }
 
