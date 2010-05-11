@@ -18,53 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+
 package com.sun.hotspot.c1x;
 
-import com.sun.c1x.C1XCompiler;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.target.amd64.AMD64;
-import com.sun.cri.ci.CiCompiler;
-import com.sun.cri.ci.CiTarget;
-import com.sun.cri.ri.RiRegisterConfig;
-import com.sun.cri.xir.RiXirGenerator;
+import com.sun.cri.ci.CiResult;
+import com.sun.cri.ri.RiMethod;
 
 /**
  * 
  * @author Thomas Wuerthinger
  * 
- * Singleton class holding the instance of the C1XCompiler.
+ * Exits from the HotSpot VM into Java code.
  *
  */
-public class Compiler {
-
-	private static CiCompiler compiler;
+public class VMExits {
 	
-	public static CiCompiler getCompiler() {
-		
-		if (compiler == null) {
-			compiler = createCompiler();
+	public static void compileMethod(RiMethod method, int entry_bci) {
+		System.out.println("compileMethod in Java code called!");
+		CiResult result = Compiler.getCompiler().compileMethod(method, null);
+		System.out.println("Compilation result: ");
+		if (result.bailout() != null) {
+			System.out.println("Bailout:");
+			result.bailout().printStackTrace();
+		} else {
+			System.out.println(result.targetMethod());
 		}
-		
-		return compiler;
-	}
-	
-	
-	private static CiCompiler createCompiler() {
-
-		final HotSpotRuntime runtime = new HotSpotRuntime();
-		final RiXirGenerator generator = new HotSpotXirGenerator();
-		final int wordSize = 8;
-		final int stackFrameAlignment = 8;
-		final int pageSize = 1024;
-		final RiRegisterConfig config = new HotSpotRegisterConfig();
-        final CiTarget target = new CiTarget(new AMD64(), config, true, wordSize, wordSize, wordSize, stackFrameAlignment, pageSize, wordSize, wordSize, 16);
-        final CiCompiler compiler = new C1XCompiler(runtime, target, generator);
-        
-        C1XOptions.setOptimizationLevel(3);
-        C1XOptions.PrintCFGToFile = true;
-        C1XOptions.PrintAssembly = true;
-        
-        return compiler;
-        
 	}
 }
