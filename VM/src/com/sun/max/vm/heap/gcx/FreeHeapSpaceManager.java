@@ -330,6 +330,11 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
             fillUp();
         }
 
+        void printSpaceLeft() {
+            Log.print("Small object allocator: space left = ");
+            Log.println(hardLimit().minus(top()).toLong());
+
+        }
     }
 
     /**
@@ -523,6 +528,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
             Log.println(tlabFreeSpaceList.totalChunks);
             Log.unlock(lockDisabledSafepoints);
         }
+
         Address allocateChunks(Size size) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(!head.isZero(), "Head of free list must not be null");
@@ -659,27 +665,27 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
 
     public boolean canSatisfyAllocation(Size size) {
         // assert: must hold this class lock and must only be called from GC
-        if (invokeGCForExactFitRequest) {
-            int index = binIndex(size);
-            // Any chunks in bin larger or equal to index is large enough to contain the requested size.
-            // We may have to re-enter the leftover into another bin.
-            while (index < freeChunkBins.length) {
-                FreeSpaceList freelist = freeChunkBins[index];
-                if (!freelist.head.isZero() && freelist.canFit(size)) {
-                    return true;
-                }
-                index++;
+        int index = binIndex(size);
+        // Any chunks in bin larger or equal to index is large enough to contain the requested size.
+        // We may have to re-enter the leftover into another bin.
+        while (index < freeChunkBins.length) {
+            FreeSpaceList freelist = freeChunkBins[index];
+            if (!freelist.head.isZero() && freelist.canFit(size)) {
+                return true;
             }
-            return false;
+            index++;
         }
-        return size.lessThan(lockedFreeSpaceLeft());
+        return false;
     }
 
-    /**
-     * Inform GC whether the invoking request is for exact fit. Just an ugly hack to indirectly pass
-     * information that cannot be passed via the collectGarbage method.
-     */
-    private boolean invokeGCForExactFitRequest = false;
+    private void printTlabFreeSpace() {
+        Log.print("TLAB freelist: totalChunks = ");
+        Log.print(tlabFreeSpaceList.totalChunks);
+        Log.print(", totalSize = ");
+        Log.print(tlabFreeSpaceList.totalSize);
+        Log.print(" useTLABBin = ");
+        Log.println(useTLABBin);
+    }
 
     private Address binAllocate(int firstBinIndex, Size size, boolean exactFit) {
         int gcCount = 0;
@@ -691,9 +697,22 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
             if (!result.isZero()) {
                 return result;
             }
-            invokeGCForExactFitRequest = exactFit;
-            if (MaxineVM.isDebug() && ++gcCount > 5) {
-                FatalError.unexpected("Suspiscious repeating GC calls detected");
+            if (MaxineVM.isDebug()) {
+                gcCount++;
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Allocation failure: ");
+                Log.print("firstBinIndex ");
+                Log.print(firstBinIndex);
+                Log.print(", size: ");
+                Log.print(size.toLong());
+                Log.print(",  fit: ");
+                Log.println(exactFit ? "exact" : "not exact");
+                printTlabFreeSpace();
+                smallObjectAllocator.printSpaceLeft();
+                Log.unlock(lockDisabledSafepoints);
+                if (gcCount > 5) {
+                    FatalError.unexpected("Suspiscious repeating GC calls detected");
+                }
             }
         } while (Heap.collectGarbage(size));
         // Not enough freed memory.

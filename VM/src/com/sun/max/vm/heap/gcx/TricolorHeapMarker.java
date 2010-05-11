@@ -498,6 +498,23 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return true;
     }
 
+    final boolean isBlackWhenNotWhite(int blackBitIndex) {
+        // Only need to check the grey bit
+        final int greyBitIndex = blackBitIndex + 1;
+        final long bitmask = bitmaskFor(greyBitIndex);
+        final long bitmapWord = bitmapWordAt(greyBitIndex);
+        if ((bitmapWord & bitmask) == 0L) {
+            if (MaxineVM.isDebug()) {
+                // Mustn't be white
+                FatalError.check((bitmapWordAt(blackBitIndex) & bitmaskFor(blackBitIndex)) != 0L, "Must have a black mark");
+            }
+            // Grey bit not set.
+            return true;
+        }
+        return false;
+
+    }
+
     /**
      * Only used when tracing is completed. There should be no grey objects left.
      * @param cell
@@ -731,6 +748,16 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         void markAndVisitPoppedCell(Pointer cell) {
+            int bitIndex = heapMarker.bitIndexOf(cell);
+            // Due to how grey mark are being scanned, we may end up with black objects on the marking stack.
+            // We filter them out here. See comments in visitGreyObjects
+            if (heapMarker.isBlackWhenNotWhite(bitIndex)) {
+                return;
+            }
+            if (MaxineVM.isDebug() && Heap.traceGC()) {
+                Log.print("Visiting popped cell ");
+                Log.println(cell);
+            }
             visitGreyCell(cell);
             heapMarker.markBlackFromGrey(cell);
         }
@@ -761,6 +788,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 while (bitmapWordIndex <= rightmostBitmapWordIndex) {
                     long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
                     if (bitmapWord != 0) {
+                        // FIXME:
+                        // This way of scanning the mark bitmap may cause black objects to end up on the marking stack. Here's how.
+                        // If the object pointed by the finger contains backward references to objects covered by the same word of the mark bitmap,
+                        // and its end is covered by the same word, we will end up visiting these objects although there were pushed on the
+                        // marking stack.
+                        // One way to avoid that is to leave the finger set to the beginning of the word and iterate over all grey marks
+                        // of the word until reaching a fix point where all mark are white or black on the mark bitmap word.
                         final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
                         if (greyMarksInWord != 0) {
                             // First grey mark is the least set bit.
@@ -862,7 +896,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 }
                 bitmapWordIndex++;
             }
-            // The loop may have with a finger before the end of scan position as the finger is updated only when
+            // The loop may have ended with a finger before the end of scan position as the finger is updated only when
             // visiting grey cell. Before draining the marking stack, we set it to the end of scan position so draining
             // operates with the marking stack only.
             finger = endOfScan;
