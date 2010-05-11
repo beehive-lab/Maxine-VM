@@ -186,9 +186,9 @@ public class MockRuntime implements RiRuntime {
 	public int threadExceptionOffset() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public Method getFoldingMethod(RiMethod method) {
-            throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException();
 	}
 }

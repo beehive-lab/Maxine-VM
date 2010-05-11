@@ -70,9 +70,9 @@ public class MockMethod implements RiMethod {
 		
 		if (table != null) {
 		    handlers = new RiExceptionHandler[table.getNumberOfExceptions()];
-			for (int i=0; i<table.getNumberOfExceptions(); i++) {
-				throw new UnsupportedOperationException();
-			}
+		    if (table.getNumberOfExceptions() > 0) {
+		    	throw new UnsupportedOperationException();
+		    }
 		}
 		
 		return handlers;

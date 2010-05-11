@@ -50,7 +50,7 @@ public final class InvokeTarget {
 		if (o instanceof Method) {
 			Method method = (Method) o;
 			return new InvokeTarget(method.getName(), MockSignature.toSignature(method), method.getDeclaringClass(), method.getModifiers());
-		} else if (o instanceof Constructor) {
+		} else if (o instanceof Constructor<?>) {
 			Constructor<?> constructor = (Constructor<?>) o;
 			return new InvokeTarget("<init>", MockSignature.toSignature(constructor), constructor.getDeclaringClass(), constructor.getModifiers());
 		}
