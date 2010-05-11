@@ -363,29 +363,33 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
             return freeSpace.allocate(size);
         }
-        final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
-        final Pointer nextChunk = tlabEnd.getWord().asPointer();
+        // TLAB may have been wiped out by a previous direct allocation routine.
+        if (!tlabEnd.isZero()) {
+            final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+            final Pointer nextChunk = tlabEnd.getWord().asPointer();
 
-        final Pointer cell = tlabMark;
-        if (cell.plus(size).equals(hardLimit)) {
-            // Can actually fit the object in space left.
-            // zero-fill the headroom we left.
-            Memory.clearWords(tlabEnd, TLAB_HEADROOM.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
-            if (nextChunk.isZero()) {
-                setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
-            } else {
-                // TLAB has another chunk of free space. Set it.
-                setNextTLABChunk(enabledVmThreadLocals, nextChunk);
+            final Pointer cell = tlabMark;
+            if (cell.plus(size).equals(hardLimit)) {
+                // Can actually fit the object in space left.
+                // zero-fill the headroom we left.
+                Memory.clearWords(tlabEnd, TLAB_HEADROOM.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+                if (nextChunk.isZero()) {
+                    // Zero-out TLAB top and mark.
+                    fastRefillTLAB(enabledVmThreadLocals, Pointer.zero(), Size.zero());
+                } else {
+                    // TLAB has another chunk of free space. Set it.
+                    setNextTLABChunk(enabledVmThreadLocals, nextChunk);
+                }
+                return cell;
+            } else if (!(cell.equals(hardLimit) || nextChunk.isZero())) {
+                // We have another chunk, and we're not to limit yet. So we may change of TLAB chunk to satisfy the request.
+                return changeTLABChunkOrAllocate(enabledVmThreadLocals, tlabMark, hardLimit, nextChunk, size);
             }
-            return cell;
-        } else if (!(cell.equals(hardLimit) || nextChunk.isZero())) {
-            // We have another chunk, and we're not to limit yet. So we may change of TLAB chunk to satisfy the request.
-            return changeTLABChunkOrAllocate(enabledVmThreadLocals, tlabMark, hardLimit, nextChunk, size);
-        }
 
-        if (!refillPolicy.shouldRefill(size, tlabMark)) {
-            // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
-            return freeSpace.allocate(size);
+            if (!refillPolicy.shouldRefill(size, tlabMark)) {
+                // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
+                return freeSpace.allocate(size);
+            }
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
