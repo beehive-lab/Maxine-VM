@@ -30,35 +30,61 @@ import com.sun.max.unsafe.*;
 
 /**
  * This class encapsulates all interaction with the Xen db communication channel.
+ * A variety of channel implementations are possible, currently there are two:
+ * <ul>
+ * <li>Direct communication to the target domain via the {@code db-front/db-back} split device driver, using the {@code guk_db} library.
+ * Note that this requires that the Inspector be run in the privileged dom0 in order to access the target domain.</li>
+ * <li>Indirect communication to the {@code db-front/db-back} split device driver via a TCP connection to an agent running domU.
+ * This allows the Inspector to run in an unprivileged domain (domU).
+ * </ul>
+ * The choice of which mechanism to use is based on the value of the {@code max.ins.guestvm.channel} property.
  *
  * @author Mick Jordan
  *
  */
 public final class GuestVMXenDBChannel {
+    private static final String CHANNEL_PROPERTY = "max.ins.guestvm.channel";
     private static GuestVMXenTeleDomain teleDomain;
+    private static GuestVMXenDBChannelProtocol channelProtocol;
     private static int maxByteBufferSize;
 
     public static synchronized void attach(GuestVMXenTeleDomain teleDomain, int domId) {
         GuestVMXenDBChannel.teleDomain = teleDomain;
-        nativeAttach(domId);
-        maxByteBufferSize = nativeMaxByteBufferSize();
+        String channelType = System.getProperty(CHANNEL_PROPERTY);
+        if (channelType == null) {
+            channelType = "ring.direct";
+        }
+        if (channelType.equals("ring.direct")) {
+            channelProtocol = new GuestVMXenDBNativeChannelProtocol();
+        } else if (channelType.startsWith("ring.tcp")) {
+            final int sep = channelType.indexOf(',');
+            if (sep > 0) {
+                channelProtocol = new GuestVMXenDBTCPNativeChannelProtocol(channelType.substring(sep + 1));
+            } else {
+                throw new IllegalArgumentException("host/port not specified with " + CHANNEL_PROPERTY);
+            }
+        } else if (channelType.startsWith("gdbsx.tcp")) {
+            throw new IllegalArgumentException("gdbsx.tcp is not implemented");
+        }
+        channelProtocol.attach(domId);
+        maxByteBufferSize = channelProtocol.maxByteBufferSize();
     }
 
     public static synchronized Pointer getBootHeapStart() {
-        return Pointer.fromLong(nativeGetBootHeapStart());
+        return Pointer.fromLong(channelProtocol.getBootHeapStart());
     }
 
     public static synchronized void setTransportDebugLevel(int level) {
-        nativeSetTransportDebugLevel(level);
+        channelProtocol.setTransportDebugLevel(level);
     }
 
     private static int readBytes0(long src, ByteBuffer dst, int dstOffset, int length) {
         assert dst.limit() - dstOffset >= length;
         if (dst.isDirect()) {
-            return nativeReadBytes(src, dst, true, dstOffset, length);
+            return channelProtocol.readBytes(src, dst, true, dstOffset, length);
         }
         assert dst.array() != null;
-        return nativeReadBytes(src, dst.array(), false, dst.arrayOffset() + dstOffset, length);
+        return channelProtocol.readBytes(src, dst.array(), false, dst.arrayOffset() + dstOffset, length);
     }
 
     public static synchronized int readBytes(Address src, ByteBuffer dst, int dstOffset, int length) {
@@ -81,10 +107,10 @@ public final class GuestVMXenDBChannel {
     private static int writeBytes0(long dst, ByteBuffer src, int srcOffset, int length) {
         assert src.limit() - srcOffset >= length;
         if (src.isDirect()) {
-            return nativeWriteBytes(dst, src, true, srcOffset, length);
+            return channelProtocol.writeBytes(dst, src, true, srcOffset, length);
         }
         assert src.array() != null;
-        return nativeWriteBytes(dst, src.array(), false, src.arrayOffset() + srcOffset, length);
+        return channelProtocol.writeBytes(dst, src.array(), false, src.arrayOffset() + srcOffset, length);
 
     }
 
@@ -105,43 +131,27 @@ public final class GuestVMXenDBChannel {
         return length;
     }
 
-    public static synchronized void gatherThreads(AppendableSequence<TeleNativeThread> threads, int domainId, long threadLocalsList, long primordialThreadLocals) {
-        nativeGatherThreads(teleDomain, threads, domainId, threadLocalsList, primordialThreadLocals);
+    public static synchronized void gatherThreads(AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals) {
+        channelProtocol.gatherThreads(teleDomain, threads, threadLocalsList, primordialThreadLocals);
     }
 
     public static synchronized int resume(int domainId) {
-        return nativeResume(domainId);
-    }
-
-    public static synchronized int readByte(long domainId, long address) {
-        return nativeReadByte(domainId, address);
-    }
-
-    public static synchronized long readInt(int domainId, long address) {
-        return nativeReadInt(domainId, address);
-    }
-
-    public static synchronized int readShort(int domainId, long address) {
-        return nativeReadShort(domainId, address);
-    }
-
-    public static synchronized boolean writeByte(int domainId, long address, byte value) {
-        return nativeWriteByte(domainId, address, value);
+        return channelProtocol.resume();
     }
 
     public static synchronized int setInstructionPointer(int threadId, long ip) {
-        return nativeSetInstructionPointer(threadId, ip);
+        return channelProtocol.setInstructionPointer(threadId, ip);
     }
 
     public static synchronized boolean readRegisters(int threadId,
                     byte[] integerRegisters, int integerRegistersSize,
                     byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize) {
-        return nativeReadRegisters(threadId, integerRegisters, integerRegistersSize, floatingPointRegisters, floatingPointRegistersSize, stateRegisters, stateRegistersSize);
+        return channelProtocol.readRegisters(threadId, integerRegisters, integerRegistersSize, floatingPointRegisters, floatingPointRegistersSize, stateRegisters, stateRegistersSize);
     }
 
     public static synchronized boolean singleStep(int threadId) {
-        return nativeSingleStep(threadId);
+        return channelProtocol.singleStep(threadId);
     }
 
     /**
@@ -149,54 +159,28 @@ public final class GuestVMXenDBChannel {
      * @return
      */
     public static boolean suspendAll() {
-        return nativeSuspendAll();
+        return channelProtocol.suspendAll();
     }
 
     public static synchronized boolean suspend(int threadId) {
-        return nativeSuspend(threadId);
+        return channelProtocol.suspend(threadId);
     }
 
     public static synchronized boolean activateWatchpoint(int domainId, TeleWatchpoint teleWatchpoint) {
         final WatchpointSettings settings = teleWatchpoint.getSettings();
-        return nativeActivateWatchpoint(domainId, teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
+        return channelProtocol.activateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
     }
 
     public static synchronized boolean deactivateWatchpoint(int domainId, TeleFixedMemoryRegion memoryRegion) {
-        return nativeDeactivateWatchpoint(domainId, memoryRegion.start().toLong(), memoryRegion.size().toLong());
+        return channelProtocol.deactivateWatchpoint(memoryRegion.start().toLong(), memoryRegion.size().toLong());
     }
 
     public static synchronized long readWatchpointAddress(int domainId) {
-        return nativeReadWatchpointAddress(domainId);
+        return channelProtocol.readWatchpointAddress();
     }
 
     public static synchronized int readWatchpointAccessCode(int domainId) {
-        return nativeReadWatchpointAccessCode(domainId);
+        return channelProtocol.readWatchpointAccessCode();
     }
-
-    private static native boolean nativeAttach(int domId);
-    private static native long nativeGetBootHeapStart();
-    private static native int nativeSetTransportDebugLevel(int level);
-    private static native int nativeReadBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
-    private static native int nativeWriteBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
-    private static native int nativeMaxByteBufferSize();
-    private static native boolean nativeGatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, int domainId, long threadLocalsList, long primordialThreadLocals);
-    private static native int nativeResume(int domainId);
-    private static native int nativeReadByte(long domainId, long address);
-    private static native long nativeReadInt(int domainId, long address);
-    private static native int nativeReadShort(int domainId, long address);
-    private static native boolean nativeWriteByte(int domainId, long address, byte value);
-    private static native int nativeSetInstructionPointer(int threadId, long ip);
-    private static native boolean nativeSingleStep(int threadId);
-    private static native boolean nativeSuspendAll();
-    private static native boolean nativeSuspend(int threadId);
-    private static native boolean nativeActivateWatchpoint(int domainId, long start, long size, boolean after, boolean read, boolean write, boolean exec);
-    private static native boolean nativeDeactivateWatchpoint(int domainId, long start, long size);
-    private static native long nativeReadWatchpointAddress(int domainId);
-    private static native int nativeReadWatchpointAccessCode(int domainId);
-
-    private static native boolean nativeReadRegisters(int threadId,
-                    byte[] integerRegisters, int integerRegistersSize,
-                    byte[] floatingPointRegisters, int floatingPointRegistersSize,
-                    byte[] stateRegisters, int stateRegistersSize);
 
 }

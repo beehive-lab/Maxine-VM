@@ -55,12 +55,13 @@
 #endif
 
 typedef unsigned char   Byte;
-typedef void            *Word;
 
 #if word_32_BITS
+    typedef Unsigned4 Word;
     typedef Unsigned4   Address;
     typedef Signed4     Offset;
 #elif word_64_BITS
+    typedef Unsigned8 Word;
     typedef Unsigned8   Address;
     typedef Signed8     Offset;
 #else
