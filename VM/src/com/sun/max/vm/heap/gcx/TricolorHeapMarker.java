@@ -23,6 +23,7 @@ package com.sun.max.vm.heap.gcx;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
@@ -212,6 +213,59 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * The marking stack.
      */
     final MarkingStack markingStack;
+
+    private final TimerMetric rootScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric bootHeapScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric codeScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric immortalSpaceScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric heapMarkingTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric recoveryScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+
+    /**
+     * Counter of the number of recovery overflow scheduled during the current mark. For statistics purposes.
+     */
+    private int recoveryScanCount = 0;
+    private int totalRecoveryScanCount = 0;
+
+    private boolean traceGCTimes = false;
+
+    private void startTimer(Timer timer) {
+        if (traceGCTimes) {
+            timer.start();
+        }
+    }
+    private void stopTimer(Timer timer) {
+        if (traceGCTimes) {
+            timer.stop();
+        }
+    }
+
+    public void reportLastElapsedTimes() {
+        Log.print("root scan=");
+        Log.print(rootScanTimer.getLastElapsedTime());
+        Log.print(", boot heap scan=");
+        Log.print(bootHeapScanTimer.getLastElapsedTime());
+        Log.print(", code scan=");
+        Log.print(codeScanTimer.getLastElapsedTime());
+        Log.print(", marking=");
+        Log.print(heapMarkingTimer.getLastElapsedTime());
+        Log.print(", marking stack overflow (");
+        Log.print(recoveryScanCount);
+        Log.print(") =");
+        Log.print(recoveryScanTimer.getLastElapsedTime());
+
+    }
+
+    public void reportTotalElapsedTimes() {
+        Log.print("root scan=");
+        Log.print(rootScanTimer.getElapsedTime());
+        Log.print(", boot heap scan=");
+        Log.print(bootHeapScanTimer.getElapsedTime());
+        Log.print(", code scan=");
+        Log.print(codeScanTimer.getElapsedTime());
+        Log.print(", marking=");
+        Log.print(heapMarkingTimer.getElapsedTime());
+    }
 
     /**
      * Return the size in bytes required for a tricolor mark bitmap to cover a contiguous
@@ -963,22 +1017,31 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
         // Mark all out of heap roots first (i.e., thread).
         // This only needs setting grey marks blindly (there are no black mark at this stage).
+        startTimer(rootScanTimer);
         heapRootsScanner.run();
+        stopTimer(rootScanTimer);
 
         // Next, mark all reachable from the boot area.
         if (Heap.traceGCPhases()) {
             Log.println("Marking roots from boot heap...");
         }
+        startTimer(bootHeapScanTimer);
         markBootHeap();
+        stopTimer(bootHeapScanTimer);
+
         if (Heap.traceGCPhases()) {
             Log.println("Marking roots from code...");
         }
+        startTimer(codeScanTimer);
         markCode();
+        stopTimer(codeScanTimer);
 
         if (Heap.traceGCPhases()) {
             Log.println("Marking roots from immortal heap...");
         }
+        startTimer(immortalSpaceScanTimer);
         markImmortalHeap();
+        stopTimer(immortalSpaceScanTimer);
     }
 
     /**
@@ -1178,8 +1241,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         } while(true);
     }
 
-    private int numRecoveryScan = 0;
-
     @INLINE
     final boolean isRecovering() {
         return currentScanState == overflowScanState;
@@ -1205,8 +1266,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         // for the next scan.
 
         if (!isRecovering()) {
+            startTimer(recoveryScanTimer);
             currentScanState = overflowScanState;
-            numRecoveryScan++;
+            recoveryScanCount++;
             startOfNextOverflowScan = leftmostFlushed;
             overflowScanState.initialize(forwardScanState);
             markStackCellVisitor.setScanState(overflowScanState);
@@ -1223,6 +1285,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             forwardScanState.rightmost = overflowScanState.rightmost;
             markStackCellVisitor.setScanState(forwardScanState);
             currentScanState = forwardScanState;
+            stopTimer(recoveryScanTimer);
         } else if (leftmostFlushed.lessThan(startOfNextOverflowScan)) {
             // Schedule another rescan if the leftmost flushed cell is before the
             // currently visited cell.
@@ -1419,6 +1482,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
     public void markAll() {
+        traceGCTimes = Heap.traceGCTime();
+        recoveryScanCount = 0;
+
         clearColorMap();
         if (MaxineVM.isDebug()) {
             FatalError.check(markingStack.isEmpty(), "Marking stack must be empty");
@@ -1427,7 +1493,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         if (Heap.traceGCPhases()) {
             Log.println("Tracing grey objects...");
         }
+        startTimer(heapMarkingTimer);
         visitAllGreyObjects();
+        stopTimer(heapMarkingTimer);
+        totalRecoveryScanCount += recoveryScanCount;
+
         verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
     }
 
