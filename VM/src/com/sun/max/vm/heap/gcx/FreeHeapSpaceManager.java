@@ -697,7 +697,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
             if (!result.isZero()) {
                 return result;
             }
-            if (MaxineVM.isDebug()) {
+            if (MaxineVM.isDebug() && Heap.traceGC()) {
                 gcCount++;
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Allocation failure: ");
