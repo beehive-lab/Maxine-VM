@@ -34,6 +34,8 @@ import com.sun.max.vm.reference.*;
  */
 public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 
+    private static final int TRACE_VALUE = 2;
+
     private Address regionStart = Address.zero();
     private Size regionSize = Size.zero();
     private String regionName = null;
@@ -116,7 +118,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
                 }
                 // Quasi-atomic update
                 if (newRegionStart.isZero()) {
-                    ProgramWarning.message("read zero start for " + this);
+                    Trace.line(TRACE_VALUE, tracePrefix() + "zero start address read from VM for region " + this);
                 }
                 this.regionStart = newRegionStart;
                 this.regionSize = newRegionSize;
