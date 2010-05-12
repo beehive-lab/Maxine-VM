@@ -26,6 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.unsafe.*;
@@ -372,7 +373,14 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
     }
 
     public Sequence<MaxCodeLocation> inspectableMethods() {
-        return teleHeapScheme.inspectableMethods();
+        final AppendableSequence<MaxCodeLocation> locations = new LinkSequence<MaxCodeLocation>();
+        locations.append(CodeLocation.createMachineCodeLocation(vm(), vm().teleMethods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
+        locations.append(CodeLocation.createMachineCodeLocation(vm(), vm().teleMethods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
+        // There may be implementation-specific methods of interest
+        for (MaxCodeLocation codeLocation : teleHeapScheme.inspectableMethods()) {
+            locations.append(codeLocation);
+        }
+        return locations;
     }
 
     public Offset gcForwardingPointerOffset() {
