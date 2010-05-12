@@ -25,9 +25,9 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.heap.gcx.*;
@@ -53,7 +53,17 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      * The headroom is used to compute a soft limit that'll be used as the tlab's top.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    private static Size TLAB_HEADROOM;
+    static Size TLAB_HEADROOM;
+
+    private static void fillTLABWithDeadObject(Pointer tlabAllocationMark, Pointer tlabEnd) {
+        // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
+        Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+        if (tlabAllocationMark.greaterThan(tlabEnd)) {
+            FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
+            return;
+        }
+        fillWithDeadObject(tlabAllocationMark, hardLimit);
+    }
 
     /**
      * A marking algorithm for the MSHeapScheme.
@@ -71,13 +81,15 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     private StopTheWorldGCDaemon collectorThread;
 
+    final AfterMarkSweepVerifier afterGCVerifier;
+
     public MSHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
         freeSpace = new FreeHeapSpaceManager();
         totalUsedSpace = Size.zero();
+        afterGCVerifier = MaxineVM.isDebug() ? new AfterMarkSweepVerifier(heapMarker, freeSpace) : null;
     }
-
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
@@ -97,7 +109,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
-     * We only require that the heap is contiguous with the
      */
     private void allocateHeapAndGCStorage() {
         final Size initSize = Heap.initialSize();
@@ -110,20 +121,18 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         } else {
             FatalError.unimplemented();
         }
-
-        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(endOfCodeRegion, initSize, VirtualMemory.Type.HEAP)) {
-            reportPristineMemoryFailure("object heap", initSize);
-        }
-
-        freeSpace.initialize(endOfCodeRegion, initSize);
+        final Address heapStart = endOfCodeRegion;
+        freeSpace.initialize(heapStart, initSize, maxSize);
 
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
-        final Address endOfHeap = endOfCodeRegion.plus(maxSize);
+        final Address heapMarkerDataStart = heapStart.plus(maxSize);
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
-        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(endOfHeap, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
-            reportPristineMemoryFailure("heap marker data", heapMarkerDatasize);
+        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
+            MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
         }
-        heapMarker.initialize(freeSpace.committedHeapSpace(), endOfHeap, heapMarkerDatasize);
+
+        ContiguousHeapSpace markedSpace = freeSpace.committedHeapSpace();
+        heapMarker.initialize(markedSpace.start(), markedSpace.committedEnd(), heapMarkerDataStart, heapMarkerDatasize);
     }
 
 
@@ -132,15 +141,22 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
-        // FIXME: need to revisit this.
-        if (requestedFreeSpace.greaterThan(freeSpace.freeSpaceLeft())) {
+        collect.requestedSize = requestedFreeSpace;
+        boolean forcedGC = requestedFreeSpace.toInt() == 0;
+        if (forcedGC) {
             collectorThread.execute();
+            return true;
         }
-        return true;
+        // We may reach here after a race. Don't run GC if request can be satisfied.
+        if (freeSpace.canSatisfyAllocation(requestedFreeSpace)) {
+            return true;
+        }
+        collectorThread.execute();
+        return freeSpace.canSatisfyAllocation(requestedFreeSpace);
     }
 
     public boolean contains(Address address) {
-        return freeSpace.committedHeapSpace().contains(address);
+        return freeSpace.committedHeapSpace().inCommittedSpace(address);
     }
 
     public final void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
@@ -161,7 +177,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public Size reportFreeSpace() {
-        return null;
+        return freeSpace.freeSpaceLeft();
     }
 
     public Size reportUsedSpace() {
@@ -179,44 +195,169 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     public void writeBarrier(Reference from, Reference to) {
     }
 
+    @Override
+    protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
+        fillTLABWithDeadObject(tlabAllocationMark, tlabEnd);
+    }
+
+    static class TLABFiller extends ResetTLAB {
+        @Override
+        protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
+            if (tlabMark.greaterThan(tlabTop)) {
+                // Already filled-up (mark is at the limit).
+                return;
+            }
+            // Before filling the current TLAB chunk, save link to next pointer.
+            final Pointer nextChunk = tlabTop.getWord().asPointer();
+            fillTLABWithDeadObject(tlabMark, tlabTop);
+            HeapFreeChunk.makeParsable(nextChunk);
+        }
+    }
+
     /**
      * Class implementing the garbage collection routine.
      * This is the {@link StopTheWorldGCDaemon}'s entry point to garbage collection.
      */
     final class Collect extends Collector {
+        private long collectionCount = 0;
+        private TLABFiller tlabFiller = new TLABFiller();
+
+        private Size requestedSize;
+        private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+        private final TimerMetric reclaimTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+        private final TimerMetric totalPauseTime = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+
+        private boolean traceGCTimes = false;
+
+        private void startTimer(Timer timer) {
+            if (traceGCTimes) {
+                timer.start();
+            }
+        }
+        private void stopTimer(Timer timer) {
+            if (traceGCTimes) {
+                timer.stop();
+            }
+        }
+
+        private void reportLastGCTimes() {
+            final boolean lockDisabledSafepoints = Log.lock();
+            heapMarker.reportLastElapsedTimes();
+            Log.print(", weak refs=");
+            Log.print(weakRefTimer.getLastElapsedTime());
+            Log.print(", sweeping=");
+            Log.print(reclaimTimer.getLastElapsedTime());
+            Log.print(", total=");
+            Log.println(totalPauseTime.getLastElapsedTime());
+            Log.unlock(lockDisabledSafepoints);
+        }
+
+        private void reportTotalGCTimes() {
+            final boolean lockDisabledSafepoints = Log.lock();
+            heapMarker.reportTotalElapsedTimes();
+            Log.print(", weak refs=");
+            Log.print(weakRefTimer.getElapsedTime());
+            Log.print(", sweeping=");
+            Log.print(reclaimTimer.getElapsedTime());
+            Log.print(", total=");
+            Log.println(totalPauseTime.getElapsedTime());
+            Log.unlock(lockDisabledSafepoints);
+        }
+
+        private HeapResizingPolicy heapResizingPolicy = new HeapResizingPolicy();
+
         @Override
         public void collect(int invocationCount) {
+            traceGCTimes = Heap.traceGCTime();
+            startTimer(totalPauseTime);
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
+
             HeapScheme.Static.notifyGCStarted();
+
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
+            collectionCount++;
+            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
+                Log.print("Begin mark-sweep #");
+                Log.println(collectionCount);
+            }
+            freeSpace.makeParsable();
             heapMarker.markAll();
-            freeSpace.reclaim(heapMarker);
-
+            startTimer(weakRefTimer);
+            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
+            stopTimer(weakRefTimer);
+            startTimer(reclaimTimer);
+            Size freeSpaceAfterGC = freeSpace.reclaim(heapMarker);
+            stopTimer(reclaimTimer);
+            if (MaxineVM.isDebug()) {
+                afterGCVerifier.run();
+            }
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+
+            if (heapResizingPolicy.resizeAfterCollection(freeSpace.totalSpace(), freeSpaceAfterGC, freeSpace)) {
+                // Heap was resized.
+                // Update heapMarker's coveredArea.
+                ContiguousHeapSpace markedSpace = freeSpace.committedHeapSpace();
+                heapMarker.setCoveredArea(markedSpace.start(), markedSpace.committedEnd());
+            }
+            if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
+                Log.print("End mark-sweep #");
+                Log.println(collectionCount);
+            }
             HeapScheme.Static.notifyGCCompleted();
+            stopTimer(totalPauseTime);
+
+            if (traceGCTimes) {
+                reportLastGCTimes();
+            }
         }
     }
 
-    @Override
-    protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
-        // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
-        Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
-        if (tlabAllocationMark.greaterThan(tlabEnd)) {
-            FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
-            return;
+    private Size setNextTLABChunk(Pointer chunk) {
+        if (MaxineVM.isDebug()) {
+            FatalError.check(!chunk.isZero(), "TLAB chunk must not be null");
         }
-        fillWithDeadObject(tlabAllocationMark, hardLimit);
+        Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
+        Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
+        Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
+        // Zap chunk data to leave allocation area clean.
+        Memory.clearWords(chunk, effectiveSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+        chunk.plus(effectiveSize).setWord(nextChunk);
+        return effectiveSize;
     }
 
+    @INLINE
+    private Size setNextTLABChunk(Pointer enabledVmThreadLocals, Pointer nextChunk) {
+        Size nextChunkEffectiveSize = setNextTLABChunk(nextChunk);
+        fastRefillTLAB(enabledVmThreadLocals, nextChunk, nextChunkEffectiveSize);
+        return nextChunkEffectiveSize;
+    }
 
-    private ResetTLAB resetTLAB = new ResetTLAB() {
-        @Override
-        protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
-            doBeforeTLABRefill(tlabMark, tlabTop);
+    /**
+     * Check if changing TLAB chunks may satisfy the allocation request. If not, allocated directly from the underlying free space manager,
+     * otherwise, refills the TLAB with the next TLAB chunk and allocated from it.
+     *
+     * @param enabledVmThreadLocals Pointer to enabled VMThreadLocals
+     * @param tlabMark current mark of the TLAB
+     * @param tlabHardLimit hard limit of the current TLAB
+     * @param chunk next chunk of this TLAB
+     * @param size requested amount of memory
+     * @return a pointer to the allocated memory
+     */
+    private Pointer changeTLABChunkOrAllocate(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabHardLimit, Pointer chunk, Size size) {
+        Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
+        Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
+        if (size.greaterThan(effectiveSize))  {
+            // Don't bother with searching another TLAB chunk that fits. Allocate out of TLAB.
+            return freeSpace.allocate(size);
         }
-    };
-    protected void resetTLABs() {
-        VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
+        Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
+        fillWithDeadObject(tlabMark, tlabHardLimit);
+        // Zap chunk data to leave allocation area clean.
+        Memory.clearWords(chunk, effectiveSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+        chunk.plus(effectiveSize).setWord(nextChunk);
+        fastRefillTLAB(enabledVmThreadLocals, chunk, effectiveSize);
+        return tlabAllocate(size);
     }
 
     /**
@@ -226,21 +367,24 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      */
     private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
         Pointer tlab = freeSpace.allocateTLAB(tlabSize);
+        Size effectiveSize = setNextTLABChunk(tlab);
+
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
+            Size realTLABSize = effectiveSize.plus(TLAB_HEADROOM);
             Log.printCurrentThread(false);
             Log.print(": Allocated TLAB at ");
             Log.print(tlab);
             Log.print(" [TOP=");
-            Log.print(tlab.plus(tlab.plus(tlabSize.minus(TLAB_HEADROOM)).asAddress()));
+            Log.print(tlab.plus(effectiveSize));
             Log.print(", end=");
-            Log.print(tlab.plus(tlabSize));
+            Log.print(tlab.plus(realTLABSize));
             Log.print(", size=");
-            Log.print(tlabSize.toInt());
+            Log.print(realTLABSize.toInt());
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
-        refillTLAB(enabledVmThreadLocals, tlab, tlabSize.minus(TLAB_HEADROOM));
+        refillTLAB(enabledVmThreadLocals, tlab, effectiveSize);
     }
 
     @Override
@@ -264,23 +408,40 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the tlab.
             return tlabAllocate(size);
         }
+        // FIXME:
+        // Want to first test against size of next chunk of this TLAB (if any).
         final Size nextTLABSize = refillPolicy.nextTlabSize();
         if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
             return freeSpace.allocate(size);
         }
-        final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
-        final Pointer cell = DebugHeap.adjustForDebugTag(tlabMark);
-        if (cell.plus(size).equals(hardLimit)) {
-            // Can actually fit the object in the TLAB.
-            setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
-            // allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
-            return cell;
-        }
+        // TLAB may have been wiped out by a previous direct allocation routine.
+        if (!tlabEnd.isZero()) {
+            final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+            final Pointer nextChunk = tlabEnd.getWord().asPointer();
 
-        if (!refillPolicy.shouldRefill(size, tlabMark)) {
-            // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
-            return freeSpace.allocate(size);
+            final Pointer cell = tlabMark;
+            if (cell.plus(size).equals(hardLimit)) {
+                // Can actually fit the object in space left.
+                // zero-fill the headroom we left.
+                Memory.clearWords(tlabEnd, TLAB_HEADROOM.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+                if (nextChunk.isZero()) {
+                    // Zero-out TLAB top and mark.
+                    fastRefillTLAB(enabledVmThreadLocals, Pointer.zero(), Size.zero());
+                } else {
+                    // TLAB has another chunk of free space. Set it.
+                    setNextTLABChunk(enabledVmThreadLocals, nextChunk);
+                }
+                return cell;
+            } else if (!(cell.equals(hardLimit) || nextChunk.isZero())) {
+                // We have another chunk, and we're not to limit yet. So we may change of TLAB chunk to satisfy the request.
+                return changeTLABChunkOrAllocate(enabledVmThreadLocals, tlabMark, hardLimit, nextChunk, size);
+            }
+
+            if (!refillPolicy.shouldRefill(size, tlabMark)) {
+                // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
+                return freeSpace.allocate(size);
+            }
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
@@ -291,6 +452,15 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     @Override
     public boolean supportsTagging() {
         return false;
+    }
+
+    @Override
+    public void finalize(MaxineVM.Phase phase) {
+        if (MaxineVM.Phase.RUNNING == phase) {
+            if (Heap.traceGCTime()) {
+                collect.reportTotalGCTimes();
+            }
+        }
     }
 }
 

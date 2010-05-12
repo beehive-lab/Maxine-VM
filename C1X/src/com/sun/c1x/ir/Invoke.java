@@ -35,7 +35,7 @@ public final class Invoke extends StateSplit {
     final int opcode;
     final Value[] arguments;
     final RiMethod target;
-    public final char cpi;
+    public final int cpi;
     public final RiConstantPool constantPool;
 
     /**
@@ -48,7 +48,7 @@ public final class Invoke extends StateSplit {
      * @param target the target method being called
      * @param stateBefore the state before executing the invocation
      */
-    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, RiMethod target, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
+    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, RiMethod target, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
         super(result, stateBefore);
         this.opcode = opcode;
         this.arguments = args;
@@ -155,6 +155,7 @@ public final class Invoke extends StateSplit {
     }
 
     public CiKind[] signature() {
-        return Util.signatureToKinds(target.signatureType(), !isStatic());
+        CiKind receiver = isStatic() ? null : target.holder().kind();
+        return Util.signatureToKinds(target.signature(), receiver);
     }
 }

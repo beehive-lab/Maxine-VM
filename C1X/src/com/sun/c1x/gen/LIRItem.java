@@ -172,7 +172,7 @@ public class LIRItem {
      * Determines if the operand is in a register or may be
      * resolved to a register by the register allocator.
      */
-    public boolean isRegister() {
+    public boolean isRegisterOrVariable() {
         return resultOperand.isVariableOrRegister();
     }
 
@@ -219,9 +219,7 @@ public class LIRItem {
     }
 
     void setResult(CiVariable operand) {
-        assert instruction.operand().isIllegal() || instruction.operand().isConstant() : "operand should never change";
-        instruction.setOperand(operand);
-        gen.operands.recordResult(operand, instruction);
+        gen.setResult(instruction, operand);
         resultOperand = operand;
     }
 

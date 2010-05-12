@@ -32,7 +32,7 @@ import com.sun.cri.ri.*;
 public final class NewMultiArray extends NewArray {
     public final RiType elementKind;
     final Value[] dimensions;
-    public final char cpi;
+    public final int cpi;
     public final RiConstantPool constantPool;
 
     /**
@@ -43,7 +43,7 @@ public final class NewMultiArray extends NewArray {
      * @param cpi the constant pool index for resolution
      * @param riConstantPool the constant pool for resolution
      */
-    public NewMultiArray(RiType elementKind, Value[] dimensions, FrameState stateBefore, char cpi, RiConstantPool riConstantPool) {
+    public NewMultiArray(RiType elementKind, Value[] dimensions, FrameState stateBefore, int cpi, RiConstantPool riConstantPool) {
         super(null, stateBefore);
         this.constantPool = riConstantPool;
         this.elementKind = elementKind;

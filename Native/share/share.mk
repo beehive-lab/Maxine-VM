@@ -47,22 +47,26 @@ $(MAIN) : $(OBJECTS)
 	$(LINK_MAIN) $(OBJECTS)
 else
 #
-# On Xen we only care about two things, the image and the inspector library
+# On Xen we only care about two things, the image and the inspector library (tele)
 # The former is built as an archive file (.a) and the latter as a .so.
-
-# JVMIMAGEDIR can be overriden for faster building, e.g. /tmp, since
-# creating/assembling the memory image involves writing/reading a lot of data.
-JVMIMAGEDIR = $(PROJECT)/generated/$(OS)
+# The tele library can be built for 32 bit execution
 
 ifneq ($(TARGET), SUBSTRATE)
+	ifeq ($(TARGET), TELE)
+	    ifeq ($(DOM0), 32)
+	      OST := $(OS)_32
+	    else
+	      OST := $(OS)   
+	    endif
+	endif
 
 $(LIBRARY) : $(OBJECTS)
 	$(LINK_LIB) $(OBJECTS) -o $(LIBRARY)
-	mkdir -p $(PROJECT)/generated/$(OS)
-	cp -f $(LIBRARY) $(PROJECT)/generated/$(OS)
+	mkdir -p $(PROJECT)/generated/$(OST)
+	cp -f $(LIBRARY) $(PROJECT)/generated/$(OST)
 else
 LIBRARY = $(LIB_PREFIX)$(LIB)$(LIBA_SUFFIX)
-OBJECTS += $(JVMIMAGEDIR)/maxine.vm.0.o
+OBJECTS += $(PROJECT)/generated/$(OS)/maxine.vm.0.o
 
 $(LIBRARY) : $(OBJECTS)
 	$(LINK_AR) $(OBJECTS)

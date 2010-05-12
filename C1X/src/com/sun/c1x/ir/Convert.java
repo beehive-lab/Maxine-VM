@@ -30,7 +30,11 @@ import com.sun.cri.ci.*;
  */
 public final class Convert extends Instruction {
 
-    final int opcode;
+    /**
+     * The opcode for this conversion operation.
+     */
+    public final int opcode;
+
     Value value;
 
     /**
@@ -43,14 +47,6 @@ public final class Convert extends Instruction {
         super(kind);
         this.opcode = opcode;
         this.value = value;
-    }
-
-    /**
-     * Gets the opcode for this conversion operation.
-     * @return the opcode of this conversion operation
-     */
-    public int opcode() {
-        return opcode;
     }
 
     /**

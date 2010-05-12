@@ -147,7 +147,7 @@ public final class TargetBundleLayout {
      *         {@link Size#zero()})
      */
     public Size cellSize(ArrayField field) {
-        return WordArray.get(cellSizes, field.ordinal());
+        return WordArray.get(cellSizes, field.ordinal()).asSize();
     }
 
     /**
@@ -159,7 +159,7 @@ public final class TargetBundleLayout {
      * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
      */
     public Offset cellOffset(ArrayField field) throws IllegalArgumentException {
-        final Offset cellOffset = WordArray.get(cellOffsets, field.ordinal());
+        final Offset cellOffset = WordArray.get(cellOffsets, field.ordinal()).asOffset();
         if (cellOffset.equals(INVALID_OFFSET)) {
             assert cellSize(field).isZero();
             throw new IllegalArgumentException();

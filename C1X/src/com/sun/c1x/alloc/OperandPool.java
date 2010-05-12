@@ -22,6 +22,7 @@ package com.sun.c1x.alloc;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
@@ -58,6 +59,7 @@ public class OperandPool {
 
     /**
      * Map from a {@linkplain CiVariable#index variable index} to the instruction whose result is stored in the denoted variable.
+     * This map is only populated and used if {@link C1XOptions#DetailedAsserts} is {@code true}.
      */
     private final ArrayList<Value> variableDefs;
 
@@ -135,7 +137,7 @@ public class OperandPool {
         this.firstVariableNumber = target.allocationSpec.nofRegs;
         this.registers = registers;
         variables = new ArrayList<CiVariable>(INITIAL_VARIABLE_CAPACITY);
-        variableDefs = new ArrayList<Value>(INITIAL_VARIABLE_CAPACITY);
+        variableDefs = C1XOptions.DetailedAsserts ? new ArrayList<Value>(INITIAL_VARIABLE_CAPACITY) : null;
     }
 
     /**
@@ -219,6 +221,12 @@ public class OperandPool {
         variableDefs.set(result.index, instruction);
     }
 
+    /**
+     * Gets the instruction whose result is recorded in a given variable.
+     *
+     * @param result the variable storing the result of an instruction
+     * @return the instruction that stores its result in {@code result}
+     */
     public Value instructionForResult(CiVariable result) {
         if (variableDefs.size() > result.index) {
             return variableDefs.get(result.index);

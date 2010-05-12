@@ -22,6 +22,7 @@ package com.sun.max.vm.value;
 
 import java.io.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.type.*;
 
@@ -98,4 +99,10 @@ public final class VoidValue extends Value<VoidValue> {
     @Override
     public void write(DataOutput stream) throws IOException {
     }
+
+    @Override
+    public CiConstant asCiConstant() {
+        throw new IllegalArgumentException();
+    }
+
 }

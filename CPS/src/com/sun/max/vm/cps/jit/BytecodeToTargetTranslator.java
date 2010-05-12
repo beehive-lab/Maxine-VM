@@ -998,7 +998,7 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.READ_PC            :
                 case Bytecodes.FLUSHW             :
                 case Bytecodes.ALLOCA             :
-                case Bytecodes.LSA                :
+                case Bytecodes.ALLOCSTKVAR        :
                 case Bytecodes.JNICALL            :
                 case Bytecodes.CALL               :
                 case Bytecodes.ICMP               :
@@ -1414,7 +1414,7 @@ public abstract class BytecodeToTargetTranslator {
                 if (isResolved(classConstant, index)) {
                     TargetMethod code = getCode(LDC$reference$resolved);
                     beginBytecode(bytecode);
-                    Object mirror = ((ClassActor) classConstant.value(constantPool, index).asObject()).mirror();
+                    Object mirror = ((ClassActor) classConstant.value(constantPool, index).asObject()).javaClass();
                     assignReferenceLiteralTemplateArgument(0, mirror);
                     emitAndRecordStops(code);
                 } else {
@@ -1494,7 +1494,7 @@ public abstract class BytecodeToTargetTranslator {
             TargetMethod code = getCode(MULTIANEWARRAY$resolved);
             beginBytecode(Bytecodes.MULTIANEWARRAY);
             ClassActor arrayClassActor = classRef.resolve(constantPool, index);
-            assert arrayClassActor.isArrayClassActor();
+            assert arrayClassActor.isArrayClass();
             assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
             assignReferenceLiteralTemplateArgument(0, arrayClassActor);
             assignReferenceLiteralTemplateArgument(1, new int[numberOfDimensions]);

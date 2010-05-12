@@ -71,7 +71,7 @@ public class HIRTestExecutor implements Executor {
             args[i] = IRInterpreter.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
-        final IR method = generator.makeHirMethod(runtime.getRiMethod(classMethodActor));
+        final IR method = generator.makeHirMethod(classMethodActor);
         final IRInterpreter interpreter = new IRInterpreter(runtime, generator.compiler);
         final CiConstant result = interpreter.execute(method, args);
         return result.boxedValue();

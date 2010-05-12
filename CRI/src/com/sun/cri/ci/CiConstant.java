@@ -153,6 +153,7 @@ public final class CiConstant extends CiValue {
             case Boolean: return asInt() == 0 ? Boolean.FALSE : Boolean.TRUE;
             case Short: return (short) asInt();
             case Char: return (char) asInt();
+            case Jsr: return (int) primitive;
             case Int: return asInt();
             case Long: return asLong();
             case Float: return asFloat();

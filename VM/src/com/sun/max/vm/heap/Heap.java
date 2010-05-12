@@ -415,7 +415,9 @@ public final class Heap {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
             Log.printCurrentThread(false);
-            Log.println("--");
+            Log.print(" for ");
+            Log.print(requestedFreeSpace.toLong());
+            Log.println(" bytes --");
             Log.print("--Before GC   used: ");
             Log.print(beforeUsed);
             Log.print(", free: ");
@@ -506,6 +508,16 @@ public final class Heap {
         }
     }
 
+    /**
+     * Currently, a number of memory regions containing object are treated as "permanent" root by the GC.
+     * This method checks whether an address points into one of these regions.
+     * @param address an address
+     * @return true if the address points to one of the root regions of the heap.
+     */
+    public static boolean isInHeapRootRegion(Address address) {
+        return bootHeapRegion.contains(address) || Code.contains(address) || ImmortalHeap.getImmortalHeap().contains(address);
+    }
+
     public static boolean isValidGrip(Grip grip) {
         if (grip.isZero()) {
             return true;
@@ -520,5 +532,13 @@ public final class Heap {
         return true;
     }
 
+    public static void checkHeapSizeOptions() {
+        Size initSize = initialSize();
+        Size maxSize = maxSize();
+        if (initSize.greaterThan(maxSize)) {
+            Log.println("Incompatible minimum and maximum heap sizes specified");
+            MaxineVM.native_exit(1);
+        }
+    }
 
 }

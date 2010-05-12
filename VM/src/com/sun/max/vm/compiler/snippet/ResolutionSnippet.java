@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.snippet;
 
 import java.lang.reflect.*;
-import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -32,6 +31,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.ResolutionGuard.*;
 
 /**
  * Snippets that perform constant pool resolution. Each resolution snippet type has a corresponding
@@ -48,7 +48,12 @@ public abstract class ResolutionSnippet extends Snippet {
         final Class[] expectedSignature = {ResolutionGuard.class};
         for (Method method : getClass().getDeclaredMethods()) {
             if (method.getAnnotation(SNIPPET.class) != null) {
-                ProgramError.check(Arrays.equals(expectedSignature, method.getParameterTypes()));
+                Class<?>[] signature = method.getParameterTypes();
+                ProgramError.check(expectedSignature.length == signature.length);
+                for (int i = 0; i < expectedSignature.length; i++) {
+                    Class<?> expected = expectedSignature[i];
+                    ProgramError.check(expected.isAssignableFrom(signature[i]));
+                }
             }
         }
     }
@@ -56,8 +61,8 @@ public abstract class ResolutionSnippet extends Snippet {
     /**
      * Creates a new guard for the resolution and/or initialization performed by this snippet.
      */
-    public final ResolutionGuard createGuard(ConstantPool constantPool, int constantPoolIndex) {
-        return new ResolutionGuard(constantPool, constantPoolIndex);
+    public final ResolutionGuard.InPool createGuard(ConstantPool constantPool, int constantPoolIndex) {
+        return new ResolutionGuard.InPool(constantPool, constantPoolIndex);
     }
 
     /**
@@ -70,10 +75,17 @@ public abstract class ResolutionSnippet extends Snippet {
     public static final class ResolveClass extends ResolutionSnippet {
 
         @NEVER_INLINE
-        private static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
-            final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
+        public static void resolve(ResolutionGuard guard) {
+            final ClassActor classActor;
+            if (guard instanceof InPool) {
+                InPool guardInPool = (InPool) guard;
+                final ConstantPool constantPool = guardInPool.pool;
+                final int index = guardInPool.cpi;
+                classActor = constantPool.classAt(index).resolve(constantPool, index);
+            } else {
+                InAccessingClass guardInClass = (InAccessingClass) guard;
+                classActor = guardInClass.resolve();
+            }
             guard.value = classActor;
         }
 
@@ -99,9 +111,15 @@ public abstract class ResolutionSnippet extends Snippet {
 
         @NEVER_INLINE
         private static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
-            final ArrayClassActor arrayClassActor = ArrayClassActor.forComponentClassActor(constantPool.classAt(index).resolve(constantPool, index));
+            final ClassActor arrayClassActor;
+            if (guard instanceof InPool) {
+                InPool guardInPool = (InPool) guard;
+                final ConstantPool constantPool = guardInPool.pool;
+                final int index = guardInPool.cpi;
+                arrayClassActor = ArrayClassActor.forComponentClassActor(constantPool.classAt(index).resolve(constantPool, index));
+            } else {
+                arrayClassActor = ((InAccessingClass) guard).resolve();
+            }
             guard.value = arrayClassActor;
         }
 
@@ -126,10 +144,16 @@ public abstract class ResolutionSnippet extends Snippet {
 
         @NEVER_INLINE
         private static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
-            final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
-            if (classActor.isAbstract() || classActor.isArrayClassActor()) {
+            final ClassActor classActor;
+            if (guard instanceof InPool) {
+                InPool guardInPool = (InPool) guard;
+                final ConstantPool constantPool = guardInPool.pool;
+                final int index = guardInPool.cpi;
+                classActor = constantPool.classAt(index).resolve(constantPool, index);
+            } else {
+                classActor = ((InAccessingClass) guard).resolve();
+            }
+            if (classActor.isAbstract() || classActor.isArrayClass()) {
                 // Covers abstract classes and interfaces
                 throw new InstantiationError();
             }
@@ -156,9 +180,9 @@ public abstract class ResolutionSnippet extends Snippet {
     public static final class ResolveStaticFieldForReading extends ResolutionSnippet {
 
         @NEVER_INLINE
-        private static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
+        private static void resolve(ResolutionGuard.InPool guard) {
+            final ConstantPool constantPool = guard.pool;
+            final int index = guard.cpi;
             final FieldActor fieldActor = constantPool.fieldAt(index).resolve(constantPool, index);
             if (!fieldActor.isStatic()) {
                 throw new IncompatibleClassChangeError();
@@ -168,7 +192,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
         @SNIPPET
         @INLINE
-        public static FieldActor resolveStaticFieldForReading(ResolutionGuard guard) {
+        public static FieldActor resolveStaticFieldForReading(ResolutionGuard.InPool guard) {
             if (guard.value == null) {
                 resolve(guard);
             }
@@ -186,9 +210,9 @@ public abstract class ResolutionSnippet extends Snippet {
     public static final class ResolveStaticFieldForWriting extends ResolutionSnippet {
 
         @NEVER_INLINE
-        private static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
+        private static void resolve(ResolutionGuard.InPool guard) {
+            final ConstantPool constantPool = guard.pool;
+            final int index = guard.cpi;
             final FieldActor fieldActor = constantPool.fieldAt(index).resolve(constantPool, index);
             if (!fieldActor.isStatic()) {
                 throw new IncompatibleClassChangeError();
@@ -201,7 +225,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
         @SNIPPET
         @INLINE
-        public static FieldActor resolveStaticFieldForWriting(ResolutionGuard guard) {
+        public static FieldActor resolveStaticFieldForWriting(ResolutionGuard.InPool guard) {
             if (guard.value == null) {
                 resolve(guard);
             }
@@ -219,9 +243,9 @@ public abstract class ResolutionSnippet extends Snippet {
     public static final class ResolveInstanceFieldForReading extends ResolutionSnippet {
 
         @NEVER_INLINE
-        private static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
+        private static void resolve(ResolutionGuard.InPool guard) {
+            final ConstantPool constantPool = guard.pool;
+            final int index = guard.cpi;
             final FieldActor fieldActor = constantPool.fieldAt(index).resolve(constantPool, index);
             if (fieldActor.isStatic()) {
                 throw new IncompatibleClassChangeError();
@@ -235,7 +259,7 @@ public abstract class ResolutionSnippet extends Snippet {
          */
         @SNIPPET
         @INLINE
-        public static FieldActor resolveInstanceFieldForReading(ResolutionGuard guard) {
+        public static FieldActor resolveInstanceFieldForReading(ResolutionGuard.InPool guard) {
             if (guard.value == null) {
                 resolve(guard);
             }
@@ -253,9 +277,9 @@ public abstract class ResolutionSnippet extends Snippet {
     public static final class ResolveInstanceFieldForWriting extends ResolutionSnippet {
 
         @NEVER_INLINE
-        private static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
+        private static void resolve(ResolutionGuard.InPool guard) {
+            final ConstantPool constantPool = guard.pool;
+            final int index = guard.cpi;
             final FieldActor fieldActor = constantPool.fieldAt(index).resolve(constantPool, index);
             if (fieldActor.isStatic()) {
                 throw new IncompatibleClassChangeError();
@@ -269,7 +293,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
         @SNIPPET
         @INLINE
-        public static FieldActor resolveInstanceFieldForWriting(ResolutionGuard guard) {
+        public static FieldActor resolveInstanceFieldForWriting(ResolutionGuard.InPool guard) {
             if (guard.value == null) {
                 resolve(guard);
             }
@@ -286,19 +310,15 @@ public abstract class ResolutionSnippet extends Snippet {
      */
     public static final class ResolveStaticMethod extends ResolutionSnippet {
         @NEVER_INLINE
-        private static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
-            final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
-            if (staticMethodActor.isInitializer()) {
-                throw new VerifyError("<init> must be invoked with invokespecial");
-            }
-            guard.value = staticMethodActor;
+        private static void resolve(ResolutionGuard.InPool guard) {
+            final ConstantPool constantPool = guard.pool;
+            final int index = guard.cpi;
+            guard.value = constantPool.resolveInvokeStatic(index);
         }
 
         @SNIPPET
         @INLINE(afterSnippetsAreCompiled = true)
-        public static StaticMethodActor resolveStaticMethod(ResolutionGuard guard) {
+        public static StaticMethodActor resolveStaticMethod(ResolutionGuard.InPool guard) {
             if (guard.value == null) {
                 resolve(guard);
             }
@@ -316,25 +336,15 @@ public abstract class ResolutionSnippet extends Snippet {
     public static final class ResolveSpecialMethod extends ResolutionSnippet {
 
         @NEVER_INLINE
-        private static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
-            VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
-            if (isSpecial(virtualMethodActor, constantPool.holder())) {
-                virtualMethodActor = constantPool.holder().superClassActor.findVirtualMethodActor(virtualMethodActor);
-                if (virtualMethodActor == null) {
-                    throw new AbstractMethodError();
-                }
-            }
-            if (virtualMethodActor.isAbstract()) {
-                throw new AbstractMethodError();
-            }
-            guard.value = virtualMethodActor;
+        private static void resolve(ResolutionGuard.InPool guard) {
+            final ConstantPool constantPool = guard.pool;
+            final int index = guard.cpi;
+            guard.value = constantPool.resolveInvokeSpecial(index);
         }
 
         @SNIPPET
         @INLINE
-        public static VirtualMethodActor resolveSpecialMethod(ResolutionGuard guard) {
+        public static VirtualMethodActor resolveSpecialMethod(ResolutionGuard.InPool guard) {
             if (guard.value == null) {
                 resolve(guard);
             }
@@ -347,19 +357,20 @@ public abstract class ResolutionSnippet extends Snippet {
     public static final class ResolveVirtualMethod extends ResolutionSnippet {
 
         @NEVER_INLINE
-        private static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
-            final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
-            if (virtualMethodActor.isInitializer()) {
+        private static void resolve(ResolutionGuard.InPool guard) {
+            final ConstantPool constantPool = guard.pool;
+            final int index = guard.cpi;
+
+            final MethodActor methodActor = constantPool.resolveInvokeVirtual(index);
+            if (methodActor.isInitializer()) {
                 throw new VerifyError("<init> must be invoked with invokespecial");
             }
-            guard.value = virtualMethodActor;
+            guard.value = methodActor;
         }
 
         @SNIPPET
         @INLINE(afterSnippetsAreCompiled = true)
-        public static VirtualMethodActor resolveVirtualMethod(ResolutionGuard guard) {
+        public static VirtualMethodActor resolveVirtualMethod(ResolutionGuard.InPool guard) {
             if (guard.value == null) {
                 resolve(guard);
             }
@@ -381,20 +392,15 @@ public abstract class ResolutionSnippet extends Snippet {
     public static final class ResolveInterfaceMethod extends ResolutionSnippet {
 
         @NEVER_INLINE
-        public static void resolve(ResolutionGuard guard) {
-            final ConstantPool constantPool = guard.constantPool;
-            final int index = guard.constantPoolIndex;
-            final InterfaceMethodRefConstant methodConstant = constantPool.interfaceMethodAt(index);
-            final MethodActor declaredMethod = methodConstant.resolve(constantPool, index);
-            if (!(declaredMethod instanceof InterfaceMethodActor)) {
-                throw new InternalError("Use of INVOKEINTERFACE for a method in java.lang.Object should have been rewritten");
-            }
-            guard.value = declaredMethod;
+        public static void resolve(ResolutionGuard.InPool guard) {
+            final ConstantPool constantPool = guard.pool;
+            final int index = guard.cpi;
+            guard.value = constantPool.resolveInvokeInterface(index);
         }
 
         @SNIPPET
         @INLINE
-        public static InterfaceMethodActor resolveInterfaceMethod(ResolutionGuard guard) {
+        public static InterfaceMethodActor resolveInterfaceMethod(ResolutionGuard.InPool guard) {
             if (guard.value == null) {
                 resolve(guard);
             }

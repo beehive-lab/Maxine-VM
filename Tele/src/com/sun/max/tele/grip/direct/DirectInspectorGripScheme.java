@@ -161,7 +161,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
         final Class javaClass = object.getClass();
         final ClassActor classActor = ClassActor.fromJava(javaClass);
 
-        if (classActor.isArrayClassActor()) {
+        if (classActor.isArrayClass()) {
             return Array.getLength(object);
         }
 

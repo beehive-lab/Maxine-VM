@@ -42,28 +42,28 @@ public class MaxRiSnippets implements RiSnippets {
 
 
     public MaxRiSnippets(MaxRiRuntime runtime) {
-        link = runtime.getRiMethod(LinkNativeMethod.SNIPPET.executable);
-        enterNative = runtime.getRiMethod(NativeCallPrologue.SNIPPET.executable);
-        enterNativeForC = runtime.getRiMethod(NativeCallPrologueForC.SNIPPET.executable);
-        enterVM = runtime.getRiMethod(NativeCallEpilogue.SNIPPET.executable);
-        enterVMForC = runtime.getRiMethod(NativeCallEpilogueForC.SNIPPET.executable);
+        link = LinkNativeMethod.SNIPPET.executable;
+        enterNative = NativeCallPrologue.SNIPPET.executable;
+        enterNativeForC = NativeCallPrologueForC.SNIPPET.executable;
+        enterVM = NativeCallEpilogue.SNIPPET.executable;
+        enterVMForC = NativeCallEpilogueForC.SNIPPET.executable;
     }
 
     @Override
     public RiSnippetCall enterNative(RiMethod nativeMethod) {
-        ClassMethodActor methodActor = ((MaxRiMethod) nativeMethod).asClassMethodActor("enterNative()");
+        ClassMethodActor methodActor = (ClassMethodActor) nativeMethod;
         return new RiSnippetCall(Bytecodes.INVOKESTATIC, methodActor.isCFunction() ? enterNativeForC : enterNative);
     }
 
     @Override
     public RiSnippetCall enterVM(RiMethod nativeMethod) {
-        ClassMethodActor methodActor = ((MaxRiMethod) nativeMethod).asClassMethodActor("enterVM()");
+        ClassMethodActor methodActor = (ClassMethodActor) nativeMethod;
         return new RiSnippetCall(Bytecodes.INVOKESTATIC, methodActor.isCFunction() ? enterVMForC : enterVM);
     }
 
     @Override
     public RiSnippetCall link(RiMethod nativeMethod) {
-        ClassMethodActor methodActor = ((MaxRiMethod) nativeMethod).asClassMethodActor("link()");
+        ClassMethodActor methodActor = (ClassMethodActor) nativeMethod;
         RiSnippetCall call = new RiSnippetCall(Bytecodes.INVOKESTATIC, link, CiConstant.forObject(methodActor));
         if (!MaxineVM.isHosted() && methodActor.nativeFunction.isLinked()) {
             call.result = CiConstant.forWord(methodActor.nativeFunction.link().asAddress().toLong());

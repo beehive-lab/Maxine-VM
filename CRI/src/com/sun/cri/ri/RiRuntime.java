@@ -21,6 +21,7 @@
 package com.sun.cri.ri;
 
 import java.io.*;
+import java.lang.reflect.*;
 
 import com.sun.cri.ci.*;
 
@@ -32,6 +33,7 @@ import com.sun.cri.ci.*;
  * @author Thomas Wuerthinger
  */
 public interface RiRuntime {
+    
     /**
      * Gets the constant pool for a method.
      * @param method the method
@@ -50,6 +52,9 @@ public interface RiRuntime {
 
     /**
      * Checks whether the specified method is required to be inlined (for semantic reasons).
+     * If this method returns true, then the null-check of the receiver emitted during
+     * inlining is omitted.
+     * 
      * @param method the method being called
      * @return {@code true} if the method must be inlined; {@code false} to let the compiler
      * use its own heuristics
@@ -72,37 +77,13 @@ public interface RiRuntime {
     boolean mustNotCompile(RiMethod method);
 
     /**
-     * Byte offset of the field of the internal thread representation that contains the pointer to the thread exception object.
+     * Byte offset of the field of the internal thread representation that contains
+     * the pointer to the thread exception object.
+     * 
+     * TODO: replace with ExceptionObject XIR
      * @return the byte offset of the exception object field
      */
     int threadExceptionOffset();
-
-    /**
-     * Checks whether an explicit null check is needed with the given offset of accessing an object.
-     * If this the offset is low, then an implicit null check will work.
-     * @param offset the offset at which the object is accessed
-     * @return true if an explicit null check is needed, false otherwise
-     */
-    boolean needsExplicitNullCheck(int offset);
-
-    /**
-     * Checks whether we are on a multiprocessor system.
-     * @return true if we are on a multiprocessor system, false otherwise
-     */
-    boolean isMP();
-
-    /**
-     * Checks whether jvmti can post exceptions.
-     * @return true if jvmti can post exceptions, false otherwise.
-     */
-    boolean jvmtiCanPostExceptions();
-
-    /**
-     * Resolves a given identifier to a type.
-     * @param string the name of the type
-     * @return the resolved type
-     */
-    RiType resolveType(String string);
 
     /**
      * Offset of the lock within the lock object.
@@ -182,14 +163,18 @@ public interface RiRuntime {
     RiType getRiType(Class<?> javaClass);
 
     /**
-     * Checks whether the specified runtime type is the same as for {@code Object[]}.
-     * @param type the runtime type to test
-     * @return {@code true} if the tested type represents {@code Object[]}.
-     */
-    boolean isObjectArrayType(RiType type);
-
-    /**
      * Gets the {@linkplain RiSnippets snippets} provided by the runtime.
      */
     RiSnippets getSnippets();
+
+    /**
+     * Gets the Java reflection object that can be used to compile-time evaluate or "fold"
+     * a call to a given method. A foldable method is a pure function that has no side effects.
+     * Such methods can be executed via reflection when all their inputs are constants,
+     * and the resulting value is substituted for the method call.
+     * 
+     * @param method the compiler interface method for which a foldable is being requested
+     * @return the reflection method to execute for folding or {@code null} if {@code method} is not foldable
+     */
+    Method getFoldingMethod(RiMethod method);
 }

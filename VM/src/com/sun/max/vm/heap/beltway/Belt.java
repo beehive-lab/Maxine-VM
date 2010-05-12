@@ -96,7 +96,7 @@ public class Belt extends LinearAllocationMemoryRegion {
     }
 
     public Pointer allocate(RuntimeMemoryRegion from, Size size) {
-        return null;
+        return Pointer.zero();
     }
 
     /**

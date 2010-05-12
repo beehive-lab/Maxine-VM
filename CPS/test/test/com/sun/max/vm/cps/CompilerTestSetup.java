@@ -20,11 +20,13 @@
  */
 package test.com.sun.max.vm.cps;
 
+import static com.sun.max.asm.dis.Disassembler.*;
 import junit.framework.*;
 import test.com.sun.max.vm.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
@@ -32,7 +34,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
-import com.sun.max.vm.debug.*;
 
 public abstract class CompilerTestSetup<Method_Type> extends VmTestSetup {
 
@@ -61,7 +62,9 @@ public abstract class CompilerTestSetup<Method_Type> extends VmTestSetup {
      * @return a disassembler for the ISA specific code in {@code targetMethod} or null if no such disassembler is available
      */
     public final Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return Disassemble.createDisassembler(VMConfiguration.target().platform().processorKind, targetMethod.codeStart(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
+        Platform platform = VMConfiguration.target().platform();
+        InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        return createDisassembler(platform.instructionSet(), platform.wordWidth(), targetMethod.codeStart().toLong(), inlineDataDecoder);
     }
 
     public static BootstrapCompilerScheme compilerScheme() {

@@ -20,8 +20,6 @@
  */
 package com.sun.c0x;
 
-import java.util.List;
-
 import com.sun.cri.bytecode.BytecodeLookupSwitch;
 import com.sun.cri.bytecode.BytecodeSwitch;
 import com.sun.cri.bytecode.BytecodeTableSwitch;
@@ -49,7 +47,7 @@ public class BlockMarker {
 
     final byte[] code;
     final byte[] blockMap;
-    List<RiExceptionHandler> handlers;
+    RiExceptionHandler[] handlers;
     int numBlocks;
     int numBackwardEdges;
 

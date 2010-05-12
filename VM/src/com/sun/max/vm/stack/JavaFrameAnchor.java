@@ -130,7 +130,7 @@ public enum JavaFrameAnchor {
     }
 
     /**
-     * Creates an anchor in the frame of the caller (hence the {@code @INLINE} annotation).
+     * Creates an anchor in the frame of the caller (hence the {@link INLINE} annotation).
      */
     @INLINE
     public static Pointer create(Word stackPointer, Word framePointer, Word instructionPointer, Word previousAnchor) {

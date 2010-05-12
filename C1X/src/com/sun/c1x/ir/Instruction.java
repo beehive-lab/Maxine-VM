@@ -69,7 +69,6 @@ public abstract class Instruction extends Value {
     public Instruction(CiKind kind) {
         super(kind);
         bci = BCI_NOT_APPENDED;
-        operand = CiValue.IllegalValue;
     }
 
     /**
@@ -114,9 +113,9 @@ public abstract class Instruction extends Value {
      * @return the new next instruction
      */
     public final Instruction setNext(Instruction next, int bci) {
+        this.next = next;
         if (next != null) {
             assert !(this instanceof BlockEnd);
-            this.next = next;
             next.setBCI(bci);
         }
         return next;

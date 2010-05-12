@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import static com.sun.cri.ci.CiKind.*;
+import static java.lang.reflect.Modifier.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.globalstub.*;
@@ -120,27 +121,48 @@ public final class FrameMap {
         if (method == null) {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
-            incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signatureType(), !method.isStatic()), false, false);
+            CiKind receiver = !isStatic(method.accessFlags()) ? method.holder().kind() : null;
+            incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signature(), receiver), false);
         }
     }
 
     /**
      * Gets the calling convention for calling runtime methods with the specified signature.
-     * @param signature the signature of the arguments and return value
+     * @param signature the signature of the arguments
      * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
      */
     public CiCallingConvention runtimeCallingConvention(CiKind[] signature) {
-        return compiler.target.registerConfig.getRuntimeCallingConvention(signature, compiler.target);
+        CiCallingConvention cc = compiler.target.registerConfig.getRuntimeCallingConvention(signature, compiler.target);
+        assert cc.stackSize == 0 : "runtime call should not have stack arguments";
+        return cc;
     }
 
     /**
      * Gets the calling convention for calling Java methods with the specified signature.
-     * @param signature the signature of the arguments and return value
+     *
+     * @param signature the signature of the arguments
+     * @param outgoing if {@code true}, the reserved space on the stack for outgoing stack parameters is adjusted if necessary
      * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
      */
-    public CiCallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing, boolean reserveOutgoingArgumentsArea) {
+    public CiCallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing) {
         CiCallingConvention cc = compiler.target.registerConfig.getJavaCallingConvention(signature, outgoing, compiler.target);
-        if (reserveOutgoingArgumentsArea) {
+        if (outgoing) {
+            assert frameSize == -1 : "frame size must not yet be fixed!";
+            reserveOutgoing(cc.stackSize);
+        }
+        return cc;
+    }
+
+    /**
+     * Gets the calling convention for calling native code with the specified signature.
+     *
+     * @param signature the signature of the arguments
+     * @param outgoing if {@code true}, the reserved space on the stack for outgoing stack parameters is adjusted if necessary
+     * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
+     */
+    public CiCallingConvention nativeCallingConvention(CiKind[] signature, boolean outgoing) {
+        CiCallingConvention cc = compiler.target.registerConfig.getNativeCallingConvention(signature, outgoing, compiler.target);
+        if (outgoing) {
             assert frameSize == -1 : "frame size must not yet be fixed!";
             reserveOutgoing(cc.stackSize);
         }

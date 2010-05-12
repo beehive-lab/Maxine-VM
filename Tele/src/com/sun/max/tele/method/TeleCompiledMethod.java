@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.method;
 
+import static com.sun.max.asm.dis.Disassembler.*;
+
 import java.io.*;
 
 import com.sun.max.asm.*;
@@ -42,7 +44,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 
 /**
  * Representation of a method compilation in the VM.
@@ -311,7 +312,7 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
                 return string;
             }
         };
-        Disassemble.disassemble(printStream, getCode(), processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+        disassemble(printStream, getCode(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
     }
 
 }

@@ -121,7 +121,7 @@ final class JDK_java_lang_Class {
      */
     @SUBSTITUTE
     public boolean isInterface() {
-        return thisClassActor().isInterfaceActor();
+        return thisClassActor().isInterface();
     }
 
     /**
@@ -131,7 +131,7 @@ final class JDK_java_lang_Class {
      */
     @SUBSTITUTE
     public boolean isArray() {
-        return thisClassActor().isArrayClassActor();
+        return thisClassActor().isArrayClass();
     }
 
     /**
@@ -152,7 +152,7 @@ final class JDK_java_lang_Class {
     @SUBSTITUTE
     public String getName() {
         final ClassActor thisClassActor = thisClassActor();
-        if (thisClassActor.isArrayClassActor()) {
+        if (thisClassActor.isArrayClass()) {
             return Descriptor.dottified(thisClassActor.typeDescriptor.toString());
         }
         return thisClassActor.name.toString();
@@ -184,7 +184,7 @@ final class JDK_java_lang_Class {
             return null;
         }
         final ClassActor superClassActor = thisClassActor.superClassActor;
-        return superClassActor == null ? null : superClassActor.mirror();
+        return superClassActor == null ? null : superClassActor.javaClass();
     }
 
     /**
@@ -198,7 +198,7 @@ final class JDK_java_lang_Class {
         final ClassActor thisClassActor = thisClassActor();
         if (thisClassActor != null) {
             for (InterfaceActor interfaceActor : thisClassActor.localInterfaceActors()) {
-                javaInterfaces.append(interfaceActor.mirror());
+                javaInterfaces.append(interfaceActor.javaClass());
             }
         }
         return Sequence.Static.toArray(javaInterfaces, new Class[javaInterfaces.length()]);
@@ -215,7 +215,7 @@ final class JDK_java_lang_Class {
         if (componentClassActor == null) {
             return null;
         }
-        return componentClassActor.mirror();
+        return componentClassActor.javaClass();
     }
 
     /**

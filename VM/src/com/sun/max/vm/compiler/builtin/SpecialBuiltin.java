@@ -138,10 +138,10 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     /**
-     * Returns the index to the least significant bit set in a given value.
+     * Returns the index of the least significant bit set in a given value.
      *
      * @param value the value to scan for the least significant bit
-     * @return the index to the least significant bit within {@code value} or {@code -1} if {@code value == 0}
+     * @return the index of the least significant bit within {@code value} or {@code -1} if {@code value == 0}
      */
     @INTRINSIC(LSB)
     @BUILTIN(LeastSignificantBit.class)
@@ -150,8 +150,7 @@ public abstract class SpecialBuiltin extends Builtin {
         if (l == 0) {
             return -1;
         }
-        long lowestOneBit = Long.lowestOneBit(l);
-        return Long.numberOfTrailingZeros(lowestOneBit);
+        return Long.numberOfTrailingZeros(l);
     }
 
     public static class LeastSignificantBit extends SpecialBuiltin {
@@ -176,8 +175,7 @@ public abstract class SpecialBuiltin extends Builtin {
         if (l == 0) {
             return -1;
         }
-        long highestOneBit = Long.highestOneBit(l);
-        return Long.numberOfTrailingZeros(highestOneBit);
+        return Long.numberOfTrailingZeros(l);
     }
 
     public static class MostSignificantBit extends SpecialBuiltin {

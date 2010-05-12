@@ -25,10 +25,6 @@ import java.io.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.dis.*;
-import com.sun.max.asm.dis.amd64.*;
-import com.sun.max.asm.dis.ia32.*;
-import com.sun.max.asm.dis.ppc.*;
-import com.sun.max.asm.dis.sparc.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.sparc.*;
@@ -96,35 +92,7 @@ public final class TeleDisassembler {
     // Synchronize on class to avoid use of the disassembler before the initial call made during initialization.
     // This might be tidier if not all static.
     private static synchronized Disassembler createDisassembler(final ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
-        Disassembler disassembler = null;
-        switch (processorKind.instructionSet) {
-            case ARM:
-                FatalError.unimplemented();
-                break;
-            case AMD64:
-                disassembler = new AMD64Disassembler(startAddress.toLong(), inlineDataDecoder);
-                break;
-            case IA32:
-                disassembler = new IA32Disassembler(startAddress.toInt(), inlineDataDecoder);
-                break;
-            case PPC:
-                if (processorKind.dataModel.wordWidth == WordWidth.BITS_64) {
-                    disassembler = new PPC64Disassembler(startAddress.toLong(), inlineDataDecoder);
-                } else {
-                    disassembler = new PPC32Disassembler(startAddress.toInt(), inlineDataDecoder);
-                }
-                break;
-            case SPARC:
-                if (processorKind.dataModel.wordWidth == WordWidth.BITS_64) {
-                    disassembler = new SPARC64Disassembler(startAddress.toLong(), inlineDataDecoder);
-                } else {
-                    disassembler = new SPARC32Disassembler(startAddress.toInt(), inlineDataDecoder);
-                }
-                break;
-            default:
-                ProgramError.unknownCase();
-        }
-        return disassembler;
+        return Disassembler.createDisassembler(processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder);
     }
 
     private abstract static class LoadLiteralParser {

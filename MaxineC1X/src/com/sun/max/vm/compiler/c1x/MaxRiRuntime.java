@@ -21,8 +21,10 @@
 package com.sun.max.vm.compiler.c1x;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
@@ -35,16 +37,14 @@ import com.sun.max.io.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * The {@code MaxRiRuntime} class implements the runtime interface needed by C1X.
@@ -65,53 +65,13 @@ public class MaxRiRuntime implements RiRuntime {
     private static final CiRegister[] generalParameterRegisters = new CiRegister[]{AMD64.rdi, AMD64.rsi, AMD64.rdx, AMD64.rcx, AMD64.r8, AMD64.r9};
     private static final CiRegister[] xmmParameterRegisters = new CiRegister[]{AMD64.xmm0, AMD64.xmm1, AMD64.xmm2, AMD64.xmm3, AMD64.xmm4, AMD64.xmm5, AMD64.xmm6, AMD64.xmm7};
 
-    final MaxRiConstantPool globalConstantPool = new MaxRiConstantPool(this, null);
-
-    final HashMap<ConstantPool, MaxRiConstantPool> constantPools = new HashMap<ConstantPool, MaxRiConstantPool>();
-
     /**
      * Gets the constant pool for a specified method.
      * @param method the compiler interface method
      * @return the compiler interface constant pool for the specified method
      */
     public RiConstantPool getConstantPool(RiMethod method) {
-        return getConstantPool(asClassMethodActor(method, "getConstantPool()"));
-    }
-
-    private MaxRiConstantPool getConstantPool(ClassMethodActor classMethodActor) {
-        final ConstantPool cp = classMethodActor.compilee().codeAttribute().constantPool;
-        synchronized (this) {
-            MaxRiConstantPool constantPool = constantPools.get(cp);
-            if (constantPool == null) {
-                constantPool = new MaxRiConstantPool(this, cp);
-                constantPools.put(cp, constantPool);
-            }
-            return constantPool;
-        }
-    }
-
-    /**
-     * Resolves a compiler interface type by its name. Note that this
-     * method should only be called for globally available classes (e.g. java.lang.*),
-     * since it does not supply a constant pool.
-     * @param name the name of the class
-     * @return the compiler interface type for the class
-     */
-    public RiType resolveType(String name) {
-        final ClassActor classActor = ClassRegistry.get((ClassLoader) null, JavaTypeDescriptor.getDescriptorForJavaString(name), false);
-        if (classActor != null) {
-            return canonicalRiType(classActor, globalConstantPool, -1);
-        }
-        return null;
-    }
-
-    /**
-     * Gets the {@code RiMethod} for a given method actor.
-     * @param methodActor the method actor
-     * @return the canonical compiler interface method for the method actor
-     */
-    public RiMethod getRiMethod(ClassMethodActor methodActor) {
-        return canonicalRiMethod(methodActor, getConstantPool(methodActor), -1);
+        return asClassMethodActor(method, "getConstantPool()").compilee().codeAttribute().constantPool;
     }
 
     /**
@@ -127,12 +87,12 @@ public class MaxRiRuntime implements RiRuntime {
     /**
      * Remove once C1X can compile native method stubs.
      */
-    public static final boolean CAN_COMPILE_NATIVE_METHODS = false;
+    public static final boolean CAN_COMPILE_NATIVE_METHODS = "true".equals(System.getenv("C1X_CAN_COMPILE_NATIVE_METHODS"));
 
     /**
      * Remove once C1X implements the semantics of the ACCESSOR annotation.
      */
-    private static final boolean CAN_COMPILE_ACCESSOR_METHODS = false;
+    public static final boolean CAN_COMPILE_ACCESSOR_METHODS = false;
 
     /**
      * Checks whether the runtime requires inlining of the specified method.
@@ -172,10 +132,6 @@ public class MaxRiRuntime implements RiRuntime {
             return true;
         }
 
-        if (classMethodActor.holder().name.string.endsWith(".Log")) {
-            return true;
-        }
-
         return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
     }
 
@@ -190,24 +146,10 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     ClassMethodActor asClassMethodActor(RiMethod method, String operation) {
-        if (method instanceof MaxRiMethod) {
-            return ((MaxRiMethod) method).asClassMethodActor(operation);
+        if (method instanceof ClassMethodActor) {
+            return (ClassMethodActor) method;
         }
-        throw new MaxRiUnresolved("invalid RiMethod instance: " + method.getClass());
-    }
-
-    public boolean isMP() {
-        return true;
-    }
-
-    public boolean jvmtiCanPostExceptions() {
-        // TODO: Check what to return here
-        return false;
-    }
-
-    public boolean needsExplicitNullCheck(int offset) {
-        // TODO: Return false if implicit null check is possible for this offset!
-        return offset >= 4096;
+        throw new CiUnresolvedException("invalid RiMethod instance: " + method.getClass());
     }
 
     public int threadExceptionOffset() {
@@ -251,7 +193,7 @@ public class MaxRiRuntime implements RiRuntime {
             final InlineDataDecoder inlineDataDecoder = null;
             final Pointer startAddress = Pointer.fromInt(0);
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false);
-            Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+            Disassembler.disassemble(byteArrayOutputStream, code, processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }
         return "";
@@ -314,92 +256,28 @@ public class MaxRiRuntime implements RiRuntime {
                 }
             };
             byte[] code = Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize());
-            Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+            Disassembler.disassemble(byteArrayOutputStream, code, processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }
         return "";
+    }
+
+    public Method getFoldingMethod(RiMethod method) {
+        if (C1XOptions.CanonicalizeFoldableMethods && method.isResolved()) {
+            MethodActor methodActor = (MethodActor) method;
+            if (Actor.isDeclaredFoldable(methodActor.flags())) {
+                return methodActor.toJava();
+            }
+        }
+        return null;
     }
 
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
         return new C1XTargetMethod(name, ciTargetMethod);
     }
 
-    /**
-     * Canonicalizes resolved {@code MaxRiMethod} instances (per runtime), so
-     * that the same {@code MaxRiMethod} instance is always returned for the
-     * same {@code MethodActor}.
-     * @param methodActor the method actor for which to get the canonical type
-     * @param maxRiConstantPool the constant pool
-     * @param cpi the constant pool index
-     * @return the canonical compiler interface method for the method actor
-     */
-    public MaxRiMethod canonicalRiMethod(MethodActor methodActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
-        // TODO: is synchronization necessary here or are duplicates harmless?
-
-        // all resolved methods are canonicalized per runtime instance
-        final MaxRiMethod previous = (MaxRiMethod) methodActor.ciObject;
-        if (previous == null) {
-            final MaxRiMethod method = new MaxRiMethod(maxRiConstantPool, methodActor, cpi);
-            methodActor.ciObject = method;
-            return method;
-        }
-        return previous;
-    }
-
-    /**
-     * Canonicalizes resolved {@code MaxRiFielde} instances (per runtime), so
-     * that the same {@code MaxRiField} instance is always returned for the
-     * same {@code FieldActor}.
-     * @param fieldActor the field actor for which to get the canonical type
-     * @param maxRiConstantPool the constant pool
-     * @param cpi the constant pool index
-     * @return the canonical compiler interface field for the field actor
-     */
-    public MaxRiField canonicalRiField(FieldActor fieldActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
-        // TODO: is synchronization necessary here or are duplicates harmless?
-
-        // all resolved fields are canonicalized per runtime instance
-        final MaxRiField previous = (MaxRiField) fieldActor.ciObject;
-        if (previous == null) {
-            final MaxRiField field = new MaxRiField(maxRiConstantPool, fieldActor, cpi);
-            fieldActor.ciObject = field;
-            return field;
-        }
-        return previous;
-    }
-
-    /**
-     * Canonicalizes resolved {@code MaxRiType} instances (per runtime), so
-     * that the same {@code MaxRiType} instance is always returned for the
-     * same {@code ClassActor}.
-     * @param classActor the class actor for which to get the canonical type
-     * @param maxRiConstantPool
-     * @return the canonical compiler interface type for the class actor
-     */
-    public MaxRiType canonicalRiType(ClassActor classActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
-        // TODO: is synchronization necessary here or are duplicates harmless?
-
-        // all resolved types are canonicalized per runtime instance
-        final MaxRiType previous = (MaxRiType) classActor.ciObject;
-        if (previous == null) {
-            final MaxRiType type = new MaxRiType(maxRiConstantPool, classActor, cpi);
-            classActor.ciObject = type;
-            return type;
-        }
-        return previous;
-    }
-
     public RiType getRiType(Class<?> javaClass) {
-        // TODO: using target is probably necessary here
-        return canonicalRiType(ClassActor.fromJava(javaClass), globalConstantPool, -1);
-    }
-
-    public boolean isObjectArrayType(RiType type) {
-        if (type.isResolved()) {
-            ClassActor c = ((MaxRiType) type).asClassActor("equals Object[]");
-            return c.isArrayClassActor() && c == ClassActor.fromJava(Object[].class);
-        }
-        return false;
+        return ClassActor.fromJava(javaClass);
     }
 
     @Override

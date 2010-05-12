@@ -312,7 +312,30 @@ public class Bytecodes {
     public static final int PGET                 = 225;
     public static final int PSET                 = 226;
 
-    public static final int PCMPSWP              = 227; // Pointer compare-and-swap
+    /**
+     * Atomic update of a value in memory.
+     * 
+     * Compares {@code expectedValue} value with the actual value in a memory location (given by {@code pointer + offset}).
+     * Iff they are same, {@code newValue} is stored into the memory location and the {@code expectedValue} is returned.
+     * Otherwise, the actual value is returned.
+     * All of the above is performed in one atomic hardware transaction.
+     * 
+     * <pre>
+     * Format: { u3 opcode;   // PCMPSWP_INT, PCMPSWP_WORD, PCMPSWP_REFERENCE,
+     *                        // PCMPSWP_INT_I, PCMPSWP_WORD_I or PCMPSWP_REFERENCE_I
+     *         }
+     *         
+     * Operand Stack:
+     *     ... pointer, offset, expectedValue, newValue => ..., result
+     * </pre>
+     *
+     * @param pointer base of denoted memory location
+     * @param offset offset from {@code pointer} of the memory location
+     * @param expectedValue if this value is currently in the memory location, perform the swap
+     * @param newValue the new value to store into the memory location
+     * @return either {@code expectedValue} or the actual value
+     */
+    public static final int PCMPSWP              = 227;
 
     public static final int MOV_I2F              = 228;
     public static final int MOV_F2I              = 229;
@@ -328,7 +351,7 @@ public class Bytecodes {
      *         }
      *
      * Operand Stack:
-     *     ..., value, value => ..., value
+     *     ..., left, right => ..., result
      * </pre>
      *
      * @see UnsignedComparisons
@@ -339,12 +362,12 @@ public class Bytecodes {
      * Unsigned word comparison.
      *
      * <pre>
-     * Format: { u1 opcode;   // UCMP
+     * Format: { u1 opcode;   // UWCMP
      *           u2 op;       // ABOVE_EQUAL, ABOVE_THAN, BELOW_EQUAL or BELOW_THAN
      *         }
      *
      * Operand Stack:
-     *     ..., value, value => ..., value
+     *     ..., left, right => ..., result
      * </pre>
      *
      * @see UnsignedComparisons
@@ -380,24 +403,12 @@ public class Bytecodes {
     public static final int WRITEREG             = 235;
 
     /**
-     * Unsafe cast of top value on stack. The valid type characters and their corresponding kinds are:
-     * <pre>
-     *  'z' = boolean
-     *  'c' = char
-     *  'f' = float
-     *  'd' = double
-     *  'b' = byte
-     *  's' = short
-     *  'i' = int
-     *  'l' = long
-     *  'a' = Object
-     *  'w' = Word
-     * </pre>
+     * Unsafe cast of top value on stack.
      *
      * <pre>
      * Format: { u1 opcode;   // UNSAFE_CAST
-     *           u1 from;     // type char denoting input type
-     *           u1 to;       // type char denoting output type
+     *           u2 method;   // Constant pool index to method (CONSTANT_Methodref_info) whose signature
+     *                        // describes the source and target types of the cast
      *         }
      *
      * Operand Stack:
@@ -423,7 +434,7 @@ public class Bytecodes {
      *         }
      *
      * Operand Stack:
-     *     ..., value => ..., value
+     *     ..., size => ..., address
      * </pre>
      *
      * The value on the top of the stack is the size in bytes to allocate.
@@ -446,28 +457,59 @@ public class Bytecodes {
     public static final int MEMBAR               = 240;
     
     /**
-     * Pins a value to the native stack.
+     * Allocates and initializes a slot on the native stack frame.
+     * <p>
+     * Forces the compiler to allocate a native frame slot and initializes it with {@code value}
+     * The result is the address of the native frame slot.
+     * The native frame slot will be live for the rest of the method. The type of {@code value} determines
+     * if it is a GC root. If {@code value} is an object, any subsequent value written to the slot
+     * (via {@code address}) must be an object. If {@code value} is not an object, any subsequent value
+     * written to the slot must not be an object.
      * 
-     * Forces the compiler to ensure the value on the top of the stack is allocated
-     * on the frame of the compiled method. The top value on the stack is replaced
-     * with the address of the value in the frame. This address is valid for the
-     * remainder of the method.
+     * <b>The compiler is not required enforce this type safety.</b>
      * 
      * <pre>
-     * Format: { u1 opcode;   // STACKADDR
+     * Format: { u1 opcode;   // ALLOCSTKVAR
      *           u2 unused;
      *         }
      *
      * Operand Stack:
-     *     ..., value => ..., value
+     *     ..., value => ..., address
+     * </pre>
      */
-    public static final int LSA                  = 241;
+    public static final int ALLOCSTKVAR          = 241;
     
     public static final int PAUSE                = 242;
     public static final int ADD_SP               = 243;
     public static final int READ_PC              = 244;
     public static final int FLUSHW               = 245;
+    
+    /**
+     * Produces the index of the least significant bit within {@code value} or {@code -1} if {@code value == 0}.
+     * 
+     * <pre>
+     * Format: { u1 opcode;  // LSB
+     *           u2 ignore;
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., index
+     * </pre>
+     */
     public static final int LSB                  = 246;
+    
+    /**
+     * Produces the index of the most significant bit within {@code value} or {@code -1} if {@code value == 0}.
+     * 
+     * <pre>
+     * Format: { u1 opcode;  // MSB
+     *           u2 ignore;
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., index
+     * </pre>
+     */
     public static final int MSB                  = 247;
 
     // End extended bytecodes
@@ -1091,7 +1133,7 @@ public class Bytecodes {
         def("safepoint"       , "bii"  , EXTENSION | TRAP);
         def("alloca"          , "bii"  , EXTENSION);
         def("membar"          , "bii"  , EXTENSION);
-        def("lsa"             , "bii"  , EXTENSION);
+        def("allocstkvar"     , "bii"  , EXTENSION);
         def("pause"           , "bii"  , EXTENSION);
         def("add_sp"          , "bii"  , EXTENSION);
         def("read_pc"         , "bii"  , EXTENSION);
@@ -1446,7 +1488,7 @@ public class Bytecodes {
 
     @INTRINSIC(WREMI)
     public static native long unsignedRemainderByInt(long x, int y);
-
+    
     /**
      * Attempts to fold a binary operation on two constant word inputs.
      *

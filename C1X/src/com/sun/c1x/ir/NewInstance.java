@@ -32,7 +32,7 @@ import com.sun.cri.ri.*;
 public final class NewInstance extends StateSplit {
 
     final RiType instanceClass;
-    public final char cpi;
+    public final int cpi;
     public final RiConstantPool constantPool;
 
     /**
@@ -41,7 +41,7 @@ public final class NewInstance extends StateSplit {
      * @param cpi the constant pool index
      * @param stateBefore the state before executing this instruction
      */
-    public NewInstance(RiType type, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
+    public NewInstance(RiType type, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
         super(CiKind.Object, stateBefore);
         this.instanceClass = type;
         this.cpi = cpi;

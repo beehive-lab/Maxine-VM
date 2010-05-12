@@ -34,7 +34,7 @@ public class ResolvedObjectType extends ObjectType implements ResolvedType {
 
     public ResolvedObjectType(ClassActor classActor) {
         super(classActor.typeDescriptor, null);
-        assert !classActor.isArrayClassActor();
+        assert !classActor.isArrayClass();
         this.classActor = classActor;
     }
 

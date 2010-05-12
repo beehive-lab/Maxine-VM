@@ -108,22 +108,22 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     Location genInvokeInterface(RiMethod riMethod, Location[] args) {
-        return unimplemented(riMethod.signatureType().returnKind());
+        return unimplemented(riMethod.signature().returnKind());
     }
 
     @Override
     Location genInvokeStatic(RiMethod riMethod, Location[] args) {
-        return unimplemented(riMethod.signatureType().returnKind());
+        return unimplemented(riMethod.signature().returnKind());
     }
 
     @Override
     Location genInvokeSpecial(RiMethod riMethod, Location[] args) {
-        return unimplemented(riMethod.signatureType().returnKind());
+        return unimplemented(riMethod.signature().returnKind());
     }
 
     @Override
     Location genInvokeVirtual(RiMethod riMethod, Location[] args) {
-        return unimplemented(riMethod.signatureType().returnKind());
+        return unimplemented(riMethod.signature().returnKind());
     }
 
     @Override

@@ -121,7 +121,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
         }
 
         static MethodActor resolve(ConstantPool pool, int index, ClassActor classActor, Utf8Constant name, SignatureDescriptor signature) {
-            if (classActor.isInterfaceActor()) {
+            if (classActor.isInterface()) {
                 throw new IncompatibleClassChangeError();
             }
             // According to the JVM specification, we would have to look for interface methods,
