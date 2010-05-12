@@ -37,7 +37,7 @@ public class TeleStaticTuple extends TeleTupleObject {
     public Set<FieldActor> getFieldActors() {
         // Static tuples do not inherit fields; return only the local static fields.
         final Set<FieldActor> staticFieldActors = new HashSet<FieldActor>();
-        for (FieldActor fieldActor : classActorForType().localStaticFieldActors()) {
+        for (FieldActor fieldActor : classActorForObjectType().localStaticFieldActors()) {
             staticFieldActors.add(fieldActor);
         }
         return staticFieldActors;
@@ -56,12 +56,12 @@ public class TeleStaticTuple extends TeleTupleObject {
 
     @Override
     public Object shallowCopy() {
-        return StaticTuple.create(classActorForType());
+        return StaticTuple.create(classActorForObjectType());
     }
 
     @Override
     protected Object createDeepCopy(DeepCopier context) {
-        return classActorForType().staticTuple();
+        return classActorForObjectType().staticTuple();
     }
 
 }

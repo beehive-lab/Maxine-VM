@@ -73,9 +73,11 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
 
     @Override
     public void refresh() {
+        super.refresh();
         // Register any new compiled methods that have appeared since the previous refresh
         // Don't try this until the code cache is ready, which it isn't early in the startup sequence.
-        if (vm().codeCache().isInitialized() && vm().tryLock()) {
+        // Also make sure that the region has actually been allocated before trying.
+        if (vm().codeCache().isInitialized() && !getRegionStart().isZero() && vm().tryLock()) {
             try {
                 Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
                 final long startTimeMillis = System.currentTimeMillis();
@@ -96,10 +98,11 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
                 vm().unlock();
             }
         }
-        super.refresh();
     }
 
     /**
+     * Gets all method compilations; assumes no eviction, no reordering.
+     *
      * @return all compiled methods known to be in the region.
      */
     public List<TeleTargetMethod> teleTargetMethods() {

@@ -20,15 +20,21 @@
  */
 package com.sun.max.tele;
 
+import java.io.*;
+
 import com.sun.max.collect.*;
-import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 
 /**
  * Holds information about a block of code in
@@ -40,6 +46,175 @@ import com.sun.max.vm.compiler.target.*;
 public final class TeleCompiledNativeCode extends TeleCompiledCode {
 
     public static final Size DEFAULT_NATIVE_CODE_LENGTH = Size.fromInt(200);
+
+    /**
+     * Description of a region of native code discovered with the VM.
+     * <br>
+     * This region has no parent, as little is known about it.
+     * <br>
+     * This region has no children.
+     *
+     * @author Michael Van De Vanter
+     */
+    private static final class CompiledNativeCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCode> {
+
+        private static final IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY =
+            new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
+
+        private TeleCompiledCode owner;
+
+        private CompiledNativeCodeMemoryRegion(TeleVM teleVM, TeleCompiledNativeCode owner, String name, Address start, Size size) {
+            super(teleVM, name, start, size);
+            this.owner = owner;
+        }
+
+        public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
+            return null;
+        }
+
+        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+            return EMPTY;
+        }
+
+        public MaxCompiledCode owner() {
+            return owner;
+        }
+
+        public boolean isBootRegion() {
+            return false;
+        }
+    }
+
+    /**
+     * Summary information about a sequence of disassembled machine code instructions about
+     * which little is known.
+     *
+     * @author Michael Van De Vanter
+     */
+    private final class CompiledNativeCodeInstructionMap implements InstructionMap {
+
+        private IndexedSequence<MachineCodeLocation> instructionLocations = null;
+        private IndexedSequence<Integer> labelIndexes = null;
+
+        CompiledNativeCodeInstructionMap() {
+        }
+
+        private void initialize() {
+            if (instructions == null) {
+                instructions = getInstructions();
+                final int length = instructions.length();
+                final VariableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
+                final VariableSequence<Integer> labels = new ArrayListSequence<Integer>();
+                for (int index = 0; index < length; index++) {
+                    final TargetCodeInstruction targetCodeInstruction = instructions.get(index);
+                    locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, "native target code instruction"));
+                    if (targetCodeInstruction.label != null) {
+                        labels.append(index);
+                    }
+                }
+                instructionLocations = locations;
+                labelIndexes = labels;
+            }
+        }
+
+        public int length() {
+            initialize();
+            return instructions.length();
+        }
+
+        public TargetCodeInstruction instruction(int index) throws IllegalArgumentException {
+            initialize();
+            if (index < 0 || index >= instructions.length()) {
+                throw new IllegalArgumentException();
+            }
+            return instructions.get(index);
+        }
+
+        public int findInstructionIndex(Address address) {
+            if (address != null) {
+                initialize();
+                final int length = instructions.length();
+                if (address.greaterEqual(instructions.first().address)) {
+                    for (int index = 1; index < length; index++) {
+                        instructions.get(index);
+                        if (address.lessThan(instructions.get(index).address)) {
+                            return index - 1;
+                        }
+                    }
+                    final TargetCodeInstruction lastInstruction = instructions.last();
+                    if (address.lessThan(lastInstruction.address.plus(lastInstruction.bytes.length))) {
+                        return length - 1;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        public MachineCodeLocation instructionLocation(int index) {
+            initialize();
+            if (index < 0 || index >= instructions.length()) {
+                throw new IllegalArgumentException();
+            }
+            return instructionLocations.get(index);
+        }
+
+        public boolean isStop(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructions.length()) {
+                throw new IllegalArgumentException();
+            }
+            return false;
+        }
+
+        public boolean isCall(int index) throws IllegalArgumentException {
+            // TODO (mlvdv) how to determine this?
+            return false;
+        }
+
+        public boolean isNativeCall(int index) throws IllegalArgumentException {
+            return isCall(index);
+        }
+
+        public boolean isBytecodeBoundary(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructions.length()) {
+                throw new IllegalArgumentException();
+            }
+            return false;
+        }
+
+        public BytecodeLocation bytecodeLocation(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructions.length()) {
+                throw new IllegalArgumentException();
+            }
+            return null;
+        }
+
+        public TargetJavaFrameDescriptor targetFrameDescriptor(int index) throws IllegalArgumentException {
+            return null;
+        }
+
+        public int opcode(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructions.length()) {
+                throw new IllegalArgumentException();
+            }
+            return -1;
+        }
+
+        public int calleeConstantPoolIndex(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructions.length()) {
+                throw new IllegalArgumentException();
+            }
+            return -1;
+        }
+
+        public IndexedSequence<Integer> labelIndexes() {
+            initialize();
+            return labelIndexes;
+        }
+
+        public int[] bytecodeToTargetCodePositionMap() {
+            return null;
+        }
+    }
 
     /**
      * @param name a name for the region
@@ -58,21 +233,24 @@ public final class TeleCompiledNativeCode extends TeleCompiledCode {
         return teleCompiledNativeCode;
     }
 
-    private final String name;
-    private final CompiledMethodMemoryRegion compiledMethodMemoryRegion;
+    private final CompiledNativeCodeMemoryRegion compiledNativeCodeMemoryRegion;
+
+    private InstructionMap instructionMap = null;
+
     private IndexedSequence<TargetCodeInstruction> instructions;
     private IndexedSequence<MachineCodeLocation> instructionLocations;
+    private CodeLocation codeStartLocation = null;
 
     private TeleCompiledNativeCode(TeleVM teleVM, Address start, Size size, String name) {
         super(teleVM);
-        this.compiledMethodMemoryRegion = new NativeTargetCodeRegion(teleVM, this, start, size);
-        this.name = name;
+        this.compiledNativeCodeMemoryRegion = new CompiledNativeCodeMemoryRegion(teleVM, this, name, start, size);
+        this.instructionMap = new CompiledNativeCodeInstructionMap();
         // Register so that it can be located by address.
         vm().codeCache().register(this);
     }
 
     public String entityName() {
-        return name;
+        return compiledNativeCodeMemoryRegion.regionName();
     }
 
     public String entityDescription() {
@@ -80,22 +258,58 @@ public final class TeleCompiledNativeCode extends TeleCompiledCode {
     }
 
     public MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion() {
-        return compiledMethodMemoryRegion;
+        return compiledNativeCodeMemoryRegion;
     }
 
     public boolean contains(Address address) {
-        return compiledMethodMemoryRegion.contains(address);
+        return compiledNativeCodeMemoryRegion.contains(address);
+    }
+
+    public InstructionMap instructionMap() {
+        return instructionMap;
     }
 
     public Address getCodeStart() {
-        return compiledMethodMemoryRegion.start();
+        return compiledNativeCodeMemoryRegion.start();
     }
 
-    public Address callEntryPoint() {
+    public CodeLocation getCodeStartLocation() {
+        final Address codeStart = getCodeStart();
+        if (codeStartLocation == null && codeStart != null) {
+            codeStartLocation = codeManager().createMachineCodeLocation(codeStart, "code start location in native routine");
+        }
+        return codeStartLocation;
+    }
+
+    public Address getCallEntryPoint() {
         return getCodeStart();
     }
 
-    public IndexedSequence<TargetCodeInstruction> getInstructions() {
+    public CodeLocation getEntryLocation() {
+        return getCodeStartLocation();
+    }
+
+    public CodeLocation getCallEntryLocation() {
+        return null;
+    }
+
+    public int compilationIndex() {
+        return -1;
+    }
+
+    public TeleClassMethodActor getTeleClassMethodActor() {
+        return null;
+    }
+
+    public String targetLocationToString(TargetLocation targetLocation) {
+        return null;
+    }
+
+    public StopPositions getStopPositions() {
+        return null;
+    }
+
+    private IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (instructions == null && vm().tryLock()) {
             byte[] code = null;
             try {
@@ -110,63 +324,37 @@ public final class TeleCompiledNativeCode extends TeleCompiledCode {
         return instructions;
     }
 
-    public IndexedSequence<MachineCodeLocation> getInstructionLocations() {
-        if (instructionLocations == null) {
-            getInstructions();
-            final int length = instructions.length();
-            final VariableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
-            for (int i = 0; i < length; i++) {
-                locations.append(codeManager().createMachineCodeLocation(instructions.get(i).address, "native target code instruction"));
-            }
-            instructionLocations = locations;
-        }
-        return instructionLocations;
-    }
-
-    public CodeLocation entryLocation() {
-        return codeManager().createMachineCodeLocation(callEntryPoint(), "entry for native routine " + entityName());
-    }
-
-    public Sequence<MaxCodeLocation> labelLocations() {
-        final AppendableSequence<MaxCodeLocation> locations = new ArrayListSequence<MaxCodeLocation>();
-        for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
-            if (targetCodeInstruction.label != null) {
-                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + entityName();
-                locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, description));
-            }
-        }
-        return locations;
-    }
-
-    public TeleClassMethodActor getTeleClassMethodActor() {
+    public TargetABI getAbi() {
         return null;
     }
 
-    public StopPositions getStopPositions() {
+    public ClassMethodActor classMethodActor() {
         return null;
-    }
-
-    public int getJavaStopIndex(Address address) {
-        return -1;
     }
 
     public Size codeSize() {
-        return compiledMethodMemoryRegion.size();
-    }
-
-    @Deprecated
-    public MachineCodeInstructionArray getTargetCodeInstructions() {
-        final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
-        final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
-        for (int i = 0; i < result.length; i++) {
-            final TargetCodeInstruction ins = instructions.get(i);
-            result[i] = new MachineCodeInstruction(ins.mnemonic, ins.position, ins.address.toLong(), ins.label, ins.bytes, ins.operands, ins.getTargetAddressAsLong());
-        }
-        return new MachineCodeInstructionArray(result);
+        return compiledNativeCodeMemoryRegion.size();
     }
 
     @Deprecated
     public MethodProvider getMethodProvider() {
         return this.getTeleClassMethodActor();
+    }
+
+    public ClassActor classActorForObjectType() {
+        return null;
+    }
+
+    public byte[] getCode() {
+        return null;
+    }
+
+    public int[] bytecodeToTargetCodePositionMap() {
+        return null;
+    }
+
+    public void writeSummary(PrintStream printStream) {
+        printStream.println("Native method: " + entityName());
+        printStream.println(" ***UNIMPLEMENTED*** ");
     }
 }

@@ -22,7 +22,7 @@ package com.sun.max.tele.debug;
 
 import com.sun.max.collect.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -103,9 +103,9 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
-        final TeleTargetMethod teleTargetMethod = teleVM.codeCache().makeTeleTargetMethod(instructionPointer);
-        if (teleTargetMethod != null) {
-            return teleTargetMethod.targetMethod();
+        final TeleCompiledMethod compiledMethod = teleVM.codeCache().findCompiledMethod(instructionPointer);
+        if (compiledMethod != null) {
+            return compiledMethod.teleTargetMethod().targetMethod();
         }
         return null;
     }

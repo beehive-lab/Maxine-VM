@@ -55,7 +55,7 @@ public class EnumInspector extends ObjectInspector {
     protected void createView() {
         super.createView();
         final TeleEnum teleEnum = (TeleEnum) teleObject();
-        final String name = teleEnum.classActorForType().javaSignature(false);
+        final String name = teleEnum.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new JTabbedPane();
 

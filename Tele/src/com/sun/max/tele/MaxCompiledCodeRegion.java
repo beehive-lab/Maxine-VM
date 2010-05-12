@@ -22,8 +22,6 @@ package com.sun.max.tele;
 
 import java.util.*;
 
-import com.sun.max.tele.object.*;
-
 
 /**
  * Access to an individual allocation area of the compiled code cache.
@@ -40,7 +38,6 @@ public interface MaxCompiledCodeRegion extends MaxEntity<MaxCompiledCodeRegion> 
     /**
      * @return all known compilations in the region
      */
-    // TODO (mlvdv) create an interface for target methods
-    List<TeleTargetMethod> teleTargetMethods();
+    List<MaxCompiledCode> compilations();
 
 }

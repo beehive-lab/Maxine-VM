@@ -34,7 +34,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- *  Canonical surrogate for an object of type {@link MethodActor} in the {@link TeleVM}.
+ * Canonical surrogate for an object of type {@link MethodActor} in the VM.
  *
  * @author Michael Van De Vanter
  *
@@ -64,14 +64,14 @@ public abstract class TeleMethodActor extends TeleMemberActor implements MethodP
     }
 
     /**
-     * @return Whether this method has bytecodes in the {@link TeleVM}.
+     * @return Whether this method has bytecodes in the VM.
      */
     public boolean hasCodeAttribute() {
         return getTeleCodeAttribute() != null;
     }
 
     /**
-     * @return The bytecodes associated with this method in the {@link TeleVM}.
+     * @return The bytecodes associated with this method in the VM.
      * The {@link CodeAttribute} will not be the expected one from the classfile of the
      * method's {@link ClassActor holder}, in the event that the method was substituted.
      */
@@ -85,7 +85,7 @@ public abstract class TeleMethodActor extends TeleMemberActor implements MethodP
     }
 
     /**
-     * Local surrogate for the {@link ClassActor} in the {@link TeleVM} from which a code substitution for this
+     * Local surrogate for the {@link ClassActor} in the VM from which a code substitution for this
      * method originated, null if the method has not been substituted.
      */
     public TeleClassActor teleClassActorSubstitutedFrom() {

@@ -56,12 +56,39 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
     MaxCompiledCodeRegion findCompiledCodeRegion(Address address);
 
     /**
-     * Get the TeleTargetMethod, newly created if needed, that contains a given address in the VM.
+     * Gets the existing compiled code, if known, that contains a given address in the VM;
+     * the result could be a compiled method or a block of machine code about which little is known.
      *
-     * @param address address in target code memory in the VM
-     * @return a possibly newly created target method whose code contains the address.
+     * @param address a memory location in the VM
+     * @return the code, if any is known, that includes the address
      */
-    TeleTargetMethod makeTeleTargetMethod(Address address);
+    MaxCompiledCode findCompiledCode(Address address);
+
+    /**
+     * Get the method compilation, if any, that contains a given address in the VM.
+     *
+     * @param address memory location in the VM
+     * @return a compiled method whose code includes the address, null if none
+     */
+    MaxCompiledCode findCompiledMethod(Address address);
+
+    /**
+     * Get the block of known native code, if any, that contains a given address in the VM.
+     *
+     * @param address memory location in the VM
+     * @return known native code that includes the address, null if none
+     */
+    MaxCompiledCode findCompiledNativeCode(Address address);
+
+    /**
+     * @return gets all compilations of a method in the VM, empty if none
+     */
+    IndexedSequence<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor);
+
+    /**
+     * Gets the most recent compilation of a method in the VM, null if none.
+     */
+    MaxCompiledCode latestCompilation(TeleClassMethodActor teleClassMethodActor);
 
     /**
      * Create a new TeleCompiledNativeCode for a block of native code in the VM that has not yet been registered.
@@ -72,17 +99,6 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @return a newly created TeleCompiledNativeCode
      */
     TeleCompiledNativeCode createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name);
-
-    /**
-     * Gets the existing MaxCompiledCode, if registered, that contains a given address in the VM, possibly filtering by subtype.
-     *
-     * @param <TeleTargetRoutine_Type> the type of the requested MaxCompiledCode
-     * @param teleTargetRoutineType the {@link Class} instance representing {@code TeleTargetRoutine_Type}
-     * @param address the look up address
-     * @return the tele target routine of type {@code TeleTargetRoutine_Type} in this registry that contains {@code
-     *         address} or null if no such tele target routine of the requested type exists
-     */
-    <TeleTargetRoutine_Type extends MaxCompiledCode> TeleTargetRoutine_Type findTeleTargetRoutine(Class<TeleTargetRoutine_Type> teleTargetRoutineType, Address address);
 
     /**
      * Writes a textual summary describing all instances of {@link MaxCompiledCode} known to the VM.

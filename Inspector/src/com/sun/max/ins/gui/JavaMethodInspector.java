@@ -33,13 +33,14 @@ import com.sun.max.ins.InspectorNameDisplay.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 
 /**
  * Visual inspector and debugger for a Java method in the VM, able to display one or more kinds of code
- * associated with the method: target code, bytecode, and source.
+ * associated with the method: compiled code, bytecode, and source.
  *
  * @author Michael Van De Vanter
  */
@@ -61,7 +62,7 @@ public class JavaMethodInspector extends MethodInspector {
      * Null when this Inspector is not bound to any compilation, in which case this Inspector is the unique (unbound)
      * inspector for the method.
      */
-    private final TeleTargetMethod teleTargetMethod;
+    private final TeleCompiledMethod teleCompiledMethod;
 
     /**
      * An Inspector for a Java Method associated with a specific compilation, and which association does not change
@@ -69,11 +70,11 @@ public class JavaMethodInspector extends MethodInspector {
      *
      * @param inspection the {@link Inspection} of which this Inspector is part
      * @param parent the tabbed container for this Inspector
-     * @param teleTargetMethod surrogate for the compilation of the method in the VM
+     * @param teleCompiledMethod surrogate for the compilation of the method in the VM
      * @param codeKind request for a particular code view to be displayed initially
      */
-    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, MethodCodeKind codeKind) {
-        this(inspection, parent, teleTargetMethod, teleTargetMethod.getTeleClassMethodActor(), codeKind);
+    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleCompiledMethod teleCompiledMethod, MethodCodeKind codeKind) {
+        this(inspection, parent, teleCompiledMethod, teleCompiledMethod.getTeleClassMethodActor(), codeKind);
     }
 
     /**
@@ -92,16 +93,16 @@ public class JavaMethodInspector extends MethodInspector {
         assert codeKind != MethodCodeKind.TARGET_CODE;
     }
 
-    private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
+    private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleCompiledMethod teleCompiledMethod, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
         super(inspection, parent);
 
         this.methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
-        this.teleTargetMethod = teleTargetMethod;
+        this.teleCompiledMethod = teleCompiledMethod;
         this.requestedCodeKind = requestedCodeKind;
 
         // enable choice if target code is present, even though this Inspector is not bound to a TargetMethod
-        codeKindEnabled.put(MethodCodeKind.TARGET_CODE, teleTargetMethod != null || teleClassMethodActor.hasTargetMethod());
+        codeKindEnabled.put(MethodCodeKind.TARGET_CODE, teleCompiledMethod != null || teleClassMethodActor.hasTargetMethod());
         // enable if bytecodes present
         codeKindEnabled.put(MethodCodeKind.BYTECODES, (teleClassMethodActor == null) ? false : teleClassMethodActor.hasCodeAttribute());
         // not implemented yet
@@ -140,17 +141,17 @@ public class JavaMethodInspector extends MethodInspector {
         final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at this method entry");
         final InspectorMenu breakAtLabelsMenu = new InspectorMenu("Break at this method labels");
 
-        if (teleTargetMethod != null) {
-            final InspectorAction copyAction = actions().copyTargetMethodCodeToClipboard(teleTargetMethod, null);
+        if (teleCompiledMethod != null) {
+            final InspectorAction copyAction = actions().copyCompiledMethodCodeToClipboard(teleCompiledMethod, null);
             copyAction.setEnabled(true);
             editMenu.add(copyAction);
-            objectMenu.add(actions().inspectObject(teleTargetMethod, "Target method: " + teleTargetMethod.classActorForType().simpleName()));
+            objectMenu.add(actions().inspectObject(teleCompiledMethod.teleTargetMethod(), "Compiled method: " + teleCompiledMethod.classActorForObjectType().simpleName()));
         }
 
         if (teleClassMethodActor != null) {
-            objectMenu.add(actions().inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForType().simpleName()));
+            objectMenu.add(actions().inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-            objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForType().simpleName()));
+            objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
             objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor, "Method compilations:"));
             objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
@@ -163,16 +164,16 @@ public class JavaMethodInspector extends MethodInspector {
         }
         codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
 
-        if (teleTargetMethod != null) {
-            breakOnEntryMenu.add(actions().setTargetCodeBreakpointAtMethodEntry(teleTargetMethod, "Target code"));
+        if (teleCompiledMethod != null) {
+            breakOnEntryMenu.add(actions().setTargetCodeBreakpointAtMethodEntry(teleCompiledMethod, "Target code"));
         }
         if (teleClassMethodActor != null) {
             breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecodes"));
         }
         debugMenu.add(breakOnEntryMenu);
-        if (teleTargetMethod != null) {
-            breakAtLabelsMenu.add(actions().setTargetCodeLabelBreakpoints(teleTargetMethod, "Add target code breakpoints"));
-            breakAtLabelsMenu.add(actions().removeTargetCodeLabelBreakpoints(teleTargetMethod, "Remove target code breakpoints"));
+        if (teleCompiledMethod != null) {
+            breakAtLabelsMenu.add(actions().setTargetCodeLabelBreakpoints(teleCompiledMethod, "Add target code breakpoints"));
+            breakAtLabelsMenu.add(actions().removeTargetCodeLabelBreakpoints(teleCompiledMethod, "Remove target code breakpoints"));
         }
         debugMenu.add(breakAtLabelsMenu);
         if (teleClassMethodActor != null) {
@@ -193,7 +194,7 @@ public class JavaMethodInspector extends MethodInspector {
 
     @Override
     public MaxCompiledCode maxCompiledCode() {
-        return teleTargetMethod;
+        return teleCompiledMethod;
     }
 
     @Override
@@ -204,7 +205,7 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     public String getTextForTitle() {
         if (teleClassMethodActor == null || teleClassMethodActor.classMethodActor() == null) {
-            return teleTargetMethod.getRegionName();
+            return teleCompiledMethod.entityName();
         }
 
         final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
@@ -212,7 +213,7 @@ public class JavaMethodInspector extends MethodInspector {
         sb.append(classMethodActor.holder().simpleName());
         sb.append(".");
         sb.append(classMethodActor.name.toString());
-        sb.append(inspection().nameDisplay().methodCompilationID(teleTargetMethod));
+        sb.append(inspection().nameDisplay().methodCompilationID(teleCompiledMethod));
         sb.append(inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor));
         return sb.toString();
         //return classMethodActor.holder().simpleName() + "." + classMethodActor.name().toString() + inspection().nameDisplay().methodCompilationID(_teleTargetMethod);
@@ -230,8 +231,8 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     public String getToolTip() {
         String result = "";
-        if (teleTargetMethod != null) {
-            result =  inspection().nameDisplay().longName(teleTargetMethod);
+        if (teleCompiledMethod != null) {
+            result =  inspection().nameDisplay().longName(teleCompiledMethod);
         } else if (teleClassMethodActor != null) {
             result = inspection().nameDisplay().shortName(teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
         }
@@ -286,9 +287,9 @@ public class JavaMethodInspector extends MethodInspector {
     private CodeViewer codeViewerFactory(MethodCodeKind codeKind) {
         switch (codeKind) {
             case TARGET_CODE:
-                return new JTableTargetCodeViewer(inspection(), this, teleTargetMethod);
+                return new JTableTargetCodeViewer(inspection(), this, teleCompiledMethod);
             case BYTECODES:
-                return new JTableBytecodeViewer(inspection(), this, teleClassMethodActor, teleTargetMethod);
+                return new JTableBytecodeViewer(inspection(), this, teleClassMethodActor, teleCompiledMethod);
             case JAVA_SOURCE:
                 FatalError.unimplemented();
                 return null;

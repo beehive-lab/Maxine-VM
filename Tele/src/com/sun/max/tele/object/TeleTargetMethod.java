@@ -29,12 +29,12 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.BytecodeLocation;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -42,364 +42,19 @@ import com.sun.max.vm.reference.*;
  *
  * @author Michael Van De Vanter
  */
-public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements MaxCompiledCode, TargetMethodAccess {
+public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetMethodAccess {
 
     /**
-     * Gets all target methods that encapsulate code compiled for a given method, either as a top level compilation or
-     * as a result of inlining.
+     * Reason that a particular instruction is identified as a "Stop".
      *
-     * TODO: Once inlining dependencies are tracked, this method needs to use them.
-     *
-     * @param teleVM the VM to search
-     * @param methodKey the key denoting a method for which the target methods are being requested
-     * @return local surrogates for all {@link TargetMethod}s in the VM that include code compiled for the
-     *         method matching {@code methodKey}
+     * @see TargetMethod
+     * @see StopPositions
      */
-    public static Sequence<TeleTargetMethod> get(TeleVM teleVM, MethodKey methodKey) {
-        TeleClassActor teleClassActor = teleVM.findTeleClassActor(methodKey.holder());
-        if (teleClassActor != null) {
-            final AppendableSequence<TeleTargetMethod> result = new LinkSequence<TeleTargetMethod>();
-            for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
-                if (teleClassMethodActor.hasTargetMethod()) {
-                    ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
-                    if (classMethodActor.name.equals(methodKey.name()) && classMethodActor.descriptor.equals(methodKey.signature())) {
-                        for (int i = 0; i < teleClassMethodActor.numberOfCompilations(); ++i) {
-                            TeleTargetMethod teleTargetMethod = teleClassMethodActor.getJavaTargetMethod(i);
-                            if (teleTargetMethod != null) {
-                                result.append(teleTargetMethod);
-                            }
-                        }
-                    }
-                }
-            }
-            return result;
-        }
-        return Sequence.Static.empty(TeleTargetMethod.class);
-    }
-
-    private static final Map<TeleObject, TargetABI> abiCache = new HashMap<TeleObject, TargetABI>();
-
-    private final CompiledMethodMemoryRegion compiledMethodMemoryRegion;
-    private CodeLocation codeStartLocation = null;
-    private IndexedSequence<TargetCodeInstruction> instructions;
-    private IndexedSequence<MachineCodeLocation> instructionLocations;
-
-    /**
-     * @see  StopPositions
-     * @see  TargetMethod#stopPositions()
-     */
-    protected StopPositions stopPositions;
-
-    private TeleClassMethodActor teleClassMethodActor;
-
-    /**
-     * Cache for {@link #targetMethod()}.
-     */
-    private TargetMethod targetMethod;
-
-    private TargetABI abi;
-
-    TeleTargetMethod(TeleVM teleVM, Reference targetMethodReference) {
-        super(teleVM, targetMethodReference);
-        // Exception to the general policy of not performing VM i/o during object
-        // construction.  This is needed for the code registry.
-        // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
-        compiledMethodMemoryRegion = new MethodTargetCodeRegion(teleVM, this);
-        // Register every method compilation, so that they can be located by code address.
-        teleVM.codeCache().register(this);
-    }
-
-    @Deprecated
-    public String entityName() {
-        final ClassMethodActor classMethodActor = classMethodActor();
-        if (classMethodActor != null) {
-            return "Code " + classMethodActor.simpleName();
-        }
-        return "Unknown compiled code";
-    }
-
-    @Deprecated
-    public String entityDescription() {
-        final ClassMethodActor classMethodActor = classMethodActor();
-        final String description = getClass().getSimpleName() + " for method ";
-        if (classMethodActor != null) {
-            return description + classMethodActor.simpleName();
-        }
-        return description + "Unknown compiled code";
-    }
-
-    public MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion() {
-        return compiledMethodMemoryRegion;
-    }
-
-    public boolean contains(Address address) {
-        return compiledMethodMemoryRegion.contains(address);
-    }
-
-    /**
-     * @see TargetMethod#codeStart()
-     */
-    public Pointer getCodeStart() {
-        return targetMethod().codeStart();
-    }
-
-    /**
-     * Gets the entry point for this method as specified by the ABI in use when this target method was compiled.
-     *
-     * @return {@link Address#zero()} if this target method has not yet been compiled
-     */
-    public final Address callEntryPoint() {
-        final Pointer codeStart = getCodeStart();
-        if (codeStart.isZero()) {
-            return Address.zero();
-        }
-        final Reference callEntryPointReference = TeleInstanceReferenceFieldAccess.readPath(reference(), vm().teleFields().TargetMethod_abi, vm().teleFields().TargetABI_callEntryPoint);
-        final TeleObject teleCallEntryPoint = vm().makeTeleObject(callEntryPointReference);
-        if (teleCallEntryPoint == null) {
-            return codeStart;
-        }
-        final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
-        return codeStart.plus(callEntryPoint.offset());
-    }
-
-    public final  IndexedSequence<TargetCodeInstruction> getInstructions() {
-        if (instructions == null) {
-            final byte[] code = getCode();
-            if (code != null) {
-                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
-            }
-        }
-        return instructions;
-    }
-
-    @Deprecated
-    public IndexedSequence<MachineCodeLocation> getInstructionLocations() {
-        if (instructionLocations == null) {
-            getInstructions();
-            final int length = instructions.length();
-            final CodeManager codeManager = codeManager();
-            final VariableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
-            for (int i = 0; i < length; i++) {
-                locations.append(codeManager.createMachineCodeLocation(instructions.get(i).address, "native target code instruction"));
-            }
-            instructionLocations = locations;
-        }
-        return instructionLocations;
-    }
-
-    // TODO (mlvdv)  move this to {@link TeleCompiledMethod}
-    public CodeLocation entryLocation() {
-        final Address callEntryPoint = callEntryPoint();
-        if (callEntryPoint.isZero()) {
-            return null;
-        }
-        return codeManager().createMachineCodeLocation(callEntryPoint, "Method entry");
-    }
-
-    @Deprecated
-    public Sequence<MaxCodeLocation> labelLocations() {
-        final AppendableSequence<MaxCodeLocation> locations = new ArrayListSequence<MaxCodeLocation>();
-        for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
-            if (targetCodeInstruction.label != null) {
-                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + entityName();
-                locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, description));
-            }
-        }
-        return locations;
-    }
-
-    /**
-     * Gets the method actor in the VM for this target method.
-     *
-     * @return {@code null} if the class method actor is null the target method
-     */
-    public TeleClassMethodActor getTeleClassMethodActor() {
-        if (teleClassMethodActor == null && vm().tryLock()) {
-            try {
-                final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
-                teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
-            } finally {
-                vm().unlock();
-            }
-        }
-        return teleClassMethodActor;
-    }
-
-    // TODO (mlvdv) move this to {@link TeleCompiledMethod}
-    public StopPositions getStopPositions() {
-        if (stopPositions == null) {
-            if (targetMethod().stopPositions() != null) {
-                stopPositions = new StopPositions(targetMethod().stopPositions());
-            }
-        }
-        return stopPositions;
-    }
-
-    @Deprecated
-    public int getJavaStopIndex(Address address) {
-        final StopPositions stopPositions = getStopPositions();
-        if (stopPositions != null) {
-            final int targetCodePosition = address.minus(getCodeStart()).toInt();
-            for (int i = 0; i < stopPositions.length(); i++) {
-                if (stopPositions.get(i) == targetCodePosition) {
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * @see TargetMethod#codeStart()
-     */
-    public CodeLocation getCodeStartLocation() {
-        if (codeStartLocation == null && getCodeStart() != null) {
-            codeStartLocation = codeManager().createMachineCodeLocation(getCodeStart(), "code start location in method");
-        }
-        return codeStartLocation;
-    }
-
-    /**
-     * Gets the local mirror of the class method actor associated with this target method. This may be null.
-     */
-    public ClassMethodActor classMethodActor() {
-        final TeleClassMethodActor teleClassMethodActor = getTeleClassMethodActor();
-        if (teleClassMethodActor == null) {
-            return null;
-        }
-        return teleClassMethodActor.classMethodActor();
-    }
-
-    /**
-     * Gets the compiled entry point location for this method as specified by the ABI in use when this target method was compiled.
-     *
-     * @return {@link Address#zero()} if this target method has not yet been compiled
-     */
-    public final CodeLocation callEntryLocation() {
-        final Pointer codeStart = getCodeStart();
-        if (codeStart.isZero()) {
-            return null;
-        }
-        final Reference callEntryPointReference = TeleInstanceReferenceFieldAccess.readPath(reference(), vm().teleFields().TargetMethod_abi, vm().teleFields().TargetABI_callEntryPoint);
-        final TeleObject teleCallEntryPoint = vm().makeTeleObject(callEntryPointReference);
-        if (teleCallEntryPoint == null) {
-            return getCodeStartLocation();
-        }
-        final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
-        final Pointer callEntryPointer = codeStart.plus(callEntryPoint.offset());
-        return codeManager().createMachineCodeLocation(callEntryPointer, "call entry");
-    }
-
-    /**
-     * Gets the byte array containing the target-specific machine code of this target method in the VM.
-     * @see TargetMethod#code()
-     */
-    public final byte[] getCode() {
-        return targetMethod().code();
-    }
-
-    /**
-     * Gets the length of the byte array containing the target-specific machine code of this target method in the VM.
-     * @see TargetMethod#codeLength()
-     */
-    public final int getCodeLength() {
-        final Reference codeReference = vm().teleFields().TargetMethod_code.readReference(reference());
-        if (codeReference.isZero()) {
-            return 0;
-        }
-        final TeleArrayObject teleCodeArrayObject = (TeleArrayObject) vm().makeTeleObject(codeReference);
-        return teleCodeArrayObject.getLength();
-    }
-
-    /**
-     * @see TargetMethod#numberOfStopPositions()
-     */
-    public int getNumberOfStopPositions() {
-        return targetMethod().numberOfStopPositions();
-    }
-
-    /**
-     * @return position of the closest following call instruction, direct or indirect; -1 if none.
-     */
-    private int getNextCallPosition(int position) {
-        int nextCallPosition = -1;
-        final StopPositions stopPositions = getStopPositions();
-        if (stopPositions != null) {
-            final int numberOfCalls = targetMethod().numberOfDirectCalls() + targetMethod().numberOfIndirectCalls();
-            for (int i = 0; i < numberOfCalls; i++) {
-                final int stopPosition = stopPositions.get(i);
-                if (stopPosition > position && (nextCallPosition == -1 || stopPosition < nextCallPosition)) {
-                    nextCallPosition = stopPosition;
-                }
-            }
-        }
-        return nextCallPosition;
-    }
-
-    public MaxCodeLocation getNextCallLocation(MaxCodeLocation maxCodeLocation) {
-        assert maxCodeLocation.hasAddress();
-        final int targetCodePosition = maxCodeLocation.address().minus(getCodeStart()).toInt();
-        final int nextCallPosition = getNextCallPosition(targetCodePosition);
-        if (nextCallPosition > 0) {
-            return codeManager().createMachineCodeLocation(getCodeStart().plus(nextCallPosition), "next call location");
-        }
-        return null;
-    }
-
-    /**
-     * Gets the Java frame descriptor corresponding to a given stop index.
-     *
-     * @param stopIndex a stop index
-     * @return the Java frame descriptor corresponding to {@code stopIndex} or null if there is no Java frame descriptor
-     *         for {@code stopIndex}
-     */
-    public BytecodeLocation getBytecodeLocation(int stopIndex) {
-        TargetMethod targetMethod = targetMethod();
-        return targetMethod.getBytecodeLocationFor(stopIndex);
-    }
-
-    public TargetABI getAbi() {
-        if (abi == null) {
-            final Reference abiReference = vm().teleFields().TargetMethod_abi.readReference(reference());
-            final TeleObject teleTargetABI = vm().makeTeleObject(abiReference);
-            if (teleTargetABI != null) {
-                synchronized (abiCache) {
-                    abi = abiCache.get(teleTargetABI);
-                    if (abi == null) {
-                        abi = (TargetABI) teleTargetABI.deepCopy();
-                        abiCache.put(teleTargetABI, abi);
-                    }
-                }
-            }
-        }
-        return abi;
-    }
-
-    // [tw] Warning: duplicated code!
-    public MachineCodeInstructionArray getTargetCodeInstructions() {
-        final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
-        final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
-        for (int i = 0; i < result.length; i++) {
-            final TargetCodeInstruction ins = instructions.get(i);
-            result[i] = new MachineCodeInstruction(ins.mnemonic, ins.position, ins.address.toLong(), ins.label, ins.bytes, ins.operands, ins.getTargetAddressAsLong());
-        }
-        return new MachineCodeInstructionArray(result);
-    }
-
-    public MethodProvider getMethodProvider() {
-        return this.teleClassMethodActor;
-    }
-
-    public TargetMethod targetMethod() {
-        if (targetMethod == null) {
-            targetMethod = (TargetMethod) deepCopy();
-        }
-        return targetMethod;
-    }
-
-    @Override
-    protected DeepCopier newDeepCopier() {
-        return new ReducedDeepCopier();
+    public enum CodeStopKind {
+        DIRECT_CALL,   // Non-native direct call
+        NATIVE_CALL,   // Native direct call
+        INDIRECT_CALL, // Indirect call
+        SAFE;          // Safepoint
     }
 
     /**
@@ -428,14 +83,342 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements MaxComp
         }
     }
 
-    @Override
-    public ReferenceTypeProvider getReferenceType() {
-        return vm().vmAccess().getReferenceType(getClass());
+    /**
+     * Gets all target methods that encapsulate code compiled for a given method, either as a top level compilation or
+     * as a result of inlining.
+     *
+     * TODO: Once inlining dependencies are tracked, this method needs to use them.
+     *
+     * @param teleVM the VM to search
+     * @param methodKey the key denoting a method for which the target methods are being requested
+     * @return local surrogates for all {@link TargetMethod}s in the VM that include code compiled for the
+     *         method matching {@code methodKey}
+     */
+    public static Sequence<TeleTargetMethod> get(TeleVM teleVM, MethodKey methodKey) {
+        TeleClassActor teleClassActor = teleVM.findTeleClassActor(methodKey.holder());
+        if (teleClassActor != null) {
+            final AppendableSequence<TeleTargetMethod> result = new LinkSequence<TeleTargetMethod>();
+            for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
+                if (teleClassMethodActor.hasTargetMethod()) {
+                    ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
+                    if (classMethodActor.name.equals(methodKey.name()) && classMethodActor.descriptor.equals(methodKey.signature())) {
+                        for (int i = 0; i < teleClassMethodActor.numberOfCompilations(); ++i) {
+                            TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCompilation(i);
+                            if (teleTargetMethod != null) {
+                                result.append(teleTargetMethod);
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        return Sequence.Static.empty(TeleTargetMethod.class);
+    }
+
+    private static final Map<TeleObject, TargetABI> abiCache = new HashMap<TeleObject, TargetABI>();
+
+    private IndexedSequence<TargetCodeInstruction> instructions;
+
+    /**
+     * @see  StopPositions
+     * @see  TargetMethod#stopPositions()
+     */
+    protected StopPositions stopPositions;
+
+    private TeleClassMethodActor teleClassMethodActor;
+
+    /**
+     * Cached copy of the {@link TargetMethod} from the VM.
+     */
+    private TargetMethod targetMethod;
+
+    private TargetABI abi;
+
+    protected TeleTargetMethod(TeleVM teleVM, Reference targetMethodReference) {
+        super(teleVM, targetMethodReference);
+        // Exception to the general policy of not performing VM i/o during object
+        // construction.  This is needed for the code registry.
+        // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
+
+        // Register every method compilation, so that they can be located by code address.
+        teleVM.codeCache().register(this);
+    }
+
+    public final TargetMethod targetMethod() {
+        if (targetMethod == null) {
+            targetMethod = (TargetMethod) deepCopy();
+        }
+        return targetMethod;
+    }
+
+    /**
+     * @return disassembled target code instructions
+     */
+    public final IndexedSequence<TargetCodeInstruction> getInstructions() {
+        if (instructions == null) {
+            final byte[] code = getCode();
+            if (code != null) {
+                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
+            }
+        }
+        return instructions;
+    }
+
+    /**
+     * Gets VM memory location of the first instruction in the method.
+     *
+     * @see TargetMethod#codeStart()
+     */
+    public final Pointer getCodeStart() {
+        return targetMethod().codeStart();
+    }
+
+    /**
+     * Gets the call entry memory location for this method as specified by the ABI in use when this target method was compiled.
+     *
+     * @return {@link Address#zero()} if this target method has not yet been compiled
+     */
+    public final Address callEntryPoint() {
+        Address callEntryAddress = Address.zero();
+        final Pointer codeStart = getCodeStart();
+        if (!codeStart.isZero()) {
+            callEntryAddress = codeStart;
+            TeleObject teleCallEntryPoint = null;
+            if (vm().tryLock()) {
+                try {
+                    final Reference callEntryPointReference =
+                        TeleInstanceReferenceFieldAccess.readPath(reference(), vm().teleFields().TargetMethod_abi, vm().teleFields().TargetABI_callEntryPoint);
+                    teleCallEntryPoint = vm().makeTeleObject(callEntryPointReference);
+                } finally {
+                    vm().unlock();
+                }
+            }
+            if (teleCallEntryPoint != null) {
+                final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
+                if (callEntryPoint != null) {
+                    callEntryAddress = codeStart.plus(callEntryPoint.offset());
+                }
+            }
+        }
+        return callEntryAddress;
+    }
+
+    /**
+     * Gets the method actor in the VM for this target method.
+     *
+     * @return {@code null} if the class method actor is null the target method
+     */
+    public final TeleClassMethodActor getTeleClassMethodActor() {
+        if (teleClassMethodActor == null && vm().tryLock()) {
+            try {
+                final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
+                teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
+            } finally {
+                vm().unlock();
+            }
+        }
+        return teleClassMethodActor;
+    }
+
+    /**
+     * Gets the locations in compiled code (by byte offset from the start)
+     * of stop positions:  calls and safepoints.
+     *
+     * @return the stop positions for the compiled code.
+     * @see TargetMethod#stopPositions()
+     */
+    public final StopPositions getStopPositions() {
+        if (stopPositions == null) {
+            if (targetMethod().stopPositions() != null) {
+                stopPositions = new StopPositions(targetMethod().stopPositions());
+            }
+        }
+        return stopPositions;
+    }
+
+    /**
+     * Gets the local mirror of the class method actor associated with this target method. This may be null.
+     */
+    public final ClassMethodActor classMethodActor() {
+        final TeleClassMethodActor teleClassMethodActor = getTeleClassMethodActor();
+        return teleClassMethodActor == null ? null : teleClassMethodActor.classMethodActor();
+    }
+
+    /**
+     * Gets the byte array containing the target-specific machine code of this target method in the VM.
+     * @see TargetMethod#code()
+     */
+    public final byte[] getCode() {
+        return targetMethod().code();
+    }
+
+    /**
+     * Gets the length of the byte array containing the target-specific machine code of this target method in the VM.
+     * @see TargetMethod#codeLength()
+     */
+    public final int getCodeLength() {
+        return targetMethod().codeLength();
+    }
+
+    /**
+     * Creates a map:  instruction position (bytes offset from start) -> the kind of stop, null if not a stop.
+     */
+    public final CodeStopKind[] getPositionToStopKindMap() {
+        final StopPositions stopPositions = getStopPositions();
+        if (stopPositions == null) {
+            return null;
+        }
+        final CodeStopKind[] stopKinds = new CodeStopKind[getCodeLength()];
+
+        final int directCallCount = targetMethod().numberOfDirectCalls();
+        final int indirectCallCount = targetMethod().numberOfIndirectCalls();
+        final int safepointCount = targetMethod().numberOfSafepoints();
+        assert directCallCount + indirectCallCount + safepointCount == stopPositions.length();
+
+        for (int stopIndex = 0; stopIndex < directCallCount; stopIndex++) {
+            if (stopPositions.isNativeFunctionCall(stopIndex)) {
+                stopKinds[stopPositions.get(stopIndex)] = CodeStopKind.NATIVE_CALL;
+            } else {
+                stopKinds[stopPositions.get(stopIndex)] = CodeStopKind.DIRECT_CALL;
+            }
+        }
+        for (int stopIndex = directCallCount; stopIndex < directCallCount + indirectCallCount; stopIndex++) {
+            stopKinds[stopPositions.get(stopIndex)] = CodeStopKind.INDIRECT_CALL;
+        }
+        for (int stopIndex = directCallCount + indirectCallCount; stopIndex < stopPositions.length(); stopIndex++) {
+            stopKinds[stopPositions.get(stopIndex)] = CodeStopKind.SAFE;
+        }
+        return stopKinds;
+    }
+
+    /**
+     * Creates a map:  instruction position (bytes offset from start) -> bytecode location  (as much as can be determined).
+     */
+    public BytecodeLocation[] getPositionToBytecodeLocationMap() {
+        final StopPositions stopPositions = getStopPositions();
+        if (stopPositions == null) {
+            return null;
+        }
+        BytecodeLocation[] bytecodeLocations = new BytecodeLocation[getCodeLength()];
+        for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
+            bytecodeLocations[stopPositions.get(stopIndex)] = getBytecodeLocation(stopIndex);
+        }
+        return bytecodeLocations;
+    }
+
+    public int[] getBytecodeToTargetCodePositionMap() {
+        return null;
+    }
+
+    public IndexedSequence<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
+        return null;
+    }
+
+    public TargetJavaFrameDescriptor getTargetFrameDescriptor(int instructionIndex) {
+        final TargetCodeInstruction instruction = getInstructions().get(instructionIndex);
+        final IndexedSequence<TargetJavaFrameDescriptor> javaFrameDescriptors = getJavaFrameDescriptors();
+        if (javaFrameDescriptors != null) {
+            final StopPositions stopPositions = getStopPositions();
+            if (stopPositions != null) {
+                for (int i = 0; i < stopPositions.length(); i++) {
+                    if (stopPositions.get(i) == instruction.position) {
+                        return javaFrameDescriptors.get(i);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets the Java frame descriptor corresponding to a given stop index.
+     *
+     * @param stopIndex a stop index
+     * @return the Java frame descriptor corresponding to {@code stopIndex} or null if there is no Java frame descriptor
+     *         for {@code stopIndex}
+     * @see TargetMethod#getBytecodeLocationFor(int)
+     */
+    public BytecodeLocation getBytecodeLocation(int stopIndex) {
+        return targetMethod().getBytecodeLocationFor(stopIndex);
+    }
+
+    /**
+     * Gets the bytecode locations for the inlining chain rooted at a given instruction pointer. The first bytecode
+     * location in the returned sequence is the one at the closest position less or equal to the position denoted by
+     * {@code instructionPointer}.
+     *
+     * @param instructionPointer a pointer to an instruction within this method
+     * @param implicitExceptionPoint {@code true} if the instruction pointer corresponds to an implicit exception point
+     * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
+     *         no bytecode location can be determined for {@code instructionPointer}.
+     * @see TargetMethod#getBytecodeLocationFor(Pointer, boolean)
+     */
+    protected final BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
+        return targetMethod().getBytecodeLocationFor(instructionPointer, implicitExceptionPoint);
+    }
+
+    public final TargetABI getAbi() {
+        if (abi == null && vm().tryLock()) {
+            try {
+                final Reference abiReference = vm().teleFields().TargetMethod_abi.readReference(reference());
+                final TeleObject teleTargetABI = vm().makeTeleObject(abiReference);
+                if (teleTargetABI != null) {
+                    abi = abiCache.get(teleTargetABI);
+                    if (abi == null) {
+                        abi = (TargetABI) teleTargetABI.deepCopy();
+                        abiCache.put(teleTargetABI, abi);
+                    }
+                }
+            } finally {
+                vm().unlock();
+            }
+        }
+        return abi;
+    }
+
+    /**
+     * Gets the name of the source variable corresponding to a stack slot, if any.
+     *
+     * @param slot a stack slot
+     * @return the Java source name for the frame slot, null if not available.
+     */
+    public String sourceVariableName(MaxStackFrame.Compiled javaStackFrame, int slot) {
+        return null;
+    }
+
+    public byte[] encodedInlineDataDescriptors() {
+        return targetMethod().encodedInlineDataDescriptors();
     }
 
     /**
      * Disassembles this target method's code to a given writer.
      */
     public void disassemble(IndentWriter writer) {
+    }
+
+    // [tw] Warning: duplicated code!
+    public MachineCodeInstructionArray getTargetCodeInstructions() {
+        final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
+        final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
+        for (int i = 0; i < result.length; i++) {
+            final TargetCodeInstruction ins = instructions.get(i);
+            result[i] = new MachineCodeInstruction(ins.mnemonic, ins.position, ins.address.toLong(), ins.label, ins.bytes, ins.operands, ins.getTargetAddressAsLong());
+        }
+        return new MachineCodeInstructionArray(result);
+    }
+
+    public MethodProvider getMethodProvider() {
+        return this.teleClassMethodActor;
+    }
+
+    @Override
+    protected DeepCopier newDeepCopier() {
+        return new ReducedDeepCopier();
+    }
+
+    @Override
+    public ReferenceTypeProvider getReferenceType() {
+        return vm().vmAccess().getReferenceType(getClass());
     }
 }

@@ -22,6 +22,8 @@ package com.sun.max.ins.object;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
 
@@ -38,20 +40,20 @@ public class TupleInspector extends ObjectInspector {
         super(inspection, factory, teleObject);
         final InspectorFrame frame = createFrame(true);
 
-        final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
-        TeleTargetMethod teleTargetMethod = null;
-        if (TeleTargetMethod.class.isAssignableFrom(teleObject.getClass())) {
-            teleTargetMethod = (TeleTargetMethod) teleObject;
+        final MaxCompiledCode compiledCode = vm().codeCache().findCompiledMethod(teleObject.origin());
+        if (compiledCode != null) {
+            // This object represents a method compilation
+            final TeleCompiledMethod compiledMethod = (TeleCompiledMethod) compiledCode;
+            frame.makeMenu(MenuKind.DEBUG_MENU).add(actions().setTargetCodeBreakpointAtMethodEntry(compiledMethod));
         }
 
-        if (teleTargetMethod != null) {
-            frame.makeMenu(MenuKind.DEBUG_MENU).add(actions().setTargetCodeBreakpointAtMethodEntry(teleTargetMethod));
-        }
+        final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
         if (teleClassMethodActor != null) {
-            objectMenu.add(actions().inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForType().simpleName()));
+            // This object is associated with a class method
+            objectMenu.add(actions().inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForObjectType().simpleName()));
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-            objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForType().simpleName()));
+            objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
             objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor, "Method compilations"));
 

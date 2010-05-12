@@ -29,6 +29,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -88,12 +89,13 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      */
     private static MethodInspector make(final Inspection inspection, Address address, boolean interactive) {
         MethodInspector methodInspector = null;
-        final TeleTargetMethod teleTargetMethod = inspection.vm().codeCache().makeTeleTargetMethod(address);
-        if (teleTargetMethod != null) {
+        final MaxCompiledCode compiledCode = inspection.vm().codeCache().findCompiledMethod(address);
+        if (compiledCode != null) {
             // Java method
-            methodInspector = make(inspection, teleTargetMethod, MethodCodeKind.TARGET_CODE);
+            final TeleCompiledMethod compiledMethod = (TeleCompiledMethod) compiledCode;
+            methodInspector = make(inspection, compiledMethod, MethodCodeKind.TARGET_CODE);
         } else {
-            final MaxCompiledCode maxCompiledCode = inspection.vm().codeCache().findTeleTargetRoutine(MaxCompiledCode.class, address);
+            final MaxCompiledCode maxCompiledCode = inspection.vm().codeCache().findCompiledCode(address);
             if (maxCompiledCode != null) {
                 // Some other kind of known target code
                 methodInspector = make(inspection, maxCompiledCode);
@@ -160,9 +162,10 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     private static JavaMethodInspector make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
         // If there are compilations, then inspect in association with the most recent
-        final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentJavaTargetMethod();
-        if (teleTargetMethod != null) {
-            return make(inspection, teleTargetMethod, codeKind);
+        final MaxCompiledCode compiledCode = inspection.vm().codeCache().latestCompilation(teleClassMethodActor);
+        if (compiledCode != null) {
+            final TeleCompiledMethod compiledMethod = (TeleCompiledMethod) compiledCode;
+            return make(inspection, compiledMethod, codeKind);
         }
         final MethodInspector methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
         if (methodInspector == null) {
@@ -181,29 +184,29 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      * @return a possibly new {@link MethodInspector} associated with a specific compilation of a Java method in the
      *         VM, and with the requested code view visible.
      */
-    private static JavaMethodInspector make(Inspection inspection, TeleTargetMethod teleTargetMethod, MethodCodeKind codeKind) {
+    private static JavaMethodInspector make(Inspection inspection, TeleCompiledMethod teleCompiledMethod, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
 
         // Is there already an inspection open that is bound to this compilation?
-        MethodInspector methodInspector = teleTargetRoutineToMethodInspector.get(teleTargetMethod);
+        MethodInspector methodInspector = teleTargetRoutineToMethodInspector.get(teleCompiledMethod);
         if (methodInspector == null) {
             // No existing inspector is bound to this compilation; see if there is an inspector for this method that is
             // unbound
-            TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+            TeleClassMethodActor teleClassMethodActor = teleCompiledMethod.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
             }
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
             if (methodInspector == null) {
                 // No existing inspector exists for this method; create new one bound to this compilation
-                javaMethodInspector = new JavaMethodInspector(inspection, parent, teleTargetMethod, codeKind);
+                javaMethodInspector = new JavaMethodInspector(inspection, parent, teleCompiledMethod, codeKind);
             } else {
                 // An inspector exists for the method, but not bound to any compilation; bind it to this compilation
                 // TODO (mlvdv) Temp patch; just create a new one in this case too.
-                javaMethodInspector = new JavaMethodInspector(inspection, parent, teleTargetMethod, codeKind);
+                javaMethodInspector = new JavaMethodInspector(inspection, parent, teleCompiledMethod, codeKind);
             }
             parent.add(javaMethodInspector);
-            teleTargetRoutineToMethodInspector.put(teleTargetMethod, javaMethodInspector);
+            teleTargetRoutineToMethodInspector.put(teleCompiledMethod, javaMethodInspector);
         } else {
             // An existing inspector is bound to this method & compilation; ensure that it has the requested code view
             javaMethodInspector = (JavaMethodInspector) methodInspector;

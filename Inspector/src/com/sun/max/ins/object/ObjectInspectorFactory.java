@@ -128,7 +128,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                     break;
                 }
                 case ARRAY: {
-                    ClassActor componentClassActor = teleObject.classActorForType().componentClassActor();
+                    ClassActor componentClassActor = teleObject.classActorForObjectType().componentClassActor();
                     if (componentClassActor.isPrimitiveClassActor()) {
                         final PrimitiveClassActor primitiveClassActor = (PrimitiveClassActor) componentClassActor;
                         componentClassActor = primitiveClassActor.toWrapperClassActor();

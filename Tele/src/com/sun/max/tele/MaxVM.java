@@ -39,7 +39,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Access to an instance of the Maxine VM.
+ * Access to an instance of the VM.
  * <br>
  * This interface is a work in progress, created originally by splitting what had
  * been very intertwined code into two layers.  The eventual goal is for all VM types
@@ -261,14 +261,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void setVMTraceThreshold(long newThreshold);
 
     /**
-     * Visualizes a processor state registers in terms of flags.
-     *
-     * @param flags contents of a processor state register
-     * @return a string interpreting the contents as a sequence of flags
-     */
-    String visualizeStateRegister(long flags);
-
-    /**
      * Low-level read of a word from memory of the VM.
      */
     Word readWord(Address address);
@@ -320,7 +312,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     ReferenceValue createReferenceValue(Reference reference);
 
     /**
-     * Gets a canonical local {@classActor} corresponding to the type of a heap object in the targetVM, creating one if
+     * Gets a canonical local {@classActor} corresponding to the type of a heap object in the VM, creating one if
      * needed by loading the class using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER} from either the
      * classpath, or if not found on the classpath, by copying the classfile from the VM.
      *

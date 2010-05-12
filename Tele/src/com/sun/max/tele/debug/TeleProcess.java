@@ -36,7 +36,6 @@ import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
@@ -779,17 +778,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             // Executed a return
             return null;
         }
-        final TeleTargetMethod oldTeleTargetMethod = vm().codeCache().makeTeleTargetMethod(oldInstructionPointer);
-        if (oldTeleTargetMethod == null) {
+        final TeleCompiledMethod oldCompiledMethod = vm().codeCache().findCompiledMethod(oldInstructionPointer);
+        if (oldCompiledMethod == null) {
             // Stepped from native code:
             return null;
         }
-        final TeleTargetMethod newTeleTargetMethod = vm().codeCache().makeTeleTargetMethod(newInstructionPointer);
-        if (newTeleTargetMethod == null) {
+        final TeleCompiledMethod newCompiledMethod = vm().codeCache().findCompiledMethod(newInstructionPointer);
+        if (newCompiledMethod == null) {
             // Stepped into native code:
             return null;
         }
-        if (oldTeleTargetMethod != newTeleTargetMethod || newTeleTargetMethod.callEntryPoint().equals(newInstructionPointer)) {
+        if (oldCompiledMethod != newCompiledMethod || newCompiledMethod.getCallEntryPoint().equals(newInstructionPointer)) {
             // Stepped into a different target method or back into the entry of the same target method (i.e. a recursive call):
             return thread.stack().returnLocation();
         }

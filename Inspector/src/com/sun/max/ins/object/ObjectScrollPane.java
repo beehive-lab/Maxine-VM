@@ -45,7 +45,7 @@ public final class ObjectScrollPane extends InspectorScrollPane {
      */
     public static ObjectScrollPane createArrayElementsPane(Inspection inspection, TeleArrayObject teleArrayObject, ObjectViewPreferences instanceViewPreferences) {
         final int length = teleArrayObject.getLength();
-        final ArrayClassActor arrayClassActor = (ArrayClassActor) teleArrayObject.classActorForType();
+        final ArrayClassActor arrayClassActor = (ArrayClassActor) teleArrayObject.classActorForObjectType();
         final Kind kind = arrayClassActor.componentClassActor().kind;
         final WordValueLabel.ValueMode valueMode = kind.isReference ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
         final Offset arrayOffsetFromOrigin = arrayClassActor.kind.arrayLayout(Layout.layoutScheme()).getElementOffsetFromOrigin(0);
