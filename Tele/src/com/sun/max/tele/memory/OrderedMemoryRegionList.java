@@ -23,7 +23,6 @@ package com.sun.max.tele.memory;
 import java.util.*;
 import java.util.Arrays;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
@@ -31,10 +30,13 @@ import com.sun.max.unsafe.*;
 
 /**
  * Sorted list of non-intersecting memory regions.
+ * <br>
+ * Cloned from {@link com.sun.max.memory.SortedMemoryRegionList} to extract it from the VM's type space for memory.
  *
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
-public final class SortedMemoryRegionList<MemoryRegion_Type extends MaxMemoryRegion> implements IterableWithLength<MemoryRegion_Type> {
+public final class OrderedMemoryRegionList<MemoryRegion_Type extends MaxMemoryRegion> implements IterableWithLength<MemoryRegion_Type> {
 
     public static final Comparator<MaxMemoryRegion> COMPARATOR = new Comparator<MaxMemoryRegion>() {
         @Override
@@ -54,19 +56,17 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MaxMemoryReg
         }
     };
 
-    public SortedMemoryRegionList() {
+    public OrderedMemoryRegionList() {
         this(10);
     }
 
-    public SortedMemoryRegionList(int initialCapacity) {
+    public OrderedMemoryRegionList(int initialCapacity) {
         Class<MemoryRegion_Type[]> type = null;
         memoryRegions = StaticLoophole.cast(type, new MaxMemoryRegion[initialCapacity]);
     }
 
-    @INSPECTED
     private MemoryRegion_Type[] memoryRegions;
 
-    @INSPECTED
     private int size;
 
     public MemoryRegion_Type get(int index) {
@@ -74,7 +74,6 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MaxMemoryReg
             return null;
         }
         return memoryRegions[index];
-
     }
 
     public MemoryRegion_Type find(Address address) {
