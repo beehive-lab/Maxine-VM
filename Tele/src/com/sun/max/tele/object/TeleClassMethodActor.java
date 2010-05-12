@@ -125,7 +125,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
                 teleTargetMethodHistory[numberOfCompilations - i - 1] = (TeleTargetMethod) vm().makeTeleObject(targetMethodReference);
             }
 
-        } else if (targetState.classActorForObjectType().mirror() == Compilation.class) {
+        } else if (targetState.classActorForObjectType().javaClass() == Compilation.class) {
             // this is a compilation, get the previous target state from it
             Reference previousTargetStateReference = vm().teleFields().Compilation_previousTargetState.readReference(targetState.reference());
             if (!previousTargetStateReference.isZero()) {

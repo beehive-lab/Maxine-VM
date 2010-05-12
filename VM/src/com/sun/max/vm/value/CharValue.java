@@ -22,6 +22,7 @@ package com.sun.max.vm.value;
 
 import java.io.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
@@ -205,4 +206,10 @@ public final class CharValue extends PrimitiveValue<CharValue> {
     public void write(DataOutput stream) throws IOException {
         stream.writeChar(value);
     }
+
+    @Override
+    public CiConstant asCiConstant() {
+        return CiConstant.forChar(value);
+    }
+
 }

@@ -25,6 +25,7 @@ import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
 
 import com.sun.cri.bytecode.*;
+import com.sun.max.annotate.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -287,7 +288,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a call to a native function from a native stub.
      */
     private void verboseJniEntry() {
-        if (MaxineVM.isHosted()) {
+        if (MaxineVM.isHosted() && MaxineVM.isDebug()) {
             // Stubs generated while bootstrapping need to test the "-verbose" VM program argument
             invokestatic(traceJNI, 0, 1);
             final Label noTracing = newLabel();
@@ -311,7 +312,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a return to a native stub from a native function.
      */
     private void verboseJniExit() {
-        if (MaxineVM.isHosted()) {
+        if (MaxineVM.isHosted() && MaxineVM.isDebug()) {
             // Stubs generated while bootstrapping need to test the "-verbose" VM program argument
             invokestatic(traceJNI, 0, 1);
             final Label notVerbose = newLabel();
@@ -325,12 +326,14 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         }
     }
 
+    @NEVER_INLINE
     private void traceJniExit() {
         invokestatic(traceCurrentThreadPrefix, 0, 0);
         ldc(PoolConstantFactory.createStringConstant("\" <-- JNI: " + classMethodActor.format("%H.%n(%P)") + "]"));
         invokestatic(logPrintln_String, 1, 0);
     }
 
+    @NEVER_INLINE
     private static void traceCurrentThreadPrefix() {
         Log.print("[Thread \"");
         Log.print(VmThread.current().getName());

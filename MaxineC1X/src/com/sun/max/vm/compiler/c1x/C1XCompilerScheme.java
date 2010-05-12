@@ -100,7 +100,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                 c1xTarget = new CiTarget(arch, config, true, wordSize, wordSize, wordSize, targetABI.stackFrameAlignment, configuration.platform.pageSize, wordSize, wordSize, 16);
                 c1xXirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
                 c1xCompiler = new C1XCompiler(c1xRuntime, c1xTarget, c1xXirGenerator);
-                c1xCompiler.init();
             } else if (phase == MaxineVM.Phase.COMPILING) {
                 // can only refer to JavaPrototype while bootstrapping.
                 JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
@@ -111,7 +110,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     public final TargetMethod compile(final ClassMethodActor classMethodActor) {
         return MaxineVM.usingTarget(new Function<TargetMethod>() {
             public TargetMethod call() {
-                RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
+                RiMethod method = classMethodActor;
                 CiTargetMethod compiledMethod = c1xCompiler.compileMethod(method, c1xXirGenerator).targetMethod();
                 if (compiledMethod != null) {
                     C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);

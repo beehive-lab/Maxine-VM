@@ -20,15 +20,17 @@
  */
 package com.sun.max.vm.cps.eir;
 
+import static com.sun.max.asm.dis.Disassembler.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -270,7 +272,8 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         for (Label label : directCallLabels) {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
                 if (MaxineVM.isHosted()) {
-                    Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind, startAddress, InlineDataDecoder.createFrom(inlineDataRecorder), null);
+                    ProcessorKind kind = VMConfiguration.hostOrTarget().platform().processorKind;
+                    disassemble(System.out, code, kind.instructionSet, kind.dataModel.wordWidth, startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }
@@ -278,7 +281,8 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         for (Label label : safepointLabels) {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
                 if (MaxineVM.isHosted()) {
-                    Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind, startAddress, InlineDataDecoder.createFrom(inlineDataRecorder), null);
+                    ProcessorKind kind = VMConfiguration.hostOrTarget().platform().processorKind;
+                    disassemble(System.out, code, kind.instructionSet, kind.dataModel.wordWidth, startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }

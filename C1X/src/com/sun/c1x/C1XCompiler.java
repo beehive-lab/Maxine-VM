@@ -65,6 +65,7 @@ public class C1XCompiler extends CiCompiler {
         this.xir = xirGen;
 
         this.backend = Backend.create(target.arch, this);
+        init();
     }
 
     @Override
@@ -90,17 +91,18 @@ public class C1XCompiler extends CiCompiler {
         return result;
     }
 
-    public void init() {
-        List<XirTemplate> globalStubs = xir.buildTemplates(backend.newXirAssembler());
-
+    private void init() {
+        final List<XirTemplate> globalStubs = xir.buildTemplates(backend.newXirAssembler());
         final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
 
-        for (XirTemplate t : globalStubs) {
-            TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, t.name);
-            try {
-                map.put(t, emitter.emit(t, runtime));
-            } finally {
-                filter.remove();
+        if (globalStubs != null) {
+            for (XirTemplate t : globalStubs) {
+                TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, t.name);
+                try {
+                    map.put(t, emitter.emit(t, runtime));
+                } finally {
+                    filter.remove();
+                }
             }
         }
 

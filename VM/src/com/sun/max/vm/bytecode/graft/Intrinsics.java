@@ -112,7 +112,7 @@ public class Intrinsics extends IntrinsifierClient {
             case READ_PC            :
             case FLUSHW             :
             case ALLOCA             :
-            case LSA                :
+            case ALLOCSTKVAR        :
             case JNICALL            :
             case CALL               :
             case ICMP               :
@@ -123,44 +123,6 @@ public class Intrinsics extends IntrinsifierClient {
             // Checkstyle: resume
         }
         return false;
-    }
-
-    public static char toUnsafeOperand(Kind kind) {
-        switch (kind.asEnum) {
-            // Checkstyle: stop
-            case INT:        return 'i';
-            case BOOLEAN:    return 'z';
-            case BYTE:       return 'b';
-            case CHAR:       return 'c';
-            case DOUBLE:     return 'd';
-            case FLOAT:      return 'f';
-            case LONG:       return 'l';
-            case REFERENCE:  return 'a';
-            case SHORT:      return 's';
-            case WORD:       return 'w';
-            // Checkstyle: resume
-            default:
-                throw new IllegalArgumentException("Unknown UNSAFE_CAST type char operand: " + kind);
-        }
-    }
-
-    public static Kind toUnsafeCastOperand(char typeChar) {
-        switch (typeChar) {
-            // Checkstyle: stop
-            case 'i': return Kind.INT;
-            case 'z': return Kind.BOOLEAN;
-            case 'b': return Kind.BYTE;
-            case 'c': return Kind.CHAR;
-            case 'd': return Kind.DOUBLE;
-            case 'f': return Kind.FLOAT;
-            case 'l': return Kind.LONG;
-            case 'a': return Kind.REFERENCE;
-            case 's': return Kind.SHORT;
-            case 'w': return Kind.WORD;
-            // Checkstyle: resume
-            default:
-                throw new IllegalArgumentException("Unknown UNSAFE_CAST type char operand: " + typeChar);
-        }
     }
 
     /**
@@ -180,11 +142,7 @@ public class Intrinsics extends IntrinsifierClient {
                 MethodActor method = constant.resolve(cp, cpi);
                 int intrinsic = method.intrinsic();
                 if (intrinsic == UNSAFE_CAST) {
-                    Kind fromKind = isStatic ? sig.parameterDescriptorAt(0).toKind() : holder.toKind();
-                    Kind toKind = sig.resultKind();
-                    char fromChar = toUnsafeOperand(fromKind);
-                    char toChar = toUnsafeOperand(toKind);
-                    bi.intrinsify(UNSAFE_CAST, fromChar << 8 | toChar);
+                    bi.intrinsify(UNSAFE_CAST, cpi);
                 } else if (intrinsic == CALL) {
                     bi.intrinsify(intrinsic, cpi);
                 } else if (intrinsic != 0) {

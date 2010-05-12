@@ -30,7 +30,6 @@ import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -172,10 +171,10 @@ public class C1XCompilation {
     /**
      * Gets the {@code RiType} corresponding to {@code java.lang.Throwable}.
      *
-     * @return the compiler interface type for Throwable
+     * @return the compiler interface type for {@link Throwable}
      */
     public RiType throwableType() {
-        return runtime.resolveType("java.lang.Throwable");
+        return runtime.getRiType(Throwable.class);
     }
 
     /**
@@ -220,7 +219,7 @@ public class C1XCompilation {
             throw new CiBailout("build of BlockMap failed for " + method);
         } else {
             if (cfgPrinter() != null) {
-                cfgPrinter().printCFG(method, map, method.codeSize(), "BlockListBuilder " + Util.format("%f %r %H.%n(%p)", method, true), false, false);
+                cfgPrinter().printCFG(method, map, method.code().length, "BlockListBuilder " + CiUtil.format("%f %r %H.%n(%p)", method, true), false, false);
             }
         }
         map.cleanup();
@@ -259,7 +258,7 @@ public class C1XCompilation {
             targetMethod = emitCode();
 
             if (C1XOptions.PrintMetrics) {
-                C1XMetrics.BytecodesCompiled += method.codeSize();
+                C1XMetrics.BytecodesCompiled += method.code().length;
             }
         } catch (CiBailout b) {
             return new CiResult(null, b, stats);

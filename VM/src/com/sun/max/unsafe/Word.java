@@ -111,7 +111,7 @@ public abstract class Word {
                                 }
                             }
                         } catch (Exception e) {
-                            throw ProgramError.unexpected(e);
+                            ProgramWarning.message(e.toString());
                         }
                     }
                     return true;

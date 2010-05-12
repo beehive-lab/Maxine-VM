@@ -93,7 +93,7 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
     }
 
     public static ArrayClassActor forComponentClassActor(ClassActor elementClassActor, int dimensions) {
-        assert !elementClassActor.isArrayClassActor() : elementClassActor + " dim=" + dimensions;
+        assert !elementClassActor.isArrayClass() : elementClassActor + " dim=" + dimensions;
         assert dimensions > 0;
         ArrayClassActor arrayClassActor = forComponentClassActor(elementClassActor);
         int remainingDimensions = dimensions - 1;

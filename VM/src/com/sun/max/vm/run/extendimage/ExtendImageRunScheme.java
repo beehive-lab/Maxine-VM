@@ -157,7 +157,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
 
     @Override
     public void run() throws Throwable {
-        // The JavaTesterRunScheme no longer overrides run.
+        // The JTRunScheme no longer overrides run.
         // Instead it checks whether  to run tests in the STARTING
         // phase of the initialize method.
         if (tester == null) {
@@ -192,14 +192,18 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
         final String testRunPackageName = System.getProperty(TESTER_PROPERTY_NAME);
         if (testRunPackageName != null) {
-            final String testerRunSchemeClassname = testRunPackageName + ".JavaTesterRunScheme";
+            final String testerRunSchemeClassname = testRunPackageName + ".JTRunScheme";
+            final int lastDot = testRunPackageName.lastIndexOf('.');
+            assert lastDot > 0;
+            final String testRunParentPackageName = testRunPackageName.substring(0, lastDot);
             try {
                 final Class<?> klass = Class.forName(testerRunSchemeClassname);
                 final Constructor<?> cons = klass.getConstructor(new Class<?>[] {VMConfiguration.class});
                 tester = (JavaRunScheme) cons.newInstance(new Object[] {vmConfiguration()});
                 Trace.line(1, "extending image with " + testerRunSchemeClassname);
                 forceCompileMethod(testerRunSchemeClassname + ".run");
-                forceClass(testRunPackageName + ".JavaTesterTests", false);
+                forceClass(testRunPackageName + ".JTRuns", false);
+                forceClass(testRunParentPackageName + ".JTUtil", false);
                 tester.initialize(MaxineVM.Phase.BOOTSTRAPPING);
             } catch (Exception ex) {
                 ProgramError.unexpected(ex.getMessage());

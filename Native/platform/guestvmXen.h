@@ -25,8 +25,9 @@
 #include <maxine.h>
 
 #if os_GUESTVMXEN
+#include <stdint.h>
     typedef void *guestvmXen_Thread;
-    extern void *guestvmXen_create_thread(void (*function)(void *), unsigned long stacksize, int priority, void *runArg);
+    extern void *guestvmXen_create_thread(void (*function)(void *), uint64_t stacksize, int priority, void *runArg);
     extern void* guestvmXen_get_current(void);
     extern int guestvmXen_thread_join(guestvmXen_Thread);
     typedef void *guestvmXen_monitor_t;
@@ -49,14 +50,14 @@
     extern void *guestvmXen_virtualMemory_allocate(size_t size, int type);
     extern void *guestvmXen_virtualMemory_deallocate(void *address, size_t size, int type);
     extern void *guestvmXen_virtualMemory_allocateIn31BitSpace(size_t size, int type);
-    extern void *guestvmXen_virtualMemory_allocateAtFixedAddress(unsigned long address, size_t size, int type);
+    extern void *guestvmXen_virtualMemory_allocateAtFixedAddress(uint64_t address, size_t size, int type);
     extern int guestvmXen_virtualMemory_pageSize(void);
-    extern int guestvmXen_virtualMemory_protectPages(unsigned long address, int count);
-    extern int guestvmXen_virtualMemory_unProtectPages(unsigned long address, int count);
+    extern int guestvmXen_virtualMemory_protectPages(uint64_t address, int count);
+    extern int guestvmXen_virtualMemory_unProtectPages(uint64_t address, int count);
     extern void guestvmXen_set_javaId(guestvmXen_Thread, int id);
     extern void guestvmXen_initStack(void *nativeThreadLocals);
     extern void guestvmXen_blue_zone_trap(void *nativeThreadLocals);
-    extern unsigned long guestvmXen_remap_boot_code_region(unsigned long base, size_t size);
+    extern uint64_t guestvmXen_remap_boot_code_region(uint64_t base, size_t size);
     extern void guestvmXen_native_props(native_props_t *native_props);
 
 
@@ -67,27 +68,27 @@
     extern int guestvmXen_numProcessors(void);
 
     struct fault_regs {
-    	unsigned long r15;
-    	unsigned long r14;
-    	unsigned long r13;
-    	unsigned long r12;
-    	unsigned long rbp;
-    	unsigned long rbx;
-     	unsigned long r11;
-    	unsigned long r10;
-    	unsigned long r9;
-    	unsigned long r8;
-    	unsigned long rax;
-    	unsigned long rcx;
-    	unsigned long rdx;
-    	unsigned long rsi;
-    	unsigned long rdi;
-    	unsigned long orig_rax;
-    	unsigned long rip;
-    	unsigned long cs;
-    	unsigned long eflags;
-    	unsigned long rsp;
-   	unsigned long ss;
+    	uint64_t r15;
+    	uint64_t r14;
+    	uint64_t r13;
+    	uint64_t r12;
+    	uint64_t rbp;
+    	uint64_t rbx;
+     	uint64_t r11;
+    	uint64_t r10;
+    	uint64_t r9;
+    	uint64_t r8;
+    	uint64_t rax;
+    	uint64_t rcx;
+    	uint64_t rdx;
+    	uint64_t rsi;
+    	uint64_t rdi;
+    	uint64_t orig_rax;
+    	uint64_t rip;
+    	uint64_t cs;
+    	uint64_t eflags;
+    	uint64_t rsp;
+   	uint64_t ss;
    };
 
 #undef SIGFPE
@@ -102,7 +103,7 @@
     typedef struct fault_regs UContext;
     extern void guestvmXen_register_fault_handler(int fault, fault_handler_t fault_handler);
     typedef	struct {
-    	unsigned long ss_base;
+    	uint64_t ss_base;
     	size_t	ss_size;
     } guestvmXen_stackinfo_t;
 

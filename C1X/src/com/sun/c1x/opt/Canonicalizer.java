@@ -21,6 +21,7 @@
 package com.sun.c1x.opt;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static java.lang.reflect.Modifier.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -125,7 +126,7 @@ public class Canonicalizer extends DefaultValueVisitor {
     }
 
     private void moveConstantToRight(Op2 x) {
-        if (x.x().isConstant() && isCommutative(x.opcode())) {
+        if (x.x().isConstant() && isCommutative(x.opcode)) {
             x.swapOperands();
         }
     }
@@ -136,7 +137,7 @@ public class Canonicalizer extends DefaultValueVisitor {
 
         if (x == y) {
             // the left and right operands are the same value, try reducing some operations
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case ISUB: setIntConstant(0); return;
                 case LSUB: setLongConstant(0); return;
                 case IAND: // fall through
@@ -153,7 +154,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             // both operands are constants, try constant folding
             switch (kind) {
                 case Int: {
-                    Integer val = foldIntOp2(i.opcode(), x.asConstant().asInt(), y.asConstant().asInt());
+                    Integer val = foldIntOp2(i.opcode, x.asConstant().asInt(), y.asConstant().asInt());
                     if (val != null) {
                         setIntConstant(val); // the operation was successfully folded to an int
                         return;
@@ -161,7 +162,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                     break;
                 }
                 case Long: {
-                    Long val = foldLongOp2(i.opcode(), x.asConstant().asLong(), y.asConstant().asLong());
+                    Long val = foldLongOp2(i.opcode, x.asConstant().asLong(), y.asConstant().asLong());
                     if (val != null) {
                         setLongConstant(val); // the operation was successfully folded to a long
                         return;
@@ -171,7 +172,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 case Float: {
                     if (C1XOptions.CanonicalizeFloatingPoint) {
                         // try to fold a floating point operation
-                        Float val = foldFloatOp2(i.opcode(), x.asConstant().asFloat(), y.asConstant().asFloat());
+                        Float val = foldFloatOp2(i.opcode, x.asConstant().asFloat(), y.asConstant().asFloat());
                         if (val != null) {
                             setFloatConstant(val); // the operation was successfully folded to a float
                             return;
@@ -182,7 +183,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 case Double: {
                     if (C1XOptions.CanonicalizeFloatingPoint) {
                         // try to fold a floating point operation
-                        Double val = foldDoubleOp2(i.opcode(), x.asConstant().asDouble(), y.asConstant().asDouble());
+                        Double val = foldDoubleOp2(i.opcode, x.asConstant().asDouble(), y.asConstant().asDouble());
                         if (val != null) {
                             setDoubleConstant(val); // the operation was successfully folded to a double
                             return;
@@ -191,7 +192,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                     break;
                 }
                 case Word: {
-                    Long val = foldWordOp2(i.opcode(), x.asConstant().asLong(), y.asConstant().asLong());
+                    Long val = foldWordOp2(i.opcode, x.asConstant().asLong(), y.asConstant().asLong());
                     if (val != null) {
                         setLongConstant(val); // the operation was successfully folded to a word
                         return;
@@ -234,7 +235,7 @@ public class Canonicalizer extends DefaultValueVisitor {
 
     private Value reduceIntOp2(Op2 original, Value x, int y) {
         // attempt to reduce a binary operation with a constant on the right
-        int opcode = original.opcode();
+        int opcode = original.opcode;
         switch (opcode) {
             case IADD: return y == 0 ? setCanonical(x) : null;
             case ISUB: return y == 0 ? setCanonical(x) : null;
@@ -244,7 +245,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 }
                 if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
-                    return setCanonical(new ShiftOp(ISHL, x, intInstr(Util.log2(y))));
+                    return setCanonical(new ShiftOp(ISHL, x, intInstr(CiUtil.log2(y))));
                 }
                 return y == 0 ? setIntConstant(0) : null;
             }
@@ -281,7 +282,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             ShiftOp s = (ShiftOp) x;
             if (s.y().isConstant()) {
                 long z = s.y().asConstant().asLong();
-                if (s.opcode() == opcode) {
+                if (s.opcode == opcode) {
                     // this is a chained shift operation (e >> C >> K)
                     y = y + z;
                     shift = y & mod;
@@ -291,7 +292,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                     // reduce to (e >> (C + K))
                     return setCanonical(new ShiftOp(opcode, s.x(), intInstr((int) shift)));
                 }
-                if (s.opcode() == reverse && y == z) {
+                if (s.opcode == reverse && y == z) {
                     // this is a chained shift of the form (e >> K << K)
                     if (islong) {
                         long mask = -1;
@@ -323,7 +324,7 @@ public class Canonicalizer extends DefaultValueVisitor {
 
     private Value reduceLongOp2(Op2 original, Value x, long y) {
         // attempt to reduce a binary operation with a constant on the right
-        int opcode = original.opcode();
+        int opcode = original.opcode;
         switch (opcode) {
             case LADD: return y == 0 ? setCanonical(x) : null;
             case LSUB: return y == 0 ? setCanonical(x) : null;
@@ -333,7 +334,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 }
                 if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
-                    return setCanonical(new ShiftOp(LSHL, x, intInstr(Util.log2(y))));
+                    return setCanonical(new ShiftOp(LSHL, x, intInstr(CiUtil.log2(y))));
                 }
                 return y == 0 ? setLongConstant(0) : null;
             }
@@ -359,39 +360,37 @@ public class Canonicalizer extends DefaultValueVisitor {
         return null;
     }
 
-    /*
-     *                 final int shift = Long.numberOfTrailingZeros(divisor.toLong());
-                if (shift == 0) {
-                    return new CirCall(normalContinuation, dividendValue);
-                }
-                final Builtin bltin = (Word.width() == 64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
-                return new CirCall(CirBuiltin.get(bltin), dividendValue, new CirConstant(IntValue.from(shift)), normalContinuation, exceptionContinuation);
-
-     * */
-
     private Value reduceWordOp2(Op2 original, Value x, long y) {
         if (y == 0) {
             // Defer to arithmetic exception at runtime
             return null;
         }
         // attempt to reduce a binary operation with a constant on the right
-        int opcode = original.opcode();
+        int opcode = original.opcode;
         switch (opcode) {
             case WDIVI:
             case WDIV: {
                 if (y == 1) {
                     return setCanonical(x);
                 }
-                if (Util.isPowerOf2(y)) {
-                    return setCanonical(new ShiftOp(target.arch.is64bit() ? LUSHR : IUSHR, x, intInstr(Util.log2(y))));
+                if (CiUtil.isPowerOf2(y)) {
+                    return setCanonical(new ShiftOp(target.arch.is64bit() ? LUSHR : IUSHR, x, intInstr(CiUtil.log2(y))));
                 }
             }
-            case WREMI:
+            case WREMI: {
+                if (y == 1) {
+                    return setCanonical(intInstr(0));
+                }
+                if (CiUtil.isPowerOf2(y)) {
+                    int mask = (int) y - 1;
+                    return setCanonical(new LogicOp(CiKind.Int, IAND, x, intInstr(mask)));
+                }
+            }
             case WREM: {
                 if (y == 1) {
                     return setCanonical(wordInstr(0));
                 }
-                if (Util.isPowerOf2(y)) {
+                if (CiUtil.isPowerOf2(y)) {
                     if (target.arch.is64bit()) {
                         long mask = y - 1L;
                         return setCanonical(new LogicOp(LAND, x, longInstr(mask)));
@@ -419,7 +418,7 @@ public class Canonicalizer extends DefaultValueVisitor {
 
     private Value eliminateNarrowing(CiKind kind, Convert c) {
         Value nv = null;
-        switch (c.opcode()) {
+        switch (c.opcode) {
             case I2B:
                 if (kind == CiKind.Byte) {
                     nv = c.value();
@@ -441,16 +440,27 @@ public class Canonicalizer extends DefaultValueVisitor {
 
     @Override
     public void visitLoadField(LoadField i) {
-        if (i.isStatic() && i.isLoaded() && C1XOptions.CanonicalizeConstantFields) {
-            // only try to canonicalize static field loads
-            RiField field = i.field();
-            if (field.isConstant()) {
-                if (method.isClassInitializer()) {
-                    // don't do canonicalization in the <clinit> method
-                    return;
-                }
+        if (i.isStatic()) {
+            if (i.isLoaded() && C1XOptions.CanonicalizeConstantFields) {
 
-                CiConstant value = field.constantValue();
+                // only try to canonicalize static field loads
+                RiField field = i.field();
+                if (field.isConstant()) {
+                    if (method.isClassInitializer()) {
+                        // don't do canonicalization in the <clinit> method
+                        return;
+                    }
+
+                    CiConstant value = field.constantValue(null);
+                    if (value != null) {
+                        setConstant(value);
+                    }
+                }
+            }
+        } else {
+            RiField field = i.field();
+            if (i.object().isConstant() && field.isConstant()) {
+                CiConstant value = field.constantValue(i.object().asConstant().asObject());
                 if (value != null) {
                     setConstant(value);
                 }
@@ -495,8 +505,8 @@ public class Canonicalizer extends DefaultValueVisitor {
         } else if (array instanceof LoadField) {
             // the array is a load of a field; check if it is a constant
             RiField field = ((LoadField) array).field();
-            if (field.isConstant() && field.isStatic()) {
-                CiConstant cons = field.constantValue();
+            if (field.isConstant() && isStatic(field.accessFlags())) {
+                CiConstant cons = field.constantValue(null);
                 if (cons != null) {
                     Object obj = cons.asObject();
                     if (obj != null) {
@@ -533,18 +543,17 @@ public class Canonicalizer extends DefaultValueVisitor {
                 clearStoreCheck(i);
             } else {
                 RiType exactType = Value.exactType(array, runtime);
-                if (exactType != null) {
-                    if (runtime.isObjectArrayType(exactType)) {
-                        // the exact type of the array is Object[] => no check is necessary
+                if (exactType != null && runtime.getRiType(Object[].class).equals(exactType)) {
+                    // the exact type of the array is Object[] => no check is necessary
+                    clearStoreCheck(i);
+                } else {
+                    RiType declaredType = value.declaredType();
+                    if (declaredType != null && declaredType.isResolved() && declaredType.isSubtypeOf(exactType)) {
+                        // the value being stored has a known type
                         clearStoreCheck(i);
-                    } else {
-                        RiType declaredType = value.declaredType();
-                        if (declaredType != null && declaredType.isResolved() && declaredType.isSubtypeOf(exactType)) {
-                            // the value being stored has a known type
-                            clearStoreCheck(i);
-                        }
                     }
                 }
+
             }
         }
     }
@@ -598,7 +607,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 case Float:
                     if (x.isConstant()) {
                         float xval = x.asConstant().asFloat(); // get the actual value of x (and y since x == y)
-                        Integer val = foldFloatCompare(i.opcode(), xval, xval);
+                        Integer val = foldFloatCompare(i.opcode, xval, xval);
                         assert val != null : "invalid opcode in float compare op";
                         setIntConstant(val);
                         return;
@@ -607,7 +616,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 case Double:
                     if (x.isConstant()) {
                         double xval = x.asConstant().asDouble(); // get the actual value of x (and y since x == y)
-                        Integer val = foldDoubleCompare(i.opcode(), xval, xval);
+                        Integer val = foldDoubleCompare(i.opcode, xval, xval);
                         assert val != null : "invalid opcode in double compare op";
                         setIntConstant(val);
                         return;
@@ -623,13 +632,13 @@ public class Canonicalizer extends DefaultValueVisitor {
                     setIntConstant(foldLongCompare(x.asConstant().asLong(), y.asConstant().asLong()));
                     break;
                 case Float: {
-                    Integer val = foldFloatCompare(i.opcode(), x.asConstant().asFloat(), y.asConstant().asFloat());
+                    Integer val = foldFloatCompare(i.opcode, x.asConstant().asFloat(), y.asConstant().asFloat());
                     assert val != null : "invalid opcode in float compare op";
                     setIntConstant(val);
                     break;
                 }
                 case Double: {
-                    Integer val = foldDoubleCompare(i.opcode(), x.asConstant().asDouble(), y.asConstant().asDouble());
+                    Integer val = foldDoubleCompare(i.opcode, x.asConstant().asDouble(), y.asConstant().asDouble());
                     assert val != null : "invalid opcode in float compare op";
                     setIntConstant(val);
                     break;
@@ -650,7 +659,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         if (v.isConstant()) {
             // fold conversions between primitive types
             // Checkstyle: stop
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case I2B: setIntConstant   ((byte)   v.asConstant().asInt()); return;
                 case I2S: setIntConstant   ((short)  v.asConstant().asInt()); return;
                 case I2C: setIntConstant   ((char)   v.asConstant().asInt()); return;
@@ -679,7 +688,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         } else if (v instanceof Convert) {
             // remove chained redundant conversions
             Convert c = (Convert) v;
-            switch (c.opcode()) {
+            switch (c.opcode) {
                 case I2B: kind = CiKind.Byte; break;
                 case I2S: kind = CiKind.Short; break;
                 case I2C: kind = CiKind.Char; break;
@@ -688,7 +697,7 @@ public class Canonicalizer extends DefaultValueVisitor {
 
         if (kind != CiKind.Illegal) {
             // if any of the above matched
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case I2B:
                     if (kind == CiKind.Byte) {
                         setCanonical(v);
@@ -711,10 +720,10 @@ public class Canonicalizer extends DefaultValueVisitor {
             // check if the operation was IAND with a constant; it may have narrowed the value already
             Op2 op = (Op2) v;
             // constant should be on right hand side if there is one
-            if (op.opcode() == IAND && op.y().isConstant()) {
+            if (op.opcode == IAND && op.y().isConstant()) {
                 int safebits = 0;
                 int mask = op.y().asConstant().asInt();
-                switch (i.opcode()) {
+                switch (i.opcode) {
                     case I2B: safebits = 0x7f; break;
                     case I2S: safebits = 0x7fff; break;
                     case I2C: safebits = 0xffff; break;
@@ -748,7 +757,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             RiMethod method = i.target();
             if (method.isResolved()) {
                 // only try to fold resolved method invocations
-                CiConstant result = foldInvocation(i.target(), i.arguments());
+                CiConstant result = foldInvocation(runtime, i.target(), i.arguments());
                 if (result != null) {
                     // folding was successful
                     setCanonical(new Constant(result));
@@ -1065,7 +1074,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         Condition ifcond = i.condition();
         Value l = i.x();
         CompareOp cmp = (CompareOp) l;
-        boolean unorderedIsLess = cmp.opcode() == FCMPL || cmp.opcode() == DCMPL;
+        boolean unorderedIsLess = cmp.opcode == FCMPL || cmp.opcode == DCMPL;
         BlockBegin lssSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(-1), rtc));
         BlockBegin eqlSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(0), rtc));
         BlockBegin gtrSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(1), rtc));
@@ -1194,7 +1203,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         if (i.base() instanceof ArithmeticOp) {
             // if the base is an arithmetic op, try reducing
             ArithmeticOp root = (ArithmeticOp) i.base();
-            if (!root.isLive() && root.opcode() == LADD) {
+            if (!root.isLive() && root.opcode == LADD) {
                 // match unsafe(x + y) if the x + y is not pinned
                 // try reducing (x + y) and (y + x)
                 Value y = root.y();
@@ -1206,7 +1215,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 if (y instanceof Convert) {
                     // match unsafe(x + (long) y)
                     Convert convert = (Convert) y;
-                    if (convert.opcode() == I2L && convert.value().kind.isInt()) {
+                    if (convert.opcode == I2L && convert.value().kind.isInt()) {
                         // the conversion is redundant
                         setUnsafeRawOp(i, x, convert.value(), 0);
                     }
@@ -1239,7 +1248,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             // note that this case will not happen if C1XOptions.CanonicalizeMultipliesToShifts is true
             ArithmeticOp arith = (ArithmeticOp) index;
             CiKind st = arith.y().kind;
-            if (arith.opcode() == IMUL && arith.y().isConstant() && st.isInt()) {
+            if (arith.opcode == IMUL && arith.y().isConstant() && st.isInt()) {
                 int val = arith.y().asConstant().asInt();
                 switch (val) {
                     case 1: return setUnsafeRawOp(i, base, arith.x(), 0);
@@ -1302,8 +1311,9 @@ public class Canonicalizer extends DefaultValueVisitor {
         return args[index].asConstant().asLong();
     }
 
-    public static CiConstant foldInvocation(RiMethod method, Value[] args) {
-        Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
+    public static CiConstant foldInvocation(RiRuntime runtime, RiMethod method, Value[] args) {
+        Method reflectMethod = runtime.getFoldingMethod(method);
+//        Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
         if (reflectMethod != null) {
             // the method is foldable. check that all input arguments are constants
             for (Value a : args) {
@@ -1314,7 +1324,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             // build the argument list
             Object recvr;
             Object[] argArray = NO_ARGUMENTS;
-            if (method.isStatic()) {
+            if (isStatic(method.accessFlags())) {
                 // static method invocation
                 recvr = null;
                 if (args.length > 0) {
@@ -1343,7 +1353,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             try {
                 // attempt to invoke the method
                 Object result = reflectMethod.invoke(recvr, argArray);
-                CiKind kind = method.signatureType().returnKind();
+                CiKind kind = method.signature().returnKind();
                 // set the result of this instruction to be the result of invocation
                 C1XMetrics.MethodsFolded++;
                 return CiConstant.forBoxed(kind, result);

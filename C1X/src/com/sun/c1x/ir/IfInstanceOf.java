@@ -24,7 +24,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
- * The {@code IfInstanceOf} instruction represents a branch on the outcome of an instanceof test.
+ * A branch on the outcome of an instanceof test.
  *
  * @author Ben L. Titzer
  */
@@ -36,7 +36,7 @@ public final class IfInstanceOf extends BlockEnd {
     final int instanceofBCI;
 
     /**
-     * Constructs a new IfInstanceOf instruction.
+     * Constructs a new {@link IfInstanceOf} instruction.
      * @param targetClass the class to check against
      * @param object the instruction which produces the object value
      * @param testIsInstance {@code true} if positive instanceof check implies going to true successor

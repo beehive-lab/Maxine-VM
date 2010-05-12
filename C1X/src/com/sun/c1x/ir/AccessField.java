@@ -20,8 +20,11 @@
  */
 package com.sun.c1x.ir;
 
+import java.lang.reflect.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -33,24 +36,25 @@ public abstract class AccessField extends StateSplit {
 
     Value object;
     final RiField field;
-    public final char cpi;
+    public final int cpi;
     public final RiConstantPool constantPool;
 
     /**
      * Constructs a new access field object.
+     * @param kind the result kind of the access
      * @param object the instruction producing the receiver object
      * @param field the compiler interface representation of the field
      * @param isStatic indicates if the field is static
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public AccessField(Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
-        super(field.kind().stackKind(), stateBefore);
+    public AccessField(CiKind kind, Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded, int cpi, RiConstantPool constantPool) {
+        super(kind, stateBefore);
         this.cpi = cpi;
         this.constantPool = constantPool;
         this.object = object;
         this.field = field;
-        if (!isLoaded || C1XOptions.TestPatching && !field.isVolatile()) {
+        if (!isLoaded || C1XOptions.TestPatching && !Modifier.isVolatile(field.accessFlags())) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
             setFlag(Flag.NeedsPatching);
@@ -101,7 +105,7 @@ public abstract class AccessField extends StateSplit {
      * @return {@code true} if the field is resolved and declared volatile
      */
     public boolean isVolatile() {
-        return isLoaded() && field.isVolatile();
+        return isLoaded() && Modifier.isVolatile(field.accessFlags());
     }
 
     @Override

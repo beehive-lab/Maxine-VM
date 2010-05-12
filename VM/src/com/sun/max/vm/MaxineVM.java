@@ -606,4 +606,15 @@ public final class MaxineVM {
     public MaxineVM(VMConfiguration vmConfiguration) {
         configuration = vmConfiguration;
     }
+
+    public static void reportPristineMemoryFailure(String memoryAreaName, String operation, Size numberOfBytes) {
+        Log.println("Error occurred during initialization of VM");
+        Log.print("Failed to ");
+        Log.print(operation);
+        Log.print(' ');
+        Log.print(numberOfBytes.toLong());
+        Log.print(" bytes of memory for ");
+        Log.println(memoryAreaName);
+        MaxineVM.native_exit(1);
+    }
 }

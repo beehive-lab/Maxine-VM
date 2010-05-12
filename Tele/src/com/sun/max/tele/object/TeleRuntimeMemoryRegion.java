@@ -103,7 +103,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 
                 final Reference regionNameStringReference = vm().teleFields().RuntimeMemoryRegion_regionName.readReference(reference());
                 final TeleString teleString = (TeleString) vm().makeTeleObject(regionNameStringReference);
-                final String newRegionName = teleString.getString();
+                final String newRegionName = teleString == null ? "<null>" : teleString.getString();
 
                 Address newRegionStart = vm().teleFields().RuntimeMemoryRegion_start.readWord(reference()).asAddress();
                 if (newRegionStart.isZero() && newRegionName != null) {

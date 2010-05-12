@@ -20,6 +20,8 @@
  */
 package com.sun.cri.ri;
 
+import java.lang.reflect.*;
+
 import com.sun.cri.ci.*;
 
 /**
@@ -164,15 +166,17 @@ public interface RiType {
      * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
      * @return {@code true} if this type is an array class
      */
-    boolean isArrayKlass();
+    boolean isArrayClass();
 
     /**
-     * Checks whether this type is final.
-     * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
-     * @return {@code true} if this type is final
+     * Gets the access flags for this type. Only the flags specified in the JVM specification
+     * will be included in the returned mask. The utility methods in the {@link Modifier} class
+     * should be used to query the returned mask for the presence/absence of individual flags.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the mask of JVM defined class access flags defined for this type
      */
-    boolean isFinal();
-
+    int accessFlags();
+    
     /**
      * Checks whether this type is initialized.
      * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.

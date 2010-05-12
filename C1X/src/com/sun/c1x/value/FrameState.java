@@ -585,13 +585,15 @@ public class FrameState {
      */
     public void setupPhiForStack(BlockBegin block, int i) {
         Value p = stackAt(i);
-        if (p instanceof Phi) {
-            Phi phi = (Phi) p;
-            if (phi.block() == block && phi.isOnStack() && phi.stackIndex() == i) {
-                return;
+        if (p != null) {
+            if (p instanceof Phi) {
+                Phi phi = (Phi) p;
+                if (phi.block() == block && phi.isOnStack() && phi.stackIndex() == i) {
+                    return;
+                }
             }
+            values[maxLocals + i] = new Phi(p.kind, block, -i - 1);
         }
-        values[maxLocals + i] = new Phi(p.kind, block, -i - 1);
     }
 
     /**

@@ -39,18 +39,15 @@ public final class StorePointer extends PointerOp {
      * Creates an instruction for a pointer store. If {@code displacement != null}, the effective of the address of the store is
      * computed as the pointer plus a byte displacement plus a scaled index. Otherwise, the effective address is computed as the
      * pointer plus a byte offset.
-     *
-     * @param kind the kind of value stored to the pointer
      * @param pointer the value producing the pointer
      * @param displacement the value producing the displacement. This may be {@code null}.
-     * @param offsetOrIndex the value producing the scaled-index of the byte offset depending on whether {@code displacement} is {@code null}
+     * @param offsetOrIndex the value producing the scaled-index or the byte offset depending on whether {@code displacement} is {@code null}
      * @param value the value to write to the pointer
-     * @param canTrap {@code true} if the access can cause a trap
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public StorePointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, Value value, boolean canTrap, FrameState stateBefore, boolean isVolatile) {
-        super(kind, opcode, pointer, displacement, offsetOrIndex, canTrap, stateBefore, isVolatile);
+    public StorePointer(int opcode, Value pointer, Value displacement, Value offsetOrIndex, Value value, FrameState stateBefore, boolean isVolatile) {
+        super(CiKind.Void, opcode, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
         this.value = value;
         setFlag(Flag.LiveStore);
     }

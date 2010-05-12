@@ -24,6 +24,8 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.asm.*;
+import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -33,13 +35,13 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -576,9 +578,45 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         traceBundle(writer);
         writer.flush();
         if (MaxineVM.isHosted()) {
-            Disassemble.disassemble(byteArrayOutputStream, this);
+            disassemble(byteArrayOutputStream);
         }
         return byteArrayOutputStream.toString();
+    }
+
+
+    /**
+     * Prints a textual disassembly the code in a target method.
+     *
+     * @param out where to print the disassembly
+     * @param targetMethod the target method whose code is to be disassembled
+     */
+    public void disassemble(OutputStream out) {
+        final ProcessorKind processorKind = Platform.target().processorKind;
+        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(encodedInlineDataDescriptors());
+        final Pointer startAddress = codeStart();
+        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+            @Override
+            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
+                String string = super.disassembledObjectString(disassembler, disassembledObject);
+                if (string.startsWith("call ")) {
+
+                    final Pointer instructionPointer = startAddress.plus(disassembledObject.startPosition());
+                    final BytecodeLocation bytecodeLocation = getBytecodeLocationFor(instructionPointer, false);
+                    if (bytecodeLocation != null) {
+                        final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+                        if (methodRef != null) {
+                            final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool;
+                            string += " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                        }
+                    }
+                    if (StopPositions.isNativeFunctionCallPosition(stopPositions(),  disassembledObject.startPosition())) {
+                        string += " <native function call>";
+                    }
+                }
+                return string;
+            }
+        };
+        Disassembler.disassemble(out, code(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
     }
 
     /**

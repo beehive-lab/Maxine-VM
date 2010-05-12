@@ -238,7 +238,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitResolveClass(ResolveClass i) {
-        ResolveClass other = new ResolveClass(i.type, i.portion, i.stateBefore().copy(), i.cpi, i.constantPool);
+        ResolveClass other = new ResolveClass(i.type, i.portion, i.stateBefore().copy());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -320,7 +320,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitArithmeticOp(ArithmeticOp i) {
-        ArithmeticOp other = new ArithmeticOp(i.opcode(), i.kind, lookup(i.x()), lookup(i.y()), i.isStrictFP(), i.stateBefore() != null ? i.stateBefore().copy() : null);
+        ArithmeticOp other = new ArithmeticOp(i.opcode, i.kind, lookup(i.x()), lookup(i.y()), i.isStrictFP(), i.stateBefore() != null ? i.stateBefore().copy() : null);
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -341,7 +341,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitShiftOp(ShiftOp i) {
-        ShiftOp other = new ShiftOp(i.opcode(), lookup(i.x()), lookup(i.y()));
+        ShiftOp other = new ShiftOp(i.opcode, lookup(i.x()), lookup(i.y()));
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -349,7 +349,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitLogicOp(LogicOp i) {
-        LogicOp other = new LogicOp(i.opcode(), lookup(i.x()), lookup(i.y()));
+        LogicOp other = new LogicOp(i.opcode, lookup(i.x()), lookup(i.y()));
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -357,7 +357,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitCompareOp(CompareOp i) {
-        CompareOp other = new CompareOp(i.opcode(), lookup(i.x()), lookup(i.y()), i.stateBefore().copy());
+        CompareOp other = new CompareOp(i.opcode, lookup(i.x()), lookup(i.y()), i.stateBefore().copy());
         other.setBCI(i.bci());
         bind(i, other);
         updateState(other);
@@ -374,7 +374,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitConvert(Convert i) {
-        Convert other = new Convert(i.opcode(), lookup(i.value()), i.kind);
+        Convert other = new Convert(i.opcode, lookup(i.value()), i.kind);
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -620,14 +620,6 @@ public class LoopPeeler extends DefaultValueVisitor {
     @Override
     public void visitExceptionObject(ExceptionObject i) {
         ExceptionObject other = new ExceptionObject();
-        other.setBCI(i.bci());
-        bind(i, other);
-        addInstruction(other);
-    }
-
-    @Override
-    public void visitRoundFP(RoundFP i) {
-        RoundFP other = new RoundFP(lookup(i.value()));
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);

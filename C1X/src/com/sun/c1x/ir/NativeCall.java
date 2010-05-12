@@ -42,7 +42,7 @@ public final class NativeCall extends StateSplit {
 
     /**
      * The signature of the call which is derived from {@link #nativeMethod} but is not
-     * the same as its {@linkplain RiMethod#signatureType() signature}.
+     * the same as its {@linkplain RiMethod#signature() signature}.
      */
     public final RiSignature signature;
 
@@ -59,7 +59,7 @@ public final class NativeCall extends StateSplit {
      * @param stateBefore the state before executing the invocation
      */
     public NativeCall(RiMethod nativeMethod, RiSignature signature, Value address, Value[] args, FrameState stateBefore) {
-        super(signature.returnKind(), stateBefore);
+        super(signature.returnKind().stackKind(), stateBefore);
         this.address = address;
         this.nativeMethod = nativeMethod;
         this.arguments = args;

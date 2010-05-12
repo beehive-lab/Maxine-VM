@@ -408,6 +408,10 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
         }
     }
 
+    private int minus1IfWordWidth(int bitPosition) {
+        return bitPosition == Word.widthValue().numberOfBits ? -1 : bitPosition;
+    }
+
     private MethodStatus interpret(int opcode, boolean isWide) throws Throwable {
         switch (opcode) {
             // Checkstyle: stop
@@ -1328,8 +1332,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
             case SAFEPOINT:              machine.skipBytes(2); break;
             case PAUSE:                  machine.skipBytes(2); break;
             case FLUSHW:                 machine.skipBytes(2); break;
-            case LSB:                    machine.skipBytes(2); push((int) Long.lowestOneBit(pop().asLong())); break;
-            case MSB:                    machine.skipBytes(2); push((int) Long.highestOneBit(pop().asLong())); break;
+            case LSB:                    machine.skipBytes(2); push(minus1IfWordWidth(Long.numberOfTrailingZeros((pop().asLong())))); break;
+            case MSB:                    machine.skipBytes(2); push(minus1IfWordWidth(Long.numberOfLeadingZeros((pop().asLong())))); break;
             case UWCMP: {
                 int operand = readU2();
                 Address value2 = pop().asWord().asAddress();

@@ -90,21 +90,13 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected boolean canInlineAsConstant(CiConstant c) {
-        if (c.kind == CiKind.Long) {
-            return false;
-        }
-        return c.kind != CiKind.Object || c.asObject() == null;
-    }
-
-    @Override
     protected CiValue safepointPollRegister() {
         return ILLEGAL;
     }
 
     @Override
     protected CiAddress genAddress(CiValue base, CiValue index, int shift, int disp, CiKind kind) {
-        assert base.isVariableOrRegister() : "must be";
+        assert base.isVariableOrRegister();
         if (index.isConstant()) {
             return new CiAddress(kind, base, (((CiConstant) index).asInt() << shift) + disp);
         } else {
@@ -126,14 +118,14 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     @Override
     protected boolean strengthReduceMultiply(CiValue left, int c, CiValue result, CiValue tmp) {
         if (tmp.isLegal()) {
-            if (Util.isPowerOf2(c + 1)) {
+            if (CiUtil.isPowerOf2(c + 1)) {
                 lir.move(left, tmp);
-                lir.shiftLeft(left, Util.log2(c + 1), left);
+                lir.shiftLeft(left, CiUtil.log2(c + 1), left);
                 lir.sub(left, tmp, result, null);
                 return true;
-            } else if (Util.isPowerOf2(c - 1)) {
+            } else if (CiUtil.isPowerOf2(c - 1)) {
                 lir.move(left, tmp);
-                lir.shiftLeft(left, Util.log2(c - 1), left);
+                lir.shiftLeft(left, CiUtil.log2(c - 1), left);
                 lir.add(left, tmp, result);
                 return true;
             }
@@ -157,41 +149,52 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         setResult(x, reg);
     }
 
+    @Override
+    public void visitSignificantBit(SignificantBitOp x) {
+        LIRItem value = new LIRItem(x.value(), this);
+        value.setDestroysRegister();
+        value.loadItem();
+        CiValue reg = createResultVariable(x);
+        if (x.op == Bytecodes.LSB) {
+            lir.lsb(value.result(), reg);
+        } else {
+            lir.msb(value.result(), reg);
+        }
+ }
+
     public void visitArithmeticOpFloat(ArithmeticOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         assert !left.isStack() || !right.isStack() : "can't both be memory operands";
-        boolean mustLoadBoth = (x.opcode() == Bytecodes.FREM || x.opcode() == Bytecodes.DREM);
-        if (left.isRegister() || x.x().isConstant() || mustLoadBoth) {
+        boolean mustLoadBoth = (x.opcode == Bytecodes.FREM || x.opcode == Bytecodes.DREM);
+        if (left.isRegisterOrVariable() || x.x().isConstant() || mustLoadBoth) {
             left.loadItem();
         }
-
-        assert C1XOptions.SSEVersion >= 2;
 
         if (mustLoadBoth) {
             // frem and drem destroy also right operand, so move it to a new register
             right.setDestroysRegister();
             right.loadItem();
-        } else if (right.isRegister()) {
+        } else if (right.isRegisterOrVariable()) {
             right.loadItem();
         }
 
         CiVariable reg;
 
-        if (x.opcode() == Bytecodes.FREM) {
+        if (x.opcode == Bytecodes.FREM) {
             reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticFrem, null, left.result(), right.result());
-        } else if (x.opcode() == Bytecodes.DREM) {
+        } else if (x.opcode == Bytecodes.DREM) {
             reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticDrem, null, left.result(), right.result());
         } else {
             reg = newVariable(x.kind);
-            arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), ILLEGAL);
+            arithmeticOpFpu(x.opcode, reg, left.result(), right.result(), ILLEGAL);
         }
 
         setResult(x, reg);
     }
 
     public void visitArithmeticOpLong(ArithmeticOp x) {
-        int opcode = x.opcode();
+        int opcode = x.opcode;
         if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM) {
             // emit code for long division or modulus
             if (is64) {
@@ -250,7 +253,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     public void visitArithmeticOpInt(ArithmeticOp x) {
-        int opcode = x.opcode();
+        int opcode = x.opcode;
         if (opcode == Bytecodes.IDIV || opcode == Bytecodes.IREM) {
             // emit code for integer division or modulus
 
@@ -281,7 +284,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             LIRItem right = new LIRItem(x.y(), this);
             LIRItem leftArg = left;
             LIRItem rightArg = right;
-            if (x.isCommutative() && left.isStack() && right.isRegister()) {
+            if (x.isCommutative() && left.isStack() && right.isRegisterOrVariable()) {
                 // swap them if left is real stack (or cached) and right is real register(not cached)
                 leftArg = right;
                 rightArg = left;
@@ -297,9 +300,9 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 if (rightArg.result().isConstant()) {
                     int iconst = rightArg.asInt();
                     if (iconst > 0) {
-                        if (Util.isPowerOf2(iconst)) {
+                        if (CiUtil.isPowerOf2(iconst)) {
                             useConstant = true;
-                        } else if (Util.isPowerOf2(iconst - 1) || Util.isPowerOf2(iconst + 1)) {
+                        } else if (CiUtil.isPowerOf2(iconst - 1) || CiUtil.isPowerOf2(iconst + 1)) {
                             useConstant = true;
                             useTmp = true;
                         }
@@ -324,10 +327,9 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     public void visitArithmeticOpWord(ArithmeticOp x) {
-        int opcode = x.opcode();
+        int opcode = x.opcode;
         if (opcode == Bytecodes.WDIV || opcode == Bytecodes.WREM || opcode == Bytecodes.WDIVI || opcode == Bytecodes.WREMI) {
             // emit code for long division or modulus
-            if (is64) {
                 // emit inline 64-bit code
                 LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
                 CiValue dividend = force(x.x(), LDIV_IN); // dividend must be in RAX
@@ -357,12 +359,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 }
 
                 lir.move(resultReg, result);
-            } else {
-                // emit direct call into the runtime
-                CiRuntimeCall runtimeCall = opcode == Bytecodes.LREM ? CiRuntimeCall.ArithmethicLrem : CiRuntimeCall.ArithmeticLdiv;
-                LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-                setResult(x, callRuntimeWithResult(runtimeCall, info, x.x().operand(), x.y().operand()));
-            }
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
@@ -394,12 +390,12 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     public void visitArithmeticOp(ArithmeticOp x) {
         trySwap(x);
 
-        if (x.kind.isWord()) {
+        if (x.kind.isWord() || x.opcode == Bytecodes.WREMI) {
             visitArithmeticOpWord(x);
             return;
         }
 
-        assert x.x().kind == x.kind && x.y().kind == x.kind : "wrong parameter types";
+        assert x.x().kind == x.kind && x.y().kind == x.kind : "wrong parameter types: " + Bytecodes.nameOf(x.opcode);
         switch (x.kind) {
             case Float:
             case Double:
@@ -430,7 +426,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         value.loadItem();
         CiValue reg = createResultVariable(x);
 
-        shiftOp(x.opcode(), reg, value.result(), count.result(), ILLEGAL);
+        shiftOp(x.opcode, reg, value.result(), count.result(), ILLEGAL);
     }
 
     @Override
@@ -444,7 +440,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         right.loadNonconstant();
         CiValue reg = createResultVariable(x);
 
-        logicOp(x.opcode(), reg, left.result(), right.result());
+        logicOp(x.opcode, reg, left.result(), right.result());
     }
 
     private void trySwap(Op2 x) {
@@ -462,7 +458,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         CiValue reg = createResultVariable(x);
 
         if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
-            int code = x.opcode();
+            int code = x.opcode;
             lir.fcmp2int(left.result(), right.result(), reg, (code == Bytecodes.FCMPL || code == Bytecodes.DCMPL));
         } else if (x.x().kind.isLong()) {
             lir.lcmp2int(left.result(), right.result(), reg);
@@ -475,7 +471,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     public void visitUnsignedCompareOp(UnsignedCompareOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
-        left.setDestroysRegister();  // are we sure? why? copied from visitCompareOp
         left.loadItem();
         right.loadItem();
         Condition condition = null;
@@ -588,19 +583,18 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitConvert(Convert x) {
-        assert C1XOptions.SSEVersion >= 2 : "no fpu stack";
         CiValue input = load(x.value());
         CiVariable result = newVariable(x.kind);
 
         // arguments of lirConvert
         GlobalStub globalStub = null;
-        switch (x.opcode()) {
+        switch (x.opcode) {
             case Bytecodes.F2I: globalStub = stubFor(GlobalStub.Id.f2i); break;
             case Bytecodes.F2L: globalStub = stubFor(GlobalStub.Id.f2l); break;
             case Bytecodes.D2I: globalStub = stubFor(GlobalStub.Id.d2i); break;
             case Bytecodes.D2L: globalStub = stubFor(GlobalStub.Id.d2l); break;
         }
-        lir.convert(x.opcode(), input, result, globalStub);
+        lir.convert(x.opcode, input, result, globalStub);
         setResult(x, result);
     }
 

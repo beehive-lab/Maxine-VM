@@ -96,7 +96,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final ArrayClassActor<LongValue> LONG_ARRAY = createPrimitiveArrayClass(LONG);
     public static final ArrayClassActor<DoubleValue> DOUBLE_ARRAY = createPrimitiveArrayClass(DOUBLE);
 
-    public static final FieldActor ClassActor_mirror = findField(ClassActor.class, "mirror");
+    public static final FieldActor ClassActor_javaClass = findField(ClassActor.class, "javaClass");
     public static final FieldActor System_in = findField(System.class, "in");
     public static final FieldActor System_out = findField(System.class, "out");
     public static final FieldActor System_err = findField(System.class, "err");
@@ -264,8 +264,9 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
 
     /**
      * Finds the method actor denoted by a given name and declaring class.
-     * A side effect of this is that the method is compiled into the image as is it invocation stub
-     * if it is not a VM entry point.
+     * A side effect of this is that the method is compiled into the image.
+     * If the method is not a VM entry point (and hence not subject to reflective
+     * invocation) its invocation stub is also compiled into the image.
      *
      * @param declaringClass the class to search for a method named {@code name}
      * @param name the name of the method to find

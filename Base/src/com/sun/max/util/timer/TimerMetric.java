@@ -80,6 +80,10 @@ public class TimerMetric implements Timer, Metric {
         return nested;
     }
 
+    public int getCount() {
+        return count;
+    }
+
     public synchronized void report(String name, PrintStream stream) {
         if (count > 0) {
             final long hz = timer.getClock().getHZ();

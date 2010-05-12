@@ -388,7 +388,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     private ClassMethodActor getClassMethodActor(RiMethod riMethod) {
-        return ((MaxRiMethod) riMethod).asClassMethodActor("getClassMethodActor()");
+        return (ClassMethodActor) riMethod;
     }
 
     private boolean initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, CiDebugInfo debugInfo, CiDebugInfo[] stopInfo) {
@@ -425,7 +425,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             for (ExceptionHandler handler : ciTargetMethod.exceptionHandlers) {
                 exceptionPositionsToCatchPositions[z * 2] = handler.pcOffset;
                 exceptionPositionsToCatchPositions[z * 2 + 1] = handler.handlerPos;
-                exceptionClassActors[z] = (handler.exceptionType == null) ? null : ((MaxRiType) handler.exceptionType).classActor;
+                exceptionClassActors[z] = (handler.exceptionType == null) ? null : (ClassActor) handler.exceptionType;
                 z++;
             }
         }
@@ -648,20 +648,21 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             if (site.runtimeCall != null) {
                 directCalls.add(getClassMethodActor(site.runtimeCall, site.method));
             } else if (site.method != null) {
-                MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
+                MethodActor methodActor = (MethodActor) site.method;
                 directCalls.add(methodActor);
             }
         }
 
         // iterate over all the calls and append them to the appropriate lists
         for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.indirectCalls) {
-            assert site.method != null;
-            if (site.method.isResolved()) {
-                MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
-                if (site.method.holder().isInterface()) {
-                    interfaceCalls.add(methodActor);
-                } else {
-                    virtualCalls.add(methodActor);
+            if (site.method != null) {
+                if (site.method.isResolved()) {
+                    MethodActor methodActor = (MethodActor) site.method;
+                    if (site.method.holder().isInterface()) {
+                        interfaceCalls.add(methodActor);
+                    } else {
+                        virtualCalls.add(methodActor);
+                    }
                 }
             }
         }
@@ -669,8 +670,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, RiMethod method) {
         if (method != null) {
-            final MaxRiMethod maxMethod = (MaxRiMethod) method;
-            return maxMethod.asClassMethodActor("directCall()");
+            return (ClassMethodActor) method;
         }
 
         assert runtimeCall != null : "A call can either be a call to a method or a runtime call";

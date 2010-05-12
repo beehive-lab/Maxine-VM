@@ -236,7 +236,7 @@ public class CompiledPrototype extends Prototype {
             }
             superClassActor = superClassActor.superClassActor;
         }
-        if (!classActor.isInterfaceActor()) {
+        if (!classActor.isInterface()) {
             // for each interface that this class implements, add this class's implementation of its methods used so far
             for (InterfaceActor interfaceActor : classActor.getAllInterfaceActors()) {
                 final ClassInfo interfaceInfo = getInfo(interfaceActor);
@@ -401,16 +401,25 @@ public class CompiledPrototype extends Prototype {
 
     private static synchronized RuntimeCompilerScheme c1xCompilerScheme() {
         if (c1xCompiler == null) {
-            try {
-                // TODO: remove reflective dependency here!
-                Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
-                Constructor constructor = type.getConstructor(VMConfiguration.class);
-                c1xCompiler = (RuntimeCompilerScheme) constructor.newInstance(VMConfiguration.hostOrTarget());
-            } catch (Exception e) {
-                throw ProgramError.unexpected(e);
+            RuntimeCompilerScheme compiler = VMConfiguration.target().optCompilerScheme();
+            if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
+                compiler = VMConfiguration.target().jitCompilerScheme();
+                if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
+                    compiler = VMConfiguration.target().bootCompilerScheme();
+                    if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
+                        try {
+                            // TODO: remove reflective dependency here!
+                            Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
+                            Constructor constructor = type.getConstructor(VMConfiguration.class);
+                            compiler = (RuntimeCompilerScheme) constructor.newInstance(VMConfiguration.hostOrTarget());
+                            compiler.initialize(Phase.BOOTSTRAPPING);
+                        } catch (Exception e) {
+                            throw ProgramError.unexpected(e);
+                        }
+                    }
+                }
             }
-
-            c1xCompiler.initialize(Phase.BOOTSTRAPPING);
+            c1xCompiler = compiler;
         }
         return c1xCompiler;
     }

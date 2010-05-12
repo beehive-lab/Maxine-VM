@@ -186,9 +186,6 @@ public abstract class Actor {
     @INSPECTED
     public final Utf8Constant name;
 
-    @RESET
-    public Object ciObject;
-
     protected Actor(Utf8Constant name, int flags) {
         if ((flags & UNSAFE_FLAGS) != 0) {
             flags |= UNSAFE;

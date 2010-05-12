@@ -21,11 +21,14 @@
 package com.sun.c1x.graph;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static java.lang.reflect.Modifier.*;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.graph.ScopeData.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.util.*;
@@ -59,8 +62,16 @@ public final class GraphBuilder {
     final C1XCompilation compilation;
     final CiStatistics stats;
 
-    final ValueMap localValueMap;          // map of values for local value numbering
-    final MemoryMap memoryMap;             // map of field values for local load elimination
+    /**
+     * Map used to implement local value numbering for the current block.
+     */
+    final ValueMap localValueMap;
+
+    /**
+     * Map used for local load elimination (i.e. within the current block).
+     */
+    final MemoryMap memoryMap;
+
     final Canonicalizer canonicalizer;     // canonicalizer which does strength reduction + constant folding
     ScopeData scopeData;                   // Per-scope data; used for inlining
     BlockBegin curBlock;                   // the current block
@@ -119,7 +130,7 @@ public final class GraphBuilder {
         lastInstr = startBlock;
         curState = initialState;
 
-        if (rootMethod.isSynchronized()) {
+        if (isSynchronized(rootMethod.accessFlags())) {
             // 4A.1 add a monitor enter to the start block
             rootMethodSynchronizedObject = synchronizedObject(initialState, compilation.method);
             genMonitorEnter(rootMethodSynchronizedObject, Instruction.SYNCHRONIZATION_ENTRY_BCI);
@@ -150,8 +161,8 @@ public final class GraphBuilder {
             lastInstr = curBlock;
             if (C1XOptions.OptIntrinsify) {
                 // try to inline an Intrinsic node
-                boolean isStatic = rootMethod.isStatic();
-                int argsSize = rootMethod.signatureType().argumentSlots(!isStatic);
+                boolean isStatic = Modifier.isStatic(rootMethod.accessFlags());
+                int argsSize = rootMethod.signature().argumentSlots(!isStatic);
                 Value[] args = new Value[argsSize];
                 for (int i = 0; i < args.length; i++) {
                     args[i] = curState.localAt(i);
@@ -209,7 +220,7 @@ public final class GraphBuilder {
     }
 
     private RiExceptionHandler newDefaultExceptionHandler(RiMethod method) {
-        return constantPool().newExceptionHandler(0, method.codeSize(), -1, 0);
+        return new CiExceptionHandler(0, method.code().length, -1, 0, null);
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
@@ -364,12 +375,11 @@ public final class GraphBuilder {
         }
     }
 
+    /**
+     * Adds extra node to round a floating point value if necessary to comply with the requirements of the {@code strictfp} keyword.
+     */
     Value roundFp(Value x) {
-        if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 2) {
-            if (x.kind.isDouble() && !(x instanceof Constant) && !(x instanceof Local) && !(x instanceof RoundFP)) {
-                return append(new RoundFP(x));
-            }
-        }
+        // C1X assumes that all X86 backends support SSE2
         return x;
     }
 
@@ -464,17 +474,17 @@ public final class GraphBuilder {
         return h.isCatchAll();
     }
 
-    void genLoadConstant(char cpi) {
+    void genLoadConstant(int cpi) {
         FrameState stateBefore = curState.copy();
         Object con = constantPool().lookupConstant(cpi);
 
         if (con instanceof RiType) {
             // this is a load of class constant which might be unresolved
-            RiType ritype = (RiType) con;
-            if (!ritype.isResolved() || C1XOptions.TestPatching) {
-                push(CiKind.Object, append(new ResolveClass(ritype, RiType.Representation.JavaClass, stateBefore, cpi, constantPool())));
+            RiType riType = (RiType) con;
+            if (!riType.isResolved() || C1XOptions.TestPatching) {
+                push(CiKind.Object, append(new ResolveClass(riType, RiType.Representation.JavaClass, stateBefore)));
             } else {
-                push(CiKind.Object, append(Constant.forObject(ritype.javaClass())));
+                push(CiKind.Object, append(Constant.forObject(riType.javaClass())));
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
@@ -599,10 +609,7 @@ public final class GraphBuilder {
     void genArithmeticOp(CiKind kind, int opcode, FrameState state) {
         Value y = pop(kind);
         Value x = pop(kind);
-        Value result = append(new ArithmeticOp(opcode, kind, x, y, method().isStrictFP(), state));
-        if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
-            result = roundFp(result);
-        }
+        Value result = append(new ArithmeticOp(opcode, kind, x, y, isStrict(method().accessFlags()), state));
         push(kind, result);
     }
 
@@ -647,7 +654,7 @@ public final class GraphBuilder {
         int delta = stream().readIncrement();
         Value x = curState.localAt(index);
         Value y = append(Constant.forInt(delta));
-        curState.storeLocal(index, append(new ArithmeticOp(IADD, CiKind.Int, x, y, method().isStrictFP(), null)));
+        curState.storeLocal(index, append(new ArithmeticOp(IADD, CiKind.Int, x, y, isStrict(method().accessFlags()), null)));
     }
 
     void genGoto(int fromBCI, int toBCI) {
@@ -689,43 +696,49 @@ public final class GraphBuilder {
         appendWithoutOptimization(t, bci);
     }
 
-    void genUnsafeCast(int operand) {
-        curState.unsafe = true;
-        char fromTypeChar = (char) (operand >> 8);
-        char toTypeChar = (char) (operand & 0xff);
-        CiKind from = CiKind.fromTypeChar(fromTypeChar);
-        CiKind to = CiKind.fromTypeChar(toTypeChar);
-        if (from.sizeInSlots() != to.sizeInSlots()) {
-            assert from.isWord() || to.isWord() : "cannot use UNSAFE_CAST between two types that have a different JVM slot size";
-            curState.push(to, append(new UnsafeCast(to, curState.pop(from))));
+    void genUnsafeCast(RiMethod method) {
+        RiSignature signature = method.signature();
+        int argCount = signature.argumentCount(false);
+        RiType accessingClass = scope().method.holder();
+        RiType fromType;
+        RiType toType = signature.returnType(accessingClass);
+        if (argCount == 1) {
+            fromType = signature.argumentTypeAt(0, accessingClass);
+        } else {
+            assert argCount == 0 : "method with @UNSAFE_CAST must have exactly 1 argument";
+            fromType = method.holder();
         }
+        curState.unsafe = true;
+        CiKind from = fromType.kind();
+        CiKind to = toType.kind();
+        curState.push(to, append(new UnsafeCast(toType, curState.pop(from))));
     }
 
     void genCheckCast() {
         FrameState stateBefore = curState.immutableCopy();
-        char cpi = stream().readCPI();
+        int cpi = stream().readCPI();
         RiType type = constantPool().lookupType(cpi);
         Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isResolved() && type.isInitialized(), cpi, stateBefore);
         CheckCast c = new CheckCast(type, typeInstruction, apop(), stateBefore);
         apush(append(c));
-        if (assumeLeafClass(type) && !type.isArrayKlass()) {
+        if (assumeLeafClass(type) && !type.isArrayClass()) {
             c.setDirectCompare();
         }
     }
 
     void genInstanceOf() {
         FrameState stateBefore = curState.immutableCopy();
-        char cpi = stream().readCPI();
+        int cpi = stream().readCPI();
         RiType type = constantPool().lookupType(cpi);
         Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isResolved() && type.isInitialized(), cpi, stateBefore);
         InstanceOf i = new InstanceOf(type, typeInstruction, apop(), stateBefore);
         ipush(append(i));
-        if (assumeLeafClass(type) && !type.isArrayKlass()) {
+        if (assumeLeafClass(type) && !type.isArrayClass()) {
             i.setDirectCompare();
         }
     }
 
-    void genNewInstance(char cpi) {
+    void genNewInstance(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiType type = constantPool().lookupType(cpi);
         NewInstance n = new NewInstance(type, cpi, constantPool(), stateBefore);
@@ -740,14 +753,14 @@ public final class GraphBuilder {
         apush(append(new NewTypeArray(ipop(), CiKind.fromArrayTypeCode(typeCode), stateBefore)));
     }
 
-    void genNewObjectArray(char cpi) {
+    void genNewObjectArray(int cpi) {
         RiType type = constantPool().lookupType(cpi);
         FrameState stateBefore = curState.immutableCopy();
         NewArray n = new NewObjectArray(type, ipop(), stateBefore, cpi, constantPool());
         apush(append(n));
     }
 
-    void genNewMultiArray(char cpi) {
+    void genNewMultiArray(int cpi) {
         RiType type = constantPool().lookupType(cpi);
         FrameState stateBefore = curState.immutableCopy();
         int rank = stream().readUByte(stream().currentBCI() + 3);
@@ -759,7 +772,7 @@ public final class GraphBuilder {
         apush(append(n));
     }
 
-    void genGetField(char cpi) {
+    void genGetField(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
@@ -767,7 +780,7 @@ public final class GraphBuilder {
         appendOptimizedLoadField(field.kind(), load);
     }
 
-    void genPutField(char cpi) {
+    void genPutField(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
@@ -775,17 +788,17 @@ public final class GraphBuilder {
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded, cpi, constantPool()));
     }
 
-    void genGetStatic(char cpi) {
+    void genGetStatic(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetStatic(cpi);
         RiType holder = field.holder();
-        boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching && holder.isResolved() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
         LoadField load = new LoadField(container, field, true, stateBefore, isInitialized, cpi, constantPool());
         appendOptimizedLoadField(field.kind(), load);
     }
 
-    void genPutStatic(char cpi) {
+    void genPutStatic(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutStatic(cpi);
         RiType holder = field.holder();
@@ -796,12 +809,12 @@ public final class GraphBuilder {
         appendOptimizedStoreField(store);
     }
 
-    private Value genResolveClass(RiType.Representation representation, RiType holder, boolean initialized, char cpi, FrameState stateBefore) {
+    private Value genResolveClass(RiType.Representation representation, RiType holder, boolean initialized, int cpi, FrameState stateBefore) {
         Value holderInstr;
         if (initialized) {
             holderInstr = appendConstant(holder.getEncoding(representation));
         } else {
-            holderInstr = append(new ResolveClass(holder, representation, stateBefore, cpi, constantPool()));
+            holderInstr = append(new ResolveClass(holder, representation, stateBefore));
         }
         return holderInstr;
     }
@@ -835,47 +848,47 @@ public final class GraphBuilder {
         push(kind.stackKind(), optimized);
     }
 
-    void genInvokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
+    void genInvokeStatic(RiMethod target, int cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
-        Value[] args = curState.popArguments(target.signatureType().argumentSlots(false));
+        Value[] args = curState.popArguments(target.signature().argumentSlots(false));
         if (!tryRemoveCall(target, args, true)) {
-            if (!tryInline(target, args, null, stateBefore)) {
+            if (!tryInline(target, args, stateBefore)) {
                 appendInvoke(INVOKESTATIC, target, args, true, cpi, constantPool, stateBefore);
             }
         }
     }
 
-    void genInvokeInterface(RiMethod target, char cpi, RiConstantPool constantPool) {
+    void genInvokeInterface(RiMethod target, int cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
-        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
             genInvokeIndirect(INVOKEINTERFACE, target, args, stateBefore, cpi, constantPool);
         }
     }
 
-    void genInvokeVirtual(RiMethod target, char cpi, RiConstantPool constantPool) {
+    void genInvokeVirtual(RiMethod target, int cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
-        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
             genInvokeIndirect(INVOKEVIRTUAL, target, args, stateBefore, cpi, constantPool);
         }
     }
 
-    void genInvokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
+    void genInvokeSpecial(RiMethod target, RiType knownHolder, int cpi, RiConstantPool constantPool) {
         FrameState stateBefore = curState.immutableCopy();
-        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
             invokeDirect(target, args, knownHolder, cpi, constantPool, stateBefore);
         }
     }
 
-    private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, FrameState stateBefore, char cpi, RiConstantPool constantPool) {
+    private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, FrameState stateBefore, int cpi, RiConstantPool constantPool) {
         Value receiver = args[0];
         // attempt to devirtualize the call
         if (target.isResolved() && target.holder().isResolved()) {
             RiType klass = target.holder();
             // 0. check for trivial cases
-            if (target.canBeStaticallyBound() && !target.isAbstract()) {
+            if (target.canBeStaticallyBound() && !isAbstract(target.accessFlags())) {
                 // check for trivial cases (e.g. final methods, nonvirtual methods)
                 invokeDirect(target, args, target.holder(), cpi, constantPool, stateBefore);
                 return;
@@ -889,7 +902,7 @@ public final class GraphBuilder {
             }
             // 2. check if an assumed leaf method can be found
             RiMethod leaf = getAssumedLeafMethod(target, receiver);
-            if (leaf != null && leaf.isResolved() && !leaf.isAbstract() && leaf.holder().isResolved()) {
+            if (leaf != null && leaf.isResolved() && !isAbstract(leaf.accessFlags()) && leaf.holder().isResolved()) {
                 invokeDirect(leaf, args, null, cpi, constantPool, stateBefore);
                 return;
             }
@@ -906,24 +919,20 @@ public final class GraphBuilder {
     }
 
     private CiKind returnKind(RiMethod target) {
-        return target.signatureType().returnKind();
+        return target.signature().returnKind();
     }
 
-    private void invokeDirect(RiMethod target, Value[] args, RiType knownHolder, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
-        if (!tryInline(target, args, knownHolder, stateBefore)) {
+    private void invokeDirect(RiMethod target, Value[] args, RiType knownHolder, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
+        if (!tryInline(target, args, stateBefore)) {
             // could not optimize or inline the method call
             appendInvoke(INVOKESPECIAL, target, args, false, cpi, constantPool, stateBefore);
         }
     }
 
-    private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
+    private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
         CiKind resultType = returnKind(target);
         Value result = append(new Invoke(opcode, resultType.stackKind(), args, isStatic, target, cpi, constantPool, stateBefore));
-        if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
-            pushReturn(resultType, roundFp(result));
-        } else {
-            pushReturn(resultType, result);
-        }
+        pushReturn(resultType, result);
     }
 
     private RiType getExactType(RiType staticType, Value receiver) {
@@ -941,7 +950,7 @@ public final class GraphBuilder {
                 }
                 if (exact == null) {
                     RiType declared = receiver.declaredType();
-                    exact = declared == null ? null : declared.exactType();
+                    exact = declared == null || !declared.isResolved() ? null : declared.exactType();
                 }
             }
         }
@@ -1025,7 +1034,7 @@ public final class GraphBuilder {
 
         // If inlining, then returns become gotos to the continuation point.
         if (scopeData.continuation() != null) {
-            if (method().isSynchronized()) {
+            if (isSynchronized(method().accessFlags())) {
                 // if the inlined method is synchronized, then the monitor
                 // must be released before jumping to the continuation point
                 assert C1XOptions.OptInlineSynchronized;
@@ -1048,6 +1057,8 @@ public final class GraphBuilder {
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
+            scopeData.updateSimpleInlineInfo(curBlock, lastInstr, curState);
+
             // State at end of inlined method is the state of the caller
             // without the method parameters on stack, including the
             // return value, if any, of the inlined method on operand stack.
@@ -1064,7 +1075,7 @@ public final class GraphBuilder {
         }
 
         curState.truncateStack(0);
-        if (method().isSynchronized()) {
+        if (Modifier.isSynchronized(method().accessFlags())) {
             FrameState stateBefore = curState.immutableCopy();
             // unlock before exiting the method
             append(new MonitorExit(rootMethodSynchronizedObject, curState.unlock(), stateBefore));
@@ -1324,7 +1335,7 @@ public final class GraphBuilder {
     FrameState stateAtEntry(RiMethod method) {
         FrameState state = new FrameState(scope(), method.maxLocals(), method.maxStackSize());
         int index = 0;
-        if (!method.isStatic()) {
+        if (!isStatic(method.accessFlags())) {
             // add the receiver and assume it is non null
             Local local = new Local(method.holder().kind(), index);
             local.setFlag(Value.Flag.NonNull, true);
@@ -1332,17 +1343,18 @@ public final class GraphBuilder {
             state.storeLocal(index, local);
             index = 1;
         }
-        RiSignature sig = method.signatureType();
+        RiSignature sig = method.signature();
         int max = sig.argumentCount(false);
+        RiType accessingClass = method.holder();
         for (int i = 0; i < max; i++) {
-            RiType type = sig.argumentTypeAt(i);
-            CiKind vt = type.kind().stackKind();
-            Local local = new Local(vt, index);
+            RiType type = sig.argumentTypeAt(i, accessingClass);
+            CiKind kind = type.kind().stackKind();
+            Local local = new Local(kind, index);
             if (type.isResolved()) {
                 local.setDeclaredType(type);
             }
             state.storeLocal(index, local);
-            index += vt.sizeInSlots();
+            index += kind.sizeInSlots();
         }
         return state;
     }
@@ -1390,7 +1402,7 @@ public final class GraphBuilder {
     }
 
     private boolean tryFoldable(RiMethod target, Value[] args) {
-        CiConstant result = Canonicalizer.foldInvocation(target, args);
+        CiConstant result = Canonicalizer.foldInvocation(compilation.runtime, target, args);
         if (result != null) {
             if (traceLevel > 0) {
                 log.println("|");
@@ -1404,8 +1416,17 @@ public final class GraphBuilder {
         return false;
     }
 
-    boolean tryInline(RiMethod target, Value[] args, RiType knownHolder, FrameState stateBefore) {
-        if (checkInliningConditions(target)) {
+    boolean tryInline(RiMethod target, Value[] args, FrameState stateBefore) {
+        boolean forcedInline = compilation.runtime.mustInline(target);
+        if (forcedInline) {
+            for (IRScope scope = scope().caller; scope != null; scope = scope.caller) {
+                if (scope.method.equals(target)) {
+                    throw new CiBailout("Cannot recursively inline method that is force-inlined");
+                }
+            }
+            C1XMetrics.InlineForcedMethods++;
+        }
+        if (forcedInline || checkInliningConditions(target)) {
             if (traceLevel > 0) {
                 log.adjustIndentation(1);
                 log.println("\\");
@@ -1415,7 +1436,7 @@ public final class GraphBuilder {
                     log.println("|");
                 }
             }
-            inline(target, args, knownHolder, stateBefore);
+            inline(target, args, forcedInline, stateBefore);
             if (traceLevel > 0) {
                 if (traceLevel < TRACELEVEL_STATE) {
                     log.println("|");
@@ -1431,14 +1452,13 @@ public final class GraphBuilder {
     }
 
     boolean checkInliningConditions(RiMethod target) {
-        if (compilation.runtime.mustInline(target)) {
-            C1XMetrics.InlineForcedMethods++;
-            return true;
-        }
         if (!C1XOptions.OptInline) {
             return false; // all inlining is turned off
         }
-        if (!target.hasCode()) {
+        if (!target.isResolved()) {
+            return cannotInline(target, "unresolved method");
+        }
+        if (target.code() == null) {
             return cannotInline(target, "method has no code");
         }
         if (!target.holder().isInitialized()) {
@@ -1447,7 +1467,7 @@ public final class GraphBuilder {
         if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
             return cannotInline(target, "recursive inlining too deep");
         }
-        if (target.codeSize() > scopeData.maxInlineSize()) {
+        if (target.code().length > scopeData.maxInlineSize()) {
             return cannotInline(target, "inlinee too large for this level");
         }
         if (scopeData.scope.level > C1XOptions.MaximumInlineLevel) {
@@ -1463,10 +1483,10 @@ public final class GraphBuilder {
         if (compilation.runtime.mustNotCompile(target)) {
             return cannotInline(target, "compile excluded by runtime");
         }
-        if (target.isSynchronized() && !C1XOptions.OptInlineSynchronized) {
+        if (isSynchronized(target.accessFlags()) && !C1XOptions.OptInlineSynchronized) {
             return cannotInline(target, "is synchronized");
         }
-        if (target.hasExceptionHandlers() && !C1XOptions.OptInlineExcept) {
+        if (target.exceptionHandlers().length != 0 && !C1XOptions.OptInlineExcept) {
             return cannotInline(target, "has exception handlers");
         }
         if (!target.hasBalancedMonitors()) {
@@ -1487,14 +1507,14 @@ public final class GraphBuilder {
         return false;
     }
 
-    void inline(RiMethod target, Value[] args, RiType knownHolder, FrameState stateBefore) {
-        if (!target.isStatic()) {
+    void inline(RiMethod target, Value[] args, boolean forcedInline, FrameState stateBefore) {
+        BlockBegin orig = curBlock;
+        if (!forcedInline && !isStatic(target.accessFlags())) {
             // the receiver object must be null-checked for instance methods
             Value receiver = args[0];
             if (!receiver.isNonNull() && !receiver.kind.isWord()) {
                 NullCheck check = new NullCheck(receiver, stateBefore);
-                args[0] = check;
-                append(check);
+                args[0] = append(check);
             }
         }
 
@@ -1535,7 +1555,7 @@ public final class GraphBuilder {
         Value lock = null;
         BlockBegin syncHandler = null;
         // inline the locking code if the target method is synchronized
-        if (target.isSynchronized()) {
+        if (Modifier.isSynchronized(target.accessFlags())) {
             // lock the receiver object if it is an instance method, the class object otherwise
             lock = synchronizedObject(curState, target);
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, ir.nextBlockNumber());
@@ -1557,16 +1577,31 @@ public final class GraphBuilder {
             iterateAllBlocks();
         } else {
             // ready to resume parsing inlined method into this block
-            inlineIntoCurrentBlock();
+            iterateBytecodesForBlock(0, true);
             // now iterate over the rest of the blocks
             iterateAllBlocks();
         }
 
         assert continuationExisted || !continuationBlock.wasVisited() : "continuation should not have been parsed if we created it";
 
-        if (continuationPredecessors == continuationBlock.predecessors().size()) {
-            // Inlining caused that the instructions after the invoke in the
-            // caller are not reachable any more (i.e. not one control flow path
+        ReturnBlock simpleInlineInfo = scopeData.simpleInlineInfo();
+        if (simpleInlineInfo != null && curBlock == orig) {
+            // Optimization: during parsing of the callee we
+            // generated at least one Goto to the continuation block. If we
+            // generated exactly one, and if the inlined method spanned exactly
+            // one block (and we didn't have to Goto its entry), then we snip
+            // off the Goto to the continuation, allowing control to fall
+            // through back into the caller block and effectively performing
+            // block merging. This allows local load elimination and local value numbering
+            // to take place across multiple callee scopes if they are relatively simple, and
+            // is currently essential to making inlining profitable. It also reduces the
+            // number of blocks in the CFG
+            lastInstr = simpleInlineInfo.returnPredecessor;
+            curState = simpleInlineInfo.returnState.popScope();
+            lastInstr.setNext(null, -1);
+        } else if (continuationPredecessors == continuationBlock.predecessors().size()) {
+            // Inlining caused the instructions after the invoke in the
+            // caller to not reachable any more (i.e. no control flow path
             // in the callee was terminated by a return instruction).
             // So skip filling this block with instructions!
             assert continuationBlock == scopeData.continuation();
@@ -1585,7 +1620,7 @@ public final class GraphBuilder {
         }
 
         // fill the exception handler for synchronized methods with instructions
-        if (target.isSynchronized()) {
+        if (Modifier.isSynchronized(target.accessFlags())) {
             fillSyncHandler(lock, syncHandler, true);
         } else {
             popScope();
@@ -1595,7 +1630,7 @@ public final class GraphBuilder {
     }
 
     private Value synchronizedObject(FrameState state, RiMethod target) {
-        if (target.isStatic()) {
+        if (isStatic(target.accessFlags())) {
             Constant classConstant = Constant.forObject(target.holder().javaClass());
             return appendWithoutOptimization(classConstant, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         } else {
@@ -1657,10 +1692,6 @@ public final class GraphBuilder {
         lastInstr = origLast;
     }
 
-    void inlineIntoCurrentBlock() {
-        iterateBytecodesForBlock(0);
-    }
-
     void iterateAllBlocks() {
         BlockBegin b;
         while ((b = scopeData.removeFromWorkList()) != null) {
@@ -1677,7 +1708,7 @@ public final class GraphBuilder {
                 curBlock = b;
                 curState = b.stateBefore().copy();
                 lastInstr = b;
-                iterateBytecodesForBlock(b.bci());
+                iterateBytecodesForBlock(b.bci(), false);
             }
         }
     }
@@ -1749,9 +1780,8 @@ public final class GraphBuilder {
         target.merge(ir.osrEntryBlock.end().stateAfter());
     }
 
-    BlockEnd iterateBytecodesForBlock(int bci) {
-        // Temporary variable for constant pool index
-        char cpi;
+    BlockEnd iterateBytecodesForBlock(int bci, boolean inliningIntoCurrentBlock) {
+        int cpi;
 
         skipBlock = false;
         assert curState != null;
@@ -1763,9 +1793,18 @@ public final class GraphBuilder {
         boolean pushException = block.isExceptionEntry() && block.next() == null;
         int prevBCI = bci;
         int endBCI = s.endBCI();
+        boolean blockStart = true;
 
         while (bci < endBCI) {
             BlockBegin nextBlock = blockAt(bci);
+            if (bci == 0 && inliningIntoCurrentBlock) {
+                if (!nextBlock.isParserLoopHeader()) {
+                    // Ignore the block boundary of the entry block of a method
+                    // being inlined unless the block is a loop header.
+                    nextBlock = null;
+                    blockStart = false;
+                }
+            }
             if (nextBlock != null && nextBlock != block) {
                 // we fell through to the next block, add a goto and break
                 end = new Goto(nextBlock, null, false);
@@ -1787,7 +1826,7 @@ public final class GraphBuilder {
             }
 
             traceState();
-            traceInstruction(bci, s, opcode);
+            traceInstruction(bci, s, opcode, blockStart);
 
             // Checkstyle: stop
             switch (opcode) {
@@ -1993,7 +2032,7 @@ public final class GraphBuilder {
                 case JSR_W          : genJsr(s.readFarBranchDest()); break;
 
 
-                case UNSAFE_CAST    : genUnsafeCast(s.readCPI()); break;
+                case UNSAFE_CAST    : genUnsafeCast(constantPool().lookupMethod(s.readCPI())); break;
                 case WLOAD          : loadLocal(s.readLocalIndex(), CiKind.Word); break;
                 case WLOAD_0        : loadLocal(0, CiKind.Word); break;
                 case WLOAD_1        : loadLocal(1, CiKind.Word); break;
@@ -2009,16 +2048,17 @@ public final class GraphBuilder {
                 case WCONST_0       : wpush(appendConstant(CiConstant.ZERO)); break;
                 case WDIV           : // fall through
                 case WDIVI          : // fall through
-                case WREM           : // fall through
-                case WREMI          : genArithmeticOp(CiKind.Word, opcode, curState.copy()); break;
+                case WREM           : genArithmeticOp(CiKind.Word, opcode, curState.copy()); break;
+                case WREMI          : genArithmeticOp(CiKind.Int, opcode, curState.copy()); break;
 
                 case READREG        : genLoadRegister(s.readCPI()); break;
                 case WRITEREG       : genStoreRegister(s.readCPI()); break;
 
-                case PREAD          : genLoadPointer(PREAD   | (s.readCPI() << 8)); break;
-                case PGET           : genLoadPointer(PGET    | (s.readCPI() << 8)); break;
-                case PWRITE         : genStorePointer(PWRITE | (s.readCPI() << 8)); break;
-                case PSET           : genStorePointer(PSET   | (s.readCPI() << 8)); break;
+                case PREAD          : genLoadPointer(PREAD      | (s.readCPI() << 8)); break;
+                case PGET           : genLoadPointer(PGET       | (s.readCPI() << 8)); break;
+                case PWRITE         : genStorePointer(PWRITE    | (s.readCPI() << 8)); break;
+                case PSET           : genStorePointer(PSET      | (s.readCPI() << 8)); break;
+                case PCMPSWP        : getCompareAndSwap(PCMPSWP | (s.readCPI() << 8)); break;
 
                 case WRETURN        : genMethodReturn(wpop()); break;
                 case READ_PC        : genLoadPC(); break;
@@ -2034,8 +2074,10 @@ public final class GraphBuilder {
                 case UCMP           : genUnsignedCompareOp(CiKind.Int, opcode, s.readCPI()); break;
                 case UWCMP          : genUnsignedCompareOp(CiKind.Word, opcode, s.readCPI()); break;
 
-                case LSA            : genLoadStackAddress(); break;
+                case ALLOCSTKVAR    : genLoadStackAddress(); break;
                 case PAUSE          : genPause(); break;
+                case LSB            : // fall through
+                case MSB            : genSignificantBit(opcode);break;
 
 //                case PCMPSWP: {
 //                    opcode |= readUnsigned2() << 8;
@@ -2087,6 +2129,7 @@ public final class GraphBuilder {
                 break;
             }
             bci = s.currentBCI();
+            blockStart = false;
         }
 
         // stop processing of this block
@@ -2132,10 +2175,10 @@ public final class GraphBuilder {
         }
     }
 
-    private void traceInstruction(int bci, BytecodeStream s, int opcode) {
+    private void traceInstruction(int bci, BytecodeStream s, int opcode, boolean blockStart) {
         if (traceLevel >= TRACELEVEL_INSTRUCTIONS) {
             StringBuilder sb = new StringBuilder(40);
-            sb.append('|');
+            sb.append(blockStart ? '+' : '|');
             if (bci < 10) {
                 sb.append("  ");
             } else if (bci < 100) {
@@ -2155,7 +2198,7 @@ public final class GraphBuilder {
 
     private void genLoadStackAddress() {
         Value value = curState.xpop();
-        wpush(append(new LoadStackAddress(value)));
+        wpush(append(new AllocateStackVariable(value)));
     }
 
     private void genStackAllocate() {
@@ -2163,11 +2206,16 @@ public final class GraphBuilder {
         wpush(append(new StackAllocate(size)));
     }
 
+    private void genSignificantBit(int opcode) {
+        Value value = pop(CiKind.Word);
+        push(CiKind.Int, append(new SignificantBitOp(value, opcode)));
+    }
+
     private void appendSnippetCall(RiSnippetCall snippetCall, FrameState stateBefore) {
         Value[] args = new Value[snippetCall.arguments.length];
         RiMethod snippet = snippetCall.snippet;
-        RiSignature signature = snippet.signatureType();
-        assert signature.argumentCount(!snippet.isStatic()) == args.length;
+        RiSignature signature = snippet.signature();
+        assert signature.argumentCount(!isStatic(snippet.accessFlags())) == args.length;
         for (int i = args.length - 1; i >= 0; --i) {
             CiKind argKind = signature.argumentKindAt(i);
             if (snippetCall.arguments[i] == null) {
@@ -2178,7 +2226,7 @@ public final class GraphBuilder {
         }
 
         if (!tryRemoveCall(snippet, args, true)) {
-            if (!tryInline(snippet, args, null, stateBefore)) {
+            if (!tryInline(snippet, args, stateBefore)) {
                 appendInvoke(snippetCall.opcode, snippet, args, true, (char) 0, constantPool(), stateBefore);
             }
         }
@@ -2213,7 +2261,7 @@ public final class GraphBuilder {
         }
      }
 
-    void genNativeCall(char cpi) {
+    void genNativeCall(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
         RiSignature sig = constantPool().lookupSignature(cpi);
         Value nativeFunctionAddress = wpop();
@@ -2318,7 +2366,7 @@ public final class GraphBuilder {
             displacement = ipop();
         }
         Value pointer = wpop();
-        push(kind, append(new LoadPointer(kind, opcode, pointer, displacement, offsetOrIndex, true, stateBefore, false)));
+        push(kind.stackKind(), append(new LoadPointer(kind.stackKind(), opcode, pointer, displacement, offsetOrIndex, stateBefore, false)));
     }
 
     private void genStorePointer(int opcode) {
@@ -2335,8 +2383,32 @@ public final class GraphBuilder {
             displacement = ipop();
         }
         Value pointer = wpop();
-        push(kind, append(new StorePointer(kind, opcode, pointer, displacement, offsetOrIndex, value, true, stateBefore, false)));
+        append(new StorePointer(opcode, pointer, displacement, offsetOrIndex, value, stateBefore, false));
     }
+
+    private static CiKind kindForCompareAndSwap(int opcode) {
+        switch (opcode) {
+            case PCMPSWP_INT        :
+            case PCMPSWP_INT_I      : return CiKind.Int;
+            case PCMPSWP_WORD       :
+            case PCMPSWP_WORD_I     : return CiKind.Word;
+            case PCMPSWP_REFERENCE  :
+            case PCMPSWP_REFERENCE_I: return CiKind.Object;
+            default:
+                throw new CiBailout("Unsupported compare-and-swap opcode " + opcode + "(" + nameOf(opcode) + ")");
+        }
+    }
+
+    private void getCompareAndSwap(int opcode) {
+        FrameState stateBefore = curState.immutableCopy();
+        CiKind kind = kindForCompareAndSwap(opcode);
+        Value newValue = pop(kind);
+        Value expectedValue = pop(kind);
+        Value offset = (opcode >= PCMPSWP_INT_I && opcode <= PCMPSWP_REFERENCE_I) ? ipop() : wpop();
+        Value pointer = wpop();
+        append(new CompareAndSwap(opcode, pointer, offset, expectedValue, newValue, stateBefore, false));
+    }
+
 
     private void genArrayLength() {
         ipush(append(new ArrayLength(apop(), curState.copy())));
@@ -2359,7 +2431,7 @@ public final class GraphBuilder {
 
     boolean assumeLeafClass(RiType type) {
         if (!C1XOptions.TestSlowPath && type.isResolved()) {
-            if (type.isFinal()) {
+            if (isFinal(type.accessFlags())) {
                 return true;
             }
             if (C1XOptions.UseDeopt && C1XOptions.OptCHA) {

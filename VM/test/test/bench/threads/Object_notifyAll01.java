@@ -27,33 +27,37 @@ package test.bench.threads;
 import test.bench.util.*;
 
 public class Object_notifyAll01 extends RunBench {
-    static volatile int count;
+    static int count;
 
-    protected Object_notifyAll01(LoopRunnable bench) {
-        super(bench);
+    protected Object_notifyAll01() {
+        super(new Bench(), new EncapBench());
     }
 
-    public static boolean test(int i) throws InterruptedException {
-        new Object_notifyAll01(new Bench()).runBench(true);
-        return true;
+    public static boolean test(int i) {
+        return new Object_notifyAll01().runBench(true);
     }
 
-    static class Bench implements LoopRunnable {
-        public void run(long loopCount) {
-            for (long i = 0; i < loopCount; i++) {
-                synchronized (this) {
-                    count++;
-                    notifyAll();
-                }
-            }
-        }
+    static class Bench implements MicroBenchmark {
 
-        public void runBareLoop(long loopCount) {
-            for (long i = 0; i < loopCount; i++) {
-                synchronized (this) {
-                    count++;
-                }
+        public void run(boolean warmup) {
+            synchronized (this) {
+                count++;
+                notifyAll();
             }
         }
+    }
+
+    static class EncapBench implements MicroBenchmark {
+
+        public void run(boolean warmup) {
+            synchronized (this) {
+                count++;
+            }
+        }
+    }
+
+    // for running stand-alone
+    public static void main(String[] args) {
+        test(0);
     }
 }

@@ -51,8 +51,8 @@ import com.sun.max.vm.value.*;
 
 /**
  * Template from which (parts of) {@link JniFunctions} is generated. The static initializer of
- * {@link JniFunctions} includes a call to {@link #generate()} to double-check that the source
- * is up-to-date with respect to any edits made to this class.
+ * {@link JniFunctions} includes a call to {@link JniFunctionsGenerator#generate(boolean, Class, Class)}
+ * to double-check that the source is up-to-date with respect to any edits made to this class.
  *
  * All the methods annotated by {@link VM_ENTRY_POINT} appear in the exact same order as specified in
  * jni.h. In addition, any methods annotated by {@link VM_ENTRY_POINT} that are declared
@@ -291,7 +291,7 @@ public final class JniFunctionsSource {
 
     private static Object allocObject(Class javaClass) throws InstantiationException {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        if (classActor.isTupleClassActor() && !classActor.isAbstract()) {
+        if (classActor.isTupleClass() && !classActor.isAbstract()) {
             return Heap.createTuple(classActor.dynamicHub());
         }
         throw new InstantiationException();
@@ -1145,7 +1145,7 @@ public final class JniFunctionsSource {
         try {
             return JniHandles.createLocalHandle(CString.utf8ToJava(utf));
         } catch (Utf8Exception utf8Exception) {
-            return null;
+            return JniHandle.zero();
         }
     }
 
@@ -1717,7 +1717,7 @@ public final class JniFunctionsSource {
         if (arrayObject instanceof double[]) {
             return getDoubleArrayElements(array, isCopy);
         }
-        return null;
+        return Pointer.zero();
     }
 
     @VM_ENTRY_POINT

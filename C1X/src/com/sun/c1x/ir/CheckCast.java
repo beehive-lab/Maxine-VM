@@ -35,7 +35,7 @@ public final class CheckCast extends TypeCheck {
 
     /**
      * Creates a new CheckCast instruction.
-     * @param targetClass the class being casted to
+     * @param targetClass the class being cast to
      * @param object the instruction producing the object
      * @param stateBefore the state before the cast
      */
@@ -59,7 +59,7 @@ public final class CheckCast extends TypeCheck {
      */
     @Override
     public RiType exactType() {
-        return targetClass.exactType();
+        return targetClass.isResolved() ? targetClass.exactType() : null;
     }
 
     /**

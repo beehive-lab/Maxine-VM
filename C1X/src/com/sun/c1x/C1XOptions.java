@@ -63,12 +63,8 @@ public class C1XOptions {
     public static boolean IntrinsifyAtomic                   = true;
     public static boolean IntrinsifyUnsafe                   = true;
 
-    // floating point settings
-    public static int     SSEVersion                         = 2;
-    public static boolean RoundFPResults                     = ____;
-
     // debugging and printing settings
-    public static boolean IRChecking                         = ____;
+    public static boolean IRChecking                         = true;
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
@@ -133,7 +129,7 @@ public class C1XOptions {
 
     // optimistic optimization settings
     public static boolean UseDeopt                      = ____;
-    public static boolean AggressivelyResolveCPEs       = true;
+    public static boolean NormalCPEResolution           = true;
 
     // state merging settings
     public static boolean AssumeVerifiedBytecode        = ____;
@@ -165,7 +161,7 @@ public class C1XOptions {
     public static boolean GenTableRanges                = ____;
 
     public static int     InitialCodeBufferSize         = 232;
-    public static boolean DetailedAsserts               = ____;
+    public static boolean DetailedAsserts               = true;
 
     // Runtime settings
     public static boolean UseBiasedLocking              = ____;
@@ -298,7 +294,7 @@ public class C1XOptions {
         OptCSEArrayLength               = true;
 
         // turn on state merging optimizations
-        PhiLoopStores = true;
+        PhiLoopStores                   = true;
 
         // turn on speculative optimizations
         OptCHA                          = true;
@@ -343,6 +339,10 @@ public class C1XOptions {
 
         map.put("DetailedAsserts",
                 "Turn on detailed error checking that has a noticeable performance impact.");
+
+        map.put("NormalCPEResolution",
+                "Eagerly resolve constant pool entries when the resolution can be done " +
+                "without triggering class loading.");
 
         for (String name : map.keySet()) {
             try {

@@ -31,7 +31,7 @@ import com.sun.cri.ri.*;
 public final class NewObjectArray extends NewArray {
 
     final RiType elementClass;
-    public final char cpi;
+    public final int cpi;
     public final RiConstantPool constantPool;
 
     /**
@@ -42,7 +42,7 @@ public final class NewObjectArray extends NewArray {
      * @param cpi the constant pool index
      * @param constantPool the constant pool
      */
-    public NewObjectArray(RiType elementClass, Value length, FrameState stateBefore, char cpi, RiConstantPool constantPool) {
+    public NewObjectArray(RiType elementClass, Value length, FrameState stateBefore, int cpi, RiConstantPool constantPool) {
         super(length, stateBefore);
         this.constantPool = constantPool;
         this.elementClass = elementClass;

@@ -40,7 +40,7 @@ import com.sun.max.vm.heap.*;
  */
 public class MarkingStack {
     private static final VMIntOption markingStackSizeOption =
-        register(new  VMIntOption("-XX:MarkingStackSize=", 32, "Size of the marking stack in number of references."),
+        register(new  VMIntOption("-XX:MarkingStackSize=", 1024, "Size of the marking stack in number of references."),
                         MaxineVM.Phase.PRISTINE);
 
     abstract static class MarkingStackCellVisitor {
@@ -73,14 +73,14 @@ public class MarkingStack {
     }
 
     void initialize() {
-        // FIXME: should be allocated in the heap, outside of the covered area, as a  reference array,
+        // FIXME: a better solution might be to allocate this in the heap, outside of the covered area, as a  reference array,
         // Root marking will skip it.
         // Same with the other GC data structures (i.e., rescan map and mark bitmap)
         final int length = markingStackSizeOption.getValue();
         final int size = length << Word.widthValue().log2numberOfBytes;
         base = Memory.allocate(Size.fromInt(size));
         if (base.isZero()) {
-            ((HeapSchemeAdaptor) VMConfiguration.target().heapScheme()).reportPristineMemoryFailure("marking stack", Size.fromInt(size));
+            MaxineVM.reportPristineMemoryFailure("marking stack", "allocate", Size.fromInt(size));
         }
         last = length - 1;
         drainThreshold = (length * 2) / 3;
@@ -98,14 +98,28 @@ public class MarkingStack {
     void push(Pointer cell) {
         if (topIndex < last) {
             base.asPointer().setWord(topIndex++, cell);
+            if (MaxineVM.isDebug() && Heap.traceGC()) {
+                Log.print("MarkingStack.push(");
+                Log.print(cell);
+                Log.println(")");
+            }
             return;
         }
         if (!draining.isZero()) {
-            // We're already draining. So this is an overflow situation. Store the cell in the last slot of the stack (reserved for overflow).
+            if (MaxineVM.isDebug() && Heap.traceGC()) {
+                Log.println("MarkingStack.push initiates overflow recovery");
+            }
+           // We're already draining. So this is an overflow situation. Store the cell in the last slot of the stack (reserved for overflow).
             base.asPointer().setWord(topIndex++, cell);
             // Set draining back to false. The recovering will empty the marking stack.
             overflowHandler.recoverFromOverflow();
+            if (MaxineVM.isDebug() && Heap.traceGC()) {
+                Log.println("MarkingStack.push ends overflow recovery");
+            }
         } else {
+            if (MaxineVM.isDebug() && Heap.traceGC()) {
+                Log.println("MarkingStack.push initiates draining");
+            }
             // Start draining with the cell requested to be pushed.
             draining = cell;
             drainingCellVisitor.visitPoppedCell(cell);
@@ -115,12 +129,21 @@ public class MarkingStack {
                 drainingCellVisitor.visitPoppedCell(draining);
             }
             draining = Pointer.zero();
+            if (MaxineVM.isDebug() && Heap.traceGC()) {
+                Log.println("MarkingStack.push ends draining");
+            }
         }
     }
 
     void drain() {
+        if (MaxineVM.isDebug() && Heap.traceGC()) {
+            Log.println("MarkingStack begin draining");
+        }
         while (topIndex > 0) {
             drainingCellVisitor.visitPoppedCell(base.asPointer().getWord(--topIndex).asPointer());
+        }
+        if (MaxineVM.isDebug() && Heap.traceGC()) {
+            Log.println("MarkingStack ends draining");
         }
     }
 
@@ -131,6 +154,9 @@ public class MarkingStack {
         }
         while (topIndex > 0) {
             drainingCellVisitor.visitFlushedCell(base.asPointer().getWord(--topIndex).asPointer());
+        }
+        if (MaxineVM.isDebug() && Heap.traceGC()) {
+            Log.println("MarkingStack flushed");
         }
     }
 }
