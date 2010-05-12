@@ -21,8 +21,12 @@
 
 package com.sun.hotspot.c1x;
 
+import com.sun.cri.ci.CiCompiler;
 import com.sun.cri.ci.CiResult;
+import com.sun.cri.ri.RiConstantPool;
+import com.sun.cri.ri.RiField;
 import com.sun.cri.ri.RiMethod;
+import com.sun.cri.ri.RiType;
 
 /**
  * 
@@ -34,8 +38,14 @@ import com.sun.cri.ri.RiMethod;
 public class VMExits {
 	
 	public static void compileMethod(RiMethod method, int entry_bci) {
-		System.out.println("compileMethod in Java code called!");
-		CiResult result = Compiler.getCompiler().compileMethod(method, null);
+		
+		assert method instanceof RiMethod : "And YES, this assert is necessary and a potential life saver as this method is called from the VM ;-)";
+		
+		System.out.println("compileMethod in Java code called!!");
+		
+		CiCompiler compiler = Compiler.getCompiler();
+		CiResult result = compiler.compileMethod(method, null);
+		
 		System.out.println("Compilation result: ");
 		if (result.bailout() != null) {
 			System.out.println("Bailout:");
@@ -43,5 +53,31 @@ public class VMExits {
 		} else {
 			System.out.println(result.targetMethod());
 		}
+	}
+	
+	public static RiMethod createRiMethod(Object methodOop) {
+		System.out.println("creating RiMethod object");
+		RiMethod m = new HotSpotMethod(methodOop);
+		System.out.println("returning " + m);
+		return m;
+	}
+	
+	public static RiField createRiField(Object klassOop, int index) {
+		System.out.println("creating RiField object");
+		return new HotSpotField(klassOop, index);
+	}
+	
+	public static RiType createRiType(Object klassOop) {
+		System.out.println("creating RiType object");
+		return new HotSpotType(klassOop);
+	}
+	
+	public static RiConstantPool createRiConstantPool(Object constantPoolOop) {
+		System.out.println("creating RiConstantPool object");
+		return new HotSpotConstantPool(constantPoolOop);
+	}
+	
+	public static void main(String[] args) throws InterruptedException {
+		Thread.sleep(10000);
 	}
 }
