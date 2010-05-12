@@ -187,7 +187,7 @@ public class CompiledMethodInstructionMap extends AbstractTeleVMHolder implement
                         codeStopKinds[index] = codeStopKind;
                         final BytecodeLocation bytecodeLocation = bytecodeLocations[index];
                         // TODO (mlvdv) only works for non-inlined calls
-                        if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor())) {
+                        if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor()) && bytecodeLocation.bytecodePosition >= 0) {
                             callees[index] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
                         }
                     }
