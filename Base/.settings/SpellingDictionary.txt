@@ -16,6 +16,7 @@ Doug
 Hannes
 Hiroshi
 Jordan
+Karthik
 Kotselidis
 Laurent
 Liu
@@ -127,6 +128,7 @@ nops
 op
 outbound
 payload
+placeholder
 polymorphic
 popup
 postorder
@@ -185,6 +187,8 @@ undockable
 unix
 unpark
 unparks
+upcall
+upcalls
 viewport
 vm
 watchpoint
