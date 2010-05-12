@@ -18,17 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.interpreter;
-
-import com.sun.max.*;
-
 /**
- * @author Athul Acharya
+ * Access to memory state in the VM.
+ *
+ * @author Michael Van De Vanter
  */
-public class Package extends MaxPackage {
-
-    public Package() {
-        super();
-    }
-
-}
+package com.sun.max.tele.memory;
