@@ -2455,14 +2455,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 }
 
                 public void menuSelected(MenuEvent e) {
-                    System.out.println("Menu event" + e);
                     removeAll();
-                    System.out.println("all removed");
                     for (MaxCodeLocation codeLocation : vm().inspectableMethods()) {
-                        System.out.println("code Location=" + codeLocation);
                         add(actions().setBreakpoint(codeLocation));
                     }
-                    System.out.println("Done");
                 }
             });
         }
