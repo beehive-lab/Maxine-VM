@@ -20,72 +20,180 @@
  */
 package com.sun.max.tele;
 
+import java.io.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 
 /**
- * Data describing a single code routine in the VM, either compiled from a Java method or a block of native code.
+ * Description of a single compiled code routine in the VM, either compiled from a Java method or a block of native code.
  *
  * @author Michael Van De Vanter
  */
 public interface MaxCompiledCode extends MaxEntity<MaxCompiledCode> {
 
     /**
+     * @return the sequence number of this compilation, if a compiled method; -1 if native
+     */
+    int compilationIndex();
+
+    /**
      * @return VM address of the first instruction in the target code represented by this routine. Note that this
-     *         may differ from the designated {@linkplain #callEntryPoint() entry point} of the code.
-     *
+     *         may differ from the designated {@linkplain #getCallEntryPoint() entry point} of the code.
      */
     Address getCodeStart();
 
     /**
-     * @return target address at which this code is entered from a call (which may not be the same as the
-     *         {@linkplain #getCodeStart() start address})
+     * @return VM location of the first instruction in the target code represented by this routine. Note that this
+     *         may differ from the designated {@linkplain #getCallEntryLocation() call entry location} of the code.
      */
-    Address callEntryPoint();
+    CodeLocation getCodeStartLocation();
 
     /**
-     * @return  target code instructions in this routine, disassembling them if not yet done
-     */
-    IndexedSequence<TargetCodeInstruction> getInstructions();
-
-    /**
-     * @return compiled code location for each instruction.
-     * @see #getInstructions()
-     */
-    IndexedSequence<MachineCodeLocation> getInstructionLocations();
-
-    /**
-     * Gets a location that specifies the entry.
-     */
-    CodeLocation entryLocation();
-
-    /**
-     * Gets the locations of all labels synthesized by disassembly of this method.
+     * Gets the compiled entry point location for this method as specified by the ABI in use when this target method was compiled.
      *
-     * @return the locations, empty sequence if none.
+     * @return {@link Address#zero()} if this target method has not yet been compiled
      */
-    Sequence<MaxCodeLocation> labelLocations();
+    CodeLocation getCallEntryLocation();
 
     /**
-     * @return Local {@link TeleClassMethodActor} for the target routine in the VM, if it was
+     * @return meta-information about the machine code instructions
+     */
+    InstructionMap instructionMap();
+
+    /**
+     * Gets accessor to the method descriptor in the VM for this compiled method.
+     *
+     * @return access to the {@link ClassMethodActor} for the target routine in the VM, if it was
      * compiled from a Java method; null otherwise.
      */
     TeleClassMethodActor getTeleClassMethodActor();
 
-    StopPositions getStopPositions();
+    /**
+     * @return local instance of {@link ClassMethodActor} corresponding to the target routine
+     * in the VM, if it was compiled from a Java method; null otherwise.
+     */
+    ClassMethodActor classMethodActor();
 
     /**
-     * Gets the index of the stop corresponding to a given address that possibly denotes a position within this tele
-     * routine.
+     * Gets the local instance of the class description for the object that represents this
+     * method compilation in the VM.
      *
-     * @param address a target code address
-     * @return the index of the stop corresponding to {@code address} or -1 if {@code address} does not correspond to a
-     *         stop within this tele routine
+     * @return a local descriptor of the type of the object representing this compilation
+     * in the VM.
      */
-    int getJavaStopIndex(Address address);
+    ClassActor classActorForObjectType();
+
+    /**
+     * Gets the human-readable name of a data location that can be addressed by machine
+     * code instructions in this method.
+     *
+     * @param targetLocation
+     * @return the name of the data location
+     */
+    String targetLocationToString(TargetLocation targetLocation);
+
+    /**
+     * Writes a textual disassembly of the instructions.
+     */
+    void writeSummary(PrintStream printStream);
+
+    public interface InstructionMap {
+
+        /**
+         * @return the number of machine instructions in this map
+         */
+        int length();
+
+        /**
+         * @return the instruction at a specified index in this sequence
+         * of instructions.
+         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
+         */
+        TargetCodeInstruction instruction(int index) throws IllegalArgumentException;
+
+        /**
+         * @return the index of the instruction whose machine code location includes
+         * a specific memory location, -1 if none.
+         */
+        int findInstructionIndex(Address address);
+
+        /**
+         * @return the location of the instruction at a specified index
+         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
+         */
+        MachineCodeLocation instructionLocation(int index);
+
+        /**
+         * @return whether the instruction is a stop
+         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
+         */
+        boolean isStop(int index) throws IllegalArgumentException;
+
+        /**
+         * @return whether the instruction is a call
+         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
+         */
+        boolean isCall(int index) throws IllegalArgumentException;
+
+        /**
+         * @return whether the instruction is a native call
+         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
+         */
+        boolean isNativeCall(int index) throws IllegalArgumentException;
+
+        /**
+         * @return whether the instruction is at the beginning of a sequence
+         * of instructions known precisely to implement a bytecode
+         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
+         */
+        boolean isBytecodeBoundary(int index) throws IllegalArgumentException;
+
+        /**
+         * @return the bytecode location corresponding to the instruction at the beginning
+         * of a sequence of instructions that implement a bytecode, if known, else null
+         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
+         */
+        BytecodeLocation bytecodeLocation(int index) throws IllegalArgumentException;
+
+        /**
+         * @return the target frame descriptor for the instruction; null if none.
+         *
+         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
+         */
+        TargetJavaFrameDescriptor targetFrameDescriptor(int index) throws IllegalArgumentException;
+
+        /**
+         * @return the opcode corresponding the instruction at the beginning
+         * of a sequence of instructions that implement a bytecode, if known, else -1.
+         *
+         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
+         */
+        int opcode(int index) throws IllegalArgumentException;
+
+        /**
+         * @return if the instruction is a call, the index into the constant pool of the operand/callee; else -1.
+         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
+         */
+        int calleeConstantPoolIndex(int index) throws IllegalArgumentException;
+
+        /**
+         * Gets the instruction indexes of all labels synthesized by disassembly of this method.
+         *
+         * @return the index of instructions with labels, empty if none.
+         */
+        Sequence<Integer> labelIndexes();
+
+        int[] bytecodeToTargetCodePositionMap();
+
+    }
 
 }

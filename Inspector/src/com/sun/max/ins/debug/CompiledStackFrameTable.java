@@ -37,12 +37,6 @@ import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.LocalVariableTable.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 import com.sun.max.vm.value.*;
 
@@ -257,26 +251,7 @@ public class CompiledStackFrameTable extends InspectorTable {
          * @return the Java source name for {@code slot} or null if a name is not available
          */
         public String sourceVariableName(int row) {
-            final TargetMethod targetMethod = javaStackFrame.targetMethod();
-            if (targetMethod instanceof JitTargetMethod) {
-                final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
-                final JitStackFrameLayout jitLayout = (JitStackFrameLayout) javaStackFrame.layout();
-                final int bytecodePosition = jitTargetMethod.bytecodePositionFor(javaStackFrame.ip());
-                final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-                CodeAttribute codeAttribute = classMethodActor == null ? null : classMethodActor.codeAttribute();
-                if (bytecodePosition != -1 && codeAttribute != null) {
-                    for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
-                        final int localVariableOffset = jitLayout.localVariableOffset(localVariableIndex);
-                        if (getOffset(row).equals(localVariableOffset)) {
-                            final Entry entry = codeAttribute.localVariableTable().findLocalVariable(localVariableIndex, bytecodePosition);
-                            if (entry != null) {
-                                return entry.name(codeAttribute.constantPool).string;
-                            }
-                        }
-                    }
-                }
-            }
-            return null;
+            return javaStackFrame.sourceVariableName(row);
         }
     }
 

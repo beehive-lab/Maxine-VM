@@ -23,6 +23,7 @@ package com.sun.max.tele;
 import java.io.*;
 
 import com.sun.max.program.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.type.*;
 
@@ -113,7 +114,18 @@ public class FileCommands {
         for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
             if (teleClassMethodActor.classMethodActor().format("%n(%p)").equals(methodSignature)) {
                 found = true;
-                teleClassMethodActor.entryLocation();
+                final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
+                if (teleTargetMethod != null) {
+                    final TeleCompiledMethod compiledMethod = teleVM.codeCache().findCompiledMethod(teleTargetMethod.callEntryPoint());
+                    if (compiledMethod != null) {
+                        try {
+                            teleVM.breakpointManager().makeBreakpoint(compiledMethod.getCallEntryLocation());
+                        } catch (MaxVMBusyException e) {
+                            ProgramError.unexpected(" failed to set breakpoint from file: VM Busy");
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 break;
             }
         }

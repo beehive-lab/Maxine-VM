@@ -29,18 +29,16 @@ import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
  * Access to compiled code in the VM.
  * <br>
- * Much of the important state
- * about the code cache is contained in a singleton heap object, an instance
- * of {@link CodeManger}.
+ * Much of the important state in the VM about the code cache is contained
+ * in a singleton heap object, an instance of {@linkplain com.sun.max.vm.code.CodeManager CodeManager}.
  * <br>
- * The cache allocates memory in one or more memory regions.  At the moment,
+ * The VM's cache allocates memory in one or more memory regions.  At the moment,
  * the VM allocates only one dynamic code region.
  *
  * @see com.sun.max.vm.code.CodeManager
@@ -58,6 +56,10 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
      */
     private TeleCodeManager teleCodeManager;
 
+    /**
+     * Contains all the compiled code we know about,
+     * organized for lookup by address.
+     */
     private CodeRegistry codeRegistry;
 
     private final String bootCodeRegionName;
@@ -66,7 +68,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     private VariableSequence<MaxCompiledCodeRegion> compiledCodeRegions = new ArrayListSequence<MaxCompiledCodeRegion>(2);
 
     /**
-     * Creates the objects that models the cache of compiled code in the VM.
+     * Creates the object that models the cache of compiled code in the VM.
      * <br>
      * A subsequent call to {@link #initialize()} is required before this object is functional.
      */
@@ -95,26 +97,40 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     }
 
     /**
-     * Completes the initialization of this object:  identifies the VM's code regions, and pre-loads
+     * Completes the initialization of this object:  identifies the VM's code regions, and preloads
      * the cache of information about method compilations in the boot code region.
      */
     public void initialize() {
         Trace.begin(1, tracePrefix() + " initializing");
         final long startTimeMillis = System.currentTimeMillis();
-        int count = 0;
 
-        teleCodeManager = (TeleCodeManager) vm().makeTeleObject(vm().teleFields().Code_codeManager.readReference(vm()));
+        if (!vm().tryLock()) {
+            ProgramError.unexpected("Unable to initialize code cache from VM");
+        }
+        try {
+            teleCodeManager = (TeleCodeManager) vm().makeTeleObject(vm().teleFields().Code_codeManager.readReference(vm()));
+        } finally {
+            vm().unlock();
+        }
+
         bootCodeRegion = new TeleCompiledCodeRegion(vm(), teleCodeManager.teleBootCodeRegion(), true);
         dynamicCodeRegion = new TeleCompiledCodeRegion(vm(), teleCodeManager.teleRuntimeCodeRegion(), false);
 
         compiledCodeRegions.append(bootCodeRegion);
         compiledCodeRegions.append(dynamicCodeRegion);
 
+        int methodCount = 0;
         for (TeleTargetMethod teleTargetMethod : bootCodeRegion().teleTargetMethods()) {
+            // Force information about each method to be preloaded from the VM.
             teleTargetMethod.classMethodActor();
-            count++;
+            methodCount++;
         }
-        Trace.end(1, tracePrefix() + " initializing (" + count + " methods in boot code region pre-loaded)", startTimeMillis);
+        Trace.end(1, tracePrefix() + " initializing (" + methodCount + " methods in boot code region pre-loaded)", startTimeMillis);
+    }
+
+    public void refresh() {
+        bootCodeRegion.refresh();
+        dynamicCodeRegion.refresh();
     }
 
     public String entityName() {
@@ -136,7 +152,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return findCompiledCodeRegion(address) != null;
     }
 
-    public MaxCompiledCodeRegion bootCodeRegion() {
+    public TeleCompiledCodeRegion bootCodeRegion() {
         return bootCodeRegion;
     }
 
@@ -154,48 +170,66 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return null;
     }
 
-    // TODO (mlvdv) sort out comments here
-    /**
-     * Gets a {@code TeleTargetMethod} instance representing the {@link TargetMethod} in the tele VM that contains a
-     * given instruction pointer. If the instruction pointer's address does not lie within a target method, then null is returned.
-     * If the instruction pointer is within a target method but there is no {@code TeleTargetMethod} instance existing
-     * for it in the {@linkplain TeleCodeCache tele code cache}, then a new instance is created and returned.
-     *
-     * @param address an instruction pointer in the tele VM's address space
-     * @return {@code TeleTargetMethod} instance representing the {@code TargetMethod} containing {@code
-     *         instructionPointer} or null if there is no {@code TargetMethod} containing {@code instructionPointer}
-     */
-    public TeleTargetMethod makeTeleTargetMethod(Address address) {
-        ProgramError.check(!address.isZero());
-        if (!vm().isBootImageRelocated()) {
-            return null;
+    public TeleCompiledCode findCompiledCode(Address address) {
+        TeleCompiledCode teleCompiledCode = codeRegistry().get(TeleCompiledCode.class, address);
+        if (teleCompiledCode == null) {
+            // Neither a known Java method nor known native code.
+            // See if we can find a Java method the hard way.
+            teleCompiledCode = findCompiledMethod(address);
         }
-        TeleTargetMethod teleTargetMethod = findTeleTargetRoutine(TeleTargetMethod.class, address);
-        if (teleTargetMethod == null
-                        && findTeleTargetRoutine(MaxCompiledCode.class, address) == null
-                        && contains(address)) {
-            // Not a known java target method, and not some other kind of known target code, but in a code region
-            // See if the code manager in the VM knows about it.
+        return teleCompiledCode;
+    }
+
+    public TeleCompiledMethod findCompiledMethod(Address address) {
+        TeleCompiledMethod teleCompiledMethod = codeRegistry().get(TeleCompiledMethod.class, address);
+        if (teleCompiledMethod == null) {
+            // Not a known Java method.
+            final TeleCompiledNativeCode teleCompiledNativeCode = codeRegistry().get(TeleCompiledNativeCode.class, address);
+            if (teleCompiledNativeCode != null) {
+                // The address is in a known block of native code, so no compiled method
+                return null;
+            }
+            if (!contains(address)) {
+                // The address is not in a code allocation region; no use looking further.
+                return null;
+            }
+            // Not a known compiled method, and not some other kind of known target code, but in a code region
+            // Use the interpreter to see if the code manager in the VM knows about it.
             try {
                 final Reference targetMethodReference = vm().teleMethods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
                 // Possible that the address points to an unallocated area of a code region.
                 if (targetMethodReference != null && !targetMethodReference.isZero()) {
-                    teleTargetMethod = (TeleTargetMethod) vm().makeTeleObject(targetMethodReference);  // Constructor will add to register.
+                    vm().makeTeleObject(targetMethodReference);  // Constructor will register the compiled method if successful
                 }
+            } catch (MaxVMBusyException maxVMBusyException) {
             } catch (TeleInterpreterException e) {
                 throw ProgramError.unexpected(e);
             }
+            // If a new method was discovered, then it will have been added to the registry.
+            teleCompiledMethod = codeRegistry().get(TeleCompiledMethod.class, address);
         }
-        return teleTargetMethod;
+        return teleCompiledMethod;
+    }
+
+    public IndexedSequence<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor) {
+        final VariableSequence<MaxCompiledCode> compilations = new ArrayListSequence<MaxCompiledCode>(teleClassMethodActor.numberOfCompilations());
+        for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
+            compilations.append(findCompiledMethod(teleTargetMethod.getRegionStart()));
+        }
+        return compilations;
+    }
+
+    public TeleCompiledMethod latestCompilation(TeleClassMethodActor teleClassMethodActor) {
+        final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
+        return teleTargetMethod == null ? null : findCompiledMethod(teleTargetMethod.getRegionStart());
+    }
+
+    public TeleCompiledNativeCode findCompiledNativeCode(Address address) {
+        return codeRegistry().get(TeleCompiledNativeCode.class, address);
     }
 
     public TeleCompiledNativeCode createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name) {
         return TeleCompiledNativeCode.create(vm(), codeStart, codeSize, name);
-    }
-
-    @Deprecated
-    public <TeleTargetRoutine_Type extends MaxCompiledCode> TeleTargetRoutine_Type findTeleTargetRoutine(Class<TeleTargetRoutine_Type> teleTargetRoutineType, Address address) {
-        return codeRegistry().get(teleTargetRoutineType, address);
     }
 
     public void writeSummary(PrintStream printStream) {
@@ -235,13 +269,12 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
      * Adds a {@link MaxCompiledCode} entry to the code registry, indexed by code address. Should only be called from
      * a constructor of a {@link TeleTargetMethod} subclass.
      *
-     * @param maxCompiledCode the compiled code whose {@linkplain MaxCompiledCode#memoryRegion() code
-     *            region} is to be added to this registry
-     * @throws IllegalArgumentException when the memory region of {@link MaxCompiledCode} overlaps one already in this registry.
+     * @param teleTargetMethod the compiled method whose memory region is to be added to this registry
+     * @throws IllegalArgumentException when the memory region of {@link teleTargetMethod} overlaps one already in this registry.
      */
     public void register(TeleTargetMethod teleTargetMethod) {
-        final TeleCompiledCodeRegion teleCompiledCodeRegion = findCompiledCodeRegion(teleTargetMethod.callEntryPoint());
-        ProgramWarning.check(teleCompiledCodeRegion != null, "Can't locate code region for method");
+        final TeleCompiledCodeRegion teleCompiledCodeRegion = findCompiledCodeRegion(teleTargetMethod.getRegionStart());
+        ProgramError.check(teleCompiledCodeRegion != null, "Can't locate code region for method");
         codeRegistry().add(new TeleCompiledMethod(vm(), teleTargetMethod, teleCompiledCodeRegion, teleCompiledCodeRegion == bootCodeRegion));
     }
 

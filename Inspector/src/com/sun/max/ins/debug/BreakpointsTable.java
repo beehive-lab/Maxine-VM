@@ -32,7 +32,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.object.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -618,9 +618,10 @@ public final class BreakpointsTable extends InspectorTable {
         TargetBreakpointData(MaxBreakpoint targetBreakpoint) {
             super(targetBreakpoint);
             final Address address = codeLocation().address();
-            final TeleTargetMethod teleTargetMethod = vm().codeCache().makeTeleTargetMethod(address);
-            if (teleTargetMethod != null) {
-                shortName = inspection().nameDisplay().shortName(teleTargetMethod);
+            MaxCompiledCode compiledCode = vm().codeCache().findCompiledMethod(address);
+            if (compiledCode != null) {
+                final TeleCompiledMethod compiledMethod = (TeleCompiledMethod) compiledCode;
+                shortName = inspection().nameDisplay().shortName(compiledMethod);
                 final StringBuilder sb = new StringBuilder();
                 sb.append("(");
                 if (breakpoint().getDescription() == null) {
@@ -629,17 +630,18 @@ public final class BreakpointsTable extends InspectorTable {
                     sb.append(breakpoint().getDescription());
                 }
                 sb.append(") ");
-                sb.append(inspection().nameDisplay().longName(teleTargetMethod, address));
+                sb.append(inspection().nameDisplay().longName(compiledMethod, address));
                 longName = sb.toString();
-                codeStart = teleTargetMethod.getCodeStart();
+                codeStart = compiledCode.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                final TeleCompiledNativeCode teleCompiledNativeCode = vm().codeCache().findTeleTargetRoutine(TeleCompiledNativeCode.class, address);
-                if (teleCompiledNativeCode != null) {
-                    codeStart = teleCompiledNativeCode.getCodeStart();
+                compiledCode = vm().codeCache().findCompiledNativeCode(address);
+                if (compiledCode != null) {
+                    final TeleCompiledNativeCode compiledNativeCode = (TeleCompiledNativeCode) compiledCode;
+                    codeStart = compiledNativeCode.getCodeStart();
                     location = address.minus(codeStart.asAddress()).toInt();
-                    shortName = inspection().nameDisplay().shortName(teleCompiledNativeCode);
-                    longName = inspection().nameDisplay().longName(teleCompiledNativeCode);
+                    shortName = inspection().nameDisplay().shortName(compiledNativeCode);
+                    longName = inspection().nameDisplay().longName(compiledNativeCode);
                 } else {
                     // Must be an address in an unknown area of native code
                     shortName = "0x" + address.toHexString();

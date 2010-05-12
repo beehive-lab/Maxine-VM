@@ -18,45 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.method;
+package com.sun.max.tele;
 
-import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.unsafe.*;
 
 /**
- * Represents a region of VM memory that holds compiled code for a method.
- * <br>
- * TEMPORARY:  this very awkward class gets rewritten when all the memory region work gets completed.
+ * Data describing a single block of machine code representing a native routine
+ * about which little is known.
  *
  * @author Michael Van De Vanter
  */
 @Deprecated
-public final class MethodTargetCodeRegion extends CompiledMethodMemoryRegion {
-
-    private final TeleTargetMethod teleTargetMethod;
-    private Address regionStart = Address.zero();
-    private Size regionSize = Size.zero();
-
-    public MethodTargetCodeRegion(TeleVM teleVM, TeleTargetMethod teleTargetMethod) {
-        super(teleVM, teleTargetMethod, Address.zero(), Size.zero(), "Method TeleTarget-" + teleTargetMethod.toString());
-        this.teleTargetMethod = teleTargetMethod;
-    }
-
-    @Override
-    public Address start() {
-        if (regionStart.isZero()) {
-            regionStart = teleTargetMethod.getRegionStart();
-        }
-        return regionStart;
-    }
-
-    @Override
-    public Size size() {
-        if (regionSize.isZero()) {
-            regionSize = teleTargetMethod.getRegionSize();
-        }
-        return regionSize;
-    }
+public interface MaxCompiledNativeCode extends MaxCompiledCode {
 
 }

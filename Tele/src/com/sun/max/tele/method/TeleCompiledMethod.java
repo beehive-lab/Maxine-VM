@@ -20,17 +20,29 @@
  */
 package com.sun.max.tele.method;
 
+import java.io.*;
+
+import com.sun.max.asm.*;
+import com.sun.max.asm.dis.*;
 import com.sun.max.collect.*;
+import com.sun.max.io.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.platform.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.bytecode.BytecodeLocation;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
-
+import com.sun.max.vm.debug.*;
 
 /**
  * Representation of a method compilation in the VM.
@@ -56,12 +68,14 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
         private static final IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY =
             new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
 
-        private TeleCompiledMethod owner;
+        private final TeleCompiledMethod owner;
         private final boolean isBootCode;
-        final MaxEntityMemoryRegion<? extends MaxEntity> parent;
+        private final MaxEntityMemoryRegion<? extends MaxEntity> parent;
 
         private CompiledMethodMemoryRegion(TeleVM teleVM, TeleCompiledMethod owner, TeleTargetMethod teleTargetMethod, TeleCompiledCodeRegion teleCompiledCodeRegion, boolean isBootCode) {
             super(teleVM, teleTargetMethod);
+            ProgramError.check(teleCompiledCodeRegion != null);
+            this.owner = owner;
             this.isBootCode = isBootCode;
             this.parent = teleCompiledCodeRegion.memoryRegion();
         }
@@ -83,8 +97,53 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
         }
     }
 
+    /**
+     * Adapter for bytecode scanning that only knows the constant pool
+     * index argument of the last method invocation instruction scanned.
+     */
+    private static final class MethodRefIndexFinder extends BytecodeAdapter  {
+        int methodRefIndex = -1;
+
+        public MethodRefIndexFinder reset() {
+            methodRefIndex = -1;
+            return this;
+        }
+
+        @Override
+        protected void invokestatic(int index) {
+            methodRefIndex = index;
+        }
+
+        @Override
+        protected void invokespecial(int index) {
+            methodRefIndex = index;
+        }
+
+        @Override
+        protected void invokevirtual(int index) {
+            methodRefIndex = index;
+        }
+
+        @Override
+        protected void invokeinterface(int index, int count) {
+            methodRefIndex = index;
+        }
+
+        public int methodRefIndex() {
+            return methodRefIndex;
+        }
+    };
+
+    private InstructionMap instructionMap = null;
 
     private final TeleTargetMethod teleTargetMethod;
+
+    /**
+     * Which number is this in the sequence of compilations for the method.
+     */
+    private final int compilationIndex;
+
+    private CodeLocation codeStartLocation = null;
     private final CompiledMethodMemoryRegion compiledMethodMemoryRegion;
     private IndexedSequence<MachineCodeLocation> instructionLocations;
 
@@ -100,14 +159,17 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
         super(teleVM);
         this.teleTargetMethod = teleTargetMethod;
         this.compiledMethodMemoryRegion = new CompiledMethodMemoryRegion(teleVM, this, teleTargetMethod, teleCompiledCodeRegion, isBootCode);
+        this.instructionMap = new CompiledMethodInstructionMap(teleVM, teleTargetMethod);
+        final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+        this.compilationIndex = teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(teleTargetMethod);
     }
 
     public String entityName() {
-        final ClassMethodActor classMethodActor = teleTargetMethod.classMethodActor();
+        final ClassMethodActor classMethodActor = classMethodActor();
         if (classMethodActor != null) {
             return "Code " + classMethodActor.simpleName();
         }
-        return "Unknown compiled code";
+        return teleTargetMethod.getRegionName();
     }
 
     public String entityDescription() {
@@ -116,7 +178,7 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
         if (classMethodActor != null) {
             return description + classMethodActor.simpleName();
         }
-        return description + "Unknown compiled code";
+        return description + teleTargetMethod.classActorForObjectType().simpleName();
     }
 
     public MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion() {
@@ -127,68 +189,77 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
         return compiledMethodMemoryRegion.contains(address);
     }
 
+    public InstructionMap instructionMap() {
+        return instructionMap;
+    }
+
     public Address getCodeStart() {
         return teleTargetMethod.getCodeStart();
     }
 
-    public Address callEntryPoint() {
+    public CodeLocation getCodeStartLocation() {
+        final Address codeStart = getCodeStart();
+        if (codeStartLocation == null && codeStart != null) {
+            codeStartLocation = codeManager().createMachineCodeLocation(codeStart, "code start location in method");
+        }
+        return codeStartLocation;
+    }
+
+    public Address getCallEntryPoint() {
         return teleTargetMethod.callEntryPoint();
     }
 
-    public IndexedSequence<TargetCodeInstruction> getInstructions() {
-        return teleTargetMethod.getInstructions();
-    }
-
-    public IndexedSequence<MachineCodeLocation> getInstructionLocations() {
-        if (instructionLocations == null) {
-            getInstructions();
-            final int length = getInstructions().length();
-            final CodeManager codeManager = codeManager();
-            final VariableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
-            for (int i = 0; i < length; i++) {
-                locations.append(codeManager.createMachineCodeLocation(getInstructions().get(i).address, "native target code instruction"));
-            }
-            instructionLocations = locations;
+    public CodeLocation getCallEntryLocation() {
+        final Address callEntryPoint = getCallEntryPoint();
+        if (callEntryPoint.isZero()) {
+            return null;
         }
-        return instructionLocations;
+        return codeManager().createMachineCodeLocation(callEntryPoint, "Method entry");
     }
 
-    public CodeLocation entryLocation() {
-        return teleTargetMethod.entryLocation();
-    }
-
-    public Sequence<MaxCodeLocation> labelLocations() {
-        final AppendableSequence<MaxCodeLocation> locations = new ArrayListSequence<MaxCodeLocation>();
-        for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
-            if (targetCodeInstruction.label != null) {
-                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + entityName();
-                locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, description));
-            }
-        }
-        return locations;
+    public int compilationIndex() {
+        return compilationIndex;
     }
 
     public TeleClassMethodActor getTeleClassMethodActor() {
         return teleTargetMethod.getTeleClassMethodActor();
     }
 
-    public StopPositions getStopPositions() {
-        return teleTargetMethod.getStopPositions();
+    public ClassMethodActor classMethodActor() {
+        final TeleClassMethodActor teleClassMethodActor = getTeleClassMethodActor();
+        if (teleClassMethodActor != null) {
+            return teleClassMethodActor.classMethodActor();
+        }
+        return null;
     }
 
-    public int getJavaStopIndex(Address address) {
-        final StopPositions stopPositions = getStopPositions();
-        if (stopPositions != null) {
-            final int targetCodePosition = address.minus(getCodeStart()).toInt();
-            for (int i = 0; i < stopPositions.length(); i++) {
-                if (stopPositions.get(i) == targetCodePosition) {
-                    return i;
-                }
+    public ClassActor classActorForObjectType() {
+        return teleTargetMethod.classActorForObjectType();
+    }
+
+    public String targetLocationToString(TargetLocation targetLocation) {
+        final String framePointerRegisterName =
+            TeleIntegerRegisters.symbolizer(vm().vmConfiguration()).fromValue(teleTargetMethod.getAbi().framePointer().value()).toString();
+
+        switch (targetLocation.tag()) {
+            case INTEGER_REGISTER: {
+                final TargetLocation.IntegerRegister integerRegister = (TargetLocation.IntegerRegister) targetLocation;
+                return TeleIntegerRegisters.symbolizer(vm().vmConfiguration()).fromValue(integerRegister.index()).toString();
+            }
+            case FLOATING_POINT_REGISTER: {
+                final TargetLocation.FloatingPointRegister floatingPointRegister = (TargetLocation.FloatingPointRegister) targetLocation;
+                return TeleFloatingPointRegisters.symbolizer(vm().vmConfiguration()).fromValue(floatingPointRegister.index()).toString();
+            }
+            case LOCAL_STACK_SLOT: {
+                final TargetLocation.LocalStackSlot localStackSlot = (TargetLocation.LocalStackSlot) targetLocation;
+                return framePointerRegisterName + "[" + (localStackSlot.index() * vm().wordSize().toInt()) + "]";
+            }
+            default: {
+                return targetLocation.toString();
             }
         }
-        return -1;
     }
-    
+
     public TeleTargetMethod teleTargetMethod() {
         return teleTargetMethod;
     }
@@ -199,6 +270,48 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
 
     public MachineCodeInstructionArray getTargetCodeInstructions() {
         return teleTargetMethod.getTargetCodeInstructions();
+    }
+
+    public byte[] getCode() {
+        return teleTargetMethod.getCode();
+    }
+    /**
+     * Gets the name of the source variable corresponding to a stack slot, if any.
+     *
+     * @param slot a stack slot
+     * @return the Java source name for the frame slot, null if not available.
+     */
+    public String sourceVariableName(MaxStackFrame.Compiled javaStackFrame, int slot) {
+        return teleTargetMethod.sourceVariableName(javaStackFrame, slot);
+    }
+
+    public void writeSummary(PrintStream printStream) {
+        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(printStream));
+        writer.println("target method: " + classMethodActor().format("%H.%n(%p)"));
+        writer.println("compilation: " + compilationIndex);
+        teleTargetMethod.disassemble(writer);
+        writer.flush();
+        final ProcessorKind processorKind = vm().vmConfiguration().platform().processorKind;
+        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod().encodedInlineDataDescriptors());
+        final Address startAddress = getCodeStart();
+        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+            @Override
+            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
+                final String string = super.disassembledObjectString(disassembler, disassembledObject);
+                if (string.startsWith("call ")) {
+                    final BytecodeLocation bytecodeLocation = null; //_teleTargetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
+                    if (bytecodeLocation != null) {
+                        final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+                        if (methodRef != null) {
+                            final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool;
+                            return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                        }
+                    }
+                }
+                return string;
+            }
+        };
+        Disassemble.disassemble(printStream, getCode(), processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
     }
 
 }

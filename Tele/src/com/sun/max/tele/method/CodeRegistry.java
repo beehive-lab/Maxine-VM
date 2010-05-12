@@ -28,7 +28,8 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
- * A cache of information about compiled routines (methods and native routines)in the VM.
+ * A cache of information about compiled code (by methods and native routines) in the VM,
+ * organized for efficient lookup by memory address.
  *
  * @author Michael Van De Vanter
  */
@@ -43,34 +44,35 @@ final class CodeRegistry extends AbstractTeleVMHolder {
         Trace.end(TRACE_VALUE, tracePrefix() + " initializing", startTimeMillis);
     }
 
-    private final SortedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>> compiledCodeMemoryRegions = new SortedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>>();
+    private final SortedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>> compiledCodeMemoryRegions =
+        new SortedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>>();
 
     /**
      * Adds an entry to the code registry, indexed by code address.
      *
-     * @param teleCompiledCode the compiled code whose {@linkplain MaxCompiledCode#memoryRegion() code
+     * @param maxCompiledCode the compiled code whose {@linkplain MaxCompiledCode#memoryRegion() code
      *            region} is to be added to this registry
      * @throws IllegalArgumentException when the code's memory overlaps one already in this registry.
      */
-    public synchronized void add(TeleCompiledCode teleCompiledCode) {
-        compiledCodeMemoryRegions.add(teleCompiledCode.memoryRegion());
+    public synchronized void add(MaxCompiledCode maxCompiledCode) {
+        compiledCodeMemoryRegions.add(maxCompiledCode.memoryRegion());
     }
 
     /**
      * Gets the {@link MaxCompiledCode} in this registry that contains a given address in the VM.
      *
-     * @param <TeleTargetRoutine_Type> the type of the requested MaxCompiledCode
-     * @param teleTargetRoutineType the {@link Class} instance representing {@code TeleTargetRoutine_Type}
+     * @param <CompiledCode_Type> the type of the requested MaxCompiledCode
+     * @param compiledCodeType the {@link Class} instance representing {@code TeleTargetRoutine_Type}
      * @param address the look up address
      * @return the tele target routine of type {@code TeleTargetRoutine_Type} in this registry that contains {@code
      *         address} or null if no such tele target routine of the requested type exists
      */
-    public synchronized <TeleTargetRoutine_Type extends MaxCompiledCode> TeleTargetRoutine_Type get(Class<TeleTargetRoutine_Type> teleTargetRoutineType, Address address) {
-        final MaxEntityMemoryRegion<MaxCompiledCode> compiledMethodMemoryRegion = compiledCodeMemoryRegions.find(address);
-        if (compiledMethodMemoryRegion != null) {
-            final MaxCompiledCode maxCompiledCode = compiledMethodMemoryRegion.owner();
-            if (teleTargetRoutineType.isInstance(maxCompiledCode)) {
-                return teleTargetRoutineType.cast(maxCompiledCode);
+    public synchronized <CompiledCode_Type extends MaxCompiledCode> CompiledCode_Type get(Class<CompiledCode_Type> compiledCodeType, Address address) {
+        final MaxEntityMemoryRegion<MaxCompiledCode> compiledCodeMemoryRegion = compiledCodeMemoryRegions.find(address);
+        if (compiledCodeMemoryRegion != null) {
+            final MaxCompiledCode maxCompiledCode = compiledCodeMemoryRegion.owner();
+            if (compiledCodeType.isInstance(maxCompiledCode)) {
+                return compiledCodeType.cast(maxCompiledCode);
             }
         }
         return null;

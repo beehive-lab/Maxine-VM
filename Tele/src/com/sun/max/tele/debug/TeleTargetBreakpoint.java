@@ -487,16 +487,20 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         private byte[] recoverOriginalCodeForBreakpoint(Address instructionPointer) {
+            Value result = null;
             try {
-                final Value result = vm().teleMethods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
-                final Reference reference = result.asReference();
-                if (reference.isZero()) {
-                    return null;
-                }
-                return (byte[]) reference.toJava();
+                result = vm().teleMethods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
+            } catch (MaxVMBusyException maxVMBusyException) {
             } catch (TeleInterpreterException e) {
                 throw ProgramError.unexpected(e);
             }
+            if (result != null) {
+                final Reference reference = result.asReference();
+                if (!reference.isZero()) {
+                    return (byte[]) reference.toJava();
+                }
+            }
+            return null;
         }
 
         /**
@@ -617,7 +621,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         private String describeLocation(TeleTargetBreakpoint teleTargetBreakpoint) {
-            final MaxCompiledCode maxCompiledCode = vm().codeCache().findTeleTargetRoutine(MaxCompiledCode.class, teleTargetBreakpoint.address());
+            final MaxCompiledCode maxCompiledCode = vm().codeCache().findCompiledCode(teleTargetBreakpoint.address());
             if (maxCompiledCode != null) {
                 return " in " + maxCompiledCode.entityName();
             }

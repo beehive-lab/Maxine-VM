@@ -46,7 +46,7 @@ public final class TeleEnum extends TeleTupleObject {
 
     public Enum toJava() {
         if (enumCopy == null) {
-            final ClassActor classActor = classActorForType();
+            final ClassActor classActor = classActorForObjectType();
             Class enumClass = classActor.toJava();
             // find the class for this enum that directly extends Enum (i.e. that has the values).
             while (enumClass.getSuperclass() != Enum.class) {

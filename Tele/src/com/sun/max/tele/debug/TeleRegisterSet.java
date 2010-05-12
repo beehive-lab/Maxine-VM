@@ -163,6 +163,10 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
         return live ? stateRegisters : null;
     }
 
+    public String stateRegisterValueToString(long flags) {
+        return TeleStateRegisters.flagsToString(vm(), flags);
+    }
+
     TeleIntegerRegisters teleIntegerRegisters() {
         refresh();
         return live ? teleIntegerRegisters : null;

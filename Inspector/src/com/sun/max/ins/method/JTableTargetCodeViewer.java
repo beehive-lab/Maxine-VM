@@ -40,10 +40,10 @@ import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxCompiledCode.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
@@ -183,7 +183,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        focus().setCodeLocation(instructionLocations().get(row));
+        focus().setCodeLocation(instructionMap().instructionLocation(row));
     }
 
     @Override
@@ -283,7 +283,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
          */
         public boolean updateCodeFocus(MaxCodeLocation codeLocation) {
             final int oldSelectedRow = getSelectedRow();
-            if (codeLocation.hasAddress()) {
+            if (codeLocation != null && codeLocation.hasAddress()) {
                 final Address targetCodeInstructionAddress = focus().codeLocation().address();
                 if (maxCompiledCode().contains(targetCodeInstructionAddress)) {
                     final TargetCodeTableModel model = (TargetCodeTableModel) getModel();
@@ -342,7 +342,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public int getRowCount() {
-            return maxCompiledCode.getInstructions().length();
+            return maxCompiledCode.instructionMap().length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -396,11 +396,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public TargetCodeInstruction rowToInstruction(int row) {
-            return maxCompiledCode.getInstructions().get(row);
+            return maxCompiledCode.instructionMap().instruction(row);
         }
 
         public MaxCodeLocation rowToLocation(int row) {
-            return maxCompiledCode.getInstructionLocations().get(row);
+            return maxCompiledCode.instructionMap().instructionLocation(row);
         }
 
         /**
@@ -408,12 +408,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
          * @return the row in this block of code containing an instruction starting at the address, -1 if none.
          */
         public int findRow(Address address) {
-            int row = 0;
-            for (TargetCodeInstruction targetCodeInstruction : maxCompiledCode.getInstructions()) {
+            final InstructionMap instructionMap = maxCompiledCode.instructionMap();
+            for (int row = 0; row < instructionMap.length(); row++) {
+                final TargetCodeInstruction targetCodeInstruction = instructionMap.instruction(row);
                 if (targetCodeInstruction.address.equals(address)) {
                     return row;
                 }
-                row++;
             }
             return -1;
         }
@@ -431,7 +431,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     private void setBorderForRow(JComponent component, int row) {
-        if (isBoundaryRow[row]) {
+        if (instructionMap().isBytecodeBoundary(row)) {
             component.setBorder(style().defaultPaneTopBorder());
         } else {
             component.setBorder(null);
@@ -448,7 +448,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         if (isSearchMatchRow(row)) {
             component.setOpaque(true);
             component.setBackground(style().searchMatchedBackground());
-        } else if (isStopRow[row]) {
+        } else if (instructionMap().isStop(row)) {
             component.setOpaque(true);
             component.setBackground(stopBackgroundColor);
         } else {
@@ -491,7 +491,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 } else {
                     setBorder(style().debugDisabledTargetBreakpointTagBorder());
                 }
-            } else if (isBoundaryRow[row]) {
+            } else if (instructionMap().isBytecodeBoundary(row)) {
                 setBorder(style().defaultPaneTopBorder());
             } else {
                 setBorder(null);
@@ -707,7 +707,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BytecodeLocation bytecodeLocation = rowToBytecodeLocation(row);
+            final BytecodeLocation bytecodeLocation = instructionMap().bytecodeLocation(row);
             setText("");
             setToolTipText("Source line not available");
             setBackgroundForRow(this, row);
@@ -727,7 +727,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     private final class OperandsRenderer implements TableCellRenderer, Prober {
-        private InspectorLabel[] inspectorLabels = new InspectorLabel[instructions().length()];
+        private InspectorLabel[] inspectorLabels = new InspectorLabel[instructionMap().length()];
         private TargetCodeLabel targetCodeLabel = new TargetCodeLabel(inspection, "");
         private LiteralRenderer literalRenderer = getLiteralRenderer(inspection);
 
@@ -760,14 +760,14 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     final Address literalAddress = targetCodeInstruction.literalSourceAddress.asAddress();
                     renderer = literalRenderer.render(inspection, text, literalAddress);
                     inspectorLabels[row] = renderer;
-                } else if (rowToCalleeIndex(row) >= 0 && targetCodeInstruction.mnemonic.contains("call")) {
-                    final PoolConstantLabel poolConstantLabel = PoolConstantLabel.make(inspection, rowToCalleeIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
+                } else if (instructionMap().calleeConstantPoolIndex(row) >= 0 && targetCodeInstruction.mnemonic.contains("call")) {
+                    final PoolConstantLabel poolConstantLabel =
+                        PoolConstantLabel.make(inspection, instructionMap().calleeConstantPoolIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
                     poolConstantLabel.setToolTipPrefix(text);
                     renderer = poolConstantLabel;
                     renderer.setForeground(getRowTextColor(row));
                 } else {
-                    final StopPositions stopPositions = maxCompiledCode().getStopPositions();
-                    if (stopPositions != null && stopPositions.isNativeFunctionCallPosition(targetCodeInstruction.position)) {
+                    if (instructionMap().isNativeCall(row)) {
                         final TextLabel textLabel = new TextLabel(inspection, "<native function>", text);
                         renderer = textLabel;
                         renderer.setForeground(getRowTextColor(row));

@@ -614,12 +614,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 final TeleJitTargetMethod teleJitTargetMethod = (TeleJitTargetMethod) teleTargetMethod;
                 final int targetCodePosition;
                 if (bytecodePosition == -1) {
-                    // Specifies the code start, at the beginning of the method prologue
-                    TargetMethod targetMethod = teleTargetMethod.targetMethod();
-                    targetCodePosition = AdapterGenerator.prologueSizeForCallee(targetMethod);
+                    targetCodePosition = AdapterGenerator.prologueSizeForCallee(teleTargetMethod.targetMethod());
                 } else {
-                    final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
-                    targetCodePosition = bytecodeToTargetCodePositionMap[bytecodePosition];
+                    targetCodePosition = teleJitTargetMethod.getBytecodeToTargetCodePositionMap()[bytecodePosition];
                 }
                 address = teleTargetMethod.getCodeStart().plus(targetCodePosition);
                 Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint for offset " + targetCodePosition + " in " + teleTargetMethod);

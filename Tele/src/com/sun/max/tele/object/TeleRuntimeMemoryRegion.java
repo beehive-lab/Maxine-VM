@@ -22,6 +22,7 @@ package com.sun.max.tele.object;
 
 import java.lang.management.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -40,6 +41,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 
     TeleRuntimeMemoryRegion(TeleVM teleVM, Reference runtimeMemoryRegionReference) {
         super(teleVM, runtimeMemoryRegionReference);
+        refresh();
     }
 
     /**
@@ -94,6 +96,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 
     @Override
     protected void refresh() {
+        super.refresh();
         if (vm().tryLock()) {
             try {
                 final Size newRegionSize = vm().teleFields().RuntimeMemoryRegion_size.readWord(reference()).asSize();
@@ -112,22 +115,25 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
                     }
                 }
                 // Quasi-atomic update
+                if (newRegionStart.isZero()) {
+                    ProgramWarning.message("read zero start for " + this);
+                }
                 this.regionStart = newRegionStart;
                 this.regionSize = newRegionSize;
                 this.regionName = newRegionName;
                 final long sizeAsLong = this.regionSize.toLong();
                 this.memoryUsage = new MemoryUsage(-1, sizeAsLong, sizeAsLong, -1);
             } catch (DataIOError dataIOError) {
-                System.err.println("TeleRuntimeMemoryRegion dataIOError:");
+                ProgramWarning.message("TeleRuntimeMemoryRegion dataIOError:");
                 dataIOError.printStackTrace();
                 // No update; VM not available for some reason.
                 // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
             } finally {
                 vm().unlock();
             }
+        } else {
+            ProgramWarning.message("TeleRuntimeMemoryRegion unable to refresh: VM busy");
         }
-        super.refresh();
     }
-
 
 }

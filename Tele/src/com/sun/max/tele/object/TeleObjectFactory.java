@@ -277,12 +277,12 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
                 try {
                     teleObject = (TeleObject) constructor.newInstance(vm(), reference);
                 } catch (InstantiationException e) {
-                    throw ProgramError.unexpected();
+                    ProgramError.unexpected();
                 } catch (IllegalAccessException e) {
-                    throw ProgramError.unexpected();
+                    ProgramError.unexpected();
                 } catch (InvocationTargetException e) {
                     e.printStackTrace();
-                    throw ProgramError.unexpected();
+                    ProgramError.unexpected();
                 }
             }
         } else {

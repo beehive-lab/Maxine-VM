@@ -110,19 +110,14 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
     private final TeleStack teleStack;
     private final int position;
     private final CodeLocation codeLocation;
-
-    // TODO (mlvdv) temp only until TargetMethod class use is eliminated
-    private final TeleFixedMemoryRegion targetMethodMemoryRegion;
+    private final TeleCompiledMethod teleCompiledMethod;
 
     protected TeleStackFrame(TeleVM teleVM, TeleStack teleStack, int position, StackFrame_Type stackFrame) {
         super(teleVM);
         this.stackFrame = stackFrame;
         this.teleStack = teleStack;
         this.position = position;
-
-        final TargetMethod targetMethod = stackFrame.targetMethod();
-        this.targetMethodMemoryRegion = targetMethod == null ? null :
-            new TeleFixedMemoryRegion(teleVM, "memory for TargetMethod", targetMethod.start(), targetMethod.size());
+        this.teleCompiledMethod = teleVM.codeCache().findCompiledMethod(stackFrame.ip);
 
         CodeLocation location = null;
         Pointer instructionPointer = stackFrame.ip;
@@ -182,12 +177,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         return codeLocation;
     }
 
-    public final TargetMethod targetMethod() {
-        return stackFrame.targetMethod();
-    }
-
-    public final TeleFixedMemoryRegion getTargetMethodMemoryRegion() {
-        return targetMethodMemoryRegion;
+    public final TeleCompiledMethod compiledMethod() {
+        return teleCompiledMethod;
     }
 
     public boolean isSameFrame(MaxStackFrame maxStackFrame) {
@@ -243,6 +234,11 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         public StackBias bias() {
             return stackFrame.bias();
+        }
+
+        public String sourceVariableName(int slot) {
+            final TeleCompiledMethod compiledMethod = compiledMethod();
+            return compiledMethod == null ? null : compiledMethod.sourceVariableName(this, slot);
         }
     }
 

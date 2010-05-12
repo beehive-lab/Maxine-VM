@@ -32,7 +32,6 @@ import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -246,8 +245,8 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                     if (stackFrame == null) {
                         setValue(null, "No stack frame focus");
                     } else {
-                        final TargetMethod targetMethod = stackFrame.targetMethod();
-                        final String name = targetMethod == null ? "nativeMethod: 0x" + stackFrame.codeLocation().address().toHexString() : targetMethod.toString();
+                        final MaxCompiledCode compiledMethod = stackFrame.compiledMethod();
+                        final String name = compiledMethod == null ? "nativeMethod: 0x" + stackFrame.codeLocation().address().toHexString() : compiledMethod.entityName();
                         setValue(name, "Stack frame focus = " + name);
                     }
                 }

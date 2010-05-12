@@ -21,7 +21,6 @@
 package com.sun.max.tele;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 
@@ -103,20 +102,14 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
      */
     MaxCodeLocation codeLocation();
 
-    // TODO (mlvdv) eliminate use of the VM class return type TargetMethod
     /**
      * Gets the compiled method enclosing the {@linkplain #ip() execution point} in this frame, if any.
      * <br>
      * Thread-safe
      *
-     * @return null if this is a frame of a native function or other special frame not associated with a method
+     * @return method compilation for this frame, null a native function or other special frame not associated with a method
      */
-    TargetMethod targetMethod();
-
-
-    // TODO (mlvdv) temporary method; replace with a call to get memory region on the method class
-    // when there is one to replace use of TargetMethod.
-    MaxMemoryRegion getTargetMethodMemoryRegion();
+    MaxCompiledCode compiledMethod();
 
     /**
      * Determines if this frame and another refer to the same frame.
@@ -159,6 +152,14 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
          * @return a stack bias.
          */
         StackBias bias();
+
+        /**
+         * Gets the name of the source variable corresponding to a stack slot, if any.
+         *
+         * @param slot a stack slot
+         * @return the Java source name for the frame slot, null if not available.
+         */
+        String sourceVariableName(int slot);
 
     }
 

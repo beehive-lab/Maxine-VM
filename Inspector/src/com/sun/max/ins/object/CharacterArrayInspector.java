@@ -55,7 +55,7 @@ public final class CharacterArrayInspector extends ObjectInspector {
         super.createView();
 
         final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
-        final String componentTypeName = teleArrayObject.classActorForType().componentClassActor().javaSignature(false);
+        final String componentTypeName = teleArrayObject.classActorForObjectType().componentClassActor().javaSignature(false);
 
         tabbedPane = new JTabbedPane();
 
