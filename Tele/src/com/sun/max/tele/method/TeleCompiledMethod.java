@@ -28,8 +28,6 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
-import com.sun.max.jdwp.vm.data.*;
-import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -263,14 +261,6 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
 
     public TeleTargetMethod teleTargetMethod() {
         return teleTargetMethod;
-    }
-
-    public MethodProvider getMethodProvider() {
-        return teleTargetMethod.getMethodProvider();
-    }
-
-    public MachineCodeInstructionArray getTargetCodeInstructions() {
-        return teleTargetMethod.getTargetCodeInstructions();
     }
 
     public byte[] getCode() {
