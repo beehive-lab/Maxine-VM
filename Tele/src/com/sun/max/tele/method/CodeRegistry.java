@@ -44,8 +44,8 @@ final class CodeRegistry extends AbstractTeleVMHolder {
         Trace.end(TRACE_VALUE, tracePrefix() + " initializing", startTimeMillis);
     }
 
-    private final SortedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>> compiledCodeMemoryRegions =
-        new SortedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>>();
+    private final OrderedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>> compiledCodeMemoryRegions =
+        new OrderedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>>();
 
     /**
      * Adds an entry to the code registry, indexed by code address.
