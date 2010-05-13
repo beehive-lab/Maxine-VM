@@ -93,14 +93,15 @@ public final class CiRegister {
         Byte,
 
         /**
-         * Denotes a 64-bit XMM register.
+         * Denotes a floating point register.
          */
-        XMM,
-
+        FPU,
+        
         /**
-         * Denotes an 80-bit MMX register.
+         * Denotes a register guaranteed to be non-zero if read in compiled Java code.
+         * For example, a register dedicated to holding the current thread.
          */
-        MMX;
+        NonZero;
 
         public final int mask = 1 << (ordinal() + 1);
     }
@@ -162,10 +163,10 @@ public final class CiRegister {
     }
 
     /**
-     * Determines if this an XMM register.
+     * Determines if this a floating point register.
      */
-    public boolean isXmm() {
-        return checkFlag(RegisterFlag.XMM);
+    public boolean isFpu() {
+        return checkFlag(RegisterFlag.FPU);
     }
 
     /**
@@ -176,18 +177,18 @@ public final class CiRegister {
     }
 
     /**
+     * Determines if this a register guaranteed to be non-zero if read in compiled Java code.
+     */
+    public boolean isNonZero() {
+        return checkFlag(RegisterFlag.NonZero);
+    }
+
+    /**
      * Determines if this register has the {@link RegisterFlag#Byte} attribute set.
      * @return {@code true} iff this register has the {@link RegisterFlag#Byte} attribute set.
      */
     public boolean isByte() {
         return checkFlag(RegisterFlag.Byte);
-    }
-
-    /**
-     * Determines if this an MMX register.
-     */
-    public boolean isMMX() {
-        return checkFlag(RegisterFlag.MMX);
     }
 
     @Override
@@ -287,7 +288,7 @@ public final class CiRegister {
                     byteRegs.add(r);
                 }
 
-                if (r.isXmm()) {
+                if (r.isFpu()) {
                     fpRegs.add(r);
                 }
                 maxRegNum = Math.max(maxRegNum, r.number);

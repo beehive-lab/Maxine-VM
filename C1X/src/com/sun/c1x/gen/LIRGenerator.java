@@ -38,6 +38,7 @@ import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.value.FrameState.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
@@ -299,9 +300,12 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         // no moves are created for phi functions at the begin of exception
         // handlers, so assign operands manually here
-        for (Phi phi : currentBlock.allLivePhis()) {
-            operandForPhi(phi);
-        }
+        currentBlock.stateBefore().forEachLivePhi(currentBlock, new PhiProcedure() {
+            public boolean doPhi(Phi phi) {
+                operandForPhi(phi);
+                return true;
+            }
+        });
 
         CiVariable result = newVariable(CiKind.Object);
         CiRegisterValue threadReg = compilation.target.registerConfig.getThreadRegister().asValue(CiKind.Object);
@@ -509,8 +513,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitLoadRegister(LoadRegister x) {
-        CiValue reg = createResultVariable(x);
-        lir.move(x.register().asValue(x.kind), reg);
+        x.setOperand(x.register().asValue(CiKind.Word));
     }
 
     @Override
@@ -518,7 +521,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.pause();
     }
 
-    private CiAddress getAddressForPointerOp(PointerOp x, CiKind kind, LIRItem pointer) {
+    protected CiAddress getAddressForPointerOp(PointerOp x, CiKind kind, LIRItem pointer) {
         CiAddress addr;
         if (x.displacement() == null) {
             // address is [pointer + offset]
@@ -526,9 +529,9 @@ public abstract class LIRGenerator extends ValueVisitor {
                 int displacement = x.offset().asConstant().asInt();
                 addr = new CiAddress(kind, pointer.result(), displacement);
             } else {
-                LIRItem index = new LIRItem(x.offset(), this);
-                index.loadItem();
-                addr = new CiAddress(kind, pointer.result(), index.result());
+                LIRItem offset = new LIRItem(x.offset(), this);
+                offset.loadItem();
+                addr = new CiAddress(kind, pointer.result(), offset.result());
             }
         } else {
             // address is [pointer + disp + (index * scale)]
@@ -729,9 +732,9 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private CiValue allocateOperand(XirTemp temp) {
-        if (temp instanceof XirFixed) {
-            XirFixed fixed = (XirFixed) temp;
-            return fixed.location;
+        if (temp instanceof XirRegister) {
+            XirRegister reg = (XirRegister) temp;
+            return reg.register;
         }
 
         return newVariable(temp.kind);
@@ -1660,10 +1663,10 @@ public abstract class LIRGenerator extends ValueVisitor {
         return phi.operand();
     }
 
-    protected void postBarrier(CiValue addr, CiValue newVal) {
+    protected void postGCWriteBarrier(CiValue addr, CiValue newVal) {
     }
 
-    protected void preBarrier(CiValue addrOpr, boolean patch, LIRDebugInfo info) {
+    protected void preGCWriteBarrier(CiValue addrOpr, boolean patch, LIRDebugInfo info) {
     }
 
     protected void setNoResult(Instruction x) {

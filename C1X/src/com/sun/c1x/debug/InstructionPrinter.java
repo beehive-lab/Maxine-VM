@@ -38,13 +38,13 @@ import com.sun.cri.ri.*;
 public class InstructionPrinter extends ValueVisitor {
 
     /**
-     * Formats a given instruction as value is a {@linkplain com.sun.c1x.value.FrameState frame state}. If the instruction is a phi defined at a given
-     * block, its {@linkplain com.sun.c1x.ir.Phi#operand() operands} are appended to the returned string.
+     * Formats a given instruction as a value in a {@linkplain FrameState frame state}. If the instruction is a phi defined at a given
+     * block, its {@linkplain Phi#inputCount() inputs} are appended to the returned string.
      *
      * @param index the index of the value in the frame state
      * @param value the frame state value
-     * @param block if {@code value} is a phi, then its operands are formatted if {@code block} is its
-     *            {@linkplain com.sun.c1x.ir.Phi#block() join point}
+     * @param block if {@code value} is a phi, then its inputs are formatted if {@code block} is its
+     *            {@linkplain Phi#block() join point}
      * @return the instruction representation as a string
      */
     public static String stateString(int index, Value value, BlockBegin block) {
@@ -55,9 +55,9 @@ public class InstructionPrinter extends ValueVisitor {
             // print phi operands
             if (phi.block() == block) {
                 sb.append(" [");
-                for (int j = 0; j < phi.operandCount(); j++) {
+                for (int j = 0; j < phi.inputCount(); j++) {
                     sb.append(' ');
-                    Value operand = phi.operandAt(j);
+                    Value operand = phi.inputAt(j);
                     if (operand != null) {
                         sb.append(Util.valueString(operand));
                     } else {
@@ -190,6 +190,9 @@ public class InstructionPrinter extends ValueVisitor {
         String flags = instruction.flagsToString();
         if (!flags.isEmpty()) {
             out.print("  [flags: " + flags + "]");
+        }
+        if (instruction instanceof StateSplit) {
+            out.print("  [state: " + ((StateSplit) instruction).stateBefore() + "]");
         }
         out.println();
     }
@@ -668,6 +671,13 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
+    public void visitCompareAndSwap(CompareAndSwap i) {
+        out.print(Bytecodes.nameOf(i.opcode)).print("(").print(i.pointer());
+        out.print(" + ").print(i.offset());
+        out.print(", ").print(i.expectedValue()).print(", ").print(i.newValue()).print(')');
+    }
+
+    @Override
     public void visitUnsafeGetObject(UnsafeGetObject unsafe) {
         out.print("UnsafeGetObject.(").print(unsafe.object()).print(", ").print(unsafe.offset()).print(')');
     }
@@ -717,7 +727,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = CiUtil.log2(target.sizeInBytes(i.kind));
+            int scale = target.sizeInBytes(i.kind);
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(")");
@@ -752,7 +762,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = CiUtil.log2(target.sizeInBytes(i.pointer().kind));
+            int scale = target.sizeInBytes(i.pointer().kind);
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(") := ").print(i.value());

@@ -63,7 +63,7 @@ public class LIRLabel extends LIROp0 {
      * Prints this instruction to a LogStream.
      */
     @Override
-    public String operationString() {
+    public String operationString(OperandFormatter operandFmt) {
         return label.isBound() ? String.valueOf(label.position()) : "?";
     }
 }

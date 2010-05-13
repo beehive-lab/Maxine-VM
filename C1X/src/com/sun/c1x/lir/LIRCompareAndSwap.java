@@ -32,24 +32,21 @@ public class LIRCompareAndSwap extends LIRInstruction {
 
     /**
      * Constructs a new LIRCompareAndSwap instruction.
-     *
      * @param addr
-     * @param cmpValue
+     * @param expectedValue
      * @param newValue
-     * @param tmp1
-     * @param tmp2
      */
-    public LIRCompareAndSwap(LIROpcode opcode, CiValue addr, CiValue cmpValue, CiValue newValue, CiValue tmp1, CiValue tmp2) {
-        super(opcode, CiValue.IllegalValue, null, false, null, 0, 2, addr, cmpValue, newValue);
+    public LIRCompareAndSwap(LIROpcode opcode, CiAddress addr, CiValue expectedValue, CiValue newValue) {
+        super(opcode, CiValue.IllegalValue, null, false, null, 0, 2, addr, expectedValue, newValue);
     }
 
     /**
-     * Gets the address of this class.
+     * Gets the address of compare and swap.
      *
      * @return the address
      */
-    public CiValue address() {
-        return operand(0);
+    public CiAddress address() {
+        return (CiAddress) operand(0);
     }
 
     /**
@@ -57,7 +54,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      *
      * @return the cmpValue
      */
-    public CiValue cmpValue() {
+    public CiValue exepectedValue() {
         return operand(1);
     }
 

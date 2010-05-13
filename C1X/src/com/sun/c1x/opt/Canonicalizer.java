@@ -1315,6 +1315,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         Method reflectMethod = runtime.getFoldingMethod(method);
 //        Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
         if (reflectMethod != null) {
+            reflectMethod.setAccessible(true);
             // the method is foldable. check that all input arguments are constants
             for (Value a : args) {
                 if (a != null && !a.isConstant()) {

@@ -236,7 +236,7 @@ public abstract class Instruction extends Value {
 
     /**
      * Gets the state after the instruction, if it is recorded. Typically only
-     * instances of {@link BlockEnd} have a state after.
+     * instances of {@link BlockEnd} have a non-null state after.
      * @return the state after the instruction
      */
     public FrameState stateAfter() {

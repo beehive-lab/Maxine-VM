@@ -33,6 +33,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.value.FrameState.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -103,31 +104,33 @@ public class IRInterpreter {
 
         private class ValueMapInitializer implements BlockClosure {
 
-            public void apply(BlockBegin block) {
+            public void apply(final BlockBegin block) {
                 FrameState state = block.stateBefore();
-                ArrayList<Phi> phis = (ArrayList<Phi>) state.allPhis(block);
+                state.forEachPhi(block, new PhiProcedure() {
+                    public boolean doPhi(Phi phi) {
+                        for (int j = 0; j < phi.inputCount(); j++) {
+                            Value phiOperand = block.isExceptionEntry() ? phi.inputAt(j) : phi.block().predAt(j).end();
+                            assert phiOperand != null : "Illegal phi operand";
 
-                for (Phi phi : phis) {
-                    for (int j = 0; j < phi.operandCount(); j++) {
-                        Value phiOperand = block.isExceptionEntry() ? phi.operandAt(j) : phi.block().predAt(j).end();
-                        assert phiOperand != null : "Illegal phi operand";
-
-                        if (phiOperand instanceof Phi) {
-                            if (phiOperand != phi) {
-                                phi.setFlag(Flag.PhiVisited);
-                                addPhiToInstructionList((Phi) phiOperand, phi);
-                                phi.clearFlag(Flag.PhiVisited);
+                            if (phiOperand instanceof Phi) {
+                                if (phiOperand != phi) {
+                                    phi.setFlag(Flag.PhiVisited);
+                                    addPhiToInstructionList((Phi) phiOperand, phi);
+                                    phi.clearFlag(Flag.PhiVisited);
+                                }
+                            } else {
+                                ArrayList<PhiMove> blockPhiMoves = phiMoves.get(phiOperand);
+                                if (blockPhiMoves == null) {
+                                    blockPhiMoves = new ArrayList<PhiMove>();
+                                    phiMoves.put(phiOperand, blockPhiMoves);
+                                }
+                                blockPhiMoves.add(new PhiMove(phi, phi.inputAt(j)));
                             }
-                        } else {
-                            ArrayList<PhiMove> blockPhiMoves = phiMoves.get(phiOperand);
-                            if (blockPhiMoves == null) {
-                                blockPhiMoves = new ArrayList<PhiMove>();
-                                phiMoves.put(phiOperand, blockPhiMoves);
-                            }
-                            blockPhiMoves.add(new PhiMove(phi, phi.operandAt(j)));
                         }
+                        return true;
                     }
-                }
+                });
+
                 for (Instruction instr = block; instr != null; instr = instr.next()) {
                     instructionValueMap.put(instr, new Val(-1, null));
                 }
@@ -135,8 +138,8 @@ public class IRInterpreter {
 
             private void addPhiToInstructionList(Phi phiSrc, Phi phi) {
                 phiSrc.setFlag(Flag.PhiVisited);
-                for (int j = 0; j < phiSrc.operandCount(); j++) {
-                    Value phiOperand = phiSrc.operandAt(j);
+                for (int j = 0; j < phiSrc.inputCount(); j++) {
+                    Value phiOperand = phiSrc.inputAt(j);
                     assert phiOperand != null : "Illegal phi operand";
 
                     if (phiOperand instanceof Phi) {
