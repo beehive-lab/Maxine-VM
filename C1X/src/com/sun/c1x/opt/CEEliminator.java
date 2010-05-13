@@ -24,6 +24,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.value.FrameState.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -112,7 +113,7 @@ public class CEEliminator implements BlockClosure {
 
         // check that phi function is present at end of successor stack and that
         // only this phi was pushed on the stack
-        Value suxPhi = suxState.stackAt(curIf.stateAfter().stackSize());
+        final Value suxPhi = suxState.stackAt(curIf.stateAfter().stackSize());
         if (suxPhi == null || !(suxPhi instanceof Phi) || ((Phi) suxPhi).block() != sux) {
             return;
         }
@@ -134,14 +135,17 @@ public class CEEliminator implements BlockClosure {
         // check that successor has no other phi functions but suxPhi
         // this can happen when tBlock or fBlock contained additional stores to local variables
         // that are no longer represented by explicit instructions
-
-        for (Phi i : sux.stateBefore().allPhis(sux)) {
-            if (i != suxPhi) {
-                return;
+        boolean suxHasOtherPhi = sux.stateBefore().forEachPhi(sux, new PhiProcedure() {
+            public boolean doPhi(Phi phi) {
+                return phi == suxPhi;
             }
+        });
+        if (suxHasOtherPhi) {
+            return;
         }
+
         // check that true and false blocks don't have phis
-        if (tBlock.stateBefore().hasPhisFor(null) || fBlock.stateBefore().hasPhisFor(null)) {
+        if (tBlock.stateBefore().hasPhis() || fBlock.stateBefore().hasPhis()) {
             return;
         }
 
@@ -204,9 +208,9 @@ public class CEEliminator implements BlockClosure {
 
         // substitute the phi if possible
         Phi suxAsPhi = (Phi) suxPhi;
-        if (suxAsPhi.operandCount() == 1) {
+        if (suxAsPhi.inputCount() == 1) {
             // if the successor block now has only one predecessor
-            assert suxAsPhi.operandAt(0) == result : "screwed up phi";
+            assert suxAsPhi.inputAt(0) == result : "screwed up phi";
             subst.setSubst(suxPhi, result);
 
             // 3) successfully eliminated a conditional expression

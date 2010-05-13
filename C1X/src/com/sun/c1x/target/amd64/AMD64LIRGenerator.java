@@ -42,23 +42,22 @@ import com.sun.cri.ci.*;
  */
 public final class AMD64LIRGenerator extends LIRGenerator {
 
-    private static final CiValue IDIV_IN = AMD64.rax.asValue(CiKind.Int);
-    private static final CiValue IDIV_OUT = AMD64.rax.asValue(CiKind.Int);
-    private static final CiValue IREM_OUT = AMD64.rdx.asValue(CiKind.Int);
-    private static final CiValue IDIV_TMP = AMD64.rdx.asValue(CiKind.Int);
+    private static final CiRegisterValue RAX_I = AMD64.rax.asValue(CiKind.Int);
+    private static final CiRegisterValue RAX_L = AMD64.rax.asValue(CiKind.Long);
+    private static final CiRegisterValue RAX_W = AMD64.rax.asValue(CiKind.Word);
+    private static final CiRegisterValue RDX_I = AMD64.rdx.asValue(CiKind.Int);
+    private static final CiRegisterValue RDX_L = AMD64.rdx.asValue(CiKind.Long);
 
-    private static final CiValue LDIV_IN = AMD64.rax.asValue(CiKind.Long);
-    private static final CiValue LDIV_OUT = AMD64.rax.asValue(CiKind.Long);
-    private static final CiValue LREM_OUT = AMD64.rdx.asValue(CiKind.Long);
-    private static final CiValue LDIV_TMP = AMD64.rdx.asValue(CiKind.Long);
+    private static final CiRegisterValue LDIV_TMP = RDX_L;
 
 
     /**
      * The register in which MUL puts the result for 64-bit multiplication.
      */
-    private static final CiValue LMUL_OUT = AMD64.rax.asValue(CiKind.Long);
+    private static final CiRegisterValue LMUL_OUT = RAX_L;
 
-    private static final CiValue SHIFT_COUNT_IN = AMD64.rcx.asValue(CiKind.Int);
+    private static final CiRegisterValue SHIFT_COUNT_IN = AMD64.rcx.asValue(CiKind.Int);
+
     protected static final CiValue ILLEGAL = CiValue.IllegalValue;
 
     public AMD64LIRGenerator(C1XCompilation compilation) {
@@ -200,7 +199,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             if (is64) {
                 // emit inline 64-bit code
                 LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-                CiValue dividend = force(x.x(), LDIV_IN); // dividend must be in RAX
+                CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
                 CiValue divisor = load(x.y());            // divisor can be in any (other) register
 
                 if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
@@ -212,10 +211,10 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 CiValue result = createResultVariable(x);
                 CiValue resultReg;
                 if (opcode == Bytecodes.LREM) {
-                    resultReg = LREM_OUT; // remainder result is produced in rdx
+                    resultReg = RDX_L; // remainder result is produced in rdx
                     lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
                 } else {
-                    resultReg = LDIV_OUT; // division result is produced in rax
+                    resultReg = RAX_L; // division result is produced in rax
                     lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
                 }
 
@@ -257,9 +256,14 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         if (opcode == Bytecodes.IDIV || opcode == Bytecodes.IREM) {
             // emit code for integer division or modulus
 
+            // Call 'stateFor' before 'force()' because 'stateFor()' may
+            // force the evaluation of other instructions that are needed for
+            // correct debug info.  Otherwise the live range of the fixed
+            // register might be too long.
             LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-            CiValue dividend = force(x.x(), IDIV_IN); // dividend must be in RAX
-            CiValue divisor = load(x.y());            // divisor can be in any (other) register
+
+            CiValue dividend = force(x.x(), RAX_I); // dividend must be in RAX
+            CiValue divisor = load(x.y());          // divisor can be in any (other) register
 
             if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
                 ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArithmeticException), info);
@@ -267,14 +271,19 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 lir.branch(Condition.EQ, CiKind.Int, stub);
                 info = null;
             }
+            // idiv and irem use rdx in their implementation so the
+            // register allocator must not assign to an interval that overlaps
+            // this division instruction.
+            CiRegisterValue tmp = RDX_I;
+
             CiValue result = createResultVariable(x);
             CiValue resultReg;
             if (opcode == Bytecodes.IREM) {
-                resultReg = IREM_OUT; // remainder result is produced in rdx
-                lir.irem(dividend, divisor, resultReg, IDIV_TMP, info);
+                resultReg = tmp; // remainder result is produced in rdx
+                lir.irem(dividend, divisor, resultReg, tmp, info);
             } else {
-                resultReg = IDIV_OUT; // division result is produced in rax
-                lir.idiv(dividend, divisor, resultReg, IDIV_TMP, info);
+                resultReg = RAX_I; // division result is produced in rax
+                lir.idiv(dividend, divisor, resultReg, tmp, info);
             }
 
             lir.move(resultReg, result);
@@ -332,7 +341,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             // emit code for long division or modulus
                 // emit inline 64-bit code
                 LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-                CiValue dividend = force(x.x(), LDIV_IN); // dividend must be in RAX
+                CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
                 CiValue divisor = load(x.y());            // divisor can be in any (other) register
 
                 if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
@@ -344,17 +353,17 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 CiValue result = createResultVariable(x);
                 CiValue resultReg;
                 if (opcode == Bytecodes.WREM) {
-                    resultReg = LREM_OUT; // remainder result is produced in rdx
+                    resultReg = RDX_L; // remainder result is produced in rdx
                     lir.wrem(dividend, divisor, resultReg, LDIV_TMP, info);
                 } else if (opcode == Bytecodes.WREMI) {
-                    resultReg = LREM_OUT; // remainder result is produced in rdx
+                    resultReg = RDX_L; // remainder result is produced in rdx
                     lir.wremi(dividend, divisor, resultReg, LDIV_TMP, info);
                 } else if (opcode == Bytecodes.WDIV) {
-                    resultReg = LDIV_OUT; // division result is produced in rax
+                    resultReg = RAX_L; // division result is produced in rax
                     lir.wdiv(dividend, divisor, resultReg, LDIV_TMP, info);
                 } else {
                     assert opcode == Bytecodes.WDIVI;
-                    resultReg = LDIV_OUT; // division result is produced in rax
+                    resultReg = RAX_L; // division result is produced in rax
                     lir.wdivi(dividend, divisor, resultReg, LDIV_TMP, info);
                 }
 
@@ -488,6 +497,48 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
+    public void visitCompareAndSwap(CompareAndSwap x) {
+        CiKind kind = x.kind;
+        LIRItem pointer = new LIRItem(x.pointer(), this);
+        LIRItem expectedValue = new LIRItem(x.expectedValue(), this);
+        LIRItem newValue = new LIRItem(x.newValue(), this);
+
+
+        assert pointer.instruction.kind.isWord();
+        assert expectedValue.instruction.kind == kind : "invalid type";
+        assert newValue.instruction.kind == kind : "invalid type";
+
+        pointer.loadItem();
+        CiAddress addr = getAddressForPointerOp(x, x.kind, pointer);
+
+        expectedValue.loadItemForce(AMD64.rax.asValue(kind));
+        newValue.loadItem();
+
+        if (kind.isObject()) { // Write-barrier needed for Object fields.
+            // Do the pre-write barrier : if any.
+            preGCWriteBarrier(addr, false, null);
+        }
+
+        CiValue result = createResultVariable(x);
+        CiValue resultReg = AMD64.rax.asValue(kind);
+        if (kind.isObject()) {
+            lir.casObj(addr, expectedValue.result(), newValue.result());
+        } else if (kind.isInt()) {
+            lir.casInt(addr, expectedValue.result(), newValue.result());
+        } else {
+            assert kind.isLong() || kind.isWord();
+            lir.casLong(addr, expectedValue.result(), newValue.result());
+        }
+
+        lir.move(resultReg, result);
+
+        if (kind.isObject()) { // Write-barrier needed for Object fields.
+            // Seems to be precise
+            postGCWriteBarrier(addr, newValue.result());
+        }
+    }
+
+    @Override
     protected void genCompareAndSwap(Intrinsic x, CiKind kind) {
         assert x.numberOfArguments() == 4 : "wrong type";
         LIRItem obj = new LIRItem(x.argumentAt(0), this); // object
@@ -503,37 +554,33 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         // get address of field
         obj.loadItem();
         offset.loadNonconstant();
+        CiAddress addr = new CiAddress(kind, obj.result(), offset.result());
 
         if (kind.isObject()) {
             cmp.loadItemForce(AMD64.rax.asValue(CiKind.Object));
             val.loadItem();
         } else if (kind.isInt()) {
-            cmp.loadItemForce(AMD64.rax.asValue(CiKind.Int));
+            cmp.loadItemForce(RAX_I);
             val.loadItem();
         } else if (kind.isLong()) {
             assert is64 : "32-bit not implemented";
-            cmp.loadItemForce(AMD64.rax.asValue(CiKind.Long));
+            cmp.loadItemForce(RAX_L);
             val.loadItemForce(AMD64.rbx.asValue(CiKind.Long));
         } else {
             Util.shouldNotReachHere();
         }
 
-        CiValue addr = newVariable(CiKind.Word);
-        lir.move(obj.result(), addr);
-        lir.add(addr, offset.result(), addr);
-
         if (kind.isObject()) { // Write-barrier needed for Object fields.
             // Do the pre-write barrier : if any.
-            preBarrier(addr, false, null);
+            preGCWriteBarrier(addr, false, null);
         }
 
-        CiValue ill = ILLEGAL; // for convenience
         if (kind.isObject()) {
-            lir.casObj(addr, cmp.result(), val.result(), ill, ill);
+            lir.casObj(addr, cmp.result(), val.result());
         } else if (kind.isInt()) {
-            lir.casInt(addr, cmp.result(), val.result(), ill, ill);
+            lir.casInt(addr, cmp.result(), val.result());
         } else if (kind.isLong()) {
-            lir.casLong(addr, cmp.result(), val.result(), ill, ill);
+            lir.casLong(addr, cmp.result(), val.result());
         } else {
             Util.shouldNotReachHere();
         }
@@ -543,7 +590,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         lir.cmove(Condition.EQ, CiConstant.INT_1, CiConstant.INT_0, result);
         if (kind.isObject()) { // Write-barrier needed for Object fields.
             // Seems to be precise
-            postBarrier(addr, val.result());
+            postGCWriteBarrier(addr, val.result());
         }
     }
 
@@ -684,11 +731,11 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             boolean isObj = (kind == CiKind.Jsr || kind == CiKind.Object);
             if (isObj) {
                 // Do the pre-write barrier, if any.
-                preBarrier(addr, false, null);
+                preGCWriteBarrier(addr, false, null);
                 lir.move(data, addr);
                 assert src.isVariableOrRegister() : "must be register";
                 // Seems to be a precise address
-                postBarrier(addr, data);
+                postGCWriteBarrier(addr, data);
             } else {
                 lir.move(data, addr);
             }

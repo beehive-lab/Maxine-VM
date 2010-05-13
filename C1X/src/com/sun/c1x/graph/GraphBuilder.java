@@ -2406,7 +2406,7 @@ public final class GraphBuilder {
         Value expectedValue = pop(kind);
         Value offset = (opcode >= PCMPSWP_INT_I && opcode <= PCMPSWP_REFERENCE_I) ? ipop() : wpop();
         Value pointer = wpop();
-        append(new CompareAndSwap(opcode, pointer, offset, expectedValue, newValue, stateBefore, false));
+        push(kind, append(new CompareAndSwap(opcode, pointer, offset, expectedValue, newValue, stateBefore, false)));
     }
 
 

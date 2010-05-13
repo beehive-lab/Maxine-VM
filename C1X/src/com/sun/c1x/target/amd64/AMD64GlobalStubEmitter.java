@@ -139,7 +139,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         return new GlobalStub(stub, stub.resultKind, stubObject, argsSize, argOffsets, resultOffset);
     }
 
-    private CiValue allocateOperand(XirParameter param, int parameterIndex) {
+    private CiValue allocateParameterOperand(XirParameter param, int parameterIndex) {
         return new CiAddress(param.kind, AMD64.RSP, argumentIndexToStackOffset(parameterIndex));
     }
 
@@ -148,9 +148,9 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private CiValue allocateOperand(XirTemp temp) {
-        if (temp instanceof XirFixed) {
-            XirFixed fixed = (XirFixed) temp;
-            return fixed.location;
+        if (temp instanceof XirRegister) {
+            XirRegister fixed = (XirRegister) temp;
+            return fixed.register;
         }
 
         return newRegister(temp.kind);
@@ -178,10 +178,10 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         }
 
         for (XirTemp t : template.temps) {
-            if (t instanceof XirFixed) {
-                final XirFixed fixed = (XirFixed) t;
-                if (fixed.location.isRegister()) {
-                    allocatableRegisters.remove(fixed.location.asRegister());
+            if (t instanceof XirRegister) {
+                final XirRegister fixed = (XirRegister) t;
+                if (fixed.register.isRegister()) {
+                    allocatableRegisters.remove(fixed.register.asRegister());
                 }
             }
         }
@@ -205,7 +205,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
         for (XirParameter param : template.parameters) {
             assert !(param instanceof XirConstantOperand) : "constant parameters not supported for stubs";
-            CiValue op = allocateOperand(param, param.parameterIndex);
+            CiValue op = allocateParameterOperand(param, param.parameterIndex);
             assert operands[param.index] == null;
 
             // Is the value destroyed?

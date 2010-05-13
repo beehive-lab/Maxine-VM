@@ -152,10 +152,16 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
 
     public String getName() {
         String name;
-        if (classMethodActor() == null) {
-            name = targetMethod().name();
+        ClassMethodActor classMethodActor = classMethodActor();
+        if (classMethodActor == null) {
+            Reference nameReference = vm().teleFields().RuntimeMemoryRegion_regionName.readReference(reference());
+            if (!nameReference.isZero()) {
+                name = vm().getString(nameReference);
+            } else {
+                name = "???";
+            }
         } else {
-            name = classMethodActor().simpleName();
+            name = classMethodActor.simpleName();
         }
         return getClass().getSimpleName() + " for " + name;
     }
@@ -421,6 +427,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
 
     public TargetMethod targetMethod() {
         if (targetMethod == null) {
+            Trace.line(1, "Deep copying target method: " + getName());
             targetMethod = (TargetMethod) deepCopy();
         }
         return targetMethod;

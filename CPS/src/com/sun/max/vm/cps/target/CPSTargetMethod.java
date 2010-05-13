@@ -97,11 +97,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     }
 
     @Override
-    public String name() {
-        return regionName();
-    }
-
-    @Override
     public int count(Builtin builtin, int defaultResult) {
         return defaultResult;
     }

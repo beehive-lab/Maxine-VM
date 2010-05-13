@@ -87,7 +87,7 @@ public abstract class Safepoint {
      *
      * TODO: Make the choice for this value based on the mechanism proven to runs best on each platform.
      */
-    public static final boolean UseCASBasedGCMutatorSynchronization = false;
+    public static final boolean UseCASBasedGCMutatorSynchronization = true;
 
     /**
      * Constant denoting a mutator thread is executing native code.

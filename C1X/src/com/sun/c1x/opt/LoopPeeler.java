@@ -26,6 +26,7 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.Loop.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.value.FrameState.*;
 
 /**
  * The {@code LoopPeeler} performs the loop peeling optimization in
@@ -717,7 +718,7 @@ public class LoopPeeler extends DefaultValueVisitor {
                             if (phi.block() == loop.header) {
                                 // TODO: think about cases were more than one edge flow to loop
                                 // header
-                                return lookup(phi.operandAt(predecessorIdx));
+                                return lookup(phi.inputAt(predecessorIdx));
                             }
                         }
                         return lookup(i);
@@ -829,10 +830,13 @@ public class LoopPeeler extends DefaultValueVisitor {
             // the loop has only one outside predecessor
             // we resolve all phi instructions in to use the operand coming
             // from that predecessor
-            int predIdx = predecessors.indexOf(loopPredecessors.get(0));
-            for (Phi phi : loop.header.stateBefore().allPhis(loop.header)) {
-                bind(phi, phi.operandAt(predIdx));
-            }
+            final int predIdx = predecessors.indexOf(loopPredecessors.get(0));
+            loop.header.stateBefore().forEachPhi(loop.header, new PhiProcedure() {
+                public boolean doPhi(Phi phi) {
+                    bind(phi, phi.inputAt(predIdx));
+                    return true;
+                }
+            });
         }
 
         // make all outside predecessors point to the cloned

@@ -102,7 +102,12 @@ public abstract class LIRInstruction {
      * Constructs a new Instruction.
      *
      * @param opcode the opcode of the new instruction
-     * @param result the operand that holds the operation result of this instruction
+     * @param result the operand that holds the operation result of this instruction. This will be
+     *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
+     * @param info the debug info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
+     * @param hasCall
+     * @param stub
+     * @param tempInput
      * @param info the object holding information needed to perform deoptimization
      */
     public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall, LocalStub stub, int tempInput, int temp, CiValue... inputAndTempOperands) {
@@ -169,19 +174,19 @@ public abstract class LIRInstruction {
         return new LIRAddressOperand(base, address);
     }
 
-    private LIROperand addOperand(CiValue input, boolean isInput, boolean isTemp) {
-        assert input != null;
-        if (input != CiValue.IllegalValue) {
-            assert !(input.isAddress());
-            if (input.isStackSlot()) {
+    private LIROperand addOperand(CiValue operand, boolean isInput, boolean isTemp) {
+        assert operand != null;
+        if (operand != CiValue.IllegalValue) {
+            assert !(operand.isAddress());
+            if (operand.isStackSlot()) {
                 // no variables to add
-                return new LIROperand(input);
-            } else if (input.isConstant()) {
+                return new LIROperand(operand);
+            } else if (operand.isConstant()) {
                 // no variables to add
-                return new LIROperand(input);
+                return new LIROperand(operand);
             } else {
                 assert allocatorOperands.size() == outputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
-                allocatorOperands.add(input);
+                allocatorOperands.add(operand);
 
                 if (isInput && isTemp) {
                     allocatorTempInputCount++;
@@ -321,12 +326,31 @@ public abstract class LIRInstruction {
     public abstract void emitCode(LIRAssembler masm);
 
     /**
+     * Utility for specializing how a {@linkplain CiValue LIR operand} is formatted to a string.
+     * The {@linkplain OperandFormatter#DEFAULT default formatter} return the value of
+     * {@link CiValue#toString()}.
+     */
+    public static class OperandFormatter {
+        public static final OperandFormatter DEFAULT = new OperandFormatter();
+
+        /**
+         * Formats a given operand as a string.
+         *
+         * @param operand the operand to format
+         * @return {@code operand} as a string
+         */
+        public String format(CiValue operand) {
+            return operand.toString();
+        }
+    }
+
+    /**
      * Gets the operation performed by this instruction in terms of its operands as a string.
      */
-    public String operationString() {
+    public String operationString(OperandFormatter operandFmt) {
         StringBuilder buf = new StringBuilder();
         if (result != ILLEGAL_SLOT) {
-            buf.append(result.value(this)).append(" = ");
+            buf.append(operandFmt.format(result.value(this))).append(" = ");
         }
         if (inputAndTempOperands.length > 1) {
             buf.append("(");
@@ -338,7 +362,7 @@ public abstract class LIRInstruction {
             } else {
                 first = false;
             }
-            buf.append(operandSlot.value(this));
+            buf.append(operandFmt.format(operandSlot.value(this)));
         }
         if (inputAndTempOperands.length > 1) {
             buf.append(")");
@@ -352,7 +376,7 @@ public abstract class LIRInstruction {
      * @param st the LogStream to print into.
      */
     public final void printOn(LogStream st) {
-        if (id != -1 || C1XOptions.PrintCFGToFile) {
+        if (id != -1) {
             st.printf("%4d ", id);
         } else {
             st.print("     ");
@@ -478,7 +502,11 @@ public abstract class LIRInstruction {
 
     @Override
     public String toString() {
-        StringBuilder buf = new StringBuilder(name()).append(' ').append(operationString());
+        return toString(OperandFormatter.DEFAULT);
+    }
+
+    public String toString(OperandFormatter operandFmt) {
+        StringBuilder buf = new StringBuilder(name()).append(' ').append(operationString(operandFmt));
         if (info != null) {
             buf.append(" [bci:").append(info.bci).append("]");
         }

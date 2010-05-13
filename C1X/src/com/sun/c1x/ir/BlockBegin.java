@@ -693,14 +693,6 @@ public final class BlockBegin extends Instruction {
         return this.predecessors.contains(block);
     }
 
-    public Iterable<Phi> allLivePhis() {
-        return stateBefore.allLivePhis(this);
-    }
-
-    public Iterable<Phi> allPhis() {
-        return stateBefore.allPhis(this);
-    }
-
     public void addExceptionStates(List<FrameState> exceptHandlerStates) {
         for (FrameState state : exceptHandlerStates) {
             addExceptionState(state.copy());

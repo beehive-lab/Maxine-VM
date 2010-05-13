@@ -74,7 +74,11 @@ public abstract class Value {
     private int flags;
     protected CiValue operand = CiValue.IllegalValue;
 
-    public Object optInfo; // a cache field for analysis information
+    /**
+     * A cache for analysis information. Every optimization must reset this field to {@code null} once it has completed.
+     */
+    public Object optInfo;
+
     public Value subst;    // managed by InstructionSubstituter
 
     /**

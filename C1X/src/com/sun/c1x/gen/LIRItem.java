@@ -256,6 +256,6 @@ public class LIRItem {
 
     @Override
     public String toString() {
-        return result() + "";
+        return result().toString();
     }
 }
