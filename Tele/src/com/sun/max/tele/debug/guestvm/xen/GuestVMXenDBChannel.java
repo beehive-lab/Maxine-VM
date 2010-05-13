@@ -26,45 +26,62 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.MaxWatchpoint.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.jni.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.dump.*;
 import com.sun.max.unsafe.*;
 
 /**
  * This class encapsulates all interaction with the Xen db communication channel.
- * A variety of channel implementations are possible, currently there are two:
+ * A variety of channel implementations are possible, currently there are three:
  * <ul>
  * <li>Direct communication to the target domain via the {@code db-front/db-back} split device driver, using the {@code guk_db} library.
  * Note that this requires that the Inspector be run in the privileged dom0 in order to access the target domain.</li>
  * <li>Indirect communication to the {@code db-front/db-back} split device driver via a TCP connection to an agent running domU.
- * This allows the Inspector to run in an unprivileged domain (domU).
+ * This allows the Inspector to run in an unprivileged domain (domU).</li>
+ * <li>Reading a Xen core dump.</li>
  * </ul>
- * The choice of which mechanism to use is based on the value of the {@code max.ins.guestvm.channel} property.
+ * The choice of which mechanism to use is based on the value of the {@value CHANNEL_PROPERTY} property.
  *
  * @author Mick Jordan
  *
  */
 public final class GuestVMXenDBChannel {
     private static final String CHANNEL_PROPERTY = "max.ins.guestvm.channel";
+    private static final String RING_JNI = "ring.jni";
+    private static final String RING_TCP = "ring.tcp";
+    private static final String XEN_DUMP = "xen.dump";
+    private static final String GDBSX_TCP = "gdbsx.tcp";
+    private static final String DEFAULT_PROTOCOL = RING_JNI;
     private static GuestVMXenTeleDomain teleDomain;
-    private static GuestVMXenDBChannelProtocol channelProtocol;
+    private static Protocol channelProtocol;
     private static int maxByteBufferSize;
 
     public static synchronized void attach(GuestVMXenTeleDomain teleDomain, int domId) {
         GuestVMXenDBChannel.teleDomain = teleDomain;
         String channelType = System.getProperty(CHANNEL_PROPERTY);
         if (channelType == null) {
-            channelType = "ring.direct";
+            channelType = DEFAULT_PROTOCOL;
         }
-        if (channelType.equals("ring.direct")) {
-            channelProtocol = new GuestVMXenDBNativeChannelProtocol();
-        } else if (channelType.startsWith("ring.tcp")) {
+        if (channelType.equals(RING_JNI)) {
+            channelProtocol = new JniProtocol();
+        } else if (channelType.startsWith(RING_TCP)) {
             final int sep = channelType.indexOf(',');
             if (sep > 0) {
-                channelProtocol = new GuestVMXenDBTCPNativeChannelProtocol(channelType.substring(sep + 1));
+                channelProtocol = new TCPProtocol(channelType.substring(sep + 1));
             } else {
                 throw new IllegalArgumentException("host/port not specified with " + CHANNEL_PROPERTY);
             }
-        } else if (channelType.startsWith("gdbsx.tcp")) {
-            throw new IllegalArgumentException("gdbsx.tcp is not implemented");
+        } else if (channelType.startsWith(XEN_DUMP)) {
+            final int sep = channelType.indexOf(',');
+            if (sep > 0) {
+                channelProtocol = new DumpProtocol(channelType.substring(sep + 1));
+            } else {
+                throw new IllegalArgumentException("dump file not specified with " + CHANNEL_PROPERTY);
+            }
+        } else if (channelType.startsWith(GDBSX_TCP)) {
+            throw new IllegalArgumentException(GDBSX_TCP + " is not implemented");
         }
         channelProtocol.attach(domId);
         maxByteBufferSize = channelProtocol.maxByteBufferSize();
