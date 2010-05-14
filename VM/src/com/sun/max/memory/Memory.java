@@ -221,7 +221,7 @@ public final class Memory {
     }
 
     @NO_SAFEPOINTS("speed")
-    public static void zapRegion(MemoryRegion region) {
+    public static void zapRegion(RuntimeMemoryRegion region) {
         FatalError.check(region.start().isWordAligned(), "Can only zap word-aligned region");
         FatalError.check(region.size().remainder(Word.size()) == 0, "Can only zap region of words");
         setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));

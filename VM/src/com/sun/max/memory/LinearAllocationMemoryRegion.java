@@ -42,7 +42,7 @@ public class LinearAllocationMemoryRegion extends RuntimeMemoryRegion {
         super(start, size);
     }
 
-    public LinearAllocationMemoryRegion(MemoryRegion memoryRegion) {
+    public LinearAllocationMemoryRegion(RuntimeMemoryRegion memoryRegion) {
         super(memoryRegion);
     }
 

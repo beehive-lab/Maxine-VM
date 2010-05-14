@@ -25,7 +25,7 @@ import java.lang.management.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
-public class RuntimeMemoryRegion implements MemoryRegion {
+public class RuntimeMemoryRegion {
 
     /**
      * An optional, short string that describes the role being played by the region, useful for debugging.
@@ -54,7 +54,7 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         this.size = size;
     }
 
-    public RuntimeMemoryRegion(MemoryRegion memoryRegion) {
+    public RuntimeMemoryRegion(RuntimeMemoryRegion memoryRegion) {
         start = memoryRegion.start();
         size = memoryRegion.size();
     }
@@ -105,12 +105,15 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         return address.greaterEqual(start()) && address.lessThan(end());
     }
 
-    public final boolean overlaps(MemoryRegion memoryRegion) {
+    public final boolean overlaps(RuntimeMemoryRegion memoryRegion) {
         return start().lessThan(memoryRegion.end()) && end().greaterThan(memoryRegion.start());
     }
 
-    public final boolean sameAs(MemoryRegion otherMemoryRegion) {
-        return Util.equal(this, otherMemoryRegion);
+    public final boolean sameAs(RuntimeMemoryRegion otherMemoryRegion) {
+        if (otherMemoryRegion == null) {
+            return false;
+        }
+        return start.equals(otherMemoryRegion.start) && size.equals(otherMemoryRegion.size);
     }
 
     public MemoryUsage getUsage() {

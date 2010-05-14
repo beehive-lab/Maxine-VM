@@ -414,7 +414,7 @@ public final class DataPrototype extends Prototype {
      */
     abstract class MemoryRegionVisitor implements ObjectCellVisitor, Cloneable {
 
-        final MemoryRegion region;
+        final RuntimeMemoryRegion region;
         final String name;
 
         /**
@@ -423,7 +423,7 @@ public final class DataPrototype extends Prototype {
          * @param region the region of memory to visit
          * @param name the name of this visitor
          */
-        MemoryRegionVisitor(MemoryRegion region, String name) {
+        MemoryRegionVisitor(RuntimeMemoryRegion region, String name) {
             this.region = region;
             this.name = name;
         }
@@ -497,7 +497,7 @@ public final class DataPrototype extends Prototype {
          * @param region the memory region
          * @param name the name of this writer
          */
-        ByteArrayMemoryRegionWriter(MemoryRegion region, String name) {
+        ByteArrayMemoryRegionWriter(RuntimeMemoryRegion region, String name) {
             super(region, name);
             data = new byte[region.size().roundedUpBy(pageSize).toInt()];
             used = new boolean[data.length];
@@ -612,7 +612,7 @@ public final class DataPrototype extends Prototype {
         private Object object;
         private boolean objectIsArray;
         private String[] values;
-        private final MemoryRegion otherRegion;
+        private final RuntimeMemoryRegion otherRegion;
 
         /**
          * Creates a new map writer for the specified region.
@@ -622,7 +622,7 @@ public final class DataPrototype extends Prototype {
          * @param name the name of this map writer
          * @param mapPrintStream the print stream to which to output the result
          */
-        MemoryRegionMapWriter(MemoryRegion region, MemoryRegion otherRegion, String name, PrintStream mapPrintStream) {
+        MemoryRegionMapWriter(RuntimeMemoryRegion region, RuntimeMemoryRegion otherRegion, String name, PrintStream mapPrintStream) {
             super(region, name);
             this.mapPrintStream = mapPrintStream;
             this.otherRegion = otherRegion;

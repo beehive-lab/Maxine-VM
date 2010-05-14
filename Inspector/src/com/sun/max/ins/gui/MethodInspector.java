@@ -108,7 +108,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                         try {
                             String description = enteredDescription;
                             if (description == null || description.equals("")) {
-                                description = "Native code @0x" + nativeAddress.toHexString();
+                                description = defaultDescription;
                             }
                             final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().createTeleNativeTargetRoutine(nativeAddress, codeSize, description);
                             result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));

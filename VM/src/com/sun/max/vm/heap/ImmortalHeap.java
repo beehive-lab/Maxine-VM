@@ -142,7 +142,7 @@ public final class ImmortalHeap {
         immortalHeap.initialize(Size.fromLong(Math.max(maxPermSize.getValue().toLong(), permSize.getValue().toLong())));
     }
 
-    public static void initialize(MemoryRegion memoryRegion) {
+    public static void initialize(RuntimeMemoryRegion memoryRegion) {
         immortalHeap.initialize(memoryRegion);
     }
 

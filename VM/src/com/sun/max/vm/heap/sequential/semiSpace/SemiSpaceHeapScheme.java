@@ -934,7 +934,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
     /**
      * Inserts {@linkplain DebugHeap#writeCellPadding(Pointer, int) padding} into the unused portion of a thread's TLAB.
-     * This is required if {@linkplain DebugHeap#verifyRegion(String, Pointer, Address, MemoryRegion, PointerOffsetVisitor) verification}
+     * This is required if {@linkplain DebugHeap#verifyRegion(String, Pointer, Address, RuntimeMemoryRegion, PointerOffsetVisitor) verification}
      * of the heap will be performed.
      *
      * @param enabledVmThreadLocals the pointer to the safepoint-enabled VM thread locals for the thread whose TLAB is
@@ -1022,7 +1022,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         }
     }
 
-    private void zapRegion(MemoryRegion region, String when) {
+    private void zapRegion(RuntimeMemoryRegion region, String when) {
         if (Heap.traceGCPhases()) {
             Log.print("Zapping region ");
             Log.print(region.regionName());

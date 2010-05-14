@@ -33,11 +33,11 @@ import com.sun.max.unsafe.*;
  *
  * @author Bernd Mathiske
  */
-public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion> implements IterableWithLength<MemoryRegion_Type> {
+public final class SortedMemoryRegionList<MemoryRegion_Type extends RuntimeMemoryRegion> implements IterableWithLength<MemoryRegion_Type> {
 
-    public static final Comparator<MemoryRegion> COMPARATOR = new Comparator<MemoryRegion>() {
+    public static final Comparator<RuntimeMemoryRegion> COMPARATOR = new Comparator<RuntimeMemoryRegion>() {
         @Override
-        public int compare(MemoryRegion o1, MemoryRegion o2) {
+        public int compare(RuntimeMemoryRegion o1, RuntimeMemoryRegion o2) {
             Address o1Start = o1.start();
             Address o2Start = o2.start();
             if (o1Start.lessThan(o2Start)) {
@@ -59,7 +59,7 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
 
     public SortedMemoryRegionList(int initialCapacity) {
         Class<MemoryRegion_Type[]> type = null;
-        memoryRegions = StaticLoophole.cast(type, new MemoryRegion[initialCapacity]);
+        memoryRegions = StaticLoophole.cast(type, new RuntimeMemoryRegion[initialCapacity]);
     }
 
     @INSPECTED
