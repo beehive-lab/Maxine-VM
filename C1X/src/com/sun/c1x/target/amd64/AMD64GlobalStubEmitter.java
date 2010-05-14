@@ -35,9 +35,6 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     public static final int ARGUMENT_SIZE = 8;
 
-    private static boolean callerFrameContainsArguments = true;
-
-    private static final int ReservedArgumentSlots = 4;
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
     private static final CiRegister convertArgument = AMD64.xmm0;
@@ -50,7 +47,6 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     private int argsSize;
     private int[] argOffsets;
     private int resultOffset;
-    private int localSize;
     private int saveSize;
     private int registerRestoreEpilogueOffset;
 
@@ -71,7 +67,6 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     private void reset(CiKind resultKind, CiKind[] argTypes) {
         asm = new AMD64MacroAssembler(compiler, compiler.target);
-        localSize = 0;
         saveSize = 0;
         argsSize = 0;
         argOffsets = new int[argTypes.length];
@@ -80,11 +75,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         registersSaved = null;
 
         for (int i = 0; i < argTypes.length; i++) {
-            if (callerFrameContainsArguments) {
-                argOffsets[i] = argsSize;
-            } else {
-                argOffsets[i] = -(ARGUMENT_SIZE + target.wordSize) - (i * ARGUMENT_SIZE);
-            }
+            argOffsets[i] = argsSize;
             argsSize += ARGUMENT_SIZE;
         }
 
@@ -92,11 +83,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
             if (argsSize == 0) {
                 argsSize = ARGUMENT_SIZE;
             }
-            if (callerFrameContainsArguments) {
-                resultOffset = 0;
-            } else {
-                resultOffset = -(ARGUMENT_SIZE + target.wordSize);
-            }
+            resultOffset = 0;
         }
     }
 
@@ -343,18 +330,10 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private int argumentIndexToStackOffset(int index) {
-        assert index < ReservedArgumentSlots;
-        if (callerFrameContainsArguments) {
-            // <-- lower addresses
-            // | stub frame              | caller frame   |
-            // | locals,savearea,retaddr | args .....     |
-            return frameSize() + (index + 1) * ARGUMENT_SIZE;
-        } else {
-            // <-- lower addresses
-            // | stub frame                   | caller frame   |
-            // | locals,savearea,args,retaddr | ..........     |
-            return frameSize() - (index + 1) * ARGUMENT_SIZE;
-        }
+        // <-- lower addresses
+        // | stub frame              | caller frame   |
+        // | locals,savearea,retaddr | args .....     |
+        return frameSize() + (index + 1) * ARGUMENT_SIZE;
     }
 
     private void loadArgument(int index, CiRegister register) {
@@ -368,7 +347,6 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     private void partialSavePrologue(CiRegister... registersToSave) {
         this.registersSaved = registersToSave;
         this.saveSize = registersToSave.length * target.wordSize;
-        this.localSize = reservedSize();
 
         // align to code size
         int entryCodeOffset = runtime.codeOffset();
@@ -389,7 +367,6 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     private void completeSavePrologue() {
         this.saveSize = target.registerConfig.getMinimumCalleeSaveFrameSize();
-        this.localSize = reservedSize();
         int entryCodeOffset = runtime.codeOffset();
         if (entryCodeOffset != 0) {
             // align to code size
@@ -405,14 +382,6 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
             }
         }
         this.savedAllRegisters = true;
-    }
-
-    private int reservedSize() {
-        if (callerFrameContainsArguments) {
-            return 0;
-        } else {
-            return ReservedArgumentSlots * ARGUMENT_SIZE;
-        }
     }
 
     private void epilogue() {
@@ -442,7 +411,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private int frameSize() {
-        return target.alignFrameSize(localSize + saveSize);
+        return target.alignFrameSize(saveSize);
     }
 
     private void forwardRuntimeCall(CiRuntimeCall call) {
