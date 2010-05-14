@@ -31,7 +31,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -163,8 +162,12 @@ public class Intrinsics extends IntrinsifierClient {
                         bi.intrinsify(INVOKESPECIAL, cpi);
                     }
                 }
-            } catch (HostOnlyClassError e) {
-            } catch (HostOnlyMethodError e) {
+            } catch (NoClassDefFoundError e) {
+                // This is almost always due to process code guarded with MaxineVM.isHosted().
+                // The compiler will dead-code eliminate such code before it is ever compiled.
+            } catch (NoSuchMethodError e) {
+                // This is almost always due to process code guarded with MaxineVM.isHosted().
+                // The compiler will dead-code eliminate such code before it is ever compiled.
             }
         }
 
