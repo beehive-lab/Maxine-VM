@@ -57,13 +57,14 @@ public abstract class Disassembler {
         String key = isa + " " + wordWidth;
         Constructor con = disassemblerConstructors.get(key);
         if (con == null) {
+            // Try word-width specific class first:
             String packageName = new com.sun.max.asm.dis.Package().name() + "." + isa.name().toLowerCase();
-            String className = packageName + "." + isa.name() + "Disassembler";
+            String className = packageName + "." + isa.name() + wordWidth.numberOfBits + "Disassembler";
             Class<?> disasmClass = null;
             try {
                 disasmClass = Class.forName(className);
             } catch (ClassNotFoundException e1) {
-                className = packageName + "." + isa.name() + wordWidth.numberOfBits + "Disassembler";
+                className = packageName + "." + isa.name() + "Disassembler";
                 try {
                     disasmClass = Class.forName(className);
                 } catch (ClassNotFoundException e2) {
