@@ -46,12 +46,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
     private final InstructionMap instructionMap;
     private TeleConstantPool teleConstantPool;
     private ConstantPool localConstantPool;
-
-    /**
-     * local copy of the method bytecodes in the VM; null if a native method or otherwise unavailable.
-     */
-    //private final byte[] bytecodes;
-
     private final String[] rowToTagText;
 
     protected TargetCodeViewer(Inspection inspection, MethodInspector parent, MaxCompiledCode compiledCode) {
@@ -70,7 +64,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
             final TeleClassMethodActor teleClassMethodActor = compiledMethod.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
-//              bytecodes = teleCodeAttribute.readBytecodes();
                 teleConstantPool = teleCodeAttribute.getTeleConstantPool();
                 ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
                 localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().constantPool;
@@ -83,82 +76,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
                     }
                 }
             }
-        }
-
-
-
-//        rowToCalleeIndex = new int[targetInstructionCount];
-//        Arrays.fill(rowToCalleeIndex, -1);
-//        isBoundaryRow = new boolean[targetInstructionCount];
-//        Arrays.fill(isBoundaryRow, false);
-//        isStopRow = new boolean[targetInstructionCount];
-//        Arrays.fill(isStopRow, false);
-
-//        final int targetCodeLength = compiledCode.memoryRegion().size().toInt();
-//        final int[] positionToStopIndex = new int[targetCodeLength];
-//        Arrays.fill(positionToStopIndex, -1);
-//        final StopPositions stopPositions = compiledCode.getStopPositions();
-//        if (stopPositions != null) {
-//            for (int stopPositionIndex = 0; stopPositionIndex < stopPositions.length(); ++stopPositionIndex) {
-//                final int stopPosition = stopPositions.get(stopPositionIndex);
-//                ProgramError.check(stopPosition >= 0 && stopPosition < positionToStopIndex.length);
-//                positionToStopIndex[stopPosition] = stopPositionIndex;
-//            }
-//        }
-
-        if (compiledCode instanceof TeleJitTargetMethod) { // JIT method
-//            final int[] bytecodeToTargetCodePositionMap = ((TeleJitTargetMethod) compiledCode).bytecodeToTargetCodePositionMap();
-//            int bytecodeIndex = 0; // position in the original bytecode stream.
-//            for (int row = 0; row < targetInstructionCount; row++) {
-//                final int bytecodePosition = bytecodeIndex;
-//                // To check if we're crossing a bytecode boundary in the JITed code, compare the offset of the instruction at the current row with the offset recorded by the JIT
-//                // for the start of bytecode template.
-//                final int instructionPosition = instructionMap.instruction(row).position;
-//                if (bytecodePosition < bytecodeToTargetCodePositionMap.length && instructionPosition == bytecodeToTargetCodePositionMap[bytecodePosition]) {
-//                    // This is the start of the machine code block implementing the next bytecode
-////                    isBoundaryRow[row] = true;
-//
-//                    int opcode = Bytes.beU1(bytecodes, bytecodeIndex);
-//                    if (opcode == Bytecodes.WIDE) {
-//                        opcode = Bytes.beU1(bytecodes, bytecodeIndex + 1);
-//                    }
-//
-//                    rowToTagText[row] = bytecodePosition + ": " + Bytecodes.nameOf(opcode);
-//                    //final BytecodeLocation bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), bytecodePosition);
-//
-//                    do {
-//                        ++bytecodeIndex;
-//                    } while (bytecodeIndex < bytecodeToTargetCodePositionMap.length && bytecodeToTargetCodePositionMap[bytecodeIndex] == 0);
-//                }
-//                if (positionToStopIndex[instructionPosition] >= 0) {
-//                    //isStopRow[row] = true;
-//                }
-//            }
-        } else {
-//            for (int row = 0; row < targetInstructionCount; row++) {
-//                int stopIndex = -1;
-//                // byte offset of this machine code instruction from beginning
-//                final int machineInstructionPosition = instructions.get(row).position;
-//                if (machineInstructionPosition >= 0 && machineInstructionPosition < positionToStopIndex.length) {
-//                    // The disassembler sometimes seems to report wild positions
-//                    // when disassembling random binary; this can happen when
-//                    // viewing some unknown native code whose length we must guess.
-//                    stopIndex = positionToStopIndex[machineInstructionPosition];
-//                }
-//                if (stopIndex >= 0) {
-//                    // the row is at a stop point
-//                    // isStopRow[row] = true;
-//                    if (compiledCode instanceof TeleTargetMethod) {
-//                        final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) compiledCode;
-//                        final BytecodeLocation bytecodeLocation = teleTargetMethod.getBytecodeLocation(stopIndex);
-//
-//                        // TODO (mlvdv) only works for non-inlined calls
-//                        if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor())) {
-//                            rowToCalleeIndex[row] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
-//                        }
-//                    }
-//                }
-//            }
         }
         updateStackCache();
     }
@@ -277,20 +194,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
     };
 
     private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
-
-    /**
-     * @param bytecodes
-     * @param bytecodePosition byte offset into bytecodes
-     * @return if a call instruction, the index into the constant pool of the called {@link MethodRefConstant}; else -1.
-     */
-    private int findCalleeIndex(byte[] bytecodes, int bytecodePosition) {
-        if (bytecodePosition >= bytecodes.length) {
-            return -1;
-        }
-        final BytecodeScanner bytecodeScanner = new BytecodeScanner(methodRefIndexFinder.reset());
-        bytecodeScanner.scanInstruction(bytecodes, bytecodePosition);
-        return methodRefIndexFinder.methodRefIndex();
-    }
 
     /**
      * Does the instruction address have a target code breakpoint set in the VM.
