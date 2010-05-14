@@ -21,6 +21,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 
 
 public class HeapResizingPolicy {
@@ -33,7 +34,15 @@ public class HeapResizingPolicy {
      */
     final int maxFreeSpaceRatioForShrinking = 70;
 
-    public void resizeAfterCollection(Size totalSpace, Size spaceLeftAfterGC, ResizableSpace heapSpace) {
+    /**
+     * Resize the heap according to policy.
+     *
+     * @param totalSpace
+     * @param spaceLeftAfterGC
+     * @param heapSpace
+     * @return true if the heap was resized
+     */
+    public boolean resizeAfterCollection(Size totalSpace, Size spaceLeftAfterGC, ResizableSpace heapSpace) {
         Size min = Size.fromLong((totalSpace.toLong() * minFreeSpaceRatioForExpansion) / 100);
         Size spaceUsedAfterGC = totalSpace.minus(spaceLeftAfterGC);
 
@@ -42,14 +51,22 @@ public class HeapResizingPolicy {
             Size minDesiredCapacity =  Size.fromLong((spaceUsedAfterGC.toLong() * 100) / (100 - minFreeSpaceRatioForExpansion));
             Size growth = minDesiredCapacity.minus(totalSpace);
             // Resize take care of rounding up to alignment constraints.
-            heapSpace.growAfterGC(growth);
-            return;
+            Size actualGrowth = heapSpace.growAfterGC(growth);
+            if (MaxineVM.isDebug()) {
+                Log.print("Request to grow the heap: requested ");
+                Log.print(growth.toLong());
+                Log.print("bytes, obtained ");
+                Log.print(actualGrowth.toLong());
+                Log.println(" bytes");
+            }
+            return !actualGrowth.isZero();
         }
         Size max = Size.fromLong((totalSpace.toLong() * maxFreeSpaceRatioForShrinking) / 100);
         if (spaceLeftAfterGC.greaterThan(max)) {
             Size maxDesiredCapacity =  Size.fromLong((spaceUsedAfterGC.toLong() * 100) / (100 - maxFreeSpaceRatioForShrinking));
             Size shrinkage = totalSpace.minus(maxDesiredCapacity);
-            heapSpace.shrinkAfterGC(shrinkage);
+            return !heapSpace.shrinkAfterGC(shrinkage).isZero();
         }
+        return false;
     }
 }

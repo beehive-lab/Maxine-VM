@@ -354,7 +354,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #if log_LOADER
         log_println("allocated %lu bytes of auxiliary space at %p\n", image_header()->auxiliarySpaceSize, auxiliarySpace);
 #endif
-        memset((Word) auxiliarySpace, 1, image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
+        memset((void *) auxiliarySpace, 1, image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
     }
 
 #if log_LOADER

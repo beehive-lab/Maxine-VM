@@ -111,7 +111,10 @@ public class SpecialReferenceManager {
 
         while (ref != null) {
             final Grip referent = Grip.fromJava(ref).readGrip(referentField.offset());
-            if (!gripForwarder.isReachable(referent)) {
+            if (referent.isZero()) {
+                TupleAccess.writeObject(ref, nextField.offset(), last);
+                last = ref;
+            } else if (!gripForwarder.isReachable(referent)) {
                 TupleAccess.writeObject(ref, referentField.offset(), null);
                 TupleAccess.writeObject(ref, nextField.offset(), last);
                 last = ref;
@@ -120,15 +123,25 @@ public class SpecialReferenceManager {
                 // we need to update this field manually
                 TupleAccess.writeObject(ref, referentField.offset(), gripForwarder.getForwardGrip(referent));
             }
+
+            java.lang.ref.Reference r = ref;
+            ref = UnsafeCast.asJDKReference(TupleAccess.readObject(ref, discoveredField.offset()));
+            TupleAccess.writeObject(r, discoveredField.offset(), null);
+
             if (traceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Processed ");
-                Log.print(ObjectAccess.readClassActor(ref).name.string);
+                Log.print(ObjectAccess.readClassActor(r).name.string);
                 Log.print(" at ");
-                Log.print(ObjectAccess.toOrigin(ref));
+                Log.print(ObjectAccess.toOrigin(r));
+                if (MaxineVM.isDebug()) {
+                    Log.print(" [next discovered = ");
+                    Log.print(ObjectAccess.toOrigin(ref));
+                    Log.print("]");
+                }
                 Log.print(" whose referent ");
                 Log.print(referent.toOrigin());
-                final Object newReferent = TupleAccess.readObject(ref, referentField.offset());
+                final Object newReferent = TupleAccess.readObject(r, referentField.offset());
                 if (newReferent == null) {
                     Log.println(" was unreachable");
                 } else {
@@ -137,9 +150,6 @@ public class SpecialReferenceManager {
                 }
                 Log.unlock(lockDisabledSafepoints);
             }
-            java.lang.ref.Reference r = ref;
-            ref = UnsafeCast.asJDKReference(TupleAccess.readObject(ref, discoveredField.offset()));
-            TupleAccess.writeObject(r, discoveredField.offset(), null);
         }
         TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
         discoveredList = Grip.fromOrigin(Pointer.zero());
@@ -199,14 +209,22 @@ public class SpecialReferenceManager {
             if (MaxineVM.isDebug()) {
                 boolean hasNullDiscoveredField = grip.readGrip(discoveredField.offset()).isZero();
                 boolean isHeadOfDiscoveredList = grip.equals(discoveredList);
-                FatalError.check(hasNullDiscoveredField && !isHeadOfDiscoveredList,
-                                "Discovered reference already discovered");
+                if (!(hasNullDiscoveredField && !isHeadOfDiscoveredList)) {
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("Discovered reference ");
+                    Log.print(grip.toOrigin());
+                    Log.print(" ");
+                    Log.unlock(lockDisabledSafepoints);
+                    FatalError.unexpected(": already discovered");
+                }
             }
             grip.writeGrip(discoveredField.offset(), discoveredList);
             discoveredList = grip;
             if (traceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
+                Log.print(grip.toOrigin());
+                Log.print(" ");
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(grip).toJava());
                 Log.print(hub.classActor.name.string);
                 Log.println(" to list of discovered references");

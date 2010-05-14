@@ -131,7 +131,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
         final Word primordialThreadLocals = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.primordialThreadLocalsOffset));
         final Word threadLocalsList = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.threadLocalsListHeadOffset));
-        GuestVMXenDBChannel.gatherThreads(threads, domainId, threadLocalsList.asAddress().toLong(), primordialThreadLocals.asAddress().toLong());
+        GuestVMXenDBChannel.gatherThreads(threads, threadLocalsList.asAddress().toLong(), primordialThreadLocals.asAddress().toLong());
     }
 
     @Override
