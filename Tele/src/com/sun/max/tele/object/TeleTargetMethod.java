@@ -68,7 +68,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         if (teleTargetMethod == null
                         && teleVM.findTeleTargetRoutine(TeleTargetRoutine.class, address) == null
                         && teleVM.codeCache().contains(address)) {
-            // Not a known Java target method, and not some other kind of known target code, but in a code region
+            // Not a known java target method, and not some other kind of known target code, but in a code region
             // See if the code manager in the VM knows about it.
             try {
                 final Reference targetMethodReference = teleVM.teleMethods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
@@ -128,10 +128,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         // construction.  This is needed for the code registry.
         // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
         targetCodeRegion = new MethodTargetCodeRegion(teleVM, this);
-        // Initializes the start and size fields via a refresh so that the following
-        // call to register the target method gets the correct values for placing
-        // the target method in a sorted list
-        refresh();
         // Register every method compilation, so that they can be located by code address.
         teleVM.registerTeleTargetRoutine(this);
     }
@@ -180,23 +176,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     public TeleClassMethodActor getTeleClassMethodActor() {
         if (teleClassMethodActor == null) {
             final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
-            if (!classMethodActorReference.isZero()) {
-                teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
-            }
+            teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
         }
-        return teleClassMethodActor;
-    }
-
-    public TeleRoutine teleRoutine() {
-        TeleClassMethodActor teleClassMethodActor = getTeleClassMethodActor();
-        if (teleClassMethodActor == null) {
-            return new TeleRoutine() {
-                public String getUniqueName() {
-                    return getName();
-                }
-            };
-        }
-
         return teleClassMethodActor;
     }
 
@@ -433,6 +414,18 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
             }
         }
         return locations;
+    }
+
+    @Override
+    protected void refresh() {
+        if (getRegionSize().isZero() || getRegionStart().isZero() || getRegionName() == null) {
+            super.refresh();
+        } else {
+            // The fields updated by super.refresh() are all immutable once that have non-default values
+            // as code is not moved by the VM.
+            // Avoiding the redundant refresh for TeleTargetMethods is critical for performance as the
+            // Inspector holds a lot of these objects.
+        }
     }
 
     /**

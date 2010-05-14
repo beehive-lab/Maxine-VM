@@ -48,7 +48,7 @@ public final class InspectableHeapInfo {
      * @see com.sun.max.vm.heap.HeapScheme
      */
     @INSPECTED
-    private static MemoryRegion[] memoryRegions;
+    private static RuntimeMemoryRegion[] memoryRegions;
 
     /**
      * Maximum number of roots that the Inspector can register for tracking relocations.
@@ -102,7 +102,7 @@ public final class InspectableHeapInfo {
      * Stores descriptions of memory allocated by the heap in a location that can
      * be inspected easily.
      * <br>
-     * It is a good idea to use instances of {@link MemoryRegion} that have
+     * It is a good idea to use instances of {@link RuntimeMemoryRegion} that have
      * been allocated in the boot heap if at all possible, thus avoiding having
      * meta information about the dynamic heap being described by objects
      * in the dynamic heap.
@@ -111,7 +111,7 @@ public final class InspectableHeapInfo {
      *
      * @param memoryRegions regions allocated by the heap implementation
      */
-    public static void init(MemoryRegion... memoryRegions) {
+    public static void init(RuntimeMemoryRegion... memoryRegions) {
         if (Inspectable.isVmInspected()) {
             InspectableHeapInfo.memoryRegions = memoryRegions;
 

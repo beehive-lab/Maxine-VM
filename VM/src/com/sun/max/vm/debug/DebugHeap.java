@@ -171,7 +171,7 @@ public final class DebugHeap {
      *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions. This value is
      *            ignored if null.
      */
-    public static void verifyGripAtIndex(Address address, int index, Grip grip, MemoryRegion space1, MemoryRegion space2) {
+    public static void verifyGripAtIndex(Address address, int index, Grip grip, RuntimeMemoryRegion space1, RuntimeMemoryRegion space2) {
         if (grip.isZero()) {
             return;
         }
@@ -200,7 +200,7 @@ public final class DebugHeap {
         FatalError.unexpected("invalid grip");
     }
 
-    private static Hub checkHub(Pointer origin, MemoryRegion space) {
+    private static Hub checkHub(Pointer origin, RuntimeMemoryRegion space) {
         final Grip hubGrip = Layout.readHubGrip(origin);
         FatalError.check(!hubGrip.isZero(), "null hub");
         final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
@@ -238,10 +238,10 @@ public final class DebugHeap {
      * @param space the address space in which valid objects can be found apart from the boot
      *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions.
      * @param verifier a {@link PointerOffsetVisitor} instance that will call
-     *            {@link #verifyGripAtIndex(Address, int, Grip, MemoryRegion, MemoryRegion)} for a reference value denoted by a base
+     *            {@link #verifyGripAtIndex(Address, int, Grip, RuntimeMemoryRegion, RuntimeMemoryRegion)} for a reference value denoted by a base
      *            pointer and offset
      */
-    public static void verifyRegion(String description, Address start, final Address end, final MemoryRegion space, PointerIndexVisitor verifier) {
+    public static void verifyRegion(String description, Address start, final Address end, final RuntimeMemoryRegion space, PointerIndexVisitor verifier) {
 
         if (Heap.traceGCPhases()) {
             Log.print("Verifying region ");

@@ -40,8 +40,6 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
      */
     TargetCodeRegion targetCodeRegion();
 
-    TeleRoutine teleRoutine();
-
     /**
      * @return a name assigned in the Tele layer for identification purposes.
      */

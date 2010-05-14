@@ -137,7 +137,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticIntFieldAccess InspectableCodeInfo_breakpointClassDescriptorsCharCount = new TeleStaticIntFieldAccess(InspectableCodeInfo.class, "breakpointClassDescriptorsCharCount");
     public final TeleStaticIntFieldAccess InspectableCodeInfo_breakpointClassDescriptorsEpoch = new TeleStaticIntFieldAccess(InspectableCodeInfo.class, "breakpointClassDescriptorsEpoch");
     public final TeleStaticLongFieldAccess InspectableHeapInfo_collectionEpoch = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "collectionEpoch");
-    public final TeleStaticReferenceFieldAccess InspectableHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "memoryRegions", MemoryRegion[].class);
+    public final TeleStaticReferenceFieldAccess InspectableHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "memoryRegions", RuntimeMemoryRegion[].class);
     public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationNewCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationNewCell");
     public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationOldCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationOldCell");
     public final TeleStaticLongFieldAccess InspectableHeapInfo_rootEpoch = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "rootEpoch");
@@ -159,7 +159,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess RuntimeMemoryRegion_regionName = new TeleInstanceReferenceFieldAccess(RuntimeMemoryRegion.class, "regionName", String.class);
     public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_size = new TeleInstanceWordFieldAccess(RuntimeMemoryRegion.class, "size");
     public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_start = new TeleInstanceWordFieldAccess(RuntimeMemoryRegion.class, "start");
-    public final TeleInstanceReferenceFieldAccess SortedMemoryRegionList_memoryRegions = new TeleInstanceReferenceFieldAccess(SortedMemoryRegionList.class, "memoryRegions", MemoryRegion[].class);
+    public final TeleInstanceReferenceFieldAccess SortedMemoryRegionList_memoryRegions = new TeleInstanceReferenceFieldAccess(SortedMemoryRegionList.class, "memoryRegions", RuntimeMemoryRegion[].class);
     public final TeleInstanceIntFieldAccess SortedMemoryRegionList_size = new TeleInstanceIntFieldAccess(SortedMemoryRegionList.class, "size");
     public final TeleInstanceReferenceFieldAccess StringConstant_value = new TeleInstanceReferenceFieldAccess(StringConstant.class, "value", String.class);
     public final TeleInstanceReferenceFieldAccess TargetABI_callEntryPoint = new TeleInstanceReferenceFieldAccess(TargetABI.class, "callEntryPoint", CallEntryPoint.class);

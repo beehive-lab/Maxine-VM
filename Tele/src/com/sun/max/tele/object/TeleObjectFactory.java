@@ -70,7 +70,7 @@ import com.sun.max.vm.value.*;
  */
 public final class TeleObjectFactory extends AbstractTeleVMHolder{
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
 
     private static TeleObjectFactory teleObjectFactory;
 
@@ -326,14 +326,41 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
 
     private int previousTeleObjectCount = 0;
 
+    static class MutableLong {
+        long value;
+        @Override
+        public String toString() {
+            return String.valueOf(value);
+        }
+    }
+
+    static class TimerPerType extends HashMap<Class, long[]> {
+        @Override
+        public long[] get(Object key) {
+            long[] time = super.get(key);
+            if (time == null) {
+                time = new long[1];
+                super.put((Class) key, time);
+            }
+            return time;
+        }
+    }
+
     public void refresh(long processEpoch) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
         final long startTimeMillis = System.currentTimeMillis();
+
+        TimerPerType timePerType = new TimerPerType();
+
         for (WeakReference<TeleObject> teleObjectRef : referenceToTeleObject.values()) {
             if (teleObjectRef != null) {
                 TeleObject teleObject = teleObjectRef.get();
                 if (teleObject != null) {
+                    Class type = teleObject.getClass();
+                    long[] time = timePerType.get(type);
+                    long s = System.currentTimeMillis();
                     teleObject.refresh();
+                    time[0] += System.currentTimeMillis() - s;
                 }
             }
         }
@@ -344,6 +371,13 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         sb.append("  new=").append(Integer.toString(currentTeleObjectCount - previousTeleObjectCount));
         Trace.end(TRACE_VALUE, sb.toString(), startTimeMillis);
         previousTeleObjectCount = currentTeleObjectCount;
+
+        for (Map.Entry<Class, long[]> entry : timePerType.entrySet()) {
+            long time = entry.getValue()[0];
+            if (time > 100) {
+                Trace.line(TRACE_VALUE, "Excessive refresh time for " + entry.getKey() + ": " + time + "ms");
+            }
+        }
     }
 
 }

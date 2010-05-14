@@ -67,15 +67,6 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         return teleVM.findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
     }
 
-    private final TeleRoutine teleRoutine;
-
-    /**
-     * @return surrogate that represents the (implied) code body from which the code was compiled.
-     */
-    public TeleRoutine teleRoutine() {
-        return teleRoutine;
-    }
-
     private final TargetCodeRegion targetCodeRegion;
 
     public TargetCodeRegion targetCodeRegion() {
@@ -90,11 +81,6 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
 
     private TeleNativeTargetRoutine(TeleVM teleVM, Address start, Size size, String name) {
         super(teleVM);
-        this.teleRoutine = new TeleRoutine() {
-            public String getUniqueName() {
-                return "native method @ " + targetCodeRegion().start().toHexString();
-            }
-        };
         this.targetCodeRegion = new NativeTargetCodeRegion(teleVM, this, start, size);
         this.name = name;
         // Register so that it can be located by address.

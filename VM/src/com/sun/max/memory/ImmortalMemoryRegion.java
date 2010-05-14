@@ -47,7 +47,7 @@ public class ImmortalMemoryRegion extends LinearAllocationMemoryRegion {
         this.mark.set(region);
     }
 
-    public void initialize(MemoryRegion memoryRegion) {
+    public void initialize(RuntimeMemoryRegion memoryRegion) {
         setStart(memoryRegion.start());
         setSize(memoryRegion.size());
         mark.set(memoryRegion.start());
