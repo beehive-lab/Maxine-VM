@@ -23,8 +23,9 @@ package com.sun.mockvm;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Method;
 
+import com.sun.cri.ci.CiConstant;
+import com.sun.cri.ci.CiMethodInvokeArguments;
 import com.sun.cri.ci.CiTargetMethod;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -188,7 +189,8 @@ public class MockRuntime implements RiRuntime {
 	}
 	
 	@Override
-	public Method getFoldingMethod(RiMethod method) {
+	public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
+	    // TODO: Use CiUtil.invoke() to complete this implementation
             throw new UnsupportedOperationException();
 	}
 }

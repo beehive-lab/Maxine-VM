@@ -51,6 +51,8 @@ import com.sun.max.vm.type.*;
  */
 public abstract class Value<Value_Type extends Value<Value_Type>> implements Classifiable, Comparable<Value> {
 
+    public static final Value[] NONE = {};
+
     protected Value() {
     }
 

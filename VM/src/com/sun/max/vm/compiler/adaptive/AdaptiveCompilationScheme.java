@@ -283,6 +283,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (!Actor.isNative(flags)) {
                 return bootCompiler;
             }
+            return optCompiler;
         }
 
         RuntimeCompilerScheme compiler;

@@ -121,6 +121,4 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     public String toString() {
         return "[" + start.toHexString() + " - " + end().minus(1).toHexString() + "]";
     }
-
-
 }
