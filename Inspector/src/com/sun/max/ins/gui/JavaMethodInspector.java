@@ -33,7 +33,6 @@ import com.sun.max.ins.InspectorNameDisplay.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -62,7 +61,7 @@ public class JavaMethodInspector extends MethodInspector {
      * Null when this Inspector is not bound to any compilation, in which case this Inspector is the unique (unbound)
      * inspector for the method.
      */
-    private final TeleCompiledMethod teleCompiledMethod;
+    private final MaxCompiledMethod compiledMethod;
 
     /**
      * An Inspector for a Java Method associated with a specific compilation, and which association does not change
@@ -73,8 +72,8 @@ public class JavaMethodInspector extends MethodInspector {
      * @param teleCompiledMethod surrogate for the compilation of the method in the VM
      * @param codeKind request for a particular code view to be displayed initially
      */
-    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleCompiledMethod teleCompiledMethod, MethodCodeKind codeKind) {
-        this(inspection, parent, teleCompiledMethod, teleCompiledMethod.getTeleClassMethodActor(), codeKind);
+    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledMethod compiledMethod, MethodCodeKind codeKind) {
+        this(inspection, parent, compiledMethod, compiledMethod.getTeleClassMethodActor(), codeKind);
     }
 
     /**
@@ -93,16 +92,16 @@ public class JavaMethodInspector extends MethodInspector {
         assert codeKind != MethodCodeKind.TARGET_CODE;
     }
 
-    private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleCompiledMethod teleCompiledMethod, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
+    private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledMethod compiledMethod, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
         super(inspection, parent);
 
         this.methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
-        this.teleCompiledMethod = teleCompiledMethod;
+        this.compiledMethod = compiledMethod;
         this.requestedCodeKind = requestedCodeKind;
 
         // enable choice if target code is present, even though this Inspector is not bound to a TargetMethod
-        codeKindEnabled.put(MethodCodeKind.TARGET_CODE, teleCompiledMethod != null || teleClassMethodActor.hasTargetMethod());
+        codeKindEnabled.put(MethodCodeKind.TARGET_CODE, compiledMethod != null || teleClassMethodActor.hasTargetMethod());
         // enable if bytecodes present
         codeKindEnabled.put(MethodCodeKind.BYTECODES, (teleClassMethodActor == null) ? false : teleClassMethodActor.hasCodeAttribute());
         // not implemented yet
@@ -141,11 +140,11 @@ public class JavaMethodInspector extends MethodInspector {
         final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at this method entry");
         final InspectorMenu breakAtLabelsMenu = new InspectorMenu("Break at this method labels");
 
-        if (teleCompiledMethod != null) {
-            final InspectorAction copyAction = actions().copyCompiledMethodCodeToClipboard(teleCompiledMethod, null);
+        if (compiledMethod != null) {
+            final InspectorAction copyAction = actions().copyCompiledMethodCodeToClipboard(compiledMethod, null);
             copyAction.setEnabled(true);
             editMenu.add(copyAction);
-            objectMenu.add(actions().inspectObject(teleCompiledMethod.teleTargetMethod(), "Compiled method: " + teleCompiledMethod.classActorForObjectType().simpleName()));
+            objectMenu.add(actions().inspectObject(compiledMethod.teleTargetMethod(), "Compiled method: " + compiledMethod.classActorForObjectType().simpleName()));
         }
 
         if (teleClassMethodActor != null) {
@@ -164,16 +163,16 @@ public class JavaMethodInspector extends MethodInspector {
         }
         codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
 
-        if (teleCompiledMethod != null) {
-            breakOnEntryMenu.add(actions().setTargetCodeBreakpointAtMethodEntry(teleCompiledMethod, "Target code"));
+        if (compiledMethod != null) {
+            breakOnEntryMenu.add(actions().setTargetCodeBreakpointAtMethodEntry(compiledMethod, "Target code"));
         }
         if (teleClassMethodActor != null) {
             breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecodes"));
         }
         debugMenu.add(breakOnEntryMenu);
-        if (teleCompiledMethod != null) {
-            breakAtLabelsMenu.add(actions().setTargetCodeLabelBreakpoints(teleCompiledMethod, "Add target code breakpoints"));
-            breakAtLabelsMenu.add(actions().removeTargetCodeLabelBreakpoints(teleCompiledMethod, "Remove target code breakpoints"));
+        if (compiledMethod != null) {
+            breakAtLabelsMenu.add(actions().setTargetCodeLabelBreakpoints(compiledMethod, "Add target code breakpoints"));
+            breakAtLabelsMenu.add(actions().removeTargetCodeLabelBreakpoints(compiledMethod, "Remove target code breakpoints"));
         }
         debugMenu.add(breakAtLabelsMenu);
         if (teleClassMethodActor != null) {
@@ -193,8 +192,8 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
-    public MaxCompiledCode maxCompiledCode() {
-        return teleCompiledMethod;
+    public MaxCompiledMethod maxCompiledCode() {
+        return compiledMethod;
     }
 
     @Override
@@ -205,7 +204,7 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     public String getTextForTitle() {
         if (teleClassMethodActor == null || teleClassMethodActor.classMethodActor() == null) {
-            return teleCompiledMethod.entityName();
+            return compiledMethod.entityName();
         }
 
         final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
@@ -213,7 +212,7 @@ public class JavaMethodInspector extends MethodInspector {
         sb.append(classMethodActor.holder().simpleName());
         sb.append(".");
         sb.append(classMethodActor.name.toString());
-        sb.append(inspection().nameDisplay().methodCompilationID(teleCompiledMethod));
+        sb.append(inspection().nameDisplay().methodCompilationID(compiledMethod));
         sb.append(inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor));
         return sb.toString();
         //return classMethodActor.holder().simpleName() + "." + classMethodActor.name().toString() + inspection().nameDisplay().methodCompilationID(_teleTargetMethod);
@@ -231,8 +230,8 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     public String getToolTip() {
         String result = "";
-        if (teleCompiledMethod != null) {
-            result =  inspection().nameDisplay().longName(teleCompiledMethod);
+        if (compiledMethod != null) {
+            result =  inspection().nameDisplay().longName(compiledMethod);
         } else if (teleClassMethodActor != null) {
             result = inspection().nameDisplay().shortName(teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
         }
@@ -287,9 +286,9 @@ public class JavaMethodInspector extends MethodInspector {
     private CodeViewer codeViewerFactory(MethodCodeKind codeKind) {
         switch (codeKind) {
             case TARGET_CODE:
-                return new JTableTargetCodeViewer(inspection(), this, teleCompiledMethod);
+                return new JTableTargetCodeViewer(inspection(), this, compiledMethod);
             case BYTECODES:
-                return new JTableBytecodeViewer(inspection(), this, teleClassMethodActor, teleCompiledMethod);
+                return new JTableBytecodeViewer(inspection(), this, teleClassMethodActor, compiledMethod);
             case JAVA_SOURCE:
                 FatalError.unimplemented();
                 return null;

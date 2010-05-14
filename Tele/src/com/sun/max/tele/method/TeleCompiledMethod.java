@@ -51,7 +51,7 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @author Michael Van De Vanter
  */
-public final class TeleCompiledMethod extends TeleCompiledCode {
+public final class TeleCompiledMethod extends AbstractTeleVMHolder implements MaxCompiledMethod {
 
     /**
      * Description of a compiled method region allocated in a code cache.
@@ -62,7 +62,7 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
      *
      * @author Michael Van De Vanter
      */
-    private static final class CompiledMethodMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCode> {
+    private static final class CompiledMethodMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledMethod> {
 
         private static final IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY =
             new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
@@ -87,7 +87,7 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
             return EMPTY;
         }
 
-        public MaxCompiledCode owner() {
+        public MaxCompiledMethod owner() {
             return owner;
         }
 
@@ -180,7 +180,7 @@ public final class TeleCompiledMethod extends TeleCompiledCode {
         return description + teleTargetMethod.classActorForObjectType().simpleName();
     }
 
-    public MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion() {
+    public MaxEntityMemoryRegion<MaxCompiledMethod> memoryRegion() {
         return compiledMethodMemoryRegion;
     }
 

@@ -44,35 +44,47 @@ final class CodeRegistry extends AbstractTeleVMHolder {
         Trace.end(TRACE_VALUE, tracePrefix() + " initializing", startTimeMillis);
     }
 
-    private final OrderedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>> compiledCodeMemoryRegions =
-        new OrderedMemoryRegionList<MaxEntityMemoryRegion<MaxCompiledCode>>();
+    private final OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxCompiledCode>> compiledCodeMemoryRegions =
+        new OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxCompiledCode>>();
 
     /**
-     * Adds an entry to the code registry, indexed by code address.
+     * Adds an entry to the code registry, indexed by code address, that represents a block
+     * of native machine code about which little is known.
      *
-     * @param maxCompiledCode the compiled code whose {@linkplain MaxCompiledCode#memoryRegion() code
-     *            region} is to be added to this registry
+     * @param teleCompiledNativeCode the compiled code whose memory region is to be added to this registry
      * @throws IllegalArgumentException when the code's memory overlaps one already in this registry.
      */
-    public synchronized void add(MaxCompiledCode maxCompiledCode) {
-        compiledCodeMemoryRegions.add(maxCompiledCode.memoryRegion());
+    public synchronized void add(MaxCompiledNativeCode teleCompiledNativeCode) {
+        compiledCodeMemoryRegions.add(teleCompiledNativeCode.memoryRegion());
     }
 
     /**
-     * Gets the {@link MaxCompiledCode} in this registry that contains a given address in the VM.
+     * Adds an entry to the code registry, indexed by code address, that represents a method compilation.
      *
-     * @param <CompiledCode_Type> the type of the requested MaxCompiledCode
-     * @param compiledCodeType the {@link Class} instance representing {@code TeleTargetRoutine_Type}
-     * @param address the look up address
-     * @return the tele target routine of type {@code TeleTargetRoutine_Type} in this registry that contains {@code
-     *         address} or null if no such tele target routine of the requested type exists
+     * @param teleCompiledMethod the method compilation whose memory region is to be added to this registry
+     * @throws IllegalArgumentException when the code's memory overlaps one already in this registry.
      */
-    public synchronized <CompiledCode_Type extends MaxCompiledCode> CompiledCode_Type get(Class<CompiledCode_Type> compiledCodeType, Address address) {
-        final MaxEntityMemoryRegion<MaxCompiledCode> compiledCodeMemoryRegion = compiledCodeMemoryRegions.find(address);
-        if (compiledCodeMemoryRegion != null) {
-            final MaxCompiledCode maxCompiledCode = compiledCodeMemoryRegion.owner();
-            if (compiledCodeType.isInstance(maxCompiledCode)) {
-                return compiledCodeType.cast(maxCompiledCode);
+    public synchronized void add(TeleCompiledMethod teleCompiledMethod) {
+        compiledCodeMemoryRegions.add(teleCompiledMethod.memoryRegion());
+    }
+
+    public synchronized TeleCompiledNativeCode getCompiledNativeCode(Address address) {
+        final MaxEntityMemoryRegion< ? extends MaxCompiledCode> compiledCodeRegion = compiledCodeMemoryRegions.find(address);
+        if (compiledCodeRegion != null) {
+            final MaxCompiledCode compiledCode = compiledCodeRegion.owner();
+            if (compiledCode instanceof TeleCompiledNativeCode) {
+                return (TeleCompiledNativeCode) compiledCode;
+            }
+        }
+        return null;
+    }
+
+    public synchronized TeleCompiledMethod getCompiledMethod(Address address) {
+        final MaxEntityMemoryRegion< ? extends MaxCompiledCode> compiledCodeRegion = compiledCodeMemoryRegions.find(address);
+        if (compiledCodeRegion != null) {
+            final MaxCompiledCode compiledCode = compiledCodeRegion.owner();
+            if (compiledCode instanceof TeleCompiledMethod) {
+                return (TeleCompiledMethod) compiledCode;
             }
         }
         return null;
@@ -80,7 +92,7 @@ final class CodeRegistry extends AbstractTeleVMHolder {
 
     public void writeSummary(PrintStream printStream) {
         Address lastEndAddress = null;
-        for (MaxEntityMemoryRegion<MaxCompiledCode> compiledMethodMemoryRegion : compiledCodeMemoryRegions) {
+        for (MaxEntityMemoryRegion<? extends MaxCompiledCode> compiledMethodMemoryRegion : compiledCodeMemoryRegions) {
             final MaxCompiledCode maxCompiledCode = compiledMethodMemoryRegion.owner();
             final String name = maxCompiledCode.entityDescription();
             if (lastEndAddress != null && !lastEndAddress.equals(compiledMethodMemoryRegion.start())) {

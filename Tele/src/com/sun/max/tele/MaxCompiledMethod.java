@@ -20,13 +20,51 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.tele.object.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+
 
 /**
  * Data describing a single compilation of a method in the VM.
  *
  * @author Michael Van De Vanter
  */
-@Deprecated
-public interface MaxCompiledMethod extends MaxCompiledCode {
+public interface MaxCompiledMethod extends MaxCompiledCode<MaxCompiledMethod> {
+
+    /**
+     * @return the sequence number of this compilation, if a compiled method; -1 if native
+     */
+    int compilationIndex();
+
+    /**
+     * Gets accessor to the method descriptor in the VM for this compiled method.
+     *
+     * @return access to the {@link ClassMethodActor} for the target routine in the VM, if it was
+     * compiled from a Java method; null otherwise.
+     */
+    TeleClassMethodActor getTeleClassMethodActor();
+
+    /**
+     * @return local instance of {@link ClassMethodActor} corresponding to the target routine
+     * in the VM, if it was compiled from a Java method; null otherwise.
+     */
+    ClassMethodActor classMethodActor();
+
+    /**
+     * Gets the local instance of the class description for the object that represents this
+     * method compilation in the VM.
+     *
+     * @return a local descriptor of the type of the object representing this compilation
+     * in the VM.
+     */
+    ClassActor classActorForObjectType();
+
+    /**
+     * Gets the VM object that represents the method compilation.
+     *
+     * @return the VM object holding the compiled code.
+     */
+    TeleTargetMethod teleTargetMethod();
 
 }

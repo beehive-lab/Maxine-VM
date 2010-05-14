@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -181,10 +180,10 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g.: "[n]", where n is the index into the compilation history; first compilation n=0.
      */
-    public String methodCompilationID(MaxCompiledCode compiledCode) {
+    public String methodCompilationID(MaxCompiledMethod compiledMethod) {
         // Only have an index if a compiled method.
-        if (compiledCode != null && compiledCode.getTeleClassMethodActor() != null) {
-            final int compilationIndex = compiledCode.compilationIndex();
+        if (compiledMethod != null && compiledMethod.getTeleClassMethodActor() != null) {
+            final int compilationIndex = compiledMethod.compilationIndex();
             if (compilationIndex >= 0) {
                 return "[" + compilationIndex + "]";
             }
@@ -209,23 +208,23 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "Element.foo()[0]"
      */
-    public String veryShortName(TeleCompiledMethod teleCompiledMethod) {
-        if (teleCompiledMethod == null) {
+    public String veryShortName(MaxCompiledMethod compiledMethod) {
+        if (compiledMethod == null) {
             return "<?>";
         }
-        return teleCompiledMethod.classMethodActor() == null ?
-                        teleCompiledMethod.entityName() :
-                            teleCompiledMethod.classMethodActor().format("%h.%n()" + methodCompilationID(teleCompiledMethod));
+        return compiledMethod.classMethodActor() == null ?
+                        compiledMethod.entityName() :
+                            compiledMethod.classMethodActor().format("%h.%n()" + methodCompilationID(compiledMethod));
     }
 
 
     /**
      * E.g. "foo(Pointer, Word, int[])[0]"
      */
-    public String shortName(TeleCompiledMethod teleCompiledMethod) {
-        return teleCompiledMethod.classMethodActor() == null ?
-                        teleCompiledMethod.entityName() :
-                            teleCompiledMethod.classMethodActor().format("%n(%p)" + methodCompilationID(teleCompiledMethod));
+    public String shortName(MaxCompiledMethod compiledMethod) {
+        return compiledMethod.classMethodActor() == null ?
+                        compiledMethod.entityName() :
+                            compiledMethod.classMethodActor().format("%n(%p)" + methodCompilationID(compiledMethod));
     }
 
     /**
@@ -233,22 +232,22 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      *
      * @param returnTypeSpecification specifies where the return type should appear in the returned value
      */
-    public String shortName(TeleCompiledMethod teleCompiledMethod, ReturnTypeSpecification returnTypeSpecification) {
-        final ClassMethodActor classMethodActor = teleCompiledMethod.classMethodActor();
+    public String shortName(MaxCompiledMethod compiledMethod, ReturnTypeSpecification returnTypeSpecification) {
+        final ClassMethodActor classMethodActor = compiledMethod.classMethodActor();
 
         if (classMethodActor == null) {
-            return teleCompiledMethod.entityName();
+            return compiledMethod.entityName();
         }
 
         switch (returnTypeSpecification) {
             case ABSENT: {
-                return classMethodActor.format("%n(%p)" + methodCompilationID(teleCompiledMethod));
+                return classMethodActor.format("%n(%p)" + methodCompilationID(compiledMethod));
             }
             case AS_PREFIX: {
-                return classMethodActor.format("%r %n(%p)" + methodCompilationID(teleCompiledMethod));
+                return classMethodActor.format("%r %n(%p)" + methodCompilationID(compiledMethod));
             }
             case AS_SUFFIX: {
-                return classMethodActor.format("%n(%p)" + methodCompilationID(teleCompiledMethod) + " %r");
+                return classMethodActor.format("%n(%p)" + methodCompilationID(compiledMethod) + " %r");
             }
             default: {
                 throw ProgramError.unknownCase();
@@ -256,8 +255,8 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private String positionString(MaxCompiledCode compiledCode, Address address) {
-        final Address entry = compiledCode.getCodeStart();
+    private String positionString(MaxCompiledMethod compiledMethod, Address address) {
+        final Address entry = compiledMethod.getCodeStart();
         final long position = address.minus(entry).toLong();
         return position == 0 ? "" : "+0x" + Long.toHexString(position);
     }
@@ -269,7 +268,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "int foo(Pointer, Word, int[])[0] in com.sun.max.ins.Bar"
      */
-    public String longName(TeleCompiledMethod compiledMethod) {
+    public String longName(MaxCompiledMethod compiledMethod) {
         return compiledMethod.classMethodActor() ==
             null ? compiledMethod.entityDescription() :
                 compiledMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(compiledMethod) + " in %H");
@@ -278,7 +277,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "foo()[0]+0x7"
      */
-    public String veryShortName(TeleCompiledMethod compiledMethod, Address address) {
+    public String veryShortName(MaxCompiledMethod compiledMethod, Address address) {
         return compiledMethod.classMethodActor() ==
             null ? compiledMethod.entityName() :
                 compiledMethod.classMethodActor().format("%n()" + methodCompilationID(compiledMethod) + positionString(compiledMethod, address));
@@ -287,7 +286,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "int foo(Pointer, Word, int[])[0]+0x7 in com.sun.max.ins.Bar"
      */
-    public String longName(TeleCompiledMethod compiledMethod, Address address) {
+    public String longName(MaxCompiledMethod compiledMethod, Address address) {
         if (compiledMethod == null) {
             return "<?>";
         }
@@ -333,17 +332,17 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. user supplied name or "@0xffffffffffffffff"
      */
-    public String shortName(TeleCompiledNativeCode teleCompiledNativeCode) {
-        final String title = teleCompiledNativeCode.entityName();
-        return title == null ? "@0x" + teleCompiledNativeCode.getCodeStart().toHexString() : title;
+    public String shortName(MaxCompiledNativeCode compiledNativeCode) {
+        final String title = compiledNativeCode.entityName();
+        return title == null ? "@0x" + compiledNativeCode.getCodeStart().toHexString() : title;
     }
 
     /**
      * E.g. user supplied name or "Native code @0xffffffffffffffff"
      */
-    public String longName(TeleCompiledNativeCode teleCompiledNativeCode) {
-        final String title = teleCompiledNativeCode.entityName();
-        return title == null ? "Native code @0x" + teleCompiledNativeCode.getCodeStart().toHexString() : "Native code: " + title;
+    public String longName(MaxCompiledNativeCode compiledNativeCode) {
+        final String title = compiledNativeCode.entityName();
+        return title == null ? "Native code @0x" + compiledNativeCode.getCodeStart().toHexString() : "Native code: " + title;
     }
 
     /**
@@ -377,9 +376,8 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 // a native routine that's already been registered.
                 name.append("}");
             } else {
-                final MaxCompiledCode compiledCode = vm().codeCache().findCompiledMethod(address);
-                if (compiledCode != null) {
-                    final TeleCompiledMethod compiledMethod = (TeleCompiledMethod) compiledCode;
+                final MaxCompiledMethod compiledMethod = vm().codeCache().findCompiledMethod(address);
+                if (compiledMethod != null) {
                     name.append(",  ").append(longName(compiledMethod, address)).append("} ");
                 } else {
                     name.append("}");

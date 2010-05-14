@@ -23,15 +23,11 @@ package com.sun.max.tele;
 import java.io.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
@@ -43,9 +39,7 @@ import com.sun.max.vm.cps.target.*;
  *
  * @author Michael Van De Vanter
  */
-public final class TeleCompiledNativeCode extends TeleCompiledCode {
-
-    public static final Size DEFAULT_NATIVE_CODE_LENGTH = Size.fromInt(200);
+public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implements MaxCompiledNativeCode {
 
     /**
      * Description of a region of native code discovered with the VM.
@@ -56,14 +50,14 @@ public final class TeleCompiledNativeCode extends TeleCompiledCode {
      *
      * @author Michael Van De Vanter
      */
-    private static final class CompiledNativeCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCode> {
+    private static final class CompiledNativeCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledNativeCode> {
 
         private static final IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY =
             new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
 
-        private TeleCompiledCode owner;
+        private MaxCompiledNativeCode owner;
 
-        private CompiledNativeCodeMemoryRegion(TeleVM teleVM, TeleCompiledNativeCode owner, String name, Address start, Size size) {
+        private CompiledNativeCodeMemoryRegion(TeleVM teleVM, MaxCompiledNativeCode owner, String name, Address start, Size size) {
             super(teleVM, name, start, size);
             this.owner = owner;
         }
@@ -76,7 +70,7 @@ public final class TeleCompiledNativeCode extends TeleCompiledCode {
             return EMPTY;
         }
 
-        public MaxCompiledCode owner() {
+        public MaxCompiledNativeCode owner() {
             return owner;
         }
 
@@ -249,6 +243,21 @@ public final class TeleCompiledNativeCode extends TeleCompiledCode {
         vm().codeCache().register(this);
     }
 
+    private IndexedSequence<TargetCodeInstruction> getInstructions() {
+        if (instructions == null && vm().tryLock()) {
+            byte[] code = null;
+            try {
+                code = vm().dataAccess().readFully(getCodeStart(), compiledNativeCodeMemoryRegion.size().toInt());
+            } finally {
+                vm().unlock();
+            }
+            if (code != null) {
+                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, null);
+            }
+        }
+        return instructions;
+    }
+
     public String entityName() {
         return compiledNativeCodeMemoryRegion.regionName();
     }
@@ -257,7 +266,7 @@ public final class TeleCompiledNativeCode extends TeleCompiledCode {
         return "A discovered block of native code not managed by the VM";
     }
 
-    public MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion() {
+    public MaxEntityMemoryRegion<MaxCompiledNativeCode> memoryRegion() {
         return compiledNativeCodeMemoryRegion;
     }
 
@@ -281,23 +290,7 @@ public final class TeleCompiledNativeCode extends TeleCompiledCode {
         return codeStartLocation;
     }
 
-    public Address getCallEntryPoint() {
-        return getCodeStart();
-    }
-
-    public CodeLocation getEntryLocation() {
-        return getCodeStartLocation();
-    }
-
     public CodeLocation getCallEntryLocation() {
-        return null;
-    }
-
-    public int compilationIndex() {
-        return -1;
-    }
-
-    public TeleClassMethodActor getTeleClassMethodActor() {
         return null;
     }
 
@@ -305,56 +298,8 @@ public final class TeleCompiledNativeCode extends TeleCompiledCode {
         return null;
     }
 
-    public StopPositions getStopPositions() {
-        return null;
-    }
-
-    private IndexedSequence<TargetCodeInstruction> getInstructions() {
-        if (instructions == null && vm().tryLock()) {
-            byte[] code = null;
-            try {
-                code = vm().dataAccess().readFully(getCodeStart(), codeSize().toInt());
-            } finally {
-                vm().unlock();
-            }
-            if (code != null) {
-                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, null);
-            }
-        }
-        return instructions;
-    }
-
-    public TargetABI getAbi() {
-        return null;
-    }
-
-    public ClassMethodActor classMethodActor() {
-        return null;
-    }
-
-    public Size codeSize() {
-        return compiledNativeCodeMemoryRegion.size();
-    }
-
-    @Deprecated
-    public MethodProvider getMethodProvider() {
-        return this.getTeleClassMethodActor();
-    }
-
-    public ClassActor classActorForObjectType() {
-        return null;
-    }
-
-    public byte[] getCode() {
-        return null;
-    }
-
-    public int[] bytecodeToTargetCodePositionMap() {
-        return null;
-    }
-
     public void writeSummary(PrintStream printStream) {
         printStream.println("Native method: " + entityName());
-        printStream.println(" ***UNIMPLEMENTED*** ");
+        printStream.println(" ***UNIMPLEMENTED*** for native methods");
     }
 }

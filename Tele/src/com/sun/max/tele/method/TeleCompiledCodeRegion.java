@@ -87,7 +87,7 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
     private final TeleCodeRegion teleCodeRegion;
     private final CompiledCodeRegionMemoryRegion compiledCodeRegionMemoryRegion;
     private final String entityDescription;
-    private final ArrayList<MaxCompiledCode> compilations = new ArrayList<MaxCompiledCode>();
+    private final ArrayList<MaxCompiledMethod> compilations = new ArrayList<MaxCompiledMethod>();
 
     /**
      * Creates an object that models an allocation region in the VM that is used for compiled code.
@@ -135,7 +135,7 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
         return teleCodeRegion.teleTargetMethods();
     }
 
-    public List<MaxCompiledCode> compilations() {
+    public List<MaxCompiledMethod> compilations() {
         // Assumes no code eviction; no movement; allocated linearly.
         final List<TeleTargetMethod> teleTargetMethods = teleCodeRegion.teleTargetMethods();
         if (compilations.size() < teleTargetMethods.size()) {

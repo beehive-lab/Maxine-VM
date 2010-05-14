@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.unsafe.*;
+
 
 /**
  * Data describing a single block of machine code representing a native routine
@@ -27,7 +29,8 @@ package com.sun.max.tele;
  *
  * @author Michael Van De Vanter
  */
-@Deprecated
-public interface MaxCompiledNativeCode extends MaxCompiledCode {
+public interface MaxCompiledNativeCode extends MaxCompiledCode<MaxCompiledNativeCode> {
+
+    Size DEFAULT_NATIVE_CODE_LENGTH = Size.fromInt(200);
 
 }

@@ -25,10 +25,7 @@ import java.io.*;
 import com.sun.max.collect.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
@@ -38,16 +35,11 @@ import com.sun.max.vm.cps.target.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxCompiledCode extends MaxEntity<MaxCompiledCode> {
-
-    /**
-     * @return the sequence number of this compilation, if a compiled method; -1 if native
-     */
-    int compilationIndex();
+public interface MaxCompiledCode<CompiledCode_Type extends MaxCompiledCode> extends MaxEntity<CompiledCode_Type> {
 
     /**
      * @return VM address of the first instruction in the target code represented by this routine. Note that this
-     *         may differ from the designated {@linkplain #getCallEntryPoint() entry point} of the code.
+     * may differ from the designated {@linkplain #getCallEntryLocation() entry point} of the code.
      */
     Address getCodeStart();
 
@@ -68,29 +60,6 @@ public interface MaxCompiledCode extends MaxEntity<MaxCompiledCode> {
      * @return meta-information about the machine code instructions
      */
     InstructionMap instructionMap();
-
-    /**
-     * Gets accessor to the method descriptor in the VM for this compiled method.
-     *
-     * @return access to the {@link ClassMethodActor} for the target routine in the VM, if it was
-     * compiled from a Java method; null otherwise.
-     */
-    TeleClassMethodActor getTeleClassMethodActor();
-
-    /**
-     * @return local instance of {@link ClassMethodActor} corresponding to the target routine
-     * in the VM, if it was compiled from a Java method; null otherwise.
-     */
-    ClassMethodActor classMethodActor();
-
-    /**
-     * Gets the local instance of the class description for the object that represents this
-     * method compilation in the VM.
-     *
-     * @return a local descriptor of the type of the object representing this compilation
-     * in the VM.
-     */
-    ClassActor classActorForObjectType();
 
     /**
      * Gets the human-readable name of a data location that can be addressed by machine
@@ -192,6 +161,7 @@ public interface MaxCompiledCode extends MaxEntity<MaxCompiledCode> {
          */
         Sequence<Integer> labelIndexes();
 
+        // TODO (mlvdv) abstract this interface further to this doesn't need to be exposed.
         int[] bytecodeToTargetCodePositionMap();
 
     }

@@ -29,7 +29,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
@@ -240,7 +239,7 @@ public class WordValueLabel extends ValueLabel {
     private TeleClassActor teleClassActor;
 
     /** Non-null if a code pointer. */
-    private TeleCompiledMethod compiledMethod;
+    private MaxCompiledMethod compiledMethod;
 
     /** Non-null if a stack reference. */
     private MaxThread thread;
@@ -308,10 +307,7 @@ public class WordValueLabel extends ValueLabel {
                             displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         } else {
                             try {
-                                MaxCompiledCode compiledCode = vm().codeCache().findCompiledMethod(newValue.toWord().asAddress());
-                                if (compiledCode != null) {
-                                    compiledMethod = (TeleCompiledMethod) compiledCode;
-                                }
+                                compiledMethod = vm().codeCache().findCompiledMethod(newValue.toWord().asAddress());
                                 if (compiledMethod != null) {
                                     final Address codeStart = compiledMethod.getCodeStart();
                                     final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offset());

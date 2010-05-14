@@ -35,28 +35,22 @@ import com.sun.max.tele.object.*;
  */
 public final class NativeMethodInspector extends MethodInspector {
 
-    private final MaxCompiledCode maxCompiledCode;
+    private final MaxCompiledNativeCode compiledNativeCode;
     private TargetCodeViewer targetCodeViewer = null;
     private final String shortName;
     private final String longName;
 
-    public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledCode maxCompiledCode) {
+    public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledNativeCode compiledNativeCode) {
         super(inspection, parent);
-        this.maxCompiledCode = maxCompiledCode;
-        if (maxCompiledCode instanceof TeleCompiledNativeCode) {
-            final TeleCompiledNativeCode teleCompiledNativeCode  = (TeleCompiledNativeCode) maxCompiledCode;
-            shortName = inspection().nameDisplay().shortName(teleCompiledNativeCode);
-            longName = inspection().nameDisplay().longName(teleCompiledNativeCode);
-        } else {
-            shortName = maxCompiledCode.entityName();
-            longName = shortName;
-        }
+        this.compiledNativeCode = compiledNativeCode;
+        shortName = inspection().nameDisplay().shortName(compiledNativeCode);
+        longName = inspection().nameDisplay().longName(compiledNativeCode);
         createTabFrame(parent);
     }
 
     @Override
-    public MaxCompiledCode maxCompiledCode() {
-        return maxCompiledCode;
+    public MaxCompiledNativeCode maxCompiledCode() {
+        return compiledNativeCode;
     }
 
     @Override
@@ -76,7 +70,7 @@ public final class NativeMethodInspector extends MethodInspector {
 
     @Override
     public void createView() {
-        targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, maxCompiledCode);
+        targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, compiledNativeCode);
         getContentPane().add(targetCodeViewer);
         pack();
     }

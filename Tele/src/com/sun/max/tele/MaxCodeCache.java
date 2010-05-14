@@ -62,7 +62,7 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @param address a memory location in the VM
      * @return the code, if any is known, that includes the address
      */
-    MaxCompiledCode findCompiledCode(Address address);
+    MaxCompiledCode< ? extends MaxCompiledCode> findCompiledCode(Address address);
 
     /**
      * Get the method compilation, if any, that contains a given address in the VM.
@@ -70,7 +70,7 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @param address memory location in the VM
      * @return a compiled method whose code includes the address, null if none
      */
-    MaxCompiledCode findCompiledMethod(Address address);
+    MaxCompiledMethod findCompiledMethod(Address address);
 
     /**
      * Get the block of known native code, if any, that contains a given address in the VM.
@@ -78,27 +78,27 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @param address memory location in the VM
      * @return known native code that includes the address, null if none
      */
-    MaxCompiledCode findCompiledNativeCode(Address address);
+    MaxCompiledNativeCode findCompiledNativeCode(Address address);
 
     /**
      * @return gets all compilations of a method in the VM, empty if none
      */
-    IndexedSequence<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor);
+    IndexedSequence<MaxCompiledMethod> compilations(TeleClassMethodActor teleClassMethodActor);
 
     /**
      * Gets the most recent compilation of a method in the VM, null if none.
      */
-    MaxCompiledCode latestCompilation(TeleClassMethodActor teleClassMethodActor);
+    MaxCompiledMethod latestCompilation(TeleClassMethodActor teleClassMethodActor);
 
     /**
-     * Create a new TeleCompiledNativeCode for a block of native code in the VM that has not yet been registered.
+     * Create a new MaxCompiledNativeCode for a block of native code in the VM that has not yet been registered.
      *
      * @param codeStart starting address of the code in VM memory
      * @param codeSize presumed size of the code
      * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
      * @return a newly created TeleCompiledNativeCode
      */
-    TeleCompiledNativeCode createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name);
+    MaxCompiledNativeCode createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name);
 
     /**
      * Writes a textual summary describing all instances of {@link MaxCompiledCode} known to the VM.
