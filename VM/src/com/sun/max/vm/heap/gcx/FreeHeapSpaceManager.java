@@ -731,7 +731,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         Log.unlock(lockDisabledSafepoints);
     }
 
-    public RuntimeMemoryRegion committedHeapSpace() {
+    public MemoryRegion committedHeapSpace() {
         return committedHeapSpace;
     }
 

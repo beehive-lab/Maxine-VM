@@ -142,7 +142,7 @@ public final class ImmortalHeap {
         immortalHeap.initialize(Size.fromLong(Math.max(maxPermSize.getValue().toLong(), permSize.getValue().toLong())));
     }
 
-    public static void initialize(RuntimeMemoryRegion memoryRegion) {
+    public static void initialize(MemoryRegion memoryRegion) {
         immortalHeap.initialize(memoryRegion);
     }
 
@@ -173,7 +173,7 @@ public final class ImmortalHeap {
     }
 
     private static class ImmortalMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
-        ImmortalMemoryPoolMXBean(RuntimeMemoryRegion region, MemoryManagerMXBean manager) {
+        ImmortalMemoryPoolMXBean(MemoryRegion region, MemoryManagerMXBean manager) {
             super(MemoryType.HEAP, region, manager);
         }
 

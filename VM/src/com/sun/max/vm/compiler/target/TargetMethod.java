@@ -56,7 +56,7 @@ import com.sun.max.vm.template.*;
  * @author Doug Simon
  * @author Thomas Wuerthinger
  */
-public abstract class TargetMethod extends RuntimeMemoryRegion {
+public abstract class TargetMethod extends MemoryRegion {
 
     public static final VMStringOption printTargetMethods = VMOptions.register(new VMStringOption("-XX:PrintTargetMethods=", false, null,
         "Print compiled target methods whose fully qualified name matches <value>."), MaxineVM.Phase.STARTING);

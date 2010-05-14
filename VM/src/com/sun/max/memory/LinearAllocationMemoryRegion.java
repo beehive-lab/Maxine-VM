@@ -32,7 +32,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public class LinearAllocationMemoryRegion extends RuntimeMemoryRegion {
+public class LinearAllocationMemoryRegion extends MemoryRegion {
 
     public LinearAllocationMemoryRegion() {
         super();
@@ -42,7 +42,7 @@ public class LinearAllocationMemoryRegion extends RuntimeMemoryRegion {
         super(start, size);
     }
 
-    public LinearAllocationMemoryRegion(RuntimeMemoryRegion memoryRegion) {
+    public LinearAllocationMemoryRegion(MemoryRegion memoryRegion) {
         super(memoryRegion);
     }
 

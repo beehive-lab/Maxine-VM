@@ -414,7 +414,7 @@ public final class DataPrototype extends Prototype {
      */
     abstract class MemoryRegionVisitor implements ObjectCellVisitor, Cloneable {
 
-        final RuntimeMemoryRegion region;
+        final MemoryRegion region;
         final String name;
 
         /**
@@ -423,7 +423,7 @@ public final class DataPrototype extends Prototype {
          * @param region the region of memory to visit
          * @param name the name of this visitor
          */
-        MemoryRegionVisitor(RuntimeMemoryRegion region, String name) {
+        MemoryRegionVisitor(MemoryRegion region, String name) {
             this.region = region;
             this.name = name;
         }
@@ -497,7 +497,7 @@ public final class DataPrototype extends Prototype {
          * @param region the memory region
          * @param name the name of this writer
          */
-        ByteArrayMemoryRegionWriter(RuntimeMemoryRegion region, String name) {
+        ByteArrayMemoryRegionWriter(MemoryRegion region, String name) {
             super(region, name);
             data = new byte[region.size().roundedUpBy(pageSize).toInt()];
             used = new boolean[data.length];
@@ -612,7 +612,7 @@ public final class DataPrototype extends Prototype {
         private Object object;
         private boolean objectIsArray;
         private String[] values;
-        private final RuntimeMemoryRegion otherRegion;
+        private final MemoryRegion otherRegion;
 
         /**
          * Creates a new map writer for the specified region.
@@ -622,7 +622,7 @@ public final class DataPrototype extends Prototype {
          * @param name the name of this map writer
          * @param mapPrintStream the print stream to which to output the result
          */
-        MemoryRegionMapWriter(RuntimeMemoryRegion region, RuntimeMemoryRegion otherRegion, String name, PrintStream mapPrintStream) {
+        MemoryRegionMapWriter(MemoryRegion region, MemoryRegion otherRegion, String name, PrintStream mapPrintStream) {
             super(region, name);
             this.mapPrintStream = mapPrintStream;
             this.otherRegion = otherRegion;
@@ -1102,7 +1102,7 @@ public final class DataPrototype extends Prototype {
 
         assignMethodDispatchTableRelocationFlags();
 
-        final int startFieldOffset = getInstanceFieldOffsetInTupleCell(RuntimeMemoryRegion.class, start, JavaTypeDescriptor.forJavaClass(Address.class));
+        final int startFieldOffset = getInstanceFieldOffsetInTupleCell(MemoryRegion.class, start, JavaTypeDescriptor.forJavaClass(Address.class));
         assignTargetMethodRelocationFlags(startFieldOffset);
         setRelocationFlag(objectToCell.get(Code.bootCodeRegion).plus(startFieldOffset));
 
