@@ -31,7 +31,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -155,7 +154,7 @@ public class Intrinsics extends IntrinsifierClient {
                     bi.intrinsify(opcode, operand);
                 } else {
                     if (!unsafe) {
-                        // The semantics of @INLINE and @FOLD are only implemented by the opto compiler.
+                        // The semantics of @INLINE and @FOLD cannot be implemented by the JIT compiler.
                         unsafe = (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
                     }
                     if (holderIsWord && !isStatic) {
@@ -163,8 +162,12 @@ public class Intrinsics extends IntrinsifierClient {
                         bi.intrinsify(INVOKESPECIAL, cpi);
                     }
                 }
-            } catch (HostOnlyClassError e) {
-            } catch (HostOnlyMethodError e) {
+            } catch (NoClassDefFoundError e) {
+                // This is almost always due to process code guarded with MaxineVM.isHosted().
+                // The compiler will dead-code eliminate such code before it is ever compiled.
+            } catch (NoSuchMethodError e) {
+                // This is almost always due to process code guarded with MaxineVM.isHosted().
+                // The compiler will dead-code eliminate such code before it is ever compiled.
             }
         }
 

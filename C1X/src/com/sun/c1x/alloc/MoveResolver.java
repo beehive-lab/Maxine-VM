@@ -160,8 +160,11 @@ final class MoveResolver {
         }
     }
 
-    // check if assignedReg and assignedRegHi of the to-interval are not blocked (or only blocked by from)
-    private boolean saveToProcessMove(Interval from, Interval to) {
+    /**
+     * Checks if the {@linkplain Interval#location() location} of {@code to} is not blocked
+     * or is only blocked by {@code from}.
+     */
+    private boolean safeToProcessMove(Interval from, Interval to) {
         CiValue fromReg = from != null ? from.location() : null;
 
         CiValue reg = to.location();
@@ -241,8 +244,8 @@ final class MoveResolver {
                 Interval fromInterval = mappingFrom.get(i);
                 Interval toInterval = mappingTo.get(i);
 
-                if (saveToProcessMove(fromInterval, toInterval)) {
-                    // this inverval can be processed because target is free
+                if (safeToProcessMove(fromInterval, toInterval)) {
+                    // this interval can be processed because target is free
                     if (fromInterval != null) {
                         insertMove(fromInterval, toInterval);
                         unblockRegisters(fromInterval);
@@ -333,7 +336,7 @@ final class MoveResolver {
 
     void addMapping(Interval fromInterval, Interval toInterval) {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("MoveResolver: adding mapping from %d (%s) to %d (%s)", fromInterval.operandNumber, fromInterval.location(), toInterval.operandNumber, toInterval.location());
+            TTY.println("MoveResolver: adding mapping from interval %d (%s) to interval %d (%s)", fromInterval.operandNumber, fromInterval.location(), toInterval.operandNumber, toInterval.location());
         }
 
         assert fromInterval.kind() == toInterval.kind();

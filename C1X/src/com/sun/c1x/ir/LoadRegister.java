@@ -41,6 +41,9 @@ public final class LoadRegister extends Instruction {
     public LoadRegister(CiKind kind, CiRegister register) {
         super(kind);
         this.register = register;
+        if (register.isNonZero()) {
+            setFlag(Flag.NonNull);
+        }
     }
 
     public CiRegister register() {

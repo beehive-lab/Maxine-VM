@@ -32,7 +32,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Laurent Daynes
  */
-public class ContiguousHeapSpace extends RuntimeMemoryRegion {
+public class ContiguousHeapSpace extends MemoryRegion {
     private Address committedEnd;
     public ContiguousHeapSpace() {
         super();

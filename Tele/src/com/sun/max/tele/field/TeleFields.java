@@ -156,9 +156,9 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess FieldRefConstant$Resolved_fieldActor = new TeleInstanceReferenceFieldAccess(FieldRefConstant.Resolved.class, "fieldActor", FieldActor.class);
     public final TeleInstanceReferenceFieldAccess ResolvedMethodRefConstant_methodActor = new TeleInstanceReferenceFieldAccess(ResolvedMethodRefConstant.class, "methodActor", MethodActor.class);
     public final TeleInstanceLongFieldAccess RootTableMemoryRegion_wordsUsed = new TeleInstanceLongFieldAccess(RootTableMemoryRegion.class, "wordsUsed");
-    public final TeleInstanceReferenceFieldAccess RuntimeMemoryRegion_regionName = new TeleInstanceReferenceFieldAccess(RuntimeMemoryRegion.class, "regionName", String.class);
-    public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_size = new TeleInstanceWordFieldAccess(RuntimeMemoryRegion.class, "size");
-    public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_start = new TeleInstanceWordFieldAccess(RuntimeMemoryRegion.class, "start");
+    public final TeleInstanceReferenceFieldAccess RuntimeMemoryRegion_regionName = new TeleInstanceReferenceFieldAccess(MemoryRegion.class, "regionName", String.class);
+    public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_size = new TeleInstanceWordFieldAccess(MemoryRegion.class, "size");
+    public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_start = new TeleInstanceWordFieldAccess(MemoryRegion.class, "start");
     public final TeleInstanceReferenceFieldAccess SortedMemoryRegionList_memoryRegions = new TeleInstanceReferenceFieldAccess(SortedMemoryRegionList.class, "memoryRegions", MemoryRegion[].class);
     public final TeleInstanceIntFieldAccess SortedMemoryRegionList_size = new TeleInstanceIntFieldAccess(SortedMemoryRegionList.class, "size");
     public final TeleInstanceReferenceFieldAccess StringConstant_value = new TeleInstanceReferenceFieldAccess(StringConstant.class, "value", String.class);

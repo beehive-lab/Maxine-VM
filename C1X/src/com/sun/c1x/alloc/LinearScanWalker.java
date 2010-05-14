@@ -138,99 +138,99 @@ final class LinearScanWalker extends IntervalWalker {
     }
 
     void freeExcludeActiveFixed() {
-        Interval list = activeLists.get(RegisterBinding.Fixed);
-        while (list != Interval.EndMarker) {
-            assert list.location().isRegister() : "active interval must have a register assigned";
-            excludeFromUse(list);
-            list = list.next;
+        Interval interval = activeLists.get(RegisterBinding.Fixed);
+        while (interval != Interval.EndMarker) {
+            assert interval.location().isRegister() : "active interval must have a register assigned";
+            excludeFromUse(interval);
+            interval = interval.next;
         }
     }
 
     void freeExcludeActiveAny() {
-        Interval list = activeLists.get(RegisterBinding.Any);
-        while (list != Interval.EndMarker) {
-            assert list.location().isRegister() : "active interval must have a register assigned";
-            excludeFromUse(list);
-            list = list.next;
+        Interval interval = activeLists.get(RegisterBinding.Any);
+        while (interval != Interval.EndMarker) {
+            assert interval.location().isRegister() : "active interval must have a register assigned";
+            excludeFromUse(interval);
+            interval = interval.next;
         }
     }
 
-    void freeCollectInactiveFixed(Interval interval) {
-        Interval list = inactiveLists.get(RegisterBinding.Fixed);
-        while (list != Interval.EndMarker) {
-            if (interval.to() <= list.currentFrom()) {
-                assert list.currentIntersectsAt(interval) == -1 : "must not intersect";
-                setUsePos(list, list.currentFrom(), true);
+    void freeCollectInactiveFixed(Interval current) {
+        Interval interval = inactiveLists.get(RegisterBinding.Fixed);
+        while (interval != Interval.EndMarker) {
+            if (current.to() <= interval.currentFrom()) {
+                assert interval.currentIntersectsAt(current) == -1 : "must not intersect";
+                setUsePos(interval, interval.currentFrom(), true);
             } else {
-                setUsePos(list, list.currentIntersectsAt(interval), true);
+                setUsePos(interval, interval.currentIntersectsAt(current), true);
             }
-            list = list.next;
+            interval = interval.next;
         }
     }
 
-    void freeCollectInactiveAny(Interval interval) {
-        Interval list = inactiveLists.get(RegisterBinding.Any);
-        while (list != Interval.EndMarker) {
-            setUsePos(list, list.currentIntersectsAt(interval), true);
-            list = list.next;
+    void freeCollectInactiveAny(Interval current) {
+        Interval interval = inactiveLists.get(RegisterBinding.Any);
+        while (interval != Interval.EndMarker) {
+            setUsePos(interval, interval.currentIntersectsAt(current), true);
+            interval = interval.next;
         }
     }
 
-    void freeCollectUnhandled(RegisterBinding kind, Interval interval) {
-        Interval list = unhandledLists.get(kind);
-        while (list != Interval.EndMarker) {
-            setUsePos(list, list.intersectsAt(interval), true);
-            if (kind == RegisterBinding.Fixed && interval.to() <= list.from()) {
-                setUsePos(list, list.from(), true);
+    void freeCollectUnhandled(RegisterBinding kind, Interval current) {
+        Interval interval = unhandledLists.get(kind);
+        while (interval != Interval.EndMarker) {
+            setUsePos(interval, interval.intersectsAt(current), true);
+            if (kind == RegisterBinding.Fixed && current.to() <= interval.from()) {
+                setUsePos(interval, interval.from(), true);
             }
-            list = list.next;
+            interval = interval.next;
         }
     }
 
     void spillExcludeActiveFixed() {
-        Interval list = activeLists.get(RegisterBinding.Fixed);
-        while (list != Interval.EndMarker) {
-            excludeFromUse(list);
-            list = list.next;
+        Interval interval = activeLists.get(RegisterBinding.Fixed);
+        while (interval != Interval.EndMarker) {
+            excludeFromUse(interval);
+            interval = interval.next;
         }
     }
 
-    void spillBlockUnhandledFixed(Interval interval) {
-        Interval list = unhandledLists.get(RegisterBinding.Fixed);
-        while (list != Interval.EndMarker) {
-            setBlockPos(list, list.intersectsAt(interval));
-            list = list.next;
+    void spillBlockUnhandledFixed(Interval current) {
+        Interval interval = unhandledLists.get(RegisterBinding.Fixed);
+        while (interval != Interval.EndMarker) {
+            setBlockPos(interval, interval.intersectsAt(current));
+            interval = interval.next;
         }
     }
 
-    void spillBlockInactiveFixed(Interval interval) {
-        Interval list = inactiveLists.get(RegisterBinding.Fixed);
-        while (list != Interval.EndMarker) {
-            if (interval.to() > list.currentFrom()) {
-                setBlockPos(list, list.currentIntersectsAt(interval));
+    void spillBlockInactiveFixed(Interval current) {
+        Interval interval = inactiveLists.get(RegisterBinding.Fixed);
+        while (interval != Interval.EndMarker) {
+            if (current.to() > interval.currentFrom()) {
+                setBlockPos(interval, interval.currentIntersectsAt(current));
             } else {
-                assert list.currentIntersectsAt(interval) == -1 : "invalid optimization: intervals intersect";
+                assert interval.currentIntersectsAt(current) == -1 : "invalid optimization: intervals intersect";
             }
 
-            list = list.next;
+            interval = interval.next;
         }
     }
 
     void spillCollectActiveAny() {
-        Interval list = activeLists.get(RegisterBinding.Any);
-        while (list != Interval.EndMarker) {
-            setUsePos(list, Math.min(list.nextUsage(RegisterPriority.LiveAtLoopEnd, currentPosition), list.to()), false);
-            list = list.next;
+        Interval interval = activeLists.get(RegisterBinding.Any);
+        while (interval != Interval.EndMarker) {
+            setUsePos(interval, Math.min(interval.nextUsage(RegisterPriority.LiveAtLoopEnd, currentPosition), interval.to()), false);
+            interval = interval.next;
         }
     }
 
-    void spillCollectInactiveAny(Interval interval) {
-        Interval list = inactiveLists.get(RegisterBinding.Any);
-        while (list != Interval.EndMarker) {
-            if (list.currentIntersects(interval)) {
-                setUsePos(list, Math.min(list.nextUsage(RegisterPriority.LiveAtLoopEnd, currentPosition), list.to()), false);
+    void spillCollectInactiveAny(Interval current) {
+        Interval interval = inactiveLists.get(RegisterBinding.Any);
+        while (interval != Interval.EndMarker) {
+            if (interval.currentIntersects(current)) {
+                setUsePos(interval, Math.min(interval.nextUsage(RegisterPriority.LiveAtLoopEnd, currentPosition), interval.to()), false);
             }
-            list = list.next;
+            interval = interval.next;
         }
     }
 
@@ -401,7 +401,7 @@ final class LinearScanWalker extends IntervalWalker {
             TTY.println("----- splitting interval: ");
         }
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            interval.print(TTY.out(), allocator);
+            TTY.println(interval.logString(allocator));
         }
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println("      between %d and %d", minSplitPos, maxSplitPos);
@@ -454,9 +454,9 @@ final class LinearScanWalker extends IntervalWalker {
         }
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("      ");
-            interval.print(TTY.out(), allocator);
+            TTY.println(interval.logString(allocator));
             TTY.print("      ");
-            splitPart.print(TTY.out(), allocator);
+            TTY.println(splitPart.logString(allocator));
         }
     }
 
@@ -472,8 +472,7 @@ final class LinearScanWalker extends IntervalWalker {
 
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("----- splitting and spilling interval: ");
-
-            interval.print(TTY.out(), allocator);
+            TTY.println(interval.logString(allocator));
             TTY.println("      between %d and %d", minSplitPos, maxSplitPos);
         }
 
@@ -551,9 +550,9 @@ final class LinearScanWalker extends IntervalWalker {
             if (C1XOptions.TraceLinearScanLevel >= 2) {
                 TTY.println("      split interval in two parts");
                 TTY.print("      ");
-                interval.print(TTY.out(), allocator);
+                TTY.println(interval.logString(allocator));
                 TTY.print("      ");
-                spilledPart.print(TTY.out(), allocator);
+                TTY.println(spilledPart.logString(allocator));
             }
         }
     }
@@ -598,8 +597,7 @@ final class LinearScanWalker extends IntervalWalker {
 
     boolean allocFreeRegister(Interval interval) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
-            TTY.print("trying to find free register for ");
-            interval.print(TTY.out(), allocator);
+            TTY.println("trying to find free register for " + interval.logString(allocator));
         }
 
         initUseLists(true);
@@ -626,8 +624,7 @@ final class LinearScanWalker extends IntervalWalker {
         if (locationHint != null && locationHint.location() != null && locationHint.location().isRegister()) {
             hint = locationHint.location().asRegister();
             if (C1XOptions.TraceLinearScanLevel >= 4) {
-                TTY.print("      hint register %d from interval ", hint.number, hint);
-                locationHint.print(TTY.out(), allocator);
+                TTY.println("      hint register %d from interval %s", hint.number, locationHint.logString(allocator));
             }
         }
         assert interval.location() == null : "register already assigned to interval";
@@ -723,8 +720,7 @@ final class LinearScanWalker extends IntervalWalker {
     // Split an Interval and spill it to memory so that cur can be placed in a register
     void allocLockedRegister(Interval interval) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
-            TTY.print("need to split and spill to get register for ");
-            interval.print(TTY.out(), allocator);
+            TTY.println("need to split and spill to get register for " + interval.logString(allocator));
         }
 
         // collect current usage of registers
@@ -918,8 +914,7 @@ final class LinearScanWalker extends IntervalWalker {
         boolean result = true;
 
         if (C1XOptions.TraceLinearScanLevel >= 2) {
-            TTY.print("+++++ activating interval ");
-            interval.print(TTY.out(), allocator);
+            TTY.println("+++++ activating interval " + interval.logString(allocator));
         }
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {

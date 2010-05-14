@@ -26,9 +26,9 @@ package com.sun.c1x.alloc;
  *
  * @author Thomas Wuerthinger
  */
-final class Range {
+public final class Range {
 
-    static final Range EndMarker = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE, null);
+    public static final Range EndMarker = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE, null);
 
     /**
      * The start of the range, inclusive.

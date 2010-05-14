@@ -47,7 +47,7 @@ public class SideTable {
     private static final boolean debug = false;
 
     // Memory region occupied by the SideTable
-    private RuntimeMemoryRegion region = new RuntimeMemoryRegion(Size.zero(), Size.zero());
+    private MemoryRegion region = new MemoryRegion(Size.zero(), Size.zero());
     public static Address sideTableStart; // SideTable Table start
     public static Address sideTableCoveredRegionStart; // SideTable Region(s) start
     public Size sideTableSize;

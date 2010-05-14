@@ -375,6 +375,9 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         for (CiTargetMethod.Call site : ciTargetMethod.indirectCalls) {
             hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, stopInfo);
+            if (site.symbol != null) {
+                stopPositions[index] |= StopPositions.NATIVE_FUNCTION_CALL;
+            }
             index++;
         }
 

@@ -23,7 +23,6 @@ package com.sun.max.tele;
 import java.lang.management.*;
 import java.util.*;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 
 /**

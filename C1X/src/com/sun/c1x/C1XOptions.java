@@ -154,7 +154,7 @@ public class C1XOptions {
     public static boolean GenBoundsChecks               = true;
     public static boolean GenExplicitNullChecks         = ____;
     public static boolean GenExplicitDiv0Checks         = ____;
-    public static boolean GenSpecialDivChecks           = true;
+    public static boolean GenSpecialDivChecks           = ____;
     public static boolean GenStackBanging               = true;
     public static boolean GenAssertionCode              = ____;
     public static boolean GenFinalizerRegistration      = true;
@@ -343,6 +343,13 @@ public class C1XOptions {
         map.put("NormalCPEResolution",
                 "Eagerly resolve constant pool entries when the resolution can be done " +
                 "without triggering class loading.");
+
+        map.put("GenExplicitDiv0Checks",
+                "Generate code to check for division-by-zero instead of relying on a trap.");
+
+        map.put("GenSpecialDivChecks",
+                "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " +
+                "instead of detecting these cases via instruction decoding in a trap handler.");
 
         for (String name : map.keySet()) {
             try {

@@ -31,6 +31,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
@@ -45,6 +46,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.value.*;
 
 /**
  * The {@code MaxRiRuntime} class implements the runtime interface needed by C1X.
@@ -267,6 +269,96 @@ public class MaxRiRuntime implements RiRuntime {
             MethodActor methodActor = (MethodActor) method;
             if (Actor.isDeclaredFoldable(methodActor.flags())) {
                 return methodActor.toJava();
+            }
+        }
+        return null;
+    }
+
+    static class CachedInvocation {
+        public CachedInvocation(Value[] args) {
+            this.args = args;
+        }
+        final Value[] args;
+        CiConstant result;
+    }
+
+    /**
+     * Cache to speed up compile-time folding. This works as an invocation of a {@linkplain FOLD foldable}
+     * method is guaranteed to be idempotent with respect its arguments.
+     */
+    private final HashMap<MethodActor, CachedInvocation> cache = new HashMap<MethodActor, CachedInvocation>();
+
+    @Override
+    public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
+        if (C1XOptions.CanonicalizeFoldableMethods && method.isResolved()) {
+            MethodActor methodActor = (MethodActor) method;
+            if (Actor.isDeclaredFoldable(methodActor.flags())) {
+                Value[] values;
+                int length = methodActor.descriptor().argumentCount(!methodActor.isStatic());
+                if (length == 0) {
+                    values = Value.NONE;
+                } else {
+                    values = new Value[length];
+                    for (int i = 0; i < length; ++i) {
+                        CiConstant arg = args.nextArg();
+                        if (arg == null) {
+                            return null;
+                        }
+                        Value value;
+                        // Checkstyle: stop
+                        switch (arg.kind) {
+                            case Boolean: value = BooleanValue.from(arg.asBoolean()); break;
+                            case Byte:    value = ByteValue.from((byte) arg.asInt()); break;
+                            case Char:    value = CharValue.from((char) arg.asInt()); break;
+                            case Double:  value = DoubleValue.from(arg.asDouble()); break;
+                            case Float:   value = FloatValue.from(arg.asFloat()); break;
+                            case Int:     value = IntValue.from(arg.asInt()); break;
+                            case Long:    value = LongValue.from(arg.asLong()); break;
+                            case Object:  value = ReferenceValue.from(arg.asObject()); break;
+                            case Short:   value = ShortValue.from((short) arg.asInt()); break;
+                            case Word:    value = WordValue.from(Address.fromLong(arg.asLong())); break;
+                            default: throw new IllegalArgumentException();
+                        }
+                        // Checkstyle: resume
+                        values[i] = value;
+                    }
+                }
+
+                CachedInvocation cachedInvocation = null;
+                if (!MaxineVM.isHosted()) {
+                    synchronized (cache) {
+                        cachedInvocation = cache.get(methodActor);
+                        if (cachedInvocation != null) {
+                            if (Arrays.equals(values, cachedInvocation.args)) {
+                                return cachedInvocation.result;
+                            }
+                        } else {
+                            cachedInvocation = new CachedInvocation(values);
+                            cache.put(methodActor, cachedInvocation);
+                        }
+                    }
+                }
+
+                try {
+                    // attempt to invoke the method
+                    CiConstant result = methodActor.invoke(values).asCiConstant();
+                    // set the result of this instruction to be the result of invocation
+                    C1XMetrics.MethodsFolded++;
+
+                    if (!MaxineVM.isHosted()) {
+                        cachedInvocation.result = result;
+                    }
+
+                    return result;
+                    // note that for void, we will have a void constant with value null
+                } catch (IllegalAccessException e) {
+                    // folding failed; too bad
+                } catch (InvocationTargetException e) {
+                    // folding failed; too bad
+                } catch (ExceptionInInitializerError e) {
+                    // folding failed; too bad
+                }
+                return null;
             }
         }
         return null;

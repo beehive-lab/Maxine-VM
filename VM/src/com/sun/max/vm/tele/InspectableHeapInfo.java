@@ -63,7 +63,7 @@ public final class InspectableHeapInfo {
 
     /**
      * Inspectable location of the memory allocated for the Inspector's root table.
-     * Equivalent to {@link RuntimeMemoryRegion#start()}, but it must be
+     * Equivalent to {@link MemoryRegion#start()}, but it must be
      * readable by the Inspector using only low level operations during startup.
      */
     @INSPECTED

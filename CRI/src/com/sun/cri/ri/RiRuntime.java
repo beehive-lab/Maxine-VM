@@ -168,13 +168,15 @@ public interface RiRuntime {
     RiSnippets getSnippets();
 
     /**
-     * Gets the Java reflection object that can be used to compile-time evaluate or "fold"
-     * a call to a given method. A foldable method is a pure function that has no side effects.
-     * Such methods can be executed via reflection when all their inputs are constants,
+     * Attempts to compile-time evaluate or "fold" a call to a given method. A foldable method is a pure function
+     * that has no side effects. Such methods can be executed via reflection when all their inputs are constants,
      * and the resulting value is substituted for the method call.
      * 
-     * @param method the compiler interface method for which a foldable is being requested
-     * @return the reflection method to execute for folding or {@code null} if {@code method} is not foldable
+     * The {@link CiUtil#invoke(Method, CiMethodInvokeArguments)} utility can be used to implement this method.
+     * 
+     * @param method the compiler interface method for which folding is being requested
+     * @param the arguments to the call
+     * @return the result of the folding or {@code null} if no folding occurred
      */
-    Method getFoldingMethod(RiMethod method);
+    CiConstant invoke(RiMethod method, CiMethodInvokeArguments args);
 }
