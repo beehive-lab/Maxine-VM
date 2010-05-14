@@ -65,7 +65,9 @@ final class CodeRegistry extends AbstractTeleVMHolder {
      * @throws IllegalArgumentException when the code's memory overlaps one already in this registry.
      */
     public synchronized void add(TeleCompiledMethod teleCompiledMethod) {
-        compiledCodeMemoryRegions.add(teleCompiledMethod.memoryRegion());
+        final MaxEntityMemoryRegion<MaxCompiledMethod> memoryRegion = teleCompiledMethod.memoryRegion();
+        ProgramError.check(!memoryRegion.start().isZero(), "Code registry zero location");
+        compiledCodeMemoryRegions.add(memoryRegion);
     }
 
     public synchronized TeleCompiledNativeCode getCompiledNativeCode(Address address) {
