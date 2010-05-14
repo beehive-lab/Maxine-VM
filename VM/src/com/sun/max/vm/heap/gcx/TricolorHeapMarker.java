@@ -205,7 +205,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     /**
      * Memory where the color map is stored.
      */
-    final RuntimeMemoryRegion colorMap;
+    final MemoryRegion colorMap;
 
     /**
      * Shortcut to colorMap.start() for fast bitmap operation.
@@ -248,7 +248,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         log2BytesCoveredPerBit = Word.widthValue().log2numberOfBytes + Integer.numberOfTrailingZeros(wordsCoveredPerBit);
         assert wordsCoveredPerBit * Word.widthValue().numberOfBytes == 1 << log2BytesCoveredPerBit;
         log2BitmapWord = log2BytesCoveredPerBit + Word.widthValue().log2numberOfBits;
-        colorMap = new RuntimeMemoryRegion("Mark Bitmap");
+        colorMap = new MemoryRegion("Mark Bitmap");
         markingStack = new MarkingStack();
         markingStack.setOverflowHandler(this);
     }
@@ -259,7 +259,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param bitmapStorage
      * @param coveredArea
      */
-    public void initialize(RuntimeMemoryRegion coveredArea, Address bitmapStorage, Size bitmapSize) {
+    public void initialize(MemoryRegion coveredArea, Address bitmapStorage, Size bitmapSize) {
         if (MaxineVM.isDebug()) {
             FatalError.check(bitmapSize.toLong() >= bitmapSize(coveredArea.size()).toLong(), "Mark bitmap too small to cover heap");
         }

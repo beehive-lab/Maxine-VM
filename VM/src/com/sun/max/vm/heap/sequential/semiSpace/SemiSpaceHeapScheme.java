@@ -461,7 +461,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      * Deallocates the memory associated with the given region.
      * Sets the region start to zero but does not change the size.
      */
-    private static void deallocateSpace(RuntimeMemoryRegion space) {
+    private static void deallocateSpace(MemoryRegion space) {
         final Address base = space.start();
         if (virtualAllocOption.getValue()) {
             VirtualMemory.deallocate(base, space.size(), VirtualMemory.Type.HEAP);
@@ -934,7 +934,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
     /**
      * Inserts {@linkplain DebugHeap#writeCellPadding(Pointer, int) padding} into the unused portion of a thread's TLAB.
-     * This is required if {@linkplain DebugHeap#verifyRegion(String, Pointer, Address, RuntimeMemoryRegion, PointerOffsetVisitor) verification}
+     * This is required if {@linkplain DebugHeap#verifyRegion(String, Pointer, Address, MemoryRegion, PointerOffsetVisitor) verification}
      * of the heap will be performed.
      *
      * @param enabledVmThreadLocals the pointer to the safepoint-enabled VM thread locals for the thread whose TLAB is
@@ -1022,7 +1022,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         }
     }
 
-    private void zapRegion(RuntimeMemoryRegion region, String when) {
+    private void zapRegion(MemoryRegion region, String when) {
         if (Heap.traceGCPhases()) {
             Log.print("Zapping region ");
             Log.print(region.regionName());
@@ -1042,7 +1042,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         }
     }
 
-    private void logSpace(RuntimeMemoryRegion space) {
+    private void logSpace(MemoryRegion space) {
         Log.print(space.regionName());
         Log.print(" start "); Log.print(space.start());
         Log.print(", end "); Log.print(space.end());
@@ -1232,7 +1232,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     }
 
     private final class SemiSpaceMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
-        SemiSpaceMemoryPoolMXBean(RuntimeMemoryRegion region, MemoryManagerMXBean manager) {
+        SemiSpaceMemoryPoolMXBean(MemoryRegion region, MemoryManagerMXBean manager) {
             super(MemoryType.HEAP, region, manager);
         }
     }

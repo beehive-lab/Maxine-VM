@@ -33,13 +33,13 @@ package com.sun.max.vm.management;
 
 public class MemoryPoolMXBeanAdaptor implements MemoryPoolMXBean {
     protected MemoryManagerMXBean manager;
-    protected RuntimeMemoryRegion region;
+    protected MemoryRegion region;
     private MemoryType type;
 
     private MemoryPoolMXBeanAdaptor() {
     }
 
-    public MemoryPoolMXBeanAdaptor(MemoryType type, RuntimeMemoryRegion region, MemoryManagerMXBean manager) {
+    public MemoryPoolMXBeanAdaptor(MemoryType type, MemoryRegion region, MemoryManagerMXBean manager) {
         this.type = type;
         this.region = region;
     }
