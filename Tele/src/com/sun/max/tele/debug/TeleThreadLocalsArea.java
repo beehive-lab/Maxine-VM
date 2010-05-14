@@ -61,7 +61,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
      * This region's children are the individual {@linkplain MaxThreadLocalVariable thread local variables}
      * in the area.
      */
-    private final class ThreadLocalsAreaMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxThreadLocalsArea> {
+    private static final class ThreadLocalsAreaMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxThreadLocalsArea> {
 
         private final TeleThreadLocalsArea teleThreadLocalsArea;
 
