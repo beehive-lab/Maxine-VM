@@ -170,27 +170,20 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return null;
     }
 
-    public TeleCompiledCode findCompiledCode(Address address) {
-        TeleCompiledCode teleCompiledCode = codeRegistry().get(TeleCompiledCode.class, address);
-        if (teleCompiledCode == null) {
-            // Neither a known Java method nor known native code.
-            // See if we can find a Java method the hard way.
-            teleCompiledCode = findCompiledMethod(address);
+    public MaxCompiledCode< ? extends MaxCompiledCode> findCompiledCode(Address address) {
+        TeleCompiledNativeCode teleCompiledNativeCode = codeRegistry().getCompiledNativeCode(address);
+        if (teleCompiledNativeCode == null) {
+            return teleCompiledNativeCode;
         }
-        return teleCompiledCode;
+        return findCompiledMethod(address);
     }
 
     public TeleCompiledMethod findCompiledMethod(Address address) {
-        TeleCompiledMethod teleCompiledMethod = codeRegistry().get(TeleCompiledMethod.class, address);
+        TeleCompiledMethod teleCompiledMethod = codeRegistry().getCompiledMethod(address);
         if (teleCompiledMethod == null) {
             // Not a known Java method.
-            final TeleCompiledNativeCode teleCompiledNativeCode = codeRegistry().get(TeleCompiledNativeCode.class, address);
-            if (teleCompiledNativeCode != null) {
-                // The address is in a known block of native code, so no compiled method
-                return null;
-            }
             if (!contains(address)) {
-                // The address is not in a code allocation region; no use looking further.
+                // The address is not in a method code allocation region; no use looking further.
                 return null;
             }
             // Not a known compiled method, and not some other kind of known target code, but in a code region
@@ -206,13 +199,13 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
                 throw ProgramError.unexpected(e);
             }
             // If a new method was discovered, then it will have been added to the registry.
-            teleCompiledMethod = codeRegistry().get(TeleCompiledMethod.class, address);
+            teleCompiledMethod = codeRegistry().getCompiledMethod(address);
         }
         return teleCompiledMethod;
     }
 
-    public IndexedSequence<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor) {
-        final VariableSequence<MaxCompiledCode> compilations = new ArrayListSequence<MaxCompiledCode>(teleClassMethodActor.numberOfCompilations());
+    public IndexedSequence<MaxCompiledMethod> compilations(TeleClassMethodActor teleClassMethodActor) {
+        final VariableSequence<MaxCompiledMethod> compilations = new ArrayListSequence<MaxCompiledMethod>(teleClassMethodActor.numberOfCompilations());
         for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
             compilations.append(findCompiledMethod(teleTargetMethod.getRegionStart()));
         }
@@ -224,8 +217,8 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return teleTargetMethod == null ? null : findCompiledMethod(teleTargetMethod.getRegionStart());
     }
 
-    public TeleCompiledNativeCode findCompiledNativeCode(Address address) {
-        return codeRegistry().get(TeleCompiledNativeCode.class, address);
+    public MaxCompiledNativeCode findCompiledNativeCode(Address address) {
+        return codeRegistry().getCompiledNativeCode(address);
     }
 
     public TeleCompiledNativeCode createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name) {
@@ -255,19 +248,14 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return codeRegistry;
     }
 
-    /**
-     * Adds an entry to the code registry, indexed by code address, representing a body
-     * of compiled (native) code about which little is known.
-     *
-     * @param teleCompiledNativeCode a body of native code
-     */
-    public void register(TeleCompiledNativeCode teleCompiledNativeCode) {
+    public void register(MaxCompiledNativeCode teleCompiledNativeCode) {
         codeRegistry().add(teleCompiledNativeCode);
+
     }
 
     /**
-     * Adds a {@link MaxCompiledCode} entry to the code registry, indexed by code address. Should only be called from
-     * a constructor of a {@link TeleTargetMethod} subclass.
+     * Adds a {@link MaxCompiledMethod} entry to the code registry, indexed by code address.
+     * This should only be called from a constructor of a {@link TeleTargetMethod} subclass.
      *
      * @param teleTargetMethod the compiled method whose memory region is to be added to this registry
      * @throws IllegalArgumentException when the memory region of {@link teleTargetMethod} overlaps one already in this registry.

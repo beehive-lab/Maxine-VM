@@ -57,7 +57,7 @@ public final class TargetJavaFrameDescriptorInspector extends Inspector {
      * Display and highlight a target Java frame descriptor inspector for the frame..
      * @return The inspector, possibly newly created.
      */
-    public static TargetJavaFrameDescriptorInspector make(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, MaxCompiledCode compiledMethod) {
+    public static TargetJavaFrameDescriptorInspector make(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, MaxCompiledMethod compiledMethod) {
         final Long key = makeKey(javaFrameDescriptor);
         TargetJavaFrameDescriptorInspector inspector = inspectors.get(key);
         if (inspector == null) {
@@ -67,11 +67,11 @@ public final class TargetJavaFrameDescriptorInspector extends Inspector {
         return inspector;
     }
 
-    private final MaxCompiledCode compiledMethod;
+    private final MaxCompiledMethod compiledMethod;
     private final TargetJavaFrameDescriptor javaFrameDescriptor;
     private final Long key;
 
-    private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, MaxCompiledCode compiledMethod, Long key) {
+    private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, MaxCompiledMethod compiledMethod, Long key) {
         super(inspection);
         this.javaFrameDescriptor = javaFrameDescriptor;
         this.compiledMethod = compiledMethod;

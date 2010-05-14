@@ -32,7 +32,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -618,9 +617,8 @@ public final class BreakpointsTable extends InspectorTable {
         TargetBreakpointData(MaxBreakpoint targetBreakpoint) {
             super(targetBreakpoint);
             final Address address = codeLocation().address();
-            MaxCompiledCode compiledCode = vm().codeCache().findCompiledMethod(address);
-            if (compiledCode != null) {
-                final TeleCompiledMethod compiledMethod = (TeleCompiledMethod) compiledCode;
+            final MaxCompiledMethod compiledMethod = vm().codeCache().findCompiledMethod(address);
+            if (compiledMethod != null) {
                 shortName = inspection().nameDisplay().shortName(compiledMethod);
                 final StringBuilder sb = new StringBuilder();
                 sb.append("(");
@@ -632,12 +630,11 @@ public final class BreakpointsTable extends InspectorTable {
                 sb.append(") ");
                 sb.append(inspection().nameDisplay().longName(compiledMethod, address));
                 longName = sb.toString();
-                codeStart = compiledCode.getCodeStart();
+                codeStart = compiledMethod.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                compiledCode = vm().codeCache().findCompiledNativeCode(address);
-                if (compiledCode != null) {
-                    final TeleCompiledNativeCode compiledNativeCode = (TeleCompiledNativeCode) compiledCode;
+                final MaxCompiledNativeCode compiledNativeCode = vm().codeCache().findCompiledNativeCode(address);
+                if (compiledNativeCode != null) {
                     codeStart = compiledNativeCode.getCodeStart();
                     location = address.minus(codeStart.asAddress()).toInt();
                     shortName = inspection().nameDisplay().shortName(compiledNativeCode);

@@ -37,7 +37,6 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
@@ -59,8 +58,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final BytecodeTableModel tableModel;
     private final BytecodeViewPreferences instanceViewPreferences;
 
-    public JTableBytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, TeleCompiledMethod teleCompiledMethod) {
-        super(inspection, parent, teleClassMethodActor, teleCompiledMethod);
+    public JTableBytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, MaxCompiledMethod compiledMethod) {
+        super(inspection, parent, teleClassMethodActor, compiledMethod);
         this.inspection = inspection;
         tableModel = new BytecodeTableModel(inspection, bytecodeInstructions());
         instanceViewPreferences = new BytecodeViewPreferences(BytecodeViewPreferences.globalPreferences(inspection())) {
@@ -263,7 +262,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     focusRow = model.findRowAtPosition(0);
                 }
             } else if (codeLocation.hasAddress()) {
-                if (teleTargetMethod() != null && teleTargetMethod().contains(codeLocation.address())) {
+                if (compiledMethod() != null && compiledMethod().contains(codeLocation.address())) {
                     focusRow = model.findRow(codeLocation.address());
                 }
             }

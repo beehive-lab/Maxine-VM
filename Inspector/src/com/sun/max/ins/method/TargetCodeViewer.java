@@ -42,10 +42,10 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public abstract class TargetCodeViewer extends CodeViewer {
 
-    private final MaxCompiledCode maxCompiledCode;
+    private final MaxCompiledCode compiledCode;
     private final InstructionMap instructionMap;
-    private final TeleConstantPool teleConstantPool;
-    private final ConstantPool localConstantPool;
+    private TeleConstantPool teleConstantPool;
+    private ConstantPool localConstantPool;
 
     /**
      * local copy of the method bytecodes in the VM; null if a native method or otherwise unavailable.
@@ -54,35 +54,36 @@ public abstract class TargetCodeViewer extends CodeViewer {
 
     private final String[] rowToTagText;
 
-    protected TargetCodeViewer(Inspection inspection, MethodInspector parent, MaxCompiledCode maxCompiledCode) {
+    protected TargetCodeViewer(Inspection inspection, MethodInspector parent, MaxCompiledCode compiledCode) {
         super(inspection, parent);
-        this.maxCompiledCode = maxCompiledCode;
-        this.instructionMap = maxCompiledCode.instructionMap();
+        this.compiledCode = compiledCode;
+        this.instructionMap = compiledCode.instructionMap();
         final int targetInstructionCount = instructionMap.length();
         this.rowToTagText = new String[targetInstructionCount];
         rowToStackFrame = new MaxStackFrame[targetInstructionCount];
-        final TeleClassMethodActor teleClassMethodActor = maxCompiledCode.getTeleClassMethodActor();
-        if (teleClassMethodActor != null) {
-            final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
-//            bytecodes = teleCodeAttribute.readBytecodes();
-            teleConstantPool = teleCodeAttribute.getTeleConstantPool();
-            ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
-            localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().constantPool;
-            for (int index = 0; index < instructionMap.length(); index++) {
-                final int opcode = instructionMap.opcode(index);
-                if (instructionMap.isBytecodeBoundary(index) && opcode >= 0) {
-                    rowToTagText[index] = instructionMap.bytecodeLocation(index).bytecodePosition + ": " + Bytecodes.nameOf(opcode);
-                } else {
-                    rowToTagText[index] = "";
+
+        teleConstantPool = null;
+        localConstantPool = null;
+        Arrays.fill(rowToTagText, "");
+        if (compiledCode instanceof MaxCompiledMethod) {
+            final MaxCompiledMethod compiledMethod = (MaxCompiledMethod) compiledCode;
+            final TeleClassMethodActor teleClassMethodActor = compiledMethod.getTeleClassMethodActor();
+            if (teleClassMethodActor != null) {
+                final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
+//              bytecodes = teleCodeAttribute.readBytecodes();
+                teleConstantPool = teleCodeAttribute.getTeleConstantPool();
+                ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
+                localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().constantPool;
+                for (int index = 0; index < instructionMap.length(); index++) {
+                    final int opcode = instructionMap.opcode(index);
+                    if (instructionMap.isBytecodeBoundary(index) && opcode >= 0) {
+                        rowToTagText[index] = instructionMap.bytecodeLocation(index).bytecodePosition + ": " + Bytecodes.nameOf(opcode);
+                    } else {
+                        rowToTagText[index] = "";
+                    }
                 }
             }
-        } else {  // native method
-//            bytecodes = null;
-            teleConstantPool = null;
-            localConstantPool = null;
-            Arrays.fill(rowToTagText, "");
         }
-
 
 
 
@@ -93,10 +94,10 @@ public abstract class TargetCodeViewer extends CodeViewer {
 //        isStopRow = new boolean[targetInstructionCount];
 //        Arrays.fill(isStopRow, false);
 
-//        final int targetCodeLength = maxCompiledCode.memoryRegion().size().toInt();
+//        final int targetCodeLength = compiledCode.memoryRegion().size().toInt();
 //        final int[] positionToStopIndex = new int[targetCodeLength];
 //        Arrays.fill(positionToStopIndex, -1);
-//        final StopPositions stopPositions = maxCompiledCode.getStopPositions();
+//        final StopPositions stopPositions = compiledCode.getStopPositions();
 //        if (stopPositions != null) {
 //            for (int stopPositionIndex = 0; stopPositionIndex < stopPositions.length(); ++stopPositionIndex) {
 //                final int stopPosition = stopPositions.get(stopPositionIndex);
@@ -105,8 +106,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
 //            }
 //        }
 
-        if (maxCompiledCode instanceof TeleJitTargetMethod) { // JIT method
-//            final int[] bytecodeToTargetCodePositionMap = ((TeleJitTargetMethod) maxCompiledCode).bytecodeToTargetCodePositionMap();
+        if (compiledCode instanceof TeleJitTargetMethod) { // JIT method
+//            final int[] bytecodeToTargetCodePositionMap = ((TeleJitTargetMethod) compiledCode).bytecodeToTargetCodePositionMap();
 //            int bytecodeIndex = 0; // position in the original bytecode stream.
 //            for (int row = 0; row < targetInstructionCount; row++) {
 //                final int bytecodePosition = bytecodeIndex;
@@ -147,8 +148,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
 //                if (stopIndex >= 0) {
 //                    // the row is at a stop point
 //                    // isStopRow[row] = true;
-//                    if (maxCompiledCode instanceof TeleTargetMethod) {
-//                        final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) maxCompiledCode;
+//                    if (compiledCode instanceof TeleTargetMethod) {
+//                        final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) compiledCode;
 //                        final BytecodeLocation bytecodeLocation = teleTargetMethod.getBytecodeLocation(stopIndex);
 //
 //                        // TODO (mlvdv) only works for non-inlined calls
@@ -222,7 +223,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * @return surrogate for the {@link TargetRoutine} in the VM for the method being viewed.
      */
     protected MaxCompiledCode maxCompiledCode() {
-        return maxCompiledCode;
+        return compiledCode;
     }
 
     /**

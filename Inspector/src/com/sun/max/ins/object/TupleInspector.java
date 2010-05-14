@@ -23,7 +23,6 @@ package com.sun.max.ins.object;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
 
@@ -40,10 +39,8 @@ public class TupleInspector extends ObjectInspector {
         super(inspection, factory, teleObject);
         final InspectorFrame frame = createFrame(true);
 
-        final MaxCompiledCode compiledCode = vm().codeCache().findCompiledMethod(teleObject.origin());
-        if (compiledCode != null) {
-            // This object represents a method compilation
-            final TeleCompiledMethod compiledMethod = (TeleCompiledMethod) compiledCode;
+        final MaxCompiledMethod compiledMethod = vm().codeCache().findCompiledMethod(teleObject.origin());
+        if (compiledMethod != null) {
             frame.makeMenu(MenuKind.DEBUG_MENU).add(actions().setTargetCodeBreakpointAtMethodEntry(compiledMethod));
         }
 

@@ -79,13 +79,13 @@ public abstract class BytecodeViewer extends CodeViewer {
         return methodKey;
     }
 
-    private final TeleCompiledMethod teleCompiledMethod;
+    private final MaxCompiledMethod compiledMethod;
 
     /**
      * The compilation associated with this view, if exists.
      */
-    protected TeleCompiledMethod teleTargetMethod() {
-        return teleCompiledMethod;
+    protected MaxCompiledMethod compiledMethod() {
+        return compiledMethod;
     }
 
     private final byte[] methodBytes;
@@ -132,10 +132,10 @@ public abstract class BytecodeViewer extends CodeViewer {
      * Base class for bytecode viewers. TargetCode is optional, since a method may not yet be compiled, but may appear
      * and change as method is compiled and recompiled.
      */
-    protected BytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, TeleCompiledMethod teleCompiledMethod) {
+    protected BytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, MaxCompiledMethod compiledMethod) {
         super(inspection, parent);
         this.teleClassMethodActor = teleClassMethodActor;
-        this.teleCompiledMethod = teleCompiledMethod;
+        this.compiledMethod = compiledMethod;
         methodKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
         final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
         // Always use the {@link ConstantPool} taken from the {@link CodeAttribute}; in a substituted method, the
@@ -150,8 +150,8 @@ public abstract class BytecodeViewer extends CodeViewer {
     private void buildView() {
         int[] bytecodeToTargetCodePositionMap = null;
         InstructionMap instructionMap = null;
-        if (teleCompiledMethod != null) {
-            instructionMap = teleCompiledMethod.instructionMap();
+        if (compiledMethod != null) {
+            instructionMap = compiledMethod.instructionMap();
             bytecodeToTargetCodePositionMap = instructionMap.bytecodeToTargetCodePositionMap();
             // TODO (mlvdv) can only map bytecodes to JIT target code so far
             if (bytecodeToTargetCodePositionMap != null) {
@@ -202,7 +202,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                 return address.lessThan(bytecodeInstructions.get(row + 1).targetCodeFirstAddress);
             }
             // Last bytecode instruction:  see if before the end of the target code
-            final InstructionMap instructionMap = teleCompiledMethod.instructionMap();
+            final InstructionMap instructionMap = compiledMethod.instructionMap();
             final TargetCodeInstruction lastTargetCodeInstruction = instructionMap.instruction(instructionMap.length() - 1);
             return address.lessThan(lastTargetCodeInstruction.address.plus(lastTargetCodeInstruction.bytes.length));
         }
