@@ -88,7 +88,6 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
         return address.greaterEqual(getRegionStart()) && address.lessThan(getRegionStart().plus(getRegionSize()));
     }
 
-
     /**
      * @return whether memory has been allocated yet in the VM for this region.
      */
@@ -96,9 +95,22 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
         return !getRegionStart().isZero();
     }
 
+    /**
+     * @return whether this region of VM memory might be relocated, once allocated.
+     */
+    public boolean isRelocatable() {
+        return true;
+    }
+
     @Override
     protected void refresh() {
         super.refresh();
+
+        if (!isRelocatable() && isAllocated() && !getRegionSize().isZero()) {
+            // Optimization: if we know the region won't be moved by the VM, and
+            // we already have the location information, then don't bother to refresh.
+            return;
+        }
         if (vm().tryLock()) {
             try {
                 final Size newRegionSize = vm().teleFields().RuntimeMemoryRegion_size.readWord(reference()).asSize();

@@ -421,4 +421,9 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     public ReferenceTypeProvider getReferenceType() {
         return vm().vmAccess().getReferenceType(getClass());
     }
+
+    @Override
+    public boolean isRelocatable() {
+        return false;
+    }
 }
