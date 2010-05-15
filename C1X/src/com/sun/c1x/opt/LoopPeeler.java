@@ -249,7 +249,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitLoadField(LoadField i) {
-        LoadField other = new LoadField(i.object(), i.field(), i.isStatic(), copyStateBefore(i.stateBefore()), i.isLoaded(), i.cpi, i.constantPool);
+        LoadField other = new LoadField(i.object(), i.field(), i.isStatic(), copyStateBefore(i.stateBefore()), i.isLoaded());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -266,7 +266,7 @@ public class LoopPeeler extends DefaultValueVisitor {
     @Override
     public void visitStoreField(StoreField i) {
         StoreField other = new StoreField(lookup(i.object()), i.field(), lookup(i.value()), i.isStatic(),
-                        copyStateBefore(i.stateBefore()), i.isLoaded(), i.cpi, i.constantPool);
+                        copyStateBefore(i.stateBefore()), i.isLoaded());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -395,7 +395,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitInvoke(Invoke i) {
-        Invoke other = new Invoke(i.opcode(), i.kind, cloneArguments(i.arguments()), i.isStatic(), i.target(), i.cpi, i.constantPool, i.stateBefore().copy());
+        Invoke other = new Invoke(i.opcode(), i.kind, cloneArguments(i.arguments()), i.isStatic(), i.target(), i.stateBefore().copy());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);

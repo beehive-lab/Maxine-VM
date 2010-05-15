@@ -372,7 +372,18 @@ public class MaxRiRuntime implements RiRuntime {
         return ClassActor.fromJava(javaClass);
     }
 
-    @Override
+    public RiMethod getRiMethod(Method method) {
+        return MethodActor.fromJava(method);
+    }
+
+    public RiMethod getRiMethod(Constructor< ? > constructor) {
+        return MethodActor.fromJavaConstructor(constructor);
+    }
+
+    public RiField getRiField(Field field) {
+        return FieldActor.fromJava(field);
+    }
+
     public RiSnippets getSnippets() {
         if (snippets == null) {
             snippets = new MaxRiSnippets(this);

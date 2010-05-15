@@ -808,36 +808,8 @@ public final class ConstantPool implements RiConstantPool {
         return staticMethodActor;
     }
 
-    public RiField lookupGetField(int cpi) {
+    public RiField lookupField(int cpi) {
         return fieldFrom(fieldAt(cpi), cpi);
-    }
-
-    public RiField lookupPutField(int cpi) {
-        return fieldFrom(fieldAt(cpi), cpi);
-    }
-
-    public RiField lookupGetStatic(int cpi) {
-        return fieldFrom(fieldAt(cpi), cpi);
-    }
-
-    public RiField lookupPutStatic(int cpi) {
-        return fieldFrom(fieldAt(cpi), cpi);
-    }
-
-    public RiMethod lookupInvokeVirtual(int cpi) {
-        return methodFrom(methodAt(cpi), cpi);
-    }
-
-    public RiMethod lookupInvokeSpecial(int cpi) {
-        return methodFrom(methodAt(cpi), cpi);
-    }
-
-    public RiMethod lookupInvokeInterface(int cpi) {
-        return methodFrom(methodAt(cpi), cpi);
-    }
-
-    public RiMethod lookupInvokeStatic(int cpi) {
-        return methodFrom(methodAt(cpi), cpi);
     }
 
     public RiMethod lookupMethod(int cpi) {
