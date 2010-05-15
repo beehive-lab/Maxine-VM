@@ -152,7 +152,6 @@ public class C1XOptions {
     public static boolean GenSynchronization            = true;
     public static boolean GenArrayStoreCheck            = true;
     public static boolean GenBoundsChecks               = true;
-    public static boolean GenExplicitNullChecks         = ____;
     public static boolean GenExplicitDiv0Checks         = ____;
     public static boolean GenSpecialDivChecks           = ____;
     public static boolean GenStackBanging               = true;

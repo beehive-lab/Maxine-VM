@@ -75,6 +75,15 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
     }
 
+    static class NewInstanceTemplates extends XirPair {
+        final XirTemplate resolvedHybrid;
+
+        public NewInstanceTemplates(XirTemplate resolved, XirTemplate resolvedHybrid, XirTemplate unresolved) {
+            super(resolved, unresolved);
+            this.resolvedHybrid = resolvedHybrid;
+        }
+    }
+
     static class InvokeSpecialTemplates extends XirPair {
         final XirTemplate resolvedNullCheckEliminated;
 
@@ -112,7 +121,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     private XirTemplate monitorEnterTemplate;
     private XirTemplate monitorExitTemplate;
     private XirTemplate[] resolveClassTemplates;
-    private XirPair newInstanceTemplate;
+    private NewInstanceTemplates newInstanceTemplate;
     private XirPair checkcastForLeafTemplate;
     private XirPair checkcastForClassTemplate;
     private XirPair checkcastForInterfaceTemplate;
@@ -348,7 +357,11 @@ public class MaxXirGenerator extends RiXirGenerator {
     @Override
     public XirSnippet genNewInstance(XirSite site, RiType type) {
         if (type.isResolved() && type.isInitialized()) {
-            return new XirSnippet(newInstanceTemplate.resolved, XirArgument.forObject(hubFor(type)));
+            DynamicHub hub = hubFor(type);
+            if (hub.classActor.isHybridClass()) {
+                return new XirSnippet(newInstanceTemplate.resolvedHybrid, XirArgument.forObject(hub));
+            }
+            return new XirSnippet(newInstanceTemplate.resolved, XirArgument.forObject(hub));
         }
         XirArgument guard = guardFor(type, ResolveClassForNew.SNIPPET);
         return new XirSnippet(newInstanceTemplate.unresolved, guard);
@@ -564,7 +577,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
         if (genBoundsCheck) {
             asm.bindOutOfLine(failBoundsCheck);
-            callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, index);
+            callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, array, index);
         }
         if (genStoreCheck) {
             asm.bindOutOfLine(slowStoreCheck);
@@ -590,7 +603,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         asm.pload(kind, result, array, index, offsetOfFirstArrayElement, Scale.fromInt(elemSize), !genBoundsCheck);
         if (genBoundsCheck) {
             asm.bindOutOfLine(fail);
-            callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, index);
+            callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, array, index);
         }
         return finishTemplate(asm, "arrayload<" + kind + ">");
     }
@@ -822,8 +835,9 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirPair(resolved == null ? unresolved : resolved, unresolved);
     }
 
-    private XirPair buildNewInstance() {
+    private NewInstanceTemplates buildNewInstance() {
         XirTemplate resolved;
+        XirTemplate resolvedHybrid;
         XirTemplate unresolved;
         {
             // resolved new instance
@@ -831,6 +845,13 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
             callRuntimeThroughStub(asm, "allocateObject", result, hub);
             resolved = finishTemplate(asm, "new");
+        }
+        {
+            // resolved new hybrid
+            XirOperand result = asm.restart(CiKind.Object);
+            XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
+            callRuntimeThroughStub(asm, "allocateHybrid", result, hub);
+            resolvedHybrid = finishTemplate(asm, "newHybrid");
         }
         {
             // unresolved new instance
@@ -842,7 +863,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             unresolved = finishTemplate(asm, "new-unresolved");
         }
 
-        return new XirPair(resolved, unresolved);
+        return new NewInstanceTemplates(resolved, resolvedHybrid, unresolved);
     }
 
     private XirPair buildPutFieldTemplate(CiKind kind, boolean genWriteBarrier, boolean isStatic) {
@@ -941,7 +962,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.jneq(fail, temp, hub);
             asm.bindInline(pass);
             asm.bindOutOfLine(fail);
-            callRuntimeThroughStub(asm, "throwClassCastException", null);
+            callRuntimeThroughStub(asm, "throwClassCastException", null, hub, object);
             resolved = finishTemplate(asm, object, "checkcast-leaf<" + nonnull + ">");
         }
         {
@@ -982,7 +1003,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.jneq(fail, a, interfaceID);
             asm.bindInline(pass);
             asm.bindOutOfLine(fail);
-            callRuntimeThroughStub(asm, "throwClassCastException", null);
+            callRuntimeThroughStub(asm, "throwClassCastException", null, hub, object);
             resolved = finishTemplate(asm, object, "checkcast-interface<" + nonnull + ">");
         }
         {
@@ -1288,6 +1309,10 @@ public class MaxXirGenerator extends RiXirGenerator {
             return Heap.createTuple(hub);
         }
 
+        public static Object allocateHybrid(DynamicHub hub) {
+            return Heap.createHybrid(hub);
+        }
+
         public static int[] allocateIntArray(int length) {
             return new int[length];
         }
@@ -1393,20 +1418,20 @@ public class MaxXirGenerator extends RiXirGenerator {
 
         public static void arrayHubStoreCheck(DynamicHub componentHub, DynamicHub valueHub) {
             if (!valueHub.isSubClassHub(componentHub.classActor)) {
-                throw new ArrayStoreException();
+                throw new ArrayStoreException(componentHub.classActor + " is not assignable to " + componentHub.classActor);
             }
         }
 
-        public static void throwClassCastException() {
-            throw new ClassCastException();
+        public static void throwClassCastException(DynamicHub hub, Object object) {
+            Throw.classCastException(hub.classActor, object);
         }
 
         public static void throwNullPointerException() {
             throw new NullPointerException();
         }
 
-        public static void throwArrayIndexOutOfBoundsException(int index) {
-            throw new ArrayIndexOutOfBoundsException(index);
+        public static void throwArrayIndexOutOfBoundsException(Object array, int index) {
+            Throw.arrayIndexOutOfBoundsException(array, index);
         }
 
         public static void monitorEnter(Object o) {
