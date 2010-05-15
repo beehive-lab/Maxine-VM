@@ -478,7 +478,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 // XXX: why is this limited to the current block?
                 if (nv != null && inCurrentBlock(v)) {
                     setCanonical(new StoreField(i.object(), i.field(), nv, i.isStatic(),
-                                                i.stateBefore(), i.isLoaded(), i.cpi, i.constantPool));
+                                                i.stateBefore(), i.isLoaded()));
                 }
             }
         }

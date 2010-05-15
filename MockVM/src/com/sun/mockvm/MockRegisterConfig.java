@@ -31,97 +31,96 @@ import com.sun.cri.ri.RiRegisterConfig;
 
 /**
  * @author Thomas Wuerthinger
- *
+ * 
  */
 public class MockRegisterConfig implements RiRegisterConfig {
 
-	@Override
-	public CiRegister[] getAllocatableRegisters() {
-		return new CiRegister[]{ AMD64.rax, AMD64.rbx, AMD64.rcx, AMD64.rdx, AMD64.rsi, AMD64.rdi, AMD64.r10, AMD64.r11} ;
-	}
+    @Override
+    public CiRegister[] getAllocatableRegisters() {
+        return new CiRegister[] { AMD64.rax, AMD64.rbx, AMD64.rcx, AMD64.rdx, AMD64.rsi, AMD64.rdi, AMD64.r10, AMD64.r11};
+    }
 
-	@Override
-	public int getCalleeSaveRegisterOffset(CiRegister register) {
-		return 0;
-	}
+    @Override
+    public int getCalleeSaveRegisterOffset(CiRegister register) {
+        return 0;
+    }
 
-	@Override
-	public CiRegister[] getCallerSaveRegisters() {
-		return getAllocatableRegisters();
-	}
+    @Override
+    public CiRegister[] getCallerSaveRegisters() {
+        return getAllocatableRegisters();
+    }
 
-	@Override
-	public CiRegister getFramePointerRegister() {
-		return AMD64.rbp;
-	}
+    @Override
+    public CiRegister getFramePointerRegister() {
+        return AMD64.rbp;
+    }
 
-	@Override
-	public CiRegister getIntegerRegister(int index) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public CiRegister getIntegerRegister(int index) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public CiCallingConvention getJavaCallingConvention(CiKind[] types, boolean outgoing, CiTarget target) {
+    @Override
+    public CiCallingConvention getJavaCallingConvention(CiKind[] types, boolean outgoing, CiTarget target) {
 
-		CiValue[] locations = new CiValue[types.length];
-		int currentStackIndex = 0;
+        CiValue[] locations = new CiValue[types.length];
+        int currentStackIndex = 0;
 
-		for (int i = 0; i < types.length; i++) {
-			final CiKind kind = types[i];
+        for (int i = 0; i < types.length; i++) {
+            final CiKind kind = types[i];
 
-			if (locations[i] == null) {
-				locations[i] = CiStackSlot.get(kind.stackKind(),
-						currentStackIndex, !outgoing);
-				currentStackIndex += target.spillSlots(kind);
-			}
-		}
+            if (locations[i] == null) {
+                locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !outgoing);
+                currentStackIndex += target.spillSlots(kind);
+            }
+        }
 
-		return new CiCallingConvention(locations, currentStackIndex * target.spillSlotSize);
-	}
+        return new CiCallingConvention(locations, currentStackIndex * target.spillSlotSize);
+    }
 
-	@Override
-	public int getMinimumCalleeSaveFrameSize() {
-		return 0;
-	}
+    @Override
+    public int getMinimumCalleeSaveFrameSize() {
+        return 0;
+    }
 
-	@Override
-	public CiCallingConvention getNativeCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public CiCallingConvention getNativeCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public CiRegister[] getRegisterReferenceMapOrder() {
-		return getAllocatableRegisters();
-	}
+    @Override
+    public CiRegister[] getRegisterReferenceMapOrder() {
+        return getAllocatableRegisters();
+    }
 
-	@Override
-	public CiRegister getReturnRegister(CiKind kind) {
-		return AMD64.rax;
-	}
+    @Override
+    public CiRegister getReturnRegister(CiKind kind) {
+        return AMD64.rax;
+    }
 
-	@Override
-	public CiCallingConvention getRuntimeCallingConvention(CiKind[] parameters, CiTarget target) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public CiCallingConvention getRuntimeCallingConvention(CiKind[] parameters, CiTarget target) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public CiRegister getSafepointRegister() {
-		return AMD64.r13;
-	}
+    @Override
+    public CiRegister getSafepointRegister() {
+        return AMD64.r13;
+    }
 
-	@Override
-	public CiRegister getScratchRegister() {
-		return AMD64.r15;
-	}
+    @Override
+    public CiRegister getScratchRegister() {
+        return AMD64.r15;
+    }
 
-	@Override
-	public CiRegister getStackPointerRegister() {
-		return AMD64.rsp;
-	}
+    @Override
+    public CiRegister getStackPointerRegister() {
+        return AMD64.rsp;
+    }
 
-	@Override
-	public CiRegister getThreadRegister() {
-		return AMD64.r14;
-	}
+    @Override
+    public CiRegister getThreadRegister() {
+        return AMD64.r14;
+    }
 
 }
