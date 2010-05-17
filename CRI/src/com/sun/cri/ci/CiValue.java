@@ -119,7 +119,7 @@ public abstract class CiValue {
         return name() + kindSuffix();
     }
 
-    private final String kindSuffix() {
+    public final String kindSuffix() {
         if (kind == CiKind.Illegal) {
             return "";
         }

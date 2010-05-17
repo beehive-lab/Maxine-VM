@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.target.amd64;
 
+import static com.sun.cri.xir.XirTemplate.GlobalFlags.*;
+
 import java.util.*;
 
 import com.sun.c1x.util.*;
@@ -43,7 +45,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
         int flags = 0;
 
         if (isStub) {
-            flags |= XirTemplate.GlobalFlags.GLOBAL_STUB.mask;
+            flags |= GLOBAL_STUB.mask;
         }
 
         List<XirInstruction> currentList = fastPath;
@@ -70,9 +72,12 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     // Convert to two operand form
                     XirOperand xOp = i.x();
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
+                        if (divModTemp == null) {
+                            divModTemp = createRegister("divModTemp", CiKind.Int, AMD64.rdx);
+                        }
                         // Special treatment to make sure that the left input of % and / is in RAX
                         if (divModLeftInput == null) {
-                            divModLeftInput = this.createRegister("divModLeftInput", CiKind.Int, AMD64.rax);
+                            divModLeftInput = createRegister("divModLeftInput", CiKind.Int, AMD64.rax);
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, divModLeftInput, i.x()));
                         xOp = divModLeftInput;
@@ -97,12 +102,6 @@ public class AMD64XirAssembler extends CiXirAssembler {
 
                     }
 
-                    if (i.op == XirOp.Div || i.op == XirOp.Mod) {
-                        if (divModTemp == null) {
-                            divModTemp = this.createRegister("divModTemp", CiKind.Int, AMD64.rdx);
-                        }
-                    }
-
                     if (xOp != i.x() || yOp != i.y()) {
                         currentList.add(new XirInstruction(i.result.kind, i.op, i.result, xOp, yOp));
                         appended = true;
@@ -117,35 +116,21 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case PointerCAS:
                     break;
                 case CallStub:
-                    flags |= XirTemplate.GlobalFlags.HAS_STUB_CALL.mask;
+                    flags |= HAS_STUB_CALL.mask;
                     calleeTemplates.add((XirTemplate) i.extra);
                     break;
                 case CallRuntime:
-                    flags |= XirTemplate.GlobalFlags.HAS_RUNTIME_CALL.mask;
+                    flags |= HAS_RUNTIME_CALL.mask;
                     break;
                 case Jmp:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
-                    break;
                 case Jeq:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
-                    break;
                 case Jneq:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
-                    break;
                 case Jgt:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
-                    break;
                 case Jgteq:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
-                    break;
                 case Jugteq:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
-                   break;
                 case Jlt:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
-                    break;
                 case Jlteq:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
+                    flags |= HAS_CONTROL_FLOW.mask;
                     break;
                 case Bind:
                     XirLabel label = (XirLabel) i.extra;

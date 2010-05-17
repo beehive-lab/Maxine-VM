@@ -361,14 +361,13 @@ public class Util {
     /**
      * Converts a given instruction to a value string. The representation of an instruction as
      * a value is formed by concatenating the {@linkplain com.sun.cri.ci.CiKind#typeChar character} denoting its
-     * {@linkplain com.sun.c1x.ir.Instruction#kind kind} and its {@linkplain com.sun.c1x.ir.Instruction#id}. For example,
-     * "i13".
+     * {@linkplain Value#kind kind} and its {@linkplain Value#id()}. For example, <code>"i13"</code>.
      *
-     * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
+     * @param value the instruction to convert to a value string. If {@code value == null}, then "-" is returned.
      * @return the instruction representation as a string
      */
     public static String valueString(Value value) {
-        return value == null ? "null" : "" + value.kind.typeChar + value.id();
+        return value == null ? "-" : "" + value.kind.typeChar + value.id();
     }
 
 }

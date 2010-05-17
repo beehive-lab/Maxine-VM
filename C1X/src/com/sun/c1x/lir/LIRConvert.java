@@ -59,7 +59,7 @@ public class LIRConvert extends LIROp1 {
      * Prints this instruction to a LogStream.
      */
     @Override
-    public String operationString() {
-        return "[" + Bytecodes.nameOf(bytecode) + "] " + super.operationString();
+    public String operationString(OperandFormatter operandFmt) {
+        return "[" + Bytecodes.nameOf(bytecode) + "] " + super.operationString(operandFmt);
     }
 }

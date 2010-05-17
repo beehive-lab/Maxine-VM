@@ -75,4 +75,8 @@ public abstract class TeleMemoryRegion implements MaxMemoryRegion {
         return memoryUsage;
     }
 
+    @Override
+    public String toString() {
+        return "[" + start().toHexString() + " - " + end().minus(1).toHexString() + "]";
+    }
 }

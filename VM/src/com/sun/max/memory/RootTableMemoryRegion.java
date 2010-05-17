@@ -32,7 +32,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public final class RootTableMemoryRegion extends RuntimeMemoryRegion {
+public final class RootTableMemoryRegion extends MemoryRegion {
 
     public RootTableMemoryRegion(String description) {
         super(description);

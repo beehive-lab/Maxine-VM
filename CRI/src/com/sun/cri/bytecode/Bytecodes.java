@@ -335,7 +335,7 @@ public class Bytecodes {
      * @param newValue the new value to store into the memory location
      * @return either {@code expectedValue} or the actual value
      */
-    public static final int PCMPSWP              = 227;
+    public static final int PCMPSWP               = 227;
 
     public static final int MOV_I2F              = 228;
     public static final int MOV_F2I              = 229;
@@ -518,13 +518,15 @@ public class Bytecodes {
 
     // Pointer compare-and-swap with word-sized offset
     public static final int PCMPSWP_INT         = PCMPSWP  | 1 << 8;
-    public static final int PCMPSWP_WORD        = PCMPSWP  | 2 << 8;
-    public static final int PCMPSWP_REFERENCE   = PCMPSWP  | 3 << 8;
+    public static final int PCMPSWP_LONG        = PCMPSWP  | 2 << 8;
+    public static final int PCMPSWP_WORD        = PCMPSWP  | 3 << 8;
+    public static final int PCMPSWP_REFERENCE   = PCMPSWP  | 4 << 8;
 
     // Pointer compare-and-swap with int-sized offset
-    public static final int PCMPSWP_INT_I       = PCMPSWP  | 4 << 8;
-    public static final int PCMPSWP_WORD_I      = PCMPSWP  | 5 << 8;
-    public static final int PCMPSWP_REFERENCE_I = PCMPSWP  | 6 << 8;
+    public static final int PCMPSWP_INT_I       = PCMPSWP  | 5 << 8;
+    public static final int PCMPSWP_LONG_I      = PCMPSWP  | 6 << 8;
+    public static final int PCMPSWP_WORD_I      = PCMPSWP  | 7 << 8;
+    public static final int PCMPSWP_REFERENCE_I = PCMPSWP  | 8 << 8;
 
     // Pointer read with word-sized offset
     public static final int PREAD_BYTE         = PREAD  | 1 << 8;

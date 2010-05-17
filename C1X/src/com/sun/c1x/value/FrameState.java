@@ -641,6 +641,28 @@ public class FrameState {
         }
     }
 
+    /**
+     * Gets the value at a specified index in the set of operand stack and local values represented by this frame.
+     * This method should only be used to iterate over all the values in this frame, irrespective of whether
+     * they are on the stack or in local variables.
+     * To iterate the stack slots, the {@link #stackAt(int)} and {@link #stackSize()} methods should be used.
+     * To iterate the local variables, the {@link #localAt(int)} and {@link #localsSize()} methods should be used.
+     *
+     * @param i a value in the range {@code [0 .. valuesSize()]}
+     * @return the value at index {@code i} which may be {@code null}
+     */
+    public Value valueAt(int i) {
+        return values[i];
+    }
+
+    /**
+     * The number of operand stack slots and local variables in this frame.
+     * This method should typically only be used in conjunction with {@link #valueAt(int)}.
+     * To iterate the stack slots, the {@link #stackAt(int)} and {@link #stackSize()} methods should be used.
+     * To iterate the local variables, the {@link #localAt(int)} and {@link #localsSize()} methods should be used.
+     *
+     * @return the number of local variables in this frame
+     */
     public int valuesSize() {
         return maxLocals + stackIndex;
     }
@@ -660,8 +682,8 @@ public class FrameState {
                 if (x instanceof Phi) {
                     Phi phi = (Phi) x;
                     if (phi.block() == block) {
-                        for (int j = 0; j < phi.operandCount(); j++) {
-                            if (phi.operandIn(other) == null) {
+                        for (int j = 0; j < phi.inputCount(); j++) {
+                            if (phi.inputIn(other) == null) {
                                 throw new CiBailout("phi " + phi + " has null operand at new predecessor");
                             }
                         }
@@ -763,81 +785,102 @@ public class FrameState {
     }
 
     /**
-     * This is a helper method for iterating over all phis in this frame state.
-     * @return an iterator over all phis
+     * The interface implemented by a client of {@link FrameState#forEachPhi(BlockBegin, PhiProcedure)} and
+     * {@link FrameState#forEachLivePhi(BlockBegin, PhiProcedure)}.
      */
-    public Iterable<Phi> allPhis(BlockBegin block) {
-        final List<Phi> phis = new ArrayList<Phi>();
-
-        int max = this.valuesSize();
-        for (int i = 0; i < max; i++) {
-            Value instr = values[i];
-            if (instr instanceof Phi) {
-                if (block == null || ((Phi) instr).block() == block && !instr.isDeadPhi()) {
-                    phis.add((Phi) instr);
-                }
-            }
-        }
-
-        return phis;
+    public static interface PhiProcedure {
+        boolean doPhi(Phi phi);
     }
 
     /**
-     * This is a helper method for iterating over all phis in this frame state.
-     * @return an iterator over all phis
+     * Traverses all {@linkplain Phi phis} of a given block in this frame state.
+     *
+     * @param block only phis {@linkplain Phi#block() associated} with this block are traversed
+     * @param proc the call back invoked for each live phi traversed
      */
-    public Iterable<Phi> allLivePhis(BlockBegin block) {
-        final List<Phi> phis = new ArrayList<Phi>();
+    public boolean forEachPhi(BlockBegin block, PhiProcedure proc) {
+        int max = this.valuesSize();
+        for (int i = 0; i < max; i++) {
+            Value instr = values[i];
+            if (instr instanceof Phi && !instr.isDeadPhi()) {
+                Phi phi = (Phi) instr;
+                if (block == null || phi.block() == block) {
+                    if (!proc.doPhi(phi)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
 
+    /**
+     * Traverses all live {@linkplain Phi phis} of a given block in this frame state.
+     *
+     * @param block only phis {@linkplain Phi#block() associated} with this block are traversed
+     * @param proc the call back invoked for each live phi traversed
+     */
+    public boolean forEachLivePhi(BlockBegin block, PhiProcedure proc) {
         int max = this.valuesSize();
         for (int i = 0; i < max; i++) {
             Value instr = values[i];
             if (instr instanceof Phi && instr.isLive() && !instr.isDeadPhi()) {
-                if (block == null || ((Phi) instr).block() == block) {
-                    phis.add((Phi) instr);
+                Phi phi = (Phi) instr;
+                if (block == null || phi.block() == block) {
+                    if (!proc.doPhi(phi)) {
+                        return false;
+                    }
                 }
             }
         }
-
-        return phis;
+        return true;
     }
+
     /**
-     * Checks whether this frame state has any phi statements that refer to the specified block.
-     * @param block the block to check
-     * @return {@code true} if this frame state has phis for the specified block
+     * Checks whether this frame state has any {@linkplain Phi phi} statements.
      */
-    public boolean hasPhisFor(BlockBegin block) {
+    public boolean hasPhis() {
         int max = valuesSize();
         for (int i = 0; i < max; i++) {
-            Value instr = values[i];
-            if (instr instanceof Phi && !instr.isDeadPhi()) {
-                if (block == null || ((Phi) instr).block() == block) {
-                    return true;
-                }
+            Value value = values[i];
+            if (value instanceof Phi) {
+                return true;
             }
         }
         return false;
     }
 
     /**
-     * This is a helper method for iterating over all stack values and local variables in this frame state.
-     * @return an iterator over all state values
+     * The interface implemented by a client of {@link FrameState#forEachLiveStateValue(ValueProcedure)}.
      */
-    public Iterable<Value> allLiveStateValues() {
-        // TODO: implement a more efficient iterator for use in linear scan
-        List<Value> result = new ArrayList<Value>(valuesSize());
-        for (FrameState state = this; state != null; state = state.scope.callerState()) {
-            int max = state.valuesSize();
+    public static interface ValueProcedure {
+        void doValue(Value value);
+    }
 
-            for (int i = 0; i < max; i++) {
-                Value instr = state.values[i];
-                if (instr != null && instr.isLive()) {
-                    result.add(instr);
-                }
+    /**
+     * Traverses all {@linkplain Value#isLive() live values} of this frame state and it's callers.
+     * The set of values traversed includes all the live stack values in this frame as well as
+     * all live locals in this frame and its callers.
+     *
+     * @param proc the call back called to process each live value traversed
+     */
+    public void forEachLiveStateValue(ValueProcedure proc) {
+        FrameState state = this;
+        for (int i = 0; i != state.stackSize(); ++i) {
+            Value value = state.stackAt(i);
+            if (value != null && value.isLive()) {
+                proc.doValue(value);
             }
         }
-
-        return result;
+        while (state != null) {
+            for (int i = 0; i != state.localsSize(); ++i) {
+                Value value = state.localAt(i);
+                if (value != null && value.isLive()) {
+                    proc.doValue(value);
+                }
+            }
+            state = state.scope().callerState();
+        }
     }
 
     @Override

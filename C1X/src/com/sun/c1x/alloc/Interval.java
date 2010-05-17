@@ -306,7 +306,7 @@ public final class Interval {
      *
      * @author Doug Simon
      */
-    static final class UsePosList {
+    public static final class UsePosList {
         private IntList list;
 
         /**
@@ -503,11 +503,11 @@ public final class Interval {
     /**
      * Gets the {@linkplain CiRegisterValue register}, {@linkplain CiStackSlot spill slot} or {@linkplain CiAddress address} assigned to this interval.
      */
-    CiValue location() {
+    public CiValue location() {
         return location;
     }
 
-    CiKind kind() {
+    public CiKind kind() {
         assert !operand.isRegister() : "cannot access type for fixed interval";
         return kind;
     }
@@ -518,7 +518,7 @@ public final class Interval {
         this.kind = kind;
     }
 
-    Range first() {
+    public Range first() {
         return first;
     }
 
@@ -553,7 +553,7 @@ public final class Interval {
     /**
      * Gets the split parent for this interval.
      */
-    Interval splitParent() {
+    public Interval splitParent() {
         assert splitParent.isSplitParent() : "not a split parent: " + this;
         return splitParent;
     }
@@ -587,7 +587,7 @@ public final class Interval {
     }
 
     // for spill optimization
-    SpillState spillState() {
+    public SpillState spillState() {
         return splitParent().spillState;
     }
 
@@ -720,7 +720,7 @@ public final class Interval {
         return true;
     }
 
-    Interval locationHint(boolean searchSplitChild, LinearScan allocator) {
+    public Interval locationHint(boolean searchSplitChild, LinearScan allocator) {
         if (!searchSplitChild) {
             return locationHint;
         }
@@ -797,8 +797,8 @@ public final class Interval {
             for (Interval interval : splitChildren) {
                 if (interval != result && interval.from() <= opId && opId < interval.to() + toOffset) {
                     TTY.println(String.format("two valid result intervals found for opId %d: %d and %d", opId, result.operandNumber, interval.operandNumber));
-                    result.print(TTY.out(), allocator);
-                    interval.print(TTY.out(), allocator);
+                    TTY.println(result.logString(allocator));
+                    TTY.println(interval.logString(allocator));
                     throw new CiBailout("two valid result intervals found");
                 }
             }
@@ -1116,53 +1116,60 @@ public final class Interval {
                 to = String.valueOf(to());
             }
         }
-        return operand.name() + ":" + (operand.isRegister() ? "fixed" : kind().name()) + "[" + from + "," + to + "]";
+        String location = this.location == null ? "" : "@" + this.location.name();
+        return operandNumber + ":" + operand + (operand.isRegister() ? "" : location) + "[" + from + "," + to + "]";
     }
 
-    public void print(LogStream out, LinearScan allocator) {
-        print(out, allocator, false);
+    /**
+     * Gets the use position information for this interval.
+     */
+    public UsePosList usePosList() {
+        return usePosList;
     }
 
-    public void print(LogStream out, LinearScan allocator, boolean c1VisualizerFormat) {
-
-        out.printf("%d %s ", operandNumber, (operand.isRegister() ? "fixed" : kind().name()));
-        if (operand.isRegister()) {
-            out.printf("\"[%s|%c]\"", operand.name(), operand.kind.typeChar);
-            if (!c1VisualizerFormat) {
-                out.print(' ');
-            }
-        } else if (location != null) {
-            out.printf("\"[%s|%c]\"", location.name(), location.kind.typeChar);
-            if (!c1VisualizerFormat) {
-                out.print(' ');
+    /**
+     * Gets a single line string for logging the details of this interval to a log stream.
+     *
+     * @param allocator the register allocator context
+     */
+    public String logString(LinearScan allocator) {
+        StringBuilder buf = new StringBuilder(100);
+        buf.append(operandNumber).append(':').append(operand).append(' ');
+        if (!operand.isRegister()) {
+            if (location != null) {
+                buf.append("location{").append(location).append("} ");
             }
         }
 
+        buf.append("hints{").append(splitParent.operandNumber);
         Interval hint = locationHint(false, allocator);
-        out.printf("%d %d ", splitParent().operandNumber, hint != null ? hint.operandNumber : -1);
+        if (hint != null && hint.operandNumber != splitParent.operandNumber) {
+            buf.append(", ").append(hint.operandNumber);
+        }
+        buf.append("} ranges{");
 
         // print ranges
         Range cur = first;
         while (cur != Range.EndMarker) {
-            if (c1VisualizerFormat) {
-                out.printf("[%d, %d[", cur.from, cur.to);
-            } else {
-                out.printf("[%d, %d] ", cur.from, cur.to);
+            if (cur != first) {
+                buf.append(", ");
             }
+            buf.append(cur);
             cur = cur.next;
             assert cur != null : "range list not closed with range sentinel";
         }
+        buf.append("} uses{");
 
         // print use positions
         int prev = 0;
         for (int i = usePosList.size() - 1; i >= 0; --i) {
             assert prev < usePosList.usePos(i) : "use positions not sorted";
-
-            out.printf("%d %s ", usePosList.usePos(i), usePosList.registerPriority(i));
+            if (i != usePosList.size() - 1) {
+                buf.append(", ");
+            }
+            buf.append(usePosList.usePos(i)).append(':').append(usePosList.registerPriority(i));
             prev = usePosList.usePos(i);
         }
-
-        out.printf(" \"%s\"", spillState());
-        out.println();
+        return buf.append("} spill-state{").append(spillState()).append("}").toString();
     }
 }

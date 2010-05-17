@@ -163,18 +163,44 @@ public interface RiRuntime {
     RiType getRiType(Class<?> javaClass);
 
     /**
+     * Returns the runtime interface representation of the given Java method object.
+     *
+     * @param javaMethod the Java method object
+     * @return the runtime interface representation of {@code javaMethod}
+     */
+    RiMethod getRiMethod(Method javaMethod);
+    
+    /**
+     * Returns the runtime interface representation of the given Java constructor object.
+     *
+     * @param javaConstructor the Java constructor object
+     * @return the runtime interface representation {@code javaConstructor}
+     */
+    RiMethod getRiMethod(Constructor<?> javaConstructor);
+
+    /**
+     * Returns the runtime interface representation of the given Java field object.
+     *
+     * @param javaField the Java field object
+     * @return the runtime interface representation of {@code javaField}
+     */
+    RiField getRiField(Field javaField);
+    
+    /**
      * Gets the {@linkplain RiSnippets snippets} provided by the runtime.
      */
     RiSnippets getSnippets();
 
     /**
-     * Gets the Java reflection object that can be used to compile-time evaluate or "fold"
-     * a call to a given method. A foldable method is a pure function that has no side effects.
-     * Such methods can be executed via reflection when all their inputs are constants,
+     * Attempts to compile-time evaluate or "fold" a call to a given method. A foldable method is a pure function
+     * that has no side effects. Such methods can be executed via reflection when all their inputs are constants,
      * and the resulting value is substituted for the method call.
      * 
-     * @param method the compiler interface method for which a foldable is being requested
-     * @return the reflection method to execute for folding or {@code null} if {@code method} is not foldable
+     * The {@link CiUtil#invoke(Method, CiMethodInvokeArguments)} utility can be used to implement this method.
+     * 
+     * @param method the compiler interface method for which folding is being requested
+     * @param the arguments to the call
+     * @return the result of the folding or {@code null} if no folding occurred
      */
-    Method getFoldingMethod(RiMethod method);
+    CiConstant invoke(RiMethod method, CiMethodInvokeArguments args);
 }

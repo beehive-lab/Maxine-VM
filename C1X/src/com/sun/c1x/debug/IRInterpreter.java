@@ -33,12 +33,13 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.value.FrameState.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
- * This class implements an interpreter for C1X HIR graphs.
+ * This class implements an interpreter for HIR.
  *
  * @author Marcelo Cintra
  */
@@ -103,31 +104,33 @@ public class IRInterpreter {
 
         private class ValueMapInitializer implements BlockClosure {
 
-            public void apply(BlockBegin block) {
+            public void apply(final BlockBegin block) {
                 FrameState state = block.stateBefore();
-                ArrayList<Phi> phis = (ArrayList<Phi>) state.allPhis(block);
+                state.forEachPhi(block, new PhiProcedure() {
+                    public boolean doPhi(Phi phi) {
+                        for (int j = 0; j < phi.inputCount(); j++) {
+                            Value phiOperand = block.isExceptionEntry() ? phi.inputAt(j) : phi.block().predAt(j).end();
+                            assert phiOperand != null : "Illegal phi operand";
 
-                for (Phi phi : phis) {
-                    for (int j = 0; j < phi.operandCount(); j++) {
-                        Value phiOperand = block.isExceptionEntry() ? phi.operandAt(j) : phi.block().predAt(j).end();
-                        assert phiOperand != null : "Illegal phi operand";
-
-                        if (phiOperand instanceof Phi) {
-                            if (phiOperand != phi) {
-                                phi.setFlag(Flag.PhiVisited);
-                                addPhiToInstructionList((Phi) phiOperand, phi);
-                                phi.clearFlag(Flag.PhiVisited);
+                            if (phiOperand instanceof Phi) {
+                                if (phiOperand != phi) {
+                                    phi.setFlag(Flag.PhiVisited);
+                                    addPhiToInstructionList((Phi) phiOperand, phi);
+                                    phi.clearFlag(Flag.PhiVisited);
+                                }
+                            } else {
+                                ArrayList<PhiMove> blockPhiMoves = phiMoves.get(phiOperand);
+                                if (blockPhiMoves == null) {
+                                    blockPhiMoves = new ArrayList<PhiMove>();
+                                    phiMoves.put(phiOperand, blockPhiMoves);
+                                }
+                                blockPhiMoves.add(new PhiMove(phi, phi.inputAt(j)));
                             }
-                        } else {
-                            ArrayList<PhiMove> blockPhiMoves = phiMoves.get(phiOperand);
-                            if (blockPhiMoves == null) {
-                                blockPhiMoves = new ArrayList<PhiMove>();
-                                phiMoves.put(phiOperand, blockPhiMoves);
-                            }
-                            blockPhiMoves.add(new PhiMove(phi, phi.operandAt(j)));
                         }
+                        return true;
                     }
-                }
+                });
+
                 for (Instruction instr = block; instr != null; instr = instr.next()) {
                     instructionValueMap.put(instr, new Val(-1, null));
                 }
@@ -135,8 +138,8 @@ public class IRInterpreter {
 
             private void addPhiToInstructionList(Phi phiSrc, Phi phi) {
                 phiSrc.setFlag(Flag.PhiVisited);
-                for (int j = 0; j < phiSrc.operandCount(); j++) {
-                    Value phiOperand = phiSrc.operandAt(j);
+                for (int j = 0; j < phiSrc.inputCount(); j++) {
+                    Value phiOperand = phiSrc.inputAt(j);
                     assert phiOperand != null : "Illegal phi operand";
 
                     if (phiOperand instanceof Phi) {
@@ -262,7 +265,7 @@ public class IRInterpreter {
 
         @Override
         public void visitResolveClass(ResolveClass i) {
-            Class <?> javaClass = toJavaClass(i.type);
+            Class <?> javaClass = resolveClass(i.type);
             environment.bind(i, CiConstant.forObject(javaClass), instructionCounter);
             jumpNextInstruction();
         }
@@ -270,7 +273,7 @@ public class IRInterpreter {
         private void unexpected(Instruction i, Throwable e) {
             List<ExceptionHandler> exceptionHandlerList = i.exceptionHandlers();
             for (ExceptionHandler eh : exceptionHandlerList) {
-                if (eh.handler.isCatchAll() || toJavaClass(eh.handler.catchKlass()).isAssignableFrom(e.getClass())) {
+                if (eh.handler.isCatchAll() || resolveClass(eh.handler.catchKlass()).isAssignableFrom(e.getClass())) {
                     jump(eh.entryBlock());
                     // bind the exception object to e
                     environment.bind(eh.entryBlock().next(), CiConstant.forObject(e), instructionCounter);
@@ -284,7 +287,7 @@ public class IRInterpreter {
         @Override
         public void visitLoadField(LoadField i) {
             try {
-                Class< ? > klass = toJavaClass(i.field().holder());
+                Class<?> klass = resolveClass(i.field().holder());
                 String name = i.field().name();
                 Field field;
                 try {
@@ -311,10 +314,10 @@ public class IRInterpreter {
         @Override
         public void visitStoreField(StoreField i) {
             try {
-                Class< ? > klass = toJavaClass(i.field().holder());
+                Class<?> klass = resolveClass(i.field().holder());
                 Field field = klass.getDeclaredField(i.field().name());
                 field.setAccessible(true);
-                field.set(environment.lookup(i.object()).asObject(), getCompatibleBoxedValue(toJavaClass(i.field().type()), i.value()));
+                field.set(environment.lookup(i.object()).asObject(), getCompatibleBoxedValue(resolveClass(i.field().type()), i.value()));
             } catch (IllegalAccessException e) {
                 unexpected(i, e);
             } catch (SecurityException e) {
@@ -366,7 +369,7 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        private Object getCompatibleBoxedValue(Class< ? > type, Value value) {
+        private Object getCompatibleBoxedValue(Class<?> type, Value value) {
             CiConstant lookupValue = environment.lookup(value);
             if (type == byte.class) {
                 assert value.kind == CiKind.Int : "Types are not compatible";
@@ -402,7 +405,7 @@ public class IRInterpreter {
             Object array = environment.lookup(i.array()).asObject();
 
             try {
-                Class< ? > componentType = getElementType(array);
+                Class<?> componentType = getElementType(array);
                 Array.set(array, environment.lookup(i.index()).asInt(), getCompatibleBoxedValue(componentType, i.value()));
             } catch (NullPointerException ne) {
                 unexpected(i, ne);
@@ -414,7 +417,7 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        private Class< ? > getElementType(Object array) {
+        private Class<?> getElementType(Object array) {
             Class <?> elementType = array.getClass().getComponentType();
             while (elementType.isArray()) {
                 elementType = elementType.getComponentType();
@@ -800,6 +803,7 @@ public class IRInterpreter {
                 invokeUsingReflection(i);
                 return;
             }
+
             RiMethod targetMethod = i.target();
             String methodName = targetMethod.name();
             if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) {
@@ -810,18 +814,39 @@ public class IRInterpreter {
             }
             if (!targetMethod.isResolved()) {
                 switch (i.opcode()) {
-                    case Bytecodes.INVOKEINTERFACE:
-                        targetMethod = i.constantPool.resolveInvokeInterface(i.cpi);
+                    case Bytecodes.INVOKEINTERFACE: {
+                        targetMethod = runtime.getRiMethod(resolveMethod(targetMethod));
                         break;
-                    case Bytecodes.INVOKESPECIAL:
-                        targetMethod = i.constantPool.resolveInvokeSpecial(i.cpi);
+                    }
+                    case Bytecodes.INVOKESPECIAL: {
+                        if (targetMethod.isConstructor()) {
+                            Constructor<?> constructor = resolveConstructor(targetMethod);
+                            targetMethod = runtime.getRiMethod(constructor);
+                        } else {
+                            Method method = resolveMethod(targetMethod);
+                            if (!Modifier.isStatic(targetMethod.accessFlags())) {
+                                throw new IncompatibleClassChangeError(method + " is a static method");
+                            }
+                            targetMethod = runtime.getRiMethod(method);
+                        }
                         break;
-                    case Bytecodes.INVOKESTATIC:
-                        targetMethod = i.constantPool.resolveInvokeStatic(i.cpi);
+                    }
+                    case Bytecodes.INVOKESTATIC: {
+                        Method method = resolveMethod(targetMethod);
+                        if (!Modifier.isStatic(targetMethod.accessFlags())) {
+                            throw new IncompatibleClassChangeError(method + " is not a static method");
+                        }
+                        targetMethod = runtime.getRiMethod(method);
                         break;
-                    case Bytecodes.INVOKEVIRTUAL:
-                        targetMethod = i.constantPool.resolveInvokeVirtual(i.cpi);
+                    }
+                    case Bytecodes.INVOKEVIRTUAL: {
+                        Method method = resolveMethod(targetMethod);
+                        if (!Modifier.isStatic(targetMethod.accessFlags())) {
+                            throw new IncompatibleClassChangeError(method + " is a static method");
+                        }
+                        targetMethod = runtime.getRiMethod(method);
                         break;
+                    }
                 }
             }
             // native methods are invoked using reflection.
@@ -838,7 +863,7 @@ public class IRInterpreter {
                 case Bytecodes.INVOKEINTERFACE: {
                     RiType type;
                     try {
-                        Class< ? > objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
+                        Class<?> objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
                         type = runtime.getRiType(objClass);
                     } catch (NullPointerException ne) {
                         unexpected(i, ne);
@@ -851,7 +876,7 @@ public class IRInterpreter {
                 case Bytecodes.INVOKEVIRTUAL: {
                     RiType type;
                     try {
-                        Class< ? > objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
+                        Class<?> objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
                         type = runtime.getRiType(objClass);
                     } catch (NullPointerException ne) {
                         unexpected(i, ne);
@@ -896,7 +921,7 @@ public class IRInterpreter {
                 index = 0;
                 for (int j = 0; j < nargs; j++) {
                     CiKind argumentType = signature.argumentKindAt(j);
-                    arglist[j] = getCompatibleCiConstant(toJavaClass(signature.argumentTypeAt(j, null)), (i.arguments()[index])); //environment.lookup(i.arguments()[index]);
+                    arglist[j] = getCompatibleCiConstant(resolveClass(signature.argumentTypeAt(j, null)), (i.arguments()[index])); //environment.lookup(i.arguments()[index]);
                     index += argumentType.sizeInSlots();
                 }
             } else {
@@ -904,13 +929,13 @@ public class IRInterpreter {
                 index = 1;
                 for (int j = 1; j < nargs; j++) {
                     CiKind argumentType = signature.argumentKindAt(j - 1);
-                    arglist[j] = getCompatibleCiConstant(toJavaClass(signature.argumentTypeAt(j - 1, null)), (i.arguments()[index])); //environment.lookup(i.arguments()[index]);
+                    arglist[j] = getCompatibleCiConstant(resolveClass(signature.argumentTypeAt(j - 1, null)), (i.arguments()[index])); //environment.lookup(i.arguments()[index]);
                     index += argumentType.sizeInSlots();
                 }
             }
             return arglist;
         }
-        private CiConstant getCompatibleCiConstant(Class< ? > arrayType, Value value) {
+        private CiConstant getCompatibleCiConstant(Class<?> arrayType, Value value) {
             if (arrayType == byte.class) {
                 assert value.kind == CiKind.Int : "Types are not compatible";
                 return CiConstant.forByte((byte) environment.lookup(value).asInt());
@@ -948,10 +973,10 @@ public class IRInterpreter {
             String methodName = targetMethod.name();
 
             if (i.isStatic()) {
-                Class< ? > methodClass = toJavaClass(targetMethod.holder());
+                Class<?> methodClass = resolveClass(targetMethod.holder());
                 Method m = null;
                 try {
-                    m = methodClass.getDeclaredMethod(methodName, toJavaSignature(signature));
+                    m = methodClass.getDeclaredMethod(methodName, resolveSignature(signature));
                 } catch (SecurityException e1) {
                     unexpected(i, e1.getCause());
                 } catch (NoSuchMethodException e1) {
@@ -985,7 +1010,7 @@ public class IRInterpreter {
                     return;
                 }
                 Object objref = environment.lookup((i.arguments()[0])).boxedValue();
-                Class< ? > methodClass;
+                Class<?> methodClass;
                 try {
                     methodClass = objref.getClass();
                 } catch (NullPointerException ne) {
@@ -996,7 +1021,7 @@ public class IRInterpreter {
                 Method m = null;
                 while (m == null && methodClass != null) {
                     try {
-                        m = methodClass.getDeclaredMethod(methodName, toJavaSignature(signature));
+                        m = methodClass.getDeclaredMethod(methodName, resolveSignature(signature));
                     } catch (SecurityException e) {
                         unexpected(i, e);
                         return;
@@ -1011,7 +1036,7 @@ public class IRInterpreter {
 
                 Object res = null;
                 try {
-                    if (objref instanceof Class< ? > && ("newInstance".equals(methodName) || "newInstance0".equals(methodName))) {
+                    if (objref instanceof Class<?> && ("newInstance".equals(methodName) || "newInstance0".equals(methodName))) {
                         res = callInitMethod(i);
                     } else if (m != null) {
                         m.setAccessible(true);
@@ -1035,7 +1060,7 @@ public class IRInterpreter {
             int index = i.isStatic() ? 0 : 1;
             for (int j = 0; j < nargs; j++) {
                 CiKind argumentType = signature.argumentKindAt(j);
-                arglist[j] = getCompatibleBoxedValue(toJavaClass(signature.argumentTypeAt(j, null)), (i.arguments()[index]));
+                arglist[j] = getCompatibleBoxedValue(resolveClass(signature.argumentTypeAt(j, null)), (i.arguments()[index]));
                 index += argumentType.sizeInSlots();
             }
             return arglist;
@@ -1045,21 +1070,21 @@ public class IRInterpreter {
             Object receiver = environment.lookup(i.arguments()[0]).asObject();
             // at this point, objectRef can represent a class, or a new uninitialized object produced by a NewInstance instruction
             // in both cases, a new object will be allocated and initialized.
-            Class< ? > javaClass = (receiver instanceof Class<?>) ? (Class <?>) receiver : receiver.getClass();
+            Class<?> javaClass = (receiver instanceof Class<?>) ? (Class <?>) receiver : receiver.getClass();
             Object newReference = null;
             int nargs = i.target().signature().argumentCount(false);
             Object[] arglist = new Object[nargs];
             for (int j = 0; j < nargs; j++) {
-                arglist[j] = getCompatibleBoxedValue(toJavaClass(i.target().signature().argumentTypeAt(j, null)), i.arguments()[j + 1]); //environment.lookup((i.arguments()[j + 1])).boxedValue();
+                arglist[j] = getCompatibleBoxedValue(resolveClass(i.target().signature().argumentTypeAt(j, null)), i.arguments()[j + 1]); //environment.lookup((i.arguments()[j + 1])).boxedValue();
             }
 
-            Class< ? >[] partypes = new Class< ? >[i.target().signature().argumentCount(false)];
+            Class<?>[] partypes = new Class<?>[i.target().signature().argumentCount(false)];
             for (int j = 0; j < nargs; j++) {
-                partypes[j] = toJavaClass(i.target().signature().argumentTypeAt(j, null));
+                partypes[j] = resolveClass(i.target().signature().argumentTypeAt(j, null));
             }
 
             try {
-                final Constructor< ? > constructor = javaClass.getDeclaredConstructor(partypes);
+                final Constructor<?> constructor = javaClass.getDeclaredConstructor(partypes);
                 constructor.setAccessible(true);
                 newReference = constructor.newInstance(arglist);
             } catch (InstantiationException e) {
@@ -1074,17 +1099,17 @@ public class IRInterpreter {
             return newReference;
         }
 
-        private Class< ? >[] toJavaSignature(RiSignature signature) {
+        private Class<?>[] resolveSignature(RiSignature signature) {
             int nargs = signature.argumentCount(false);
-            Class< ? >[] partypes = new Class< ? >[signature.argumentCount(false)];
+            Class<?>[] partypes = new Class<?>[signature.argumentCount(false)];
             for (int j = 0; j < nargs; j++) {
-                partypes[j] = toJavaClass(signature.argumentTypeAt(j, null));
+                partypes[j] = resolveClass(signature.argumentTypeAt(j, null));
             }
             return partypes;
         }
 
-        private Class< ? > toJavaClass(String internalName) {
-            Class< ? > resolved = null;
+        private Class<?> resolveClass(String internalName) {
+            Class<?> resolved = null;
             try {
                 if (internalName.startsWith("[")) {
                     int arrayDimensions = 0;
@@ -1109,16 +1134,50 @@ public class IRInterpreter {
                     resolved = Class.forName(name);
                 }
             } catch (ClassNotFoundException e) {
-                throwable = e;
+                throwable = new NoClassDefFoundError(internalName);
             }
             return resolved;
         }
 
-        private Class< ? > toJavaClass(RiType type) {
+        private Class<?> resolveClass(RiType type) {
             if (type.isResolved()) {
                 return type.javaClass();
             } else {
-                return toJavaClass(type.name());
+                return resolveClass(type.name());
+            }
+        }
+
+        Field resolveField(RiField field) {
+            Class<?> klass = resolveClass(field.holder());
+            try {
+                Field f = klass.getDeclaredField(field.name());
+                f.setAccessible(true);
+                return f;
+            } catch (NoSuchFieldException e) {
+                throw new NoSuchFieldError(klass.getName() + "." + field.name());
+            }
+        }
+
+        Method resolveMethod(RiMethod method) {
+            Class<?> klass = resolveClass(method.holder());
+            try {
+                Method m = klass.getDeclaredMethod(method.name(), resolveSignature(method.signature()));
+                m.setAccessible(true);
+                return m;
+            } catch (NoSuchMethodException e) {
+                throw new NoSuchMethodError(klass.getName() + "." + method.name() + method.signature());
+            }
+        }
+
+        Constructor<?> resolveConstructor(RiMethod constructor) {
+            assert constructor.isConstructor();
+            Class<?> klass = resolveClass(method.holder());
+            try {
+                Constructor<?> c = klass.getDeclaredConstructor(resolveSignature(constructor.signature()));
+                c.setAccessible(true);
+                return c;
+            } catch (NoSuchMethodException e) {
+                throw new NoSuchMethodError(klass.getName() + ".<init>" + method.signature());
             }
         }
 
@@ -1130,7 +1189,7 @@ public class IRInterpreter {
         @Override
         public void visitNewInstance(NewInstance i) {
             RiType type = i.instanceClass();
-            Class< ? > javaClass = toJavaClass(type);
+            Class<?> javaClass = resolveClass(type);
             try {
                 // bind the NewInstance instruction to the new allocated object
                 environment.bind(i, CiConstant.forObject(unsafe.allocateInstance(javaClass)), instructionCounter);
@@ -1189,7 +1248,7 @@ public class IRInterpreter {
                 unexpected(i, new NegativeArraySizeException());
                 return;
             }
-            Object newObjectArray = Array.newInstance(toJavaClass(i.elementClass()), length);
+            Object newObjectArray = Array.newInstance(resolveClass(i.elementClass()), length);
             environment.bind(i, CiConstant.forObject(newObjectArray), instructionCounter);
             jumpNextInstruction();
         }
@@ -1216,7 +1275,7 @@ public class IRInterpreter {
         }
 
         private Class<?> elementTypeNewArray(NewMultiArray i) {
-            Class<?> elementType = toJavaClass(i.elementType());
+            Class<?> elementType = resolveClass(i.elementType());
             while (elementType.isArray()) {
                 elementType = elementType.getComponentType();
             }
@@ -1227,7 +1286,7 @@ public class IRInterpreter {
         public void visitCheckCast(CheckCast i) {
             CiConstant objectRef = environment.lookup(i.object());
 
-            if (objectRef.boxedValue() != null && !toJavaClass(i.declaredType()).isInstance(objectRef.boxedValue())) {
+            if (objectRef.boxedValue() != null && !resolveClass(i.declaredType()).isInstance(objectRef.boxedValue())) {
                 throwable = new ClassCastException("Object reference cannot be cast to the resolved type.");
             }
             environment.bind(i, objectRef, instructionCounter);
@@ -1239,7 +1298,7 @@ public class IRInterpreter {
             Value object = i.object();
             Object objectRef = environment.lookup(object).asObject();
 
-            if (objectRef == null || !(toJavaClass(i.targetClass()).isInstance(objectRef))) {
+            if (objectRef == null || !(resolveClass(i.targetClass()).isInstance(objectRef))) {
                 environment.bind(i, CiConstant.INT_0, instructionCounter);
             } else {
                 environment.bind(i, CiConstant.INT_1, instructionCounter);
@@ -1840,8 +1899,8 @@ public class IRInterpreter {
         return evaluator.run();
     }
 
-    private static Field findField(Class< ? > javaClass, String fieldName) {
-        Class< ? > c = javaClass;
+    private static Field findField(Class<?> javaClass, String fieldName) {
+        Class<?> c = javaClass;
         while (c != null) {
             try {
                 final Field field = c.getDeclaredField(fieldName);
@@ -1856,7 +1915,7 @@ public class IRInterpreter {
         return null;
     }
 
-    public static Object getStaticField(Class< ? > javaClass, String fieldName) {
+    public static Object getStaticField(Class<?> javaClass, String fieldName) {
         final Field field = findField(javaClass, fieldName);
         try {
             return field.get(javaClass);

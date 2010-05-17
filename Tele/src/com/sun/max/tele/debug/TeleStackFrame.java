@@ -182,9 +182,12 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
     }
 
     public boolean isSameFrame(MaxStackFrame maxStackFrame) {
-        // By default, delegate definition of "same" to the wrapped frames.
-        final TeleStackFrame otherStackFrame = (TeleStackFrame) maxStackFrame;
-        return this.stackFrame.isSameFrame(otherStackFrame.stackFrame);
+        if (maxStackFrame instanceof TeleStackFrame) {
+            // By default, delegate definition of "same" to the wrapped frames.
+            final TeleStackFrame otherStackFrame = (TeleStackFrame) maxStackFrame;
+            return this.stackFrame.isSameFrame(otherStackFrame.stackFrame);
+        }
+        return false;
     }
 
     @Override

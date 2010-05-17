@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -277,8 +278,12 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     RuntimeCompilerScheme selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile, RuntimeCompilerScheme recommendedCompiler) {
 
-        if (classMethodActor.compilee().isUnsafe() || classMethodActor.isUnsafe()) {
-            return bootCompiler;
+        int flags = classMethodActor.flags() | classMethodActor.compilee().flags();
+        if (Actor.isUnsafe(flags)) {
+            if (!Actor.isNative(flags)) {
+                return bootCompiler;
+            }
+            return optCompiler;
         }
 
         RuntimeCompilerScheme compiler;
@@ -323,7 +328,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         if (compiler.toString().contains("C1X")) {
             if (classMethodActor.isExtended() || classMethodActor.holder().name.toString().startsWith("com.sun.max")) {
                 // C1X does not yet recognize the extended bytecodes
-                return bootCompiler;
+//                return bootCompiler;
             }
         }
         return compiler;

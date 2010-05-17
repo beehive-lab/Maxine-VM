@@ -26,65 +26,65 @@ import java.util.Map;
 /**
  * 
  * @author Thomas Wuerthinger
- *
+ * 
  */
 public class MockUniverse {
-	
-	private static final Map<Class<?>, MockType> typeCache = new HashMap<Class<?>, MockType>();
-	
-	public static MockType lookupType(String name) {
-		try {
-			Class<?> klass = Class.forName(name);
-			return lookupType(klass);
-		} catch (ClassNotFoundException e) {
-			// Type not found in mock universe and also not via reflection
-			System.out.println("WARNING: Type with name " + name + " not found!");
-			return null;
-		}
-	}
 
-	public static MockType lookupType(Class<?> klass) {
-	
-		MockType result = typeCache.get(klass);
-		if (result == null) {
-			result = new MockType(klass);
-			typeCache.put(klass, result);
-		}
-		
-		return result;
-	}
-	
-	public static MockType lookupTypeBySignature(String signature) {
-		
-		String name = null;
-		
-		char first = signature.charAt(0);
-		if (first == '[') {
-			return (MockType)(lookupTypeBySignature(signature.substring(1)).arrayOf());
-		} else if (first == 'L') {
-			name = signature.substring(1, signature.length() - 1).replace('/', '.');
-		} else if (first == 'Z') {
-			return lookupType(Boolean.TYPE);
-		} else if (first == 'C') {
-			return lookupType(Character.TYPE);
-		} else if (first == 'F') {
-			return lookupType(Float.TYPE);
-		} else if (first == 'D') {
-			return lookupType(Double.TYPE);
-		} else if (first == 'B') {
-			return lookupType(Byte.TYPE);
-		} else if (first == 'S') {
-			return lookupType(Short.TYPE);
-		} else if (first == 'I') {
-			return lookupType(Integer.TYPE);
-		} else if (first == 'J') {
-			return lookupType(Long.TYPE);
-		} else if (first == 'V') {
-			return lookupType(Void.TYPE);
-		} else {
-			assert false;
-		}
-		
-		return lookupType(name);
-	}
+    private static final Map<Class< ? >, MockType> typeCache = new HashMap<Class< ? >, MockType>();
+
+    public static MockType lookupType(String name) {
+        try {
+            Class< ? > klass = Class.forName(name);
+            return lookupType(klass);
+        } catch (ClassNotFoundException e) {
+            // Type not found in mock universe and also not via reflection
+            System.out.println("WARNING: Type with name " + name + " not found!");
+            return null;
+        }
+    }
+
+    public static MockType lookupType(Class< ? > klass) {
+
+        MockType result = typeCache.get(klass);
+        if (result == null) {
+            result = new MockType(klass);
+            typeCache.put(klass, result);
+        }
+
+        return result;
+    }
+
+    public static MockType lookupTypeBySignature(String signature) {
+
+        String name = null;
+
+        char first = signature.charAt(0);
+        if (first == '[') {
+            return (MockType) (lookupTypeBySignature(signature.substring(1)).arrayOf());
+        } else if (first == 'L') {
+            name = signature.substring(1, signature.length() - 1).replace('/', '.');
+        } else if (first == 'Z') {
+            return lookupType(Boolean.TYPE);
+        } else if (first == 'C') {
+            return lookupType(Character.TYPE);
+        } else if (first == 'F') {
+            return lookupType(Float.TYPE);
+        } else if (first == 'D') {
+            return lookupType(Double.TYPE);
+        } else if (first == 'B') {
+            return lookupType(Byte.TYPE);
+        } else if (first == 'S') {
+            return lookupType(Short.TYPE);
+        } else if (first == 'I') {
+            return lookupType(Integer.TYPE);
+        } else if (first == 'J') {
+            return lookupType(Long.TYPE);
+        } else if (first == 'V') {
+            return lookupType(Void.TYPE);
+        } else {
+            assert false;
+        }
+
+        return lookupType(name);
+    }
 }
