@@ -36,6 +36,7 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.LIRInstruction.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.value.FrameState.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -353,7 +354,7 @@ public class LinearScan {
 
             case NoSpillStore:
                 assert defPos <= interval.spillDefinitionPos() : "positions are processed in reverse order when intervals are created";
-                if (defPos < interval.spillDefinitionPos() - 2) {
+                if (defPos < interval.spillDefinitionPos() - 2 || instructionForId(interval.spillDefinitionPos()).code == LIROpcode.Xir) {
                     // second definition found, so no spill optimization possible for this interval
                     interval.setSpillState(SpillState.NoOptimization);
                 } else {
@@ -568,24 +569,9 @@ public class LinearScan {
         assert (index << 1) == opId : "must match: " + (index << 1);
     }
 
-    // * Phase 2: compute local live sets separately for each block
-    // (sets liveGen and liveKill for each block)
-
-    void setLiveGenKill(Value value, LIRInstruction op, BitMap liveGen, BitMap liveKill) {
-        CiValue operand = value.operand();
-        if (operand.isVariable()) {
-            int operandNum = operandNumber(operand);
-            if (!liveKill.get(operandNum)) {
-                liveGen.set(operandNum);
-                if (C1XOptions.TraceLinearScanLevel >= 4) {
-                    TTY.println("  Setting liveGen for value %s, LIR opId %d, operand %d", Util.valueString(value), op.id, operandNum);
-                }
-            }
-        } else {
-            assert operand.isConstant() || operand.isIllegal() : "invalid operand for deoptimization value";
-        }
-    }
-
+    /**
+     * Computes local live sets (i.e. {@link LIRBlock#liveGen} and {@link LIRBlock#liveKill}) separately for each block.
+     */
     void computeLocalLiveSets() {
         int numBlocks = blockCount();
         int liveSize = liveSetSize();
@@ -595,15 +581,18 @@ public class LinearScan {
         // iterate all blocks
         for (int i = 0; i < numBlocks; i++) {
             BlockBegin block = blockAt(i);
-            BitMap liveGen = new BitMap(liveSize);
-            BitMap liveKill = new BitMap(liveSize);
+            final BitMap liveGen = new BitMap(liveSize);
+            final BitMap liveKill = new BitMap(liveSize);
 
             if (block.isExceptionEntry()) {
                 // Phi functions at the begin of an exception handler are
                 // implicitly defined (= killed) at the beginning of the block.
-                for (Phi phi : block.allLivePhis()) {
-                    liveKill.set(operandNumber(phi.operand()));
-                }
+                block.stateBefore().forEachLivePhi(block, new PhiProcedure() {
+                    public boolean doPhi(Phi phi) {
+                        liveKill.set(operandNumber(phi.operand()));
+                        return true;
+                    }
+                });
             }
 
             List<LIRInstruction> instructions = block.lir().instructionsList();
@@ -612,7 +601,7 @@ public class LinearScan {
             // iterate all instructions of the block. skip the first because it is always a label
             assert !instructions.get(0).hasOperands() : "first operation must always be a label";
             for (int j = 1; j < numInst; j++) {
-                LIRInstruction op = instructions.get(j);
+                final LIRInstruction op = instructions.get(j);
 
                 // iterate input operands of instruction
                 int n = op.operandCount(LIRInstruction.OperandMode.InputMode);
@@ -642,10 +631,24 @@ public class LinearScan {
                 n = op.infoCount();
                 for (int k = 0; k < n; k++) {
                     LIRDebugInfo info = op.infoAt(k);
-                    FrameState state = info.state;
-                    for (Value value : state.allLiveStateValues()) {
-                        setLiveGenKill(value, op, liveGen, liveKill);
-                    }
+                    info.state.forEachLiveStateValue(new ValueProcedure() {
+                        public void doValue(Value value) {
+                            CiValue operand = value.operand();
+                            if (operand.isVariable()) {
+                                int operandNum = operandNumber(operand);
+                                if (!liveKill.get(operandNum)) {
+                                    liveGen.set(operandNum);
+                                    if (C1XOptions.TraceLinearScanLevel >= 4) {
+                                        TTY.println("  Setting liveGen for value %s, LIR opId %d, operand %d", Util.valueString(value), op.id, operandNum);
+                                    }
+                                }
+                            } else if (operand.isRegister()) {
+                                assert !isProcessed(operand) && !operand.kind.isObject();
+                            } else {
+                                assert operand.isConstant() || operand.isIllegal() : "invalid operand for deoptimization value: " + value;
+                            }
+                        }
+                    });
                 }
 
                 // iterate temp operands of instruction
@@ -729,9 +732,10 @@ public class LinearScan {
         }
     }
 
-    // * Phase 3: perform a backward dataflow analysis to compute global live sets
-    // (sets liveIn and liveOut for each block)
-
+    /**
+     * Performs a backward dataflow analysis to compute global live sets (i.e. {@link LIRBlock#liveIn} and
+     * {@link LIRBlock#liveOut}) for each block.
+     */
     void computeGlobalLiveSets() {
         int numBlocks = blockCount();
         boolean changeOccurred;
@@ -861,19 +865,6 @@ public class LinearScan {
         TTY.println(block.lirBlock.liveIn.toString());
         TTY.print("(%d) liveOut%c B%d ", iterationCount, c, block.blockID);
         TTY.println(block.lirBlock.liveOut.toString());
-    }
-
-    // * Phase 4: build intervals
-    // (fills the list intervals)
-
-    void addUse(Value value, int from, int to, RegisterPriority registerPriority) {
-        assert !value.isIllegal() : "if this value is used by the interpreter it shouldn't be of indeterminate type";
-        CiValue operand = value.operand();
-        Constant con = value.isConstant() ? (Constant) value : null;
-
-        if ((con == null || con.isLive()) && operand.isVariableOrRegister()) {
-            addUse(operand, from, to, registerPriority, null);
-        }
     }
 
     void addUse(CiValue operand, int from, int to, RegisterPriority registerPriority, CiKind kind) {
@@ -1179,7 +1170,7 @@ public class LinearScan {
         for (int i = blockCount() - 1; i >= 0; i--) {
             BlockBegin block = blockAt(i);
             List<LIRInstruction> instructions = block.lir().instructionsList();
-            int blockFrom = block.firstLirInstructionId();
+            final int blockFrom = block.firstLirInstructionId();
             int blockTo = block.lastLirInstructionId();
 
             assert blockFrom == instructions.get(0).id;
@@ -1211,7 +1202,7 @@ public class LinearScan {
             assert !instructions.get(0).hasOperands() : "first operation must always be a label";
             for (int j = instructions.size() - 1; j >= 1; j--) {
                 LIRInstruction op = instructions.get(j);
-                int opId = op.id;
+                final int opId = op.id;
 
                 // add a temp range for each register if operation destroys caller-save registers
                 if (op.hasCall()) {
@@ -1261,10 +1252,14 @@ public class LinearScan {
                 n = op.infoCount();
                 for (k = 0; k < n; k++) {
                     LIRDebugInfo info = op.infoAt(k);
-                    FrameState state = info.state;
-                    for (Value value : state.allLiveStateValues()) {
-                        addUse(value, blockFrom, opId + 1, RegisterPriority.None);
-                    }
+                    info.state.forEachLiveStateValue(new ValueProcedure() {
+                        public void doValue(Value value) {
+                            CiValue operand = value.operand();
+                            if (operand.isVariableOrRegister()) {
+                                addUse(operand, blockFrom, (opId + 1), RegisterPriority.None, null);
+                            }
+                        }
+                    });
                 }
 
                 // special steps for some instructions (especially moves)
@@ -1309,7 +1304,7 @@ public class LinearScan {
                 int opId = op.id;
 
                 for (CiRegister r : compilation.target.allocationSpec.callerSaveRegisters) {
-                    if (r.isXmm()) {
+                    if (r.isFpu()) {
                         addTemp(r.asValue(), opId, RegisterPriority.None, CiKind.Illegal);
                     }
                 }
@@ -1691,7 +1686,7 @@ public class LinearScan {
         }
     }
 
-    void resolveExceptionEntry(BlockBegin block, MoveResolver moveResolver) {
+    void resolveExceptionEntry(final BlockBegin block, final MoveResolver moveResolver) {
         assert block.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry) : "should not call otherwise";
         assert moveResolver.checkEmpty();
 
@@ -1701,9 +1696,12 @@ public class LinearScan {
         }
 
         // the liveIn bits are not set for phi functions of the xhandler entry, so iterate them separately
-        for (Phi phi : block.allLivePhis()) {
-            resolveExceptionEntry(block, phi.operand(), moveResolver);
-        }
+        block.stateBefore().forEachLivePhi(block, new PhiProcedure() {
+            public boolean doPhi(Phi phi) {
+                resolveExceptionEntry(block, phi.operand(), moveResolver);
+                return true;
+            }
+        });
 
         if (moveResolver.hasMappings()) {
             // insert moves after first instruction
@@ -1728,7 +1726,7 @@ public class LinearScan {
             // no moves are created for this phi function in the LIRGenerator, so the
             // interval at the throwing instruction must be searched using the operands
             // of the phi function
-            Value fromValue = phi.operandAt(handler.phiOperand());
+            Value fromValue = phi.inputAt(handler.phiOperand());
 
             // with phi functions it can happen that the same fromValue is used in
             // multiple mappings, so notify move-resolver that this is allowed
@@ -1761,7 +1759,7 @@ public class LinearScan {
         }
     }
 
-    void resolveExceptionEdge(ExceptionHandler handler, int throwingOpId, MoveResolver moveResolver) {
+    void resolveExceptionEdge(final ExceptionHandler handler, final int throwingOpId, final MoveResolver moveResolver) {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
             TTY.println("resolving exception handler B%d: throwingOpId=%d", handler.entryBlock().blockID, throwingOpId);
         }
@@ -1778,9 +1776,13 @@ public class LinearScan {
         }
 
         // the liveIn bits are not set for phi functions of the xhandler entry, so iterate them separately
-        for (Phi phi : block.allLivePhis()) {
-            resolveExceptionEdge(handler, throwingOpId, phi.operand(), phi, moveResolver);
-        }
+        block.stateBefore().forEachLivePhi(block, new PhiProcedure() {
+            public boolean doPhi(Phi phi) {
+                resolveExceptionEdge(handler, throwingOpId, phi.operand(), phi, moveResolver);
+                return true;
+            }
+        });
+
         if (moveResolver.hasMappings()) {
             LIRList entryCode = new LIRList(gen);
             moveResolver.setInsertPosition(entryCode, 0);
@@ -1858,12 +1860,12 @@ public class LinearScan {
                 }
 
                 case Float: {
-                    assert !compilation.target.arch.isX86() || reg.isXmm() : "not xmm register: " + reg;
+                    assert !compilation.target.arch.isX86() || reg.isFpu() : "not xmm register: " + reg;
                     break;
                 }
 
                 case Double: {
-                    assert !compilation.target.arch.isX86() || reg.isXmm() : "not xmm register: " + reg;
+                    assert !compilation.target.arch.isX86() || reg.isFpu() : "not xmm register: " + reg;
                     break;
                 }
 
@@ -1915,8 +1917,7 @@ public class LinearScan {
             interval = splitChildAtOpId(interval, opId, mode);
         }
 
-        CiValue res = interval.location();
-        return res;
+        return interval.location();
     }
 
     void assertEqual(IRScopeDebugInfo d1, IRScopeDebugInfo d2) {
@@ -2065,6 +2066,7 @@ public class LinearScan {
             assert operand.isVariable() || operand.isConstant() : "other cases not allowed here";
 
             if (operand.isVariable()) {
+                OperandMode mode = OperandMode.InputMode;
                 BlockBegin block = blockForId(opId);
                 if (block.numberOfSux() == 1 && opId == block.lastLirInstructionId()) {
                     // generating debug information for the last instruction of a block.
@@ -2076,14 +2078,15 @@ public class LinearScan {
                     if (instr instanceof LIRBranch) {
                         if (block.lirBlock.liveOut.get(operandNumber(operand))) {
                             opId = block.suxAt(0).firstLirInstructionId();
+                            mode = OperandMode.OutputMode;
                         }
                     }
                 }
 
                 // Get current location of operand
                 // The operand must be live because debug information is considered when building the intervals
-                // if the interval is not live, colorLirOpr will cause an assert on failure opr = colorLirOpr(opr, opId,
-                // mode);
+                // if the interval is not live, colorLirOperand will cause an assert on failure
+                operand = colorLirOperand((CiVariable) operand, opId, mode);
                 assert !hasCall(opId) || operand.isStackSlot() || !isCallerSave(operand) : "can not have caller-save register operands at calls";
 
                 // Append to ScopeValue array
@@ -2254,8 +2257,6 @@ public class LinearScan {
 
                 // compute reference map and debug information
                 computeDebugInfo(iw, op);
-            } else {
-                System.console();
             }
 
             // make sure we haven't made the op invalid.
@@ -2376,7 +2377,7 @@ public class LinearScan {
 
             for (Interval interval : intervals) {
                 if (interval != null) {
-                    interval.print(TTY.out(), this);
+                    TTY.out().println(interval.logString(this));
                 }
             }
 
@@ -2455,44 +2456,38 @@ public class LinearScan {
 
             if (i1.operandNumber != i) {
                 TTY.println("Interval %d is on position %d in list", i1.operandNumber, i);
-                i1.print(TTY.out(), this);
-                TTY.println();
+                TTY.println(i1.logString(this));
                 throw new CiBailout("");
             }
 
             if (i1.operand.isVariable() && i1.kind() == CiKind.Illegal) {
                 TTY.println("Interval %d has no type assigned", i1.operandNumber);
-                i1.print(TTY.out(), this);
-                TTY.println();
+                TTY.println(i1.logString(this));
                 throw new CiBailout("");
             }
 
             if (i1.location() == null) {
                 TTY.println("Interval %d has no register assigned", i1.operandNumber);
-                i1.print(TTY.out(), this);
-                TTY.println();
+                TTY.println(i1.logString(this));
                 throw new CiBailout("");
             }
 
             if (!isProcessed(i1.location())) {
                 TTY.println("Can not have an Interval for an ignored register " + i1.location());
-                i1.print(TTY.out(), this);
-                TTY.println();
+                TTY.println(i1.logString(this));
                 throw new CiBailout("");
             }
 
             if (i1.first() == Range.EndMarker) {
                 TTY.println("Interval %d has no Range", i1.operandNumber);
-                i1.print(TTY.out(), this);
-                TTY.println();
+                TTY.println(i1.logString(this));
                 throw new CiBailout("");
             }
 
             for (Range r = i1.first(); r != Range.EndMarker; r = r.next) {
                 if (r.from >= r.to) {
                     TTY.println("Interval %d has zero length range", i1.operandNumber);
-                    i1.print(TTY.out(), this);
-                    TTY.println();
+                    TTY.println(i1.logString(this));
                     throw new CiBailout("");
                 }
             }
@@ -2517,10 +2512,8 @@ public class LinearScan {
                 if (i1.intersects(i2) && (l1.equals(l2))) {
                     if (C1XOptions.DetailedAsserts) {
                         TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.operandNumber, i2.operandNumber);
-                        i1.print(TTY.out(), this);
-                        TTY.println();
-                        i2.print(TTY.out(), this);
-                        TTY.println();
+                        TTY.println(i1.logString(this));
+                        TTY.println(i2.logString(this));
                     }
                     throw new CiBailout("");
                 }

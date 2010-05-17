@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.*;
+import com.sun.c1x.gen.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -74,16 +75,27 @@ public class LIRXirInstruction extends LIRInstruction {
      * Prints this instruction.
      */
     @Override
-    public String operationString() {
-        return toString();
+    public String operationString(OperandFormatter operandFmt) {
+        return toString(operandFmt);
     }
 
     @Override
-    public String toString() {
+    public String toString(OperandFormatter operandFmt) {
         StringBuilder sb = new StringBuilder();
         sb.append("XIR ");
 
-        sb.append(snippet.toString());
+        sb.append(snippet.template);
+        sb.append("(");
+        for (XirArgument a : snippet.arguments) {
+            sb.append(" ");
+            if (a.constant != null) {
+                sb.append(operandFmt.format(a.constant));
+            } else {
+                LIRItem item = (LIRItem) a.object;
+                sb.append(operandFmt.format(item.result()));
+            }
+        }
+        sb.append(" )");
 
         if (method != null) {
             sb.append(" // ");
@@ -94,15 +106,17 @@ public class LIRXirInstruction extends LIRInstruction {
 
         int z = 0;
 
-        sb.append(result().toString() + " = ");
+        if (result().isLegal()) {
+            sb.append(operandFmt.format(result()) + " = ");
+        }
 
-        for (LIROperand opSlot : super.inputAndTempOperands) {
+        for (LIROperand opSlot : inputAndTempOperands) {
 
             CiValue op = opSlot.value(this);
 
             if (op != null) {
                 sb.append(" ");
-                sb.append(op.toString());
+                sb.append(operandFmt.format(op));
             }
 
             z++;

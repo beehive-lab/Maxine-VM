@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,20 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
+package com.sun.cri.ci;
 
 /**
- * Abstracts over instances of {@link TeleMethodActor} and native code
- * routine for which there is nothing to reference in the tele VM.
- * 
- * @author Michael Van De Vanter
+ * Adapter for compiler IR values to a compile-time method invocation.
+ *  
+ * @author Doug Simon
  */
-public interface TeleRoutine {
+public abstract class CiMethodInvokeArguments {
 
     /**
-     * @return A unique, informative name about the particular tele object.
-     * It is also used as a key for uniqueness.
+     * Gets the next argument. The caller knows how many arguments there are
+     * based on the signature of the method being invoked.
+     * 
+     * @return the next argument or {@code null} if there are no more arguments or the next argument is not a constant
      */
-    String getUniqueName();
-
+    public abstract CiConstant nextArg();
 }

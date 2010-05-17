@@ -94,14 +94,14 @@ public final class Phi extends Value {
      * @param i the index of the predecessor
      * @return the instruction that produced the value in the i'th predecessor
      */
-    public Value operandAt(int i) {
+    public Value inputAt(int i) {
         FrameState state;
         if (block.isExceptionEntry()) {
             state = block.exceptionHandlerStates().get(i);
         } else {
             state = block.predecessors().get(i).end().stateAfter();
         }
-        return operandIn(state);
+        return inputIn(state);
     }
 
     /**
@@ -109,7 +109,7 @@ public final class Phi extends Value {
      * @param state the state to access
      * @return the instruction producing the value
      */
-    public Value operandIn(FrameState state) {
+    public Value inputIn(FrameState state) {
         if (isLocal()) {
             return state.localAt(localIndex());
         } else {
@@ -118,11 +118,11 @@ public final class Phi extends Value {
     }
 
     /**
-     * Get the number of operands to this phi (i.e. the number of predecessors to the
+     * Get the number of inputs to this phi (i.e. the number of predecessors to the
      * join block).
-     * @return the number of operands in this phi
+     * @return the number of inputs in this phi
      */
-    public int operandCount() {
+    public int inputCount() {
         if (block.isExceptionEntry()) {
             return block.exceptionHandlerStates().size();
         } else {

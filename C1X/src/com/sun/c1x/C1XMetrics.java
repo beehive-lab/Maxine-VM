@@ -33,7 +33,6 @@ public class C1XMetrics {
     public static int GlobalValueNumberHits;
     public static int ValueMapResizes;
     public static int InlinedFinalizerChecks;
-    public static int FoldableMethodsRegistered;
     public static int MethodsFolded;
     public static int InlineForcedMethods;
     public static int InlineForbiddenMethods;

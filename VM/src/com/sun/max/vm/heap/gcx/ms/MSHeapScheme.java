@@ -25,6 +25,7 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
@@ -222,11 +223,53 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         private TLABFiller tlabFiller = new TLABFiller();
 
         private Size requestedSize;
+        private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+        private final TimerMetric reclaimTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+        private final TimerMetric totalPauseTime = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+
+        private boolean traceGCTimes = false;
+
+        private void startTimer(Timer timer) {
+            if (traceGCTimes) {
+                timer.start();
+            }
+        }
+        private void stopTimer(Timer timer) {
+            if (traceGCTimes) {
+                timer.stop();
+            }
+        }
+
+        private void reportLastGCTimes() {
+            final boolean lockDisabledSafepoints = Log.lock();
+            heapMarker.reportLastElapsedTimes();
+            Log.print(", weak refs=");
+            Log.print(weakRefTimer.getLastElapsedTime());
+            Log.print(", sweeping=");
+            Log.print(reclaimTimer.getLastElapsedTime());
+            Log.print(", total=");
+            Log.println(totalPauseTime.getLastElapsedTime());
+            Log.unlock(lockDisabledSafepoints);
+        }
+
+        private void reportTotalGCTimes() {
+            final boolean lockDisabledSafepoints = Log.lock();
+            heapMarker.reportTotalElapsedTimes();
+            Log.print(", weak refs=");
+            Log.print(weakRefTimer.getElapsedTime());
+            Log.print(", sweeping=");
+            Log.print(reclaimTimer.getElapsedTime());
+            Log.print(", total=");
+            Log.println(totalPauseTime.getElapsedTime());
+            Log.unlock(lockDisabledSafepoints);
+        }
 
         private HeapResizingPolicy heapResizingPolicy = new HeapResizingPolicy();
 
         @Override
         public void collect(int invocationCount) {
+            traceGCTimes = Heap.traceGCTime();
+            startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
             HeapScheme.Static.notifyGCStarted();
@@ -240,8 +283,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             freeSpace.makeParsable();
             heapMarker.markAll();
+            startTimer(weakRefTimer);
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
+            stopTimer(weakRefTimer);
+            startTimer(reclaimTimer);
             Size freeSpaceAfterGC = freeSpace.reclaim(heapMarker);
+            stopTimer(reclaimTimer);
             if (MaxineVM.isDebug()) {
                 afterGCVerifier.run();
             }
@@ -258,6 +305,11 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
                 Log.println(collectionCount);
             }
             HeapScheme.Static.notifyGCCompleted();
+            stopTimer(totalPauseTime);
+
+            if (traceGCTimes) {
+                reportLastGCTimes();
+            }
         }
     }
 
@@ -363,29 +415,33 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
             return freeSpace.allocate(size);
         }
-        final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
-        final Pointer nextChunk = tlabEnd.getWord().asPointer();
+        // TLAB may have been wiped out by a previous direct allocation routine.
+        if (!tlabEnd.isZero()) {
+            final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+            final Pointer nextChunk = tlabEnd.getWord().asPointer();
 
-        final Pointer cell = tlabMark;
-        if (cell.plus(size).equals(hardLimit)) {
-            // Can actually fit the object in space left.
-            // zero-fill the headroom we left.
-            Memory.clearWords(tlabEnd, TLAB_HEADROOM.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
-            if (nextChunk.isZero()) {
-                setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
-            } else {
-                // TLAB has another chunk of free space. Set it.
-                setNextTLABChunk(enabledVmThreadLocals, nextChunk);
+            final Pointer cell = tlabMark;
+            if (cell.plus(size).equals(hardLimit)) {
+                // Can actually fit the object in space left.
+                // zero-fill the headroom we left.
+                Memory.clearWords(tlabEnd, TLAB_HEADROOM.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+                if (nextChunk.isZero()) {
+                    // Zero-out TLAB top and mark.
+                    fastRefillTLAB(enabledVmThreadLocals, Pointer.zero(), Size.zero());
+                } else {
+                    // TLAB has another chunk of free space. Set it.
+                    setNextTLABChunk(enabledVmThreadLocals, nextChunk);
+                }
+                return cell;
+            } else if (!(cell.equals(hardLimit) || nextChunk.isZero())) {
+                // We have another chunk, and we're not to limit yet. So we may change of TLAB chunk to satisfy the request.
+                return changeTLABChunkOrAllocate(enabledVmThreadLocals, tlabMark, hardLimit, nextChunk, size);
             }
-            return cell;
-        } else if (!(cell.equals(hardLimit) || nextChunk.isZero())) {
-            // We have another chunk, and we're not to limit yet. So we may change of TLAB chunk to satisfy the request.
-            return changeTLABChunkOrAllocate(enabledVmThreadLocals, tlabMark, hardLimit, nextChunk, size);
-        }
 
-        if (!refillPolicy.shouldRefill(size, tlabMark)) {
-            // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
-            return freeSpace.allocate(size);
+            if (!refillPolicy.shouldRefill(size, tlabMark)) {
+                // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
+                return freeSpace.allocate(size);
+            }
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
@@ -398,5 +454,13 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         return false;
     }
 
+    @Override
+    public void finalize(MaxineVM.Phase phase) {
+        if (MaxineVM.Phase.RUNNING == phase) {
+            if (Heap.traceGCTime()) {
+                collect.reportTotalGCTimes();
+            }
+        }
+    }
 }
 

@@ -56,7 +56,7 @@ import com.sun.max.vm.template.*;
  * @author Doug Simon
  * @author Thomas Wuerthinger
  */
-public abstract class TargetMethod extends RuntimeMemoryRegion {
+public abstract class TargetMethod extends MemoryRegion {
 
     public static final VMStringOption printTargetMethods = VMOptions.register(new VMStringOption("-XX:PrintTargetMethods=", false, null,
         "Print compiled target methods whose fully qualified name matches <value>."), MaxineVM.Phase.STARTING);
@@ -331,6 +331,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      */
     public final boolean linkDirectCalls(Adapter adapter) {
         boolean linkedAll = true;
+        final Object[] directCallees = directCallees();
         if (directCallees != null) {
             for (int i = 0; i < directCallees.length; i++) {
                 final int offset = getCallEntryOffset(directCallees[i], i);
@@ -364,35 +365,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     private int getCallEntryOffset(Object callee, int index) {
         final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(index);
         return callEntryPoint.offsetInCallee();
-    }
-
-    /**
-     * Links all the direct calls in this target method. Only calls within this target method's prologue are linked to
-     * the target callee (if it's
-     * {@linkplain CompilationScheme.Static#getCurrentTargetMethod(ClassMethodActor) available}). All other direct
-     * calls are linked to a {@linkplain StaticTrampoline static trampoline}.
-     *
-     * @return true if all the direct callees in this target method's prologue were linked to a resolved target method
-     */
-    @HOSTED_ONLY
-    public final boolean linkDirectCallsInPrologue() {
-        boolean linkedAll = true;
-        final Object[] directCallees = directCallees();
-        if (directCallees != null) {
-            for (int i = 0; i < directCallees.length; i++) {
-                final int offset = getCallEntryOffset(directCallees[i], i);
-                final TargetMethod callee = getTargetMethod(directCallees[i]);
-                if (!isDirectCalleeInPrologue(i)) {
-                    patchCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
-                } else if (callee == null) {
-                    linkedAll = false;
-                    patchCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
-                } else {
-                    patchCallSite(stopPosition(i), callee.codeStart().plus(offset));
-                }
-            }
-        }
-        return linkedAll;
     }
 
     @HOSTED_ONLY
@@ -473,6 +445,21 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * @return -1 if the search fails
      */
     public int findNextCall(int targetCodePosition, boolean nativeFunctionCall) {
+        if (stopPositions == null || targetCodePosition < 0 || targetCodePosition > code.length) {
+            return -1;
+        }
+
+        int closestCallPosition = Integer.MAX_VALUE;
+        final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
+        for (int stopIndex = 0; stopIndex < numberOfCalls; stopIndex++) {
+            final int callPosition = stopPosition(stopIndex);
+            if (callPosition > targetCodePosition && callPosition < closestCallPosition && (!nativeFunctionCall || StopPositions.isNativeFunctionCall(stopPositions, stopIndex))) {
+                closestCallPosition = callPosition;
+            }
+        }
+        if (closestCallPosition != Integer.MAX_VALUE) {
+            return closestCallPosition;
+        }
         return -1;
     }
 

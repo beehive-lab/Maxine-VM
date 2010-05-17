@@ -146,9 +146,9 @@ public class LivenessMarker {
                 if (i instanceof Phi) {
                     // phis are special
                     Phi phi = (Phi) i;
-                    int max = phi.operandCount();
+                    int max = phi.inputCount();
                     for (int j = 0; j < max; j++) {
-                        apply(phi.operandAt(j));
+                        apply(phi.inputAt(j));
                     }
                 }
             }

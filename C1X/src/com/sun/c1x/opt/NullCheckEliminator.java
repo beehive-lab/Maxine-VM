@@ -26,6 +26,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
+import com.sun.c1x.value.FrameState.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -140,9 +141,13 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         // first pass on a block
         computeLocalInSet(info);
         // process any phis in the block
-        for (Phi phi : block.stateBefore().allPhis(block)) {
-            visitPhi(phi);
-        }
+        block.stateBefore().forEachPhi(block, new PhiProcedure() {
+            public boolean doPhi(Phi phi) {
+                visitPhi(phi);
+                return true;
+            }
+        });
+
         // now visit the instructions in order
         for (Instruction i = block.next(); i != null; i = i.next()) {
             i.accept(this);
@@ -344,8 +349,8 @@ public class NullCheckEliminator extends DefaultValueVisitor {
 
     @Override
     public void visitPhi(Phi phi) {
-        for (int j = 0; j < phi.operandCount(); j++) {
-            Value operand = phi.operandAt(j);
+        for (int j = 0; j < phi.inputCount(); j++) {
+            Value operand = phi.inputAt(j);
             if (processUse(phi, operand, false)) {
                 continue;
             }

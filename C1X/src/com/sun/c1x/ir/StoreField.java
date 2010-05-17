@@ -45,8 +45,8 @@ public final class StoreField extends AccessField {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public StoreField(Value object, RiField field, Value value, boolean isStatic, FrameState stateBefore, boolean isLoaded, int cpi, RiConstantPool constantPool) {
-        super(CiKind.Void, object, field, isStatic, stateBefore, isLoaded, cpi, constantPool);
+    public StoreField(Value object, RiField field, Value value, boolean isStatic, FrameState stateBefore, boolean isLoaded) {
+        super(CiKind.Void, object, field, isStatic, stateBefore, isLoaded);
         this.value = value;
         setFlag(Flag.LiveStore);
     }

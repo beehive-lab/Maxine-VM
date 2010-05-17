@@ -639,19 +639,15 @@ public class CompiledPrototype extends Prototype {
     private void linkNonVirtualCalls() {
         Trace.begin(1, "linkNonVirtualCalls");
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
-            if (targetMethod.classMethodActor() != null) {
-                if (!(targetMethod instanceof Adapter)) {
-                    ClassMethodActor classMethodActor = targetMethod.classMethodActor;
+            if (!(targetMethod instanceof Adapter)) {
+                Adapter adapter = null;
+                ClassMethodActor classMethodActor = targetMethod.classMethodActor;
+                if (classMethodActor != null) {
                     AdapterGenerator gen = AdapterGenerator.forCallee(classMethodActor, targetMethod.abi().callEntryPoint);
-                    Adapter adapter = gen != null ? gen.make(classMethodActor) : null;
-                    if (!targetMethod.linkDirectCalls(adapter)) {
-                        ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
-                    }
+                    adapter = gen != null ? gen.make(classMethodActor) : null;
                 }
-            } else {
-                // Link at least direct calls in method prologue
-                if (!targetMethod.linkDirectCallsInPrologue()) {
-                    ProgramError.unexpected("did not link all direct calls in prologue - method: " + targetMethod);
+                if (!targetMethod.linkDirectCalls(adapter)) {
+                    ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
                 }
             }
         }

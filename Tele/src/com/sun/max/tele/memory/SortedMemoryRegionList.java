@@ -23,7 +23,6 @@ package com.sun.max.tele.memory;
 import java.util.*;
 import java.util.Arrays;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
@@ -63,10 +62,8 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MaxMemoryReg
         memoryRegions = StaticLoophole.cast(type, new MaxMemoryRegion[initialCapacity]);
     }
 
-    @INSPECTED
     private MemoryRegion_Type[] memoryRegions;
 
-    @INSPECTED
     private int size;
 
     public MemoryRegion_Type get(int index) {

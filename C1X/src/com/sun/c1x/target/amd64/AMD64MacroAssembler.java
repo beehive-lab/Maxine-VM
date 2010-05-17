@@ -261,7 +261,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     void cmpsd2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
-        assert opr1.isXmm() && opr2.isXmm();
+        assert opr1.isFpu() && opr2.isFpu();
         ucomisd(opr1, opr2);
 
         Label l = new Label();
@@ -284,8 +284,8 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
-        assert opr1.isXmm();
-        assert opr2.isXmm();
+        assert opr1.isFpu();
+        assert opr2.isFpu();
         ucomiss(opr1, opr2);
 
         Label l = new Label();
@@ -474,7 +474,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     // Support optimal SSE move instructions.
     void movflt(CiRegister dst, CiRegister src) {
-        assert dst.isXmm() && src.isXmm();
+        assert dst.isFpu() && src.isFpu();
         if (C1XOptions.UseXmmRegToRegMoveAll) {
             movaps(dst, src);
         } else {
@@ -483,17 +483,17 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     void movflt(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         movss(dst, src);
     }
 
     void movflt(CiAddress dst, CiRegister src) {
-        assert src.isXmm();
+        assert src.isFpu();
         movss(dst, src);
     }
 
     void movdbl(CiRegister dst, CiRegister src) {
-        assert dst.isXmm() && src.isXmm();
+        assert dst.isFpu() && src.isFpu();
         if (C1XOptions.UseXmmRegToRegMoveAll) {
             movapd(dst, src);
         } else {
@@ -502,7 +502,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     void movdbl(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         if (C1XOptions.UseXmmLoadAndClearUpper) {
             movsd(dst, src);
         } else {

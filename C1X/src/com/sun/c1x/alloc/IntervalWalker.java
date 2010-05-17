@@ -238,7 +238,7 @@ public class IntervalWalker {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
             TTY.print(from.toString() + " to " + to.toString());
             TTY.fillTo(23);
-            interval.print(TTY.out(), allocator);
+            TTY.out().println(interval.logString(allocator));
         }
     }
 }

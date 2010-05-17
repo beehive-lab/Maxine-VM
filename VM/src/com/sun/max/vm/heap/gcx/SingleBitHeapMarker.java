@@ -93,7 +93,7 @@ public class SingleBitHeapMarker implements MarkingStack.OverflowHandler {
     /**
      * Memory where the color map is stored.
      */
-    final RuntimeMemoryRegion markBitmap;
+    final MemoryRegion markBitmap;
 
 
     /**
@@ -133,7 +133,7 @@ public class SingleBitHeapMarker implements MarkingStack.OverflowHandler {
         log2BitmapWord = log2BytesCoveredPerBit + Word.widthValue().log2numberOfBits;
         markingStack = new MarkingStack();
         markingStack.setOverflowHandler(this);
-        markBitmap = new RuntimeMemoryRegion("Mark Bitmap");
+        markBitmap = new MemoryRegion("Mark Bitmap");
         markingStack.setOverflowHandler(this);
     }
 
@@ -143,7 +143,7 @@ public class SingleBitHeapMarker implements MarkingStack.OverflowHandler {
      * @param bitmapStorage
      * @param coveredArea
      */
-    public void initialize(RuntimeMemoryRegion coveredArea, Address bitmapStorage, Size bitmapSize) {
+    public void initialize(MemoryRegion coveredArea, Address bitmapStorage, Size bitmapSize) {
         if (MaxineVM.isDebug()) {
             FatalError.check(bitmapSize.toLong() >= coveredArea.size().dividedBy(wordsCoveredPerBit * Word.widthValue().numberOfBits).toLong(),
                             "Mark bitmap too small to cover heap");

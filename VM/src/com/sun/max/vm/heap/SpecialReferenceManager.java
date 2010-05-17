@@ -209,8 +209,14 @@ public class SpecialReferenceManager {
             if (MaxineVM.isDebug()) {
                 boolean hasNullDiscoveredField = grip.readGrip(discoveredField.offset()).isZero();
                 boolean isHeadOfDiscoveredList = grip.equals(discoveredList);
-                FatalError.check(hasNullDiscoveredField && !isHeadOfDiscoveredList,
-                                "Discovered reference already discovered");
+                if (!(hasNullDiscoveredField && !isHeadOfDiscoveredList)) {
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("Discovered reference ");
+                    Log.print(grip.toOrigin());
+                    Log.print(" ");
+                    Log.unlock(lockDisabledSafepoints);
+                    FatalError.unexpected(": already discovered");
+                }
             }
             grip.writeGrip(discoveredField.offset(), discoveredList);
             discoveredList = grip;

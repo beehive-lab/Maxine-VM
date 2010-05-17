@@ -41,8 +41,6 @@ import com.sun.cri.ri.*;
  */
 public class Canonicalizer extends DefaultValueVisitor {
 
-    private static final Object[] NO_ARGUMENTS = {};
-
     final RiRuntime runtime;
     final RiMethod method;
     final CiTarget target;
@@ -480,7 +478,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 // XXX: why is this limited to the current block?
                 if (nv != null && inCurrentBlock(v)) {
                     setCanonical(new StoreField(i.object(), i.field(), nv, i.isStatic(),
-                                                i.stateBefore(), i.isLoaded(), i.cpi, i.constantPool));
+                                                i.stateBefore(), i.isLoaded()));
                 }
             }
         }
@@ -1311,62 +1309,29 @@ public class Canonicalizer extends DefaultValueVisitor {
         return args[index].asConstant().asLong();
     }
 
-    public static CiConstant foldInvocation(RiRuntime runtime, RiMethod method, Value[] args) {
-        Method reflectMethod = runtime.getFoldingMethod(method);
-//        Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
-        if (reflectMethod != null) {
-            // the method is foldable. check that all input arguments are constants
-            for (Value a : args) {
-                if (a != null && !a.isConstant()) {
+    public static CiConstant foldInvocation(RiRuntime runtime, RiMethod method, final Value[] args) {
+        CiConstant result = runtime.invoke(method, new CiMethodInvokeArguments() {
+            int i;
+            @Override
+            public CiConstant nextArg() {
+                if (i >= args.length) {
                     return null;
                 }
-            }
-            // build the argument list
-            Object recvr;
-            Object[] argArray = NO_ARGUMENTS;
-            if (isStatic(method.accessFlags())) {
-                // static method invocation
-                recvr = null;
-                if (args.length > 0) {
-                    ArrayList<Object> list = new ArrayList<Object>();
-                    for (Value a : args) {
-                        if (a != null) {
-                            list.add(a.asConstant().boxedValue());
-                        }
+                Value arg = args[i++];
+                if (arg == null) {
+                    if (i >= args.length) {
+                        return null;
                     }
-                    argArray = list.toArray();
+                    arg = args[i++];
+                    assert arg != null;
                 }
-            } else {
-                // instance method invocation
-                recvr = args[0].asConstant().asObject();
-                if (args.length > 1) {
-                    ArrayList<Object> list = new ArrayList<Object>();
-                    for (int i = 1; i < args.length; i++) {
-                        Value a = args[i];
-                        if (a != null) {
-                            list.add(a.asConstant().boxedValue());
-                        }
-                    }
-                    argArray = list.toArray();
-                }
+                return arg.isConstant() ? arg.asConstant() : null;
             }
-            try {
-                // attempt to invoke the method
-                Object result = reflectMethod.invoke(recvr, argArray);
-                CiKind kind = method.signature().returnKind();
-                // set the result of this instruction to be the result of invocation
-                C1XMetrics.MethodsFolded++;
-                return CiConstant.forBoxed(kind, result);
-                // note that for void, we will have a void constant with value null
-            } catch (IllegalAccessException e) {
-                // folding failed; too bad
-            } catch (InvocationTargetException e) {
-                // folding failed; too bad
-            } catch (ExceptionInInitializerError e) {
-                // folding failed; too bad
-            }
+        });
+        if (result != null) {
+            C1XMetrics.MethodsFolded++;
         }
-        return null;
+        return result;
     }
 
     private RiType asRiType(Value x) {

@@ -30,56 +30,56 @@ import com.sun.cri.ri.RiType;
 
 /**
  * @author Thomas Wuerthinger
- *
+ * 
  */
 public class MockField implements RiField {
 
-	private final Field field;
-	private final MockType holder;
+    private final Field field;
+    private final MockType holder;
 
-	public MockField(MockType holder, Field field) {
-		this.field = field;
-		this.holder = holder;
-	}
+    public MockField(MockType holder, Field field) {
+        this.field = field;
+        this.holder = holder;
+    }
 
-	@Override
-	public CiConstant constantValue(Object object) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public CiConstant constantValue(Object object) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public RiType holder() {
-		return holder;
-	}
+    @Override
+    public RiType holder() {
+        return holder;
+    }
 
-	@Override
-	public boolean isConstant() {
-		return false;
-	}
+    @Override
+    public boolean isConstant() {
+        return false;
+    }
 
-	@Override
-	public boolean isResolved() {
-		return true;
-	}
+    @Override
+    public boolean isResolved() {
+        return true;
+    }
 
-	@Override
-	public int accessFlags() {
-		return field.getModifiers();
-	}
+    @Override
+    public int accessFlags() {
+        return field.getModifiers();
+    }
 
-	@Override
-	public CiKind kind() {
-		return CiKind.fromJavaClass(field.getType());
-	}
+    @Override
+    public CiKind kind() {
+        return CiKind.fromJavaClass(field.getType());
+    }
 
-	@Override
-	public String name() {
-		return field.getName();
-	}
+    @Override
+    public String name() {
+        return field.getName();
+    }
 
-	@Override
-	public RiType type() {
-		return MockUniverse.lookupType(field.getType());
-	}
+    @Override
+    public RiType type() {
+        return MockUniverse.lookupType(field.getType());
+    }
 
 }

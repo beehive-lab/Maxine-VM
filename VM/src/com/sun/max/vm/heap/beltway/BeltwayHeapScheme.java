@@ -431,7 +431,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         }
     }
 
-    public void testCards(RuntimeMemoryRegion origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public void testCards(MemoryRegion origin, MemoryRegion from, MemoryRegion to) {
         final int startCardIndex = cardRegion.getCardIndexFromHeapAddress(origin.start());
         final int endCardIndex = cardRegion.getCardIndexFromHeapAddress(origin.end());
 
@@ -454,17 +454,17 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     @INLINE
-    public final Pointer gcBumpAllocate(RuntimeMemoryRegion belt, Size size) {
+    public final Pointer gcBumpAllocate(MemoryRegion belt, Size size) {
         return beltManager.gcBumpAllocate((Belt) belt, size);
     }
 
     @INLINE
-    public final Pointer gcSynchAllocate(RuntimeMemoryRegion belt, Size size) {
+    public final Pointer gcSynchAllocate(MemoryRegion belt, Size size) {
         return beltManager.gcAllocate((Belt) belt, size);
     }
 
     @INLINE
-    public final Pointer gcAllocate(RuntimeMemoryRegion belt, Size size) {
+    public final Pointer gcAllocate(MemoryRegion belt, Size size) {
         if (useGCTlabs) {
             return gcTlabAllocate(belt, size);
         }
@@ -633,7 +633,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     // Old TLAB code////
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Pointer gcTlabAllocate(RuntimeMemoryRegion gcRegion, Size size) {
+    public Pointer gcTlabAllocate(MemoryRegion gcRegion, Size size) {
         // FIXME: REVISIT this code
         /*
         final VmThread thread = VmThread.current();
@@ -685,7 +685,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         return newSize;
     }
 
-    public final void initializeFirstGCTLAB(RuntimeMemoryRegion gcRegion, BeltTLAB tlab, Size size) {
+    public final void initializeFirstGCTLAB(MemoryRegion gcRegion, BeltTLAB tlab, Size size) {
         //Debug.println("Try to set initial GC TLAB");
         final Size newSize = calculateGCTLABSize(size);
         final Size allocSize = newSize.asPointer().minusWords(1).asSize();
@@ -699,7 +699,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     @INLINE
-    public final Pointer gcAllocateTLAB(RuntimeMemoryRegion gcRegion, Size size) {
+    public final Pointer gcAllocateTLAB(MemoryRegion gcRegion, Size size) {
         Pointer pointer = gcSynchAllocate(gcRegion, size);
         if (!pointer.isZero()) {
             if (DebugHeap.isTagging()) {

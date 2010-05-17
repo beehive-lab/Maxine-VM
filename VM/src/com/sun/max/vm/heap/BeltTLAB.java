@@ -170,7 +170,7 @@ public class BeltTLAB extends LinearAllocationMemoryRegion {
     }
 
     @INLINE
-    public final Pointer allocate(RuntimeMemoryRegion space, Size size) {
+    public final Pointer allocate(MemoryRegion space, Size size) {
         return Pointer.zero();
     }
 

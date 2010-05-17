@@ -39,7 +39,7 @@ import com.sun.max.vm.type.*;
  * @author Michael Van De Vanter
  *
  */
-public abstract class TeleMethodActor extends TeleMemberActor implements TeleRoutine, MethodProvider {
+public abstract class TeleMethodActor extends TeleMemberActor implements MethodProvider {
 
     /**
      * @return local {@link MethodActor} corresponding the the {@link TeleVM}'s {@link MethodActor} for this method.
