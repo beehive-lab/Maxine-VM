@@ -95,7 +95,7 @@ public class Belt extends LinearAllocationMemoryRegion {
         this.expandable = expandable;
     }
 
-    public Pointer allocate(RuntimeMemoryRegion from, Size size) {
+    public Pointer allocate(MemoryRegion from, Size size) {
         return Pointer.zero();
     }
 

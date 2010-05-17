@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,44 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
-
-import com.sun.cri.ci.*;
+package com.sun.cri.ci;
 
 /**
- * The {@code LoadRegister} instruction represents a read of a physical register.
- * This instruction is part of the HIR support for low-level operations, such as safepoints,
- * stack banging, etc, and does not correspond to a Java operation.
- *
- * @author Ben L. Titzer
+ * Adapter for compiler IR values to a compile-time method invocation.
+ *  
+ * @author Doug Simon
  */
-public final class LoadRegister extends Instruction {
-
-    final CiRegister register;
+public abstract class CiMethodInvokeArguments {
 
     /**
-     * Creates a new LoadPointer instance.
-     * @param kind the kind of value loaded from the register
-     * @param register the register to laod
+     * Gets the next argument. The caller knows how many arguments there are
+     * based on the signature of the method being invoked.
+     * 
+     * @return the next argument or {@code null} if there are no more arguments or the next argument is not a constant
      */
-    public LoadRegister(CiKind kind, CiRegister register) {
-        super(kind);
-        this.register = register;
-        if (register.isNonZero()) {
-            setFlag(Flag.NonNull);
-        }
-    }
-
-    public CiRegister register() {
-        return register;
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitLoadRegister(this);
-    }
+    public abstract CiConstant nextArg();
 }

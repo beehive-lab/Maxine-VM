@@ -32,11 +32,9 @@ import com.sun.cri.ri.*;
  */
 public final class Invoke extends StateSplit {
 
-    final int opcode;
-    final Value[] arguments;
-    final RiMethod target;
-    public final int cpi;
-    public final RiConstantPool constantPool;
+    public final int opcode;
+    public final Value[] arguments;
+    public final RiMethod target;
 
     /**
      * Constructs a new Invoke instruction.
@@ -48,7 +46,7 @@ public final class Invoke extends StateSplit {
      * @param target the target method being called
      * @param stateBefore the state before executing the invocation
      */
-    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, RiMethod target, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
+    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, RiMethod target, FrameState stateBefore) {
         super(result, stateBefore);
         this.opcode = opcode;
         this.arguments = args;
@@ -59,9 +57,6 @@ public final class Invoke extends StateSplit {
         } else if (args[0].isNonNull()) {
             redundantNullCheck();
         }
-
-        this.cpi = cpi;
-        this.constantPool = constantPool;
     }
 
     /**

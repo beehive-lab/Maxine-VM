@@ -291,7 +291,43 @@ public class IRChecker extends ValueVisitor {
                 assertKind(y, CiKind.Double);
                 break;
             default:
-                fail("Illegal CompareOp opcode");
+                fail("Illegal CompareOp opcode: " + Bytecodes.nameOf(i.opcode));
+        }
+    }
+
+    @Override
+    public void visitCompareAndSwap(CompareAndSwap i) {
+        assertKind(i.pointer(), CiKind.Word);
+        assertNull(i.displacement(), "displacement should be null");
+        assertKind(i.newValue(), i.kind);
+        assertKind(i.expectedValue(), i.kind);
+        switch (i.opcode) {
+            case Bytecodes.PCMPSWP_INT:
+                assertKind(i, CiKind.Int);
+                assertKind(i.offset(), CiKind.Word);
+                break;
+            case Bytecodes.PCMPSWP_INT_I:
+                assertKind(i, CiKind.Int);
+                assertKind(i.offset(), CiKind.Int);
+                break;
+            case Bytecodes.PCMPSWP_REFERENCE:
+                assertKind(i, CiKind.Object);
+                assertKind(i.offset(), CiKind.Word);
+                break;
+            case Bytecodes.PCMPSWP_REFERENCE_I:
+                assertKind(i, CiKind.Object);
+                assertKind(i.offset(), CiKind.Int);
+                break;
+            case Bytecodes.PCMPSWP_WORD:
+                assertKind(i, CiKind.Word);
+                assertKind(i.offset(), CiKind.Word);
+                break;
+            case Bytecodes.PCMPSWP_WORD_I:
+                assertKind(i, CiKind.Word);
+                assertKind(i.offset(), CiKind.Int);
+                break;
+            default:
+                fail("Illegal CompareAndSwap opcode: " + Bytecodes.nameOf(i.opcode));
         }
     }
 
@@ -593,8 +629,8 @@ public class IRChecker extends ValueVisitor {
         if (i.isLocal() && (i.localIndex() >= block.stateBefore().scope().method.maxLocals() || i.localIndex() < 0)) {
             fail("Phi refers to an invalid local variable");
         }
-        for (int j = 0; j < i.operandCount(); j++) {
-            assertKind(i.operandAt(j), i.kind);
+        for (int j = 0; j < i.inputCount(); j++) {
+            assertKind(i.inputAt(j), i.kind);
         }
     }
 

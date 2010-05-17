@@ -32,34 +32,6 @@ import com.sun.cri.ci.*;
 public interface RiConstantPool {
 
     /**
-     * Resolves a reference to a method for an INVOKEVIRTUAL operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface method
-     */
-    RiMethod resolveInvokeVirtual(int cpi);
-
-    /**
-     * Resolves a reference to a method for an INVOKESPECIAL operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface method
-     */
-    RiMethod resolveInvokeSpecial(int cpi);
-
-    /**
-     * Resolves a reference to a method for an INVOKEINTERFACE operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface method
-     */
-    RiMethod resolveInvokeInterface(int cpi);
-
-    /**
-     * Resolves a reference to a method for an INVOKESTATIC operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface method
-     */
-    RiMethod resolveInvokeStatic(int cpi);
-
-    /**
      * Resolves a reference to a compiler interface type at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface type
@@ -67,81 +39,20 @@ public interface RiConstantPool {
     RiType resolveType(int cpi);
 
     /**
-     * Looks up a reference to a field for a GETFIELD operation at compile time
-     * (does not perform resolution). If a GETFIELD of this constant would fail
-     * at run time, the compiler expects this method to return an unresolved constant.
+     * Looks up a reference to a field.
+     * 
      * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
+     * @return a reference to the field at {@code cpi} in this pool
+     * @throws ClassFormatError if the entry at {@code cpi} is not a field
      */
-    RiField lookupGetField(int cpi);
-
+    RiField lookupField(int cpi);
+    
     /**
-     * Looks up a reference to a field for a PUTFIELD operation at compile time
-     * (does not perform resolution). If a PUTTFIELD of this constant would fail
-     * at run time, the compiler expects this method to return an unresolved constant.
+     * Looks up a reference to a method.
+     * 
      * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField lookupPutField(int cpi);
-
-    /**
-     * Looks up a reference to a field for a GETSTATIC operation at compile time
-     * (does not perform resolution).  If a GETSTATIC of this constant would fail
-     * at run time, the compiler expects this method to return an unresolved static.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField lookupGetStatic(int cpi);
-
-    /**
-     * Looks a reference to a field for a PUTSTATIC operation at compile time
-     * (does not perform resolution). If a PUTSTATIC of this constant would fail
-     * at run time, the compiler expects this method to return an unresolved constant.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField lookupPutStatic(int cpi);
-
-    /**
-     * Looks up a reference to a method for an INVOKEVIRTUAL operation at compile time
-     * (does not perform resolution).  If an INVOKEVIRTUAL of this constant would fail
-     * at run time, the compiler expects this method to return an unresolved constant.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface method
-     */
-    RiMethod lookupInvokeVirtual(int cpi);
-
-    /**
-     * Looks up a reference to a method for an INVOKESPECIAL operation at compile time
-     * (does not perform resolution). If an INVOKESPECIAL of this constant would fail
-     * at run time, the compiler expects this method to return an unresolved constant.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface method
-     */
-    RiMethod lookupInvokeSpecial(int cpi);
-
-    /**
-     * Looks up a reference to a method for an INVOKEINTERFACE operation at compile time
-     * (does not perform resolution). If an INVOKEINTERFACE of this constant would fail
-     * at run time, the compiler expects this method to return an unresolved constant.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface method
-     */
-    RiMethod lookupInvokeInterface(int cpi);
-
-    /**
-     * Looks up a reference to a method for an INVOKESTATIC operation at compile time
-     * (does not perform resolution). If an INVOKESTATIC of this constant would fail
-     * at run time, the compiler expects this method to return an unresolved constant.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface method
-     */
-    RiMethod lookupInvokeStatic(int cpi);
-
-    /**
-     * Looks up a reference to a method at compile time (does not perform resolution).
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface method
+     * @return a reference to the method at {@code cpi} in this pool
+     * @throws ClassFormatError if the entry at {@code cpi} is not a method
      */
     RiMethod lookupMethod(int cpi);
     

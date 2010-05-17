@@ -92,14 +92,14 @@ public class C1XCompiler extends CiCompiler {
     }
 
     private void init() {
-        final List<XirTemplate> globalStubs = xir.buildTemplates(backend.newXirAssembler());
+        final List<XirTemplate> xirTemplateStubs = xir.buildTemplates(backend.newXirAssembler());
         final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
 
-        if (globalStubs != null) {
-            for (XirTemplate t : globalStubs) {
-                TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, t.name);
+        if (xirTemplateStubs != null) {
+            for (XirTemplate template : xirTemplateStubs) {
+                TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, template.name);
                 try {
-                    map.put(t, emitter.emit(t, runtime));
+                    map.put(template, emitter.emit(template, runtime));
                 } finally {
                     filter.remove();
                 }
@@ -122,20 +122,20 @@ public class C1XCompiler extends CiCompiler {
         return globalStub;
     }
 
-    public GlobalStub lookupGlobalStub(XirTemplate t) {
-        GlobalStub globalStub = map.get(t);
-        assert globalStub != null : "no stub for XirTemplate: " + t;
+    public GlobalStub lookupGlobalStub(XirTemplate template) {
+        GlobalStub globalStub = map.get(template);
+        assert globalStub != null : "no stub for XirTemplate: " + template;
         return globalStub;
     }
 
-    public GlobalStub lookupGlobalStub(CiRuntimeCall rtcall) {
-        GlobalStub globalStub = map.get(rtcall);
+    public GlobalStub lookupGlobalStub(CiRuntimeCall runtimeCall) {
+        GlobalStub globalStub = map.get(runtimeCall);
         if (globalStub == null) {
-            globalStub = backend.newGlobalStubEmitter().emit(rtcall, runtime);
-            map.put(rtcall, globalStub);
+            globalStub = backend.newGlobalStubEmitter().emit(runtimeCall, runtime);
+            map.put(runtimeCall, globalStub);
         }
 
-        assert globalStub != null : "could not find global stub for runtime call: " + rtcall;
+        assert globalStub != null : "could not find global stub for runtime call: " + runtimeCall;
         return globalStub;
     }
 }

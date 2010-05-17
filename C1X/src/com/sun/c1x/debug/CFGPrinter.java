@@ -24,11 +24,15 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.alloc.*;
+import com.sun.c1x.alloc.Interval.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.lir.LIRInstruction.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -189,8 +193,7 @@ public class CFGPrinter {
     }
 
     /**
-     * Prints the JVM frame states pertaining to a given block. There will be more than one
-     * frame state if this block is in a method that has been inlined.
+     * Prints the JVM frame state upon entry to a given block.
      *
      * @param block the block for which the frame state is to be printed
      */
@@ -200,20 +203,20 @@ public class CFGPrinter {
         FrameState state = block.stateBefore();
 
         if (state.stackSize() > 0) {
-          begin("stack");
-          out.print("size ").println(state.stackSize());
+            begin("stack");
+            out.print("size ").println(state.stackSize());
 
-          int i = 0;
-          while (i < state.stackSize()) {
-              Value value = state.stackAt(i);
-              out.disableIndentation();
-              out.print(InstructionPrinter.stateString(i, value, block));
-              printOperand(value);
-              out.println();
-              out.enableIndentation();
-              i += value.kind.sizeInSlots();
-          }
-          end("stack");
+            int i = 0;
+            while (i < state.stackSize()) {
+                Value value = state.stackAt(i);
+                out.disableIndentation();
+                out.print(InstructionPrinter.stateString(i, value, block));
+                printOperand(value);
+                out.println();
+                out.enableIndentation();
+                i += value.kind.sizeInSlots();
+            }
+            end("stack");
         }
 
         if (state.locksSize() > 0) {
@@ -258,6 +261,64 @@ public class CFGPrinter {
     }
 
     /**
+     * Formats a given {@linkplain FrameState JVM frame state} as a single line string.
+     */
+    private String stateToString(FrameState state) {
+        if (state == null) {
+            return null;
+        }
+
+        StringBuilder buf = new StringBuilder();
+
+        if (state.stackSize() > 0) {
+            int i = 0;
+            buf.append("stack{");
+            while (i < state.stackSize()) {
+                if (i == 0) {
+                    buf.append(' ');
+                }
+                Value value = state.stackAt(i);
+                buf.append(Util.valueString(value)).append(' ');
+                i++;
+            }
+            buf.append("} ");
+        }
+
+        if (state.locksSize() > 0) {
+            buf.append("locks{");
+            for (int i = 0; i < state.locksSize(); ++i) {
+                if (i == 0) {
+                    buf.append(' ');
+                }
+                Value value = state.lockAt(i);
+                buf.append(Util.valueString(value)).append(' ');
+            }
+            buf.append("} ");
+        }
+
+        boolean multipleScopes = state.scope().callerState() != null;
+        do {
+            // Only qualify locals with method name if there are multiple scopes (due to inlining)
+            if (multipleScopes) {
+                buf.append(CiUtil.format("%h.%n:", state.scope().method, false));
+            }
+            buf.append("locals{");
+            int i = 0;
+            while (i < state.localsSize()) {
+                if (i == 0) {
+                    buf.append(' ');
+                }
+                Value value = state.localAt(i);
+                buf.append(Util.valueString(value)).append(' ');
+                i++;
+            }
+            buf.append("} ");
+            state = state.scope().callerState();
+        } while (state != null);
+        return buf.toString();
+    }
+
+    /**
      * Prints the HIR for each instruction in a given block.
      *
      * @param block
@@ -273,6 +334,58 @@ public class CFGPrinter {
     }
 
     /**
+     * Formats LIR operands as expected by the C1 Visualizer.
+     */
+    public static class CFGOperandFormatter extends OperandFormatter {
+        /**
+         * The textual delimiters used for an operand depend on the context in which it is being
+         * printed. When printed as part of a frame state or as the result operand in a HIR node listing,
+         * the double-quotes (i.e. {@code "}'s) are used. Otherwise, square brackets are used.
+         */
+        public final boolean asStateOrHIROperandResult;
+
+        public CFGOperandFormatter(boolean asStateOrHIROperandResult) {
+            this.asStateOrHIROperandResult = asStateOrHIROperandResult;
+        }
+
+        @Override
+        public String format(CiValue operand) {
+            if (operand.isLegal()) {
+                String op;
+                if (operand.isVariableOrRegister() || operand.isStackSlot()) {
+                    op = operand.name();
+                } else if (operand.isConstant()) {
+                    CiConstant constant = (CiConstant) operand;
+                    op = operand.kind.javaName + ":" + operand.kind.format(constant.boxedValue());
+                } else if (operand.isAddress()) {
+                    CiAddress address = (CiAddress) operand;
+                    op = "Base:" + format(address.base);
+                    if (!address.index.isIllegal()) {
+                        op += " Index:" + format(address.index);
+                    }
+                    if (address.scale != Scale.Times1) {
+                        op += " * " + address.scale.value;
+                    }
+                    op += " Disp:" + address.displacement;
+                } else {
+                    assert operand.isIllegal();
+                    op = "-";
+                }
+                if (operand.kind != CiKind.Illegal) {
+                    op += "|" + operand.kind.typeChar;
+                }
+                if (!asStateOrHIROperandResult) {
+                    op = "[" + op + "]";
+                } else {
+                    op = " \"" + op + "\" ";
+                }
+                return op;
+            }
+            return "";
+        }
+    }
+
+    /**
      * Prints the LIR for each instruction in a given block.
      *
      * @param block the block to print
@@ -282,7 +395,9 @@ public class CFGPrinter {
         if (lir != null) {
             begin("LIR");
             for (int i = 0; i < lir.length(); i++) {
-                lir.at(i).printOn(out);
+                LIRInstruction inst = lir.at(i);
+                out.printf("%4d ", inst.id);
+                out.print(inst.toString(new CFGOperandFormatter(false)));
                 out.println(" <|@ ");
             }
             end("LIR");
@@ -290,8 +405,8 @@ public class CFGPrinter {
     }
 
     private void printOperand(Value i) {
-        if (i != null && i.operand().isVariable()) {
-            out.print(" \"").print(i.operand().toString()).print("\" ");
+        if (i != null && i.operand().isLegal()) {
+            out.print(new CFGOperandFormatter(true).format(i.operand()));
         }
     }
 
@@ -309,6 +424,12 @@ public class CFGPrinter {
         printOperand(i);
         out.print(i).print(' ');
         new InstructionPrinter(out, true, target).printInstruction(i);
+        if (i instanceof StateSplit) {
+            String state = stateToString(((StateSplit) i).stateBefore());
+            if (state != null) {
+                out.print("  [" + state + "]");
+            }
+        }
 
         out.println(" <|@");
     }
@@ -358,13 +479,50 @@ public class CFGPrinter {
         begin("intervals");
         out.println(String.format("name \"%s\"", name));
 
-        for (Interval i : intervals) {
-            if (i != null) {
-                i.print(out, allocator, true);
+        for (Interval interval : intervals) {
+            if (interval != null) {
+                printInterval(allocator, interval);
             }
         }
 
         end("intervals");
+    }
+
+    private void printInterval(LinearScan allocator, Interval interval) {
+        out.printf("%d %s ", interval.operandNumber, (interval.operand.isRegister() ? "fixed" : interval.kind().name()));
+        if (interval.operand.isRegister()) {
+            out.printf("\"[%s|%c]\"", interval.operand.name(), interval.operand.kind.typeChar);
+            if (!true) {
+                out.print(' ');
+            }
+        } else {
+            if (interval.location() != null) {
+                out.printf("\"[%s|%c]\"", interval.location().name(), interval.location().kind.typeChar);
+            }
+        }
+
+        Interval hint = interval.locationHint(false, allocator);
+        out.printf("%d %d ", interval.splitParent().operandNumber, hint != null ? hint.operandNumber : -1);
+
+        // print ranges
+        Range cur = interval.first();
+        while (cur != Range.EndMarker) {
+            out.printf("[%d, %d[", cur.from, cur.to);
+            cur = cur.next;
+            assert cur != null : "range list not closed with range sentinel";
+        }
+
+        // print use positions
+        int prev = 0;
+        UsePosList usePosList = interval.usePosList();
+        for (int i = usePosList.size() - 1; i >= 0; --i) {
+            assert prev < usePosList.usePos(i) : "use positions not sorted";
+            out.printf("%d %s ", usePosList.usePos(i), usePosList.registerPriority(i));
+            prev = usePosList.usePos(i);
+        }
+
+        out.printf(" \"%s\"", interval.spillState());
+        out.println();
     }
 
     public void printMachineCode(String code) {

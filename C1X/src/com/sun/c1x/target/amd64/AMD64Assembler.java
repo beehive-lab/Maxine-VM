@@ -277,7 +277,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     void emitOperand(CiAddress adr, CiRegister reg) {
-        assert reg.isXmm();
+        assert reg.isFpu();
         assert !(adr.base().encoding >= MinEncodingNeedsRex) && !(adr.index().encoding >= MinEncodingNeedsRex) : "no extended registers";
         emitOperandHelper(reg, adr);
     }
@@ -360,7 +360,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void addsd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm() && src.isXmm();
+        assert dst.isFpu() && src.isFpu();
         emitByte(0xF2);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -369,7 +369,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void addsd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF2);
         prefix(src, dst);
         emitByte(0x0F);
@@ -378,7 +378,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void addss(CiRegister dst, CiRegister src) {
-        assert dst.isXmm() && src.isXmm();
+        assert dst.isFpu() && src.isFpu();
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -387,7 +387,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void addss(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF3);
         prefix(src, dst);
         emitByte(0x0F);
@@ -412,7 +412,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void andpd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0x66);
         prefix(src, dst);
         emitByte(0x0F);
@@ -568,7 +568,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void comisd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         // NOTE: dbx seems to decode this as comiss even though the
         // 0x66 is there. Strangly ucomisd comes out correct
         emitByte(0x66);
@@ -576,7 +576,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void comiss(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
 
         prefix(src, dst);
         emitByte(0x0F);
@@ -585,8 +585,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvtdq2pd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
 
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
@@ -596,8 +596,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvtdq2ps(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0x5B);
@@ -605,8 +605,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvtsd2ss(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0xF2);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -615,7 +615,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvtsi2sdl(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF2);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -624,7 +624,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvtsi2ssl(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -633,8 +633,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvtss2sd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -643,7 +643,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvttsd2sil(CiRegister dst, CiRegister src) {
-        assert src.isXmm();
+        assert src.isFpu();
         emitByte(0xF2);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -652,7 +652,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvttss2sil(CiRegister dst, CiRegister src) {
-        assert src.isXmm();
+        assert src.isFpu();
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -668,7 +668,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void divsd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF2);
         prefix(src, dst);
         emitByte(0x0F);
@@ -677,8 +677,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void divsd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0xF2);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -687,7 +687,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void divss(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF3);
         prefix(src, dst);
         emitByte(0x0F);
@@ -696,8 +696,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void divss(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -879,8 +879,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movapd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         int dstenc = dst.encoding;
         int srcenc = src.encoding;
         emitByte(0x66);
@@ -904,8 +904,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movaps(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         int dstenc = dst.encoding;
         int srcenc = src.encoding;
         if (dstenc < 8) {
@@ -948,17 +948,17 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movdl(CiRegister dst, CiRegister src) {
-        if (dst.isXmm()) {
-            assert dst.isXmm();
-            assert !src.isXmm() : "does this hold?";
+        if (dst.isFpu()) {
+            assert dst.isFpu();
+            assert !src.isFpu() : "does this hold?";
                 emitByte(0x66);
             int encode = prefixAndEncode(dst.encoding, src.encoding);
             emitByte(0x0F);
             emitByte(0x6E);
             emitByte(0xC0 | encode);
-        } else if (src.isXmm()) {
-            assert src.isXmm();
-            assert !dst.isXmm();
+        } else if (src.isFpu()) {
+            assert src.isFpu();
+            assert !dst.isFpu();
                 emitByte(0x66);
             // swap src/dst to get correct prefix
             int encode = prefixAndEncode(src.encoding, dst.encoding);
@@ -969,7 +969,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movdqa(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0x66);
         prefix(src, dst);
         emitByte(0x0F);
@@ -978,7 +978,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movdqa(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0x66);
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -987,7 +987,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movdqa(CiAddress dst, CiRegister src) {
-        assert src.isXmm();
+        assert src.isFpu();
         emitByte(0x66);
         prefix(dst, src);
         emitByte(0x0F);
@@ -996,7 +996,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movdqu(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF3);
         prefix(src, dst);
         emitByte(0x0F);
@@ -1005,8 +1005,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movdqu(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
 
         emitByte(0xF3);
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
@@ -1016,7 +1016,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movdqu(CiAddress dst, CiRegister src) {
-        assert src.isXmm();
+        assert src.isFpu();
 
         emitByte(0xF3);
         prefix(dst, src);
@@ -1060,7 +1060,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     // when loading from memory. But for old Opteron use movlpd instead of movsd.
     // The selection is done in Macromovdbl() and movflt().
     public final void movlpd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
 
         emitByte(0x66);
         prefix(src, dst);
@@ -1071,13 +1071,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movq(CiRegister dst, CiAddress src) {
-        if (dst.isMMX()) {
-            assert dst.isMMX();
-            emitByte(0x0F);
-            emitByte(0x6F);
-            emitOperand(dst, src);
-        } else if (dst.isXmm()) {
-            assert dst.isXmm();
+        if (dst.isFpu()) {
+            assert dst.isFpu();
                 emitByte(0xF3);
             prefixq(src, dst);
             emitByte(0x0F);
@@ -1097,19 +1092,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movq(CiAddress dst, CiRegister src) {
-        if (src.isMMX()) {
-            assert src.isMMX();
-            emitByte(0x0F);
-            emitByte(0x7F);
-            // workaround gcc (3.2.1-7a) bug
-            // In that version of gcc with only an emitOperand(MMX, Address)
-            // gcc will tail jump and try and reverse the parameters completely
-            // obliterating dst in the process. By having a version available
-            // that doesn't need to swap the args at the tail jump the bug is
-            // avoided.
-            emitOperand(dst, src);
-        } else if (src.isXmm()) {
-            assert src.isXmm();
+        if (src.isFpu()) {
+            assert src.isFpu();
 
             emitByte(0x66);
             prefixq(dst, src);
@@ -1139,8 +1123,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movsd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0xF2);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -1149,7 +1133,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movsd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF2);
         prefix(src, dst);
         emitByte(0x0F);
@@ -1158,7 +1142,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movsd(CiAddress dst, CiRegister src) {
-        assert src.isXmm();
+        assert src.isFpu();
         emitByte(0xF2);
         prefix(dst, src);
         emitByte(0x0F);
@@ -1167,8 +1151,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movss(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -1177,7 +1161,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movss(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF3);
         prefix(src, dst);
         emitByte(0x0F);
@@ -1186,7 +1170,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void movss(CiAddress dst, CiRegister src) {
-        assert src.isXmm();
+        assert src.isFpu();
         emitByte(0xF3);
         prefix(dst, src);
         emitByte(0x0F);
@@ -1277,7 +1261,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void mulsd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF2);
         prefix(src, dst);
         emitByte(0x0F);
@@ -1286,8 +1270,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void mulsd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
 
         emitByte(0xF2);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
@@ -1297,7 +1281,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void mulss(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
 
         emitByte(0xF3);
         prefix(src, dst);
@@ -1307,8 +1291,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void mulss(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -1617,8 +1601,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void pshufd(CiRegister dst, CiRegister src, int mode) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         assert Util.isByte(mode) : "invalid value";
 
         emitByte(0x66);
@@ -1630,7 +1614,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void pshufd(CiRegister dst, CiAddress src, int mode) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         assert Util.isByte(mode) : "invalid value";
 
         emitByte(0x66);
@@ -1643,8 +1627,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void pshuflw(CiRegister dst, CiRegister src, int mode) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         assert Util.isByte(mode) : "invalid value";
 
         emitByte(0xF2);
@@ -1656,7 +1640,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void pshuflw(CiRegister dst, CiAddress src, int mode) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         assert Util.isByte(mode) : "invalid value";
 
         emitByte(0xF2);
@@ -1668,7 +1652,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void psrlq(CiRegister dst, int shift) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         // HMM Table D-1 says sse2 or mmx
 
         int encode = prefixqAndEncode(AMD64.xmm2.encoding, dst.encoding);
@@ -1680,8 +1664,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void punpcklbw(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0x66);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -1713,7 +1697,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void pxor(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
 
         emitByte(0x66);
         prefix(src, dst);
@@ -1723,8 +1707,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void pxor(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
 
         emitByte(0x66);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
@@ -1883,8 +1867,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void sqrtsd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         // HMM Table D-1 says sse2
         // assert is64 || target.supportsSSE();
         emitByte(0xF2);
@@ -1930,8 +1914,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void subsd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0xF2);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -1940,7 +1924,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void subsd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
 
         emitByte(0xF2);
         prefix(src, dst);
@@ -1950,8 +1934,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void subss(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -1960,7 +1944,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void subss(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
 
         emitByte(0xF3);
         prefix(src, dst);
@@ -2001,20 +1985,20 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void ucomisd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0x66);
         ucomiss(dst, src);
     }
 
     public final void ucomisd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0x66);
         ucomiss(dst, src);
     }
 
     public final void ucomiss(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
 
         prefix(src, dst);
         emitByte(0x0F);
@@ -2023,8 +2007,8 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void ucomiss(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0x2E);
@@ -2032,7 +2016,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void xaddl(CiAddress dst, CiRegister src) {
-        assert src.isXmm();
+        assert src.isFpu();
 
         prefix(dst, src);
         emitByte(0x0F);
@@ -2069,14 +2053,14 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void xorpd(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
-        assert src.isXmm();
+        assert dst.isFpu();
+        assert src.isFpu();
         emitByte(0x66);
         xorps(dst, src);
     }
 
     public final void xorpd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
 
         emitByte(0x66);
         prefix(src, dst);
@@ -2087,7 +2071,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
 
     public final void xorps(CiRegister dst, CiRegister src) {
 
-        assert dst.isXmm();
+        assert dst.isFpu();
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0x57);
@@ -2095,7 +2079,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void xorps(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
 
         prefix(src, dst);
         emitByte(0x0F);
@@ -2432,7 +2416,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvtsi2sdq(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF2);
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -2441,7 +2425,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvtsi2ssq(CiRegister dst, CiRegister src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
         emitByte(0xF3);
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -2450,7 +2434,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvttsd2siq(CiRegister dst, CiRegister src) {
-        assert src.isXmm();
+        assert src.isFpu();
         emitByte(0xF2);
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -2459,7 +2443,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void cvttss2siq(CiRegister dst, CiRegister src) {
-        assert src.isXmm();
+        assert src.isFpu();
         emitByte(0xF3);
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -2540,13 +2524,13 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         // table D-1 says MMX/SSE2
         emitByte(0x66);
 
-        if (dst.isXmm()) {
-            assert dst.isXmm();
+        if (dst.isFpu()) {
+            assert dst.isFpu();
             int encode = prefixqAndEncode(dst.encoding, src.encoding);
             emitByte(0x0F);
             emitByte(0x6E);
             emitByte(0xC0 | encode);
-        } else if (src.isXmm()) {
+        } else if (src.isFpu()) {
 
             // swap src/dst to get correct prefix
             int encode = prefixqAndEncode(src.encoding, dst.encoding);
@@ -2780,7 +2764,7 @@ public abstract class AMD64Assembler extends AbstractAssembler {
     }
 
     public final void sqrtsd(CiRegister dst, CiAddress src) {
-        assert dst.isXmm();
+        assert dst.isFpu();
 
         emitByte(0xF2);
         prefix(src, dst);

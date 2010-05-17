@@ -38,8 +38,8 @@ public final class LoadField extends AccessField {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public LoadField(Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded, int cpi, RiConstantPool constantPool) {
-        super(field.kind().stackKind(), object, field, isStatic, stateBefore, isLoaded, cpi, constantPool);
+    public LoadField(Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded) {
+        super(field.kind().stackKind(), object, field, isStatic, stateBefore, isLoaded);
     }
 
     /**

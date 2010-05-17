@@ -108,7 +108,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                         try {
                             String name = enteredName;
                             if (name == null || name.equals("")) {
-                                name = "Native code @0x" + nativeAddress.toHexString();
+                                name = defaultDescription;
                             }
                             final MaxCompiledNativeCode compiledNativeCode = vm().codeCache().createTeleNativeTargetRoutine(nativeAddress, codeSize, name);
                             result.setValue(MethodInspector.make(inspection, compiledNativeCode));
