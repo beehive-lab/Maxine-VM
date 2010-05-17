@@ -28,8 +28,7 @@ public class HotSpotMethod implements RiMethod {
 
 	@Override
 	public byte[] code() {
-		// TODO Auto-generated method stub
-		return null;
+		return VMEntries.RiMethod_code(methodOop);
 	}
 
 	@Override
