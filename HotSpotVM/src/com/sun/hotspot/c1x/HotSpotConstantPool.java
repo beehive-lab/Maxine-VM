@@ -28,55 +28,7 @@ public class HotSpotConstantPool implements RiConstantPool {
 	}
 
 	@Override
-	public RiField lookupGetField(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiField lookupGetStatic(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiMethod lookupInvokeInterface(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiMethod lookupInvokeSpecial(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiMethod lookupInvokeStatic(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiMethod lookupInvokeVirtual(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public RiMethod lookupMethod(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiField lookupPutField(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiField lookupPutStatic(int cpi) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -94,31 +46,13 @@ public class HotSpotConstantPool implements RiConstantPool {
 	}
 
 	@Override
-	public RiMethod resolveInvokeInterface(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiMethod resolveInvokeSpecial(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiMethod resolveInvokeStatic(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiMethod resolveInvokeVirtual(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public RiType resolveType(int cpi) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public RiField lookupField(int cpi) {
 		// TODO Auto-generated method stub
 		return null;
 	}
