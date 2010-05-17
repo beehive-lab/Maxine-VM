@@ -21,10 +21,15 @@
 package com.sun.hotspot.c1x;
 
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import com.sun.cri.ci.CiConstant;
+import com.sun.cri.ci.CiMethodInvokeArguments;
 import com.sun.cri.ci.CiTargetMethod;
 import com.sun.cri.ri.RiConstantPool;
+import com.sun.cri.ri.RiField;
 import com.sun.cri.ri.RiMethod;
 import com.sun.cri.ri.RiOsrFrame;
 import com.sun.cri.ri.RiRuntime;
@@ -83,12 +88,6 @@ public class HotSpotRuntime implements RiRuntime {
 	}
 
 	@Override
-	public Method getFoldingMethod(RiMethod method) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public RiOsrFrame getOsrFrame(RiMethod method, int bci) {
 		// TODO Auto-generated method stub
 		return null;
@@ -140,6 +139,30 @@ public class HotSpotRuntime implements RiRuntime {
 	public int threadExceptionOffset() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	public RiField getRiField(Field javaField) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public RiMethod getRiMethod(Method javaMethod) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public RiMethod getRiMethod(Constructor<?> javaConstructor) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
