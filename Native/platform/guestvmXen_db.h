@@ -25,6 +25,7 @@
 
 #include <inttypes.h>
 
+// from guk/include/guk/sched.h
 #define RUNNABLE_FLAG           0x00000001     /* Thread can be run on a CPU */
 #define RUNNING_FLAG            0x00000002     /* Thread is currently runnig */
 #define RESCHED_FLAG            0x00000004     /* Scheduler should be called at  the first opportunity. */
@@ -40,12 +41,15 @@
 #define APPSCHED_FLAG           0x00002000     /* application scheduler */
 #define WATCH_FLAG              0x00004000     /* at watchpoint */
 
+// from guk/tools/db-front/db-if.h
 struct db_thread {
-    int id;
-    int flags;
+    uint16_t id;
+    uint16_t pad;
+    uint32_t flags;
     uint64_t stack;
     uint64_t stack_size;
 };
+
 
 struct db_regs {
     uint64_t xmm0;
