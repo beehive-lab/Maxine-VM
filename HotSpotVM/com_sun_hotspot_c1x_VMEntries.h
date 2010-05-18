@@ -167,6 +167,22 @@ JNIEXPORT jboolean JNICALL Java_com_sun_hotspot_c1x_VMEntries_RiType_1isInstance
 JNIEXPORT jboolean JNICALL Java_com_sun_hotspot_c1x_VMEntries_RiType_1isInterface
   (JNIEnv *, jclass, jobject);
 
+/*
+ * Class:     com_sun_hotspot_c1x_VMEntries
+ * Method:    RiMethod_accessFlags
+ * Signature: (Ljava/lang/Object;)I
+ */
+JNIEXPORT jint JNICALL Java_com_sun_hotspot_c1x_VMEntries_RiMethod_1accessFlags
+  (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     com_sun_hotspot_c1x_VMEntries
+ * Method:    installCode
+ * Signature: (Ljava/lang/Object;[BI)V
+ */
+JNIEXPORT void JNICALL Java_com_sun_hotspot_c1x_VMEntries_installCode
+  (JNIEnv *, jclass, jobject, jbyteArray, jint);
+
 #ifdef __cplusplus
 }
 #endif
