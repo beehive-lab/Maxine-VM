@@ -20,7 +20,9 @@
  */
 package com.sun.hotspot.c1x;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -28,6 +30,9 @@ import java.lang.reflect.Method;
 import com.sun.cri.ci.CiConstant;
 import com.sun.cri.ci.CiMethodInvokeArguments;
 import com.sun.cri.ci.CiTargetMethod;
+import com.sun.cri.ci.CiTargetMethod.Call;
+import com.sun.cri.ci.CiTargetMethod.DataPatch;
+import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.cri.ri.RiConstantPool;
 import com.sun.cri.ri.RiField;
 import com.sun.cri.ri.RiMethod;
@@ -35,6 +40,12 @@ import com.sun.cri.ri.RiOsrFrame;
 import com.sun.cri.ri.RiRuntime;
 import com.sun.cri.ri.RiSnippets;
 import com.sun.cri.ri.RiType;
+import com.sun.max.asm.InstructionSet;
+import com.sun.max.asm.dis.DisassembledObject;
+import com.sun.max.asm.dis.Disassembler;
+import com.sun.max.asm.dis.DisassemblyPrinter;
+import com.sun.max.io.IndentWriter;
+import com.sun.max.lang.WordWidth;
 
 /**
  * 
@@ -63,23 +74,79 @@ public class HotSpotRuntime implements RiRuntime {
 		
 	}
 
-	@Override
-	public String disassemble(byte[] code) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public String disassemble(byte[] code) {
+        return disassemble(code, new DisassemblyPrinter(false));
+    }
 
-	@Override
-	public String disassemble(CiTargetMethod targetMethod) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    private String disassemble(byte[] code, DisassemblyPrinter disassemblyPrinter) {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
+        writer.flush();
+        final InstructionSet instructionSet = InstructionSet.AMD64;
+        Disassembler.disassemble(byteArrayOutputStream, code, instructionSet, WordWidth.BITS_64, 0, null, disassemblyPrinter);
+        return byteArrayOutputStream.toString();
+    }
 
-	@Override
-	public String disassemble(RiMethod method) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public String disassemble(final CiTargetMethod targetMethod) {
+
+        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+
+            private String toString(Call call) {
+                if (call.runtimeCall != null) {
+                    return "{" + call.runtimeCall.name() + "}";
+                } else if (call.symbol != null) {
+                    return "{" + call.symbol + "}";
+                } else if (call.globalStubID != null) {
+                    return "{" + call.globalStubID + "}";
+                } else {
+                    return "{" + call.method + "}";
+                }
+            }
+
+            private String siteInfo(int pcOffset) {
+                for (Call call : targetMethod.directCalls) {
+                    if (call.pcOffset == pcOffset) {
+                        return toString(call);
+                    }
+                }
+                for (Call call : targetMethod.indirectCalls) {
+                    if (call.pcOffset == pcOffset) {
+                        return toString(call);
+                    }
+                }
+                for (Safepoint site : targetMethod.safepoints) {
+                    if (site.pcOffset == pcOffset) {
+                        return "{safepoint}";
+                    }
+                }
+                for (DataPatch site : targetMethod.dataReferences) {
+                    if (site.pcOffset == pcOffset) {
+                        return "{" + site.data + "}";
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
+                final String string = super.disassembledObjectString(disassembler, disassembledObject);
+
+                String site = siteInfo(disassembledObject.startPosition());
+                if (site != null) {
+                    return string + " " + site;
+                }
+                return string;
+            }
+        };
+        return disassemble(targetMethod.targetCode(), disassemblyPrinter);
+    }
+
+    @Override
+    public String disassemble(RiMethod method) {
+        return "No disassembler available";
+    }
 
 	@Override
 	public RiConstantPool getConstantPool(RiMethod method) {

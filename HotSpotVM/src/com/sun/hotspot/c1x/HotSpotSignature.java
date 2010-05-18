@@ -76,7 +76,9 @@ public class HotSpotSignature implements RiSignature {
 
     @Override
     public CiKind argumentKindAt(int index) {
-        return CiKind.fromTypeString(arguments.get(index));
+        CiKind kind = CiKind.fromTypeString(arguments.get(index));
+        System.out.println("argument kind: " + index + " is " + kind);
+        return kind;
     }
 
     @Override
@@ -92,6 +94,7 @@ public class HotSpotSignature implements RiSignature {
 
     @Override
     public RiType argumentTypeAt(int index, RiType accessingClass) {
+    	System.out.println("argument type at " + index);
     	Object accessor = null;
     	if (accessingClass instanceof HotSpotType) {
     		accessor = ((HotSpotType)accessingClass).klassOop;

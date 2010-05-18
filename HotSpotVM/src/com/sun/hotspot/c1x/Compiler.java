@@ -63,7 +63,7 @@ public class Compiler {
         C1XOptions.setOptimizationLevel(3);
         C1XOptions.TraceBytecodeParserLevel = 4;
         C1XOptions.PrintCFGToFile = false;
-        C1XOptions.PrintAssembly = true;
+        C1XOptions.PrintAssembly = false;//true;
         C1XOptions.PrintCompilation = true;
         return compiler;
         

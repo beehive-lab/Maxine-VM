@@ -10,6 +10,7 @@ public class HotSpotType implements RiType {
 	
 	public HotSpotType(Object o) {
 		this.klassOop = o;
+		assert klassOop != null;
 	}
 
 	@Override
@@ -112,7 +113,7 @@ public class HotSpotType implements RiType {
 
 	@Override
 	public CiKind kind() {
-		return CiKind.fromJavaClass(javaClass());
+		return CiKind.Object;
 	}
 
 	@Override

@@ -8,7 +8,7 @@ import com.sun.cri.ri.RiType;
 
 public class HotSpotMethod implements RiMethod {
 	
-	private Object methodOop;
+	Object methodOop;
 	private byte[] code;
 	
 	public HotSpotMethod(Object methodOop) {
@@ -17,8 +17,7 @@ public class HotSpotMethod implements RiMethod {
 
 	@Override
 	public int accessFlags() {
-		// TODO Auto-generated method stub
-		return 0;
+		return VMEntries.RiMethod_accessFlags(methodOop);
 	}
 
 	@Override

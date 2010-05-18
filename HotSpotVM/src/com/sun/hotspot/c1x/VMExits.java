@@ -55,6 +55,7 @@ public class VMExits {
 			result.bailout().printStackTrace();
 		} else {
 			System.out.println(result.targetMethod());
+			VMEntries.installCode(((HotSpotMethod)method).methodOop, result.targetMethod().targetCode(), result.targetMethod().frameSize());
 		}
 	}
 	
@@ -153,6 +154,8 @@ public class VMExits {
 	}
 	
 	public static void main(String[] args) throws InterruptedException {
-		Thread.sleep(10000);
+		System.out.println(C1XHotSpotTests.add(1, 2));
+		Thread.sleep(5000);
+		System.out.println(C1XHotSpotTests.add(1, 2));
 	}
 }
