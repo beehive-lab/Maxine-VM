@@ -34,7 +34,7 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
     if (jniGatherThreadID == NULL) {
         jclass c = (*env)->GetObjectClass(env, teleProcess);
         c_ASSERT(c != NULL);
-        jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IJJIJJJJII)V");
+        jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IJJIJJJJJI)V");
         c_ASSERT(jniGatherThreadID != NULL);
     }
     const int tlaSize = threadLocalsAreaSize();
@@ -58,7 +58,12 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
         ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
     }
 
-    tele_log_println("Gathered thread[id=%d, localHandle=%lu, handle=%p, pc=%p, stackBase=%p, stackEnd=%p, stackSize=%lu, tlb=%p, tlbSize=%d, tlaSize=%d]",
+#if defined(_LP64)
+    tele_log_println("Gathered thread[id=%d, localHandle=%lu, handle=%p, pc=%p, stackBase=%p, stackEnd=%p, stackSize=%lu, tlb=%p, tlbSize=%ld, tlaSize=%d]",
+#else
+    // for 32 bit hosting
+    tele_log_println("Gathered thread[id=%d, localHandle=%llu, handle=%llx, pc=%llx, stackBase=%llx, stackEnd=%llx, stackSize=%llu, tlb=%llx, tlbSize=%lld, tlaSize=%d]",
+#endif
                     getThreadLocal(int, tl, ID),
                     localHandle,
                     ntl->handle,
@@ -100,7 +105,6 @@ static boolean isThreadLocalsForStackPointer(ProcessHandle ph, Address stackPoin
 }
 
 ThreadLocals teleProcess_findThreadLocals(ProcessHandle ph, Address threadLocalsList, Address primordialThreadLocals, Address stackPointer, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
-
     memset((void *) tlCopy, 0, threadLocalsAreaSize());
     memset((void *) ntlCopy, 0, sizeof(NativeThreadLocalsStruct));
 
