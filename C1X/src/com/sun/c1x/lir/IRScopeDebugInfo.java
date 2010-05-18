@@ -22,11 +22,11 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>IRScopeDebugInfo</code> class definition.
+ * The {@code IRScopeDebugInfo} class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
@@ -38,10 +38,10 @@ public class IRScopeDebugInfo {
     private final int bci;
     private final List<CiValue> locals;
     private final List<CiValue> expressions;
-    private final List<CiLocation> monitors;
+    private final List<CiValue> monitors;
     private final IRScopeDebugInfo caller;
 
-    public IRScopeDebugInfo(IRScope scope, int bci, List<CiValue> locals, List<CiValue> expressions, List<CiLocation> monitors, IRScopeDebugInfo caller) {
+    public IRScopeDebugInfo(IRScope scope, int bci, List<CiValue> locals, List<CiValue> expressions, List<CiValue> monitors, IRScopeDebugInfo caller) {
         this.scope = scope;
         this.locals = locals;
         this.bci = bci;

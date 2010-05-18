@@ -20,6 +20,7 @@
  */
 package test.output;
 
+
 /**
  * A test class for the {@link test.output.HelloWorldReflect} class.
  *

@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.template.generate.*;
@@ -62,7 +61,6 @@ public final class TemplateTable {
         for (BytecodeTemplate bt : BytecodeTemplate.values()) {
             TargetMethod code = templates.get(bt);
             this.templates[bt.ordinal()] = code;
-            ProgramWarning.check(code != null, "Missing code for template: " + bt);
         }
 
         maxFrameSlots = Ints.roundUp(templateGenerator.maxTemplateFrameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;

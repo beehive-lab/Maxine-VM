@@ -27,9 +27,9 @@ import com.sun.c1x.alloc.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * Utility for printing the control flow graph of a method being compiled by C1X at various compilation phases.
@@ -54,21 +54,31 @@ public class CFGPrinter {
             try {
                 cfgFileStream = new FileOutputStream(cfgFile);
             } catch (FileNotFoundException e) {
-                TTY.println("WARNING: Cound not open " + cfgFile.getAbsolutePath());
+                TTY.println("WARNING: Could not open " + cfgFile.getAbsolutePath());
             }
         }
         return cfgFileStream;
     }
 
     private final LogStream out;
+    private final CiTarget target;
 
     /**
      * Creates a control flow graph printer.
      *
      * @param os where the output generated via this printer shown be written
+     * @param target the target architecture description
      */
-    public CFGPrinter(OutputStream os) {
+    public CFGPrinter(OutputStream os, CiTarget target) {
         out = new LogStream(os);
+        this.target = target;
+    }
+
+    /**
+     * Flushes all buffered output to the stream passed to {@link #CFGPrinter(OutputStream, CiTarget)}.
+     */
+    public void flush() {
+        out.flush();
     }
 
     private void begin(String string) {
@@ -88,8 +98,8 @@ public class CFGPrinter {
      */
     public void printCompilation(RiMethod method) {
         begin("compilation");
-        out.print("name \" ").print(Util.format("%H::%n", method, true)).println('"');
-        out.print("method \"").print(Util.format("%f %r %H.%n(%p)", method, true)).println('"');
+        out.print("name \" ").print(CiUtil.format("%H::%n", method, true)).println('"');
+        out.print("method \"").print(CiUtil.format("%f %r %H.%n(%p)", method, true)).println('"');
         out.print("date ").println(System.currentTimeMillis());
         end("compilation");
     }
@@ -166,13 +176,6 @@ public class CFGPrinter {
             out.print("loop_depth ").println(block.loopDepth());
         }
 
-        /* TODO: Uncomment (and fix) once LIR is implemented
-        if (block.firstLirInstructionId() != -1) {
-            _out.print("first_lir_id ").println(block.firstLirInstructionId());
-            _out.print("last_lir_id ").println(block.lastLirInstructionId());
-        }
-        */
-
         if (printHIR) {
             printState(block);
             printHIR(block);
@@ -194,7 +197,7 @@ public class CFGPrinter {
     private void printState(BlockBegin block) {
         begin("states");
 
-        ValueStack state = block.stateBefore();
+        FrameState state = block.stateBefore();
 
         if (state.stackSize() > 0) {
           begin("stack");
@@ -205,7 +208,7 @@ public class CFGPrinter {
               Value value = state.stackAt(i);
               out.disableIndentation();
               out.print(InstructionPrinter.stateString(i, value, block));
-              printLirOperand(value);
+              printOperand(value);
               out.println();
               out.enableIndentation();
               i += value.kind.sizeInSlots();
@@ -221,7 +224,7 @@ public class CFGPrinter {
                 Value value = state.lockAt(i);
                 out.disableIndentation();
                 out.print(InstructionPrinter.stateString(i, value, block));
-                printLirOperand(value);
+                printOperand(value);
                 out.println();
                 out.enableIndentation();
             }
@@ -231,14 +234,14 @@ public class CFGPrinter {
         do {
             begin("locals");
             out.print("size ").println(state.localsSize());
-            out.print("method \"").print(Util.format("%f %r %H.%n(%p)", state.scope().method, true)).println('"');
+            out.print("method \"").print(CiUtil.format("%f %h.%n(%p):%r", state.scope().method, false)).println('"');
             int i = 0;
             while (i < state.localsSize()) {
                 Value value = state.localAt(i);
                 if (value != null) {
                     out.disableIndentation();
                     out.print(InstructionPrinter.stateString(i, value, block));
-                    printLirOperand(value);
+                    printOperand(value);
                     out.println();
                     out.enableIndentation();
                     // also ignore illegal HiWords
@@ -286,8 +289,8 @@ public class CFGPrinter {
         }
     }
 
-    private void printLirOperand(Value i) {
-        if (i != null && i.operand() != null && i.operand().isVariable()) {
+    private void printOperand(Value i) {
+        if (i != null && i.operand().isVariable()) {
             out.print(" \"").print(i.operand().toString()).print("\" ");
         }
     }
@@ -303,9 +306,9 @@ public class CFGPrinter {
         }
         int useCount = 0;
         out.print(i.bci()).print(' ').print(useCount).print(' ');
-        printLirOperand(i);
+        printOperand(i);
         out.print(i).print(' ');
-        new InstructionPrinter(out, true).printInstruction(i);
+        new InstructionPrinter(out, true, target).printInstruction(i);
 
         out.println(" <|@");
     }
@@ -344,7 +347,8 @@ public class CFGPrinter {
         out.print("name \"").print(label).println('"');
         startBlock.iteratePreOrder(new BlockClosure() {
             public void apply(BlockBegin block) {
-                printBlock(block, block.end().successors(), block.exceptionHandlerBlocks(), printHIR, printLIR);
+                List<BlockBegin> successors = block.end() != null ? block.end().successors() : new ArrayList<BlockBegin>(0);
+                printBlock(block, successors, block.exceptionHandlerBlocks(), printHIR, printLIR);
             }
         });
         end("cfg");
@@ -356,7 +360,7 @@ public class CFGPrinter {
 
         for (Interval i : intervals) {
             if (i != null) {
-                i.print(out, allocator);
+                i.print(out, allocator, true);
             }
         }
 

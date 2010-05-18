@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ri.*;
 
 /**
  * An instruction that represents the runtime resolution of a Java class object. For example, an
@@ -34,15 +34,11 @@ public final class ResolveClass extends StateSplit {
 
     public final RiType type;
     public final RiType.Representation portion;
-    public final RiConstantPool constantPool;
-    public final char cpi;
 
-    public ResolveClass(RiType type, RiType.Representation r, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
+    public ResolveClass(RiType type, RiType.Representation r, FrameState stateBefore) {
         super(type.getRepresentationKind(r), stateBefore);
         this.portion = r;
         this.type = type;
-        this.cpi = cpi;
-        this.constantPool = constantPool;
         setFlag(Flag.NonNull);
         assert stateBefore != null : "resolution must record state";
     }

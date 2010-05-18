@@ -30,7 +30,7 @@ import com.sun.max.ins.gui.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class FileInspector extends UniqueInspector {
+public abstract class FileInspector extends Inspector {
 
     private File file;
 
@@ -39,7 +39,7 @@ public abstract class FileInspector extends UniqueInspector {
     }
 
     protected FileInspector(Inspection inspection, File file) {
-        super(inspection, file);
+        super(inspection);
         this.file = file;
     }
 

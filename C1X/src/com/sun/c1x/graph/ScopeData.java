@@ -20,16 +20,18 @@
  */
 package com.sun.c1x.graph;
 
+import static com.sun.c1x.graph.ScopeData.ReturnBlock.*;
+
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>ScopeData</code> class represents inlining context when parsing the bytecodes
+ * The {@code ScopeData} class represents inlining context when parsing the bytecodes
  * of an inlined method.
  *
  * @author Ben L. Titzer
@@ -67,25 +69,25 @@ public class ScopeData {
     BlockBegin continuation;
 
     // Without return value of inlined method on stack
-    ValueStack continuationState;
+    FrameState continuationState;
 
-    // Number of returns seen in this scope
-    int numReturns;
+    /**
+     * Field used to generate fewer blocks when inlining. If this value is {@code null},
+     * then no {@code return}s have been encountered during inlining. If it is an instance
+     * of {@link ReturnBlock}, then it is the block info for the single {@code return}
+     * encountered. Otherwise, it will be {@link ReturnBlock#MULTIPLE_RETURNS}.
+     */
+    ReturnBlock inlinedReturnBlock;
 
-    // In order to generate better code while inlining, we currently
-    // have to perform an optimization for single-block inlined
-    // methods where we continue parsing into the same block. This
-    // allows us to perform LVN and folding across inlined scopes.
-    BlockBegin cleanupBlock;       // The block to which the return was added
-    Instruction cleanupReturnPrev; // Instruction before return instruction
-    ValueStack cleanupState;       // State of that block (not yet pinned)
-
-    // We track the destination bci of the jsr only to determine
-    // bailout conditions, since we only handle a subset of all of the
-    // possible jsr-ret control structures. Recursive invocations of a
-    // jsr are disallowed by the verifier. > 0 indicates parsing
-    // of a jsr.
+    /**
+     * Tracks the destination bci of the jsr. This is (currently) only used to determine
+     * bailout conditions, since only a subset of all of the possible jsr-ret control
+     * structures can (currently) be compiled.
+     *
+     * A value > 0 for this field indicates parsing of a jsr.
+     */
     final int jsrEntryBci;
+
     // We need to track the local variable in which the return address
     // was stored to ensure we can handle inlining the jsr, because we
     // don't handle arbitrary jsr/ret constructs.
@@ -121,9 +123,9 @@ public class ScopeData {
         } else {
             maxInlineSize = C1XOptions.MaximumInlineSize;
         }
-        List<RiExceptionHandler> handlers = scope.method.exceptionHandlers();
-        if (handlers != null && handlers.size() > 0) {
-            exceptionHandlers = new ArrayList<ExceptionHandler>(handlers.size());
+        RiExceptionHandler[] handlers = scope.method.exceptionHandlers();
+        if (handlers != null && handlers.length > 0) {
+            exceptionHandlers = new ArrayList<ExceptionHandler>(handlers.length);
             for (RiExceptionHandler ch : handlers) {
                 ExceptionHandler h = new ExceptionHandler(ch);
                 h.setEntryBlock(blockAt(h.handler.handlerBCI()));
@@ -152,7 +154,7 @@ public class ScopeData {
         assert jsrEntryBci > 0 : "jsr cannot jump to BCI 0";
         assert parent != null : "jsr must have parent scope";
         this.jsrEntryBci = jsrEntryBci;
-        this.jsrDuplicatedBlocks = new BlockBegin[scope.method.codeSize()];
+        this.jsrDuplicatedBlocks = new BlockBegin[scope.method.code().length];
         this.jsrRetAddrLocal = -1;
 
         maxInlineSize = (int) (C1XOptions.MaximumInlineRatio * parent.maxInlineSize());
@@ -212,7 +214,7 @@ public class ScopeData {
 
     /**
      * Checks whether this ScopeData has any handlers.
-     * @return <code>true</code> if there are any exception handlers
+     * @return {@code true} if there are any exception handlers
      */
     public boolean hasHandler() {
         return hasHandler;
@@ -231,7 +233,7 @@ public class ScopeData {
      * @return the size of the stack
      */
     public int callerStackSize() {
-        ValueStack state = scope.callerState();
+        FrameState state = scope.callerState();
         return state == null ? 0 : state.stackSize();
     }
 
@@ -255,7 +257,7 @@ public class ScopeData {
      * Gets the state at the continuation point.
      * @return the state at the continuation point
      */
-    public ValueStack continuationState() {
+    public FrameState continuationState() {
         return continuationState;
     }
 
@@ -263,13 +265,13 @@ public class ScopeData {
      * Sets the state at the continuation point.
      * @param state the state at the continuation
      */
-    public void setContinuationState(ValueStack state) {
+    public void setContinuationState(FrameState state) {
         continuationState = state;
     }
 
     /**
      * Checks whether this ScopeData is parsing a JSR.
-     * @return <code>true</code> if this scope data is parsing a JSR
+     * @return {@code true} if this scope data is parsing a JSR
      */
     public boolean parsingJsr() {
         return jsrEntryBci > 0;
@@ -316,61 +318,60 @@ public class ScopeData {
     }
 
     /**
-     * Gets the number of returns, in this scope or (if parsing a JSR) the parent scope.
-     * @return the number of returns
+     * A block delimited by a return instruction in an inlined method.
      */
-    public int numberOfReturns() {
-        if (parsingJsr()) {
-            return parent.numberOfReturns();
+    public static class ReturnBlock {
+        /**
+         * The inlined block.
+         */
+        final BlockBegin block;
+
+        /**
+         * The second last instruction in the block. That is, the one before the return instruction.
+         */
+        final Instruction returnPredecessor;
+
+        /**
+         * The frame state at the end of the block.
+         */
+        final FrameState returnState;
+
+        ReturnBlock(BlockBegin block, Instruction returnPredecessor, FrameState returnState) {
+            super();
+            this.block = block;
+            this.returnPredecessor = returnPredecessor;
+            this.returnState = returnState;
         }
-        return numReturns;
+
+        public static final ReturnBlock MULTIPLE_RETURNS = new ReturnBlock(null, null, null);
     }
 
     /**
-     * Increments the number of returns, in this scope or (if parsing a JSR) the parent scope.
+     * Updates the info about blocks in this scope delimited by a return instruction.
+     *
+     * @param block a block delimited by a {@code return} instruction
+     * @param returnPredecessor the second last instruction in the block. That is, the one before the return instruction.
+     * @param returnState the frame state after the return instruction
      */
-    public void incrementNumberOfReturns() {
-        if (parsingJsr()) {
-            parent.incrementNumberOfReturns();
+    public void updateSimpleInlineInfo(BlockBegin block, Instruction returnPredecessor, FrameState returnState) {
+        if (inlinedReturnBlock == null) {
+            inlinedReturnBlock = new ReturnBlock(block, returnPredecessor, returnState);
         } else {
-            numReturns++;
+            inlinedReturnBlock = MULTIPLE_RETURNS;
         }
     }
 
     /**
-     * Sets the information for cleaning up after a failed inlining.
-     * @param block the cleanup block
-     * @param returnPrev the previous return
-     * @param returnState the state at the previous return
+     * Gets the return block info for a simple inline scope. That is, a scope that contains only a
+     * single block delimited by a {@code return} instruction.
+     *
+     * @return the return block info for a simple inline scope or {@code null} if this is not a simple inline scope
      */
-    public void setInlineCleanupInfo(BlockBegin block, Instruction returnPrev, ValueStack returnState) {
-        cleanupBlock = block;
-        cleanupReturnPrev = returnPrev;
-        cleanupState = returnState;
-    }
-
-    /**
-     * Gets the cleanup block for when inlining fails.
-     * @return the cleanup block
-     */
-    public BlockBegin inlineCleanupBlock() {
-        return cleanupBlock;
-    }
-
-    /**
-     * Gets the previous return for when inlining fails.
-     * @return the previous return
-     */
-    public Instruction inlineCleanupReturnPrev() {
-        return cleanupReturnPrev;
-    }
-
-    /**
-     * Gets the state for when inlining fails.
-     * @return the state
-     */
-    public ValueStack inlineCleanupState() {
-        return cleanupState;
+    public ReturnBlock simpleInlineInfo() {
+        if (inlinedReturnBlock == MULTIPLE_RETURNS) {
+            return null;
+        }
+        return inlinedReturnBlock;
     }
 
     /**
@@ -441,7 +442,7 @@ public class ScopeData {
     /**
      * Removes the next block from the worklist. The list is sorted topologically, so the
      * block with the lowest depth first number in the list will be removed and returned.
-     * @return the next block from the worklist; <code>null</code> if there are no blocks
+     * @return the next block from the worklist; {@code null} if there are no blocks
      * in the worklist
      */
     public BlockBegin removeFromWorkList() {

@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>UnsafeGetRaw</code> instruction represents an unsafe access of raw memory where
+ * The {@code UnsafeGetRaw} instruction represents an unsafe access of raw memory where
  * the type is not an object reference.
  *
  * @author Ben L. Titzer
@@ -36,7 +36,7 @@ public final class UnsafeGetRaw extends UnsafeRawOp {
      * Constructs a new UnsafeGetRaw instruction.
      * @param opKind the kind of the operation
      * @param addr the instruction generating the base address
-     * @param mayBeUnaligned <code>true</code> if this operation may be unaligned
+     * @param mayBeUnaligned {@code true} if this operation may be unaligned
      */
     public UnsafeGetRaw(CiKind opKind, Value addr, boolean mayBeUnaligned) {
         super(opKind, addr, false);
@@ -49,7 +49,7 @@ public final class UnsafeGetRaw extends UnsafeRawOp {
      * @param addr the instruction generating the base address
      * @param index the instruction generating the index
      * @param log2scale the log base 2 of the scaling factor
-     * @param mayBeUnaligned <code>true</code> if this operation may be unaligned
+     * @param mayBeUnaligned {@code true} if this operation may be unaligned
      */
     public UnsafeGetRaw(CiKind opKind, Value addr, Value index, int log2scale, boolean mayBeUnaligned) {
         super(opKind, addr, index, log2scale, false);
@@ -58,7 +58,7 @@ public final class UnsafeGetRaw extends UnsafeRawOp {
 
     /**
      * Checks whether this operation may be unaligned.
-     * @return <code>true</code> if this operation may be unaligned
+     * @return {@code true} if this operation may be unaligned
      */
     public boolean mayBeUnaligned() {
         return mayBeUnaligned;

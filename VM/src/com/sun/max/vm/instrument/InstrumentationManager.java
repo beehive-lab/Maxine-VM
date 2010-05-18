@@ -55,7 +55,7 @@ public class InstrumentationManager {
     }
 
     /**
-     * Returns an instance of the class that implements the @see java.lang.instrument.Instrumentation interface, creating it if necessary.
+     * Returns an instance of the class that implements the {@link Instrumentation} interface, creating it if necessary.
      * @return Instrumentation instance
      */
     public static Instrumentation createInstrumentation() {

@@ -38,7 +38,7 @@ import java.util.Arrays;
 import java.util.jar.*;
 import java.util.zip.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -56,6 +56,7 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.type.ClassRegistry.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -694,18 +695,22 @@ public final class ClassfileReader {
 
     @HOSTED_ONLY
     private Annotation[] getAnnotations(Utf8Constant name, Descriptor descriptor) {
+        if (name == null) {
+            try {
+                Class holder = Classes.forName(classDescriptor.toJavaString(), false, ClassfileReader.class.getClassLoader());
+                return holder.getAnnotations();
+            } catch (NoClassDefFoundError e) {
+                // This occurs for synthesized classes that are not available on the class path
+                return new Annotation[0];
+            }
+        }
         Class holder = Classes.forName(classDescriptor.toJavaString(), false, ClassfileReader.class.getClassLoader());
         Annotation[] annotations;
         if (name.equals(SymbolTable.INIT)) {
             SignatureDescriptor sig = (SignatureDescriptor) descriptor;
             annotations = Classes.getDeclaredConstructor(holder, sig.resolveParameterTypes(ClassfileReader.class.getClassLoader())).getAnnotations();
         } else if (descriptor instanceof TypeDescriptor) {
-            TypeDescriptor type = (TypeDescriptor) descriptor;
-            if (name.equals(type.toJavaString())) {
-                annotations = holder.getAnnotations();
-            } else {
-                annotations = Classes.getDeclaredField(holder, name.string).getAnnotations();
-            }
+            annotations = Classes.getDeclaredField(holder, name.string).getAnnotations();
         } else {
             SignatureDescriptor sig = (SignatureDescriptor) descriptor;
             annotations = Classes.getDeclaredMethod(holder, name.string, sig.resolveParameterTypes(ClassfileReader.class.getClassLoader())).getAnnotations();
@@ -858,6 +863,17 @@ public final class ClassfileReader {
 
                 int substituteeIndex = -1;
                 int intrinsic = 0;
+                Class accessor = null;
+
+                boolean classHasNeverInlineAnnotation = false;
+                if (MaxineVM.isHosted()) {
+                    for (Annotation annotation : getAnnotations(null, null)) {
+                        if (annotation.annotationType() == NEVER_INLINE.class) {
+                            classHasNeverInlineAnnotation = true;
+                            break;
+                        }
+                    }
+                }
 
                 if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
                     for (Annotation annotation : getAnnotations(name, descriptor)) {
@@ -875,6 +891,9 @@ public final class ClassfileReader {
                             flags |= NO_SAFEPOINTS;
                         } else if (annotation.annotationType() == BUILTIN.class) {
                             flags |= BUILTIN | UNSAFE;
+                        } else if (annotation.annotationType() == ACCESSOR.class) {
+                            accessor = ((ACCESSOR) annotation).value();
+                            flags |= UNSAFE;
                         } else if (annotation.annotationType() == PLATFORM.class) {
                             if (!Platform.target().isAcceptedBy((PLATFORM) annotation)) {
                                 continue nextMethod;
@@ -922,7 +941,8 @@ public final class ClassfileReader {
                                         final int accessFlagsMask = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED;
                                         flags &= ~accessFlagsMask;
                                         flags |= substituteeActor.flags() & accessFlagsMask;
-                                        substituteeActor.beUnsafe();
+
+                                        flags |= substituteeActor.flags() & SUBSTITUTION_ADOPTED_FLAGS;
                                         break;
                                     }
                                 }
@@ -936,6 +956,10 @@ public final class ClassfileReader {
                             codeAttribute = null;
                         }
                     }
+                }
+
+                if (classHasNeverInlineAnnotation && !isInline(flags) && !isInlineAfterSnippetsAreCompiled(flags)) {
+                    flags |= NEVER_INLINE;
                 }
 
                 if (isNative(flags)) {
@@ -962,6 +986,7 @@ public final class ClassfileReader {
 
                 classRegistry.set(GENERIC_SIGNATURE, methodActor, genericSignature);
                 classRegistry.set(CHECKED_EXCEPTIONS, methodActor, checkedExceptions);
+                classRegistry.set(Property.ACCESSOR, methodActor, accessor);
                 classRegistry.set(RUNTIME_VISIBLE_ANNOTATION_BYTES, methodActor, runtimeVisibleAnnotationsBytes);
                 classRegistry.set(RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES, methodActor, runtimeVisibleParameterAnnotationsBytes);
                 classRegistry.set(ANNOTATION_DEFAULT_BYTES, methodActor, annotationDefaultBytes);
@@ -1097,7 +1122,7 @@ public final class ClassfileReader {
             /*
              * Cannot inherit from an array class.
              */
-            if (superClassActor.isArrayClassActor()) {
+            if (superClassActor.isArrayClass()) {
                 throw classFormatError("Cannot inherit from array class");
             }
 
@@ -1109,7 +1134,7 @@ public final class ClassfileReader {
              *   superclass of C is in fact an interface, loading
              *   throws an IncompatibleClassChangeError.
              */
-            if (superClassActor.isInterfaceActor()) {
+            if (superClassActor.isInterface()) {
                 throw classFormatError("Cannot extend an interface class");
             }
 
@@ -1252,7 +1277,7 @@ public final class ClassfileReader {
         classfileStream.checkEndOfFile();
 
         if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
-            for (Annotation annotation : getAnnotations(name, classDescriptor)) {
+            for (Annotation annotation : getAnnotations(null, null)) {
                 if (annotation.annotationType() == HOSTED_ONLY.class) {
                     throw new HostOnlyClassError(name.string);
                 }
@@ -1299,15 +1324,6 @@ public final class ClassfileReader {
         if (superClassActor != null) {
             superClassActor.checkAccessBy(classActor);
         }
-
-        if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
-            for (Annotation annotation : getAnnotations(name, classDescriptor)) {
-                if (annotation.annotationType() == METHOD_SUBSTITUTIONS.class) {
-                    METHOD_SUBSTITUTIONS.Static.processAnnotationInfo((METHOD_SUBSTITUTIONS) annotation, classActor);
-                }
-            }
-        }
-
         return classActor;
     }
 

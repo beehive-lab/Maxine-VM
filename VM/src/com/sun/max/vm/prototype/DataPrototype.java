@@ -828,7 +828,7 @@ public final class DataPrototype extends Prototype {
                         final int expectedOffset = previousOffset + previousSize;
                         assert previousObject == null || expectedOffset <= offset : "expected offset: 0x" + Integer.toHexString(expectedOffset) + ", actual offset: 0x" + Integer.toHexString(offset);
 
-                        if (debugging) {
+                        if (tagging) {
                             m.setOffset(offset - tagBytes.length, null);
                             m.visitBytes("debugTag", tagBytes);
                             numberOfBytes += tagBytes.length;
@@ -1117,7 +1117,7 @@ public final class DataPrototype extends Prototype {
     private final int alignment;
     private final LayoutScheme layoutScheme;
     private final GripScheme gripScheme;
-    private final boolean debugging;
+    private final boolean tagging;
 
     /**
      * Create and build a new data prototype from the specified graph prototype.
@@ -1134,8 +1134,7 @@ public final class DataPrototype extends Prototype {
         alignment = Word.size();
         layoutScheme = graphPrototype.vmConfiguration().layoutScheme();
         gripScheme = graphPrototype.vmConfiguration().gripScheme();
-        debugging = graphPrototype.vmConfiguration().debugging();
-
+        tagging = graphPrototype.vmConfiguration().debugging() && graphPrototype.vmConfiguration().heapScheme().supportsTagging();
         Trace.begin(1, DataPrototype.class.getSimpleName());
 
         assignCodeCells();

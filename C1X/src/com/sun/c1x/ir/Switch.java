@@ -22,11 +22,11 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>Switch</code> class is the base of both lookup and table switches.
+ * The {@code Switch} class is the base of both lookup and table switches.
  *
  * @author Ben L. Titzer
  */
@@ -39,11 +39,10 @@ public abstract class Switch extends BlockEnd {
      * @param value the instruction that provides the value to be switched over
      * @param successors the list of successors of this switch
      * @param stateBefore the state before the switch
-     * @param isSafepoint <code>true</code> if this switch is a safepoint
+     * @param isSafepoint {@code true} if this switch is a safepoint
      */
-    public Switch(Value value, List<BlockBegin> successors, ValueStack stateBefore, boolean isSafepoint) {
-        super(CiKind.Illegal, stateBefore, isSafepoint);
-        this.successors = successors;
+    public Switch(Value value, List<BlockBegin> successors, FrameState stateBefore, boolean isSafepoint) {
+        super(CiKind.Illegal, stateBefore, isSafepoint, successors);
         this.value = value;
     }
 

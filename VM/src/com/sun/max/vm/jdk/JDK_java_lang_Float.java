@@ -32,7 +32,7 @@ import com.sun.max.vm.compiler.builtin.*;
 @METHOD_SUBSTITUTIONS(Float.class)
 public class JDK_java_lang_Float {
     @SUBSTITUTE
-    public static int floatToIntBits(float f) {
+    public static int floatToRawIntBits(float f) {
         return SpecialBuiltin.floatToInt(f);
     }
 

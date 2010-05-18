@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>AccessIndexed</code> class is the base class of instructions that read or write
+ * The {@code AccessIndexed} class is the base class of instructions that read or write
  * elements of an array.
  *
  * @author Ben L. Titzer
@@ -37,14 +37,15 @@ public abstract class AccessIndexed extends AccessArray {
 
     /**
      * Create an new AccessIndexed instruction.
+     * @param kind the result kind of the access
      * @param array the instruction producing the array
      * @param index the instruction producing the index
      * @param length the instruction producing the length (used in bounds check elimination?)
      * @param elementType the type of the elements of the array
      * @param stateBefore the state before executing this instruction
      */
-    AccessIndexed(Value array, Value index, Value length, CiKind elementType, ValueStack stateBefore) {
-        super(elementType.stackType(), array, stateBefore);
+    AccessIndexed(CiKind kind, Value array, Value index, Value length, CiKind elementType, FrameState stateBefore) {
+        super(kind, array, stateBefore);
         this.index = index;
         this.length = length;
         this.elementType = elementType;

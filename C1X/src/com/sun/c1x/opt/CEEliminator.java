@@ -21,10 +21,10 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class implements conditional-expression elimination, which replaces some
@@ -105,7 +105,7 @@ public class CEEliminator implements BlockClosure {
         }
 
         // check that at least one word was pushed on suxState
-        ValueStack suxState = sux.stateBefore();
+        FrameState suxState = sux.stateBefore();
         if (suxState.stackSize() <= curIf.stateAfter().stackSize()) {
             return;
         }
@@ -166,7 +166,7 @@ public class CEEliminator implements BlockClosure {
 
         Value result;
         if (tValue == fValue) {
-            // conditional choses the same value regardless
+            // conditional chooses the same value regardless
             result = tValue;
             C1XMetrics.RedundantConditionals++;
         } else {
@@ -178,11 +178,11 @@ public class CEEliminator implements BlockClosure {
         }
 
         // append Goto to successor
-        ValueStack stateBefore = curIf.isSafepoint() ? curIf.stateAfter() : null;
+        FrameState stateBefore = curIf.isSafepoint() ? curIf.stateAfter() : null;
         Goto newGoto = new Goto(sux, stateBefore, curIf.isSafepoint() || tGoto.isSafepoint() || fGoto.isSafepoint());
 
         // prepare state for Goto
-        ValueStack gotoState = curIf.stateAfter();
+        FrameState gotoState = curIf.stateAfter();
         while (suxState.scope() != gotoState.scope()) {
             gotoState = gotoState.popScope();
             assert gotoState != null : "states do not match up";

@@ -39,13 +39,13 @@ public class LinearAllocatorHeapRegion extends LinearAllocationMemoryRegion {
     }
 
     public LinearAllocatorHeapRegion(String description) {
-        setDescription(description);
+        setRegionName(description);
     }
 
     public LinearAllocatorHeapRegion(Address start, Size size, String description) {
         super(start, size);
         mark.set(start.wordAligned());
-        setDescription(description);
+        setRegionName(description);
     }
 
     public Size allocationSize(Size cellSize) {

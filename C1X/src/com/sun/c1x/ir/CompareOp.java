@@ -20,17 +20,17 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>CompareOp</code> instruction represents comparisons such as equals, not equal, etc.
+ * The {@code CompareOp} instruction represents comparisons such as equals, not equal, etc.
  *
  * @author Ben L. Titzer
  */
 public final class CompareOp extends Op2 {
 
-    ValueStack stateBefore;
+    FrameState stateBefore;
 
     /**
      * Creates a new compare operation.
@@ -39,7 +39,7 @@ public final class CompareOp extends Op2 {
      * @param y the second input
      * @param stateBefore the state before the comparison is performed
      */
-    public CompareOp(int opcode, Value x, Value y, ValueStack stateBefore) {
+    public CompareOp(int opcode, Value x, Value y, FrameState stateBefore) {
         super(CiKind.Int, opcode, x, y);
         this.stateBefore = stateBefore;
     }
@@ -49,7 +49,7 @@ public final class CompareOp extends Op2 {
      * @return the state before the comparison is performed
      */
     @Override
-    public ValueStack stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 

@@ -23,12 +23,12 @@ package com.sun.c1x.asm;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.lir.LIRDebugInfo;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * @author Marcelo Cintra
@@ -40,18 +40,14 @@ public abstract class AbstractAssembler {
     public final CiTarget target;
     public final CiTargetMethod targetMethod;
     public final List<ExceptionInfo> exceptionInfoList;
-    public final boolean is64;
-    public final boolean is32;
     protected final int wordSize;
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;
-        this.targetMethod = new CiTargetMethod(target.allocatableRegs.registerRefMapSize);
+        this.targetMethod = new CiTargetMethod(target.allocationSpec.refMapSize);
         this.codeBuffer = new Buffer(target.arch.byteOrder);
-        this.is32 = target.arch.is32bit();
-        this.is64 = target.arch.is64bit();
         this.exceptionInfoList = new ArrayList<ExceptionInfo>();
-        this.wordSize = target.arch.wordSize;
+        this.wordSize = target.wordSize;
     }
 
     public final void bind(Label l) {
@@ -69,7 +65,7 @@ public abstract class AbstractAssembler {
         targetMethod.setFrameSize(frameSize);
     }
 
-    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int registerRestoreEpilogueOffset) {
+    public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset) {
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
@@ -98,14 +94,15 @@ public abstract class AbstractAssembler {
 
         if (C1XOptions.PrintAssembly) {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
-            TTY.println("Frame size: %d", targetMethod.frameSize());
-            TTY.println("Register size: %d", targetMethod.referenceRegisterCount());
+            TTY.println("Name: " + name);
+            TTY.println("Frame size: " + targetMethod.frameSize());
+            TTY.println("Register size: " + targetMethod.referenceRegisterCount());
 
             Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
             Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
 
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
-            TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
+            TTY.println(runtime.disassemble(targetMethod));
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Safepoint x : targetMethod.safepoints) {
@@ -168,7 +165,7 @@ public abstract class AbstractAssembler {
         targetMethod.recordSafepoint(pos, registerMap, stackMap, debugInfo);
     }
 
-    public Address recordDataReferenceInCode(CiConstant data) {
+    public CiAddress recordDataReferenceInCode(CiConstant data) {
         assert data != null;
 
         int pos = codeBuffer.position();
@@ -178,7 +175,7 @@ public abstract class AbstractAssembler {
         }
 
         targetMethod.recordDataReference(pos, data);
-        return Address.InternalRelocation;
+        return CiAddress.Placeholder;
     }
 
     protected int target(Label l) {

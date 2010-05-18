@@ -20,19 +20,20 @@
  */
 package com.sun.max.unsafe;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
@@ -110,7 +111,7 @@ public abstract class Word {
                                 }
                             }
                         } catch (Exception e) {
-                            throw ProgramError.unexpected(e);
+                            ProgramWarning.message(e.toString());
                         }
                     }
                     return true;
@@ -217,6 +218,22 @@ public abstract class Word {
         }
         final Boxed box = (Boxed) this;
         return BoxedPointer.from(box.value());
+    }
+
+    /**
+     * @return bit index of the least significant bit set, or -1 if zero.
+     */
+    @INTRINSIC(LSB)
+    public final int leastSignificantBitSet() {
+        return SpecialBuiltin.leastSignificantBit(this);
+    }
+
+    /**
+     * @return bit index of the least significant bit set, or -1 if zero.
+     */
+    @INTRINSIC(MSB)
+    public final int mostSignificantBitSet() {
+        return SpecialBuiltin.mostSignificantBit(this);
     }
 
     @HOSTED_ONLY

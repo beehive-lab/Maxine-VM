@@ -24,10 +24,22 @@ import java.awt.event.*;
 
 import com.sun.max.ins.*;
 
+/**
+ * An implementation of {@link MouseListener} that only responds to single
+ * mouse clicks, in which the abstract method {@link #procedure(MouseEvent)}
+ * is called.
+ *
+ * @author Michael Van De Vanter
+ */
 public abstract class InspectorMouseClickAdapter implements MouseListener {
 
     private final Inspection inspection;
 
+    /**
+     * Creates a{@link MouseListener} that only responds to single
+     * mouse clicks, in which the abstract method {@link #procedure(MouseEvent)}
+     * is called.
+     */
     protected InspectorMouseClickAdapter(Inspection inspection) {
         this.inspection = inspection;
     }

@@ -20,10 +20,10 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.c1x.bytecode.Bytecodes.UNSAFE_CAST;
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.heap.*;

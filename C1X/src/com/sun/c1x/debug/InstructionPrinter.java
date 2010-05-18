@@ -22,22 +22,23 @@ package com.sun.c1x.debug;
 
 import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.util.Util;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * An {@link com.sun.c1x.ir.ValueVisitor} for {@linkplain #printInstruction(Value) printing}
+ * A {@link ValueVisitor} for {@linkplain #printInstruction(Value) printing}
  * an {@link Instruction} as an expression or statement.
  *
  * @author Doug Simon
  */
 public class InstructionPrinter extends ValueVisitor {
+
     /**
-     * Formats a given instruction as value is a {@linkplain com.sun.c1x.value.ValueStack frame state}. If the instruction is a phi defined at a given
+     * Formats a given instruction as value is a {@linkplain com.sun.c1x.value.FrameState frame state}. If the instruction is a phi defined at a given
      * block, its {@linkplain com.sun.c1x.ir.Phi#operand() operands} are appended to the returned string.
      *
      * @param index the index of the value in the frame state
@@ -113,7 +114,7 @@ public class InstructionPrinter extends ValueVisitor {
          * @param out the print stream
          */
         public void printLabel(LogStream out) {
-            out.fillTo(position + out.indentation(), '_');
+            out.fillTo(position + out.indentationLevel(), '_');
             out.print(label);
         }
 
@@ -123,16 +124,18 @@ public class InstructionPrinter extends ValueVisitor {
          * @param out the print stream
          */
         public void advance(LogStream out) {
-            out.fillTo(position + out.indentation(), ' ');
+            out.fillTo(position + out.indentationLevel(), ' ');
         }
     }
 
     private final LogStream out;
     private final boolean printPhis;
+    private final CiTarget target;
 
-    public InstructionPrinter(LogStream out, boolean printPhis) {
+    public InstructionPrinter(LogStream out, boolean printPhis, CiTarget target) {
         this.out = out;
         this.printPhis = printPhis;
+        this.target = target;
     }
 
     public LogStream out() {
@@ -175,7 +178,7 @@ public class InstructionPrinter extends ValueVisitor {
             out.print('.');
         }
 
-        int indentation = out.indentation();
+        int indentation = out.indentationLevel();
         out.fillTo(BCI.position + indentation, ' ').
              print(instruction instanceof Instruction ? ((Instruction) instruction).bci() : 0).
              fillTo(USE.position + indentation, ' ').
@@ -184,6 +187,10 @@ public class InstructionPrinter extends ValueVisitor {
              print(instruction).
              fillTo(INSTRUCTION.position + indentation, ' ');
         printInstruction(instruction);
+        String flags = instruction.flagsToString();
+        if (!flags.isEmpty()) {
+            out.print("  [flags: " + flags + "]");
+        }
         out.println();
     }
 
@@ -191,7 +198,7 @@ public class InstructionPrinter extends ValueVisitor {
     public void visitArithmeticOp(ArithmeticOp arithOp) {
         out.print(arithOp.x()).
              print(' ').
-             print(Bytecodes.operator(arithOp.opcode())).
+             print(Bytecodes.operator(arithOp.opcode)).
              print(' ').
              print(arithOp.y());
     }
@@ -283,7 +290,7 @@ public class InstructionPrinter extends ValueVisitor {
         boolean hasPhisOnStack = false;
 
         if (end != null && end.stateAfter() != null) {
-            ValueStack state = block.stateBefore();
+            FrameState state = block.stateBefore();
 
             int i = 0;
             while (!hasPhisOnStack && i < state.stackSize()) {
@@ -312,7 +319,7 @@ public class InstructionPrinter extends ValueVisitor {
             out.println();
             out.println("Locals:");
 
-            ValueStack state = block.stateBefore();
+            FrameState state = block.stateBefore();
             do {
                 int i = 0;
                 while (i < state.localsSize()) {
@@ -358,40 +365,53 @@ public class InstructionPrinter extends ValueVisitor {
         return value instanceof Phi && ((Phi) value).block() == block;
     }
 
+    private String nameOf(RiType type) {
+        return CiUtil.toJavaName(type);
+    }
+
     @Override
     public void visitCheckCast(CheckCast checkcast) {
         out.print("checkcast(").
              print(checkcast.object()).
              print(") ").
-             print(checkcast.targetClass().name());
+             print(nameOf(checkcast.targetClass()));
     }
 
     @Override
     public void visitCompareOp(CompareOp compareOp) {
         out.print(compareOp.x()).
              print(' ').
-             print(Bytecodes.operator(compareOp.opcode())).
+             print(Bytecodes.operator(compareOp.opcode)).
+             print(' ').
+             print(compareOp.y());
+    }
+
+    @Override
+    public void visitUnsignedCompareOp(UnsignedCompareOp compareOp) {
+        out.print(compareOp.x()).
+             print(' ').
+             print(Bytecodes.operator(compareOp.opcode)).
              print(' ').
              print(compareOp.y());
     }
 
     @Override
     public void visitConstant(Constant constant) {
-        CiConstant type = constant.value;
-        if (type == CiConstant.NULL_OBJECT) {
+        CiConstant value = constant.value;
+        if (value == CiConstant.NULL_OBJECT) {
             out.print("null");
-        } else if (type.kind.isPrimitive()) {
+        } else if (value.kind.isPrimitive()) {
             out.print(constant.asConstant().valueString());
-        } else if (type.kind.isObject()) {
+        } else if (value.kind.isObject()) {
             Object object = constant.asConstant().asObject();
             if (object == null) {
                 out.print("null");
             } else if (object instanceof String) {
                 out.print('"').print(object.toString()).print('"');
             } else {
-                out.print("<object: ").print(object.getClass().getName()).print('@').print(System.identityHashCode(object)).print('>');
+                out.print("<object: ").print(value.kind.format(object)).print('>');
             }
-        } else if (type.kind.isJsr()) {
+        } else if (value.kind.isJsr()) {
             out.print("bci:").print(constant.asConstant().valueString());
         } else {
             out.print("???");
@@ -400,7 +420,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitConvert(Convert convert) {
-        out.print(Bytecodes.nameOf(convert.opcode())).print('(').print(convert.value()).print(')');
+        out.print(Bytecodes.nameOf(convert.opcode)).print('(').print(convert.value()).print(')');
     }
 
     @Override
@@ -453,7 +473,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitInstanceOf(InstanceOf i) {
-        out.print("instanceof(").print(i.object()).print(") ").print(i.targetClass().name());
+        out.print("instanceof(").print(i.object()).print(") ").print(nameOf(i.targetClass()));
     }
 
     @Override
@@ -474,30 +494,28 @@ public class InstructionPrinter extends ValueVisitor {
         if (invoke.hasReceiver()) {
             out.print(invoke.receiver()).print('.');
             argStart = 1;
-          }
+        }
 
-          out.print(Bytecodes.nameOf(invoke.opcode())).print('(');
-          Value[] arguments = invoke.arguments();
-          for (int i = argStart; i < arguments.length; i++) {
-              if (i > argStart) {
-                  out.print(", ");
-              }
-              out.print(arguments[i]);
-          }
-          out.println(')');
-          INSTRUCTION.advance(out);
-          RiMethod target = invoke.target();
-          out.print(target.holder().name()).print('.').print(target.name()).print(target.signatureType().asString());
+        RiMethod target = invoke.target();
+        out.print(target.name()).print('(');
+        Value[] arguments = invoke.arguments();
+        for (int i = argStart; i < arguments.length; i++) {
+            if (i > argStart) {
+                out.print(", ");
+            }
+            out.print(arguments[i]);
+        }
+        out.print(CiUtil.format(") [method: %H.%n(%p):%r]", target, false));
     }
 
     @Override
     public void visitLoadField(LoadField i) {
         out.print(i.object()).
-             print("._").
-             print(i.offset()).
-             print(" (").
-             print(i.field().type().kind().typeChar).
-             print(")");
+             print(".").
+             print(i.field().name()).
+             print(" [field: ").
+             print(CiUtil.format("%h.%n:%t", i.field(), false)).
+             print("]");
     }
 
     @Override
@@ -512,7 +530,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitLogicOp(LogicOp logicOp) {
-        out.print(logicOp.x()).print(' ').print(Bytecodes.operator(logicOp.opcode())).print(' ').print(logicOp.y());
+        out.print(logicOp.x()).print(' ').print(Bytecodes.operator(logicOp.opcode)).print(' ').print(logicOp.y());
     }
 
     @Override
@@ -548,8 +566,13 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
+    public void visitSignificantBit(SignificantBitOp significantBit) {
+        out.print(Bytecodes.nameOf(significantBit.op) + " [").print(significantBit).print("] ");
+    }
+
+    @Override
     public void visitNewInstance(NewInstance newInstance) {
-        out.print("new instance ").print(newInstance.instanceClass().name());
+        out.print("new instance ").print(nameOf(newInstance.instanceClass()));
     }
 
     @Override
@@ -562,12 +585,12 @@ public class InstructionPrinter extends ValueVisitor {
           }
           out.print(dimensions[i]);
         }
-        out.print("] ").print(newMultiArray.elementKind.name());
+        out.print("] ").print(nameOf(newMultiArray.elementKind));
     }
 
     @Override
     public void visitNewObjectArray(NewObjectArray newObjectArray) {
-        out.print("new object array [").print(newObjectArray.length()).print("] ").print(newObjectArray.elementClass().name());
+        out.print("new object array [").print(newObjectArray.length()).print("] ").print(nameOf(newObjectArray.elementClass()));
     }
 
     @Override
@@ -603,18 +626,19 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
-    public void visitRoundFP(RoundFP i) {
-        out.print("roundfp ").print(i.value());
-    }
-
-    @Override
     public void visitShiftOp(ShiftOp shiftOp) {
-        out.print(shiftOp.x()).print(' ').print(Bytecodes.operator(shiftOp.opcode())).print(' ').print(shiftOp.y());
+        out.print(shiftOp.x()).print(' ').print(Bytecodes.operator(shiftOp.opcode)).print(' ').print(shiftOp.y());
     }
 
     @Override
     public void visitStoreField(StoreField store) {
-        out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().kind().typeChar).print(')');
+        out.print(store.object()).
+            print(".").
+            print(store.field().name()).
+            print(" := ").
+            print(store.value()).
+            print(" [type: ").print(CiUtil.format("%h.%n:%t", store.field(), false)).
+            print(']');
     }
 
     @Override
@@ -680,5 +704,85 @@ public class InstructionPrinter extends ValueVisitor {
             out.print(", index ").print(unsafe.index()).print(", log2_scale ").print(unsafe.log2Scale());
         }
         out.print(", value ").print(unsafe.value()).print(')');
+    }
+
+    @Override
+    public void visitLoadPC(LoadPC i) {
+        out.print("load_pc");
+    }
+
+    @Override
+    public void visitLoadPointer(LoadPointer i) {
+        out.print("*(").print(i.pointer());
+        if (i.displacement() == null) {
+            out.print(" + ").print(i.offset());
+        } else {
+            int scale = CiUtil.log2(target.sizeInBytes(i.kind));
+            out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
+        }
+        out.print(")");
+    }
+
+    @Override
+    public void visitLoadRegister(LoadRegister i) {
+        out.print(i.register().toString());
+    }
+
+    @Override
+    public void visitNativeCall(NativeCall invoke) {
+        out.print(invoke.nativeMethod.jniSymbol()).print('(');
+        Value[] arguments = invoke.arguments;
+        for (int i = 0; i < arguments.length; i++) {
+            if (i > 0) {
+                out.print(", ");
+            }
+            out.print(arguments[i]);
+        }
+        out.print(')');
+    }
+
+    @Override
+    public void visitResolveClass(ResolveClass i) {
+        out.println("resolve[").print(nameOf(i.type)).print("-" + i.portion + "]");
+    }
+
+    @Override
+    public void visitStorePointer(StorePointer i) {
+        out.print("*(").print(i.pointer());
+        if (i.displacement() == null) {
+            out.print(" + ").print(i.offset());
+        } else {
+            int scale = CiUtil.log2(target.sizeInBytes(i.pointer().kind));
+            out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
+        }
+        out.print(") := ").print(i.value());
+    }
+
+    @Override
+    public void visitStoreRegister(StoreRegister i) {
+        out.print(i.register().toString()).print(" := ").print(i.value());
+    }
+
+    @Override
+    public void visitStackAllocate(StackAllocate i) {
+        out.print("alloca(").print(i.size()).print(")");
+    }
+
+    @Override
+    public void visitUnsafeCast(UnsafeCast i) {
+        out.print("unsafe_cast(").
+        print(i.value()).
+        print(") ").
+        print(nameOf(i.toType));
+    }
+
+    @Override
+    public void visitLoadStackAddress(AllocateStackVariable i) {
+        out.print("&(").print(i.value()).print(")");
+    }
+
+    @Override
+    public void visitPause(Pause i) {
+        out.print("pause");
     }
 }

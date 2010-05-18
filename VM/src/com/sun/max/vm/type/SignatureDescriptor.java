@@ -26,6 +26,8 @@ import static com.sun.max.vm.type.JavaTypeDescriptor.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.collect.ChainedHashMapping.*;
@@ -37,7 +39,7 @@ import com.sun.max.vm.classfile.constant.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class SignatureDescriptor extends Descriptor {
+public abstract class SignatureDescriptor extends Descriptor implements RiSignature {
 
     /**
      * The only concrete subclass of {@link TypeDescriptor}.
@@ -78,16 +80,28 @@ public abstract class SignatureDescriptor extends Descriptor {
      */
     private static final GrowableMapping<String, SignatureDescriptorEntry> canonicalSignatureDescriptors = new ChainingValueChainedHashMapping<String, SignatureDescriptorEntry>();
 
+    static {
+        // Ensures Kind is initialized
+        Kind.fromJava(Object.class);
+    }
+
     SignatureDescriptor(String value, TypeDescriptor[] typeDescriptors) {
         super(value);
         assert getClass() == SignatureDescriptorEntry.class;
         this.typeDescriptors = typeDescriptors;
+        int n = 0;
+        for (int i = 1; i != typeDescriptors.length; ++i) {
+            n += typeDescriptors[i].toKind().stackSlots;
+        }
+        numberOfSlots = n;
     }
 
     /**
      * The return and parameter types of this signature. The return type is at index 0 followed by the parameter types starting at index 1.
      */
     private final TypeDescriptor[] typeDescriptors;
+
+    public final int numberOfSlots;
 
     private static synchronized SignatureDescriptor createSignatureDescriptor(String value, TypeDescriptor[] typeDescriptors) {
         SignatureDescriptorEntry signatureDescriptorEntry = canonicalSignatureDescriptors.get(value);
@@ -202,11 +216,7 @@ public abstract class SignatureDescriptor extends Descriptor {
      * Long and double parameters use two slots, all other parameters use one slot.
      */
     public int computeNumberOfSlots() {
-        int n = 0;
-        for (int i = 1; i != typeDescriptors.length; ++i) {
-            n += typeDescriptors[i].toKind().isCategory1 ? 1 : 2;
-        }
-        return n;
+        return numberOfSlots;
     }
 
     /**
@@ -343,4 +353,33 @@ public abstract class SignatureDescriptor extends Descriptor {
     }
 
     public static final SignatureDescriptor VOID = create("()V");
+
+    public int argumentCount(boolean receiver) {
+        return numberOfParameters() + (receiver ? 1 : 0);
+    }
+
+    public RiType argumentTypeAt(int index, RiType accessingClass) {
+        return UnresolvedType.toRiType(parameterDescriptorAt(index), accessingClass);
+    }
+
+    public CiKind argumentKindAt(int index) {
+        return parameterDescriptorAt(index).toKind().ciKind;
+    }
+
+    public final RiType returnType(RiType accessingClass) {
+        return UnresolvedType.toRiType(resultDescriptor(), accessingClass);
+    }
+
+    public final CiKind returnKind() {
+        return resultDescriptor().toKind().ciKind;
+    }
+
+    public final String asString() {
+        return toString();
+    }
+
+    public final int argumentSlots(boolean withReceiver) {
+        return numberOfSlots + (withReceiver ? 1 : 0);
+    }
+
 }

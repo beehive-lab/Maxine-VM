@@ -152,7 +152,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     @Override
     public void setEnabled(boolean enabled) throws MaxVMBusyException {
         assert this.enabled != enabled;
-        if (!teleVM().tryLock()) {
+        if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
         try {
@@ -162,7 +162,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 // Create a target code breakpoint in every existing compilation at the location
                 // best corresponding to the bytecode location of this breakpoint.
                 teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
-                for (TeleTargetMethod teleTargetMethod : TeleTargetMethod.get(teleVM(), codeLocation().methodKey())) {
+                for (TeleTargetMethod teleTargetMethod : TeleTargetMethod.get(vm(), codeLocation().methodKey())) {
                     createTargetBreakpointForMethod(teleTargetMethod);
                 }
             } else {
@@ -178,7 +178,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 bytecodeBreakpointManager.fireBreakpointsChanged();
             }
         } finally {
-            teleVM().unlock();
+            vm().unlock();
         }
     }
 
@@ -189,22 +189,22 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     @Override
     public void setCondition(String conditionDescriptor) throws ExpressionException, MaxVMBusyException {
-        if (!teleVM().tryLock()) {
+        if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
         try {
-            this.condition = new BreakpointCondition(teleVM(), conditionDescriptor);
+            this.condition = new BreakpointCondition(vm(), conditionDescriptor);
             for (TeleTargetBreakpoint teleTargetBreakpoint : teleTargetBreakpoints) {
                 teleTargetBreakpoint.setTriggerEventHandler(condition);
             }
         } finally {
-            teleVM().unlock();
+            vm().unlock();
         }
     }
 
     @Override
     public void remove() throws MaxVMBusyException {
-        if (!teleVM().tryLock()) {
+        if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
         try {
@@ -214,7 +214,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             }
             bytecodeBreakpointManager.removeBreakpoint(this);
         } finally {
-            teleVM().unlock();
+            vm().unlock();
         }
     }
 
@@ -415,7 +415,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         public TeleBreakpoint makeClientBreakpoint(CodeLocation codeLocation) throws MaxVMBusyException {
             assert codeLocation.hasMethodKey();
-            if (!teleVM().tryLock()) {
+            if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }
             TeleBytecodeBreakpoint breakpoint;
@@ -429,7 +429,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     breakpoint = null;
                 }
             } finally {
-                teleVM().unlock();
+                vm().unlock();
             }
             return breakpoint;
         }
@@ -449,7 +449,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         public TeleBreakpoint makeSystemBreakpoint(CodeLocation codeLocation, VMTriggerEventHandler handler) throws MaxVMBusyException {
             assert codeLocation.hasMethodKey();
-            if (!teleVM().tryLock()) {
+            if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }
             TeleBytecodeBreakpoint breakpoint;
@@ -465,7 +465,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     breakpoint = null;
                 }
             } finally {
-                teleVM().unlock();
+                vm().unlock();
             }
             return breakpoint;
         }
@@ -489,7 +489,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             if (breakpoints.length() == 0) {
                 createCompilerBreakpoint();
             }
-            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(teleVM(), this, codeLocation, kind, key);
+            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(vm(), this, codeLocation, kind, key);
             breakpoint.setDescription(codeLocation.description());
             breakpoints.put(key, breakpoint);
             updateBreakpointCache();
@@ -538,7 +538,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private void createCompilerBreakpoint() throws MaxVMBusyException {
             assert compilerTargetCodeBreakpoint == null;
-            compilerTargetCodeBreakpoint = teleTargetBreakpointManager.makeSystemBreakpoint(teleVM().teleMethods().compilationComplete(), null);
+            compilerTargetCodeBreakpoint = teleTargetBreakpointManager.makeSystemBreakpoint(vm().teleMethods().compilationComplete(), null);
             compilerTargetCodeBreakpoint.setDescription("System trap for VM compiler");
             compilerTargetCodeBreakpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -546,9 +546,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     // The new compilation; don't bother to construct a representation of it unless there's a match and it's needed.
                     TeleTargetMethod teleTargetMethod = null;
 
-                    final String holderTypeDescriptorString = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter0)));
-                    final String methodName = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter1)));
-                    final String signatureDescriptorString = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter2)));
+                    final TeleIntegerRegisters teleIntegerRegisters = teleNativeThread.registers().teleIntegerRegisters();
+                    final String holderTypeDescriptorString = vm().getStringUnsafe(vm().wordToTemporaryReference(teleIntegerRegisters.getValue(parameter0)));
+                    final String methodName = vm().getStringUnsafe(vm().wordToTemporaryReference(teleIntegerRegisters.getValue(parameter1)));
+                    final String signatureDescriptorString = vm().getStringUnsafe(vm().wordToTemporaryReference(teleIntegerRegisters.getValue(parameter2)));
                     Trace.line(COMPILATION_TRACE_VALUE, "VM just compiled: " + holderTypeDescriptorString + " " + methodName + " " + signatureDescriptorString);
                     for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : breakpointCache) {
                         // Streamlined comparison using as little Inspector machinery as possible, since we take this break at every VM compilation
@@ -557,8 +558,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                                         signatureDescriptorString.equals(teleBytecodeBreakpoint.signatureDescriptorString)) {
                             // Match; must set a target breakpoint on the method just compiled; is is acceptable to incur some overhead now.
                             if (teleTargetMethod == null) {
-                                final Reference targetMethodReference = teleVM().wordToReference(teleNativeThread.integerRegisters().get(parameter3));
-                                teleTargetMethod = (TeleTargetMethod) teleVM().makeTeleObject(targetMethodReference);
+                                final Reference targetMethodReference = vm().wordToReference(teleIntegerRegisters.getValue(parameter3));
+                                teleTargetMethod = (TeleTargetMethod) vm().makeTeleObject(targetMethodReference);
                             }
                             try {
                                 teleBytecodeBreakpoint.handleNewCompilation(teleTargetMethod);
@@ -623,7 +624,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 address = teleTargetMethod.getCodeStart().plus(targetCodePosition);
                 Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint for offset " + targetCodePosition + " in " + teleTargetMethod);
             } else {
-                if (bytecodePosition == 0) {
+                if (bytecodePosition == -1) {
+                    // Specifies the code start, at the beginning of the method prologue
                     address = teleTargetMethod.callEntryPoint();
                     Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint at method entry in " + teleTargetMethod);
                 } else {
@@ -631,7 +633,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 }
             }
             if (teleTargetBreakpointManager.getTargetBreakpointAt(address) == null) {
-                final CodeLocation location = CodeLocation.createMachineCodeLocation(teleVM(), address, "For bytecode breapoint=" + owner.codeLocation());
+                final CodeLocation location = CodeLocation.createMachineCodeLocation(vm(), address, "For bytecode breapoint=" + owner.codeLocation());
                 final VMTriggerEventHandler vmTriggerEventHandler = new VMTriggerEventHandler() {
 
                     public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -657,22 +659,30 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 breakpointClassDescriptors.add(breakpoint.holderTypeDescriptorString);
             }
             // Create string containing class descriptors for all classes in which breakpoints are set, each terminated by a space.
-            final StringBuilder sb = new StringBuilder();
+            final StringBuilder typeDescriptorsBuilder = new StringBuilder();
             for (String descriptor : breakpointClassDescriptors) {
-                sb.append(descriptor).append(" ");
+                typeDescriptorsBuilder.append(descriptor).append(" ");
             }
-            final String breakpointClassDescriptorsString = sb.toString();
+            final String breakpointClassDescriptorsString = typeDescriptorsBuilder.toString();
+            if (breakpointClassDescriptorsString.length() > InspectableCodeInfo.BREAKPOINT_DESCRIPTORS_ARRAY_LENGTH) {
+                final StringBuilder errMsg = new StringBuilder();
+                errMsg.append("Implementation Restriction exceeded: list of type descriptors for classes containing ");
+                errMsg.append("bytecode breakpoints must not exceed ");
+                errMsg.append(InspectableCodeInfo.BREAKPOINT_DESCRIPTORS_ARRAY_LENGTH).append(" characters.  ");
+                errMsg.append("Current length=").append(breakpointClassDescriptorsString.length()).append(" characters.");
+                ProgramError.unexpected(errMsg.toString());
+            }
             Trace.line(TRACE_VALUE, tracePrefix + "Writing to VM type descriptors for breakpoint classes =\"" + breakpointClassDescriptorsString + "\"");
             // Write the string into the designated region in the VM, along with length and incremented epoch counter
             final int charsLength = breakpointClassDescriptorsString.length();
-            final Reference charArrayReference = teleVM().teleFields().InspectableCodeInfo_breakpointClassDescriptorCharArray.readReference(teleVM());
+            final Reference charArrayReference = vm().teleFields().InspectableCodeInfo_breakpointClassDescriptorCharArray.readReference(vm());
             ProgramError.check(charArrayReference != null && !charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
-            final CharArrayLayout charArrayLayout = teleVM().layoutScheme().charArrayLayout;
+            final CharArrayLayout charArrayLayout = vm().layoutScheme().charArrayLayout;
             for (int index = 0; index < charsLength; index++) {
                 charArrayLayout.setChar(charArrayReference, index, breakpointClassDescriptorsString.charAt(index));
             }
-            teleVM().teleFields().InspectableCodeInfo_breakpointClassDescriptorsCharCount.writeInt(teleVM(), charsLength);
-            teleVM().teleFields().InspectableCodeInfo_breakpointClassDescriptorsEpoch.writeInt(teleVM(), ++breakpointClassDescriptorsEpoch);
+            vm().teleFields().InspectableCodeInfo_breakpointClassDescriptorsCharCount.writeInt(vm(), charsLength);
+            vm().teleFields().InspectableCodeInfo_breakpointClassDescriptorsEpoch.writeInt(vm(), ++breakpointClassDescriptorsEpoch);
         }
 
         /**

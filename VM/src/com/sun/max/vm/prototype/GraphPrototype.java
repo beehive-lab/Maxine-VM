@@ -573,7 +573,7 @@ public class GraphPrototype extends Prototype {
 
     private void exploreClassActor(ClassActor classActor) {
         final Class<?> javaClass = classActor.toJava();
-        classActor.setMirror(javaClass);
+        classActor.setJavaClass(javaClass);
         // add the class actor object
         add(classActor, javaClass, "mirror");
     }
@@ -586,7 +586,7 @@ public class GraphPrototype extends Prototype {
             }
             throw ProgramError.unexpected("Could not get class actor for " + javaClass);
         }
-        classActor.setMirror(javaClass);
+        classActor.setJavaClass(javaClass);
         // add the class actor object
         add(javaClass, classActor, "classActor");
         // walk the static fields of the class

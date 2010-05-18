@@ -200,8 +200,8 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
         }
         remoteTeleGrip = createTemporaryRemoteTeleGrip(rawGrip);
         if (teleVM.isValidOrigin(remoteTeleGrip.toOrigin())) {
-            if (teleVM().containsInDynamicHeap(remoteTeleGrip.toOrigin())) {
-                if (teleVM().isInLiveMemory(remoteTeleGrip.toOrigin())) {
+            if (teleVM().heap().containsInDynamicHeap(remoteTeleGrip.toOrigin())) {
+                if (teleVM().heap().isInLiveMemory(remoteTeleGrip.toOrigin())) {
                     final int index = teleRoots.register(rawGrip);
                     remoteTeleGrip = new MutableTeleGrip(this, index);
                 } else {

@@ -29,6 +29,9 @@ import java.lang.reflect.*;
 
 import sun.reflect.*;
 
+import com.sun.c1x.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -37,6 +40,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -49,7 +53,7 @@ import com.sun.max.vm.value.*;
  * @author Hiroshi Yamauchi
  * @author Doug Simon
  */
-public class FieldActor extends MemberActor {
+public class FieldActor extends MemberActor implements RiField {
 
     /**
      * Flags indicating special annotations applied to methods.
@@ -176,6 +180,11 @@ public class FieldActor extends MemberActor {
         return javaField;
     }
 
+    @Override
+    public String toString() {
+        return format("%H.%n");
+    }
+
     public Pointer pointer(Object object) {
         if (isStatic()) {
             return Pointer.zero();
@@ -277,5 +286,49 @@ public class FieldActor extends MemberActor {
     @FOLD
     public static FieldActor findInstance(Class javaClass, String name) {
         return ClassActor.fromJava(javaClass).findLocalInstanceFieldActor(name);
+    }
+
+    public final int accessFlags() {
+        return flags() & JAVA_FIELD_FLAGS;
+    }
+
+    public final CiConstant constantValue(Object object) {
+        if (isConstant()) {
+            Value v;
+            if (isStatic()) {
+                v = constantValue();
+                if (v != null) {
+                    return v.asCiConstant();
+                }
+            }
+            if (C1XOptions.CanonicalizeFinalFields) {
+                if (isStatic()) {
+                    assert object == null;
+                    object = holder().staticTuple();
+                } else {
+                    assert object != null;
+                }
+
+                if (MaxineVM.isHosted()) {
+                    v = HostTupleAccess.readValue(object, this);
+                } else {
+                    v = readValue(Reference.fromJava(object));
+                }
+                return v.asCiConstant();
+            }
+        }
+        return null;
+    }
+
+    public final boolean isResolved() {
+        return true;
+    }
+
+    public final CiKind kind() {
+        return kind.ciKind;
+    }
+
+    public final String name() {
+        return name.string;
     }
 }

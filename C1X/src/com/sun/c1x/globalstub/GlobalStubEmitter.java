@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.globalstub;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.xir.*;
-import com.sun.c1x.ri.RiRuntime;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 /**
  * An interface to represent the entity that generates stubs.

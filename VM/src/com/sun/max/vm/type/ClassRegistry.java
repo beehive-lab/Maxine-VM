@@ -26,6 +26,7 @@ import static com.sun.max.vm.prototype.HostedBootClassLoader.*;
 
 import java.io.*;
 import java.lang.reflect.*;
+import java.security.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -76,15 +77,15 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final InterfaceActor CLONEABLE = createClass(Cloneable.class);
     public static final InterfaceActor SERIALIZABLE = createClass(Serializable.class);
 
-    public static final PrimitiveClassActor<VoidValue> VOID = createPrimitiveClass(Kind.VOID);
-    public static final PrimitiveClassActor<ByteValue> BYTE = createPrimitiveClass(Kind.BYTE);
-    public static final PrimitiveClassActor<BooleanValue> BOOLEAN = createPrimitiveClass(Kind.BOOLEAN);
-    public static final PrimitiveClassActor<ShortValue> SHORT = createPrimitiveClass(Kind.SHORT);
-    public static final PrimitiveClassActor<CharValue> CHAR = createPrimitiveClass(Kind.CHAR);
-    public static final PrimitiveClassActor<IntValue> INT = createPrimitiveClass(Kind.INT);
-    public static final PrimitiveClassActor<FloatValue> FLOAT = createPrimitiveClass(Kind.FLOAT);
-    public static final PrimitiveClassActor<LongValue> LONG = createPrimitiveClass(Kind.LONG);
-    public static final PrimitiveClassActor<DoubleValue> DOUBLE = createPrimitiveClass(Kind.DOUBLE);
+    public static final PrimitiveClassActor VOID = createPrimitiveClass(Kind.VOID);
+    public static final PrimitiveClassActor BYTE = createPrimitiveClass(Kind.BYTE);
+    public static final PrimitiveClassActor BOOLEAN = createPrimitiveClass(Kind.BOOLEAN);
+    public static final PrimitiveClassActor SHORT = createPrimitiveClass(Kind.SHORT);
+    public static final PrimitiveClassActor CHAR = createPrimitiveClass(Kind.CHAR);
+    public static final PrimitiveClassActor INT = createPrimitiveClass(Kind.INT);
+    public static final PrimitiveClassActor FLOAT = createPrimitiveClass(Kind.FLOAT);
+    public static final PrimitiveClassActor LONG = createPrimitiveClass(Kind.LONG);
+    public static final PrimitiveClassActor DOUBLE = createPrimitiveClass(Kind.DOUBLE);
 
     public static final ArrayClassActor<ByteValue> BYTE_ARRAY = createPrimitiveArrayClass(BYTE);
     public static final ArrayClassActor<BooleanValue> BOOLEAN_ARRAY = createPrimitiveArrayClass(BOOLEAN);
@@ -95,7 +96,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final ArrayClassActor<LongValue> LONG_ARRAY = createPrimitiveArrayClass(LONG);
     public static final ArrayClassActor<DoubleValue> DOUBLE_ARRAY = createPrimitiveArrayClass(DOUBLE);
 
-    public static final FieldActor ClassActor_mirror = findField(ClassActor.class, "mirror");
+    public static final FieldActor ClassActor_javaClass = findField(ClassActor.class, "javaClass");
     public static final FieldActor System_in = findField(System.class, "in");
     public static final FieldActor System_out = findField(System.class, "out");
     public static final FieldActor System_err = findField(System.class, "err");
@@ -105,6 +106,8 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final FieldActor Thread_inheritedAccessControlContext = findField(Thread.class, "inheritedAccessControlContext");
     public static final FieldActor ClassLoader_loadedLibraryNames = findField(ClassLoader.class, "loadedLibraryNames");
     public static final FieldActor ClassLoader_nativeLibraries = findField(ClassLoader.class, "nativeLibraries");
+    public static final FieldActor AccessControlContext_privilegedContext = findField(AccessControlContext.class, "privilegedContext");
+    public static final FieldActor Throwable_stackTrace = findField(Throwable.class, "stackTrace");
 
     public static final MethodActor ThreadGroup_add_Thread = findMethod(ThreadGroup.class, "add", Thread.class);
     public static final MethodActor Thread_init = findMethod("init", Thread.class);
@@ -119,6 +122,8 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final MethodActor VmThread_run = findMethod("run", VmThread.class);
     public static final MethodActor VmThread_attach = findMethod("attach", VmThread.class);
     public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
+    public static final MethodActor AccessControlContext_init = findMethod(AccessControlContext.class, "<init>", ProtectionDomain[].class, boolean.class);
+    public static final MethodActor DirectByteBuffer_init = findMethod(Classes.forName("java.nio.DirectByteBuffer"), "<init>", long.class, int.class);
 
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded
@@ -174,15 +179,15 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      * Creates a ClassActor for a primitive type.
      */
     @HOSTED_ONLY
-    private static <Value_Type extends Value<Value_Type>> PrimitiveClassActor<Value_Type> createPrimitiveClass(Kind<Value_Type> kind) {
-        return put(new PrimitiveClassActor<Value_Type>(kind));
+    private static <Value_Type extends Value<Value_Type>> PrimitiveClassActor createPrimitiveClass(Kind<Value_Type> kind) {
+        return put(new PrimitiveClassActor(kind));
     }
 
     /**
      * Creates an ArrayClassActor for a primitive array type.
      */
     @HOSTED_ONLY
-    private static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createPrimitiveArrayClass(PrimitiveClassActor<Value_Type> componentClassActor) {
+    private static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createPrimitiveArrayClass(PrimitiveClassActor componentClassActor) {
         return put(new ArrayClassActor<Value_Type>(componentClassActor));
     }
 
@@ -259,6 +264,9 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
 
     /**
      * Finds the method actor denoted by a given name and declaring class.
+     * A side effect of this is that the method is compiled into the image.
+     * If the method is not a VM entry point (and hence not subject to reflective
+     * invocation) its invocation stub is also compiled into the image.
      *
      * @param declaringClass the class to search for a method named {@code name}
      * @param name the name of the method to find
@@ -448,6 +456,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         CHECKED_EXCEPTIONS(MethodActor.class, TypeDescriptor[].class, MethodActor.NO_CHECKED_EXCEPTIONS),
         CONSTANT_VALUE(FieldActor.class, Value.class, null),
         ANNOTATION_DEFAULT_BYTES(MethodActor.class, byte[].class, MethodActor.NO_ANNOTATION_DEFAULT_BYTES),
+        ACCESSOR(MethodActor.class, Class.class, null),
         INVOCATION_STUB(false, MethodActor.class, GeneratedStub.class, null),
         RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES(MethodActor.class, byte[].class, MethodActor.NO_RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES);
 

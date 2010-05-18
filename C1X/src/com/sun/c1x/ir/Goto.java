@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>Goto</code> instruction represents the end of a block with an unconditional jump to another block.
+ * The {@code Goto} instruction represents the end of a block with an unconditional jump to another block.
  *
  * @author Ben L. Titzer
  */
@@ -34,9 +34,9 @@ public final class Goto extends BlockEnd {
      * Constructs a new Goto instruction.
      * @param succ the successor block of the goto
      * @param stateBefore the state before the goto
-     * @param isSafepoint <code>true</code> if the goto should be considered a safepoint (e.g. backward branch)
+     * @param isSafepoint {@code true} if the goto should be considered a safepoint (e.g. backward branch)
      */
-    public Goto(BlockBegin succ, ValueStack stateBefore, boolean isSafepoint) {
+    public Goto(BlockBegin succ, FrameState stateBefore, boolean isSafepoint) {
         super(CiKind.Illegal, stateBefore, isSafepoint);
         successors.add(succ);
     }

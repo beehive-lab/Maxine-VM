@@ -21,7 +21,6 @@
 package com.sun.max.unsafe;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.object.*;
 
 /**
@@ -52,10 +51,8 @@ public final class WordArray {
      * Replaces all {@code null} entries in a given word array with the appropriately typed boxed zero value.
      */
     @HOSTED_ONLY
-    private static <Word_Type extends Word> void replaceNullWithZero(Word_Type[] array) {
-        final Class<Class<Word_Type>> type = null;
-        final Class<Word_Type> wordType = StaticLoophole.cast(type, array.getClass().getComponentType());
-        final Word_Type zero = Word.zero().as(wordType);
+    private static void replaceNullWithZero(Word[] array) {
+        final Word zero = Word.zero();
         for (int i = 0; i != array.length; ++i) {
             if (array[i] == null) {
                 array[i] = zero;
@@ -63,14 +60,14 @@ public final class WordArray {
         }
     }
 
-    public static <Word_Type extends Word> void fill(Word_Type[] array, Word_Type value) {
+    public static void fill(Word[] array, Word value) {
         for (int i = 0; i < array.length; i++) {
             uncheckedSet(array, i, value);
         }
     }
 
     // Substituted by uncheckedGet_()
-    public static <Word_Type extends Word> Word_Type uncheckedGet(Word_Type[] array, int index) {
+    public static Word uncheckedGet(Word[] array, int index) {
         if (array[index] == null) {
             replaceNullWithZero(array);
         }
@@ -84,7 +81,7 @@ public final class WordArray {
     }
 
     // Substituted by get_()
-    public static <Word_Type extends Word> Word_Type get(Word_Type[] array, int index) {
+    public static Word get(Word[] array, int index) {
         if (array[index] == null) {
             replaceNullWithZero(array);
         }
@@ -99,29 +96,29 @@ public final class WordArray {
     }
 
     // Substituted by uncheckedSet_()
-    public static <Word_Type extends Word> void uncheckedSet(Word_Type[] array, int index, Word_Type value) {
+    public static void uncheckedSet(Word[] array, int index, Word value) {
         array[index] = value;
     }
 
     @LOCAL_SUBSTITUTION
     @INLINE
-    private static <Word_Type extends Word> void uncheckedSet_(Word_Type[] array, int index, Word_Type value) {
+    private static void uncheckedSet_(Word[] array, int index, Word value) {
         ArrayAccess.setWord(array, index, value);
     }
 
     // Substituted by set_()
-    public static <Word_Type extends Word> void set(Word_Type[] array, int index, Word_Type value) {
+    public static void set(Word[] array, int index, Word value) {
         array[index] = value;
     }
 
     @LOCAL_SUBSTITUTION
     @INLINE
-    private static <Word_Type extends Word> void set_(Word_Type[] array, int index, Word_Type value) {
+    private static void set_(Word[] array, int index, Word value) {
         ArrayAccess.checkIndex(array, index);
         ArrayAccess.setWord(array, index, value);
     }
 
-    public static <Word_Type extends Word> void copyAll(Word_Type[] fromArray, Word_Type[] toArray) {
+    public static void copyAll(Word[] fromArray, Word[] toArray) {
         if (fromArray.length > toArray.length) {
             throw new ArrayIndexOutOfBoundsException();
         }

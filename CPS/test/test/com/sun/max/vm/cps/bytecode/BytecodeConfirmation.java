@@ -20,7 +20,7 @@
  */
 package test.com.sun.max.vm.cps.bytecode;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;

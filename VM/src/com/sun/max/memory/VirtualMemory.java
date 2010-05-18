@@ -117,15 +117,15 @@ public final class VirtualMemory {
     }
 
     /**
-     * Allocates virtual memory that is not backed by swap space.
-     *
-     * @param size the size requested
-     * @type type of memory
-     * @return the address of the allocated memory or zero if unsuccessful
+     * Generic virtual memory allocator.
+     * @param address reserve virtual memory at specified address if not zero, otherwise let the underlying OS decide where to allocate
+     * @param size
+     * @param reserveSwap reserve swap space if set to true.
+     * @param protNone no protection is set if true, all are set otherwise
+     * @return address to the allocated chunk of virtual memory, zero otherwise if allocation failed for any reason.
      */
-    public static Pointer allocateNoSwap(Size size, Type type) {
-        return virtualMemory_allocateNoSwap(size);
-    }
+    @C_FUNCTION
+    private static native Pointer virtualMemory_allocatePrivateAnon(Address address, Size size, boolean reserveSwap, boolean protNone, int type);
 
     @C_FUNCTION
     private static native boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int type);
@@ -134,13 +134,43 @@ public final class VirtualMemory {
     private static native Pointer virtualMemory_allocateIn31BitSpace(Size size, int type);
 
     @C_FUNCTION
-    private static native Pointer virtualMemory_allocateNoSwap(Size size);
-
-    @C_FUNCTION
     private static native Pointer virtualMemory_allocate(Size size, int type);
 
     @C_FUNCTION
     private static native Pointer virtualMemory_deallocate(Address start, Size size, int type);
+
+
+    /**
+     * Allocates virtual memory that is not backed by swap space.
+     *
+     * @param size the size requested
+     * @type type of memory
+     * @return the address of the allocated memory or zero if unsuccessful
+     */
+    public static Pointer allocateNoSwap(Size size, Type type) {
+        return virtualMemory_allocatePrivateAnon(Address.zero(), size, false, false, type.ordinal());
+    }
+
+    public static Pointer reserveMemory(Address address, Size size, Type type) {
+        return virtualMemory_allocatePrivateAnon(address, size, false, true, type.ordinal());
+    }
+
+    public static boolean commitMemory(Address address, Size size, Type type) {
+        if (address.isZero()) {
+            return false;
+        }
+        Pointer committed = virtualMemory_allocatePrivateAnon(address, size, true, false, type.ordinal());
+        return !committed.isZero();
+    }
+
+    public static boolean uncommitMemory(Address address, Size size, Type type) {
+        if (address.isZero()) {
+            return false;
+        }
+        // Remap previously mapped space so the new space isn't backed with swap space and has not protection set (i.e., prevents any access).
+        Pointer uncommitted = virtualMemory_allocatePrivateAnon(address, size, false, true, type.ordinal());
+        return !uncommitted.isZero();
+    }
 
     /* Page protection methods */
 

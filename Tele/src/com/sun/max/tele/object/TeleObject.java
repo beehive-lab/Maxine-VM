@@ -25,13 +25,13 @@ import java.util.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
@@ -41,10 +41,13 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Canonical surrogate for a heap object in the {@link TeleVM}.
+ * Canonical surrogate for a heap object in the VM.
  *
- * This class and its subclasses play the role of typed wrappers for References to heap objects in the {@link TeleVM},
+ * This class and its subclasses play the role of typed wrappers for References to heap objects in the VM,
  * encapsulating implementation details for working with those objects remotely.
+ * <br>
+ * Each implementation is expected to either avoid caching any values read from the VM, or to update any
+ * caches each time {@link #refresh()} is called.
  *
  * @author Michael Van De Vanter
  * @author Hannes Payer
@@ -135,7 +138,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public TeleObject getForwardedTeleObject() {
         if (isObsolete()) {
             TeleGrip forwardedTeleGrip = reference.grip().getForwardedTeleGrip();
-            TeleObject teleObject = teleVM().findObjectByOID(forwardedTeleGrip.makeOID());
+            TeleObject teleObject = vm().findObjectByOID(forwardedTeleGrip.makeOID());
             if (teleObject == null) {
                 reference = (TeleReference) forwardedTeleGrip.toReference();
                 return this;
@@ -145,14 +148,21 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         return this;
     }
 
-    protected void refresh(long processEpoch) {
+    /**
+     * Update any cached state from the VM, if possible.
+     * <br>
+     * Note that this method gets called automatically as part of instance creation.
+     *
+     * @see TeleObjectFactory#make(Reference)
+     */
+    protected void refresh() {
         /*if (reference.toOrigin().equals(Pointer.zero())) {
             live = false;
         }*/
     }
 
     /**
-     * @return canonical reference to this object in the {@link TeleVM}
+     * @return canonical reference to this object in the VM
      */
     public TeleReference reference() {
         return reference;
@@ -164,7 +174,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public abstract ObjectKind kind();
 
     /**
-     * @return a number that uniquely identifies this object in the {@link TeleVM} for the duration of the inspection
+     * @return a number that uniquely identifies this object in the VM for the duration of the inspection
      */
     public long getOID() {
         return oid;
@@ -188,7 +198,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
 
     /**
      * @return local {@link ClassActor}, equivalent to the one in the teleVM that describes the type
-     * of this object in the {@link TeleVM}.
+     * of this object in the VM.
      * Note that in the singular instance of {@link StaticTuple} this does not correspond to the actual type of the
      * object, which is an exceptional Maxine object that has no ordinary Java type; it returns in this case
      * the type of the class that the tuple helps implement.
@@ -198,7 +208,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * return local surrogate for the{@link ClassMethodActor} associated with this object in the {@link TeleVM}, either
+     * return local surrogate for the{@link ClassMethodActor} associated with this object in the VM, either
      * because it is a {@link ClassMethodActor} or because it is a class closely associated with a method that refers to
      * a {@link ClassMethodActor}. Null otherwise.
      */
@@ -231,24 +241,24 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     /**
      * @return the size of the memory occupied by this object in the VM, including header.
      */
-    public abstract Size objectSize();
+    protected abstract Size objectSize();
 
     /**
      * Gets the current area of memory in which the object is stored.
      *
      * @return current memory region occupied by this object in the VM, subject to relocation by GC.
      */
-    public final MemoryRegion memoryRegion() {
+    public final TeleFixedMemoryRegion objectMemoryRegion() {
         if (isObsolete() || isDead()) {
             //Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
-            return new TeleMemoryRegion(specificLayout.originToCell(lastValidPointer), objectSize(), "");
+            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(lastValidPointer), objectSize());
         }
-        return new TeleMemoryRegion(specificLayout.originToCell(reference.toOrigin()), objectSize(), "");
+        return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.toOrigin()), objectSize());
     }
 
-    public final MemoryRegion getForwardedMemoryRegion() {
+    public final MaxMemoryRegion getForwardedMemoryRegion() {
         if (isObsolete()) {
-            return new TeleMemoryRegion(specificLayout.originToCell(reference.grip().getForwardedTeleGrip().toOrigin()), objectSize(), "");
+            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.grip().getForwardedTeleGrip().toOrigin()), objectSize());
         }
         return null;
     }
@@ -305,10 +315,10 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @param headerField a field in the object's header
      * @return current memory region occupied by a header field in this object in the VM
      */
-    public final MemoryRegion headerMemoryRegion(HeaderField headerField) {
+    public final TeleFixedMemoryRegion headerMemoryRegion(HeaderField headerField) {
         final Pointer start = origin().plus(headerOffset(headerField));
         final Size size = headerSize(headerField);
-        return new TeleMemoryRegion(start, size, "Current memory for header field " + headerField.name);
+        return new TeleFixedMemoryRegion(vm(), "Current memory for header field " + headerField.name, start, size);
     }
 
     /**
@@ -318,8 +328,8 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     public TeleHub getTeleHub() {
         if (teleHub == null) {
-            final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
-            teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
+            final Reference hubReference = vm().wordToReference(vm().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
+            teleHub = (TeleHub) vm().makeTeleObject(hubReference);
         }
         return teleHub;
     }
@@ -330,7 +340,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the "misc" word from the header of this object in the teleVM
      */
     public Word getMiscWord() {
-        return teleVM().layoutScheme().generalLayout.readMisc(reference);
+        return vm().layoutScheme().generalLayout.readMisc(reference);
     }
 
     /**
@@ -379,16 +389,16 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @param fieldActor a field in the object
      * @return current memory region occupied by the field in this object in the VM, subject to relocation by GC.
      */
-    public final MemoryRegion fieldMemoryRegion(FieldActor fieldActor) {
+    public final TeleFixedMemoryRegion fieldMemoryRegion(FieldActor fieldActor) {
         final Pointer start = origin().plus(fieldActor.offset());
         final Size size = fieldSize(fieldActor);
-        return new TeleMemoryRegion(start, size, "");
+        return new TeleFixedMemoryRegion(vm(), "", start, size);
     }
 
     /**
      * @param fieldActor local {@link FieldActor}, part of the {@link ClassActor} for the type of this object, that
-     *            describes a field in this object in the {@link TeleVM}
-     * @return contents of the designated field in this object in the {@link TeleVM}
+     *            describes a field in this object in the VM
+     * @return contents of the designated field in this object in the VM
      */
     public abstract Value readFieldValue(FieldActor fieldActor);
 
@@ -477,9 +487,9 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         }
 
         /**
-         * Updates the field of an object or class from the {@link TeleVM}.
+         * Updates the field of an object or class from the VM.
          *
-         * @param teleObject surrogate for a tuple in the {@link TeleVM}. This will be a static tuple if the field is static.
+         * @param teleObject surrogate for a tuple in the VM. This will be a static tuple if the field is static.
          * @param tuple the local object to be updated in the host VM. This value is ignored if the field is static.
          * @param fieldActor the field to be copied/updated
          */
@@ -495,7 +505,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
                     final Value value = teleObject.readFieldValue(fieldActor);
                     final Object newJavaValue;
                     if (fieldActor.kind.isReference) {
-                        final TeleObject teleFieldReferenceObject = teleObject.teleVM().makeTeleObject(value.asReference());
+                        final TeleObject teleFieldReferenceObject = teleObject.vm().makeTeleObject(value.asReference());
                         if (teleFieldReferenceObject == null) {
                             newJavaValue = null;
                         } else {
@@ -565,7 +575,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * Updates the static fields of a specified local class from the {@link TeleVM}.
+     * Updates the static fields of a specified local class from the VM.
      */
     public static void copyStaticFields(TeleVM teleVM, Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
@@ -597,6 +607,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     public ReferenceTypeProvider getReferenceType() {
-        return teleVM().findTeleClassActor(classActorForType().typeDescriptor);
+        return vm().findTeleClassActor(classActorForType().typeDescriptor);
     }
 }

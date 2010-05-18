@@ -98,7 +98,7 @@ public class IR {
         topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI);
 
         // Graph builder must set the startBlock and the osrEntryBlock
-        new GraphBuilder(compilation, topScope, this);
+        new GraphBuilder(compilation, this).build(topScope);
         assert startBlock != null;
         verifyAndPrint("After graph building");
     }
@@ -174,7 +174,7 @@ public class IR {
 
     private void print(boolean cfgOnly) {
         TTY.println("IR for " + compilation.method);
-        final InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
+        final InstructionPrinter ip = new InstructionPrinter(TTY.out(), true, compilation.target);
         final BlockPrinter bp = new BlockPrinter(this, ip, cfgOnly, false);
         startBlock.iteratePreOrder(bp);
     }
@@ -188,7 +188,7 @@ public class IR {
             new IRChecker(this, phase).check();
         }
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
-        if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
+        if (cfgPrinter != null) {
             cfgPrinter.printCFG(startBlock, phase, true, false);
         }
         if (C1XOptions.PrintHIR) {
@@ -222,7 +222,7 @@ public class IR {
         newSucc.setNext(e, bci);
         newSucc.setEnd(e);
         // setup states
-        ValueStack s = source.end().stateAfter();
+        FrameState s = source.end().stateAfter();
         newSucc.setStateBefore(s.copy());
         e.setStateAfter(s.immutableCopy());
         assert newSucc.stateBefore().localsSize() == s.localsSize();

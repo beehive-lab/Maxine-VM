@@ -28,7 +28,7 @@ import com.sun.max.ide.*;
 import com.sun.max.io.*;
 
 /**
- * This class implements the {@linkplain #generate() process} by which the source in {@link JniFunctionsSource JniFunctionsSource.java}
+ * This class implements the {@linkplain #generate process} by which the source in {@link JniFunctionsSource JniFunctionsSource.java}
  * and {@link JmmFunctionsSource JmmFunctionsSource.java} is pre-processed to produce source in
  * {@link JniFunctions JniFunctions.java} and {@link JmmFunctions JmmFunctions.java}.
  * The generated source is delineated by the following lines:

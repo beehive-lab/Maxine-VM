@@ -74,6 +74,7 @@ public final class FatalError extends Error {
      * @see #unexpected(String, boolean, Throwable, Pointer)
      * @return never
      */
+    @NEVER_INLINE
     public static FatalError unexpected(String message) {
         throw unexpected(message, false, null, Pointer.zero());
     }
@@ -90,6 +91,7 @@ public final class FatalError extends Error {
      * @see #unexpected(String, boolean, Throwable, Pointer)
      * @return never
      */
+    @NEVER_INLINE
     public static FatalError unexpected(String message, Throwable throwable) {
         throw unexpected(message, false, throwable, Pointer.zero());
     }
@@ -110,6 +112,7 @@ public final class FatalError extends Error {
      *            resulting in this fatal error
      * @return never
      */
+    @NEVER_INLINE
     public static FatalError unexpected(String message, boolean trappedInNative, Throwable throwable, Pointer trapState) {
         if (MaxineVM.isHosted()) {
             throw new FatalError(message, throwable);
@@ -176,6 +179,7 @@ public final class FatalError extends Error {
      *
      * @param message the error message to print
      */
+    @NEVER_INLINE
     public static void crash(String message) {
         Log.println(message);
         MaxineVM.native_exit(11); // should be symbolic
@@ -204,6 +208,7 @@ public final class FatalError extends Error {
      * @see #unexpected(String, boolean, Throwable, Pointer)
      * @return never
      */
+    @NEVER_INLINE
     public static FatalError unimplemented() {
         throw unexpected("Unimplemented", false, null, Pointer.zero());
     }

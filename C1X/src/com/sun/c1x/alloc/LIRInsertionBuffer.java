@@ -23,6 +23,8 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
  *
@@ -35,7 +37,7 @@ public final class LIRInsertionBuffer {
     // list of insertion points. index and count are stored alternately:
     // indexAndCount[i * 2]: the index into lir list where "count" ops should be inserted
     // indexAndCount[i * 2 + 1]: the number of ops to be inserted at index
-    private final List<Integer> indexAndCount;
+    private final IntList indexAndCount;
 
     // the LIROps to be inserted
     private final List<LIRInstruction> ops;
@@ -51,7 +53,7 @@ public final class LIRInsertionBuffer {
 
     LIRInsertionBuffer() {
         ops = new ArrayList<LIRInstruction>(8);
-        indexAndCount = new ArrayList<Integer>(8);
+        indexAndCount = new IntList(8);
     }
 
     // must be called before using the insertion buffer
@@ -96,7 +98,7 @@ public final class LIRInsertionBuffer {
         return ops.get(i);
     }
 
-    void move(int index, LIROperand src, LIROperand dst, LIRDebugInfo info) {
+    void move(int index, CiValue src, CiValue dst, LIRDebugInfo info) {
         append(index, new LIROp1(LIROpcode.Move, src, dst, dst.kind, info));
     }
 

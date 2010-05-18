@@ -36,7 +36,6 @@ import com.sun.max.program.*;
  * and for navigating forward and backward among the matching rows.
  *
  * @author Michael Van De Vanter
- *
  */
 public class RowTextSearchToolBar extends InspectorToolBar {
 

@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>UnsafeGetObject</code> instruction represents an unsafe read.
+ * The {@code UnsafeGetObject} instruction represents an unsafe read.
  *
  * @author Ben L. Titzer
  */
@@ -34,7 +34,7 @@ public final class UnsafeGetObject extends UnsafeObjectOp {
      * @param opKind the kind of the operation
      * @param object the instruction generating the object
      * @param offset the instruction generating the offset
-     * @param isVolatile <code>true</code> if this operation is volatile
+     * @param isVolatile {@code true} if this operation is volatile
      */
     public UnsafeGetObject(CiKind opKind, Value object, Value offset, boolean isVolatile) {
         super(opKind, object, offset, false, isVolatile);

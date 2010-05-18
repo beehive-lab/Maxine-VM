@@ -20,12 +20,12 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>If</code> instruction represents a branch that can go one of two directions
+ * The {@code If} instruction represents a branch that can go one of two directions
  * depending on the outcome of a comparison.
  *
  * @author Ben L. Titzer
@@ -40,15 +40,15 @@ public final class If extends BlockEnd {
      * Constructs a new If instruction.
      * @param x the instruction producing the first input to the instruction
      * @param cond the condition (comparison operation)
-     * @param unorderedIsTrue <code>true</code> if unordered is treated as true (floating point operations)
+     * @param unorderedIsTrue {@code true} if unordered is treated as true (floating point operations)
      * @param y the instruction that produces the second input to this instruction
      * @param trueSucc the block representing the true successor
      * @param falseSucc the block representing the false successor
      * @param stateBefore the state before the branch
-     * @param isSafepoint <code>true</code> if this branch should be considered a safepoint
+     * @param isSafepoint {@code true} if this branch should be considered a safepoint
      */
     public If(Value x, Condition cond, boolean unorderedIsTrue, Value y,
-              BlockBegin trueSucc, BlockBegin falseSucc, ValueStack stateBefore, boolean isSafepoint) {
+              BlockBegin trueSucc, BlockBegin falseSucc, FrameState stateBefore, boolean isSafepoint) {
         super(CiKind.Illegal, stateBefore, isSafepoint);
         this.x = x;
         this.y = y;
@@ -85,7 +85,7 @@ public final class If extends BlockEnd {
 
     /**
      * Checks whether unordered inputs mean true or false.
-     * @return <code>true</code> if unordered inputs produce true
+     * @return {@code true} if unordered inputs produce true
      */
     public boolean unorderedIsTrue() {
         return checkFlag(Flag.UnorderedIsTrue);
@@ -109,7 +109,7 @@ public final class If extends BlockEnd {
 
     /**
      * Gets the block corresponding to the specified outcome of the branch.
-     * @param istrue <code>true</code> if the true successor is requested, <code>false</code> otherwise
+     * @param istrue {@code true} if the true successor is requested, {@code false} otherwise
      * @return the corresponding successor
      */
     public BlockBegin successor(boolean istrue) {

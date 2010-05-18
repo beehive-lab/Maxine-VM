@@ -29,6 +29,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.cps.b.c.*;
 import com.sun.max.vm.cps.cir.*;
@@ -389,6 +390,11 @@ public abstract class JavaOperator extends CirOperator {
     }
 
     public static final JavaOperator SAFEPOINT_OP = new JavaBuiltinOperator(SafepointBuiltin.BUILTIN);
+    public static final JavaOperator LINK_OP = new JavaSnippetOperator(LinkNativeMethod.SNIPPET);
+    public static final JavaOperator J2N_OP = new JavaSnippetOperator(NativeCallPrologue.SNIPPET);
+    public static final JavaOperator N2J_OP = new JavaSnippetOperator(NativeCallEpilogue.SNIPPET);
+    public static final JavaOperator J2NC_OP = new JavaSnippetOperator(NativeCallPrologueForC.SNIPPET);
+    public static final JavaOperator N2JC_OP = new JavaSnippetOperator(NativeCallEpilogueForC.SNIPPET);
 
     public static final JavaOperator FLOAT_TO_INT = new JavaSnippetOperator(Snippet.ConvertFloatToInt.SNIPPET);
     public static final JavaOperator FLOAT_TO_LONG = new JavaSnippetOperator(Snippet.ConvertFloatToLong.SNIPPET);

@@ -22,21 +22,19 @@ package com.sun.max.ins.memory;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.management.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.memory.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.value.*;
@@ -48,9 +46,6 @@ import com.sun.max.vm.value.*;
  */
 public final class MemoryRegionsTable extends InspectorTable {
 
-    private final HeapRegionDisplay bootHeapRegionDisplay;
-    private final CodeRegionDisplay bootCodeRegionDisplay;
-
     private final HeapScheme heapScheme;
     private final String heapSchemeName;
 
@@ -59,8 +54,6 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
-        bootHeapRegionDisplay = new HeapRegionDisplay(vm().teleBootHeapRegion());
-        bootCodeRegionDisplay = new CodeRegionDisplay(vm().teleBootCodeRegion());
         heapScheme = inspection.vm().vmConfiguration().heapScheme();
         heapSchemeName = heapScheme.getClass().getSimpleName();
         tableModel = new MemoryRegionsTableModel(inspection);
@@ -71,9 +64,9 @@ public final class MemoryRegionsTable extends InspectorTable {
     @Override
     protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
         final InspectorPopupMenu menu = new InspectorPopupMenu();
-        final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) tableModel.getMemoryRegion(row);
-        final String regionName = memoryRegionDisplay.description();
-        menu.add(actions().inspectRegionMemoryWords(memoryRegionDisplay, regionName));
+        final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
+        final String regionName = memoryRegion.regionName();
+        menu.add(actions().inspectRegionMemoryWords(memoryRegion, regionName));
         // menu.add(actions().setRegionWatchpoint(memoryRegionDisplay, "Watch region memory"));
         menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
         menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
@@ -85,7 +78,7 @@ public final class MemoryRegionsTable extends InspectorTable {
      */
     @Override
     public void updateFocusSelection() {
-        final MemoryRegion memoryRegion = focus().memoryRegion();
+        final MaxMemoryRegion memoryRegion = focus().memoryRegion();
         final int row = tableModel.findRow(memoryRegion);
         updateSelection(row);
     }
@@ -98,8 +91,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         if (!listSelectionEvent.getValueIsAdjusting()) {
             final int row = getSelectedRow();
             if (row >= 0) {
-                final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) getValueAt(row, 0);
-                focus().setMemoryRegion(memoryRegionDisplay);
+                focus().setMemoryRegion(tableModel.getMemoryRegion(row));
             }
         }
     }
@@ -124,19 +116,32 @@ public final class MemoryRegionsTable extends InspectorTable {
      */
     private final class MemoryRegionsTableModel extends InspectorMemoryTableModel {
 
-        private SortedMemoryRegionList<MemoryRegionDisplay> sortedMemoryRegions;
+        private MaxMemoryRegion[] sortedRegions = null;
 
         public MemoryRegionsTableModel(Inspection inspection) {
             super(inspection, Address.zero());
             refresh();
         }
 
+        @Override
+        public void refresh() {
+            final Sequence<MaxMemoryRegion> memoryRegions = vm().state().memoryRegions();
+            sortedRegions = memoryRegions.toCollection().toArray(new MaxMemoryRegion[memoryRegions.length()]);
+            Arrays.sort(sortedRegions, MaxMemoryRegion.Util.startComparator());
+            super.refresh();
+        }
+
+        public int getRowCount() {
+            return sortedRegions.length;
+        }
+
         public int getColumnCount() {
             return MemoryRegionsColumnKind.VALUES.length();
         }
 
-        public int getRowCount() {
-            return sortedMemoryRegions.length();
+        @Override
+        public Class<?> getColumnClass(int row) {
+            return MaxMemoryRegion.class;
         }
 
         public Object getValueAt(int row, int col) {
@@ -144,48 +149,8 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         @Override
-        public Class<?> getColumnClass(int c) {
-            return MemoryRegionDisplay.class;
-        }
-
-        @Override
-        public void refresh() {
-            sortedMemoryRegions = new SortedMemoryRegionList<MemoryRegionDisplay>();
-
-            sortedMemoryRegions.add(bootHeapRegionDisplay);
-            for (TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion : vm().teleHeapRegions()) {
-                sortedMemoryRegions.add(new HeapRegionDisplay(teleLinearAllocationMemoryRegion));
-            }
-            if (vm().teleRootsRegion() != null) {
-                sortedMemoryRegions.add(new OtherRegionDisplay(vm().teleRootsRegion()));
-            }
-
-            if (vm().teleImmortalHeapRegion() != null) {
-                sortedMemoryRegions.add(new HeapRegionDisplay(vm().teleImmortalHeapRegion()));
-            }
-
-            sortedMemoryRegions.add(bootCodeRegionDisplay);
-            final TeleCodeRegion teleRuntimeCodeRegion = vm().teleRuntimeCodeRegion();
-            if (teleRuntimeCodeRegion.isAllocated()) {
-                sortedMemoryRegions.add(new CodeRegionDisplay(teleRuntimeCodeRegion));
-            }
-
-            for (MaxThread thread : vm().state().threads()) {
-                final MaxStack stack = thread.stack();
-                if (!stack.memoryRegion().size().isZero()) {
-                    sortedMemoryRegions.add(new StackRegionDisplay(stack));
-                }
-                MemoryRegion threadLocalsRegion = thread.locals().memoryRegion();
-                if (threadLocalsRegion != null) {
-                    sortedMemoryRegions.add(new ThreadLocalsRegionDisplay(threadLocalsRegion));
-                }
-            }
-            super.refresh();
-        }
-
-        @Override
-        public MemoryRegion getMemoryRegion(int row) {
-            return sortedMemoryRegions.get(row);
+        public MaxMemoryRegion getMemoryRegion(int row) {
+            return sortedRegions[row];
         }
 
         @Override
@@ -195,24 +160,19 @@ public final class MemoryRegionsTable extends InspectorTable {
 
         @Override
         public int findRow(Address address) {
-            int row = 0;
-            for (MemoryRegionDisplay region : sortedMemoryRegions) {
-                if (region.contains(address)) {
+            for (int row = 0; row < sortedRegions.length; row++) {
+                if (sortedRegions[row].contains(address)) {
                     return row;
                 }
-                row++;
             }
             return -1;
         }
 
-        int findRow(MemoryRegion memoryRegion) {
-            assert memoryRegion != null;
-            int row = 0;
-            for (MemoryRegionDisplay region : sortedMemoryRegions) {
-                if (memoryRegion.sameAs(region)) {
+        int findRow(MaxMemoryRegion memoryRegion) {
+            for (int row = 0; row < sortedRegions.length; row++) {
+                if (sortedRegions[row].sameAs(memoryRegion)) {
                     return row;
                 }
-                row++;
             }
             return -1;
         }
@@ -245,233 +205,167 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     }
 
-    private final class NameCellRenderer implements TableCellRenderer {
+    private final class NameCellRenderer implements TableCellRenderer, Prober  {
+
+        // The labels have important user interaction state, so create one per memory region and keep them around,
+        // even though they may not always appear in the same row.
+        private final Map<MaxMemoryRegion, InspectorLabel> regionToLabel = new HashMap<MaxMemoryRegion, InspectorLabel>();
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
-            final MemoryRegionValueLabel label = memoryRegionData.memoryRegionValueLabel();
+            final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            InspectorLabel label = regionToLabel.get(memoryRegion);
+            if (label == null) {
+                label = new MemoryRegionNameLabel(inspection(), memoryRegion);
+                regionToLabel.put(memoryRegion, label);
+            }
             label.setForeground(getRowTextColor(row));
             label.setBackground(cellBackgroundColor(isSelected));
             return label;
-        }
-
-    }
-
-    private final class StartAddressCellRenderer implements TableCellRenderer {
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
-            final WordValueLabel label = memoryRegionData.startLabel();
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
-        }
-    }
-
-    private final class EndAddressCellRenderer implements TableCellRenderer {
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
-            final WordValueLabel label = memoryRegionData.endLabel();
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
-        }
-    }
-
-    private final class SizeCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
-
-        public SizeCellRenderer() {
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
-            final DataLabel.LongAsHex label = new DataLabel.LongAsHex(inspection(), memoryRegionData.size().toLong());
-            label.setOpaque(true);
-            label.setForeground(getRowTextColor(row));
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
-        }
-    }
-
-    private final class AllocCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
-
-        public AllocCellRenderer() {
-            setOpaque(true);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
-            final long allocated = memoryRegionData.allocated().toLong();
-            long size = memoryRegionData.size().toLong();
-            if (size == 0) {
-                return gui().getUnavailableDataTableCellRenderer();
-            }
-            final DataLabel.Percent label = new DataLabel.Percent(inspection(), allocated, size);
-            label.setOpaque(true);
-            label.setToolTipText("Allocated from region: 0x" + Long.toHexString(allocated) + "(" + allocated + ")");
-            label.setForeground(getRowTextColor(row));
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
-        }
-    }
-
-    /**
-     * Decorates a {@link MemoryRegion} with additional display-related behavior.
-     */
-    private abstract class MemoryRegionDisplay extends TeleMemoryRegion implements Comparable<MemoryRegionDisplay> {
-
-        public MemoryRegionDisplay(MemoryRegion memoryRegion) {
-            super(memoryRegion);
-        }
-
-        public int compareTo(MemoryRegionDisplay o) {
-            return start().lessThan(o.start()) ? -1 : start().equals(o.start()) ? 0 : 1;
-        }
-
-        /**
-         * @return the amount of memory within the region that has actually been used.
-         */
-        Size allocated() {
-            return size();
-        }
-
-        @Override
-        public final String description() {
-            return inspection().nameDisplay().shortName(this);
-        }
-
-        public final String toolTipText() {
-            return inspection().nameDisplay().longName(this);
-        }
-
-        private MemoryRegionValueLabel memoryRegionValueLabel;
-
-        public MemoryRegionValueLabel memoryRegionValueLabel() {
-            if (memoryRegionValueLabel == null) {
-                memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
-
-                    @Override
-                    public Value fetchValue() {
-                        return WordValue.from(MemoryRegionDisplay.this.start());
-                    }
-                };
-            }
-            memoryRegionValueLabel.setOpaque(true);
-            return memoryRegionValueLabel;
-        }
-
-        private WordValueLabel startLabel;
-
-        public WordValueLabel startLabel() {
-            if (startLabel == null) {
-                startLabel = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
-
-                    @Override
-                    public Value fetchValue() {
-                        return WordValue.from(MemoryRegionDisplay.this.start());
-                    }
-                };
-            }
-            startLabel.setOpaque(true);
-            return startLabel;
-        }
-
-        private WordValueLabel endLabel;
-
-        public WordValueLabel endLabel() {
-            if (endLabel == null) {
-                endLabel = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
-
-                    @Override
-                    public Value fetchValue() {
-                        return WordValue.from(MemoryRegionDisplay.this.end());
-                    }
-                };
-            }
-            endLabel.setOpaque(true);
-            return endLabel;
         }
 
         public void redisplay() {
-            if (startLabel != null) {
-                startLabel.redisplay();
-            }
-            if (endLabel != null) {
-                endLabel.redisplay();
+            for (Prober prober : regionToLabel.values()) {
+                prober.redisplay();
             }
         }
 
-        @Override
-        public MemoryUsage getUsage() {
-            return null;
+        public void refresh(boolean force) {
+            for (Prober prober : regionToLabel.values()) {
+                prober.refresh(force);
+            }
         }
-
     }
 
-    private final class HeapRegionDisplay extends MemoryRegionDisplay {
+    private final class StartAddressCellRenderer implements TableCellRenderer, Prober {
 
-        private final TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion;
+        // ValueLabels have important user interaction state, so create one per memory region and keep them around,
+        // even though they may not always appear in the same row.
+        private final Map<MaxMemoryRegion, InspectorLabel> regionToLabel = new HashMap<MaxMemoryRegion, InspectorLabel>();
 
-        HeapRegionDisplay(TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion) {
-            super(teleLinearAllocationMemoryRegion);
-            this.teleLinearAllocationMemoryRegion = teleLinearAllocationMemoryRegion;
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            InspectorLabel label = regionToLabel.get(memoryRegion);
+            if (label == null) {
+                label = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
+
+                    @Override
+                    public Value fetchValue() {
+                        return WordValue.from(memoryRegion.start());
+                    }
+                };
+                label.setOpaque(true);
+                regionToLabel.put(memoryRegion, label);
+            }
+            label.setBackground(cellBackgroundColor(isSelected));
+            return label;
         }
 
-        @Override
-        Size allocated() {
-            return teleLinearAllocationMemoryRegion.allocatedSize();
+        public void redisplay() {
+            for (Prober prober : regionToLabel.values()) {
+                prober.redisplay();
+            }
         }
 
+        public void refresh(boolean force) {
+            for (Prober prober : regionToLabel.values()) {
+                prober.refresh(force);
+            }
+        }
     }
 
-    private final class CodeRegionDisplay extends MemoryRegionDisplay {
+    private final class EndAddressCellRenderer implements TableCellRenderer, Prober {
 
-        private final TeleCodeRegion teleCodeRegion;
+        // ValueLabels have important user interaction state, so create one per memory region and keep them around,
+        // even though they may not always appear in the same row.
+        private final Map<MaxMemoryRegion, InspectorLabel> regionToLabel = new HashMap<MaxMemoryRegion, InspectorLabel>();
 
-        CodeRegionDisplay(TeleCodeRegion teleCodeRegion) {
-            super(teleCodeRegion);
-            this.teleCodeRegion = teleCodeRegion;
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            InspectorLabel label = regionToLabel.get(memoryRegion);
+            if (label == null) {
+                label = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
+
+                    @Override
+                    public Value fetchValue() {
+                        return WordValue.from(memoryRegion.end());
+                    }
+                };
+                label.setOpaque(true);
+                regionToLabel.put(memoryRegion, label);
+            }
+            label.setBackground(cellBackgroundColor(isSelected));
+            return label;
         }
 
-        @Override
-        public Size allocated() {
-            return teleCodeRegion.allocatedSize();
+        public void redisplay() {
+            for (Prober prober : regionToLabel.values()) {
+                prober.redisplay();
+            }
         }
 
+        public void refresh(boolean force) {
+            for (Prober prober : regionToLabel.values()) {
+                prober.refresh(force);
+            }
+        }
     }
 
-    private final class StackRegionDisplay extends MemoryRegionDisplay {
+    private final class SizeCellRenderer implements TableCellRenderer, Prober {
 
-        private final MaxStack stack;
+        private final Map<MaxMemoryRegion, InspectorLabel> regionToLabel = new HashMap<MaxMemoryRegion, InspectorLabel>();
 
-        StackRegionDisplay(MaxStack stack) {
-            super(stack.memoryRegion());
-            this.stack = stack;
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            InspectorLabel label = regionToLabel.get(memoryRegion);
+            if (label == null) {
+                label = new MemoryRegionSizeLabel(inspection(), memoryRegion);
+                regionToLabel.put(memoryRegion, label);
+            }
+            label.setForeground(getRowTextColor(row));
+            label.setBackground(cellBackgroundColor(isSelected));
+            return label;
         }
 
-        @Override
-        Size allocated() {
-            // Stack grows downward from the end of the region;
-            return end().minus(stack.thread().stackPointer()).asSize();
+        public void redisplay() {
+            for (Prober prober : regionToLabel.values()) {
+                prober.redisplay();
+            }
         }
 
+        public void refresh(boolean force) {
+            for (Prober prober : regionToLabel.values()) {
+                prober.refresh(force);
+            }
+        }
     }
 
-    private final class ThreadLocalsRegionDisplay extends MemoryRegionDisplay {
+    private final class AllocCellRenderer implements TableCellRenderer, Prober {
 
-        ThreadLocalsRegionDisplay(MemoryRegion threadLocalsRegion) {
-            super(threadLocalsRegion);
+        private final Map<MaxMemoryRegion, InspectorLabel> regionToLabel = new HashMap<MaxMemoryRegion, InspectorLabel>();
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
+            InspectorLabel label = regionToLabel.get(memoryRegion);
+            if (label == null) {
+                label = new MemoryRegionAllocationLabel(inspection(), memoryRegion, MemoryRegionsTable.this);
+                regionToLabel.put(memoryRegion, label);
+            }
+            label.setForeground(getRowTextColor(row));
+            label.setBackground(cellBackgroundColor(isSelected));
+            return label;
         }
 
-    }
-
-    private final class OtherRegionDisplay extends MemoryRegionDisplay {
-
-        OtherRegionDisplay(MemoryRegion memoryRegion) {
-            super(memoryRegion);
+        public void redisplay() {
+            for (Prober prober : regionToLabel.values()) {
+                prober.redisplay();
+            }
         }
 
+        public void refresh(boolean force) {
+            for (Prober prober : regionToLabel.values()) {
+                prober.refresh(force);
+            }
+        }
     }
 
 }

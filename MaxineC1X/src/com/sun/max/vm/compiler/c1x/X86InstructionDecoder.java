@@ -495,7 +495,7 @@ public final class X86InstructionDecoder {
         patchDisp32(code, patchPos, offset);
     }
 
-    private static void patchDisp32(byte[] code, int pos, int b) {
+    private static void patchDisp32(byte[] code, int pos, int offset) {
         assert pos + 4 < code.length;
 
         assert code[pos] == 0;
@@ -503,9 +503,9 @@ public final class X86InstructionDecoder {
         assert code[pos + 2] == 0;
         assert code[pos + 3] == 0;
 
-        code[pos++] = (byte) (b & 0xFF);
-        code[pos++] = (byte) ((b >> 8) & 0xFF);
-        code[pos++] = (byte) ((b >> 16) & 0xFF);
-        code[pos++] = (byte) ((b >> 24) & 0xFF);
+        code[pos++] = (byte) (offset & 0xFF);
+        code[pos++] = (byte) ((offset >> 8) & 0xFF);
+        code[pos++] = (byte) ((offset >> 16) & 0xFF);
+        code[pos++] = (byte) ((offset >> 24) & 0xFF);
     }
 }

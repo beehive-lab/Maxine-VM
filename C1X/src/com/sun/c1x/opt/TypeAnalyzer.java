@@ -21,7 +21,7 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.graph.IR;
-import com.sun.c1x.ri.RiType;
+import com.sun.cri.ri.*;
 
 /**
  * This class implements an iterative, flow-sensitve type analysis that can be

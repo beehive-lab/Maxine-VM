@@ -63,8 +63,8 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
          */
         public TeleClassMethodActor getTeleClassMethodActor() {
             if (teleClassMethodActor == null) {
-                final Reference methodActorReference = teleVM().teleFields().ResolvedMethodRefConstant_methodActor.readReference(reference());
-                teleClassMethodActor = (TeleClassMethodActor) teleVM().makeTeleObject(methodActorReference);
+                final Reference methodActorReference = vm().teleFields().ResolvedMethodRefConstant_methodActor.readReference(reference());
+                teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(methodActorReference);
             }
             return teleClassMethodActor;
         }

@@ -60,7 +60,7 @@ class MethodReferenceBytecodeAdapter extends BytecodeAdapter {
     protected void invokespecial(int index) {
         final ClassMethodRefConstant methodRef = constantPool.classMethodAt(index);
         if (methodRef.isResolvableWithoutClassLoading(constantPool)) {
-            final ResolutionGuard guard = constantPool.makeResolutionGuard(index, ResolveSpecialMethod.SNIPPET);
+            final ResolutionGuard.InPool guard = constantPool.makeResolutionGuard(index, ResolveSpecialMethod.SNIPPET);
             staticAndSpecialMethodActors.add(ResolveSpecialMethod.resolveSpecialMethod(guard));
         }
     }
@@ -69,7 +69,7 @@ class MethodReferenceBytecodeAdapter extends BytecodeAdapter {
     protected void invokestatic(int index) {
         final ClassMethodRefConstant methodRef = constantPool.classMethodAt(index);
         if (methodRef.isResolvableWithoutClassLoading(constantPool)) {
-            final ResolutionGuard guard = constantPool.makeResolutionGuard(index, ResolveStaticMethod.SNIPPET);
+            final ResolutionGuard.InPool guard = constantPool.makeResolutionGuard(index, ResolveStaticMethod.SNIPPET);
             staticAndSpecialMethodActors.add(ResolveStaticMethod.resolveStaticMethod(guard));
         }
     }

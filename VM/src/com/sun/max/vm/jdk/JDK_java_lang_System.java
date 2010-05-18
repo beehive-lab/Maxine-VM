@@ -291,7 +291,7 @@ public final class JDK_java_lang_System {
         }
         final Hub fromHub = ObjectAccess.readHub(fromArray);
         final ClassActor fromArrayClassActor = fromHub.classActor;
-        if (!fromArrayClassActor.isArrayClassActor()) {
+        if (!fromArrayClassActor.isArrayClass()) {
             throw new ArrayStoreException();
         }
         final Kind kind = fromArrayClassActor.componentClassActor().kind;
@@ -319,7 +319,7 @@ public final class JDK_java_lang_System {
             arrayCopyForward(kind, fromArray, fromIndex, toArray, toIndex, length, null);
         } else {
             final ClassActor toArrayClassActor = toHub.classActor;
-            if (!toArrayClassActor.isArrayClassActor()) {
+            if (!toArrayClassActor.isArrayClass()) {
                 throw new ArrayStoreException();
             }
             final ClassActor toComponentClassActor = toArrayClassActor.componentClassActor();

@@ -46,11 +46,18 @@ public final class Code {
 
     public static final VMBooleanXXOption traceAllocation = register(new VMBooleanXXOption("-XX:-TraceCodeAllocation", "Trace allocation from the code cache."), MaxineVM.Phase.STARTING);
 
+
+    /**
+     * Used by the Inspector to uniquely identify the special boot code region.
+     */
+    @INSPECTED
+    private static final String CODE_BOOT_NAME = "Code-Boot";
+
     /**
      * The code region that contains the boot code.
      */
     @INSPECTED
-    public static final CodeRegion bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).wordAligned(), Size.fromInt(Integer.MAX_VALUE / 4), "Code-Boot");
+    public static final CodeRegion bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).wordAligned(), Size.fromInt(Integer.MAX_VALUE / 4), CODE_BOOT_NAME);
 
     /**
      * Creates the singleton code manager for this operating system.

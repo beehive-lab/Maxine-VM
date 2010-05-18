@@ -20,12 +20,12 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>LoadIndexed</code> instruction represents a read from an element of an array.
+ * The {@code LoadIndexed} instruction represents a read from an element of an array.
  *
  * @author Ben L. Titzer
  */
@@ -39,8 +39,8 @@ public final class LoadIndexed extends AccessIndexed {
      * @param elementType the element type
      * @param stateBefore the state before executing this instruction
      */
-    public LoadIndexed(Value array, Value index, Value length, CiKind elementType, ValueStack stateBefore) {
-        super(array, index, length, elementType, stateBefore);
+    public LoadIndexed(Value array, Value index, Value length, CiKind elementType, FrameState stateBefore) {
+        super(elementType.stackKind(), array, index, length, elementType, stateBefore);
     }
 
     /**

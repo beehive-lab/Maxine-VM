@@ -22,8 +22,9 @@ package com.sun.max.vm.template;
 
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -409,35 +410,32 @@ public enum BytecodeTemplate {
     MOV_L2D,
     MOV_D2L,
 
-    UWLT,
-    UWLTEQ,
-    UWGT,
-    UWGTEQ,
-    UGE,
     WRETURN,
     SAFEPOINT,
     PAUSE,
+    LSB,
+    MSB,
 
 //    JNICALL,
-    READGPR_FP_CPU,
-    READGPR_SP_CPU,
-    READGPR_FP_ABI,
-    READGPR_SP_ABI,
-    READGPR_LATCH,
+    READREG$fp_cpu,
+    READREG$sp_cpu,
+    READREG$fp_abi,
+    READREG$sp_abi,
+    READREG$latch,
 
-    WRITEGPR_FP_CPU,
-    WRITEGPR_SP_CPU,
-    WRITEGPR_FP_ABI,
-    WRITEGPR_SP_ABI,
-    WRITEGPR_LATCH,
-    WRITEGPR_LINK,
+    WRITEREG$fp_cpu,
+    WRITEREG$sp_cpu,
+    WRITEREG$fp_abi,
+    WRITEREG$sp_abi,
+    WRITEREG$latch,
+    WRITEREG$link,
 
     MEMBAR_LOAD_LOAD,
     MEMBAR_LOAD_STORE,
     MEMBAR_STORE_LOAD,
     MEMBAR_STORE_STORE,
     MEMBAR_MEMOP_STORE,
-    MEMBAR_ALL;
+    MEMBAR_FENCE;
 
 
 
@@ -451,6 +449,24 @@ public enum BytecodeTemplate {
     public static final EnumMap<KindEnum, BytecodeTemplate> INVOKEINTERFACES = makeKindMap(Bytecodes.INVOKEINTERFACE);
     public static final EnumMap<KindEnum, BytecodeTemplate> INVOKESPECIALS = makeKindMap(Bytecodes.INVOKESPECIAL);
     public static final EnumMap<KindEnum, BytecodeTemplate> INVOKESTATICS = makeKindMap(Bytecodes.INVOKESTATIC);
+
+    public static final EnumMap<Role, BytecodeTemplate> WRITEREGS = new EnumMap<Role, BytecodeTemplate>(Role.class);
+    public static final EnumMap<Role, BytecodeTemplate> READREGS = new EnumMap<Role, BytecodeTemplate>(Role.class);
+
+    static {
+        WRITEREGS.put(Role.CPU_FRAME_POINTER, WRITEREG$fp_cpu);
+        WRITEREGS.put(Role.CPU_STACK_POINTER, WRITEREG$sp_cpu);
+        WRITEREGS.put(Role.ABI_FRAME_POINTER, WRITEREG$fp_abi);
+        WRITEREGS.put(Role.ABI_STACK_POINTER, WRITEREG$sp_abi);
+        WRITEREGS.put(Role.SAFEPOINT_LATCH, WRITEREG$latch);
+        WRITEREGS.put(Role.LINK_ADDRESS, WRITEREG$link);
+
+        READREGS.put(Role.CPU_FRAME_POINTER, READREG$fp_cpu);
+        READREGS.put(Role.CPU_STACK_POINTER, READREG$sp_cpu);
+        READREGS.put(Role.ABI_FRAME_POINTER, READREG$fp_abi);
+        READREGS.put(Role.ABI_STACK_POINTER, READREG$sp_abi);
+        READREGS.put(Role.SAFEPOINT_LATCH, READREG$latch);
+    }
 
     /**
      * Creates a map from kinds to the template specialized for each kind a given bytecode is parameterized by.

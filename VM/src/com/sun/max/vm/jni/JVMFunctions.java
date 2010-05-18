@@ -62,7 +62,7 @@ public class JVMFunctions {
         // Append the class of each method to the array:
         final List<Class> result = new ArrayList<Class>();
         for (ClassMethodActor methodActor : methodActors) {
-            result.add(methodActor.holder().mirror());
+            result.add(methodActor.holder().javaClass());
         }
         return result.toArray(new Class[result.size()]);
     }

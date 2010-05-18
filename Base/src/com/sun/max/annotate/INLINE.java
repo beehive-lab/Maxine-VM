@@ -22,7 +22,8 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Every thus annotated method is to be inlined unconditionally by the VM's optimizing compiler.
+ * Every thus annotated method is to be inlined unconditionally by the VM's optimizing compiler
+ * and the receiver is never null-checked.
  *
  * This annotation exists primarily for annotating methods that <b>must</b> be inlined
  * for semantic reasons as opposed to those that could be inlined for performance reasons.

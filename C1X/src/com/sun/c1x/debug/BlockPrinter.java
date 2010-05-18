@@ -22,8 +22,8 @@ package com.sun.c1x.debug;
 
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.util.Util;
 
 /**
  * Prints a listing for a {@linkplain BlockBegin block}.
@@ -71,18 +71,18 @@ public class BlockPrinter implements BlockClosure {
 
     }
 
-    private static void printStack(ValueStack stack, LogStream out) {
+    private static void printStack(FrameState state, LogStream out) {
         int startPosition = out.position();
-        if (stack.stackEmpty()) {
+        if (state.stackEmpty()) {
           out.print("empty stack");
         } else {
           out.print("stack [");
           int i = 0;
-          while (i < stack.stackSize()) {
+          while (i < state.stackSize()) {
             if (i > 0) {
                 out.print(", ");
             }
-            Value value = stack.stackAt(i);
+            Value value = state.stackAt(i);
             out.print(i + ":" + Util.valueString(value));
               i += value.kind.sizeInSlots();
             if (value instanceof Phi) {
@@ -95,14 +95,14 @@ public class BlockPrinter implements BlockClosure {
           }
           out.print(']');
         }
-        if (!stack.noActiveLocks()) {
+        if (!state.noActiveLocks()) {
             // print out the lines on the line below this
             // one at the same indentation level.
             out.println();
             out.fillTo(startPosition, ' ');
             out.print("locks [");
-            for (int i = 0; i < stack.locksSize(); i++) {
-                Value value = stack.lockAt(i);
+            for (int i = 0; i < state.locksSize(); i++) {
+                Value value = state.lockAt(i);
                 if (i > 0) {
                     out.print(", ");
                 }

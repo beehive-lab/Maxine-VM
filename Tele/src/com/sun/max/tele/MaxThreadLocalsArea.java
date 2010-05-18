@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -35,7 +34,7 @@ import com.sun.max.vm.thread.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxThreadLocalsArea {
+public interface MaxThreadLocalsArea extends MaxEntity<MaxThreadLocalsArea> {
 
     /**
      * Gets the thread containing this thread locals area in the VM.
@@ -54,15 +53,6 @@ public interface MaxThreadLocalsArea {
      * @return the state
      */
     Safepoint.State safepointState();
-
-    /**
-     * Gets a description of the memory occupied by this thread locals area in the VM.
-     * <br>
-     * Thread-safe
-     *
-     * @return the memory occupied by this thread locals area in the VM.
-     */
-    MemoryRegion memoryRegion();
 
     /**
      * Gets the number of thread local variables in this thread locals area in the VM.

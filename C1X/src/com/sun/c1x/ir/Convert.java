@@ -20,37 +20,33 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>Convert</code> class represents a conversion between primitive types.
+ * The {@code Convert} class represents a conversion between primitive types.
  *
  * @author Ben L. Titzer
  */
 public final class Convert extends Instruction {
 
-    final int opcode;
+    /**
+     * The opcode for this conversion operation.
+     */
+    public final int opcode;
+
     Value value;
 
     /**
      * Constructs a new Convert instance.
      * @param opcode the bytecode representing the operation
      * @param value the instruction producing the input value
-     * @param type the result type of this instruction
+     * @param kind the result type of this instruction
      */
-    public Convert(int opcode, Value value, CiKind type) {
-        super(type);
+    public Convert(int opcode, Value value, CiKind kind) {
+        super(kind);
         this.opcode = opcode;
         this.value = value;
-    }
-
-    /**
-     * Gets the opcode for this conversion operation.
-     * @return the opcode of this conversion operation
-     */
-    public int opcode() {
-        return opcode;
     }
 
     /**
