@@ -18,28 +18,40 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.guestvm.xen.dbchannel;
+package com.sun.max.tele.debug.guestvm.xen.dbchannel.agent;
+
+import java.io.*;
 
 import static com.sun.max.tele.debug.guestvm.xen.dbchannel.dataio.DataIOProtocol.*;
 
+import com.sun.max.collect.*;
+import com.sun.max.program.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.jni.*;
+
 /**
- * A {@link SimpleProtocol} implementation that simply delegates to another.
+ * A {@link SimpleProtocol} implementation that is called reflectively by {@link ProtocolAgent}
+ * and delegates to the standard {@link JniProtocol}, save the {@link SimpleProtocol#gatherThreads(long, long)}
+ * and {@link SimpleProtocol#readThreads} methods, which are implemented here.
  *
  * @author Mick Jordan
  *
  */
 
-public class DelegatingProtocol extends RIProtocolAdaptor implements SimpleProtocol {
-    private SimpleProtocol impl;
+public class AgentJniProtocol extends RIProtocolAdaptor implements SimpleProtocol {
+    private JniProtocol impl;
 
-    public DelegatingProtocol(SimpleProtocol impl) {
-        this.impl = impl;
+    public AgentJniProtocol() {
+        this.impl = new JniProtocol();
         setArrayMode("readBytes", 1, ArrayMode.OUT);
         setArrayMode("writeBytes", 1, ArrayMode.IN);
         setArrayMode("readRegisters", 1, ArrayMode.OUT);
         setArrayMode("readRegisters", 3, ArrayMode.OUT);
         setArrayMode("readRegisters", 5, ArrayMode.OUT);
+        setArrayMode("readThreads", 1, ArrayMode.OUT);
     }
+
+    private static native void teleThreadLocalsInitialize(int threadLocalsSize);
 
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {
@@ -47,8 +59,9 @@ public class DelegatingProtocol extends RIProtocolAdaptor implements SimpleProto
     }
 
     @Override
-    public boolean attach(int domId) {
-        return impl.attach(domId);
+    public boolean attach(int domId, int threadLocalsAreaSize) {
+        teleThreadLocalsInitialize(threadLocalsAreaSize);
+        return impl.attach(domId, threadLocalsAreaSize);
     }
 
     @Override
@@ -125,6 +138,48 @@ public class DelegatingProtocol extends RIProtocolAdaptor implements SimpleProto
     @Override
     public int writeBytes(long dst, byte[] src, int srcOffset, int length) {
         return impl.writeBytes(dst, src, srcOffset, length);
+    }
+
+    private byte[] threadData;
+    private int numThreads;
+
+    @Override
+    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
+        GuestVMXenTeleDomain teleDomain = new GuestVMXenTeleDomain();
+        AppendableSequence<TeleNativeThread> threads = new ArrayListSequence<TeleNativeThread>();
+        impl.gatherThreads(teleDomain, threads, threadLocalsList, primordialThreadLocals);
+        numThreads = threads.length();
+        SimpleProtocol.GatherThreadData[] data = new SimpleProtocol.GatherThreadData[numThreads];
+        int index = 0;
+        for (TeleNativeThread tnt : threads) {
+            data[index++] = tnt.getThreadData();
+        }
+        final ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        ObjectOutputStream oos = null;
+        try {
+            oos = new ObjectOutputStream(bs);
+            oos.writeObject(data);
+            threadData = bs.toByteArray();
+            return bs.size();
+        } catch (IOException ex) {
+            ProgramError.unexpected(getClass().getName() + ".gatherThreads unexpected I/O error: ", ex);
+        } finally {
+            if (oos != null) {
+                try {
+                    oos.close();
+                    bs.close();
+                } catch (IOException ex) {
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public int readThreads(int size, byte[] gatherThreadsData) {
+        assert gatherThreadsData.length >= threadData.length;
+        System.arraycopy(threadData, 0, gatherThreadsData, 0, threadData.length);
+        return numThreads;
     }
 
 }

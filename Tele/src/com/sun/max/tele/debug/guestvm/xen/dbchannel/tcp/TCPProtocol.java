@@ -54,14 +54,13 @@ public class TCPProtocol extends CompleteProtocolAdaptor {
     }
 
     @Override
-    public boolean attach(int domId) {
+    public boolean attach(int domId, int threadLocalsAreaSize) {
         Trace.line(1, "connecting to agent on " + host + ":" + port);
         try {
             socket = new Socket(host, port);
             Trace.line(1, "connected");
-            in = new DataInputStream(socket.getInputStream());
-            out = new DataOutputStream(socket.getOutputStream());
-            return super.attach(domId);
+            setStreams(new BufferedInputStream(socket.getInputStream()), new BufferedOutputStream(socket.getOutputStream()));
+            return super.attach(domId, threadLocalsAreaSize);
         } catch (Exception ex) {
             Trace.line(1, ex);
             return false;

@@ -20,10 +20,6 @@
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel;
 
-import com.sun.max.collect.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.guestvm.xen.*;
-
 /**
  * The actual protocol expected by the Inspector, that is an extension of the simple {@link SimpleProtocol}.
  * An in-process implementation typically will implement this entire interface directly. A communication-based
@@ -48,21 +44,22 @@ public interface Protocol extends SimpleProtocol {
      * @param dst virtual address to write to
      * @param src either byte array or a {@link java.nio.ByteBuffer byte buffer} to read from
      * @param isDirectByteBuffer {@code true} if {@code src} is a {@link java.nio.ByteBuffer byte buffer}, {@code false} if it is a byte array.
-     * @param srcOffset offset in the byte buffer where readinh should begin
+     * @param srcOffset offset in the byte buffer where reading should begin
      * @param length number of bytes to write
      * @return number of bytes actually written
      */
     int writeBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
     /**
      * Gathers the set of active threads in the target VM.
-     * @param teleDomain
-     * @param threads
-     * @param domainId
-     * @param threadLocalsList
-     * @param primordialThreadLocals
-     * @return
+     * This avoids explicit types so that different versions of the Inspector types can be used on the two sides
+     * of the communication channel.
+     * @param teleDomain a {@link GuestVMTeleDomain} object
+     * @param threads an {@link AppendableSequence<TeleNativeThread>}
+     * @param threadLocalsList address of the thread locals list in the target VM
+     * @param primordialThreadLocals address of the primordial thread locals in the target VM
+     * @return {@code true} if the gather was successful, {@code false} otherwise.
      */
-    boolean gatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
+    boolean gatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals);
 
 
 }

@@ -83,7 +83,7 @@ public final class GuestVMXenDBChannel {
         } else if (channelType.startsWith(GDBSX_TCP)) {
             throw new IllegalArgumentException(GDBSX_TCP + " is not implemented");
         }
-        channelProtocol.attach(domId);
+        channelProtocol.attach(domId, teleDomain.teleVM().bootImage().header.threadLocalsAreaSize);
         maxByteBufferSize = channelProtocol.maxByteBufferSize();
     }
 
