@@ -239,11 +239,15 @@ endif
 
 ifeq ($(OS),guestvm)
     # assume Xen hypervisor
-    ifeq ($(TELEBITS),64)
-      mf = -m64
+    ifeq ($(TARGET),TELE)
+        ifeq ($(TELEBITS),64)
+          mf = -m64
+        else
+          mf = -m32
+          tdir = /32bit
+        endif
     else
-      mf = -m32
-      tdir = /32bit
+      mf = -m64
     endif
     ifneq "$(findstring def, $(origin CC))" ""
         # origin of CC is either undefined or default, so set it here
