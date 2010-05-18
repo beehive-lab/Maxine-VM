@@ -373,7 +373,12 @@ int threadLocalsAreaSize() {
 void threadLocals_println(ThreadLocals tl) {
     NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
     int id = getThreadLocal(int, tl, ID);
+#if defined(_LP64)
     log_println("ThreadLocals[%d: base=%p, end=%p, size=%lu, tlBlock=%p, tlBlockSize=%lu]",
+#else
+    // for 32 bit host
+    log_println("ThreadLocals[%d: base=%llx, end=%llx, size=%llu, tlBlock=%llx, tlBlockSize=%llu]",
+#endif
                     id, ntl->stackBase, ntl->stackBase + ntl->stackSize, ntl->stackSize, ntl->tlBlock, ntl->tlBlockSize);
 }
 

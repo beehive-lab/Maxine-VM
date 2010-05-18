@@ -43,7 +43,7 @@
 
 #undef word_64_BITS
 
-#if defined(_LP64)
+#if defined(w64)
 #   define word_64_BITS 1
 #endif
 
