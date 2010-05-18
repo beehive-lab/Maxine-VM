@@ -383,7 +383,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         wordValueCheckBox.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionEvent) {
-                final JCheckBox checkBox = (JCheckBox) actionEvent.getSource();
+                final InspectorCheckBox checkBox = (InspectorCheckBox) actionEvent.getSource();
                 investigateWordValues = checkBox.isSelected();
                 inspection.updateViewConfiguration();
             }
