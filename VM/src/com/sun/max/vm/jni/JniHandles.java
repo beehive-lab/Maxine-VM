@@ -106,7 +106,7 @@ public final class JniHandles {
     /**
      * The objects exposed to native code via handles.
      *
-     * Note that this representation simplifies handle allocation and deferencing
+     * Note that this representation simplifies handle allocation and dereferencing
      * (in the context of a "JNI handle is an index" implementation)
      * at the cost of expanding an array (allocation plus copy). It will be replaced
      * with a better representation if this expansion cost proves to be too high.
@@ -114,7 +114,7 @@ public final class JniHandles {
     private Object[] handles = new Object[INITIAL_NUMBER_OF_HANDLES];
 
     /**
-     * The frames pushed by {@link JniFunctions#_PushLocalFrame}.
+     * The frames pushed by {@link JniFunctions#PushLocalFrame}.
      */
     private Frame frames;
 
@@ -138,7 +138,7 @@ public final class JniHandles {
      * The name of this field also gives some indication of how handles can be allocated
      * and freed in a stack like fashion.
      *
-     * Invariant: All elements in _handles at an index greater than or equal to _top are null.
+     * Invariant: All elements in {@link #handles} at an index greater than or equal to {@link top} are null.
      */
     private int top;
 
@@ -147,6 +147,7 @@ public final class JniHandles {
      * as the parameter to the {@link #resetTop(int)} method to free handles in a stack
      * like fashion.
      */
+    @INLINE
     public int top() {
         return top;
     }

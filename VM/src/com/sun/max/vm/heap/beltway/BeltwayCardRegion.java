@@ -48,7 +48,7 @@ public class BeltwayCardRegion {
     private static Pointer adjustedCardTable = Pointer.zero();
 
     // Memory region occupied by the CardTable
-    private RuntimeMemoryRegion region = new RuntimeMemoryRegion(Size.zero(), Size.zero());
+    private MemoryRegion region = new MemoryRegion(Size.zero(), Size.zero());
     public Address cardTableStart; // Card Table start
     public Address coveredRegionStart; // Card Region(s) start
     public long numberOfCards;

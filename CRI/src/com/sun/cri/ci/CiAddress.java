@@ -72,13 +72,13 @@ public final class CiAddress extends CiValue {
     }
 
     /**
-     * Creates a {@code CiAddress} with given base and index registers, no scaling and no displacement.
+     * Creates a {@code CiAddress} with given base and offset registers, no scaling and no displacement.
      * @param kind the kind of the value being addressed
      * @param base the base register
-     * @param index the index register
+     * @param offset the offset register
      */
-    public CiAddress(CiKind kind, CiValue base, CiValue index) {
-        this(kind, base, index, Scale.Times1, 0);
+    public CiAddress(CiKind kind, CiValue base, CiValue offset) {
+        this(kind, base, offset, Scale.Times1, 0);
     }
 
     /**

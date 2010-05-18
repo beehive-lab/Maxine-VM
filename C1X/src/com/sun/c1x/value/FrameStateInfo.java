@@ -25,9 +25,9 @@ import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
- * The {@code FrameStateInfo} class represents an immutable view of the state of a frame
+ * The {@link FrameStateInfo} class represents an immutable view of the state of a frame
  * (i.e. it does not have push, pop, or store operations). It is represented more compactly
- * than a {@code ValueStack}. Its immutability eliminates a large number of bugs in
+ * than {@link FrameState}. Its immutability eliminates a large number of bugs in
  * caching of states within the IR.
  *
  * @author Ben L. Titzer

@@ -73,8 +73,8 @@ public class XirSnippet {
     	sb.append(template.toString());
     	sb.append("(");
     	for (XirArgument a : arguments) {
-    		sb.append(" ");
-    		sb.append(a.toString());
+    	    sb.append(" ");
+    	    sb.append(a.toString());
     	}
 
     	sb.append(" )");

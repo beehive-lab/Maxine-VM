@@ -391,22 +391,22 @@ public class LIRList {
         append(new LIROp2(isUnorderedLess ? LIROpcode.Ucmpfd2i : LIROpcode.Cmpfd2i, left, right, dst));
     }
 
-    public void casLong(CiValue addr, CiValue cmpValue, CiValue newValue, CiValue t1, CiValue t2) {
+    public void casLong(CiAddress addr, CiValue cmpValue, CiValue newValue) {
         // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
         // implying successful swap of newValue into addr
-        append(new LIRCompareAndSwap(LIROpcode.CasLong, addr, cmpValue, newValue, t1, t2));
+        append(new LIRCompareAndSwap(LIROpcode.CasLong, addr, cmpValue, newValue));
     }
 
-    public void casObj(CiValue addr, CiValue cmpValue, CiValue newValue, CiValue t1, CiValue t2) {
+    public void casObj(CiAddress addr, CiValue cmpValue, CiValue newValue) {
         // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
         // implying successful swap of newValue into addr
-        append(new LIRCompareAndSwap(LIROpcode.CasObj, addr, cmpValue, newValue, t1, t2));
+        append(new LIRCompareAndSwap(LIROpcode.CasObj, addr, cmpValue, newValue));
     }
 
-    public void casInt(CiValue addr, CiValue cmpValue, CiValue newValue, CiValue t1, CiValue t2) {
+    public void casInt(CiAddress addr, CiValue cmpValue, CiValue newValue) {
         // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
         // implying successful swap of newValue into addr
-        append(new LIRCompareAndSwap(LIROpcode.CasInt, addr, cmpValue, newValue, t1, t2));
+        append(new LIRCompareAndSwap(LIROpcode.CasInt, addr, cmpValue, newValue));
     }
 
     public void store(CiValue src, CiAddress dst, LIRDebugInfo info) {

@@ -177,11 +177,11 @@ public class LIROp2 extends LIRInstruction {
      * Prints this instruction.
      */
     @Override
-    public String operationString() {
+    public String operationString(OperandFormatter operandFmt) {
         if (code == LIROpcode.Cmove) {
-            return condition.toString() + " " + super.operationString();
+            return condition.toString() + " " + super.operationString(operandFmt);
         }
-        return super.operationString();
+        return super.operationString(operandFmt);
     }
 }
 

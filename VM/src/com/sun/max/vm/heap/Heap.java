@@ -415,7 +415,9 @@ public final class Heap {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
             Log.printCurrentThread(false);
-            Log.println("--");
+            Log.print(" for ");
+            Log.print(requestedFreeSpace.toLong());
+            Log.println(" bytes --");
             Log.print("--Before GC   used: ");
             Log.print(beforeUsed);
             Log.print(", free: ");

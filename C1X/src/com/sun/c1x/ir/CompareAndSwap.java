@@ -53,7 +53,8 @@ public final class CompareAndSwap extends PointerOp {
      * @param isVolatile {@code true} if the access is volatile
      */
     public CompareAndSwap(int opcode, Value pointer, Value offset, Value expectedValue, Value newValue, FrameState stateBefore, boolean isVolatile) {
-        super(expectedValue.kind, opcode, pointer, offset, null, stateBefore, isVolatile);
+        super(expectedValue.kind, opcode, pointer, null, offset, stateBefore, isVolatile);
+        assert offset != null;
         this.expectedValue = expectedValue;
         this.newValue = newValue;
         setFlag(Flag.LiveStore);
@@ -65,7 +66,7 @@ public final class CompareAndSwap extends PointerOp {
      */
     @Override
     public void accept(ValueVisitor v) {
-//        v.visitCompareAndSwap(this);
+        v.visitCompareAndSwap(this);
     }
 
     public Value expectedValue() {

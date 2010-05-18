@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import static com.sun.cri.ci.CiUtil.*;
 import static java.lang.reflect.Modifier.*;
 
 import java.lang.reflect.*;
@@ -29,12 +28,12 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.*;
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -76,6 +75,15 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
     }
 
+    static class NewInstanceTemplates extends XirPair {
+        final XirTemplate resolvedHybrid;
+
+        public NewInstanceTemplates(XirTemplate resolved, XirTemplate resolvedHybrid, XirTemplate unresolved) {
+            super(resolved, unresolved);
+            this.resolvedHybrid = resolvedHybrid;
+        }
+    }
+
     static class InvokeSpecialTemplates extends XirPair {
         final XirTemplate resolvedNullCheckEliminated;
 
@@ -113,7 +121,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     private XirTemplate monitorEnterTemplate;
     private XirTemplate monitorExitTemplate;
     private XirTemplate[] resolveClassTemplates;
-    private XirPair newInstanceTemplate;
+    private NewInstanceTemplates newInstanceTemplate;
     private XirPair checkcastForLeafTemplate;
     private XirPair checkcastForClassTemplate;
     private XirPair checkcastForInterfaceTemplate;
@@ -131,7 +139,6 @@ public class MaxXirGenerator extends RiXirGenerator {
     final int wordSize;
     final int arrayLengthOffset;
 
-    @UNSAFE
     public MaxXirGenerator(VMConfiguration vmConfiguration, CiTarget target, MaxRiRuntime runtime) {
         this.target = target;
         this.runtime = runtime;
@@ -350,7 +357,11 @@ public class MaxXirGenerator extends RiXirGenerator {
     @Override
     public XirSnippet genNewInstance(XirSite site, RiType type) {
         if (type.isResolved() && type.isInitialized()) {
-            return new XirSnippet(newInstanceTemplate.resolved, XirArgument.forObject(hubFor(type)));
+            DynamicHub hub = hubFor(type);
+            if (hub.classActor.isHybridClass()) {
+                return new XirSnippet(newInstanceTemplate.resolvedHybrid, XirArgument.forObject(hub));
+            }
+            return new XirSnippet(newInstanceTemplate.resolved, XirArgument.forObject(hub));
         }
         XirArgument guard = guardFor(type, ResolveClassForNew.SNIPPET);
         return new XirSnippet(newInstanceTemplate.unresolved, guard);
@@ -519,7 +530,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     private XirTemplate buildSafepoint() {
         asm.restart(CiKind.Void);
-        XirOperand param = asm.createRegister("safepoint", CiKind.Word, AMD64.r14);
+        XirOperand param = asm.createRegister("latch", CiKind.Word, AMD64.r14);
         asm.pload(CiKind.Word, param, param, false);
         return finishTemplate(asm, "safepoint");
     }
@@ -560,13 +571,13 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
         asm.bindInline(store);
         int elemSize = target.sizeInBytes(kind);
-        asm.pstore(kind, array, index, value, asm.i(offsetOfFirstArrayElement), asm.i(log2(elemSize)), !genBoundsCheck && !genStoreCheck);
+        asm.pstore(kind, array, index, value, offsetOfFirstArrayElement, Scale.fromInt(elemSize), !genBoundsCheck && !genStoreCheck);
         if (genWriteBarrier) {
             addWriteBarrier(asm, array, value);
         }
         if (genBoundsCheck) {
             asm.bindOutOfLine(failBoundsCheck);
-            callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, index);
+            callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, array, index);
         }
         if (genStoreCheck) {
             asm.bindOutOfLine(slowStoreCheck);
@@ -589,10 +600,10 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.jugteq(fail, index, length);
         }
         int elemSize = target.sizeInBytes(kind);
-        asm.pload(kind, result, array, index, asm.i(offsetOfFirstArrayElement), asm.i(log2(elemSize)), !genBoundsCheck);
+        asm.pload(kind, result, array, index, offsetOfFirstArrayElement, Scale.fromInt(elemSize), !genBoundsCheck);
         if (genBoundsCheck) {
             asm.bindOutOfLine(fail);
-            callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, index);
+            callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, array, index);
         }
         return finishTemplate(asm, "arrayload<" + kind + ">");
     }
@@ -663,10 +674,10 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.mod(a, interfaceID, mtableLengthOrStartIndex);
             asm.pload(CiKind.Int, mtableLengthOrStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.add(a, a, mtableLengthOrStartIndex);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(CiUtil.log2(Ints.SIZE)), false);
+            asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement, Scale.Times4, false);
             asm.add(a, a, methodIndex);
             XirOperand result = asm.createTemp("result", CiKind.Word);
-            asm.pload(CiKind.Word, result, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(CiUtil.log2(wordSize)), false);
+            asm.pload(CiKind.Word, result, hub, a, offsetOfFirstArrayElement, Scale.fromInt(wordSize), false);
             resolved = finishTemplate(asm, result, "invokeinterface");
         }
         {
@@ -687,10 +698,10 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.mod(a, interfaceID, mtableLengthOrStartIndex);
             asm.pload(CiKind.Int, mtableLengthOrStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.add(a, a, mtableLengthOrStartIndex);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(CiUtil.log2(Ints.SIZE)), false);
+            asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement, Scale.Times4, false);
             asm.add(a, a, methodIndex);
             XirOperand result = asm.createTemp("result", CiKind.Word);
-            asm.pload(CiKind.Word, result, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(CiUtil.log2(wordSize)), false);
+            asm.pload(CiKind.Word, result, hub, a, offsetOfFirstArrayElement, Scale.fromInt(wordSize), false);
             unresolved = finishTemplate(asm, result, "invokeinterface");
         }
         return new XirPair(resolved, unresolved);
@@ -824,8 +835,9 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirPair(resolved == null ? unresolved : resolved, unresolved);
     }
 
-    private XirPair buildNewInstance() {
+    private NewInstanceTemplates buildNewInstance() {
         XirTemplate resolved;
+        XirTemplate resolvedHybrid;
         XirTemplate unresolved;
         {
             // resolved new instance
@@ -833,6 +845,13 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
             callRuntimeThroughStub(asm, "allocateObject", result, hub);
             resolved = finishTemplate(asm, "new");
+        }
+        {
+            // resolved new hybrid
+            XirOperand result = asm.restart(CiKind.Object);
+            XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
+            callRuntimeThroughStub(asm, "allocateHybrid", result, hub);
+            resolvedHybrid = finishTemplate(asm, "newHybrid");
         }
         {
             // unresolved new instance
@@ -844,7 +863,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             unresolved = finishTemplate(asm, "new-unresolved");
         }
 
-        return new XirPair(resolved, unresolved);
+        return new NewInstanceTemplates(resolved, resolvedHybrid, unresolved);
     }
 
     private XirPair buildPutFieldTemplate(CiKind kind, boolean genWriteBarrier, boolean isStatic) {
@@ -943,7 +962,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.jneq(fail, temp, hub);
             asm.bindInline(pass);
             asm.bindOutOfLine(fail);
-            callRuntimeThroughStub(asm, "throwClassCastException", null);
+            callRuntimeThroughStub(asm, "throwClassCastException", null, hub, object);
             resolved = finishTemplate(asm, object, "checkcast-leaf<" + nonnull + ">");
         }
         {
@@ -979,12 +998,12 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(log2(Ints.SIZE)), false);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(log2(wordSize)), false);
+            asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement, Scale.Times4, false);
+            asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement, Scale.fromInt(wordSize), false);
             asm.jneq(fail, a, interfaceID);
             asm.bindInline(pass);
             asm.bindOutOfLine(fail);
-            callRuntimeThroughStub(asm, "throwClassCastException", null);
+            callRuntimeThroughStub(asm, "throwClassCastException", null, hub, object);
             resolved = finishTemplate(asm, object, "checkcast-interface<" + nonnull + ">");
         }
         {
@@ -1063,8 +1082,8 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(log2(Ints.SIZE)), false);
-            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(log2(wordSize)), false);
+            asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement, Scale.Times4, false);
+            asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement, Scale.fromInt(wordSize), false);
             asm.jneq(fail, a, interfaceID);
             asm.bindInline(pass);
             asm.mov(result, asm.b(true));
@@ -1252,7 +1271,6 @@ public class MaxXirGenerator extends RiXirGenerator {
             return classActor.staticTuple();
         }
 
-        @UNSAFE
         public static Word resolveStaticMethod(ResolutionGuard.InPool guard) {
             return CompilationScheme.Static.compile(ResolutionSnippet.ResolveStaticMethod.resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
@@ -1261,7 +1279,6 @@ public class MaxXirGenerator extends RiXirGenerator {
             return ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard).vTableIndex() * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
         }
 
-        @UNSAFE
         public static Word resolveSpecialMethod(ResolutionGuard.InPool guard) {
             return CompilationScheme.Static.compile(ResolutionSnippet.ResolveSpecialMethod.resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
@@ -1290,6 +1307,10 @@ public class MaxXirGenerator extends RiXirGenerator {
 
         public static Object allocateObject(DynamicHub hub) {
             return Heap.createTuple(hub);
+        }
+
+        public static Object allocateHybrid(DynamicHub hub) {
+            return Heap.createHybrid(hub);
         }
 
         public static int[] allocateIntArray(int length) {
@@ -1397,20 +1418,20 @@ public class MaxXirGenerator extends RiXirGenerator {
 
         public static void arrayHubStoreCheck(DynamicHub componentHub, DynamicHub valueHub) {
             if (!valueHub.isSubClassHub(componentHub.classActor)) {
-                throw new ArrayStoreException();
+                throw new ArrayStoreException(componentHub.classActor + " is not assignable to " + componentHub.classActor);
             }
         }
 
-        public static void throwClassCastException() {
-            throw new ClassCastException();
+        public static void throwClassCastException(DynamicHub hub, Object object) {
+            Throw.classCastException(hub.classActor, object);
         }
 
         public static void throwNullPointerException() {
             throw new NullPointerException();
         }
 
-        public static void throwArrayIndexOutOfBoundsException(int index) {
-            throw new ArrayIndexOutOfBoundsException(index);
+        public static void throwArrayIndexOutOfBoundsException(Object array, int index) {
+            Throw.arrayIndexOutOfBoundsException(array, index);
         }
 
         public static void monitorEnter(Object o) {

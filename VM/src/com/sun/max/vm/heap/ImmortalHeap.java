@@ -173,7 +173,7 @@ public final class ImmortalHeap {
     }
 
     private static class ImmortalMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
-        ImmortalMemoryPoolMXBean(RuntimeMemoryRegion region, MemoryManagerMXBean manager) {
+        ImmortalMemoryPoolMXBean(MemoryRegion region, MemoryManagerMXBean manager) {
             super(MemoryType.HEAP, region, manager);
         }
 

@@ -158,6 +158,16 @@ public final class CirReplication {
 
     private final Map<CirBlock, CirBlock> blockMap = new IdentityHashMap<CirBlock, CirBlock>();
 
+    private void fixme(CirNode node) {
+        Replication replication = new Replication(node);
+        final CirClosure originalClosure = (CirClosure) replication.original;
+        final CirClosure closureReplica = (CirClosure) replication.original.clone();
+        final CirVariable[] originalParameters = originalClosure.parameters();
+        final int numberOfParameters = originalParameters.length;
+        final CirVariable[] parameterReplicas = CirClosure.newParameters(numberOfParameters);
+        closureReplica.setParameters(parameterReplicas);
+    }
+
     private CirNode run(CirNode node) {
         final LinkedList<Replication> toDo = new LinkedList<Replication>();
         Replication replication = new Replication(node);
