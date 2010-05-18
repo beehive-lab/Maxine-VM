@@ -20,25 +20,20 @@
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel.jni;
 
-import com.sun.max.collect.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.guestvm.xen.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
-import com.sun.max.tele.debug.guestvm.xen.dbchannel.agent.*;
 
 /**
  * An implementation of {@link Protocol} that links directly to native code
  * that communicates directly through JNI to  the Xen ring mechanism to the target Guest VM domain.
  * This requires that the Inspector run with root privileges in (a 64-bit) dom0.
  *
- * The class is also used indirectly by {@link ProtocolAgent} when the
- * Inspector runs in a domU and connects via TCP.
- *
  * @author Mick Jordan
  *
  */
 
 public class JniProtocol implements Protocol {
+    private Timings timings = new Timings("JniProtocol.readBytes");
 
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {
@@ -46,12 +41,14 @@ public class JniProtocol implements Protocol {
     }
 
     @Override
-    public boolean attach(int domId) {
+    public boolean attach(int domId, int threadLocalsAreaSize) {
+        Trace.line(1, "attaching to domain " + domId);
         return nativeAttach(domId);
     }
 
     @Override
     public boolean detach() {
+        Trace.line(1, "detaching from domain");
         return nativeDetach();
     }
 
@@ -61,8 +58,8 @@ public class JniProtocol implements Protocol {
     }
 
     @Override
-    public boolean gatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals) {
-        return nativeGatherThreads(teleDomain, threads, threadLocalsList, primordialThreadLocals);
+    public boolean gatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
+        return nativeGatherThreads(teleDomain, threadSequence, threadLocalsList, primordialThreadLocals);
     }
 
     @Override
@@ -77,7 +74,10 @@ public class JniProtocol implements Protocol {
 
     @Override
     public int readBytes(long src, byte[] dst, int dstOffset, int length) {
-        return nativeReadBytes(src, dst, false, 0, length);
+        timings.start();
+        final int result =  nativeReadBytes(src, dst, false, 0, length);
+        timings.add();
+        return result;
     }
 
     @Override
@@ -148,7 +148,7 @@ public class JniProtocol implements Protocol {
     private static native int nativeReadBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
     private static native int nativeWriteBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
     private static native int nativeMaxByteBufferSize();
-    private static native boolean nativeGatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
+    private static native boolean nativeGatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals);
     private static native int nativeResume();
     private static native int nativeSetInstructionPointer(int threadId, long ip);
     private static native boolean nativeSingleStep(int threadId);
@@ -163,6 +163,18 @@ public class JniProtocol implements Protocol {
                     byte[] integerRegisters, int integerRegistersSize,
                     byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize);
+
+    @Override
+    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
+        ProgramError.unexpected("SimpleProtocol.gatherThreads(int, int) should not be called in this configuration");
+        return 0;
+    }
+
+    @Override
+    public int readThreads(int size, byte[] gatherThreadsData) {
+        ProgramError.unexpected("SimpleProtocol.readThreads should not be called in this configuration");
+        return 0;
+    }
 
 
 }

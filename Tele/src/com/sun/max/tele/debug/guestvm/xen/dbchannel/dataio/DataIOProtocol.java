@@ -50,7 +50,14 @@ public class DataIOProtocol implements SimpleProtocol {
     protected DataInputStream in;
     protected DataOutputStream out;
 
+    private final Timings timings = new Timings("DataIOProtocol.readBytes");
+
     protected DataIOProtocol() {
+    }
+
+    protected void setStreams(InputStream in, OutputStream out) {
+        this.in = new DataInputStream(in);
+        this.out = new DataOutputStream(out);
     }
 
     @Override
@@ -60,10 +67,12 @@ public class DataIOProtocol implements SimpleProtocol {
     }
 
     @Override
-    public boolean attach(int domId) {
+    public boolean attach(int domId, int threadLocalsAreaSize) {
         try {
             out.writeUTF("attach");
             out.writeInt(domId);
+            out.writeInt(threadLocalsAreaSize);
+            out.flush();
             boolean result = in.readBoolean();
             return result;
         } catch (Exception ex) {
@@ -76,6 +85,7 @@ public class DataIOProtocol implements SimpleProtocol {
     public boolean detach() {
         try {
             out.writeUTF("detach");
+            out.flush();
             return in.readBoolean();
         } catch (Exception ex) {
             Trace.line(1, ex);
@@ -87,6 +97,7 @@ public class DataIOProtocol implements SimpleProtocol {
     public long getBootHeapStart() {
         try {
             out.writeUTF("getBootHeapStart");
+            out.flush();
             return in.readLong();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -98,6 +109,7 @@ public class DataIOProtocol implements SimpleProtocol {
     public int maxByteBufferSize() {
         try {
             out.writeUTF("maxByteBufferSize");
+            out.flush();
             return in.readInt();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -108,13 +120,17 @@ public class DataIOProtocol implements SimpleProtocol {
     @Override
     public int readBytes(long src, byte[] dst, int dstOffset, int length) {
         try {
+            timings.start();
             out.writeUTF("readBytes");
             out.writeLong(src);
             outArray(ArrayMode.OUT, dst);
             out.writeInt(dstOffset);
             out.writeInt(length);
+            out.flush();
             inArray(dst, dstOffset, length);
-            return in.readInt();
+            final int result = in.readInt();
+            timings.add();
+            return result;
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
             return 0;
@@ -133,10 +149,11 @@ public class DataIOProtocol implements SimpleProtocol {
             out.writeInt(floatingPointRegistersSize);
             outArray(ArrayMode.OUT, stateRegisters);
             out.writeInt(stateRegistersSize);
+            out.flush();
             inArray(integerRegisters, 0, integerRegistersSize);
             inArray(floatingPointRegisters, 0, floatingPointRegistersSize);
             inArray(stateRegisters, 0, stateRegistersSize);
-            return true;
+            return in.readBoolean();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
             return false;
@@ -147,6 +164,7 @@ public class DataIOProtocol implements SimpleProtocol {
     public int readWatchpointAccessCode() {
         try {
             out.writeUTF("readWatchpointAccessCode");
+            out.flush();
             return in.readInt();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -158,6 +176,7 @@ public class DataIOProtocol implements SimpleProtocol {
     public long readWatchpointAddress() {
         try {
             out.writeUTF("readWatchpointAddress");
+            out.flush();
             return in.readLong();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -171,6 +190,7 @@ public class DataIOProtocol implements SimpleProtocol {
             out.writeUTF("deactivateWatchpoint");
             out.writeLong(start);
             out.writeLong(size);
+            out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -182,6 +202,7 @@ public class DataIOProtocol implements SimpleProtocol {
     public int resume() {
         try {
             out.writeUTF("resume");
+            out.flush();
             return in.readInt();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -195,6 +216,7 @@ public class DataIOProtocol implements SimpleProtocol {
             out.writeUTF("setInstructionPointer");
             out.writeInt(threadId);
             out.writeLong(ip);
+            out.flush();
             return in.readInt();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -206,6 +228,7 @@ public class DataIOProtocol implements SimpleProtocol {
     public int setTransportDebugLevel(int level) {
         try {
             out.writeUTF("setTransportDebugLevel");
+            out.flush();
             return in.readInt();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -218,6 +241,7 @@ public class DataIOProtocol implements SimpleProtocol {
         try {
             out.writeUTF("singleStep");
             out.writeInt(threadId);
+            out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -230,6 +254,7 @@ public class DataIOProtocol implements SimpleProtocol {
         try {
             out.writeUTF("suspend");
             out.writeInt(threadId);
+            out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -241,6 +266,7 @@ public class DataIOProtocol implements SimpleProtocol {
     public boolean suspendAll() {
         try {
             out.writeUTF("suspendAll");
+            out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -256,6 +282,36 @@ public class DataIOProtocol implements SimpleProtocol {
             outArray(ArrayMode.IN, src);
             out.writeInt(srcOffset);
             out.writeInt(length);
+            out.flush();
+            return in.readInt();
+        } catch (IOException ex) {
+            ProgramError.unexpected(ex);
+            return 0;
+        }
+    }
+
+    @Override
+    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
+        try {
+            out.writeUTF("gatherThreads");
+            out.writeLong(threadLocalsList);
+            out.writeLong(primordialThreadLocals);
+            out.flush();
+            return in.readInt();
+        } catch (IOException ex) {
+            ProgramError.unexpected(ex);
+            return 0;
+        }
+    }
+
+    @Override
+    public int readThreads(int size, byte[] gatherThreadData) {
+        try {
+            out.writeUTF("readThreads");
+            out.writeInt(size);
+            outArray(ArrayMode.OUT, gatherThreadData);
+            out.flush();
+            inArray(gatherThreadData, 0, size);
             return in.readInt();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -282,6 +338,5 @@ public class DataIOProtocol implements SimpleProtocol {
     private void unimplemented(String name) {
         ProgramError.unexpected(getClass().getName() + "." + name + " unimplemented");
     }
-
 
 }

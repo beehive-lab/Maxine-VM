@@ -21,17 +21,22 @@
 package com.sun.max.tele.debug.guestvm.xen.dbchannel.agent;
 
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
-import com.sun.max.tele.debug.guestvm.xen.dbchannel.jni.*;
 
 /**
- * Called reflectively from {@link ProtocolAgent} and simply delegates to the standard in-process {@link JniProtocol JNI implementation}.
+ * This is a stub implementation that exists only on the agent side of the split communication protocol.
  *
  * @author Mick Jordan
  *
  */
 
-public class ReflectiveJniProtocol extends DelegatingProtocol {
-    public ReflectiveJniProtocol() {
-        super(new JniProtocol());
+public class TeleNativeThread {
+    private SimpleProtocol.GatherThreadData data;
+
+    TeleNativeThread(SimpleProtocol.GatherThreadData data) {
+        this.data = data;
+    }
+
+    SimpleProtocol.GatherThreadData getThreadData() {
+        return data;
     }
 }

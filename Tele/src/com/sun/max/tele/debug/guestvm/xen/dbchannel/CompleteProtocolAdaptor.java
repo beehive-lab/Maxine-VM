@@ -20,13 +20,14 @@
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel;
 
+import java.io.*;
 import java.nio.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.guestvm.xen.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.dataio.*;
+import com.sun.max.tele.debug.guestvm.xen.*;
+import com.sun.max.tele.debug.*;
 
 /**
  * An adaptor that provides implementations of the methods in {@link Protocol} that cannot be
@@ -36,21 +37,26 @@ import com.sun.max.tele.debug.guestvm.xen.dbchannel.dataio.*;
  *
  */
 public abstract class CompleteProtocolAdaptor extends DataIOProtocol implements Protocol {
+    private Timings timings = new Timings("CompleteProtocolAdaptor.readBytes");
 
     @Override
     public int readBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length) {
         byte[] bytes;
+        int result;
+        timings.start();
         if (isDirectByteBuffer) {
             ByteBuffer bb = (ByteBuffer) dst;
             // have to copy the byte buffer back into an array
             bytes = new byte[length];
             final int n = readBytes(src, bytes, 0, length);
             bb.put(bytes, dstOffset, n);
-            return n;
+            result = n;
         } else {
             bytes = (byte[]) dst;
-            return readBytes(src, bytes, dstOffset, length);
+            result = readBytes(src, bytes, dstOffset, length);
         }
+        timings.add();
+        return result;
     }
 
     @Override
@@ -68,9 +74,37 @@ public abstract class CompleteProtocolAdaptor extends DataIOProtocol implements 
         return writeBytes(dst, bytes, srcOffset, length);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public boolean gatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals) {
-        ProgramError.unexpected(getClass().getName() + "." + "gatherThreads not implemented");
+    public boolean gatherThreads(Object teleDomainObject, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
+        final int dataSize = gatherThreads(threadLocalsList, primordialThreadLocals);
+        final byte[] data = new byte[dataSize];
+        readThreads(dataSize, data);
+        // deserialize the thread data
+        final ByteArrayInputStream bs = new ByteArrayInputStream(data);
+        ObjectInputStream iis = null;
+        try {
+            iis = new ObjectInputStream(bs);
+            SimpleProtocol.GatherThreadData[] threadDataArray = (SimpleProtocol.GatherThreadData[]) iis.readObject();
+            // now we call the real jniGatherThread on this side
+            GuestVMXenTeleDomain teleDomain = (GuestVMXenTeleDomain) teleDomainObject;
+            for (SimpleProtocol.GatherThreadData t : threadDataArray) {
+                //Trace.line(1, "calling jniGatherThread " + t.id + ", " + t.localHandle + ", " + t.handle + ", " + t.state + ", " + t.instructionPointer + ", " +
+                //                Long.toHexString(t.stackBase) + ", " + t.stackSize+ ", " + t.tlb + ", " + t.tlbSize + ", " + t.tlaSize);
+                teleDomain.jniGatherThread((AppendableSequence<TeleNativeThread>) threadSequence, t.id, t.localHandle, t.handle, t.state, t.instructionPointer, t.stackBase, t.stackSize, t.tlb, t.tlbSize, t.tlaSize);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            ProgramError.unexpected(getClass().getName() + ".gatherThreads unexpected error: ", ex);
+        } finally {
+            if (iis != null) {
+                try {
+                    iis.close();
+                    bs.close();
+                } catch (IOException ex) {
+                }
+            }
+        }
         return false;
     }
 

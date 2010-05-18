@@ -20,10 +20,7 @@
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel.dump;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.guestvm.xen.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
 
@@ -45,7 +42,7 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
     }
 
     @Override
-    public boolean attach(int domId) {
+    public boolean attach(int domId, int threadLocalsAreaSize) {
         // nothing to do
         return true;
     }
@@ -63,7 +60,7 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
     }
 
     @Override
-    public boolean gatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals) {
+    public boolean gatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
         unimplemented("gatherThreads");
         return false;
     }

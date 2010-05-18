@@ -36,7 +36,7 @@ import com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.*;
 public class ProtocolAgent {
 
     private static int port = TCPProtocol.DEFAULT_PORT;
-    private static final String NATIVE = "agent.ReflectiveJni";
+    private static final String NATIVE = "agent.AgentJni";
     private static String impl = NATIVE;
     private static int dbtLevel = 0;
     /**
@@ -76,7 +76,10 @@ public class ProtocolAgent {
                     Trace.line(1, "waiting for connection");
                     final Socket sock = server.accept();
                     Trace.line(1, "connection accepted on " + sock.getLocalPort() + " from " + sock.getInetAddress());
-                    new Handler(sock).start();
+                    final Handler handler = new Handler(sock);
+                    handler.start();
+                    // no concurrent connections, underlying native support cannot handle that at the moment
+                    handler.join();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -95,8 +98,8 @@ public class ProtocolAgent {
         Handler(Socket socket) throws Exception {
             this.socket = socket;
             try {
-                in = new DataInputStream(socket.getInputStream());
-                out = new DataOutputStream(socket.getOutputStream());
+                in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+                out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
             } catch (IOException ex) {
                 close();
                 throw ex;
@@ -110,7 +113,8 @@ public class ProtocolAgent {
 
         @Override
         public void run() {
-            while (true) {
+            boolean terminated = false;
+            while (!terminated) {
                 try {
                     final String command = in.readUTF();
                     MethodInfo m = protocol.methodMap.get(command);
@@ -120,15 +124,18 @@ public class ProtocolAgent {
                         final Object[] args = protocol.readArgs(in, m);
                         final Object result = m.method.invoke(protocol, args);
                         protocol.writeResult(out, m, result, args);
+                        if (command.equals("resume") && ((Integer) result == 1)) {
+                            terminated = true;
+                        }
                     }
                 } catch (Exception ex) {
                     System.err.println(ex);
                     ex.printStackTrace();
                     System.err.println("terminating connection");
-                    close();
-                    return;
+                    terminated = true;
                 }
             }
+            close();
         }
 
         private void close() {

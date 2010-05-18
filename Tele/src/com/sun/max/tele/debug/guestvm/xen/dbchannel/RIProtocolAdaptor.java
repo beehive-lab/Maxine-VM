@@ -56,6 +56,8 @@ public abstract class RIProtocolAdaptor {
 
     public final Map<String, MethodInfo> methodMap;
 
+    private final Timings timings = new Timings("RIProcotcoAdaptor.writeResult");
+
     protected RIProtocolAdaptor() {
         final Method[] interfaceMethods = SimpleProtocol.class.getDeclaredMethods();
         final Method[] implMethods = getClass().getMethods();
@@ -129,28 +131,30 @@ public abstract class RIProtocolAdaptor {
     }
 
     public void writeResult(DataOutputStream out, MethodInfo m, Object result, Object[] args) throws IOException {
+        timings.start();
         // deal with byte arrays as output
         int index = 0;
-        for (Class<?> klass : m.parameterTypes) {
+        for (Class< ? > klass : m.parameterTypes) {
             if (klass == byte[].class && m.arrayModes[index] != ArrayMode.IN) {
                 out.write((byte[]) args[index]);
             }
             index++;
         }
-        if (m.returnType == void.class) {
-            return;
+        if (m.returnType != void.class) {
+            // Trace.line(2, "writing result " + result);
+            if (m.returnType == boolean.class) {
+                out.writeBoolean((Boolean) result);
+            } else if (m.returnType == int.class) {
+                out.writeInt((Integer) result);
+            } else if (m.returnType == long.class) {
+                // Trace.line(2, "  0x" + Long.toHexString((Long) result));
+                out.writeLong((Long) result);
+            } else {
+                ProgramError.unexpected("unexpected result type writeResult: " + m.returnType.getName());
+            }
         }
-        //Trace.line(2, "writing result " + result);
-        if (m.returnType == boolean.class) {
-            out.writeBoolean((Boolean) result);
-        } else if (m.returnType == int.class) {
-            out.writeInt((Integer) result);
-        } else if (m.returnType == long.class) {
-            //Trace.line(2, "  0x" + Long.toHexString((Long) result));
-            out.writeLong((Long) result);
-        } else {
-            ProgramError.unexpected("unexpected result type writeResult: " + m.returnType.getName());
-        }
+        out.flush();
+        timings.add();
     }
 
 }

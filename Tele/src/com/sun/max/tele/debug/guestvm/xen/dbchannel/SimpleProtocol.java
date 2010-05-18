@@ -20,6 +20,10 @@
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel;
 
+import java.io.Serializable;
+
+import com.sun.max.program.*;
+
 /**
  * The interface used by the Maxine Inspector Virtual Edition (aka Guest VM) to access information from a target Maxine VM.
  * It is defined in terms of simple data types that allow an implementation with {@link DataInputStream} and {@link DataOutputStream}
@@ -33,9 +37,10 @@ public interface SimpleProtocol {
     /**
      * Establish a connection to a given target VM.
      * @param domId the Xen domain id of the target VM; only meaningful for an active target VM
+     * @param threadLocalsAreaSize size of thread locals area frm boot image header
      * @return {@code true} if the attach succeeded, {@code false} otherwise
      */
-    boolean attach(int domId);
+    boolean attach(int domId, int threadLocalsAreaSize);
     /**
      * Break connection with target VM.
      * @return {@code true} if the detach succeeded, {@code false} otherwise
@@ -89,6 +94,55 @@ public interface SimpleProtocol {
                     byte[] integerRegisters, int integerRegistersSize,
                     byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize);
+
+    /**
+     * Exactly the data passed as arguments to {@link TeleProcess.jniGatherThread}.
+     * It is manually serialized and passed as a byte array.
+     */
+    public static class GatherThreadData implements Serializable {
+        int id;
+        long localHandle;
+        long handle;
+        int state;
+        long instructionPointer;
+        long stackBase;
+        long stackSize;
+        long tlb;
+        long tlbSize;
+        int tlaSize;
+
+        public GatherThreadData(int id, long localHandle, long handle, int state, long instructionPointer, long stackBase, long stackSize, long tlb, long tlbSize, int tlaSize) {
+            this.id = id;
+            this.localHandle = localHandle;
+            this.handle = handle;
+            this.state = state;
+            this.instructionPointer = instructionPointer;
+            this.stackBase = stackBase;
+            this.stackSize = stackSize;
+            this.tlb = tlb;
+            this.tlbSize = tlbSize;
+            this.tlaSize = tlaSize;
+            //Trace.line(1, "GatherThreadData " + id + ", " + localHandle + ", 0x" + Long.toHexString(handle) + ", 0x" + Long.toHexString(state) + ", 0x" + Long.toHexString(instructionPointer) + ", 0x" +
+            //               Long.toHexString(stackBase) + ", " + stackSize + ", 0x" + Long.toHexString(tlb) + ", " + tlbSize + ", " + tlaSize);
+        }
+    }
+
+    /**
+     * A dumbed down version of {@link Protocol#gatherThreads} that can communicate using the
+     * limitations of this interface. Operates in tandem with {@link #readThreads}.
+     * @param threadLocalsList forwarded from {@link Protocol#gatherThreads}
+     * @param primordialThreadLocals forwarded from {@link Protocol#gatherThreads}
+     * @return number of gathered threads (length of serialized array)
+     */
+    int gatherThreads(long threadLocalsList, long primordialThreadLocals);
+
+    /**
+     * Read the gathered thgeads data into byte array.
+     * @param size size needed for byte array (result of {@link #gatherThreads}
+     * @param gatherThreadsData byte array for serialized data, {@link ArrayMode#OUT} parameter
+     * @return number of gathered threads (length of serialized array)
+     */
+    int readThreads(int size, byte[] gatherThreadsData);
 
     // Control methods, only relevant for an active target VM
 
