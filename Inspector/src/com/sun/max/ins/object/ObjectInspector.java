@@ -156,15 +156,19 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public final String getTextForTitle() {
+        final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(currentObjectOrigin);
+        final String regionSuffix = " in "
+            + (memoryRegion == null ? "unknown region" : memoryRegion.regionName());
+
         switch (teleObject.getTeleObjectMemoryState()) {
             case LIVE:
                 Pointer pointer = teleObject.origin();
                 title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
-                return title;
+                return title + regionSuffix;
             case OBSOLETE:
-                return TeleObjectMemory.State.OBSOLETE.label() + " " + title;
+                return TeleObjectMemory.State.OBSOLETE.label() + " " + title + regionSuffix;
             case DEAD:
-                return TeleObjectMemory.State.DEAD.label() + " " + title;
+                return TeleObjectMemory.State.DEAD.label() + " " + title + regionSuffix;
         }
         return null;
     }
