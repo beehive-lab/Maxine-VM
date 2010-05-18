@@ -22,10 +22,13 @@
 package com.sun.hotspot.c1x;
 
 import com.sun.cri.ci.CiCompiler;
+import com.sun.cri.ci.CiConstant;
+import com.sun.cri.ci.CiKind;
 import com.sun.cri.ci.CiResult;
 import com.sun.cri.ri.RiConstantPool;
 import com.sun.cri.ri.RiField;
 import com.sun.cri.ri.RiMethod;
+import com.sun.cri.ri.RiSignature;
 import com.sun.cri.ri.RiType;
 
 /**
@@ -62,19 +65,91 @@ public class VMExits {
 		return m;
 	}
 	
-	public static RiField createRiField(Object klassOop, int index) {
+	public static RiSignature createRiSignature(Object symbolOop) {
+		System.out.println("Creating RiSignature object");
+		String name = VMEntries.RiSignature_symbolToString(symbolOop);
+		System.out.println("Signature name: " + name);
+		return new HotSpotSignature(name);
+	}
+	
+	public static RiField createRiField(RiType holder, Object nameSymbol, RiType type, int offset) {
 		System.out.println("creating RiField object");
-		return new HotSpotField(klassOop, index);
+		return new HotSpotField(holder, nameSymbol, type, offset);
 	}
 	
 	public static RiType createRiType(Object klassOop) {
 		System.out.println("creating RiType object");
 		return new HotSpotType(klassOop);
 	}
+
+	public static RiType createRiTypePrimitive(int basicType) {
+		System.out.println("Creating primitive type with basicType " + basicType);
+		CiKind kind = null;
+		switch (basicType) {
+		case 4:
+			kind = CiKind.Boolean;
+			break;
+		case 5:
+			kind = CiKind.Char;
+			break;
+		case 6:
+			kind = CiKind.Float;
+			break;
+		case 7:
+			kind = CiKind.Double;
+			break;
+		case 8:
+			kind = CiKind.Byte;
+			break;
+		case 9:
+			kind = CiKind.Short;
+			break;
+		case 10:
+			kind = CiKind.Int;
+			break;
+		case 11:
+			kind = CiKind.Long;
+			break;
+		case 14:
+			kind = CiKind.Void;
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown basic type: " + basicType);
+		}
+		System.out.println("Chosen kind: " + kind);
+		return new HotSpotTypePrimitive(kind);
+	}
+	
+	public static RiType createRiTypeUnresolved(Object symbolOop, Object accessingKlassOop) {
+		System.out.println("Creating unresolved RiType object");
+		String name = VMEntries.RiSignature_symbolToString(symbolOop);
+		System.out.println("Class name: " + name);
+		return new HotSpotTypeUnresolved(name);
+	}
 	
 	public static RiConstantPool createRiConstantPool(Object constantPoolOop) {
 		System.out.println("creating RiConstantPool object");
 		return new HotSpotConstantPool(constantPoolOop);
+	}
+	
+	public static CiConstant createCiConstantInt(int value) {
+		return CiConstant.forInt(value);
+	}
+
+	public static CiConstant createCiConstantLong(long value) {
+		return CiConstant.forLong(value);
+	}
+
+	public static CiConstant createCiConstantFloat(float value) {
+		return CiConstant.forFloat(value);
+	}
+	
+	public static CiConstant createCiConstantDouble(double value) {
+		return CiConstant.forDouble(value);
+	}
+
+	public static CiConstant createCiConstantObject(Object value) {
+		return CiConstant.forObject(value);
 	}
 	
 	public static void main(String[] args) throws InterruptedException {

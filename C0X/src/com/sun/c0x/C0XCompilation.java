@@ -501,10 +501,10 @@ public class C0XCompilation {
                 case Bytecodes.PUTSTATIC      : doPutStatic(constantPool().lookupField(stream.readCPI())); break;
                 case Bytecodes.GETFIELD       : doGetField(constantPool().lookupField(stream.readCPI())); break;
                 case Bytecodes.PUTFIELD       : doPutField(constantPool().lookupField(stream.readCPI())); break;
-                case Bytecodes.INVOKEVIRTUAL  : doInvokeVirtual(constantPool().lookupMethod(stream.readCPI())); break;
-                case Bytecodes.INVOKESPECIAL  : doInvokeSpecial(constantPool().lookupMethod(stream.readCPI())); break;
-                case Bytecodes.INVOKESTATIC   : doInvokeStatic(constantPool().lookupMethod(stream.readCPI())); break;
-                case Bytecodes.INVOKEINTERFACE: doInvokeInterface(constantPool().lookupMethod(stream.readCPI())); break;
+                case Bytecodes.INVOKEVIRTUAL  : doInvokeVirtual(constantPool().lookupMethod(stream.readCPI(), (byte)Bytecodes.INVOKEVIRTUAL)); break;
+                case Bytecodes.INVOKESPECIAL  : doInvokeSpecial(constantPool().lookupMethod(stream.readCPI(), (byte)Bytecodes.INVOKESPECIAL)); break;
+                case Bytecodes.INVOKESTATIC   : doInvokeStatic(constantPool().lookupMethod(stream.readCPI(), (byte)Bytecodes.INVOKESTATIC)); break;
+                case Bytecodes.INVOKEINTERFACE: doInvokeInterface(constantPool().lookupMethod(stream.readCPI(), (byte)Bytecodes.INVOKEINTERFACE)); break;
                 case Bytecodes.NEW            : doNewInstance(stream.readCPI()); break;
                 case Bytecodes.NEWARRAY       : doNewTypeArray(stream.readLocalIndex()); break;
                 case Bytecodes.ANEWARRAY      : doNewObjectArray(stream.readCPI()); break;

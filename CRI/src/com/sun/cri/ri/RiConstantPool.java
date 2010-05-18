@@ -32,13 +32,6 @@ import com.sun.cri.ci.*;
 public interface RiConstantPool {
 
     /**
-     * Resolves a reference to a compiler interface type at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface type
-     */
-    RiType resolveType(int cpi);
-
-    /**
      * Looks up a reference to a field.
      * 
      * @param cpi the constant pool index
@@ -51,10 +44,11 @@ public interface RiConstantPool {
      * Looks up a reference to a method.
      * 
      * @param cpi the constant pool index
+     * @param byteCode the bytecode
      * @return a reference to the method at {@code cpi} in this pool
      * @throws ClassFormatError if the entry at {@code cpi} is not a method
      */
-    RiMethod lookupMethod(int cpi);
+    RiMethod lookupMethod(int cpi, byte byteCode);
     
     /**
      * Looks up a reference to a compiler interface type at compile time (does not

@@ -7,12 +7,16 @@ import com.sun.cri.ri.RiType;
 
 public class HotSpotField implements RiField {
 	
-	private final Object klassOop;
-	private final int index;
+	private final RiType holder;
+	private final Object nameSymbol;
+	private final RiType type;
+	private final int offset;
 	
-	public HotSpotField(Object o, int index) {
-		this.klassOop = o;
-		this.index = index;
+	public HotSpotField(RiType holder, Object nameSymbol, RiType type, int offset) {
+		this.holder = holder;
+		this.nameSymbol = nameSymbol;
+		this.type = type;
+		this.offset = offset;
 	}
 
 	@Override
@@ -29,8 +33,7 @@ public class HotSpotField implements RiField {
 
 	@Override
 	public RiType holder() {
-		// TODO Auto-generated method stub
-		return null;
+		return holder;
 	}
 
 	@Override
@@ -41,26 +44,22 @@ public class HotSpotField implements RiField {
 
 	@Override
 	public boolean isResolved() {
-		// TODO Auto-generated method stub
-		return false;
+		return offset != -1;
 	}
 
 	@Override
 	public CiKind kind() {
-		// TODO Auto-generated method stub
-		return null;
+		return type().kind();
 	}
 
 	@Override
 	public String name() {
-		// TODO Auto-generated method stub
-		return null;
+		return VMEntries.RiSignature_symbolToString(nameSymbol);
 	}
 
 	@Override
 	public RiType type() {
-		// TODO Auto-generated method stub
-		return null;
+		return type;
 	}
 	
 
