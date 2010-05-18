@@ -812,7 +812,7 @@ public final class ConstantPool implements RiConstantPool {
         return fieldFrom(fieldAt(cpi), cpi);
     }
 
-    public RiMethod lookupMethod(int cpi) {
+    public RiMethod lookupMethod(int cpi, byte byteCode) {
         return methodFrom(methodAt(cpi), cpi);
     }
 

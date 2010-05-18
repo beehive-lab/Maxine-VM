@@ -2,16 +2,17 @@ package com.sun.hotspot.c1x;
 
 import com.sun.cri.ci.CiConstant;
 import com.sun.cri.ci.CiKind;
-import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiMethod;
+import com.sun.cri.ri.RiType;
 
-public class HotSpotType implements RiType {
+public class HotSpotTypePrimitive implements RiType {
+
+	private CiKind kind;
 	
-	final Object klassOop;
-	
-	public HotSpotType(Object o) {
-		this.klassOop = o;
+	public HotSpotTypePrimitive(CiKind kind) {
+		this.kind = kind;
 	}
-
+	
 	@Override
 	public int accessFlags() {
 		// TODO Auto-generated method stub
@@ -39,6 +40,7 @@ public class HotSpotType implements RiType {
 	@Override
 	public CiConstant getEncoding(Representation r) {
 		// TODO Auto-generated method stub
+		
 		return null;
 	}
 
@@ -68,8 +70,8 @@ public class HotSpotType implements RiType {
 
 	@Override
 	public boolean isArrayClass() {
-		System.out.println("Checking for array class " + name());
-		return VMEntries.RiType_isArrayClass(klassOop);
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	@Override
@@ -86,16 +88,19 @@ public class HotSpotType implements RiType {
 
 	@Override
 	public boolean isInstanceClass() {
-		return VMEntries.RiType_isInstanceClass(klassOop);
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	@Override
 	public boolean isInterface() {
-		return VMEntries.RiType_isInterface(klassOop);
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	@Override
 	public boolean isResolved() {
+		// TODO Auto-generated method stub
 		return true;
 	}
 
@@ -107,22 +112,21 @@ public class HotSpotType implements RiType {
 
 	@Override
 	public Class<?> javaClass() {
-		return VMEntries.RiType_javaClass(klassOop);
+		return kind.toJavaClass();
 	}
 
 	@Override
 	public CiKind kind() {
-		return CiKind.fromJavaClass(javaClass());
+		return kind;
 	}
 
 	@Override
 	public String name() {
-		return VMEntries.RiType_name(klassOop);
+		return kind.toString();
 	}
 
 	@Override
 	public RiMethod resolveMethodImpl(RiMethod method) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

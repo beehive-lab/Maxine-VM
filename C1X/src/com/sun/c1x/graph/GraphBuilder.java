@@ -2012,10 +2012,10 @@ public final class GraphBuilder {
                 case PUTSTATIC      : genPutStatic(s.readCPI()); break;
                 case GETFIELD       : genGetField(s.readCPI()); break;
                 case PUTFIELD       : genPutField(s.readCPI()); break;
-                case INVOKEVIRTUAL  : cpi = s.readCPI(); genInvokeVirtual(constantPool().lookupMethod(cpi), cpi, constantPool()); break;
-                case INVOKESPECIAL  : cpi = s.readCPI(); genInvokeSpecial(constantPool().lookupMethod(cpi), null, cpi, constantPool()); break;
-                case INVOKESTATIC   : cpi = s.readCPI(); genInvokeStatic(constantPool().lookupMethod(cpi), cpi, constantPool()); break;
-                case INVOKEINTERFACE: cpi = s.readCPI(); genInvokeInterface(constantPool().lookupMethod(cpi), cpi, constantPool()); break;
+                case INVOKEVIRTUAL  : cpi = s.readCPI(); genInvokeVirtual(constantPool().lookupMethod(cpi, (byte)Bytecodes.INVOKEVIRTUAL), cpi, constantPool()); break;
+                case INVOKESPECIAL  : cpi = s.readCPI(); genInvokeSpecial(constantPool().lookupMethod(cpi, (byte)Bytecodes.INVOKESPECIAL), null, cpi, constantPool()); break;
+                case INVOKESTATIC   : cpi = s.readCPI(); genInvokeStatic(constantPool().lookupMethod(cpi, (byte)Bytecodes.INVOKESTATIC), cpi, constantPool()); break;
+                case INVOKEINTERFACE: cpi = s.readCPI(); genInvokeInterface(constantPool().lookupMethod(cpi, (byte)Bytecodes.INVOKEINTERFACE), cpi, constantPool()); break;
                 case NEW            : genNewInstance(s.readCPI()); break;
                 case NEWARRAY       : genNewTypeArray(s.readLocalIndex()); break;
                 case ANEWARRAY      : genNewObjectArray(s.readCPI()); break;
@@ -2032,7 +2032,7 @@ public final class GraphBuilder {
                 case JSR_W          : genJsr(s.readFarBranchDest()); break;
 
 
-                case UNSAFE_CAST    : genUnsafeCast(constantPool().lookupMethod(s.readCPI())); break;
+                case UNSAFE_CAST    : genUnsafeCast(constantPool().lookupMethod(s.readCPI(), (byte)Bytecodes.UNSAFE_CAST)); break;
                 case WLOAD          : loadLocal(s.readLocalIndex(), CiKind.Word); break;
                 case WLOAD_0        : loadLocal(0, CiKind.Word); break;
                 case WLOAD_1        : loadLocal(1, CiKind.Word); break;

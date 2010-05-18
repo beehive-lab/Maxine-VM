@@ -9,6 +9,7 @@ import com.sun.cri.ri.RiType;
 public class HotSpotMethod implements RiMethod {
 	
 	private Object methodOop;
+	private byte[] code;
 	
 	public HotSpotMethod(Object methodOop) {
 		this.methodOop = methodOop;
@@ -28,13 +29,17 @@ public class HotSpotMethod implements RiMethod {
 
 	@Override
 	public byte[] code() {
-		return VMEntries.RiMethod_code(methodOop);
+		if (code == null) {
+			code = VMEntries.RiMethod_code(methodOop);
+		}
+		
+		return code;
 	}
 
 	@Override
 	public RiExceptionHandler[] exceptionHandlers() {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO: Add support for exception handlers
+		return new RiExceptionHandler[0];
 	}
 
 	@Override
@@ -45,8 +50,7 @@ public class HotSpotMethod implements RiMethod {
 
 	@Override
 	public RiType holder() {
-		// TODO Auto-generated method stub
-		return null;
+		return VMEntries.RiMethod_holder(methodOop);
 	}
 
 	@Override
@@ -93,14 +97,12 @@ public class HotSpotMethod implements RiMethod {
 
 	@Override
 	public int maxLocals() {
-		// TODO Auto-generated method stub
-		return 0;
+		return VMEntries.RiMethod_maxLocals(methodOop);
 	}
 
 	@Override
 	public int maxStackSize() {
-		// TODO Auto-generated method stub
-		return 0;
+		return VMEntries.RiMethod_maxStackSize(methodOop);
 	}
 
 	@Override
@@ -111,14 +113,12 @@ public class HotSpotMethod implements RiMethod {
 
 	@Override
 	public String name() {
-		// TODO Auto-generated method stub
-		return null;
+		return VMEntries.RiMethod_name(methodOop);
 	}
 
 	@Override
 	public RiSignature signature() {
-		// TODO Auto-generated method stub
-		return null;
+		return new HotSpotSignature(VMEntries.RiMethod_signature(methodOop));
 	}
 
 }

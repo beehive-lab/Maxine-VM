@@ -17,44 +17,33 @@ public class HotSpotConstantPool implements RiConstantPool {
 
 	@Override
 	public CiConstant encoding() {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO: Check if this is correct.
+		return CiConstant.forObject(constantPoolOop);
 	}
 
 	@Override
 	public Object lookupConstant(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
+		return VMEntries.RiConstantPool_lookupConstant(constantPoolOop, cpi);
 	}
 
 	@Override
-	public RiMethod lookupMethod(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
+	public RiMethod lookupMethod(int cpi, byte byteCode) {
+		return VMEntries.RiConstantPool_lookupMethod(constantPoolOop, cpi, byteCode);
 	}
 
 	@Override
 	public RiSignature lookupSignature(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
+		return VMEntries.RiConstantPool_lookupSignature(constantPoolOop, cpi);
 	}
 
 	@Override
 	public RiType lookupType(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RiType resolveType(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
+		return VMEntries.RiConstantPool_lookupType(constantPoolOop, cpi);
 	}
 
 	@Override
 	public RiField lookupField(int cpi) {
-		// TODO Auto-generated method stub
-		return null;
+		return VMEntries.RiConstantPool_lookupField(constantPoolOop, cpi);
 	}
 
 }

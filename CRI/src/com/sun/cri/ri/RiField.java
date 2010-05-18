@@ -68,7 +68,7 @@ public interface RiField {
      * Gets the access flags for this field. Only the flags specified in the JVM specification
      * will be included in the returned mask. The utility methods in the {@link Modifier} class
      * should be used to query the returned mask for the presence/absence of individual flags.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * NOTE: ONLY AVAILABLE ON RESOLVED FIELDS.
      * @return the mask of JVM defined field access flags defined for this field
      */
     int accessFlags();
