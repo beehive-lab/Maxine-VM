@@ -39,10 +39,10 @@ import com.sun.max.vm.cps.target.*;
  *
  * @author Michael Van De Vanter
  */
-public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implements MaxCompiledNativeCode {
+public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxExternalCode {
 
     /**
-     * Description of a region of native code discovered with the VM.
+     * Description of a region of external native code discovered with the VM.
      * <br>
      * This region has no parent, as little is known about it.
      * <br>
@@ -50,14 +50,14 @@ public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implement
      *
      * @author Michael Van De Vanter
      */
-    private static final class CompiledNativeCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledNativeCode> {
+    private static final class ExternalCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxExternalCode> {
 
         private static final IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY =
             new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
 
-        private MaxCompiledNativeCode owner;
+        private MaxExternalCode owner;
 
-        private CompiledNativeCodeMemoryRegion(TeleVM teleVM, MaxCompiledNativeCode owner, String name, Address start, Size size) {
+        private ExternalCodeMemoryRegion(TeleVM teleVM, MaxExternalCode owner, String name, Address start, Size size) {
             super(teleVM, name, start, size);
             this.owner = owner;
         }
@@ -70,7 +70,7 @@ public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implement
             return EMPTY;
         }
 
-        public MaxCompiledNativeCode owner() {
+        public MaxExternalCode owner() {
             return owner;
         }
 
@@ -80,17 +80,17 @@ public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implement
     }
 
     /**
-     * Summary information about a sequence of disassembled machine code instructions about
+     * Summary information about a sequence of external disassembled machine code instructions about
      * which little is known.
      *
      * @author Michael Van De Vanter
      */
-    private final class CompiledNativeCodeInstructionMap implements InstructionMap {
+    private final class ExternalCodeInstructionMap implements InstructionMap {
 
         private IndexedSequence<MachineCodeLocation> instructionLocations = null;
         private IndexedSequence<Integer> labelIndexes = null;
 
-        CompiledNativeCodeInstructionMap() {
+        ExternalCodeInstructionMap() {
         }
 
         private void initialize() {
@@ -101,7 +101,7 @@ public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implement
                 final VariableSequence<Integer> labels = new ArrayListSequence<Integer>();
                 for (int index = 0; index < length; index++) {
                     final TargetCodeInstruction targetCodeInstruction = instructions.get(index);
-                    locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, "native target code instruction"));
+                    locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, "external machine code instruction"));
                     if (targetCodeInstruction.label != null) {
                         labels.append(index);
                     }
@@ -216,18 +216,18 @@ public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implement
      * about which little more is known than its location.  The location must not overlap any code
      * region already known.
      */
-    public static TeleCompiledNativeCode create(TeleVM teleVM, Address codeStart, Size codeSize, String name) {
-        TeleCompiledNativeCode teleCompiledNativeCode = null;
+    public static TeleExternalCode create(TeleVM teleVM, Address codeStart, Size codeSize, String name) {
+        TeleExternalCode teleExternalCode = null;
         try {
             // Fail if the region specified by 'address' and 'size' overlaps an existing native entry
-            teleCompiledNativeCode = new TeleCompiledNativeCode(teleVM, codeStart, codeSize, name);
+            teleExternalCode = new TeleExternalCode(teleVM, codeStart, codeSize, name);
         } catch (IllegalArgumentException illegalArgumentException) {
-            ProgramError.unexpected("Native code region is overlapping an existing code region");
+            ProgramError.unexpected("External native code region is overlapping an existing code region");
         }
-        return teleCompiledNativeCode;
+        return teleExternalCode;
     }
 
-    private final CompiledNativeCodeMemoryRegion compiledNativeCodeMemoryRegion;
+    private final ExternalCodeMemoryRegion externalCodeMemoryRegion;
 
     private InstructionMap instructionMap = null;
 
@@ -235,10 +235,10 @@ public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implement
     private IndexedSequence<MachineCodeLocation> instructionLocations;
     private CodeLocation codeStartLocation = null;
 
-    private TeleCompiledNativeCode(TeleVM teleVM, Address start, Size size, String name) {
+    private TeleExternalCode(TeleVM teleVM, Address start, Size size, String name) {
         super(teleVM);
-        this.compiledNativeCodeMemoryRegion = new CompiledNativeCodeMemoryRegion(teleVM, this, name, start, size);
-        this.instructionMap = new CompiledNativeCodeInstructionMap();
+        this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(teleVM, this, name, start, size);
+        this.instructionMap = new ExternalCodeInstructionMap();
         // Register so that it can be located by address.
         vm().codeCache().register(this);
     }
@@ -247,7 +247,7 @@ public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implement
         if (instructions == null && vm().tryLock()) {
             byte[] code = null;
             try {
-                code = vm().dataAccess().readFully(getCodeStart(), compiledNativeCodeMemoryRegion.size().toInt());
+                code = vm().dataAccess().readFully(getCodeStart(), externalCodeMemoryRegion.size().toInt());
             } finally {
                 vm().unlock();
             }
@@ -259,19 +259,19 @@ public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implement
     }
 
     public String entityName() {
-        return compiledNativeCodeMemoryRegion.regionName();
+        return externalCodeMemoryRegion.regionName();
     }
 
     public String entityDescription() {
         return "A discovered block of native code not managed by the VM";
     }
 
-    public MaxEntityMemoryRegion<MaxCompiledNativeCode> memoryRegion() {
-        return compiledNativeCodeMemoryRegion;
+    public MaxEntityMemoryRegion<MaxExternalCode> memoryRegion() {
+        return externalCodeMemoryRegion;
     }
 
     public boolean contains(Address address) {
-        return compiledNativeCodeMemoryRegion.contains(address);
+        return externalCodeMemoryRegion.contains(address);
     }
 
     public InstructionMap instructionMap() {
@@ -279,13 +279,13 @@ public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implement
     }
 
     public Address getCodeStart() {
-        return compiledNativeCodeMemoryRegion.start();
+        return externalCodeMemoryRegion.start();
     }
 
     public CodeLocation getCodeStartLocation() {
         final Address codeStart = getCodeStart();
         if (codeStartLocation == null && codeStart != null) {
-            codeStartLocation = codeManager().createMachineCodeLocation(codeStart, "code start location in native routine");
+            codeStartLocation = codeManager().createMachineCodeLocation(codeStart, "code start location in external native code");
         }
         return codeStartLocation;
     }
@@ -299,7 +299,7 @@ public final class TeleCompiledNativeCode extends AbstractTeleVMHolder implement
     }
 
     public void writeSummary(PrintStream printStream) {
-        printStream.println("Native method: " + entityName());
-        printStream.println(" ***UNIMPLEMENTED*** for native methods");
+        printStream.println("External native code: " + entityName());
+        printStream.println(" ***UNIMPLEMENTED*** for external native methods");
     }
 }

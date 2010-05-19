@@ -78,10 +78,10 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
 
     /**
      * Makes an inspector displaying code for the method pointed to by the instructionPointer. Should always work for
-     * Java methods. For native methods, only works if the code block is already known to the inspector or if the user
+     * Java methods. For external native methods, only works if the code block is already known to the inspector or if the user
      * supplies some additional information at an optional prompt.
      *
-     * @param address Target code location in the VM.
+     * @param address machine code location in the VM.
      * @param interactive Should user be prompted for additional address information in case the location is unknown
      *            native code.
      * @return A possibly new inspector, null if unable to view.
@@ -93,16 +93,16 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
             // Java method
             methodInspector = make(inspection, compiledMethod, MethodCodeKind.TARGET_CODE);
         } else {
-            final MaxCompiledNativeCode compiledNativeCode = inspection.vm().codeCache().findCompiledNativeCode(address);
-            if (compiledNativeCode != null) {
-                // Some other kind of known target code
-                methodInspector = make(inspection, compiledNativeCode);
+            final MaxExternalCode externalCode = inspection.vm().codeCache().findExternalCode(address);
+            if (externalCode != null) {
+                // Some other kind of known external machine code
+                methodInspector = make(inspection, externalCode);
             } else if (interactive) {
                 // Code location is not in a Java method or runtime stub and has not yet been viewed in a native routine.
                 // Give the user a chance to guess at its length so we can register and view it
                 final MutableInnerClassGlobal<MethodInspector> result = new MutableInnerClassGlobal<MethodInspector>();
                 final String defaultDescription = "Native code @0x" + address.toHexString();
-                new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxCompiledNativeCode.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
+                new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxExternalCode.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
                     @Override
                     public void entered(Address nativeAddress, Size codeSize, String enteredName) {
                         try {
@@ -110,11 +110,11 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                             if (name == null || name.equals("")) {
                                 name = defaultDescription;
                             }
-                            final MaxCompiledNativeCode compiledNativeCode = vm().codeCache().createTeleNativeTargetRoutine(nativeAddress, codeSize, name);
-                            result.setValue(MethodInspector.make(inspection, compiledNativeCode));
+                            final MaxExternalCode externalCode = vm().codeCache().createExternalCode(nativeAddress, codeSize, name);
+                            result.setValue(MethodInspector.make(inspection, externalCode));
                             // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                         } catch (IllegalArgumentException illegalArgumentException) {
-                            inspection.gui().errorMessage("Specified native code range overlaps region already registered in Inpsector");
+                            inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
                         }
                     }
                     @Override
@@ -218,14 +218,14 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     /**
      * @return A possibly new inspector for a block of native code in the VM already known to the inspector.
      */
-    private static NativeMethodInspector make(Inspection inspection, MaxCompiledNativeCode maxCompiledNativeCode) {
+    private static NativeMethodInspector make(Inspection inspection, MaxExternalCode maxExternalCode) {
         NativeMethodInspector nativeMethodInspector = null;
-        MethodInspector methodInspector = machineCodeToMethodInspector.get(maxCompiledNativeCode);
+        MethodInspector methodInspector = machineCodeToMethodInspector.get(maxExternalCode);
         if (methodInspector == null) {
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
-            nativeMethodInspector = new NativeMethodInspector(inspection, parent, maxCompiledNativeCode);
+            nativeMethodInspector = new NativeMethodInspector(inspection, parent, maxExternalCode);
             parent.add(nativeMethodInspector);
-            machineCodeToMethodInspector.put(maxCompiledNativeCode, nativeMethodInspector);
+            machineCodeToMethodInspector.put(maxExternalCode, nativeMethodInspector);
         } else {
             nativeMethodInspector = (NativeMethodInspector) methodInspector;
         }

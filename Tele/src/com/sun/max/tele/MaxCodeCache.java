@@ -78,7 +78,7 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @param address memory location in the VM
      * @return known external native code that includes the address, null if none
      */
-    MaxCompiledNativeCode findCompiledNativeCode(Address address);
+    MaxExternalCode findExternalCode(Address address);
 
     /**
      * @return gets all compilations of a method in the VM, empty if none
@@ -91,14 +91,14 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
     MaxCompiledMethod latestCompilation(TeleClassMethodActor teleClassMethodActor);
 
     /**
-     * Create a new MaxCompiledNativeCode for a block of native code in the VM that has not yet been registered.
+     * Create a new MaxExternalCode for a block of external native code in the VM that has not yet been registered.
      *
-     * @param codeStart starting address of the code in VM memory
+     * @param codeStart starting address of the machine code in VM memory
      * @param codeSize presumed size of the code
      * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
-     * @return a newly created TeleCompiledNativeCode
+     * @return a newly created TeleExternalCode
      */
-    MaxCompiledNativeCode createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name);
+    MaxExternalCode createExternalCode(Address codeStart, Size codeSize, String name);
 
     /**
      * Writes a textual summary describing all instances of {@link MaxMachineCode} known to the VM.

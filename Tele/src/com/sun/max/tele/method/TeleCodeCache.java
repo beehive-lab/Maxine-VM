@@ -171,9 +171,9 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     }
 
     public MaxMachineCode< ? extends MaxMachineCode> findMachineCode(Address address) {
-        TeleCompiledNativeCode teleCompiledNativeCode = codeRegistry().getCompiledNativeCode(address);
-        if (teleCompiledNativeCode == null) {
-            return teleCompiledNativeCode;
+        TeleExternalCode externalCode = codeRegistry().getExternalCode(address);
+        if (externalCode != null) {
+            return externalCode;
         }
         return findCompiledMethod(address);
     }
@@ -217,12 +217,12 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return teleTargetMethod == null ? null : findCompiledMethod(teleTargetMethod.getRegionStart());
     }
 
-    public MaxCompiledNativeCode findCompiledNativeCode(Address address) {
-        return codeRegistry().getCompiledNativeCode(address);
+    public MaxExternalCode findExternalCode(Address address) {
+        return codeRegistry().getExternalCode(address);
     }
 
-    public TeleCompiledNativeCode createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name) {
-        return TeleCompiledNativeCode.create(vm(), codeStart, codeSize, name);
+    public TeleExternalCode createExternalCode(Address codeStart, Size codeSize, String name) {
+        return TeleExternalCode.create(vm(), codeStart, codeSize, name);
     }
 
     public void writeSummary(PrintStream printStream) {
@@ -248,8 +248,8 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return codeRegistry;
     }
 
-    public void register(TeleCompiledNativeCode teleCompiledNativeCode) {
-        codeRegistry().add(teleCompiledNativeCode);
+    public void register(TeleExternalCode teleExternalCode) {
+        codeRegistry().add(teleExternalCode);
 
     }
 
