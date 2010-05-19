@@ -18,25 +18,34 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.guestvm.xen;
+package com.sun.max.tele.debug.guestvm.xen.dbchannel;
 
-import com.sun.max.collect.*;
-import com.sun.max.tele.debug.*;
+import java.io.Serializable;
+
+import com.sun.max.program.*;
 
 /**
  * The interface used by the Maxine Inspector Virtual Edition (aka Guest VM) to access information from a target Maxine VM.
+ * It is defined in terms of simple data types that allow an implementation with {@link DataInputStream} and {@link DataOutputStream}
+ *
  *
  * @author Mick Jordan
  *
  */
 
-public interface GuestVMXenDBChannelProtocol {
+public interface SimpleProtocol {
     /**
      * Establish a connection to a given target VM.
      * @param domId the Xen domain id of the target VM; only meaningful for an active target VM
-     * @return {@code true} if the connection succeeded, {@code false} otherwise
+     * @param threadLocalsAreaSize size of thread locals area frm boot image header
+     * @return {@code true} if the attach succeeded, {@code false} otherwise
      */
-    boolean attach(int domId);
+    boolean attach(int domId, int threadLocalsAreaSize);
+    /**
+     * Break connection with target VM.
+     * @return {@code true} if the detach succeeded, {@code false} otherwise
+     */
+    boolean detach();
     /**
      * Gets the address of the base of the boot image heap.
      * @return base address of the boot heap
@@ -47,29 +56,29 @@ public interface GuestVMXenDBChannelProtocol {
 
     /**
      * Gets the largest byte buffer supported by the protocol.
+     * If this value is small it may result in multiple calls to {@link #readBytes} or {@link #writeBytes}
+     * to satisfy a single request at a higher level. Therefore it should be as large as practicable.
      * @return size of largest byte buffer that can be used for bulk data transfer
      */
     int maxByteBufferSize();
     /**
-     * Reads bytes from the target VM into either an array or a direct {@link java.nio.ByteBuffer}.
+     * Reads bytes from the target VM into a byte array.
      * @param src virtual address to read from
-     * @param dst either byte array or a  {@link java.nio.ByteBuffer byte buffer} to write to
-     * @param isDirectByteBuffer {@code true} if {@code dst} is a {@link java.nio.ByteBuffer byte buffer}, {@code false} if it is a byte array.
-     * @param dstOffset offset in the byte buffer where writing should begin
+     * @param dst byte array to write to
+     * @param dstOffset offset to start writing bytes
      * @param length number of bytes to read
      * @return the number of bytes actually read
      */
-    int readBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
+    int readBytes(long src, byte[] dst, int dstOffset, int length);
     /**
-     * Writes bytes from either an array or a direct {@link java.nio.ByteBuffer} to the target VM.
+     * Writes bytes from a byte array to the target VM.
      * @param dst virtual address to write to
-     * @param src either byte array or a {@link java.nio.ByteBuffer byte buffer} to read from
-     * @param isDirectByteBuffer {@code true} if {@code src} is a {@link java.nio.ByteBuffer byte buffer}, {@code false} if it is a byte array.
-     * @param srcOffset offset in the byte buffer where readinh should begin
+     * @param src byte array containing data to write
+     * @param srcOffset offset to start reading bytes
      * @param length number of bytes to write
      * @return number of bytes actually written
      */
-    int writeBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
+    int writeBytes(long dst, byte[] src, int srcOffset, int length);
     /**
      * Gets the registers of the given thread from the target VM.
      * @param threadId id of the thread for which the registers are requested
@@ -86,18 +95,54 @@ public interface GuestVMXenDBChannelProtocol {
                     byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize);
 
-   /**
-     * Gathers the set of active threads in the target VM.
-     * This is not really a data access method because it assumes an active agent in the VM that can get this information by interpreting the state of the VM.
-     * It needs re-thinking in the context of inactive domains and targets with no active agent.
-     * @param teleDomain
-     * @param threads
-     * @param domainId
-     * @param threadLocalsList
-     * @param primordialThreadLocals
-     * @return
+    /**
+     * Exactly the data passed as arguments to {@link TeleProcess.jniGatherThread}.
+     * It is manually serialized and passed as a byte array.
      */
-    boolean gatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
+    public static class GatherThreadData implements Serializable {
+        int id;
+        long localHandle;
+        long handle;
+        int state;
+        long instructionPointer;
+        long stackBase;
+        long stackSize;
+        long tlb;
+        long tlbSize;
+        int tlaSize;
+
+        public GatherThreadData(int id, long localHandle, long handle, int state, long instructionPointer, long stackBase, long stackSize, long tlb, long tlbSize, int tlaSize) {
+            this.id = id;
+            this.localHandle = localHandle;
+            this.handle = handle;
+            this.state = state;
+            this.instructionPointer = instructionPointer;
+            this.stackBase = stackBase;
+            this.stackSize = stackSize;
+            this.tlb = tlb;
+            this.tlbSize = tlbSize;
+            this.tlaSize = tlaSize;
+            //Trace.line(1, "GatherThreadData " + id + ", " + localHandle + ", 0x" + Long.toHexString(handle) + ", 0x" + Long.toHexString(state) + ", 0x" + Long.toHexString(instructionPointer) + ", 0x" +
+            //               Long.toHexString(stackBase) + ", " + stackSize + ", 0x" + Long.toHexString(tlb) + ", " + tlbSize + ", " + tlaSize);
+        }
+    }
+
+    /**
+     * A dumbed down version of {@link Protocol#gatherThreads} that can communicate using the
+     * limitations of this interface. Operates in tandem with {@link #readThreads}.
+     * @param threadLocalsList forwarded from {@link Protocol#gatherThreads}
+     * @param primordialThreadLocals forwarded from {@link Protocol#gatherThreads}
+     * @return number of gathered threads (length of serialized array)
+     */
+    int gatherThreads(long threadLocalsList, long primordialThreadLocals);
+
+    /**
+     * Read the gathered thgeads data into byte array.
+     * @param size size needed for byte array (result of {@link #gatherThreads}
+     * @param gatherThreadsData byte array for serialized data, {@link ArrayMode#OUT} parameter
+     * @return number of gathered threads (length of serialized array)
+     */
+    int readThreads(int size, byte[] gatherThreadsData);
 
     // Control methods, only relevant for an active target VM
 

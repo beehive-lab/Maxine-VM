@@ -18,40 +18,56 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.guestvm.xen;
+package com.sun.max.tele.debug.guestvm.xen.dbchannel.dump;
 
-import com.sun.max.collect.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
-public class GuestVMXenDBTraceChannelProtocol extends GuestVMXenDBChannelProtocolAdaptor {
+
+public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
+
+    /**
+     * Creates an instance of {@link Protocol} that can read from Xen core dumps.
+     *
+     * @param dumpFile designates the dump file (and image file) somehow
+     */
+    public DumpProtocol(String dumpFile) {
+        // TODO implement
+    }
 
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {
+        inappropriate("activateWatchpoint");
         return false;
     }
 
     @Override
-    public boolean attach(int domId) {
-        Trace.line(1, "attach " + domId);
+    public boolean attach(int domId, int threadLocalsAreaSize) {
+        // nothing to do
         return true;
     }
 
     @Override
-    public boolean deactivateWatchpoint(long start, long size) {
-        // TODO Auto-generated method stub
+    public boolean detach() {
+        // nothing to do
         return false;
     }
 
     @Override
-    public boolean gatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals) {
-        // TODO Auto-generated method stub
+    public boolean deactivateWatchpoint(long start, long size) {
+        inappropriate("deactivateWatchpoint");
+        return false;
+    }
+
+    @Override
+    public boolean gatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
+        unimplemented("gatherThreads");
         return false;
     }
 
     @Override
     public long getBootHeapStart() {
-        // TODO Auto-generated method stub
+        unimplemented("getBootHeapStart");
         return 0;
     }
 
@@ -62,39 +78,39 @@ public class GuestVMXenDBTraceChannelProtocol extends GuestVMXenDBChannelProtoco
     }
 
     @Override
-    public int readBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length) {
-        // TODO Auto-generated method stub
+    public int readBytes(long src, byte[] dst, int dstOffset, int length) {
+        unimplemented("readBytes");
         return 0;
     }
 
     @Override
     public boolean readRegisters(int threadId, byte[] integerRegisters, int integerRegistersSize, byte[] floatingPointRegisters, int floatingPointRegistersSize, byte[] stateRegisters,
                     int stateRegistersSize) {
-        // TODO Auto-generated method stub
+        unimplemented("readRegisters");
         return false;
     }
 
     @Override
     public int readWatchpointAccessCode() {
-        // TODO Auto-generated method stub
+        inappropriate("readWatchpointAccessCode");
         return 0;
     }
 
     @Override
     public long readWatchpointAddress() {
-        // TODO Auto-generated method stub
+        inappropriate("readWatchpointAddress");
         return 0;
     }
 
     @Override
     public int resume() {
-        // TODO Auto-generated method stub
+        inappropriate("resume");
         return 0;
     }
 
     @Override
     public int setInstructionPointer(int threadId, long ip) {
-        // TODO Auto-generated method stub
+        inappropriate("setInstructionPointer");
         return 0;
     }
 
@@ -106,26 +122,33 @@ public class GuestVMXenDBTraceChannelProtocol extends GuestVMXenDBChannelProtoco
 
     @Override
     public boolean singleStep(int threadId) {
-        // TODO Auto-generated method stub
+        inappropriate("singleStep");
         return false;
     }
 
     @Override
     public boolean suspend(int threadId) {
-        // TODO Auto-generated method stub
+        inappropriate("suspend");
         return false;
     }
 
     @Override
     public boolean suspendAll() {
-        // TODO Auto-generated method stub
+        inappropriate("suspendAll");
         return false;
     }
 
     @Override
-    public int writeBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length) {
-        // TODO Auto-generated method stub
+    public int writeBytes(long dst, byte[] src, int srcOffset, int length) {
+        unimplemented("writeBytes");
         return 0;
     }
 
+    private void inappropriate(String name) {
+        ProgramError.unexpected("DumpProtocol: inappropriate method: " + name + " invoked");
+    }
+
+    private void unimplemented(String name) {
+        ProgramError.unexpected("DumpProtocol: unimplemented method: " + name + " invoked");
+    }
 }

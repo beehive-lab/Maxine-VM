@@ -18,12 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.guestvm.xen;
+package com.sun.max.tele.debug.guestvm.xen.dbchannel.agent;
 
 import java.io.*;
 import java.net.*;
 import com.sun.max.program.*;
-import static com.sun.max.tele.debug.guestvm.xen.GuestVMXenDBChannelProtocolAdaptor.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.RIProtocolAdaptor.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.*;
 
 /**
  * An agent that handles the dom0 side of the Maxine Inspector debug communication channel.
@@ -31,11 +33,12 @@ import static com.sun.max.tele.debug.guestvm.xen.GuestVMXenDBChannelProtocolAdap
  * @author Mick Jordan
  *
  */
-public class GuestVMXenDBNativeChannelAgent {
+public class ProtocolAgent {
 
-    private static int port = GuestVMXenDBTCPNativeChannelProtocol.DEFAULT_PORT;
-    private static final String NATIVE = "Native";
+    private static int port = TCPProtocol.DEFAULT_PORT;
+    private static final String NATIVE = "agent.AgentJni";
     private static String impl = NATIVE;
+    private static int dbtLevel = 0;
     /**
      * @param args
      */
@@ -50,6 +53,8 @@ public class GuestVMXenDBNativeChannelAgent {
                 impl = args[++i];
             } else if (arg.equals("-trace")) {
                 traceLevel = Integer.parseInt(args[++i]);
+            } else if (arg.equals("-dbtlevel")) {
+                dbtLevel = Integer.parseInt(args[++i]);
             }
         }
         // Checkstyle: resume modified control variable check
@@ -71,7 +76,10 @@ public class GuestVMXenDBNativeChannelAgent {
                     Trace.line(1, "waiting for connection");
                     final Socket sock = server.accept();
                     Trace.line(1, "connection accepted on " + sock.getLocalPort() + " from " + sock.getInetAddress());
-                    new Handler(sock).start();
+                    final Handler handler = new Handler(sock);
+                    handler.start();
+                    // no concurrent connections, underlying native support cannot handle that at the moment
+                    handler.join();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -85,76 +93,49 @@ public class GuestVMXenDBNativeChannelAgent {
         private Socket socket;
         private DataInputStream in;
         private DataOutputStream out;
-        private GuestVMXenDBChannelProtocolAdaptor protocol;
+        private RIProtocolAdaptor protocol;
 
         Handler(Socket socket) throws Exception {
             this.socket = socket;
             try {
-                in = new DataInputStream(socket.getInputStream());
-                out = new DataOutputStream(socket.getOutputStream());
+                in = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+                out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
             } catch (IOException ex) {
                 close();
                 throw ex;
             }
-            final String protocolClassName = "com.sun.max.tele.debug.guestvm.xen.GuestVMXenDB" + impl + "ChannelProtocol";
-            protocol = (GuestVMXenDBChannelProtocolAdaptor) Class.forName(protocolClassName).newInstance();
+            final String protocolClassName = "com.sun.max.tele.debug.guestvm.xen.dbchannel." + impl + "Protocol";
+            protocol = (RIProtocolAdaptor) Class.forName(protocolClassName).newInstance();
+            if (dbtLevel > 0) {
+                ((Protocol) protocol).setTransportDebugLevel(dbtLevel);
+            }
         }
 
         @Override
         public void run() {
-            while (true) {
+            boolean terminated = false;
+            while (!terminated) {
                 try {
                     final String command = in.readUTF();
                     MethodInfo m = protocol.methodMap.get(command);
                     if (m == null) {
                         Trace.line(1, "command " + command + " not available");
                     } else {
-                        final Object[] args = readArgs(m);
+                        final Object[] args = protocol.readArgs(in, m);
                         final Object result = m.method.invoke(protocol, args);
-                        writeResult(m, result);
+                        protocol.writeResult(out, m, result, args);
+                        if (command.equals("resume") && ((Integer) result == 1)) {
+                            terminated = true;
+                        }
                     }
                 } catch (Exception ex) {
                     System.err.println(ex);
                     ex.printStackTrace();
-                    System.err.println("exiting");
-                    close();
-                    return;
+                    System.err.println("terminating connection");
+                    terminated = true;
                 }
             }
-        }
-
-        private Object[] readArgs(MethodInfo m) throws IOException {
-            final Object[] result = new Object[m.parameterTypes.length];
-            int index = 0;
-            for (Class<?> klass : m.parameterTypes) {
-                if (klass == long.class) {
-                    result[index] = in.readLong();
-                } else if (klass == int.class) {
-                    result[index] = in.readInt();
-                } else if (klass == boolean.class) {
-                    result[index] = in.readBoolean();
-                } else if (klass == byte.class) {
-                    result[index] = in.readByte();
-                } else {
-                    ProgramError.unexpected("unexpected argument type readArgs: " + klass.getName());
-                }
-                index++;
-            }
-            return result;
-        }
-
-        private void writeResult(MethodInfo m, Object result) throws IOException {
-            if (m.returnType == void.class) {
-                return;
-            } else if (m.returnType == boolean.class) {
-                out.writeBoolean((Boolean) result);
-            } else if (m.returnType == int.class) {
-                out.writeInt((Integer) result);
-            } else if (m.returnType == long.class) {
-                out.writeLong((Long) result);
-            } else {
-                ProgramError.unexpected("unexpected result type writeResult: " + m.returnType.getName());
-            }
+            close();
         }
 
         private void close() {
