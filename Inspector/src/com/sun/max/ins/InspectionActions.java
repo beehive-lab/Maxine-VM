@@ -38,7 +38,7 @@ import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxCompiledCode.*;
+import com.sun.max.tele.MaxMachineCode.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
@@ -1263,44 +1263,44 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  inspect the memory holding a block of target code.
+     * Action:  inspect the memory holding a block of machine code.
      */
     final class InspectTargetRegionMemoryWordsAction extends InspectorAction {
 
         private static final String  DEFAULT_TITLE = "Inspect Target Code memory region";
-        private final MaxCompiledCode maxCompiledCode;
+        private final MaxMachineCode machineCode;
 
-        private InspectTargetRegionMemoryWordsAction(MaxCompiledCode maxCompiledCode, String actionTitle) {
+        private InspectTargetRegionMemoryWordsAction(MaxMachineCode machineCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.maxCompiledCode = maxCompiledCode;
+            this.machineCode = machineCode;
         }
 
         @Override
         protected void procedure() {
-            final String description = maxCompiledCode.entityName();
-            actions().inspectRegionMemoryWords(maxCompiledCode.memoryRegion(), description).perform();
+            final String description = machineCode.entityName();
+            actions().inspectRegionMemoryWords(machineCode.memoryRegion(), description).perform();
         }
     }
 
     /**
-     * Creates an action that will inspect memory containing a block of target code.
+     * Creates an action that will inspect memory containing a block of machine code.
      *
-     * @param maxCompiledCode a block of target code in the VM, either a Java method or native
+     * @param machineCode a block of machine code in the VM, either a Java method or external native
      * @param actionTitle a name for the action
      * @return an Action that will create a Memory Words Inspector for the code
      */
-    public final InspectorAction inspectTargetRegionMemoryWords(MaxCompiledCode maxCompiledCode, String actionTitle) {
-        return new InspectTargetRegionMemoryWordsAction(maxCompiledCode, actionTitle);
+    public final InspectorAction inspectTargetRegionMemoryWords(MaxMachineCode machineCode, String actionTitle) {
+        return new InspectTargetRegionMemoryWordsAction(machineCode, actionTitle);
     }
 
     /**
      * Creates an action that will inspect memory containing a block of target code.
      *
-     * @param maxCompiledCode a block of target code in the VM, either a Java method or native
+     * @param machineCode a block of target code in the VM, either a Java method or native
      * @return an Action that will create a Memory Words Inspector for the code
      */
-    public final InspectorAction inspectTargetRegionMemoryWords(MaxCompiledCode maxCompiledCode) {
-        return new InspectTargetRegionMemoryWordsAction(maxCompiledCode, null);
+    public final InspectorAction inspectTargetRegionMemoryWords(MaxMachineCode machineCode) {
+        return new InspectTargetRegionMemoryWordsAction(machineCode, null);
     }
 
     /**
@@ -1977,7 +1977,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 @Override
                 public String validateInput(Address address) {
-                    if (vm().codeCache().findCompiledCode(address) != null) {
+                    if (vm().codeCache().findMachineCode(address) != null) {
                         return null;
                     }
                     return "There is no method containing the address " + address.toHexString();

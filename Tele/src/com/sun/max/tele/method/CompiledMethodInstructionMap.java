@@ -25,7 +25,7 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxCompiledCode.*;
+import com.sun.max.tele.MaxMachineCode.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleTargetMethod.*;

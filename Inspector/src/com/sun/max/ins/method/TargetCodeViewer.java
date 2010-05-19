@@ -27,7 +27,7 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxCompiledCode.*;
+import com.sun.max.tele.MaxMachineCode.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -42,16 +42,16 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public abstract class TargetCodeViewer extends CodeViewer {
 
-    private final MaxCompiledCode compiledCode;
+    private final MaxMachineCode machineCode;
     private final InstructionMap instructionMap;
     private TeleConstantPool teleConstantPool;
     private ConstantPool localConstantPool;
     private final String[] rowToTagText;
 
-    protected TargetCodeViewer(Inspection inspection, MethodInspector parent, MaxCompiledCode compiledCode) {
+    protected TargetCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
         super(inspection, parent);
-        this.compiledCode = compiledCode;
-        this.instructionMap = compiledCode.instructionMap();
+        this.machineCode = machineCode;
+        this.instructionMap = machineCode.instructionMap();
         final int targetInstructionCount = instructionMap.length();
         this.rowToTagText = new String[targetInstructionCount];
         rowToStackFrame = new MaxStackFrame[targetInstructionCount];
@@ -59,8 +59,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
         teleConstantPool = null;
         localConstantPool = null;
         Arrays.fill(rowToTagText, "");
-        if (compiledCode instanceof MaxCompiledMethod) {
-            final MaxCompiledMethod compiledMethod = (MaxCompiledMethod) compiledCode;
+        if (machineCode instanceof MaxCompiledMethod) {
+            final MaxCompiledMethod compiledMethod = (MaxCompiledMethod) machineCode;
             final TeleClassMethodActor teleClassMethodActor = compiledMethod.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
@@ -115,14 +115,14 @@ public abstract class TargetCodeViewer extends CodeViewer {
         // For very deep stacks (e.g. when debugging a metacircular related infinite recursion issue),
         // it's faster to loop over the frames and then only loop over the instructions for each
         // frame related to the target code represented by this viewer.
-        final MaxMemoryRegion targetCodeRegion = maxCompiledCode().memoryRegion();
+        final MaxMemoryRegion targetCodeRegion = machineCode().memoryRegion();
         for (MaxStackFrame frame : frames) {
             final MaxCodeLocation frameCodeLocation = frame.codeLocation();
-            final MaxCompiledCode compiledMethod = frame.compiledMethod();
-            if (frameCodeLocation != null && compiledMethod != null) {
+            final MaxMachineCode machineCode = frame.compiledMethod();
+            if (frameCodeLocation != null && machineCode != null) {
                 final boolean isFrameForThisCode =
                     frame instanceof MaxStackFrame.Compiled ?
-                                    targetCodeRegion.overlaps(compiledMethod.memoryRegion()) :
+                                    targetCodeRegion.overlaps(machineCode.memoryRegion()) :
                                         targetCodeRegion.contains(frameCodeLocation.address());
                 if (isFrameForThisCode) {
                     for (int row = 0; row < instructionMap.length(); row++) {
@@ -139,8 +139,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
     /**
      * @return surrogate for the {@link TargetRoutine} in the VM for the method being viewed.
      */
-    protected MaxCompiledCode maxCompiledCode() {
-        return compiledCode;
+    protected MaxMachineCode machineCode() {
+        return machineCode;
     }
 
     /**

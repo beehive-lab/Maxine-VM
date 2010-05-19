@@ -29,7 +29,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxCompiledNativeCode extends MaxCompiledCode<MaxCompiledNativeCode> {
+public interface MaxCompiledNativeCode extends MaxMachineCode<MaxCompiledNativeCode> {
 
     Size DEFAULT_NATIVE_CODE_LENGTH = Size.fromInt(200);
 

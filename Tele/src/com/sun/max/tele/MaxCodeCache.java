@@ -27,7 +27,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Access to the cache of compiled code in the VM.
+ * Access to the cache of machine code in the VM.
  * The code cache consists of a part of the boot image
  * and one or more dynamically allocated regions
  *
@@ -56,13 +56,13 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
     MaxCompiledCodeRegion findCompiledCodeRegion(Address address);
 
     /**
-     * Gets the existing compiled code, if known, that contains a given address in the VM;
-     * the result could be a compiled method or a block of machine code about which little is known.
+     * Gets the existing machine code, if known, that contains a given address in the VM;
+     * the result could be a compiled method or a block of external native code about which little is known.
      *
      * @param address a memory location in the VM
      * @return the code, if any is known, that includes the address
      */
-    MaxCompiledCode< ? extends MaxCompiledCode> findCompiledCode(Address address);
+    MaxMachineCode< ? extends MaxMachineCode> findMachineCode(Address address);
 
     /**
      * Get the method compilation, if any, that contains a given address in the VM.
@@ -73,10 +73,10 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
     MaxCompiledMethod findCompiledMethod(Address address);
 
     /**
-     * Get the block of known native code, if any, that contains a given address in the VM.
+     * Get the block of known external native code, if any, that contains a given address in the VM.
      *
      * @param address memory location in the VM
-     * @return known native code that includes the address, null if none
+     * @return known external native code that includes the address, null if none
      */
     MaxCompiledNativeCode findCompiledNativeCode(Address address);
 
@@ -101,7 +101,7 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
     MaxCompiledNativeCode createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name);
 
     /**
-     * Writes a textual summary describing all instances of {@link MaxCompiledCode} known to the VM.
+     * Writes a textual summary describing all instances of {@link MaxMachineCode} known to the VM.
      */
     void writeSummary(PrintStream printStream);
 

@@ -31,28 +31,29 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 
 /**
- * Description of a single compiled code routine in the VM, either compiled from a Java method or a block of native code.
+ * Description of a single machine code routine in the VM, either compiled from a Java method or a block of external native code.
  *
  * @author Michael Van De Vanter
  */
-public interface MaxCompiledCode<CompiledCode_Type extends MaxCompiledCode> extends MaxEntity<CompiledCode_Type> {
+public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends MaxEntity<MachineCode_Type> {
 
     /**
-     * @return VM address of the first instruction in the target code represented by this routine. Note that this
+     * @return VM address of the first instruction in the machine code represented by this routine. Note that this
      * may differ from the designated {@linkplain #getCallEntryLocation() entry point} of the code.
      */
     Address getCodeStart();
 
     /**
-     * @return VM location of the first instruction in the target code represented by this routine. Note that this
+     * @return VM location of the first instruction in the machine code represented by this routine. Note that this
      *         may differ from the designated {@linkplain #getCallEntryLocation() call entry location} of the code.
      */
     CodeLocation getCodeStartLocation();
 
     /**
-     * Gets the compiled entry point location for this method as specified by the ABI in use when this target method was compiled.
+     * Gets the compiled entry point location for this code, which in the case of a compiled method is the
+     * entry specified by the ABI in use when compiled.
      *
-     * @return {@link Address#zero()} if this target method has not yet been compiled
+     * @return {@link Address#zero()} if not yet been compiled
      */
     CodeLocation getCallEntryLocation();
 
@@ -71,7 +72,7 @@ public interface MaxCompiledCode<CompiledCode_Type extends MaxCompiledCode> exte
     String targetLocationToString(TargetLocation targetLocation);
 
     /**
-     * Writes a textual disassembly of the instructions.
+     * Writes a textual disassembly of the machine code instructions.
      */
     void writeSummary(PrintStream printStream);
 

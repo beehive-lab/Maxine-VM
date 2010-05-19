@@ -192,7 +192,7 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
-    public MaxCompiledMethod maxCompiledCode() {
+    public MaxCompiledMethod machineCode() {
         return compiledMethod;
     }
 

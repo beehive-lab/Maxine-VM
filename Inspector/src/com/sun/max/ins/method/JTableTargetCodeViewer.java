@@ -40,7 +40,7 @@ import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxCompiledCode.*;
+import com.sun.max.tele.MaxMachineCode.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
@@ -70,12 +70,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     private final Color defaultBackgroundColor;
     private final Color stopBackgroundColor;
 
-    public JTableTargetCodeViewer(Inspection inspection, MethodInspector parent, MaxCompiledCode maxCompiledCode) {
-        super(inspection, parent, maxCompiledCode);
+    public JTableTargetCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
+        super(inspection, parent, machineCode);
         this.inspection = inspection;
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
-        this.tableModel = new TargetCodeTableModel(inspection, maxCompiledCode);
+        this.tableModel = new TargetCodeTableModel(inspection, machineCode);
         this.columns = new TableColumn[TargetCodeColumnKind.VALUES.length()];
         instanceViewPreferences = new TargetCodeViewPreferences(TargetCodeViewPreferences.globalPreferences(inspection())) {
             @Override
@@ -285,7 +285,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             final int oldSelectedRow = getSelectedRow();
             if (codeLocation != null && codeLocation.hasAddress()) {
                 final Address targetCodeInstructionAddress = focus().codeLocation().address();
-                if (maxCompiledCode().contains(targetCodeInstructionAddress)) {
+                if (machineCode().contains(targetCodeInstructionAddress)) {
                     final TargetCodeTableModel model = (TargetCodeTableModel) getModel();
                     final int row = model.findRow(targetCodeInstructionAddress);
                     if (row >= 0) {
@@ -329,12 +329,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      */
     private final class TargetCodeTableModel extends InspectorTableModel {
 
-        final MaxCompiledCode maxCompiledCode;
+        final MaxMachineCode machineCode;
 
-        public TargetCodeTableModel(Inspection inspection, MaxCompiledCode maxCompiledCode) {
+        public TargetCodeTableModel(Inspection inspection, MaxMachineCode machineCode) {
             super(inspection);
-            assert maxCompiledCode != null;
-            this.maxCompiledCode = maxCompiledCode;
+            assert machineCode != null;
+            this.machineCode = machineCode;
         }
 
         public int getColumnCount() {
@@ -342,7 +342,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public int getRowCount() {
-            return maxCompiledCode.instructionMap().length();
+            return machineCode.instructionMap().length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -396,11 +396,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public TargetCodeInstruction rowToInstruction(int row) {
-            return maxCompiledCode.instructionMap().instruction(row);
+            return machineCode.instructionMap().instruction(row);
         }
 
         public MaxCodeLocation rowToLocation(int row) {
-            return maxCompiledCode.instructionMap().instructionLocation(row);
+            return machineCode.instructionMap().instructionLocation(row);
         }
 
         /**
@@ -408,7 +408,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
          * @return the row in this block of code containing an instruction starting at the address, -1 if none.
          */
         public int findRow(Address address) {
-            final InstructionMap instructionMap = maxCompiledCode.instructionMap();
+            final InstructionMap instructionMap = machineCode.instructionMap();
             for (int row = 0; row < instructionMap.length(); row++) {
                 final TargetCodeInstruction targetCodeInstruction = instructionMap.instruction(row);
                 if (targetCodeInstruction.address.equals(address)) {
@@ -753,7 +753,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             if (renderer == null) {
                 final TargetCodeInstruction targetCodeInstruction = tableModel.rowToInstruction(row);
                 final String text = targetCodeInstruction.operands;
-                if (targetCodeInstruction.targetAddress != null && !maxCompiledCode().contains(targetCodeInstruction.targetAddress)) {
+                if (targetCodeInstruction.targetAddress != null && !machineCode().contains(targetCodeInstruction.targetAddress)) {
                     renderer = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction.targetAddress, table);
                     inspectorLabels[row] = renderer;
                 } else if (targetCodeInstruction.literalSourceAddress != null) {

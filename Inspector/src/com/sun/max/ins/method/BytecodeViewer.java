@@ -31,7 +31,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxCompiledCode.*;
+import com.sun.max.tele.MaxMachineCode.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
