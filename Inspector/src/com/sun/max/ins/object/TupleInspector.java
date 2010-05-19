@@ -39,9 +39,9 @@ public class TupleInspector extends ObjectInspector {
         super(inspection, factory, teleObject);
         final InspectorFrame frame = createFrame(true);
 
-        final MaxCompiledMethod compiledMethod = vm().codeCache().findCompiledMethod(teleObject.origin());
-        if (compiledMethod != null) {
-            frame.makeMenu(MenuKind.DEBUG_MENU).add(actions().setTargetCodeBreakpointAtMethodEntry(compiledMethod));
+        final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(teleObject.origin());
+        if (compiledCode != null) {
+            frame.makeMenu(MenuKind.DEBUG_MENU).add(actions().setMachineCodeBreakpointAtEntry(compiledCode));
         }
 
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();

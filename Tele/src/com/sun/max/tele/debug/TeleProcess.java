@@ -778,18 +778,18 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             // Executed a return
             return null;
         }
-        final TeleCompiledMethod oldCompiledMethod = vm().codeCache().findCompiledMethod(oldInstructionPointer);
-        if (oldCompiledMethod == null) {
-            // Stepped from native code:
+        final TeleCompiledCode oldCompiledCode = vm().codeCache().findCompiledCode(oldInstructionPointer);
+        if (oldCompiledCode == null) {
+            // Stepped from external native code:
             return null;
         }
-        final TeleCompiledMethod newCompiledMethod = vm().codeCache().findCompiledMethod(newInstructionPointer);
-        if (newCompiledMethod == null) {
-            // Stepped into native code:
+        final TeleCompiledCode newCompiledCode = vm().codeCache().findCompiledCode(newInstructionPointer);
+        if (newCompiledCode == null) {
+            // Stepped into external native code:
             return null;
         }
-        if (oldCompiledMethod != newCompiledMethod || newCompiledMethod.getCallEntryPoint().equals(newInstructionPointer)) {
-            // Stepped into a different target method or back into the entry of the same target method (i.e. a recursive call):
+        if (oldCompiledCode != newCompiledCode || newCompiledCode.getCallEntryPoint().equals(newInstructionPointer)) {
+            // Stepped into a different compilation or back into the entry of the same target method (i.e. a recursive call):
             return thread.stack().returnLocation();
         }
         // Stepped over a normal, non-call instruction:

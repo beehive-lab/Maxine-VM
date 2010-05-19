@@ -726,8 +726,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                 z++;
 
                 final Address address = stackFrame.ip;
-                TeleCompiledMethod compiledMethod = vm().codeCache().findCompiledMethod(address);
-                if (compiledMethod == null) {
+                TeleCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+                if (compiledCode == null) {
                     if (stackFrame.targetMethod() == null) {
                         LOGGER.warning("Target method of stack frame (" + stackFrame + ") was null!");
                         continue;
@@ -739,14 +739,14 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                         ProgramWarning.message("Could not find tele class method actor for " + classMethodActor);
                         continue;
                     }
-                    compiledMethod = vm().codeCache().findCompiledMethod(targetMethod.codeStart().asAddress());
-                    if (compiledMethod == null) {
+                    compiledCode = vm().codeCache().findCompiledCode(targetMethod.codeStart().asAddress());
+                    if (compiledCode == null) {
                         ProgramWarning.message("Could not find tele target method actor for " + classMethodActor);
                         continue;
                     }
                 }
 
-                //final TeleCompiledMethod compiledMethod = (TeleCompiledMethod) compiledCode;
+                //final TeleCompiledCode compiledMethod = (TeleCompiledCode) compiledCode;
 
                 LOGGER.info("Processing stackframe " + stackFrame);
 
@@ -756,15 +756,15 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                 }
                 if (index != -1) {
                     final int stopIndex = index;
-                    BytecodeLocation descriptor = compiledMethod.teleTargetMethod().getBytecodeLocation(stopIndex);
+                    BytecodeLocation descriptor = compiledCode.teleTargetMethod().getBytecodeLocation(stopIndex);
 
                     if (descriptor == null) {
                         LOGGER.info("WARNING: No Java frame descriptor found for Java stop " + stopIndex);
 
-                        if (vm().findTeleMethodActor(TeleClassMethodActor.class, compiledMethod.classMethodActor()) == null) {
+                        if (vm().findTeleMethodActor(TeleClassMethodActor.class, compiledCode.classMethodActor()) == null) {
                             LOGGER.warning("Could not find tele method!");
                         } else {
-                            result.append(new FrameProviderImpl(z == 1, compiledMethod.teleTargetMethod(), stackFrame, null, compiledMethod.classMethodActor(), 0));
+                            result.append(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, null, compiledCode.classMethodActor(), 0));
                         }
                     } else {
 
@@ -772,16 +772,16 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                             final TeleClassMethodActor curTma = vm().findTeleMethodActor(TeleClassMethodActor.class, descriptor.classMethodActor);
 
                             LOGGER.info("Found part frame " + descriptor + " tele method actor: " + curTma);
-                            result.append(new FrameProviderImpl(z == 1, compiledMethod.teleTargetMethod(), stackFrame, descriptor));
+                            result.append(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, descriptor));
                             descriptor = descriptor.parent();
                         }
                     }
                 } else {
                     LOGGER.info("Not at Java stop!");
-                    if (vm().findTeleMethodActor(TeleClassMethodActor.class, compiledMethod.classMethodActor()) == null) {
+                    if (vm().findTeleMethodActor(TeleClassMethodActor.class, compiledCode.classMethodActor()) == null) {
                         LOGGER.warning("Could not find tele method!");
                     } else {
-                        result.append(new FrameProviderImpl(z == 1, compiledMethod.teleTargetMethod(), stackFrame, null, compiledMethod.classMethodActor(), 0));
+                        result.append(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, null, compiledCode.classMethodActor(), 0));
                     }
                 }
             }

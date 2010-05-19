@@ -41,7 +41,7 @@ import com.sun.max.vm.compiler.target.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompiledMethod> {
+public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompiledCode> {
 
     /**
      * A tuple (method compilation name, method compilation).
@@ -50,19 +50,19 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
 
         private final String name;
 
-        private final MaxCompiledMethod compiledMethod;
+        private final MaxCompiledCode compiledCode;
 
-        public NamedMethodCompilation(String name, MaxCompiledMethod compiledMethod) {
+        public NamedMethodCompilation(String name, MaxCompiledCode compiledCode) {
             this.name = name;
-            this.compiledMethod = compiledMethod;
+            this.compiledCode = compiledCode;
         }
 
         public String name() {
             return name;
         }
 
-        public MaxCompiledMethod compiledCode() {
-            return compiledMethod;
+        public MaxCompiledCode compiledCode() {
+            return compiledCode;
         }
 
         public int compareTo(NamedMethodCompilation o) {
@@ -76,7 +76,7 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
     }
 
     @Override
-    protected MaxCompiledMethod convertSelectedItem(Object listItem) {
+    protected MaxCompiledCode convertSelectedItem(Object listItem) {
         return ((NamedMethodCompilation) listItem).compiledCode();
     }
 
@@ -93,30 +93,30 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
                     if (filterLowerCase.isEmpty() ||
                                     (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                                     methodNameLowerCase.contains(filterLowerCase)) {
-                        for (MaxCompiledMethod compiledMethod : vm().codeCache().compilations(teleClassMethodActor)) {
-                            final String name = inspection().nameDisplay().shortName(compiledMethod, ReturnTypeSpecification.AS_SUFFIX);
-                            namedTeleTargetMethods.add(new NamedMethodCompilation(name, compiledMethod));
+                        for (MaxCompiledCode compiledCode : vm().codeCache().compilations(teleClassMethodActor)) {
+                            final String name = inspection().nameDisplay().shortName(compiledCode, ReturnTypeSpecification.AS_SUFFIX);
+                            namedTeleTargetMethods.add(new NamedMethodCompilation(name, compiledCode));
                         }
                     }
                 }
             }
         } else {
             for (MaxCompiledCodeRegion teleCompiledCodeRegion : inspection().vm().codeCache().compiledCodeRegions()) {
-                for (MaxCompiledMethod compiledMethod : teleCompiledCodeRegion.compilations()) {
-                    ClassMethodActor methodActor = compiledMethod.classMethodActor();
-                    String targetMethodType = Classes.getSimpleName(compiledMethod.teleTargetMethod().getTeleHub().getTeleClassActor().getName());
+                for (MaxCompiledCode compiledCode : teleCompiledCodeRegion.compilations()) {
+                    ClassMethodActor methodActor = compiledCode.classMethodActor();
+                    String targetMethodType = Classes.getSimpleName(compiledCode.teleTargetMethod().getTeleHub().getTeleClassActor().getName());
                     if (methodActor != null) {
                         final String textToMatch = methodActor.format("%h.%n " + targetMethodType).toLowerCase();
                         if (filterLowerCase.isEmpty() ||
                             (filterLowerCase.endsWith(" ") && textToMatch.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                              textToMatch.contains(filterLowerCase)) {
                             final String name = methodActor.format("%h.%n(%p) [" + targetMethodType + "]");
-                            namedTeleTargetMethods.add(new NamedMethodCompilation(name, compiledMethod));
+                            namedTeleTargetMethods.add(new NamedMethodCompilation(name, compiledCode));
                         }
                     } else {
-                        String regionName = compiledMethod.entityName();
+                        String regionName = compiledCode.entityName();
                         if (filterLowerCase.isEmpty() || (regionName + " " + targetMethodType).toLowerCase().contains(filterLowerCase)) {
-                            namedTeleTargetMethods.add(new NamedMethodCompilation(regionName + " [" + targetMethodType + "]", compiledMethod));
+                            namedTeleTargetMethods.add(new NamedMethodCompilation(regionName + " [" + targetMethodType + "]", compiledCode));
                         }
                     }
                 }
@@ -151,7 +151,7 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
      * @param multi allow multiple selections if true
      * @return references to the selected {@link TargetMethod}s in the tele VM, null if user canceled.
      */
-    public static Sequence<MaxCompiledMethod> show(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multi) {
+    public static Sequence<MaxCompiledCode> show(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multi) {
         final TargetMethodSearchDialog dialog = new TargetMethodSearchDialog(inspection, teleClassActor, title, actionName, multi);
         dialog.setVisible(true);
         return dialog.selectedObjects();
@@ -168,7 +168,7 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
     }
 
     @Override
-    protected MaxCompiledMethod noSelectedObject() {
+    protected MaxCompiledCode noSelectedObject() {
         return null;
     }
 

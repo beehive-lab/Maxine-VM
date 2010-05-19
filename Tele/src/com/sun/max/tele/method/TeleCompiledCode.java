@@ -44,17 +44,17 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
- * Representation of a method compilation in the VM.
+ * Representation of compilation in the VM:  a method, stub, adapter, or other routine.
  * Much of the information is derived by delegation to
  * a surrogate for the corresponding instance of {@link TargetMethod}
  * in the VM.
  *
  * @author Michael Van De Vanter
  */
-public final class TeleCompiledMethod extends AbstractTeleVMHolder implements MaxCompiledMethod {
+public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxCompiledCode {
 
     /**
-     * Description of a compiled method region allocated in a code cache.
+     * Description of a compiled code region allocated in a code cache.
      * <br>
      * The parent of this region is the {@link MaxCompiledCodeRegion} in which it is created.
      * <br>
@@ -62,16 +62,16 @@ public final class TeleCompiledMethod extends AbstractTeleVMHolder implements Ma
      *
      * @author Michael Van De Vanter
      */
-    private static final class CompiledMethodMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledMethod> {
+    private static final class CompiledCodeMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCode> {
 
         private static final IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY =
             new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
 
-        private final TeleCompiledMethod owner;
+        private final TeleCompiledCode owner;
         private final boolean isBootCode;
         private final MaxEntityMemoryRegion<? extends MaxEntity> parent;
 
-        private CompiledMethodMemoryRegion(TeleVM teleVM, TeleCompiledMethod owner, TeleTargetMethod teleTargetMethod, TeleCompiledCodeRegion teleCompiledCodeRegion, boolean isBootCode) {
+        private CompiledCodeMemoryRegion(TeleVM teleVM, TeleCompiledCode owner, TeleTargetMethod teleTargetMethod, TeleCompiledCodeRegion teleCompiledCodeRegion, boolean isBootCode) {
             super(teleVM, teleTargetMethod);
             ProgramError.check(teleCompiledCodeRegion != null);
             this.owner = owner;
@@ -87,7 +87,7 @@ public final class TeleCompiledMethod extends AbstractTeleVMHolder implements Ma
             return EMPTY;
         }
 
-        public MaxCompiledMethod owner() {
+        public MaxCompiledCode owner() {
             return owner;
         }
 
@@ -143,22 +143,22 @@ public final class TeleCompiledMethod extends AbstractTeleVMHolder implements Ma
     private final int compilationIndex;
 
     private CodeLocation codeStartLocation = null;
-    private final CompiledMethodMemoryRegion compiledMethodMemoryRegion;
+    private final CompiledCodeMemoryRegion compiledCodeMemoryRegion;
     private IndexedSequence<MachineCodeLocation> instructionLocations;
 
     /**
      * Creates an object that describes a region of VM memory used to hold a single compiled method.
      *
      * @param teleVM the VM
-     * @param teleTargetMethod surrogate for the method compilation in the VM
+     * @param teleTargetMethod surrogate for the compilation in the VM
      * @param teleCompiledCodeRegion surrogate for the code cache's allocation region in which this is created
      * @param isBootCode is this code in the boot region?
      */
-    public TeleCompiledMethod(TeleVM teleVM, TeleTargetMethod teleTargetMethod, TeleCompiledCodeRegion teleCompiledCodeRegion, boolean isBootCode) {
+    public TeleCompiledCode(TeleVM teleVM, TeleTargetMethod teleTargetMethod, TeleCompiledCodeRegion teleCompiledCodeRegion, boolean isBootCode) {
         super(teleVM);
         this.teleTargetMethod = teleTargetMethod;
-        this.compiledMethodMemoryRegion = new CompiledMethodMemoryRegion(teleVM, this, teleTargetMethod, teleCompiledCodeRegion, isBootCode);
-        this.instructionMap = new CompiledMethodInstructionMap(teleVM, teleTargetMethod);
+        this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(teleVM, this, teleTargetMethod, teleCompiledCodeRegion, isBootCode);
+        this.instructionMap = new CompiledCodeInstructionMap(teleVM, teleTargetMethod);
         final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
         this.compilationIndex = teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(teleTargetMethod);
     }
@@ -173,19 +173,19 @@ public final class TeleCompiledMethod extends AbstractTeleVMHolder implements Ma
 
     public String entityDescription() {
         final ClassMethodActor classMethodActor = teleTargetMethod.classMethodActor();
-        final String description = teleTargetMethod.getClass().getSimpleName() + " for method ";
+        final String description = teleTargetMethod.getClass().getSimpleName() + " for ";
         if (classMethodActor != null) {
             return description + classMethodActor.simpleName();
         }
         return description + teleTargetMethod.classActorForObjectType().simpleName();
     }
 
-    public MaxEntityMemoryRegion<MaxCompiledMethod> memoryRegion() {
-        return compiledMethodMemoryRegion;
+    public MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion() {
+        return compiledCodeMemoryRegion;
     }
 
     public boolean contains(Address address) {
-        return compiledMethodMemoryRegion.contains(address);
+        return compiledCodeMemoryRegion.contains(address);
     }
 
     public InstructionMap instructionMap() {
@@ -199,7 +199,7 @@ public final class TeleCompiledMethod extends AbstractTeleVMHolder implements Ma
     public CodeLocation getCodeStartLocation() {
         final Address codeStart = getCodeStart();
         if (codeStartLocation == null && codeStart != null) {
-            codeStartLocation = codeManager().createMachineCodeLocation(codeStart, "code start location in method");
+            codeStartLocation = codeManager().createMachineCodeLocation(codeStart, "start location in code");
         }
         return codeStartLocation;
     }
@@ -213,7 +213,7 @@ public final class TeleCompiledMethod extends AbstractTeleVMHolder implements Ma
         if (callEntryPoint.isZero()) {
             return null;
         }
-        return codeManager().createMachineCodeLocation(callEntryPoint, "Method entry");
+        return codeManager().createMachineCodeLocation(callEntryPoint, "Code entry");
     }
 
     public int compilationIndex() {
@@ -278,7 +278,7 @@ public final class TeleCompiledMethod extends AbstractTeleVMHolder implements Ma
 
     public void writeSummary(PrintStream printStream) {
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(printStream));
-        writer.println("target method: " + classMethodActor().format("%H.%n(%p)"));
+        writer.println("code for: " + classMethodActor().format("%H.%n(%p)"));
         writer.println("compilation: " + compilationIndex);
         teleTargetMethod.disassemble(writer);
         writer.flush();

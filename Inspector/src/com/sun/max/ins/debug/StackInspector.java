@@ -89,13 +89,13 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         private final MaxStack stack;
         private final MaxStackFrame stackFrame;
         private final int position;
-        final MaxCompiledMethod compiledMethod;
+        final MaxCompiledCode compiledCode;
 
         TruncatedStackFrame(MaxStack stack, MaxStackFrame stackFrame, int position) {
             this.stack = stack;
             this.stackFrame = stackFrame;
             this.position = position;
-            this.compiledMethod = vm().codeCache().findCompiledMethod(stackFrame.ip());
+            this.compiledCode = vm().codeCache().findCompiledCode(stackFrame.ip());
         }
 
         public MaxVM vm() {
@@ -110,8 +110,8 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             return "A pseudo stack frame created to represent a large number of stack frames that couldn't be displayed";
         }
 
-        public MaxCompiledMethod compiledMethod() {
-            return compiledMethod;
+        public MaxCompiledCode compiledCode() {
+            return compiledCode;
         }
 
         public MaxEntityMemoryRegion<MaxStackFrame> memoryRegion() {
@@ -198,11 +198,11 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             String toolTip = null;
             Component component;
             if (stackFrame instanceof MaxStackFrame.Compiled) {
-                final MaxCompiledMethod compiledMethod = stackFrame.compiledMethod();
-                name = inspection().nameDisplay().veryShortName(compiledMethod);
-                toolTip = inspection().nameDisplay().longName(compiledMethod, stackFrame.ip());
-                if (compiledMethod != null) {
-                    final TeleClassMethodActor teleClassMethodActor = compiledMethod.getTeleClassMethodActor();
+                final MaxCompiledCode compiledCode = stackFrame.compiledCode();
+                name = inspection().nameDisplay().veryShortName(compiledCode);
+                toolTip = inspection().nameDisplay().longName(compiledCode, stackFrame.ip());
+                if (compiledCode != null) {
+                    final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
                     if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
                         name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
                         try {
@@ -438,16 +438,16 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     private String javaStackFrameName(MaxStackFrame.Compiled javaStackFrame) {
         final Address address = javaStackFrame.ip();
-        final MaxCompiledMethod compiledMethod = vm().codeCache().findCompiledMethod(address);
+        final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
         String name;
-        if (compiledMethod != null) {
-            name = inspection().nameDisplay().veryShortName(compiledMethod);
-            final TeleClassMethodActor teleClassMethodActor = compiledMethod.getTeleClassMethodActor();
+        if (compiledCode != null) {
+            name = inspection().nameDisplay().veryShortName(compiledCode);
+            final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
             if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
                 name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
             }
         } else {
-            final MethodActor classMethodActor = javaStackFrame.compiledMethod().classMethodActor();
+            final MethodActor classMethodActor = javaStackFrame.compiledCode().classMethodActor();
             name = classMethodActor.format("%h.%n");
         }
         return name;

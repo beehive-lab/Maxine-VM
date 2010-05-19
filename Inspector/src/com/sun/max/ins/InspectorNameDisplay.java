@@ -180,10 +180,10 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g.: "[n]", where n is the index into the compilation history; first compilation n=0.
      */
-    public String methodCompilationID(MaxCompiledMethod compiledMethod) {
+    public String methodCompilationID(MaxCompiledCode compiledCode) {
         // Only have an index if a compiled method.
-        if (compiledMethod != null && compiledMethod.getTeleClassMethodActor() != null) {
-            final int compilationIndex = compiledMethod.compilationIndex();
+        if (compiledCode != null && compiledCode.getTeleClassMethodActor() != null) {
+            final int compilationIndex = compiledCode.compilationIndex();
             if (compilationIndex >= 0) {
                 return "[" + compilationIndex + "]";
             }
@@ -208,23 +208,23 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "Element.foo()[0]"
      */
-    public String veryShortName(MaxCompiledMethod compiledMethod) {
-        if (compiledMethod == null) {
+    public String veryShortName(MaxCompiledCode compiledCode) {
+        if (compiledCode == null) {
             return "<?>";
         }
-        return compiledMethod.classMethodActor() == null ?
-                        compiledMethod.entityName() :
-                            compiledMethod.classMethodActor().format("%h.%n()" + methodCompilationID(compiledMethod));
+        return compiledCode.classMethodActor() == null ?
+                        compiledCode.entityName() :
+                            compiledCode.classMethodActor().format("%h.%n()" + methodCompilationID(compiledCode));
     }
 
 
     /**
      * E.g. "foo(Pointer, Word, int[])[0]"
      */
-    public String shortName(MaxCompiledMethod compiledMethod) {
-        return compiledMethod.classMethodActor() == null ?
-                        compiledMethod.entityName() :
-                            compiledMethod.classMethodActor().format("%n(%p)" + methodCompilationID(compiledMethod));
+    public String shortName(MaxCompiledCode compiledCode) {
+        return compiledCode.classMethodActor() == null ?
+                        compiledCode.entityName() :
+                            compiledCode.classMethodActor().format("%n(%p)" + methodCompilationID(compiledCode));
     }
 
     /**
@@ -232,22 +232,22 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      *
      * @param returnTypeSpecification specifies where the return type should appear in the returned value
      */
-    public String shortName(MaxCompiledMethod compiledMethod, ReturnTypeSpecification returnTypeSpecification) {
-        final ClassMethodActor classMethodActor = compiledMethod.classMethodActor();
+    public String shortName(MaxCompiledCode compiledCode, ReturnTypeSpecification returnTypeSpecification) {
+        final ClassMethodActor classMethodActor = compiledCode.classMethodActor();
 
         if (classMethodActor == null) {
-            return compiledMethod.entityName();
+            return compiledCode.entityName();
         }
 
         switch (returnTypeSpecification) {
             case ABSENT: {
-                return classMethodActor.format("%n(%p)" + methodCompilationID(compiledMethod));
+                return classMethodActor.format("%n(%p)" + methodCompilationID(compiledCode));
             }
             case AS_PREFIX: {
-                return classMethodActor.format("%r %n(%p)" + methodCompilationID(compiledMethod));
+                return classMethodActor.format("%r %n(%p)" + methodCompilationID(compiledCode));
             }
             case AS_SUFFIX: {
-                return classMethodActor.format("%n(%p)" + methodCompilationID(compiledMethod) + " %r");
+                return classMethodActor.format("%n(%p)" + methodCompilationID(compiledCode) + " %r");
             }
             default: {
                 throw ProgramError.unknownCase();
@@ -255,8 +255,8 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private String positionString(MaxCompiledMethod compiledMethod, Address address) {
-        final Address entry = compiledMethod.getCodeStart();
+    private String positionString(MaxCompiledCode compiledCode, Address address) {
+        final Address entry = compiledCode.getCodeStart();
         final long position = address.minus(entry).toLong();
         return position == 0 ? "" : "+0x" + Long.toHexString(position);
     }
@@ -268,32 +268,32 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. "int foo(Pointer, Word, int[])[0] in com.sun.max.ins.Bar"
      */
-    public String longName(MaxCompiledMethod compiledMethod) {
-        return compiledMethod.classMethodActor() ==
-            null ? compiledMethod.entityDescription() :
-                compiledMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(compiledMethod) + " in %H");
+    public String longName(MaxCompiledCode compiledCode) {
+        return compiledCode.classMethodActor() ==
+            null ? compiledCode.entityDescription() :
+                compiledCode.classMethodActor().format("%r %n(%p)" + methodCompilationID(compiledCode) + " in %H");
     }
 
     /**
      * E.g. "foo()[0]+0x7"
      */
-    public String veryShortName(MaxCompiledMethod compiledMethod, Address address) {
-        return compiledMethod.classMethodActor() ==
-            null ? compiledMethod.entityName() :
-                compiledMethod.classMethodActor().format("%n()" + methodCompilationID(compiledMethod) + positionString(compiledMethod, address));
+    public String veryShortName(MaxCompiledCode compiledCode, Address address) {
+        return compiledCode.classMethodActor() ==
+            null ? compiledCode.entityName() :
+                compiledCode.classMethodActor().format("%n()" + methodCompilationID(compiledCode) + positionString(compiledCode, address));
     }
 
     /**
      * E.g. "int foo(Pointer, Word, int[])[0]+0x7 in com.sun.max.ins.Bar"
      */
-    public String longName(MaxCompiledMethod compiledMethod, Address address) {
-        if (compiledMethod == null) {
+    public String longName(MaxCompiledCode compiledCode, Address address) {
+        if (compiledCode == null) {
             return "<?>";
         }
-        if (compiledMethod.classMethodActor() != null) {
-            return compiledMethod.classMethodActor().format("%r %n(%p)" + methodCompilationID(compiledMethod) + positionString(compiledMethod, address) + " in %H");
+        if (compiledCode.classMethodActor() != null) {
+            return compiledCode.classMethodActor().format("%r %n(%p)" + methodCompilationID(compiledCode) + positionString(compiledCode, address) + " in %H");
         }
-        return compiledMethod.entityName();
+        return compiledCode.entityName();
     }
 
     /**
@@ -376,9 +376,9 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 // a native routine that's already been registered.
                 name.append("}");
             } else {
-                final MaxCompiledMethod compiledMethod = vm().codeCache().findCompiledMethod(address);
-                if (compiledMethod != null) {
-                    name.append(",  ").append(longName(compiledMethod, address)).append("} ");
+                final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+                if (compiledCode != null) {
+                    name.append(",  ").append(longName(compiledCode, address)).append("} ");
                 } else {
                     name.append("}");
                 }

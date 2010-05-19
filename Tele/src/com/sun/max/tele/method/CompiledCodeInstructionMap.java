@@ -37,14 +37,14 @@ import com.sun.max.vm.cps.target.*;
 
 /**
  * Summary information about a sequence of disassembled machine code instructions
- * that were compiled from a Java method.
+ * that were compiled by the VM from a method, stub, adapter, or other routine.
  * <br>
  * Full initialization is lazy, so that it isn't done for all the methods discovered
  * in the VM, but only those for which we want all the details about the code.
  *
  * @author Michael Van De Vanter
  */
-public class CompiledMethodInstructionMap extends AbstractTeleVMHolder implements InstructionMap {
+public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements InstructionMap {
 
     /**
      * Adapter for bytecode scanning that only knows the constant pool
@@ -117,7 +117,7 @@ public class CompiledMethodInstructionMap extends AbstractTeleVMHolder implement
 
     private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
 
-    CompiledMethodInstructionMap(TeleVM teleVM, TeleTargetMethod teleTargetMethod) {
+    CompiledCodeInstructionMap(TeleVM teleVM, TeleTargetMethod teleTargetMethod) {
         super(teleVM);
         this.teleTargetMethod = teleTargetMethod;
     }

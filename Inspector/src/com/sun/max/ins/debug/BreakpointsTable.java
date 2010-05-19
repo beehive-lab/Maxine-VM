@@ -66,11 +66,11 @@ public final class BreakpointsTable extends InspectorTable {
         }
         menu.addSeparator();
         final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
-        methodEntryBreakpoints.add(actions().setTargetCodeBreakpointAtMethodEntriesByName());
+        methodEntryBreakpoints.add(actions().setMachineCodeBreakpointAtEntriesByName());
         methodEntryBreakpoints.add(actions().setBytecodeBreakpointAtMethodEntryByName());
         methodEntryBreakpoints.add(actions().setBytecodeBreakpointAtMethodEntryByKey());
         menu.add(methodEntryBreakpoints);
-        menu.add(actions().setTargetCodeBreakpointAtObjectInitializer());
+        menu.add(actions().setMachineCodeBreakpointAtObjectInitializer());
         menu.add(actions().removeAllBreakpoints());
         return menu;
     }
@@ -617,9 +617,9 @@ public final class BreakpointsTable extends InspectorTable {
         TargetBreakpointData(MaxBreakpoint targetBreakpoint) {
             super(targetBreakpoint);
             final Address address = codeLocation().address();
-            final MaxCompiledMethod compiledMethod = vm().codeCache().findCompiledMethod(address);
-            if (compiledMethod != null) {
-                shortName = inspection().nameDisplay().shortName(compiledMethod);
+            final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+            if (compiledCode != null) {
+                shortName = inspection().nameDisplay().shortName(compiledCode);
                 final StringBuilder sb = new StringBuilder();
                 sb.append("(");
                 if (breakpoint().getDescription() == null) {
@@ -628,9 +628,9 @@ public final class BreakpointsTable extends InspectorTable {
                     sb.append(breakpoint().getDescription());
                 }
                 sb.append(") ");
-                sb.append(inspection().nameDisplay().longName(compiledMethod, address));
+                sb.append(inspection().nameDisplay().longName(compiledCode, address));
                 longName = sb.toString();
-                codeStart = compiledMethod.getCodeStart();
+                codeStart = compiledCode.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
                 final MaxExternalCode externalCode = vm().codeCache().findExternalCode(address);

@@ -115,10 +115,10 @@ public class FileCommands {
                 found = true;
                 final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
                 if (teleTargetMethod != null) {
-                    final MaxCompiledMethod compiledMethod = teleVM.codeCache().findCompiledMethod(teleTargetMethod.callEntryPoint());
-                    if (compiledMethod != null) {
+                    final MaxCompiledCode compiledCode = teleVM.codeCache().findCompiledCode(teleTargetMethod.callEntryPoint());
+                    if (compiledCode != null) {
                         try {
-                            teleVM.breakpointManager().makeBreakpoint(compiledMethod.getCallEntryLocation());
+                            teleVM.breakpointManager().makeBreakpoint(compiledCode.getCallEntryLocation());
                         } catch (MaxVMBusyException e) {
                             ProgramError.unexpected(" failed to set breakpoint from file: VM Busy");
                             e.printStackTrace();

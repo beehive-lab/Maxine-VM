@@ -59,9 +59,9 @@ public abstract class TargetCodeViewer extends CodeViewer {
         teleConstantPool = null;
         localConstantPool = null;
         Arrays.fill(rowToTagText, "");
-        if (machineCode instanceof MaxCompiledMethod) {
-            final MaxCompiledMethod compiledMethod = (MaxCompiledMethod) machineCode;
-            final TeleClassMethodActor teleClassMethodActor = compiledMethod.getTeleClassMethodActor();
+        if (machineCode instanceof MaxCompiledCode) {
+            final MaxCompiledCode compiledCode = (MaxCompiledCode) machineCode;
+            final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
                 teleConstantPool = teleCodeAttribute.getTeleConstantPool();
@@ -118,7 +118,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         final MaxMemoryRegion targetCodeRegion = machineCode().memoryRegion();
         for (MaxStackFrame frame : frames) {
             final MaxCodeLocation frameCodeLocation = frame.codeLocation();
-            final MaxMachineCode machineCode = frame.compiledMethod();
+            final MaxMachineCode machineCode = frame.compiledCode();
             if (frameCodeLocation != null && machineCode != null) {
                 final boolean isFrameForThisCode =
                     frame instanceof MaxStackFrame.Compiled ?
