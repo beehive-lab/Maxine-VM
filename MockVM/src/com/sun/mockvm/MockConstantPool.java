@@ -73,9 +73,9 @@ public class MockConstantPool implements RiConstantPool {
         }
     }
 
-    private RiMethod lookupInvoke(int cpi) {
+    private RiMethod lookupInvoke(int cpi, int opcode) {
         ConstantMethodref c = (ConstantMethodref) cp.getConstant(cpi);
-        MockType type = (MockType) lookupType((char) c.getClassIndex());
+        MockType type = (MockType) lookupType((char) c.getClassIndex(), opcode);
         ConstantNameAndType methodConstant = (ConstantNameAndType) cp.getConstant(c.getNameAndTypeIndex());
         String methodName = methodConstant.getName(cp);
         String methodSignature = methodConstant.getSignature(cp);
@@ -84,12 +84,12 @@ public class MockConstantPool implements RiConstantPool {
     }
 
     public RiMethod lookupMethod(int cpi, int opcode) {
-        return lookupInvoke(cpi);
+        return lookupInvoke(cpi, opcode);
     }
 
     public RiField lookupField(int cpi, int opcode) {
         ConstantFieldref c = (ConstantFieldref) cp.getConstant(cpi);
-        MockType type = (MockType) lookupType((char) c.getClassIndex());
+        MockType type = (MockType) lookupType((char) c.getClassIndex(), opcode);
         ConstantNameAndType methodConstant = (ConstantNameAndType) cp.getConstant(c.getNameAndTypeIndex());
         String fieldName = methodConstant.getName(cp);
         String fieldSignature = methodConstant.getSignature(cp);
@@ -103,7 +103,7 @@ public class MockConstantPool implements RiConstantPool {
     }
 
     @Override
-    public RiType lookupType(int cpi) {
+    public RiType lookupType(int cpi, int opcode) {
         Constant c = cp.getConstant(cpi);
         ConstantClass cc = (ConstantClass) c;
         int nameIndex = cc.getNameIndex();
