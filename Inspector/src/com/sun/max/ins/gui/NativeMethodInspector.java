@@ -49,7 +49,7 @@ public final class NativeMethodInspector extends MethodInspector {
     }
 
     @Override
-    public MaxCompiledNativeCode maxCompiledCode() {
+    public MaxCompiledNativeCode machineCode() {
         return compiledNativeCode;
     }
 

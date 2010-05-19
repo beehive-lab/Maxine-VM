@@ -28,7 +28,7 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
- * A cache of information about compiled code (by methods and native routines) in the VM,
+ * A cache of information about machine code (by methods and native routines) in the VM,
  * organized for efficient lookup by memory address.
  *
  * @author Michael Van De Vanter
@@ -44,18 +44,18 @@ final class CodeRegistry extends AbstractTeleVMHolder {
         Trace.end(TRACE_VALUE, tracePrefix() + " initializing", startTimeMillis);
     }
 
-    private final OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxCompiledCode>> compiledCodeMemoryRegions =
-        new OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxCompiledCode>>();
+    private final OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxMachineCode>> machineCodeMemoryRegions =
+        new OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxMachineCode>>();
 
     /**
      * Adds an entry to the code registry, indexed by code address, that represents a block
      * of native machine code about which little is known.
      *
-     * @param teleCompiledNativeCode the compiled code whose memory region is to be added to this registry
+     * @param teleCompiledNativeCode the machine code whose memory region is to be added to this registry
      * @throws IllegalArgumentException when the code's memory overlaps one already in this registry.
      */
-    public synchronized void add(MaxCompiledNativeCode teleCompiledNativeCode) {
-        compiledCodeMemoryRegions.add(teleCompiledNativeCode.memoryRegion());
+    public synchronized void add(TeleCompiledNativeCode teleCompiledNativeCode) {
+        machineCodeMemoryRegions.add(teleCompiledNativeCode.memoryRegion());
     }
 
     /**
@@ -67,13 +67,13 @@ final class CodeRegistry extends AbstractTeleVMHolder {
     public synchronized void add(TeleCompiledMethod teleCompiledMethod) {
         final MaxEntityMemoryRegion<MaxCompiledMethod> memoryRegion = teleCompiledMethod.memoryRegion();
         ProgramError.check(!memoryRegion.start().isZero(), "Code registry zero location");
-        compiledCodeMemoryRegions.add(memoryRegion);
+        machineCodeMemoryRegions.add(memoryRegion);
     }
 
     public synchronized TeleCompiledNativeCode getCompiledNativeCode(Address address) {
-        final MaxEntityMemoryRegion< ? extends MaxCompiledCode> compiledCodeRegion = compiledCodeMemoryRegions.find(address);
-        if (compiledCodeRegion != null) {
-            final MaxCompiledCode compiledCode = compiledCodeRegion.owner();
+        final MaxEntityMemoryRegion< ? extends MaxMachineCode> machineCodeRegion = machineCodeMemoryRegions.find(address);
+        if (machineCodeRegion != null) {
+            final MaxMachineCode compiledCode = machineCodeRegion.owner();
             if (compiledCode instanceof TeleCompiledNativeCode) {
                 return (TeleCompiledNativeCode) compiledCode;
             }
@@ -82,11 +82,11 @@ final class CodeRegistry extends AbstractTeleVMHolder {
     }
 
     public synchronized TeleCompiledMethod getCompiledMethod(Address address) {
-        final MaxEntityMemoryRegion< ? extends MaxCompiledCode> compiledCodeRegion = compiledCodeMemoryRegions.find(address);
-        if (compiledCodeRegion != null) {
-            final MaxCompiledCode compiledCode = compiledCodeRegion.owner();
-            if (compiledCode instanceof TeleCompiledMethod) {
-                return (TeleCompiledMethod) compiledCode;
+        final MaxEntityMemoryRegion< ? extends MaxMachineCode> machineCodeRegion = machineCodeMemoryRegions.find(address);
+        if (machineCodeRegion != null) {
+            final MaxMachineCode machineCode = machineCodeRegion.owner();
+            if (machineCode instanceof TeleCompiledMethod) {
+                return (TeleCompiledMethod) machineCode;
             }
         }
         return null;
@@ -94,9 +94,9 @@ final class CodeRegistry extends AbstractTeleVMHolder {
 
     public void writeSummary(PrintStream printStream) {
         Address lastEndAddress = null;
-        for (MaxEntityMemoryRegion<? extends MaxCompiledCode> compiledMethodMemoryRegion : compiledCodeMemoryRegions) {
-            final MaxCompiledCode maxCompiledCode = compiledMethodMemoryRegion.owner();
-            final String name = maxCompiledCode.entityDescription();
+        for (MaxEntityMemoryRegion<? extends MaxMachineCode> compiledMethodMemoryRegion : machineCodeMemoryRegions) {
+            final MaxMachineCode maxMachineCode = compiledMethodMemoryRegion.owner();
+            final String name = maxMachineCode.entityDescription();
             if (lastEndAddress != null && !lastEndAddress.equals(compiledMethodMemoryRegion.start())) {
                 printStream.println(lastEndAddress.toHexString() + "--" + compiledMethodMemoryRegion.start().minus(1).toHexString() + ": ");
             }

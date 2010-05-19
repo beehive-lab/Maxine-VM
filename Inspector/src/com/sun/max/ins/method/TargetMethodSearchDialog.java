@@ -155,10 +155,10 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
         final TargetMethodSearchDialog dialog = new TargetMethodSearchDialog(inspection, teleClassActor, title, actionName, multi);
         dialog.setVisible(true);
         return dialog.selectedObjects();
-//        final Sequence<MaxCompiledCode> teleObjects = dialog.selectedObjects();
+//        final Sequence<MaxMachineCode> teleObjects = dialog.selectedObjects();
 //        if (teleObjects != null) {
 //            final AppendableSequence<TeleTargetMethod> teleTargetMethods = new LinkSequence<TeleTargetMethod>();
-//            for (MaxCompiledCode teleObject : teleObjects) {
+//            for (MaxMachineCode teleObject : teleObjects) {
 //                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleObject;
 //                teleTargetMethods.append(teleTargetMethod);
 //            }

@@ -30,7 +30,7 @@ import com.sun.max.vm.actor.member.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxCompiledMethod extends MaxCompiledCode<MaxCompiledMethod> {
+public interface MaxCompiledMethod extends MaxMachineCode<MaxCompiledMethod> {
 
     /**
      * @return the sequence number of this compilation, if a compiled method; -1 if native

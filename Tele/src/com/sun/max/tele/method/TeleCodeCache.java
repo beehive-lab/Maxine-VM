@@ -170,7 +170,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return null;
     }
 
-    public MaxCompiledCode< ? extends MaxCompiledCode> findCompiledCode(Address address) {
+    public MaxMachineCode< ? extends MaxMachineCode> findMachineCode(Address address) {
         TeleCompiledNativeCode teleCompiledNativeCode = codeRegistry().getCompiledNativeCode(address);
         if (teleCompiledNativeCode == null) {
             return teleCompiledNativeCode;
@@ -248,7 +248,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return codeRegistry;
     }
 
-    public void register(MaxCompiledNativeCode teleCompiledNativeCode) {
+    public void register(TeleCompiledNativeCode teleCompiledNativeCode) {
         codeRegistry().add(teleCompiledNativeCode);
 
     }

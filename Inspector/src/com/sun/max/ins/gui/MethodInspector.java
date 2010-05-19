@@ -128,8 +128,8 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         return methodInspector;
     }
 
-    private static final VariableMapping<MaxCompiledCode, MethodInspector> compiledCodeToMethodInspector =
-        new IdentityHashMapping<MaxCompiledCode, MethodInspector>();
+    private static final VariableMapping<MaxMachineCode, MethodInspector> machineCodeToMethodInspector =
+        new IdentityHashMapping<MaxMachineCode, MethodInspector>();
 
     private static final VariableMapping<TeleClassMethodActor, MethodInspector> teleClassMethodActorToMethodInspector =
         new IdentityHashMapping<TeleClassMethodActor, MethodInspector>();
@@ -188,7 +188,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         JavaMethodInspector javaMethodInspector = null;
 
         // Is there already an inspection open that is bound to this compilation?
-        MethodInspector methodInspector = compiledCodeToMethodInspector.get(compiledMethod);
+        MethodInspector methodInspector = machineCodeToMethodInspector.get(compiledMethod);
         if (methodInspector == null) {
             // No existing inspector is bound to this compilation; see if there is an inspector for this method that is
             // unbound
@@ -206,7 +206,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                 javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledMethod, codeKind);
             }
             parent.add(javaMethodInspector);
-            compiledCodeToMethodInspector.put(compiledMethod, javaMethodInspector);
+            machineCodeToMethodInspector.put(compiledMethod, javaMethodInspector);
         } else {
             // An existing inspector is bound to this method & compilation; ensure that it has the requested code view
             javaMethodInspector = (JavaMethodInspector) methodInspector;
@@ -220,12 +220,12 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      */
     private static NativeMethodInspector make(Inspection inspection, MaxCompiledNativeCode maxCompiledNativeCode) {
         NativeMethodInspector nativeMethodInspector = null;
-        MethodInspector methodInspector = compiledCodeToMethodInspector.get(maxCompiledNativeCode);
+        MethodInspector methodInspector = machineCodeToMethodInspector.get(maxCompiledNativeCode);
         if (methodInspector == null) {
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
             nativeMethodInspector = new NativeMethodInspector(inspection, parent, maxCompiledNativeCode);
             parent.add(nativeMethodInspector);
-            compiledCodeToMethodInspector.put(maxCompiledNativeCode, nativeMethodInspector);
+            machineCodeToMethodInspector.put(maxCompiledNativeCode, nativeMethodInspector);
         } else {
             nativeMethodInspector = (NativeMethodInspector) methodInspector;
         }
@@ -247,7 +247,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         frame.makeMenu(MenuKind.EDIT_MENU);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectTargetRegionMemoryWords(maxCompiledCode()));
+        memoryMenu.add(actions().inspectTargetRegionMemoryWords(machineCode()));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");
@@ -287,9 +287,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     }
 
     /**
-     * @return Local {@link MaxCompiledCode} for the method in the VM; null if not bound to compiled code yet.
+     * @return Local {@link MaxMachineCode} for the method in the VM; null if not bound to compiled code yet.
      */
-    public abstract MaxCompiledCode maxCompiledCode();
+    public abstract MaxMachineCode machineCode();
 
     /**
      * @return Java method information; null if not known to be associated with a Java method.
@@ -315,7 +315,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing for " + getTitle());
-        compiledCodeToMethodInspector.remove(maxCompiledCode());
+        machineCodeToMethodInspector.remove(machineCode());
         teleClassMethodActorToMethodInspector.remove(teleClassMethodActor());
         super.inspectorClosing();
     }
