@@ -83,12 +83,11 @@ public class MockConstantPool implements RiConstantPool {
         return result;
     }
 
-    @Override
-    public RiMethod lookupMethod(int cpi, byte byteCode) {
+    public RiMethod lookupMethod(int cpi, int opcode) {
         return lookupInvoke(cpi);
     }
 
-    public RiField lookupField(int cpi) {
+    public RiField lookupField(int cpi, int opcode) {
         ConstantFieldref c = (ConstantFieldref) cp.getConstant(cpi);
         MockType type = (MockType) lookupType((char) c.getClassIndex());
         ConstantNameAndType methodConstant = (ConstantNameAndType) cp.getConstant(c.getNameAndTypeIndex());

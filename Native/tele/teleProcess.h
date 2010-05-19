@@ -63,6 +63,8 @@ typedef struct ps_prochandle *ProcessHandle;
 #define readProcessMemory(ph, src, dst, size) Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
 #define writeProcessMemory(ph, dst, src, size) Pwrite(ph, src, length, (uintptr_t) dst);
 #elif os_GUESTVMXEN
+// N.B The tele library may execute on either a 32 bit or a 64 bit host depending on the particular Xen/Linux configration.
+// In particular, Oracle VM 2.x has a 32 bit dom0.
 #include <stdint.h>
 extern unsigned short readbytes(uint64_t src, char *dst, unsigned short n);
 extern unsigned short writebytes(uint64_t st, char *src, unsigned short n);

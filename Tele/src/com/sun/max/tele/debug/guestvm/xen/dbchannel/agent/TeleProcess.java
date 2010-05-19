@@ -18,19 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.tele.debug.guestvm.xen.dbchannel.agent;
+
+import com.sun.max.collect.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
+
 /**
- * @author Grzegorz Milos
+ * This is a stub implementation that exists only on the agent side of the split communication protocol.
+ *
  * @author Mick Jordan
  *
- * The Guest VM specific implementation the "tele" layer for the Maxine Inspector.
- * Several implementations are provided and selected at runtime by {@link com.sun.max.tele.debug.guestvm.xen.GuestVMXenDBChannel}.
- * <ul>
- * <li>Direct connection via {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.jni.JniProtocol}.</li>
- * <li>Indirection connection via TCP using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.TCPProtocol}, to an agent running in dom0
- * using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.jni.JniProtocol}.</li>
- * <li>Indirection connection via TCP using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.TCPProtocol}, to an agent running in dom0
- * using the "gdbsx" agwnt (TBD).
- * <li>Connection to a Xen dump file using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.dump.DumpProtocol}.</li>
- * </ul>
  */
-package com.sun.max.tele.debug.guestvm.xen;
+
+public class TeleProcess {
+    public final void jniGatherThread(AppendableSequence<TeleNativeThread> threads,
+                    int id,
+                    long localHandle,
+                    long handle,
+                    int state,
+                    long instructionPointer,
+                    long stackBase,
+                    long stackSize,
+                    long tlb,
+                    long tlbSize,
+                    int tlaSize) {
+        threads.append(new TeleNativeThread(new SimpleProtocol.GatherThreadData(id, localHandle, handle, state, instructionPointer, stackBase, stackSize, tlb, tlbSize, tlaSize)));
+    }
+
+}

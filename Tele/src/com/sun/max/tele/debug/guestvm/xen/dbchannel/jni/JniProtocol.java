@@ -18,24 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.guestvm.xen;
+package com.sun.max.tele.debug.guestvm.xen.dbchannel.jni;
 
-import com.sun.max.collect.*;
-import com.sun.max.tele.debug.*;
+import com.sun.max.program.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
 /**
- * An implementation of {@link GuestVMXenDBChannelProtocol} that links directly to native code
- * that communicates via the Xen ring mechanism to the target Guest VM domain.
+ * An implementation of {@link Protocol} that links directly to native code
+ * that communicates directly through JNI to  the Xen ring mechanism to the target Guest VM domain.
  * This requires that the Inspector run with root privileges in (a 64-bit) dom0.
- *
- * The class is also used by {@link GuestVMXenDBNativeChannelAgent} when the
- * Inspector runs in a domU and connects via TCP.
  *
  * @author Mick Jordan
  *
  */
 
-public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtocolAdaptor {
+public class JniProtocol implements Protocol {
+    private Timings timings = new Timings("JniProtocol.readBytes");
 
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {
@@ -43,8 +41,15 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
     }
 
     @Override
-    public boolean attach(int domId) {
+    public boolean attach(int domId, int threadLocalsAreaSize) {
+        Trace.line(1, "attaching to domain " + domId);
         return nativeAttach(domId);
+    }
+
+    @Override
+    public boolean detach() {
+        Trace.line(1, "detaching from domain");
+        return nativeDetach();
     }
 
     @Override
@@ -53,8 +58,8 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
     }
 
     @Override
-    public boolean gatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals) {
-        return nativeGatherThreads(teleDomain, threads, threadLocalsList, primordialThreadLocals);
+    public boolean gatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
+        return nativeGatherThreads(teleDomain, threadSequence, threadLocalsList, primordialThreadLocals);
     }
 
     @Override
@@ -65,6 +70,14 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
     @Override
     public int maxByteBufferSize() {
         return nativeMaxByteBufferSize();
+    }
+
+    @Override
+    public int readBytes(long src, byte[] dst, int dstOffset, int length) {
+        timings.start();
+        final int result =  nativeReadBytes(src, dst, false, 0, length);
+        timings.add();
+        return result;
     }
 
     @Override
@@ -119,17 +132,23 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
     }
 
     @Override
+    public int writeBytes(long dst, byte[] src, int srcOffset, int length) {
+        return nativeWriteBytes(dst, src, false, 0, length);
+    }
+
+    @Override
     public int writeBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length) {
         return nativeWriteBytes(dst, src, isDirectByteBuffer, srcOffset, length);
     }
 
     private static native boolean nativeAttach(int domId);
+    private static native boolean nativeDetach();
     private static native long nativeGetBootHeapStart();
     private static native int nativeSetTransportDebugLevel(int level);
     private static native int nativeReadBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
     private static native int nativeWriteBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
     private static native int nativeMaxByteBufferSize();
-    private static native boolean nativeGatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
+    private static native boolean nativeGatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals);
     private static native int nativeResume();
     private static native int nativeSetInstructionPointer(int threadId, long ip);
     private static native boolean nativeSingleStep(int threadId);
@@ -144,6 +163,18 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
                     byte[] integerRegisters, int integerRegistersSize,
                     byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize);
+
+    @Override
+    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
+        ProgramError.unexpected("SimpleProtocol.gatherThreads(int, int) should not be called in this configuration");
+        return 0;
+    }
+
+    @Override
+    public int readThreads(int size, byte[] gatherThreadsData) {
+        ProgramError.unexpected("SimpleProtocol.readThreads should not be called in this configuration");
+        return 0;
+    }
 
 
 }
