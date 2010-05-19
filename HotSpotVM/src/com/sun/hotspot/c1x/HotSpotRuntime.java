@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -48,31 +48,31 @@ import com.sun.max.io.IndentWriter;
 import com.sun.max.lang.WordWidth;
 
 /**
- * 
+ *
  * @author Thomas Wuerthinger
- * 
- * CRI runtime implementation for the HotSpot VM.
+ *
+ *         CRI runtime implementation for the HotSpot VM.
  *
  */
 public class HotSpotRuntime implements RiRuntime {
 
-	@Override
-	public int basicObjectLockOffsetInBytes() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    @Override
+    public int basicObjectLockOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 
-	@Override
-	public int codeOffset() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    @Override
+    public int codeOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 
-	@Override
-	public void codePrologue(RiMethod method, OutputStream out) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public void codePrologue(RiMethod method, OutputStream out) {
+        // TODO Auto-generated method stub
+
+    }
 
     @Override
     public String disassemble(byte[] code) {
@@ -148,87 +148,87 @@ public class HotSpotRuntime implements RiRuntime {
         return "No disassembler available";
     }
 
-	@Override
-	public RiConstantPool getConstantPool(RiMethod method) {
-		return VMEntries.RiRuntime_getConstantPool(((HotSpotType)method.holder()).klassOop);
-	}
+    @Override
+    public RiConstantPool getConstantPool(RiMethod method) {
+        return VMEntries.RiRuntime_getConstantPool(((HotSpotType) method.holder()).klassOop);
+    }
 
-	@Override
-	public RiOsrFrame getOsrFrame(RiMethod method, int bci) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public RiOsrFrame getOsrFrame(RiMethod method, int bci) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public RiType getRiType(Class<?> javaClass) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public RiType getRiType(Class< ? > javaClass) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public RiSnippets getSnippets() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public RiSnippets getSnippets() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public boolean mustInline(RiMethod method) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    @Override
+    public boolean mustInline(RiMethod method) {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
-	@Override
-	public boolean mustNotCompile(RiMethod method) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    @Override
+    public boolean mustNotCompile(RiMethod method) {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
-	@Override
-	public boolean mustNotInline(RiMethod method) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    @Override
+    public boolean mustNotInline(RiMethod method) {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
-	@Override
-	public Object registerTargetMethod(CiTargetMethod targetMethod, String name) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public Object registerTargetMethod(CiTargetMethod targetMethod, String name) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public int sizeofBasicObjectLock() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    @Override
+    public int sizeofBasicObjectLock() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 
-	@Override
-	public int threadExceptionOffset() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    @Override
+    public int threadExceptionOffset() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 
-	@Override
-	public RiField getRiField(Field javaField) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public RiField getRiField(Field javaField) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public RiMethod getRiMethod(Method javaMethod) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public RiMethod getRiMethod(Method javaMethod) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public RiMethod getRiMethod(Constructor<?> javaConstructor) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public RiMethod getRiMethod(Constructor< ? > javaConstructor) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 }

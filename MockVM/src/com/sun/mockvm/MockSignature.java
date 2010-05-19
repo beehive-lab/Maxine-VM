@@ -71,8 +71,9 @@ public class MockSignature implements RiSignature {
                 return parseSignature(signature, cur + 1);
 
             case 'L':
-                while (signature.charAt(cur) != ';')
+                while (signature.charAt(cur) != ';') {
                     cur++;
+                }
                 cur++;
                 break;
 
@@ -126,24 +127,33 @@ public class MockSignature implements RiSignature {
         if (c.isArray()) {
             return "[" + toSignature(c.getComponentType());
         } else if (c.isPrimitive()) {
-            if (c == Void.TYPE)
+            if (c == Void.TYPE) {
                 return "V";
-            if (c == Integer.TYPE)
+            }
+            if (c == Integer.TYPE) {
                 return "I";
-            if (c == Byte.TYPE)
+            }
+            if (c == Byte.TYPE) {
                 return "B";
-            if (c == Character.TYPE)
+            }
+            if (c == Character.TYPE) {
                 return "C";
-            if (c == Double.TYPE)
+            }
+            if (c == Double.TYPE) {
                 return "D";
-            if (c == Float.TYPE)
+            }
+            if (c == Float.TYPE) {
                 return "F";
-            if (c == Long.TYPE)
+            }
+            if (c == Long.TYPE) {
                 return "J";
-            if (c == Short.TYPE)
+            }
+            if (c == Short.TYPE) {
                 return "S";
-            if (c == Boolean.TYPE)
+            }
+            if (c == Boolean.TYPE) {
                 return "Z";
+            }
             throw new UnsupportedOperationException();
         } else {
             return "L" + c.getCanonicalName().replace('.', '/') + ";";

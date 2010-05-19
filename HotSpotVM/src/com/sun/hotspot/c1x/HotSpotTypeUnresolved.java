@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -38,14 +38,14 @@ public class HotSpotTypeUnresolved implements RiType {
      * @param cpi the index in {@code constantPool} of the unresolved type reference
      */
     public HotSpotTypeUnresolved(String name) {
-    	this.name = name;
+        this.name = name;
     }
 
     public String name() {
-    	return name;
+        return name;
     }
 
-    public Class<?> javaClass() {
+    public Class< ? > javaClass() {
         throw unresolved("javaClass");
     }
 
@@ -94,17 +94,17 @@ public class HotSpotTypeUnresolved implements RiType {
     }
 
     public RiType componentType() {
-    	// TODO: Implement
-    	throw new UnsupportedOperationException();
+        // TODO: Implement
+        throw new UnsupportedOperationException();
     }
 
     public RiType exactType() {
         throw unresolved("exactType()");
     }
-    
+
     public RiType arrayOf() {
-    	// TODO: Implement
-    	throw new UnsupportedOperationException();
+        // TODO: Implement
+        throw new UnsupportedOperationException();
     }
 
     public RiMethod resolveMethodImpl(RiMethod method) {
@@ -112,7 +112,7 @@ public class HotSpotTypeUnresolved implements RiType {
     }
 
     public CiKind kind() {
-    	// TODO: Check if this is correct.
+        // TODO: Check if this is correct.
         return CiKind.Object;
     }
 
@@ -140,7 +140,7 @@ public class HotSpotTypeUnresolved implements RiType {
     }
 
     public CiKind getRepresentationKind(RiType.Representation r) {
-    	// TODO: Check if this is correct.
+        // TODO: Check if this is correct.
         return CiKind.Object;
     }
 }
