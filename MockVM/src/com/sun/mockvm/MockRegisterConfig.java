@@ -37,7 +37,7 @@ public class MockRegisterConfig implements RiRegisterConfig {
 
     @Override
     public CiRegister[] getAllocatableRegisters() {
-        return new CiRegister[] { AMD64.rax, AMD64.rbx, AMD64.rcx, AMD64.rdx, AMD64.rsi, AMD64.rdi, AMD64.r10, AMD64.r11};
+        return new CiRegister[] {AMD64.rax, AMD64.rbx, AMD64.rcx, AMD64.rdx, AMD64.rsi, AMD64.rdi, AMD64.r10, AMD64.r11};
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -29,43 +29,42 @@ import com.sun.cri.ri.RiRegisterConfig;
 import com.sun.cri.xir.RiXirGenerator;
 
 /**
- * 
+ *
  * @author Thomas Wuerthinger
- * 
- * Singleton class holding the instance of the C1XCompiler.
+ *
+ *         Singleton class holding the instance of the C1XCompiler.
  *
  */
 public class Compiler {
 
-	private static CiCompiler compiler;
-	
-	public static CiCompiler getCompiler() {
-		
-		if (compiler == null) {
-			compiler = createCompiler();
-		}
-		
-		return compiler;
-	}
-	
-	
-	private static CiCompiler createCompiler() {
+    private static CiCompiler compiler;
 
-		final HotSpotRuntime runtime = new HotSpotRuntime();
-		final RiXirGenerator generator = new HotSpotXirGenerator();
-		final int wordSize = 8;
-		final int stackFrameAlignment = 8;
-		final int pageSize = 1024;
-		final RiRegisterConfig config = new HotSpotRegisterConfig();
+    public static CiCompiler getCompiler() {
+
+        if (compiler == null) {
+            compiler = createCompiler();
+        }
+
+        return compiler;
+    }
+
+    private static CiCompiler createCompiler() {
+
+        final HotSpotRuntime runtime = new HotSpotRuntime();
+        final RiXirGenerator generator = new HotSpotXirGenerator();
+        final int wordSize = 8;
+        final int stackFrameAlignment = 8;
+        final int pageSize = 1024;
+        final RiRegisterConfig config = new HotSpotRegisterConfig();
         final CiTarget target = new CiTarget(new AMD64(), config, true, wordSize, wordSize, wordSize, stackFrameAlignment, pageSize, wordSize, wordSize, 16);
         final CiCompiler compiler = new C1XCompiler(runtime, target, generator);
-        
+
         C1XOptions.setOptimizationLevel(3);
         C1XOptions.TraceBytecodeParserLevel = 4;
         C1XOptions.PrintCFGToFile = false;
-        C1XOptions.PrintAssembly = false;//true;
+        C1XOptions.PrintAssembly = false; // true;
         C1XOptions.PrintCompilation = true;
         return compiler;
-        
-	}
+
+    }
 }

@@ -53,8 +53,9 @@ public class MockXirGenerator extends RiXirGenerator {
 
             CiKind curKind = CiKind.values()[i];
 
-            if (curKind == CiKind.Float || curKind == CiKind.Double)
+            if (curKind == CiKind.Float || curKind == CiKind.Double) {
                 continue;
+            }
 
             if (CiKind.values()[i] == CiKind.Void) {
                 asm.restart(CiKind.values()[i]);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -37,164 +37,148 @@ import com.sun.cri.xir.XirTemplate;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
 
 /**
- * 
+ *
  * @author Thomas Wuerthinger
  *
  */
 public class HotSpotXirGenerator extends RiXirGenerator {
 
-	private XirTemplate[] emptyTemplates = new XirTemplate[CiKind.values().length];
-	
-	@Override
-	public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
+    private XirTemplate[] emptyTemplates = new XirTemplate[CiKind.values().length];
 
-		List<XirTemplate> templates = new ArrayList<XirTemplate>();
-		for (int i=0; i<CiKind.values().length; i++) {
-			
-			CiKind curKind = CiKind.values()[i];
+    @Override
+    public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
 
-			if (curKind == CiKind.Float || curKind == CiKind.Double) continue;
-			
-			if (CiKind.values()[i] == CiKind.Void) {
-				asm.restart(CiKind.values()[i]);
-				emptyTemplates[i] = asm.finishTemplate("empty-" + CiKind.values()[i]);
-			} else {
-				asm.restart();
-				XirOperand result = asm.createTemp("result", CiKind.values()[i]);
-				emptyTemplates[i] = asm.finishTemplate(result, "empty-" + CiKind.values()[i]);
-			}
-			templates.add(emptyTemplates[i]);
-		}
-		
-		
-		return templates;
-	}
-	
-	@Override
-	public XirSnippet genArrayLength(XirSite site, XirArgument array) {
-		return new XirSnippet(emptyTemplates[CiKind.Int.ordinal()]);
-	}
+        List<XirTemplate> templates = new ArrayList<XirTemplate>();
+        for (int i = 0; i < CiKind.values().length; i++) {
 
-	@Override
-	public XirSnippet genArrayLoad(XirSite site, XirArgument array,
-			XirArgument index, XirArgument length, CiKind elementKind,
-			RiType elementType) {
-		return new XirSnippet(emptyTemplates[elementKind.ordinal()]);
-	}
+            CiKind curKind = CiKind.values()[i];
 
-	@Override
-	public XirSnippet genArrayStore(XirSite site, XirArgument array,
-			XirArgument index, XirArgument length, XirArgument value,
-			CiKind elementKind, RiType elementType) {
-		return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
-	}
+            if (curKind == CiKind.Float || curKind == CiKind.Double) {
+                continue;
+            }
 
-	@Override
-	public XirSnippet genCheckCast(XirSite site, XirArgument receiver,
-			XirArgument hub, RiType type) {
-		return new XirSnippet(emptyTemplates[CiKind.Object.ordinal()]);
-	}
+            if (CiKind.values()[i] == CiKind.Void) {
+                asm.restart(CiKind.values()[i]);
+                emptyTemplates[i] = asm.finishTemplate("empty-" + CiKind.values()[i]);
+            } else {
+                asm.restart();
+                XirOperand result = asm.createTemp("result", CiKind.values()[i]);
+                emptyTemplates[i] = asm.finishTemplate(result, "empty-" + CiKind.values()[i]);
+            }
+            templates.add(emptyTemplates[i]);
+        }
 
-	@Override
-	public XirSnippet genEntrypoint(XirSite site) {
-		return null;
-	}
+        return templates;
+    }
 
-	@Override
-	public XirSnippet genGetField(XirSite site, XirArgument receiver,
-			RiField field) {
-		return new XirSnippet(emptyTemplates[field.kind().ordinal()]);
-	}
+    @Override
+    public XirSnippet genArrayLength(XirSite site, XirArgument array) {
+        return new XirSnippet(emptyTemplates[CiKind.Int.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genGetStatic(XirSite site, XirArgument staticTuple,
-			RiField field) {
-		return new XirSnippet(emptyTemplates[field.kind().ordinal()]);
-	}
+    @Override
+    public XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, XirArgument length, CiKind elementKind, RiType elementType) {
+        return new XirSnippet(emptyTemplates[elementKind.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genInstanceOf(XirSite site, XirArgument receiver,
-			XirArgument hub, RiType type) {
-		return new XirSnippet(emptyTemplates[CiKind.Boolean.ordinal()]);
-	}
+    @Override
+    public XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument length, XirArgument value, CiKind elementKind, RiType elementType) {
+        return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genIntrinsic(XirSite site, XirArgument[] arguments,
-			RiMethod method) {
-		return null;
-	}
+    @Override
+    public XirSnippet genCheckCast(XirSite site, XirArgument receiver, XirArgument hub, RiType type) {
+        return new XirSnippet(emptyTemplates[CiKind.Object.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genInvokeInterface(XirSite site, XirArgument receiver,
-			RiMethod method) {
-		return new XirSnippet(emptyTemplates[CiKind.Word.ordinal()]);
-	}
+    @Override
+    public XirSnippet genEntrypoint(XirSite site) {
+        return null;
+    }
 
-	@Override
-	public XirSnippet genInvokeSpecial(XirSite site, XirArgument receiver,
-			RiMethod method) {
-		return new XirSnippet(emptyTemplates[CiKind.Word.ordinal()]);
-	}
+    @Override
+    public XirSnippet genGetField(XirSite site, XirArgument receiver, RiField field) {
+        return new XirSnippet(emptyTemplates[field.kind().ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genInvokeStatic(XirSite site, RiMethod method) {
-		return new XirSnippet(emptyTemplates[CiKind.Word.ordinal()]);
-	}
+    @Override
+    public XirSnippet genGetStatic(XirSite site, XirArgument staticTuple, RiField field) {
+        return new XirSnippet(emptyTemplates[field.kind().ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genInvokeVirtual(XirSite site, XirArgument receiver,
-			RiMethod method) {
-		return new XirSnippet(emptyTemplates[CiKind.Word.ordinal()]);
-	}
+    @Override
+    public XirSnippet genInstanceOf(XirSite site, XirArgument receiver, XirArgument hub, RiType type) {
+        return new XirSnippet(emptyTemplates[CiKind.Boolean.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver) {
-		return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
-	}
+    @Override
+    public XirSnippet genIntrinsic(XirSite site, XirArgument[] arguments, RiMethod method) {
+        return null;
+    }
 
-	@Override
-	public XirSnippet genMonitorExit(XirSite site, XirArgument receiver) {
-		return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
-	}
+    @Override
+    public XirSnippet genInvokeInterface(XirSite site, XirArgument receiver, RiMethod method) {
+        return new XirSnippet(emptyTemplates[CiKind.Word.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genNewArray(XirSite site, XirArgument length,
-			CiKind elementKind, RiType componentType, RiType arrayType) {
-		return new XirSnippet(emptyTemplates[CiKind.Object.ordinal()]);
-	}
+    @Override
+    public XirSnippet genInvokeSpecial(XirSite site, XirArgument receiver, RiMethod method) {
+        return new XirSnippet(emptyTemplates[CiKind.Word.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genNewInstance(XirSite site, RiType type) {
-		return new XirSnippet(emptyTemplates[CiKind.Object.ordinal()]);
-	}
+    @Override
+    public XirSnippet genInvokeStatic(XirSite site, RiMethod method) {
+        return new XirSnippet(emptyTemplates[CiKind.Word.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths,
-			RiType type) {
-		return new XirSnippet(emptyTemplates[CiKind.Object.ordinal()]);
-	}
+    @Override
+    public XirSnippet genInvokeVirtual(XirSite site, XirArgument receiver, RiMethod method) {
+        return new XirSnippet(emptyTemplates[CiKind.Word.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genPutField(XirSite site, XirArgument receiver,
-			RiField field, XirArgument value) {
-		return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
-	}
+    @Override
+    public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver) {
+        return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genPutStatic(XirSite site, XirArgument staticTuple,
-			RiField field, XirArgument value) {
-		return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
-	}
+    @Override
+    public XirSnippet genMonitorExit(XirSite site, XirArgument receiver) {
+        return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genResolveClass(XirSite site, RiType type,
-			Representation representation) {
-		return new XirSnippet(emptyTemplates[CiKind.Object.ordinal()]);
-	}
+    @Override
+    public XirSnippet genNewArray(XirSite site, XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType) {
+        return new XirSnippet(emptyTemplates[CiKind.Object.ordinal()]);
+    }
 
-	@Override
-	public XirSnippet genSafepoint(XirSite site) {
-		return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
-	}
+    @Override
+    public XirSnippet genNewInstance(XirSite site, RiType type) {
+        return new XirSnippet(emptyTemplates[CiKind.Object.ordinal()]);
+    }
+
+    @Override
+    public XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type) {
+        return new XirSnippet(emptyTemplates[CiKind.Object.ordinal()]);
+    }
+
+    @Override
+    public XirSnippet genPutField(XirSite site, XirArgument receiver, RiField field, XirArgument value) {
+        return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
+    }
+
+    @Override
+    public XirSnippet genPutStatic(XirSite site, XirArgument staticTuple, RiField field, XirArgument value) {
+        return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
+    }
+
+    @Override
+    public XirSnippet genResolveClass(XirSite site, RiType type, Representation representation) {
+        return new XirSnippet(emptyTemplates[CiKind.Object.ordinal()]);
+    }
+
+    @Override
+    public XirSnippet genSafepoint(XirSite site) {
+        return new XirSnippet(emptyTemplates[CiKind.Void.ordinal()]);
+    }
 
 }
