@@ -49,13 +49,13 @@ final class CodeRegistry extends AbstractTeleVMHolder {
 
     /**
      * Adds an entry to the code registry, indexed by code address, that represents a block
-     * of native machine code about which little is known.
+     * of external machine code about which little is known.
      *
-     * @param teleCompiledNativeCode the machine code whose memory region is to be added to this registry
+     * @param externalCode the machine code whose memory region is to be added to this registry
      * @throws IllegalArgumentException when the code's memory overlaps one already in this registry.
      */
-    public synchronized void add(TeleCompiledNativeCode teleCompiledNativeCode) {
-        machineCodeMemoryRegions.add(teleCompiledNativeCode.memoryRegion());
+    public synchronized void add(TeleExternalCode externalCode) {
+        machineCodeMemoryRegions.add(externalCode.memoryRegion());
     }
 
     /**
@@ -70,12 +70,12 @@ final class CodeRegistry extends AbstractTeleVMHolder {
         machineCodeMemoryRegions.add(memoryRegion);
     }
 
-    public synchronized TeleCompiledNativeCode getCompiledNativeCode(Address address) {
+    public synchronized TeleExternalCode getExternalCode(Address address) {
         final MaxEntityMemoryRegion< ? extends MaxMachineCode> machineCodeRegion = machineCodeMemoryRegions.find(address);
         if (machineCodeRegion != null) {
-            final MaxMachineCode compiledCode = machineCodeRegion.owner();
-            if (compiledCode instanceof TeleCompiledNativeCode) {
-                return (TeleCompiledNativeCode) compiledCode;
+            final MaxMachineCode machineCode = machineCodeRegion.owner();
+            if (machineCode instanceof TeleExternalCode) {
+                return (TeleExternalCode) machineCode;
             }
         }
         return null;

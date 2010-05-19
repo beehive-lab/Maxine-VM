@@ -633,12 +633,12 @@ public final class BreakpointsTable extends InspectorTable {
                 codeStart = compiledMethod.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                final MaxCompiledNativeCode compiledNativeCode = vm().codeCache().findCompiledNativeCode(address);
-                if (compiledNativeCode != null) {
-                    codeStart = compiledNativeCode.getCodeStart();
+                final MaxExternalCode externalCode = vm().codeCache().findExternalCode(address);
+                if (externalCode != null) {
+                    codeStart = externalCode.getCodeStart();
                     location = address.minus(codeStart.asAddress()).toInt();
-                    shortName = inspection().nameDisplay().shortName(compiledNativeCode);
-                    longName = inspection().nameDisplay().longName(compiledNativeCode);
+                    shortName = inspection().nameDisplay().shortName(externalCode);
+                    longName = inspection().nameDisplay().longName(externalCode);
                 } else {
                     // Must be an address in an unknown area of native code
                     shortName = "0x" + address.toHexString();

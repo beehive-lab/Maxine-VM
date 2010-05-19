@@ -24,12 +24,12 @@ import com.sun.max.unsafe.*;
 
 
 /**
- * Data describing a single block of machine code representing a native routine
+ * Data describing a single block of external machine code representing a native routine
  * about which little is known.
  *
  * @author Michael Van De Vanter
  */
-public interface MaxCompiledNativeCode extends MaxMachineCode<MaxCompiledNativeCode> {
+public interface MaxExternalCode extends MaxMachineCode<MaxExternalCode> {
 
     Size DEFAULT_NATIVE_CODE_LENGTH = Size.fromInt(200);
 

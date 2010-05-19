@@ -332,17 +332,17 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     /**
      * E.g. user supplied name or "@0xffffffffffffffff"
      */
-    public String shortName(MaxCompiledNativeCode compiledNativeCode) {
-        final String title = compiledNativeCode.entityName();
-        return title == null ? "@0x" + compiledNativeCode.getCodeStart().toHexString() : title;
+    public String shortName(MaxExternalCode externalCode) {
+        final String title = externalCode.entityName();
+        return title == null ? "@0x" + externalCode.getCodeStart().toHexString() : title;
     }
 
     /**
      * E.g. user supplied name or "Native code @0xffffffffffffffff"
      */
-    public String longName(MaxCompiledNativeCode compiledNativeCode) {
-        final String title = compiledNativeCode.entityName();
-        return title == null ? "Native code @0x" + compiledNativeCode.getCodeStart().toHexString() : "Native code: " + title;
+    public String longName(MaxExternalCode externalCode) {
+        final String title = externalCode.entityName();
+        return title == null ? "Native code @0x" + externalCode.getCodeStart().toHexString() : "Native code: " + title;
     }
 
     /**
@@ -372,7 +372,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
             name.append("Target{0x").append(address.toHexString());
-            if (vm().codeCache().findCompiledNativeCode(address) != null) {
+            if (vm().codeCache().findExternalCode(address) != null) {
                 // a native routine that's already been registered.
                 name.append("}");
             } else {

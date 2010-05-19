@@ -223,11 +223,11 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             } else {
                 ProgramWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.ip();
-                final MaxCompiledNativeCode compiledNativeCode = vm().codeCache().findCompiledNativeCode(instructionPointer);
-                if (compiledNativeCode != null) {
+                final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
+                if (externalCode != null) {
                     // native that we know something about
-                    name = inspection().nameDisplay().shortName(compiledNativeCode);
-                    toolTip = inspection().nameDisplay().longName(compiledNativeCode);
+                    name = inspection().nameDisplay().shortName(externalCode);
+                    toolTip = inspection().nameDisplay().longName(externalCode);
                 } else {
                     name = "nativeMethod:0x" + instructionPointer.toHexString();
                     toolTip = "nativeMethod";
@@ -472,9 +472,9 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         }
         if (stackFrame instanceof MaxStackFrame.Native) {
             final Pointer instructionPointer = stackFrame.ip();
-            final MaxCompiledNativeCode compiledNativeCode = vm().codeCache().findCompiledNativeCode(instructionPointer);
-            if (compiledNativeCode == null) {
-                menu.add(new InspectorAction(inspection(), "Open native code dialog...") {
+            final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
+            if (externalCode == null) {
+                menu.add(new InspectorAction(inspection(), "Open external code dialog...") {
                     @Override
                     protected void procedure() {
                         focus().setCodeLocation(stackFrame.codeLocation(), true);

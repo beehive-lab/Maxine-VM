@@ -35,22 +35,22 @@ import com.sun.max.tele.object.*;
  */
 public final class NativeMethodInspector extends MethodInspector {
 
-    private final MaxCompiledNativeCode compiledNativeCode;
+    private final MaxExternalCode externalCode;
     private TargetCodeViewer targetCodeViewer = null;
     private final String shortName;
     private final String longName;
 
-    public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledNativeCode compiledNativeCode) {
+    public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxExternalCode externalCode) {
         super(inspection, parent);
-        this.compiledNativeCode = compiledNativeCode;
-        shortName = inspection().nameDisplay().shortName(compiledNativeCode);
-        longName = inspection().nameDisplay().longName(compiledNativeCode);
+        this.externalCode = externalCode;
+        shortName = inspection().nameDisplay().shortName(externalCode);
+        longName = inspection().nameDisplay().longName(externalCode);
         createTabFrame(parent);
     }
 
     @Override
-    public MaxCompiledNativeCode machineCode() {
-        return compiledNativeCode;
+    public MaxExternalCode machineCode() {
+        return externalCode;
     }
 
     @Override
@@ -70,7 +70,7 @@ public final class NativeMethodInspector extends MethodInspector {
 
     @Override
     public void createView() {
-        targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, compiledNativeCode);
+        targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, externalCode);
         getContentPane().add(targetCodeViewer);
         pack();
     }
