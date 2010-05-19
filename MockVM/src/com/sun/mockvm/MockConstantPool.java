@@ -83,12 +83,11 @@ public class MockConstantPool implements RiConstantPool {
         return result;
     }
 
-    @Override
-    public RiMethod lookupMethod(int cpi) {
+    public RiMethod lookupMethod(int cpi, int opcode) {
         return lookupInvoke(cpi);
     }
 
-    public RiField lookupField(int cpi) {
+    public RiField lookupField(int cpi, int opcode) {
         ConstantFieldref c = (ConstantFieldref) cp.getConstant(cpi);
         MockType type = (MockType) lookupType((char) c.getClassIndex());
         ConstantNameAndType methodConstant = (ConstantNameAndType) cp.getConstant(c.getNameAndTypeIndex());
@@ -112,10 +111,5 @@ public class MockConstantPool implements RiConstantPool {
         ConstantUtf8 utf = (ConstantUtf8) name;
         String klassName = utf.getBytes().replace('/', '.');
         return MockUniverse.lookupType(klassName);
-    }
-
-    @Override
-    public RiType resolveType(int cpi) {
-        throw new UnsupportedOperationException();
     }
 }
