@@ -61,11 +61,11 @@ final class CodeRegistry extends AbstractTeleVMHolder {
     /**
      * Adds an entry to the code registry, indexed by code address, that represents a method compilation.
      *
-     * @param teleCompiledMethod the method compilation whose memory region is to be added to this registry
+     * @param teleCompiledCode the compilation whose memory region is to be added to this registry
      * @throws IllegalArgumentException when the code's memory overlaps one already in this registry.
      */
-    public synchronized void add(TeleCompiledMethod teleCompiledMethod) {
-        final MaxEntityMemoryRegion<MaxCompiledMethod> memoryRegion = teleCompiledMethod.memoryRegion();
+    public synchronized void add(TeleCompiledCode teleCompiledCode) {
+        final MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion = teleCompiledCode.memoryRegion();
         ProgramError.check(!memoryRegion.start().isZero(), "Code registry zero location");
         machineCodeMemoryRegions.add(memoryRegion);
     }
@@ -81,12 +81,12 @@ final class CodeRegistry extends AbstractTeleVMHolder {
         return null;
     }
 
-    public synchronized TeleCompiledMethod getCompiledMethod(Address address) {
+    public synchronized TeleCompiledCode getCompiledCode(Address address) {
         final MaxEntityMemoryRegion< ? extends MaxMachineCode> machineCodeRegion = machineCodeMemoryRegions.find(address);
         if (machineCodeRegion != null) {
             final MaxMachineCode machineCode = machineCodeRegion.owner();
-            if (machineCode instanceof TeleCompiledMethod) {
-                return (TeleCompiledMethod) machineCode;
+            if (machineCode instanceof TeleCompiledCode) {
+                return (TeleCompiledCode) machineCode;
             }
         }
         return null;

@@ -57,24 +57,24 @@ public final class TargetJavaFrameDescriptorInspector extends Inspector {
      * Display and highlight a target Java frame descriptor inspector for the frame..
      * @return The inspector, possibly newly created.
      */
-    public static TargetJavaFrameDescriptorInspector make(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, MaxCompiledMethod compiledMethod) {
+    public static TargetJavaFrameDescriptorInspector make(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, MaxCompiledCode compiledCode) {
         final Long key = makeKey(javaFrameDescriptor);
         TargetJavaFrameDescriptorInspector inspector = inspectors.get(key);
         if (inspector == null) {
-            inspector = new TargetJavaFrameDescriptorInspector(inspection, javaFrameDescriptor, compiledMethod, key);
+            inspector = new TargetJavaFrameDescriptorInspector(inspection, javaFrameDescriptor, compiledCode, key);
             inspectors.put(key, inspector);
         }
         return inspector;
     }
 
-    private final MaxCompiledMethod compiledMethod;
+    private final MaxCompiledCode compiledCode;
     private final TargetJavaFrameDescriptor javaFrameDescriptor;
     private final Long key;
 
-    private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, MaxCompiledMethod compiledMethod, Long key) {
+    private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, MaxCompiledCode compiledCode, Long key) {
         super(inspection);
         this.javaFrameDescriptor = javaFrameDescriptor;
-        this.compiledMethod = compiledMethod;
+        this.compiledCode = compiledCode;
         this.key = key;
         final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
@@ -118,12 +118,12 @@ public final class TargetJavaFrameDescriptorInspector extends Inspector {
             if (entry != null) {
                 local += ": " + entry.name(codeAttribute.constantPool);
             }
-            local += " = " + compiledMethod.targetLocationToString(descriptor.locals[i]);
+            local += " = " + compiledCode.targetLocationToString(descriptor.locals[i]);
             panel.add(new TextLabel(inspection(), local));
         }
         for (int i = 0; i < descriptor.stackSlots.length; i++) {
             String stackSlot = "stack #" + i;
-            stackSlot += " = " + compiledMethod.targetLocationToString(descriptor.stackSlots[i]);
+            stackSlot += " = " + compiledCode.targetLocationToString(descriptor.stackSlots[i]);
             panel.add(new TextLabel(inspection(), stackSlot));
         }
         panel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor()));

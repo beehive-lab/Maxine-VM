@@ -38,6 +38,6 @@ public interface MaxCompiledCodeRegion extends MaxEntity<MaxCompiledCodeRegion> 
     /**
      * @return all known compilations in the region
      */
-    List<MaxCompiledMethod> compilations();
+    List<MaxCompiledCode> compilations();
 
 }

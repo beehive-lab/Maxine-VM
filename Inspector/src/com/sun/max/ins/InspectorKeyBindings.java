@@ -61,11 +61,11 @@ public class InspectorKeyBindings {
         DebugResumeAction.class,
         DebugPauseAction.class,
         ToggleTargetCodeBreakpointAction.class,
-        SetTargetCodeLabelBreakpointsAction.class,
-        RemoveTargetCodeLabelBreakpointsAction.class,
+        SetMachineCodeLabelBreakpointsAction.class,
+        RemoveMachineCodeLabelBreakpointsAction.class,
         SetBytecodeBreakpointAtMethodEntryByNameAction.class,
-        SetTargetCodeBreakpointAtObjectInitializerAction.class,
-        SetTargetCodeBreakpointAtMethodEntriesByNameAction.class
+        SetMachineCodeBreakpointAtObjectInitializerAction.class,
+        SetMachineCodeBreakpointAtEntriesByNameAction.class
     ));
 
     /**
@@ -154,11 +154,11 @@ public class InspectorKeyBindings {
         add(DebugResumeAction.class, VK_F5).
         add(DebugPauseAction.class, 'P', CTRL_DOWN_MASK).
         add(ToggleTargetCodeBreakpointAction.class, VK_F8, CTRL_DOWN_MASK).
-        add(SetTargetCodeBreakpointAtMethodEntriesByNameAction.class, 'E', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(SetMachineCodeBreakpointAtEntriesByNameAction.class, 'E', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetBytecodeBreakpointAtMethodEntryByNameAction.class, 'S', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(SetTargetCodeBreakpointAtObjectInitializerAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(SetTargetCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK).
-        add(RemoveTargetCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(SetMachineCodeBreakpointAtObjectInitializerAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(SetMachineCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK).
+        add(RemoveMachineCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(DebugRunToInstructionWithBreakpointsAction.class, VK_F4).
         add(DebugRunToInstructionAction.class, VK_F4, CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
 
@@ -181,11 +181,11 @@ public class InspectorKeyBindings {
         add(DebugResumeAction.class, VK_F8).
         add(DebugPauseAction.class, 'P', CTRL_DOWN_MASK).
         add(ToggleTargetCodeBreakpointAction.class, 'B', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(SetTargetCodeBreakpointAtMethodEntriesByNameAction.class, 'E', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(SetMachineCodeBreakpointAtEntriesByNameAction.class, 'E', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetBytecodeBreakpointAtMethodEntryByNameAction.class, 'S', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(SetTargetCodeBreakpointAtObjectInitializerAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(SetTargetCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK).
-        add(RemoveTargetCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(SetMachineCodeBreakpointAtObjectInitializerAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(SetMachineCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK).
+        add(RemoveMachineCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(DebugRunToInstructionWithBreakpointsAction.class, 'R', CTRL_DOWN_MASK).
         add(DebugRunToInstructionAction.class, 'R', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(DebugRunToNextCallWithBreakpointsAction.class, 'C', CTRL_DOWN_MASK).

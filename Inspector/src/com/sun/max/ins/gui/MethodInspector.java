@@ -88,10 +88,10 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      */
     private static MethodInspector make(final Inspection inspection, Address address, boolean interactive) {
         MethodInspector methodInspector = null;
-        final MaxCompiledMethod compiledMethod = inspection.vm().codeCache().findCompiledMethod(address);
-        if (compiledMethod != null) {
+        final MaxCompiledCode compiledCode = inspection.vm().codeCache().findCompiledCode(address);
+        if (compiledCode != null) {
             // Java method
-            methodInspector = make(inspection, compiledMethod, MethodCodeKind.TARGET_CODE);
+            methodInspector = make(inspection, compiledCode, MethodCodeKind.TARGET_CODE);
         } else {
             final MaxExternalCode externalCode = inspection.vm().codeCache().findExternalCode(address);
             if (externalCode != null) {
@@ -163,9 +163,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     private static JavaMethodInspector make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
         // If there are compilations, then inspect in association with the most recent
-        final MaxCompiledMethod compiledMethod = inspection.vm().codeCache().latestCompilation(teleClassMethodActor);
-        if (compiledMethod != null) {
-            return make(inspection, compiledMethod, codeKind);
+        final MaxCompiledCode compiledCode = inspection.vm().codeCache().latestCompilation(teleClassMethodActor);
+        if (compiledCode != null) {
+            return make(inspection, compiledCode, codeKind);
         }
         final MethodInspector methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
         if (methodInspector == null) {
@@ -184,29 +184,29 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      * @return a possibly new {@link MethodInspector} associated with a specific compilation of a Java method in the
      *         VM, and with the requested code view visible.
      */
-    private static JavaMethodInspector make(Inspection inspection, MaxCompiledMethod compiledMethod, MethodCodeKind codeKind) {
+    private static JavaMethodInspector make(Inspection inspection, MaxCompiledCode compiledCode, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
 
         // Is there already an inspection open that is bound to this compilation?
-        MethodInspector methodInspector = machineCodeToMethodInspector.get(compiledMethod);
+        MethodInspector methodInspector = machineCodeToMethodInspector.get(compiledCode);
         if (methodInspector == null) {
             // No existing inspector is bound to this compilation; see if there is an inspector for this method that is
             // unbound
-            TeleClassMethodActor teleClassMethodActor = compiledMethod.getTeleClassMethodActor();
+            TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
             }
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
             if (methodInspector == null) {
                 // No existing inspector exists for this method; create new one bound to this compilation
-                javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledMethod, codeKind);
+                javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledCode, codeKind);
             } else {
                 // An inspector exists for the method, but not bound to any compilation; bind it to this compilation
                 // TODO (mlvdv) Temp patch; just create a new one in this case too.
-                javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledMethod, codeKind);
+                javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledCode, codeKind);
             }
             parent.add(javaMethodInspector);
-            machineCodeToMethodInspector.put(compiledMethod, javaMethodInspector);
+            machineCodeToMethodInspector.put(compiledCode, javaMethodInspector);
         } else {
             // An existing inspector is bound to this method & compilation; ensure that it has the requested code view
             javaMethodInspector = (JavaMethodInspector) methodInspector;

@@ -175,12 +175,12 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         if (externalCode != null) {
             return externalCode;
         }
-        return findCompiledMethod(address);
+        return findCompiledCode(address);
     }
 
-    public TeleCompiledMethod findCompiledMethod(Address address) {
-        TeleCompiledMethod teleCompiledMethod = codeRegistry().getCompiledMethod(address);
-        if (teleCompiledMethod == null) {
+    public TeleCompiledCode findCompiledCode(Address address) {
+        TeleCompiledCode teleCompiledCode = codeRegistry().getCompiledCode(address);
+        if (teleCompiledCode == null) {
             // Not a known Java method.
             if (!contains(address)) {
                 // The address is not in a method code allocation region; no use looking further.
@@ -199,22 +199,22 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
                 throw ProgramError.unexpected(e);
             }
             // If a new method was discovered, then it will have been added to the registry.
-            teleCompiledMethod = codeRegistry().getCompiledMethod(address);
+            teleCompiledCode = codeRegistry().getCompiledCode(address);
         }
-        return teleCompiledMethod;
+        return teleCompiledCode;
     }
 
-    public IndexedSequence<MaxCompiledMethod> compilations(TeleClassMethodActor teleClassMethodActor) {
-        final VariableSequence<MaxCompiledMethod> compilations = new ArrayListSequence<MaxCompiledMethod>(teleClassMethodActor.numberOfCompilations());
+    public IndexedSequence<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor) {
+        final VariableSequence<MaxCompiledCode> compilations = new ArrayListSequence<MaxCompiledCode>(teleClassMethodActor.numberOfCompilations());
         for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
-            compilations.append(findCompiledMethod(teleTargetMethod.getRegionStart()));
+            compilations.append(findCompiledCode(teleTargetMethod.getRegionStart()));
         }
         return compilations;
     }
 
-    public TeleCompiledMethod latestCompilation(TeleClassMethodActor teleClassMethodActor) {
+    public TeleCompiledCode latestCompilation(TeleClassMethodActor teleClassMethodActor) {
         final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
-        return teleTargetMethod == null ? null : findCompiledMethod(teleTargetMethod.getRegionStart());
+        return teleTargetMethod == null ? null : findCompiledCode(teleTargetMethod.getRegionStart());
     }
 
     public MaxExternalCode findExternalCode(Address address) {
@@ -254,7 +254,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     }
 
     /**
-     * Adds a {@link MaxCompiledMethod} entry to the code registry, indexed by code address.
+     * Adds a {@link MaxCompiledCode} entry to the code registry, indexed by code address.
      * This should only be called from a constructor of a {@link TeleTargetMethod} subclass.
      *
      * @param teleTargetMethod the compiled method whose memory region is to be added to this registry
@@ -263,7 +263,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     public void register(TeleTargetMethod teleTargetMethod) {
         final TeleCompiledCodeRegion teleCompiledCodeRegion = findCompiledCodeRegion(teleTargetMethod.getRegionStart());
         ProgramError.check(teleCompiledCodeRegion != null, "Can't locate code region for method");
-        codeRegistry().add(new TeleCompiledMethod(vm(), teleTargetMethod, teleCompiledCodeRegion, teleCompiledCodeRegion == bootCodeRegion));
+        codeRegistry().add(new TeleCompiledCode(vm(), teleTargetMethod, teleCompiledCodeRegion, teleCompiledCodeRegion == bootCodeRegion));
     }
 
 }

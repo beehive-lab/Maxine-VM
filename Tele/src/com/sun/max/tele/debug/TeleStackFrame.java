@@ -110,14 +110,14 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
     private final TeleStack teleStack;
     private final int position;
     private final CodeLocation codeLocation;
-    private final TeleCompiledMethod teleCompiledMethod;
+    private final TeleCompiledCode teleCompiledCode;
 
     protected TeleStackFrame(TeleVM teleVM, TeleStack teleStack, int position, StackFrame_Type stackFrame) {
         super(teleVM);
         this.stackFrame = stackFrame;
         this.teleStack = teleStack;
         this.position = position;
-        this.teleCompiledMethod = teleVM.codeCache().findCompiledMethod(stackFrame.ip);
+        this.teleCompiledCode = teleVM.codeCache().findCompiledCode(stackFrame.ip);
 
         CodeLocation location = null;
         Pointer instructionPointer = stackFrame.ip;
@@ -177,8 +177,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         return codeLocation;
     }
 
-    public final TeleCompiledMethod compiledMethod() {
-        return teleCompiledMethod;
+    public final TeleCompiledCode compiledCode() {
+        return teleCompiledCode;
     }
 
     public boolean isSameFrame(MaxStackFrame maxStackFrame) {
@@ -240,8 +240,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         }
 
         public String sourceVariableName(int slot) {
-            final TeleCompiledMethod compiledMethod = compiledMethod();
-            return compiledMethod == null ? null : compiledMethod.sourceVariableName(this, slot);
+            final TeleCompiledCode compiledCode = compiledCode();
+            return compiledCode == null ? null : compiledCode.sourceVariableName(this, slot);
         }
     }
 

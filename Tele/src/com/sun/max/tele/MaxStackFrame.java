@@ -103,13 +103,13 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
     MaxCodeLocation codeLocation();
 
     /**
-     * Gets the compiled method enclosing the {@linkplain #ip() execution point} in this frame, if any.
+     * Gets the compiled code enclosing the {@linkplain #ip() execution point} in this frame, if any.
      * <br>
      * Thread-safe
      *
-     * @return method compilation for this frame, null a native function or other special frame not associated with a method
+     * @return compiled code for this frame, null if an external function or other special frame not associated with a method
      */
-    MaxCompiledMethod compiledMethod();
+    MaxCompiledCode compiledCode();
 
     /**
      * Determines if this frame and another refer to the same frame.

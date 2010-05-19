@@ -254,9 +254,9 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         }
         TeleClassMethodActor teleClassMethodActor = null;
         try {
-            final TeleCompiledMethod compiledMethod = vm().codeCache().findCompiledMethod(address);
-            if (compiledMethod != null) {
-                teleClassMethodActor = compiledMethod.getTeleClassMethodActor();
+            final TeleCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+            if (compiledCode != null) {
+                teleClassMethodActor = compiledCode.getTeleClassMethodActor();
             }
         } finally {
             vm().unlock();
