@@ -23,6 +23,7 @@ package com.sun.max.tele.debug.guestvm.xen.dbchannel;
 import java.nio.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.MaxWatchpoint.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.memory.*;
@@ -50,10 +51,10 @@ import com.sun.max.unsafe.*;
  */
 public final class GuestVMXenDBChannel {
     private static final String CHANNEL_PROPERTY = "max.ins.guestvm.channel";
-    private static final String DB_DIRECT = "db.direct";
-    private static final String DB_TCP = "db.tcp";
-    private static final String XG_TCP = "xg.tcp";
-    private static final String XG_DIRECT = "xg.direct";
+    private static final String DB_DIRECT = "db";
+    private static final String DB_TCP = "tcp.db";
+    private static final String XG_DIRECT = "xg";
+    private static final String XG_TCP = "tcp.xg";
     private static final String XEN_DUMP = "xen.dump";
     private static final String DEFAULT_PROTOCOL = DB_DIRECT;
     private static GuestVMXenTeleDomain teleDomain;
@@ -63,34 +64,48 @@ public final class GuestVMXenDBChannel {
     public static synchronized void attach(GuestVMXenTeleDomain teleDomain, int domId) {
         GuestVMXenDBChannel.teleDomain = teleDomain;
         String channelType = System.getProperty(CHANNEL_PROPERTY);
-        if (channelType == null) {
-            channelType = DEFAULT_PROTOCOL;
-        }
+        final ChannelInfo channelInfo = ChannelInfo.getChannelInfo(channelType);
 
-        if (channelType.equals(DB_DIRECT)) {
+        if (channelInfo.type.equals(DB_DIRECT)) {
             channelProtocol = new DBProtocol();
-        } else if (channelType.startsWith(DB_TCP)) {
-            final int sep = channelType.indexOf(',');
-            if (sep > 0) {
-                channelProtocol = new TCPProtocol(channelType.substring(sep + 1));
-            } else {
-                throw new IllegalArgumentException("host/port not specified with " + CHANNEL_PROPERTY);
-            }
-        } else if (channelType.startsWith(XG_DIRECT)) {
-            final int sep = channelType.indexOf(',');
-            channelProtocol = new XGProtocol(ImageFileHandler.open(channelType.substring(sep)));
-        } else if (channelType.startsWith(XG_TCP)) {
-            throw new IllegalArgumentException(XG_TCP + " is not implemented");
-        } else if (channelType.startsWith(XEN_DUMP)) {
-            final int sep = channelType.indexOf(',');
-            if (sep > 0) {
-                channelProtocol = new DumpProtocol(channelType.substring(sep + 1));
-            } else {
-                throw new IllegalArgumentException("dump file not specified with " + CHANNEL_PROPERTY);
-            }
+        } else if (channelInfo.type.equals(DB_TCP)) {
+            channelProtocol = new TCPProtocol(channelInfo.rest);
+        } else if (channelInfo.type.equals(XG_DIRECT)) {
+            channelProtocol = new XGProtocol(ImageFileHandler.open(channelInfo.imageFile));
+        } else if (channelInfo.type.equals(XG_TCP)) {
+            channelProtocol = new TCPXGProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
+        } else if (channelInfo.type.equals(XEN_DUMP)) {
+            channelProtocol = new DumpProtocol(channelInfo.imageFile, channelInfo.rest);
+        } else {
+            ProgramError.unexpected("unknown channel type: " + channelType);
         }
         channelProtocol.attach(domId, teleDomain.vm().bootImage().header.threadLocalsAreaSize);
         maxByteBufferSize = channelProtocol.maxByteBufferSize();
+    }
+
+    static class ChannelInfo {
+        String type;
+        String imageFile;
+        String rest;
+
+        private static void usage(String channelType) {
+            ProgramError.unexpected("syntax error in channel type: " + channelType);
+        }
+
+        private static ChannelInfo getChannelInfo(String channelType) {
+            final ChannelInfo result = new ChannelInfo();
+            final String[] parts = channelType.split(",");
+            System.out.println("l " + parts.length + " p0 " + parts[0] + " p1 " + parts[1] + " p2 " + parts[2]);
+            if (parts.length < 2) {
+                usage(channelType);
+            }
+            result.type = parts[0];
+            result.imageFile = parts[1];
+            if (parts.length > 2) {
+                result.rest = parts[2];
+            }
+            return result;
+        }
     }
 
     public static synchronized Pointer getBootHeapStart() {

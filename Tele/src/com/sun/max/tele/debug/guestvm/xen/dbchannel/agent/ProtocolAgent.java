@@ -36,7 +36,7 @@ import com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.*;
 public class ProtocolAgent {
 
     private static int port = TCPProtocol.DEFAULT_PORT;
-    private static final String DBRING = "agent.AgentDBRing";
+    private static final String DBRING = "agent.AgentDB";
     private static final String XG = "agent.AgentXG";
     private static String impl = DBRING;
     private static int dbtLevel = 0;
