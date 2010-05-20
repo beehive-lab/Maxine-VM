@@ -20,14 +20,13 @@
  */
 package com.sun.max.ins.gui;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.ins.*;
 
 /**
  * A label for presenting a Bytecodes instruction mnemonic.
  *
  * @author Michael Van De Vanter
- *
  */
 public class BytecodeMnemonicLabel extends InspectorLabel {
 

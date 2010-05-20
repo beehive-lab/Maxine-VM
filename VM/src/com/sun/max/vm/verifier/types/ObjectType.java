@@ -75,7 +75,7 @@ public class ObjectType extends ReferenceType {
         }
 
         final ClassActor thisActor = resolve();
-        if (thisActor.isInterfaceActor()) {
+        if (thisActor.isInterface()) {
             // Interfaces (including java.lang.Cloneable and java.io.Serializable) are treated as java.lang.Object
             return true;
         }
@@ -126,10 +126,10 @@ public class ObjectType extends ReferenceType {
         ClassActor fromClassActor = fromObject.resolve();
 
         // Treat interfaces as if they were java.lang.Object.
-        if (classActor.isInterfaceActor()) {
+        if (classActor.isInterface()) {
             return OBJECT;
         }
-        if (fromClassActor.isInterfaceActor()) {
+        if (fromClassActor.isInterface()) {
             return OBJECT;
         }
 

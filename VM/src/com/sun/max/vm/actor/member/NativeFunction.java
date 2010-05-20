@@ -47,7 +47,7 @@ public class NativeFunction {
     }
 
     /**
-     * Determines if this method actor has the same name any other native method actor defined in the same class.
+     * Determines if this method actor has the same name as any other native method actor defined in the same class.
      */
     @NEVER_INLINE
     private boolean isOverloadedByNativeMethod() {
@@ -92,6 +92,13 @@ public class NativeFunction {
             }
         }
         return address;
+    }
+
+    /**
+     * Determines if the native function pointer has been linked.
+     */
+    public boolean isLinked() {
+        return !address.isZero();
     }
 
     /**

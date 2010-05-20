@@ -22,11 +22,10 @@ package com.sun.max.tele;
 
 import java.io.*;
 
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -91,7 +90,7 @@ public class TeleCodeRegistry extends AbstractTeleVMHolder {
         Address lastEndAddress = null;
         for (TargetCodeRegion targetCodeRegion : targetCodeRegions) {
             final TeleTargetRoutine teleTargetRoutine = targetCodeRegion.teleTargetRoutine();
-            final String name = teleTargetRoutine.teleRoutine().getUniqueName();
+            final String name = teleTargetRoutine.getName();
             if (lastEndAddress != null && !lastEndAddress.equals(targetCodeRegion.start())) {
                 printStream.println(lastEndAddress.toHexString() + "--" + targetCodeRegion.start().minus(1).toHexString() + ": ");
             }

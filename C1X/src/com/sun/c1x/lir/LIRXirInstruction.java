@@ -21,13 +21,14 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.xir.*;
+import com.sun.c1x.gen.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 public class LIRXirInstruction extends LIRInstruction {
 
-    public final LIROperand[] originalOperands;
+    public final CiValue[] originalOperands;
     public final int outputOperandIndex;
     public final int[] operandIndices;
     public final XirSnippet snippet;
@@ -36,7 +37,7 @@ public class LIRXirInstruction extends LIRInstruction {
     public final int tempCount;
     public final int inputCount;
 
-    public LIRXirInstruction(XirSnippet snippet, LIROperand[] originalOperands, LIROperand outputOperand, int inputTempCount, int tempCount, LIROperand[] operands, int[] operandIndices, int outputOperandIndex, LIRDebugInfo info, RiMethod method) {
+    public LIRXirInstruction(XirSnippet snippet, CiValue[] originalOperands, CiValue outputOperand, int inputTempCount, int tempCount, CiValue[] operands, int[] operandIndices, int outputOperandIndex, LIRDebugInfo info, RiMethod method) {
         super(LIROpcode.Xir, outputOperand, info, false, null, inputTempCount, tempCount, operands);
         this.method = method;
         this.snippet = snippet;
@@ -50,7 +51,7 @@ public class LIRXirInstruction extends LIRInstruction {
         C1XMetrics.LIRXIRInstructions++;
     }
 
-    public LIROperand[] getOperands() {
+    public CiValue[] getOperands() {
         for (int i = 0; i < operandIndices.length; i++) {
             originalOperands[operandIndices[i]] = operand(i);
         }
@@ -72,19 +73,29 @@ public class LIRXirInstruction extends LIRInstruction {
 
      /**
      * Prints this instruction.
-     *
-     * @param out the output stream
      */
     @Override
-    public void printInstruction(LogStream out) {
-        out.print(toString());    }
+    public String operationString(OperandFormatter operandFmt) {
+        return toString(operandFmt);
+    }
 
     @Override
-    public String toString() {
+    public String toString(OperandFormatter operandFmt) {
         StringBuilder sb = new StringBuilder();
-        sb.append("LIRXIR ");
+        sb.append("XIR ");
 
-        sb.append(snippet.toString());
+        sb.append(snippet.template);
+        sb.append("(");
+        for (XirArgument a : snippet.arguments) {
+            sb.append(" ");
+            if (a.constant != null) {
+                sb.append(operandFmt.format(a.constant));
+            } else {
+                LIRItem item = (LIRItem) a.object;
+                sb.append(operandFmt.format(item.result()));
+            }
+        }
+        sb.append(" )");
 
         if (method != null) {
             sb.append(" // ");
@@ -95,15 +106,17 @@ public class LIRXirInstruction extends LIRInstruction {
 
         int z = 0;
 
-        sb.append(result().toString() + " = ");
+        if (result().isLegal()) {
+            sb.append(operandFmt.format(result()) + " = ");
+        }
 
-        for (OperandSlot opSlot : super.operandSlots) {
+        for (LIROperand opSlot : inputAndTempOperands) {
 
-            LIROperand op = opSlot.get(this);
+            CiValue op = opSlot.value(this);
 
             if (op != null) {
                 sb.append(" ");
-                sb.append(op.toString());
+                sb.append(operandFmt.format(op));
             }
 
             z++;

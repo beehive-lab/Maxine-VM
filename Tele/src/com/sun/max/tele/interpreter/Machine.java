@@ -57,10 +57,10 @@ public final class Machine extends AbstractTeleVMHolder{
     }
 
     public ReferenceValue toReferenceValue(Reference reference) {
-        if (teleVM() == null) {
+        if (vm() == null) {
             return ObjectReferenceValue.from(reference.toJava());
         } else {
-            return teleVM().createReferenceValue(reference);
+            return vm().createReferenceValue(reference);
         }
     }
 
@@ -180,7 +180,7 @@ public final class Machine extends AbstractTeleVMHolder{
     }
 
     public TeleInterpreterException raiseException(ReferenceValue throwableReference) throws TeleInterpreterException {
-        throw new TeleInterpreterException(toThrowable(teleVM(), throwableReference), this);
+        throw new TeleInterpreterException(toThrowable(vm(), throwableReference), this);
     }
 
     public TeleInterpreterException raiseException(Throwable throwable) throws TeleInterpreterException {
@@ -211,9 +211,9 @@ public final class Machine extends AbstractTeleVMHolder{
     public Value getStatic(int cpIndex) {
         final ConstantPool constantPool = currentThread.frame().constantPool();
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
-        if (teleVM() != null) {
+        if (vm() != null) {
             final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
-            final TeleClassActor teleClassActor = teleVM().findTeleClassActor(fieldActor.holder().typeDescriptor);
+            final TeleClassActor teleClassActor = vm().findTeleClassActor(fieldActor.holder().typeDescriptor);
             final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
             final Reference staticTupleReference = teleStaticTuple.reference();
 
@@ -239,7 +239,7 @@ public final class Machine extends AbstractTeleVMHolder{
                     return new WordValue(staticTupleReference.readWord(fieldActor.offset()));
                 }
                 case REFERENCE: {
-                    return teleVM().createReferenceValue(teleVM().wordToReference(staticTupleReference.readWord(fieldActor.offset())));
+                    return vm().createReferenceValue(vm().wordToReference(staticTupleReference.readWord(fieldActor.offset())));
                 }
             }
         } else {
@@ -251,7 +251,7 @@ public final class Machine extends AbstractTeleVMHolder{
     }
 
     public void putStatic(int cpIndex, Value value) {
-        if (teleVM() != null) {
+        if (vm() != null) {
             ProgramError.unexpected("Cannot run putstatic remotely!");
         } else {
             final ConstantPool cp = currentThread.frame().constantPool();
@@ -274,7 +274,7 @@ public final class Machine extends AbstractTeleVMHolder{
         } else {
             assert kind.isReference;
             if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
-                return teleVM().createReferenceValue(teleVM().wordToReference(instance.readWord(fieldActor.offset())));
+                return vm().createReferenceValue(vm().wordToReference(instance.readWord(fieldActor.offset())));
             } else {
                 return fieldActor.readValue(instance);
             }
@@ -289,7 +289,7 @@ public final class Machine extends AbstractTeleVMHolder{
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
 
             if (value instanceof TeleReferenceValue) {
-                fieldActor.writeValue(instance, TeleReferenceValue.from(teleVM(), makeLocalReference((TeleReference) value.asReference())));
+                fieldActor.writeValue(instance, TeleReferenceValue.from(vm(), makeLocalReference((TeleReference) value.asReference())));
             } else {
                 final Value val = fieldActor.kind.convert(value);
                 fieldActor.writeValue(instance, val);
@@ -382,11 +382,11 @@ public final class Machine extends AbstractTeleVMHolder{
             return remoteReference;
         }
 
-        final ClassActor remoteReferenceClassActor = teleVM().makeClassActorForTypeOf(remoteReference);
+        final ClassActor remoteReferenceClassActor = vm().makeClassActorForTypeOf(remoteReference);
 
         if (remoteReferenceClassActor.typeDescriptor.equals(JavaTypeDescriptor.STRING)) {
-            return Reference.fromJava(teleVM().getString(remoteReference));
-        } else if (remoteReferenceClassActor.isArrayClassActor() && remoteReferenceClassActor.componentClassActor().isPrimitiveClassActor()) {
+            return Reference.fromJava(vm().getString(remoteReference));
+        } else if (remoteReferenceClassActor.isArrayClass() && remoteReferenceClassActor.componentClassActor().isPrimitiveClassActor()) {
             final int arrayLength = Layout.readArrayLength(remoteReference);
             return Reference.fromJava(readRemoteArray(remoteReference, arrayLength, remoteReferenceClassActor.componentClassActor().typeDescriptor));
         } else {
@@ -403,7 +403,7 @@ public final class Machine extends AbstractTeleVMHolder{
                 final TeleReferenceValue inspectorReferenceArgument = (TeleReferenceValue) arguments[i];
                 final TeleReference reference = (TeleReference) inspectorReferenceArgument.asReference();
                 if (!reference.isLocal()) {
-                    arguments[i] = TeleReferenceValue.from(teleVM(), makeLocalReference(reference));
+                    arguments[i] = TeleReferenceValue.from(vm(), makeLocalReference(reference));
                 }
             }
         }

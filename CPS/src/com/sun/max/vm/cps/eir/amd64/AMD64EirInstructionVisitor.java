@@ -37,6 +37,8 @@ public interface AMD64EirInstructionVisitor extends EirInstructionVisitor {
     void visit(ADDSS instruction);
     void visit(AND_I32 instruction);
     void visit(AND_I64 instruction);
+    void visit(BSF_I64 instruction);
+    void visit(BSR_I64 instruction);
     void visit(CDQ instruction);
     void visit(CMOVA_I32 instruction);
     void visit(CMOVB_I32 instruction);

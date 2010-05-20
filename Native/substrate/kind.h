@@ -23,17 +23,17 @@
 
 /* These values must correspond exactly to the ordinals of enum type com.sun.max.vm.type.Kind: */
 
-#define kind_VOID        0
+#define kind_BOOLEAN     0
 #define kind_BYTE        1
-#define kind_BOOLEAN     2
-#define kind_SHORT       3
-#define kind_CHAR        4
-#define kind_INT         5
-#define kind_FLOAT       6
-#define kind_LONG        7
-#define kind_DOUBLE      8
+#define kind_SHORT       2
+#define kind_CHAR        3
+#define kind_INT         4
+#define kind_FLOAT       5
+#define kind_LONG        6
+#define kind_DOUBLE      7
+#define kind_REFERENCE   8
 #define kind_WORD        9
-#define kind_REFERENCE  10
+#define kind_VOID       10
 
 #endif /*__kind_h__*/
 

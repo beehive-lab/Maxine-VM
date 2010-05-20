@@ -24,6 +24,8 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.asm.*;
+import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -33,13 +35,13 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -54,7 +56,7 @@ import com.sun.max.vm.template.*;
  * @author Doug Simon
  * @author Thomas Wuerthinger
  */
-public abstract class TargetMethod extends RuntimeMemoryRegion {
+public abstract class TargetMethod extends MemoryRegion {
 
     public static final VMStringOption printTargetMethods = VMOptions.register(new VMStringOption("-XX:PrintTargetMethods=", false, null,
         "Print compiled target methods whose fully qualified name matches <value>."), MaxineVM.Phase.STARTING);
@@ -102,13 +104,13 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     public TargetMethod(String description, TargetABI abi) {
         this.classMethodActor = null;
         this.abi = abi;
-        setDescription(description);
+        setRegionName(description);
     }
 
     public TargetMethod(ClassMethodActor classMethodActor, TargetABI abi) {
         this.classMethodActor = classMethodActor;
         this.abi = abi;
-        setDescription(classMethodActor.name.toString());
+        setRegionName(classMethodActor.name.toString());
     }
 
     public int registerRestoreEpilogueOffset() {
@@ -136,6 +138,16 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
     public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
+        return null;
+    }
+
+    /**
+     * Gets the bytecode locations for the inlining chain rooted at a given stop.
+     *
+     * @param stopIndex an index of a stop within this method
+     * @return the bytecode locations for the inlining chain rooted at the denoted stop
+     */
+    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
         return null;
     }
 
@@ -319,6 +331,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      */
     public final boolean linkDirectCalls(Adapter adapter) {
         boolean linkedAll = true;
+        final Object[] directCallees = directCallees();
         if (directCallees != null) {
             for (int i = 0; i < directCallees.length; i++) {
                 final int offset = getCallEntryOffset(directCallees[i], i);
@@ -352,35 +365,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     private int getCallEntryOffset(Object callee, int index) {
         final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(index);
         return callEntryPoint.offsetInCallee();
-    }
-
-    /**
-     * Links all the direct calls in this target method. Only calls within this target method's prologue are linked to
-     * the target callee (if it's
-     * {@linkplain CompilationScheme.Static#getCurrentTargetMethod(ClassMethodActor) available}). All other direct
-     * calls are linked to a {@linkplain StaticTrampoline static trampoline}.
-     *
-     * @return true if all the direct callees in this target method's prologue were linked to a resolved target method
-     */
-    @HOSTED_ONLY
-    public final boolean linkDirectCallsInPrologue() {
-        boolean linkedAll = true;
-        final Object[] directCallees = directCallees();
-        if (directCallees != null) {
-            for (int i = 0; i < directCallees.length; i++) {
-                final int offset = getCallEntryOffset(directCallees[i], i);
-                final TargetMethod callee = getTargetMethod(directCallees[i]);
-                if (!isDirectCalleeInPrologue(i)) {
-                    patchCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
-                } else if (callee == null) {
-                    linkedAll = false;
-                    patchCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
-                } else {
-                    patchCallSite(stopPosition(i), callee.codeStart().plus(offset));
-                }
-            }
-        }
-        return linkedAll;
     }
 
     @HOSTED_ONLY
@@ -461,6 +445,21 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * @return -1 if the search fails
      */
     public int findNextCall(int targetCodePosition, boolean nativeFunctionCall) {
+        if (stopPositions == null || targetCodePosition < 0 || targetCodePosition > code.length) {
+            return -1;
+        }
+
+        int closestCallPosition = Integer.MAX_VALUE;
+        final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
+        for (int stopIndex = 0; stopIndex < numberOfCalls; stopIndex++) {
+            final int callPosition = stopPosition(stopIndex);
+            if (callPosition > targetCodePosition && callPosition < closestCallPosition && (!nativeFunctionCall || StopPositions.isNativeFunctionCall(stopPositions, stopIndex))) {
+                closestCallPosition = callPosition;
+            }
+        }
+        if (closestCallPosition != Integer.MAX_VALUE) {
+            return closestCallPosition;
+        }
         return -1;
     }
 
@@ -529,7 +528,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     @Override
     public final String toString() {
-        return (classMethodActor == null) ? description() : classMethodActor.format("%H.%n(%p)");
+        return (classMethodActor == null) ? regionName() : classMethodActor.format("%H.%n(%p)");
     }
 
     protected final void setABI(TargetABI abi) {
@@ -556,7 +555,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     }
 
     public String name() {
-        return description();
+        return regionName();
     }
 
     public final String traceToString() {
@@ -566,9 +565,45 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         traceBundle(writer);
         writer.flush();
         if (MaxineVM.isHosted()) {
-            Disassemble.disassemble(byteArrayOutputStream, this);
+            disassemble(byteArrayOutputStream);
         }
         return byteArrayOutputStream.toString();
+    }
+
+
+    /**
+     * Prints a textual disassembly the code in a target method.
+     *
+     * @param out where to print the disassembly
+     * @param targetMethod the target method whose code is to be disassembled
+     */
+    public void disassemble(OutputStream out) {
+        final ProcessorKind processorKind = Platform.target().processorKind;
+        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(encodedInlineDataDescriptors());
+        final Pointer startAddress = codeStart();
+        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+            @Override
+            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
+                String string = super.disassembledObjectString(disassembler, disassembledObject);
+                if (string.startsWith("call ")) {
+
+                    final Pointer instructionPointer = startAddress.plus(disassembledObject.startPosition());
+                    final BytecodeLocation bytecodeLocation = getBytecodeLocationFor(instructionPointer, false);
+                    if (bytecodeLocation != null) {
+                        final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+                        if (methodRef != null) {
+                            final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool;
+                            string += " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                        }
+                    }
+                    if (StopPositions.isNativeFunctionCallPosition(stopPositions(),  disassembledObject.startPosition())) {
+                        string += " <native function call>";
+                    }
+                }
+                return string;
+            }
+        };
+        Disassembler.disassemble(out, code(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
     }
 
     /**

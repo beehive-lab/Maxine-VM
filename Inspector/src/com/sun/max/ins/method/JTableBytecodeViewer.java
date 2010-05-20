@@ -629,7 +629,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     @Override
     public void print(String name) {
         final MessageFormat header = new MessageFormat(name);
-        final MessageFormat footer = new MessageFormat("Maxine: " + codeViewerKindName() + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
+        final MessageFormat footer = new MessageFormat(vm().entityName() + ": " + codeViewerKindName() + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
         try {
             table.print(JTable.PrintMode.FIT_WIDTH, header, footer);
         } catch (PrinterException printerException) {

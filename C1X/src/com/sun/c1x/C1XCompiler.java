@@ -22,12 +22,12 @@ package com.sun.c1x;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.target.x86.*;
-import com.sun.c1x.xir.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 /**
  * This class implements the compiler interface for C1X.
@@ -64,9 +64,8 @@ public class C1XCompiler extends CiCompiler {
         this.target = target;
         this.xir = xirGen;
 
-        // TODO: Remove this fixed wiring to X86
-        assert target.arch instanceof AMD64;
-        this.backend = new X86Backend(this);
+        this.backend = Backend.create(target.arch, this);
+        init();
     }
 
     @Override
@@ -77,20 +76,43 @@ public class C1XCompiler extends CiCompiler {
     @Override
     public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
         C1XCompilation compilation = new C1XCompilation(this, target, runtime, method, osrBCI);
-        return compilation.compile();
+        CiResult result = compilation.compile();
+        if (false) {
+            if (result.bailout() != null) {
+                int oldLevel = C1XOptions.TraceBytecodeParserLevel;
+                String oldFilter = C1XOptions.PrintFilter;
+                C1XOptions.TraceBytecodeParserLevel = 2;
+                C1XOptions.PrintFilter = null;
+                new C1XCompilation(this, target, runtime, method, osrBCI).compile();
+                C1XOptions.TraceBytecodeParserLevel = oldLevel;
+                C1XOptions.PrintFilter = oldFilter;
+            }
+        }
+        return result;
     }
 
-    public void init() {
-        List<XirTemplate> globalStubs = xir.buildTemplates(backend.newXirAssembler());
-
+    private void init() {
+        final List<XirTemplate> xirTemplateStubs = xir.buildTemplates(backend.newXirAssembler());
         final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
 
-        for (XirTemplate t : globalStubs) {
-            map.put(t, emitter.emit(t, runtime));
+        if (xirTemplateStubs != null) {
+            for (XirTemplate template : xirTemplateStubs) {
+                TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, template.name);
+                try {
+                    map.put(template, emitter.emit(template, runtime));
+                } finally {
+                    filter.remove();
+                }
+            }
         }
 
         for (GlobalStub.Id id : GlobalStub.Id.values()) {
-            map.put(id, emitter.emit(id, runtime));
+            TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
+            try {
+                map.put(id, emitter.emit(id, runtime));
+            } finally {
+                suppressor.remove();
+            }
         }
     }
 
@@ -100,20 +122,20 @@ public class C1XCompiler extends CiCompiler {
         return globalStub;
     }
 
-    public GlobalStub lookupGlobalStub(XirTemplate t) {
-        GlobalStub globalStub = map.get(t);
-        assert globalStub != null : "no stub for XirTemplate: " + t;
+    public GlobalStub lookupGlobalStub(XirTemplate template) {
+        GlobalStub globalStub = map.get(template);
+        assert globalStub != null : "no stub for XirTemplate: " + template;
         return globalStub;
     }
 
-    public GlobalStub lookupGlobalStub(CiRuntimeCall rtcall) {
-        GlobalStub globalStub = map.get(rtcall);
+    public GlobalStub lookupGlobalStub(CiRuntimeCall runtimeCall) {
+        GlobalStub globalStub = map.get(runtimeCall);
         if (globalStub == null) {
-            globalStub = backend.newGlobalStubEmitter().emit(rtcall, runtime);
-            map.put(rtcall, globalStub);
+            globalStub = backend.newGlobalStubEmitter().emit(runtimeCall, runtime);
+            map.put(runtimeCall, globalStub);
         }
 
-        assert globalStub != null : "could not find global stub for runtime call: " + rtcall;
+        assert globalStub != null : "could not find global stub for runtime call: " + runtimeCall;
         return globalStub;
     }
 }

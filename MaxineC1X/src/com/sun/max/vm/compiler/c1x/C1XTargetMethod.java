@@ -23,10 +23,10 @@ package com.sun.max.vm.compiler.c1x;
 import java.io.*;
 import java.util.*;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ci.CiTargetMethod.*;
-import com.sun.c1x.ci.CiTargetMethod.ExceptionHandler;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
@@ -54,7 +54,7 @@ import com.sun.max.vm.stack.amd64.*;
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public class C1XTargetMethod extends TargetMethod {
+public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private static final int RJMP = 0xe9;
 
@@ -133,7 +133,7 @@ public class C1XTargetMethod extends TargetMethod {
     private void init(CiTargetMethod ciTargetMethod) {
 
         if (MaxineVM.isHosted()) {
-            // Save the target method for later gathering of calls
+            // Save the target method for later gathering of calls and duplication
             this.bootstrappingCiTargetMethod = ciTargetMethod;
         }
 
@@ -149,6 +149,23 @@ public class C1XTargetMethod extends TargetMethod {
                 adapter = generator.make(classMethodActor);
             }
             linkDirectCalls(adapter);
+        }
+    }
+
+    @Override
+    public TargetMethod duplicate() {
+        try {
+            C1XTargetMethod duplicate = (C1XTargetMethod) this.clone();
+
+            // Duplicate the code data buffer. There's no need to re-patch the data references in the
+            // duplicated code as all offsets to the data buffer are relative.
+            final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals == null ? 0 : scalarLiterals.length, referenceLiterals == null ? 0 : referenceLiterals.length, code.length);
+            Code.allocate(targetBundleLayout, duplicate);
+            duplicate.setData(scalarLiterals, referenceLiterals, code);
+
+            return duplicate;
+        } catch (CloneNotSupportedException e) {
+            throw FatalError.unexpected(null, e);
         }
     }
 
@@ -192,6 +209,8 @@ public class C1XTargetMethod extends TargetMethod {
         int byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize();
         return ByteArrayBitMap.isSet(referenceMaps, byteIndex, registerReferenceMapSize(), registerIndex);
     }
+
+
 
     private void initCodeBuffer(CiTargetMethod ciTargetMethod) {
         // Create the arrays for the scalar and the object reference literals
@@ -356,6 +375,9 @@ public class C1XTargetMethod extends TargetMethod {
 
         for (CiTargetMethod.Call site : ciTargetMethod.indirectCalls) {
             hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, stopInfo);
+            if (site.symbol != null) {
+                stopPositions[index] |= StopPositions.NATIVE_FUNCTION_CALL;
+            }
             index++;
         }
 
@@ -369,7 +391,7 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     private ClassMethodActor getClassMethodActor(RiMethod riMethod) {
-        return ((MaxRiMethod) riMethod).asClassMethodActor("getClassMethodActor()");
+        return (ClassMethodActor) riMethod;
     }
 
     private boolean initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, CiDebugInfo debugInfo, CiDebugInfo[] stopInfo) {
@@ -406,7 +428,7 @@ public class C1XTargetMethod extends TargetMethod {
             for (ExceptionHandler handler : ciTargetMethod.exceptionHandlers) {
                 exceptionPositionsToCatchPositions[z * 2] = handler.pcOffset;
                 exceptionPositionsToCatchPositions[z * 2 + 1] = handler.handlerPos;
-                exceptionClassActors[z] = (handler.exceptionType == null) ? null : ((MaxRiType) handler.exceptionType).classActor;
+                exceptionClassActors[z] = (handler.exceptionType == null) ? null : (ClassActor) handler.exceptionType;
                 z++;
             }
         }
@@ -629,20 +651,21 @@ public class C1XTargetMethod extends TargetMethod {
             if (site.runtimeCall != null) {
                 directCalls.add(getClassMethodActor(site.runtimeCall, site.method));
             } else if (site.method != null) {
-                MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
+                MethodActor methodActor = (MethodActor) site.method;
                 directCalls.add(methodActor);
             }
         }
 
         // iterate over all the calls and append them to the appropriate lists
         for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.indirectCalls) {
-            assert site.method != null;
-            if (site.method.isLoaded()) {
-                MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
-                if (site.method.holder().isInterface()) {
-                    interfaceCalls.add(methodActor);
-                } else {
-                    virtualCalls.add(methodActor);
+            if (site.method != null) {
+                if (site.method.isResolved()) {
+                    MethodActor methodActor = (MethodActor) site.method;
+                    if (site.method.holder().isInterface()) {
+                        interfaceCalls.add(methodActor);
+                    } else {
+                        virtualCalls.add(methodActor);
+                    }
                 }
             }
         }
@@ -650,8 +673,7 @@ public class C1XTargetMethod extends TargetMethod {
 
     private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, RiMethod method) {
         if (method != null) {
-            final MaxRiMethod maxMethod = (MaxRiMethod) method;
-            return maxMethod.asClassMethodActor("directCall()");
+            return (ClassMethodActor) method;
         }
 
         assert runtimeCall != null : "A call can either be a call to a method or a runtime call";
@@ -825,6 +847,14 @@ public class C1XTargetMethod extends TargetMethod {
 
         int stopIndex = findClosestStopIndex(ip);
         if (stopIndex < 0) {
+            return null;
+        }
+        return decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, stopIndex);
+    }
+
+    @Override
+    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
+        if (classMethodActor == null) {
             return null;
         }
         return decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, stopIndex);

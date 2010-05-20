@@ -23,31 +23,11 @@ package com.sun.c1x.graph;
 import com.sun.c1x.ir.*;
 
 /**
- * The <code>BlockUtil</code> class contains a number of utilities for manipulating a CFG of basic blocks.
+ * The {@code BlockUtil} class contains a number of utilities for manipulating a CFG of basic blocks.
  *
  * @author Ben L. Titzer
  */
 public class BlockUtil {
-
-    /**
-     * Remove an edge between two basic blocks.
-     * @param from the origin block of the edge
-     * @param to the destination block of the edge
-     */
-    public static void disconnectEdge(BlockBegin from, BlockBegin to) {
-        from.end().successors().remove(to);
-        to.removePredecessor(from);
-    }
-
-    /**
-     * Adds an edge between two basic blocks.
-     * @param from the origin of the edge
-     * @param to the destination of the edge
-     */
-    public static void addEdge(BlockBegin from, BlockBegin to) {
-        from.end().successors().add(to);
-        to.addPredecessor(from);
-    }
 
     /**
      * Disconnects the specified block from all other blocks.

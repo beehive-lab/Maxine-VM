@@ -1,38 +1,60 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel.dump;
 
+import java.io.*;
+
+import com.sun.max.elf.ELFHeader.*;
+import com.sun.max.elf.xen.*;
+import com.sun.max.elf.xen.section.notes.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
-
+import com.sun.max.tele.debug.guestvm.xen.elf.util.*;
 
 public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
+    private ELFSymbolLookup _symbolLookup = null;
+    XenCoreDumpELFReader _reader = null;
     /**
      * Creates an instance of {@link Protocol} that can read from Xen core dumps.
      *
-     * @param dumpFile designates the dump file (and image file) somehow
+     * @param dumpImageFileStr designates the dump file and image file separated by a comma (",")
      */
-    public DumpProtocol(String dumpFile) {
-        // TODO implement
+    private File _imageFile = null;
+    private File _dumpFile = null;
+    private RandomAccessFile _dumpRaf = null;
+
+    public DumpProtocol(String dumpImageFileStr) {
+        if (dumpImageFileStr != null) {
+            String[] fileArr = dumpImageFileStr.split(",");
+            if (fileArr.length != 2) {
+                throw new IllegalArgumentException("Improper dump and image file string ");
+            }
+            _imageFile = new File(fileArr[0]);
+            _dumpFile = new File(fileArr[1]);
+            if (!(_imageFile.exists() && _dumpFile.exists())) {
+                throw new IllegalArgumentException("Dump or Image file does not exist or is not accessible");
+            }
+
+        } else {
+            throw new IllegalArgumentException("argument cant be null");
+        }
+
     }
 
     @Override
@@ -43,7 +65,14 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
     @Override
     public boolean attach(int domId, int threadLocalsAreaSize) {
-        // nothing to do
+        try {
+            _symbolLookup = new ELFSymbolLookup(_imageFile);
+            _dumpRaf = new RandomAccessFile(_dumpFile, "r");
+            _reader = new XenCoreDumpELFReader(_dumpRaf);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return true;
     }
 
@@ -67,7 +96,8 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
     @Override
     public long getBootHeapStart() {
-        unimplemented("getBootHeapStart");
+        long address = _symbolLookup.lookupSymbolValue("theHeap").longValue();
+
         return 0;
     }
 

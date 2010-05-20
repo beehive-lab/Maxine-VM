@@ -20,22 +20,50 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>LIRBlock</code> class definition.
+ * The {@code LIRBlock} class definition.
  *
  * @author Ben L. Titzer
  */
 public class LIRBlock {
 
+    public LIRBlock() {
+    }
+
     public final Label label = new Label();
     private LIRList lir;
 
+    /**
+     * Bit map specifying which {@linkplain OperandPool operands} are live upon entry to this block.
+     * These are values used in this block or any of its successors where such value are not defined
+     * in this block.
+     * The bit index of an operand is its {@linkplain OperandPool#operandNumber(com.sun.cri.ci.CiValue) operand number}.
+     */
     public BitMap liveIn;
+
+    /**
+     * Bit map specifying which {@linkplain OperandPool operands} are live upon exit from this block.
+     * These are values used in a successor block that are either defined in this block or were live
+     * upon entry to this block.
+     * The bit index of an operand is its {@linkplain OperandPool#operandNumber(com.sun.cri.ci.CiValue) operand number}.
+     */
     public BitMap liveOut;
+
+    /**
+     * Bit map specifying which {@linkplain OperandPool operands} are used (before being defined) in this block.
+     * That is, these are the values that are live upon entry to the block.
+     * The bit index of an operand is its {@linkplain OperandPool#operandNumber(com.sun.cri.ci.CiValue) operand number}.
+     */
     public BitMap liveGen;
+
+    /**
+     * Bit map specifying which {@linkplain OperandPool operands} are defined/overwritten in this block.
+     * The bit index of an operand is its {@linkplain OperandPool#operandNumber(com.sun.cri.ci.CiValue) operand number}.
+     */
     public BitMap liveKill;
 
     public int firstLirInstructionID;

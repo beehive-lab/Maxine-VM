@@ -166,6 +166,10 @@ public interface BuiltinVisitor<IR_Type> {
     void visitWriteReferenceAtIntOffset(WriteReferenceAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitSetReference(SetReference builtin, IR_Type result, IR_Type[] arguments);
 
+    void visitMostSignificantBit(MostSignificantBit builtin, IR_Type result, IR_Type[] arguments);
+    void visitLeastSignificantBit(LeastSignificantBit builtin, IR_Type result, IR_Type[] arguments);
+
+
     void visitCompareAndSwapIntAtIntOffset(CompareAndSwapIntAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitCompareAndSwapInt(CompareAndSwapInt builtin, IR_Type result, IR_Type[] arguments);
     void visitCompareAndSwapWordAtIntOffset(CompareAndSwapWordAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
@@ -182,7 +186,10 @@ public interface BuiltinVisitor<IR_Type> {
     void visitCall(Call builtin, IR_Type result, IR_Type[] arguments);
 
     void visitCompareInts(CompareInts builtin, IR_Type result, IR_Type[] arguments);
-    void visitUnsignedIntGreaterEqual(UnsignedIntGreaterEqual builtin, IR_Type result, IR_Type[] arguments);
+    void visitAboveEqual(AboveEqual builtin, IR_Type result, IR_Type[] arguments);
+    void visitAboveThan(AboveThan builtin, IR_Type result, IR_Type[] arguments);
+    void visitBelowEqual(BelowEqual builtin, IR_Type result, IR_Type[] arguments);
+    void visitBelowThan(BelowThan builtin, IR_Type result, IR_Type[] arguments);
     void visitCompareWords(CompareWords builtin, IR_Type result, IR_Type[] arguments);
 
     void visitBarMemory(BarMemory builtin, IR_Type result, IR_Type[] arguments);

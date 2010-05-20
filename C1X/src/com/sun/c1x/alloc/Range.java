@@ -26,9 +26,9 @@ package com.sun.c1x.alloc;
  *
  * @author Thomas Wuerthinger
  */
-final class Range {
+public final class Range {
 
-    static final Range EndMarker = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE, null);
+    public static final Range EndMarker = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE, null);
 
     /**
      * The start of the range, inclusive.
@@ -45,13 +45,18 @@ final class Range {
      */
     public Range next;
 
-    // used only by class Interval, so hide them
     boolean intersects(Range r) {
         return intersectsAt(r) != -1;
     }
 
-    // * Implementation of Range *
 
+    /**
+     * Creates a new range.
+     *
+     * @param from the start of the range, inclusive
+     * @param to the end of the range, exclusive
+     * @param next link to the next range in a linked list
+     */
     Range(int from, int to, Range next) {
         this.from = from;
         this.to = to;

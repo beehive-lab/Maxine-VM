@@ -20,16 +20,18 @@
  */
 package com.sun.c1x.graph;
 
+import static java.lang.reflect.Modifier.*;
+
 import java.util.*;
 
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>MemoryMap</code> class is an approximation of memory that is used redundant load and
+ * The {@code MemoryMap} class is an approximation of memory that is used redundant load and
  * store elimination. In C1, tracking of fields of new objects' fields was precise,
  * while tracking of other fields is managed at the offset granularity (i.e. a write of a field with offset
- * <code>off</code> will "overwrite" all fields with the offset <code>off</code>. However, C1X distinguishes all
+ * {@code off} will "overwrite" all fields with the offset {@code off}. However, C1X distinguishes all
  * loaded fields as separate locations. Static fields have just one location, while instance fields are
  * tracked for at most one instance object. Loads or stores of unloaded fields kill all memory locations.
  * An object is no longer "new" if it is stored into a field or array.
@@ -71,7 +73,7 @@ public class MemoryMap {
      * Look up a load for load elimination, and put this load into the load elimination map.
      * @param load the instruction representing the load
      * @return a reference to the previous instruction that already loaded the value, if it is available; the
-     * <code>load</code> parameter otherwise
+     * {@code load} parameter otherwise
      */
     public Value load(LoadField load) {
         if (!load.isLoaded()) {
@@ -121,7 +123,7 @@ public class MemoryMap {
     /**
      * Look up a store for store elimination, and put this store into the load elimination map.
      * @param store the store instruction to put into the map
-     * @return <code>null</code> if the store operation is redundant; the <code>store</code> parameter
+     * @return {@code null} if the store operation is redundant; the {@code store} parameter
      * otherwise
      */
     public StoreField store(StoreField store) {
@@ -146,7 +148,7 @@ public class MemoryMap {
             Value obj = objectMap.get(field);
             if (obj == store.object()) {
                 // is this a redundant store?
-                if (value == valueMap.get(field) && !field.isVolatile()) {
+                if (value == valueMap.get(field) && !isVolatile(field.accessFlags())) {
                     return null;
                 }
             }

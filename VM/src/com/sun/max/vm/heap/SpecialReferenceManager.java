@@ -20,9 +20,12 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import java.lang.ref.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -50,6 +53,11 @@ import com.sun.max.vm.value.*;
  */
 public class SpecialReferenceManager {
 
+    private static final VMBooleanXXOption traceReferenceOption = register(new VMBooleanXXOption("-XX:-TraceReferenceGC",
+        "Trace Handling of soft/weak/final/phantom references."), MaxineVM.Phase.STARTING);
+
+    private static boolean traceReferenceGC = false;
+
     private static final boolean FINALIZERS_SUPPORTED = true;
 
     /**
@@ -61,6 +69,7 @@ public class SpecialReferenceManager {
      */
     public interface GripForwarder {
         boolean isReachable(Grip grip);
+        boolean isForwarding();
         Grip getForwardGrip(Grip grip);
     }
 
@@ -98,26 +107,41 @@ public class SpecialReferenceManager {
         // the first pass over the list finds the references that have referents that are no longer reachable
         java.lang.ref.Reference ref = UnsafeCast.asJDKReference(discoveredList.toJava());
         java.lang.ref.Reference last = UnsafeCast.asJDKReference(TupleAccess.readObject(pendingField.holder().staticTuple(), pendingField.offset()));
+        final boolean isForwardingGC = gripForwarder.isForwarding();
+
         while (ref != null) {
             final Grip referent = Grip.fromJava(ref).readGrip(referentField.offset());
-            if (gripForwarder.isReachable(referent)) {
-                // this object is reachable, however the "referent" field was not scanned.
-                // we need to update this field manually
-                TupleAccess.writeObject(ref, referentField.offset(), gripForwarder.getForwardGrip(referent));
-            } else {
+            if (referent.isZero()) {
+                TupleAccess.writeObject(ref, nextField.offset(), last);
+                last = ref;
+            } else if (!gripForwarder.isReachable(referent)) {
                 TupleAccess.writeObject(ref, referentField.offset(), null);
                 TupleAccess.writeObject(ref, nextField.offset(), last);
                 last = ref;
+            } else if (isForwardingGC) {
+                // this object is reachable, however the "referent" field was not scanned.
+                // we need to update this field manually
+                TupleAccess.writeObject(ref, referentField.offset(), gripForwarder.getForwardGrip(referent));
             }
-            if (Heap.traceGC()) {
+
+            java.lang.ref.Reference r = ref;
+            ref = UnsafeCast.asJDKReference(TupleAccess.readObject(ref, discoveredField.offset()));
+            TupleAccess.writeObject(r, discoveredField.offset(), null);
+
+            if (traceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Processed ");
-                Log.print(ObjectAccess.readClassActor(ref).name.string);
+                Log.print(ObjectAccess.readClassActor(r).name.string);
                 Log.print(" at ");
-                Log.print(ObjectAccess.toOrigin(ref));
+                Log.print(ObjectAccess.toOrigin(r));
+                if (MaxineVM.isDebug()) {
+                    Log.print(" [next discovered = ");
+                    Log.print(ObjectAccess.toOrigin(ref));
+                    Log.print("]");
+                }
                 Log.print(" whose referent ");
                 Log.print(referent.toOrigin());
-                final Object newReferent = TupleAccess.readObject(ref, referentField.offset());
+                final Object newReferent = TupleAccess.readObject(r, referentField.offset());
                 if (newReferent == null) {
                     Log.println(" was unreachable");
                 } else {
@@ -126,7 +150,6 @@ public class SpecialReferenceManager {
                 }
                 Log.unlock(lockDisabledSafepoints);
             }
-            ref = UnsafeCast.asJDKReference(TupleAccess.readObject(ref, discoveredField.offset()));
         }
         TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
         discoveredList = Grip.fromOrigin(Pointer.zero());
@@ -143,27 +166,34 @@ public class SpecialReferenceManager {
     }
 
     private static void processInspectableWeakReferencesMemory(GripForwarder gripForwarder) {
+        final RootTableMemoryRegion rootsMemoryRegion = InspectableHeapInfo.rootsMemoryRegion();
+        assert rootsMemoryRegion != null;
+        final Pointer rootsPointer = rootsMemoryRegion.start().asPointer();
+        long wordsUsedCounter = 0;
+        assert !rootsPointer.isZero();
         for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
-            final Pointer rootPointer = InspectableHeapInfo.rootsPointer().getWord(i).asPointer();
+            final Pointer rootPointer = rootsPointer.getWord(i).asPointer();
             if (!rootPointer.isZero()) {
                 final Grip referent = Grip.fromOrigin(rootPointer);
                 if (gripForwarder.isReachable(referent)) {
-                    InspectableHeapInfo.rootsPointer().setWord(i, gripForwarder.getForwardGrip(referent).toOrigin());
+                    rootsPointer.setWord(i, gripForwarder.getForwardGrip(referent).toOrigin());
+                    wordsUsedCounter++;
                 } else {
-                    InspectableHeapInfo.rootsPointer().setWord(i, Pointer.zero());
+                    rootsPointer.setWord(i, Pointer.zero());
                 }
-                if (Heap.traceGC()) {
+                if (traceReferenceGC) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Processed root table entry ");
                     Log.print(i);
                     Log.print(": set ");
                     Log.print(rootPointer);
                     Log.print(" to ");
-                    Log.println(InspectableHeapInfo.rootsPointer().getWord(i));
+                    Log.println(rootsPointer.getWord(i));
                     Log.unlock(lockDisabledSafepoints);
                 }
             }
         }
+        rootsMemoryRegion.setWordsUsed(wordsUsedCounter);
     }
 
     /**
@@ -176,11 +206,25 @@ public class SpecialReferenceManager {
     public static void discoverSpecialReference(Grip grip) {
         if (grip.readGrip(nextField.offset()).isZero()) {
             // the "next" field of this object is null, queue it for later processing
+            if (MaxineVM.isDebug()) {
+                boolean hasNullDiscoveredField = grip.readGrip(discoveredField.offset()).isZero();
+                boolean isHeadOfDiscoveredList = grip.equals(discoveredList);
+                if (!(hasNullDiscoveredField && !isHeadOfDiscoveredList)) {
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("Discovered reference ");
+                    Log.print(grip.toOrigin());
+                    Log.print(" ");
+                    Log.unlock(lockDisabledSafepoints);
+                    FatalError.unexpected(": already discovered");
+                }
+            }
             grip.writeGrip(discoveredField.offset(), discoveredList);
             discoveredList = grip;
-            if (Heap.traceGC()) {
+            if (traceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
+                Log.print(grip.toOrigin());
+                Log.print(" ");
                 final Hub hub = UnsafeCast.asHub(Layout.readHubReference(grip).toJava());
                 Log.print(hub.classActor.name.string);
                 Log.println(" to list of discovered references");
@@ -215,6 +259,7 @@ public class SpecialReferenceManager {
      */
     public static void initialize(Phase phase) {
         if (phase == Phase.STARTING) {
+            traceReferenceGC = traceReferenceOption.getValue();
             startReferenceHandlerThread();
             startFinalizerThread();
         }

@@ -20,7 +20,7 @@
  */
 package test.com.sun.max.vm.cps;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.cps.ir.*;

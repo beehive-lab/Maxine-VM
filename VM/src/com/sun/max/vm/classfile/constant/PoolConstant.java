@@ -82,8 +82,22 @@ public interface PoolConstant<PoolConstant_Type extends PoolConstant<PoolConstan
             name = name.substring(name.lastIndexOf('.') + 1); // strip the package name
             return "<" + name + "[" + poolConstant.valueString(pool) + "]>";
         }
-    }
 
+        /**
+         * Gets the constant pool index of a method or field's holder.
+         *
+         * @param memberRef a field or method reference
+         * @return the index of {@code memberRef}'s holder entry in the same constant pool
+         *         or -1 if the index is not available
+         */
+        public static int holderIndex(MemberRefConstant memberRef) {
+            if (memberRef instanceof UnresolvedRefIndices) {
+                UnresolvedRefIndices indices = (UnresolvedRefIndices) memberRef;
+                return indices.classIndex;
+            }
+            return -1;
+        }
+    }
 }
 
 //The rest of this file contains package-private abstract classes that provide most of the implementation
@@ -115,9 +129,9 @@ abstract class AbstractPoolConstant<PoolConstant_Type extends PoolConstant<PoolC
  */
 abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractPoolConstant<PoolConstant_Type> implements MemberRefConstant<PoolConstant_Type> {
 
-    final int classIndex;
+    public final int classIndex;
 
-    final int nameAndTypeIndex;
+    public final int nameAndTypeIndex;
 
     UnresolvedRefIndices(int classIndex, int nameAndTypeIndex, Tag[] tags) {
         this.classIndex       = classIndex;

@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>Throw</code> instruction represents a throw of an exception.
+ * The {@code Throw} instruction represents a throw of an exception.
  *
  * @author Ben L. Titzer
  */
@@ -32,14 +32,14 @@ public final class Throw extends BlockEnd {
 
     Value exception;
 
-    ValueStack stateBefore;
+    FrameState stateBefore;
 
     /**
      * Creates a new Throw instruction.
      * @param exception the instruction that generates the exception to throw
      * @param stateBefore the state before the exception is thrown
      */
-    public Throw(Value exception, ValueStack stateBefore) {
+    public Throw(Value exception, FrameState stateBefore) {
         super(CiKind.Illegal, null, true);
         this.stateBefore = stateBefore;
         this.exception = exception;
@@ -58,13 +58,13 @@ public final class Throw extends BlockEnd {
      * @return the state before the throw
      */
     @Override
-    public ValueStack stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 
     /**
      * Checks whether this instruction can trap.
-     * @return <code>true</code> because this instruction definitely throws an exception!
+     * @return {@code true} because this instruction definitely throws an exception!
      */
     @Override
     public boolean canTrap() {

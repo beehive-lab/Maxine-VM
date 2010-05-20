@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.debug.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>LIRConvert</code> class definition.
+ * The {@code LIRConvert} class definition.
  *
  * @author Marcelo Cintra
  *
@@ -40,7 +40,7 @@ public class LIRConvert extends LIROp1 {
      * @param operand the input operand for this instruction
      * @param result the result operand for this instruction
      */
-    public LIRConvert(int bytecode, LIROperand operand, LIROperand result) {
+    public LIRConvert(int bytecode, CiValue operand, CiValue result) {
         super(LIROpcode.Convert, operand, result);
         this.bytecode = bytecode;
     }
@@ -57,12 +57,9 @@ public class LIRConvert extends LIROp1 {
 
     /**
      * Prints this instruction to a LogStream.
-     *
-     * @param out the output stream
      */
     @Override
-    public void printInstruction(LogStream out) {
-        out.print("[" + Bytecodes.nameOf(bytecode) + "] ");
-        super.printInstruction(out);
+    public String operationString(OperandFormatter operandFmt) {
+        return "[" + Bytecodes.nameOf(bytecode) + "] " + super.operationString(operandFmt);
     }
 }

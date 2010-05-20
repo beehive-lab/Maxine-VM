@@ -21,6 +21,8 @@
 package com.sun.max.tele.debug;
 
 
+import java.io.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -37,16 +39,36 @@ public class TeleThreadManager extends AbstractTeleVMHolder implements MaxThread
     }
 
     public Sequence<MaxThread> threads() {
-        return teleVM().state().threads();
+        return vm().state().threads();
     }
 
     public MaxThread findThread(Address address) {
         for (MaxThread maxThread : threads()) {
             final MaxStack stack = maxThread.stack();
-            final MaxThreadLocals locals = maxThread.locals();
+            final MaxThreadLocalsBlock threadLocalsBlock = maxThread.localsBlock();
             if (stack.memoryRegion().contains(address) ||
-                            (locals.memoryRegion() != null && locals.memoryRegion().contains(address))) {
+                            (threadLocalsBlock.memoryRegion() != null && threadLocalsBlock.memoryRegion().contains(address))) {
                 return maxThread;
+            }
+        }
+        return null;
+    }
+
+    public MaxStack findStack(Address address) {
+        for (MaxThread maxThread : threads()) {
+            final MaxStack stack = maxThread.stack();
+            if (stack.memoryRegion().contains(address)) {
+                return stack;
+            }
+        }
+        return null;
+    }
+
+    public MaxThreadLocalsBlock findThreadLocalsBlock(Address address) {
+        for (MaxThread maxThread : threads()) {
+            final MaxThreadLocalsBlock threadLocalsBlock = maxThread.localsBlock();
+            if (threadLocalsBlock.memoryRegion() != null && threadLocalsBlock.memoryRegion().contains(address)) {
+                return threadLocalsBlock;
             }
         }
         return null;
@@ -59,6 +81,22 @@ public class TeleThreadManager extends AbstractTeleVMHolder implements MaxThread
             }
         }
         return null;
+    }
+
+
+    /**
+     * Writes a description of every thread to the stream,
+     * with more detail than typically displayed.
+     * <br>
+     * Thread-safe
+     *
+     * @param printStream
+     */
+    public void writeSummary(PrintStream printStream) {
+        printStream.println("Threads :" + vm().state());
+        for (MaxThread maxThread : threads()) {
+            printStream.println("  " + maxThread);
+        }
     }
 
 }

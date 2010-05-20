@@ -21,7 +21,7 @@
 package test.com.sun.max.vm.jtrun;
 
 /**
- * The <code>JavaTesterConfig</code> class contains configuration information about the JavaTester tests,
+ * The {@code JavaTesterConfig} class contains configuration information about the JavaTester tests,
  * including the list of the classes and the class that contains the generated test runs.
  *
  * @author Ben L. Titzer

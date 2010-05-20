@@ -29,7 +29,8 @@ import java.lang.reflect.*;
 
 import sun.reflect.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;
@@ -52,10 +53,10 @@ import com.sun.max.vm.value.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class MethodActor extends MemberActor {
+public abstract class MethodActor extends MemberActor implements RiMethod {
 
     /**
-     * Extended {@linkplain Bytecodes#isExtension(int) opcode} for an {@linkplain INTRINSIC intrinsic} method.
+     * Extended {@linkplain Bytecodes#isStandard(int) opcode} for an {@linkplain INTRINSIC intrinsic} method.
      * A value of 0 means this method is not an intrinsic method.
      */
     private final char intrinsic;
@@ -76,7 +77,7 @@ public abstract class MethodActor extends MemberActor {
     }
 
     /**
-     * Gets the {@linkplain Bytecodes#isExtension(int) extended opcode} of this method if
+     * Gets the {@linkplain Bytecodes#isStandard(int) extended opcode} of this method if
      * it is an {@link INTRINSIC} method.
      *
      * @return 0 if this method is not an intrinsic method
@@ -244,6 +245,15 @@ public abstract class MethodActor extends MemberActor {
      */
     public final TypeDescriptor[] checkedExceptions() {
         return holder().classRegistry().get(CHECKED_EXCEPTIONS, this);
+    }
+
+    /**
+     * Gets the value of the {@link ACCESSOR} annotation that was applied to this method.
+     *
+     * @return {@code null} if this method has no {@link ACCESSOR} annotation
+     */
+    public final Class accessor() {
+        return holder().classRegistry().get(ACCESSOR, this);
     }
 
     public static MethodActor fromJava(Method javaMethod) {
@@ -519,5 +529,70 @@ public abstract class MethodActor extends MemberActor {
     @FOLD
     public static StaticMethodActor findStatic(Class javaClass, String name) {
         return ClassActor.fromJava(javaClass).findLocalStaticMethodActor(name);
+    }
+
+    public final int accessFlags() {
+        return flags() & JAVA_METHOD_FLAGS;
+    }
+
+    public final boolean canBeStaticallyBound() {
+        return (flags() & (ACC_STATIC | ACC_PRIVATE | ACC_FINAL)) != 0;
+    }
+
+    public byte[] code() {
+        return null;
+    }
+
+    public RiExceptionHandler[] exceptionHandlers() {
+        return RiExceptionHandler.NONE;
+    }
+
+    @Override
+    public boolean hasBalancedMonitors() {
+        return true; // TODO: do the required analysis
+    }
+
+    public final boolean isConstructor() {
+        return isInstanceInitializer();
+    }
+
+    public final boolean isLeafMethod() {
+        return isStatic() || isPrivate() || holder().isFinal();
+    }
+
+    public final boolean isOverridden() {
+        return !canBeStaticallyBound(); // TODO: do leaf method checks
+    }
+
+    public final boolean isResolved() {
+        return true;
+    }
+
+    public String jniSymbol() {
+        return null;
+    }
+
+    public final Object liveness(int bci) {
+        return null;
+    }
+
+    public int maxLocals() {
+        return 0;
+    }
+
+    public int maxStackSize() {
+        return 0;
+    }
+
+    public RiMethodProfile methodData() {
+        return null;
+    }
+
+    public String name() {
+        return name.string;
+    }
+
+    public RiSignature signature() {
+        return descriptor();
     }
 }

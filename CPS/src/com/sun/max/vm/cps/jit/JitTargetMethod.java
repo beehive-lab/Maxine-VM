@@ -127,6 +127,11 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
     }
 
+    @Override
+    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
+        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(stopPosition(stopIndex)));
+    }
+
     /**
      * Gets the bytecode position for a machine code instruction address.
      *
@@ -245,7 +250,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
      * Ensures that the {@linkplain #referenceMaps() reference maps} for this JIT target method are finalized. Only
      * finalized reference maps are guaranteed to never change for the remaining lifetime of this target method.
      * <p/>
-     * Although this method may be called multiple threads, it cannot use standard synchronization as that may block
+     * Although this method may be called by multiple threads, it cannot use standard synchronization as that may block
      * one of the threads in native code on a mutex. This would incorrectly be interpreted by the GC as meaning
      * the mutator thread has blocked for GC after taking a safepoint trap. To avoid blocking in native code,
      * a spin loop is used instead.

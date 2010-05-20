@@ -26,7 +26,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.build.command</key>
-					<value>gmake</value>
+					<value>make</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.build.location</key>
@@ -136,7 +136,7 @@
 			</arguments>
 		</buildCommand>
 		<buildCommand>
-			<name>com.atlassw.tools.eclipse.checkstyle.CheckstyleBuilder</name>
+			<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>
 			<arguments>
 			</arguments>
 		</buildCommand>
@@ -146,6 +146,6 @@
 		<nature>org.eclipse.cdt.make.core.makeNature</nature>
 		<nature>org.eclipse.cdt.make.core.ScannerConfigNature</nature>
 		<nature>org.eclipse.cdt.core.ccnature</nature>
-		<nature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</nature>
+		<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>
 	</natures>
 </projectDescription>

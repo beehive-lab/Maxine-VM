@@ -26,7 +26,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LivenessMarker</code> class walks over an IR graph and marks instructions
+ * The {@code LivenessMarker} class walks over an IR graph and marks instructions
  * whose values are live, either because they are needed to compute the method's result,
  * may produce a side-effect, or are needed for deoptimization.
  *
@@ -36,8 +36,8 @@ public class LivenessMarker {
 
     final IR ir;
 
-    final InstrMarker deoptMarker = new InstrMarker(Value.Flag.LiveDeopt);
-    final InstrMarker valueMarker = new InstrMarker(Value.Flag.LiveValue);
+    final InstructionMarker deoptMarker = new InstructionMarker(Value.Flag.LiveDeopt);
+    final InstructionMarker valueMarker = new InstructionMarker(Value.Flag.LiveValue);
 
     int count;
 
@@ -101,12 +101,12 @@ public class LivenessMarker {
         }
     }
 
-    private class InstrMarker implements ValueClosure {
+    private class InstructionMarker implements ValueClosure {
         final Value.Flag reason;
         Link head;
         Link tail;
 
-        public InstrMarker(Value.Flag reason) {
+        public InstructionMarker(Value.Flag reason) {
             this.reason = reason;
         }
 
@@ -146,9 +146,9 @@ public class LivenessMarker {
                 if (i instanceof Phi) {
                     // phis are special
                     Phi phi = (Phi) i;
-                    int max = phi.operandCount();
+                    int max = phi.inputCount();
                     for (int j = 0; j < max; j++) {
-                        apply(phi.operandAt(j));
+                        apply(phi.inputAt(j));
                     }
                 }
             }
@@ -156,7 +156,7 @@ public class LivenessMarker {
     }
 
     private void markRootInstr(Instruction i) {
-        ValueStack stateBefore = i.stateBefore();
+        FrameState stateBefore = i.stateBefore();
         if (stateBefore != null) {
             // state before != null implies that this instruction may have side effects
             stateBefore.valuesDo(deoptMarker);

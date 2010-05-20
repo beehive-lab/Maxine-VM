@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins;
 
+import static com.sun.max.asm.dis.Disassembler.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.math.*;
@@ -39,13 +41,11 @@ import com.sun.max.ins.method.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.io.*;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.interpreter.*;
-import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -56,7 +56,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -775,7 +774,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            focus().setCodeLocation(focus().thread().instructionLocation());
+            focus().setCodeLocation(focus().thread().ipLocation());
         }
     }
 
@@ -1120,7 +1119,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Inspect memory";
         private final Address address;
-        private final MemoryRegion memoryRegion;
+        private final MaxMemoryRegion memoryRegion;
 
         InspectMemoryWordsAction() {
             super(inspection(), "Inspect memory at address...");
@@ -1128,7 +1127,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             this.memoryRegion = null;
         }
 
-        InspectMemoryWordsAction(MemoryRegion memoryRegion, String actionTitle) {
+        InspectMemoryWordsAction(MaxMemoryRegion memoryRegion, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = null;
             this.memoryRegion = memoryRegion;
@@ -1143,17 +1142,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             if (memoryRegion != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), memoryRegion, memoryRegion.description());
+                final Inspector inspector = new MemoryWordsInspector(inspection(), memoryRegion, memoryRegion.regionName());
                 inspector.highlight();
             } else  if (address != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), new TeleMemoryRegion(address, vm().wordSize().times(10), ""));
+                final Inspector inspector = new MemoryWordsInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().wordSize().times(10)));
                 inspector.highlight();
             } else {
                 new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory at address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
-                        final Inspector inspector = new MemoryWordsInspector(inspection(), new TeleMemoryRegion(address, vm().wordSize().times(10), ""));
+                        final Inspector inspector = new MemoryWordsInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().wordSize().times(10)));
                         inspector.highlight();
                     }
                 };
@@ -1170,7 +1169,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return inspectMemoryWordsAction;
     }
 
-    public final InspectorAction inspectMemoryWords(MemoryRegion memoryRegion) {
+    public final InspectorAction inspectMemoryWords(MaxMemoryRegion memoryRegion) {
         return new InspectMemoryWordsAction(memoryRegion, null);
     }
 
@@ -1208,9 +1207,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 public void menuSelected(MenuEvent e) {
                     removeAll();
-                    for (MemoryRegion memoryRegion : vm().allocatedMemoryRegions()) {
+                    for (MaxMemoryRegion memoryRegion : vm().state().memoryRegions()) {
                         //System.out.println(memoryRegion.toString());
-                        add(actions().inspectRegionMemoryWords(memoryRegion, memoryRegion.description(), memoryRegion.description()));
+                        add(actions().inspectRegionMemoryWords(memoryRegion, memoryRegion.regionName(), memoryRegion.regionName()));
                     }
                 }
             });
@@ -1363,7 +1362,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxWatchpoint watchpoint = focus().watchpoint();
             if (watchpoint != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), watchpoint, "Watchpoint " + watchpoint.description());
+                final Inspector inspector =
+                    new MemoryWordsInspector(inspection(), watchpoint.memoryRegion(), "Watchpoint " + watchpoint.description());
                 inspector.highlight();
             } else {
                 gui().errorMessage("no watchpoint selected");
@@ -1391,14 +1391,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class InspectRegionMemoryWordsAction extends InspectorAction {
 
-        private final MemoryRegion memoryRegion;
+        private final MaxMemoryRegion memoryRegion;
         private final String regionName;
 
-        InspectRegionMemoryWordsAction(MemoryRegion memoryRegion, String regionName, String actionTitle) {
+        InspectRegionMemoryWordsAction(MaxMemoryRegion memoryRegion, String regionName, String actionTitle) {
             super(inspection(), actionTitle == null ? ("Inspect memory region \"" + regionName + "\"") : actionTitle);
             this.memoryRegion = memoryRegion;
             this.regionName = regionName;
             refreshableActions.append(this);
+            refresh(true);
         }
 
         @Override
@@ -1406,27 +1407,32 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Inspector inspector = new MemoryWordsInspector(inspection(), memoryRegion, regionName);
             inspector.highlight();
         }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(!memoryRegion.start().isZero());
+        }
     }
 
     /**
      * @return an Action that will create a Memory Words Inspector for the boot heap region.
      */
     public final InspectorAction inspectBootHeapMemoryWords() {
-        return new InspectRegionMemoryWordsAction(vm().teleBootHeapRegion(), "Heap-Boot", null);
+        return new InspectRegionMemoryWordsAction(vm().heap().bootHeapRegion().memoryRegion(), "Heap-Boot", null);
     }
 
     /**
      * @return an Action that will create a Memory Words Inspector for the immortal heap region.
      */
     public final InspectorAction inspectImmortalHeapMemoryWords() {
-        return new InspectRegionMemoryWordsAction(vm().teleImmortalHeapRegion(), "Heap-Immortal", null);
+        return new InspectRegionMemoryWordsAction(vm().heap().immortalHeapRegion().memoryRegion(), "Heap-Immortal", null);
     }
 
     /**
      * @return an Action that will create a Memory Words Inspector for the boot code region.
      */
     public final InspectorAction inspectBootCodeMemoryWords() {
-        return new InspectRegionMemoryWordsAction(vm().teleBootCodeRegion(), "Heap-Code", null);
+        return new InspectRegionMemoryWordsAction(vm().codeCache().bootCodeRegion().memoryRegion(), "Heap-Code", null);
     }
 
     /**
@@ -1437,7 +1443,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @param actionTitle the name of the action that will create the display, default title if null
      * @return an action that will create a Memory Words Inspector for the region
      */
-    public final InspectorAction inspectRegionMemoryWords(MemoryRegion memoryRegion, String regionName, String actionTitle) {
+    public final InspectorAction inspectRegionMemoryWords(MaxMemoryRegion memoryRegion, String regionName, String actionTitle) {
         final String title = (actionTitle == null) ? ("Inspect memory region \"" + regionName + "\"") : actionTitle;
         return new InspectRegionMemoryWordsAction(memoryRegion, regionName, title);
     }
@@ -1449,7 +1455,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @param regionName the name of the region to display
      * @return an action that will create a Memory Words Inspector for the region
      */
-    public final InspectorAction inspectRegionMemoryWords(MemoryRegion memoryRegion, String regionName) {
+    public final InspectorAction inspectRegionMemoryWords(MaxMemoryRegion memoryRegion, String regionName) {
         return new InspectRegionMemoryWordsAction(memoryRegion, regionName, null);
     }
 
@@ -1469,9 +1475,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final MemoryRegion memoryRegion = focus().memoryRegion();
+            final MaxMemoryRegion memoryRegion = focus().memoryRegion();
             if (memoryRegion != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), memoryRegion, memoryRegion.description());
+                final Inspector inspector = new MemoryWordsInspector(inspection(), memoryRegion, memoryRegion.regionName());
                 inspector.highlight();
             }
         }
@@ -1492,14 +1498,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action: sets inspection focus to specified {@link MemoryRegion}.
+     * Action: sets inspection focus to specified {@link MaxMemoryRegion}.
      */
     final class SelectMemoryRegionAction extends InspectorAction {
 
-        private final MemoryRegion memoryRegion;
+        private final MaxMemoryRegion memoryRegion;
         private static final String DEFAULT_TITLE = "Select memory region";
 
-        SelectMemoryRegionAction(MemoryRegion memoryRegion, String actionTitle) {
+        SelectMemoryRegionAction(MaxMemoryRegion memoryRegion, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.memoryRegion = memoryRegion;
         }
@@ -1513,8 +1519,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @return an Action that will create a Memory Inspector at the start of the boot code
      */
-    public final InspectorAction selectMemoryRegion(MemoryRegion memoryRegion) {
-        final String actionTitle = "Select memory region \"" + memoryRegion.description() + "\"";
+    public final InspectorAction selectMemoryRegion(MaxMemoryRegion memoryRegion) {
+        final String actionTitle = "Select memory region \"" + memoryRegion.regionName() + "\"";
         return new SelectMemoryRegionAction(memoryRegion, actionTitle);
     }
 
@@ -1531,7 +1537,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), vm().teleBootHeapRegion().start(), "Inspect object at address...", "Inspect") {
+            new AddressInputDialog(inspection(), vm().heap().bootHeapRegion().memoryRegion().start(), "Inspect object at address...", "Inspect") {
 
                 @Override
                 public void entered(Address address) {
@@ -2095,7 +2101,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            focus().setCodeLocation(focus().thread().instructionLocation());
+            focus().setCodeLocation(focus().thread().ipLocation());
         }
 
         @Override
@@ -2382,7 +2388,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             // Most likely situation is that we are just about to call a native method in which case RAX is the address
             final MaxThread thread = focus().thread();
             assert thread != null;
-            final Address indirectCallAddress = thread.integerRegisters().getCallRegisterValue();
+            final Address indirectCallAddress = thread.registers().getCallRegisterValue();
             final Address initialAddress = indirectCallAddress == null ? vm().bootImageStart() : indirectCallAddress;
             new AddressInputDialog(inspection(), initialAddress, "View native code containing code address...", "View Code") {
                 @Override
@@ -2458,7 +2464,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     return string;
                 }
             };
-            Disassemble.disassemble(byteArrayOutputStream, teleTargetMethod.getCode(), processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+            disassemble(byteArrayOutputStream, teleTargetMethod.getCode(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             gui().postToClipboard(byteArrayOutputStream.toString());
         }
     }
@@ -3363,7 +3369,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetWordWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch memory word";
-        private final MemoryRegion memoryRegion;
+        private final MaxMemoryRegion memoryRegion;
 
         SetWordWatchpointAction() {
             super(inspection(), "Watch memory word at address...");
@@ -3373,7 +3379,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetWordWatchpointAction(Address address, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.memoryRegion = new MemoryWordRegion(address, 1, vm().wordSize());
+            this.memoryRegion = new MemoryWordRegion(vm(), address, 1, vm().wordSize());
             setEnabled(vm().watchpointManager().findWatchpoints(memoryRegion).isEmpty());
         }
 
@@ -3385,13 +3391,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new MemoryRegionInputDialog(inspection(), vm().bootImageStart(), "Watch memory starting at address...", "Watch") {
                     @Override
                     public void entered(Address address, Size size) {
-                        setWatchpoint(new MemoryWordRegion(address, size.toInt() / Word.size(), Size.fromInt(Word.size())), "User specified region");
+                        setWatchpoint(new MemoryWordRegion(vm(), address, size.toInt() / Word.size(), Size.fromInt(Word.size())), "User specified region");
                     }
                 };
             }
         }
 
-        private void setWatchpoint(MemoryRegion memoryRegion, String description) {
+        private void setWatchpoint(MaxMemoryRegion memoryRegion, String description) {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
                 final MaxWatchpoint watchpoint = vm().watchpointManager().createRegionWatchpoint(description, memoryRegion, prefs.settings());
@@ -3441,7 +3447,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Watch memory region";
         private static final String DEFAULT_REGION_DESCRIPTION = "";
-        private final MemoryRegion memoryRegion;
+        private final MaxMemoryRegion memoryRegion;
         private final String regionDescription;
 
         SetRegionWatchpointAction() {
@@ -3451,7 +3457,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             setEnabled(true);
         }
 
-        SetRegionWatchpointAction(MemoryRegion memoryRegion, String actionTitle, String regionDescription) {
+        SetRegionWatchpointAction(MaxMemoryRegion memoryRegion, String actionTitle, String regionDescription) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.memoryRegion = memoryRegion;
             this.regionDescription = regionDescription == null ? DEFAULT_REGION_DESCRIPTION : regionDescription;
@@ -3467,13 +3473,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new AddressInputDialog(inspection(), vm().bootImageStart(), "Watch memory...", "Watch") {
                     @Override
                     public void entered(Address address) {
-                        setWatchpoint(new TeleMemoryRegion(address, vm().wordSize(), ""), "User specified region");
+                        setWatchpoint(new InspectorMemoryRegion(vm(), "", address, vm().wordSize()), "User specified region");
                     }
                 };
             }
         }
 
-        private void setWatchpoint(MemoryRegion memoryRegion, String description) {
+        private void setWatchpoint(MaxMemoryRegion memoryRegion, String description) {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
                 final MaxWatchpoint watchpoint = vm().watchpointManager().createRegionWatchpoint(description, memoryRegion, prefs.settings());
@@ -3511,11 +3517,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      *
      * @param memoryRegion an area of memory in the VM
      * @param actionTitle a name for the action, use default name if null
-     * @param regionDescription a description that will be attached to the watchpoint for viewing purposes, default if null.
+     * @param regionName a description that will be attached to the watchpoint for viewing purposes, default if null.
      * @return an Action that will set a memory watchpoint at the address.
      */
-    public final InspectorAction setRegionWatchpoint(MemoryRegion memoryRegion, String actionTitle, String regionDescription) {
-        return new SetRegionWatchpointAction(memoryRegion, actionTitle, regionDescription);
+    public final InspectorAction setRegionWatchpoint(MaxMemoryRegion memoryRegion, String actionTitle, String regionName) {
+        return new SetRegionWatchpointAction(memoryRegion, actionTitle, regionName);
     }
 
      /**
@@ -3525,12 +3531,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Watch object memory";
         private final TeleObject teleObject;
-        private final MemoryRegion memoryRegion;
+        private final MaxMemoryRegion memoryRegion;
 
         SetObjectWatchpointAction(TeleObject teleObject, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleObject = teleObject;
-            this.memoryRegion = teleObject.memoryRegion();
+            this.memoryRegion = teleObject.objectMemoryRegion();
             refresh(true);
         }
 
@@ -3581,7 +3587,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Watch object field";
         private final TeleObject teleObject;
         private final FieldActor fieldActor;
-        private final MemoryRegion memoryRegion;
+        private final MaxMemoryRegion memoryRegion;
 
         SetFieldWatchpointAction(TeleObject teleObject, FieldActor fieldActor, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3642,7 +3648,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private final Offset arrayOffsetFromOrigin;
         private final int index;
         private final String indexPrefix;
-        private final MemoryRegion memoryRegion;
+        private final MaxMemoryRegion memoryRegion;
 
         SetArrayElementWatchpointAction(TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3652,7 +3658,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             this.index = index;
             this.indexPrefix = indexPrefix;
             final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes));
-            this.memoryRegion = new TeleMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
+            this.memoryRegion = new InspectorMemoryRegion(vm(), "", address, Size.fromInt(elementKind.width.numberOfBytes));
             refresh(true);
         }
 
@@ -3708,7 +3714,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Watch object header field";
         private final TeleObject teleObject;
         private final HeaderField headerField;
-        private final MemoryRegion memoryRegion;
+        private final MaxMemoryRegion memoryRegion;
 
         SetHeaderWatchpointAction(TeleObject teleObject, HeaderField headerField, String actionTitle)  {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3776,7 +3782,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
-                final String description = "Thread local variable\"" + threadLocalVariable.name()
+                final String description = "Thread local variable\"" + threadLocalVariable.variableName()
                     + "\" (" + inspection().nameDisplay().shortName(threadLocalVariable.thread()) + ","
                     + threadLocalVariable.safepointState().toString() + ")";
                 final MaxWatchpoint watchpoint = vm().watchpointManager().createVmThreadLocalWatchpoint(description, threadLocalVariable, prefs.settings());
@@ -4647,6 +4653,32 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction listVMStateHistory() {
         return listVMStateHistory;
+    }
+
+    /**
+     * Action:  lists to the console all existing threads.
+     */
+    final class ListThreadsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "List all threads";
+
+        ListThreadsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            vm().threadManager().writeSummary(System.out);
+        }
+    }
+
+    private InspectorAction listThreads = new ListThreadsAction(null);
+
+    /**
+     * @return an Action that will list to the console a description of every thread.
+     */
+    public final InspectorAction listThreads() {
+        return listThreads;
     }
 
     /**

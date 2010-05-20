@@ -38,7 +38,7 @@ import com.sun.max.vm.thread.*;
 
 public class ThreadManagement {
     /**
-     * Support for creating @see java.lang.management.ThreadInfo objects by reflection.
+     * Support for creating {@link ThreadInfo} objects by reflection.
      */
     private static Constructor<?> threadInfoConstructor;
 

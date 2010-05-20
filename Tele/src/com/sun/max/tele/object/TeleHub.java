@@ -48,8 +48,8 @@ public abstract class TeleHub extends TeleHybridObject {
      */
     public TeleClassActor getTeleClassActor() {
         if (teleClassActor == null) {
-            final Reference classActorReference = teleVM().teleFields().Hub_classActor.readReference(reference());
-            teleClassActor = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
+            final Reference classActorReference = vm().teleFields().Hub_classActor.readReference(reference());
+            teleClassActor = (TeleClassActor) vm().makeTeleObject(classActorReference);
         }
         return teleClassActor;
     }
@@ -88,7 +88,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return memory offset, relative to object origin, of the start of the vTable.
      */
     public Offset vTableOffset() {
-        return teleVM().vmConfiguration().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(vTableStartIndex());
+        return vm().vmConfiguration().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(vTableStartIndex());
     }
 
     /**
@@ -122,7 +122,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return memory offset, relative to object origin, of the start of the iTable.
      */
     public Offset iTableOffset() {
-        return teleVM().vmConfiguration().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(iTableStartIndex());
+        return vm().vmConfiguration().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(iTableStartIndex());
     }
 
     /**
@@ -152,21 +152,21 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return index into the object (viewed as an array of integers) of the beginning of the mTable.
      */
     public int mTableStartIndex() {
-        return teleVM().teleFields().Hub_mTableStartIndex.readInt(reference());
+        return vm().teleFields().Hub_mTableStartIndex.readInt(reference());
     }
 
     /**
      * @return memory offset, relative to object origin, of the start of the mTable.
      */
     public Offset mTableOffset() {
-        return teleVM().vmConfiguration().layoutScheme().intArrayLayout.getElementOffsetFromOrigin(mTableStartIndex());
+        return vm().vmConfiguration().layoutScheme().intArrayLayout.getElementOffsetFromOrigin(mTableStartIndex());
     }
 
     /**
      * @return the number of elements in the mTable array.
      */
     public int mTableLength() {
-        return teleVM().teleFields().Hub_mTableLength.readInt(reference());
+        return vm().teleFields().Hub_mTableLength.readInt(reference());
     }
 
     // The fifth and final region of memory is the reference Map: used as an array of integers
@@ -189,21 +189,21 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return index into the object (viewed as an array of integers) of the beginning of the reference map.
      */
     public int referenceMapStartIndex() {
-        return teleVM().teleFields().Hub_referenceMapStartIndex.readInt(reference());
+        return vm().teleFields().Hub_referenceMapStartIndex.readInt(reference());
     }
 
     /**
      * @return memory offset, relative to object origin, of the start of the reference map.
      */
     public Offset referenceMapOffset() {
-        return teleVM().vmConfiguration().layoutScheme().intArrayLayout.getElementOffsetFromOrigin(referenceMapStartIndex());
+        return vm().vmConfiguration().layoutScheme().intArrayLayout.getElementOffsetFromOrigin(referenceMapStartIndex());
     }
 
     /**
      * @return the number of elements in the reference map.
      */
     public int referenceMapLength() {
-        return teleVM().teleFields().Hub_referenceMapLength.readInt(reference());
+        return vm().teleFields().Hub_referenceMapLength.readInt(reference());
     }
 
     @Override

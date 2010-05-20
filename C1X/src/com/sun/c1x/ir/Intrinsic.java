@@ -21,12 +21,12 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ri.RiMethod;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>Intrinsic</code> instruction represents a call to a JDK method
+ * The {@code Intrinsic} instruction represents a call to a JDK method
  * that has been made {@linkplain C1XIntrinsic intrinsic}.
  *
  * @author Ben L. Titzer
@@ -41,18 +41,18 @@ public final class Intrinsic extends StateSplit {
 
     /**
      * Creates a new Intrinsic instruction.
-     * @param type the result type of the instruction
+     * @param kind the result type of the instruction
      * @param intrinsic the actual intrinsic
      * @param target the method for this intrinsic
      * @param args the arguments to the call (including the receiver object)
-     * @param isStatic <code>true</code> if this method is static
+     * @param isStatic {@code true} if this method is static
      * @param stateBefore the lock stack
-     * @param preservesState <code>true</code> if the implementation of this intrinsic preserves register state
-     * @param canTrap <code>true</code> if this intrinsic can cause a trap
+     * @param preservesState {@code true} if the implementation of this intrinsic preserves register state
+     * @param canTrap {@code true} if this intrinsic can cause a trap
      */
-    public Intrinsic(CiKind type, C1XIntrinsic intrinsic, RiMethod target, Value[] args, boolean isStatic,
-                     ValueStack stateBefore, boolean preservesState, boolean canTrap) {
-        super(type, stateBefore);
+    public Intrinsic(CiKind kind, C1XIntrinsic intrinsic, RiMethod target, Value[] args, boolean isStatic,
+                     FrameState stateBefore, boolean preservesState, boolean canTrap) {
+        super(kind, stateBefore);
         this.intrinsic = intrinsic;
         this.arguments = args;
         this.target = target;
@@ -97,7 +97,7 @@ public final class Intrinsic extends StateSplit {
 
     /**
      * Checks whether this intrinsic has a receiver object.
-     * @return <code>true</code> if this intrinsic has a receiver object
+     * @return {@code true} if this intrinsic has a receiver object
      */
     public boolean hasReceiver() {
         return !isStatic();
@@ -114,7 +114,7 @@ public final class Intrinsic extends StateSplit {
 
     /**
      * Checks whether this intrinsic preserves the state of registers across all cases.
-     * @return <code>true</code> if this intrinsic always preserves register state
+     * @return {@code true} if this intrinsic always preserves register state
      */
     public boolean preservesState() {
         return checkFlag(Flag.PreservesState);
@@ -122,7 +122,7 @@ public final class Intrinsic extends StateSplit {
 
     /**
      * Checks whether this intrinsic can cause a trap.
-     * @return <code>true</code> if this intrinsic can cause a trap
+     * @return {@code true} if this intrinsic can cause a trap
      */
     @Override
     public boolean canTrap() {

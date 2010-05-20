@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -20,9 +20,9 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
@@ -54,7 +54,7 @@ public final class StackAllocate extends SpecialBuiltin {
      * to allocate the requested space will result in a {@link StackOverflowError}
      * when the method's prologue is executed.
      *
-     * @param size bytes to allocate. This must be a constant.
+     * @param size bytes to allocate. This must be a compile-time constant.
      * @return the address of the allocated block. <b>The contents of the block are uninitialized</b>.
      */
     @BUILTIN(value = StackAllocate.class)

@@ -23,18 +23,19 @@ package com.sun.c1x.opt;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
+import com.sun.c1x.value.FrameState.*;
+import com.sun.cri.ci.*;
 
 /**
  * This class implements a data-flow analysis to remove redundant null checks
- * and deoptimization info for instructions that cannot ever produce {@code NullPointerException}.
+ * and deoptimization info for instructions that cannot ever produce {@code NullPointerException}s.
  *
  * This implementation uses an optimistic dataflow analysis by attempting to visit all predecessors
  * of a block before visiting the block itself. For this purpose it uses the block numbers computed by
- * the {@link com.sun.c1x.graph.BlockMap} during graph construction, which may not actually be
+ * the {@link BlockMap} during graph construction, which may not actually be
  * a valid reverse post-order number (due to inlining and any previous optimizations).
  *
  * When loops are encountered, or if the blocks are not visited in the optimal order, this implementation
@@ -46,12 +47,12 @@ import com.sun.c1x.util.*;
  * a second time.
  *
  * Note that the iterative phase is actually optional, because the first pass is conservative.
- * Iteration can be disabled by setting {@link com.sun.c1x.C1XOptions#OptIterativeNCE} to
+ * Iteration can be disabled by setting {@link C1XOptions#OptIterativeNCE} to
  * {@code false}. Iteration is rarely necessary for acyclic graphs.
  *
  * @author Ben L. Titzer
  */
-public class NullCheckEliminator extends ValueVisitor {
+public class NullCheckEliminator extends DefaultValueVisitor {
 
     static class IfEdge {
         final BlockBegin ifBlock;
@@ -140,9 +141,13 @@ public class NullCheckEliminator extends ValueVisitor {
         // first pass on a block
         computeLocalInSet(info);
         // process any phis in the block
-        for (Phi phi : block.stateBefore().allPhis(block)) {
-            visitPhi(phi);
-        }
+        block.stateBefore().forEachPhi(block, new PhiProcedure() {
+            public boolean doPhi(Phi phi) {
+                visitPhi(phi);
+                return true;
+            }
+        });
+
         // now visit the instructions in order
         for (Instruction i = block.next(); i != null; i = i.next()) {
             i.accept(this);
@@ -344,8 +349,8 @@ public class NullCheckEliminator extends ValueVisitor {
 
     @Override
     public void visitPhi(Phi phi) {
-        for (int j = 0; j < phi.operandCount(); j++) {
-            Value operand = phi.operandAt(j);
+        for (int j = 0; j < phi.inputCount(); j++) {
+            Value operand = phi.inputAt(j);
             if (processUse(phi, operand, false)) {
                 continue;
             }
@@ -362,10 +367,26 @@ public class NullCheckEliminator extends ValueVisitor {
     }
 
     @Override
+    public void visitLoadPointer(LoadPointer i) {
+        Value pointer = i.pointer();
+        if (pointer != null) {
+            processUse(i, pointer, true);
+        }
+    }
+
+    @Override
     public void visitLoadField(LoadField i) {
         Value object = i.object();
         if (object != null) {
             processUse(i, object, true);
+        }
+    }
+
+    @Override
+    public void visitStorePointer(StorePointer i) {
+        Value pointer = i.pointer();
+        if (pointer != null) {
+            processUse(i, pointer, true);
         }
     }
 
@@ -458,16 +479,16 @@ public class NullCheckEliminator extends ValueVisitor {
     }
 
     private void compareAgainstNonNull(If i, Value use) {
-        if (i.condition() == Condition.eql) {
+        if (i.condition() == Condition.EQ) {
             propagateNonNull(i, use, i.trueSuccessor());
         }
     }
 
     private void compareAgainstNull(If i, Value use) {
-        if (i.condition() == Condition.eql) {
+        if (i.condition() == Condition.EQ) {
             propagateNonNull(i, use, i.falseSuccessor());
         }
-        if (i.condition() == Condition.neq) {
+        if (i.condition() == Condition.NE) {
             propagateNonNull(i, use, i.trueSuccessor());
         }
     }

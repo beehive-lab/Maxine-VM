@@ -28,7 +28,7 @@ import com.sun.max.ins.object.StringPane.*;
 import com.sun.max.tele.object.*;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level character array in the VM.
+ * An object inspector specialized for displaying a low-level character array in the VM.
  *
  * @author Michael Van De Vanter
  */

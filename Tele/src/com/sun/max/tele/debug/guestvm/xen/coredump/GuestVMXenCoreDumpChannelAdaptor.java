@@ -8,12 +8,13 @@ import java.util.logging.*;
 
 import com.sun.max.elf.*;
 import com.sun.max.elf.xen.*;
+import com.sun.max.tele.debug.guestvm.xen.elf.util.*;
 
 /**
  * @author Puneeet Lakhina
  *
  */
-public class GuestVMXenCoreDumpChannelAdaptor  {
+public class GuestVMXenCoreDumpChannelAdaptor {
 
     File imageFile;
     File dumpFile;
@@ -54,12 +55,9 @@ public class GuestVMXenCoreDumpChannelAdaptor  {
             return;
         }
         RandomAccessFile dumpraf = new RandomAccessFile(dumpFile, "r");
-        ELFHeader elfHeader = ELFLoader.readELFHeader(dumpraf);
-        XenCoreDumpELFReader reader = new XenCoreDumpELFReader(dumpraf, elfHeader);
+        XenCoreDumpELFReader reader = new XenCoreDumpELFReader(dumpraf);
         System.out.println(reader.readNotesSection());
         reader.readGuestContext(0);
     }
-
-
 
 }

@@ -140,6 +140,14 @@ public class AMD64EirInstructionAdapter extends EirInstructionAdapter implements
         visitRA(instruction);
     }
 
+    public void visit(BSF_I64 instruction) {
+        visitArithmetic(instruction);
+    }
+
+    public void visit(BSR_I64 instruction) {
+        visitArithmetic(instruction);
+    }
+
     public void visit(CDQ instruction) {
         visitMove(instruction);
     }

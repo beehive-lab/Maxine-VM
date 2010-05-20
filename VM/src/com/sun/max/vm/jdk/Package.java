@@ -29,4 +29,9 @@ public class Package extends VMPackage {
     public Package() {
         super();
     }
+
+    @Override
+    public boolean containsMethodSubstitutions() {
+        return true;
+    }
 }

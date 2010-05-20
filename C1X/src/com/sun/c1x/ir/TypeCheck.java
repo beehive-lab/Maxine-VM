@@ -20,12 +20,12 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>TypeCheck</code> instruction is the base class of casts and instanceof tests.
+ * The {@code TypeCheck} instruction is the base class of casts and instanceof tests.
  *
  * @author Ben L. Titzer
  */
@@ -39,11 +39,11 @@ public abstract class TypeCheck extends StateSplit {
      * Creates a new TypeCheck instruction.
      * @param targetClass the class which is being casted to or checked against
      * @param object the instruction which produces the object
-     * @param type the result type of this instruction
+     * @param kind the result type of this instruction
      * @param stateBefore the state before this instruction is executed
      */
-    public TypeCheck(RiType targetClass, Value targetClassInstruction, Value object, CiKind type, ValueStack stateBefore) {
-        super(type, stateBefore);
+    public TypeCheck(RiType targetClass, Value targetClassInstruction, Value object, CiKind kind, FrameState stateBefore) {
+        super(kind, stateBefore);
         this.targetClass = targetClass;
         this.targetClassInstruction = targetClassInstruction;
         this.object = object;
@@ -68,24 +68,15 @@ public abstract class TypeCheck extends StateSplit {
 
     /**
      * Checks whether the target class of this instruction is loaded.
-     * @return <code>true</code> if the target class is loaded
+     * @return {@code true} if the target class is loaded
      */
     public boolean isLoaded() {
         return targetClass != null;
     }
 
     /**
-     * Checks whether this instruction is a direct compare.
-     * @return <code>true</code> if this cast or check is a direct compare
-     */
-    public boolean directCompare() {
-        // XXX: what does direct compare mean? leaf class?
-        return checkFlag(Flag.DirectCompare);
-    }
-
-    /**
      * Checks whether this instruction can trap.
-     * @return <code>true</code>, conservatively assuming the cast may fail
+     * @return {@code true}, conservatively assuming the cast may fail
      */
     @Override
     public boolean canTrap() {
@@ -116,9 +107,10 @@ public abstract class TypeCheck extends StateSplit {
 
     /**
      * Checks where this comparison is a direct compare.
-     * @return <code>true</code> if this typecheck is a direct compare
+     * @return {@code true} if this typecheck is a direct compare
      */
     public boolean isDirectCompare() {
+        // XXX: what does direct compare mean? leaf class?
         return checkFlag(Flag.DirectCompare);
     }
 }

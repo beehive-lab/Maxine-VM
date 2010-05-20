@@ -20,14 +20,14 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>InstanceOf</code> instruction represents an instanceof test.
+ * The {@code InstanceOf} instruction represents an instanceof test.
  *
  * @author Ben L. Titzer
  */
@@ -39,7 +39,7 @@ public final class InstanceOf extends TypeCheck {
      * @param object the instruction producing the object input to this instruction
      * @param stateBefore the state before this instruction
      */
-    public InstanceOf(RiType targetClass, Value targetClassInstruction, Value object, ValueStack stateBefore) {
+    public InstanceOf(RiType targetClass, Value targetClassInstruction, Value object, FrameState stateBefore) {
         super(targetClass, targetClassInstruction, object, CiKind.Int, stateBefore);
         if (object.isNonNull()) {
             redundantNullCheck();

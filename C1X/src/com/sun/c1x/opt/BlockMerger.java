@@ -24,6 +24,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.value.FrameState.*;
 
 /**
  * This class implements block merging, which combines adjacent basic blocks into a larger
@@ -67,27 +68,37 @@ public class BlockMerger implements BlockClosure {
         }
     }
 
-    private void skipBlock(BlockBegin block, BlockBegin sux, BlockEnd oldEnd) {
-        final ValueStack oldState = oldEnd.stateAfter();
+    private void skipBlock(BlockBegin block, final BlockBegin sux, BlockEnd oldEnd) {
+        final FrameState oldState = oldEnd.stateAfter();
         assert sux.stateBefore().scope() == oldState.scope();
-        if (block.stateBefore().hasPhisFor(block)) {
+        boolean hasAtLeastOnePhi = block.stateBefore().forEachPhi(block, new PhiProcedure() {
+            public boolean doPhi(Phi phi) {
+                return false;
+            }
+        });
+
+        if (hasAtLeastOnePhi) {
             // can't skip a block that has phis
             return;
         }
-        for (BlockBegin pred : block.predecessors()) {
-            final ValueStack predState = pred.end().stateAfter();
+        for (final BlockBegin pred : block.predecessors()) {
+            final FrameState predState = pred.end().stateAfter();
             if (predState.scope() != oldState.scope() || predState.stackSize() != oldState.stackSize()) {
                 // scopes would not match after skipping this block
                 // XXX: if phi's were smarter about scopes, this would not be necessary
                 return;
             }
-            if (sux.stateBefore().hasPhisFor(sux)) {
-                Iterable<Phi> suxPhis = sux.stateBefore().allPhis(sux);
-                for (Phi phi : suxPhis) {
-                    if (phi.operandIn(block.end().stateAfter()) != phi.operandIn(pred.end().stateAfter())) {
-                        return;
+            boolean atLeastOneSuxPhiMergesFromAnotherBlock = !sux.stateBefore().forEachPhi(sux, new PhiProcedure() {
+                public boolean doPhi(Phi phi) {
+                    if (phi.inputIn(sux.end().stateAfter()) != phi.inputIn(pred.end().stateAfter())) {
+                        return false;
                     }
+                    return true;
                 }
+            });
+
+            if (atLeastOneSuxPhiMergesFromAnotherBlock) {
+                return;
             }
         }
         ir.replaceBlock(block, sux);

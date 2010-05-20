@@ -20,23 +20,26 @@
  */
 package com.sun.c1x.debug;
 
+import static java.lang.reflect.Modifier.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
 import sun.misc.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.Value.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.value.FrameState.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * This class implements an interpreter for C1X HIR graphs.
+ * This class implements an interpreter for HIR.
  *
  * @author Marcelo Cintra
  */
@@ -101,31 +104,33 @@ public class IRInterpreter {
 
         private class ValueMapInitializer implements BlockClosure {
 
-            public void apply(BlockBegin block) {
-                ValueStack valueStack = block.stateBefore();
-                ArrayList<Phi> phis = (ArrayList<Phi>) valueStack.allPhis(block);
+            public void apply(final BlockBegin block) {
+                FrameState state = block.stateBefore();
+                state.forEachPhi(block, new PhiProcedure() {
+                    public boolean doPhi(Phi phi) {
+                        for (int j = 0; j < phi.inputCount(); j++) {
+                            Value phiOperand = block.isExceptionEntry() ? phi.inputAt(j) : phi.block().predAt(j).end();
+                            assert phiOperand != null : "Illegal phi operand";
 
-                for (Phi phi : phis) {
-                    for (int j = 0; j < phi.operandCount(); j++) {
-                        Value phiOperand = block.isExceptionEntry() ? phi.operandAt(j) : phi.block().predAt(j).end();
-                        assert phiOperand != null : "Illegal phi operand";
-
-                        if (phiOperand instanceof Phi) {
-                            if (phiOperand != phi) {
-                                phi.setFlag(Flag.PhiVisited);
-                                addPhiToInstructionList((Phi) phiOperand, phi);
-                                phi.clearFlag(Flag.PhiVisited);
+                            if (phiOperand instanceof Phi) {
+                                if (phiOperand != phi) {
+                                    phi.setFlag(Flag.PhiVisited);
+                                    addPhiToInstructionList((Phi) phiOperand, phi);
+                                    phi.clearFlag(Flag.PhiVisited);
+                                }
+                            } else {
+                                ArrayList<PhiMove> blockPhiMoves = phiMoves.get(phiOperand);
+                                if (blockPhiMoves == null) {
+                                    blockPhiMoves = new ArrayList<PhiMove>();
+                                    phiMoves.put(phiOperand, blockPhiMoves);
+                                }
+                                blockPhiMoves.add(new PhiMove(phi, phi.inputAt(j)));
                             }
-                        } else {
-                            ArrayList<PhiMove> blockPhiMoves = phiMoves.get(phiOperand);
-                            if (blockPhiMoves == null) {
-                                blockPhiMoves = new ArrayList<PhiMove>();
-                                phiMoves.put(phiOperand, blockPhiMoves);
-                            }
-                            blockPhiMoves.add(new PhiMove(phi, phi.operandAt(j)));
                         }
+                        return true;
                     }
-                }
+                });
+
                 for (Instruction instr = block; instr != null; instr = instr.next()) {
                     instructionValueMap.put(instr, new Val(-1, null));
                 }
@@ -133,8 +138,8 @@ public class IRInterpreter {
 
             private void addPhiToInstructionList(Phi phiSrc, Phi phi) {
                 phiSrc.setFlag(Flag.PhiVisited);
-                for (int j = 0; j < phiSrc.operandCount(); j++) {
-                    Value phiOperand = phiSrc.operandAt(j);
+                for (int j = 0; j < phiSrc.inputCount(); j++) {
+                    Value phiOperand = phiSrc.inputAt(j);
                     assert phiOperand != null : "Illegal phi operand";
 
                     if (phiOperand instanceof Phi) {
@@ -179,24 +184,24 @@ public class IRInterpreter {
             instructionValueMap.put(i, new Val(iCounter, value));
         }
 
-        public Environment(ValueStack valueStack, CiConstant[] values, IR ir) {
-            assert values.length <= valueStack.localsSize() : "Incorrect number of initialization arguments";
+        public Environment(FrameState state, CiConstant[] values, IR ir) {
+            assert values.length <= state.localsSize() : "Incorrect number of initialization arguments";
             ir.startBlock.iteratePreOrder(new ValueMapInitializer());
             int index = 0;
 
             for (CiConstant value : values) {
-                Object obj;
+                CiConstant obj;
                 // These conversions are necessary since the input values are
                 // parsed as integers
-                Value local = valueStack.localAt(index);
+                Value local = state.localAt(index);
                 if (local.kind == CiKind.Float && value.kind == CiKind.Int) {
-                    obj = (float) value.asInt();
+                    obj = CiConstant.forFloat(value.asInt());
                 } else if ((local.kind == CiKind.Double && value.kind == CiKind.Int)) {
-                    obj = (double) value.asInt();
+                    obj = CiConstant.forDouble(value.asInt());
                 } else {
-                    obj = value.boxedValue();
+                    obj = value;
                 }
-                bind(local, new CiConstant(local.kind, obj), 0);
+                bind(local, obj, 0);
                 performPhiMove(local);
                 index += local.kind.sizeInSlots();
             }
@@ -213,7 +218,7 @@ public class IRInterpreter {
         }
     }
 
-    private class Evaluator extends ValueVisitor {
+    private class Evaluator extends DefaultValueVisitor {
 
         private final RiMethod method;
         private BlockBegin block;
@@ -260,7 +265,7 @@ public class IRInterpreter {
 
         @Override
         public void visitResolveClass(ResolveClass i) {
-            Class <?> javaClass = toJavaClass(i.type);
+            Class <?> javaClass = resolveClass(i.type);
             environment.bind(i, CiConstant.forObject(javaClass), instructionCounter);
             jumpNextInstruction();
         }
@@ -268,21 +273,21 @@ public class IRInterpreter {
         private void unexpected(Instruction i, Throwable e) {
             List<ExceptionHandler> exceptionHandlerList = i.exceptionHandlers();
             for (ExceptionHandler eh : exceptionHandlerList) {
-                if (eh.handler.isCatchAll() || toJavaClass(eh.handler.catchKlass()).isAssignableFrom(e.getClass())) {
+                if (eh.handler.isCatchAll() || resolveClass(eh.handler.catchKlass()).isAssignableFrom(e.getClass())) {
                     jump(eh.entryBlock());
                     // bind the exception object to e
-                    environment.bind(eh.entryBlock().next(), new CiConstant(CiKind.Object, e), instructionCounter);
+                    environment.bind(eh.entryBlock().next(), CiConstant.forObject(e), instructionCounter);
                     return;
                 }
             }
-            environment.bind(i, new CiConstant(CiKind.Object, e), instructionCounter);
+            environment.bind(i, CiConstant.forObject(e), instructionCounter);
             throwable = e;
         }
 
         @Override
         public void visitLoadField(LoadField i) {
             try {
-                Class< ? > klass = toJavaClass(i.field().holder());
+                Class<?> klass = resolveClass(i.field().holder());
                 String name = i.field().name();
                 Field field;
                 try {
@@ -309,10 +314,10 @@ public class IRInterpreter {
         @Override
         public void visitStoreField(StoreField i) {
             try {
-                Class< ? > klass = toJavaClass(i.field().holder());
+                Class<?> klass = resolveClass(i.field().holder());
                 Field field = klass.getDeclaredField(i.field().name());
                 field.setAccessible(true);
-                field.set(environment.lookup(i.object()).asObject(), getCompatibleBoxedValue(toJavaClass(i.field().type()), i.value()));
+                field.set(environment.lookup(i.object()).asObject(), getCompatibleBoxedValue(resolveClass(i.field().type()), i.value()));
             } catch (IllegalAccessException e) {
                 unexpected(i, e);
             } catch (SecurityException e) {
@@ -364,7 +369,7 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        private Object getCompatibleBoxedValue(Class< ? > type, Value value) {
+        private Object getCompatibleBoxedValue(Class<?> type, Value value) {
             CiConstant lookupValue = environment.lookup(value);
             if (type == byte.class) {
                 assert value.kind == CiKind.Int : "Types are not compatible";
@@ -400,7 +405,7 @@ public class IRInterpreter {
             Object array = environment.lookup(i.array()).asObject();
 
             try {
-                Class< ? > componentType = getElementType(array);
+                Class<?> componentType = getElementType(array);
                 Array.set(array, environment.lookup(i.index()).asInt(), getCompatibleBoxedValue(componentType, i.value()));
             } catch (NullPointerException ne) {
                 unexpected(i, ne);
@@ -412,7 +417,7 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        private Class< ? > getElementType(Object array) {
+        private Class<?> getElementType(Object array) {
             Class <?> elementType = array.getClass().getComponentType();
             while (elementType.isArray()) {
                 elementType = elementType.getComponentType();
@@ -450,9 +455,9 @@ public class IRInterpreter {
             CiConstant xval = environment.lookup(i.x());
             CiConstant yval = environment.lookup(i.y());
 
-            assertKind(xval.kind.stackType(), yval.kind.stackType(), i.kind.stackType());
+            assertKind(xval.kind.stackKind(), yval.kind.stackKind(), i.kind.stackKind());
 
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case Bytecodes.IADD:
                     environment.bind(i, CiConstant.forInt((xval.asInt() + yval.asInt())), instructionCounter);
                     break;
@@ -545,21 +550,21 @@ public class IRInterpreter {
             CiConstant yval = environment.lookup(i.y());
             int s;
 
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case Bytecodes.ISHL:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forInt((xval.asInt() << (yval.asInt() & 0x1F))), instructionCounter);
                     break;
 
                 case Bytecodes.ISHR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forInt((xval.asInt() >> (yval.asInt() & 0x1F))), instructionCounter);
                     break;
 
                 case Bytecodes.IUSHR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     s = yval.asInt() & 0x1f;
                     int iresult = xval.asInt() >> s;
@@ -570,22 +575,22 @@ public class IRInterpreter {
                     break;
 
                 case Bytecodes.LSHL:
-                    assertKind(xval.kind.stackType(), CiKind.Long);
-                    assertKind(yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), CiKind.Long);
+                    assertKind(yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forLong((xval.asLong() << (yval.asInt() & 0x3F))), instructionCounter);
                     break;
 
                 case Bytecodes.LSHR:
-                    assertKind(xval.kind.stackType(), CiKind.Long);
-                    assertKind(yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), CiKind.Long);
+                    assertKind(yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forLong((xval.asLong() >> (yval.asInt() & 0x3F))), instructionCounter);
                     break;
 
                 case Bytecodes.LUSHR:
-                    assertKind(xval.kind.stackType(), CiKind.Long);
-                    assertKind(yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), CiKind.Long);
+                    assertKind(yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     s = yval.asInt() & 0x3f;
                     long lresult = xval.asLong() >> s;
@@ -605,29 +610,29 @@ public class IRInterpreter {
             final CiConstant xval = environment.lookup(i.x());
             final CiConstant yval = environment.lookup(i.y());
 
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case Bytecodes.IAND:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() & yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() | yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IXOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() ^ yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.LAND:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() & yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() | yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LXOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() ^ yval.asLong())), instructionCounter);
                     break;
                 default:
@@ -641,19 +646,19 @@ public class IRInterpreter {
             final CiConstant xval = environment.lookup(i.x());
             final CiConstant yval = environment.lookup(i.y());
 
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case Bytecodes.LCMP:
                     environment.bind(i, CiConstant.forInt(compareLongs(xval.asLong(), yval.asLong())), instructionCounter);
                     break;
 
                 case Bytecodes.FCMPG:
                 case Bytecodes.FCMPL:
-                    environment.bind(i, CiConstant.forInt(compareFloats(i.opcode(), xval.asFloat(), yval.asFloat())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt(compareFloats(i.opcode, xval.asFloat(), yval.asFloat())), instructionCounter);
                     break;
 
                 case Bytecodes.DCMPG:
                 case Bytecodes.DCMPL:
-                    environment.bind(i, CiConstant.forInt(compareDoubles(i.opcode(), xval.asDouble(), yval.asDouble())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt(compareDoubles(i.opcode, xval.asDouble(), yval.asDouble())), instructionCounter);
                     break;
 
                 default:
@@ -670,27 +675,27 @@ public class IRInterpreter {
             final CiConstant y = environment.lookup(i.y());
 
             switch (i.condition()) {
-                case eql:
+                case EQ:
                     bindIfOp(i, x.equals(y), tval, fval);
                     break;
 
-                case neq:
+                case NE:
                     bindIfOp(i, !x.equals(y), tval, fval);
                     break;
 
-                case gtr:
+                case GT:
                     bindIfOp(i, x.asInt() > y.asInt(), tval, fval);
                     break;
 
-                case geq:
+                case GE:
                     bindIfOp(i, x.asInt() >= y.asInt(), tval, fval);
                     break;
 
-                case lss:
+                case LT:
                     bindIfOp(i, x.asInt() < y.asInt(), tval, fval);
                     break;
 
-                case leq:
+                case LE:
                     bindIfOp(i, x.asInt() <= y.asInt(), tval, fval);
                     break;
             }
@@ -708,7 +713,7 @@ public class IRInterpreter {
         @Override
         public void visitConvert(Convert i) {
             final CiConstant value = environment.lookup(i.value());
-            switch (i.opcode()) {
+            switch (i.opcode) {
                 case Bytecodes.I2L:
                     assertKind(value.kind, CiKind.Int);
                     environment.bind(i, CiConstant.forLong(value.asInt()), instructionCounter);
@@ -785,7 +790,7 @@ public class IRInterpreter {
             final CiConstant object = environment.lookup(i.object());
             assertKind(object.kind, CiKind.Object);
             if (object.isNonNull()) {
-                environment.bind(i, new CiConstant(CiKind.Object, object.boxedValue()), instructionCounter);
+                environment.bind(i, CiConstant.forObject(object.boxedValue()), instructionCounter);
             } else {
                 unexpected(i, new NullPointerException());
             }
@@ -798,33 +803,55 @@ public class IRInterpreter {
                 invokeUsingReflection(i);
                 return;
             }
+
             RiMethod targetMethod = i.target();
             String methodName = targetMethod.name();
             if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) {
                 Object res = callInitMethod(i);
-                environment.bind(i.arguments()[0], new CiConstant(CiKind.Object, res), instructionCounter);
+                environment.bind(i.arguments()[0], CiConstant.forObject(res), instructionCounter);
                 jumpNextInstruction();
                 return;
             }
-            if (!targetMethod.isLoaded()) {
+            if (!targetMethod.isResolved()) {
                 switch (i.opcode()) {
-                    case Bytecodes.INVOKEINTERFACE:
-                        targetMethod = i.constantPool.resolveInvokeInterface(i.cpi);
+                    case Bytecodes.INVOKEINTERFACE: {
+                        targetMethod = runtime.getRiMethod(resolveMethod(targetMethod));
                         break;
-                    case Bytecodes.INVOKESPECIAL:
-                        targetMethod = i.constantPool.resolveInvokeSpecial(i.cpi);
+                    }
+                    case Bytecodes.INVOKESPECIAL: {
+                        if (targetMethod.isConstructor()) {
+                            Constructor<?> constructor = resolveConstructor(targetMethod);
+                            targetMethod = runtime.getRiMethod(constructor);
+                        } else {
+                            Method method = resolveMethod(targetMethod);
+                            if (!Modifier.isStatic(targetMethod.accessFlags())) {
+                                throw new IncompatibleClassChangeError(method + " is a static method");
+                            }
+                            targetMethod = runtime.getRiMethod(method);
+                        }
                         break;
-                    case Bytecodes.INVOKESTATIC:
-                        targetMethod = i.constantPool.resolveInvokeStatic(i.cpi);
+                    }
+                    case Bytecodes.INVOKESTATIC: {
+                        Method method = resolveMethod(targetMethod);
+                        if (!Modifier.isStatic(targetMethod.accessFlags())) {
+                            throw new IncompatibleClassChangeError(method + " is not a static method");
+                        }
+                        targetMethod = runtime.getRiMethod(method);
                         break;
-                    case Bytecodes.INVOKEVIRTUAL:
-                        targetMethod = i.constantPool.resolveInvokeVirtual(i.cpi);
+                    }
+                    case Bytecodes.INVOKEVIRTUAL: {
+                        Method method = resolveMethod(targetMethod);
+                        if (!Modifier.isStatic(targetMethod.accessFlags())) {
+                            throw new IncompatibleClassChangeError(method + " is a static method");
+                        }
+                        targetMethod = runtime.getRiMethod(method);
                         break;
+                    }
                 }
             }
             // native methods are invoked using reflection.
             // some special methods/classes are also always called using reflection
-            if (targetMethod.isNative() || "newInstance".equals(methodName) || "newInstance0".equals(methodName) ||
+            if (isNative(targetMethod.accessFlags()) || "newInstance".equals(methodName) || "newInstance0".equals(methodName) ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Unsafe")                     ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Reflection")                 ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.FieldAccessor")) {
@@ -836,7 +863,7 @@ public class IRInterpreter {
                 case Bytecodes.INVOKEINTERFACE: {
                     RiType type;
                     try {
-                        Class< ? > objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
+                        Class<?> objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
                         type = runtime.getRiType(objClass);
                     } catch (NullPointerException ne) {
                         unexpected(i, ne);
@@ -849,7 +876,7 @@ public class IRInterpreter {
                 case Bytecodes.INVOKEVIRTUAL: {
                     RiType type;
                     try {
-                        Class< ? > objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
+                        Class<?> objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
                         type = runtime.getRiType(objClass);
                     } catch (NullPointerException ne) {
                         unexpected(i, ne);
@@ -868,26 +895,24 @@ public class IRInterpreter {
 
             CiConstant result;
             try {
-                IR methodHir = compiledMethods.get(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signatureType().toString());
+                IR methodHir = compiledMethods.get(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signature().toString());
                 if (methodHir == null) {
                     C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, runtime, targetMethod);
                     methodHir = compilation.emitHIR();
-                    compiledMethods.put(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signatureType().toString(), methodHir);
+                    compiledMethods.put(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signature().toString(), methodHir);
                 }
                 result = interpreter.execute(methodHir, arguments(i));
                 environment.bind(i, fromBoxedJavaValue(result.boxedValue()), instructionCounter);
             } catch (InvocationTargetException e) {
                 unexpected(i, e.getTargetException());
-            } catch (CiBailout e) {
-                unexpected(i, e.getCause());
-            } catch (StackOverflowError e) {
+            } catch (Throwable e) {
                 unexpected(i, e);
             }
             jumpNextInstruction();
         }
 
         private CiConstant [] arguments(Invoke i) {
-            RiSignature signature = i.target().signatureType();
+            RiSignature signature = i.target().signature();
 
             int nargs = signature.argumentCount(!i.isStatic());
             CiConstant[] arglist = new CiConstant[nargs];
@@ -895,22 +920,22 @@ public class IRInterpreter {
             if (i.isStatic()) {
                 index = 0;
                 for (int j = 0; j < nargs; j++) {
-                    CiKind argumentType = signature.argumentTypeAt(j).kind();
-                    arglist[j] = getCompatibleCiConstant(toJavaClass(signature.argumentTypeAt(j)), (i.arguments()[index])); //environment.lookup(i.arguments()[index]);
+                    CiKind argumentType = signature.argumentKindAt(j);
+                    arglist[j] = getCompatibleCiConstant(resolveClass(signature.argumentTypeAt(j, null)), (i.arguments()[index])); //environment.lookup(i.arguments()[index]);
                     index += argumentType.sizeInSlots();
                 }
             } else {
                 arglist[0] = environment.lookup(i.receiver());
                 index = 1;
                 for (int j = 1; j < nargs; j++) {
-                    CiKind argumentType = signature.argumentTypeAt(j - 1).kind();
-                    arglist[j] = getCompatibleCiConstant(toJavaClass(signature.argumentTypeAt(j - 1)), (i.arguments()[index])); //environment.lookup(i.arguments()[index]);
+                    CiKind argumentType = signature.argumentKindAt(j - 1);
+                    arglist[j] = getCompatibleCiConstant(resolveClass(signature.argumentTypeAt(j - 1, null)), (i.arguments()[index])); //environment.lookup(i.arguments()[index]);
                     index += argumentType.sizeInSlots();
                 }
             }
             return arglist;
         }
-        private CiConstant getCompatibleCiConstant(Class< ? > arrayType, Value value) {
+        private CiConstant getCompatibleCiConstant(Class<?> arrayType, Value value) {
             if (arrayType == byte.class) {
                 assert value.kind == CiKind.Int : "Types are not compatible";
                 return CiConstant.forByte((byte) environment.lookup(value).asInt());
@@ -944,14 +969,14 @@ public class IRInterpreter {
 
         public void invokeUsingReflection(Invoke i) {
             RiMethod targetMethod = i.target();
-            RiSignature signature = targetMethod.signatureType();
+            RiSignature signature = targetMethod.signature();
             String methodName = targetMethod.name();
 
             if (i.isStatic()) {
-                Class< ? > methodClass = toJavaClass(targetMethod.holder());
+                Class<?> methodClass = resolveClass(targetMethod.holder());
                 Method m = null;
                 try {
-                    m = methodClass.getDeclaredMethod(methodName, toJavaSignature(signature));
+                    m = methodClass.getDeclaredMethod(methodName, resolveSignature(signature));
                 } catch (SecurityException e1) {
                     unexpected(i, e1.getCause());
                 } catch (NoSuchMethodException e1) {
@@ -974,18 +999,18 @@ public class IRInterpreter {
                     unexpected(i, e.getTargetException());
                 }
 
-                environment.bind(i, new CiConstant(signature.returnKind(), res), instructionCounter);
+                environment.bind(i, CiConstant.forBoxed(signature.returnKind(), res), instructionCounter);
 
             } else {
                 // Call init methods
                 if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) {
                     Object res = callInitMethod(i);
-                    environment.bind(i.arguments()[0], new CiConstant(CiKind.Object, res), instructionCounter);
+                    environment.bind(i.arguments()[0], CiConstant.forObject(res), instructionCounter);
                     jumpNextInstruction();
                     return;
                 }
                 Object objref = environment.lookup((i.arguments()[0])).boxedValue();
-                Class< ? > methodClass;
+                Class<?> methodClass;
                 try {
                     methodClass = objref.getClass();
                 } catch (NullPointerException ne) {
@@ -996,7 +1021,7 @@ public class IRInterpreter {
                 Method m = null;
                 while (m == null && methodClass != null) {
                     try {
-                        m = methodClass.getDeclaredMethod(methodName, toJavaSignature(signature));
+                        m = methodClass.getDeclaredMethod(methodName, resolveSignature(signature));
                     } catch (SecurityException e) {
                         unexpected(i, e);
                         return;
@@ -1011,7 +1036,7 @@ public class IRInterpreter {
 
                 Object res = null;
                 try {
-                    if (objref instanceof Class< ? > && ("newInstance".equals(methodName) || "newInstance0".equals(methodName))) {
+                    if (objref instanceof Class<?> && ("newInstance".equals(methodName) || "newInstance0".equals(methodName))) {
                         res = callInitMethod(i);
                     } else if (m != null) {
                         m.setAccessible(true);
@@ -1024,7 +1049,7 @@ public class IRInterpreter {
                 } catch (InvocationTargetException e) {
                     unexpected(i, e.getTargetException());
                 }
-                environment.bind(i, new CiConstant(signature.returnKind(), res), instructionCounter);
+                environment.bind(i, CiConstant.forBoxed(signature.returnKind(), res), instructionCounter);
             }
             jumpNextInstruction();
         }
@@ -1034,8 +1059,8 @@ public class IRInterpreter {
             Object[] arglist = new Object[nargs];
             int index = i.isStatic() ? 0 : 1;
             for (int j = 0; j < nargs; j++) {
-                CiKind argumentType = signature.argumentTypeAt(j).kind();
-                arglist[j] = getCompatibleBoxedValue(toJavaClass(signature.argumentTypeAt(j)), (i.arguments()[index]));
+                CiKind argumentType = signature.argumentKindAt(j);
+                arglist[j] = getCompatibleBoxedValue(resolveClass(signature.argumentTypeAt(j, null)), (i.arguments()[index]));
                 index += argumentType.sizeInSlots();
             }
             return arglist;
@@ -1045,21 +1070,21 @@ public class IRInterpreter {
             Object receiver = environment.lookup(i.arguments()[0]).asObject();
             // at this point, objectRef can represent a class, or a new uninitialized object produced by a NewInstance instruction
             // in both cases, a new object will be allocated and initialized.
-            Class< ? > javaClass = (receiver instanceof Class<?>) ? (Class <?>) receiver : receiver.getClass();
+            Class<?> javaClass = (receiver instanceof Class<?>) ? (Class <?>) receiver : receiver.getClass();
             Object newReference = null;
-            int nargs = i.target().signatureType().argumentCount(false);
+            int nargs = i.target().signature().argumentCount(false);
             Object[] arglist = new Object[nargs];
             for (int j = 0; j < nargs; j++) {
-                arglist[j] = getCompatibleBoxedValue(toJavaClass(i.target().signatureType().argumentTypeAt(j)), i.arguments()[j + 1]); //environment.lookup((i.arguments()[j + 1])).boxedValue();
+                arglist[j] = getCompatibleBoxedValue(resolveClass(i.target().signature().argumentTypeAt(j, null)), i.arguments()[j + 1]); //environment.lookup((i.arguments()[j + 1])).boxedValue();
             }
 
-            Class< ? >[] partypes = new Class< ? >[i.target().signatureType().argumentCount(false)];
+            Class<?>[] partypes = new Class<?>[i.target().signature().argumentCount(false)];
             for (int j = 0; j < nargs; j++) {
-                partypes[j] = toJavaClass(i.target().signatureType().argumentTypeAt(j));
+                partypes[j] = resolveClass(i.target().signature().argumentTypeAt(j, null));
             }
 
             try {
-                final Constructor< ? > constructor = javaClass.getDeclaredConstructor(partypes);
+                final Constructor<?> constructor = javaClass.getDeclaredConstructor(partypes);
                 constructor.setAccessible(true);
                 newReference = constructor.newInstance(arglist);
             } catch (InstantiationException e) {
@@ -1074,49 +1099,86 @@ public class IRInterpreter {
             return newReference;
         }
 
-        private Class< ? >[] toJavaSignature(RiSignature signature) {
+        private Class<?>[] resolveSignature(RiSignature signature) {
             int nargs = signature.argumentCount(false);
-            Class< ? >[] partypes = new Class< ? >[signature.argumentCount(false)];
+            Class<?>[] partypes = new Class<?>[signature.argumentCount(false)];
             for (int j = 0; j < nargs; j++) {
-                partypes[j] = toJavaClass(signature.argumentTypeAt(j));
+                partypes[j] = resolveClass(signature.argumentTypeAt(j, null));
             }
             return partypes;
         }
 
-        private Class< ? > toJavaClass(RiType type) {
-            Class< ? > resolved = null;
-            if (type.isLoaded()) {
-                resolved = type.javaClass();
-            } else {
-                try {
-                    String internalName = type.name();
-                    if (internalName.startsWith("[")) {
-                        int arrayDimensions = 0;
-                        do {
-                            internalName = internalName.substring(1);
-                            arrayDimensions++;
-                        } while (internalName.startsWith("["));
+        private Class<?> resolveClass(String internalName) {
+            Class<?> resolved = null;
+            try {
+                if (internalName.startsWith("[")) {
+                    int arrayDimensions = 0;
+                    do {
+                        internalName = internalName.substring(1);
+                        arrayDimensions++;
+                    } while (internalName.startsWith("["));
 
-                        if (internalName.length() == 1) {
-                            resolved = CiKind.fromPrimitiveOrVoidTypeChar(internalName.charAt(0)).primitiveArrayClass();
-                            arrayDimensions--;
-                        } else {
-                            String name = internalName.substring(1, internalName.length() - 1).replace('/', '.');
-                            resolved = Class.forName(name);
-                        }
-                        while (arrayDimensions > 0) {
-                            resolved = Array.newInstance(resolved, 0).getClass();
-                            arrayDimensions--;
-                        }
+                    if (internalName.length() == 1) {
+                        resolved = CiKind.fromPrimitiveOrVoidTypeChar(internalName.charAt(0)).primitiveArrayClass();
+                        arrayDimensions--;
                     } else {
-                        String name = Util.toJavaName(type);
+                        String name = internalName.substring(1, internalName.length() - 1).replace('/', '.');
                         resolved = Class.forName(name);
                     }
-                } catch (ClassNotFoundException e) {
-                    throwable = e;
+                    while (arrayDimensions > 0) {
+                        resolved = Array.newInstance(resolved, 0).getClass();
+                        arrayDimensions--;
+                    }
+                } else {
+                    String name = CiUtil.internalNameToJava(internalName, true);
+                    resolved = Class.forName(name);
                 }
+            } catch (ClassNotFoundException e) {
+                throwable = new NoClassDefFoundError(internalName);
             }
             return resolved;
+        }
+
+        private Class<?> resolveClass(RiType type) {
+            if (type.isResolved()) {
+                return type.javaClass();
+            } else {
+                return resolveClass(type.name());
+            }
+        }
+
+        Field resolveField(RiField field) {
+            Class<?> klass = resolveClass(field.holder());
+            try {
+                Field f = klass.getDeclaredField(field.name());
+                f.setAccessible(true);
+                return f;
+            } catch (NoSuchFieldException e) {
+                throw new NoSuchFieldError(klass.getName() + "." + field.name());
+            }
+        }
+
+        Method resolveMethod(RiMethod method) {
+            Class<?> klass = resolveClass(method.holder());
+            try {
+                Method m = klass.getDeclaredMethod(method.name(), resolveSignature(method.signature()));
+                m.setAccessible(true);
+                return m;
+            } catch (NoSuchMethodException e) {
+                throw new NoSuchMethodError(klass.getName() + "." + method.name() + method.signature());
+            }
+        }
+
+        Constructor<?> resolveConstructor(RiMethod constructor) {
+            assert constructor.isConstructor();
+            Class<?> klass = resolveClass(method.holder());
+            try {
+                Constructor<?> c = klass.getDeclaredConstructor(resolveSignature(constructor.signature()));
+                c.setAccessible(true);
+                return c;
+            } catch (NoSuchMethodException e) {
+                throw new NoSuchMethodError(klass.getName() + ".<init>" + method.signature());
+            }
         }
 
         /**
@@ -1127,10 +1189,10 @@ public class IRInterpreter {
         @Override
         public void visitNewInstance(NewInstance i) {
             RiType type = i.instanceClass();
-            Class< ? > javaClass = toJavaClass(type);
+            Class<?> javaClass = resolveClass(type);
             try {
                 // bind the NewInstance instruction to the new allocated object
-                environment.bind(i, new CiConstant(CiKind.Object, unsafe.allocateInstance(javaClass)), instructionCounter);
+                environment.bind(i, CiConstant.forObject(unsafe.allocateInstance(javaClass)), instructionCounter);
             } catch (InstantiationException e) {
                 unexpected(i, e.getCause());
             }
@@ -1175,7 +1237,7 @@ public class IRInterpreter {
                 default:
                     Util.shouldNotReachHere();
             }
-            environment.bind(i, new CiConstant(CiKind.Object, newObjectArray), instructionCounter);
+            environment.bind(i, CiConstant.forObject(newObjectArray), instructionCounter);
             jumpNextInstruction();
         }
 
@@ -1186,8 +1248,8 @@ public class IRInterpreter {
                 unexpected(i, new NegativeArraySizeException());
                 return;
             }
-            Object newObjectArray = Array.newInstance(toJavaClass(i.elementClass()), length);
-            environment.bind(i, new CiConstant(CiKind.Object, newObjectArray), instructionCounter);
+            Object newObjectArray = Array.newInstance(resolveClass(i.elementClass()), length);
+            environment.bind(i, CiConstant.forObject(newObjectArray), instructionCounter);
             jumpNextInstruction();
         }
 
@@ -1208,12 +1270,12 @@ public class IRInterpreter {
             } catch (Throwable e) {
                 unexpected(i, e);
             }
-            environment.bind(i, new CiConstant(CiKind.Object, newObjectArray), instructionCounter);
+            environment.bind(i, CiConstant.forObject(newObjectArray), instructionCounter);
             jumpNextInstruction();
         }
 
         private Class<?> elementTypeNewArray(NewMultiArray i) {
-            Class<?> elementType = toJavaClass(i.elementType());
+            Class<?> elementType = resolveClass(i.elementType());
             while (elementType.isArray()) {
                 elementType = elementType.getComponentType();
             }
@@ -1224,7 +1286,7 @@ public class IRInterpreter {
         public void visitCheckCast(CheckCast i) {
             CiConstant objectRef = environment.lookup(i.object());
 
-            if (objectRef.boxedValue() != null && !toJavaClass(i.declaredType()).isInstance(objectRef.boxedValue())) {
+            if (objectRef.boxedValue() != null && !resolveClass(i.declaredType()).isInstance(objectRef.boxedValue())) {
                 throwable = new ClassCastException("Object reference cannot be cast to the resolved type.");
             }
             environment.bind(i, objectRef, instructionCounter);
@@ -1236,7 +1298,7 @@ public class IRInterpreter {
             Value object = i.object();
             Object objectRef = environment.lookup(object).asObject();
 
-            if (objectRef == null || !(toJavaClass(i.targetClass()).isInstance(objectRef))) {
+            if (objectRef == null || !(resolveClass(i.targetClass()).isInstance(objectRef))) {
                 environment.bind(i, CiConstant.INT_0, instructionCounter);
             } else {
                 environment.bind(i, CiConstant.INT_1, instructionCounter);
@@ -1294,7 +1356,7 @@ public class IRInterpreter {
             int cmp = compareValues(x, y);
 
             switch (i.condition()) {
-                case eql:
+                case EQ:
                     if (cmp == 0) {
                         jump(i.successor(true));
                     } else {
@@ -1302,7 +1364,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case neq:
+                case NE:
                     if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
                     } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
@@ -1314,7 +1376,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case gtr:
+                case GT:
                     if (cmp == 1) {
                         jump(i.successor(true));
                     } else {
@@ -1322,7 +1384,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case geq:
+                case GE:
                     if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
                     } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
@@ -1335,7 +1397,7 @@ public class IRInterpreter {
 
                     break;
 
-                case lss:
+                case LT:
                     if (cmp == -1) {
                         jump(i.successor(true));
                     } else {
@@ -1343,7 +1405,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case leq:
+                case LE:
                     if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
                     } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
@@ -1443,7 +1505,7 @@ public class IRInterpreter {
                 return;
             }
             result = environment.lookup(i.result());
-            CiKind returnType = method.signatureType().returnKind();
+            CiKind returnType = method.signature().returnKind();
             if (returnType == CiKind.Boolean) {
                 result = CiConstant.forBoolean(result.asInt() != 0);
             } else if (returnType == CiKind.Int) {
@@ -1483,11 +1545,6 @@ public class IRInterpreter {
         }
 
         @Override
-        public void visitRoundFP(RoundFP i) {
-            jumpNextInstruction();
-        }
-
-        @Override
         public void visitUnsafeGetRaw(UnsafeGetRaw i) {
             Object address = environment.lookup(i.base()).asObject();
             long index = i.index() == null ? 0 : environment.lookup(i.index()).asLong();
@@ -1518,7 +1575,7 @@ public class IRInterpreter {
                     fail("Should not reach here");
 
             }
-            environment.bind(i, new CiConstant(i.unsafeOpKind, result), instructionCounter);
+            environment.bind(i, CiConstant.forBoxed(i.unsafeOpKind, result), instructionCounter);
             jumpNextInstruction();
         }
 
@@ -1598,7 +1655,7 @@ public class IRInterpreter {
                     fail("Should not reach here");
 
             }
-            environment.bind(i, new CiConstant(i.unsafeOpKind, result), instructionCounter);
+            environment.bind(i, CiConstant.forBoxed(i.unsafeOpKind, result), instructionCounter);
             jumpNextInstruction();
         }
 
@@ -1652,9 +1709,14 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
+        @Override
+        protected void visit(Value value) {
+            fail("unimplemented: visiting value of type " + value.getClass().getSimpleName());
+        }
+
         public CiConstant run() throws InvocationTargetException {
             if (C1XOptions.PrintStateInInterpreter) {
-                System.out.println("\n********** Running " + Util.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " **********\n");
+                System.out.println("\n********** Running " + CiUtil.toJavaName(method.holder()) + ":" + method.name() + method.signature().toString() + " **********\n");
                 System.out.println("Initial state");
                 printState(currentInstruction.stateBefore());
                 System.out.println("");
@@ -1667,45 +1729,45 @@ public class IRInterpreter {
                 }
             }
             if (C1XOptions.PrintStateInInterpreter) {
-                System.out.println("********** " + Util.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " ended  **********");
+                System.out.println("********** " + CiUtil.toJavaName(method.holder()) + ":" + method.name() + method.signature().toString() + " ended  **********");
             }
             if (result != null) {
-                assert method.signatureType().returnKind() != CiKind.Void;
+                assert method.signature().returnKind() != CiKind.Void;
                 return result;
             } else {
                 return CiConstant.NULL_OBJECT;
             }
         }
 
-        public void valuesDo(ValueStack valueStack, ValueClosure closure) {
-            final int maxLocals = valueStack.localsSize();
+        public void valuesDo(FrameState state, ValueClosure closure) {
+            final int maxLocals = state.localsSize();
             if (maxLocals > 0) {
                 System.out.println("** Locals **");
                 for (int i = 0; i < maxLocals; i++) {
                     System.out.print("[" + i + "]: ");
-                    closure.apply(valueStack.loadLocal(i));
+                    closure.apply(state.loadLocal(i));
                 }
             }
-            final int maxStack = valueStack.stackSize();
+            final int maxStack = state.stackSize();
             if (maxStack > 0) {
                 System.out.println("\n** Stack **");
                 for (int i = 0; i < maxStack; i++) {
                     System.out.print("[" + i + "]: ");
-                    closure.apply(valueStack.stackAt(i));
+                    closure.apply(state.stackAt(i));
                 }
             }
 
-            final int maxLocks = valueStack.locksSize();
+            final int maxLocks = state.locksSize();
             if (maxLocks > 0) {
                 System.out.println("\n** Locks **");
                 for (int i = 0; i < maxLocks; i++) {
-                    closure.apply(valueStack.lockAt(i));
+                    closure.apply(state.lockAt(i));
                 }
             }
-            ValueStack state = valueStack.scope().callerState();
-            if (state != null) {
+            FrameState callerState = state.scope().callerState();
+            if (callerState != null) {
                 System.out.println("\n** Caller state **");
-                valuesDo(state, closure);
+                valuesDo(callerState, closure);
             }
         }
 
@@ -1723,7 +1785,7 @@ public class IRInterpreter {
             System.out.println();
         }
 
-        private void printState(ValueStack state) {
+        private void printState(FrameState state) {
             valuesDo(state, new ValueClosure() {
 
                     public Value apply(Value i) {
@@ -1796,14 +1858,14 @@ public class IRInterpreter {
             }
         }
 
-        private void assertKind(CiKind xval, CiKind yval, CiKind type) {
-            assertKind(xval, type);
-            assertKind(yval, type);
+        private void assertKind(CiKind xval, CiKind yval, CiKind kind) {
+            assertKind(xval, kind);
+            assertKind(yval, kind);
         }
 
-        private void assertKind(CiKind x, CiKind type) {
-            if (x != type) {
-                if (!(x.isInt() && (type.isLong() || type.isInt()))) {
+        private void assertKind(CiKind x, CiKind kind) {
+            if (x != kind) {
+                if (!(x.isInt() && (kind.isLong() || kind.isInt()))) {
                     throw new CiBailout("Type mismatch");
                 }
             }
@@ -1816,8 +1878,8 @@ public class IRInterpreter {
         }
 
         private void assertArrayType(RiType riType) {
-            if (riType != null && riType.isLoaded()) {
-                if (!riType.isArrayKlass()) {
+            if (riType != null && riType.isResolved()) {
+                if (!riType.isArrayClass()) {
                     fail("RiType " + riType + " must be an array class");
                 }
             }
@@ -1829,7 +1891,7 @@ public class IRInterpreter {
     }
 
     public CiConstant execute(IR hir, CiConstant... arguments) throws InvocationTargetException {
-        if (hir.compilation.method.isNative()) {
+        if (isNative(hir.compilation.method.accessFlags())) {
             // TODO: invoke the native method via reflection?
             return null;
         }
@@ -1837,8 +1899,8 @@ public class IRInterpreter {
         return evaluator.run();
     }
 
-    private static Field findField(Class< ? > javaClass, String fieldName) {
-        Class< ? > c = javaClass;
+    private static Field findField(Class<?> javaClass, String fieldName) {
+        Class<?> c = javaClass;
         while (c != null) {
             try {
                 final Field field = c.getDeclaredField(fieldName);
@@ -1853,7 +1915,7 @@ public class IRInterpreter {
         return null;
     }
 
-    public static Object getStaticField(Class< ? > javaClass, String fieldName) {
+    public static Object getStaticField(Class<?> javaClass, String fieldName) {
         final Field field = findField(javaClass, fieldName);
         try {
             return field.get(javaClass);

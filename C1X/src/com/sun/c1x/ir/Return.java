@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>Return</code> class definition.
+ * The {@code Return} class definition.
  *
  * @author Ben L. Titzer
  */
@@ -33,7 +33,7 @@ public final class Return extends BlockEnd {
 
     /**
      * Constructs a new Return instruction.
-     * @param result the instruction producing the result for this return; <code>null</code> if this
+     * @param result the instruction producing the result for this return; {@code null} if this
      * is a void return
      */
     public Return(Value result) {

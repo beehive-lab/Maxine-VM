@@ -25,20 +25,18 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ir.Value;
 import com.sun.c1x.ir.Instruction;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.ri.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>Util</code> class contains a motley collection of utility methods used throughout the compiler.
+ * The {@code Util} class contains a motley collection of utility methods used throughout the compiler.
  *
  * @author Ben L. Titzer
  * @author Doug Simon
  */
 public class Util {
 
-    public static final int K = 1024;
-    public static final int M = 1024 * 1024;
     public static final int PRINTING_LINE_WIDTH = 40;
     public static final char SECTION_CHARACTER = '*';
     public static final char SUB_SECTION_CHARACTER = '=';
@@ -78,73 +76,6 @@ public class Util {
     }
 
     /**
-     * Checks whether the specified integer is a power of two.
-     *
-     * @param val the value to check
-     * @return {@code true} if the value is a power of two; {@code false} otherwise
-     */
-    public static boolean isPowerOf2(int val) {
-        return val != 0 && (val & val - 1) == 0;
-    }
-
-    /**
-     * Checks whether the specified long is a power of two.
-     *
-     * @param val the value to check
-     * @return {@code true} if the value is a power of two; {@code false} otherwise
-     */
-    public static boolean isPowerOf2(long val) {
-        return val != 0 && (val & val - 1) == 0;
-    }
-
-    /**
-     * Computes the log (base 2) of the specified integer, rounding down.
-     * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
-     *
-     * @param val the value
-     * @return the log base 2 of the value
-     */
-    public static int log2(int val) {
-        assert val > 0 && isPowerOf2(val);
-        return 31 - Integer.numberOfLeadingZeros(val);
-    }
-
-    /**
-     * Computes the log (base 2) of the specified long, rounding down.
-     * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
-     *
-     * @param val the value
-     * @return the log base 2 of the value
-     */
-    public static int log2(long val) {
-        assert val > 0 && isPowerOf2(val);
-        return 63 - Long.numberOfLeadingZeros(val);
-    }
-
-    public static int align(int size, int align) {
-        assert isPowerOf2(align);
-        return (size + align - 1) & ~(align - 1);
-    }
-
-    /**
-     * Gets a word with the nth bit set.
-     * @param n the nth bit to set
-     * @return an integer value with the nth bit set
-     */
-    public static int nthBit(int n) {
-        return (n >= Integer.SIZE ? 0 : 1 << (n));
-    }
-
-    /**
-     * Gets a word with the right-most n bits set.
-     * @param n the number of rigth most bits to set
-     * @return an integer value with the right-most n bits set
-     */
-    public static int rightNBits(int n) {
-        return nthBit(n) - 1;
-    }
-
-    /**
      * Statically cast an object to an arbitrary Object type. Dynamically checked.
      */
     @SuppressWarnings("unchecked")
@@ -158,171 +89,6 @@ public class Util {
     @SuppressWarnings("unchecked")
     public static <T> T uncheckedCast(Object object) {
         return (T) object;
-    }
-
-    private static String internalNameToJava(String name) {
-        switch (name.charAt(0)) {
-            case 'L':
-                return name.substring(1, name.length() - 1).replace('/', '.');
-            case '[':
-                return internalNameToJava(name.substring(1)) + "[]";
-            default:
-                if (name.length() != 1) {
-                    throw new IllegalArgumentException("Illegal internal name: " + name);
-                }
-                return CiKind.fromPrimitiveOrVoidTypeChar(name.charAt(0)).javaName;
-        }
-    }
-
-    /**
-     * Converts a given type to its Java programming language name. The following are examples of strings returned by
-     * this method:
-     *
-     * <pre>
-     *     qualified == true:
-     *         java.lang.Object
-     *         int
-     *         boolean[][]
-     *     qualified == false:
-     *         Object
-     *         int
-     *         boolean[][]
-     * </pre>
-     *
-     * @param riType the type to be converted to a Java name
-     * @param qualified specifies if the package prefix of the type should be included in the returned name
-     * @return the Java name corresponding to {@code riType}
-     */
-    public static String toJavaName(RiType riType, boolean qualified) {
-        CiKind kind = riType.kind();
-        if (kind.isPrimitive() || kind == CiKind.Void) {
-            return kind.javaName;
-        }
-        String string = internalNameToJava(riType.name());
-        if (qualified) {
-            return string;
-        }
-        final int lastDot = string.lastIndexOf('.');
-        if (lastDot != -1) {
-            string = string.substring(lastDot + 1);
-        }
-        return string;
-    }
-
-    /**
-     * Converts a given type to its Java programming language name. The following are examples of strings returned by
-     * this method:
-     *
-     * <pre>
-     *      java.lang.Object
-     *      int
-     *      boolean[][]
-     * </pre>
-     *
-     * @param riType the type to be converted to a Java name
-     * @return the Java name corresponding to {@code riType}
-     */
-    public static String toJavaName(RiType riType) {
-        return internalNameToJava(riType.name());
-    }
-
-    /**
-     * Gets a string for a given method formatted according to a given format specification. A format specification is
-     * composed of characters that are to be copied verbatim to the result and specifiers that denote an attribute of
-     * the method that is to be copied to the result. A specifier is a single character preceded by a '%' character. The
-     * accepted specifiers and the method attribute they denote are described below:
-     *
-     * <pre>
-     *     Specifier | Description                                          | Example(s)
-     *     ----------+------------------------------------------------------------------------------------------
-     *     'R'       | Qualified return type                                | "int" "java.lang.String"
-     *     'r'       | Unqualified return type                              | "int" "String"
-     *     'H'       | Qualified holder                                     | "java.util.Map.Entry"
-     *     'h'       | Unqualified holder                                   | "Entry"
-     *     'n'       | Method name                                          | "add"
-     *     'P'       | Qualified parameter types, separated by ', '         | "int, java.lang.String"
-     *     'p'       | Unqualified parameter types, separated by ', '       | "int, String"
-     *     'f'       | Indicator if method is unresolved, static or virtual | "unresolved" "static" "virtual"
-     *     '%'       | A '%' character                                      | "%"
-     * </pre>
-     *
-     * @param format a format specification
-     * @param method the method to be formatted
-     * @param kinds if {@code true} then the types in {@code method}'s signature are printed in the
-     *            {@linkplain CiKind#jniName JNI} form of their {@linkplain CiKind kind}
-     * @return the result of formatting this method according to {@code format}
-     * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
-     */
-    public static String format(String format, RiMethod method, boolean kinds) throws IllegalFormatException {
-        final StringBuilder sb = new StringBuilder();
-        int index = 0;
-        RiSignature sig = method.signatureType();
-        while (index < format.length()) {
-            final char ch = format.charAt(index++);
-            if (ch == '%') {
-                if (index >= format.length()) {
-                    throw new UnknownFormatConversionException("An unquoted '%' character cannot terminate a method format specification");
-                }
-                final char specifier = format.charAt(index++);
-                boolean qualified = false;
-                switch (specifier) {
-                    case 'R':
-                        qualified = true;
-                        // fall through
-                    case 'r': {
-                        sb.append(kinds ? sig.returnKind().jniName : toJavaName(sig.returnType(), qualified));
-                        break;
-                    }
-                    case 'H':
-                        qualified = true;
-                        // fall through
-                    case 'h': {
-                        sb.append(toJavaName(method.holder(), qualified));
-                        break;
-                    }
-                    case 'n': {
-                        sb.append(method.name());
-                        break;
-                    }
-                    case 'P':
-                        qualified = true;
-                        // fall through
-                    case 'p': {
-                        for (int i = 0; i < sig.argumentCount(false); i++) {
-                            if (i != 0) {
-                                sb.append(", ");
-                            }
-                            sb.append(kinds ? sig.argumentKindAt(i).jniName : toJavaName(sig.argumentTypeAt(i), qualified));
-                        }
-                        break;
-                    }
-                    case 'f': {
-                        sb.append(!method.isLoaded() ? "unresolved" : method.isStatic() ? "static" : "virtual");
-                        break;
-                    }
-                    case '%': {
-                        sb.append('%');
-                        break;
-                    }
-                    default: {
-                        throw new UnknownFormatConversionException(String.valueOf(specifier));
-                    }
-                }
-            } else {
-                sb.append(ch);
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Converts a Java source-language class name into the internal form.
-     *
-     * @param className the class name
-     * @return the internal name form of the class name
-     */
-    public static String toInternalName(String className) {
-        return "L" + className.replace('.', '/') + ";";
     }
 
     /**
@@ -380,31 +146,31 @@ public class Util {
     }
 
     static {
-        assert log2(2) == 1;
-        assert log2(4) == 2;
-        assert log2(8) == 3;
-        assert log2(16) == 4;
-        assert log2(32) == 5;
-        assert log2(0x40000000) == 30;
+        assert CiUtil.log2(2) == 1;
+        assert CiUtil.log2(4) == 2;
+        assert CiUtil.log2(8) == 3;
+        assert CiUtil.log2(16) == 4;
+        assert CiUtil.log2(32) == 5;
+        assert CiUtil.log2(0x40000000) == 30;
 
-        assert log2(2L) == 1;
-        assert log2(4L) == 2;
-        assert log2(8L) == 3;
-        assert log2(16L) == 4;
-        assert log2(32L) == 5;
-        assert log2(0x4000000000000000L) == 62;
+        assert CiUtil.log2(2L) == 1;
+        assert CiUtil.log2(4L) == 2;
+        assert CiUtil.log2(8L) == 3;
+        assert CiUtil.log2(16L) == 4;
+        assert CiUtil.log2(32L) == 5;
+        assert CiUtil.log2(0x4000000000000000L) == 62;
 
-        assert !isPowerOf2(3);
-        assert !isPowerOf2(5);
-        assert !isPowerOf2(7);
-        assert !isPowerOf2(-1);
+        assert !CiUtil.isPowerOf2(3);
+        assert !CiUtil.isPowerOf2(5);
+        assert !CiUtil.isPowerOf2(7);
+        assert !CiUtil.isPowerOf2(-1);
 
-        assert isPowerOf2(2);
-        assert isPowerOf2(4);
-        assert isPowerOf2(8);
-        assert isPowerOf2(16);
-        assert isPowerOf2(32);
-        assert isPowerOf2(64);
+        assert CiUtil.isPowerOf2(2);
+        assert CiUtil.isPowerOf2(4);
+        assert CiUtil.isPowerOf2(8);
+        assert CiUtil.isPowerOf2(16);
+        assert CiUtil.isPowerOf2(32);
+        assert CiUtil.isPowerOf2(64);
     }
 
     /**
@@ -450,20 +216,13 @@ public class Util {
         return (int) l;
     }
 
-    public static boolean traceLinearScan(int level, String string, Object... objects) {
-        if (C1XOptions.TraceLinearScanLevel >= level) {
-            TTY.println(String.format(string, objects));
-        }
-        return true;
-    }
-
     public static int roundUp(int number, int mod) {
         return ((number + mod - 1) / mod) * mod;
     }
 
-    public static void truncate(List<?> instructions, int length) {
-        while (instructions.size() > length) {
-            instructions.remove(instructions.size() - 1);
+    public static void truncate(List<?> list, int length) {
+        while (list.size() > length) {
+            list.remove(list.size() - 1);
         }
     }
 
@@ -500,18 +259,18 @@ public class Util {
             }
         }
 
-        if (length % bytesPerLine != bytesPerLine - 1) {
+        if (length % bytesPerLine != bytesPerLine) {
             TTY.println();
         }
     }
 
-    public static CiKind[] signatureToKinds(RiSignature signature, boolean withReceiver) {
+    public static CiKind[] signatureToKinds(RiSignature signature, CiKind receiverKind) {
         int args = signature.argumentCount(false);
         CiKind[] result;
         int i = 0;
-        if (withReceiver) {
+        if (receiverKind != null) {
             result = new CiKind[args + 1];
-            result[0] = CiKind.Object;
+            result[0] = receiverKind;
             i = 1;
         } else {
             result = new CiKind[args];
@@ -601,15 +360,14 @@ public class Util {
 
     /**
      * Converts a given instruction to a value string. The representation of an instruction as
-     * a value is formed by concatenating the {@linkplain com.sun.c1x.ci.CiKind#typeChar character} denoting its
-     * {@linkplain com.sun.c1x.ir.Instruction#kind kind} and its {@linkplain com.sun.c1x.ir.Instruction#id}. For example,
-     * "i13".
+     * a value is formed by concatenating the {@linkplain com.sun.cri.ci.CiKind#typeChar character} denoting its
+     * {@linkplain Value#kind kind} and its {@linkplain Value#id()}. For example, <code>"i13"</code>.
      *
-     * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
+     * @param value the instruction to convert to a value string. If {@code value == null}, then "-" is returned.
      * @return the instruction representation as a string
      */
     public static String valueString(Value value) {
-        return value == null ? "null" : "" + value.kind.typeChar + value.id();
+        return value == null ? "-" : "" + value.kind.typeChar + value.id();
     }
 
 }

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.LinkedList;
 
 /**
- * The <code>JTUtil</code> class definition.
+ * The {@code JTUtil} class definition.
  *
  * @author Ben L. Titzer
  */

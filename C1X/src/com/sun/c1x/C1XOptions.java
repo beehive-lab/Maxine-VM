@@ -20,8 +20,13 @@
  */
 package com.sun.c1x;
 
+import java.util.*;
+
+import com.sun.c1x.debug.TTY.*;
+
 /**
  * This class encapsulates options that control the behavior of the C1X compiler.
+ * The help message for each option is specified by a {@linkplain #helpMap help map}.
  *
  * @author Ben L. Titzer
  */
@@ -58,26 +63,17 @@ public class C1XOptions {
     public static boolean IntrinsifyAtomic                   = true;
     public static boolean IntrinsifyUnsafe                   = true;
 
-    // floating point settings
-    public static int     SSEVersion                         = 2;
-    public static boolean RoundFPResults                     = ____;
-
     // debugging and printing settings
-    public static boolean IRChecking                         = ____;
+    public static boolean IRChecking                         = true;
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
-    public static boolean VerifyOopMaps                      = ____;
-    public static boolean VerifyOops                         = ____;
     public static boolean PrintHIR                           = ____;
     public static boolean PrintLIR                           = ____;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
     public static boolean PrintTimers                        = ____;
-    public static boolean PrintCFG                           = ____;
     public static boolean PrintCompilation                   = ____;
-    public static boolean PrintExceptionHandlers             = ____;
-    public static boolean PrintNotLoaded                     = ____;
     public static boolean PrintXirTemplates                  = ____;
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean FatalUnimplemented                 = ____;
@@ -88,7 +84,13 @@ public class C1XOptions {
     public static int     TraceLinearScanLevel               = 0;
     public static boolean TraceRelocation                    = ____;
     public static boolean TraceLIRVisit                      = ____;
+    public static int     TraceBytecodeParserLevel           = 0;
     public static boolean PrintLoopList                      = ____;
+
+    /**
+     * See {@link Filter#matches(String, Object)}.
+     */
+    public static String  PrintFilter                        = null;
 
     // canonicalizer settings
     public static boolean CanonicalizeClassIsInstance        = true;
@@ -127,7 +129,7 @@ public class C1XOptions {
 
     // optimistic optimization settings
     public static boolean UseDeopt                      = ____;
-    public static boolean AggressivelyResolveCPEs       = true;
+    public static boolean NormalCPEResolution           = true;
 
     // state merging settings
     public static boolean AssumeVerifiedBytecode        = ____;
@@ -137,7 +139,7 @@ public class C1XOptions {
 
     // miscellaneous settings
     public static boolean SupportObjectConstants        = true;
-    public static boolean SupportWordTypes              = ____;
+    public static boolean SupportWordTypes              = true;
 
     // Linear scan settings
     public static boolean StressLinearScan              = ____;
@@ -150,21 +152,18 @@ public class C1XOptions {
     public static boolean GenSynchronization            = true;
     public static boolean GenArrayStoreCheck            = true;
     public static boolean GenBoundsChecks               = true;
-    public static boolean GenExplicitNullChecks         = ____;
     public static boolean GenExplicitDiv0Checks         = ____;
-    public static boolean GenSpecialDivChecks           = true;
+    public static boolean GenSpecialDivChecks           = ____;
     public static boolean GenStackBanging               = true;
     public static boolean GenAssertionCode              = ____;
     public static boolean GenFinalizerRegistration      = true;
     public static boolean GenTableRanges                = ____;
 
     public static int     InitialCodeBufferSize         = 232;
-    public static boolean DetailedAsserts               = ____;
+    public static boolean DetailedAsserts               = true;
 
     // Runtime settings
-    public static boolean UseXIR                        = ____;
     public static boolean UseBiasedLocking              = ____;
-    public static boolean UseTLAB                       = ____;
     public static int     ReadPrefetchInstr             = 0;
     public static boolean UseFastLocking                = ____;
     public static boolean UseSlowPath                   = ____;
@@ -294,7 +293,7 @@ public class C1XOptions {
         OptCSEArrayLength               = true;
 
         // turn on state merging optimizations
-        PhiLoopStores = true;
+        PhiLoopStores                   = true;
 
         // turn on speculative optimizations
         OptCHA                          = true;
@@ -316,5 +315,48 @@ public class C1XOptions {
         OptDeadCodeElimination1         = true;
         OptDeadCodeElimination2         = true;
         OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
+    }
+
+    /**
+     * A map from option field names to some text describing the meaning and
+     * usage of the corresponding option.
+     */
+    public static final Map<String, String> helpMap;
+
+    static {
+        HashMap<String, String> map = new HashMap<String, String>();
+        map.put("PrintFilter",
+                "Filter compiler tracing to methods whose fully qualified name " +
+                "matches <arg>. If <arg> starts with \"~\", then <arg> (without " +
+                "the \"~\") is interpreted as a regular expression. Otherwise, " +
+                "<arg> is interpreted as a simple substring.");
+
+        map.put("TraceBytecodeParserLevel",
+                "Trace frontend bytecode parser at level <n> where 0 means no " +
+                "tracing, 1 means instruction tracing and 2 means instruction " +
+                "plus frame state tracing.");
+
+        map.put("DetailedAsserts",
+                "Turn on detailed error checking that has a noticeable performance impact.");
+
+        map.put("NormalCPEResolution",
+                "Eagerly resolve constant pool entries when the resolution can be done " +
+                "without triggering class loading.");
+
+        map.put("GenExplicitDiv0Checks",
+                "Generate code to check for division-by-zero instead of relying on a trap.");
+
+        map.put("GenSpecialDivChecks",
+                "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " +
+                "instead of detecting these cases via instruction decoding in a trap handler.");
+
+        for (String name : map.keySet()) {
+            try {
+                C1XOptions.class.getField(name);
+            } catch (Exception e) {
+                throw new InternalError("The name '" + name + "' does not denote a field in " + C1XOptions.class);
+            }
+        }
+        helpMap = Collections.unmodifiableMap(map);
     }
 }

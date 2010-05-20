@@ -21,7 +21,7 @@
 package com.sun.max.ins.memory;
 
 import com.sun.max.program.*;
-import com.sun.max.tele.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public class MemoryWordRegion extends TeleMemoryRegion {
+public class MemoryWordRegion extends InspectorMemoryRegion {
 
     public final int wordCount;
     private final Size wordSize;
@@ -42,8 +42,8 @@ public class MemoryWordRegion extends TeleMemoryRegion {
      * @param wordCount number of words to include in the region
      * @param wordSize size of word in target platform.
      */
-    public MemoryWordRegion(Address start, int wordCount, Size wordSize) {
-        super(start, wordSize.times(wordCount), null);
+    public MemoryWordRegion(MaxVM vm, Address start, int wordCount, Size wordSize) {
+        super(vm, null, start, wordSize.times(wordCount));
         this.wordCount = wordCount;
         this.wordSize = wordSize;
         ProgramError.check(start.isAligned(wordSize.toInt()));

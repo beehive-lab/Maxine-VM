@@ -34,7 +34,6 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
@@ -88,7 +87,7 @@ public final class MemoryWordsTable extends InspectorTable {
     protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
         final InspectorPopupMenu menu = new InspectorPopupMenu();
         if (vm().watchpointManager() != null) {
-            final MemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
+            final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
                 @Override
@@ -195,7 +194,7 @@ public final class MemoryWordsTable extends InspectorTable {
         int positionBias;
 
         // Cache of memory descriptors for each row
-        private final Map<Long, MemoryRegion> addressToMemoryRegion = new HashMap<Long, MemoryRegion>();
+        private final Map<Long, MaxMemoryRegion> addressToMemoryRegion = new HashMap<Long, MaxMemoryRegion>();
 
         public MemoryWordsTableModel(Inspection inspection, MemoryWordRegion memoryRegion, Address origin) {
             super(inspection, origin);
@@ -244,11 +243,11 @@ public final class MemoryWordsTable extends InspectorTable {
         }
 
         @Override
-        public MemoryRegion getMemoryRegion(int row) {
+        public MaxMemoryRegion getMemoryRegion(int row) {
             final Address address = memoryWordRegion.getAddressAt(row);
-            MemoryRegion rowMemoryRegion = addressToMemoryRegion.get(address.toLong());
+            MaxMemoryRegion rowMemoryRegion = addressToMemoryRegion.get(address.toLong());
             if (rowMemoryRegion == null) {
-                rowMemoryRegion = new MemoryWordRegion(address, 1, getWordSize());
+                rowMemoryRegion = new MemoryWordRegion(vm(), address, 1, getWordSize());
                 addressToMemoryRegion.put(address.toLong(), rowMemoryRegion);
             }
             return rowMemoryRegion;

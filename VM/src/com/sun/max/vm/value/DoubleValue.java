@@ -22,6 +22,7 @@ package com.sun.max.vm.value;
 
 import java.io.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -85,7 +86,7 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
 
     @Override
     public Double asBoxedJavaValue() {
-        return new Double(value);
+        return Double.valueOf(value);
     }
 
     @Override
@@ -162,4 +163,10 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
     public void write(DataOutput stream) throws IOException {
         stream.writeDouble(value);
     }
+
+    @Override
+    public CiConstant asCiConstant() {
+        return CiConstant.forDouble(value);
+    }
+
 }

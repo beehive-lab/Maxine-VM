@@ -217,7 +217,10 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         register(builtins, new CirReducibleAddressComparison(GreaterThan.BUILTIN, ValueComparator.UNSIGNED_GREATER_THAN, Address.zero(), Address.max(), false));
         register(builtins, new CirReducibleAddressComparison(LessEqual.BUILTIN, ValueComparator.UNSIGNED_LESS_EQUAL, Address.zero(), Address.max(), true));
         register(builtins, new CirReducibleAddressComparison(LessThan.BUILTIN, ValueComparator.UNSIGNED_LESS_THAN, Address.max(), Address.zero(), false));
-        register(builtins, new CirReducibleUnsignedIntComparison(UnsignedIntGreaterEqual.BUILTIN, ValueComparator.UNSIGNED_GREATER_EQUAL, IntValue.from(0xffffffff), IntValue.ZERO, true));
+        register(builtins, new CirReducibleUnsignedIntComparison(AboveEqual.BUILTIN, ValueComparator.UNSIGNED_GREATER_EQUAL, IntValue.from(0xffffffff), IntValue.ZERO, true));
+        register(builtins, new CirReducibleUnsignedIntComparison(AboveThan.BUILTIN, ValueComparator.UNSIGNED_GREATER_THAN, IntValue.ZERO, IntValue.from(0xffffffff), false));
+        register(builtins, new CirReducibleUnsignedIntComparison(BelowEqual.BUILTIN, ValueComparator.UNSIGNED_LESS_EQUAL, IntValue.ZERO, IntValue.from(0xffffffff), true));
+        register(builtins, new CirReducibleUnsignedIntComparison(BelowThan.BUILTIN, ValueComparator.UNSIGNED_LESS_THAN, IntValue.from(0xffffffff), IntValue.ZERO, false));
         register(builtins, new CirShiftBuiltin(IntShiftedLeft.BUILTIN, Ints.WIDTH, false));
         register(builtins, new CirShiftBuiltin(LongShiftedLeft.BUILTIN, Longs.WIDTH, false));
         register(builtins, new CirShiftBuiltin(IntUnsignedShiftedRight.BUILTIN, Ints.WIDTH, false));

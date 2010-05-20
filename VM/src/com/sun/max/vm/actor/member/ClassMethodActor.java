@@ -20,12 +20,15 @@
  */
 package com.sun.max.vm.actor.member;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import java.lang.reflect.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -86,10 +89,17 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     public final NativeFunction nativeFunction;
 
+    private RiExceptionHandler[] exceptionHandlers;
+
     public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, int intrinsic) {
         super(name, descriptor, flags, intrinsic);
         this.originalCodeAttribute = codeAttribute;
         this.nativeFunction = isNative() ? new NativeFunction(this) : null;
+
+        if (MaxineVM.isHosted() && codeAttribute != null) {
+            ClassfileWriter.classfileCodeAttributeMap.put(this, codeAttribute);
+            ClassfileWriter.classfileCodeMap.put(this, codeAttribute.code().clone());
+        }
     }
 
     /**
@@ -126,23 +136,102 @@ public abstract class ClassMethodActor extends MethodActor {
 
     @INLINE
     public final boolean noSafepoints() {
-        return noSafepoints(compilee().flags());
+        return noSafepoints(flags());
     }
 
     @INLINE
     public final boolean isDeclaredFoldable() {
-        return isDeclaredFoldable(compilee().flags());
+        return isDeclaredFoldable(flags());
     }
 
     /**
-     * Gets the CodeAttribute currently associated with this actor, irrespective of whether or not it will be replaced
-     * later as a result of substitution or preprocessing.
+     * Gets the {@code CodeAttribute} with which this method actor was originally constructed.
      *
-     * Note: This method must not be synchronized as it is called by a GC thread during stack walking.
-     * @return the raw code attribute
+     * This is basically a hack to ensure that C1X can obtain code that hasn't been subject to
+     * the {@linkplain Preprocessor preprocessing} required by the CPS and template JIT compilers.
      */
     public final CodeAttribute originalCodeAttribute() {
+        if (isNative()) {
+            // C1X must compile the generated JNI stub
+            return codeAttribute();
+        }
+
+        // This call ensures that intrinsification is performed on the bytecode array in
+        // 'originalCodeAttribute' before it is returned.
+        compilee();
+
         return originalCodeAttribute;
+    }
+
+    @Override
+    public final byte[] code() {
+        CodeAttribute codeAttribute = originalCodeAttribute();
+        if (codeAttribute != null) {
+            return codeAttribute.code();
+        }
+        return null;
+    }
+
+    @Override
+    public RiExceptionHandler[] exceptionHandlers() {
+        if (exceptionHandlers != null) {
+            // return the cached exception handlers
+            return exceptionHandlers;
+        }
+
+        Sequence<ExceptionHandlerEntry> exceptionHandlerTable = Sequence.Static.empty(ExceptionHandlerEntry.class);
+        CodeAttribute codeAttribute = originalCodeAttribute();
+        if (codeAttribute != null) {
+            exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
+        }
+        if (exceptionHandlerTable.length() == 0) {
+            exceptionHandlers = RiExceptionHandler.NONE;
+        } else {
+            exceptionHandlers = new RiExceptionHandler[exceptionHandlerTable.length()];
+            int i = 0;
+            for (ExceptionHandlerEntry entry : exceptionHandlerTable) {
+                RiType catchType;
+                int catchTypeIndex = entry.catchTypeIndex();
+                if (catchTypeIndex == 0) {
+                    catchType = null;
+                } else {
+                    ConstantPool pool = codeAttribute.constantPool;
+                    catchType = pool.classAt(catchTypeIndex).resolve(pool, catchTypeIndex);
+                }
+                exceptionHandlers[i++] = new CiExceptionHandler(
+                                (char) entry.startPosition(),
+                                (char) entry.endPosition(),
+                                (char) entry.handlerPosition(),
+                                (char) catchTypeIndex, catchType);
+            }
+        }
+        return exceptionHandlers;
+    }
+
+    @Override
+    public String jniSymbol() {
+        if (nativeFunction != null) {
+            return nativeFunction.makeSymbol();
+        }
+        return null;
+    }
+
+    @Override
+    public int maxLocals() {
+        CodeAttribute codeAttribute = originalCodeAttribute();
+        if (codeAttribute != null) {
+            return codeAttribute.maxLocals;
+        }
+        return 0;
+    }
+
+    @Override
+    public int maxStackSize() {
+        CodeAttribute codeAttribute = originalCodeAttribute();
+        if (codeAttribute != null) {
+            return codeAttribute.maxStack;
+        }
+        return 0;
     }
 
     /**
@@ -179,6 +268,7 @@ public abstract class ClassMethodActor extends MethodActor {
                     if (substitute != null) {
                         compilee = substitute.compilee();
                         codeAttribute = compilee.codeAttribute;
+                        originalCodeAttribute = compilee.originalCodeAttribute;
                         return compilee;
                     }
                     if (MaxineVM.isHosted() && !hostedVerificationDisabled) {
@@ -233,17 +323,10 @@ public abstract class ClassMethodActor extends MethodActor {
                     }
                 }
 
-                if (codeAttribute != null) {
-                    Intrinsics intrinsics = new Intrinsics(compilee, codeAttribute);
-                    intrinsics.run();
-                    if (intrinsics.unsafe) {
-                        compilee.beUnsafe();
-                        beUnsafe();
-                    }
-                    if (intrinsics.extended) {
-                        compilee.beExtended();
-                        beExtended();
-                    }
+                intrinsify(compilee, codeAttribute);
+                if (codeAttribute != originalCodeAttribute && originalCodeAttribute != null) {
+                    // C1X must also see the intrinsified code
+                    intrinsify(compilee, originalCodeAttribute);
                 }
 
                 this.codeAttribute = codeAttribute;
@@ -251,6 +334,23 @@ public abstract class ClassMethodActor extends MethodActor {
             }
         }
         return compilee;
+    }
+
+    private boolean intrinsify(ClassMethodActor compilee, CodeAttribute codeAttribute) {
+        if (codeAttribute != null) {
+            Intrinsics intrinsics = new Intrinsics(compilee, codeAttribute);
+            intrinsics.run();
+            if (intrinsics.unsafe) {
+                compilee.beUnsafe();
+                beUnsafe();
+            }
+            if (intrinsics.extended) {
+                compilee.beExtended();
+                beExtended();
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

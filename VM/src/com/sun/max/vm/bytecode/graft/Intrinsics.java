@@ -21,15 +21,16 @@
 
 package com.sun.max.vm.bytecode.graft;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.bytecode.BytecodeIntrinsifier.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
+
+import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.BytecodeIntrinsifier.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -102,22 +103,22 @@ public class Intrinsics extends IntrinsifierClient {
     private static boolean isUnsafe(int opcode) {
         switch (opcode) {
             // Checkstyle: stop
-            case Bytecodes.READGPR            :
-            case Bytecodes.WRITEGPR           :
-            case Bytecodes.SAFEPOINT          :
-            case Bytecodes.PAUSE              :
-            case Bytecodes.ADD_SP             :
-            case Bytecodes.READ_PC            :
-            case Bytecodes.FLUSHW             :
-            case Bytecodes.ALLOCA             :
-            case Bytecodes.STACKADDR          :
-            case Bytecodes.JNICALL            :
-            case Bytecodes.CALL               :
-            case Bytecodes.ICMP               :
-            case Bytecodes.WCMP               :
-            case Bytecodes.RET                :
-            case Bytecodes.JSR_W              :
-            case Bytecodes.JSR                : return true;
+            case READREG            :
+            case WRITEREG           :
+            case SAFEPOINT          :
+            case PAUSE              :
+            case ADD_SP             :
+            case READ_PC            :
+            case FLUSHW             :
+            case ALLOCA             :
+            case ALLOCSTKVAR        :
+            case JNICALL            :
+            case CALL               :
+            case ICMP               :
+            case WCMP               :
+            case RET                :
+            case JSR_W              :
+            case JSR                : return true;
             // Checkstyle: resume
         }
         return false;
@@ -139,29 +140,34 @@ public class Intrinsics extends IntrinsifierClient {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
                 int intrinsic = method.intrinsic();
-                if (intrinsic == Bytecodes.UNSAFE_CAST) {
-                    Kind fromKind = isStatic ? sig.parameterDescriptorAt(0).toKind() : holder.toKind();
-                    Kind toKind = sig.resultKind();
-                    bi.intrinsify(Bytecodes.UNSAFE_CAST, fromKind.asEnum.ordinal() << 8 | toKind.asEnum.ordinal());
+                if (intrinsic == UNSAFE_CAST) {
+                    bi.intrinsify(UNSAFE_CAST, cpi);
+                } else if (intrinsic == CALL) {
+                    bi.intrinsify(intrinsic, cpi);
                 } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;
                     if (!unsafe) {
                         unsafe = isUnsafe(opcode);
                     }
-                    assert Bytecodes.isExtension(opcode);
-                    int operand = Bytecodes.isOpcode3(intrinsic) ? (intrinsic >> 8) & 0xffff : cpi;
+                    assert !isStandard(opcode);
+                    int operand = (intrinsic >> 8) & 0xffff;
                     bi.intrinsify(opcode, operand);
                 } else {
                     if (!unsafe) {
+                        // The semantics of @INLINE and @FOLD cannot be implemented by the JIT compiler.
                         unsafe = (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
                     }
                     if (holderIsWord && !isStatic) {
                         // Cannot dispatch dynamically on Word types
-                        bi.intrinsify(Bytecodes.INVOKESPECIAL, cpi);
+                        bi.intrinsify(INVOKESPECIAL, cpi);
                     }
                 }
-            } catch (HostOnlyClassError e) {
-            } catch (HostOnlyMethodError e) {
+            } catch (NoClassDefFoundError e) {
+                // This is almost always due to process code guarded with MaxineVM.isHosted().
+                // The compiler will dead-code eliminate such code before it is ever compiled.
+            } catch (NoSuchMethodError e) {
+                // This is almost always due to process code guarded with MaxineVM.isHosted().
+                // The compiler will dead-code eliminate such code before it is ever compiled.
             }
         }
 

@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm.bytecode.graft;
 
-import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -316,7 +316,7 @@ public abstract class BytecodeAssembler {
      */
     protected abstract void setWritePosition(int position);
 
-    private void emitByte(int b) {
+    public final void emitByte(int b) {
         writeByte((byte) (b & 0xff));
         currentAddress++;
         if (currentAddress > highestAddress) {
@@ -324,21 +324,21 @@ public abstract class BytecodeAssembler {
         }
     }
 
-    private void emitShort(int s) {
+    public final void emitShort(int s) {
         emitByte(s >> 8);
         emitByte(s);
     }
 
-    private void emitOpcode(int opcode) {
+    public final void emitOpcode(int opcode) {
         emitByte(opcode);
     }
 
-    private void emitOffset2(int offset) {
+    public final void emitOffset2(int offset) {
         emitByte(offset >> 8);
         emitByte(offset);
     }
 
-    private void emitOffset4(int offset) {
+    public final void emitOffset4(int offset) {
         emitByte(offset >> 24);
         emitByte(offset >> 16);
         emitByte(offset >> 8);

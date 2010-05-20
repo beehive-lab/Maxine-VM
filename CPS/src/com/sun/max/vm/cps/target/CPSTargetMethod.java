@@ -97,11 +97,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     }
 
     @Override
-    public String name() {
-        return description();
-    }
-
-    @Override
     public int count(Builtin builtin, int defaultResult) {
         return defaultResult;
     }
@@ -445,7 +440,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         if (stopPositions == null || compressedJavaFrameDescriptors == null) {
             return null;
         }
-        int resultIndex = -1;
+        int stopIndex = -1;
         int minDistance = Integer.MAX_VALUE;
         final int position = instructionPointer.minus(codeStart).toInt();
         for (int i = 0; i < numberOfStopPositions(); i++) {
@@ -454,14 +449,14 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
                 final int distance = position - stopPosition;
                 if (distance < minDistance) {
                     minDistance = distance;
-                    resultIndex = i;
+                    stopIndex = i;
                 }
             }
         }
-        if (resultIndex < 0) {
+        if (stopIndex < 0) {
             return null;
         }
-        return TargetJavaFrameDescriptor.get(this, resultIndex);
+        return TargetJavaFrameDescriptor.get(this, stopIndex);
     }
 
     /**
@@ -485,6 +480,11 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         }
 
         return getJavaFrameDescriptorFor(instructionPointer);
+    }
+
+    @Override
+    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
+        return TargetJavaFrameDescriptor.get(this, stopIndex);
     }
 
     /**

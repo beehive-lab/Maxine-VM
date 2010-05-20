@@ -20,9 +20,11 @@
  */
 package com.sun.max.tele.debug;
 
+import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleStackFrameWalker.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -30,7 +32,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * Hierarchy of classes that act as wrappers for VM instances of {@link StackFrame}, with additional
+ * Hierarchy of classes that act as wrappers for VM {@linkplain StackFrame stack frames}, with additional
  * contextual information added for the benefits of clients.  The hierarchy also includes the two subclasses
  * {@link ErrorFrame} and {@link TruncatedFrame}, which are <em>synthetic</em>: they
  * correspond to no VM frame types, but are rather used to as markers by the stack walker for errors
@@ -39,6 +41,43 @@ import com.sun.max.vm.stack.*;
  * @author Michael Van De Vanter
  */
 public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends AbstractTeleVMHolder implements MaxStackFrame {
+
+    private static final int TRACE_LEVEL = 2;
+
+    /**
+     * Description of the memory region occupied by a {@linkplain MaxStackFrame stack frame} in the VM.
+     * <br>
+     * The parent of this region is the {@linkplain MaxStack stack} in which it is contained.
+     * <br>
+     * This region has no children (although it could if we chose to decompose it into slots).
+     */
+    private static final class StackFrameMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxStackFrame> {
+
+        private static final IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY =
+            new ArrayListSequence<MaxEntityMemoryRegion< ? extends MaxEntity>>(0);
+        private final TeleStackFrame teleStackFrame;
+
+        private StackFrameMemoryRegion(TeleVM teleVM, TeleStackFrame teleStackFrame, String regionName, Address start, Size size) {
+            super(teleVM, regionName, start, size);
+            this.teleStackFrame = teleStackFrame;
+        }
+
+        public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
+            return teleStackFrame.stack().memoryRegion();
+        }
+
+        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+            return EMPTY;
+        }
+
+        public MaxStackFrame owner() {
+            return teleStackFrame;
+        }
+
+        public boolean isBootRegion() {
+            return false;
+        }
+    }
 
     /**
      * Factory method for wrapping VM (and synthetic) stack frames with additional information, in a type
@@ -72,11 +111,18 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
     private final int position;
     private final CodeLocation codeLocation;
 
+    // TODO (mlvdv) temp only until TargetMethod class use is eliminated
+    private final TeleFixedMemoryRegion targetMethodMemoryRegion;
+
     protected TeleStackFrame(TeleVM teleVM, TeleStack teleStack, int position, StackFrame_Type stackFrame) {
         super(teleVM);
         this.stackFrame = stackFrame;
         this.teleStack = teleStack;
         this.position = position;
+
+        final TargetMethod targetMethod = stackFrame.targetMethod();
+        this.targetMethodMemoryRegion = targetMethod == null ? null :
+            new TeleFixedMemoryRegion(teleVM, "memory for TargetMethod", targetMethod.start(), targetMethod.size());
 
         CodeLocation location = null;
         Pointer instructionPointer = stackFrame.ip;
@@ -108,7 +154,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         this.codeLocation = location;
     }
 
-    public final MaxStack stack() {
+    public final TeleStack stack() {
         return teleStack;
     }
 
@@ -140,21 +186,50 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         return stackFrame.targetMethod();
     }
 
+    public final TeleFixedMemoryRegion getTargetMethodMemoryRegion() {
+        return targetMethodMemoryRegion;
+    }
+
     public boolean isSameFrame(MaxStackFrame maxStackFrame) {
-        // By default, delegate definition of "same" to the wrapped frames.
-        final TeleStackFrame otherStackFrame = (TeleStackFrame) maxStackFrame;
-        return this.stackFrame.isSameFrame(otherStackFrame.stackFrame);
+        if (maxStackFrame instanceof TeleStackFrame) {
+            // By default, delegate definition of "same" to the wrapped frames.
+            final TeleStackFrame otherStackFrame = (TeleStackFrame) maxStackFrame;
+            return this.stackFrame.isSameFrame(otherStackFrame.stackFrame);
+        }
+        return false;
     }
 
     @Override
     public String toString() {
-        return Integer.toString(position) + ":  " + description();
+        return Integer.toString(position) + ":  " + entityName();
     }
 
     static final class CompiledFrame extends TeleStackFrame<CompiledStackFrame> implements MaxStackFrame.Compiled {
 
+        private final StackFrameMemoryRegion stackFrameMemoryRegion;
+        private final String entityDescription;
+
         protected CompiledFrame(TeleVM teleVM, TeleStack teleStack, int position, CompiledStackFrame compiledStackFrame) {
             super(teleVM, teleStack, position, compiledStackFrame);
+            final String description = teleStack.thread().entityName() + " frame(" + position() + ")";
+            this.stackFrameMemoryRegion = new StackFrameMemoryRegion(teleVM, this, description, stackFrame.slotBase(), Size.fromInt(layout().frameSize()));
+            this.entityDescription = "Stack frame " + position() + " in the " + vm().entityName() + " for " + teleStack.thread().entityName();
+        }
+
+        public String entityName() {
+            return "<" + stackFrame.getClass().getSimpleName() + "> " + stackFrame.toString();
+        }
+
+        public String entityDescription() {
+            return entityDescription;
+        }
+
+        public MaxEntityMemoryRegion<MaxStackFrame> memoryRegion() {
+            return stackFrameMemoryRegion;
+        }
+
+        public boolean contains(Address address) {
+            return stackFrameMemoryRegion.contains(address);
         }
 
         public CompiledStackFrameLayout layout() {
@@ -172,10 +247,6 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         public StackBias bias() {
             return stackFrame.bias();
         }
-
-        public String description() {
-            return "<" + stackFrame.getClass().getSimpleName() + "> " + stackFrame.toString();
-        }
     }
 
     static final class NativeFrame extends TeleStackFrame<NativeStackFrame> implements MaxStackFrame.Native {
@@ -184,9 +255,21 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             super(teleVM, teleStack, position, nativeStackFrame);
         }
 
-        @Override
-        public String description() {
+        public String entityName() {
             return "<Native stack frame>  " + stackFrame.toString();
+        }
+
+        public String entityDescription() {
+            return "A stack frame discovered running unknown native code together with the " + vm().entityName();
+        }
+
+        public MaxEntityMemoryRegion<MaxStackFrame> memoryRegion() {
+            // Don't know enough
+            return null;
+        }
+
+        public boolean contains(Address address) {
+            return false;
         }
     }
 
@@ -194,6 +277,22 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         private ErrorFrame(TeleVM teleVM, TeleStack teleStack, int position, ErrorStackFrame errorStackFrame) {
             super(teleVM, teleStack, position, errorStackFrame);
+        }
+
+        public String entityName() {
+            return "<error: " + errorMessage() + ">" + stackFrame.toString();
+        }
+
+        public String entityDescription() {
+            return "A error frame created as part of a stack walking failure for the " + vm().entityName();
+        }
+
+        public MaxEntityMemoryRegion<MaxStackFrame> memoryRegion() {
+            return null;
+        }
+
+        public boolean contains(Address address) {
+            return false;
         }
 
         @Override
@@ -213,10 +312,6 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         public String errorMessage() {
             return stackFrame.errorMessage();
-        }
-
-        public String description() {
-            return "<error: " + errorMessage() + ">" + stackFrame.toString();
         }
     }
 

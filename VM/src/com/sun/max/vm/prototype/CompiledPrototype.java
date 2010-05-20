@@ -33,12 +33,12 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jdk.*;
@@ -152,10 +152,6 @@ public class CompiledPrototype extends Prototype {
         return methodActors.values();
     }
 
-    public BootstrapCompilerScheme compilerScheme() {
-        return vmConfiguration().bootCompilerScheme();
-    }
-
     public RuntimeCompilerScheme jitScheme() {
         return vmConfiguration().jitCompilerScheme();
     }
@@ -240,7 +236,7 @@ public class CompiledPrototype extends Prototype {
             }
             superClassActor = superClassActor.superClassActor;
         }
-        if (!classActor.isInterfaceActor()) {
+        if (!classActor.isInterface()) {
             // for each interface that this class implements, add this class's implementation of its methods used so far
             for (InterfaceActor interfaceActor : classActor.getAllInterfaceActors()) {
                 final ClassInfo interfaceInfo = getInfo(interfaceActor);
@@ -295,7 +291,7 @@ public class CompiledPrototype extends Prototype {
 
     private void traceNewTargetMethod(TargetMethod targetMethod) {
         if (Trace.hasLevel(2)) {
-            Trace.line(2, "new target method: " + (targetMethod.classMethodActor() == null ? targetMethod.description() : targetMethod.classMethodActor().format("%H.%n(%P)")));
+            Trace.line(2, "new target method: " + (targetMethod.classMethodActor() == null ? targetMethod.regionName() : targetMethod.classMethodActor().format("%H.%n(%P)")));
         }
     }
 
@@ -351,9 +347,10 @@ public class CompiledPrototype extends Prototype {
                 return false;
             }
         }
-        if (methodActor.isBuiltin() && !SpecialBuiltin.class.isAssignableFrom(methodActor.holder().toJava())) {
-//            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
-//            addMethods(methodActor, stubClassActor.localVirtualMethodActors(), Relationship.INTERFACE_CALL);
+        if (Actor.isDeclaredFoldable(methodActor.flags())) {
+            // All foldable methods must have their stubs precompiled in the image
+            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
+            addMethods(referrer, stubClassActor.localVirtualMethodActors(), relationship);
         }
         methodActors.put(methodActor, new Link(methodActor, referrer, relationship));
         worklist.add(methodActor);
@@ -404,16 +401,25 @@ public class CompiledPrototype extends Prototype {
 
     private static synchronized RuntimeCompilerScheme c1xCompilerScheme() {
         if (c1xCompiler == null) {
-            try {
-                // TODO: remove reflective dependency here!
-                Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
-                Constructor constructor = type.getConstructor(VMConfiguration.class);
-                c1xCompiler = (RuntimeCompilerScheme) constructor.newInstance(VMConfiguration.hostOrTarget());
-            } catch (Exception e) {
-                throw ProgramError.unexpected(e);
+            RuntimeCompilerScheme compiler = VMConfiguration.target().optCompilerScheme();
+            if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
+                compiler = VMConfiguration.target().jitCompilerScheme();
+                if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
+                    compiler = VMConfiguration.target().bootCompilerScheme();
+                    if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
+                        try {
+                            // TODO: remove reflective dependency here!
+                            Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
+                            Constructor constructor = type.getConstructor(VMConfiguration.class);
+                            compiler = (RuntimeCompilerScheme) constructor.newInstance(VMConfiguration.hostOrTarget());
+                            compiler.initialize(Phase.BOOTSTRAPPING);
+                        } catch (Exception e) {
+                            throw ProgramError.unexpected(e);
+                        }
+                    }
+                }
             }
-
-            c1xCompiler.initialize(Phase.BOOTSTRAPPING);
+            c1xCompiler = compiler;
         }
         return c1xCompiler;
     }
@@ -490,55 +496,68 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "compile: " + worklist.size() + " new methods");
         final CodeRegion region = Code.bootCodeRegion;
         final Address oldMark = region.getAllocationMark();
-        int submittedCompilations = totalCompilations;
         final int initialNumberOfCompilations = totalCompilations;
-
-        final ExecutorService compilationService = Executors.newFixedThreadPool(numberOfCompilerThreads);
-        final CompletionService<TargetMethod> compilationCompletionService = new ExecutorCompletionService<TargetMethod>(compilationService);
         final CompilationScheme compilationScheme = vmConfiguration().compilationScheme();
 
-        while (true) {
+        if (numberOfCompilerThreads == 1) {
             while (!worklist.isEmpty()) {
                 final MethodActor methodActor = worklist.removeFirst();
                 if (hasCode(methodActor)) {
-                    ++submittedCompilations;
-                    compilationCompletionService.submit(new Callable<TargetMethod>() {
-                        public TargetMethod call() throws Exception {
-                            try {
-                                RuntimeCompilerScheme compiler = recommendedCompiler.get(methodActor);
-                                TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, compiler);
-                                assert result != null;
-                                return result;
-                            } catch (Throwable error) {
-                                throw reportCompilationError(methodActor, error);
+                    RuntimeCompilerScheme compiler = recommendedCompiler.get(methodActor);
+                    TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, compiler);
+                    processNewTargetMethod(targetMethod);
+                }
+            }
+        } else {
+            int submittedCompilations = totalCompilations;
+
+            final ExecutorService compilationService = Executors.newFixedThreadPool(numberOfCompilerThreads);
+            final CompletionService<TargetMethod> compilationCompletionService = new ExecutorCompletionService<TargetMethod>(compilationService);
+
+            while (true) {
+                while (!worklist.isEmpty()) {
+                    final MethodActor methodActor = worklist.removeFirst();
+                    if (hasCode(methodActor)) {
+                        ++submittedCompilations;
+                        compilationCompletionService.submit(new Callable<TargetMethod>() {
+                            public TargetMethod call() throws Exception {
+                                try {
+                                    RuntimeCompilerScheme compiler = recommendedCompiler.get(methodActor);
+                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, compiler);
+                                    assert result != null;
+                                    return result;
+                                } catch (Throwable error) {
+                                    throw reportCompilationError(methodActor, error);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
+                }
+                if (totalCompilations >= submittedCompilations) {
+                    if (!worklist.isEmpty()) {
+                        continue;
+                    }
+                    break;
+                }
+                try {
+                    final TargetMethod targetMethod = compilationCompletionService.take().get();
+                    assert targetMethod != null;
+                    processNewTargetMethod(targetMethod);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException executionException) {
+                    compilationService.shutdownNow();
+                    ProgramError.unexpected(executionException.getCause());
+                }
+                ++totalCompilations;
+                if (totalCompilations % 200 == 0) {
+                    Trace.line(1, "compiled: " + totalCompilations + " (" + methodActors.length() + " methods)");
                 }
             }
-            if (totalCompilations >= submittedCompilations) {
-                if (!worklist.isEmpty()) {
-                    continue;
-                }
-                break;
-            }
-            try {
-                final TargetMethod targetMethod = compilationCompletionService.take().get();
-                assert targetMethod != null;
-                processNewTargetMethod(targetMethod);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException executionException) {
-                compilationService.shutdownNow();
-                ProgramError.unexpected(executionException.getCause());
-            }
-            ++totalCompilations;
-            if (totalCompilations % 200 == 0) {
-                Trace.line(1, "compiled: " + totalCompilations + " (" + methodActors.length() + " methods)");
-            }
+
+            compilationService.shutdown();
         }
 
-        compilationService.shutdown();
         final int newCompilations = totalCompilations - initialNumberOfCompilations;
         Trace.end(1, "new compilations: " + newCompilations);
         if (newCompilations == 0) {
@@ -573,15 +592,19 @@ public class CompiledPrototype extends Prototype {
         return ProgramError.unexpected("Error occurred while compiling " + classMethodActor, error);
     }
 
-    public void compileUnsafeMethods() {
-        Trace.begin(1, "compiling unsafe methods");
-        for (ClassMethodActor classMethodActor : UNSAFE.Static.methods()) {
-            if (!(classMethodActor.isNative() && classMethodActor.isVmEntryPoint())) {
-                worklist.add(classMethodActor);
-            }
+    public void compileFoldableMethods() {
+        Trace.begin(1, "compiling foldable methods");
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+            classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
+                public void run(ClassMethodActor classMethodActor) {
+                    if (classMethodActor.isDeclaredFoldable()) {
+                        add(classMethodActor, null, null);
+                    }
+                }
+            });
         }
         compileWorklist();
-        Trace.end(1, "compiling unsafe methods");
+        Trace.end(1, "compiling foldable methods");
     }
 
     private boolean hasCode(MethodActor methodActor) {
@@ -616,19 +639,15 @@ public class CompiledPrototype extends Prototype {
     private void linkNonVirtualCalls() {
         Trace.begin(1, "linkNonVirtualCalls");
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
-            if (targetMethod.classMethodActor() != null) {
-                if (!(targetMethod instanceof Adapter)) {
-                    ClassMethodActor classMethodActor = targetMethod.classMethodActor;
+            if (!(targetMethod instanceof Adapter)) {
+                Adapter adapter = null;
+                ClassMethodActor classMethodActor = targetMethod.classMethodActor;
+                if (classMethodActor != null) {
                     AdapterGenerator gen = AdapterGenerator.forCallee(classMethodActor, targetMethod.abi().callEntryPoint);
-                    Adapter adapter = gen != null ? gen.make(classMethodActor) : null;
-                    if (!targetMethod.linkDirectCalls(adapter)) {
-                        ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
-                    }
+                    adapter = gen != null ? gen.make(classMethodActor) : null;
                 }
-            } else {
-                // Link at least direct calls in method prologue
-                if (!targetMethod.linkDirectCallsInPrologue()) {
-                    ProgramError.unexpected("did not link all direct calls in prologue - method: " + targetMethod);
+                if (!targetMethod.linkDirectCalls(adapter)) {
+                    ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
                 }
             }
         }

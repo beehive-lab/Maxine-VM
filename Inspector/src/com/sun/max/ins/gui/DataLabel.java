@@ -29,7 +29,7 @@ import com.sun.max.vm.stack.*;
 
 /**
  * A selectable, lightweight, label for basic kinds of data
- * that we don't know much about.
+ * about which little is known.
  *
  * @author Michael Van De Vanter
  */

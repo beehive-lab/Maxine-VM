@@ -21,6 +21,7 @@
 package com.sun.max.memory;
 
 import java.lang.management.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
@@ -29,77 +30,105 @@ import com.sun.max.unsafe.*;
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
+ * @author Doug Simon
  */
-public interface MemoryRegion {
+public class MemoryRegion {
 
     /**
-     * @return address of the first location in the region.
+     * An optional, short string that describes the role being played by the region, useful for debugging.
      */
-    @INLINE(override = true)
-    Address start();
+    @INSPECTED
+    private String regionName = "<unnamed>";
+
+    @INSPECTED
+    protected Address start;
+
+    @INSPECTED
+    protected Size size;
+
+    public MemoryRegion() {
+        start = Address.zero();
+        size = Size.zero();
+    }
+
+    public MemoryRegion(Size size) {
+        start = Address.zero();
+        this.size = size;
+    }
+
+    public MemoryRegion(Address start, Size size) {
+        this.start = start;
+        this.size = size;
+    }
+
+    public MemoryRegion(MemoryRegion memoryRegion) {
+        start = memoryRegion.start();
+        size = memoryRegion.size();
+    }
+
+    public MemoryRegion(String regionName) {
+        this.regionName = regionName;
+        start = Address.zero();
+        size = Size.zero();
+    }
+
+    @INLINE
+    public final Address start() {
+        return start;
+    }
+
+    public void setStart(Address start) {
+        this.start = start;
+    }
+
+    public final Size size() {
+        return size;
+    }
+
+    public final void setSize(Size size) {
+        this.size = size;
+    }
+
+    public final void setEnd(Address end) {
+        size = end.minus(start).asSize();
+    }
+
+    public final String regionName() {
+        return regionName;
+    }
 
     /**
-     * @return size of the region.
+     * Sets the name that describes role being played by this region.
      */
-    Size size();
+    public final void setRegionName(String regionName) {
+        this.regionName = regionName;
+    }
 
-    /**
-     * @return address just past the last location in the region.
-     */
-    Address end();
+    public final Address end() {
+        return start().plus(size());
+    }
 
-    /**
-     * @return does the region contain the address.
-     */
-    boolean contains(Address address);
+    public final boolean contains(Address address) {
+        return address.greaterEqual(start()) && address.lessThan(end());
+    }
 
-    /**
-     * @return does the region have any locations in common with another region.
-     */
-    boolean overlaps(MemoryRegion memoryRegion);
+    public final boolean overlaps(MemoryRegion memoryRegion) {
+        return start().lessThan(memoryRegion.end()) && end().greaterThan(memoryRegion.start());
+    }
 
-    /**
-     * @return does the region have the same bounds as another region.
-     * @see Util#equal(MemoryRegion, MemoryRegion)
-     */
-    boolean sameAs(MemoryRegion memoryRegion);
-
-    /**
-     * @return an optional, short string that describes the role being played by the region, useful for debugging.
-     */
-    String description();
-
-    /**
-     * @return an @see MemoryUsage object for this region or null if not available.
-     */
-    MemoryUsage getUsage();
-
-    public static class Util {
-        /**
-         * Gets a string representation for a memory region composed of its {@linkplain MemoryRegion#description() description}
-         * and {@linkplain MemoryRegion#start()} - {@linkplain MemoryRegion#end()} address range.
-         */
-        public static String asString(MemoryRegion memoryRegion) {
-            if (memoryRegion == null) {
-                return "null";
-            }
-            final StringBuilder sb = new StringBuilder();
-            if (memoryRegion.description() != null) {
-                sb.append(memoryRegion.description()).append(":");
-            }
-            sb.append("[").append(memoryRegion.start().toHexString()).append(" - ").append(memoryRegion.end().minus(1).toHexString()).append("]");
-            return sb.toString();
+    public final boolean sameAs(MemoryRegion otherMemoryRegion) {
+        if (otherMemoryRegion == null) {
+            return false;
         }
+        return start.equals(otherMemoryRegion.start) && size.equals(otherMemoryRegion.size);
+    }
 
-        public static boolean equal(MemoryRegion left, MemoryRegion right) {
-            if (left == null) {
-                return right == null;
-            }
-            if (right == null) {
-                return false;
-            }
-            return left.start().equals(right.start()) && left.size().equals(right.size());
+    public MemoryUsage getUsage() {
+        return null;
+    }
 
-        }
+    @Override
+    public String toString() {
+        return "[" + start.toHexString() + " - " + end().minus(1).toHexString() + "]";
     }
 }

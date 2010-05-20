@@ -112,9 +112,8 @@ public class JitTracer extends Tracer {
 
         _recorder.record(methodActor, bytecodePosition, stackPointer);
 
-        return Address.zero();
         */
-        return null;
+        return Address.zero();
     }
 
     /**

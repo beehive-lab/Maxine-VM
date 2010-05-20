@@ -48,7 +48,7 @@ public class TeleReferenceClassActor extends TeleClassActor implements ClassProv
 
     public ClassProvider getSuperClass() {
         if (this.classActor().superClassActor != null) {
-            return (ClassProvider) teleVM().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
+            return (ClassProvider) vm().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
         }
         return null;
     }

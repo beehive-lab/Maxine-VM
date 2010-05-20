@@ -20,16 +20,19 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>StoreIndexed</code> instruction represents a write to an array element.
+ * The {@code StoreIndexed} instruction represents a write to an array element.
  *
  * @author Ben L. Titzer
  */
 public final class StoreIndexed extends AccessIndexed {
 
+    /**
+     * The value to store.
+     */
     Value value;
 
     /**
@@ -41,8 +44,8 @@ public final class StoreIndexed extends AccessIndexed {
      * @param value the value to store into the array
      * @param stateBefore the state before executing this instruction
      */
-    public StoreIndexed(Value array, Value index, Value length, CiKind elementType, Value value, ValueStack stateBefore) {
-        super(array, index, length, elementType, stateBefore);
+    public StoreIndexed(Value array, Value index, Value length, CiKind elementType, Value value, FrameState stateBefore) {
+        super(CiKind.Void, array, index, length, elementType, stateBefore);
         this.value = value;
         setFlag(Flag.LiveStore);
     }
@@ -57,7 +60,7 @@ public final class StoreIndexed extends AccessIndexed {
 
     /**
      * Checks if this instruction needs a write barrier.
-     * @return <code>true</code> if this instruction needs a write barrier
+     * @return {@code true} if this instruction needs a write barrier
      */
     public boolean needsWriteBarrier() {
         return !checkFlag(Flag.NoWriteBarrier);
@@ -65,7 +68,7 @@ public final class StoreIndexed extends AccessIndexed {
 
     /**
      * Checks if this instruction needs a store check.
-     * @return <code>true</code> if this instruction needs a store check
+     * @return {@code true} if this instruction needs a store check
      */
     public boolean needsStoreCheck() {
         return !checkFlag(Flag.NoStoreCheck);

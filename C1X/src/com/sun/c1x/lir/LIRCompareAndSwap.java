@@ -20,8 +20,10 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.cri.ci.*;
+
 /**
- * The <code>LIRCompareAndSwap</code> class definition.
+ * The {@code LIRCompareAndSwap} class definition.
  *
  * @author Marcelo Cintra
  *
@@ -30,24 +32,21 @@ public class LIRCompareAndSwap extends LIRInstruction {
 
     /**
      * Constructs a new LIRCompareAndSwap instruction.
-     *
      * @param addr
-     * @param cmpValue
+     * @param expectedValue
      * @param newValue
-     * @param tmp1
-     * @param tmp2
      */
-    public LIRCompareAndSwap(LIROpcode opcode, LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand tmp1, LIROperand tmp2) {
-        super(opcode, LIROperand.IllegalLocation, null, false, null, 0, 2, addr, cmpValue, newValue);
+    public LIRCompareAndSwap(LIROpcode opcode, CiAddress addr, CiValue expectedValue, CiValue newValue) {
+        super(opcode, CiValue.IllegalValue, null, false, null, 0, 2, addr, expectedValue, newValue);
     }
 
     /**
-     * Gets the address of this class.
+     * Gets the address of compare and swap.
      *
      * @return the address
      */
-    public LIROperand address() {
-        return operand(0);
+    public CiAddress address() {
+        return (CiAddress) operand(0);
     }
 
     /**
@@ -55,7 +54,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      *
      * @return the cmpValue
      */
-    public LIROperand cmpValue() {
+    public CiValue exepectedValue() {
         return operand(1);
     }
 
@@ -64,7 +63,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      *
      * @return the newValue
      */
-    public LIROperand newValue() {
+    public CiValue newValue() {
         return operand(2);
     }
 
