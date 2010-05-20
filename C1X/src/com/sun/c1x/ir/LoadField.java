@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>LoadField</code> instruction represents a read of a static or instance field.
+ * The {@code LoadField} instruction represents a read of a static or instance field.
  *
  * @author Ben L. Titzer
  */
@@ -38,8 +38,8 @@ public final class LoadField extends AccessField {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public LoadField(Value object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
-        super(object, field, isStatic, stateBefore, isLoaded, cpi, constantPool);
+    public LoadField(Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded) {
+        super(field.kind().stackKind(), object, field, isStatic, stateBefore, isLoaded);
     }
 
     /**
@@ -54,12 +54,13 @@ public final class LoadField extends AccessField {
     /**
      * Gets the exact type of the field being accessed. If the field type is
      * a primitive array or an instance class and the class is loaded and final,
-     * then the exact type is the same as the declared type. Otherwise it is <code>null</code>
-     * @return the exact type of the field if known; <code>null</code> otherwise
+     * then the exact type is the same as the declared type. Otherwise it is {@code null}
+     * @return the exact type of the field if known; {@code null} otherwise
      */
     @Override
     public RiType exactType() {
-        return declaredType().exactType();
+        RiType declaredType = declaredType();
+        return declaredType.isResolved() ? declaredType.exactType() : null;
     }
 
     /**

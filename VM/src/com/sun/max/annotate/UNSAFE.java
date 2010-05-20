@@ -22,17 +22,9 @@ package com.sun.max.annotate;
 
 import java.lang.annotation.*;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.prototype.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Methods with this annotation must be compiled with the bootstrap compiler, not the JIT.
@@ -43,7 +35,7 @@ import com.sun.max.vm.type.*;
  * before the code makes sense in the target VM.
  * <p>
  * Most of these methods are recognized automatically.
- * Only those not captured by the {@linkplain Static#determineMethods() below algorithm}
+ * Only those not captured during {@linkplain Intrinsics#run() intrinsification}
  * need to be annotated.
  * <p>
  * Some other annotations imply UNSAFE:
@@ -51,14 +43,12 @@ import com.sun.max.vm.type.*;
  * <li>{@link BUILTIN}</li>
  * <li>{@link C_FUNCTION}</li>
  * <li>{@link VM_ENTRY_POINT}</li>
+ * <li>{@link ACCESSOR}</li>
  * <li>{@link SUBSTITUTE}: the substitutee is unsafe</li>
  * <li>{@link LOCAL_SUBSTITUTION}: the substitutee is unsafe</li>
  * </ul>
  * <p>
  * However, some must be pointed out manually with this annotation.
- * In addition to the above, any method that calls a method with this annotation is regarded as unsafe, too.
- * But this property is not transitive.
- * It only applies when a method manually declared UNSAFE is found.
  *
  * @see ClassfileReader
  *
@@ -67,186 +57,4 @@ import com.sun.max.vm.type.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
 public @interface UNSAFE {
-
-    @HOSTED_ONLY
-    public final class Static {
-
-        private Static() {
-        }
-
-        private static boolean isUnsafeType(TypeDescriptor type, ClassActor classActor, ClassLoader classLoader) {
-            if (KindTypeDescriptor.isWord(type)) {
-                return true;
-            }
-            if (type.isResolvableWithoutClassLoading(classActor, classLoader)) {
-                return Accessor.class.isAssignableFrom(type.resolve(classLoader).toJava());
-            }
-            return false;
-        }
-
-        private static boolean isUnsafeSignature(SignatureDescriptor descriptor, ClassActor classActor, ClassLoader classLoader) {
-            if (isUnsafeType(descriptor.resultDescriptor(), classActor, classLoader)) {
-                return true;
-            }
-            for (int i = 0; i < descriptor.numberOfParameters(); i++) {
-                if (isUnsafeType(descriptor.parameterDescriptorAt(i), classActor, classLoader)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private static boolean hasUnsafeSignature(MethodActor methodActor, ClassActor classActor, ClassLoader classLoader) {
-            if (methodActor instanceof VirtualMethodActor && isUnsafeType(methodActor.holder().typeDescriptor, classActor, classLoader)) {
-                return true;
-            }
-            return isUnsafeSignature(methodActor.descriptor(), classActor, classLoader);
-        }
-
-        /**
-         * Find out whether the given method must be compiled by the bootstrap compiler only, without resolving any constant pool constants.
-         */
-        private static boolean isUnsafe(ClassMethodActor classMethodActor) {
-            if (classMethodActor.isUnsafe()) {
-                return true;
-            }
-            final CodeAttribute codeAttribute;
-            try {
-                codeAttribute = classMethodActor.compilee().codeAttribute();
-            } catch (HostOnlyMethodError hostOnlyMethodError) {
-                // a reference to a @HOSTED_ONLY method - do nothing
-                return false;
-            }
-
-            if (codeAttribute == null) {
-                return false;
-            }
-            if (classMethodActor.isCFunction() || classMethodActor.isVmEntryPoint()) {
-                return true;
-            }
-            if (classMethodActor.isClassInitializer()) { // TODO: check whether the latter is always correct
-                return false;
-            }
-            final ClassActor classActor = classMethodActor.holder();
-            final ClassLoader classLoader = classActor.classLoader;
-            if (hasUnsafeSignature(classMethodActor, classActor, classLoader)) {
-                return true;
-            }
-
-            final ConstantPool pool = codeAttribute.constantPool;
-            final MutableInnerClassGlobal<Boolean> isUnsafe = new MutableInnerClassGlobal<Boolean>(false);
-
-            final BytecodeVisitor bytecodeVisitor = new BytecodeAdapter() {
-                private void checkField(int index) {
-                    final FieldRefConstant fieldRefConstant = (FieldRefConstant) pool.at(index);
-                    if (isUnsafeType(fieldRefConstant.type(pool), classActor, classLoader)) {
-                        isUnsafe.setValue(true);
-                    }
-                }
-
-                @Override
-                protected void getfield(int index) {
-                    checkField(index);
-                }
-
-                @Override
-                protected void putfield(int index) {
-                    checkField(index);
-                }
-
-                @Override
-                protected void getstatic(int index) {
-                    checkField(index);
-                }
-
-                @Override
-                protected void putstatic(int index) {
-                    checkField(index);
-                }
-
-                private void checkMethod(int index, boolean hasReceiver) {
-                    final MethodRefConstant methodRefConstant = (MethodRefConstant) pool.at(index);
-                    if (isUnsafeSignature(methodRefConstant.signature(pool), classActor, classLoader)) {
-                        isUnsafe.setValue(true);
-                    }
-                    if (hasReceiver && isUnsafeType(methodRefConstant.holder(pool), classActor, classLoader)) {
-                        isUnsafe.setValue(true);
-                    }
-                    if (methodRefConstant.holder(pool).toJavaString().startsWith(maxPackageName) && methodRefConstant.isResolvableWithoutClassLoading(pool)) {
-                        try {
-                            final MethodActor methodActor = methodRefConstant.resolve(pool, index);
-                            if (methodActor.isUnsafe()) {
-                                isUnsafe.setValue(true);
-                            }
-                        } catch (HostOnlyMethodError hostOnlyMethodError) {
-                            // a reference to a @HOSTED_ONLY method - do nothing
-                        }
-                    }
-                }
-
-                @Override
-                protected void invokestatic(int index) {
-                    checkMethod(index, false);
-                }
-
-                @Override
-                protected void invokespecial(int index) {
-                    checkMethod(index, true);
-                }
-
-                @Override
-                protected void invokevirtual(int index) {
-                    checkMethod(index, true);
-                }
-
-                @Override
-                protected void invokeinterface(int index, int count) {
-                    checkMethod(index, true);
-                }
-
-            };
-            final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodeVisitor);
-            bytecodeScanner.scan(classMethodActor);
-            return isUnsafe.value();
-        }
-
-        private static final AppendableSequence<ClassMethodActor> list = new ArrayListSequence<ClassMethodActor>();
-
-        public static Sequence<ClassMethodActor> methods() {
-            return list;
-        }
-
-        private static void determine(ClassMethodActor classMethodActor) {
-            if (isUnsafe(classMethodActor)) {
-                list.append(classMethodActor);
-            }
-        }
-
-        private static final String maxPackageName = new com.sun.max.Package().name();
-        private static final String asmPackageName = new com.sun.max.vm.asm.Package().name();
-
-        /**
-         * Find all unsafe methods and mark them with the UNSAFE flag.
-         * As a side-effect add them to the list for use of the {@link CompiledPrototype}.
-         */
-        public static void determineMethods() {
-            Trace.begin(1, "determining unsafe methods");
-            for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
-
-                if (classActor.packageName().startsWith(maxPackageName) && !classActor.packageName().startsWith(asmPackageName)) {
-                    for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {
-                        determine(classMethodActor);
-                    }
-                    for (ClassMethodActor classMethodActor : classActor.localVirtualMethodActors()) {
-                        determine(classMethodActor);
-                    }
-                }
-            }
-            // Only now set the flag, because it is NOT transitive that a method that calls another unsafe one is also unsafe:
-            for (ClassMethodActor classMethodActor : list) {
-                classMethodActor.beUnsafe();
-            }
-            Trace.end(1, "determining unsafe methods [" + list.length() + " methods]");
-        }
-    }
 }

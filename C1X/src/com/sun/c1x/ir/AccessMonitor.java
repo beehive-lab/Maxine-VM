@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>AccessMonitor</code> instruction is the base class of both monitor acquisition and release.
+ * The {@code AccessMonitor} instruction is the base class of both monitor acquisition and release.
  *
  * @author Ben L. Titzer
  */
@@ -39,7 +39,7 @@ public abstract class AccessMonitor extends StateSplit {
      * @param stateBefore the state before executing the monitor operation
      * @param lockNumber the number of the lock being acquired
      */
-    public AccessMonitor(Value object, ValueStack stateBefore, int lockNumber) {
+    public AccessMonitor(Value object, FrameState stateBefore, int lockNumber) {
         super(CiKind.Illegal, stateBefore);
         this.object = object;
         this.lockNumber = lockNumber;

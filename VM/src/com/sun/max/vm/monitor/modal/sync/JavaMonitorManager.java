@@ -372,7 +372,8 @@ public class JavaMonitorManager {
      * @param monitor the monitor whose binding to protect
      */
     public static void protectBinding(JavaMonitor monitor) {
-        VmThread.current().setProtectedMonitor(monitor);
+        VmThread current = VmThread.current();
+        current.protectedMonitor = monitor;
     }
 
     /**
@@ -405,7 +406,7 @@ public class JavaMonitorManager {
 
     private static class ProtectedMonitorGatherer implements Procedure<VmThread> {
         public void run(VmThread thread) {
-            final JavaMonitor monitor = thread.protectedMonitor();
+            final JavaMonitor monitor = thread.protectedMonitor;
             if (monitor != null) {
                 final ManagedMonitor managedMonitor = (ManagedMonitor) monitor;
                 if (managedMonitor.bindingProtection() == BindingProtection.UNPROTECTED) {

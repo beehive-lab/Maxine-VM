@@ -30,7 +30,7 @@ import com.sun.max.vm.runtime.*;
  * It also provides allocation methods that are expected to be for small quantities
  * of memory (or quantities that are not multiple of a page) that will be satisfied
  * by the native allocation library, i.e. malloc/free.
- * Large amounts of memory should be allocated using the @see VirtualMemory class.
+ * Large amounts of memory should be allocated using the {@link VirtualMemory} class.
  *
  * @author Bernd Mathiske
  */

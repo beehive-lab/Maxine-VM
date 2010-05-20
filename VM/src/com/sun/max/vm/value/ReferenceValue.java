@@ -22,15 +22,16 @@ package com.sun.max.vm.value;
 
 import java.io.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
  * Abstract type for different boxed representations of object references (and null).
- * 
+ *
  * @see Reference
- * 
+ *
  * @author Bernd Mathiske
  * @author Athul Acharya
  */
@@ -64,4 +65,8 @@ public abstract class ReferenceValue extends Value<ReferenceValue> {
 
     public abstract ClassActor getClassActor();
 
+    @Override
+    public CiConstant asCiConstant() {
+        return CiConstant.forObject(asObject());
+    }
 }

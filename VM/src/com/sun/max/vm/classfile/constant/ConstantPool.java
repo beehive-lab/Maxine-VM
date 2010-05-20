@@ -20,14 +20,19 @@
  */
 package com.sun.max.vm.classfile.constant;
 
-import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
-import com.sun.max.program.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
+
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
+import com.sun.max.program.*;
+import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -41,7 +46,7 @@ import com.sun.max.vm.value.*;
  *
  * @see <a href="http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#20080">4.4 The Constant Pool</a>
  */
-public final class ConstantPool {
+public final class ConstantPool implements RiConstantPool {
 
     /**
      * The initial capacity of a {@linkplain #ConstantPool(ClassLoader) generated} pool.
@@ -190,7 +195,7 @@ public final class ConstantPool {
      */
     int length;
 
-    private final IntHashMap<ResolutionGuard> guards;
+    private final IntHashMap<ResolutionGuard.InPool> guards;
     private final ClassLoader classLoader;
 
     /**
@@ -355,7 +360,7 @@ public final class ConstantPool {
         }
 
         this.constants = poolConstants;
-        guards = new IntHashMap<ResolutionGuard>(numberOfResolvableConstants);
+        guards = new IntHashMap<ResolutionGuard.InPool>(numberOfResolvableConstants);
 
         // Pass 3: second verification pass - checks the strings are of the right format
         i = 1;
@@ -396,7 +401,7 @@ public final class ConstantPool {
     public ConstantPool(ClassLoader classLoader) {
         this.classLoader = classLoader;
         this.constants = new PoolConstant[INITIAL_CAPACITY];
-        this.guards = new IntHashMap<ResolutionGuard>();
+        this.guards = new IntHashMap<ResolutionGuard.InPool>();
 
         // Index 0 is always invalid
         this.constants[length++] = InvalidConstant.VALUE;
@@ -417,7 +422,7 @@ public final class ConstantPool {
         }
         this.constants = constants;
         this.length = length;
-        this.guards = new IntHashMap<ResolutionGuard>(length);
+        this.guards = new IntHashMap<ResolutionGuard.InPool>(length);
     }
 
     /**
@@ -426,11 +431,11 @@ public final class ConstantPool {
      *
      * @param index the index of a resolvable entry in this constant pool
      */
-    public ResolutionGuard makeResolutionGuard(int index, ResolutionSnippet snippet) {
+    public ResolutionGuard.InPool makeResolutionGuard(int index, ResolutionSnippet snippet) {
         synchronized (guards) {
             assert (snippet.serial() & 0xffff) == snippet.serial();
             final int key = snippet.serial() << 16 | index;
-            ResolutionGuard guard = guards.get(key);
+            ResolutionGuard.InPool guard = guards.get(key);
             if (guard == null) {
                 guard = snippet.createGuard(this, index);
                 guards.put(key, guard);
@@ -757,4 +762,145 @@ public final class ConstantPool {
         return "ConstantPool[" + holder() + "]";
     }
 
+    // --- Implementation of RiConstantPool ---
+
+    public MethodActor resolveInvokeVirtual(int cpi) {
+        final VirtualMethodActor virtualMethodActor = classMethodAt(cpi).resolveVirtual(this, cpi);
+        if (virtualMethodActor.isInitializer()) {
+            throw new VerifyError("<init> must be invoked with invokespecial");
+        }
+        return virtualMethodActor;
+    }
+
+    public static boolean isSpecial(MethodActor declaredMethod, ClassActor currentClassActor) {
+        final ClassActor holder = declaredMethod.holder();
+        return (currentClassActor.flags() & Actor.ACC_SUPER) != 0 && currentClassActor != holder && currentClassActor.hasSuperClass(holder) && !declaredMethod.isInstanceInitializer();
+    }
+
+    public MethodActor resolveInvokeSpecial(int cpi) {
+        MethodActor methodActor = classMethodAt(cpi).resolveVirtual(this, cpi);
+        if (isSpecial(methodActor, holder())) {
+            methodActor = holder().superClassActor.findVirtualMethodActor(methodActor);
+            if (methodActor == null) {
+                throw new AbstractMethodError();
+            }
+        }
+        if (methodActor.isAbstract()) {
+            throw new AbstractMethodError();
+        }
+        return methodActor;
+    }
+
+    public MethodActor resolveInvokeInterface(int cpi) {
+        final InterfaceMethodRefConstant methodConstant = interfaceMethodAt(cpi);
+        final MethodActor declaredMethod = methodConstant.resolve(this, cpi);
+        if (!(declaredMethod instanceof InterfaceMethodActor)) {
+            throw new InternalError("Use of INVOKEINTERFACE for a method in java.lang.Object should have been rewritten");
+        }
+        return declaredMethod;
+    }
+
+    public MethodActor resolveInvokeStatic(int cpi) {
+        final StaticMethodActor staticMethodActor = classMethodAt(cpi).resolveStatic(this, cpi);
+        if (staticMethodActor.isInitializer()) {
+            throw new VerifyError("<init> must be invoked with invokespecial");
+        }
+        return staticMethodActor;
+    }
+
+    public RiField lookupField(int cpi) {
+        return fieldFrom(fieldAt(cpi), cpi);
+    }
+
+    public RiMethod lookupMethod(int cpi) {
+        return methodFrom(methodAt(cpi), cpi);
+    }
+
+    public ClassActor resolveType(int cpi) {
+        return classAt(cpi).resolve(this, cpi);
+    }
+
+    public RiType lookupType(int cpi) {
+        return typeFrom(classAt(cpi), cpi);
+    }
+
+    public RiSignature lookupSignature(int cpi) {
+        return SignatureDescriptor.create(utf8At(cpi).string);
+    }
+
+    public Object lookupConstant(int cpi) {
+        switch (tagAt(cpi)) {
+            case CLASS: {
+                RiType type = typeFrom(classAt(cpi), cpi);
+                if (type.isResolved()) {
+                    return CiConstant.forObject(type.javaClass());
+                }
+                return type;
+            }
+            case INTEGER: {
+                return CiConstant.forInt(intAt(cpi));
+            }
+            case FLOAT: {
+                return CiConstant.forFloat(floatAt(cpi));
+            }
+            case STRING: {
+                return CiConstant.forObject(stringAt(cpi));
+            }
+            case LONG: {
+                return CiConstant.forLong(longAt(cpi));
+            }
+            case DOUBLE: {
+                return CiConstant.forDouble(doubleAt(cpi));
+            }
+            default:
+                throw ProgramError.unexpected("unknown constant type");
+        }
+    }
+
+    private RiField fieldFrom(FieldRefConstant constant, int cpi) {
+        if (constant.isResolved() || attemptResolution(constant)) {
+            // the resolution can occur without side effects
+            try {
+                return constant.resolve(this, cpi);
+            } catch (HostOnlyFieldError hostOnlyFieldError) {
+                // Treat as unresolved
+            }
+        }
+        RiType holder = UnresolvedType.toRiType(constant.holder(this), holder());
+        RiType type = UnresolvedType.toRiType(constant.type(this), holder());
+        String name = constant.name(this).string;
+        return new UnresolvedField(this, cpi, holder, name, type);
+    }
+
+    private RiMethod methodFrom(MethodRefConstant constant, int cpi) {
+        if (constant.isResolved() || attemptResolution(constant)) {
+            // the resolution can occur without side effects
+            try {
+                return constant.resolve(this, cpi);
+            } catch (HostOnlyMethodError hostOnlyMethodError) {
+                // Treat as unresolved
+            }
+        }
+        RiType holder = UnresolvedType.toRiType(constant.holder(this), holder());
+        RiSignature signature = constant.signature(this);
+        String name = constant.name(this).string;
+
+        return new UnresolvedMethod(this, cpi, holder, name, signature);
+    }
+
+    private RiType typeFrom(ClassConstant constant, int cpi) {
+        if (constant.isResolved() || attemptResolution(constant)) {
+            // the resolution can occur without side effects
+            return constant.resolve(this, cpi);
+        }
+        return new UnresolvedType.InPool(constant.typeDescriptor(), this, cpi);
+    }
+
+    private boolean attemptResolution(ResolvableConstant constant) {
+        return constant.isResolvableWithoutClassLoading(this);
+    }
+
+    public CiConstant encoding() {
+        return CiConstant.forObject(this);
+    }
 }

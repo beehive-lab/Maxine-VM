@@ -20,14 +20,14 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>CheckCast</code> instruction represents a checkcast bytecode.
+ * The {@code CheckCast} instruction represents a {@link Bytecodes#CHECKCAST}.
  *
  * @author Ben L. Titzer
  */
@@ -35,11 +35,11 @@ public final class CheckCast extends TypeCheck {
 
     /**
      * Creates a new CheckCast instruction.
-     * @param targetClass the class being casted to
+     * @param targetClass the class being cast to
      * @param object the instruction producing the object
      * @param stateBefore the state before the cast
      */
-    public CheckCast(RiType targetClass, Value targetClassInstruction, Value object, ValueStack stateBefore) {
+    public CheckCast(RiType targetClass, Value targetClassInstruction, Value object, FrameState stateBefore) {
         super(targetClass, targetClassInstruction, object, CiKind.Object, stateBefore);
         initFlag(Flag.NonNull, object.isNonNull());
     }
@@ -59,7 +59,7 @@ public final class CheckCast extends TypeCheck {
      */
     @Override
     public RiType exactType() {
-        return targetClass.exactType();
+        return targetClass.isResolved() ? targetClass.exactType() : null;
     }
 
     /**
@@ -73,7 +73,7 @@ public final class CheckCast extends TypeCheck {
 
     @Override
     public int valueNumber() {
-        return targetClass.isLoaded() ? Util.hash1(Bytecodes.CHECKCAST, object) : 0;
+        return targetClass.isResolved() ? Util.hash1(Bytecodes.CHECKCAST, object) : 0;
     }
 
     @Override

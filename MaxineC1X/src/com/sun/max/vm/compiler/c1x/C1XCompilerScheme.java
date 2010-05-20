@@ -21,9 +21,10 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.xir.*;
+import com.sun.c1x.target.amd64.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
@@ -72,27 +73,34 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            if (MaxineVM.isHosted()) {
-                VMOptions.addFieldOptions("-C1X:", C1XOptions.class);
-            }
-            // create the RiRuntime object passed to C1X
-            c1xRuntime = new MaxRiRuntime(this);
-            VMConfiguration configuration = vmConfiguration();
-            // create the CiTarget object passed to C1X
-            MaxRiRegisterConfig config = new MaxRiRegisterConfig(configuration);
-            InstructionSet isa = configuration.platform().processorKind.instructionSet;
-            CiArchitecture arch = CiArchitecture.findArchitecture(isa.name().toLowerCase());
-            TargetABI<?, ?> targetABI = configuration.targetABIsScheme().optimizedJavaABI;
+        if (MaxineVM.isHosted()) {
+            if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+                if (MaxineVM.isHosted()) {
+                    VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.helpMap);
+                }
+                // create the RiRuntime object passed to C1X
+                c1xRuntime = new MaxRiRuntime(this);
+                VMConfiguration configuration = vmConfiguration();
+                // create the CiTarget object passed to C1X
+                MaxRiRegisterConfig config = new MaxRiRegisterConfig(configuration);
+                InstructionSet isa = configuration.platform().processorKind.instructionSet;
+                CiArchitecture arch;
+                switch (isa) {
+                    case AMD64:
+                        arch = new AMD64();
+                        break;
+                    default:
+                        throw FatalError.unimplemented();
+                }
 
-            c1xTarget = new CiTarget(arch, config, configuration.platform.pageSize, true);
-            c1xTarget.stackAlignment = targetABI.stackFrameAlignment;
-            c1xXirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
-            c1xCompiler = new C1XCompiler(c1xRuntime, c1xTarget, c1xXirGenerator);
-            c1xCompiler.init();
-        }
-        if (phase == MaxineVM.Phase.COMPILING) {
-            if (MaxineVM.isHosted()) {
+                TargetABI<?, ?> targetABI = configuration.targetABIsScheme().optimizedJavaABI;
+
+                int wordSize = arch.wordSize;
+
+                c1xTarget = new CiTarget(arch, config, true, wordSize, wordSize, wordSize, targetABI.stackFrameAlignment, configuration.platform.pageSize, wordSize, wordSize, 16);
+                c1xXirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
+                c1xCompiler = new C1XCompiler(c1xRuntime, c1xTarget, c1xXirGenerator);
+            } else if (phase == MaxineVM.Phase.COMPILING) {
                 // can only refer to JavaPrototype while bootstrapping.
                 JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
             }
@@ -102,7 +110,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     public final TargetMethod compile(final ClassMethodActor classMethodActor) {
         return MaxineVM.usingTarget(new Function<TargetMethod>() {
             public TargetMethod call() {
-                RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
+                RiMethod method = classMethodActor;
                 CiTargetMethod compiledMethod = c1xCompiler.compileMethod(method, c1xXirGenerator).targetMethod();
                 if (compiledMethod != null) {
                     C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);

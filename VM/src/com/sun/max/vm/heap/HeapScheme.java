@@ -52,13 +52,6 @@ public interface HeapScheme extends VMScheme {
     boolean isGcThread(Thread thread);
 
     /**
-     * If the heap implementation uses an adjusted card table,
-     * report the number of bits to shift an object address with.
-     * Otherwise return -1;
-     */
-    int adjustedCardTableShift();
-
-    /**
      * Given the size of the boot image, calculates the size of the auxiliary space that the substrate is to allocate
      * and pass to the target VM.
      */
@@ -268,9 +261,16 @@ public interface HeapScheme extends VMScheme {
 
     /**
      * Returns the garbage collection management bean for this heap scheme.
-     * @return the @see GarbageCollectorMXBean instance
+     * @return the {@link GarbageCollectorMXBean} instance
      */
     GarbageCollectorMXBean getGarbageCollectorMXBean();
+
+    /**
+     * Indicates whether this heap scheme supports tagging of heap object for debugging purposes.
+     * @return true if tagging of heap object is supported
+     */
+    @INLINE
+    boolean supportsTagging();
 
     /**
      * Methods to be called by all implementations when specified events occur, necessary

@@ -25,7 +25,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>PhiSimplifier</code> class is a helper class that can reduce phi instructions.
+ * The {@code PhiSimplifier} class is a helper class that can reduce phi instructions.
  *
  * @author Ben L. Titzer
  */
@@ -46,7 +46,7 @@ public class PhiSimplifier implements BlockClosure {
      * @param block the block to apply the simplification to
      */
     public void apply(BlockBegin block) {
-        ValueStack state = block.stateBefore();
+        FrameState state = block.stateBefore();
         for (int i = 0; i < state.stackSize(); i++) {
             simplify(state.stackAt(i));
         }
@@ -76,9 +76,9 @@ public class PhiSimplifier implements BlockClosure {
             // attempt to simplify the phi by recursively simplifying its operands
             phi.setFlag(Value.Flag.PhiVisited);
             Value phiSubst = null;
-            int max = phi.operandCount();
+            int max = phi.inputCount();
             for (int i = 0; i < max; i++) {
-                Value oldInstr = phi.operandAt(i);
+                Value oldInstr = phi.inputAt(i);
 
                 if (oldInstr == null || oldInstr.isIllegal() || oldInstr.isDeadPhi()) {
                     // if one operand is illegal, make the entire phi illegal

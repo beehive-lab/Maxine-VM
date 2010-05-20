@@ -22,7 +22,6 @@ package com.sun.max.ins;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.debug.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -303,40 +302,40 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
     }
 
-    private MemoryRegion memoryRegion;
+    private MaxMemoryRegion memoryRegion;
 
     private final Object memoryRegionFocusTracer = new Object() {
         @Override
         public String toString() {
             final StringBuilder name = new StringBuilder();
-            name.append(tracePrefix()).append("Focus (MemoryRegion): ").append(memoryRegion.description());
+            name.append(tracePrefix()).append("Focus (MemoryRegion): ").append(memoryRegion.regionName());
             return name.toString();
         }
     };
 
     /**
-     * @return the {@link MemoryRegion} that is the current user focus (view state).
+     * @return the {@linkplain MaxMemoryRegion memory region} that is the current user focus (view state).
      */
-    public MemoryRegion memoryRegion() {
+    public MaxMemoryRegion memoryRegion() {
         return memoryRegion;
     }
 
     /**
-     * Is there a currently selected {@link MemoryRegion}.
+     * Is there a currently selected {@linkplain MaxMemoryRegion memory region}.
      */
     public boolean hasMemoryRegion() {
         return memoryRegion != null;
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular {@link MemoryRegion}; notify interested inspectors.
+     * Shifts the focus of the Inspection to a particular {@linkplain MaxMemoryRegion memory region}; notify interested inspectors.
      * If the region is a  stackRegion, then set the current thread to the thread owning the stack.
      * This is a view state change that can happen when there is no change to the VM state.
      */
-    public void setMemoryRegion(MemoryRegion memoryRegion) {
+    public void setMemoryRegion(MaxMemoryRegion memoryRegion) {
         // TODO (mlvdv) see about setting to null if a thread is observed to have died, or mark the region as dead?
         if ((memoryRegion == null && this.memoryRegion != null) || (memoryRegion != null && !memoryRegion.sameAs(this.memoryRegion))) {
-            final MemoryRegion oldMemoryRegion = this.memoryRegion;
+            final MaxMemoryRegion oldMemoryRegion = this.memoryRegion;
             this.memoryRegion = memoryRegion;
             Trace.line(TRACE_VALUE, memoryRegionFocusTracer);
             for (ViewFocusListener listener : listeners.clone()) {

@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>UnsafeObjectOp</code> class is the base of all unsafe object instructions.
+ * The {@code UnsafeObjectOp} class is the base of all unsafe object instructions.
  *
  * @author Ben L. Titzer
  */
@@ -38,8 +38,8 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      * @param opKind the kind of the operation
      * @param object the instruction generating the object
      * @param offset the instruction generating the index
-     * @param isStore <code>true</code> if this is a store operation
-     * @param isVolatile <code>true</code> if the operation is volatile
+     * @param isStore {@code true} if this is a store operation
+     * @param isVolatile {@code true} if the operation is volatile
      */
     public UnsafeObjectOp(CiKind opKind, Value object, Value offset, boolean isStore, boolean isVolatile) {
         super(opKind, isStore);
@@ -66,7 +66,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
 
     /**
      * Checks whether this is a volatile operation.
-     * @return <code>true</code> if this operation is volatile
+     * @return {@code true} if this operation is volatile
      */
     public boolean isVolatile() {
         return isVolatile;

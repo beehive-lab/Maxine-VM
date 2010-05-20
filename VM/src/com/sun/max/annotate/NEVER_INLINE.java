@@ -29,9 +29,13 @@ import java.lang.annotation.*;
  * for semantic reasons. Typically, this is to ensure that a separate activation frame is
  * always used for a call to the method.
  *
+ * This annotation can also be applied to a class in which is equivalent to applying
+ * it to all the methods in the class <b>except</b> for those explicitly annotated with
+ * {@link INLINE}.
+ *
  * @author Doug Simon
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.TYPE})
 public @interface NEVER_INLINE {
 }

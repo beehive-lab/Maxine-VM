@@ -26,8 +26,6 @@ import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * Factory and manager for descriptions of locations in code in the VM.
@@ -36,54 +34,24 @@ import com.sun.max.vm.stack.*;
  */
 public final class CodeManager extends AbstractTeleVMHolder implements MaxCodeManager {
 
-    // Location of the caller return address relative to the saved location in a stack frame, usually 0 but see SPARC.
-    private final int  offsetToReturnPC;
-
     public CodeManager(TeleVM teleVM) {
         super(teleVM);
-        this.offsetToReturnPC = teleVM.vmConfiguration().platform.processorKind.instructionSet.offsetToReturnPC;
     }
 
     public BytecodeLocation createBytecodeLocation(MethodKey methodKey, String description) throws ProgramError {
-        return CodeLocation.createBytecodeLocation(teleVM(), methodKey, description);
+        return CodeLocation.createBytecodeLocation(vm(), methodKey, description);
     }
 
     public  BytecodeLocation createBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) {
-        return CodeLocation.createBytecodeLocation(teleVM(), teleClassMethodActor, bytecodePosition, description);
+        return CodeLocation.createBytecodeLocation(vm(), teleClassMethodActor, bytecodePosition, description);
     }
 
     public MachineCodeLocation createMachineCodeLocation(Address address, String description) throws ProgramError {
-        return CodeLocation.createMachineCodeLocation(teleVM(), address, description);
+        return CodeLocation.createMachineCodeLocation(vm(), address, description);
     }
 
     public MachineCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position, String description) throws ProgramError {
-        return CodeLocation.createMachineCodeLocation(teleVM(), address, teleClassMethodActor, position, description);
-    }
-
-    public MachineCodeLocation createMachineCodeLocation(StackFrame stackFrame) throws ProgramError {
-        ProgramError.check(stackFrame != null);
-        Pointer instructionPointer = stackFrame.ip;
-        if (instructionPointer.isZero()) {
-            return null;
-        }
-        final StackFrame callee = stackFrame.calleeFrame();
-        if (callee == null) {
-            // Top frame, not a call return so no adjustment.
-            return createMachineCodeLocation(instructionPointer, "top stack frame IP");
-        }
-        // Add a platform-specific offset from the stored code address to the actual call return site.
-        final TargetMethod calleeTargetMethod = callee.targetMethod();
-        if (calleeTargetMethod != null) {
-            final ClassMethodActor calleeClassMethodActor = calleeTargetMethod.classMethodActor();
-            if (calleeClassMethodActor != null) {
-                if (calleeClassMethodActor.isTrapStub()) {
-                    // Special case, where the IP caused a trap; no adjustment.
-                    return createMachineCodeLocation(instructionPointer, "stack frame return");
-                }
-            }
-        }
-        // An ordinary call; apply a platform-specific adjustment to get the real return address.
-        return createMachineCodeLocation(instructionPointer.plus(offsetToReturnPC), "stack frame return");
+        return CodeLocation.createMachineCodeLocation(vm(), address, teleClassMethodActor, position, description);
     }
 
 }

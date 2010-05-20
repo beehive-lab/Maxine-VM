@@ -45,7 +45,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 
 /**
- * Holds the user interaction state for the inspection of a Maxine VM, which is accessed via a surrogate implementing {@link MaxVM}.
+ * Holds the user interaction state for the inspection of a VM, which is accessed via a surrogate implementing {@link MaxVM}.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -176,7 +176,7 @@ public final class Inspection implements InspectionHolder {
                 ThreadLocalsInspector.make(this);
                 StackInspector.make(this);
                 BreakpointsInspector.make(this);
-                focus.setCodeLocation(focus.thread().instructionLocation());
+                focus.setCodeLocation(focus.thread().ipLocation());
             } catch (Throwable throwable) {
                 System.err.println("Error during initialization");
                 throwable.printStackTrace();

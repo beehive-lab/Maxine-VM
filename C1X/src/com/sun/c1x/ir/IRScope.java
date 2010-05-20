@@ -21,13 +21,13 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.CiCodePos;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>IRScope</code> class represents an inlining context in the compilation
+ * The {@code IRScope} class represents an inlining context in the compilation
  * of a method.
  *
  * @author Ben L. Titzer
@@ -42,7 +42,7 @@ public class IRScope {
     final int callerBCI;
     CiCodePos callerCodeSite;
 
-    ValueStack callerState;
+    FrameState callerState;
     int numberOfLocks;
 
     int lockStackSize;
@@ -87,13 +87,13 @@ public class IRScope {
      * Gets the value stack at the caller of this scope.
      * @return the value stack at the point of this call
      */
-    public final ValueStack callerState() {
+    public final FrameState callerState() {
         return callerState;
     }
 
     /**
      * Returns whether this IR scope is the top scope (i.e. has no caller).
-     * @return <code>true</code> if this inlining scope has no parent
+     * @return {@code true} if this inlining scope has no parent
      */
     public final boolean isTopScope() {
         return caller == null;
@@ -112,7 +112,7 @@ public class IRScope {
      * Sets the caller state for this IRScope.
      * @param callerState the new caller state
      */
-    public final void setCallerState(ValueStack callerState) {
+    public final void setCallerState(FrameState callerState) {
         this.callerState = callerState;
     }
 
@@ -125,7 +125,7 @@ public class IRScope {
         if (caller == null) {
             return "root-scope: " + method;
         } else {
-            return "inline-scope @ " + callerBCI + ": " + method;
+            return "inlined-scope: " + method + " [caller bci: " + callerBCI + "]";
         }
     }
 
@@ -139,7 +139,7 @@ public class IRScope {
         }
         IRScope curScope = this;
         // TODO: should this calculation be done in ScopeData (because of synchronized handler)?
-        while (curScope != null && curScope.method.exceptionHandlers().size() > 0) {
+        while (curScope != null && curScope.method.exceptionHandlers().length > 0) {
             curScope = curScope.caller;
         }
         lockStackSize = curScope == null ? 0 : curScope.callerState() == null ? 0 : curScope.callerState().stackSize();

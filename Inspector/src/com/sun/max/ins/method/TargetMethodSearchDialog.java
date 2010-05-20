@@ -27,6 +27,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectorNameDisplay.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -68,8 +69,8 @@ public final class TargetMethodSearchDialog extends TeleObjectSearchDialog {
                 }
             }
         } else {
-            for (TeleCodeRegion teleCodeRegion : inspection().vm().teleCodeRegions()) {
-                for (TeleTargetMethod teleTargetMethod : teleCodeRegion.teleTargetMethods()) {
+            for (MaxCompiledCodeRegion teleCompiledCodeRegion : inspection().vm().codeCache().compiledCodeRegions()) {
+                for (TeleTargetMethod teleTargetMethod : teleCompiledCodeRegion.teleTargetMethods()) {
                     ClassMethodActor methodActor = teleTargetMethod.classMethodActor();
                     String targetMethodType = Classes.getSimpleName(teleTargetMethod.getTeleHub().getTeleClassActor().getName());
                     if (methodActor != null) {
@@ -81,9 +82,9 @@ public final class TargetMethodSearchDialog extends TeleObjectSearchDialog {
                             namedTeleTargetMethods.add(new NamedTeleObject(name, teleTargetMethod));
                         }
                     } else {
-                        String description = teleTargetMethod.description();
-                        if (filterLowerCase.isEmpty() || (description + " " + targetMethodType).toLowerCase().contains(filterLowerCase)) {
-                            namedTeleTargetMethods.add(new NamedTeleObject(description + " [" + targetMethodType + "]", teleTargetMethod));
+                        String regionName = teleTargetMethod.getRegionName();
+                        if (filterLowerCase.isEmpty() || (regionName + " " + targetMethodType).toLowerCase().contains(filterLowerCase)) {
+                            namedTeleTargetMethods.add(new NamedTeleObject(regionName + " [" + targetMethodType + "]", teleTargetMethod));
                         }
                     }
                 }

@@ -21,39 +21,34 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
-import com.sun.c1x.ci.CiKind;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>StorePointer</code> instruction represents a write of a pointer.
+ * The {@code StorePointer} instruction represents a write of a pointer.
  * This instruction is part of the HIR support for low-level operations, such as safepoints,
  * stack banging, etc, and does not correspond to a Java operation.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public final class StorePointer extends StateSplit {
+public final class StorePointer extends PointerOp {
 
-    Value pointer;
     Value value;
-    final boolean isVolatile;
-    final boolean canTrap;
-    final boolean isPrefetch;
 
     /**
-     * Creates a new LoadPointer instance.
-     * @param kind the kind of value stored to the pointer
+     * Creates an instruction for a pointer store. If {@code displacement != null}, the effective of the address of the store is
+     * computed as the pointer plus a byte displacement plus a scaled index. Otherwise, the effective address is computed as the
+     * pointer plus a byte offset.
      * @param pointer the value producing the pointer
+     * @param displacement the value producing the displacement. This may be {@code null}.
+     * @param offsetOrIndex the value producing the scaled-index or the byte offset depending on whether {@code displacement} is {@code null}
      * @param value the value to write to the pointer
-     * @param canTrap {@code true} if the access can cause a trap
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public StorePointer(CiKind kind, Value pointer, Value value, boolean canTrap, ValueStack stateBefore, boolean isVolatile) {
-        super(kind, stateBefore);
-        this.pointer = pointer;
+    public StorePointer(int opcode, Value pointer, Value displacement, Value offsetOrIndex, Value value, FrameState stateBefore, boolean isVolatile) {
+        super(CiKind.Void, opcode, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
         this.value = value;
-        this.isVolatile = isVolatile;
-        this.isPrefetch = false;
-        this.canTrap = canTrap;
         setFlag(Flag.LiveStore);
     }
 
@@ -66,27 +61,13 @@ public final class StorePointer extends StateSplit {
         v.visitStorePointer(this);
     }
 
-    @Override
-    public boolean canTrap() {
-        return canTrap;
-    }
-
-    public Value pointer() {
-        return pointer;
-    }
-
     public Value value() {
         return value;
     }
 
-    /**
-     * Iterates over the input values to this instruction. In this case,
-     * it is only the pointer value.
-     * @param closure the closure to apply to each value
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
-        pointer = closure.apply(pointer);
+        super.inputValuesDo(closure);
         value = closure.apply(value);
     }
 }

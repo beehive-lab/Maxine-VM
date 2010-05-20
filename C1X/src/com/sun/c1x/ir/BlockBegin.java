@@ -24,21 +24,20 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>BlockBegin</code> instruction represents the beginning of a basic block,
- * and holds a lot of information about the basic block, including the successor and
+ * Denotes the beginning of a basic block, and holds information
+ * about the basic block, including the successor and
  * predecessor blocks, exception handlers, liveness information, etc.
  *
  * @author Ben L. Titzer
  */
 public final class BlockBegin extends Instruction {
-    // XXX: could use a shared, empty ArrayList
-    private static final List<BlockBegin> NO_HANDLERS = Util.uncheckedCast(Collections.EMPTY_LIST);
+    private static final List<BlockBegin> NO_HANDLERS = Collections.emptyList();
 
     /**
      * An enumeration of flags for block entries indicating various things.
@@ -60,11 +59,29 @@ public final class BlockBegin extends Instruction {
         public final int mask = 1 << ordinal();
     }
 
+    /**
+     * A unique id used in tracing.
+     */
     public final int blockID;
 
+    /**
+     * Denotes the current set of {@link BlockBegin.BlockFlag} settings.
+     */
     private int blockFlags;
-    private ValueStack stateBefore;
+
+    /**
+     * The frame state before execution of the first instruction in this block.
+     */
+    private FrameState stateBefore;
+
+    /**
+     * A link to the last node in the block (which contains the successors).
+     */
     private BlockEnd end;
+
+    /**
+     * The {@link BlockBegin} nodes for which this node is a successor.
+     */
     private final List<BlockBegin> predecessors;
 
     private int depthFirstNumber;
@@ -74,7 +91,7 @@ public final class BlockBegin extends Instruction {
 
     private BlockBegin dominator;
     private List<BlockBegin> exceptionHandlerBlocks;
-    private List<ValueStack> exceptionHandlerStates;
+    private List<FrameState> exceptionHandlerStates;
 
     // LIR block
     public LIRBlock lirBlock;
@@ -163,7 +180,7 @@ public final class BlockBegin extends Instruction {
      * @return the state at the start of this block
      */
     @Override
-    public ValueStack stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 
@@ -171,7 +188,7 @@ public final class BlockBegin extends Instruction {
      * Sets the initial state for this block.
      * @param stateBefore the state for this block
      */
-    public void setStateBefore(ValueStack stateBefore) {
+    public void setStateBefore(FrameState stateBefore) {
         assert this.stateBefore == null;
         this.stateBefore = stateBefore;
     }
@@ -184,7 +201,7 @@ public final class BlockBegin extends Instruction {
         return exceptionHandlerBlocks == null ? NO_HANDLERS : exceptionHandlerBlocks;
     }
 
-    public List<ValueStack> exceptionHandlerStates() {
+    public List<FrameState> exceptionHandlerStates() {
         return exceptionHandlerStates;
     }
 
@@ -254,7 +271,7 @@ public final class BlockBegin extends Instruction {
     /**
      * Check whether this block has the specified flag set.
      * @param flag the flag to test
-     * @return <code>true</code> if this block has the flag
+     * @return {@code true} if this block has the flag
      */
     public boolean checkBlockFlag(BlockFlag flag) {
         return (blockFlags & flag.mask) != 0;
@@ -328,10 +345,10 @@ public final class BlockBegin extends Instruction {
         }
     }
 
-    public int addExceptionState(ValueStack state) {
+    public int addExceptionState(FrameState state) {
         assert checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
         if (exceptionHandlerStates == null) {
-            exceptionHandlerStates = new ArrayList<ValueStack>();
+            exceptionHandlerStates = new ArrayList<FrameState>();
         }
         exceptionHandlerStates.add(state);
         return exceptionHandlerStates.size() - 1;
@@ -365,8 +382,8 @@ public final class BlockBegin extends Instruction {
         v.visitBlockBegin(this);
     }
 
-    public void merge(ValueStack newState) {
-        ValueStack existingState = stateBefore;
+    public void merge(FrameState newState) {
+        FrameState existingState = stateBefore;
 
         if (existingState == null) {
             // this is the first state for the block
@@ -413,7 +430,7 @@ public final class BlockBegin extends Instruction {
         }
     }
 
-    private void invalidateDeadLocals(ValueStack newState, BitMap liveness) {
+    private void invalidateDeadLocals(FrameState newState, BitMap liveness) {
         int max = newState.localsSize();
         assert liveness.size() == max;
         for (int i = 0; i < max; i++) {
@@ -425,7 +442,7 @@ public final class BlockBegin extends Instruction {
         }
     }
 
-    private void insertLoopPhis(ValueStack newState) {
+    private void insertLoopPhis(FrameState newState) {
         int stackSize = newState.stackSize();
         for (int i = 0; i < stackSize; i++) {
             // always insert phis for the stack
@@ -653,7 +670,7 @@ public final class BlockBegin extends Instruction {
     }
 
     public BlockBegin predAt(int j) {
-        return this.predecessors.get(j);
+        return predecessors.get(j);
     }
 
     public int firstLirInstructionId() {
@@ -676,16 +693,8 @@ public final class BlockBegin extends Instruction {
         return this.predecessors.contains(block);
     }
 
-    public Iterable<Phi> allLivePhis() {
-        return stateBefore.allLivePhis(this);
-    }
-
-    public Iterable<Phi> allPhis() {
-        return stateBefore.allPhis(this);
-    }
-
-    public void addExceptionStates(List<ValueStack> exceptHandlerStates) {
-        for (ValueStack state : exceptHandlerStates) {
+    public void addExceptionStates(List<FrameState> exceptHandlerStates) {
+        for (FrameState state : exceptHandlerStates) {
             addExceptionState(state.copy());
         }
     }

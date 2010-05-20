@@ -20,9 +20,12 @@
  */
 package com.sun.c1x.ir;
 
+import java.lang.reflect.*;
+
 import com.sun.c1x.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The base class of all instructions that access fields.
@@ -32,27 +35,22 @@ import com.sun.c1x.value.*;
 public abstract class AccessField extends StateSplit {
 
     Value object;
-    final int offset;
     final RiField field;
-    public final char cpi;
-    public final RiConstantPool constantPool;
 
     /**
      * Constructs a new access field object.
+     * @param kind the result kind of the access
      * @param object the instruction producing the receiver object
      * @param field the compiler interface representation of the field
      * @param isStatic indicates if the field is static
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public AccessField(Value object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
-        super(field.kind().stackType(), stateBefore);
-        this.cpi = cpi;
-        this.constantPool = constantPool;
+    public AccessField(CiKind kind, Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded) {
+        super(kind, stateBefore);
         this.object = object;
-        this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
-        if (!isLoaded || C1XOptions.TestPatching && !field.isVolatile()) {
+        if (!isLoaded || C1XOptions.TestPatching && !Modifier.isVolatile(field.accessFlags())) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
             setFlag(Flag.NeedsPatching);
@@ -75,14 +73,6 @@ public abstract class AccessField extends StateSplit {
     }
 
     /**
-     * Gets the offset of the field from the start of the object, in bytes.
-     * @return the offset of the field within the object
-     */
-    public int offset() {
-        return offset;
-    }
-
-    /**
      * Gets the compiler interface field for this field access.
      * @return the compiler interface field for this field access
      */
@@ -92,7 +82,7 @@ public abstract class AccessField extends StateSplit {
 
     /**
      * Checks whether this field access is an access to a static field.
-     * @return <code>true</code> if this field access is to a static field
+     * @return {@code true} if this field access is to a static field
      */
     public boolean isStatic() {
         return checkFlag(Flag.IsStatic);
@@ -100,7 +90,7 @@ public abstract class AccessField extends StateSplit {
 
     /**
      * Checks whether the class of the field of this access is loaded.
-     * @return <code>true</code> if the class is loaded
+     * @return {@code true} if the class is loaded
      */
     public boolean isLoaded() {
         return checkFlag(Flag.IsLoaded);
@@ -111,7 +101,7 @@ public abstract class AccessField extends StateSplit {
      * @return {@code true} if the field is resolved and declared volatile
      */
     public boolean isVolatile() {
-        return isLoaded() && field.isVolatile();
+        return isLoaded() && Modifier.isVolatile(field.accessFlags());
     }
 
     @Override
@@ -124,7 +114,7 @@ public abstract class AccessField extends StateSplit {
 
     /**
      * Checks whether this field access will require patching.
-     * @return <code>true</code> if this field access will require patching
+     * @return {@code true} if this field access will require patching
      */
     public boolean needsPatching() {
         return checkFlag(Flag.NeedsPatching);
@@ -133,7 +123,7 @@ public abstract class AccessField extends StateSplit {
     /**
      * Checks whether this field access may cause a trap or an exception, which
      * is if it either requires a null check or needs patching.
-     * @return <code>true</code> if this field access can cause a trap
+     * @return {@code true} if this field access can cause a trap
      */
     @Override
     public boolean canTrap() {

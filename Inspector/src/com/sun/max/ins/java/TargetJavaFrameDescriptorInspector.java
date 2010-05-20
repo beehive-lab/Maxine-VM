@@ -21,55 +21,64 @@
 package com.sun.max.ins.java;
 
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.value.*;
 
 /**
  * @author Bernd Mathiske
  */
-public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<TargetJavaFrameDescriptorInspector> {
+public final class TargetJavaFrameDescriptorInspector extends Inspector {
 
-    private final TargetJavaFrameDescriptor javaFrameDescriptor;
-    private final String framePointer;
+    private static final int TRACE_VALUE = 2;
 
     private static final int MAX_BYTE_CODE_BITS = 20;
 
-    private static long subject(TargetJavaFrameDescriptor javaFrameDescriptor) {
+    private static Long makeKey(TargetJavaFrameDescriptor javaFrameDescriptor) {
         if (javaFrameDescriptor == null) {
             return -1L;
         }
         return (MethodID.fromMethodActor(javaFrameDescriptor.classMethodActor).asAddress().toLong() << MAX_BYTE_CODE_BITS) | javaFrameDescriptor.bytecodePosition;
     }
 
-    private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi) {
-        super(inspection, LongValue.from(subject(javaFrameDescriptor)));
-        this.javaFrameDescriptor = javaFrameDescriptor;
-        framePointer = TeleIntegerRegisters.symbolizer(vm().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
-        final InspectorFrame frame = createFrame(true);
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-    }
+    private static Map<Long, TargetJavaFrameDescriptorInspector> inspectors =
+        new Hashtable<Long, TargetJavaFrameDescriptorInspector>();
 
     /**
      * Display and highlight a target Java frame descriptor inspector for the frame..
      * @return The inspector, possibly newly created.
      */
     public static TargetJavaFrameDescriptorInspector make(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi) {
-        final UniqueInspector.Key<TargetJavaFrameDescriptorInspector> key = UniqueInspector.Key.create(TargetJavaFrameDescriptorInspector.class, subject(javaFrameDescriptor));
-        TargetJavaFrameDescriptorInspector inspector = UniqueInspector.find(inspection, key);
+        final Long key = makeKey(javaFrameDescriptor);
+        TargetJavaFrameDescriptorInspector inspector = inspectors.get(key);
         if (inspector == null) {
-            inspector = new TargetJavaFrameDescriptorInspector(inspection, javaFrameDescriptor, abi);
+            inspector = new TargetJavaFrameDescriptorInspector(inspection, javaFrameDescriptor, abi, key);
+            inspectors.put(key, inspector);
         }
         return inspector;
+    }
+
+    private final TargetJavaFrameDescriptor javaFrameDescriptor;
+    private final String framePointer;
+    private final Long key;
+
+    private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi, Long key) {
+        super(inspection);
+        this.javaFrameDescriptor = javaFrameDescriptor;
+        this.key = key;
+        framePointer = TeleIntegerRegisters.symbolizer(vm().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
+        final InspectorFrame frame = createFrame(true);
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
 
     private String shortString(BytecodeLocation bytecodeLocation) {
@@ -166,6 +175,13 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
 
     public void viewConfigurationChanged() {
         reconstructView();
+    }
+
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing for " + getTitle());
+        inspectors.remove(key);
+        super.inspectorClosing();
     }
 
 }

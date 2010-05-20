@@ -20,11 +20,8 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.sparc;
 
+import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.asm.sparc.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
-import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
@@ -483,26 +480,19 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(new CMP_I64(eirBlock(), a, b));
     }
 
-    private MembarOperand toMembarOperand(PoolSet<MemoryBarrier> memoryBarriers) {
-        final PoolSet<MemoryBarrier> memoryModelBarriers = methodTranslation().memoryModel.barriers;
+    private MembarOperand toMembarOperand(int memoryBarriers) {
         MembarOperand operand = MembarOperand.NO_MEMBAR;
-        for (MemoryBarrier b : memoryBarriers) {
-            if (!memoryModelBarriers.contains(b)) {
-                switch (b) {
-                    case LOAD_LOAD:
-                        operand = operand.or(MembarOperand.LOAD_LOAD);
-                        break;
-                    case LOAD_STORE:
-                        operand = operand.or(MembarOperand.LOAD_STORE);
-                        break;
-                    case STORE_STORE:
-                        operand = operand.or(MembarOperand.STORE_STORE);
-                        break;
-                    case STORE_LOAD:
-                        operand = operand.or(MembarOperand.STORE_LOAD);
-                        break;
-                }
-            }
+        if ((memoryBarriers & MemoryBarriers.LOAD_LOAD) != 0) {
+            operand = operand.or(MembarOperand.LOAD_LOAD);
+        }
+        if ((memoryBarriers & MemoryBarriers.LOAD_STORE) != 0) {
+            operand = operand.or(MembarOperand.LOAD_STORE);
+        }
+        if ((memoryBarriers & MemoryBarriers.STORE_STORE) != 0) {
+            operand = operand.or(MembarOperand.STORE_STORE);
+        }
+        if ((memoryBarriers & MemoryBarriers.STORE_LOAD) != 0) {
+            operand = operand.or(MembarOperand.STORE_LOAD);
         }
         return operand;
     }
@@ -512,15 +502,11 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
     @Override
     public void visitBarMemory(BarMemory builtin, DirValue dirResult, DirValue[] dirArguments) {
         assert dirResult == null;
-        if (!dirArguments[0].isConstant()) {
-            ProgramWarning.message("optimizer failed to determine a memory barrier argument as a known constant => emitting a full barrier just in case");
-            addInstruction(new MEMBAR(eirBlock(), FULL_MEMBAR));
-            return;
-        }
+        assert dirArguments[0].isConstant();
         final DirConstant dirConstant = (DirConstant) dirArguments[0];
-        final Class<PoolSet<MemoryBarrier>> type = null;
-        final PoolSet<MemoryBarrier> memoryBarriers = StaticLoophole.cast(type, dirConstant.value().asObject());
-        if (methodTranslation().memoryModel.barriers.containsAll(memoryBarriers)) {
+        assert dirConstant.value().kind() == Kind.INT;
+        final int memoryBarriers = dirConstant.value().asInt() & ~(methodTranslation().memoryModel.impliedBarriers);
+        if (memoryBarriers == 0) {
             return;
         }
         final MembarOperand membarOperand = toMembarOperand(memoryBarriers);
@@ -787,7 +773,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitUnsignedIntGreaterEqual(UnsignedIntGreaterEqual builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitAboveEqual(AboveEqual builtin, DirValue dirResult, DirValue[] dirArguments) {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);

@@ -22,12 +22,11 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.lir.LIROperand;
+import com.sun.cri.ci.*;
 
 /**
- * This class represents an instruction node in the IR, which is a {@link Value} that
+ * Denotes an instruction node in the IR, which is a {@link Value} that
  * can be added to a basic block (whereas other {@link Value} nodes such as {@link Phi} and
  * {@link Local} cannot be added to basic blocks).
  *
@@ -35,27 +34,41 @@ import com.sun.c1x.lir.LIROperand;
  * control flow operators, phi statements, method calls, the start of basic blocks, and
  * the end of basic blocks.
  *
+ * Instruction nodes are chained together in a basic block through the embedded
+ * {@link Instruction#next} field. An Instruction may also have a list of {@link ExceptionHandler}s.
+ *
+ *
  * @author Ben L. Titzer
  */
 public abstract class Instruction extends Value {
 
     public static final int BCI_NOT_APPENDED = -99;
-    public static final int INVOCATION_ENTRY_BCI = -1;
+    public static final int INVOCATION_ENTRY_BCI = -1;  // XXX: not currently used
     public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
+    /**
+     * Index of bytecode that generated this node when appended in a basic block.
+     * Negative values indicate special cases.
+     */
     private int bci;
+
+    /**
+     * Link to next Instruction in a basic block.
+     */
     private Instruction next;
 
+    /**
+     * List of associated exception handlers.
+     */
     private List<ExceptionHandler> exceptionHandlers = ExceptionHandler.ZERO_HANDLERS;
 
     /**
      * Constructs a new instruction with the specified value type.
-     * @param type the value type for this instruction
+     * @param kind the value type for this instruction
      */
-    public Instruction(CiKind type) {
-        super(type);
+    public Instruction(CiKind kind) {
+        super(kind);
         bci = BCI_NOT_APPENDED;
-        lirOperand = LIROperand.IllegalLocation;
     }
 
     /**
@@ -71,21 +84,20 @@ public abstract class Instruction extends Value {
      * @param bci the new bytecode index for this instruction
      */
     public final void setBCI(int bci) {
-        // XXX: BCI field may not be needed at all
         assert bci >= 0 || bci == SYNCHRONIZATION_ENTRY_BCI;
         this.bci = bci;
     }
 
     /**
      * Checks whether this instruction has already been added to its basic block.
-     * @return <code>true</code> if this instruction has been added to the basic block containing it
+     * @return {@code true} if this instruction has been added to the basic block containing it
      */
     public final boolean isAppended() {
         return bci != BCI_NOT_APPENDED;
     }
 
     /**
-     * Gets the next instruction after this one in the basic block, or <code>null</code>
+     * Gets the next instruction after this one in the basic block, or {@code null}
      * if this instruction is the end of a basic block.
      * @return the next instruction after this one in the basic block
      */
@@ -101,9 +113,9 @@ public abstract class Instruction extends Value {
      * @return the new next instruction
      */
     public final Instruction setNext(Instruction next, int bci) {
+        this.next = next;
         if (next != null) {
             assert !(this instanceof BlockEnd);
-            this.next = next;
             next.setBCI(bci);
         }
         return next;
@@ -174,7 +186,7 @@ public abstract class Instruction extends Value {
      * Checks that this instruction is equal to another instruction for the purposes
      * of value numbering.
      * @param i the other instruction
-     * @return <code>true</code> if this instruction is equivalent to the specified
+     * @return {@code true} if this instruction is equivalent to the specified
      * instruction w.r.t. value numbering
      */
     public boolean valueEqual(Instruction i) {
@@ -191,7 +203,7 @@ public abstract class Instruction extends Value {
 
     /**
      * Tests whether this instruction can trap.
-     * @return <code>true</code> if this instruction can cause a trap.
+     * @return {@code true} if this instruction can cause a trap.
      */
     public boolean canTrap() {
         return false;
@@ -204,11 +216,11 @@ public abstract class Instruction extends Value {
      */
     public final void allValuesDo(ValueClosure closure) {
         inputValuesDo(closure);
-        ValueStack stateBefore = stateBefore();
+        FrameState stateBefore = stateBefore();
         if (stateBefore != null) {
             stateBefore.valuesDo(closure);
         }
-        ValueStack stateAfter = stateAfter();
+        FrameState stateAfter = stateAfter();
         if (stateAfter != null) {
             stateAfter.valuesDo(closure);
         }
@@ -218,16 +230,16 @@ public abstract class Instruction extends Value {
      * Gets the state before the instruction, if it is recorded.
      * @return the state before the instruction
      */
-    public ValueStack stateBefore() {
+    public FrameState stateBefore() {
         return null;
     }
 
     /**
      * Gets the state after the instruction, if it is recorded. Typically only
-     * instances of {@link BlockEnd} have a state after.
+     * instances of {@link BlockEnd} have a non-null state after.
      * @return the state after the instruction
      */
-    public ValueStack stateAfter() {
+    public FrameState stateAfter() {
         return null;
     }
 }

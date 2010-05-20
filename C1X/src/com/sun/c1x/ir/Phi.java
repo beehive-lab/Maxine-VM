@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>Phi</code> instruction represents the merging of dataflow
+ * The {@code Phi} instruction represents the merging of dataflow
  * in the instruction graph. It refers to a join block and a variable.
  *
  * @author Ben L. Titzer
@@ -36,12 +36,12 @@ public final class Phi extends Value {
 
     /**
      * Create a new Phi for the specified join block and local variable (or operand stack) slot.
-     * @param type the type of the variable
+     * @param kind the type of the variable
      * @param block the join point
      * @param index the index into the stack (if < 0) or local variables
      */
-    public Phi(CiKind type, BlockBegin block, int index) {
-        super(type);
+    public Phi(CiKind kind, BlockBegin block, int index) {
+        super(kind);
         this.block = block;
         this.index = index;
     }
@@ -56,7 +56,7 @@ public final class Phi extends Value {
 
     /**
      * Check whether this phi corresponds to a local variable.
-     * @return <code>true</code> if this phi refers to a local variable
+     * @return {@code true} if this phi refers to a local variable
      */
     public boolean isLocal() {
         return index >= 0;
@@ -64,7 +64,7 @@ public final class Phi extends Value {
 
     /**
      * Check whether this phi corresponds to a stack location.
-     * @return <code>true</code> if this phi refers to a stack location
+     * @return {@code true} if this phi refers to a stack location
      */
     public boolean isOnStack() {
         return index < 0;
@@ -94,14 +94,14 @@ public final class Phi extends Value {
      * @param i the index of the predecessor
      * @return the instruction that produced the value in the i'th predecessor
      */
-    public Value operandAt(int i) {
-        ValueStack state;
+    public Value inputAt(int i) {
+        FrameState state;
         if (block.isExceptionEntry()) {
             state = block.exceptionHandlerStates().get(i);
         } else {
             state = block.predecessors().get(i).end().stateAfter();
         }
-        return operandIn(state);
+        return inputIn(state);
     }
 
     /**
@@ -109,7 +109,7 @@ public final class Phi extends Value {
      * @param state the state to access
      * @return the instruction producing the value
      */
-    public Value operandIn(ValueStack state) {
+    public Value inputIn(FrameState state) {
         if (isLocal()) {
             return state.localAt(localIndex());
         } else {
@@ -118,11 +118,11 @@ public final class Phi extends Value {
     }
 
     /**
-     * Get the number of operands to this phi (i.e. the number of predecessors to the
+     * Get the number of inputs to this phi (i.e. the number of predecessors to the
      * join block).
-     * @return the number of operands in this phi
+     * @return the number of inputs in this phi
      */
-    public int operandCount() {
+    public int inputCount() {
         if (block.isExceptionEntry()) {
             return block.exceptionHandlerStates().size();
         } else {

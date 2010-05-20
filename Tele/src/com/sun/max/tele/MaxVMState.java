@@ -75,7 +75,19 @@ public interface MaxVMState  {
     long epoch();
 
     /**
-     * The set of threads live in the VM at this state transition.
+     * Enumerates all memory regions in the VM that have been allocated from the OS
+     * at this state transition.
+     * <br>
+     * <b>Note</b>: the internal state of a memory region identified here is
+     * not necessarily immutable, for example if an allocation mark has changed
+     * since this object was created.
+     *
+     * @return the regions of memory that the VM has allocated from the OS.
+     */
+    Sequence<MaxMemoryRegion> memoryRegions();
+
+    /**
+     * Enumerates all threads live in the VM at this state transition.
      * <br>
      *  <b>Note</b> : the internal state of a thread identified here is not necessarily immutable,
      * for example by the time a reader examines the set of live threads, one or more
@@ -110,7 +122,7 @@ public interface MaxVMState  {
      *  for example a thread reported here (which is live at this state transition)
      *  may have died by the time a reader examines this state transition.
      *
-     *  @see #threads()
+     * @see #threads()
      * @see #threadsDied()
      */
     Sequence<MaxThread> threadsStarted();
@@ -127,7 +139,7 @@ public interface MaxVMState  {
      *
      * @return threads died since the previous state in the history; empty if none.
      * @see #threads()
-     *  @see #threadsStarted()
+     * @see #threadsStarted()
      */
     Sequence<MaxThread> threadsDied();
 

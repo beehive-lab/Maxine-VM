@@ -106,14 +106,7 @@ public abstract class MemberActor extends Actor {
     }
 
     @Override
-    public String toString() {
-        final String string = holder() + ":" + name + ":" + descriptor;
-        final String flags = flagsString();
-        if (!flags.isEmpty()) {
-            return flags + " " + string;
-        }
-        return string;
-    }
+    public abstract String toString();
 
     public abstract boolean isHiddenToReflection();
 

@@ -22,8 +22,6 @@ package com.sun.max.tele.debug.guestvm.xen.dbchannel;
 
 import java.io.Serializable;
 
-import com.sun.max.program.*;
-
 /**
  * The interface used by the Maxine Inspector Virtual Edition (aka Guest VM) to access information from a target Maxine VM.
  * It is defined in terms of simple data types that allow an implementation with {@link DataInputStream} and {@link DataOutputStream}

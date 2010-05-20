@@ -21,7 +21,7 @@
 package com.sun.c1x.lir;
 
 /**
- * The <code>LirOpcode</code> enum represents the Operation code of each LIR instruction.
+ * The {@code LirOpcode} enum represents the Operation code of each LIR instruction.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
@@ -32,6 +32,9 @@ public enum LIROpcode {
         Label,
         StdEntry,
         OsrEntry,
+        ReadPC,
+        Alloca,
+        Pause,
     RuntimeCall,
         Membar,
         MembarAcquire,
@@ -40,7 +43,7 @@ public enum LIROpcode {
     BeginOp1,
         NullCheck,
         Return,
-        Leal,
+        Lea,
         Neg,
         Branch,
         CondFloatBranch,
@@ -48,6 +51,8 @@ public enum LIROpcode {
         Prefetchr,
         Prefetchw,
         Convert,
+        Lsb,
+        Msb,
     Safepoint,
     EndOp1,
     BeginOp2,
@@ -83,15 +88,19 @@ public enum LIROpcode {
         Irem,
         Ldiv,
         Lrem,
+        Wdiv,
+        Wdivi,
+        Wrem,
+        Wremi,
     EndOp3,
-    InterfaceCall,
-    VirtualCall,
+    NativeCall,
     DirectCall,
     IndirectCall,
     InstanceOf,
     CheckCast,
     StoreCheck,
     CasLong,
+    CasWord,
     CasObj,
     CasInt,
     Xir,

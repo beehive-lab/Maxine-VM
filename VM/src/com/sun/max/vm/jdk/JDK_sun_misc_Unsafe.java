@@ -701,10 +701,10 @@ final class JDK_sun_misc_Unsafe {
     public Object allocateInstance(Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         MakeClassInitialized.makeClassInitialized(classActor);
-        if (classActor.isArrayClassActor()) {
+        if (classActor.isArrayClass()) {
             return Heap.createArray(classActor.dynamicHub(), 0);
         }
-        if (classActor.isTupleClassActor()) {
+        if (classActor.isTupleClass()) {
             return Heap.createTuple(classActor.dynamicHub());
         }
         return null;

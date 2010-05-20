@@ -30,7 +30,7 @@ import com.sun.max.vm.monitor.modal.sync.*;
  * A modal monitor scheme with no transitions: inflated only.
  * N.B. The default number of unbound monitors necessary to get the VM up
  * and running without excessive garbage collections is much higher than the
- * default in @see JavaMonitorManager. So we set it explicitly here unless
+ * default in {@link JavaMonitorManager}. So we set it explicitly here unless
  * the user has already done so. The value was empirically determined.
  *
  * @author Simon Wilkinson

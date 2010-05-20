@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
@@ -103,7 +103,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         }
 
         final ConditionVariable waitingCondition = ownerThread.waitingCondition().init();
-        ownerThread.setNextWaitingThread(waitingThreads);
+        ownerThread.nextWaitingThread = waitingThreads;
         waitingThreads = ownerThread;
         this.ownerThread = null;
         final boolean interrupted;
@@ -119,31 +119,31 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         this.recursionCount = recursionCount;
 
         boolean timedOut = false;
-        if (ownerThread.nextWaitingThread() != ownerThread) {
+        if (ownerThread.nextWaitingThread != ownerThread) {
             // The thread is still on the waitingThreads list: remove it
             timedOut = !interrupted;
 
             if (ownerThread == waitingThreads) {
                 // Common case: owner is at the head of the list
-                waitingThreads = ownerThread.nextWaitingThread();
-                ownerThread.setNextWaitingThread(ownerThread);
+                waitingThreads = ownerThread.nextWaitingThread;
+                ownerThread.nextWaitingThread = ownerThread;
             } else {
                 if (waitingThreads == null) {
                     FatalError.unexpected("Thread woken from wait by timeout not in waiting threads list");
                 }
                 // Must now search the list and remove ownerThread
                 VmThread previous = waitingThreads;
-                VmThread waiter = previous.nextWaitingThread();
+                VmThread waiter = previous.nextWaitingThread;
                 while (waiter != ownerThread) {
                     if (waiter == null) {
                         FatalError.unexpected("Thread woken from wait by timeout not in waiting threads list");
                     }
                     previous = waiter;
-                    waiter = waiter.nextWaitingThread();
+                    waiter = waiter.nextWaitingThread;
                 }
                 // ownerThread
-                previous.setNextWaitingThread(ownerThread.nextWaitingThread());
-                ownerThread.setNextWaitingThread(ownerThread);
+                previous.nextWaitingThread = ownerThread.nextWaitingThread;
+                ownerThread.nextWaitingThread = ownerThread;
             }
         }
 
@@ -169,12 +169,12 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
                 waiter.setState(Thread.State.BLOCKED);
                 waiter.waitingCondition().threadNotify(false);
                 final VmThread previous = waiter;
-                waiter = waiter.nextWaitingThread();
+                waiter = waiter.nextWaitingThread;
 
                 // This is the idiom for indicating that the thread is no longer on a waiters list.
                 // which in turn makes it easy to determine in 'monitorWait' if the thread was
                 // notified or woke up because the timeout expired.
-                previous.setNextWaitingThread(previous);
+                previous.nextWaitingThread = previous;
             }
             waitingThreads = null;
         } else {
@@ -182,10 +182,10 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
             if (waiter != null) {
                 waiter.setState(Thread.State.BLOCKED);
                 waiter.waitingCondition().threadNotify(false);
-                waitingThreads = waiter.nextWaitingThread();
+                waitingThreads = waiter.nextWaitingThread;
 
                 // See comment above.
-                waiter.setNextWaitingThread(waiter);
+                waiter.nextWaitingThread = waiter;
             }
         }
         traceEndMonitorNotify(currentThread);
@@ -216,7 +216,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         while (waiter != null) {
             Log.print(waiter.getName());
             Log.print(" ");
-            waiter = waiter.nextWaitingThread();
+            waiter = waiter.nextWaitingThread;
         }
         Log.print("}");
     }

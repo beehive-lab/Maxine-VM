@@ -142,6 +142,10 @@ public final class ImmortalHeap {
         immortalHeap.initialize(Size.fromLong(Math.max(maxPermSize.getValue().toLong(), permSize.getValue().toLong())));
     }
 
+    public static void initialize(MemoryRegion memoryRegion) {
+        immortalHeap.initialize(memoryRegion);
+    }
+
     /**
      * Visit the cells in the immortal heap.
      *
@@ -149,8 +153,9 @@ public final class ImmortalHeap {
      */
     public static void visitCells(CellVisitor cellVisitor) {
         Pointer firstCell = immortalHeap.start().asPointer();
+        final Pointer lastCell = immortalHeap.mark();
         Pointer cell = firstCell;
-        while (cell.lessThan(immortalHeap.mark())) {
+        while (cell.lessThan(lastCell)) {
             cell = DebugHeap.checkDebugCellTag(firstCell, cell);
             cell = cellVisitor.visitCell(cell);
         }
@@ -168,7 +173,7 @@ public final class ImmortalHeap {
     }
 
     private static class ImmortalMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
-        ImmortalMemoryPoolMXBean(RuntimeMemoryRegion region, MemoryManagerMXBean manager) {
+        ImmortalMemoryPoolMXBean(MemoryRegion region, MemoryManagerMXBean manager) {
             super(MemoryType.HEAP, region, manager);
         }
 

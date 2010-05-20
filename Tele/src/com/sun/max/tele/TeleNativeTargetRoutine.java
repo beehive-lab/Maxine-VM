@@ -32,7 +32,7 @@ import com.sun.max.vm.compiler.target.*;
 
 /**
  * Holds information about a block of code in
- * the process of the {@link TeleVM}, about which little is known
+ * the process of the VM, about which little is known
  * other than the memory location and possibly an assigned name.
  *
  * @author Michael Van De Vanter
@@ -43,7 +43,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
 
     /**
      * @param name a name for the region
-     * @return a newly created surrogate for a block of native code discovered in the {@link TeleVM}
+     * @return a newly created surrogate for a block of native code discovered in the VM
      * about which little more is known than its location.  The location must not overlap any code
      * region already known.
      */
@@ -59,21 +59,12 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     }
 
     /**
-     * @return an already existing surrogate for a block of native code discovered in the {@link TeleVM}
+     * @return an already existing surrogate for a block of native code discovered in the VM
      * whose location includes the specified address, null if not known to be a native routine
      * or if known to be a Java method.
      */
     public static TeleNativeTargetRoutine make(TeleVM teleVM, Address address) {
         return teleVM.findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
-    }
-
-    private final TeleRoutine teleRoutine;
-
-    /**
-     * @return surrogate that represents the (implied) code body from which the code was compiled.
-     */
-    public TeleRoutine teleRoutine() {
-        return teleRoutine;
     }
 
     private final TargetCodeRegion targetCodeRegion;
@@ -90,15 +81,10 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
 
     private TeleNativeTargetRoutine(TeleVM teleVM, Address start, Size size, String name) {
         super(teleVM);
-        this.teleRoutine = new TeleRoutine() {
-            public String getUniqueName() {
-                return "native method @ " + targetCodeRegion().start().toHexString();
-            }
-        };
-        this.targetCodeRegion = new TargetCodeRegion(this, start, size);
+        this.targetCodeRegion = new NativeTargetCodeRegion(teleVM, this, start, size);
         this.name = name;
         // Register so that it can be located by address.
-        teleVM().registerTeleTargetRoutine(this);
+        vm().registerTeleTargetRoutine(this);
     }
 
     public Address getCodeStart() {
@@ -118,8 +104,8 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
 
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (instructions == null) {
-            final byte[] code = teleVM().dataAccess().readFully(getCodeStart(), codeSize().toInt());
-            instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind, getCodeStart(), code, null);
+            final byte[] code = vm().dataAccess().readFully(getCodeStart(), codeSize().toInt());
+            instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, null);
         }
         return instructions;
     }

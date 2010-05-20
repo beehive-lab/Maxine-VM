@@ -23,9 +23,9 @@ package com.sun.max.tele.debug.guestvm.xen;
 import java.nio.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.MaxWatchpoint.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.jni.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.*;
@@ -83,7 +83,7 @@ public final class GuestVMXenDBChannel {
         } else if (channelType.startsWith(GDBSX_TCP)) {
             throw new IllegalArgumentException(GDBSX_TCP + " is not implemented");
         }
-        channelProtocol.attach(domId, teleDomain.teleVM().bootImage().header.threadLocalsAreaSize);
+        channelProtocol.attach(domId, teleDomain.vm().bootImage().header.threadLocalsAreaSize);
         maxByteBufferSize = channelProtocol.maxByteBufferSize();
     }
 
@@ -185,10 +185,10 @@ public final class GuestVMXenDBChannel {
 
     public static synchronized boolean activateWatchpoint(int domainId, TeleWatchpoint teleWatchpoint) {
         final WatchpointSettings settings = teleWatchpoint.getSettings();
-        return channelProtocol.activateWatchpoint(teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
+        return channelProtocol.activateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
     }
 
-    public static synchronized boolean deactivateWatchpoint(int domainId, MemoryRegion memoryRegion) {
+    public static synchronized boolean deactivateWatchpoint(int domainId, TeleFixedMemoryRegion memoryRegion) {
         return channelProtocol.deactivateWatchpoint(memoryRegion.start().toLong(), memoryRegion.size().toLong());
     }
 

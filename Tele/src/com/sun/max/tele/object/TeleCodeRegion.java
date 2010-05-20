@@ -29,7 +29,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for a region of memory in the {@link TeleVM} used to allocate target code.
+ * Canonical surrogate for a region of memory in the VM used to allocate compiled code.
  *
  * @author Michael Van De Vanter
  */
@@ -37,6 +37,8 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
 
     private static final int TRACE_VALUE = 2;
 
+    private boolean initialized = false;
+    private boolean isBootCodeRegion = false;
     private final List<TeleTargetMethod> teleTargetMethods = new ArrayList<TeleTargetMethod>();
 
     TeleCodeRegion(TeleVM teleVM, Reference codeRegionReference) {
@@ -44,32 +46,29 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     }
 
     /**
-     * @return whether this region is the code region contained in the boot image of the {@link TeleVM}.
+     * @return whether this region is the code region contained in the boot image of the VM.
      */
     private boolean isBootCodeRegion() {
-        return this == teleVM().teleBootCodeRegion();
+        initialize();
+        return isBootCodeRegion;
+    }
+
+    private void initialize() {
+        if (!initialized) {
+            isBootCodeRegion = getRegionName().equals(vm().codeCache().bootCodeRegionName());
+            initialized = true;
+        }
     }
 
     @Override
-    public Size size() {
+    public Size getRegionSize() {
         if (isBootCodeRegion()) {
             // The explicit representation of the boot {@link CodeRegion} gets "trimmed" by setting its size
             // to the amount allocated within the region.  Other regions don't have this happen.
             // Return the size allocated for the whole region, as recorded in the boot image.
-            return Size.fromInt(teleVM().bootImage().header.codeSize);
+            return Size.fromInt(vm().bootImage().header.codeSize);
         }
-        return super.size();
-    }
-
-    /**
-     * @return how much memory in region has been allocated to code, {@link Size#zero()) if memory for region not allocated.
-     */
-    @Override
-    public Size allocatedSize() {
-        if (isAllocated()) {
-            return mark().minus(start()).asSize();
-        }
-        return Size.zero();
+        return super.getRegionSize();
     }
 
     public List<TeleTargetMethod> teleTargetMethods() {
@@ -77,21 +76,22 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     }
 
     @Override
-    public void refresh(long processEpoch) {
+    public void refresh() {
         Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
         final long startTimeMillis = System.currentTimeMillis();
-        Reference targetMethods = teleVM().teleFields().CodeRegion_targetMethods.readReference(reference());
-        int size = teleVM().teleFields().SortedMemoryRegionList_size.readInt(targetMethods);
-        Reference regions = teleVM().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethods);
+        Reference targetMethods = vm().teleFields().CodeRegion_targetMethods.readReference(reference());
+        int size = vm().teleFields().SortedMemoryRegionList_size.readInt(targetMethods);
+        Reference regions = vm().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethods);
         int index = teleTargetMethods.size();
         final int delta = size - index;
         while (index < size) {
-            Reference ref = teleVM().getElementValue(Kind.REFERENCE, regions, index).asReference();
-            TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleVM().makeTeleObject(ref);
+            Reference ref = vm().getElementValue(Kind.REFERENCE, regions, index).asReference();
+            TeleTargetMethod teleTargetMethod = (TeleTargetMethod) vm().makeTeleObject(ref);
             assert teleTargetMethod != null;
             teleTargetMethods.add(teleTargetMethod);
             index++;
         }
+        super.refresh();
         Trace.end(TRACE_VALUE, tracePrefix() + "refreshing: new target methods =" + delta, startTimeMillis);
     }
 }

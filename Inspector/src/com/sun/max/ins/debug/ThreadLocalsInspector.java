@@ -100,7 +100,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         tabbedPane = new JTabbedPane();
         if (thread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-                final MaxThreadLocalsArea threadLocalsArea = thread.locals().threadLocalsAreaFor(state);
+                final MaxThreadLocalsArea threadLocalsArea = thread.localsBlock().threadLocalsAreaFor(state);
                 if (threadLocalsArea != null) {
                     final ThreadLocalsAreaPanel panel = new ThreadLocalsAreaPanel(inspection(), thread, threadLocalsArea, viewPreferences);
                     tabbedPane.add(state.toString(), panel);
@@ -155,7 +155,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
             public void procedure() {
                 final ThreadLocalsAreaPanel threadLocalsAreaPanel = (ThreadLocalsAreaPanel) tabbedPane.getSelectedComponent();
                 final String name = getTextForTitle() + " " + threadLocalsAreaPanel.getSafepointState().toString();
-                final MessageFormat footer = new MessageFormat("Maxine: " + name + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
+                final MessageFormat footer = new MessageFormat(vm().entityName() + ": " + name + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
                 try {
                     final InspectorTable inspectorTable = threadLocalsAreaPanel.getTable();
                     assert inspectorTable != null;
@@ -182,7 +182,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-            final MaxThreadLocalsArea threadLocalsArea = thread.locals().threadLocalsAreaFor(state);
+            final MaxThreadLocalsArea threadLocalsArea = thread.localsBlock().threadLocalsAreaFor(state);
             final ThreadLocalsAreaPanel panel = threadLocalsPanelFor(state);
             if (threadLocalsArea != null) {
                 if (panel == null) {

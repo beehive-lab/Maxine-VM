@@ -20,11 +20,15 @@
  */
 package com.sun.max.vm.jni;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
 
+import com.sun.cri.bytecode.*;
+import com.sun.max.annotate.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -120,6 +124,9 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant logPrintln_String = createClassMethodConstant(Log.class, makeSymbol("println"), String.class);
     private static final ClassMethodRefConstant logPrint_String = createClassMethodConstant(Log.class, makeSymbol("print"), String.class);
     private static final ClassMethodRefConstant traceJNI = createClassMethodConstant(ClassMethodActor.class, makeSymbol("traceJNI"));
+    private static final ClassMethodRefConstant link = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("link"));
+    private static final ClassMethodRefConstant nativeToJava = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("nativeToJava"));
+    private static final ClassMethodRefConstant javaToNative = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("javaToNative"));
     private static final StringConstant threadLabelPrefix = PoolConstantFactory.createStringConstant("[Thread \"");
 
     private void generateCode(boolean isCFunction, boolean isStatic, ClassActor holder, SignatureDescriptor signatureDescriptor) {
@@ -135,6 +142,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         int currentThread = -1;
 
         int parameterLocalIndex = 0;
+
         if (!isCFunction) {
 
             // Cache current thread in a local variable
@@ -234,8 +242,15 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             ++parameterLocalIndex;
         }
 
+        // Link native function
+        invokestatic(link, 0, 1);
+
+        invokestatic(javaToNative, 0, 0);
+
         // Invoke the native function
         callnative(SignatureDescriptor.create(nativeFunctionDescriptor.append(')').append(nativeResultDescriptor).toString()), nativeFunctionArgSlots, nativeResultDescriptor.toKind().stackSlots);
+
+        invokestatic(nativeToJava, 0, 0);
 
         if (!isCFunction) {
             // Unwrap a reference result from its enclosing JNI handle. This must be done
@@ -273,7 +288,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a call to a native function from a native stub.
      */
     private void verboseJniEntry() {
-        if (MaxineVM.isHosted()) {
+        if (MaxineVM.isHosted() && MaxineVM.isDebug()) {
             // Stubs generated while bootstrapping need to test the "-verbose" VM program argument
             invokestatic(traceJNI, 0, 1);
             final Label noTracing = newLabel();
@@ -297,7 +312,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a return to a native stub from a native function.
      */
     private void verboseJniExit() {
-        if (MaxineVM.isHosted()) {
+        if (MaxineVM.isHosted() && MaxineVM.isDebug()) {
             // Stubs generated while bootstrapping need to test the "-verbose" VM program argument
             invokestatic(traceJNI, 0, 1);
             final Label notVerbose = newLabel();
@@ -311,14 +326,24 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         }
     }
 
+    @NEVER_INLINE
     private void traceJniExit() {
         invokestatic(traceCurrentThreadPrefix, 0, 0);
         ldc(PoolConstantFactory.createStringConstant("\" <-- JNI: " + classMethodActor.format("%H.%n(%P)") + "]"));
         invokestatic(logPrintln_String, 1, 0);
     }
 
+    @NEVER_INLINE
     private static void traceCurrentThreadPrefix() {
         Log.print("[Thread \"");
         Log.print(VmThread.current().getName());
     }
+
+    @INTRINSIC(JNIOP_LINK)
+    public static native Address link();
+    @INTRINSIC(JNIOP_N2J)
+    public static native void nativeToJava();
+    @INTRINSIC(JNIOP_J2N)
+    public static native void javaToNative();
+
 }

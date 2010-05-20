@@ -26,9 +26,10 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.Loop.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.value.FrameState.*;
 
 /**
- * The <code>LoopPeeler</code> performs the loop peeling optimization in
+ * The {@code LoopPeeler} performs the loop peeling optimization in
  * a set of loops.
  *
  *
@@ -92,7 +93,7 @@ import com.sun.c1x.value.*;
  * @author Marcelo Cintra
  *
  */
-public class LoopPeeler extends ValueVisitor {
+public class LoopPeeler extends DefaultValueVisitor {
 
     private Instruction lastInstruction;
     private Map<Value, Value> valueMap;
@@ -160,7 +161,7 @@ public class LoopPeeler extends ValueVisitor {
                     BlockBegin newPhiBlock = (BlockBegin) lookup(phi.block());
                     boolean phiIsLocal = phi.isLocal();
                     int phiIndex = phiIsLocal ? phi.localIndex() : phi.stackIndex();
-                    ValueStack stateBefore = newPhiBlock.stateBefore();
+                    FrameState stateBefore = newPhiBlock.stateBefore();
 
                     if (phiIsLocal) {
                         stateBefore.setupPhiForLocal(newPhiBlock, phiIndex);
@@ -238,7 +239,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitResolveClass(ResolveClass i) {
-        ResolveClass other = new ResolveClass(i.type, i.portion, i.stateBefore().copy(), i.cpi, i.constantPool);
+        ResolveClass other = new ResolveClass(i.type, i.portion, i.stateBefore().copy());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -248,7 +249,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitLoadField(LoadField i) {
-        LoadField other = new LoadField(i.object(), i.field(), i.isStatic(), copyStateBefore(i.stateBefore()), i.isLoaded(), i.cpi, i.constantPool);
+        LoadField other = new LoadField(i.object(), i.field(), i.isStatic(), copyStateBefore(i.stateBefore()), i.isLoaded());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -258,14 +259,14 @@ public class LoopPeeler extends ValueVisitor {
         addInstruction(other);
     }
 
-    private ValueStack copyStateBefore(ValueStack stateBefore) {
+    private FrameState copyStateBefore(FrameState stateBefore) {
         return stateBefore != null ? stateBefore.copy() : null;
     }
 
     @Override
     public void visitStoreField(StoreField i) {
         StoreField other = new StoreField(lookup(i.object()), i.field(), lookup(i.value()), i.isStatic(),
-                        copyStateBefore(i.stateBefore()), i.isLoaded(), i.cpi, i.constantPool);
+                        copyStateBefore(i.stateBefore()), i.isLoaded());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -320,7 +321,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitArithmeticOp(ArithmeticOp i) {
-        ArithmeticOp other = new ArithmeticOp(i.opcode(), lookup(i.x()), lookup(i.y()), i.isStrictFP(), i.stateBefore() != null ? i.stateBefore().copy() : null);
+        ArithmeticOp other = new ArithmeticOp(i.opcode, i.kind, lookup(i.x()), lookup(i.y()), i.isStrictFP(), i.stateBefore() != null ? i.stateBefore().copy() : null);
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -341,7 +342,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitShiftOp(ShiftOp i) {
-        ShiftOp other = new ShiftOp(i.opcode(), lookup(i.x()), lookup(i.y()));
+        ShiftOp other = new ShiftOp(i.opcode, lookup(i.x()), lookup(i.y()));
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -349,7 +350,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitLogicOp(LogicOp i) {
-        LogicOp other = new LogicOp(i.opcode(), lookup(i.x()), lookup(i.y()));
+        LogicOp other = new LogicOp(i.opcode, lookup(i.x()), lookup(i.y()));
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -357,7 +358,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitCompareOp(CompareOp i) {
-        CompareOp other = new CompareOp(i.opcode(), lookup(i.x()), lookup(i.y()), i.stateBefore().copy());
+        CompareOp other = new CompareOp(i.opcode, lookup(i.x()), lookup(i.y()), i.stateBefore().copy());
         other.setBCI(i.bci());
         bind(i, other);
         updateState(other);
@@ -374,7 +375,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitConvert(Convert i) {
-        Convert other = new Convert(i.opcode(), lookup(i.value()), i.kind);
+        Convert other = new Convert(i.opcode, lookup(i.value()), i.kind);
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -394,7 +395,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitInvoke(Invoke i) {
-        Invoke other = new Invoke(i.opcode(), i.kind, cloneArguments(i.arguments()), i.isStatic(), i.vtableIndex(), i.target(), i.cpi, i.constantPool, i.stateBefore().copy());
+        Invoke other = new Invoke(i.opcode(), i.kind, cloneArguments(i.arguments()), i.isStatic(), i.target(), i.stateBefore().copy());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -626,14 +627,6 @@ public class LoopPeeler extends ValueVisitor {
     }
 
     @Override
-    public void visitRoundFP(RoundFP i) {
-        RoundFP other = new RoundFP(lookup(i.value()));
-        other.setBCI(i.bci());
-        bind(i, other);
-        addInstruction(other);
-    }
-
-    @Override
     public void visitUnsafeGetRaw(UnsafeGetRaw i) {
         UnsafeGetRaw other = new UnsafeGetRaw(i.kind, lookup(i.base()), i.mayBeUnaligned());
         other.setBCI(i.bci());
@@ -725,7 +718,7 @@ public class LoopPeeler extends ValueVisitor {
                             if (phi.block() == loop.header) {
                                 // TODO: think about cases were more than one edge flow to loop
                                 // header
-                                return lookup(phi.operandAt(predecessorIdx));
+                                return lookup(phi.inputAt(predecessorIdx));
                             }
                         }
                         return lookup(i);
@@ -778,15 +771,15 @@ public class LoopPeeler extends ValueVisitor {
 
     private boolean insertPhi(Edge edge, Map <Value, Value> mapValueToPhi) {
         BlockBegin clonedExit = (BlockBegin) lookup(edge.source);
-        ValueStack exit = edge.source.end().stateAfter();
-        ValueStack other = clonedExit.end().stateAfter();
+        FrameState exit = edge.source.end().stateAfter();
+        FrameState other = clonedExit.end().stateAfter();
         boolean hasSubstitution = false;
 
         assert exit.stackSize() == other.stackSize();
         assert exit.localsSize() == other.localsSize();
         assert exit.locksSize() == other.locksSize();
 
-        ValueStack stateAtDestination = edge.destination.stateBefore();
+        FrameState stateAtDestination = edge.destination.stateBefore();
         for (int i = 0; i < stateAtDestination.localsSize(); i++) {
             Value x = exit.localAt(i);
             Value y = other.localAt(i);
@@ -837,10 +830,13 @@ public class LoopPeeler extends ValueVisitor {
             // the loop has only one outside predecessor
             // we resolve all phi instructions in to use the operand coming
             // from that predecessor
-            int predIdx = predecessors.indexOf(loopPredecessors.get(0));
-            for (Phi phi : loop.header.stateBefore().allPhis(loop.header)) {
-                bind(phi, phi.operandAt(predIdx));
-            }
+            final int predIdx = predecessors.indexOf(loopPredecessors.get(0));
+            loop.header.stateBefore().forEachPhi(loop.header, new PhiProcedure() {
+                public boolean doPhi(Phi phi) {
+                    bind(phi, phi.inputAt(predIdx));
+                    return true;
+                }
+            });
         }
 
         // make all outside predecessors point to the cloned

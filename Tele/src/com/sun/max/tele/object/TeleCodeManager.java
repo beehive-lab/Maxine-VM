@@ -22,13 +22,12 @@ package com.sun.max.tele.object;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for the singleton {@link CodeManager} in the {@link TeleVM}.
+ * Canonical surrogate for the singleton {@link CodeManager} in the VM.
  *
  * @author Michael Van De Vanter
  * @author Hannes Payer
@@ -42,22 +41,13 @@ public final class TeleCodeManager extends TeleTupleObject {
         return "[TeleCodeManager] ";
     }
 
-    private static TeleCodeManager teleCodeManager;
-
-    public static TeleCodeManager make(TeleVM teleVM) {
-        if (teleCodeManager ==  null) {
-            teleCodeManager = (TeleCodeManager) teleVM.makeTeleObject(teleVM.teleFields().Code_codeManager.readReference(teleVM));
-            teleCodeManager.initialize();
-        }
-        return teleCodeManager;
-    }
-
     private TeleCodeRegion teleBootCodeRegion = null;
 
     /**
-     * Surrogates for each of the code regions created by the {@link CodeManager} in the {@link TeleVM}.
-     * Assume that the regions are all created at startup, and that their identity doesn't change, just their
-     * address as they have memory allocated for them.
+     * Surrogates for the runtime (dynamic) code region created by the {@link CodeManager} in the VM.
+     * <br>
+     * Assume that the region is created at startup, and that its identity doesn't change, just the
+     * address when memory is allocated for it.
      */
     private TeleCodeRegion teleRuntimeCodeRegion = null;
 
@@ -69,58 +59,41 @@ public final class TeleCodeManager extends TeleTupleObject {
      * Lazy initialization; try to keep data reading out of constructor.
      */
     private void initialize() {
-        Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
-        final long startTimeMillis = System.currentTimeMillis();
-        final Reference bootCodeRegionReference = teleVM().teleFields().Code_bootCodeRegion.readReference(teleVM());
-        teleBootCodeRegion = (TeleCodeRegion) teleVM().makeTeleObject(bootCodeRegionReference);
+        if (teleBootCodeRegion == null) {
+            Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
+            final long startTimeMillis = System.currentTimeMillis();
+            final Reference bootCodeRegionReference = vm().teleFields().Code_bootCodeRegion.readReference(vm());
+            teleBootCodeRegion = (TeleCodeRegion) vm().makeTeleObject(bootCodeRegionReference);
 
-        final Reference runtimeCodeRegionReference = teleVM().teleFields().CodeManager_runtimeCodeRegion.readReference(teleVM());
-        teleRuntimeCodeRegion = (TeleCodeRegion) teleVM().makeTeleObject(runtimeCodeRegionReference);
+            final Reference runtimeCodeRegionReference = vm().teleFields().CodeManager_runtimeCodeRegion.readReference(vm());
+            teleRuntimeCodeRegion = (TeleCodeRegion) vm().makeTeleObject(runtimeCodeRegionReference);
 
-        teleBootCodeRegion.refresh(0);
-        teleRuntimeCodeRegion.refresh(0);
+            teleBootCodeRegion.refresh();
+            teleRuntimeCodeRegion.refresh();
 
-        // Pre-load the class method actors for all target methods in the boot heap.
-        // This just shifts the perceptible delay when bringing up the "View target code..." dialog
-        // into the general Inspector start up delay.
-        for (TeleTargetMethod teleTargetMethod : teleBootCodeRegion.teleTargetMethods()) {
-            teleTargetMethod.classMethodActor();
+            Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
         }
-
-        Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
     }
 
     @Override
-    public void refresh(long processEpoch) {
+    public void refresh() {
         // We aren't caching anything yet, other than the identity of the code regions (see above);
     }
 
     /**
-     * @return surrogate for the special {@link CodeRegion} in the {@link BootImage} of the {@link TeleVM}.
+     * @return surrogate for the special {@link CodeRegion} in the {@link BootImage} of the VM.
      */
     public TeleCodeRegion teleBootCodeRegion() {
+        initialize();
         return teleBootCodeRegion;
     }
 
     /**
-     * @return surrogates for the special Runtime {@link CodeRegion} of the {@link TeleVM}.
+     * @return surrogates for the special Runtime {@link CodeRegion} of the VM.
      */
     public TeleCodeRegion teleRuntimeCodeRegion() {
+        initialize();
         return teleRuntimeCodeRegion;
-    }
-
-    /**
-     * @return the allocated {@link CodeRegion} in the {@link TeleVM} that contains the address,
-     * possibly the boot code region; null if none.
-     */
-    public TeleCodeRegion findCodeRegion(Address address) {
-        if (teleBootCodeRegion.contains(address)) {
-            return teleBootCodeRegion;
-        }
-        if (teleRuntimeCodeRegion.contains(address)) {
-            return teleRuntimeCodeRegion;
-        }
-        return null;
     }
 
 }

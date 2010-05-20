@@ -20,11 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiRegister;
+import com.sun.cri.ci.*;
 
 /**
- * The <code>LoadRegister</code> instruction represents a read of a physical register.
+ * The {@code LoadRegister} instruction represents a read of a physical register.
  * This instruction is part of the HIR support for low-level operations, such as safepoints,
  * stack banging, etc, and does not correspond to a Java operation.
  *
@@ -42,6 +41,9 @@ public final class LoadRegister extends Instruction {
     public LoadRegister(CiKind kind, CiRegister register) {
         super(kind);
         this.register = register;
+        if (register.isNonZero()) {
+            setFlag(Flag.NonNull);
+        }
     }
 
     public CiRegister register() {

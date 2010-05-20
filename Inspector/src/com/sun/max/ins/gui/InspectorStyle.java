@@ -26,7 +26,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 /**
- * Visual interaction specification for Inspectors.
+ * Visual interaction specification for VM Inspectors.
  *
  * @author Michael Van De Vanter
  * @see <a href="http://en.wikipedia.org/wiki/Web_colors#X11_color_names">X11 color names</a>

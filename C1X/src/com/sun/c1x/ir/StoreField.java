@@ -20,15 +20,20 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>StoreField</code> instruction represents a write to a static or instance field.
+ * The {@code StoreField} instruction represents a write to a static or instance field.
  *
  * @author Ben L. Titzer
  */
 public final class StoreField extends AccessField {
+
+    /**
+     * The value to store.
+     */
     Value value;
 
     /**
@@ -40,8 +45,8 @@ public final class StoreField extends AccessField {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public StoreField(Value object, RiField field, Value value, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
-        super(object, field, isStatic, stateBefore, isLoaded, cpi, constantPool);
+    public StoreField(Value object, RiField field, Value value, boolean isStatic, FrameState stateBefore, boolean isLoaded) {
+        super(CiKind.Void, object, field, isStatic, stateBefore, isLoaded);
         this.value = value;
         setFlag(Flag.LiveStore);
     }
@@ -56,7 +61,7 @@ public final class StoreField extends AccessField {
 
     /**
      * Checks whether this instruction needs a write barrier.
-     * @return <code>true</code> if this instruction needs a write barrier
+     * @return {@code true} if this instruction needs a write barrier
      */
     public boolean needsWriteBarrier() {
         return !checkFlag(Flag.NoWriteBarrier);

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.jdk;
 
+import java.security.*;
+
 import sun.reflect.*;
 
 import com.sun.max.annotate.*;
@@ -118,7 +120,7 @@ final class JDK_sun_reflect_Reflection {
 
     /**
      * Get the caller Context at a specified place in the stack.
-     * This is used by @see JDK_java_security_AccessController for @See AccessCOntroller.doiPrivileged
+     * This is used by {@link JDK_java_security_AccessController} for {@link AccessController#doPrivileged}.
      *
      * @param realFramesToSkip the number of frames to skip
      * @return the Context object corresponding to the specified place in the stack

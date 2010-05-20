@@ -294,7 +294,7 @@ static void mapHeapAndCode(int fd) {
 #elif os_SOLARIS || os_DARWIN
     // Reserve more than -Xmx should ever demand.
     // Most of this will be released again once in Java code by the heap scheme
-    theHeap = virtualMemory_allocateNoSwap(TERA_BYTE, HEAP_VM);
+    theHeap = virtualMemory_allocatePrivateAnon((Address) 0, TERA_BYTE, JNI_FALSE, JNI_FALSE, HEAP_VM);
     if (theHeap == ALLOC_FAILED) {
         log_exit(4, "could not reserve boot image");
     }

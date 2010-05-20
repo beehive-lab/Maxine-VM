@@ -57,7 +57,7 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  * @Author Mick Jordan
  */
-public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements HeapScheme, CellVisitor {
+public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisitor {
 
     public static final String FROM_REGION_NAME = "Heap-From";
     public static final String TO_REGION_NAME = "Heap-To";
@@ -257,11 +257,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
 
         if (!heapAllocationOk) {
-            Log.println("Error occurred during initialization of VM");
-            Log.print("Could not reserve ");
-            Log.print(heapAllocationSize.toLong());
-            Log.println(" bytes of memory for object heap");
-            MaxineVM.native_exit(1);
+            MaxineVM.reportPristineMemoryFailure("object heap", "allocate", heapAllocationSize);
         } else {
             if (Heap.verbose()) {
                 Log.print("Allocated ");
@@ -298,6 +294,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                     return false;
                 }
             }
+            return true;
+        }
+
+        public boolean isForwarding() {
             return true;
         }
 
@@ -461,7 +461,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      * Deallocates the memory associated with the given region.
      * Sets the region start to zero but does not change the size.
      */
-    private static void deallocateSpace(RuntimeMemoryRegion space) {
+    private static void deallocateSpace(MemoryRegion space) {
         final Address base = space.start();
         if (virtualAllocOption.getValue()) {
             VirtualMemory.deallocate(base, space.size(), VirtualMemory.Type.HEAP);
@@ -550,7 +550,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
             final Pointer toCell = gcAllocate(size);
-            if (MaxineVM.isDebug()) {
+            if (DebugHeap.isTagging()) {
                 DebugHeap.writeCellTag(toCell);
             }
 
@@ -780,7 +780,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      */
     private Pointer gcAllocate(Size size) {
         Pointer cell = allocationMark().asPointer();
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             cell = cell.plusWords(1);
         }
         toSpace.mark.set(cell.plus(size));
@@ -899,10 +899,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
             end = cell.plus(size);
             while (end.greaterThan(top)) {
-                if (VmThread.isAttaching()) {
-                    Log.println("Out of memory on thread still attaching to the VM");
-                    MaxineVM.native_exit(1);
-                }
                 if (!Heap.collectGarbage(size)) {
                     /*
                      * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we
@@ -1003,14 +999,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             if (Heap.traceGCPhases()) {
                 Log.println("Verifying heap objects...");
             }
-            DebugHeap.verifyRegion(toSpace.description(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
+            DebugHeap.verifyRegion(toSpace.regionName(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
             if (Heap.traceGCPhases()) {
                 Log.println("Verifying code objects...");
             }
 
             CodeRegion codeRegion = Code.getCodeManager().getRuntimeCodeRegion();
             if (!codeRegion.size().isZero()) {
-                DebugHeap.verifyRegion(codeRegion.description(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, gripVerifier);
+                DebugHeap.verifyRegion(codeRegion.regionName(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, gripVerifier);
             }
 
         }
@@ -1029,7 +1025,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     private void zapRegion(MemoryRegion region, String when) {
         if (Heap.traceGCPhases()) {
             Log.print("Zapping region ");
-            Log.print(region.description());
+            Log.print(region.regionName());
             Log.print(' ');
             Log.println(when);
         }
@@ -1046,8 +1042,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
     }
 
-    private void logSpace(RuntimeMemoryRegion space) {
-        Log.print(space.description());
+    private void logSpace(MemoryRegion space) {
+        Log.print(space.regionName());
         Log.print(" start "); Log.print(space.start());
         Log.print(", end "); Log.print(space.end());
         Log.print(", size "); Log.print(space.size());
@@ -1236,7 +1232,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     }
 
     private final class SemiSpaceMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
-        SemiSpaceMemoryPoolMXBean(RuntimeMemoryRegion region, MemoryManagerMXBean manager) {
+        SemiSpaceMemoryPoolMXBean(MemoryRegion region, MemoryManagerMXBean manager) {
             super(MemoryType.HEAP, region, manager);
         }
     }

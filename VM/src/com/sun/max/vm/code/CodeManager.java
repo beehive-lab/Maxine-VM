@@ -54,7 +54,7 @@ public abstract class CodeManager {
             "Memory allocated for runtime code region cache."), MaxineVM.Phase.PRISTINE);
 
     /**
-     * The code regions.
+     * The code region.
      */
     @INSPECTED
     protected static final CodeRegion runtimeCodeRegion = new CodeRegion("Code-Runtime");
@@ -99,7 +99,7 @@ public abstract class CodeManager {
             currentCodeRegion = Code.bootCodeRegion;
         }
 
-        Object allocationTraceDescription = Code.traceAllocation.getValue() ? (targetMethod.classMethodActor() == null ? targetMethod.description() : targetMethod.classMethodActor()) : null;
+        Object allocationTraceDescription = Code.traceAllocation.getValue() ? (targetMethod.classMethodActor() == null ? targetMethod.regionName() : targetMethod.classMethodActor()) : null;
         Pointer start = currentCodeRegion.allocate(allocationSize, false);
         traceChunkAllocation(allocationTraceDescription, allocationSize, start);
         if (start.isZero()) {

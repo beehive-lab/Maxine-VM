@@ -20,24 +20,21 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The <code>Invoke</code> instruction represents all kinds of method calls.
+ * The {@code Invoke} instruction represents all kinds of method calls.
  *
  * @author Ben L. Titzer
  */
 public final class Invoke extends StateSplit {
 
-    final int opcode;
-    final Value[] arguments;
-    final int vtableIndex;
-    final RiMethod target;
-    public final char cpi;
-    public final RiConstantPool constantPool;
+    public final int opcode;
+    public final Value[] arguments;
+    public final RiMethod target;
 
     /**
      * Constructs a new Invoke instruction.
@@ -46,15 +43,13 @@ public final class Invoke extends StateSplit {
      * @param result the result type
      * @param args the list of instructions producing arguments to the invocation, including the receiver object
      * @param isStatic {@code true} if this call is static (no receiver object)
-     * @param vtableIndex the vtable index for a virtual or interface call
      * @param target the target method being called
      * @param stateBefore the state before executing the invocation
      */
-    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, RiMethod target, FrameState stateBefore) {
         super(result, stateBefore);
         this.opcode = opcode;
         this.arguments = args;
-        this.vtableIndex = vtableIndex;
         this.target = target;
         if (isStatic) {
             setFlag(Flag.IsStatic);
@@ -62,9 +57,6 @@ public final class Invoke extends StateSplit {
         } else if (args[0].isNonNull()) {
             redundantNullCheck();
         }
-
-        this.cpi = cpi;
-        this.constantPool = constantPool;
     }
 
     /**
@@ -85,20 +77,12 @@ public final class Invoke extends StateSplit {
 
     /**
      * Gets the instruction that produces the receiver object for this invocation, if any.
-     * @return the instruction that produces the receiver object for this invocation if any, <code>null</code> if this
+     * @return the instruction that produces the receiver object for this invocation if any, {@code null} if this
      *         invocation does not take a receiver object
      */
     public Value receiver() {
         assert !isStatic();
         return arguments[0];
-    }
-
-    /**
-     * Gets the virtual table index for a virtual invocation.
-     * @return the virtual table index
-     */
-    public int vtableIndex() {
-        return vtableIndex;
     }
 
     /**
@@ -119,7 +103,7 @@ public final class Invoke extends StateSplit {
 
     /**
      * Checks whether this instruction can trap.
-     * @return <code>true</code>, conservatively assuming the called method may throw an exception
+     * @return {@code true}, conservatively assuming the called method may throw an exception
      */
     @Override
     public boolean canTrap() {
@@ -133,7 +117,7 @@ public final class Invoke extends StateSplit {
 
     /**
      * Checks whether this invocation has a receiver object.
-     * @return <code>true</code> if this invocation has a receiver object; <code>false</code> otherwise, if this is a
+     * @return {@code true} if this invocation has a receiver object; {@code false} otherwise, if this is a
      *         static call
      */
     public boolean hasReceiver() {
@@ -166,6 +150,7 @@ public final class Invoke extends StateSplit {
     }
 
     public CiKind[] signature() {
-        return Util.signatureToKinds(target.signatureType(), !isStatic());
+        CiKind receiver = isStatic() ? null : target.holder().kind();
+        return Util.signatureToKinds(target.signature(), receiver);
     }
 }

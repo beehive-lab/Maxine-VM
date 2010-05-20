@@ -144,7 +144,7 @@ public class VmThread {
 
     private final CompactReferenceMapInterpreter compactReferenceMapInterpreter = new CompactReferenceMapInterpreter();
 
-    private JavaMonitor protectedMonitor;
+    public JavaMonitor protectedMonitor;
 
     private ConditionVariable waitingCondition = ConditionVariableFactory.create();
 
@@ -164,10 +164,10 @@ public class VmThread {
      * @see StandardJavaMonitor#monitorWait(long)
      * @see StandardJavaMonitor#monitorNotify(boolean)
      */
-    private VmThread nextWaitingThread = this;
+    public VmThread nextWaitingThread = this;
 
     /**
-     * A stack of elements that support  @see AccessController.doPrivileged calls.
+     * A stack of elements that support  {@link AccessController#doPrivileged(PrivilegedAction)} calls.
      */
     private PrivilegedElement privilegedStackTop;
 
@@ -782,28 +782,8 @@ public class VmThread {
     }
 
     @INLINE
-    public final JavaMonitor protectedMonitor() {
-        return protectedMonitor;
-    }
-
-    @INLINE
-    public final void setProtectedMonitor(JavaMonitor protectedMonitor) {
-        this.protectedMonitor = protectedMonitor;
-    }
-
-    @INLINE
     public final ConditionVariable waitingCondition() {
         return waitingCondition;
-    }
-
-    @INLINE
-    public final VmThread nextWaitingThread() {
-        return nextWaitingThread;
-    }
-
-    @INLINE
-    public final void setNextWaitingThread(VmThread nextWaitingThread) {
-        this.nextWaitingThread = nextWaitingThread;
     }
 
     /**
@@ -899,6 +879,7 @@ public class VmThread {
         return JniHandles.createLocalHandle(jniHandles, object);
     }
 
+    @INLINE
     public final JniHandles jniHandles() {
         return jniHandles;
     }

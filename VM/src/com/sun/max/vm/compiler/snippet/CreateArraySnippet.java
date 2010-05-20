@@ -106,7 +106,7 @@ public abstract class CreateArraySnippet extends Snippet {
         }
         @SNIPPET
         public static Object createMultiReferenceArray(ClassActor classActor, int[] lengths) {
-            if (!classActor.isArrayClassActor()) {
+            if (!classActor.isArrayClass()) {
                 throw new VerifyError("MULTIANEWARRAY cannot be applied to non-array type " + classActor);
             }
             return createMultiReferenceArrayAtIndex(0, classActor, lengths);

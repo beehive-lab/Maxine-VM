@@ -27,7 +27,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.ide.*;
@@ -481,14 +481,29 @@ public class ClassfileWriter {
     }
 
     /**
+     * Preserves the original bytecode loaded or generated for a method actor. This bytecode is guaranteed to be
+     * valid JVM code which can be used to (re)generate a valid class file. This is required in hosted execution
+     * mode when {@link ClassActor}s may have to be serialized to class files that can be loaded by the
+     * underlying JVM.
+     */
+    @HOSTED_ONLY
+    public static final HashMap<MethodActor, byte[]> classfileCodeMap = new HashMap<MethodActor, byte[]>();
+
+    /**
+     * Exists for the same reasons as {@link #classfileCodeMap}. The reason {@link #classfileCodeMap} is required
+     * in addition to this map is that {@linkplain BytecodeIntrinsifier intrinsification} occurs 'in situ'.
+     */
+    @HOSTED_ONLY
+    public static final HashMap<MethodActor, CodeAttribute> classfileCodeAttributeMap = new HashMap<MethodActor, CodeAttribute>();
+
+    /**
      * Represents the class file info for methods.
      */
     public static class MethodInfo extends MemberInfo<MethodActor> {
 
         MethodInfo(MethodActor methodActor) {
             super(methodActor);
-            final CodeAttribute codeAttribute = methodActor instanceof ClassMethodActor ? ((ClassMethodActor) methodActor).codeAttribute() : null;
-            final CodeAttribute originalCodeAttribute = methodActor instanceof ClassMethodActor ? ((ClassMethodActor) methodActor).originalCodeAttribute() : null;
+            CodeAttribute codeAttribute = methodActor instanceof ClassMethodActor ? ((ClassMethodActor) methodActor).codeAttribute() : null;
             final byte[] runtimeVisibleParameterAnnotationsBytes = methodActor.runtimeVisibleParameterAnnotationsBytes();
             final byte[] annotationDefaultBytes = methodActor.annotationDefaultBytes();
             final TypeDescriptor[] checkedExceptions = methodActor.checkedExceptions();
@@ -517,7 +532,21 @@ public class ClassfileWriter {
             }
 
             if (codeAttribute != null) {
-                attributes.append(new Code(codeAttribute, originalCodeAttribute));
+                if (MaxineVM.isHosted()) {
+                    if (classfileCodeAttributeMap.containsKey(methodActor)) {
+                        codeAttribute = classfileCodeAttributeMap.get(methodActor);
+                    }
+                }
+
+                Code code = new Code(codeAttribute);
+                if (MaxineVM.isHosted()) {
+                    byte[] classfileCode = classfileCodeMap.get(methodActor);
+                    if (classfileCode != null) {
+                        code.classfileCode = classfileCode;
+                    }
+                }
+
+                attributes.append(code);
             }
         }
 
@@ -530,12 +559,12 @@ public class ClassfileWriter {
     public static class Code extends Attribute {
         protected final AppendableSequence<Attribute> attributes = new ArrayListSequence<Attribute>();
         protected final CodeAttribute codeAttribute;
-        protected final CodeAttribute originalCodeAttribute;
+        @HOSTED_ONLY
+        protected byte[] classfileCode;
 
-        public Code(CodeAttribute codeAttribute, CodeAttribute originalCodeAttribute) {
+        public Code(CodeAttribute codeAttribute) {
             super("Code");
             this.codeAttribute = codeAttribute;
-            this.originalCodeAttribute = originalCodeAttribute;
             final StackMapTable stackMapTable = codeAttribute.stackMapTable();
             final LineNumberTable lineNumberTable = codeAttribute.lineNumberTable();
             final LocalVariableTable localVariableTable = codeAttribute.localVariableTable();
@@ -577,7 +606,7 @@ public class ClassfileWriter {
         /**
          * Replace non-standard bytecodes with standard JVM bytecodes.
          */
-        private static byte[] standardizeCode(final CodeAttribute codeAttribute, final CodeAttribute originalCodeAttribute, final ClassfileWriter cf) {
+        private static byte[] standardizeCode(final CodeAttribute codeAttribute, final ClassfileWriter cf) {
             final byte[] code = codeAttribute.code();
             if (code == null) {
                 return code;
@@ -596,20 +625,6 @@ public class ClassfileWriter {
                     codeCopy[position + 1] = (byte) (index >> 8);
                     codeCopy[position + 2] = (byte) index;
                 }
-                @Override
-                protected boolean extension(int opcode, boolean isWide) {
-                    if (originalCodeAttribute != null) {
-                        int length = Bytecodes.lengthOf(opcode);
-                        int start = bytecodeScanner().currentOpcodePosition();
-                        byte[] originalCode = originalCodeAttribute.code();
-                        for (int bci = start; bci < start + length; bci++) {
-                            codeCopy[bci] = originalCode[bci];
-                        }
-                    } else {
-                        ProgramWarning.message("Non-standard JVM bytecode " + opcode + " (" + Bytecodes.nameOf(opcode) + ") written to class file generated for " + cf.constantPoolEditor.pool().holder());
-                    }
-                    return false;
-                }
             };
             new BytecodeScanner(bytecodeAdapter).scan(new BytecodeBlock(code));
             return codeCopy;
@@ -620,7 +635,12 @@ public class ClassfileWriter {
             final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
             cf.writeUnsigned2(codeAttribute.maxStack);
             cf.writeUnsigned2(codeAttribute.maxLocals);
-            final byte[] code = standardizeCode(codeAttribute, originalCodeAttribute, cf);
+            final byte[] code;
+            if (MaxineVM.isHosted() && classfileCode != null) {
+                code = classfileCode;
+            } else {
+                code = standardizeCode(codeAttribute, cf);
+            }
             cf.writeUnsigned4(code.length);
             cf.writeUnsigned1Array(code);
             cf.writeUnsigned2(exceptionHandlerTable.length());

@@ -127,8 +127,8 @@ public final class SolarisTeleProcess extends TeleProcess {
 
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        final Word primordialVmThreadLocals = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header.primordialThreadLocalsOffset));
-        final Word threadLocalsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header.threadLocalsListHeadOffset));
+        final Word primordialVmThreadLocals = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.primordialThreadLocalsOffset));
+        final Word threadLocalsList = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.threadLocalsListHeadOffset));
         nativeGatherThreads(processHandle, threads, threadLocalsList.asAddress().toLong(), primordialVmThreadLocals.asAddress().toLong());
     }
 
@@ -196,12 +196,12 @@ public final class SolarisTeleProcess extends TeleProcess {
     @Override
     protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
         final WatchpointSettings settings = teleWatchpoint.getSettings();
-        return nativeActivateWatchpoint(processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
+        return nativeActivateWatchpoint(processHandle, teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
     }
 
     @Override
     protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
-        return nativeDeactivateWatchpoint(processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong());
+        return nativeDeactivateWatchpoint(processHandle, teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong());
     }
 
     /**

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/MaxineC1X/test/test/com/sun/max/vm/compiler/c1x/C1XTest.java"/>
@@ -24,7 +24,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="test.com.sun.max.vm.compiler.c1x.C1XTest"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-C1X:-UseXIR ^java."/>
-<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="VM"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-C1X:OptLevel=3 -C1X:-PrintAssembly -C1X:+PrintCFGToFile -C1X:-PrintCompilation  -C1X:TraceBytecodeParserLevel=0 -C1X:-PrintMetrics -C1X:-PrintHIR -C1X:TraceLinearScanLevel=0  ^jtt.bytecode.BC_iaload:test"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="MaxineC1X"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea"/>
 </launchConfiguration>

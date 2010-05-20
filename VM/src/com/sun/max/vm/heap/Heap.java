@@ -90,7 +90,7 @@ public final class Heap {
      * @return the size of the maximum heap specified on the command line
      */
     private static Size maxSizeOption() {
-        if (maxHeapSizeOption.isPresent() || maxHeapSizeOption.getValue().greaterThan(initialHeapSizeOption.getValue())) {
+        if (maxHeapSizeOption.isPresent() && maxHeapSizeOption.getValue().greaterThan(initialHeapSizeOption.getValue())) {
             return maxHeapSizeOption.getValue();
         }
         return initialHeapSizeOption.getValue();
@@ -242,8 +242,14 @@ public final class Heap {
         return disableGCOption.getValue();
     }
 
+    /**
+     * Used by the Inspector to uniquely identify the special boot heap region.
+     */
     @INSPECTED
-    public static final BootHeapRegion bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), "Heap-Boot");
+    private static final String HEAP_BOOT_NAME = "Heap-Boot";
+
+    @INSPECTED
+    public static final BootHeapRegion bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), HEAP_BOOT_NAME);
 
     @UNSAFE
     @FOLD
@@ -409,7 +415,9 @@ public final class Heap {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
             Log.printCurrentThread(false);
-            Log.println("--");
+            Log.print(" for ");
+            Log.print(requestedFreeSpace.toLong());
+            Log.println(" bytes --");
             Log.print("--Before GC   used: ");
             Log.print(beforeUsed);
             Log.print(", free: ");
@@ -500,6 +508,16 @@ public final class Heap {
         }
     }
 
+    /**
+     * Currently, a number of memory regions containing object are treated as "permanent" root by the GC.
+     * This method checks whether an address points into one of these regions.
+     * @param address an address
+     * @return true if the address points to one of the root regions of the heap.
+     */
+    public static boolean isInHeapRootRegion(Address address) {
+        return bootHeapRegion.contains(address) || Code.contains(address) || ImmortalHeap.getImmortalHeap().contains(address);
+    }
+
     public static boolean isValidGrip(Grip grip) {
         if (grip.isZero()) {
             return true;
@@ -508,11 +526,19 @@ public final class Heap {
         if (!bootHeapRegion.contains(origin) && !heapScheme().contains(origin) && !Code.contains(origin) && !ImmortalHeap.getImmortalHeap().contains(origin)) {
             return false;
         }
-        if (MaxineVM.isDebug()) {
+        if (DebugHeap.isTagging()) {
             return DebugHeap.isValidNonnullGrip(grip);
         }
         return true;
     }
 
+    public static void checkHeapSizeOptions() {
+        Size initSize = initialSize();
+        Size maxSize = maxSize();
+        if (initSize.greaterThan(maxSize)) {
+            Log.println("Incompatible minimum and maximum heap sizes specified");
+            MaxineVM.native_exit(1);
+        }
+    }
 
 }

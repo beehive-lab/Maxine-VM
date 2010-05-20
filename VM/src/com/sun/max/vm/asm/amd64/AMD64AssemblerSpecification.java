@@ -96,6 +96,25 @@ interface AMD64AssemblerSpecification {
     void andq(byte disp8, AMD64IndirectRegister64 destination, int imm32);
     void andq(int disp32, AMD64IndirectRegister64 destination, byte imm8);
     void andq(int disp32, AMD64IndirectRegister64 destination, int imm32);
+
+    void bsf(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source);
+    void bsf(AMD64GeneralRegister32 destination, AMD64IndirectRegister64 source);
+    void bsf(AMD64GeneralRegister32 destination, byte disp8, AMD64IndirectRegister64 source);
+    void bsf(AMD64GeneralRegister32 destination, int disp32, AMD64IndirectRegister64 source);
+    void bsf(AMD64GeneralRegister64 destination, AMD64GeneralRegister64 source);
+    void bsf(AMD64GeneralRegister64 destination, AMD64IndirectRegister64 source);
+    void bsf(AMD64GeneralRegister64 destination, byte disp8, AMD64IndirectRegister64 source);
+    void bsf(AMD64GeneralRegister64 destination, int disp32, AMD64IndirectRegister64 source);
+
+    void bsr(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source);
+    void bsr(AMD64GeneralRegister32 destination, AMD64IndirectRegister64 source);
+    void bsr(AMD64GeneralRegister32 destination, byte disp8, AMD64IndirectRegister64 source);
+    void bsr(AMD64GeneralRegister32 destination, int disp32, AMD64IndirectRegister64 source);
+    void bsr(AMD64GeneralRegister64 destination, AMD64GeneralRegister64 source);
+    void bsr(AMD64GeneralRegister64 destination, AMD64IndirectRegister64 source);
+    void bsr(AMD64GeneralRegister64 destination, byte disp8, AMD64IndirectRegister64 source);
+    void bsr(AMD64GeneralRegister64 destination, int disp32, AMD64IndirectRegister64 source);
+
     void call(AMD64GeneralRegister64 destination);
     void call(byte disp8, AMD64IndirectRegister64 destination);
     void call(final Label label);
@@ -105,6 +124,9 @@ interface AMD64AssemblerSpecification {
     void cmova(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source);
     void cmova(AMD64GeneralRegister32 destination, byte disp8, AMD64IndirectRegister64 source);
     void cmova(AMD64GeneralRegister32 destination, int disp32, AMD64IndirectRegister64 source);
+    void cmovae(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source);
+    void cmovae(AMD64GeneralRegister32 destination, byte disp8, AMD64IndirectRegister64 source);
+    void cmovae(AMD64GeneralRegister32 destination, int disp32, AMD64IndirectRegister64 source);
     void cmovb(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source);
     void cmovb(AMD64GeneralRegister32 destination, byte disp8, AMD64IndirectRegister64 source);
     void cmovb(AMD64GeneralRegister32 destination, int disp32, AMD64IndirectRegister64 source);
@@ -477,6 +499,8 @@ interface AMD64AssemblerSpecification {
     void rip_call(int rel32);
     void rip_cmova(AMD64GeneralRegister32 destination, int rel32);
     void rip_cmova(final AMD64GeneralRegister32 destination, final Label label);
+    void rip_cmovae(AMD64GeneralRegister32 destination, int rel32);
+    void rip_cmovae(final AMD64GeneralRegister32 destination, final Label label);
     void rip_cmovb(AMD64GeneralRegister32 destination, int rel32);
     void rip_cmovb(final AMD64GeneralRegister32 destination, final Label label);
     void rip_cmove(AMD64GeneralRegister32 destination, int rel32);
@@ -1071,19 +1095,11 @@ interface AMD64AssemblerSpecification {
 //    void bsf(AMD64GeneralRegister16 destination, int disp32, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void bsf(AMD64GeneralRegister16 destination, int disp32, AMD64IndirectRegister64 source);
 //    void bsf(AMD64GeneralRegister32 destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsf(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source);
-//    void bsf(AMD64GeneralRegister32 destination, AMD64IndirectRegister64 source);
 //    void bsf(AMD64GeneralRegister32 destination, byte disp8, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsf(AMD64GeneralRegister32 destination, byte disp8, AMD64IndirectRegister64 source);
 //    void bsf(AMD64GeneralRegister32 destination, int disp32, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsf(AMD64GeneralRegister32 destination, int disp32, AMD64IndirectRegister64 source);
 //    void bsf(AMD64GeneralRegister64 destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsf(AMD64GeneralRegister64 destination, AMD64GeneralRegister64 source);
-//    void bsf(AMD64GeneralRegister64 destination, AMD64IndirectRegister64 source);
 //    void bsf(AMD64GeneralRegister64 destination, byte disp8, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsf(AMD64GeneralRegister64 destination, byte disp8, AMD64IndirectRegister64 source);
 //    void bsf(AMD64GeneralRegister64 destination, int disp32, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsf(AMD64GeneralRegister64 destination, int disp32, AMD64IndirectRegister64 source);
 //    void bsr(AMD64GeneralRegister16 destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void bsr(AMD64GeneralRegister16 destination, AMD64GeneralRegister16 source);
 //    void bsr(AMD64GeneralRegister16 destination, AMD64IndirectRegister64 source);
@@ -1092,19 +1108,11 @@ interface AMD64AssemblerSpecification {
 //    void bsr(AMD64GeneralRegister16 destination, int disp32, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void bsr(AMD64GeneralRegister16 destination, int disp32, AMD64IndirectRegister64 source);
 //    void bsr(AMD64GeneralRegister32 destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsr(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source);
-//    void bsr(AMD64GeneralRegister32 destination, AMD64IndirectRegister64 source);
 //    void bsr(AMD64GeneralRegister32 destination, byte disp8, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsr(AMD64GeneralRegister32 destination, byte disp8, AMD64IndirectRegister64 source);
 //    void bsr(AMD64GeneralRegister32 destination, int disp32, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsr(AMD64GeneralRegister32 destination, int disp32, AMD64IndirectRegister64 source);
 //    void bsr(AMD64GeneralRegister64 destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsr(AMD64GeneralRegister64 destination, AMD64GeneralRegister64 source);
-//    void bsr(AMD64GeneralRegister64 destination, AMD64IndirectRegister64 source);
 //    void bsr(AMD64GeneralRegister64 destination, byte disp8, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsr(AMD64GeneralRegister64 destination, byte disp8, AMD64IndirectRegister64 source);
 //    void bsr(AMD64GeneralRegister64 destination, int disp32, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void bsr(AMD64GeneralRegister64 destination, int disp32, AMD64IndirectRegister64 source);
 //    void bswap(AMD64GeneralRegister32 register);
 //    void bswap(AMD64GeneralRegister64 register);
 //    void bt(AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale, AMD64GeneralRegister16 source);
@@ -1266,11 +1274,8 @@ interface AMD64AssemblerSpecification {
 //    void cmovae(AMD64GeneralRegister16 destination, AMD64GeneralRegister16 source);
 //    void cmovae(AMD64GeneralRegister16 destination, AMD64IndirectRegister64 source);
 //    void cmovae(AMD64GeneralRegister16 destination, byte disp8, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void cmovae(AMD64GeneralRegister16 destination, byte disp8, AMD64IndirectRegister64 source);
 //    void cmovae(AMD64GeneralRegister16 destination, int disp32, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void cmovae(AMD64GeneralRegister16 destination, int disp32, AMD64IndirectRegister64 source);
 //    void cmovae(AMD64GeneralRegister32 destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void cmovae(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source);
 //    void cmovae(AMD64GeneralRegister32 destination, AMD64IndirectRegister64 source);
 //    void cmovae(AMD64GeneralRegister32 destination, byte disp8, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void cmovae(AMD64GeneralRegister32 destination, byte disp8, AMD64IndirectRegister64 source);
@@ -5273,10 +5278,8 @@ interface AMD64AssemblerSpecification {
 //    void rip_cmova(final AMD64GeneralRegister16 destination, final Label label);
 //    void rip_cmova(final AMD64GeneralRegister64 destination, final Label label);
 //    void rip_cmovae(AMD64GeneralRegister16 destination, int rel32);
-//    void rip_cmovae(AMD64GeneralRegister32 destination, int rel32);
 //    void rip_cmovae(AMD64GeneralRegister64 destination, int rel32);
 //    void rip_cmovae(final AMD64GeneralRegister16 destination, final Label label);
-//    void rip_cmovae(final AMD64GeneralRegister32 destination, final Label label);
 //    void rip_cmovae(final AMD64GeneralRegister64 destination, final Label label);
 //    void rip_cmovb(AMD64GeneralRegister16 destination, int rel32);
 //    void rip_cmovb(AMD64GeneralRegister64 destination, int rel32);

@@ -26,7 +26,7 @@ import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
 /**
- * A tool bar specialized for use in the Maxine Inspector.
+ * A tool bar specialized for use in the VM Inspector.
  *
  * @author Michael Van De Vanter
  */
@@ -36,7 +36,7 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder {
     private final String tracePrefix;
 
     /**
-     * Creates a new {@JToolBar}, specialized for use in the Maxine Inspector,
+     * Creates a new {@link JToolBar}, specialized for use in the VM Inspector,
      * not floatable by default.
      */
     public InspectorToolBar(Inspection inspection) {

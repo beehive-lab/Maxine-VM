@@ -22,7 +22,7 @@ package com.sun.max.vm.bytecode;
 
 import static com.sun.max.vm.classfile.ErrorContext.*;
 
-import com.sun.c1x.bytecode.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 
 /**
@@ -307,7 +307,7 @@ public abstract class BytecodeVisitor {
     protected abstract void jnicall(int nativeFunctionDescriptorIndex);
 
     /**
-     * Parses an {@linkplain Bytecodes#isExtension(int) extended} bytecode instruction.
+     * Parses an {@linkplain Bytecodes#isStandard(int) extended} bytecode instruction.
      *
      * @param opcode the opcode of the extended bytecode instruction
      * @param isWide specifies if the WIDE prefix was parsed before the opcode

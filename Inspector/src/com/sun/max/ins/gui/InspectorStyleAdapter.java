@@ -28,7 +28,7 @@ import javax.swing.border.*;
 import com.sun.max.ins.*;
 
 /**
- * An adaptor for specifying styles.
+ * An adaptor for specifying styles in the VM Inspector.
  *
  * @author Michael Van De Vanter
  */

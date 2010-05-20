@@ -30,14 +30,14 @@ import com.sun.max.ins.*;
 
 /**
  * Component to be used as tabComponent.
- * Contains a JLabel to show the text and a JButton to close the tab it belongs to
- *
- * Copied from the online Java Tutorial and modified to Maxine coding conventions.  2/5/08
+ * Contains a JLabel to show the text and a JButton to close the tab it belongs to.
+ * <br>
+ * Copied from the online Java Tutorial and modified to Maxine Project coding conventions.  2/5/08
  * http://java.sun.com/docs/books/tutorial/uiswing/examples/components/TabComponentsDemoProject/src/components/ButtonTabComponent.java
  *
- * Unfortunately, using this with the Maxine TabbedInspector is a bit
+ * Unfortunately, using this with the VM Inspector's TabbedInspector is a bit
  * tricky; causes there to be children of the TabbedInspector that aren't themselves
- * Inspectors.  The Inspector iterator filters them out.
+ * Inspectors.  The VM Inspector iterator filters them out.
  *
  * @author Michael Van De Vanter
  */

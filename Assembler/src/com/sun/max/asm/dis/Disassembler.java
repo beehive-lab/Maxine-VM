@@ -21,6 +21,7 @@
 package com.sun.max.asm.dis;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.asm.*;
@@ -40,10 +41,107 @@ import com.sun.max.program.*;
  */
 public abstract class Disassembler {
 
+    private static final Map<String, Constructor> disassemblerConstructors = new HashMap<String, Constructor>();
+
     /**
-     * (tw) Turn on the following flag in order to get debugging output.
+     * Gets a constructor for instantiating a disassembler for a given {@linkplain InstructionSet ISA}
+     * and {@linkplain WordWidth word size}. If a non-null constructor is returned, it's signature
+     * will be {@code (long, InlineDataDecoder)} or {@code (int, InlineDataDecoder)} depending on whether
+     * {@code wordWidth} is {@link WordWidth#BITS_64} or {@link WordWidth#BITS_32}.
+     *
+     * @param isa an instruction set
+     * @param wordWidth a word size
+     * @return a disassembler for {@code isa} and {@code wordWidth} or {@code null} if none exists
      */
-    public final boolean TRACE = false;
+    public static Constructor getDisassemblerConstructor(InstructionSet isa, WordWidth wordWidth) {
+        String key = isa + " " + wordWidth;
+        Constructor con = disassemblerConstructors.get(key);
+        if (con == null) {
+            // Try word-width specific class first:
+            String packageName = new com.sun.max.asm.dis.Package().name() + "." + isa.name().toLowerCase();
+            String className = packageName + "." + isa.name() + wordWidth.numberOfBits + "Disassembler";
+            Class<?> disasmClass = null;
+            try {
+                disasmClass = Class.forName(className);
+            } catch (ClassNotFoundException e1) {
+                className = packageName + "." + isa.name() + "Disassembler";
+                try {
+                    disasmClass = Class.forName(className);
+                } catch (ClassNotFoundException e2) {
+                    return null;
+                }
+            }
+            try {
+                if (wordWidth == WordWidth.BITS_64) {
+                    con = disasmClass.getConstructor(long.class, InlineDataDecoder.class);
+                } else {
+                    assert wordWidth == WordWidth.BITS_32 : wordWidth;
+                    con = disasmClass.getConstructor(int.class, InlineDataDecoder.class);
+                }
+            } catch (NoSuchMethodException e) {
+                return null;
+            }
+            disassemblerConstructors.put(key, con);
+        }
+        return con;
+
+    }
+
+    /**
+     * Gets a disassembler for a given {@linkplain InstructionSet ISA} and {@linkplain WordWidth word size}
+     * that can be used to disassemble an instruction stream located at a given address.
+     *
+     * @param isa an instruction set
+     * @param wordWidth a word size
+     * @param startAddress the start address at which the instruction stream to be disassembled is located
+     * @param inlineDataDecoder used to decode any inline data in {@code code}. This value can be {@code null}.
+     * @return the created disassembler
+     * @throws IllegalArgumentException if no disassembler exists for {@code isa} and {@code wordWidth}
+     */
+    public static Disassembler createDisassembler(InstructionSet isa, WordWidth wordWidth, long startAddress, InlineDataDecoder inlineDataDecoder) {
+        Constructor con = getDisassemblerConstructor(isa, wordWidth);
+        if (con == null) {
+            throw new IllegalArgumentException("No disassembler is available for " + isa + " with word size " + wordWidth.numberOfBits);
+        }
+
+        try {
+            return (Disassembler) con.newInstance(startAddress, inlineDataDecoder);
+        } catch (Exception e) {
+            throw (InternalError) new InternalError("Error invoking constructor " + con).initCause(e);
+        }
+    }
+
+    /**
+     * Prints a textual disassembly of some given machine code.
+     *
+     * @param out where to print the disassembly
+     * @param code the machine code to be disassembled and printed
+     * @param instructionSet the instruction set
+     * @param wordWidth the word width
+     * @param startAddress the address at which {@code code} is located
+     * @param inlineDataDecoder used to decode any inline data in {@code code}
+     * @param disassemblyPrinter the printer utility to use for the printing. If {@code null}, then a new instance of
+     *            {@link DisassemblyPrinter} is created and used.
+     */
+    public static void disassemble(OutputStream out, byte[] code, InstructionSet instructionSet, WordWidth wordWidth, long startAddress, InlineDataDecoder inlineDataDecoder, DisassemblyPrinter disassemblyPrinter) {
+        if (code.length == 0) {
+            return;
+        }
+        final Disassembler disassembler = createDisassembler(instructionSet, wordWidth, startAddress, inlineDataDecoder);
+        final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(code));
+        try {
+            disassembler.scanAndPrint(stream, out, disassemblyPrinter);
+        } catch (IOException ioException) {
+            ProgramError.unexpected();
+        } catch (AssemblyException assemblyException) {
+            System.err.println(assemblyException);
+        }
+    }
+
+    /**
+     * Turn on the following flag in order to get debugging output.
+     */
+    public static final boolean TRACE = false;
 
     private final ImmediateArgument startAddress;
     private final Endianness endianness;
