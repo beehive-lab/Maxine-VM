@@ -39,22 +39,12 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
     private File _dumpFile = null;
     private RandomAccessFile _dumpRaf = null;
 
-    public DumpProtocol(String dumpImageFileStr) {
-        if (dumpImageFileStr != null) {
-            String[] fileArr = dumpImageFileStr.split(",");
-            if (fileArr.length != 2) {
-                throw new IllegalArgumentException("Improper dump and image file string ");
-            }
-            _imageFile = new File(fileArr[0]);
-            _dumpFile = new File(fileArr[1]);
+    public DumpProtocol(String imageFile, String dumpFile) {
+            _imageFile = new File(imageFile);
+            _dumpFile = new File(dumpFile);
             if (!(_imageFile.exists() && _dumpFile.exists())) {
                 throw new IllegalArgumentException("Dump or Image file does not exist or is not accessible");
             }
-
-        } else {
-            throw new IllegalArgumentException("argument cant be null");
-        }
-
     }
 
     @Override

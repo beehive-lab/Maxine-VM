@@ -18,19 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp;
+
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
+
 /**
- * @author Grzegorz Milos
+ * A variant of {@link TCPProtocol} that is communicating to an {@link AgentXGProtocol}.
+ *
  * @author Mick Jordan
  *
- * The Guest VM specific implementation the "tele" layer for the Maxine Inspector.
- * Several implementations are provided and selected at runtime by {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.GuestVMXenDBChannel}.
- * <ul>
- * <li>Direct connection via {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.db.DBProtocol}.</li>
- * <li>Indirection connection via TCP using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.TCPProtocol}, to an agent running in dom0
- * using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.db.DBProtocol}.</li>
- * <li>Indirection connection via TCP using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.TCPProtocol}, to an agent running in dom0
- * using the "gdbsx" agwnt (TBD).
- * <li>Connection to a Xen dump file using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.dump.DumpProtocol}.</li>
- * </ul>
  */
-package com.sun.max.tele.debug.guestvm.xen;
+
+public class TCPXGProtocol extends TCPProtocol {
+    private ImageFileHandler imageFileHandler;
+
+    public TCPXGProtocol(ImageFileHandler imageFileHandler, String hostAndPort) {
+        super(hostAndPort);
+        this.imageFileHandler = imageFileHandler;
+    }
+
+    @Override
+    public long getBootHeapStart() {
+//        final long addr = imageFileHandler.getBootHeapStartSymbolAddress();
+        return super.getBootHeapStart();
+    }
+}

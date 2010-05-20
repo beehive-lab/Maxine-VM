@@ -18,19 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * @author Grzegorz Milos
- * @author Mick Jordan
- *
- * The Guest VM specific implementation the "tele" layer for the Maxine Inspector.
- * Several implementations are provided and selected at runtime by {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.GuestVMXenDBChannel}.
- * <ul>
- * <li>Direct connection via {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.db.DBProtocol}.</li>
- * <li>Indirection connection via TCP using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.TCPProtocol}, to an agent running in dom0
- * using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.db.DBProtocol}.</li>
- * <li>Indirection connection via TCP using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.TCPProtocol}, to an agent running in dom0
- * using the "gdbsx" agwnt (TBD).
- * <li>Connection to a Xen dump file using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.dump.DumpProtocol}.</li>
- * </ul>
- */
-package com.sun.max.tele.debug.guestvm.xen;
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <alloca.h>
+
+#include "isa.h"
+#include "log.h"
+#include "jni.h"
+#include "threadLocals.h"
+#include "teleProcess.h"
+#include "teleNativeThread.h"
+
+#include <xg_public.h>
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_agent_AgentXGProtocol_nativeInit(JNIEnv *env, jclass c) {
+    /*tele_*/log_println("Calling xg_init");
+    return xg_init();
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_xg_XGProtocol_nativeAttach(JNIEnv *env, jclass c, jint domainId) {
+    /*tele_*/log_println("Calling xg_attach on domId=%d", domainId);
+    return xg_attach(domainId);
+}
+
