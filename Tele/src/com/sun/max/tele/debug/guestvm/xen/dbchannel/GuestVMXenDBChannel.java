@@ -1,22 +1,19 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel;
 
@@ -35,13 +32,14 @@ import com.sun.max.tele.debug.guestvm.xen.dbchannel.xg.*;
 import com.sun.max.unsafe.*;
 
 /**
- * This class encapsulates all interaction with the Xen db communication channel.
- * A variety of channel implementations are possible, currently there are three:
+ * This class encapsulates all interaction with the Xen db communication channel. A variety of channel implementations
+ * are possible, currently there are three:
  * <ul>
- * <li>Direct communication to the target domain via the {@code db-front/db-back} split device driver, using the {@code guk_db} library.
- * Note that this requires that the Inspector be run in the privileged dom0 in order to access the target domain.</li>
- * <li>Indirect communication to the {@code db-front/db-back} split device driver via a TCP connection to an agent running domU.
- * This allows the Inspector to run in an unprivileged domain (domU).</li>
+ * <li>Direct communication to the target domain via the {@code db-front/db-back} split device driver, using the {@code
+ * guk_db} library. Note that this requires that the Inspector be run in the privileged dom0 in order to access the
+ * target domain.</li>
+ * <li>Indirect communication to the {@code db-front/db-back} split device driver via a TCP connection to an agent
+ * running domU. This allows the Inspector to run in an unprivileged domain (domU).</li>
  * <li>Reading a Xen core dump.</li>
  * </ul>
  * The choice of which mechanism to use is based on the value of the {@value CHANNEL_PROPERTY} property.
@@ -50,6 +48,7 @@ import com.sun.max.unsafe.*;
  *
  */
 public final class GuestVMXenDBChannel {
+
     private static final String CHANNEL_PROPERTY = "max.ins.guestvm.channel";
     private static final String DB_DIRECT = "db";
     private static final String DB_TCP = "tcp.db";
@@ -65,25 +64,29 @@ public final class GuestVMXenDBChannel {
         GuestVMXenDBChannel.teleDomain = teleDomain;
         String channelType = System.getProperty(CHANNEL_PROPERTY);
         final ChannelInfo channelInfo = ChannelInfo.getChannelInfo(channelType);
-
-        if (channelInfo.type.equals(DB_DIRECT)) {
-            channelProtocol = new DBProtocol();
-        } else if (channelInfo.type.equals(DB_TCP)) {
-            channelProtocol = new TCPProtocol(channelInfo.rest);
-        } else if (channelInfo.type.equals(XG_DIRECT)) {
-            channelProtocol = new XGProtocol(ImageFileHandler.open(channelInfo.imageFile));
-        } else if (channelInfo.type.equals(XG_TCP)) {
-            channelProtocol = new TCPXGProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
-        } else if (channelInfo.type.equals(XEN_DUMP)) {
-            channelProtocol = new DumpProtocol(channelInfo.imageFile, channelInfo.rest);
-        } else {
-            ProgramError.unexpected("unknown channel type: " + channelType);
+        try {
+            if (channelInfo.type.equals(DB_DIRECT)) {
+                channelProtocol = new DBProtocol();
+            } else if (channelInfo.type.equals(DB_TCP)) {
+                channelProtocol = new TCPProtocol(channelInfo.rest);
+            } else if (channelInfo.type.equals(XG_DIRECT)) {
+                channelProtocol = new XGProtocol(ImageFileHandler.open(channelInfo.imageFile));
+            } else if (channelInfo.type.equals(XG_TCP)) {
+                channelProtocol = new TCPXGProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
+            } else if (channelInfo.type.equals(XEN_DUMP)) {
+                channelProtocol = new DumpProtocol(channelInfo.imageFile, channelInfo.rest);
+            } else {
+                ProgramError.unexpected("unknown channel type: " + channelType);
+            }
+            channelProtocol.attach(domId, teleDomain.vm().bootImage().header.threadLocalsAreaSize);
+            maxByteBufferSize = channelProtocol.maxByteBufferSize();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        channelProtocol.attach(domId, teleDomain.vm().bootImage().header.threadLocalsAreaSize);
-        maxByteBufferSize = channelProtocol.maxByteBufferSize();
     }
 
     static class ChannelInfo {
+
         String type;
         String imageFile;
         String rest;
@@ -181,9 +184,7 @@ public final class GuestVMXenDBChannel {
         return channelProtocol.setInstructionPointer(threadId, ip);
     }
 
-    public static synchronized boolean readRegisters(int threadId,
-                    byte[] integerRegisters, int integerRegistersSize,
-                    byte[] floatingPointRegisters, int floatingPointRegistersSize,
+    public static synchronized boolean readRegisters(int threadId, byte[] integerRegisters, int integerRegistersSize, byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize) {
         return channelProtocol.readRegisters(threadId, integerRegisters, integerRegistersSize, floatingPointRegisters, floatingPointRegistersSize, stateRegisters, stateRegistersSize);
     }
@@ -194,6 +195,7 @@ public final class GuestVMXenDBChannel {
 
     /**
      * This is not synchronized because it is used to interrupt a resume that already holds the lock.
+     *
      * @return
      */
     public static boolean suspendAll() {
@@ -206,7 +208,8 @@ public final class GuestVMXenDBChannel {
 
     public static synchronized boolean activateWatchpoint(int domainId, TeleWatchpoint teleWatchpoint) {
         final WatchpointSettings settings = teleWatchpoint.getSettings();
-        return channelProtocol.activateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
+        return channelProtocol.activateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite,
+                        settings.trapOnExec);
     }
 
     public static synchronized boolean deactivateWatchpoint(int domainId, TeleFixedMemoryRegion memoryRegion) {

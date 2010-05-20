@@ -35,16 +35,16 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
      *
      * @param dumpImageFileStr designates the dump file and image file separated by a comma (",")
      */
-    private File _imageFile = null;
-    private File _dumpFile = null;
+    private File imageFile = null;
+    private File dumpFile = null;
     private RandomAccessFile _dumpRaf = null;
 
-    public DumpProtocol(String imageFile, String dumpFile) {
-            _imageFile = new File(imageFile);
-            _dumpFile = new File(dumpFile);
-            if (!(_imageFile.exists() && _dumpFile.exists())) {
-                throw new IllegalArgumentException("Dump or Image file does not exist or is not accessible");
-            }
+    public DumpProtocol(String imageFileStr, String dumpFileStr) {
+        this.imageFile = new File(imageFileStr);
+        dumpFile = new File(dumpFileStr);
+        if (!(this.imageFile.exists() && dumpFile.exists())) {
+            throw new IllegalArgumentException("Dump or Image file does not exist or is not accessible");
+        }
     }
 
     @Override
@@ -56,8 +56,8 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
     @Override
     public boolean attach(int domId, int threadLocalsAreaSize) {
         try {
-            _symbolLookup = new ELFSymbolLookup(_imageFile);
-            _dumpRaf = new RandomAccessFile(_dumpFile, "r");
+            _symbolLookup = new ELFSymbolLookup(imageFile);
+            _dumpRaf = new RandomAccessFile(dumpFile, "r");
             _reader = new XenCoreDumpELFReader(_dumpRaf);
 
         } catch (Exception e) {
@@ -87,7 +87,6 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
     @Override
     public long getBootHeapStart() {
         long address = _symbolLookup.lookupSymbolValue("theHeap").longValue();
-
         return 0;
     }
 
