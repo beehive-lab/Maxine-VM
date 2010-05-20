@@ -36,9 +36,11 @@ import com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.*;
 public class ProtocolAgent {
 
     private static int port = TCPProtocol.DEFAULT_PORT;
-    private static final String NATIVE = "agent.AgentJni";
-    private static String impl = NATIVE;
+    private static final String DBRING = "agent.AgentDBRing";
+    private static final String XG = "agent.AgentXG";
+    private static String impl = DBRING;
     private static int dbtLevel = 0;
+    private static boolean oneShot = true;
     /**
      * @param args
      */
@@ -55,14 +57,16 @@ public class ProtocolAgent {
                 traceLevel = Integer.parseInt(args[++i]);
             } else if (arg.equals("-dbtlevel")) {
                 dbtLevel = Integer.parseInt(args[++i]);
+            } else  if (arg.equals("-xg")) {
+                impl = XG;
             }
         }
         // Checkstyle: resume modified control variable check
         if (traceLevel > 0) {
             Trace.on(traceLevel);
         }
-        if (impl.equals(NATIVE)) {
-            System.loadLibrary("tele");
+        System.loadLibrary("tele");
+        if (impl.equals(DBRING)) {
             System.loadLibrary("guk_db");
         }
         listen();
@@ -80,6 +84,9 @@ public class ProtocolAgent {
                     handler.start();
                     // no concurrent connections, underlying native support cannot handle that at the moment
                     handler.join();
+                    if (oneShot) {
+                        break;
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

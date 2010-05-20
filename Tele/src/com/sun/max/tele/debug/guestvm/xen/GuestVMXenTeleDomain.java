@@ -30,6 +30,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
