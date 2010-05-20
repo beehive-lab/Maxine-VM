@@ -18,19 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * @author Grzegorz Milos
- * @author Mick Jordan
- *
- * The Guest VM specific implementation the "tele" layer for the Maxine Inspector.
- * Several implementations are provided and selected at runtime by {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.GuestVMXenDBChannel}.
- * <ul>
- * <li>Direct connection via {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.db.DBProtocol}.</li>
- * <li>Indirection connection via TCP using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.TCPProtocol}, to an agent running in dom0
- * using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.db.DBProtocol}.</li>
- * <li>Indirection connection via TCP using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.TCPProtocol}, to an agent running in dom0
- * using the "gdbsx" agwnt (TBD).
- * <li>Connection to a Xen dump file using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.dump.DumpProtocol}.</li>
- * </ul>
- */
-package com.sun.max.tele.debug.guestvm.xen;
+package com.sun.max.tele.debug.guestvm.xen.dbchannel.agent;
+
+import com.sun.max.program.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.xg.*;
+
+public class AgentXGProtocol extends AgentProtocolAdaptor {
+
+    private boolean init;
+
+    public AgentXGProtocol() {
+        super(new XGProtocol(null));
+    }
+
+    @Override
+    protected void implAttach(int domId, int threadLocalsAreaSize) {
+        if (!init) {
+            final int result = nativeInit();
+            if (result < 0) {
+                ProgramError.unexpected("failed to initialize the xg system");
+            }
+            init = true;
+        }
+    }
+
+    private static native int nativeInit();
+
+}

@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.guestvm.xen;
+package com.sun.max.tele.debug.guestvm.xen.dbchannel;
 
 import java.nio.*;
 
@@ -26,10 +26,11 @@ import com.sun.max.collect.*;
 import com.sun.max.tele.MaxWatchpoint.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.memory.*;
-import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
-import com.sun.max.tele.debug.guestvm.xen.dbchannel.jni.*;
+import com.sun.max.tele.debug.guestvm.xen.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.db.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.dump.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.xg.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -49,11 +50,12 @@ import com.sun.max.unsafe.*;
  */
 public final class GuestVMXenDBChannel {
     private static final String CHANNEL_PROPERTY = "max.ins.guestvm.channel";
-    private static final String RING_JNI = "ring.jni";
-    private static final String RING_TCP = "ring.tcp";
+    private static final String DB_DIRECT = "db.direct";
+    private static final String DB_TCP = "db.tcp";
+    private static final String XG_TCP = "xg.tcp";
+    private static final String XG_DIRECT = "xg.direct";
     private static final String XEN_DUMP = "xen.dump";
-    private static final String GDBSX_TCP = "gdbsx.tcp";
-    private static final String DEFAULT_PROTOCOL = RING_JNI;
+    private static final String DEFAULT_PROTOCOL = DB_DIRECT;
     private static GuestVMXenTeleDomain teleDomain;
     private static Protocol channelProtocol;
     private static int maxByteBufferSize;
@@ -64,15 +66,21 @@ public final class GuestVMXenDBChannel {
         if (channelType == null) {
             channelType = DEFAULT_PROTOCOL;
         }
-        if (channelType.equals(RING_JNI)) {
-            channelProtocol = new JniProtocol();
-        } else if (channelType.startsWith(RING_TCP)) {
+
+        if (channelType.equals(DB_DIRECT)) {
+            channelProtocol = new DBProtocol();
+        } else if (channelType.startsWith(DB_TCP)) {
             final int sep = channelType.indexOf(',');
             if (sep > 0) {
                 channelProtocol = new TCPProtocol(channelType.substring(sep + 1));
             } else {
                 throw new IllegalArgumentException("host/port not specified with " + CHANNEL_PROPERTY);
             }
+        } else if (channelType.startsWith(XG_DIRECT)) {
+            final int sep = channelType.indexOf(',');
+            channelProtocol = new XGProtocol(ImageFileHandler.open(channelType.substring(sep)));
+        } else if (channelType.startsWith(XG_TCP)) {
+            throw new IllegalArgumentException(XG_TCP + " is not implemented");
         } else if (channelType.startsWith(XEN_DUMP)) {
             final int sep = channelType.indexOf(',');
             if (sep > 0) {
@@ -80,8 +88,6 @@ public final class GuestVMXenDBChannel {
             } else {
                 throw new IllegalArgumentException("dump file not specified with " + CHANNEL_PROPERTY);
             }
-        } else if (channelType.startsWith(GDBSX_TCP)) {
-            throw new IllegalArgumentException(GDBSX_TCP + " is not implemented");
         }
         channelProtocol.attach(domId, teleDomain.vm().bootImage().header.threadLocalsAreaSize);
         maxByteBufferSize = channelProtocol.maxByteBufferSize();

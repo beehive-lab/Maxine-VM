@@ -275,7 +275,8 @@ ifeq ($(OS),guestvm)
     
     LINK_AR = $(AR) r $(LIB_PREFIX)$(LIB)$(LIBA_SUFFIX)
     ifeq ($(GUK),1)
-        LINK_LIB = $(CC) -shared -lc -lm $(mf)  -L ../../../../../guk/tools/db-front$(tdir) -lguk_db
+        XG_ROOT = $(XEN_ROOT)/tools/debugger/gdbsx/xg
+        LINK_LIB = $(CC) -shared -lc -lm $(mf)  -L ../../../../../guk/tools/db-front$(tdir) -lguk_db $(XG_ROOT)/xg_main.o $(XG_ROOT)/xg_64.o $(XG_ROOT)/xg_32.o
     else
         LINK_LIB = $(CC) -shared -lc -lm $(mf)
     endif
@@ -298,6 +299,13 @@ ifeq ($(OS),guestvm)
         HOSTOS_LC = solaris
     endif
     JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(HOSTOS_LC)
+    # if we are building TELE need access to Xen debugger header
+    ifeq ($(TARGET),TELE) 
+        ifndef XEN_ROOT
+            ignore := $(error "Must set XEN_ROOT environment variable to root of your Xen source tree")
+        endif
+        CFLAGS += -I $(XEN_ROOT)/tools/debugger/gdbsx/xg
+    endif
 else
     JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
 endif

@@ -53,7 +53,7 @@ else
 
 ifneq ($(TARGET), SUBSTRATE)
 	ifeq ($(TARGET), TELE)
-	    ifeq ($(DOM0), 32)
+	    ifeq ($(TELEBITS), 32)
 	      OST := $(OS)_32
 	    else
 	      OST := $(OS)   

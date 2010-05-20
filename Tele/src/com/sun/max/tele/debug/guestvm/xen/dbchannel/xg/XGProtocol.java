@@ -18,32 +18,53 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.guestvm.xen.dbchannel.jni;
+package com.sun.max.tele.debug.guestvm.xen.dbchannel.xg;
+
+import java.nio.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
 /**
+ *
  * An implementation of {@link Protocol} that links directly to native code
- * that communicates directly through JNI to  the Xen ring mechanism to the target Guest VM domain.
- * This requires that the Inspector run with root privileges in (a 64-bit) dom0.
+ * that communicates directly through JNI to  the "xg" debug agent that accesses the target Guest VM domain.
+ * This requires that the Inspector or Inspector Agent run with root privileges in dom0.
+ *
+ * N.B. The xg interface is very simple and, unlike the db-front/db-back custom interface that is accessed by
+ * {@link DBProtocol}, has no notion of threads or other Maxine VM abstractions. These have to be
+ * discovered by analyzing the memory using knowledge, primarily symbolic references from the VM image file,
+ * about how the lowest level VM layer is implemented.
  *
  * @author Mick Jordan
  *
  */
 
-public class JniProtocol implements Protocol {
-    private Timings timings = new Timings("JniProtocol.readBytes");
+public class XGProtocol implements Protocol {
+
+    private ImageFileHandler imageFileHandler;
+
+    public XGProtocol(ImageFileHandler imageFileHandler) {
+        this.imageFileHandler = imageFileHandler;
+    }
 
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {
         return nativeActivateWatchpoint(start, size, after, read, write, exec);
     }
 
+    private int maxVCPU;
+
     @Override
     public boolean attach(int domId, int threadLocalsAreaSize) {
         Trace.line(1, "attaching to domain " + domId);
-        return nativeAttach(domId);
+        final int attachResult = nativeAttach(domId);
+        if (attachResult < 0) {
+            return false;
+        } else {
+            maxVCPU = attachResult;
+            return true;
+        }
     }
 
     @Override
@@ -64,20 +85,23 @@ public class JniProtocol implements Protocol {
 
     @Override
     public long getBootHeapStart() {
-        return nativeGetBootHeapStart();
+        final long addr = imageFileHandler.getBootHeapStartSymbolAddress();
+        final ByteBuffer bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
+        final int n = readBytes(addr, bb.array(), 0, 8);
+        if (n != 8) {
+            ProgramError.unexpected("getBootHeapStart read failed");
+        }
+        return bb.getLong();
     }
 
     @Override
     public int maxByteBufferSize() {
-        return nativeMaxByteBufferSize();
+        return 4096;
     }
 
     @Override
     public int readBytes(long src, byte[] dst, int dstOffset, int length) {
-        timings.start();
-        final int result =  nativeReadBytes(src, dst, false, 0, length);
-        timings.add();
-        return result;
+        return nativeReadBytes(src, dst, false, 0, length);
     }
 
     @Override
@@ -141,7 +165,7 @@ public class JniProtocol implements Protocol {
         return nativeWriteBytes(dst, src, isDirectByteBuffer, srcOffset, length);
     }
 
-    private static native boolean nativeAttach(int domId);
+    private static native int nativeAttach(int domId);
     private static native boolean nativeDetach();
     private static native long nativeGetBootHeapStart();
     private static native int nativeSetTransportDebugLevel(int level);
