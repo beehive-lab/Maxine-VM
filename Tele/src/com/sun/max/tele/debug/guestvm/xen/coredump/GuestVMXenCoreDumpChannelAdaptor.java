@@ -56,8 +56,7 @@ public class GuestVMXenCoreDumpChannelAdaptor {
         }
         RandomAccessFile dumpraf = new RandomAccessFile(dumpFile, "r");
         XenCoreDumpELFReader reader = new XenCoreDumpELFReader(dumpraf);
-        System.out.println(reader.readNotesSection());
-        reader.readGuestContext(0);
+        System.out.println(reader.getNotesSection());
     }
 
 }

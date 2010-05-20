@@ -19,17 +19,14 @@ package com.sun.max.tele.debug.guestvm.xen.dbchannel.dump;
 
 import java.io.*;
 
-import com.sun.max.elf.ELFHeader.*;
 import com.sun.max.elf.xen.*;
-import com.sun.max.elf.xen.section.notes.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
-import com.sun.max.tele.debug.guestvm.xen.elf.util.*;
 
 public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
-    private ELFSymbolLookup _symbolLookup = null;
-    XenCoreDumpELFReader _reader = null;
+    private ImageFileHandler imageFileHandler;
+    private XenCoreDumpELFReader xenReader = null;
     /**
      * Creates an instance of {@link Protocol} that can read from Xen core dumps.
      *
@@ -37,12 +34,12 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
      */
     private File imageFile = null;
     private File dumpFile = null;
-    private RandomAccessFile _dumpRaf = null;
+    private RandomAccessFile dumpRaf = null;
 
-    public DumpProtocol(String imageFileStr, String dumpFileStr) {
-        this.imageFile = new File(imageFileStr);
+    public DumpProtocol(ImageFileHandler imageFileHandler, String dumpFileStr) {
+        this.imageFileHandler = imageFileHandler;
         dumpFile = new File(dumpFileStr);
-        if (!(this.imageFile.exists() && dumpFile.exists())) {
+        if (!dumpFile.exists()) {
             throw new IllegalArgumentException("Dump or Image file does not exist or is not accessible");
         }
     }
@@ -56,10 +53,7 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
     @Override
     public boolean attach(int domId, int threadLocalsAreaSize) {
         try {
-            _symbolLookup = new ELFSymbolLookup(imageFile);
-            _dumpRaf = new RandomAccessFile(dumpFile, "r");
-            _reader = new XenCoreDumpELFReader(_dumpRaf);
-
+            xenReader = new XenCoreDumpELFReader(new RandomAccessFile(dumpFile, "r"));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -86,7 +80,13 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
     @Override
     public long getBootHeapStart() {
-        long address = _symbolLookup.lookupSymbolValue("theHeap").longValue();
+        long address = imageFileHandler.getBootHeapStartSymbolAddress();
+        try {
+            //This essentially assumes 64 bitness of the address and the target.
+            return xenReader.getPagesSection().getDataInputStream(address).read_Elf64_XWord();
+        } catch (Exception e) {
+            ProgramError.unexpected("Couldnt get Boot Heap start from the dump File");
+        }
         return 0;
     }
 

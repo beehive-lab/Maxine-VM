@@ -32,14 +32,13 @@ import com.sun.max.tele.debug.guestvm.xen.dbchannel.xg.*;
 import com.sun.max.unsafe.*;
 
 /**
- * This class encapsulates all interaction with the Xen db communication channel. A variety of channel implementations
- * are possible, currently there are three:
+ * This class encapsulates all interaction with the Xen db communication channel.
+ * A variety of channel implementations are possible, currently there are three:
  * <ul>
- * <li>Direct communication to the target domain via the {@code db-front/db-back} split device driver, using the {@code
- * guk_db} library. Note that this requires that the Inspector be run in the privileged dom0 in order to access the
- * target domain.</li>
- * <li>Indirect communication to the {@code db-front/db-back} split device driver via a TCP connection to an agent
- * running domU. This allows the Inspector to run in an unprivileged domain (domU).</li>
+ * <li>Direct communication to the target domain via the {@code db-front/db-back} split device driver, using the {@code guk_db} library.
+ * Note that this requires that the Inspector be run in the privileged dom0 in order to access the target domain.</li>
+ * <li>Indirect communication to the {@code db-front/db-back} split device driver via a TCP connection to an agent running domU.
+ * This allows the Inspector to run in an unprivileged domain (domU).</li>
  * <li>Reading a Xen core dump.</li>
  * </ul>
  * The choice of which mechanism to use is based on the value of the {@value CHANNEL_PROPERTY} property.
@@ -48,7 +47,6 @@ import com.sun.max.unsafe.*;
  *
  */
 public final class GuestVMXenDBChannel {
-
     private static final String CHANNEL_PROPERTY = "max.ins.guestvm.channel";
     private static final String DB_DIRECT = "db";
     private static final String DB_TCP = "tcp.db";
@@ -74,19 +72,19 @@ public final class GuestVMXenDBChannel {
             } else if (channelInfo.type.equals(XG_TCP)) {
                 channelProtocol = new TCPXGProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
             } else if (channelInfo.type.equals(XEN_DUMP)) {
-                channelProtocol = new DumpProtocol(channelInfo.imageFile, channelInfo.rest);
+                channelProtocol = new DumpProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
             } else {
                 ProgramError.unexpected("unknown channel type: " + channelType);
             }
             channelProtocol.attach(domId, teleDomain.vm().bootImage().header.threadLocalsAreaSize);
             maxByteBufferSize = channelProtocol.maxByteBufferSize();
         } catch (Exception e) {
+			//TODO: Do something with this exception
             e.printStackTrace();
         }
     }
 
     static class ChannelInfo {
-
         String type;
         String imageFile;
         String rest;
@@ -208,8 +206,7 @@ public final class GuestVMXenDBChannel {
 
     public static synchronized boolean activateWatchpoint(int domainId, TeleWatchpoint teleWatchpoint) {
         final WatchpointSettings settings = teleWatchpoint.getSettings();
-        return channelProtocol.activateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite,
-                        settings.trapOnExec);
+        return channelProtocol.activateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
     }
 
     public static synchronized boolean deactivateWatchpoint(int domainId, TeleFixedMemoryRegion memoryRegion) {
