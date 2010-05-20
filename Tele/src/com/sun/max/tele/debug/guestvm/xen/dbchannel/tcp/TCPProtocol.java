@@ -43,7 +43,7 @@ public class TCPProtocol extends CompleteProtocolAdaptor {
     private Socket socket;
 
     public TCPProtocol(String hostAndPort) {
-        final int sep = hostAndPort.indexOf(',');
+        final int sep = hostAndPort.indexOf(':');
         if (sep > 0) {
             port = Integer.parseInt(hostAndPort.substring(sep + 1));
             host = hostAndPort.substring(0, sep);

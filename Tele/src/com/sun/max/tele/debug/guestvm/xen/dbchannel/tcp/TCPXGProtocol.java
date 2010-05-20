@@ -18,36 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.guestvm.xen.dbchannel.agent;
+package com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp;
 
-import com.sun.max.program.*;
-import com.sun.max.tele.debug.guestvm.xen.dbchannel.xg.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
-public class AgentXGProtocol extends AgentProtocolAdaptor {
+/**
+ * A variant of {@link TCPProtocol} that is communicating to an {@link AgentXGProtocol}.
+ *
+ * @author Mick Jordan
+ *
+ */
 
-    private boolean init;
+public class TCPXGProtocol extends TCPProtocol {
+    private ImageFileHandler imageFileHandler;
 
-    public AgentXGProtocol() {
-        super(new XGProtocol(null));
+    public TCPXGProtocol(ImageFileHandler imageFileHandler, String hostAndPort) {
+        super(hostAndPort);
+        this.imageFileHandler = imageFileHandler;
     }
-
-    @Override
-    protected void implAttach(int domId, int threadLocalsAreaSize) {
-        if (!init) {
-            final int result = nativeInit();
-            if (result < 0) {
-                ProgramError.unexpected("failed to initialize the xg system");
-            }
-            init = true;
-        }
-    }
-
-    private static native int nativeInit();
 
     @Override
     public long getBootHeapStart() {
-        ProgramError.unexpected("getBootHeapStart should never be called in this configuration");
-        return 0;
+//        final long addr = imageFileHandler.getBootHeapStartSymbolAddress();
+        return super.getBootHeapStart();
     }
-
 }

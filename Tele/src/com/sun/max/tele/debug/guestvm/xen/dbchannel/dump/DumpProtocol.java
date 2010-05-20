@@ -31,7 +31,7 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
      *
      * @param dumpFile designates the dump file (and image file) somehow
      */
-    public DumpProtocol(String dumpFile) {
+    public DumpProtocol(String imageFile, String dumpFile) {
         // TODO implement
     }
 

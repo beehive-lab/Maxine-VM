@@ -85,6 +85,7 @@ public class XGProtocol implements Protocol {
 
     @Override
     public long getBootHeapStart() {
+        assert imageFileHandler != null;
         final long addr = imageFileHandler.getBootHeapStartSymbolAddress();
         final ByteBuffer bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
         final int n = readBytes(addr, bb.array(), 0, 8);
