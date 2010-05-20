@@ -75,7 +75,7 @@ public final class GuestVMXenDBChannel {
         } else if (channelInfo.type.equals(XG_TCP)) {
             channelProtocol = new TCPXGProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
         } else if (channelInfo.type.equals(XEN_DUMP)) {
-            channelProtocol = new DumpProtocol(channelInfo.imageFile, channelInfo.rest);
+            channelProtocol = new DumpProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
         } else {
             ProgramError.unexpected("unknown channel type: " + channelType);
         }

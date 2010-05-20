@@ -26,12 +26,14 @@ import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
 public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
+    private ImageFileHandler imageFileHandler;
     /**
      * Creates an instance of {@link Protocol} that can read from Xen core dumps.
-     *
-     * @param dumpFile designates the dump file (and image file) somehow
+     * @param imageFileHandler access to the image file
+     * @param dumpFile path to the dump file
      */
-    public DumpProtocol(String imageFile, String dumpFile) {
+    public DumpProtocol(ImageFileHandler imageFileHandler, String dumpFile) {
+        this.imageFileHandler = imageFileHandler;
         // TODO implement
     }
 
