@@ -1,22 +1,19 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel;
 
@@ -65,22 +62,26 @@ public final class GuestVMXenDBChannel {
         GuestVMXenDBChannel.teleDomain = teleDomain;
         String channelType = System.getProperty(CHANNEL_PROPERTY);
         final ChannelInfo channelInfo = ChannelInfo.getChannelInfo(channelType);
-
-        if (channelInfo.type.equals(DB_DIRECT)) {
-            channelProtocol = new DBProtocol();
-        } else if (channelInfo.type.equals(DB_TCP)) {
-            channelProtocol = new TCPProtocol(channelInfo.rest);
-        } else if (channelInfo.type.equals(XG_DIRECT)) {
-            channelProtocol = new XGProtocol(ImageFileHandler.open(channelInfo.imageFile));
-        } else if (channelInfo.type.equals(XG_TCP)) {
-            channelProtocol = new TCPXGProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
-        } else if (channelInfo.type.equals(XEN_DUMP)) {
-            channelProtocol = new DumpProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
-        } else {
-            ProgramError.unexpected("unknown channel type: " + channelType);
+        try {
+            if (channelInfo.type.equals(DB_DIRECT)) {
+                channelProtocol = new DBProtocol();
+            } else if (channelInfo.type.equals(DB_TCP)) {
+                channelProtocol = new TCPProtocol(channelInfo.rest);
+            } else if (channelInfo.type.equals(XG_DIRECT)) {
+                channelProtocol = new XGProtocol(ImageFileHandler.open(channelInfo.imageFile));
+            } else if (channelInfo.type.equals(XG_TCP)) {
+                channelProtocol = new TCPXGProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
+            } else if (channelInfo.type.equals(XEN_DUMP)) {
+                channelProtocol = new DumpProtocol(ImageFileHandler.open(channelInfo.imageFile), channelInfo.rest);
+            } else {
+                ProgramError.unexpected("unknown channel type: " + channelType);
+            }
+            channelProtocol.attach(domId, teleDomain.vm().bootImage().header.threadLocalsAreaSize);
+            maxByteBufferSize = channelProtocol.maxByteBufferSize();
+        } catch (Exception e) {
+			//TODO: Do something with this exception
+            e.printStackTrace();
         }
-        channelProtocol.attach(domId, teleDomain.vm().bootImage().header.threadLocalsAreaSize);
-        maxByteBufferSize = channelProtocol.maxByteBufferSize();
     }
 
     static class ChannelInfo {
@@ -181,9 +182,7 @@ public final class GuestVMXenDBChannel {
         return channelProtocol.setInstructionPointer(threadId, ip);
     }
 
-    public static synchronized boolean readRegisters(int threadId,
-                    byte[] integerRegisters, int integerRegistersSize,
-                    byte[] floatingPointRegisters, int floatingPointRegistersSize,
+    public static synchronized boolean readRegisters(int threadId, byte[] integerRegisters, int integerRegistersSize, byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize) {
         return channelProtocol.readRegisters(threadId, integerRegisters, integerRegistersSize, floatingPointRegisters, floatingPointRegistersSize, stateRegisters, stateRegistersSize);
     }
@@ -194,6 +193,7 @@ public final class GuestVMXenDBChannel {
 
     /**
      * This is not synchronized because it is used to interrupt a resume that already holds the lock.
+     *
      * @return
      */
     public static boolean suspendAll() {
