@@ -7,8 +7,6 @@ import java.io.*;
 import java.util.logging.*;
 
 import com.sun.max.elf.*;
-import com.sun.max.elf.xen.*;
-import com.sun.max.tele.debug.guestvm.xen.elf.util.*;
 
 /**
  * @author Puneeet Lakhina
