@@ -1,38 +1,48 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
+ * described in this document. In particular, and without limitation, these intellectual property rights may include one
+ * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
+ * applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
+ * license agreement and applicable provisions of the FAR and its supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
+ * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
+ * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel.dump;
 
+import java.io.*;
+
+import com.sun.max.elf.*;
+import com.sun.max.elf.xen.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
-
 public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
+    private ImageFileHandler imageFileHandler;
+    private XenCoreDumpELFReader xenReader = null;
     /**
      * Creates an instance of {@link Protocol} that can read from Xen core dumps.
      *
-     * @param dumpFile designates the dump file (and image file) somehow
+     * @param dumpImageFileStr designates the dump file and image file separated by a comma (",")
      */
-    public DumpProtocol(String dumpFile) {
-        // TODO implement
+    private File imageFile = null;
+    private File dumpFile = null;
+    private RandomAccessFile dumpRaf = null;
+
+    public DumpProtocol(ImageFileHandler imageFileHandler, String dumpFileStr) {
+        this.imageFileHandler = imageFileHandler;
+        dumpFile = new File(dumpFileStr);
+        if (!dumpFile.exists()) {
+            throw new IllegalArgumentException("Dump or Image file does not exist or is not accessible");
+        }
     }
 
     @Override
@@ -43,7 +53,11 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
     @Override
     public boolean attach(int domId, int threadLocalsAreaSize) {
-        // nothing to do
+        try {
+            xenReader = new XenCoreDumpELFReader(new RandomAccessFile(dumpFile, "r"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return true;
     }
 
@@ -67,7 +81,13 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
     @Override
     public long getBootHeapStart() {
-        unimplemented("getBootHeapStart");
+        long address = imageFileHandler.getBootHeapStartSymbolAddress();
+        try {
+            //This essentially assumes 64 bitness of the address and the target.
+            return xenReader.getPagesSection().getDataInputStream(address).read_Elf64_XWord();
+        } catch (Exception e) {
+            ProgramError.unexpected("Couldnt get Boot Heap start from the dump File");
+        }
         return 0;
     }
 

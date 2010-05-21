@@ -23,11 +23,11 @@
  * @author Mick Jordan
  *
  * The Guest VM specific implementation the "tele" layer for the Maxine Inspector.
- * Several implementations are provided and selected at runtime by {@link com.sun.max.tele.debug.guestvm.xen.GuestVMXenDBChannel}.
+ * Several implementations are provided and selected at runtime by {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.GuestVMXenDBChannel}.
  * <ul>
- * <li>Direct connection via {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.jni.JniProtocol}.</li>
+ * <li>Direct connection via {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.db.DBProtocol}.</li>
  * <li>Indirection connection via TCP using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.TCPProtocol}, to an agent running in dom0
- * using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.jni.JniProtocol}.</li>
+ * using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.db.DBProtocol}.</li>
  * <li>Indirection connection via TCP using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp.TCPProtocol}, to an agent running in dom0
  * using the "gdbsx" agwnt (TBD).
  * <li>Connection to a Xen dump file using {@link com.sun.max.tele.debug.guestvm.xen.dbchannel.dump.DumpProtocol}.</li>

@@ -32,7 +32,6 @@
 #include "c.h"
 #include "word.h"
 #include "jni.h"
-
 /**
  * Initializes the low-level VM logging facility.
  */
