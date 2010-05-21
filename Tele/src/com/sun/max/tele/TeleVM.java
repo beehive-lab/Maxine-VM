@@ -109,6 +109,7 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Thomas Wuerthinger
  * @author Hannes Payer
+ * @author Mick Jordan
  */
 public abstract class TeleVM implements MaxVM {
 
@@ -119,6 +120,32 @@ public abstract class TeleVM implements MaxVM {
     private static final String TELE_LIBRARY_NAME = "tele";
 
     /**
+     * Modes in which the Inspector operates, which require different startup behavior.
+     * @author Mick Jordan
+     *
+     */
+    public enum Mode {
+        /**
+         * Create and start a new process to execute the VM, passing arguments.
+         */
+        CREATE,
+        /**
+         * Attach to an existing VM process.
+         */
+        ATTACH,
+        /**
+         * Browse a VM image as produced by the {@link BootImageGenerator}.
+         */
+        IMAGE,
+        /**
+         * Attach to a dump of a VM process.
+         */
+        DUMP
+    }
+
+    private static Mode mode;
+
+    /**
      * The options controlling how a tele VM instance is {@linkplain #newAllocator(String...) created}.
      */
     public static class Options extends OptionSet {
@@ -126,8 +153,8 @@ public abstract class TeleVM implements MaxVM {
         /**
          * Specifies if these options apply when creating a {@linkplain TeleVM#createReadOnly(File, Classpath) read-only} Tele VM.
          */
-        public final boolean readOnly;
-
+        public final Option<String> modeOption = newStringOption("mode", "create",
+            "Mode of operation: create | attach | image | dump");
         public final Option<File> vmDirectoryOption = newFileOption("vmdir", BootImageGenerator.getDefaultVMDirectory(),
             "Path to directory containing VM executable, shared libraries and boot image.");
         public final Option<List<String>> classpathOption = newStringListOption("cp", null, File.pathSeparatorChar,
@@ -155,19 +182,14 @@ public abstract class TeleVM implements MaxVM {
          */
         public final Option<Integer> debuggeeIdOption;
 
-        public Options(boolean readOnly) {
-            this.readOnly = readOnly;
-            if (readOnly) {
-                heapOption = newStringOption("heap", null, "Relocation address for the heap and code in the boot image.");
-                vmArguments = null;
-                debuggeeIdOption = null;
-            } else {
-                heapOption = null;
-                vmArguments = newStringOption("a", null, "Specifies the arguments to the target VM.");
-                debuggeeIdOption = newIntegerOption("id", -1,
-                    "Process id of VM instance to which this debugger should attach. A value of -1 indicates that a new VM " +
-                    "process should be started using the arguments specified by the -" + vmArguments + " option.");
-            }
+        /**
+         * Creates command line options that are specific to certain operation modes. No longer tries to customise the
+         * options based on mode.
+         */
+        public Options() {
+            heapOption = newStringOption("heap", null, "Relocation address for the heap and code in the boot image.");
+            vmArguments = newStringOption("a", "", "Specifies the arguments to the target VM.");
+            debuggeeIdOption = newIntegerOption("id", -1, "Process id of VM instance to which this debugger should attach");
         }
     }
 
@@ -179,6 +201,8 @@ public abstract class TeleVM implements MaxVM {
      */
     public static TeleVM create(Options options) throws BootImageException {
         HostObjectAccess.setMainThread(Thread.currentThread());
+
+        mode = Mode.valueOf(options.modeOption.getValue().toUpperCase());
 
         final String logLevel = options.logLevelOption.getValue();
         try {
@@ -213,35 +237,58 @@ public abstract class TeleVM implements MaxVM {
         }
         checkClasspath(sourcepath);
 
-        if (!options.readOnly) {
-            final String value = options.vmArguments.getValue();
-            final String[] commandLineArguments = value == null ? null : ("".equals(value) ? new String[0] : value.trim().split(" "));
-            teleVM = create(bootImageFile, sourcepath, commandLineArguments, options.debuggeeIdOption.getValue());
-            teleVM.teleProcess().initializeState();
-            try {
-                teleVM.advanceToJavaEntryPoint();
-            } catch (IOException ioException) {
-                throw new BootImageException(ioException);
-            }
+        switch (mode) {
+            case CREATE:
+                final String value = options.vmArguments.getValue();
+                final String[] commandLineArguments = "".equals(value) ? new String[0] : value.trim().split(" ");
+                // Guest VM CREATE is more like ATTACH in that it needs the process id, but also may need to be advanced to entry point
+                teleVM = create(bootImageFile, sourcepath, commandLineArguments, options.debuggeeIdOption.getValue());
+                teleVM.teleProcess().initializeState();
+                try {
+                    teleVM.advanceToJavaEntryPoint();
+                } catch (IOException ioException) {
+                    throw new BootImageException(ioException);
+                }
+                break;
 
-            final File commandFile = options.commandFileOption.getValue();
-            if (commandFile != null && !commandFile.equals("")) {
-                teleVM.executeCommandsFromFile(commandFile.getPath());
-            }
+            case ATTACH:
+                teleVM = create(bootImageFile, sourcepath, null, options.debuggeeIdOption.getValue());
+                teleVM.teleProcess().initializeState();
+                break;
 
-        } else {
-            String heap = options.heapOption.getValue();
-            if (heap != null) {
-                assert System.getProperty(ReadOnlyTeleProcess.HEAP_PROPERTY) == null;
-                System.setProperty(ReadOnlyTeleProcess.HEAP_PROPERTY, heap);
-            }
-            teleVM = createReadOnly(bootImageFile, sourcepath);
-            teleVM.refresh(0);
+            case IMAGE:
+            case DUMP:
+                String heap = options.heapOption.getValue();
+                if (heap != null) {
+                    assert System.getProperty(ReadOnlyTeleProcess.HEAP_PROPERTY) == null;
+                    System.setProperty(ReadOnlyTeleProcess.HEAP_PROPERTY, heap);
+                }
+                teleVM = createReadOnly(bootImageFile, sourcepath);
+                teleVM.refresh(0);
         }
+
+        final File commandFile = options.commandFileOption.getValue();
+        if (commandFile != null && !commandFile.equals("")) {
+            teleVM.executeCommandsFromFile(commandFile.getPath());
+        }
+
 
         return teleVM;
     }
 
+    public static Mode mode() {
+        return mode;
+    }
+
+    /**
+     * Create the appropriate subclass of {@link TeleVM} based on VM configuration.
+     * @param bootImageFile
+     * @param sourcepath
+     * @param commandlineArguments {@code null} if {@code processId > 0} else command line arguments for new VM process
+     * @param processID {@code -1} for new VM process, else id of process to attach to
+     * @return
+     * @throws BootImageException
+     */
     private static TeleVM create(File bootImageFile, Classpath sourcepath, String[] commandlineArguments, int processID) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
         TeleVM teleVM = null;

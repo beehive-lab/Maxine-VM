@@ -55,11 +55,8 @@ public final class ReadOnlyTeleVM extends TeleVM {
 
     @Override
     protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
-        if (bootImage().vmConfiguration.platform().operatingSystem != OperatingSystem.GUESTVM) {
-            final ReadOnlyTeleProcess teleProcess = (ReadOnlyTeleProcess) teleProcess();
-            return teleProcess.heap();
-        }
-        return null;
+        final ReadOnlyTeleProcess teleProcess = (ReadOnlyTeleProcess) teleProcess();
+        return teleProcess.heap();
     }
 
     @Override
