@@ -19,15 +19,15 @@ package com.sun.max.tele.debug.guestvm.xen.dbchannel.dump;
 
 import java.io.*;
 
-import com.sun.max.elf.*;
-import com.sun.max.elf.xen.*;
+//import com.sun.max.elf.*;
+//import com.sun.max.elf.xen.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
 public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
     private ImageFileHandler imageFileHandler;
-    private XenCoreDumpELFReader xenReader = null;
+//    private XenCoreDumpELFReader xenReader = null;
     /**
      * Creates an instance of {@link Protocol} that can read from Xen core dumps.
      *
@@ -54,7 +54,7 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
     @Override
     public boolean attach(int domId, int threadLocalsAreaSize) {
         try {
-            xenReader = new XenCoreDumpELFReader(new RandomAccessFile(dumpFile, "r"));
+//            xenReader = new XenCoreDumpELFReader(new RandomAccessFile(dumpFile, "r"));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -81,10 +81,10 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
     @Override
     public long getBootHeapStart() {
-        long address = imageFileHandler.getBootHeapStartSymbolAddress();
+//        long address = imageFileHandler.getBootHeapStartSymbolAddress();
         try {
             //This essentially assumes 64 bitness of the address and the target.
-            return xenReader.getPagesSection().getDataInputStream(address).read_Elf64_XWord();
+//            return xenReader.getPagesSection().getDataInputStream(address).read_Elf64_XWord();
         } catch (Exception e) {
             ProgramError.unexpected("Couldnt get Boot Heap start from the dump File");
         }
