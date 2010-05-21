@@ -22,6 +22,7 @@ package com.sun.max.tele.debug.guestvm.xen.dbchannel.xg;
 
 import java.nio.*;
 
+import com.sun.max.elf.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
