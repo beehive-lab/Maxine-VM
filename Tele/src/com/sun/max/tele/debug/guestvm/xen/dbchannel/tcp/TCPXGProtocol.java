@@ -20,7 +20,9 @@
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.xg.*;
 
 /**
  * A variant of {@link TCPProtocol} that is communicating to an {@link AgentXGProtocol}.
@@ -31,15 +33,21 @@ import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
 public class TCPXGProtocol extends TCPProtocol {
     private ImageFileHandler imageFileHandler;
+    private XGProtocol xgProtocol;
 
     public TCPXGProtocol(ImageFileHandler imageFileHandler, String hostAndPort) {
         super(hostAndPort);
         this.imageFileHandler = imageFileHandler;
+        xgProtocol = new XGProtocol(imageFileHandler);
     }
 
     @Override
     public long getBootHeapStart() {
 //        final long addr = imageFileHandler.getBootHeapStartSymbolAddress();
-        return super.getBootHeapStart();
+        final long addr = 0x6add410;
+        // delegate
+        final long result = xgProtocol.getBootHeapStart(this, addr);
+        Trace.line(1, "getBootHeapStart returned " + Long.toHexString(result));
+        return result;
     }
 }
