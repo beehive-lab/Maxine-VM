@@ -37,6 +37,10 @@ static int terminated = 0;    // target domain has terminated
 static struct db_thread *threads_at_rest = NULL;  // cache of threads on return from resume
 static int num_threads_at_rest;
 static volatile int suspend_all_request = 0;
+static struct guestvm_memory_handler db_memory_handler = {
+                .readbytes = &db_readbytes,
+                .writebytes = &db_writebytes
+};
 
 /* Only used on the agent side of the split communication layer; a replacement for TeleVM.nativeInitialize. */
 JNIEXPORT void JNICALL
@@ -54,7 +58,7 @@ void teleProcess_initialize(void) {
 
 struct db_regs *checked_get_regs(char *f, int threadId) {
     struct db_regs *db_regs;
-    db_regs = get_regs(threadId);
+    db_regs = db_get_regs(threadId);
     if (db_regs == NULL) {
         log_println("guestvmXenNativeThread_%s: cannot get registers for thread %d", f, threadId);
         gather_and_trace_threads();
@@ -70,20 +74,20 @@ Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeSuspendAll
 
 JNIEXPORT jlong JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeSuspend(JNIEnv *env, jclass c, jint threadId) {
-    suspend(threadId);
+    db_suspend(threadId);
     return 1;
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeSingleStep(JNIEnv *env, jclass c, jint threadId) {
-    int rc = single_step(threadId);
+    int rc = db_single_step(threadId);
     return rc == 0;
 }
 
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint threadId, jlong ip) {
-    return set_ip(threadId, ip);
+    return db_set_ip(threadId, ip);
 }
 
 JNIEXPORT jboolean JNICALL
@@ -165,15 +169,14 @@ Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeGatherThre
     struct db_thread *threads;
     int num_threads;
 
-    threads = gather_threads(&num_threads);
+    threads = db_gather_threads(&num_threads);
     int i;
     for (i=0; i<num_threads; i++) {
         tele_log_println("nativeGatherThreads processing thread %d,", threads[i].id);
         ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         struct db_regs *db_regs = checked_get_regs("nativeGatherThreads", threads[i].id);
-        ProcessHandle ph = NULL;
-        threadLocals = teleProcess_findThreadLocals(ph, threadLocalsList, primordialThreadLocals, db_regs->rsp, threadLocals, &nativeThreadLocalsStruct);
+        threadLocals = teleProcess_findThreadLocals(&db_memory_handler, threadLocalsList, primordialThreadLocals, db_regs->rsp, threadLocals, &nativeThreadLocalsStruct);
         teleProcess_jniGatherThread(env, teleDomain, threadSeq, (jlong) threads[i].id, toThreadState(threads[i].flags), db_regs->rip, threadLocals);
     }
     free(threads);
@@ -209,7 +212,7 @@ void gather_and_trace_threads(void) {
     struct db_thread *threads;
     int num_threads;
     if (terminated) return;
-    threads = gather_threads(&num_threads);
+    threads = db_gather_threads(&num_threads);
     trace_threads(threads, num_threads);
     free(threads);
 }
@@ -222,12 +225,12 @@ Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeResume(JNI
 
     tele_log_println("resuming all runnable threads");
     if (threads_at_rest != NULL) free(threads_at_rest);
-    resume_all();
+    db_resume_all();
     /* Poll waiting for the thread to block or we get a suspendAll request, sleep for a short while to give domain chance to do something */
     usleep(500);
     while(suspend_all_request == 0) {
         tele_log_println("waiting for a thread to block");
-        threads = gather_threads(&num_threads);
+        threads = db_gather_threads(&num_threads);
         if (threads == NULL) {
             // target domain has explicitly terminated
             // send signoff
@@ -260,8 +263,8 @@ Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeResume(JNI
 
     suspend_all_request = 0;
     tele_log_println("suspending all threads");
-    suspend_all();
-    threads = gather_threads(&num_threads);
+    db_suspend_all();
+    threads = db_gather_threads(&num_threads);
     trace_threads(threads, num_threads);
     threads_at_rest = threads;
     num_threads_at_rest = num_threads;
@@ -270,7 +273,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeResume(JNI
 
 JNIEXPORT jlong JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeGetBootHeapStart(JNIEnv *env, jclass c) {
-    return app_specific1(0);
+    return db_app_specific1(0);
 }
 
 JNIEXPORT jint JNICALL
@@ -280,17 +283,17 @@ Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeSetTranspo
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeReadBytes(JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
-    return teleProcess_read(NULL, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
+    return teleProcess_read(&db_memory_handler, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeWriteBytes(JNIEnv *env, jclass c, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
-    return teleProcess_write(NULL, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
+    return teleProcess_write(&db_memory_handler, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeMaxByteBufferSize(JNIEnv *env, jclass c) {
-	return multibytebuffersize();
+	return db_multibytebuffersize();
 }
 
 JNIEXPORT jboolean JNICALL
@@ -301,12 +304,12 @@ Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeActivateWa
     if (write) kind |= WRITE_W;
     if (exec) kind |= EXEC_W;
 	if (!after) return false;
-    return activate_watchpoint(address, size, kind);
+    return db_activate_watchpoint(address, size, kind);
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeDeactivateWatchpoint(JNIEnv *env, jclass c, jlong address, jlong size) {
-	return deactivate_watchpoint(address, size);
+	return db_deactivate_watchpoint(address, size);
 }
 
 static int get_wp_thread() {
@@ -327,7 +330,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeReadWatchp
 		log_println("readWatchpointAddress: no thread at watchpoint");
 		return 0;
 	}
-	return watchpoint_info(thread_id, &kind);
+	return db_watchpoint_info(thread_id, &kind);
 }
 
 JNIEXPORT jint JNICALL
@@ -338,7 +341,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_db_DBProtocol_nativeReadWatchp
 		log_println("readWatchpointAccessCode: no thread at watchpoint");
 		return 0;
 	}
-	watchpoint_info(thread_id, &kind);
+	db_watchpoint_info(thread_id, &kind);
 	return kind & ~AFTER_W;
 
 }
