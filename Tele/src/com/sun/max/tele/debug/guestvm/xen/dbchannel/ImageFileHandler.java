@@ -68,4 +68,9 @@ public final class ImageFileHandler {
     public long getThreadListSymbolAddress() {
         return symbolLookup.lookupSymbolValue(ALL_THREADS_SYMBOL_NAME).longValue();
     }
+
+    public long getSymbolAddress(String name) {
+        final Number number = symbolLookup.lookupSymbolValue(name);
+        return number == null ? -1 : number.longValue();
+    }
 }
