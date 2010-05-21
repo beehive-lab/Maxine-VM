@@ -22,27 +22,16 @@ package com.sun.max.tele.debug.guestvm.xen.dbchannel.agent;
 
 import java.io.*;
 
-import static com.sun.max.tele.debug.guestvm.xen.dbchannel.dataio.DataIOProtocol.*;
-
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
-import com.sun.max.tele.debug.guestvm.xen.dbchannel.jni.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.dataio.DataIOProtocol.*;
 
-/**
- * A {@link SimpleProtocol} implementation that is called reflectively by {@link ProtocolAgent}
- * and delegates to the standard {@link JniProtocol}, save the {@link SimpleProtocol#gatherThreads(long, long)}
- * and {@link SimpleProtocol#readThreads} methods, which are implemented here.
- *
- * @author Mick Jordan
- *
- */
+public abstract class AgentProtocolAdaptor extends RIProtocolAdaptor implements SimpleProtocol {
+    private Protocol impl;
 
-public class AgentJniProtocol extends RIProtocolAdaptor implements SimpleProtocol {
-    private JniProtocol impl;
-
-    public AgentJniProtocol() {
-        this.impl = new JniProtocol();
+    protected AgentProtocolAdaptor(Protocol impl) {
+        this.impl = impl;
         setArrayMode("readBytes", 1, ArrayMode.OUT);
         setArrayMode("writeBytes", 1, ArrayMode.IN);
         setArrayMode("readRegisters", 1, ArrayMode.OUT);
@@ -51,7 +40,14 @@ public class AgentJniProtocol extends RIProtocolAdaptor implements SimpleProtoco
         setArrayMode("readThreads", 1, ArrayMode.OUT);
     }
 
-    private static native void teleThreadLocalsInitialize(int threadLocalsSize);
+    /**
+     * Invoked prior to {@link #attach} for custom code that needs to be executed by this particular agent implementation.
+     * @param domId
+     * @param threadLocalsAreaSize
+     */
+    protected void implAttach(int domId, int threadLocalsAreaSize) {
+
+    }
 
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {
@@ -60,7 +56,7 @@ public class AgentJniProtocol extends RIProtocolAdaptor implements SimpleProtoco
 
     @Override
     public boolean attach(int domId, int threadLocalsAreaSize) {
-        teleThreadLocalsInitialize(threadLocalsAreaSize);
+        implAttach(domId, threadLocalsAreaSize);
         return impl.attach(domId, threadLocalsAreaSize);
     }
 

@@ -65,7 +65,7 @@ public class Thread_counter01  extends RunBench {
         }
     }
 
-    static class Bench implements MicroBenchmark {
+    static class Bench extends AbstractMicroBenchmark {
 
         private static Timer benchTimer;
         private RunnerFactory runnerFactory;
