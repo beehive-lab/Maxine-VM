@@ -60,6 +60,13 @@ Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_xg_XGProtocol_nativeAttach(JNI
     return xg_attach(domainId);
 }
 
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_xg_XGProtocol_nativeResume(JNIEnv *env, jobject domain) {
+    /*tele_*/log_println("Calling xg_resume_n_wait");
+    int vcpu = xg_resume_n_wait(64);
+}
+
+
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_dbchannel_xg_XGProtocol_nativeReadBytes(JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
     return teleProcess_read(&xg_memory_handler, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
