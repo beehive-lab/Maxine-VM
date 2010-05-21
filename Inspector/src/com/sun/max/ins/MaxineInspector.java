@@ -47,7 +47,7 @@ public final class MaxineInspector {
         Trace.begin(TRACE_VALUE, tracePrefix + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
 
-        final Options options = new Options(false);
+        final Options options = new Options();
         Trace.addTo(options);
         final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exits.");
         options.parseArguments(args);
@@ -62,7 +62,11 @@ public final class MaxineInspector {
 
                 public void run() {
                     Inspection.initializeSwing();
-                    new Inspection(maxVM);
+                    final Inspection inspection = new Inspection(maxVM);
+                    if (TeleVM.mode() == Mode.IMAGE) {
+                        // Bring up the boot image info inspector as a starting point for browsing
+                        BootImageInspector.make(inspection).highlight();
+                    }
                 }
             });
         } catch (BootImageException bootImageException) {

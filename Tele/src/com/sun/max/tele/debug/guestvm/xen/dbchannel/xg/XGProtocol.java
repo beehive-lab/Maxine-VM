@@ -22,6 +22,7 @@ package com.sun.max.tele.debug.guestvm.xen.dbchannel.xg;
 
 import java.nio.*;
 
+import com.sun.max.elf.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
@@ -87,8 +88,12 @@ public class XGProtocol implements Protocol {
     public long getBootHeapStart() {
         assert imageFileHandler != null;
         final long addr = imageFileHandler.getBootHeapStartSymbolAddress();
+        return getBootHeapStart(this, addr);
+    }
+
+    public long getBootHeapStart(SimpleProtocol p, long addr) {
         final ByteBuffer bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-        final int n = readBytes(addr, bb.array(), 0, 8);
+        final int n = p.readBytes(addr, bb.array(), 0, 8);
         if (n != 8) {
             ProgramError.unexpected("getBootHeapStart read failed");
         }
