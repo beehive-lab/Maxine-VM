@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.mockvm;
+package com.sun.hotspot.c1x;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +37,11 @@ import com.sun.cri.xir.XirTemplate;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
 
 /**
- * 
+ *
  * @author Thomas Wuerthinger
- * 
+ *
  */
-public class MockXirGenerator extends RiXirGenerator {
+public class HotSpotXirGenerator extends RiXirGenerator {
 
     private XirTemplate[] emptyTemplates = new XirTemplate[CiKind.values().length];
 

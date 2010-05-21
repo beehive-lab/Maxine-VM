@@ -18,53 +18,53 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.mockvm;
+package com.sun.hotspot.c1x;
 
 import com.sun.c1x.C1XCompiler;
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.target.amd64.AMD64;
 import com.sun.cri.ci.CiCompiler;
-import com.sun.cri.ci.CiResult;
 import com.sun.cri.ci.CiTarget;
-import com.sun.cri.ci.CiTargetMethod;
-import com.sun.cri.ri.RiMethod;
 import com.sun.cri.ri.RiRegisterConfig;
 import com.sun.cri.xir.RiXirGenerator;
 
 /**
+ *
  * @author Thomas Wuerthinger
  *
- *         Sets up a mock runtime for C1X and tries to compile a method. Generates a file output.cfg that can be viewed
- *         with the c1visualizer.
+ *         Singleton class holding the instance of the C1XCompiler.
  *
  */
-public class Main {
+public class Compiler {
 
-    public static void main(String[] args) {
+    private static CiCompiler compiler;
 
-        final MockRuntime runtime = new MockRuntime();
-        final RiXirGenerator generator = new MockXirGenerator();
+    public static CiCompiler getCompiler() {
+
+        if (compiler == null) {
+            compiler = createCompiler();
+        }
+
+        return compiler;
+    }
+
+    private static CiCompiler createCompiler() {
+
+        final HotSpotRuntime runtime = new HotSpotRuntime();
+        final RiXirGenerator generator = new HotSpotXirGenerator();
         final int wordSize = 8;
         final int stackFrameAlignment = 8;
         final int pageSize = 1024;
-        final RiRegisterConfig config = new MockRegisterConfig();
+        final RiRegisterConfig config = new HotSpotRegisterConfig();
         final CiTarget target = new CiTarget(new AMD64(), config, true, wordSize, wordSize, wordSize, stackFrameAlignment, pageSize, wordSize, wordSize, 16);
         final CiCompiler compiler = new C1XCompiler(runtime, target, generator);
 
         C1XOptions.setOptimizationLevel(3);
-        C1XOptions.PrintCFGToFile = true;
-        C1XOptions.PrintAssembly = true;
-
-        MockType type = MockUniverse.lookupType("com.sun.mockvm.Main");
-        RiMethod method = type.lookupMethod("main", "([Ljava/lang/String;)V");
-        CiResult result = compiler.compileMethod(method, generator);
-
-        if (result.bailout() != null) {
-            result.bailout().printStackTrace();
-        } else {
-            CiTargetMethod targetMethod = result.targetMethod();
-            System.out.println("Code size: " + targetMethod.targetCode().length);
-        }
+        C1XOptions.TraceBytecodeParserLevel = 4;
+        C1XOptions.PrintCFGToFile = false;
+        C1XOptions.PrintAssembly = false; // true;
+        C1XOptions.PrintCompilation = true;
+        return compiler;
 
     }
 }

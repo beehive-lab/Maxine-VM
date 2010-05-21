@@ -497,14 +497,14 @@ public class C0XCompilation {
                 case Bytecodes.DRETURN        : doReturn(CiKind.Double, pop2()); break bytecodeLoop;
                 case Bytecodes.RETURN         : doReturn(CiKind.Void, null); break bytecodeLoop;
                 case Bytecodes.ATHROW         : doThrow(bci); break bytecodeLoop;
-                case Bytecodes.GETSTATIC      : doGetStatic(constantPool().lookupField(stream.readCPI())); break;
-                case Bytecodes.PUTSTATIC      : doPutStatic(constantPool().lookupField(stream.readCPI())); break;
-                case Bytecodes.GETFIELD       : doGetField(constantPool().lookupField(stream.readCPI())); break;
-                case Bytecodes.PUTFIELD       : doPutField(constantPool().lookupField(stream.readCPI())); break;
-                case Bytecodes.INVOKEVIRTUAL  : doInvokeVirtual(constantPool().lookupMethod(stream.readCPI())); break;
-                case Bytecodes.INVOKESPECIAL  : doInvokeSpecial(constantPool().lookupMethod(stream.readCPI())); break;
-                case Bytecodes.INVOKESTATIC   : doInvokeStatic(constantPool().lookupMethod(stream.readCPI())); break;
-                case Bytecodes.INVOKEINTERFACE: doInvokeInterface(constantPool().lookupMethod(stream.readCPI())); break;
+                case Bytecodes.GETSTATIC      : doGetStatic(constantPool().lookupField(stream.readCPI(), opcode)); break;
+                case Bytecodes.PUTSTATIC      : doPutStatic(constantPool().lookupField(stream.readCPI(), opcode)); break;
+                case Bytecodes.GETFIELD       : doGetField(constantPool().lookupField(stream.readCPI(), opcode)); break;
+                case Bytecodes.PUTFIELD       : doPutField(constantPool().lookupField(stream.readCPI(), opcode)); break;
+                case Bytecodes.INVOKEVIRTUAL  : doInvokeVirtual(constantPool().lookupMethod(stream.readCPI(), opcode)); break;
+                case Bytecodes.INVOKESPECIAL  : doInvokeSpecial(constantPool().lookupMethod(stream.readCPI(), opcode)); break;
+                case Bytecodes.INVOKESTATIC   : doInvokeStatic(constantPool().lookupMethod(stream.readCPI(), opcode)); break;
+                case Bytecodes.INVOKEINTERFACE: doInvokeInterface(constantPool().lookupMethod(stream.readCPI(), opcode)); break;
                 case Bytecodes.NEW            : doNewInstance(stream.readCPI()); break;
                 case Bytecodes.NEWARRAY       : doNewTypeArray(stream.readLocalIndex()); break;
                 case Bytecodes.ANEWARRAY      : doNewObjectArray(stream.readCPI()); break;
@@ -559,7 +559,7 @@ public class C0XCompilation {
     }
 
     private void doNewMultiArray(char cpi, int rank) {
-        RiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi, Bytecodes.MULTIANEWARRAY);
         Location[] lengths = popN(rank);
         Location r = codeGen.genNewMultiArray(type, lengths);
         push1(r);
@@ -576,14 +576,14 @@ public class C0XCompilation {
     }
 
     private void doInstanceOf(char cpi) {
-        RiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi, Bytecodes.INSTANCEOF);
         Location object = pop1();
         Location r = codeGen.genInstanceOf(type, object);
         push1(r);
     }
 
     private void doCheckCast(char cpi) {
-        RiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi, Bytecodes.CHECKCAST);
         Location object = pop1();
         codeGen.genCheckCast(type, object);
         push1(object);
@@ -596,7 +596,7 @@ public class C0XCompilation {
     }
 
     private void doNewObjectArray(char cpi) {
-        RiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi, Bytecodes.ANEWARRAY);
         Location length = pop1();
         Location r = codeGen.genNewObjectArray(type, length);
         push1(r);
@@ -610,7 +610,7 @@ public class C0XCompilation {
     }
 
     private void doNewInstance(char cpi) {
-        RiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi, Bytecodes.NEW);
         Location r = codeGen.genNewInstance(type);
         push1(r);
     }

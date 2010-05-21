@@ -1,21 +1,23 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc. All rights reserved.
- * 
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
- * described in this document. In particular, and without limitation, these intellectual property rights may include one
- * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
- * applications in the U.S. and in other countries.
- * 
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
- * license agreement and applicable provisions of the FAR and its supplements.
- * 
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
- * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
- * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
- * 
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
  */
-
 package com.sun.mockvm;
 
 import org.apache.bcel.classfile.Constant;
@@ -38,9 +40,9 @@ import com.sun.cri.ri.RiSignature;
 import com.sun.cri.ri.RiType;
 
 /**
- * 
+ *
  * @author Thomas Wuerthinger
- * 
+ *
  */
 public class MockConstantPool implements RiConstantPool {
 
@@ -73,9 +75,9 @@ public class MockConstantPool implements RiConstantPool {
         }
     }
 
-    private RiMethod lookupInvoke(int cpi) {
+    private RiMethod lookupInvoke(int cpi, int opcode) {
         ConstantMethodref c = (ConstantMethodref) cp.getConstant(cpi);
-        MockType type = (MockType) lookupType((char) c.getClassIndex());
+        MockType type = (MockType) lookupType((char) c.getClassIndex(), opcode);
         ConstantNameAndType methodConstant = (ConstantNameAndType) cp.getConstant(c.getNameAndTypeIndex());
         String methodName = methodConstant.getName(cp);
         String methodSignature = methodConstant.getSignature(cp);
@@ -83,14 +85,13 @@ public class MockConstantPool implements RiConstantPool {
         return result;
     }
 
-    @Override
-    public RiMethod lookupMethod(int cpi) {
-        return lookupInvoke(cpi);
+    public RiMethod lookupMethod(int cpi, int opcode) {
+        return lookupInvoke(cpi, opcode);
     }
 
-    public RiField lookupField(int cpi) {
+    public RiField lookupField(int cpi, int opcode) {
         ConstantFieldref c = (ConstantFieldref) cp.getConstant(cpi);
-        MockType type = (MockType) lookupType((char) c.getClassIndex());
+        MockType type = (MockType) lookupType((char) c.getClassIndex(), opcode);
         ConstantNameAndType methodConstant = (ConstantNameAndType) cp.getConstant(c.getNameAndTypeIndex());
         String fieldName = methodConstant.getName(cp);
         String fieldSignature = methodConstant.getSignature(cp);
@@ -104,7 +105,7 @@ public class MockConstantPool implements RiConstantPool {
     }
 
     @Override
-    public RiType lookupType(int cpi) {
+    public RiType lookupType(int cpi, int opcode) {
         Constant c = cp.getConstant(cpi);
         ConstantClass cc = (ConstantClass) c;
         int nameIndex = cc.getNameIndex();
@@ -112,10 +113,5 @@ public class MockConstantPool implements RiConstantPool {
         ConstantUtf8 utf = (ConstantUtf8) name;
         String klassName = utf.getBytes().replace('/', '.');
         return MockUniverse.lookupType(klassName);
-    }
-
-    @Override
-    public RiType resolveType(int cpi) {
-        throw new UnsupportedOperationException();
     }
 }

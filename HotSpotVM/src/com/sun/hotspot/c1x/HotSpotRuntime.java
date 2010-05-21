@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.mockvm;
+package com.sun.hotspot.c1x;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -51,16 +51,27 @@ import com.sun.max.lang.WordWidth;
  *
  * @author Thomas Wuerthinger
  *
+ *         CRI runtime implementation for the HotSpot VM.
+ *
  */
-public class MockRuntime implements RiRuntime {
+public class HotSpotRuntime implements RiRuntime {
+
+    @Override
+    public int basicObjectLockOffsetInBytes() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 
     @Override
     public int codeOffset() {
+        // TODO Auto-generated method stub
         return 0;
     }
 
     @Override
     public void codePrologue(RiMethod method, OutputStream out) {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
@@ -139,75 +150,85 @@ public class MockRuntime implements RiRuntime {
 
     @Override
     public RiConstantPool getConstantPool(RiMethod method) {
-
-        final MockMethod mockMethod = (MockMethod) method;
-        return mockMethod.getHolder().getConstantPool();
+        return VMEntries.RiRuntime_getConstantPool(((HotSpotType) method.holder()).klassOop);
     }
 
     @Override
     public RiOsrFrame getOsrFrame(RiMethod method, int bci) {
-        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        return null;
     }
 
+    @Override
     public RiType getRiType(Class< ? > javaClass) {
-        return MockUniverse.lookupType(javaClass);
-    }
-
-    public RiMethod getRiMethod(Method javaMethod) {
-        throw new UnsupportedOperationException();
-    }
-
-    public RiMethod getRiMethod(Constructor< ? > javaConstructor) {
-        throw new UnsupportedOperationException();
-    }
-
-    public RiField getRiField(Field javaField) {
-        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public RiSnippets getSnippets() {
-        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public boolean mustInline(RiMethod method) {
+        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public boolean mustNotCompile(RiMethod method) {
+        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public boolean mustNotInline(RiMethod method) {
+        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public Object registerTargetMethod(CiTargetMethod targetMethod, String name) {
-        return targetMethod;
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public int sizeofBasicObjectLock() {
-        return 0;
-    }
-
-    @Override
-    public int basicObjectLockOffsetInBytes() {
+        // TODO Auto-generated method stub
         return 0;
     }
 
     @Override
     public int threadExceptionOffset() {
-        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public RiField getRiField(Field javaField) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public RiMethod getRiMethod(Method javaMethod) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public RiMethod getRiMethod(Constructor< ? > javaConstructor) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public CiConstant invoke(RiMethod method, CiMethodInvokeArguments args) {
-        // TODO: Use CiUtil.invoke() to complete this implementation
-        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        return null;
     }
+
 }

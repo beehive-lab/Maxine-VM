@@ -18,9 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.mockvm;
-
-import org.apache.bcel.classfile.ExceptionTable;
+package com.sun.hotspot.c1x;
 
 import com.sun.cri.ri.RiExceptionHandler;
 import com.sun.cri.ri.RiMethod;
@@ -28,148 +26,118 @@ import com.sun.cri.ri.RiMethodProfile;
 import com.sun.cri.ri.RiSignature;
 import com.sun.cri.ri.RiType;
 
-/**
- *
- * @author Thomas Wuerthinger
- *
- */
-public class MockMethod implements RiMethod {
+public class HotSpotMethod implements RiMethod {
 
-    private final InvokeTarget method;
-    private final org.apache.bcel.classfile.Method fileMethod;
-    private final RiSignature signature;
-    private final MockType holder;
+    Object methodOop;
+    private byte[] code;
 
-    public MockMethod(MockType holder, InvokeTarget rm, org.apache.bcel.classfile.Method fileMethod) {
-        this.method = rm;
-        this.fileMethod = fileMethod;
-        this.holder = holder;
-        signature = new MockSignature(rm.signature);
+    public HotSpotMethod(Object methodOop) {
+        this.methodOop = methodOop;
+    }
+
+    @Override
+    public int accessFlags() {
+        return VMEntries.RiMethod_accessFlags(methodOop);
     }
 
     @Override
     public boolean canBeStaticallyBound() {
+        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public byte[] code() {
-        if (fileMethod == null) {
-            return null;
+        if (code == null) {
+            code = VMEntries.RiMethod_code(methodOop);
         }
-        return fileMethod.getCode().getCode();
+
+        return code;
     }
 
     @Override
     public RiExceptionHandler[] exceptionHandlers() {
-
-        if (fileMethod == null) {
-            throw new UnsupportedOperationException();
-        }
-
-        RiExceptionHandler[] handlers = new RiExceptionHandler[0];
-        final ExceptionTable table = fileMethod.getExceptionTable();
-
-        if (table != null) {
-            handlers = new RiExceptionHandler[table.getNumberOfExceptions()];
-//            for (int i = 0; i < table.getNumberOfExceptions(); i++) {
-//                throw new UnsupportedOperationException();
-//            }
-        }
-
-        return handlers;
+        // TODO: Add support for exception handlers
+        return new RiExceptionHandler[0];
     }
 
     @Override
     public boolean hasBalancedMonitors() {
-        // TODO: check
+        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public RiType holder() {
-        return MockUniverse.lookupType(method.declaringClass);
-    }
-
-    @Override
-    public int accessFlags() {
-        return method.modifiers;
+        return VMEntries.RiMethod_holder(methodOop);
     }
 
     @Override
     public boolean isClassInitializer() {
-        return method.name.equals("<cinit>");
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public boolean isConstructor() {
-        return method.name.equals("<init>");
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public boolean isLeafMethod() {
+        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     public boolean isOverridden() {
-        return true;
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public boolean isResolved() {
-        return true;
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public String jniSymbol() {
-        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public Object liveness(int bci) {
+        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public int maxLocals() {
-        if (fileMethod == null) {
-            throw new UnsupportedOperationException();
-        }
-
-        return fileMethod.getCode().getMaxLocals();
+        return VMEntries.RiMethod_maxLocals(methodOop);
     }
 
     @Override
     public int maxStackSize() {
-        if (fileMethod == null) {
-            throw new UnsupportedOperationException();
-        }
-
-        return fileMethod.getCode().getMaxStack();
+        return VMEntries.RiMethod_maxStackSize(methodOop);
     }
 
     @Override
     public RiMethodProfile methodData() {
-        throw new UnsupportedOperationException();
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public String name() {
-        return method.name;
+        return VMEntries.RiMethod_name(methodOop);
     }
 
     @Override
     public RiSignature signature() {
-        return signature;
+        return new HotSpotSignature(VMEntries.RiMethod_signature(methodOop));
     }
 
-    public MockType getHolder() {
-        return holder;
-    }
-
-    @Override
-    public String toString() {
-        return name();
-    }
 }
