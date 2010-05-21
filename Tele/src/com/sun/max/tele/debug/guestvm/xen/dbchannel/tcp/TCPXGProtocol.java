@@ -35,6 +35,7 @@ import com.sun.max.tele.debug.guestvm.xen.dbchannel.xg.*;
 public class TCPXGProtocol extends TCPProtocol {
     private ImageFileHandler imageFileHandler;
     private XGProtocol xgProtocol;
+    private boolean started;
 
     public TCPXGProtocol(ImageFileHandler imageFileHandler, String hostAndPort) {
         super(hostAndPort);
@@ -44,11 +45,24 @@ public class TCPXGProtocol extends TCPProtocol {
 
     @Override
     public long getBootHeapStart() {
-//        final long addr = imageFileHandler.getBootHeapStartSymbolAddress();
-        final long addr = 0x6add410;
+        final long addr = imageFileHandler.getBootHeapStartSymbolAddress();
         // delegate
         final long result = xgProtocol.getBootHeapStart(this, addr);
         Trace.line(1, "getBootHeapStart returned " + Long.toHexString(result));
+        return result;
+    }
+
+    @Override
+    public int resume() {
+        if (!started) {
+            // release domain
+            final long addr = imageFileHandler.getSymbolAddress("xg_resume_flag");
+            assert addr > 0;
+            byte[] one = new byte[] {1};
+            writeBytes(addr, one, 0, 1);
+        }
+        final int result = super.resume();
+        Trace.line(1, "resume returned " + result);
         return result;
     }
 }
