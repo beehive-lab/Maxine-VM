@@ -1,19 +1,22 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product that is
- * described in this document. In particular, and without limitation, these intellectual property rights may include one
- * or more of the U.S. patents listed at http://www.sun.com/patents and one or more additional patents or pending patent
- * applications in the U.S. and in other countries.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun Microsystems, Inc. standard
- * license agreement and applicable provisions of the FAR and its supplements.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or registered
- * trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks are used under license and
- * are trademarks or registered trademarks of SPARC International, Inc. in the U.S. and other countries.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open Company, Ltd.
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
  */
 /**
  * Measures the opening of a client-side TCP socket.
@@ -73,12 +76,12 @@ public class NewSocket extends NetSettings {
 
     static class OpenBench extends AbstractMicroBenchmark {
 
-        private Socket _socket;
+        private Socket socket;
 
         @Override
         public void run(boolean warmup) {
             try {
-                _socket = new Socket(host(), port());
+                socket = new Socket(host(), port());
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -86,9 +89,9 @@ public class NewSocket extends NetSettings {
 
         @Override
         public void postrun() {
-            if (_socket != null) {
+            if (socket != null) {
                 try {
-                    _socket.close();
+                    socket.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -98,12 +101,12 @@ public class NewSocket extends NetSettings {
 
     static class CloseBench extends AbstractMicroBenchmark {
 
-        private Socket _socket;
+        private Socket socket;
 
         @Override
         public void prerun() throws Exception {
             try {
-                _socket = new Socket(host(), port());
+                socket = new Socket(host(), port());
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -112,8 +115,8 @@ public class NewSocket extends NetSettings {
         @Override
         public void run(boolean warmup) {
             try {
-                if (_socket != null) {
-                    _socket.close();
+                if (socket != null) {
+                    socket.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
