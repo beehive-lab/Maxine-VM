@@ -22,7 +22,6 @@ package com.sun.max.tele.debug.no;
 
 import java.io.*;
 
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;

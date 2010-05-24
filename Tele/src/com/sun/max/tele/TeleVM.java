@@ -120,6 +120,11 @@ public abstract class TeleVM implements MaxVM {
     private static final String TELE_LIBRARY_NAME = "tele";
 
     /**
+     * Some configurations of the Inspector (tcp-based remote) do not need the tele library locally.
+     */
+    private static final String NO_TELE_PROPERTY = "max.ins.no.tele";
+
+    /**
      * Modes in which the Inspector operates, which require different startup behavior.
      * @author Mick Jordan
      *
@@ -193,6 +198,10 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
+    private static boolean needTeleLibrary() {
+        return System.getProperty(NO_TELE_PROPERTY) == null;
+    }
+
     /**
      * Creates a new VM instance based on a given set of options.
      *
@@ -227,7 +236,9 @@ public abstract class TeleVM implements MaxVM {
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
         HostedBootClassLoader.setClasspath(classpath);
 
-        Prototype.loadLibrary(TELE_LIBRARY_NAME);
+        if (needTeleLibrary()) {
+            Prototype.loadLibrary(TELE_LIBRARY_NAME);
+        }
         final File bootImageFile = BootImageGenerator.getBootImageFile(vmdir);
 
         Classpath sourcepath = JavaProject.getSourcePath(true);
@@ -526,7 +537,9 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        nativeInitialize(bootImage.header.threadLocalsAreaSize);
+        if (needTeleLibrary()) {
+            nativeInitialize(bootImage.header.threadLocalsAreaSize);
+        }
         final MaxineVM vm = createVM(this.bootImage);
         this.vmConfiguration = vm.configuration;
 
