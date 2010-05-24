@@ -1,39 +1,29 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc., 4150 Network Circle, Santa
- * Clara, California 95054, U.S.A. All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
- * U.S. Government Rights - Commercial software. Government users are
- * subject to the Sun Microsystems, Inc. standard license agreement and
- * applicable provisions of the FAR and its supplements.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
  *
- * Use is subject to license terms.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
  *
- * This distribution may include materials developed by third parties.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
  *
- * Parts of the product may be derived from Berkeley BSD systems,
- * licensed from the University of California. UNIX is a registered
- * trademark in the U.S.  and in other countries, exclusively licensed
- * through X/Open Company, Ltd.
- *
- * Sun, Sun Microsystems, the Sun logo and Java are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other
- * countries.
- *
- * This product is covered and controlled by U.S. Export Control laws and
- * may be subject to the export or import laws in other
- * countries. Nuclear, missile, chemical biological weapons or nuclear
- * maritime end uses or end users, whether direct or indirect, are
- * strictly prohibited. Export or reexport to countries subject to
- * U.S. embargo or to entities identified on U.S. export exclusion lists,
- * including, but not limited to, the denied persons and specially
- * designated nationals lists is strictly prohibited.
- *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel.dump;
 
 import java.io.*;
 
 import com.sun.max.elf.xen.*;
+import com.sun.max.elf.xen.section.prstatus.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
@@ -119,7 +109,20 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
     @Override
     public boolean readRegisters(int threadId, byte[] integerRegisters, int integerRegistersSize, byte[] floatingPointRegisters, int floatingPointRegistersSize, byte[] stateRegisters,
                     int stateRegistersSize) {
-        unimplemented("readRegisters");
+        try {
+            //FIXME: Thhe right context for the given threadId
+            GuestContext context = xenReader.getGuestContext(0);
+            context.getCpuUserRegs().canonicalizeTeleIntegerRegisters(integerRegisters);
+            context.getCpuUserRegs().canonicalizeTeleStateRegisters(stateRegisters);
+            System.arraycopy(context.getfpuRegisters(), 0, floatingPointRegisters, 0, floatingPointRegistersSize);
+            return true;
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ImproperDumpFileException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         return false;
     }
 
