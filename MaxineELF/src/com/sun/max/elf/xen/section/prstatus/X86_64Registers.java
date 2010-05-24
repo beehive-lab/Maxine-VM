@@ -33,16 +33,40 @@ public class X86_64Registers {
 // byte[] teleCanonicalizedRegisterData;
     byte[] originalRegisterData;
     boolean bigEndian;
-    public static enum Register {
+    public static enum IntegerRegister {
         //The canonical index is based on amd64.c . The original Index is based on cpu_user_regs in xen-x86_64.c in the xen distribution
         R15(0, 8, 120), R14(8, 8, 112), R13(16, 8, 104), R12(24, 8, 96), RBP(8, 8, 40), RBX(32, 8, 24), R11(40, 8, 88), R10(48, 8, 80), R9(56, 8, 72), R8(64, 8, 64), RAX(72, 8, 0), RCX(80, 8, 8), RDX(
-                        88, 8, 16), RSI(96, 8, 48), RDI(104, 8, 56), RFLAGS(128, 8, -1), RSP(136, 8, 32);
+                        88, 8, 16), RSI(96, 8, 48), RDI(104, 8, 56),  RSP(136, 8, 32);
 
         private int originalIndex;
         private int length;
         private int canonicalIndex;
 
-        Register(int index, int length, int canonicalIndex) {
+        IntegerRegister(int index, int length, int canonicalIndex) {
+            this.originalIndex = index;
+            this.length = length;
+            this.canonicalIndex = canonicalIndex;
+        }
+
+        public int getOriginalIndex() {
+            return this.originalIndex;
+        }
+
+        public int getLength() {
+            return this.length;
+        }
+
+        public int getCanonicalIndex() {
+            return this.canonicalIndex;
+        }
+    }
+
+    public static enum StateRegister {
+        RIP(120,8,0),RFLAGS(128, 8, 8);
+        private int originalIndex;
+        private int length;
+        private int canonicalIndex;
+        StateRegister(int index, int length, int canonicalIndex) {
             this.originalIndex = index;
             this.length = length;
             this.canonicalIndex = canonicalIndex;
@@ -66,9 +90,26 @@ public class X86_64Registers {
         this.bigEndian = bigEndian;
     }
 
-    public byte[] canonicalize() {
-        byte[] canonicalArr = new byte[128];
-        for(Register register:Register.values()) {
+    public byte[] canonicalizeTeleIntegerRegisters(byte[] canonicalArr) {
+        for(IntegerRegister register:IntegerRegister.values()) {
+            if(register.getCanonicalIndex() == -1) {
+                continue;
+            }
+            if(bigEndian) {
+                for(int i=register.getOriginalIndex(),j=register.getCanonicalIndex(),ctr=0;ctr < register.getLength();i++,j++,ctr++) {
+                    canonicalArr[j] = originalRegisterData[i];
+                }
+            }else {
+                for(int i=register.getOriginalIndex()+register.getLength()-1,j=register.getCanonicalIndex(),ctr=0;ctr < register.getLength();i--,j++,ctr++) {
+                    canonicalArr[j] = originalRegisterData[i];
+                }
+            }
+        }
+        return canonicalArr;
+    }
+
+    public byte[] canonicalizeTeleStateRegisters(byte[] canonicalArr) {
+        for(StateRegister register:StateRegister.values()) {
             if(register.getCanonicalIndex() == -1) {
                 continue;
             }
