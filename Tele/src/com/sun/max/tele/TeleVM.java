@@ -1516,6 +1516,7 @@ public abstract class TeleVM implements MaxVM {
         teleClassRegistry.refresh(processEpoch);
         //}
         teleObjectFactory.refresh(processEpoch);
+        teleCodeCache.refresh();
 
         Trace.end(TRACE_VALUE, refreshTracer, startTimeMillis);
     }
