@@ -162,7 +162,7 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
          */
         Sequence<Integer> labelIndexes();
 
-        // TODO (mlvdv) abstract this interface further to this doesn't need to be exposed.
+        // TODO (mlvdv) should abstract this interface further so this doesn't need to be exposed.
         int[] bytecodeToTargetCodePositionMap();
 
     }

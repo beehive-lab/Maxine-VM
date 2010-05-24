@@ -21,6 +21,7 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -28,14 +29,21 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
- * A cache of information about machine code (by methods and native routines) in the VM,
+ * A cache of information about machine code (both compilations and external code) in the VM,
  * organized for efficient lookup by memory address.
+ * <br>
+ * In the case where the the representation of a compilation exists, but has not yet been allocated
+ * memory space in the VM's code cache (distinguished by a starting address equal to zero), the
+ * entries are set aside and checked upon each refresh to see if they have since been allocated
+ * and can be inserted into the registry.
  *
  * @author Michael Van De Vanter
  */
 final class CodeRegistry extends AbstractTeleVMHolder {
 
     private static final int TRACE_VALUE = 1;
+
+    private int previousEntryCount = 0;
 
     public CodeRegistry(TeleVM teleVM) {
         super(teleVM);
@@ -46,6 +54,9 @@ final class CodeRegistry extends AbstractTeleVMHolder {
 
     private final OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxMachineCode>> machineCodeMemoryRegions =
         new OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxMachineCode>>();
+
+    private final Set<MaxEntityMemoryRegion<? extends MaxMachineCode>> unallocatedMachineCodeMemoryRegions =
+        new HashSet<MaxEntityMemoryRegion<? extends MaxMachineCode>>();
 
     /**
      * Adds an entry to the code registry, indexed by code address, that represents a block
@@ -59,15 +70,35 @@ final class CodeRegistry extends AbstractTeleVMHolder {
     }
 
     /**
-     * Adds an entry to the code registry, indexed by code address, that represents a method compilation.
+     * Adds an entry to the code registry, indexed by code address, that represents a VM compilation.
      *
      * @param teleCompiledCode the compilation whose memory region is to be added to this registry
      * @throws IllegalArgumentException when the code's memory overlaps one already in this registry.
      */
     public synchronized void add(TeleCompiledCode teleCompiledCode) {
         final MaxEntityMemoryRegion<MaxCompiledCode> memoryRegion = teleCompiledCode.memoryRegion();
-        ProgramError.check(!memoryRegion.start().isZero(), "Code registry zero location");
-        machineCodeMemoryRegions.add(memoryRegion);
+        if (memoryRegion.start().isZero()) {
+            // The code has not been allocated any memory in the code cache yet; set aside for now.
+            unallocatedMachineCodeMemoryRegions.add(memoryRegion);
+            Trace.line(TRACE_VALUE, tracePrefix() + " unallocated code memory region pending for registry: " + teleCompiledCode.entityName());
+        } else {
+            machineCodeMemoryRegions.add(memoryRegion);
+        }
+    }
+
+    public void refresh() {
+        Trace.begin(TRACE_VALUE, tracePrefix() + " refreshing");
+        for (MaxEntityMemoryRegion< ? extends MaxMachineCode> memoryRegion : unallocatedMachineCodeMemoryRegions) {
+            if (!memoryRegion.start().isZero()) {
+                unallocatedMachineCodeMemoryRegions.remove(memoryRegion);
+                Trace.line(TRACE_VALUE, tracePrefix() + " formerly unallocated code memory region promoted to registry: " + memoryRegion.owner().entityName());
+                machineCodeMemoryRegions.add(memoryRegion);
+            }
+        }
+        final int entryCount = machineCodeMemoryRegions.length();
+        final int newEntryCount =  entryCount - previousEntryCount;
+        previousEntryCount = entryCount;
+        Trace.end(TRACE_VALUE, tracePrefix() + " refreshing, " + entryCount + " entries, " + newEntryCount + " new, "  + unallocatedMachineCodeMemoryRegions.size() + " unallocated");
     }
 
     public synchronized TeleExternalCode getExternalCode(Address address) {
