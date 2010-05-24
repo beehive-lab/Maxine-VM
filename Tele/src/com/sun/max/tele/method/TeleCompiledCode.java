@@ -29,7 +29,6 @@ import com.sun.max.asm.dis.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.memory.*;
@@ -69,18 +68,19 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
 
         private final TeleCompiledCode owner;
         private final boolean isBootCode;
-        private final MaxEntityMemoryRegion<? extends MaxEntity> parent;
+        private final TeleCodeCache teleCodeCache;
 
-        private CompiledCodeMemoryRegion(TeleVM teleVM, TeleCompiledCode owner, TeleTargetMethod teleTargetMethod, TeleCompiledCodeRegion teleCompiledCodeRegion, boolean isBootCode) {
+        private CompiledCodeMemoryRegion(TeleVM teleVM, TeleCompiledCode owner, TeleTargetMethod teleTargetMethod, TeleCodeCache teleCodeCache, boolean isBootCode) {
             super(teleVM, teleTargetMethod);
-            ProgramError.check(teleCompiledCodeRegion != null);
             this.owner = owner;
             this.isBootCode = isBootCode;
-            this.parent = teleCompiledCodeRegion.memoryRegion();
+            this.teleCodeCache = teleCodeCache;
         }
 
         public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
-            return parent;
+            // Evaluate this lazily, since this isn't known until the code's memory
+            // region is actually allocated.
+            return teleCodeCache.findCompiledCodeRegion(start()).memoryRegion();
         }
 
         public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
@@ -151,13 +151,13 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
      *
      * @param teleVM the VM
      * @param teleTargetMethod surrogate for the compilation in the VM
-     * @param teleCompiledCodeRegion surrogate for the code cache's allocation region in which this is created
+     * @param teleCodeCache the owner of all cached code in the VM
      * @param isBootCode is this code in the boot region?
      */
-    public TeleCompiledCode(TeleVM teleVM, TeleTargetMethod teleTargetMethod, TeleCompiledCodeRegion teleCompiledCodeRegion, boolean isBootCode) {
+    public TeleCompiledCode(TeleVM teleVM, TeleTargetMethod teleTargetMethod, TeleCodeCache teleCodeCache, boolean isBootCode) {
         super(teleVM);
         this.teleTargetMethod = teleTargetMethod;
-        this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(teleVM, this, teleTargetMethod, teleCompiledCodeRegion, isBootCode);
+        this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(teleVM, this, teleTargetMethod, teleCodeCache, isBootCode);
         this.instructionMap = new CompiledCodeInstructionMap(teleVM, teleTargetMethod);
         final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
         this.compilationIndex = teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(teleTargetMethod);

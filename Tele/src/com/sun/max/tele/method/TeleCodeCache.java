@@ -129,8 +129,11 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     }
 
     public void refresh() {
+        Trace.begin(TRACE_VALUE, tracePrefix() + " refreshing");
+        codeRegistry.refresh();
         bootCodeRegion.refresh();
         dynamicCodeRegion.refresh();
+        Trace.end(TRACE_VALUE, tracePrefix() + " refreshing");
     }
 
     public String entityName() {
@@ -262,8 +265,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
      */
     public void register(TeleTargetMethod teleTargetMethod) {
         final TeleCompiledCodeRegion teleCompiledCodeRegion = findCompiledCodeRegion(teleTargetMethod.getRegionStart());
-        ProgramError.check(teleCompiledCodeRegion != null, "Can't locate code region for method");
-        codeRegistry().add(new TeleCompiledCode(vm(), teleTargetMethod, teleCompiledCodeRegion, teleCompiledCodeRegion == bootCodeRegion));
+        codeRegistry().add(new TeleCompiledCode(vm(), teleTargetMethod, this, teleCompiledCodeRegion == bootCodeRegion));
     }
 
 }
