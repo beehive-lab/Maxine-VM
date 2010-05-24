@@ -746,8 +746,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                     }
                 }
 
-                //final TeleCompiledCode compiledMethod = (TeleCompiledCode) compiledCode;
-
                 LOGGER.info("Processing stackframe " + stackFrame);
 
                 int index = -1;
