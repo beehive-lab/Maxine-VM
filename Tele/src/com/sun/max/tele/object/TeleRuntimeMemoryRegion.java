@@ -92,7 +92,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
      * @return whether memory has been allocated yet in the VM for this region.
      */
     public final boolean isAllocated() {
-        return !getRegionStart().isZero();
+        return !getRegionStart().isZero() && !getRegionSize().isZero();
     }
 
     /**
@@ -106,7 +106,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
     protected void refresh() {
         super.refresh();
 
-        if (!isRelocatable() && isAllocated() && !getRegionSize().isZero()) {
+        if (!isRelocatable() && isAllocated()) {
             // Optimization: if we know the region won't be moved by the VM, and
             // we already have the location information, then don't bother to refresh.
             return;
