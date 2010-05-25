@@ -19,6 +19,13 @@
 # Company, Ltd.
 #
 
+# Currently all Maxine target implementations are 64 bit. 
+# This is where you might change that for the native code; TARGET_WORD_SIZE is interpreted in word.h
+# N.B. There are no doubt still assumptions in the code that host and target word size are the same. 
+# These should be fixed.
+
+TARGET_WORD_SIZE := w64
+
 ifeq ($(LIB), prototype)
     TARGET := PROTOTYPE
 endif
@@ -162,9 +169,9 @@ ifeq ($(OS),darwin)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
+        CFLAGS = -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     endif
-    C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET)
+    C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     LINK_MAIN = $(CC) -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -framework CoreFoundation -o $(MAIN)
     # The version linker flag below ensure are required by the modified version of
     # libjava.jnilib that is put into the $(PROJECT)/generated/$(OS) directory
@@ -186,9 +193,9 @@ ifeq ($(OS),linux)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET)
+        CFLAGS = -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET) -D$(TARGET_WORD_SIZE)
     endif
-    C_DEPENDENCIES_FLAGS = -M -DLINUX -D$(ISA) -D$(TARGET)
+    C_DEPENDENCIES_FLAGS = -M -DLINUX -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     # The -rpath option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
     # find Maxine's version of the libjvm.so library. 
     LINK_MAIN = $(CC) -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
@@ -204,9 +211,9 @@ ifeq ($(OS),solaris)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g -xc99 -errwarn -errtags -errfmt=error $(KPIC_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
+        CFLAGS = -g -xc99 -errwarn -errtags -errfmt=error $(KPIC_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) -D$(TARGET_WORD_SIZE) $(OTHER_CFLAGS)
     endif
-    C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) 
+    C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) 
     LINK_MAIN = $(CC) $(ARCH_FLAG) -lc -lthread -ldl -o $(MAIN)
     LINK_LIB = $(CC) -G $(ARCH_FLAG) -lresolv -lc -lm -ldl -lthread -lrt -lproc
     LIB_PREFIX = lib
@@ -221,9 +228,9 @@ ifeq ($(OS),windows)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g -ansi -Wall -pedantic -Wno-long-long -mno-cygwin -DWINDOWS -D$(ISA) -D$(TARGET)
+        CFLAGS = -g -ansi -Wall -pedantic -Wno-long-long -mno-cygwin -DWINDOWS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     endif   
-    C_DEPENDENCIES_FLAGS = -MM -DWINDOWS -D$(ISA) -D$(TARGET)
+    C_DEPENDENCIES_FLAGS = -MM -DWINDOWS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     LINK_MAIN = $(CC) -g -mno-cygwin -Wall -W1,----add-stdcall-alias -ldl
     LINK_LIB = $(CC) -g -shared -mno-cygwin -Wall -W1,----add-stdcall-alias
     LIB_PREFIX =
@@ -232,11 +239,15 @@ endif
 
 ifeq ($(OS),guestvm)
     # assume Xen hypervisor
-    ifeq ($(TELEBITS),64)
-      mf = -m64
+    ifeq ($(TARGET),TELE)
+        ifeq ($(TELEBITS),64)
+          mf = -m64
+        else
+          mf = -m32
+          tdir = /32bit
+        endif
     else
-      mf = -m32
-      tdir = /32bit
+      mf = -m64
     endif
     ifneq "$(findstring def, $(origin CC))" ""
         # origin of CC is either undefined or default, so set it here
@@ -247,9 +258,9 @@ ifeq ($(OS),guestvm)
         CFLAGS = -g -Wall -Wno-format -Wpointer-arith -Winline \
                   $(mf) -mno-red-zone -fpic -fno-reorder-blocks \
                   -fno-asynchronous-unwind-tables -fno-builtin \
-                  -DGUESTVMXEN -D$(ISA) -D$(TARGET)
+                  -DGUESTVMXEN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     endif
-    C_DEPENDENCIES_FLAGS = -M -DGUESTVMXEN -D$(ISA) -D$(TARGET)
+    C_DEPENDENCIES_FLAGS = -M -DGUESTVMXEN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     ifeq ($(HOSTOS),Linux)
         CFLAGS += -fno-stack-protector 
     endif
@@ -264,7 +275,8 @@ ifeq ($(OS),guestvm)
     
     LINK_AR = $(AR) r $(LIB_PREFIX)$(LIB)$(LIBA_SUFFIX)
     ifeq ($(GUK),1)
-        LINK_LIB = $(CC) -shared -lc -lm $(mf)  -L ../../../../../guk/tools/db-front$(tdir) -lguk_db
+        XG_ROOT = $(XEN_ROOT)/tools/debugger/gdbsx/xg
+        LINK_LIB = $(CC) -shared -lc -lm $(mf)  -L ../../../../../guk/tools/db-front$(tdir) -lguk_db $(XG_ROOT)/xg_main.o $(XG_ROOT)/xg_64.o $(XG_ROOT)/xg_32.o
     else
         LINK_LIB = $(CC) -shared -lc -lm $(mf)
     endif
@@ -287,6 +299,13 @@ ifeq ($(OS),guestvm)
         HOSTOS_LC = solaris
     endif
     JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(HOSTOS_LC)
+    # if we are building TELE need access to Xen debugger header
+    ifeq ($(TARGET),TELE) 
+        ifndef XEN_ROOT
+            ignore := $(error "Must set XEN_ROOT environment variable to root of your Xen source tree")
+        endif
+        CFLAGS += -I $(XEN_ROOT)/tools/debugger/gdbsx/xg
+    endif
 else
     JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
 endif

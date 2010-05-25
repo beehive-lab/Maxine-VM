@@ -18,33 +18,60 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.guestvm.xen;
+package com.sun.max.tele.debug.guestvm.xen.dbchannel.xg;
 
-import com.sun.max.collect.*;
-import com.sun.max.tele.debug.*;
+import java.nio.*;
+
+import com.sun.max.elf.*;
+import com.sun.max.program.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
 
 /**
- * An implementation of {@link GuestVMXenDBChannelProtocol} that links directly to native code
- * that communicates via the Xen ring mechanism to the target Guest VM domain.
- * This requires that the Inspector run with root privileges in (a 64-bit) dom0.
  *
- * The class is also used by {@link GuestVMXenDBNativeChannelAgent} when the
- * Inspector runs in a domU and connects via TCP.
+ * An implementation of {@link Protocol} that links directly to native code
+ * that communicates directly through JNI to  the "xg" debug agent that accesses the target Guest VM domain.
+ * This requires that the Inspector or Inspector Agent run with root privileges in dom0.
+ *
+ * N.B. The xg interface is very simple and, unlike the db-front/db-back custom interface that is accessed by
+ * {@link DBProtocol}, has no notion of threads or other Maxine VM abstractions. These have to be
+ * discovered by analyzing the memory using knowledge, primarily symbolic references from the VM image file,
+ * about how the lowest level VM layer is implemented.
  *
  * @author Mick Jordan
  *
  */
 
-public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtocolAdaptor {
+public class XGProtocol implements Protocol {
+
+    private ImageFileHandler imageFileHandler;
+
+    public XGProtocol(ImageFileHandler imageFileHandler) {
+        this.imageFileHandler = imageFileHandler;
+    }
 
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {
         return nativeActivateWatchpoint(start, size, after, read, write, exec);
     }
 
+    private int maxVCPU;
+
     @Override
-    public boolean attach(int domId) {
-        return nativeAttach(domId);
+    public boolean attach(int domId, int threadLocalsAreaSize) {
+        Trace.line(1, "attaching to domain " + domId);
+        final int attachResult = nativeAttach(domId);
+        if (attachResult < 0) {
+            return false;
+        } else {
+            maxVCPU = attachResult;
+            return true;
+        }
+    }
+
+    @Override
+    public boolean detach() {
+        Trace.line(1, "detaching from domain");
+        return nativeDetach();
     }
 
     @Override
@@ -53,18 +80,34 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
     }
 
     @Override
-    public boolean gatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals) {
-        return nativeGatherThreads(teleDomain, threads, threadLocalsList, primordialThreadLocals);
+    public boolean gatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
+        return nativeGatherThreads(teleDomain, threadSequence, threadLocalsList, primordialThreadLocals);
     }
 
     @Override
     public long getBootHeapStart() {
-        return nativeGetBootHeapStart();
+        assert imageFileHandler != null;
+        final long addr = imageFileHandler.getBootHeapStartSymbolAddress();
+        return getBootHeapStart(this, addr);
+    }
+
+    public long getBootHeapStart(SimpleProtocol p, long addr) {
+        final ByteBuffer bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
+        final int n = p.readBytes(addr, bb.array(), 0, 8);
+        if (n != 8) {
+            ProgramError.unexpected("getBootHeapStart read failed");
+        }
+        return bb.getLong();
     }
 
     @Override
     public int maxByteBufferSize() {
-        return nativeMaxByteBufferSize();
+        return 4096;
+    }
+
+    @Override
+    public int readBytes(long src, byte[] dst, int dstOffset, int length) {
+        return nativeReadBytes(src, dst, false, 0, length);
     }
 
     @Override
@@ -119,17 +162,23 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
     }
 
     @Override
+    public int writeBytes(long dst, byte[] src, int srcOffset, int length) {
+        return nativeWriteBytes(dst, src, false, 0, length);
+    }
+
+    @Override
     public int writeBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length) {
         return nativeWriteBytes(dst, src, isDirectByteBuffer, srcOffset, length);
     }
 
-    private static native boolean nativeAttach(int domId);
+    private static native int nativeAttach(int domId);
+    private static native boolean nativeDetach();
     private static native long nativeGetBootHeapStart();
     private static native int nativeSetTransportDebugLevel(int level);
     private static native int nativeReadBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
     private static native int nativeWriteBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
     private static native int nativeMaxByteBufferSize();
-    private static native boolean nativeGatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
+    private static native boolean nativeGatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals);
     private static native int nativeResume();
     private static native int nativeSetInstructionPointer(int threadId, long ip);
     private static native boolean nativeSingleStep(int threadId);
@@ -144,6 +193,18 @@ public class GuestVMXenDBNativeChannelProtocol extends GuestVMXenDBChannelProtoc
                     byte[] integerRegisters, int integerRegistersSize,
                     byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize);
+
+    @Override
+    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
+        ProgramError.unexpected("SimpleProtocol.gatherThreads(int, int) should not be called in this configuration");
+        return 0;
+    }
+
+    @Override
+    public int readThreads(int size, byte[] gatherThreadsData) {
+        ProgramError.unexpected("SimpleProtocol.readThreads should not be called in this configuration");
+        return 0;
+    }
 
 
 }

@@ -901,7 +901,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     long stackBase,
                     long stackSize,
                     long tlb,
-                    int tlbSize,
+                    long tlbSize,
                     int tlaSize) {
         assert state >= 0 && state < MaxThreadState.VALUES.length() : state;
         TeleNativeThread thread = handleToThreadMap.get(localHandle);

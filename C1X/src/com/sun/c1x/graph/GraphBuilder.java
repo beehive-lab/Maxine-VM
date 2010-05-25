@@ -717,7 +717,7 @@ public final class GraphBuilder {
     void genCheckCast() {
         FrameState stateBefore = curState.immutableCopy();
         int cpi = stream().readCPI();
-        RiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi, CHECKCAST);
         Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isResolved() && type.isInitialized(), cpi, stateBefore);
         CheckCast c = new CheckCast(type, typeInstruction, apop(), stateBefore);
         apush(append(c));
@@ -729,7 +729,7 @@ public final class GraphBuilder {
     void genInstanceOf() {
         FrameState stateBefore = curState.immutableCopy();
         int cpi = stream().readCPI();
-        RiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi, INSTANCEOF);
         Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isResolved() && type.isInitialized(), cpi, stateBefore);
         InstanceOf i = new InstanceOf(type, typeInstruction, apop(), stateBefore);
         ipush(append(i));
@@ -740,7 +740,7 @@ public final class GraphBuilder {
 
     void genNewInstance(int cpi) {
         FrameState stateBefore = curState.immutableCopy();
-        RiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi, NEW);
         NewInstance n = new NewInstance(type, cpi, constantPool(), stateBefore);
         if (memoryMap != null) {
             memoryMap.newInstance(n);
@@ -754,14 +754,14 @@ public final class GraphBuilder {
     }
 
     void genNewObjectArray(int cpi) {
-        RiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi, ANEWARRAY);
         FrameState stateBefore = curState.immutableCopy();
         NewArray n = new NewObjectArray(type, ipop(), stateBefore, cpi, constantPool());
         apush(append(n));
     }
 
     void genNewMultiArray(int cpi) {
-        RiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi, MULTIANEWARRAY);
         FrameState stateBefore = curState.immutableCopy();
         int rank = stream().readUByte(stream().currentBCI() + 3);
         Value[] dims = new Value[rank];
@@ -772,25 +772,22 @@ public final class GraphBuilder {
         apush(append(n));
     }
 
-    void genGetField(int cpi) {
+    void genGetField(int cpi, RiField field) {
         FrameState stateBefore = curState.immutableCopy();
-        RiField field = constantPool().lookupField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
         LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded);
         appendOptimizedLoadField(field.kind(), load);
     }
 
-    void genPutField(int cpi) {
+    void genPutField(int cpi, RiField field) {
         FrameState stateBefore = curState.immutableCopy();
-        RiField field = constantPool().lookupField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
         Value value = pop(field.kind().stackKind());
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded));
     }
 
-    void genGetStatic(int cpi) {
+    void genGetStatic(int cpi, RiField field) {
         FrameState stateBefore = curState.immutableCopy();
-        RiField field = constantPool().lookupField(cpi);
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && holder.isResolved() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
@@ -798,9 +795,8 @@ public final class GraphBuilder {
         appendOptimizedLoadField(field.kind(), load);
     }
 
-    void genPutStatic(int cpi) {
+    void genPutStatic(int cpi, RiField field) {
         FrameState stateBefore = curState.immutableCopy();
-        RiField field = constantPool().lookupField(cpi);
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
@@ -2008,14 +2004,14 @@ public final class GraphBuilder {
                 case DRETURN        : genMethodReturn(dpop()); break;
                 case ARETURN        : genMethodReturn(apop()); break;
                 case RETURN         : genMethodReturn(null  ); break;
-                case GETSTATIC      : genGetStatic(s.readCPI()); break;
-                case PUTSTATIC      : genPutStatic(s.readCPI()); break;
-                case GETFIELD       : genGetField(s.readCPI()); break;
-                case PUTFIELD       : genPutField(s.readCPI()); break;
-                case INVOKEVIRTUAL  : cpi = s.readCPI(); genInvokeVirtual(constantPool().lookupMethod(cpi), cpi, constantPool()); break;
-                case INVOKESPECIAL  : cpi = s.readCPI(); genInvokeSpecial(constantPool().lookupMethod(cpi), null, cpi, constantPool()); break;
-                case INVOKESTATIC   : cpi = s.readCPI(); genInvokeStatic(constantPool().lookupMethod(cpi), cpi, constantPool()); break;
-                case INVOKEINTERFACE: cpi = s.readCPI(); genInvokeInterface(constantPool().lookupMethod(cpi), cpi, constantPool()); break;
+                case GETSTATIC      : cpi = s.readCPI(); genGetStatic(cpi, constantPool().lookupField(cpi, opcode)); break;
+                case PUTSTATIC      : cpi = s.readCPI(); genPutStatic(cpi, constantPool().lookupField(cpi, opcode)); break;
+                case GETFIELD       : cpi = s.readCPI(); genGetField(cpi, constantPool().lookupField(cpi, opcode)); break;
+                case PUTFIELD       : cpi = s.readCPI(); genPutField(cpi, constantPool().lookupField(cpi, opcode)); break;
+                case INVOKEVIRTUAL  : cpi = s.readCPI(); genInvokeVirtual(constantPool().lookupMethod(cpi, opcode), cpi, constantPool()); break;
+                case INVOKESPECIAL  : cpi = s.readCPI(); genInvokeSpecial(constantPool().lookupMethod(cpi, opcode), null, cpi, constantPool()); break;
+                case INVOKESTATIC   : cpi = s.readCPI(); genInvokeStatic(constantPool().lookupMethod(cpi, opcode), cpi, constantPool()); break;
+                case INVOKEINTERFACE: cpi = s.readCPI(); genInvokeInterface(constantPool().lookupMethod(cpi, opcode), cpi, constantPool()); break;
                 case NEW            : genNewInstance(s.readCPI()); break;
                 case NEWARRAY       : genNewTypeArray(s.readLocalIndex()); break;
                 case ANEWARRAY      : genNewObjectArray(s.readCPI()); break;
@@ -2032,7 +2028,7 @@ public final class GraphBuilder {
                 case JSR_W          : genJsr(s.readFarBranchDest()); break;
 
 
-                case UNSAFE_CAST    : genUnsafeCast(constantPool().lookupMethod(s.readCPI())); break;
+                case UNSAFE_CAST    : genUnsafeCast(constantPool().lookupMethod(s.readCPI(), (byte)Bytecodes.UNSAFE_CAST)); break;
                 case WLOAD          : loadLocal(s.readLocalIndex(), CiKind.Word); break;
                 case WLOAD_0        : loadLocal(0, CiKind.Word); break;
                 case WLOAD_1        : loadLocal(1, CiKind.Word); break;

@@ -21,7 +21,10 @@
 package test.bench.util;
 
 import java.util.*;
+
 import com.sun.max.program.*;
+
+
 
 /**
  * A framework for running (micro) benchmarks that factors out timing and startup issues, leaving the benchmark writer
@@ -43,11 +46,11 @@ import com.sun.max.program.*;
  * the loop count at benchmark execution time if required. A warming phase can also be include
  * <p>
  * Once an instance of the subclass of {@code RunBench} has been created, the benchmark may be run by invoking
- * {@link #runBench}. There are three variants of {@link #runBench}; the first two use the {@value #DEFAULT_LOOP_COUNT default loop count},
- * and differ in whether result reporting defaults to {@code true} or is specified as an argument. The third variant allows the
- * default loop count to be overridden. If result reporting is enabled the results are reported to
- * the standard output on completion. If it is disabled the caller can later invoke methods,
- * such as {@link #elapsedTime} to get the relevant information, and report it in a custom manner.
+ * {@link #runBench}. There are three variants of {@link #runBench}; the first two use the {@value #DEFAULT_LOOP_COUNT
+ * default loop count}, and differ in whether result reporting defaults to {@code true} or is specified as an argument.
+ * The third variant allows the default loop count to be overridden. If result reporting is enabled the results are
+ * reported to the standard output on completion. If it is disabled the caller can later invoke methods, such as
+ * {@link #elapsedTime} to get the relevant information, and report it in a custom manner.
  * <p>
  * {@link #runBench} returns {@code true} if the benchmark completed successfully and {@code false} if an exception was
  * thrown.
@@ -60,17 +63,40 @@ public class RunBench {
      * The benchmark must implement this interface.
      */
     protected static interface MicroBenchmark {
+
+        void prerun() throws Exception;
+
         /*
          * Run one iteration of the benchmark.
+         *
          * @param warmup {@code true} if this is a warm up run
          */
         void run(boolean warmup) throws Exception;
+
+        void postrun() throws Exception;
+    }
+
+    /**
+     * Provides empty implementations of pre and post run for classes that dont need it.
+     *
+     * @author Puneeet Lakhina
+     */
+    protected abstract static  class AbstractMicroBenchmark implements MicroBenchmark {
+
+        @Override
+        public void prerun() throws Exception {
+        }
+
+        @Override
+        public void postrun() throws Exception {
+        }
     }
 
     /**
      * Base class that has no encapsulating code, which is the common case.
      */
-    private static class EmptyEncap implements MicroBenchmark {
+    private static class EmptyEncap extends AbstractMicroBenchmark {
+
         public void run(boolean warmup) {
         }
     }
@@ -115,9 +141,9 @@ public class RunBench {
     }
 
     /*
-     * Create an instance that will run {@code bench}. {@code encap} should be a variant that just contains any encapsulating
-     * code that is necessary for the benchmark. For example, setting up a {@code synchronized} block to test {@link Object#wait}.
-     * This is used to factor out timing of code that should not be measured.
+     * Create an instance that will run {@code bench}. {@code encap} should be a variant that just contains any
+     * encapsulating code that is necessary for the benchmark. For example, setting up a {@code synchronized} block to
+     * test {@link Object#wait}. This is used to factor out timing of code that should not be measured.
      */
     protected RunBench(MicroBenchmark bench, MicroBenchmark encap) {
         getBenchProperties();
@@ -132,11 +158,10 @@ public class RunBench {
     }
 
     /**
-     * Gets the number of iterations associated with this benchmark.
-     * Note that is this called before {@link #runBench} in invoked, it
-     * will return the {@link #defaultLoopCount default loop count}, otherwise
-     * it will return either the value passed to {@link #runBench} (if any), or
-     * {@link #defaultLoopCount default loop count}.
+     * Gets the number of iterations associated with this benchmark. Note that is this called before {@link #runBench}
+     * in invoked, it will return the {@link #defaultLoopCount default loop count}, otherwise it will return either the
+     * value passed to {@link #runBench} (if any), or {@link #defaultLoopCount default loop count}.
+     *
      * @return the number of iterations
      */
     public int loopCount() {
@@ -149,6 +174,7 @@ public class RunBench {
 
     /**
      * Run the benchmark for the default number of iterations and report the results to the standard output.
+     *
      * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
      */
     public boolean runBench() {
@@ -157,7 +183,9 @@ public class RunBench {
 
     /*
      * Run the benchmark for the default number of iterations.
-     * @param report  report the results iff true
+     *
+     * @param report report the results iff true
+     *
      * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
      */
     public boolean runBench(boolean report) {
@@ -166,10 +194,13 @@ public class RunBench {
 
     /*
      * Run the benchmark for the given number of iterations.
+     *
      * @param loopCount the number of iterations
-     * @param report  report the results iff true
+     *
+     * @param report report the results iff true
+     *
      * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
-      */
+     */
     public boolean runBench(int loopCount, boolean report) {
         this.loopCount = loopCount;
         elapsed = new long[loopCount];
@@ -207,12 +238,16 @@ public class RunBench {
     private void doRun(long loopCount, MicroBenchmark bench, long[] timings) throws Throwable {
         // do warmup and discard results
         for (int i = 0; i < warmupCount; i++) {
+            bench.prerun();
             bench.run(true);
+            bench.postrun();
         }
         for (int i = 0; i < loopCount; i++) {
+            bench.prerun();
             final long start = System.nanoTime();
             bench.run(false);
             timings[i] = System.nanoTime() - start;
+            bench.postrun();
         }
     }
 
@@ -253,7 +288,6 @@ public class RunBench {
         }
         return result;
     }
-
 
     public static String getRequiredProperty(String name) {
         return getProperty(name, true);

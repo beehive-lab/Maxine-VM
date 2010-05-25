@@ -42,7 +42,7 @@ public class TestTeleVM {
     private static TeleVM teleVM = null;
 
     public static TeleVM create() {
-        final Options options = new Options(false);
+        final Options options = new Options();
 
         final File bootJar = BootImageGenerator.getBootImageJarFile(null);
         Classpath classpathPrefix = Classpath.EMPTY;

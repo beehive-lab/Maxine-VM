@@ -55,7 +55,6 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
-import com.sun.xml.internal.ws.util.*;
 
 /**
  * Provider of {@link InspectorAction}s that are of general use.
@@ -2425,10 +2424,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void procedure() {
-            final ByteArrayBuffer byteArrayBuffer = new ByteArrayBuffer();
-            final PrintStream printStream = new PrintStream(byteArrayBuffer);
+            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            final PrintStream printStream = new PrintStream(outputStream);
             compiledCode.writeSummary(printStream);
-            gui().postToClipboard(byteArrayBuffer.toString());
+            gui().postToClipboard(outputStream.toString());
         }
     }
 

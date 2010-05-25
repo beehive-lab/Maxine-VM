@@ -103,7 +103,7 @@ public class Main {
 
         TeleVM t = null;
         try {
-            final Options options = new Options(false);
+            final Options options = new Options();
             options.sourcepathOption.setValue(Arrays.asList(sourcepath.toStringArray()));
             options.vmArguments.setValue(com.sun.max.lang.Arrays.toString(arguments, " "));
             t = TeleVM.create(options);
