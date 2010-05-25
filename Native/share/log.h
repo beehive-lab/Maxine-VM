@@ -49,6 +49,7 @@ extern void log_print_buffer(const char *buffer);
 extern void log_print_format(const char *format, ...);
 extern void log_print_vformat(const char *format, va_list ap);
 extern void log_print_newline(void);
+extern void log_print_symbol(Address address);
 extern void log_print_float(float f);
 extern void log_print_double(double d);
 extern void log_flush(void);

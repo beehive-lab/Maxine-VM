@@ -252,6 +252,7 @@ public class C1XCompilation {
         CiTargetMethod targetMethod;
         TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
         try {
+            setCurrent(this);
 
             emitHIR();
             emitLIR();
@@ -267,6 +268,7 @@ public class C1XCompilation {
         } finally {
             filter.remove();
             flushCfgPrinterToFile();
+            setCurrent(null);
         }
 
         return new CiResult(targetMethod, null, stats);
@@ -289,7 +291,6 @@ public class C1XCompilation {
     }
 
     public IR emitHIR() {
-        setCurrent(this);
 
         if (C1XOptions.PrintCompilation) {
             TTY.println();

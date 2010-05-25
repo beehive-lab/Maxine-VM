@@ -1686,8 +1686,8 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
 
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = compilation.target.registerConfig.getReturnRegister(inst.result.kind);
-                        CiValue resultLocation = returnRegister.asValue(inst.result.kind);
-                        moveOp(resultLocation, operands[inst.result.index], inst.result.kind, null, false);
+                        CiValue resultLocation = returnRegister.asValue(inst.result.kind.stackKind());
+                        moveOp(resultLocation, operands[inst.result.index], inst.result.kind.stackKind(), null, false);
                     }
                     break;
 

@@ -396,21 +396,9 @@ void native_exit(jint code) {
 }
 
 void native_trap_exit(int code, Address address) {
-#if !os_GUESTVMXEN
-    Dl_info info;
-    if (dladdr((void *) address, &info) != 0) {
-        if (info.dli_sname == NULL) {
-            log_println("In %s (%p)", info.dli_fname, info.dli_fbase);
-        } else {
-            log_println("In %s (%p) at %s (%p%+d)",
-                            info.dli_fname,
-                            info.dli_fbase,
-                            info.dli_sname,
-                            info.dli_saddr,
-                            address - (Address) info.dli_saddr);
-        }
-    }
-#endif
+    log_print("In ");
+    log_print_symbol(address);
+    log_print_newline();
     log_exit(code, "Trap in native code at %p\n", address);
 }
 

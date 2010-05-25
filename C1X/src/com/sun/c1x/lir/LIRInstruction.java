@@ -327,7 +327,7 @@ public abstract class LIRInstruction {
 
     /**
      * Utility for specializing how a {@linkplain CiValue LIR operand} is formatted to a string.
-     * The {@linkplain OperandFormatter#DEFAULT default formatter} return the value of
+     * The {@linkplain OperandFormatter#DEFAULT default formatter} returns the value of
      * {@link CiValue#toString()}.
      */
     public static class OperandFormatter {
@@ -505,11 +505,53 @@ public abstract class LIRInstruction {
         return toString(OperandFormatter.DEFAULT);
     }
 
+    private static void appendRefMap(StringBuilder buf, OperandFormatter operandFmt, byte[] map, boolean frameRefMap) {
+        CiRegister[] registerReferenceMapOrder = null;
+        if (!frameRefMap) {
+            C1XCompilation current = C1XCompilation.current();
+            registerReferenceMapOrder = current.target.registerConfig.getRegisterReferenceMapOrder();
+        }
+        for (int i = 0; i < map.length; i++) {
+            int b = map[i] & 0xff;
+            if (b != 0) {
+                if (buf.length() != 0) {
+                    buf.append(' ');
+                }
+                int index = (i * 8);
+                while (b != 0) {
+                    if ((b & 1) != 0) {
+                        if (frameRefMap) {
+                            buf.append(operandFmt.format(CiStackSlot.get(CiKind.Object, index)));
+                        } else {
+                            CiRegisterValue register = registerReferenceMapOrder[index].asValue(CiKind.Object);
+                            buf.append(operandFmt.format(register));
+                        }
+                    }
+                    b >>>= 1;
+                    index++;
+                }
+            }
+        }
+    }
+
     public String toString(OperandFormatter operandFmt) {
         StringBuilder buf = new StringBuilder(name()).append(' ').append(operationString(operandFmt));
         if (info != null) {
-            buf.append(" [bci:").append(info.bci).append("]");
+            buf.append(" [bci:").append(info.bci);
+            if (info.hasDebugInfo()) {
+                CiDebugInfo debugInfo = info.debugInfo();
+                StringBuilder refmap = new StringBuilder();
+                if (debugInfo.hasStackRefMap()) {
+                    appendRefMap(refmap, operandFmt, debugInfo.frameRefMap, true);
+                }
+                if (debugInfo.hasRegisterRefMap()) {
+                    appendRefMap(refmap, operandFmt, debugInfo.registerRefMap, false);
+                }
+                if (refmap.length() != 0) {
+                    buf.append(", refmap{").append(refmap.toString().trim()).append('}');
+                }
+            }
         }
-        return buf.toString();
+        return buf.append(']').toString();
     }
 }

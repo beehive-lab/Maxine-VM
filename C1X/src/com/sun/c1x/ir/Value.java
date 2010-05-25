@@ -68,10 +68,22 @@ public abstract class Value {
                                           Flag.LiveDeopt.mask |
                                           Flag.LiveControl.mask |
                                           Flag.LiveSideEffect.mask;
+    /**
+     * The kind of this value. This is {@link CiKind#Void} for instructions that produce no value.
+     * This kind is guaranteed to be a {@linkplain CiKind#stackKind() stack kind}.
+     */
     public final CiKind kind;
 
+    /**
+     * Unique identifier for this value. This field's value is lazily initialized by {@link #id()}.
+     */
     private int id;
+
+    /**
+     * A mask of {@linkplain Flag flags} denoting extra properties of this value.
+     */
     private int flags;
+
     protected CiValue operand = CiValue.IllegalValue;
 
     /**
@@ -79,7 +91,10 @@ public abstract class Value {
      */
     public Object optInfo;
 
-    public Value subst;    // managed by InstructionSubstituter
+    /**
+     * Used by {@link InstructionSubstituter}.
+     */
+    public Value subst;
 
     /**
      * Creates a new value with the specified kind.
