@@ -35,7 +35,7 @@ import com.sun.max.elf.xen.XenCoreDumpELFReader;
 
 
 /**
- * This maps to to the xen_cumpcore_p2m struct. An array of this struct (size = no of pages) is contained in the {@link XenCoreDumpELFReader#P2M_SECTION_NAME} section of the core dump. The {@link XenCoreDumpELFReader#PFN_SECTION_NAME} is for fully virtualized or ia64 domain both of which we done support.
+ * This maps to to the xen_cumpcore_p2m struct. An array of this struct (array length = no of pages) is contained in the {@link XenCoreDumpELFReader#P2M_SECTION_NAME} section of the core dump. The {@link XenCoreDumpELFReader#PFN_SECTION_NAME} is for fully virtualized or ia64 domain both of which we done support.
  * @author Puneeet Lakhina
  *
  */

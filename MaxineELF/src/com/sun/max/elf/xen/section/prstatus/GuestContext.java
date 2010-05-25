@@ -131,4 +131,12 @@ public class GuestContext {
     }
 
 
+    /**
+     * @return the ctrlreg
+     */
+    public long[] getCtrlreg() {
+        return ctrlreg;
+    }
+
+
 }

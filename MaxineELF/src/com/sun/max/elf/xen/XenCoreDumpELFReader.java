@@ -153,6 +153,8 @@ public class XenCoreDumpELFReader {
         return -1;
     }
 
-
+    public long getNoOfPages()throws IOException {
+        return getNotesSection().getHeaderNoteDescriptor().getNoOfPages();
+    }
 
 }
