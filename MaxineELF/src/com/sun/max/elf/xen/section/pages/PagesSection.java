@@ -61,12 +61,50 @@ public class PagesSection {
         this.pageSize = pageSize;
     }
 
-    public ELFDataInputStream getDataInputStream(long sectionLocalOffset) throws IOException {
+    public long getX64WordAtOffset(long sectionLocalOffset)throws IOException {
+        return getDataInputStream(sectionLocalOffset).read_Elf64_XWord();
+    }
+    private ELFDataInputStream getDataInputStream(long sectionLocalOffset) throws IOException {
         raf.seek(pageSectionHeader.getOffset()+sectionLocalOffset);
         return new ELFDataInputStream(elfHeader, raf);
     }
 
-    public ELFDataInputStream getDataInputStream() throws IOException {
+    private ELFDataInputStream getDataInputStream() throws IOException {
         return getDataInputStream(0);
+    }
+    /**
+     * Get the page info corresponding to this pseudo physical pfn.
+     * @param pfn
+     * @return
+     */
+    public PageInfo getPageInfoForPfn(long pfn)throws IOException {
+        raf.seek(p2mSectionHeader.getOffset()+pfn * 16);
+        PageInfo pageInfo = new PageInfo();
+        ELFDataInputStream dataInputStream = new ELFDataInputStream(elfHeader,raf);
+        pageInfo.setPfn(dataInputStream.read_Elf64_Addr());
+        pageInfo.setGmfn(dataInputStream.read_Elf64_Addr());
+        if(pageInfo.getPfn() != pfn) {
+            throw new RuntimeException("Improper read.The pfn at the offset doesnt match.");
+        }
+        return pageInfo;
+    }
+
+    /**
+     * Get the page info corresponding to this pseudo physical pfn.
+     * @param pfn
+     * @return
+     */
+    public PageInfo getPageInfoForMfn(long mfn)throws IOException {
+        raf.seek(p2mSectionHeader.getOffset());
+        for(int i=0;i<noOfPages;i++) {
+            PageInfo pageInfo = new PageInfo();
+            ELFDataInputStream dataInputStream = new ELFDataInputStream(elfHeader,raf);
+            pageInfo.setPfn(dataInputStream.read_Elf64_XWord());
+            pageInfo.setGmfn(dataInputStream.read_Elf64_XWord());
+            if(pageInfo.getGmfn() == mfn) {
+                return pageInfo;
+            }
+        }
+        throw new RuntimeException("Mfn not found");
     }
 }

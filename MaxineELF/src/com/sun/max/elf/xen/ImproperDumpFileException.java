@@ -23,12 +23,14 @@
  */
 package com.sun.max.elf.xen;
 
+import java.io.IOException;
+
 
 /**
  * @author Puneeet Lakhina
  *
  */
-public class ImproperDumpFileException extends Exception {
+public class ImproperDumpFileException extends IOException {
 
     /**
      *

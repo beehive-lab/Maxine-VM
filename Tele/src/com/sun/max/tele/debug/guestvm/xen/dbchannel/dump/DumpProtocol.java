@@ -91,7 +91,7 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
         long address = imageFileHandler.getBootHeapStartSymbolAddress();
         try {
             //This essentially assumes 64 bitness of the address and the target.
-            return xenReader.getPagesSection().getDataInputStream(address).read_Elf64_XWord();
+            return xenReader.getPagesSection().getX64WordAtOffset(address);
         } catch (Exception e) {
             ProgramError.unexpected("Couldnt get Boot Heap start from the dump File");
         }
@@ -121,9 +121,6 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
             System.arraycopy(context.getfpuRegisters(), 0, floatingPointRegisters, 0, floatingPointRegistersSize);
             return true;
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ImproperDumpFileException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
