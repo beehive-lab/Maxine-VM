@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
@@ -808,20 +809,123 @@ public final class ConstantPool implements RiConstantPool {
         return staticMethodActor;
     }
 
-    public RiField lookupField(int cpi) {
-        return fieldFrom(fieldAt(cpi), cpi);
+    private FieldActor checkResolvedFieldAccess(FieldActor field, int opcode) {
+        if (opcode >= 0) {
+            switch (opcode) {
+                case GETSTATIC: {
+                    if (!field.isStatic()) {
+                        // IncompatibleClassChangeError
+                        return null;
+                    }
+                    break;
+                }
+                case PUTSTATIC: {
+                    if (!field.isStatic()) {
+                        // IncompatibleClassChangeError
+                        return null;
+                    }
+                    if (field.isFinal() && field.holder() != holder()) {
+                        // IllegalAccessError
+                        return null;
+                    }
+                    break;
+                }
+                case GETFIELD: {
+                    if (field.isStatic()) {
+                        // IncompatibleClassChangeError
+                        return null;
+                    }
+                    break;
+                }
+                case PUTFIELD: {
+                    if (field.isStatic()) {
+                        // IncompatibleClassChangeError
+                        return null;
+                    }
+                    if (field.isFinal() && field.holder() != holder()) {
+                        // IllegalAccessError
+                        return null;
+                    }
+                    break;
+                }
+            }
+        }
+        return field;
     }
 
-    public RiMethod lookupMethod(int cpi) {
-        return methodFrom(methodAt(cpi), cpi);
+    public RiField lookupField(int cpi, int opcode) {
+        FieldRefConstant constant = fieldAt(cpi);
+        if (constant.isResolved() || attemptResolution(constant)) {
+            // the resolution can occur without side effects
+            try {
+                FieldActor field = checkResolvedFieldAccess(constant.resolve(this, cpi), opcode);
+                if (field != null) {
+                    return field;
+                }
+            } catch (HostOnlyFieldError hostOnlyFieldError) {
+                // Treat as unresolved
+            }
+        }
+        RiType holder = UnresolvedType.toRiType(constant.holder(this), holder());
+        RiType type = UnresolvedType.toRiType(constant.type(this), holder());
+        String name = constant.name(this).string;
+        return new UnresolvedField(this, cpi, holder, name, type);
     }
 
-    public ClassActor resolveType(int cpi) {
-        return classAt(cpi).resolve(this, cpi);
+    private MethodActor checkResolvedMethodAccess(MethodActor method, int opcode) {
+        if (opcode >= 0) {
+            switch (opcode) {
+                case INVOKESTATIC: {
+                    if (!method.isStatic()) {
+                        // IncompatibleClassChangeError
+                        return null;
+                    }
+                    if (method.isInitializer()) {
+                        // VerifyError: <init> must be invoked with INVOKESPECIAL
+                        return null;
+                    }
+                    break;
+                }
+                case INVOKEINTERFACE:
+                case INVOKESPECIAL:
+                case INVOKEVIRTUAL: {
+                    if (method.isStatic()) {
+                        // IncompatibleClassChangeError
+                        return null;
+                    }
+                    if (method.isInitializer() && opcode != INVOKESPECIAL) {
+                        // VerifyError: <init> must be invoked with INVOKESPECIAL
+                        return null;
+                    }
+                    break;
+                }
+            }
+        }
+        return method;
     }
 
-    public RiType lookupType(int cpi) {
-        return typeFrom(classAt(cpi), cpi);
+    public RiMethod lookupMethod(int cpi, int opcode) {
+        MethodRefConstant constant = methodAt(cpi);
+        if (constant.isResolved() || attemptResolution(constant)) {
+            // the resolution can occur without side effects
+            try {
+                MethodActor method = checkResolvedMethodAccess(constant.resolve(this, cpi), opcode);
+                if (method != null) {
+                    return method;
+                }
+            } catch (HostOnlyMethodError hostOnlyMethodError) {
+                // Treat as unresolved
+            }
+        }
+        RiType holder = UnresolvedType.toRiType(constant.holder(this), holder());
+        RiSignature signature = constant.signature(this);
+        String name = constant.name(this).string;
+
+        return new UnresolvedMethod(this, cpi, holder, name, signature);
+    }
+
+    public RiType lookupType(int cpi, int opcode) {
+        return typeFrom(classAt(cpi), cpi, opcode);
     }
 
     public RiSignature lookupSignature(int cpi) {
@@ -831,7 +935,7 @@ public final class ConstantPool implements RiConstantPool {
     public Object lookupConstant(int cpi) {
         switch (tagAt(cpi)) {
             case CLASS: {
-                RiType type = typeFrom(classAt(cpi), cpi);
+                RiType type = typeFrom(classAt(cpi), cpi, LDC);
                 if (type.isResolved()) {
                     return CiConstant.forObject(type.javaClass());
                 }
@@ -857,43 +961,38 @@ public final class ConstantPool implements RiConstantPool {
         }
     }
 
-    private RiField fieldFrom(FieldRefConstant constant, int cpi) {
+    private RiType typeFrom(ClassConstant constant, int cpi, int opcode) {
         if (constant.isResolved() || attemptResolution(constant)) {
             // the resolution can occur without side effects
-            try {
-                return constant.resolve(this, cpi);
-            } catch (HostOnlyFieldError hostOnlyFieldError) {
-                // Treat as unresolved
+            ClassActor type = checkResolvedTypeAccess(constant.resolve(this, cpi), opcode);
+            if (type != null) {
+                return type;
             }
-        }
-        RiType holder = UnresolvedType.toRiType(constant.holder(this), holder());
-        RiType type = UnresolvedType.toRiType(constant.type(this), holder());
-        String name = constant.name(this).string;
-        return new UnresolvedField(this, cpi, holder, name, type);
-    }
-
-    private RiMethod methodFrom(MethodRefConstant constant, int cpi) {
-        if (constant.isResolved() || attemptResolution(constant)) {
-            // the resolution can occur without side effects
-            try {
-                return constant.resolve(this, cpi);
-            } catch (HostOnlyMethodError hostOnlyMethodError) {
-                // Treat as unresolved
-            }
-        }
-        RiType holder = UnresolvedType.toRiType(constant.holder(this), holder());
-        RiSignature signature = constant.signature(this);
-        String name = constant.name(this).string;
-
-        return new UnresolvedMethod(this, cpi, holder, name, signature);
-    }
-
-    private RiType typeFrom(ClassConstant constant, int cpi) {
-        if (constant.isResolved() || attemptResolution(constant)) {
-            // the resolution can occur without side effects
-            return constant.resolve(this, cpi);
         }
         return new UnresolvedType.InPool(constant.typeDescriptor(), this, cpi);
+    }
+
+    private ClassActor checkResolvedTypeAccess(ClassActor classActor, int opcode) {
+        if (opcode >= 0) {
+            switch (opcode) {
+                case NEW: {
+                    if (classActor.isAbstract() || classActor.isArrayClass()) {
+                        // InstantiationError
+                        return null;
+                    }
+                    break;
+                }
+                case MULTIANEWARRAY:
+                case ANEWARRAY:
+                case CHECKCAST:
+                case INSTANCEOF:
+                case LDC: {
+                    // No extra checks required
+                    break;
+                }
+            }
+        }
+        return classActor;
     }
 
     private boolean attemptResolution(ResolvableConstant constant) {

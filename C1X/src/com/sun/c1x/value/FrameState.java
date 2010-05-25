@@ -737,7 +737,7 @@ public class FrameState {
     }
 
     private Value assertKind(CiKind kind, Value x) {
-        assert x != null && (unsafe || x.kind == kind);
+        assert x != null && (unsafe || x.kind == kind) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
         return x;
     }
 

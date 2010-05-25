@@ -25,6 +25,7 @@
 
 #include <inttypes.h>
 
+// from guk/include/guk/sched.h
 #define RUNNABLE_FLAG           0x00000001     /* Thread can be run on a CPU */
 #define RUNNING_FLAG            0x00000002     /* Thread is currently runnig */
 #define RESCHED_FLAG            0x00000004     /* Scheduler should be called at  the first opportunity. */
@@ -40,12 +41,15 @@
 #define APPSCHED_FLAG           0x00002000     /* application scheduler */
 #define WATCH_FLAG              0x00004000     /* at watchpoint */
 
+// from guk/tools/db-front/dbif.h
 struct db_thread {
-    int id;
-    int flags;
+    uint16_t id;
+    uint16_t pad;
+    uint32_t flags;
     uint64_t stack;
     uint64_t stack_size;
 };
+
 
 struct db_regs {
     uint64_t xmm0;
@@ -86,24 +90,24 @@ struct db_regs {
 
 int db_attach(int domain_id);
 int db_detach(void);
-uint64_t read_u64(uint64_t address);
-void write_u64(uint64_t address, uint64_t value);
-uint16_t readbytes(uint64_t address, char *buffer, uint16_t n);
-uint16_t writebytes(uint64_t address, char *buffer, uint16_t n);
-uint16_t multibytebuffersize(void);
-struct db_thread* gather_threads(int *num);
-int suspend(uint16_t thread_id);
-int resume(uint16_t thread_id);
-int suspend_all(void);
-int resume_all(void);
-int single_step(uint16_t thread_id);
-struct db_regs* get_regs(uint16_t thread_id);
-struct thread_state* get_thread_state(uint16_t thread_id);
-int set_ip(uint16_t thread_id, uint64_t ip);
-int get_thread_stack(uint16_t thread_id,
+uint64_t db_read_u64(uint64_t address);
+void db_write_u64(uint64_t address, uint64_t value);
+uint16_t db_readbytes(uint64_t address, char *buffer, uint16_t n);
+uint16_t db_writebytes(uint64_t address, char *buffer, uint16_t n);
+uint16_t db_multibytebuffersize(void);
+struct db_thread* db_gather_threads(int *num);
+int db_suspend(uint16_t thread_id);
+int db_resume(uint16_t thread_id);
+int db_suspend_all(void);
+int db_resume_all(void);
+int db_single_step(uint16_t thread_id);
+struct db_regs* db_get_regs(uint16_t thread_id);
+struct thread_state* db_get_thread_state(uint16_t thread_id);
+int db_set_ip(uint16_t thread_id, uint64_t ip);
+int db_get_thread_stack(uint16_t thread_id,
                      uint64_t *stack_start,
                      uint64_t *stack_size);
-uint64_t app_specific1(uint64_t arg);
+uint64_t db_app_specific1(uint64_t arg);
 int db_debug(int level);
 void db_signoff(void);
 
@@ -111,8 +115,8 @@ void db_signoff(void);
 #define WRITE_W 2
 #define EXEC_W 4
 #define AFTER_W 8
-int activate_watchpoint(uint64_t address, uint64_t size, int kind);
-int deactivate_watchpoint(uint64_t address, uint64_t size);
-uint64_t watchpoint_info(uint16_t thread_id, int *kind);
+int db_activate_watchpoint(uint64_t address, uint64_t size, int kind);
+int db_deactivate_watchpoint(uint64_t address, uint64_t size);
+uint64_t db_watchpoint_info(uint16_t thread_id, int *kind);
 
 #endif /* __LIB_GUESTVMXEN_DB__ */

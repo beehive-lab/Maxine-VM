@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.tele.interpreter;
 
+import java.util.*;
+
 import junit.framework.*;
 
 import org.junit.runner.*;
@@ -74,7 +76,7 @@ public class TeleInterpreterRemoteTest extends TeleInterpreterTestCase {
         synchronized (getClass()) {
             if (teleVM == null) {
                 try {
-                    teleVM = TeleVM.create(new Options(true));
+                    teleVM = TeleVM.create(new Options());
                     teleVM.refresh(0);
                 } catch (BootImageException e) {
                     throw ProgramError.unexpected(e);

@@ -23,10 +23,12 @@
  */
 /*
  * @Harness: java
+ *
  * @Runs: 0 = true
  */
 package test.bench.net;
 
+import java.io.*;
 import java.net.*;
 
 public class NewSocket extends NetSettings {
@@ -35,11 +37,26 @@ public class NewSocket extends NetSettings {
         super(bench);
     }
 
-    public static boolean test(int i) {
-        return new NewSocket(new Bench()).runBench(true);
+    public static boolean test() {
+        return new NewSocket(new OpenCloseBench()).runBench(true);
     }
 
-    static class Bench implements MicroBenchmark {
+    public static boolean testall() {
+        boolean result = new NewSocket(new OpenCloseBench()).runBench(true);
+        result = result && new NewSocket(new OpenBench()).runBench(true);
+        return result && new NewSocket(new CloseBench()).runBench(true);
+    }
+
+    public static boolean testOpen() {
+        return new NewSocket(new OpenBench()).runBench(true);
+    }
+
+    public static boolean testClose() {
+        return new NewSocket(new CloseBench()).runBench(true);
+    }
+
+    static class OpenCloseBench extends AbstractMicroBenchmark {
+
         public void run(boolean warmup) {
             Socket s = null;
             try {
@@ -57,8 +74,58 @@ public class NewSocket extends NetSettings {
         }
     }
 
+    static class OpenBench extends AbstractMicroBenchmark {
+
+        private Socket socket;
+
+        @Override
+        public void run(boolean warmup) {
+            try {
+                socket = new Socket(host(), port());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        @Override
+        public void postrun() {
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    static class CloseBench extends AbstractMicroBenchmark {
+
+        private Socket socket;
+
+        @Override
+        public void prerun() throws Exception {
+            try {
+                socket = new Socket(host(), port());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        @Override
+        public void run(boolean warmup) {
+            try {
+                if (socket != null) {
+                    socket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     // for running stand-alone
     public static void main(String[] args) {
-        test(0);
+        test();
     }
 }

@@ -78,12 +78,14 @@ public interface DataIO {
         public static void readFully(DataIO dataIO, Address src, ByteBuffer dst) {
             final int length = dst.limit();
             int n = 0;
+            assert dst.position() == 0;
             while (n < length) {
                 final int count = dataIO.read(src.plus(n), dst, n, length - n);
                 if (count <= 0) {
                     throw new DataIOError(src, (length - n) + " of " + length + " bytes unread");
                 }
                 n += count;
+                dst.position(0);
             }
         }
 
