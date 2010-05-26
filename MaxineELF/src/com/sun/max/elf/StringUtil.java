@@ -147,7 +147,6 @@ public final class StringUtil {
             } else if (ch == '1') {
                 accumul = (accumul << 1) | 1;
             }
-            break;
         }
 
         return accumul;
