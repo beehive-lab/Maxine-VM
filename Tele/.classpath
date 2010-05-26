@@ -6,6 +6,5 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/VMDI"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CPS"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/MaxineC1X"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/MaxineELF"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
