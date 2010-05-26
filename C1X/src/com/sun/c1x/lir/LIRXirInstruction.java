@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import java.util.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.gen.*;
 import com.sun.cri.ci.*;
@@ -82,12 +84,19 @@ public class LIRXirInstruction extends LIRInstruction {
     @Override
     public String toString(OperandFormatter operandFmt) {
         StringBuilder sb = new StringBuilder();
-        sb.append("XIR ");
+        sb.append("XIR: ");
+
+        if (result().isLegal()) {
+            sb.append(operandFmt.format(result()) + " = ");
+        }
 
         sb.append(snippet.template);
         sb.append("(");
-        for (XirArgument a : snippet.arguments) {
-            sb.append(" ");
+        for (int i = 0; i < snippet.arguments.length; i++) {
+            XirArgument a = snippet.arguments[i];
+            if (i > 0) {
+                sb.append(", ");
+            }
             if (a.constant != null) {
                 sb.append(operandFmt.format(a.constant));
             } else {
@@ -95,40 +104,38 @@ public class LIRXirInstruction extends LIRInstruction {
                 sb.append(operandFmt.format(item.result()));
             }
         }
-        sb.append(" )");
+        sb.append(')');
 
         if (method != null) {
-            sb.append(" // ");
+            sb.append(" method=");
             sb.append(method.toString());
         }
 
-        sb.append(" // ");
 
-        int z = 0;
-
-        if (result().isLegal()) {
-            sb.append(operandFmt.format(result()) + " = ");
-        }
-
-        for (LIROperand opSlot : inputAndTempOperands) {
-
-            CiValue op = opSlot.value(this);
-
-            if (op != null) {
-                sb.append(" ");
-                sb.append(operandFmt.format(op));
+        for (LIRInstruction.OperandMode mode : LIRInstruction.OPERAND_MODES) {
+            int n = operandCount(mode);
+            if (mode == OperandMode.OutputMode && n <= 1) {
+                // Already printed single output (i.e. result())
+                continue;
             }
-
-            z++;
-
-            if (z == inputCount) {
-                sb.append(" | ");
-            }
-
-            if (z == inputCount + inputTempCount) {
-                sb.append(" | ");
+            if (n != 0) {
+                sb.append(' ').append(mode.name().toLowerCase()).append("=(");
+                HashSet<String> operands = new HashSet<String>();
+                for (int i = 0; i < n; i++) {
+                    String operand = operandFmt.format(operandAt(mode, i));
+                    if (!operands.contains(operand)) {
+                        if (!operands.isEmpty()) {
+                            sb.append(", ");
+                        }
+                        operands.add(operand);
+                        sb.append(operand);
+                    }
+                }
+                sb.append(')');
             }
         }
+
+        appendDebugInfo(sb, operandFmt, info);
 
         return sb.toString();
     }

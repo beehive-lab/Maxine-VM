@@ -357,12 +357,15 @@ public abstract class LIRInstruction {
         }
         boolean first = true;
         for (LIROperand operandSlot : inputAndTempOperands) {
-            if (!first) {
-                buf.append(' ');
-            } else {
-                first = false;
+            String operand = operandFmt.format(operandSlot.value(this));
+            if (!operand.isEmpty()) {
+                if (!first) {
+                    buf.append(", ");
+                } else {
+                    first = false;
+                }
+                buf.append(operand);
             }
-            buf.append(operandFmt.format(operandSlot.value(this)));
         }
         if (inputAndTempOperands.length > 1) {
             buf.append(")");
@@ -505,7 +508,7 @@ public abstract class LIRInstruction {
         return toString(OperandFormatter.DEFAULT);
     }
 
-    private static void appendRefMap(StringBuilder buf, OperandFormatter operandFmt, byte[] map, boolean frameRefMap) {
+    protected static void appendRefMap(StringBuilder buf, OperandFormatter operandFmt, byte[] map, boolean frameRefMap) {
         CiRegister[] registerReferenceMapOrder = null;
         if (!frameRefMap) {
             C1XCompilation current = C1XCompilation.current();
@@ -514,12 +517,12 @@ public abstract class LIRInstruction {
         for (int i = 0; i < map.length; i++) {
             int b = map[i] & 0xff;
             if (b != 0) {
-                if (buf.length() != 0) {
-                    buf.append(' ');
-                }
                 int index = (i * 8);
                 while (b != 0) {
                     if ((b & 1) != 0) {
+                        if (buf.length() != 0) {
+                            buf.append(", ");
+                        }
                         if (frameRefMap) {
                             buf.append(operandFmt.format(CiStackSlot.get(CiKind.Object, index)));
                         } else {
@@ -534,8 +537,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public String toString(OperandFormatter operandFmt) {
-        StringBuilder buf = new StringBuilder(name()).append(' ').append(operationString(operandFmt));
+    protected void appendDebugInfo(StringBuilder buf, OperandFormatter operandFmt, LIRDebugInfo info) {
         if (info != null) {
             buf.append(" [bci:").append(info.bci);
             if (info.hasDebugInfo()) {
@@ -548,10 +550,16 @@ public abstract class LIRInstruction {
                     appendRefMap(refmap, operandFmt, debugInfo.registerRefMap, false);
                 }
                 if (refmap.length() != 0) {
-                    buf.append(", refmap{").append(refmap.toString().trim()).append('}');
+                    buf.append(", refmap(").append(refmap.toString().trim()).append(')');
                 }
             }
+            buf.append(']');
         }
-        return buf.append(']').toString();
+    }
+
+    public String toString(OperandFormatter operandFmt) {
+        StringBuilder buf = new StringBuilder(name()).append(' ').append(operationString(operandFmt));
+        appendDebugInfo(buf, operandFmt, info);
+        return buf.toString();
     }
 }

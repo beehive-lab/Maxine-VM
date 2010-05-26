@@ -20,9 +20,9 @@
  */
 package com.sun.max.tele.debug.guestvm.xen.dbchannel.tcp;
 
-import com.sun.max.elf.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.*;
+import com.sun.max.tele.debug.guestvm.xen.dbchannel.agent.*;
 import com.sun.max.tele.debug.guestvm.xen.dbchannel.xg.*;
 
 /**
