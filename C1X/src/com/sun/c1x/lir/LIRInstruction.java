@@ -79,9 +79,9 @@ public abstract class LIRInstruction {
     public static final OperandMode[] OPERAND_MODES = OperandMode.values();
 
     public enum OperandMode {
-        OutputMode,
-        InputMode,
-        TempMode
+        Output,
+        Input,
+        Temp
     }
 
     private int outputCount;
@@ -416,25 +416,25 @@ public abstract class LIRInstruction {
     }
 
     public int operandCount(OperandMode mode) {
-        if (mode == OperandMode.OutputMode) {
+        if (mode == OperandMode.Output) {
             return outputCount;
-        } else if (mode == OperandMode.InputMode) {
+        } else if (mode == OperandMode.Input) {
             return allocatorInputCount + allocatorTempInputCount;
         } else {
-            assert mode == OperandMode.TempMode;
+            assert mode == OperandMode.Temp;
             return allocatorTempInputCount + allocatorTempCount;
         }
     }
 
     public CiValue operandAt(OperandMode mode, int index) {
-        if (mode == OperandMode.OutputMode) {
+        if (mode == OperandMode.Output) {
             assert index < outputCount;
             return allocatorOperands.get(index);
-        } else if (mode == OperandMode.InputMode) {
+        } else if (mode == OperandMode.Input) {
             assert index < allocatorInputCount + allocatorTempInputCount;
             return allocatorOperands.get(index + outputCount);
         } else {
-            assert mode == OperandMode.TempMode;
+            assert mode == OperandMode.Temp;
             assert index < allocatorTempInputCount + allocatorTempCount;
             return allocatorOperands.get(index + outputCount + allocatorInputCount);
         }
@@ -443,14 +443,14 @@ public abstract class LIRInstruction {
     public void setOperandAt(OperandMode mode, int index, CiValue location) {
         assert index < operandCount(mode);
         assert location.kind != CiKind.Illegal;
-        if (mode == OperandMode.OutputMode) {
+        if (mode == OperandMode.Output) {
             assert index < outputCount;
             allocatorOperands.set(index, location);
-        } else if (mode == OperandMode.InputMode) {
+        } else if (mode == OperandMode.Input) {
             assert index < allocatorInputCount + allocatorTempInputCount;
             allocatorOperands.set(index + outputCount, location);
         } else {
-            assert mode == OperandMode.TempMode;
+            assert mode == OperandMode.Temp;
             assert index < allocatorTempInputCount + allocatorTempCount;
             allocatorOperands.set(index + outputCount + allocatorInputCount, location);
         }

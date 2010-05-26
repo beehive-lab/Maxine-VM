@@ -237,13 +237,13 @@ final class RegisterVerifier {
             }
 
             // check if input operands are correct
-            int n = op.operandCount(LIRInstruction.OperandMode.InputMode);
+            int n = op.operandCount(LIRInstruction.OperandMode.Input);
             for (int j = 0; j < n; j++) {
-                CiValue operand = op.operandAt(LIRInstruction.OperandMode.InputMode, j);
+                CiValue operand = op.operandAt(LIRInstruction.OperandMode.Input, j);
                 if (allocator.isProcessed(operand)) {
                     Interval interval = intervalAt(operand);
                     if (op.id != -1) {
-                        interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.InputMode, allocator);
+                        interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.Input, allocator);
                     }
 
                     assert checkState(inputState, interval.location(), interval.splitParent());
@@ -265,13 +265,13 @@ final class RegisterVerifier {
             }
 
             // set temp operands (some operations use temp operands also as output operands, so can't set them null)
-            n = op.operandCount(LIRInstruction.OperandMode.TempMode);
+            n = op.operandCount(LIRInstruction.OperandMode.Temp);
             for (int j = 0; j < n; j++) {
-                CiValue operand = op.operandAt(LIRInstruction.OperandMode.TempMode, j);
+                CiValue operand = op.operandAt(LIRInstruction.OperandMode.Temp, j);
                 if (allocator.isProcessed(operand)) {
                     Interval interval = intervalAt(operand);
                     if (op.id != -1) {
-                        interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.TempMode, allocator);
+                        interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.Temp, allocator);
                     }
 
                     statePut(inputState, interval.location(), interval.splitParent());
@@ -279,13 +279,13 @@ final class RegisterVerifier {
             }
 
             // set output operands
-            n = op.operandCount(LIRInstruction.OperandMode.OutputMode);
+            n = op.operandCount(LIRInstruction.OperandMode.Output);
             for (int j = 0; j < n; j++) {
-                CiValue operand = op.operandAt(LIRInstruction.OperandMode.OutputMode, j);
+                CiValue operand = op.operandAt(LIRInstruction.OperandMode.Output, j);
                 if (allocator.isProcessed(operand)) {
                     Interval interval = intervalAt(operand);
                     if (op.id != -1) {
-                        interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.OutputMode, allocator);
+                        interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.Output, allocator);
                     }
 
                     statePut(inputState, interval.location(), interval.splitParent());
