@@ -114,7 +114,7 @@ public class LIRXirInstruction extends LIRInstruction {
 
         for (LIRInstruction.OperandMode mode : LIRInstruction.OPERAND_MODES) {
             int n = operandCount(mode);
-            if (mode == OperandMode.OutputMode && n <= 1) {
+            if (mode == OperandMode.Output && n <= 1) {
                 // Already printed single output (i.e. result())
                 continue;
             }
