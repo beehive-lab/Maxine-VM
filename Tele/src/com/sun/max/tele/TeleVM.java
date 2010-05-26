@@ -23,6 +23,7 @@ package com.sun.max.tele;
 import static com.sun.max.tele.debug.ProcessState.*;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -41,7 +42,6 @@ import com.sun.max.program.Classpath.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.darwin.*;
-import com.sun.max.tele.debug.guestvm.xen.*;
 import com.sun.max.tele.debug.linux.*;
 import com.sun.max.tele.debug.no.*;
 import com.sun.max.tele.debug.solaris.*;
@@ -293,6 +293,7 @@ public abstract class TeleVM implements MaxVM {
 
     /**
      * Create the appropriate subclass of {@link TeleVM} based on VM configuration.
+     *
      * @param bootImageFile
      * @param sourcepath
      * @param commandlineArguments {@code null} if {@code processId > 0} else command line arguments for new VM process
@@ -314,7 +315,13 @@ public abstract class TeleVM implements MaxVM {
                 teleVM = new SolarisTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, processID);
                 break;
             case GUESTVM:
-                teleVM = new GuestVMXenTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, processID);
+                try {
+                    final Class< ? > klass = Class.forName("com.sun.max.tele.debug.guestvm.GuestVMTeleVM");
+                    final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {File.class, BootImage.class, Classpath.class, String[].class, int.class});
+                    teleVM = (TeleVM) cons.newInstance(new Object[] {bootImageFile, bootImage, sourcepath, commandlineArguments, processID});
+                } catch (Exception ex) {
+                    FatalError.unexpected("failed to instantiate TeleVM class for GuestVM", ex);
+                }
                 break;
             default:
                 FatalError.unimplemented();
