@@ -34,6 +34,7 @@
 #define STEPPING_FLAG           0x00000020     /* Thread is to be single stepped */
 #define DEBUG_SUSPEND_FLAG      0x00000040     /* Thread was actually put to sleep because of REQ_DEBUG_SUSPEND */
 #define INTERRUPTED_FLAG        0x00000080     /* Thread was interrupted during last wait */
+#define UKERNEL_FLAG            0x00000100     /* Thread is a ukerrnel thread */
 #define JOIN_FLAG               0x00000200     /* Thread is waiting for joinee */
 #define AUX1_FLAG               0x00000400     /* monitor block */
 #define AUX2_FLAG               0x00000800     /* monitor wait */

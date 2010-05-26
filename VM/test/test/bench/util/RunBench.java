@@ -76,12 +76,11 @@ public class RunBench {
         void postrun() throws Exception;
     }
 
-    /**
-     * Provides empty implementations of pre and post run for classes that dont need it.
+    /**Provides empty implementations of pre and post run for classes that dont need it.
      *
      * @author Puneeet Lakhina
      */
-    protected abstract static  class AbstractMicroBenchmark implements MicroBenchmark {
+    protected static abstract class AbstractMicroBenchmark implements MicroBenchmark {
 
         @Override
         public void prerun() throws Exception {
