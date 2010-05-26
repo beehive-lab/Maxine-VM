@@ -80,7 +80,7 @@ public class RunBench {
      *
      * @author Puneeet Lakhina
      */
-    protected static abstract class AbstractMicroBenchmark implements MicroBenchmark {
+    protected abstract static class AbstractMicroBenchmark implements MicroBenchmark {
 
         @Override
         public void prerun() throws Exception {
