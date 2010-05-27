@@ -84,7 +84,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * All target code breakpoints created in compilations of the method in the VM.
      * Non-null iff this breakpoint is enabled; null if disabled.
      */
-    private AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
+    private List<TeleTargetBreakpoint> teleTargetBreakpoints = new ArrayList<TeleTargetBreakpoint>();
 
     /**
      * A new bytecode breakpoint, enabled by default, at a specified location.
@@ -121,7 +121,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         } else {
             // TODO (mlvdv) If we support conditions, need to combine it with the trigger handler added by factory method.
             for (TeleTargetBreakpoint newBreakpoint : newBreakpoints) {
-                teleTargetBreakpoints.append(newBreakpoint);
+                teleTargetBreakpoints.add(newBreakpoint);
                 Trace.line(TRACE_VALUE, tracePrefix() + "created " + newBreakpoint + " for " + this);
             }
         }
@@ -161,7 +161,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 assert teleTargetBreakpoints == null;
                 // Create a target code breakpoint in every existing compilation at the location
                 // best corresponding to the bytecode location of this breakpoint.
-                teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
+                teleTargetBreakpoints = new ArrayList<TeleTargetBreakpoint>();
                 for (TeleTargetMethod teleTargetMethod : TeleTargetMethod.get(vm(), codeLocation().methodKey())) {
                     createTargetBreakpointForMethod(teleTargetMethod);
                 }
@@ -378,14 +378,14 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @return all client bytecode breakpoints that currently exist in the VM.
          * Modification safe against breakpoint removal.
          */
-        Sequence<TeleBytecodeBreakpoint> clientBreakpoints() {
+        List<TeleBytecodeBreakpoint> clientBreakpoints() {
             if (breakpointCache.isEmpty()) {
-                return Sequence.Static.empty(TeleBytecodeBreakpoint.class);
+                return Collections.emptyList();
             }
-            final AppendableSequence<TeleBytecodeBreakpoint> clientBreakpoints = new ArrayListSequence<TeleBytecodeBreakpoint>();
+            final List<TeleBytecodeBreakpoint> clientBreakpoints = new ArrayList<TeleBytecodeBreakpoint>();
             for (TeleBytecodeBreakpoint breakpoint : breakpointCache) {
                 if (breakpoint.kind() == BreakpointKind.CLIENT) {
-                    clientBreakpoints.append(breakpoint);
+                    clientBreakpoints.add(breakpoint);
                 }
             }
             return clientBreakpoints;

@@ -20,9 +20,8 @@
  */
 package com.sun.max.ins.gui;
 
+import java.util.*;
 import java.util.regex.*;
-
-import com.sun.max.collect.*;
 
 /**
  * Regular expression pattern matcher; identifies by number the rows that match a pattern.
@@ -38,6 +37,6 @@ public interface RowTextSearcher {
      * @param pattern a regular expression pattern
      * @return rows in the row-based object being searched that match the {@link Pattern}.
      */
-    IndexedSequence<Integer> search(Pattern pattern);
+    List<Integer> search(Pattern pattern);
 
 }
