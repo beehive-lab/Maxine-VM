@@ -32,7 +32,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -67,11 +66,11 @@ public final class BreakpointsTable extends InspectorTable {
         }
         menu.addSeparator();
         final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
-        methodEntryBreakpoints.add(actions().setTargetCodeBreakpointAtMethodEntriesByName());
+        methodEntryBreakpoints.add(actions().setMachineCodeBreakpointAtEntriesByName());
         methodEntryBreakpoints.add(actions().setBytecodeBreakpointAtMethodEntryByName());
         methodEntryBreakpoints.add(actions().setBytecodeBreakpointAtMethodEntryByKey());
         menu.add(methodEntryBreakpoints);
-        menu.add(actions().setTargetCodeBreakpointAtObjectInitializer());
+        menu.add(actions().setMachineCodeBreakpointAtObjectInitializer());
         menu.add(actions().removeAllBreakpoints());
         return menu;
     }
@@ -618,9 +617,9 @@ public final class BreakpointsTable extends InspectorTable {
         TargetBreakpointData(MaxBreakpoint targetBreakpoint) {
             super(targetBreakpoint);
             final Address address = codeLocation().address();
-            final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
-            if (teleTargetMethod != null) {
-                shortName = inspection().nameDisplay().shortName(teleTargetMethod);
+            final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+            if (compiledCode != null) {
+                shortName = inspection().nameDisplay().shortName(compiledCode);
                 final StringBuilder sb = new StringBuilder();
                 sb.append("(");
                 if (breakpoint().getDescription() == null) {
@@ -629,17 +628,17 @@ public final class BreakpointsTable extends InspectorTable {
                     sb.append(breakpoint().getDescription());
                 }
                 sb.append(") ");
-                sb.append(inspection().nameDisplay().longName(teleTargetMethod, address));
+                sb.append(inspection().nameDisplay().longName(compiledCode, address));
                 longName = sb.toString();
-                codeStart = teleTargetMethod.getCodeStart();
+                codeStart = compiledCode.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
-                if (teleNativeTargetRoutine != null) {
-                    codeStart = teleNativeTargetRoutine.getCodeStart();
+                final MaxExternalCode externalCode = vm().codeCache().findExternalCode(address);
+                if (externalCode != null) {
+                    codeStart = externalCode.getCodeStart();
                     location = address.minus(codeStart.asAddress()).toInt();
-                    shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
-                    longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
+                    shortName = inspection().nameDisplay().shortName(externalCode);
+                    longName = inspection().nameDisplay().longName(externalCode);
                 } else {
                     // Must be an address in an unknown area of native code
                     shortName = "0x" + address.toHexString();

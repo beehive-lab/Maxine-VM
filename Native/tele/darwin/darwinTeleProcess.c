@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <alloca.h>
+#include <libgen.h>
 
 #include <mach/mach.h>
 #include <mach/mach_types.h>
@@ -179,6 +180,16 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
             log_exit(1, "Could not allocate space for setting MAX_AGENT_PORT environment variable");
         }
         putenv(portDef);
+
+        /*
+         * See comment in 'main' function (Native/launch/maxvm.c) explaining why DYLD_LIBRARY_PATH is used.
+         */
+        char *dyldLibraryPathDef;
+        if (asprintf(&dyldLibraryPathDef, "DYLD_LIBRARY_PATH=%s", dirname(argv[0])) == -1) {
+            fprintf(stderr, "Could not allocate space for defining DYLD_LIBRARY_PATH environment variable\n");
+            exit(1);
+        }
+        putenv(dyldLibraryPathDef);
 
         /* This call does not return if it succeeds: */
         execv(argv[0], argv);

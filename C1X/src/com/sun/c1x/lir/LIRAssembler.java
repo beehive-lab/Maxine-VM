@@ -233,10 +233,10 @@ public abstract class LIRAssembler {
                 emitDirectCall(op.target, op.info);
                 break;
             case IndirectCall:
-                emitIndirectCall(op.target, op.info, op.lastArgument());
+                emitIndirectCall(op.target, op.info, op.targetAddress());
                 break;
             case NativeCall: {
-                emitNativeCall((String) op.target, op.info, op.lastArgument());
+                emitNativeCall((String) op.target, op.info, op.targetAddress());
                 break;
             }
             default:

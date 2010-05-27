@@ -116,7 +116,7 @@ public abstract class TeleHybridObject extends TeleObject {
 
     @Override
     public Object shallowCopy() {
-        final ClassActor classActor = classActorForType();
+        final ClassActor classActor = classActorForObjectType();
         final Class<?> javaClass = classActor.toJava();
         try {
             final Object protoHybridObject =  Objects.allocateInstance(javaClass);

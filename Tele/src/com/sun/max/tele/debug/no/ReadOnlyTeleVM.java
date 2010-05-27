@@ -22,7 +22,6 @@ package com.sun.max.tele.debug.no;
 
 import java.io.*;
 
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -55,11 +54,8 @@ public final class ReadOnlyTeleVM extends TeleVM {
 
     @Override
     protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
-        if (bootImage().vmConfiguration.platform().operatingSystem != OperatingSystem.GUESTVM) {
-            final ReadOnlyTeleProcess teleProcess = (ReadOnlyTeleProcess) teleProcess();
-            return teleProcess.heap();
-        }
-        return null;
+        final ReadOnlyTeleProcess teleProcess = (ReadOnlyTeleProcess) teleProcess();
+        return teleProcess.heap();
     }
 
     @Override

@@ -77,6 +77,9 @@ public final class Log {
     private static native void log_print_newline();
 
     @C_FUNCTION
+    private static native void log_print_symbol(Address address);
+
+    @C_FUNCTION
     private static native void log_lock();
 
     @C_FUNCTION
@@ -113,6 +116,13 @@ public final class Log {
      */
     public static void print(String s) {
         out.print(s);
+    }
+
+    /**
+     * Equivalent to calling {@link LogPrintStream#printSymbol(Word)} on {@link #out}.
+     */
+    public static void printSymbol(Word address) {
+        out.printSymbol(address);
     }
 
     /**
@@ -420,6 +430,27 @@ public final class Log {
             while (i < ch.length) {
                 i = CString.writePartialUtf8(ch, i, buffer.address(), buffer.size());
                 log_print_buffer(buffer.address());
+            }
+        }
+
+        /**
+         * Prints symbolic information available for a given address (if any). This method
+         * uses the dladdr(3) function on Unix platforms. Typical output for a call to this
+         * method may be:
+         * <pre>
+         *
+         * </pre>
+         *
+         * If no symbolic information is available for {@code address}, then this method is
+         * equivalent to calling {@link #print(Word)} with the value of {@code address}.
+         *
+         * @param address
+         */
+        public void printSymbol(Word address) {
+            if (MaxineVM.isHosted()) {
+                super.print(address.toHexString());
+            } else {
+                log_print_symbol(address.asAddress());
             }
         }
 

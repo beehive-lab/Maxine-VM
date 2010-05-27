@@ -75,7 +75,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     public TypeDescriptor componentType() {
-        return classActorForType().componentClassActor().typeDescriptor;
+        return classActorForObjectType().componentClassActor().typeDescriptor;
     }
 
     public Kind componentKind() {
@@ -129,7 +129,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
             }
             return newRefArray;
         }
-        final Class<?> componentJavaClass = classActorForType().componentClassActor().toJava();
+        final Class<?> componentJavaClass = classActorForObjectType().componentClassActor().toJava();
         final Object newArray = Array.newInstance(componentJavaClass, length);
         for (int index = 0; index < length; index++) {
             Array.set(newArray, index, readElementValue(index).asBoxedJavaValue());
@@ -141,7 +141,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     protected Object createDeepCopy(DeepCopier context) {
         final Kind componentKind = componentKind();
         final int length = getLength();
-        final Class<?> componentJavaClass = classActorForType().componentClassActor().toJava();
+        final Class<?> componentJavaClass = classActorForObjectType().componentClassActor().toJava();
         final Object newArray = Array.newInstance(componentJavaClass, length);
         context.register(this, newArray, true);
         if (length != 0) {

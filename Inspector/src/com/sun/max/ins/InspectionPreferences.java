@@ -23,10 +23,10 @@ package com.sun.max.ins;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.InspectorKeyBindings.*;
 import com.sun.max.ins.gui.*;
@@ -74,7 +74,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
          */
         PROCESS;
 
-        public static final IndexedSequence<ExternalViewerType> VALUES = new ArraySequence<ExternalViewerType>(values());
+        public static List<ExternalViewerType> VALUES = Arrays.asList(values());
     }
 
     /**
@@ -105,7 +105,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
             return label;
         }
 
-        public static final IndexedSequence<ToolTipDismissDelayPolicy> VALUES = new ArraySequence<ToolTipDismissDelayPolicy>(values());
+        public static final List<ToolTipDismissDelayPolicy> VALUES = Arrays.asList(values());
     }
 
     private static final String INSPECTION_SETTINGS_NAME = "inspection";
@@ -127,7 +127,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     private ExternalViewerType externalViewerType = ExternalViewerType.SOCKET;
     private final Map<ExternalViewerType, String> externalViewerConfig = new EnumMap<ExternalViewerType, String>(ExternalViewerType.class);
 
-    private final AppendableSequence<InspectorAction> actionsWithKeyBindings = new ArrayListSequence<InspectorAction>();
+    private final List<InspectorAction> actionsWithKeyBindings = new ArrayList<InspectorAction>();
     private KeyBindingMap keyBindingMap = InspectorKeyBindings.DEFAULT_KEY_BINDINGS;
 
     /**
@@ -262,7 +262,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     public void registerAction(InspectorAction inspectorAction) {
         final Class<? extends InspectorAction> actionClass = inspectorAction.getClass();
         if (InspectorKeyBindings.KEY_BINDABLE_ACTIONS.contains(actionClass)) {
-            actionsWithKeyBindings.append(inspectorAction);
+            actionsWithKeyBindings.add(inspectorAction);
             final KeyStroke keyStroke = keyBindingMap.get(actionClass);
             inspectorAction.putValue(Action.ACCELERATOR_KEY, keyStroke);
         }
@@ -383,7 +383,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         wordValueCheckBox.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent actionEvent) {
-                final JCheckBox checkBox = (JCheckBox) actionEvent.getSource();
+                final InspectorCheckBox checkBox = (InspectorCheckBox) actionEvent.getSource();
                 investigateWordValues = checkBox.isSelected();
                 inspection.updateViewConfiguration();
             }

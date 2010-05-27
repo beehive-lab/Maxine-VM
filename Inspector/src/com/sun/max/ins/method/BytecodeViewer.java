@@ -31,6 +31,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxMachineCode.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -78,13 +79,13 @@ public abstract class BytecodeViewer extends CodeViewer {
         return methodKey;
     }
 
-    private final TeleTargetMethod teleTargetMethod;
+    private final MaxCompiledCode compiledCode;
 
     /**
      * The compilation associated with this view, if exists.
      */
-    protected TeleTargetMethod teleTargetMethod() {
-        return teleTargetMethod;
+    protected MaxCompiledCode compiledCode() {
+        return compiledCode;
     }
 
     private final byte[] methodBytes;
@@ -131,10 +132,10 @@ public abstract class BytecodeViewer extends CodeViewer {
      * Base class for bytecode viewers. TargetCode is optional, since a method may not yet be compiled, but may appear
      * and change as method is compiled and recompiled.
      */
-    protected BytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, TeleTargetMethod teleTargetMethod) {
+    protected BytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, MaxCompiledCode compiledCode) {
         super(inspection, parent);
         this.teleClassMethodActor = teleClassMethodActor;
-        this.teleTargetMethod = teleTargetMethod;
+        this.compiledCode = compiledCode;
         methodKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
         final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
         // Always use the {@link ConstantPool} taken from the {@link CodeAttribute}; in a substituted method, the
@@ -148,9 +149,10 @@ public abstract class BytecodeViewer extends CodeViewer {
 
     private void buildView() {
         int[] bytecodeToTargetCodePositionMap = null;
-        if (teleTargetMethod != null) {
-            targetCodeInstructions = teleTargetMethod.getInstructions();
-            bytecodeToTargetCodePositionMap = teleTargetMethod instanceof TeleJitTargetMethod ? ((TeleJitTargetMethod) teleTargetMethod).bytecodeToTargetCodePositionMap() : null;
+        InstructionMap instructionMap = null;
+        if (compiledCode != null) {
+            instructionMap = compiledCode.instructionMap();
+            bytecodeToTargetCodePositionMap = instructionMap.bytecodeToTargetCodePositionMap();
             // TODO (mlvdv) can only map bytecodes to JIT target code so far
             if (bytecodeToTargetCodePositionMap != null) {
                 haveTargetCodeAddresses = true;
@@ -168,11 +170,11 @@ public abstract class BytecodeViewer extends CodeViewer {
                 final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
                 final int nextBytecodeOffset = bytecodeScanner.scanInstruction(methodBytes, currentBytecodeOffset);
                 final byte[] instructionBytes = Bytes.getSection(methodBytes, currentBytecodeOffset, nextBytecodeOffset);
-                if (bytecodeToTargetCodePositionMap != null) {
-                    while (targetCodeInstructions.get(targetCodeRow).position < bytecodeToTargetCodePositionMap[currentBytecodeOffset]) {
+                if (haveTargetCodeAddresses) {
+                    while (instructionMap.instruction(targetCodeRow).position < bytecodeToTargetCodePositionMap[currentBytecodeOffset]) {
                         targetCodeRow++;
                     }
-                    targetCodeFirstAddress = targetCodeInstructions.get(targetCodeRow).address;
+                    targetCodeFirstAddress = instructionMap.instruction(targetCodeRow).address;
                 }
                 final BytecodeInstruction instruction = new BytecodeInstruction(bytecodeRow, currentBytecodeOffset, instructionBytes, bytecodePrinter.opcode(), bytecodePrinter.operand1(),
                                 bytecodePrinter.operand2(), targetCodeRow, targetCodeFirstAddress);
@@ -183,7 +185,6 @@ public abstract class BytecodeViewer extends CodeViewer {
                 throw new InspectorError("could not disassemble byte code", throwable);
             }
         }
-
     }
 
     /**
@@ -201,7 +202,8 @@ public abstract class BytecodeViewer extends CodeViewer {
                 return address.lessThan(bytecodeInstructions.get(row + 1).targetCodeFirstAddress);
             }
             // Last bytecode instruction:  see if before the end of the target code
-            final TargetCodeInstruction lastTargetCodeInstruction = targetCodeInstructions.last();
+            final InstructionMap instructionMap = compiledCode.instructionMap();
+            final TargetCodeInstruction lastTargetCodeInstruction = instructionMap.instruction(instructionMap.length() - 1);
             return address.lessThan(lastTargetCodeInstruction.address.plus(lastTargetCodeInstruction.bytes.length));
         }
         return false;

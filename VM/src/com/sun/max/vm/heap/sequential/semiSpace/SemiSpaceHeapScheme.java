@@ -345,7 +345,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 // Pre-verification of the heap.
                 verifyObjectSpaces("before GC");
 
-                HeapScheme.Static.notifyGCStarted();
+                HeapScheme.Inspect.notifyGCStarted();
 
                 VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
@@ -413,7 +413,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 // Post-verification of the heap.
                 verifyObjectSpaces("after GC");
 
-                HeapScheme.Static.notifyGCCompleted();
+                HeapScheme.Inspect.notifyGCCompleted();
 
                 if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();
@@ -571,7 +571,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
             Memory.copyBytes(fromCell, toCell, size);
 
-            HeapScheme.Static.notifyObjectRelocated(fromCell, toCell);
+            HeapScheme.Inspect.notifyObjectRelocated(fromCell, toCell);
 
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);
@@ -1072,24 +1072,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     }
 
     @Override
-    @INSPECTED
-    @NEVER_INLINE
     public boolean decreaseMemory(Size amount) {
-        /*
-         * Important: The Inspector assumes that this method is loaded
-         * and compiled in the boot image and that it will never be dynamically recompiled.
-         */
+        HeapScheme.Inspect.notifyDecreaseMemoryRequested(amount);
         return shrink(amount);
     }
 
     @Override
-    @INSPECTED
-    @NEVER_INLINE
     public synchronized boolean increaseMemory(Size amount) {
-        /*
-         * Important: The Inspector assumes that this method is loaded
-         * and compiled in the boot image and that it will never be dynamically recompiled.
-         */
+        HeapScheme.Inspect.notifyIncreaseMemoryRequested(amount);
         /* The conservative assumption is that "amount" is the total amount that we could
          * allocate. Since we can't deallocate our existing spaces until we know we can allocate
          * the new ones, our new spaces cannot be greater than amount/2 in size.

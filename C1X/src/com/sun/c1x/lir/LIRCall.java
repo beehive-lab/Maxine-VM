@@ -39,7 +39,7 @@ public class LIRCall extends LIRInstruction {
      */
     public final Object target;
 
-    public final List<CiValue> arguments;
+    private final int targetAddressIndex;
 
     private static CiValue[] toArray(List<CiValue> arguments) {
         return arguments.toArray(new CiValue[arguments.size()]);
@@ -47,7 +47,12 @@ public class LIRCall extends LIRInstruction {
 
     public LIRCall(LIROpcode opcode, Object target, CiValue result, List<CiValue> arguments, LIRDebugInfo info, boolean calleeSaved) {
         super(opcode, result, info, !calleeSaved, null, 0, 0, toArray(arguments));
-        this.arguments = arguments;
+        if (opcode == LIROpcode.DirectCall) {
+            this.targetAddressIndex = -1;
+        } else {
+            // The last argument is the operand holding the address for the indirect call
+            this.targetAddressIndex = arguments.size() - 1;
+        }
         this.target = target;
     }
 
@@ -77,7 +82,35 @@ public class LIRCall extends LIRInstruction {
         return (CiRuntimeCall) target;
     }
 
-    public CiValue lastArgument() {
-        return operand(arguments.size() - 1);
+    public CiValue targetAddress() {
+        return operand(targetAddressIndex);
+    }
+
+    @Override
+    public String operationString(OperandFormatter operandFmt) {
+        StringBuilder buf = new StringBuilder();
+        if (result().isLegal()) {
+            buf.append(operandFmt.format(result())).append(" = ");
+        }
+        String targetAddress = null;
+        if (code != LIROpcode.DirectCall) {
+            targetAddress = operandFmt.format(targetAddress());
+            buf.append(targetAddress);
+        }
+        buf.append('(');
+        boolean first = true;
+        for (LIROperand operandSlot : inputAndTempOperands) {
+            String operand = operandFmt.format(operandSlot.value(this));
+            if (!operand.isEmpty() && !operand.equals(targetAddress)) {
+                if (!first) {
+                    buf.append(", ");
+                } else {
+                    first = false;
+                }
+                buf.append(operand);
+            }
+        }
+        buf.append(')');
+        return buf.toString();
     }
 }

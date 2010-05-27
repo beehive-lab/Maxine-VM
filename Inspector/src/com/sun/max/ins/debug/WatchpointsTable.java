@@ -130,7 +130,7 @@ public final class WatchpointsTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return vm().watchpointManager().watchpoints().length();
+            return vm().watchpointManager().watchpoints().size();
         }
 
         public Object getValueAt(int row, int col) {

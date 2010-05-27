@@ -859,7 +859,7 @@ public final class JDK_java_lang_System {
                         asFilesystemPath(classesPath, "charsets.jar"));
         }
         setIfAbsent(properties, "sun.boot.class.path", checkAugmentBootClasspath(bootClassPath));
-        javaAndZipLibraryPaths[0] = getenvExecutablePath();
+        javaAndZipLibraryPaths[0] = librariesPath;
         javaAndZipLibraryPaths[1] = librariesPath;
 
         String extDirs = "/Library/Java/Extensions:/System/Library/Java/Extensions:" + javaHome + "/lib/ext";

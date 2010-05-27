@@ -175,7 +175,7 @@ public final class InspectableHeapInfo {
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param collectionEpoch the GC epoch that is starting.
-     * @see HeapScheme.Static#inspectableGCStarting()
+     * @see HeapScheme.Inspect#inspectableGCStarting()
      */
     @INSPECTED
     @NEVER_INLINE
@@ -207,7 +207,7 @@ public final class InspectableHeapInfo {
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param collectionEpoch the GC epoch that is ending.
-     * @see HeapScheme.Static#inspectableGCComplete()
+     * @see HeapScheme.Inspect#inspectableGCComplete()
      */
     @INSPECTED
     @NEVER_INLINE

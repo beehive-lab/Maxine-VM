@@ -177,6 +177,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         if (vm().watchpointManager() != null) {
             menu.add(actions.listWatchpoints());
         }
+        menu.add(actions.listInspectableMethods());
         return menu;
     }
 

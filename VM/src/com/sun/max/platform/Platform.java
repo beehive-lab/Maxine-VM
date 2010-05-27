@@ -75,7 +75,7 @@ public final class Platform {
     private static final Pattern NON_REGEX_TEST_PATTERN = Pattern.compile("\\w+");
 
     /**
-     * Determines if a given string contains any {@linkplain Pattern regular expression}.
+     * Determines if a given string contains a {@linkplain Pattern regular expression}.
      */
     private static boolean isRegex(String input) {
         for (int i = 0; i < input.length(); ++i) {
@@ -111,8 +111,8 @@ public final class Platform {
      * <p>
      * An element value of "" always matches the corresponding platform component.
      * <p>
-     * An element value that does not contain any regular expressions (as specified by {@link Pattern})
-     * is used as a simple string filter that is compared for case-insensitive equality against the
+     * An element value that is not a {@linkplain Pattern regular expression}
+     * is a simple string filter compared for {@linkplain String#equalsIgnoreCase(String) case-insensitive equality} against the
      * corresponding platform component. For example {@code @PLATFORM(os = "windows")} will match
      * this platform object if {@code this.operatingSystem().name().equalsIgnoreCase("windows")}. A negative
      * filter can be specified by prefixing {@code '!'} to the filter value. That is,

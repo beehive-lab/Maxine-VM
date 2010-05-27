@@ -70,6 +70,7 @@ public class MockRuntime implements RiRuntime {
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
         writer.flush();
         final InstructionSet instructionSet = InstructionSet.AMD64;
+        ;
         Disassembler.disassemble(byteArrayOutputStream, code, instructionSet, WordWidth.BITS_64, 0, null, disassemblyPrinter);
         return byteArrayOutputStream.toString();
     }

@@ -254,9 +254,9 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         }
         TeleClassMethodActor teleClassMethodActor = null;
         try {
-            final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
-            if (teleTargetMethod != null) {
-                teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+            final TeleCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+            if (compiledCode != null) {
+                teleClassMethodActor = compiledCode.getTeleClassMethodActor();
             }
         } finally {
             vm().unlock();
@@ -296,7 +296,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return null;
         }
         try {
-            final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getJavaTargetMethod(0);
+            final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getCompilation(0);
             if (javaTargetMethod != null) {
                 return javaTargetMethod.callEntryPoint();
             }

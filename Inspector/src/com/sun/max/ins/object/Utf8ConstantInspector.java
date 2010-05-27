@@ -55,7 +55,7 @@ class Utf8ConstantInspector extends ObjectInspector {
     protected void createView() {
         super.createView();
         final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject();
-        final String name = teleUtf8Constant.classActorForType().javaSignature(false);
+        final String name = teleUtf8Constant.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new JTabbedPane();
 

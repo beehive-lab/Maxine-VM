@@ -56,7 +56,7 @@ public class StringConstantInspector extends ObjectInspector {
         super.createView();
 
         final TeleStringConstant teleStringConstant = (TeleStringConstant) teleObject();
-        final String name = teleStringConstant.classActorForType().javaSignature(false);
+        final String name = teleStringConstant.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new JTabbedPane();
 
