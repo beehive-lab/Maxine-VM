@@ -177,7 +177,7 @@ public class DumpProtocol extends CompleteProtocolAdaptor implements Protocol {
 
     @Override
     public int writeBytes(long dst, byte[] src, int srcOffset, int length) {
-        unimplemented("writeBytes");
+        inappropriate("writeBytes");
         return 0;
     }
 
