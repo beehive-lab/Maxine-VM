@@ -97,7 +97,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
             if (instructions == null) {
                 instructions = getInstructions();
                 final int length = instructions.length();
-                final VariableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
+                final VariableSequence<MachineCodeLocation> locations = new ArrayListSequence<MachineCodeLocation>(length);
                 final VariableSequence<Integer> labels = new ArrayListSequence<Integer>();
                 for (int index = 0; index < length; index++) {
                     final TargetCodeInstruction targetCodeInstruction = instructions.get(index);

@@ -22,10 +22,11 @@ package com.sun.max.ins.method;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
@@ -125,22 +126,22 @@ public abstract class CodeViewer extends InspectorPanel {
         add(toolBarPanel, BorderLayout.NORTH);
     }
 
-    private IndexedSequence<Integer> searchMatchingRows = null;
+    private List<Integer> searchMatchingRows = null;
 
     /**
      * @return the rows that match a current search session; null if no search session active.
      */
-    protected final IndexedSequence<Integer> getSearchMatchingRows() {
+    protected final List<Integer> getSearchMatchingRows() {
         return searchMatchingRows;
     }
 
     private final RowSearchListener searchListener = new RowSearchListener() {
 
-        public void searchResult(IndexedSequence<Integer> result) {
+        public void searchResult(List<Integer> result) {
             searchMatchingRows = result;
             // go to next matching row from current selection
             if (searchMatchingRows != null) {
-                Trace.line(TRACE_VALUE, "search: matches " + searchMatchingRows.length() + " = " + searchMatchingRows);
+                Trace.line(TRACE_VALUE, "search: matches " + searchMatchingRows.size() + " = " + searchMatchingRows);
             }
             repaint();
         }
@@ -177,7 +178,7 @@ public abstract class CodeViewer extends InspectorPanel {
 
     private void setFocusAtNextSearchMatch() {
         Trace.line(TRACE_VALUE, "search:  next match");
-        if (searchMatchingRows.length() > 0) {
+        if (searchMatchingRows.size() > 0) {
             int currentRow = getSelectedRow();
             for (int row : searchMatchingRows) {
                 if (row > currentRow) {
@@ -200,9 +201,9 @@ public abstract class CodeViewer extends InspectorPanel {
 
     private void setFocusAtPreviousSearchMatch() {
         Trace.line(TRACE_VALUE, "search:  previous match");
-        if (searchMatchingRows.length() > 0) {
+        if (searchMatchingRows.size() > 0) {
             int currentRow = getSelectedRow();
-            for (int index = searchMatchingRows.length() - 1; index >= 0; index--) {
+            for (int index = searchMatchingRows.size() - 1; index >= 0; index--) {
                 final Integer matchingRow = searchMatchingRows.get(index);
                 if (matchingRow < currentRow) {
                     setFocusAtRow(matchingRow);
@@ -211,7 +212,7 @@ public abstract class CodeViewer extends InspectorPanel {
             }
             // wrap, could be optional, or dialog choice
             currentRow = getRowCount();
-            for (int index = searchMatchingRows.length() - 1; index >= 0; index--) {
+            for (int index = searchMatchingRows.size() - 1; index >= 0; index--) {
                 final Integer matchingRow = searchMatchingRows.get(index);
                 if (matchingRow < currentRow) {
                     setFocusAtRow(matchingRow);
@@ -337,14 +338,14 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     // Active rows are those for which there is an associated stack frame
-    private VectorSequence<Integer> activeRows = new VectorSequence<Integer>(3);
+    private List<Integer> activeRows = new ArrayList<Integer>(3);
     private int currentActiveRowIndex = -1;
 
     private void updateActiveRows() {
         activeRows.clear();
         for (int row = 0; row < rowToStackFrame.length; row++) {
             if (rowToStackFrame[row] != null) {
-                activeRows.append(row);
+                activeRows.add(row);
             }
         }
         currentActiveRowIndex = -1;
@@ -355,7 +356,7 @@ public abstract class CodeViewer extends InspectorPanel {
      * Does the method have any rows that are either the current instruction pointer or call return lines marked.
      */
     protected boolean hasActiveRows() {
-        return activeRows.length() > 0;
+        return activeRows.size() > 0;
     }
 
     /**
@@ -364,8 +365,8 @@ public abstract class CodeViewer extends InspectorPanel {
      */
     protected int nextActiveRow() {
         if (hasActiveRows()) {
-            currentActiveRowIndex = (currentActiveRowIndex + 1) % activeRows.length();
-            return activeRows.elementAt(currentActiveRowIndex);
+            currentActiveRowIndex = (currentActiveRowIndex + 1) % activeRows.size();
+            return activeRows.get(currentActiveRowIndex);
         }
         return -1;
     }
@@ -374,7 +375,7 @@ public abstract class CodeViewer extends InspectorPanel {
      * Is there a currently active search that matches the specified row?
      */
     protected boolean isSearchMatchRow(int row) {
-        final IndexedSequence<Integer> searchMatchingRows = getSearchMatchingRows();
+        final List<Integer> searchMatchingRows = getSearchMatchingRows();
         if (searchMatchingRows != null) {
             for (int matchingRow : searchMatchingRows) {
                 if (row == matchingRow) {

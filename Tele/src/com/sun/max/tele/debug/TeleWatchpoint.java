@@ -729,13 +729,15 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         // either in part or whole, with others in the set.
         private final TreeSet<TeleWatchpoint> clientWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparator);
 
-        // A thread-safe, immutable collection of the current watchpoint list.
-        // This list will be read many, many more times than it will change.
-        private volatile IterableWithLength<MaxWatchpoint> clientWatchpointsCache = Sequence.Static.empty(MaxWatchpoint.class);
+        /**
+         * A thread-safe, immutable collection of the current watchpoint list.
+         * This list will be read many, many more times than it will change.
+         */
+        private volatile List<MaxWatchpoint> clientWatchpointsCache = Collections.emptyList();
 
         // Watchpoints used for internal purposes, for example for GC and relocation services
         private final TreeSet<TeleWatchpoint> systemWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparator);
-        private volatile IterableWithLength<MaxWatchpoint> systemWatchpointsCache = Sequence.Static.empty(MaxWatchpoint.class);
+        private volatile List<MaxWatchpoint> systemWatchpointsCache = Collections.emptyList();
 
         /**
          * A listener for GC completions, whenever there are any watchpoints; null when no watchpoints.
@@ -993,23 +995,17 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @param memoryRegion a memory region in the VM
          * @return all watchpoints whose memory regions overlap the specified region, empty sequence if none.
          */
-        public Sequence<MaxWatchpoint> findWatchpoints(MaxMemoryRegion memoryRegion) {
-            DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
+        public List<MaxWatchpoint> findWatchpoints(MaxMemoryRegion memoryRegion) {
+            List<MaxWatchpoint> watchpoints = Collections.emptyList();
             for (MaxWatchpoint maxWatchpoint : clientWatchpointsCache) {
                 if (maxWatchpoint.memoryRegion().overlaps(memoryRegion)) {
                     if (watchpoints.isEmpty()) {
-                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(maxWatchpoint);
-                    } else if (watchpoints.length() == 1) {
-                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
-                        newSet.add(maxWatchpoint);
-                        watchpoints = newSet;
-                    } else {
-                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
-                        growableSet.add(maxWatchpoint);
+                        watchpoints = new ArrayList<MaxWatchpoint>(1);
                     }
+                    watchpoints.add(maxWatchpoint);
                 }
             }
-            return watchpoints;
+            return Collections.unmodifiableList(watchpoints);
         }
 
         /**
@@ -1029,14 +1025,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             return null;
         }
 
-        /**
-         * All watchpoints that currently exist.
-         * <br>
-         * Returns an immutable collection; membership is thread-safe
-         *
-         * @return all watchpoints currently set in the VM; thread-safe.
-         */
-        public IterableWithLength<MaxWatchpoint> watchpoints() {
+        public List<MaxWatchpoint> watchpoints() {
             // Hand out the cached, thread-safe summary
             return clientWatchpointsCache;
         }
@@ -1091,8 +1080,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         }
 
         private void updateAfterWatchpointChanges() {
-            clientWatchpointsCache = new VectorSequence<MaxWatchpoint>(clientWatchpoints);
-            systemWatchpointsCache = new VectorSequence<MaxWatchpoint>(systemWatchpoints);
+            clientWatchpointsCache = Collections.unmodifiableList(new ArrayList<MaxWatchpoint>(clientWatchpoints));
+            systemWatchpointsCache = new ArrayListSequence<MaxWatchpoint>(systemWatchpoints);
             // Ensure that the manager listens for GC completion events iff
             // there are watchpoints.
             if (watchpointCount() > 0) {

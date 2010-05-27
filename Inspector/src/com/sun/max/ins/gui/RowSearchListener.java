@@ -20,7 +20,7 @@
  */
 package com.sun.max.ins.gui;
 
-import com.sun.max.collect.*;
+import java.util.*;
 
 /**
  * Callback interface for views that incorporate of row-based searching.
@@ -36,7 +36,7 @@ public interface RowSearchListener {
      *
      * @param searchMatchingRows the rows that match the supplied pattern, length=0 if no matches, null if pattern is empty (no search).
      */
-    void searchResult(IndexedSequence<Integer> searchMatchingRows);
+    void searchResult(List<Integer> searchMatchingRows);
 
     /**
      * Notifies that the user has requested to see the next match, relative to the current selection, of the most recent search.
