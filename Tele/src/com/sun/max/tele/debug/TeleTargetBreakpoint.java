@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.*;
@@ -307,10 +306,8 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         private final Map<Long, TransientTargetBreakpoint> transientBreakpoints = new HashMap<Long, TransientTargetBreakpoint>();
 
 
-        // Thread-safe, immutable versions of the maps. Will be read many, many more times than they will change.
-        private volatile IterableWithLength<ClientTargetBreakpoint> clientBreakpointsCache = Sequence.Static.empty(ClientTargetBreakpoint.class);
-        private volatile IterableWithLength<SystemTargetBreakpoint> systemBreakpointsCache = Sequence.Static.empty(SystemTargetBreakpoint.class);
-        private volatile IterableWithLength<TransientTargetBreakpoint> transientBreakpointsCache = Sequence.Static.empty(TransientTargetBreakpoint.class);
+        // Thread-safe, immutable versions of the client map. Will be read many, many more times than will change.
+        private volatile List<ClientTargetBreakpoint> clientBreakpointsCache = Collections.emptyList();
 
         private List<MaxBreakpointListener> breakpointListeners = new CopyOnWriteArrayList<MaxBreakpointListener>();
 
@@ -357,7 +354,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          * @return all the client-visible persistent target code breakpoints that currently exist
          * in the VM.  Modification safe against breakpoint removal.
          */
-        synchronized Iterable<ClientTargetBreakpoint> clientBreakpoints() {
+        synchronized List<ClientTargetBreakpoint> clientBreakpoints() {
             return clientBreakpointsCache;
         }
 
@@ -487,16 +484,20 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         private byte[] recoverOriginalCodeForBreakpoint(Address instructionPointer) {
+            Value result = null;
             try {
-                final Value result = vm().teleMethods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
-                final Reference reference = result.asReference();
-                if (reference.isZero()) {
-                    return null;
-                }
-                return (byte[]) reference.toJava();
+                result = vm().teleMethods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
+            } catch (MaxVMBusyException maxVMBusyException) {
             } catch (TeleInterpreterException e) {
                 throw ProgramError.unexpected(e);
             }
+            if (result != null) {
+                final Reference reference = result.asReference();
+                if (!reference.isZero()) {
+                    return (byte[]) reference.toJava();
+                }
+            }
+            return null;
         }
 
         /**
@@ -580,14 +581,12 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * Update immutable caches of breakpoint lists and possibly notify listeners.
+         * Update immutable cache of breakpoint list and possibly notify listeners.
          *
          * @param announce whether to notify listeners
          */
         private void updateAfterBreakpointChanges(boolean announce) {
-            clientBreakpointsCache = new VectorSequence<ClientTargetBreakpoint>(clientBreakpoints.values());
-            systemBreakpointsCache = new VectorSequence<SystemTargetBreakpoint>(systemBreakpoints.values());
-            transientBreakpointsCache = new VectorSequence<TransientTargetBreakpoint>(transientBreakpoints.values());
+            clientBreakpointsCache = Collections.unmodifiableList(new ArrayList<ClientTargetBreakpoint>(clientBreakpoints.values()));
             if (announce) {
                 for (final MaxBreakpointListener listener : breakpointListeners) {
                     listener.breakpointsChanged();
@@ -608,18 +607,18 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             for (ClientTargetBreakpoint targetBreakpoint : clientBreakpointsCache) {
                 printStream.println("  " + targetBreakpoint + describeLocation(targetBreakpoint));
             }
-            for (SystemTargetBreakpoint targetBreakpoint : systemBreakpointsCache) {
+            for (SystemTargetBreakpoint targetBreakpoint : systemBreakpoints.values()) {
                 printStream.println("  " + targetBreakpoint + describeLocation(targetBreakpoint));
             }
-            for (TransientTargetBreakpoint targetBreakpoint : transientBreakpointsCache) {
+            for (TransientTargetBreakpoint targetBreakpoint : transientBreakpoints.values()) {
                 printStream.println("  " + targetBreakpoint + describeLocation(targetBreakpoint));
             }
         }
 
         private String describeLocation(TeleTargetBreakpoint teleTargetBreakpoint) {
-            final TeleTargetRoutine teleTargetRoutine = vm().findTeleTargetRoutine(TeleTargetRoutine.class, teleTargetBreakpoint.address());
-            if (teleTargetRoutine != null) {
-                return " in " + teleTargetRoutine.getName();
+            final MaxMachineCode maxMachineCode = vm().codeCache().findMachineCode(teleTargetBreakpoint.address());
+            if (maxMachineCode != null) {
+                return " in " + maxMachineCode.entityName();
             }
             return "";
         }

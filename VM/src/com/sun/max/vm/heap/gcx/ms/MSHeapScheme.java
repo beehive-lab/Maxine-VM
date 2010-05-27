@@ -272,7 +272,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             startTimer(totalPauseTime);
             VmThreadMap.ACTIVE.forAllThreadLocals(null, tlabFiller);
 
-            HeapScheme.Static.notifyGCStarted();
+            HeapScheme.Inspect.notifyGCStarted();
 
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
@@ -304,7 +304,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
                 Log.print("End mark-sweep #");
                 Log.println(collectionCount);
             }
-            HeapScheme.Static.notifyGCCompleted();
+            HeapScheme.Inspect.notifyGCCompleted();
             stopTimer(totalPauseTime);
 
             if (traceGCTimes) {

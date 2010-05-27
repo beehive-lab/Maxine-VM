@@ -23,11 +23,12 @@ package test.com.sun.max.vm;
 import static test.com.sun.max.vm.MaxineTester.Logs.*;
 
 import java.io.*;
+import java.util.*;
 
 import test.com.sun.max.vm.MaxineTester.*;
 
 import com.sun.max.io.*;
-import com.sun.max.lang.*;
+import com.sun.max.lang.Arrays;
 
 /**
  * The {@code ExternalCommand} class represents an external command with input and output files.
@@ -77,6 +78,16 @@ public class ExternalCommand {
                     ps.println("Command array[" + i + "] = \"" + cmdarray[i] + "\"");
                 }
                 ps.println("Working directory: " + (workingDir == null ? "CWD" : workingDir.getAbsolutePath()));
+                ps.println("Enviroment:");
+                if (env != null) {
+                    for (String def : env) {
+                        ps.println("    " + def);
+                    }
+                } else {
+                    for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+                        ps.println("    " + entry.getKey() + "=" + entry.getValue());
+                    }
+                }
                 ps.close();
             }
 

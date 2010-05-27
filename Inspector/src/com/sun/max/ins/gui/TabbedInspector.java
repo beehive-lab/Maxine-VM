@@ -22,11 +22,11 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.lang.*;
@@ -196,10 +196,10 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
      * Disposes of all but the specified inspector, presumed to be a tabbed member of this inspector.
      */
     public void closeOthers(Inspector_Type keepInspector) {
-        final AppendableSequence<Inspector_Type> toClose = new ArrayListSequence<Inspector_Type>();
+        final List<Inspector_Type> toClose = new ArrayList<Inspector_Type>();
         for (Inspector_Type inspector : inspectors) {
             if (inspector != keepInspector) {
-                toClose.append(inspector);
+                toClose.add(inspector);
             }
         }
         for (Inspector_Type inspector : toClose) {

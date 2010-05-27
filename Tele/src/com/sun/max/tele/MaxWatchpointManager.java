@@ -21,8 +21,8 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.MaxWatchpoint.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.object.*;
@@ -166,7 +166,7 @@ public interface MaxWatchpointManager {
      *
      * @return all existing watchpoints; empty if none.
      */
-    IterableWithLength<MaxWatchpoint> watchpoints();
+    List<MaxWatchpoint> watchpoints();
 
     /**
      * Finds all VM watchpoints that overlap a specified memory region.
@@ -176,7 +176,7 @@ public interface MaxWatchpointManager {
      * @param memoryRegion an area of memory in the VM
      * @return the watchpoints whose memory region overlaps, empty sequence if none.
      */
-    Sequence<MaxWatchpoint> findWatchpoints(MaxMemoryRegion memoryRegion);
+    List<MaxWatchpoint> findWatchpoints(MaxMemoryRegion memoryRegion);
 
     /**
      * Writes a textual description of each existing watchpoint.

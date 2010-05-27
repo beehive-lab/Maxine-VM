@@ -37,7 +37,7 @@ public class Object_notifyAll01 extends RunBench {
         return new Object_notifyAll01().runBench(true);
     }
 
-    static class Bench implements MicroBenchmark {
+    static class Bench extends AbstractMicroBenchmark {
 
         public void run(boolean warmup) {
             synchronized (this) {
@@ -47,7 +47,7 @@ public class Object_notifyAll01 extends RunBench {
         }
     }
 
-    static class EncapBench implements MicroBenchmark {
+    static class EncapBench extends AbstractMicroBenchmark {
 
         public void run(boolean warmup) {
             synchronized (this) {

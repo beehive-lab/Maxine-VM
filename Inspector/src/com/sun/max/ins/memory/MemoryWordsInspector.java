@@ -45,6 +45,7 @@ import com.sun.max.unsafe.*;
  */
 public final class MemoryWordsInspector extends Inspector {
 
+    private static final String UNKNOWN_REGION_NAME = "unknown region";
     private static final int TRACE_VALUE = 2;
 
     public static enum ViewMode {
@@ -516,24 +517,43 @@ public final class MemoryWordsInspector extends Inspector {
 
     @Override
     public String getTextForTitle() {
+
+        // Locate the first and last memory locations with respect to regions
+        // allocated by the VM, and build a description of the memory range
+        final MaxMemoryRegion startRegion = vm().findMemoryRegion(memoryWordRegion.start());
+        final MaxMemoryRegion lastRegion = vm().findMemoryRegion(memoryWordRegion.end().minus(1));
+        final String startRegionName = startRegion == null ? UNKNOWN_REGION_NAME : startRegion.regionName();
+        final String lastRegionName = lastRegion == null ? UNKNOWN_REGION_NAME : lastRegion.regionName();
+        final String regionDescription = " in "
+            + (startRegionName.equals(lastRegionName) ? startRegionName : (startRegionName + " - " + lastRegionName));
+        final StringBuilder titleBuilder = new StringBuilder();
         switch(viewMode()) {
             case OBJECT:
                 final TeleObject teleObject = vm().makeTeleObject(vm().originToReference(origin.asPointer()));
                 if (teleObject == null) {
-                    return "Memory object: " + memoryWordRegion.start().toHexString();
+                    titleBuilder.append("Memory object: ").append(memoryWordRegion.start().toHexString());
+                } else {
+                    titleBuilder.append("Memory: object ").append(memoryWordRegion.start().toHexString()).append(inspection().nameDisplay().referenceLabelText(teleObject));
                 }
-                return "Memory: object " + memoryWordRegion.start().toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
+                titleBuilder.append(regionDescription);
+                break;
             case PAGE:
-                return "Memory: page " + memoryWordRegion.start().toHexString();
+                titleBuilder.append("Memory: page ").append(memoryWordRegion.start().toHexString());
+                titleBuilder.append(regionDescription);
+                break;
             case WORD:
                 if (regionName == null) {
-                    return "Memory: " +  memoryWordRegion.start().toHexString() + "--" +  memoryWordRegion.end().toHexString();
+                    titleBuilder.append("Memory: ").append(memoryWordRegion.start().toHexString()).append("--").append(memoryWordRegion.end().toHexString());
+                    titleBuilder.append(regionDescription);
+                } else {
+                    titleBuilder.append("Memory: region ").append(regionName);
+                    // No suffix; we already know the name of the region
                 }
-                return "Memory: region " + regionName;
+                break;
             default:
                 ProgramError.unknownCase();
         }
-        return null;
+        return titleBuilder.toString();
     }
 
     @Override

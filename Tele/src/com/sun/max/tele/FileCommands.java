@@ -113,7 +113,18 @@ public class FileCommands {
         for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
             if (teleClassMethodActor.classMethodActor().format("%n(%p)").equals(methodSignature)) {
                 found = true;
-                teleClassMethodActor.entryLocation();
+                final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
+                if (teleTargetMethod != null) {
+                    final MaxCompiledCode compiledCode = teleVM.codeCache().findCompiledCode(teleTargetMethod.callEntryPoint());
+                    if (compiledCode != null) {
+                        try {
+                            teleVM.breakpointManager().makeBreakpoint(compiledCode.getCallEntryLocation());
+                        } catch (MaxVMBusyException e) {
+                            ProgramError.unexpected(" failed to set breakpoint from file: VM Busy");
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 break;
             }
         }

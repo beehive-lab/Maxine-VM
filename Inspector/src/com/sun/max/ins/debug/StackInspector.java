@@ -40,7 +40,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
 
 /**
  * A singleton inspector that displays stack contents for the thread in the VM that is the current user focus.
@@ -90,17 +89,13 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         private final MaxStack stack;
         private final MaxStackFrame stackFrame;
         private final int position;
-
-        // TODO (mlvdv) temp only until TargetMethod class use is eliminated
-        private final MaxMemoryRegion targetMethodMemoryRegion;
+        final MaxCompiledCode compiledCode;
 
         TruncatedStackFrame(MaxStack stack, MaxStackFrame stackFrame, int position) {
             this.stack = stack;
             this.stackFrame = stackFrame;
             this.position = position;
-            final TargetMethod targetMethod = stackFrame.targetMethod();
-            this.targetMethodMemoryRegion = targetMethod == null ? null :
-                new InspectorMemoryRegion(stack().vm(), "memory for TargetMethod", targetMethod.start(), targetMethod.size());
+            this.compiledCode = vm().codeCache().findCompiledCode(stackFrame.ip());
         }
 
         public MaxVM vm() {
@@ -113,6 +108,10 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
         public String entityDescription() {
             return "A pseudo stack frame created to represent a large number of stack frames that couldn't be displayed";
+        }
+
+        public MaxCompiledCode compiledCode() {
+            return compiledCode;
         }
 
         public MaxEntityMemoryRegion<MaxStackFrame> memoryRegion() {
@@ -149,14 +148,6 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
         public MaxCodeLocation codeLocation() {
             return stackFrame.codeLocation();
-        }
-
-        public TargetMethod targetMethod() {
-            return stackFrame.targetMethod();
-        }
-
-        public MaxMemoryRegion getTargetMethodMemoryRegion() {
-            return targetMethodMemoryRegion;
         }
 
         public boolean isSameFrame(MaxStackFrame stackFrame) {
@@ -207,18 +198,20 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             String toolTip = null;
             Component component;
             if (stackFrame instanceof MaxStackFrame.Compiled) {
-                final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(stackFrame.targetMethod().codeStart());
-                name = inspection().nameDisplay().veryShortName(teleTargetMethod);
-                toolTip = inspection().nameDisplay().longName(teleTargetMethod, stackFrame.ip());
-                final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
-                if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
-                    name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
-                    try {
-                        toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
-                    } catch (Exception e) {
-                        // There's corner cases where we can't obtain detailed information for the tool tip (e.g., the method we're trying to get the substitution info about
-                        //  is being constructed. Instead of propagating the exception, just use a default tool tip. [Laurent].
-                        toolTip = "?";
+                final MaxCompiledCode compiledCode = stackFrame.compiledCode();
+                name = inspection().nameDisplay().veryShortName(compiledCode);
+                toolTip = inspection().nameDisplay().longName(compiledCode, stackFrame.ip());
+                if (compiledCode != null) {
+                    final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
+                    if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
+                        name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+                        try {
+                            toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+                        } catch (Exception e) {
+                            // There's corner cases where we can't obtain detailed information for the tool tip (e.g., the method we're trying to get the substitution info about
+                            //  is being constructed. Instead of propagating the exception, just use a default tool tip. [Laurent].
+                            toolTip = "?";
+                        }
                     }
                 }
             } else if (stackFrame instanceof TruncatedStackFrame) {
@@ -230,11 +223,11 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             } else {
                 ProgramWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.ip();
-                final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
-                if (teleNativeTargetRoutine != null) {
+                final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
+                if (externalCode != null) {
                     // native that we know something about
-                    name = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
-                    toolTip = inspection().nameDisplay().longName(teleNativeTargetRoutine);
+                    name = inspection().nameDisplay().shortName(externalCode);
+                    toolTip = inspection().nameDisplay().longName(externalCode);
                 } else {
                     name = "nativeMethod:0x" + instructionPointer.toHexString();
                     toolTip = "nativeMethod";
@@ -436,7 +429,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                // TODO (mlvdv) view options
+                //
                 //new SimpleDialog(inspection(), globalPreferences(inspection()).getPanel(), "Stack Inspector view options", true);
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<CompiledStackFrameColumnKind>(inspection(), "Stack Frame Options", viewPreferences);
             }
@@ -445,16 +438,16 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     private String javaStackFrameName(MaxStackFrame.Compiled javaStackFrame) {
         final Address address = javaStackFrame.ip();
-        final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
+        final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
         String name;
-        if (teleTargetMethod != null) {
-            name = inspection().nameDisplay().veryShortName(teleTargetMethod);
-            final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+        if (compiledCode != null) {
+            name = inspection().nameDisplay().veryShortName(compiledCode);
+            final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
             if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
                 name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
             }
         } else {
-            final MethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
+            final MethodActor classMethodActor = javaStackFrame.compiledCode().classMethodActor();
             name = classMethodActor.format("%h.%n");
         }
         return name;
@@ -479,9 +472,9 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         }
         if (stackFrame instanceof MaxStackFrame.Native) {
             final Pointer instructionPointer = stackFrame.ip();
-            final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
-            if (teleNativeTargetRoutine == null) {
-                menu.add(new InspectorAction(inspection(), "Open native code dialog...") {
+            final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
+            if (externalCode == null) {
+                menu.add(new InspectorAction(inspection(), "Open external code dialog...") {
                     @Override
                     protected void procedure() {
                         focus().setCodeLocation(stackFrame.codeLocation(), true);
@@ -497,7 +490,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     protected void refreshView(boolean force) {
         ProgramError.check(stack != null);
         if (stack.thread() != null && stack.thread().isLive()) {
-            if (force || stack.lastUpdated() == null || stack.lastUpdated().newerThan(lastUpdatedState)) {
+            if (force || stack.lastUpdated() == null || vm().state().newerThan(lastUpdatedState)) {
                 final Sequence<MaxStackFrame> frames = stack.frames();
                 assert !frames.isEmpty();
                 if (force || stack.lastChanged().newerThan(this.lastChangedState)) {

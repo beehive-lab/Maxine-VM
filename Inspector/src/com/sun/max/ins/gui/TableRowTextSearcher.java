@@ -21,12 +21,13 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 import java.util.regex.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 
 /**
@@ -76,12 +77,12 @@ public class TableRowTextSearcher extends AbstractInspectionHolder implements Ro
         return rowsOfText;
     }
 
-    public IndexedSequence<Integer> search(Pattern pattern) {
+    public List<Integer> search(Pattern pattern) {
         String[] rowsOfText = this.rowsOfText;
-        AppendableIndexedSequence<Integer> matchingRows = new VectorSequence<Integer>(rowsOfText.length);
+        List<Integer> matchingRows = new ArrayList<Integer>(rowsOfText.length);
         for (int row = 0; row < rowsOfText.length; row++) {
             if (pattern.matcher(rowsOfText[row]).find()) {
-                matchingRows.append(row);
+                matchingRows.add(row);
             }
         }
         return matchingRows;

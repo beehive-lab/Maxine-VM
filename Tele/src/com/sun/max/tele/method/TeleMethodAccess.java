@@ -95,10 +95,20 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
      *
      * @param arguments
      * @return return value from the method
+     * @throws MaxVMBusyException if the VM is running and the interpreter cannot be used
      * @throws TeleInterpreterException if an uncaught exception occurs during execution of the method
      */
-    public Value interpret(Value... arguments) throws TeleInterpreterException {
+    public Value interpret(Value... arguments) throws MaxVMBusyException, TeleInterpreterException {
         ProgramError.check(methodActor instanceof ClassMethodActor, "cannot interpret interface method");
-        return TeleInterpreter.execute(vm(), (ClassMethodActor) methodActor, arguments);
+        Value result = null;
+        if (!vm().tryLock()) {
+            throw new MaxVMBusyException();
+        }
+        try {
+            result = TeleInterpreter.execute(vm(), (ClassMethodActor) methodActor, arguments);
+        } finally {
+            vm().unlock();
+        }
+        return result;
     }
 }

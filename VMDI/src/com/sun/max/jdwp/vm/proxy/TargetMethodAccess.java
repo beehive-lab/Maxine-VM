@@ -20,11 +20,13 @@
  */
 package com.sun.max.jdwp.vm.proxy;
 
-import com.sun.max.jdwp.vm.core.*;
-import com.sun.max.jdwp.vm.data.*;
+import com.sun.max.jdwp.vm.core.JDWPPlus;
 
 /**
  * Class representing a compiled version of the method. This interface is not needed for the JDWP protocol.
+ *  <br>
+ *  <strong>Note:</strong> methods disabled for the time being, as not needed for JDWP and their
+ *  implementations were cluttering {@link TeleCompiledMethod}.  (mlvdv 5/11/2010)
  *
  * @author Thomas Wuerthinger
  *
@@ -35,14 +37,15 @@ public interface TargetMethodAccess {
     /**
      * @return an object that allows access to the machine code instructions of this compiled method
      */
-    @ConstantReturnValue
-    MachineCodeInstructionArray getTargetCodeInstructions();
+//    @ConstantReturnValue
+//    MachineCodeInstructionArray getTargetCodeInstructions();
 
     /**
      * A target method always represents one Java method.
      *
      * @return the JDWP method object of this target method
      */
-    @ConstantReturnValue
-    MethodProvider getMethodProvider();
+//    @ConstantReturnValue
+//    MethodProvider getMethodProvider();
+
 }

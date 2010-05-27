@@ -25,6 +25,7 @@ import java.awt.event.*;
 import java.awt.print.*;
 import java.text.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -58,8 +59,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final BytecodeTableModel tableModel;
     private final BytecodeViewPreferences instanceViewPreferences;
 
-    public JTableBytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, TeleTargetMethod teleTargetMethod) {
-        super(inspection, parent, teleClassMethodActor, teleTargetMethod);
+    public JTableBytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, MaxCompiledCode compiledCode) {
+        super(inspection, parent, teleClassMethodActor, compiledCode);
         this.inspection = inspection;
         tableModel = new BytecodeTableModel(inspection, bytecodeInstructions());
         instanceViewPreferences = new BytecodeViewPreferences(BytecodeViewPreferences.globalPreferences(inspection())) {
@@ -262,7 +263,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     focusRow = model.findRowAtPosition(0);
                 }
             } else if (codeLocation.hasAddress()) {
-                if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(codeLocation.address())) {
+                if (compiledCode() != null && compiledCode().contains(codeLocation.address())) {
                     focusRow = model.findRow(codeLocation.address());
                 }
             }
@@ -408,7 +409,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
      * @return Color to be used for the background of all row labels; may have special overrides in future, as for Target Code
      */
     private Color getRowBackgroundColor(int row) {
-        final IndexedSequence<Integer> searchMatchingRows = getSearchMatchingRows();
+        final List<Integer> searchMatchingRows = getSearchMatchingRows();
         if (searchMatchingRows != null) {
             for (int matchingRow : searchMatchingRows) {
                 if (row == matchingRow) {

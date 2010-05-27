@@ -95,13 +95,13 @@ public final class TeleVMState implements MaxVMState {
         if (previous != null && Sequence.Static.equals(previous.memoryRegions, memoryRegions)) {
             this.memoryRegions = previous.memoryRegions;
         } else {
-            this.memoryRegions = new VectorSequence<MaxMemoryRegion>(memoryRegions);
+            this.memoryRegions = new ArrayListSequence<MaxMemoryRegion>(memoryRegions);
         }
 
         this.singleStepThread = singleStepThread;
-        this.threadsStarted = threadsStarted.length() == 0 ? EMPTY_MAXTHREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsStarted);
-        this.threadsDied = threadsDied.length() == 0 ? EMPTY_MAXTHREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsDied);
-        this.breakpointEvents = breakpointEvents.isEmpty() ? EMPTY_MAXBREAKPOINTEVENT_SEQUENCE : new VectorSequence<MaxBreakpointEvent>(breakpointEvents);
+        this.threadsStarted = threadsStarted.length() == 0 ? EMPTY_MAXTHREAD_SEQUENCE : new ArrayListSequence<MaxThread>(threadsStarted);
+        this.threadsDied = threadsDied.length() == 0 ? EMPTY_MAXTHREAD_SEQUENCE : new ArrayListSequence<MaxThread>(threadsDied);
+        this.breakpointEvents = breakpointEvents.isEmpty() ? EMPTY_MAXBREAKPOINTEVENT_SEQUENCE : new ArrayListSequence<MaxBreakpointEvent>(breakpointEvents);
         this.maxWatchpointEvent = teleWatchpointEvent;
         this.isInGC = isInGC;
         this.previous = previous;
@@ -109,13 +109,13 @@ public final class TeleVMState implements MaxVMState {
         // Compute the current active thread list.
         if (previous == null) {
             // First state transition in the history.
-            this.threads = new VectorSequence<MaxThread>(threadsStarted);
+            this.threads = new ArrayListSequence<MaxThread>(threadsStarted);
         } else if (threadsStarted.length() + threadsDied.length() == 0)  {
             // No changes since predecessor; share the thread list.
             this.threads = previous.threads();
         } else {
             // There have been some thread changes; make a new (immutable) sequence for the new state
-            this.threads = new VectorSequence<MaxThread>(threads);
+            this.threads = new ArrayListSequence<MaxThread>(threads);
         }
     }
 

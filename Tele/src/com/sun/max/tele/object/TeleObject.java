@@ -197,13 +197,13 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * @return local {@link ClassActor}, equivalent to the one in the teleVM that describes the type
+     * @return local {@link ClassActor}, equivalent to the one in the VM that describes the type
      * of this object in the VM.
      * Note that in the singular instance of {@link StaticTuple} this does not correspond to the actual type of the
      * object, which is an exceptional Maxine object that has no ordinary Java type; it returns in this case
      * the type of the class that the tuple helps implement.
      */
-    public ClassActor classActorForType() { //TODO: fix class actor lookup
+    public ClassActor classActorForObjectType() { //TODO: fix class actor lookup
         return getTeleHub().getTeleClassActor().classActor();
     }
 
@@ -349,7 +349,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     public Set<FieldActor> getFieldActors() {
         final Set<FieldActor> instanceFieldActors = new HashSet<FieldActor>();
-        collectInstanceFieldActors(classActorForType(), instanceFieldActors);
+        collectInstanceFieldActors(classActorForObjectType(), instanceFieldActors);
         return instanceFieldActors;
     }
 
@@ -566,11 +566,20 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return a best effort deep copy - with certain substitutions
      */
     public final Object deepCopy() {
+        Object objectCopy = null;
         Trace.begin(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
         long start = System.currentTimeMillis();
-        DeepCopier copier = newDeepCopier();
-        Object objectCopy = makeDeepCopy(copier);
-        Trace.end(COPY_TRACE_VALUE, "Deep copying from VM: " + this + " [" + copier.numberOfCopies() + " objects]", start);
+        if (vm().tryLock()) {
+            try {
+                DeepCopier copier = newDeepCopier();
+                objectCopy = makeDeepCopy(copier);
+                Trace.end(COPY_TRACE_VALUE, "Deep copying from VM: " + this + " [" + copier.numberOfCopies() + " objects]", start);
+            } finally {
+                vm().unlock();
+            }
+        } else {
+            ProgramWarning.message("Deep copy failed (VM busy) for " + this);
+        }
         return objectCopy;
     }
 
@@ -607,6 +616,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     public ReferenceTypeProvider getReferenceType() {
-        return vm().findTeleClassActor(classActorForType().typeDescriptor);
+        return vm().findTeleClassActor(classActorForObjectType().typeDescriptor);
     }
 }

@@ -28,10 +28,9 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.*;
+import com.sun.max.tele.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.jni.*;
 
@@ -58,51 +57,31 @@ public final class TargetJavaFrameDescriptorInspector extends Inspector {
      * Display and highlight a target Java frame descriptor inspector for the frame..
      * @return The inspector, possibly newly created.
      */
-    public static TargetJavaFrameDescriptorInspector make(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi) {
+    public static TargetJavaFrameDescriptorInspector make(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, MaxCompiledCode compiledCode) {
         final Long key = makeKey(javaFrameDescriptor);
         TargetJavaFrameDescriptorInspector inspector = inspectors.get(key);
         if (inspector == null) {
-            inspector = new TargetJavaFrameDescriptorInspector(inspection, javaFrameDescriptor, abi, key);
+            inspector = new TargetJavaFrameDescriptorInspector(inspection, javaFrameDescriptor, compiledCode, key);
             inspectors.put(key, inspector);
         }
         return inspector;
     }
 
+    private final MaxCompiledCode compiledCode;
     private final TargetJavaFrameDescriptor javaFrameDescriptor;
-    private final String framePointer;
     private final Long key;
 
-    private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi, Long key) {
+    private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, MaxCompiledCode compiledCode, Long key) {
         super(inspection);
         this.javaFrameDescriptor = javaFrameDescriptor;
+        this.compiledCode = compiledCode;
         this.key = key;
-        framePointer = TeleIntegerRegisters.symbolizer(vm().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
         final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
 
     private String shortString(BytecodeLocation bytecodeLocation) {
         return bytecodeLocation.classMethodActor.name.toString() + " @ " + bytecodeLocation.bytecodePosition;
-    }
-
-    private String targetLocationToString(TargetLocation targetLocation) {
-        switch (targetLocation.tag()) {
-            case INTEGER_REGISTER: {
-                final TargetLocation.IntegerRegister integerRegister = (TargetLocation.IntegerRegister) targetLocation;
-                return TeleIntegerRegisters.symbolizer(vm().vmConfiguration()).fromValue(integerRegister.index()).toString();
-            }
-            case FLOATING_POINT_REGISTER: {
-                final TargetLocation.FloatingPointRegister floatingPointRegister = (TargetLocation.FloatingPointRegister) targetLocation;
-                return TeleFloatingPointRegisters.symbolizer(vm().vmConfiguration()).fromValue(floatingPointRegister.index()).toString();
-            }
-            case LOCAL_STACK_SLOT: {
-                final TargetLocation.LocalStackSlot localStackSlot = (TargetLocation.LocalStackSlot) targetLocation;
-                return framePointer + "[" + (localStackSlot.index() * vm().wordSize().toInt()) + "]";
-            }
-            default: {
-                return targetLocation.toString();
-            }
-        }
     }
 
     private JPanel createDescriptorPanel(TargetJavaFrameDescriptor descriptor) {
@@ -139,12 +118,12 @@ public final class TargetJavaFrameDescriptorInspector extends Inspector {
             if (entry != null) {
                 local += ": " + entry.name(codeAttribute.constantPool);
             }
-            local += " = " + targetLocationToString(descriptor.locals[i]);
+            local += " = " + compiledCode.targetLocationToString(descriptor.locals[i]);
             panel.add(new TextLabel(inspection(), local));
         }
         for (int i = 0; i < descriptor.stackSlots.length; i++) {
             String stackSlot = "stack #" + i;
-            stackSlot += " = " + targetLocationToString(descriptor.stackSlots[i]);
+            stackSlot += " = " + compiledCode.targetLocationToString(descriptor.stackSlots[i]);
             panel.add(new TextLabel(inspection(), stackSlot));
         }
         panel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor()));

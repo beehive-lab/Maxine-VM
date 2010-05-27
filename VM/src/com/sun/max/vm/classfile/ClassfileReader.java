@@ -932,8 +932,8 @@ public final class ClassfileReader {
                                     final MethodActor substituteeActor = methodActors[j];
                                     if (substituteeActor.name.equals(substituteeName) && substituteeActor.descriptor().equals(descriptor)) {
                                         ProgramError.check(isStatic == substituteeActor.isStatic());
-                                        Trace.line(1, "Substituted " + classDescriptor.toJavaString() + "." + substituteeName + descriptor);
-                                        Trace.line(1, "       with " + classDescriptor.toJavaString() + "." + name + descriptor);
+                                        Trace.line(2, "Substituted " + classDescriptor.toJavaString() + "." + substituteeName + descriptor);
+                                        Trace.line(2, "       with " + classDescriptor.toJavaString() + "." + name + descriptor);
                                         substituteeIndex = j;
                                         name = substituteeName;
 

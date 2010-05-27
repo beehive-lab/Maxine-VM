@@ -656,8 +656,7 @@ public class MaxineTester {
             copyBinary(imageDir, mapLibraryName("tele"));
 
             if (OperatingSystem.current() == OperatingSystem.DARWIN) {
-                // Darwin has funky behavior relating to the namespace for native libraries, use a workaround
-                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, null, logs, true, null, 5);
+                copyBinary(imageDir, mapLibraryName("jvmlinkage"));
             }
 
             generatedImages.put(imageConfig, imageDir);

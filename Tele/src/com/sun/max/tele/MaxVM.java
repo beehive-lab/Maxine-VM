@@ -39,7 +39,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Access to an instance of the Maxine VM.
+ * Access to an instance of the VM.
  * <br>
  * This interface is a work in progress, created originally by splitting what had
  * been very intertwined code into two layers.  The eventual goal is for all VM types
@@ -261,14 +261,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void setVMTraceThreshold(long newThreshold);
 
     /**
-     * Visualizes a processor state registers in terms of flags.
-     *
-     * @param flags contents of a processor state register
-     * @return a string interpreting the contents as a sequence of flags
-     */
-    String visualizeStateRegister(long flags);
-
-    /**
      * Low-level read of a word from memory of the VM.
      */
     Word readWord(Address address);
@@ -320,7 +312,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     ReferenceValue createReferenceValue(Reference reference);
 
     /**
-     * Gets a canonical local {@classActor} corresponding to the type of a heap object in the targetVM, creating one if
+     * Gets a canonical local {@classActor} corresponding to the type of a heap object in the VM, creating one if
      * needed by loading the class using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER} from either the
      * classpath, or if not found on the classpath, by copying the classfile from the VM.
      *
@@ -433,35 +425,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void updateLoadableTypeDescriptorsFromClasspath();
 
     /**
-     * Get the TeleTargetMethod, newly created if needed, that contains a given address in the VM.
-     *
-     * @param address address in target code memory in the VM
-     * @return a possibly newly created target method whose code contains the address.
-     */
-    TeleTargetMethod makeTeleTargetMethod(Address address);
-
-    /**
-     * Create a new TeleNativeTargetRoutine for a block of native code in the VM that has not yet been registered.
-     *
-     * @param codeStart starting address of the code in VM memory
-     * @param codeSize presumed size of the code
-     * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
-     * @return a newly created TeleNativeTargetRoutine
-     */
-    TeleNativeTargetRoutine createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name);
-
-    /**
-     * Gets the existing TeleTargetRoutine, if registered, that contains a given address in the VM, possibly filtering by subtype.
-     *
-     * @param <TeleTargetRoutine_Type> the type of the requested TeleTargetRoutine
-     * @param teleTargetRoutineType the {@link Class} instance representing {@code TeleTargetRoutine_Type}
-     * @param address the look up address
-     * @return the tele target routine of type {@code TeleTargetRoutine_Type} in this registry that contains {@code
-     *         address} or null if no such tele target routine of the requested type exists
-     */
-    <TeleTargetRoutine_Type extends TeleTargetRoutine> TeleTargetRoutine_Type findTeleTargetRoutine(Class<TeleTargetRoutine_Type> teleTargetRoutineType, Address address);
-
-    /**
      * Finds the remote {@link MethodActor} corresponding to a local one.
      *
      * @param <TeleMethodActor_Type> the type of the requested TeleMethodActor
@@ -470,11 +433,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return surrogate for the {@link MethodActor} of type {@code TeleMethodActor_Type} in the VM.
      */
     <TeleMethodActor_Type extends TeleMethodActor> TeleMethodActor_Type findTeleMethodActor(Class<TeleMethodActor_Type> teleMethodActorType, MethodActor methodActor);
-
-    /**
-     * Writes a textual summary describing all  instances of {@link TeleTargetRoutine} known to the VM.
-     */
-    void describeTeleTargetRoutines(PrintStream printStream);
 
     /**
      * Sets debugging trace level for the transport

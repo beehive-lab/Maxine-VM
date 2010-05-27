@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <dlfcn.h>
 
 #include "log.h"
 #include "jni.h"
@@ -151,6 +152,27 @@ void log_print_word(Address address) {
 
 void log_print_newline() {
     log_print_format(NEWLINE_STRING);
+}
+
+void log_print_symbol(Address address) {
+#if !os_GUESTVMXEN
+    Dl_info info;
+    if (dladdr((void *) address, &info) != 0) {
+        if (info.dli_sname == NULL) {
+            log_print("%s (%p)", info.dli_fname, info.dli_fbase);
+            return;
+        } else {
+            log_print("%s (%p) at %s (%p%+d)",
+                            info.dli_fname,
+                            info.dli_fbase,
+                            info.dli_sname,
+                            info.dli_saddr,
+                            address - (Address) info.dli_saddr);
+            return;
+        }
+    }
+#endif
+    log_print_word(address);
 }
 
 void log_print_float(float f) {
