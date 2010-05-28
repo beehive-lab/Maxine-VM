@@ -83,8 +83,9 @@ public final class Throw {
                 Log.print(ip.minus(codeStart).toInt());
                 Log.print("]");
             } else {
-                Log.print("native:");
-                Log.print(ip);
+                Log.print("native{");
+                Log.printSymbol(ip);
+                Log.print("}");
             }
             Log.println();
         }

@@ -20,12 +20,14 @@
  */
 package com.sun.max.ins;
 
+
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
@@ -70,9 +72,9 @@ public final class BootImageTable extends InspectorTable {
 
     private final class BootImageTableModel extends InspectorTableModel {
 
-        private final AppendableIndexedSequence<String> names = new ArrayListSequence<String>(50);
-        private final AppendableIndexedSequence<InspectorLabel> valueLabels = new ArrayListSequence<InspectorLabel>(50);
-        private final AppendableIndexedSequence<InspectorLabel> regionLabels = new ArrayListSequence<InspectorLabel>(50);
+        private final List<String> names = new ArrayList<String>(50);
+        private final List<InspectorLabel> valueLabels = new ArrayList<InspectorLabel>(50);
+        private final List<InspectorLabel> regionLabels = new ArrayList<InspectorLabel>(50);
         private final InspectorLabel dummyLabel;
 
         BootImageTableModel(Inspection inspection) {
@@ -154,9 +156,9 @@ public final class BootImageTable extends InspectorTable {
          * Adds a row to the table.
          */
         private void addRow(String name, InspectorLabel valueLabel, InspectorLabel regionLabel) {
-            names.append(name);
-            valueLabels.append(valueLabel);
-            regionLabels.append(regionLabel != null ? regionLabel : dummyLabel);
+            names.add(name);
+            valueLabels.add(valueLabel);
+            regionLabels.add(regionLabel != null ? regionLabel : dummyLabel);
         }
 
         public int getColumnCount() {
@@ -164,7 +166,7 @@ public final class BootImageTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return names.length();
+            return names.size();
         }
 
         public Object getValueAt(int row, int col) {

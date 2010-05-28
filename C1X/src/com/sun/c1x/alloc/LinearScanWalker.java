@@ -882,8 +882,8 @@ final class LinearScanWalker extends IntervalWalker {
             return;
         }
 
-        Interval beginHint = registerHint.getSplitChildAtOpId(beginPos, LIRInstruction.OperandMode.InputMode, allocator);
-        Interval endHint = registerHint.getSplitChildAtOpId(endPos, LIRInstruction.OperandMode.OutputMode, allocator);
+        Interval beginHint = registerHint.getSplitChildAtOpId(beginPos, LIRInstruction.OperandMode.Input, allocator);
+        Interval endHint = registerHint.getSplitChildAtOpId(endPos, LIRInstruction.OperandMode.Output, allocator);
         if (beginHint == endHint || beginHint.to() != beginPos || endHint.from() != endPos) {
             // registerHint must be split : otherwise the re-writing of use positions does not work
             return;

@@ -118,7 +118,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
             targetMethod.linkDirectCalls(adapter);
         }
 
-        CompilationScheme.Static.notifyCompilationComplete(targetMethod);
+        CompilationScheme.Inspect.notifyCompilationComplete(targetMethod);
     }
 }
 

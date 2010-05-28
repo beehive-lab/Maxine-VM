@@ -72,6 +72,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
 
     @Override
     protected void refresh() {
+        super.refresh();
         if (vm().tryLock()) {
             try {
                 final Reference markReference = vm().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
@@ -83,7 +84,6 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
                 vm().unlock();
             }
         }
-        super.refresh();
     }
 
 }

@@ -110,4 +110,11 @@ public interface MaxRegisterSet extends MaxEntity<MaxRegisterSet> {
      */
     Sequence<MaxRegister> stateRegisters();
 
+    /**
+     * Visualizes a processor state registers in terms of flags.
+     *
+     * @param flags contents of a processor state register
+     * @return a string interpreting the contents as a sequence of flags
+     */
+    String stateRegisterValueToString(long flags);
 }

@@ -22,7 +22,6 @@ package com.sun.max.tele;
 
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
@@ -42,6 +41,8 @@ import com.sun.max.vm.runtime.*;
  */
 public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme{
 
+    private static final Sequence<MaxCodeLocation> EMPTY_METHOD_SEQUENCE = Sequence.Static.empty(MaxCodeLocation.class);
+
     TeleSemiSpaceHeapScheme(TeleVM teleVM) {
         super(teleVM);
     }
@@ -51,10 +52,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
     }
 
     public Sequence<MaxCodeLocation> inspectableMethods() {
-        final AppendableSequence<MaxCodeLocation> locations = new LinkSequence<MaxCodeLocation>();
-        locations.append(CodeLocation.createMachineCodeLocation(vm(), vm().teleMethods().SemiSpaceHeapScheme_increaseMemory, heapSchemeClass().getSimpleName() + ": increase memory"));
-        locations.append(CodeLocation.createMachineCodeLocation(vm(), vm().teleMethods().SemiSpaceHeapScheme_decreaseMemory, heapSchemeClass().getSimpleName() + ": decrease memory"));
-        return locations;
+        return EMPTY_METHOD_SEQUENCE;
     }
 
     public Offset gcForwardingPointerOffset() {

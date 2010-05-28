@@ -18,42 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.method;
+package com.sun.max.tele.thread;
 
-import com.sun.max.tele.*;
-import com.sun.max.tele.memory.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.thread.*;
 
 /**
- * Represents a region of VM memory that holds compiled code.
+ * Java access to the NativeThreadLocalsStruct in Native/share/threadLocals.h for use by Inspector.
+ * Unlike {@link VmThreadLocal} we use a simple enum as we are only interested in the field offsets.
  *
- * @author Michael Van De Vanter
-  */
-public abstract class TargetCodeRegion extends TeleFixedMemoryRegion {
+ * @author Mick Jordan
+ */
+public enum NativeThreadLocal {
+    STACKBASE(0),
+    STACKSIZE(8),
+    HANDLE(16),
+    TLBLOCK(24),
+    TLBLOCKSIZE(32),
+    STACK_YELLOW_ZONE(40),
+    STACK_RED_ZONE(48),
+    STACK_BLUE_ZONE(56),
+    OSDATA(64);
 
-    private final TeleTargetRoutine teleTargetRoutine;
+    public int offset;
 
-    public TargetCodeRegion(TeleVM teleVM, TeleTargetRoutine teleTargetRoutine, Address start, Size size, String description) {
-        super(teleVM, description, start, size);
-        this.teleTargetRoutine = teleTargetRoutine;
-    }
-
-    public TeleTargetRoutine teleTargetRoutine() {
-        return teleTargetRoutine;
-    }
-
-    /**
-     * Does this region of compiled code contain a particular location.
-     * Always false if the location is not a compiled location.
-     *
-     * @param codeLocation location of a code instruction in the VM
-     * @return whether the code instruction is a target instruction in this region
-     */
-    public boolean contains(MaxCodeLocation codeLocation) {
-        if (codeLocation.hasAddress()) {
-            return contains(codeLocation.address());
-        }
-        return false;
+    NativeThreadLocal(int offset) {
+        this.offset = offset;
     }
 
 }

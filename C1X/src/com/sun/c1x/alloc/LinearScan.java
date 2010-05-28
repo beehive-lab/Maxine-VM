@@ -604,9 +604,9 @@ public class LinearScan {
                 final LIRInstruction op = instructions.get(j);
 
                 // iterate input operands of instruction
-                int n = op.operandCount(LIRInstruction.OperandMode.InputMode);
+                int n = op.operandCount(LIRInstruction.OperandMode.Input);
                 for (int k = 0; k < n; k++) {
-                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.InputMode, k);
+                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.Input, k);
 
                     if (operand.isVariable()) {
                         int operandNum = operandNumber(operand);
@@ -652,9 +652,9 @@ public class LinearScan {
                 }
 
                 // iterate temp operands of instruction
-                n = op.operandCount(LIRInstruction.OperandMode.TempMode);
+                n = op.operandCount(LIRInstruction.OperandMode.Temp);
                 for (int k = 0; k < n; k++) {
-                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.TempMode, k);
+                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.Temp, k);
 
                     if (operand.isVariable()) {
                         int varNum = operandNumber(operand);
@@ -671,9 +671,9 @@ public class LinearScan {
                 }
 
                 // iterate output operands of instruction
-                n = op.operandCount(LIRInstruction.OperandMode.OutputMode);
+                n = op.operandCount(LIRInstruction.OperandMode.Output);
                 for (int k = 0; k < n; k++) {
-                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.OutputMode, k);
+                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.Output, k);
 
                     if (operand.isVariable()) {
                         int varNum = operandNumber(operand);
@@ -1220,16 +1220,16 @@ public class LinearScan {
                 // visit definitions (output and temp operands)
                 int k;
                 int n;
-                n = op.operandCount(LIRInstruction.OperandMode.OutputMode);
+                n = op.operandCount(LIRInstruction.OperandMode.Output);
                 for (k = 0; k < n; k++) {
-                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.OutputMode, k);
+                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.Output, k);
                     assert operand.isVariableOrRegister();
                     addDef(operand, opId, registerPriorityOfOutputOperand(op, operand), operand.kind.stackKind());
                 }
 
-                n = op.operandCount(LIRInstruction.OperandMode.TempMode);
+                n = op.operandCount(LIRInstruction.OperandMode.Temp);
                 for (k = 0; k < n; k++) {
-                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.TempMode, k);
+                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.Temp, k);
                     assert operand.isVariableOrRegister();
                     if (C1XOptions.TraceLinearScanLevel >= 2) {
                         TTY.println(" temp %s tempPos %d (%s)", operand, opId, RegisterPriority.MustHaveRegister.name());
@@ -1238,9 +1238,9 @@ public class LinearScan {
                 }
 
                 // visit uses (input operands)
-                n = op.operandCount(LIRInstruction.OperandMode.InputMode);
+                n = op.operandCount(LIRInstruction.OperandMode.Input);
                 for (k = 0; k < n; k++) {
-                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.InputMode, k);
+                    CiValue operand = op.operandAt(LIRInstruction.OperandMode.Input, k);
                     assert operand.isVariableOrRegister();
                     addUse(operand, blockFrom, opId, registerPriorityOfInputOperand(op, operand), null);
                 }
@@ -1499,21 +1499,21 @@ public class LinearScan {
         assert operand.isVariable() : "register number out of bounds";
         assert intervalFor(operand) != null : "no interval found";
 
-        return splitChildAtOpId(intervalFor(operand), block.firstLirInstructionId(), LIRInstruction.OperandMode.OutputMode);
+        return splitChildAtOpId(intervalFor(operand), block.firstLirInstructionId(), LIRInstruction.OperandMode.Output);
     }
 
     Interval intervalAtBlockEnd(BlockBegin block, CiValue operand) {
         assert operand.isVariable() : "register number out of bounds";
         assert intervalFor(operand) != null : "no interval found";
 
-        return splitChildAtOpId(intervalFor(operand), block.lastLirInstructionId() + 1, LIRInstruction.OperandMode.OutputMode);
+        return splitChildAtOpId(intervalFor(operand), block.lastLirInstructionId() + 1, LIRInstruction.OperandMode.Output);
     }
 
     Interval intervalAtOpId(CiValue operand, int opId) {
         assert operand.isVariable() : "register number out of bounds";
         assert intervalFor(operand) != null : "no interval found";
 
-        return splitChildAtOpId(intervalFor(operand), opId, LIRInstruction.OperandMode.InputMode);
+        return splitChildAtOpId(intervalFor(operand), opId, LIRInstruction.OperandMode.Input);
     }
 
     void resolveCollectMappings(BlockBegin fromBlock, BlockBegin toBlock, MoveResolver moveResolver) {
@@ -2066,7 +2066,7 @@ public class LinearScan {
             assert operand.isVariable() || operand.isConstant() : "other cases not allowed here";
 
             if (operand.isVariable()) {
-                OperandMode mode = OperandMode.InputMode;
+                OperandMode mode = OperandMode.Input;
                 BlockBegin block = blockForId(opId);
                 if (block.numberOfSux() == 1 && opId == block.lastLirInstructionId()) {
                     // generating debug information for the last instruction of a block.
@@ -2078,7 +2078,7 @@ public class LinearScan {
                     if (instr instanceof LIRBranch) {
                         if (block.lirBlock.liveOut.get(operandNumber(operand))) {
                             opId = block.suxAt(0).firstLirInstructionId();
-                            mode = OperandMode.OutputMode;
+                            mode = OperandMode.Output;
                         }
                     }
                 }

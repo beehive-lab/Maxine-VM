@@ -79,9 +79,9 @@ public abstract class LIRInstruction {
     public static final OperandMode[] OPERAND_MODES = OperandMode.values();
 
     public enum OperandMode {
-        OutputMode,
-        InputMode,
-        TempMode
+        Output,
+        Input,
+        Temp
     }
 
     private int outputCount;
@@ -327,7 +327,7 @@ public abstract class LIRInstruction {
 
     /**
      * Utility for specializing how a {@linkplain CiValue LIR operand} is formatted to a string.
-     * The {@linkplain OperandFormatter#DEFAULT default formatter} return the value of
+     * The {@linkplain OperandFormatter#DEFAULT default formatter} returns the value of
      * {@link CiValue#toString()}.
      */
     public static class OperandFormatter {
@@ -357,12 +357,15 @@ public abstract class LIRInstruction {
         }
         boolean first = true;
         for (LIROperand operandSlot : inputAndTempOperands) {
-            if (!first) {
-                buf.append(' ');
-            } else {
-                first = false;
+            String operand = operandFmt.format(operandSlot.value(this));
+            if (!operand.isEmpty()) {
+                if (!first) {
+                    buf.append(", ");
+                } else {
+                    first = false;
+                }
+                buf.append(operand);
             }
-            buf.append(operandFmt.format(operandSlot.value(this)));
         }
         if (inputAndTempOperands.length > 1) {
             buf.append(")");
@@ -413,25 +416,25 @@ public abstract class LIRInstruction {
     }
 
     public int operandCount(OperandMode mode) {
-        if (mode == OperandMode.OutputMode) {
+        if (mode == OperandMode.Output) {
             return outputCount;
-        } else if (mode == OperandMode.InputMode) {
+        } else if (mode == OperandMode.Input) {
             return allocatorInputCount + allocatorTempInputCount;
         } else {
-            assert mode == OperandMode.TempMode;
+            assert mode == OperandMode.Temp;
             return allocatorTempInputCount + allocatorTempCount;
         }
     }
 
     public CiValue operandAt(OperandMode mode, int index) {
-        if (mode == OperandMode.OutputMode) {
+        if (mode == OperandMode.Output) {
             assert index < outputCount;
             return allocatorOperands.get(index);
-        } else if (mode == OperandMode.InputMode) {
+        } else if (mode == OperandMode.Input) {
             assert index < allocatorInputCount + allocatorTempInputCount;
             return allocatorOperands.get(index + outputCount);
         } else {
-            assert mode == OperandMode.TempMode;
+            assert mode == OperandMode.Temp;
             assert index < allocatorTempInputCount + allocatorTempCount;
             return allocatorOperands.get(index + outputCount + allocatorInputCount);
         }
@@ -440,14 +443,14 @@ public abstract class LIRInstruction {
     public void setOperandAt(OperandMode mode, int index, CiValue location) {
         assert index < operandCount(mode);
         assert location.kind != CiKind.Illegal;
-        if (mode == OperandMode.OutputMode) {
+        if (mode == OperandMode.Output) {
             assert index < outputCount;
             allocatorOperands.set(index, location);
-        } else if (mode == OperandMode.InputMode) {
+        } else if (mode == OperandMode.Input) {
             assert index < allocatorInputCount + allocatorTempInputCount;
             allocatorOperands.set(index + outputCount, location);
         } else {
-            assert mode == OperandMode.TempMode;
+            assert mode == OperandMode.Temp;
             assert index < allocatorTempInputCount + allocatorTempCount;
             allocatorOperands.set(index + outputCount + allocatorInputCount, location);
         }
@@ -505,11 +508,58 @@ public abstract class LIRInstruction {
         return toString(OperandFormatter.DEFAULT);
     }
 
+    protected static void appendRefMap(StringBuilder buf, OperandFormatter operandFmt, byte[] map, boolean frameRefMap) {
+        CiRegister[] registerReferenceMapOrder = null;
+        if (!frameRefMap) {
+            C1XCompilation current = C1XCompilation.current();
+            registerReferenceMapOrder = current.target.registerConfig.getRegisterReferenceMapOrder();
+        }
+        for (int i = 0; i < map.length; i++) {
+            int b = map[i] & 0xff;
+            if (b != 0) {
+                int index = (i * 8);
+                while (b != 0) {
+                    if ((b & 1) != 0) {
+                        if (buf.length() != 0) {
+                            buf.append(", ");
+                        }
+                        if (frameRefMap) {
+                            buf.append(operandFmt.format(CiStackSlot.get(CiKind.Object, index)));
+                        } else {
+                            CiRegisterValue register = registerReferenceMapOrder[index].asValue(CiKind.Object);
+                            buf.append(operandFmt.format(register));
+                        }
+                    }
+                    b >>>= 1;
+                    index++;
+                }
+            }
+        }
+    }
+
+    protected void appendDebugInfo(StringBuilder buf, OperandFormatter operandFmt, LIRDebugInfo info) {
+        if (info != null) {
+            buf.append(" [bci:").append(info.bci);
+            if (info.hasDebugInfo()) {
+                CiDebugInfo debugInfo = info.debugInfo();
+                StringBuilder refmap = new StringBuilder();
+                if (debugInfo.hasStackRefMap()) {
+                    appendRefMap(refmap, operandFmt, debugInfo.frameRefMap, true);
+                }
+                if (debugInfo.hasRegisterRefMap()) {
+                    appendRefMap(refmap, operandFmt, debugInfo.registerRefMap, false);
+                }
+                if (refmap.length() != 0) {
+                    buf.append(", refmap(").append(refmap.toString().trim()).append(')');
+                }
+            }
+            buf.append(']');
+        }
+    }
+
     public String toString(OperandFormatter operandFmt) {
         StringBuilder buf = new StringBuilder(name()).append(' ').append(operationString(operandFmt));
-        if (info != null) {
-            buf.append(" [bci:").append(info.bci).append("]");
-        }
+        appendDebugInfo(buf, operandFmt, info);
         return buf.toString();
     }
 }

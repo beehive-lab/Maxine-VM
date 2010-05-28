@@ -168,7 +168,7 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
             if (vm().tryLock()) {
                 try {
                     final IndexedSequence<StackFrame> frames = teleNativeThread.frames();
-                    final VariableSequence<MaxStackFrame> maxStackFrames = new VectorSequence<MaxStackFrame>(frames.length());
+                    final VariableSequence<MaxStackFrame> maxStackFrames = new ArrayListSequence<MaxStackFrame>(frames.length());
                     int position = 0;
                     for (StackFrame stackFrame : frames) {
                         maxStackFrames.append(TeleStackFrame.createFrame(vm(), this, position, stackFrame));

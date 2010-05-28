@@ -123,6 +123,16 @@ public class StopPositions {
     }
 
     /**
+     * Determines if a given index in a given stop positions array denotes the position
+     * of a native function call.
+     *
+     * @param index an index within {@code stopPositions}
+     */
+    public boolean isNativeFunctionCall(int index) {
+        return (stopPositions[index] & NATIVE_FUNCTION_CALL) != 0;
+    }
+
+    /**
      * Determines if a given position denotes a native function call.
      *
      * @param position a position within a target method

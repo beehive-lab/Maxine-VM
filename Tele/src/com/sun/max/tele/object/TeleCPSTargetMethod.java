@@ -42,6 +42,7 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
 
     private IndexedSequence<TargetJavaFrameDescriptor> javaFrameDescriptors = null;
 
+    @Override
     public IndexedSequence<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
         if (javaFrameDescriptors == null) {
             final byte[] compressedDescriptors = ((CPSTargetMethod) targetMethod()).compressedJavaFrameDescriptors();

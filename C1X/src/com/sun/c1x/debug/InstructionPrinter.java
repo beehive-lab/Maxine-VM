@@ -753,7 +753,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitResolveClass(ResolveClass i) {
-        out.println("resolve[").print(nameOf(i.type)).print("-" + i.portion + "]");
+        out.print("resolve[").print(nameOf(i.type)).print("-" + i.portion + "]");
     }
 
     @Override

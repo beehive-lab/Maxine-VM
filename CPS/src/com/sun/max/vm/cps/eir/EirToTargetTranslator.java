@@ -296,7 +296,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
             // at target runtime, each method gets linked individually right after generating it:
             targetMethod.linkDirectCalls(adapter);
         }
-        CompilationScheme.Static.notifyCompilationComplete(targetMethod);
+        CompilationScheme.Inspect.notifyCompilationComplete(targetMethod);
 
         eirMethod.cleanupAfterEmitting();
     }
