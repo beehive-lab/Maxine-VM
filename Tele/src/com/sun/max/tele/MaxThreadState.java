@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.thread.*;
 
 /**
@@ -77,7 +78,7 @@ public enum MaxThreadState {
      */
     RUNNING("Running", false);
 
-    public static final IndexedSequence<MaxThreadState> VALUES = new ArraySequence<MaxThreadState>(values());
+    public static final List<MaxThreadState> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 
     private final String asString;
     private final boolean allowsDataAccess;

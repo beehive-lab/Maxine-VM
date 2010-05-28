@@ -23,6 +23,7 @@ package com.sun.max.tele.method;
 import static com.sun.max.asm.dis.Disassembler.*;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
@@ -63,8 +64,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
      */
     private static final class CompiledCodeMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCode> {
 
-        private static final IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY =
-            new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
+        private static final List<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY = Collections.emptyList();
 
         private final TeleCompiledCode owner;
         private final boolean isBootCode;
@@ -83,7 +83,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
             return teleCodeCache.findCompiledCodeRegion(start()).memoryRegion();
         }
 
-        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+        public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
             return EMPTY;
         }
 

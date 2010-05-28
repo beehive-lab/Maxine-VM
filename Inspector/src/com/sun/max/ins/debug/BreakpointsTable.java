@@ -113,7 +113,7 @@ public final class BreakpointsTable extends InspectorTable {
     private final class BreakpointsColumnModel extends InspectorTableColumnModel<BreakpointsColumnKind>  {
 
         private BreakpointsColumnModel(BreakpointsViewPreferences viewPreferences) {
-            super(BreakpointsColumnKind.VALUES.length(), viewPreferences);
+            super(BreakpointsColumnKind.VALUES.size(), viewPreferences);
             addColumn(BreakpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
             addColumn(BreakpointsColumnKind.ENABLED, null, new DefaultCellEditor(new JCheckBox()));
             addColumn(BreakpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
@@ -138,7 +138,7 @@ public final class BreakpointsTable extends InspectorTable {
         private final Set<BreakpointData> breakpoints = new TreeSet<BreakpointData>();
 
         public int getColumnCount() {
-            return BreakpointsColumnKind.VALUES.length();
+            return BreakpointsColumnKind.VALUES.size();
         }
 
         public int getRowCount() {

@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug;
 
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
@@ -89,7 +91,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         }
     }
 
-    public IndexedSequence<StackFrame> frames() {
+    public List<StackFrame> frames() {
         final VariableSequence<StackFrame> frames = new ArrayListSequence<StackFrame>();
         try {
             frames(frames, cpuInstructionPointer, cpuStackPointer, cpuFramePointer);
@@ -98,7 +100,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
             final StackFrame parentFrame = frames.isEmpty() ? null : frames.last();
             frames.append(new ErrorStackFrame(parentFrame, e.toString()));
         }
-        return frames;
+        return new ArrayList<StackFrame>(frames.toCollection());
     }
 
     @Override

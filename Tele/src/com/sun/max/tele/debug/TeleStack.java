@@ -22,8 +22,8 @@ package com.sun.max.tele.debug;
 
 import java.io.*;
 import java.lang.management.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
@@ -33,7 +33,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * Access to the state of a teleStack in the VM.
+ * Access to the state of a stack in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -51,8 +51,6 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
      */
     private static final class StackMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxStack> {
 
-        private IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children =
-            new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
         private TeleStack teleStack;
         private MaxVMState lastUpdatedState = null;
 
@@ -71,18 +69,14 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
             return null;
         }
 
-        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
-            if (teleStack.lastUpdated().newerThan(this.lastUpdatedState)) {
-                final IndexedSequence<MaxStackFrame> frames = teleStack.frames();
-                final VariableSequence<MaxEntityMemoryRegion<? extends MaxEntity>> regions =
-                    new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(frames.length());
-                for (MaxStackFrame stackFrame : frames) {
-                    regions.append(stackFrame.memoryRegion());
-                }
-                children = regions;
-                this.lastUpdatedState = teleStack.lastUpdated();
+        public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+            final List<MaxStackFrame> frames = teleStack.frames();
+            final List<MaxEntityMemoryRegion<? extends MaxEntity>> regions =
+                new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity>>(frames.size());
+            for (MaxStackFrame stackFrame : frames) {
+                regions.add(stackFrame.memoryRegion());
             }
-            return children;
+            return Collections.unmodifiableList(regions);
         }
 
         public MaxStack owner() {
@@ -121,7 +115,7 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
     /**
      * Most recently updated teleStack frames; may be empty, but non-null.
      */
-    private volatile IndexedSequence<MaxStackFrame> maxStackFrames = IndexedSequence.Static.empty(MaxStackFrame.class);
+    private volatile List<MaxStackFrame> maxStackFrames = Collections.emptyList();
 
     /**
      * Creates an object that models a teleStack in the VM.
@@ -159,19 +153,19 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
     }
 
     public MaxStackFrame top() {
-        return frames().first();
+        return frames().get(0);
     }
 
-    public IndexedSequence<MaxStackFrame> frames() {
+    public List<MaxStackFrame> frames() {
         final TeleVMState currentVmState = vm().state();
         if (currentVmState.newerThan(lastUpdatedState)) {
             if (vm().tryLock()) {
                 try {
-                    final IndexedSequence<StackFrame> frames = teleNativeThread.frames();
-                    final VariableSequence<MaxStackFrame> maxStackFrames = new ArrayListSequence<MaxStackFrame>(frames.length());
+                    final List<StackFrame> frames = teleNativeThread.frames();
+                    final List<MaxStackFrame> maxStackFrames = new ArrayList<MaxStackFrame>(frames.size());
                     int position = 0;
                     for (StackFrame stackFrame : frames) {
-                        maxStackFrames.append(TeleStackFrame.createFrame(vm(), this, position, stackFrame));
+                        maxStackFrames.add(TeleStackFrame.createFrame(vm(), this, position, stackFrame));
                         position++;
                     }
                     this.maxStackFrames = maxStackFrames;
@@ -210,13 +204,13 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
 
     public void writeSummary(PrintStream printStream) {
         printStream.println("Stack frames :");
-        for (MaxStackFrame maxStackFrame : frames().clone()) {
+        for (MaxStackFrame maxStackFrame : new ArrayList<MaxStackFrame>(frames())) {
             printStream.println("  " + maxStackFrame.toString());
         }
     }
 
     public CodeLocation returnLocation() {
-        final StackFrame topFrame = teleNativeThread.frames().first();
+        final StackFrame topFrame = teleNativeThread.frames().get(0);
         final StackFrame topFrameCaller = topFrame.callerFrame();
         if (topFrameCaller == null) {
             return null;
