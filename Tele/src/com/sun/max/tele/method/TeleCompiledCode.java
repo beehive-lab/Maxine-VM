@@ -134,14 +134,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
     };
 
     private InstructionMap instructionMap = null;
-
     private final TeleTargetMethod teleTargetMethod;
-
-    /**
-     * Which number is this in the sequence of compilations for the method.
-     */
-    private final int compilationIndex;
-
     private CodeLocation codeStartLocation = null;
     private final CompiledCodeMemoryRegion compiledCodeMemoryRegion;
     private IndexedSequence<MachineCodeLocation> instructionLocations;
@@ -159,8 +152,6 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         this.teleTargetMethod = teleTargetMethod;
         this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(teleVM, this, teleTargetMethod, teleCodeCache, isBootCode);
         this.instructionMap = new CompiledCodeInstructionMap(teleVM, teleTargetMethod);
-        final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
-        this.compilationIndex = teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(teleTargetMethod);
     }
 
     public String entityName() {
@@ -217,7 +208,9 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
     }
 
     public int compilationIndex() {
-        return compilationIndex;
+        // Lazily computed to avoid circularity during construction.
+        final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+        return teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(teleTargetMethod);
     }
 
     public TeleClassMethodActor getTeleClassMethodActor() {
@@ -279,7 +272,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
     public void writeSummary(PrintStream printStream) {
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(printStream));
         writer.println("code for: " + classMethodActor().format("%H.%n(%p)"));
-        writer.println("compilation: " + compilationIndex);
+        writer.println("compilation: " + compilationIndex());
         teleTargetMethod.disassemble(writer);
         writer.flush();
         final ProcessorKind processorKind = vm().vmConfiguration().platform().processorKind;
