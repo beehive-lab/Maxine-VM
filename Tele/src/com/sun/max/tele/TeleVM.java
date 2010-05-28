@@ -252,7 +252,7 @@ public abstract class TeleVM implements MaxVM {
             case CREATE:
                 final String value = options.vmArguments.getValue();
                 final String[] commandLineArguments = "".equals(value) ? new String[0] : value.trim().split(" ");
-                // Guest VM CREATE is more like ATTACH in that it needs the process id, but also may need to be advanced to entry point
+                // Guest VM CREATE is more like ATTACH in that it needs the process id, but also needs to be advanced to entry point
                 teleVM = create(bootImageFile, sourcepath, commandLineArguments, options.debuggeeIdOption.getValue());
                 teleVM.teleProcess().initializeState();
                 try {
@@ -263,12 +263,18 @@ public abstract class TeleVM implements MaxVM {
                 break;
 
             case ATTACH:
+            case DUMP:
+                /* TODO The fundamental difference in this mode is that VM has executed for a while.
+                 * This means that boot heap relocation has (almost certainly) been performed
+                 * AND the boot heap will contain references to the dynamic heap.
+                 * So the delicate dance that us normally performed when setting up the
+                 * TeleClassRegistry is neither necessary nor sufficient.
+                 */
                 teleVM = create(bootImageFile, sourcepath, null, options.debuggeeIdOption.getValue());
                 teleVM.teleProcess().initializeState();
                 break;
 
             case IMAGE:
-            case DUMP:
                 String heap = options.heapOption.getValue();
                 if (heap != null) {
                     assert System.getProperty(ReadOnlyTeleProcess.HEAP_PROPERTY) == null;
