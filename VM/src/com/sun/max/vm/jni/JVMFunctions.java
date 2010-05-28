@@ -50,6 +50,10 @@ public class JVMFunctions {
 
     // Checkstyle: stop method name check
 
+    public static void Unimplemented() {
+        throw FatalError.unimplemented();
+    }
+
     public static Class[] GetClassContext() {
         // Use the stack walker to collect the frames:
         final StackFrameWalker stackFrameWalker = new VmStackFrameWalker(VmThread.current().vmThreadLocals());

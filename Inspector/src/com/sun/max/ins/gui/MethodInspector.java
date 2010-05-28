@@ -78,43 +78,43 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
 
     /**
      * Makes an inspector displaying code for the method pointed to by the instructionPointer. Should always work for
-     * Java methods. For native methods, only works if the code block is already known to the inspector or if the user
+     * Java methods. For external native methods, only works if the code block is already known to the inspector or if the user
      * supplies some additional information at an optional prompt.
      *
-     * @param address Target code location in the VM.
+     * @param address machine code location in the VM.
      * @param interactive Should user be prompted for additional address information in case the location is unknown
      *            native code.
      * @return A possibly new inspector, null if unable to view.
      */
     private static MethodInspector make(final Inspection inspection, Address address, boolean interactive) {
         MethodInspector methodInspector = null;
-        final TeleTargetMethod teleTargetMethod = inspection.vm().makeTeleTargetMethod(address);
-        if (teleTargetMethod != null) {
+        final MaxCompiledCode compiledCode = inspection.vm().codeCache().findCompiledCode(address);
+        if (compiledCode != null) {
             // Java method
-            methodInspector = make(inspection, teleTargetMethod, MethodCodeKind.TARGET_CODE);
+            methodInspector = make(inspection, compiledCode, MethodCodeKind.TARGET_CODE);
         } else {
-            final TeleTargetRoutine teleTargetRoutine = inspection.vm().findTeleTargetRoutine(TeleTargetRoutine.class, address);
-            if (teleTargetRoutine != null) {
-                // Some other kind of known target code
-                methodInspector = make(inspection, teleTargetRoutine);
+            final MaxExternalCode externalCode = inspection.vm().codeCache().findExternalCode(address);
+            if (externalCode != null) {
+                // Some other kind of known external machine code
+                methodInspector = make(inspection, externalCode);
             } else if (interactive) {
                 // Code location is not in a Java method or runtime stub and has not yet been viewed in a native routine.
                 // Give the user a chance to guess at its length so we can register and view it
                 final MutableInnerClassGlobal<MethodInspector> result = new MutableInnerClassGlobal<MethodInspector>();
                 final String defaultDescription = "Native code @0x" + address.toHexString();
-                new NativeLocationInputDialog(inspection, "Describe unknown native code", address, TeleNativeTargetRoutine.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
+                new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxExternalCode.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
                     @Override
-                    public void entered(Address nativeAddress, Size codeSize, String enteredDescription) {
+                    public void entered(Address nativeAddress, Size codeSize, String enteredName) {
                         try {
-                            String description = enteredDescription;
-                            if (description == null || description.equals("")) {
-                                description = defaultDescription;
+                            String name = enteredName;
+                            if (name == null || name.equals("")) {
+                                name = defaultDescription;
                             }
-                            final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().createTeleNativeTargetRoutine(nativeAddress, codeSize, description);
-                            result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));
+                            final MaxExternalCode externalCode = vm().codeCache().createExternalCode(nativeAddress, codeSize, name);
+                            result.setValue(MethodInspector.make(inspection, externalCode));
                             // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                         } catch (IllegalArgumentException illegalArgumentException) {
-                            inspection.gui().errorMessage("Specified native code range overlaps region already registered in Inpsector");
+                            inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
                         }
                     }
                     @Override
@@ -128,8 +128,11 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         return methodInspector;
     }
 
-    private static final VariableMapping<TeleTargetRoutine, MethodInspector> teleTargetRoutineToMethodInspector = new IdentityHashMapping<TeleTargetRoutine, MethodInspector>();
-    private static final VariableMapping<TeleClassMethodActor, MethodInspector> teleClassMethodActorToMethodInspector = new IdentityHashMapping<TeleClassMethodActor, MethodInspector>();
+    private static final VariableMapping<MaxMachineCode, MethodInspector> machineCodeToMethodInspector =
+        new IdentityHashMapping<MaxMachineCode, MethodInspector>();
+
+    private static final VariableMapping<TeleClassMethodActor, MethodInspector> teleClassMethodActorToMethodInspector =
+        new IdentityHashMapping<TeleClassMethodActor, MethodInspector>();
 
     /**
      * Makes an inspector displaying code for specified code location. Should always work for
@@ -160,9 +163,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     private static JavaMethodInspector make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
         // If there are compilations, then inspect in association with the most recent
-        final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentJavaTargetMethod();
-        if (teleTargetMethod != null) {
-            return make(inspection, teleTargetMethod, codeKind);
+        final MaxCompiledCode compiledCode = inspection.vm().codeCache().latestCompilation(teleClassMethodActor);
+        if (compiledCode != null) {
+            return make(inspection, compiledCode, codeKind);
         }
         final MethodInspector methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
         if (methodInspector == null) {
@@ -181,29 +184,29 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      * @return a possibly new {@link MethodInspector} associated with a specific compilation of a Java method in the
      *         VM, and with the requested code view visible.
      */
-    private static JavaMethodInspector make(Inspection inspection, TeleTargetMethod teleTargetMethod, MethodCodeKind codeKind) {
+    private static JavaMethodInspector make(Inspection inspection, MaxCompiledCode compiledCode, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
 
         // Is there already an inspection open that is bound to this compilation?
-        MethodInspector methodInspector = teleTargetRoutineToMethodInspector.get(teleTargetMethod);
+        MethodInspector methodInspector = machineCodeToMethodInspector.get(compiledCode);
         if (methodInspector == null) {
             // No existing inspector is bound to this compilation; see if there is an inspector for this method that is
             // unbound
-            TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+            TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
             }
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
             if (methodInspector == null) {
                 // No existing inspector exists for this method; create new one bound to this compilation
-                javaMethodInspector = new JavaMethodInspector(inspection, parent, teleTargetMethod, codeKind);
+                javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledCode, codeKind);
             } else {
                 // An inspector exists for the method, but not bound to any compilation; bind it to this compilation
                 // TODO (mlvdv) Temp patch; just create a new one in this case too.
-                javaMethodInspector = new JavaMethodInspector(inspection, parent, teleTargetMethod, codeKind);
+                javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledCode, codeKind);
             }
             parent.add(javaMethodInspector);
-            teleTargetRoutineToMethodInspector.put(teleTargetMethod, javaMethodInspector);
+            machineCodeToMethodInspector.put(compiledCode, javaMethodInspector);
         } else {
             // An existing inspector is bound to this method & compilation; ensure that it has the requested code view
             javaMethodInspector = (JavaMethodInspector) methodInspector;
@@ -215,14 +218,14 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     /**
      * @return A possibly new inspector for a block of native code in the VM already known to the inspector.
      */
-    private static NativeMethodInspector make(Inspection inspection, TeleTargetRoutine teleTargetRoutine) {
+    private static NativeMethodInspector make(Inspection inspection, MaxExternalCode maxExternalCode) {
         NativeMethodInspector nativeMethodInspector = null;
-        MethodInspector methodInspector = teleTargetRoutineToMethodInspector.get(teleTargetRoutine);
+        MethodInspector methodInspector = machineCodeToMethodInspector.get(maxExternalCode);
         if (methodInspector == null) {
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
-            nativeMethodInspector = new NativeMethodInspector(inspection, parent, teleTargetRoutine);
+            nativeMethodInspector = new NativeMethodInspector(inspection, parent, maxExternalCode);
             parent.add(nativeMethodInspector);
-            teleTargetRoutineToMethodInspector.put(teleTargetRoutine, nativeMethodInspector);
+            machineCodeToMethodInspector.put(maxExternalCode, nativeMethodInspector);
         } else {
             nativeMethodInspector = (NativeMethodInspector) methodInspector;
         }
@@ -244,7 +247,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         frame.makeMenu(MenuKind.EDIT_MENU);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectTargetRegionMemoryWords(teleTargetRoutine()));
+        memoryMenu.add(actions().inspectTargetRegionMemoryWords(machineCode()));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");
@@ -284,9 +287,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     }
 
     /**
-     * @return Local {@link TeleTargetRoutine} for the method in the VM; null if not bound to target code yet.
+     * @return Local {@link MaxMachineCode} for the method in the VM; null if not bound to compiled code yet.
      */
-    public abstract TeleTargetRoutine teleTargetRoutine();
+    public abstract MaxMachineCode machineCode();
 
     /**
      * @return Java method information; null if not known to be associated with a Java method.
@@ -312,7 +315,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing for " + getTitle());
-        teleTargetRoutineToMethodInspector.remove(teleTargetRoutine());
+        machineCodeToMethodInspector.remove(machineCode());
         teleClassMethodActorToMethodInspector.remove(teleClassMethodActor());
         super.inspectorClosing();
     }

@@ -374,9 +374,7 @@ public class CFGPrinter {
                 if (operand.kind != CiKind.Illegal) {
                     op += "|" + operand.kind.typeChar;
                 }
-                if (!asStateOrHIROperandResult) {
-                    op = "[" + op + "]";
-                } else {
+                if (asStateOrHIROperandResult) {
                     op = " \"" + op + "\" ";
                 }
                 return op;

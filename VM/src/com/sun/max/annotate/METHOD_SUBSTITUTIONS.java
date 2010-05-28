@@ -95,8 +95,8 @@ public @interface METHOD_SUBSTITUTIONS {
                     if (substituteToOriginal.put(substituteMethodActor, originalMethodActor) != null) {
                         ProgramError.unexpected("only one original method per substitute allowed - " + substituteMethod);
                     }
-                    Trace.line(1, "Substituted " + originalMethodActor.format("%h.%n(%p)"));
-                    Trace.line(1, "       with " + substituteMethodActor.format("%h.%n(%p)"));
+                    Trace.line(2, "Substituted " + originalMethodActor.format("%h.%n(%p)"));
+                    Trace.line(2, "       with " + substituteMethodActor.format("%h.%n(%p)"));
                     originalMethodActor.setFlagsFromSubstitute(substituteMethodActor);
                     MaxineVM.registerImageMethod(originalMethodActor); // TODO: loosen this requirement
                 } else {

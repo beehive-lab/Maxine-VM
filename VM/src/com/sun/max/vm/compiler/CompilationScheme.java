@@ -25,7 +25,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.MethodProfile;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 
@@ -124,11 +126,8 @@ public interface CompilationScheme extends VMScheme {
     /**
      * This class provides a facade for the {@code CompilationScheme} interface, simplifying usage. It provides a number
      * of utilities to, for example, compile a method, get a method's current entrypoint, reset its method state, etc.
-     * <br>
-     * It also contains methods to be called when certain events occur, needed for some Inspector functions to work.
      *
      * @author Ben L. Titzer
-     * @author Michael Van De Vanter
      */
     public final class Static {
         private Static() {
@@ -214,6 +213,16 @@ public interface CompilationScheme extends VMScheme {
             }
         }
 
+    }
+
+    /**
+     * Collection of methods (the public ones) to be called by all implementations when
+     * specified events occur; these supports certain Inspector services.
+     *
+     * @author Michael Van De Vanter
+     */
+    public static final class Inspect {
+
         /**
          * Announces that a compilation has just been completed; must be called for
          * certain Inspector services to work.
@@ -242,5 +251,8 @@ public interface CompilationScheme extends VMScheme {
         private static void inspectableCompilationComplete(TargetMethod targetMethod) {
         }
 
+        // Ensure that the above method is compiled into the boot image so that it can be inspected conveniently
+        private static CriticalMethod inspectableCompilationCompleteCriticalMethod =
+            new CriticalMethod(CompilationScheme.Inspect.class, "inspectableCompilationComplete", SignatureDescriptor.create(void.class, TargetMethod.class));
     }
 }

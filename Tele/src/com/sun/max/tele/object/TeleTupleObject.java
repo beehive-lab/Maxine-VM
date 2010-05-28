@@ -59,7 +59,7 @@ public class TeleTupleObject extends TeleObject {
 
     @Override
     public Size objectSize() {
-        return classActorForType().dynamicTupleSize();
+        return classActorForObjectType().dynamicTupleSize();
     }
 
     @Override
@@ -82,7 +82,7 @@ public class TeleTupleObject extends TeleObject {
 
     @Override
     public TeleClassMethodActor getTeleClassMethodActorForObject() {
-        final Class<?> javaClass = classActorForType().toJava();
+        final Class<?> javaClass = classActorForObjectType().toJava();
         if (IrMethod.class.isAssignableFrom(javaClass)) {
             final Reference classMethodActorReference = vm().teleFields().IrMethod_classMethodActor(javaClass.asSubclass(IrMethod.class)).readReference(reference());
             return (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
@@ -92,7 +92,7 @@ public class TeleTupleObject extends TeleObject {
 
     @Override
     public Object shallowCopy() {
-        final ClassActor classActor = classActorForType();
+        final ClassActor classActor = classActorForObjectType();
         final Class<?> javaClass = classActor.toJava();
         try {
             final Object newTupleObject = Objects.allocateInstance(javaClass);
@@ -124,7 +124,7 @@ public class TeleTupleObject extends TeleObject {
 
     @Override
     protected Object createDeepCopy(DeepCopier context) {
-        final ClassActor classActor = classActorForType();
+        final ClassActor classActor = classActorForObjectType();
         final Class<?> javaClass = classActor.toJava();
         final String classMessage = "Copying instance fields of " + javaClass + " from VM";
         Trace.begin(COPY_TRACE_VALUE, classMessage);

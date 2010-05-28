@@ -20,8 +20,6 @@
  */
 package test.com.sun.max.tele.interpreter;
 
-import java.util.*;
-
 import junit.framework.*;
 
 import org.junit.runner.*;

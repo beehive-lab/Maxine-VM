@@ -54,7 +54,7 @@ public final class StringInspector extends ObjectInspector {
     protected void createView() {
         super.createView();
         final TeleString teleString = (TeleString) teleObject();
-        final String name = teleString.classActorForType().javaSignature(false);
+        final String name = teleString.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new JTabbedPane();
 

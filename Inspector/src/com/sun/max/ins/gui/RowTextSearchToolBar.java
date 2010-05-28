@@ -22,12 +22,12 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 import java.util.regex.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.program.*;
 
@@ -48,7 +48,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
     private final JButton nextButton;
     private final JButton previousButton;
 
-    private IndexedSequence<Integer> matchingRows = null;
+    private List<Integer> matchingRows = null;
 
     private class SearchTextListener implements DocumentListener {
         public void changedUpdate(DocumentEvent e) {
@@ -98,7 +98,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         textField.getDocument().addDocumentListener(new SearchTextListener());
         textField.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-                if  (matchingRows.length() > 0) {
+                if  (matchingRows.size() > 0) {
                     owner.selectNextResult();
                 }
             }
@@ -175,7 +175,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
                 return;
             }
             matchingRows = searcher.search(pattern);
-            final int matchCount = matchingRows.length();
+            final int matchCount = matchingRows.size();
             if (matchCount == 0) {
                 statusLabel.setText("no matches");
             }  else if (matchCount == 1) {

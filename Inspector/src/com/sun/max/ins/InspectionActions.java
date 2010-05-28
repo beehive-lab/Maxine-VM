@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins;
 
-import static com.sun.max.asm.dis.Disassembler.*;
-
 import java.io.*;
 import java.lang.reflect.*;
 import java.math.*;
@@ -30,8 +28,6 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
@@ -40,10 +36,9 @@ import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
-import com.sun.max.io.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxMachineCode.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
@@ -54,7 +49,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
@@ -133,7 +127,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Actions that are held and shared; they have state that will be refreshed.
      * This is particularly important for actions that enable/disable, depending on the inspection state.
      */
-    private final AppendableSequence<InspectorAction> refreshableActions = new ArrayListSequence<InspectorAction>();
+    private final List<InspectorAction> refreshableActions = new ArrayList<InspectorAction>();
 
     InspectionActions(Inspection inspection) {
         super(inspection);
@@ -439,7 +433,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ChangeInterpreterUseLevelAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -487,7 +481,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetTransportDebugLevelAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -588,7 +582,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetVMTraceLevelAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -634,7 +628,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetVMTraceThresholdAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -706,7 +700,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -738,7 +732,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewMemoryRegionsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -797,7 +791,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewRegistersAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -829,7 +823,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewStackAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -861,7 +855,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewThreadsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -893,7 +887,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewVmThreadLocalsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -925,7 +919,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewWatchpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -1008,7 +1002,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), "Inspect memory bytes at address...");
             this.address = null;
             this.teleObject = null;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         InspectMemoryBytesAction(Address address, String actionTitle) {
@@ -1268,50 +1262,44 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  inspect the memory holding a block of target code.
+     * Action:  inspect the memory holding a block of machine code.
      */
     final class InspectTargetRegionMemoryWordsAction extends InspectorAction {
 
         private static final String  DEFAULT_TITLE = "Inspect Target Code memory region";
-        private final TeleTargetRoutine teleTargetRoutine;
+        private final MaxMachineCode machineCode;
 
-        private InspectTargetRegionMemoryWordsAction(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+        private InspectTargetRegionMemoryWordsAction(MaxMachineCode machineCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleTargetRoutine = teleTargetRoutine;
+            this.machineCode = machineCode;
         }
 
         @Override
         protected void procedure() {
-            final String description;
-            if (teleTargetRoutine instanceof TeleTargetMethod) {
-                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
-                description = "Target Method " + inspection().nameDisplay().shortName(teleTargetMethod);
-            } else {
-                description = "Native Target Method: " + teleTargetRoutine.getName();
-            }
-            actions().inspectRegionMemoryWords(teleTargetRoutine.targetCodeRegion(), description).perform();
+            final String description = machineCode.entityName();
+            actions().inspectRegionMemoryWords(machineCode.memoryRegion(), description).perform();
         }
     }
 
     /**
-     * Creates an action that will inspect memory containing a block of target code.
+     * Creates an action that will inspect memory containing a block of machine code.
      *
-     * @param teleTargetRoutine a block of target code in the VM, either a Java method or native
+     * @param machineCode a block of machine code in the VM, either a Java method or external native
      * @param actionTitle a name for the action
      * @return an Action that will create a Memory Words Inspector for the code
      */
-    public final InspectorAction inspectTargetRegionMemoryWords(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
-        return new InspectTargetRegionMemoryWordsAction(teleTargetRoutine, actionTitle);
+    public final InspectorAction inspectTargetRegionMemoryWords(MaxMachineCode machineCode, String actionTitle) {
+        return new InspectTargetRegionMemoryWordsAction(machineCode, actionTitle);
     }
 
     /**
      * Creates an action that will inspect memory containing a block of target code.
      *
-     * @param teleTargetRoutine a block of target code in the VM, either a Java method or native
+     * @param machineCode a block of target code in the VM, either a Java method or native
      * @return an Action that will create a Memory Words Inspector for the code
      */
-    public final InspectorAction inspectTargetRegionMemoryWords(TeleTargetRoutine teleTargetRoutine) {
-        return new InspectTargetRegionMemoryWordsAction(teleTargetRoutine, null);
+    public final InspectorAction inspectTargetRegionMemoryWords(MaxMachineCode machineCode) {
+        return new InspectTargetRegionMemoryWordsAction(machineCode, null);
     }
 
     /**
@@ -1398,7 +1386,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), actionTitle == null ? ("Inspect memory region \"" + regionName + "\"") : actionTitle);
             this.memoryRegion = memoryRegion;
             this.regionName = regionName;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             refresh(true);
         }
 
@@ -1469,7 +1457,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         InspectSelectedMemoryRegionWordsAction() {
             super(inspection(), DEFAULT_TITLE);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             refresh(true);
         }
 
@@ -1893,29 +1881,27 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Menu: contains actions to inspect each of the compilations of a target method.
+     * Menu: contains actions to inspect each of the compilations of a method.
      */
     final class InspectTargetMethodCompilationsMenu extends InspectorMenu {
 
         private static final String DEFAULT_TITLE = "Compilations";
         private final TeleClassMethodActor teleClassMethodActor;
 
-        public InspectTargetMethodCompilationsMenu(TeleClassMethodActor teleClassMethodactor, String actionTitle) {
+        public InspectTargetMethodCompilationsMenu(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
             super(actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleClassMethodActor = teleClassMethodactor;
+            this.teleClassMethodActor = teleClassMethodActor;
             refresh(true);
         }
 
         @Override
         public void refresh(boolean force) {
-            if (getMenuComponentCount() < teleClassMethodActor.numberOfCompilations()) {
-                for (int index = getMenuComponentCount(); index < teleClassMethodActor.numberOfCompilations(); index++) {
-                    final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getJavaTargetMethod(index);
-                    final StringBuilder name = new StringBuilder();
-                    name.append(inspection().nameDisplay().methodCompilationID(teleTargetMethod));
-                    name.append("  ");
-                    name.append(teleTargetMethod.classActorForType().simpleName());
-                    add(actions().inspectObject(teleTargetMethod, name.toString()));
+            final IndexedSequence<MaxCompiledCode> compilations = vm().codeCache().compilations(teleClassMethodActor);
+            if (getMenuComponentCount() < compilations.length()) {
+                for (int index = getMenuComponentCount(); index < compilations.length(); index++) {
+                    final MaxCompiledCode compiledCode = compilations.get(index);
+                    final String name = inspection().nameDisplay().shortName(compiledCode);
+                    add(actions().inspectObject(compiledCode.teleTargetMethod(), name.toString()));
                 }
             }
         }
@@ -1990,7 +1976,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 @Override
                 public String validateInput(Address address) {
-                    if (vm().makeTeleTargetMethod(address) != null) {
+                    if (vm().codeCache().findMachineCode(address) != null) {
                         return null;
                     }
                     return "There is no method containing the address " + address.toHexString();
@@ -2035,7 +2021,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             assert codeLocation != null;
             this.codeLocation = codeLocation;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -2064,7 +2050,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "View code at current selection";
         public ViewMethodCodeAtSelectionAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -2096,7 +2082,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "View code at current IP";
         public ViewMethodCodeAtIPAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -2215,7 +2201,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewMethodTargetCodeByNameAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "View target code...";
+        private static final String DEFAULT_TITLE = "View compiled code...";
 
         public ViewMethodTargetCodeByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2223,11 +2209,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View target code for method in class...", "Select");
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View compiled code for method in class...", "Select");
             if (teleClassActor != null) {
-                final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(inspection(), teleClassActor, "View Target Code for Method...", "View Code", false);
-                if (teleTargetMethods != null) {
-                    focus().setCodeLocation(teleTargetMethods.first().callEntryLocation());
+                final Sequence<MaxCompiledCode> compilations =
+                    TargetMethodSearchDialog.show(inspection(), teleClassActor, "View Compiled Code for Method...", "View Code", false);
+                if (compilations != null) {
+                    focus().setCodeLocation(compilations.first().getCallEntryLocation());
                 }
             }
         }
@@ -2244,9 +2231,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} the target code for an interactively specified method.
+     * Action:  displays in the {@MethodInspector} the compiled code for an interactively specified method.
      */
-// TODO (mlvdv) review
     final class ViewMethodTargetCodeAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View target code...";
@@ -2257,9 +2243,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(inspection(), null, "View Target Code for Method...", "View Code", false);
-            if (teleTargetMethods != null) {
-                focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(teleTargetMethods.first().callEntryPoint(), "target code for method"), false);
+            final Sequence<MaxCompiledCode> compilations =
+                TargetMethodSearchDialog.show(inspection(), null, "View Compiled Code for Method...", "View Code", false);
+            if (compilations != null) {
+                focus().setCodeLocation(compilations.first().getCallEntryLocation(), false);
             }
         }
     }
@@ -2275,7 +2262,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Menu: contains actions to view code for each of the compilations of a target method.
+     * Menu: contains actions to view code for each of the compilations of a method.
      */
     final class ViewTargetMethodCodeMenu extends InspectorMenu {
 
@@ -2290,18 +2277,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            if (getMenuComponentCount() < teleClassMethodActor.numberOfCompilations()) {
-                for (int index = getMenuComponentCount(); index < teleClassMethodActor.numberOfCompilations(); index++) {
-                    final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getJavaTargetMethod(index);
+            final IndexedSequence<MaxCompiledCode> compilations = vm().codeCache().compilations(teleClassMethodActor);
+            if (getMenuComponentCount() < compilations.length()) {
+                for (int index = getMenuComponentCount(); index < compilations.length(); index++) {
+                    final MaxCompiledCode compiledCode = compilations.get(index);
                     final StringBuilder name = new StringBuilder();
-                    name.append(inspection().nameDisplay().methodCompilationID(teleTargetMethod));
+                    name.append(inspection().nameDisplay().methodCompilationID(compiledCode));
                     name.append("  ");
-                    name.append(teleTargetMethod.classActorForType().simpleName());
-                    add(actions().viewMethodCodeAtLocation(teleTargetMethod.callEntryLocation(), name.toString()));
+                    name.append(compiledCode.classActorForObjectType().simpleName());
+                    add(actions().viewMethodCodeAtLocation(compiledCode.getCallEntryLocation(), name.toString()));
                 }
             }
         }
     }
+
 
     /**
      * Creates a menu containing actions to inspect the target code for all compilations of a method, dynamically updated
@@ -2420,62 +2409,34 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * Action:  copies to the system clipboard a textual representation of the
-     * disassembled target code for a compiled method.
+     * disassembled machine code for a method compilation.
      */
-    final class CopyTargetMethodCodeToClipboardAction extends InspectorAction {
+    final class CopyCompiledCodeToClipboardAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Copy disassembled target code to clipboard";
+        private static final String DEFAULT_TITLE = "Copy disassembled machine code to clipboard";
 
-        private final TeleTargetMethod teleTargetMethod;
+        private final MaxCompiledCode compiledCode;
 
-        /**
-         * @param teleTargetRoutine
-         */
-        private CopyTargetMethodCodeToClipboardAction(TeleTargetMethod teleTargetMethod, String actionTitle) {
+        private CopyCompiledCodeToClipboardAction(MaxCompiledCode compiledCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleTargetMethod = teleTargetMethod;
+            this.compiledCode = compiledCode;
         }
 
         @Override
         public void procedure() {
-            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
-            writer.println("target method: " + teleTargetMethod.classMethodActor().format("%H.%n(%p)"));
-            writer.println("compilation: " + inspection().nameDisplay().methodCompilationID(teleTargetMethod) + "  " + teleTargetMethod.classActorForType().simpleName());
-            teleTargetMethod.disassemble(writer);
-            writer.flush();
-            final ProcessorKind processorKind = vm().vmConfiguration().platform().processorKind;
-            final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod.targetMethod().encodedInlineDataDescriptors());
-            final Pointer startAddress = teleTargetMethod.getCodeStart();
-            final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
-                @Override
-                protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
-                    final String string = super.disassembledObjectString(disassembler, disassembledObject);
-                    if (string.startsWith("call ")) {
-                        final BytecodeLocation bytecodeLocation = null; //_teleTargetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
-                        if (bytecodeLocation != null) {
-                            final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
-                            if (methodRef != null) {
-                                final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool;
-                                return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
-                            }
-                        }
-                    }
-                    return string;
-                }
-            };
-            disassemble(byteArrayOutputStream, teleTargetMethod.getCode(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
-            gui().postToClipboard(byteArrayOutputStream.toString());
+            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            final PrintStream printStream = new PrintStream(outputStream);
+            compiledCode.writeSummary(printStream);
+            gui().postToClipboard(outputStream.toString());
         }
     }
 
     /**
-     * @return an Action that copies to the system clipboard a textual disassembly of a method's target code.
+     * @return an Action that copies to the system clipboard a textual disassembly of machine code.
      */
-    public InspectorAction copyTargetMethodCodeToClipboard(TeleTargetMethod teleTargetMethod, String actionTitle) {
-        return new CopyTargetMethodCodeToClipboardAction(teleTargetMethod, actionTitle);
+    public InspectorAction copyCompiledCodeToClipboard(MaxCompiledCode compiledCode, String actionTitle) {
+        return new CopyCompiledCodeToClipboardAction(compiledCode, actionTitle);
     }
-
 
     /**
      * Menu: display a sub-menu of commands to make visible
@@ -2596,7 +2557,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         RemoveAllBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
                 public void breakpointStateChanged() {
@@ -2619,7 +2580,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && (vm().breakpointManager().breakpoints().length() > 0));
+            setEnabled(inspection().hasProcess() && (vm().breakpointManager().breakpoints().size() > 0));
         }
     }
 
@@ -2845,7 +2806,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         ToggleTargetCodeBreakpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.codeLocation = null;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
@@ -2925,7 +2886,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetTargetCodeBreakpointAtAddressAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             refresh(true);
         }
 
@@ -2966,58 +2927,57 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  sets a breakpoint at every label in a target method.
+     * Action:  sets a breakpoint at every label in a compilation.
      */
-    final class SetTargetCodeLabelBreakpointsAction extends InspectorAction {
+    final class SetMachineCodeLabelBreakpointsAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Set breakpoint at every target code label";
-        private final Sequence<MaxCodeLocation> locations;
+        private static final String DEFAULT_TITLE = "Set breakpoint at every machine code label";
+        private final InstructionMap instructionMap;
 
-        SetTargetCodeLabelBreakpointsAction(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+        SetMachineCodeLabelBreakpointsAction(MaxCompiledCode compiledCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.locations = teleTargetRoutine.labelLocations();
-            setEnabled(inspection().hasProcess() && locations.length() > 0);
+            this.instructionMap = compiledCode.instructionMap();
+            setEnabled(inspection().hasProcess() && instructionMap.labelIndexes().length() > 0);
         }
 
         @Override
         protected void procedure() {
             try {
-                for (MaxCodeLocation location : locations) {
-                    vm().breakpointManager().makeBreakpoint(location);
+                for (int index : instructionMap.labelIndexes()) {
+                    vm().breakpointManager().makeBreakpoint(instructionMap.instructionLocation(index));
                 }
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
             }
         }
-
     }
 
     /**
-     * @return an Action that will set a breakpoint at every label in a target routine
+     * @return an Action that will set a breakpoint at every machine code label in a compilation
      */
-    public final InspectorAction setTargetCodeLabelBreakpoints(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
-        return new SetTargetCodeLabelBreakpointsAction(teleTargetRoutine, actionTitle);
+    public final InspectorAction setMachineCodeLabelBreakpoints(MaxCompiledCode compiledCode, String actionTitle) {
+        return new SetMachineCodeLabelBreakpointsAction(compiledCode, actionTitle);
     }
 
     /**
-     * Action:  removes any breakpoints at labels in a target method.
+     * Action:  removes any breakpoints at machine code labels.
      */
-    final class RemoveTargetCodeLabelBreakpointsAction extends InspectorAction {
+    final class RemoveMachineCodeLabelBreakpointsAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Remove breakpoint at every target code label";
-        private final Sequence<MaxCodeLocation> labelLocations;
+        private static final String DEFAULT_TITLE = "Remove breakpoint at every machine code label";
+        private final InstructionMap instructionMap;
 
-        RemoveTargetCodeLabelBreakpointsAction(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+        RemoveMachineCodeLabelBreakpointsAction(MaxCompiledCode compiledCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            labelLocations = teleTargetRoutine.labelLocations();
-            setEnabled(inspection().hasProcess() && labelLocations.length() > 0);
+            this.instructionMap = compiledCode.instructionMap();
+            setEnabled(inspection().hasProcess() && instructionMap.labelIndexes().length() > 0);
         }
 
         @Override
         protected void procedure() {
             try {
-                for (MaxCodeLocation location : labelLocations) {
-                    final MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(location);
+                for (int index : instructionMap.labelIndexes()) {
+                    final MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(instructionMap.instructionLocation(index));
                     if (breakpoint != null) {
                         breakpoint.remove();
                     }
@@ -3029,30 +2989,30 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @return an Action that will remove any breakpoints labels in a target method.
+     * @return an Action that will remove any breakpoints machine code labels.
      */
-    public final InspectorAction removeTargetCodeLabelBreakpoints(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
-        return new RemoveTargetCodeLabelBreakpointsAction(teleTargetRoutine, actionTitle);
+    public final InspectorAction removeMachineCodeLabelBreakpoints(MaxCompiledCode compiledCode, String actionTitle) {
+        return new RemoveMachineCodeLabelBreakpointsAction(compiledCode, actionTitle);
     }
 
      /**
-     * Action:  sets target code breakpoints at  a specified method entry.
+     * Action:  sets machine code breakpoints at a specified compiled code entry.
      */
-    final class SetTargetCodeBreakpointAtMethodEntryAction extends InspectorAction {
+    final class SetMachineCodeBreakpointAtEntryAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Set target code breakpoint at method entry";
-        private final TeleTargetMethod teleTargetMethod;
-        SetTargetCodeBreakpointAtMethodEntryAction(TeleTargetMethod teleTargetMethod, String actionTitle) {
+        private static final String DEFAULT_TITLE = "Set machine code breakpoint at code entry";
+        private final MaxCompiledCode compiledCode;
+        SetMachineCodeBreakpointAtEntryAction(MaxCompiledCode compiledCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleTargetMethod = teleTargetMethod;
-            refreshableActions.append(this);
+            this.compiledCode = compiledCode;
+            refreshableActions.add(this);
         }
 
         @Override
         protected void procedure() {
-            final MaxCodeLocation entryLocation = teleTargetMethod.entryLocation();
+            final MaxCodeLocation callEntryLocation = compiledCode.getCallEntryLocation();
             try {
-                MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(entryLocation);
+                MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(callEntryLocation);
                 focus().setBreakpoint(breakpoint);
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -3066,42 +3026,45 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @return an interactive Action that sets a target code breakpoint at  a method entry
+     * @return an interactive Action that sets a machine code breakpoint at code entry.
      */
-    public final InspectorAction setTargetCodeBreakpointAtMethodEntry(TeleTargetMethod teleTargetMethod, String actionTitle) {
-        return new  SetTargetCodeBreakpointAtMethodEntryAction(teleTargetMethod, actionTitle);
+    public final InspectorAction setMachineCodeBreakpointAtEntry(MaxCompiledCode compiledCode, String actionTitle) {
+        return new  SetMachineCodeBreakpointAtEntryAction(compiledCode, actionTitle);
     }
 
     /**
-     * @return an interactive Action that sets a target code breakpoint at  a method entry
+     * @return an interactive Action that sets a compiled code breakpoint at  a method entry
      */
-    public final InspectorAction setTargetCodeBreakpointAtMethodEntry(TeleTargetMethod teleTargetMethod) {
-        return new  SetTargetCodeBreakpointAtMethodEntryAction(teleTargetMethod, null);
+    public final InspectorAction setMachineCodeBreakpointAtEntry(MaxCompiledCode compiledCode) {
+        return new  SetMachineCodeBreakpointAtEntryAction(compiledCode, null);
     }
 
     /**
-     * Action:  sets target code breakpoints at  method entries to be selected interactively by name.
+     * Action:  sets machine code breakpoints at code entries to be selected interactively by name.
      */
-    final class SetTargetCodeBreakpointAtMethodEntriesByNameAction extends InspectorAction {
+    final class SetMachineCodeBreakpointAtEntriesByNameAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Compiled methods...";
+        private static final String DEFAULT_TITLE = "Compiled code...";
 
-        SetTargetCodeBreakpointAtMethodEntriesByNameAction(String actionTitle) {
+        SetMachineCodeBreakpointAtEntriesByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
         protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "Class for compiled method entry breakpoints...", "Select");
+            final TeleClassActor teleClassActor =
+                ClassActorSearchDialog.show(inspection(), "Class for machine code entry breakpoints...", "Select");
             if (teleClassActor != null) {
-                final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(inspection(), teleClassActor, "Compiled Method Entry Breakpoints", "Set Breakpoints", true);
-                if (teleTargetMethods != null) {
+                final Sequence<MaxCompiledCode> compilations =
+                    TargetMethodSearchDialog.show(inspection(), teleClassActor, "Compiled Method Entry Breakpoints", "Set Breakpoints", true);
+                if (compilations != null) {
                     try {
                         // There may be multiple compilations of a method in the result.
                         MaxBreakpoint targetBreakpoint = null;
-                        for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
-                            targetBreakpoint = vm().breakpointManager().makeBreakpoint(teleTargetMethod.getTeleClassMethodActor().entryLocation());
+                        for (MaxCompiledCode compiledCode : compilations) {
+                            targetBreakpoint =
+                                vm().breakpointManager().makeBreakpoint(compiledCode.getCallEntryLocation());
                         }
                         focus().setBreakpoint(targetBreakpoint);
                     } catch (MaxVMBusyException maxVMBusyException) {
@@ -3117,26 +3080,26 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final SetTargetCodeBreakpointAtMethodEntriesByNameAction setTargetCodeBreakpointAtMethodEntriesByNameAction =
-        new SetTargetCodeBreakpointAtMethodEntriesByNameAction(null);
+    private final SetMachineCodeBreakpointAtEntriesByNameAction setMachineCodeBreakpointAtEntriesByNameAction =
+        new SetMachineCodeBreakpointAtEntriesByNameAction(null);
 
     /**
      * @return Singleton interactive Action that sets a target code breakpoint at  a method entry to be selected by name.
      */
-    public final InspectorAction setTargetCodeBreakpointAtMethodEntriesByName() {
-        return setTargetCodeBreakpointAtMethodEntriesByNameAction;
+    public final InspectorAction setMachineCodeBreakpointAtEntriesByName() {
+        return setMachineCodeBreakpointAtEntriesByNameAction;
     }
 
     /**
-     * Action: sets target code breakpoint at object initializers of a class specified interactively by name.
+     * Action: sets machine code breakpoint at object initializers of a class specified interactively by name.
      */
-    final class SetTargetCodeBreakpointAtObjectInitializerAction extends InspectorAction {
+    final class SetMachineCodeBreakpointAtObjectInitializerAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Object initializers of class...";
 
-        SetTargetCodeBreakpointAtObjectInitializerAction(String actionTitle) {
+        SetMachineCodeBreakpointAtObjectInitializerAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -3151,9 +3114,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                             if (virtualMethodActor.name == SymbolTable.INIT) {
                                 final TeleClassMethodActor teleClassMethodActor = vm().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
                                 if (teleClassMethodActor != null) {
-                                    for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
-                                        final MaxCodeLocation entryLocation = teleTargetMethod.entryLocation();
-                                        breakpoint = vm().breakpointManager().makeBreakpoint(entryLocation);
+                                    for (MaxCompiledCode compiledCode : vm().codeCache().compilations(teleClassMethodActor)) {
+                                        final MaxCodeLocation callEntryLocation = compiledCode.getCallEntryLocation();
+                                        breakpoint = vm().breakpointManager().makeBreakpoint(callEntryLocation);
                                     }
                                 }
                             }
@@ -3174,15 +3137,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private InspectorAction setTargetCodeBreakpointAtObjectInitializer =
-        new SetTargetCodeBreakpointAtObjectInitializerAction(null);
+    private InspectorAction setMachineCodeBreakpointAtObjectInitializer =
+        new SetMachineCodeBreakpointAtObjectInitializerAction(null);
 
     /**
-     * @return an interactive Action that will set a target code breakpoint at the
+     * @return an interactive Action that will set a machine code breakpoint at the
      * object initializer for a class specified by name.
      */
-    public final InspectorAction setTargetCodeBreakpointAtObjectInitializer() {
-        return setTargetCodeBreakpointAtObjectInitializer;
+    public final InspectorAction setMachineCodeBreakpointAtObjectInitializer() {
+        return setMachineCodeBreakpointAtObjectInitializer;
     }
 
     /**
@@ -3194,7 +3157,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ToggleBytecodeBreakpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
@@ -3246,7 +3209,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         SetBytecodeBreakpointAtMethodEntryAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleClassMethodActor = teleClassMethodActor;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             refresh(true);
         }
 
@@ -3289,7 +3252,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetBytecodeBreakpointAtMethodEntryByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -3332,7 +3295,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetBytecodeBreakpointAtMethodEntryByKeyAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -3961,7 +3924,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         RemoveAllWatchpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
                 public void watchpointSetChanged() {
@@ -3986,7 +3949,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(vm().watchpointManager() != null && vm().watchpointManager().watchpoints().length() > 0);
+            setEnabled(vm().watchpointManager() != null && vm().watchpointManager().watchpoints().size() > 0);
         }
     }
 
@@ -4008,7 +3971,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugPauseAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4044,7 +4007,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugResumeAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4081,7 +4044,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugReturnFromFrameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4120,7 +4083,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugReturnFromFrameWithBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4161,7 +4124,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         DebugRunToInstructionAction(MaxCodeLocation codeLocation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.codeLocation = codeLocation;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             refresh(true);
         }
 
@@ -4218,7 +4181,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         DebugRunToInstructionWithBreakpointsAction(MaxCodeLocation codeLocation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.codeLocation = codeLocation;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4272,21 +4235,25 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugRunToNextCallAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
         protected void procedure() {
             final MaxCodeLocation maxCodeLocation = focus().codeLocation();
-            if (maxCodeLocation != null && !maxCodeLocation.hasAddress()) {
-                final TeleTargetMethod teleTargetMethod = vm().findTeleTargetRoutine(TeleTargetMethod.class, maxCodeLocation.address());
-                if (teleTargetMethod != null) {
-                    final MaxCodeLocation nextCallLocation = teleTargetMethod.getNextCallLocation(maxCodeLocation);
-                    if (nextCallLocation != null) {
-                        try {
-                            vm().runToInstruction(nextCallLocation, false, false);
-                        } catch (Exception exception) {
-                            throw new InspectorError("Run to next call instruction (ignoring breakpoints) could not be performed.", exception);
+            if (maxCodeLocation != null && maxCodeLocation.hasAddress()) {
+                final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(maxCodeLocation.address());
+                if (compiledCode != null) {
+                    final InstructionMap instructionMap = compiledCode.instructionMap();
+                    final int instructionIndex = instructionMap.findInstructionIndex(maxCodeLocation.address());
+                    for (int index = instructionIndex + 1; index < instructionMap.length(); index++) {
+                        if (instructionMap.isCall(index)) {
+                            try {
+                                vm().runToInstruction(instructionMap.instructionLocation(index), false, false);
+                            } catch (Exception exception) {
+                                throw new InspectorError("Run to next call instruction (ignoring breakpoints) could not be performed.", exception);
+                            }
+                            break;
                         }
                     }
                 }
@@ -4319,21 +4286,27 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugRunToNextCallWithBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
         protected void procedure() {
+
             final MaxCodeLocation maxCodeLocation = focus().codeLocation();
-            assert maxCodeLocation.hasAddress();
-            final TeleTargetMethod teleTargetMethod = vm().findTeleTargetRoutine(TeleTargetMethod.class, maxCodeLocation.address());
-            if (teleTargetMethod != null) {
-                final MaxCodeLocation nextCallLocation = teleTargetMethod.getNextCallLocation(maxCodeLocation);
-                if (nextCallLocation != null) {
-                    try {
-                        vm().runToInstruction(nextCallLocation, false, true);
-                    } catch (Exception exception) {
-                        throw new InspectorError("Run to next call instruction could not be performed.", exception);
+            if (maxCodeLocation != null && maxCodeLocation.hasAddress()) {
+                final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(maxCodeLocation.address());
+                if (compiledCode != null) {
+                    final InstructionMap instructionMap = compiledCode.instructionMap();
+                    final int instructionIndex = instructionMap.findInstructionIndex(maxCodeLocation.address());
+                    for (int index = instructionIndex + 1; index < instructionMap.length(); index++) {
+                        if (instructionMap.isCall(index)) {
+                            try {
+                                vm().runToInstruction(instructionMap.instructionLocation(index), false, true);
+                            } catch (Exception exception) {
+                                throw new InspectorError("Run to next call instruction could not be performed.", exception);
+                            }
+                            break;
+                        }
                     }
                 }
             }
@@ -4364,7 +4337,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugSingleStepAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4402,7 +4375,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugStepOverAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4441,7 +4414,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugStepOverWithBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4539,11 +4512,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class InspectJavaFrameDescriptorAction extends InspectorAction {
         private static final String DEFAULT_TITLE = "Inspect Java frame descriptor";
         private TargetJavaFrameDescriptor targetJavaFrameDescriptor;
-        private TargetABI abi;
 
         InspectJavaFrameDescriptorAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
@@ -4555,7 +4527,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             assert targetJavaFrameDescriptor != null;
-            TargetJavaFrameDescriptorInspector.make(inspection(), targetJavaFrameDescriptor, abi).highlight();
+            if (focus().hasCodeLocation()) {
+                final Address instructionAddress = focus().codeLocation().address();
+                if (instructionAddress != null && !instructionAddress.isZero()) {
+                    final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
+                    if (compiledCode != null) {
+                        TargetJavaFrameDescriptorInspector.make(inspection(), targetJavaFrameDescriptor, compiledCode).highlight();
+                    }
+                }
+            } else {
+                gui().errorMessage("Could not locate Java frame descriptor");
+            }
         }
 
         /**
@@ -4565,26 +4547,19 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (focus().hasCodeLocation()) {
                 final Address instructionAddress = focus().codeLocation().address();
                 if (instructionAddress != null && !instructionAddress.isZero()) {
-                    final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(instructionAddress);
-                    if (teleTargetMethod != null) {
-                        final int stopIndex = teleTargetMethod.getJavaStopIndex(instructionAddress);
-                        if (stopIndex >= 0) {
-                            BytecodeLocation bytecodeLocation = teleTargetMethod.getBytecodeLocation(stopIndex);
-                            if (!(bytecodeLocation instanceof TargetJavaFrameDescriptor)) {
-                                return false;
-                            }
-                            targetJavaFrameDescriptor = (TargetJavaFrameDescriptor) bytecodeLocation;
-                            if (targetJavaFrameDescriptor == null) {
-                                return false;
-                            }
-                            abi = teleTargetMethod.getAbi();
-                            return true;
+                    final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
+                    if (compiledCode != null) {
+                        final InstructionMap instructionMap = compiledCode.instructionMap();
+                        final int instructionIndex = instructionMap.findInstructionIndex(instructionAddress);
+                        targetJavaFrameDescriptor = instructionMap.targetFrameDescriptor(instructionIndex);
+                        if (targetJavaFrameDescriptor == null) {
+                            return false;
                         }
+                        return true;
                     }
                 }
             }
             targetJavaFrameDescriptor = null;
-            abi = null;
             return false;
         }
 
@@ -4711,7 +4686,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  lists to the console all entries in the {@link TeleCodeRegistry}.
+     * Action:  lists to the console all entries in the {@link MaxCodeCache}.
      */
     final class ListCodeRegistryAction extends InspectorAction {
 
@@ -4723,21 +4698,21 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            vm().describeTeleTargetRoutines(System.out);
+            vm().codeCache().writeSummary(System.out);
         }
     }
 
     private InspectorAction listCodeRegistry = new ListCodeRegistryAction(null);
 
     /**
-     * @return an Action that will list to the console the entries in the {@link TeleCodeRegistry}.
+     * @return an Action that will list to the console the entries in the {@link MaxCodeCache}.
      */
     public final InspectorAction listCodeRegistry() {
         return listCodeRegistry;
     }
 
     /**
-     * Action:  lists to the console all entries in the {@link TeleCodeRegistry} to an interactively specified file.
+     * Action:  lists to the console all entries in the {@link MaxCodeCache} to an interactively specified file.
      */
     final class ListCodeRegistryToFileAction extends InspectorAction {
 
@@ -4763,7 +4738,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
             try {
                 final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));
-                vm().describeTeleTargetRoutines(printStream);
+                vm().codeCache().writeSummary(printStream);
             } catch (FileNotFoundException fileNotFoundException) {
                 gui().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
             }
@@ -4773,7 +4748,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private InspectorAction listCodeRegistryToFile = new ListCodeRegistryToFileAction(null);
 
     /**
-     * @return an interactive Action that will list to a specified file the entries in the {@link TeleCodeRegistry}.
+     * @return an interactive Action that will list to a specified file the entries in the {@link MaxCodeCache}.
      */
     public final InspectorAction listCodeRegistryToFile() {
         return listCodeRegistryToFile;
@@ -4803,6 +4778,36 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction listBreakpoints() {
         return listBreakpoints;
+    }
+
+    /**
+     * Action:  lists to the console all existing breakpoints.
+     */
+    final class ListInspectableMethodsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "List inspectable methods for menu";
+
+        ListInspectableMethodsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            System.out.println("Inspectable Methods for menu:");
+            for (MaxCodeLocation codeLocation : vm().inspectableMethods()) {
+                codeLocation.hasAddress();
+                System.out.println("\t" + codeLocation.description() + ", " + codeLocation.toString());
+            }
+        }
+    }
+
+    private InspectorAction listInspectableMethods = new ListInspectableMethodsAction(null);
+
+    /**
+     * @return an Action that will list to the console a summary of breakpoints in the VM.
+     */
+    public final InspectorAction listInspectableMethods() {
+        return listInspectableMethods;
     }
 
     /**
@@ -4881,14 +4886,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(builtinBreakpointsMenu);
 
                 final InspectorMenu methodEntryBreakpoints = new InspectorMenu("Break at method entry");
-                methodEntryBreakpoints.add(actions().setTargetCodeBreakpointAtMethodEntriesByName());
+                methodEntryBreakpoints.add(actions().setMachineCodeBreakpointAtEntriesByName());
                 methodEntryBreakpoints.add(actions().setBytecodeBreakpointAtMethodEntryByName());
                 methodEntryBreakpoints.add(actions().setBytecodeBreakpointAtMethodEntryByKey());
                 menu.add(methodEntryBreakpoints);
 
                 final InspectorMenu breakAt = new InspectorMenu("Break at target code");
                 breakAt.add(actions().setTargetCodeBreakpointAtAddress());
-                breakAt.add(actions().setTargetCodeBreakpointAtObjectInitializer());
+                breakAt.add(actions().setMachineCodeBreakpointAtObjectInitializer());
                 menu.add(breakAt);
 
                 final InspectorMenu toggle = new InspectorMenu("Toggle breakpoint");

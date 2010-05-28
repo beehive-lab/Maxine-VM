@@ -31,6 +31,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 public interface HeapScheme extends VMScheme {
 
@@ -273,22 +274,75 @@ public interface HeapScheme extends VMScheme {
     boolean supportsTagging();
 
     /**
-     * Methods to be called by all implementations when specified events occur, necessary
-     * for certain Inspector services to work.
+     * Collection of methods (the public ones) to be called by all implementations when
+     * specified events occur; these supports certain Inspector services.
      *
      * @author Michael Van De Vanter
      */
-    public final class Static {
-        private Static() {
-        }
-
+    public static final class Inspect {
         /**
-         * Announces that a GC is about to begin; must be called by GC implementations
-         * for certain Inspector services to work.
+         * Announces that a GC is about to begin.  It does almost nothing, but it
+         * must be called by GC implementations for certain Inspector services to work.
          */
         public static void notifyGCStarted() {
             InspectableHeapInfo.notifyGCStarted();
             inspectableGCStarted();
+        }
+
+        /**
+         * Announces that a GC has concluded.  It does almost nothing, but it
+         * must be called by GC implementations for certain Inspector services to work.
+         */
+        public static void notifyGCCompleted() {
+            InspectableHeapInfo.notifyGCCompleted();
+            inspectableGCCompleted();
+        }
+
+        /**
+         * Announces that an object has just been relocated.  It does almost nothing,
+         * but it must be called for certain Inspector services to work.
+         * <br>
+         * Should be called as late as possible, but before a forwarding pointer
+         * gets written; this is so that some implementations can set a watchpoint
+         * on the forwarding pointer location to trigger on a specific object relocation.
+         *
+         * @param oldCellLocation the former memory cell of the object
+         * @param newCellLocation the new memory cell of the object
+         */
+        public static void notifyObjectRelocated(Address oldCellLocation, Address newCellLocation) {
+            InspectableHeapInfo.notifyObjectRelocated(oldCellLocation,  newCellLocation);
+            inspectableObjectRelocated(oldCellLocation, newCellLocation);
+        }
+
+        /**
+         * Announces that a request has been made to increase the size of the heap.
+         * It does nothing, but it must be called for certain Inspector services to work.
+         * <br>
+         * This method should be called by implementations first thing when the request
+         * is received, before action is taken.
+         *
+         * @param size
+         * @see HeapScheme#increaseMemory(Size)
+         */
+        public static void notifyIncreaseMemoryRequested(Size size) {
+            inspectableIncreaseMemoryRequested(size);
+        }
+
+        /**
+         * Announces that a request has been made to decrease the size of the heap.
+         * It does nothing, but it must be called for certain Inspector services to work.
+         * <br>
+         * This method should be called by implementations first thing when the request
+         * is received, before action is taken.
+         *
+         * @param size
+         * @see HeapScheme#decreaseMemory(Size)
+         */
+        public static void notifyDecreaseMemoryRequested(Size size) {
+            inspectableDecreaseMemoryRequested(size);
+        }
+
+        private Inspect() {
         }
 
         /**
@@ -306,20 +360,16 @@ public interface HeapScheme extends VMScheme {
         private static void inspectableGCStarted() {
         }
 
-        /**
-         * Announces that a GC has concluded; must be called by GC implementations
-         * for certain Inspector services to work.
-         */
-        public static void notifyGCCompleted() {
-            InspectableHeapInfo.notifyGCCompleted();
-            inspectableGCCompleted();
-        }
+        // Ensure that the above method is compiled into the boot image so that it can be inspected conveniently
+        private static CriticalMethod inspectableGCStartedCriticalMethod =
+            new CriticalMethod(HeapScheme.Inspect.class, "inspectableGCStarted", SignatureDescriptor.create(void.class));
+
 
         /**
          * An empty method whose purpose is to be interrupted by the Inspector
          * at the conclusions of a GC.
          * <br>
-         * This particular method is intended for  use by users of the Inspector, and
+         * This particular method is intended for use by users of the Inspector, and
          * is distinct from a method used by the Inspector for internal use.
          * <br>
          * <strong>Important:</strong> The Inspector assumes that this method is loaded
@@ -330,21 +380,9 @@ public interface HeapScheme extends VMScheme {
         private static void inspectableGCCompleted() {
         }
 
-        /**
-         * Announces that an object has just been relocated; must be called for
-         * certain Inspector services to work.
-         * <br>
-         * Should be called as late as possible, but before a forwarding pointer
-         * gets written; this is so that some implementations can set a watchpoint
-         * on the forwarding pointer location to trigger on a specific object relocation.
-         *
-         * @param oldCellLocation the former memory cell of the object
-         * @param newCellLocation the new memory cell of the object
-         */
-        public static void notifyObjectRelocated(Address oldCellLocation, Address newCellLocation) {
-            InspectableHeapInfo.notifyObjectRelocated(oldCellLocation,  newCellLocation);
-            objectRelocated(oldCellLocation, newCellLocation);
-        }
+        // Ensure that the above method is compiled into the boot image so that it can be inspected conveniently
+        private static CriticalMethod inspectableGCCompletedCriticalMethod =
+            new CriticalMethod(HeapScheme.Inspect.class, "inspectableGCCompleted", SignatureDescriptor.create(void.class));
 
         /**
          * An empty method whose purpose is to be interrupted by the Inspector
@@ -358,8 +396,55 @@ public interface HeapScheme extends VMScheme {
          */
         @INSPECTED
         @NEVER_INLINE
-        private static void objectRelocated(Address oldCellLocation, Address newCellLocation) {
+        private static void inspectableObjectRelocated(Address oldCellLocation, Address newCellLocation) {
         }
+
+        // Ensure that the above method is compiled into the boot image so that it can be inspected conveniently
+        private static CriticalMethod inspectableObjectRelocatedCriticalMethod =
+            new CriticalMethod(HeapScheme.Inspect.class, "inspectableObjectRelocated", SignatureDescriptor.create(void.class, Address.class, Address.class));
+
+        /**
+         * An empty method whose purpose is to be interrupted by the Inspector
+         * when a change in heap size is requested.
+         * <br>
+         * This particular method is intended for use by users of the Inspector.
+         * <br>
+         * <strong>Important:</strong> The Inspector assumes that this method is loaded
+         * and compiled in the boot image and that it will never be dynamically recompiled.
+         *
+         * @see HeapScheme#increaseMemory(Size)
+         */
+        @INSPECTED
+        @NEVER_INLINE
+        private static void inspectableIncreaseMemoryRequested(Size size) {
+        }
+
+        // Ensure that the above method is compiled into the boot image so that it can be inspected conveniently
+        private static CriticalMethod inspectableIncreaseMemoryRequestedCriticalMethod =
+            new CriticalMethod(HeapScheme.Inspect.class, "inspectableIncreaseMemoryRequested", SignatureDescriptor.create(void.class, Size.class));
+
+
+        /**
+         * An empty method whose purpose is to be interrupted by the Inspector
+         * when a change in heap size is requested.
+         * <br>
+         * This particular method is intended for use by users of the Inspector.
+         * <br>
+         * <strong>Important:</strong> The Inspector assumes that this method is loaded
+         * and compiled in the boot image and that it will never be dynamically recompiled.
+         *
+         * @see HeapScheme#decreaseMemory(Size)
+         */
+        @INSPECTED
+        @NEVER_INLINE
+        private static void inspectableDecreaseMemoryRequested(Size size) {
+        }
+
+        // Ensure that the above method is compiled into the boot image so that it can be inspected conveniently
+        private static CriticalMethod inspectableDecreaseMemoryRequestedCriticalMethod =
+            new CriticalMethod(HeapScheme.Inspect.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.create(void.class, Size.class));
+
+
     }
 
 }

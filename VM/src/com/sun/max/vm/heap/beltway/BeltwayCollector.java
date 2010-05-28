@@ -88,7 +88,7 @@ public abstract class BeltwayCollector extends Collector {
     protected void prologue() {
         numCollections++;
         heapScheme.resetTLABs();
-        HeapScheme.Static.notifyGCStarted();
+        HeapScheme.Inspect.notifyGCStarted();
 
         if (Heap.verbose()) {
             Log.print(collectorName);
@@ -104,7 +104,7 @@ public abstract class BeltwayCollector extends Collector {
             Log.print(" Collection: ");
             Log.println(numCollections);
         }
-        HeapScheme.Static.notifyGCCompleted();
+        HeapScheme.Inspect.notifyGCCompleted();
     }
 
     /**

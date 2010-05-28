@@ -22,6 +22,7 @@ package com.sun.max.tele.object;
 
 import java.lang.management.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -33,6 +34,8 @@ import com.sun.max.vm.reference.*;
  */
 public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 
+    private static final int TRACE_VALUE = 2;
+
     private Address regionStart = Address.zero();
     private Size regionSize = Size.zero();
     private String regionName = null;
@@ -40,6 +43,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 
     TeleRuntimeMemoryRegion(TeleVM teleVM, Reference runtimeMemoryRegionReference) {
         super(teleVM, runtimeMemoryRegionReference);
+        refresh();
     }
 
     /**
@@ -84,16 +88,29 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
         return address.greaterEqual(getRegionStart()) && address.lessThan(getRegionStart().plus(getRegionSize()));
     }
 
-
     /**
      * @return whether memory has been allocated yet in the VM for this region.
      */
     public final boolean isAllocated() {
-        return !getRegionStart().isZero();
+        return !getRegionStart().isZero() && !getRegionSize().isZero();
+    }
+
+    /**
+     * @return whether this region of VM memory might be relocated, once allocated.
+     */
+    public boolean isRelocatable() {
+        return true;
     }
 
     @Override
     protected void refresh() {
+        super.refresh();
+
+        if (!isRelocatable() && isAllocated()) {
+            // Optimization: if we know the region won't be moved by the VM, and
+            // we already have the location information, then don't bother to refresh.
+            return;
+        }
         if (vm().tryLock()) {
             try {
                 final Size newRegionSize = vm().teleFields().RuntimeMemoryRegion_size.readWord(reference()).asSize();
@@ -112,22 +129,25 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
                     }
                 }
                 // Quasi-atomic update
+                if (newRegionStart.isZero()) {
+                    Trace.line(TRACE_VALUE, tracePrefix() + "zero start address read from VM for region " + this);
+                }
                 this.regionStart = newRegionStart;
                 this.regionSize = newRegionSize;
                 this.regionName = newRegionName;
                 final long sizeAsLong = this.regionSize.toLong();
                 this.memoryUsage = new MemoryUsage(-1, sizeAsLong, sizeAsLong, -1);
             } catch (DataIOError dataIOError) {
-                System.err.println("TeleRuntimeMemoryRegion dataIOError:");
+                ProgramWarning.message("TeleRuntimeMemoryRegion dataIOError:");
                 dataIOError.printStackTrace();
                 // No update; VM not available for some reason.
                 // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
             } finally {
                 vm().unlock();
             }
+        } else {
+            ProgramWarning.message("TeleRuntimeMemoryRegion unable to refresh: VM busy");
         }
-        super.refresh();
     }
-
 
 }

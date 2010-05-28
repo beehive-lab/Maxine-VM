@@ -56,7 +56,7 @@ public class DescriptorInspector extends ObjectInspector {
     protected void createView() {
         super.createView();
         final TeleDescriptor teleDescriptor = (TeleDescriptor) teleObject();
-        final String name = teleDescriptor.classActorForType().javaSignature(false);
+        final String name = teleDescriptor.classActorForObjectType().javaSignature(false);
 
         tabbedPane = new JTabbedPane();
 

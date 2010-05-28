@@ -155,10 +155,12 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     public boolean decreaseMemory(Size amount) {
+        HeapScheme.Inspect.notifyDecreaseMemoryRequested(amount);
         return false;
     }
 
     public boolean increaseMemory(Size amount) {
+        HeapScheme.Inspect.notifyIncreaseMemoryRequested(amount);
         return false;
     }
 

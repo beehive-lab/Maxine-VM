@@ -252,7 +252,7 @@ public abstract class TeleVM implements MaxVM {
             case CREATE:
                 final String value = options.vmArguments.getValue();
                 final String[] commandLineArguments = "".equals(value) ? new String[0] : value.trim().split(" ");
-                // Guest VM CREATE is more like ATTACH in that it needs the process id, but also may need to be advanced to entry point
+                // Guest VM CREATE is more like ATTACH in that it needs the process id, but also needs to be advanced to entry point
                 teleVM = create(bootImageFile, sourcepath, commandLineArguments, options.debuggeeIdOption.getValue());
                 teleVM.teleProcess().initializeState();
                 try {
@@ -263,12 +263,18 @@ public abstract class TeleVM implements MaxVM {
                 break;
 
             case ATTACH:
+            case DUMP:
+                /* TODO The fundamental difference in this mode is that VM has executed for a while.
+                 * This means that boot heap relocation has (almost certainly) been performed
+                 * AND the boot heap will contain references to the dynamic heap.
+                 * So the delicate dance that us normally performed when setting up the
+                 * TeleClassRegistry is neither necessary nor sufficient.
+                 */
                 teleVM = create(bootImageFile, sourcepath, null, options.debuggeeIdOption.getValue());
                 teleVM.teleProcess().initializeState();
                 break;
 
             case IMAGE:
-            case DUMP:
                 String heap = options.heapOption.getValue();
                 if (heap != null) {
                     assert System.getProperty(ReadOnlyTeleProcess.HEAP_PROPERTY) == null;
@@ -509,7 +515,6 @@ public abstract class TeleVM implements MaxVM {
 
     private final TeleObjectFactory teleObjectFactory;
     private TeleClassRegistry teleClassRegistry;
-    private TeleCodeRegistry teleCodeRegistry;
 
     private boolean isInGC = false;
 
@@ -954,10 +959,6 @@ public abstract class TeleVM implements MaxVM {
      */
     public final LayoutScheme layoutScheme() {
         return vmConfiguration.layoutScheme();
-    }
-
-    public final String visualizeStateRegister(long flags) {
-        return TeleStateRegisters.flagsToString(this, flags);
     }
 
     /**
@@ -1499,40 +1500,12 @@ public abstract class TeleVM implements MaxVM {
         this.typesOnClasspath = typesOnClasspath;
     }
 
-    private synchronized TeleCodeRegistry teleCodeRegistry() {
-        if (teleCodeRegistry == null) {
-            teleCodeRegistry = new TeleCodeRegistry(this);
-        }
-        return teleCodeRegistry;
-    }
-
     public final Sequence<MaxCodeLocation> inspectableMethods() {
         final AppendableSequence<MaxCodeLocation> methods = new ArrayListSequence<MaxCodeLocation>(teleMethods.clientInspectableMethods());
         for (MaxCodeLocation method : teleHeap.inspectableMethods()) {
             methods.append(method);
         }
         return methods;
-    }
-
-    /**
-     * Registers the description of a newly discovered block of target code so that it can be located later by address.
-     *
-     * @param teleTargetRoutine a newly created description for a block of target code in the VM.
-     */
-    public final void registerTeleTargetRoutine(TeleTargetRoutine teleTargetRoutine) {
-        teleCodeRegistry().add(teleTargetRoutine);
-    }
-
-    public final TeleTargetMethod makeTeleTargetMethod(Address address) {
-        return TeleTargetMethod.make(this, address);
-    }
-
-    public final TeleNativeTargetRoutine createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name) {
-        return TeleNativeTargetRoutine.create(this, codeStart, codeSize, name);
-    }
-
-    public final <TeleTargetRoutine_Type extends TeleTargetRoutine> TeleTargetRoutine_Type findTeleTargetRoutine(Class<TeleTargetRoutine_Type> teleTargetRoutineType, Address address) {
-        return teleCodeRegistry().get(teleTargetRoutineType, address);
     }
 
     public final <TeleMethodActor_Type extends TeleMethodActor> TeleMethodActor_Type findTeleMethodActor(Class<TeleMethodActor_Type> teleMethodActorType, MethodActor methodActor) {
@@ -1545,10 +1518,6 @@ public abstract class TeleVM implements MaxVM {
             }
         }
         return null;
-    }
-
-    public final void describeTeleTargetRoutines(PrintStream printStream) {
-        teleCodeRegistry().writeSummaryToStream(printStream);
     }
 
     public final void setTransportDebugLevel(int level) {
@@ -1604,7 +1573,7 @@ public abstract class TeleVM implements MaxVM {
         if (teleClassRegistry == null) {
             // Must delay creation/initialization of the {@link TeleClassRegistry} until after
             // we hit the first execution breakpoint; otherwise addresses won't have been relocated.
-            // This depends on the {@TeleHeap} already existing.
+            // This depends on the {@link TeleHeap} already existing.
             teleClassRegistry = new TeleClassRegistry(this);
             // Can only fully initialize the {@link TeleHeap} once
             // the {@TeleClassRegistry} is fully initialized, otherwise there's a cycle.
@@ -1620,6 +1589,7 @@ public abstract class TeleVM implements MaxVM {
         teleClassRegistry.refresh(processEpoch);
         //}
         teleObjectFactory.refresh(processEpoch);
+        teleCodeCache.refresh();
 
         Trace.end(TRACE_VALUE, refreshTracer, startTimeMillis);
     }
@@ -2204,13 +2174,15 @@ public abstract class TeleVM implements MaxVM {
         }
 
         public void removeBreakpoint(JdwpCodeLocation codeLocation) {
-            final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryLocation());
-            if (breakpoint != null) {
-                try {
-                    breakpoint.remove();
-                } catch (MaxVMBusyException maxVMBusyException) {
-                    ProgramError.unexpected("breakpoint removal failed");
+            if (codeLocation.isMachineCode()) {
+                final MachineCodeLocation location = codeManager().createMachineCodeLocation(Address.fromLong(codeLocation.position()), "jdwp location");
+                final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(location);
+                if (breakpoint != null) {
+                    try {
+                        breakpoint.remove();
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        ProgramError.unexpected("breakpoint removal failed");
+                    }
                 }
             }
             assert breakpointLocations.contains(codeLocation);
@@ -2278,7 +2250,7 @@ public abstract class TeleVM implements MaxVM {
         public TargetMethodAccess[] findTargetMethods(long[] addresses) {
             final TargetMethodAccess[] result = new TargetMethodAccess[addresses.length];
             for (int i = 0; i < addresses.length; i++) {
-                result[i] = TeleVM.this.makeTeleTargetMethod(Address.fromLong(addresses[i]));
+                result[i] = TeleVM.this.codeCache().findCompiledCode(Address.fromLong(addresses[i])).teleTargetMethod();
             }
             return result;
         }

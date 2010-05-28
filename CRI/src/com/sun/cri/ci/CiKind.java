@@ -302,6 +302,29 @@ public enum CiKind {
         return CiKind.Object;
     }
 
+    public Class< ? > toJavaClass() {
+        switch(this) {
+            case Void:
+                return java.lang.Void.TYPE;
+            case Int:
+                return java.lang.Integer.TYPE;
+            case Byte:
+                return java.lang.Byte.TYPE;
+            case Char:
+                return java.lang.Character.TYPE;
+            case Double:
+                return java.lang.Double.TYPE;
+            case Float:
+                return java.lang.Float.TYPE;
+            case Short:
+                return java.lang.Short.TYPE;
+            case Boolean:
+                return java.lang.Boolean.TYPE;
+            default:
+                return null;
+        }
+    }
+
     /**
      * Checks whether this value type is void.
      * @return {@code true} if this type is void

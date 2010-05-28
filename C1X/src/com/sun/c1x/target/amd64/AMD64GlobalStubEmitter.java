@@ -374,11 +374,14 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         }
         asm.subq(AMD64.rsp, frameSize());
         asm.setFrameSize(frameSize());
+        int rspToRegisterState = frameSize() - saveSize;
+        assert rspToRegisterState >= 0;
         // save all registers
         for (CiRegister r : allRegisters) {
-          int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
-              if (r != AMD64.rsp && offset >= 0) {
-                asm.movq(new CiAddress(CiKind.Word, AMD64.RSP, offset), r);
+            int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
+            assert offset >= 0;
+            if (r != AMD64.rsp && offset >= 0) {
+                asm.movq(new CiAddress(CiKind.Word, AMD64.RSP, rspToRegisterState + offset), r);
             }
         }
         this.savedAllRegisters = true;
@@ -390,10 +393,11 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
         if (savedAllRegisters) {
             // saved all registers, restore all registers
+            int rspToRegisterState = frameSize() - saveSize;
             for (CiRegister r : allRegisters) {
                 int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
                 if (r != AMD64.rsp && offset >= 0) {
-                    asm.movq(r, new CiAddress(CiKind.Word, AMD64.RSP, offset));
+                    asm.movq(r, new CiAddress(CiKind.Word, AMD64.RSP, rspToRegisterState + offset));
                 }
             }
         } else {
