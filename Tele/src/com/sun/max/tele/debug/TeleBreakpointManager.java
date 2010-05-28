@@ -21,8 +21,8 @@
 package com.sun.max.tele.debug;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
@@ -37,8 +37,8 @@ public class TeleBreakpointManager extends AbstractTeleVMHolder implements MaxBr
     private final TeleBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
     private final TeleTargetBreakpoint.TargetBreakpointManager targetBreakpointManager;
 
-    // Thread-safe, immutable list.  Will be read many, many more times than they will change.
-    private volatile IterableWithLength<MaxBreakpoint> breakpointCache = Sequence.Static.empty(MaxBreakpoint.class);
+    // Thread-safe, immutable list.  Will be read many, many more times than will change.
+    private volatile List<MaxBreakpoint> breakpointCache = Collections.emptyList();
 
     public TeleBreakpointManager(TeleVM teleVM, TeleBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager) {
         super(teleVM);
@@ -80,7 +80,7 @@ public class TeleBreakpointManager extends AbstractTeleVMHolder implements MaxBr
         return bytecodeBreakpointManager.findClientBreakpoint(methodCodeLocation);
     }
 
-    public IterableWithLength<MaxBreakpoint> breakpoints() {
+    public List<MaxBreakpoint> breakpoints() {
         return breakpointCache;
     }
 
@@ -98,11 +98,11 @@ public class TeleBreakpointManager extends AbstractTeleVMHolder implements MaxBr
      * Recomputes the immutable list cache of all client breakpoints.
      */
     private void updateBreakpointCache() {
-        final VariableSequence<MaxBreakpoint> newBreakpointsCache = new  VectorSequence<MaxBreakpoint>(targetBreakpointManager.clientBreakpoints());
+        final List<MaxBreakpoint> newBreakpointsCache = new  ArrayList<MaxBreakpoint>(targetBreakpointManager.clientBreakpoints());
         for (MaxBreakpoint breakpoint : bytecodeBreakpointManager.clientBreakpoints()) {
-            newBreakpointsCache.append(breakpoint);
+            newBreakpointsCache.add(breakpoint);
         }
-        breakpointCache = newBreakpointsCache;
+        breakpointCache = Collections.unmodifiableList(newBreakpointsCache);
     }
 
 }

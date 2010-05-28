@@ -21,8 +21,7 @@
 package com.sun.max.tele;
 
 import java.io.*;
-
-import com.sun.max.collect.*;
+import java.util.*;
 
 /**
  * Client access to VM breakpoint creation and management.
@@ -86,7 +85,7 @@ public interface MaxBreakpointManager {
      *
      * @return all existing breakpoints; empty if none.
      */
-    IterableWithLength<MaxBreakpoint> breakpoints();
+    List<MaxBreakpoint> breakpoints();
 
     /**
      * Writes a textual description of each existing breakpoint.

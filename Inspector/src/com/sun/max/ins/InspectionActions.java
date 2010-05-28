@@ -127,7 +127,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Actions that are held and shared; they have state that will be refreshed.
      * This is particularly important for actions that enable/disable, depending on the inspection state.
      */
-    private final AppendableSequence<InspectorAction> refreshableActions = new ArrayListSequence<InspectorAction>();
+    private final List<InspectorAction> refreshableActions = new ArrayList<InspectorAction>();
 
     InspectionActions(Inspection inspection) {
         super(inspection);
@@ -433,7 +433,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ChangeInterpreterUseLevelAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -481,7 +481,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetTransportDebugLevelAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -582,7 +582,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetVMTraceLevelAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -628,7 +628,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetVMTraceThresholdAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -700,7 +700,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -732,7 +732,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewMemoryRegionsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -791,7 +791,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewRegistersAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -823,7 +823,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewStackAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -855,7 +855,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewThreadsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -887,7 +887,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewVmThreadLocalsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -919,7 +919,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ViewWatchpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -1002,7 +1002,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), "Inspect memory bytes at address...");
             this.address = null;
             this.teleObject = null;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         InspectMemoryBytesAction(Address address, String actionTitle) {
@@ -1386,7 +1386,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), actionTitle == null ? ("Inspect memory region \"" + regionName + "\"") : actionTitle);
             this.memoryRegion = memoryRegion;
             this.regionName = regionName;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             refresh(true);
         }
 
@@ -1457,7 +1457,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         InspectSelectedMemoryRegionWordsAction() {
             super(inspection(), DEFAULT_TITLE);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             refresh(true);
         }
 
@@ -2021,7 +2021,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             assert codeLocation != null;
             this.codeLocation = codeLocation;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -2050,7 +2050,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "View code at current selection";
         public ViewMethodCodeAtSelectionAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -2082,7 +2082,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "View code at current IP";
         public ViewMethodCodeAtIPAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -2557,7 +2557,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         RemoveAllBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
                 public void breakpointStateChanged() {
@@ -2580,7 +2580,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && (vm().breakpointManager().breakpoints().length() > 0));
+            setEnabled(inspection().hasProcess() && (vm().breakpointManager().breakpoints().size() > 0));
         }
     }
 
@@ -2806,7 +2806,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         ToggleTargetCodeBreakpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.codeLocation = null;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
@@ -2886,7 +2886,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetTargetCodeBreakpointAtAddressAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             refresh(true);
         }
 
@@ -3005,7 +3005,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         SetMachineCodeBreakpointAtEntryAction(MaxCompiledCode compiledCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.compiledCode = compiledCode;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -3048,7 +3048,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetMachineCodeBreakpointAtEntriesByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -3099,7 +3099,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetMachineCodeBreakpointAtObjectInitializerAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -3157,7 +3157,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         ToggleBytecodeBreakpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
@@ -3209,7 +3209,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         SetBytecodeBreakpointAtMethodEntryAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleClassMethodActor = teleClassMethodActor;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             refresh(true);
         }
 
@@ -3252,7 +3252,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetBytecodeBreakpointAtMethodEntryByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -3295,7 +3295,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetBytecodeBreakpointAtMethodEntryByKeyAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -3924,7 +3924,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         RemoveAllWatchpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
                 public void watchpointSetChanged() {
@@ -3949,7 +3949,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(vm().watchpointManager() != null && vm().watchpointManager().watchpoints().length() > 0);
+            setEnabled(vm().watchpointManager() != null && vm().watchpointManager().watchpoints().size() > 0);
         }
     }
 
@@ -3971,7 +3971,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugPauseAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4007,7 +4007,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugResumeAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4044,7 +4044,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugReturnFromFrameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4083,7 +4083,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugReturnFromFrameWithBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4124,7 +4124,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         DebugRunToInstructionAction(MaxCodeLocation codeLocation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.codeLocation = codeLocation;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             refresh(true);
         }
 
@@ -4181,7 +4181,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         DebugRunToInstructionWithBreakpointsAction(MaxCodeLocation codeLocation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.codeLocation = codeLocation;
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4235,7 +4235,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugRunToNextCallAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4286,7 +4286,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugRunToNextCallWithBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4337,7 +4337,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugSingleStepAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4375,7 +4375,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugStepOverAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4414,7 +4414,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         DebugStepOverWithBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
         }
 
         @Override
@@ -4515,7 +4515,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         InspectJavaFrameDescriptorAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.append(this);
+            refreshableActions.add(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {

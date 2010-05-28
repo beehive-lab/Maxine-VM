@@ -90,7 +90,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     }
 
     public IndexedSequence<StackFrame> frames() {
-        final VariableSequence<StackFrame> frames = new VectorSequence<StackFrame>();
+        final VariableSequence<StackFrame> frames = new ArrayListSequence<StackFrame>();
         try {
             frames(frames, cpuInstructionPointer, cpuStackPointer, cpuFramePointer);
         } catch (Throwable e) {
