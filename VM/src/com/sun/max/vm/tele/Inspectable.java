@@ -51,7 +51,7 @@ public final class Inspectable {
      * additional steps to facilitate inspection should be activated.
      */
     @INSPECTED
-    private static int flags = INSPECTED;
+    private static int flags = INSPECTED;  // temp hack
 
     private static boolean optionChecked;
 
@@ -59,7 +59,7 @@ public final class Inspectable {
      * Determines if the VM process is being inspected.
      */
     public static boolean isVmInspected() {
-        Log.print("isInspected is "); Log.print((flags & INSPECTED) != 0); Log.println();
+//        Log.print("isInspected is "); Log.print((flags & INSPECTED) != 0); Log.println();
         if ((flags & INSPECTED) != 0) {
             return true;
         }
@@ -70,7 +70,7 @@ public final class Inspectable {
             flags = INSPECTED;
         }
         optionChecked = true;
-        Log.print("isInspected is "); Log.print((flags & INSPECTED) != 0); Log.println();
+//        Log.print("isInspected is "); Log.print((flags & INSPECTED) != 0); Log.println();
         return (flags & INSPECTED) != 0;
     }
 
