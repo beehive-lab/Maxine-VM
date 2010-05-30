@@ -202,6 +202,10 @@ public abstract class TeleVM implements MaxVM {
         return System.getProperty(NO_TELE_PROPERTY) == null;
     }
 
+    public static boolean isAttaching() {
+        return mode == Mode.DUMP || mode == Mode.ATTACH;
+    }
+
     /**
      * Creates a new VM instance based on a given set of options.
      *
@@ -264,14 +268,19 @@ public abstract class TeleVM implements MaxVM {
 
             case ATTACH:
             case DUMP:
-                /* TODO The fundamental difference in this mode is that VM has executed for a while.
+                /* The fundamental difference in this mode is that VM has executed for a while.
                  * This means that boot heap relocation has (almost certainly) been performed
                  * AND the boot heap will contain references to the dynamic heap.
                  * So the delicate dance that us normally performed when setting up the
-                 * TeleClassRegistry is neither necessary nor sufficient.
+                 * TeleClassRegistry is neither entirely necessary nor sufficient.
+                 * The is handled by doing two passes over the class registry and
+                 * deferring resolution of those references that are outside the boot heap
+                 * until the second pass, after the TeleHeap is fully initialized.
+                 * We also need to explicitly refresh the threads and update state.
+                 *
                  */
                 teleVM = create(bootImageFile, sourcepath, null, options.debuggeeIdOption.getValue());
-                teleVM.teleProcess().initializeState();
+                teleVM.teleProcess().initializeStateOnAttach();
                 break;
 
             case IMAGE:
@@ -1044,7 +1053,7 @@ public abstract class TeleVM implements MaxVM {
         }
 
         try {
-            if (!heap().contains(origin) && !codeCache().contains(origin)) {
+            if (!heap().contains(origin) && (codeCache() == null || !codeCache().contains(origin))) {
                 return false;
             }
             if (false && isInGC() && heap().containsInDynamicHeap(origin)) {
@@ -1582,6 +1591,9 @@ public abstract class TeleVM implements MaxVM {
             // Now set up the map of the compiled code cache
             teleCodeCache = new TeleCodeCache(this);
             teleCodeCache.initialize();
+            if (isAttaching()) {
+                teleClassRegistry.processAttachFixupList();
+            }
         }
         refreshReferences();
         //if (!isInGC()) { ATTETION: Could produce bugs.
