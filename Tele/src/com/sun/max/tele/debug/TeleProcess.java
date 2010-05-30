@@ -401,6 +401,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
+     * Initializes the state history for attach/dump modes.
+     */
+    public final void initializeStateOnAttach() {
+        initializeState();
+        epoch++;
+        refreshThreads();
+        // now update state to reflect the discovered threads, all of which will appear as STARTED
+        updateState(STOPPED, TeleProcess.EMPTY_BREAKPOINTEVENT_SEQUENCE, null);
+    }
+
+    /**
      * Gets the singleton for creating and managing VM watchpoints; null if not enabled
      * on this platform.
      *
