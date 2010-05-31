@@ -157,7 +157,7 @@ public final class Inspection implements InspectionHolder {
                 // Choose an arbitrary thread as the "current" thread. If the inspector is
                 // creating the process to be debugged (as opposed to attaching to it), then there
                 // should only be one thread.
-                final IterableWithLength<MaxThread> threads = vm().state().threads();
+                final List<MaxThread> threads = vm().state().threads();
                 MaxThread nonJavaThread = null;
                 for (MaxThread thread : threads) {
                     if (thread.isJava()) {
@@ -531,7 +531,7 @@ public final class Inspection implements InspectionHolder {
         if (!focus().thread().isLive()) {
             // Our most recent thread focus died; pick a new one to maintain the
             // invariant, even if another one gets set eventually.
-            focus().setThread(vm().state().threads().first());
+            focus().setThread(vm().state().threads().get(0));
         }
         try {
             refreshAll(false);
@@ -543,7 +543,7 @@ public final class Inspection implements InspectionHolder {
                 focus().setWatchpoint(watchpointEvent.watchpoint());
                 focus().setAddress(watchpointEvent.address());
             } else if (!vm().state().breakpointEvents().isEmpty()) {
-                final MaxThread thread = vm().state().breakpointEvents().first().thread();
+                final MaxThread thread = vm().state().breakpointEvents().get(0).thread();
                 if (thread != null) {
                     focus().setThread(thread);
                 } else {

@@ -20,9 +20,10 @@
  */
 package com.sun.max.ins.gui;
 
+import java.util.*;
+
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.program.*;
 
@@ -36,8 +37,8 @@ import com.sun.max.program.*;
  */
 public class InspectorMenu extends JMenu implements Prober {
 
-    private final AppendableSequence<InspectorMenuItems> menuItems = new LinkSequence<InspectorMenuItems>();
-    private AppendableSequence<InspectorAction> actions = new LinkSequence<InspectorAction>();
+    private final List<InspectorMenuItems> menuItems = new ArrayList<InspectorMenuItems>();
+    private List<InspectorAction> actions = new ArrayList<InspectorAction>();
     private final String name;
     /**
      * Creates a standard menu that can be used on the Inspector menu bar.
@@ -73,12 +74,12 @@ public class InspectorMenu extends JMenu implements Prober {
     }
 
     public void add(InspectorAction action) {
-        actions.append(action);
+        actions.add(action);
         super.add(action);
     }
 
     public void add(InspectorMenuItems inspectorMenuItems) {
-        menuItems.append(inspectorMenuItems);
+        menuItems.add(inspectorMenuItems);
         inspectorMenuItems.addTo(this);
     }
 

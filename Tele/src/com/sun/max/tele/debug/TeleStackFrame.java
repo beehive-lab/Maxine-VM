@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.debug;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleStackFrameWalker.*;
@@ -53,8 +54,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
      */
     private static final class StackFrameMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxStackFrame> {
 
-        private static final IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY =
-            new ArrayListSequence<MaxEntityMemoryRegion< ? extends MaxEntity>>(0);
+        private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY = Collections.emptyList();
         private final TeleStackFrame teleStackFrame;
 
         private StackFrameMemoryRegion(TeleVM teleVM, TeleStackFrame teleStackFrame, String regionName, Address start, Size size) {
@@ -66,7 +66,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return teleStackFrame.stack().memoryRegion();
         }
 
-        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+        public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
             return EMPTY;
         }
 

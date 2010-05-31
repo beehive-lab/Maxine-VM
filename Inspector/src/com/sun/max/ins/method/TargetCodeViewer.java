@@ -23,7 +23,6 @@ package com.sun.max.ins.method;
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
@@ -108,7 +107,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         if (thread == null) {
             return;
         }
-        final Sequence<MaxStackFrame> frames = thread.stack().frames();
+        final List<MaxStackFrame> frames = thread.stack().frames();
 
         Arrays.fill(rowToStackFrame, null);
 

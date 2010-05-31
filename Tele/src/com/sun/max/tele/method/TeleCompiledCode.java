@@ -23,6 +23,7 @@ package com.sun.max.tele.method;
 import static com.sun.max.asm.dis.Disassembler.*;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
@@ -63,8 +64,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
      */
     private static final class CompiledCodeMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCode> {
 
-        private static final IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY =
-            new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
+        private static final List<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY = Collections.emptyList();
 
         private final TeleCompiledCode owner;
         private final boolean isBootCode;
@@ -83,7 +83,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
             return teleCodeCache.findCompiledCodeRegion(start()).memoryRegion();
         }
 
-        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+        public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
             return EMPTY;
         }
 
@@ -134,14 +134,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
     };
 
     private InstructionMap instructionMap = null;
-
     private final TeleTargetMethod teleTargetMethod;
-
-    /**
-     * Which number is this in the sequence of compilations for the method.
-     */
-    private final int compilationIndex;
-
     private CodeLocation codeStartLocation = null;
     private final CompiledCodeMemoryRegion compiledCodeMemoryRegion;
     private IndexedSequence<MachineCodeLocation> instructionLocations;
@@ -159,8 +152,6 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         this.teleTargetMethod = teleTargetMethod;
         this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(teleVM, this, teleTargetMethod, teleCodeCache, isBootCode);
         this.instructionMap = new CompiledCodeInstructionMap(teleVM, teleTargetMethod);
-        final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
-        this.compilationIndex = teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(teleTargetMethod);
     }
 
     public String entityName() {
@@ -217,7 +208,9 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
     }
 
     public int compilationIndex() {
-        return compilationIndex;
+        // Lazily computed to avoid circularity during construction.
+        final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+        return teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(teleTargetMethod);
     }
 
     public TeleClassMethodActor getTeleClassMethodActor() {
@@ -279,7 +272,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
     public void writeSummary(PrintStream printStream) {
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(printStream));
         writer.println("code for: " + classMethodActor().format("%H.%n(%p)"));
-        writer.println("compilation: " + compilationIndex);
+        writer.println("compilation: " + compilationIndex());
         teleTargetMethod.disassemble(writer);
         writer.flush();
         final ProcessorKind processorKind = vm().vmConfiguration().platform().processorKind;

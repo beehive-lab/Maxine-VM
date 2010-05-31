@@ -21,10 +21,10 @@
 package com.sun.max.ins.gui;
 
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.tele.*;
@@ -62,15 +62,15 @@ public final class Watchpoints {
 
         @Override
         protected void procedure() {
-            final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+            final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
             if (watchpoints.isEmpty()) {
                 final MaxWatchpoint newWatchpoint = setWatchpoint();
                 if (newWatchpoint != null) {
                     inspection.focus().setWatchpoint(newWatchpoint);
                 }
             } else {
-                if (watchpoints.length() > 1) {
-                    if (!inspection.gui().yesNoDialog(Integer.toString(watchpoints.length()) + " watchpoints active here:  DELETE ALL?")) {
+                if (watchpoints.size() > 1) {
+                    if (!inspection.gui().yesNoDialog(Integer.toString(watchpoints.size()) + " watchpoints active here:  DELETE ALL?")) {
                         return;
                     }
                 }
@@ -85,12 +85,12 @@ public final class Watchpoints {
      *
      * @return either a single {@link InspectorActoin} or a {@link JMenu} to be used as a sub-menu.
      */
-    public static Object createRemoveActionOrMenu(Inspection inspection, final Sequence<MaxWatchpoint> watchpoints) {
+    public static Object createRemoveActionOrMenu(Inspection inspection, final List<MaxWatchpoint> watchpoints) {
         if (watchpoints.isEmpty()) {
             return InspectorAction.dummyAction(inspection, "Remove memory watchpoint");
         }
-        if (watchpoints.length() == 1) {
-            final MaxWatchpoint watchpoint = watchpoints.first();
+        if (watchpoints.size() == 1) {
+            final MaxWatchpoint watchpoint = watchpoints.get(0);
             final String description = watchpoint.description();
             final String title = description == null ? "Remove watchpont" : "Remove watchpoint: " + description;
             return inspection.actions().removeWatchpoint(watchpoint, title);
@@ -107,12 +107,12 @@ public final class Watchpoints {
     /**
      * Creates a menu entry for editing a possibly empty collection of VM memory watchpoints.
      */
-    public static JMenu createEditMenu(Inspection inspection, final Sequence<MaxWatchpoint> watchpoints) {
+    public static JMenu createEditMenu(Inspection inspection, final List<MaxWatchpoint> watchpoints) {
         final JMenu menu = new JMenu("Modify memory watchpoint");
         if (watchpoints.isEmpty()) {
             menu.setEnabled(false);
-        } else if (watchpoints.length() == 1) {
-            final MaxWatchpoint watchpoint = watchpoints.first();
+        } else if (watchpoints.size() == 1) {
+            final MaxWatchpoint watchpoint = watchpoints.get(0);
             buildWatchpointMenu(inspection, menu, watchpoint);
             final String description = watchpoint.description();
             final String title = description == null ? "Modify watchpont" : "Modify watchpoint: " + description;

@@ -23,12 +23,12 @@ package com.sun.max.ins.memory;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
@@ -99,7 +99,7 @@ public final class MemoryRegionsTable extends InspectorTable {
     private final class MemoryRegionsColumnModel extends InspectorTableColumnModel<MemoryRegionsColumnKind> {
 
         private MemoryRegionsColumnModel(MemoryRegionsViewPreferences viewPreferences) {
-            super(MemoryRegionsColumnKind.VALUES.length(), viewPreferences);
+            super(MemoryRegionsColumnKind.VALUES.size(), viewPreferences);
             addColumn(MemoryRegionsColumnKind.TAG, new TagCellRenderer(inspection()), null);
             addColumn(MemoryRegionsColumnKind.NAME, new NameCellRenderer(), null);
             addColumn(MemoryRegionsColumnKind.START, new StartAddressCellRenderer(), null);
@@ -125,8 +125,8 @@ public final class MemoryRegionsTable extends InspectorTable {
 
         @Override
         public void refresh() {
-            final Sequence<MaxMemoryRegion> memoryRegions = vm().state().memoryRegions();
-            sortedRegions = memoryRegions.toCollection().toArray(new MaxMemoryRegion[memoryRegions.length()]);
+            final List<MaxMemoryRegion> memoryRegions = vm().state().memoryRegions();
+            sortedRegions = memoryRegions.toArray(new MaxMemoryRegion[memoryRegions.size()]);
             Arrays.sort(sortedRegions, MaxMemoryRegion.Util.startComparator());
             super.refresh();
         }
@@ -136,7 +136,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return MemoryRegionsColumnKind.VALUES.length();
+            return MemoryRegionsColumnKind.VALUES.size();
         }
 
         @Override

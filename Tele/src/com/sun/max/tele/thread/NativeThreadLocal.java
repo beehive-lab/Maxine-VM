@@ -18,34 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
+package com.sun.max.tele.thread;
 
-import java.util.*;
-
-import javax.swing.*;
-
-import com.sun.max.ins.*;
+import com.sun.max.vm.thread.*;
 
 /**
- * A sequence of items suitable for adding to a {@link InspectorPopupMenu}.
- * <br>
- * Contains only instances of {@link InspectorAction} and {@link JMenu}.
+ * Java access to the NativeThreadLocalsStruct in Native/share/threadLocals.h for use by Inspector.
+ * Unlike {@link VmThreadLocal} we use a simple enum as we are only interested in the field offsets.
  *
- * @author Michael Van De Vanter
+ * @author Mick Jordan
  */
-public class InspectorPopupMenuItems implements Iterable<Object>{
+public enum NativeThreadLocal {
+    STACKBASE(0),
+    STACKSIZE(8),
+    HANDLE(16),
+    TLBLOCK(24),
+    TLBLOCKSIZE(32),
+    STACK_YELLOW_ZONE(40),
+    STACK_RED_ZONE(48),
+    STACK_BLUE_ZONE(56),
+    OSDATA(64);
 
-    private final List<Object> items = new ArrayList<Object>();
+    public int offset;
 
-    public Iterator<Object> iterator() {
-        return items.iterator();
+    NativeThreadLocal(int offset) {
+        this.offset = offset;
     }
 
-    public void add(JMenu menu) {
-        items.add(menu);
-    }
-
-    public void add(InspectorAction action) {
-        items.add(action);
-    }
 }

@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.gcx.ms.*;
 
@@ -78,9 +79,9 @@ public final class TeleMSHeapScheme extends AbstractTeleVMHolder implements Tele
         return false;
     }
 
-    public Sequence<MaxCodeLocation> inspectableMethods() {
+    public List<MaxCodeLocation> inspectableMethods() {
         // TODO
-        return Sequence.Static.empty(MaxCodeLocation.class);
+        return Collections.emptyList();
     }
 
 }

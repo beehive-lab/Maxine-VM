@@ -21,8 +21,8 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -43,7 +43,7 @@ public interface MaxThreadManager {
      * @return the active (live) threads
      * @see MaxVM#state()
      */
-    Sequence<MaxThread> threads();
+    List<MaxThread> threads();
 
     /**
      * Finds the thread whose memory contains a specific address from among those known to be live in the current VM state,

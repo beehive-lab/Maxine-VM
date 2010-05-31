@@ -22,11 +22,11 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
@@ -491,7 +491,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         ProgramError.check(stack != null);
         if (stack.thread() != null && stack.thread().isLive()) {
             if (force || stack.lastUpdated() == null || vm().state().newerThan(lastUpdatedState)) {
-                final Sequence<MaxStackFrame> frames = stack.frames();
+                final List<MaxStackFrame> frames = stack.frames();
                 assert !frames.isEmpty();
                 if (force || stack.lastChanged().newerThan(this.lastChangedState)) {
                     stackFrameListModel.clear();
@@ -503,7 +503,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                     // Avoid a complete redisplay for performance reasons.
                     // However, the object representing the top frame may be different,
                     // in which case the state of the old frame object is out of date.
-                    final MaxStackFrame newTopFrame = frames.first();
+                    final MaxStackFrame newTopFrame = frames.get(0);
                     stackFrameListModel.set(0, newTopFrame);
                     if (selectedFramePanel != null && selectedFramePanel.stackFrame().isTop() && selectedFramePanel.stackFrame().isSameFrame(newTopFrame)) {
                         // If the top frame is selected, update the panel displaying its contents
@@ -579,7 +579,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     /**
      * Add frames to the stack model until {@link #maxFramesDisplay} reached.
      */
-    private void addToModel(final Sequence<MaxStackFrame> frames) {
+    private void addToModel(final List<MaxStackFrame> frames) {
         int position = stackFrameListModel.size();
         for (MaxStackFrame stackFrame : frames) {
             if (position  >= maxFramesDisplay) {

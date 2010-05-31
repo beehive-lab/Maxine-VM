@@ -24,10 +24,11 @@ import java.awt.*;
 import java.awt.print.*;
 import java.text.*;
 import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.lang.*;
@@ -79,7 +80,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             return label;
         }
 
-        public static final IndexedSequence<MenuKind> VALUES = new ArraySequence<MenuKind>(values());
+        public static final List<MenuKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
     }
 
     protected InspectorMenuItems defaultMenuItems(MenuKind menuKind) {

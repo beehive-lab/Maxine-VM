@@ -54,7 +54,7 @@ public final class RegistersTable extends InspectorTable {
     private final class RegistersColumnModel extends InspectorTableColumnModel<RegistersColumnKind> {
 
         private RegistersColumnModel(RegistersViewPreferences viewPreferences) {
-            super(RegistersColumnKind.VALUES.length(), viewPreferences);
+            super(RegistersColumnKind.VALUES.size(), viewPreferences);
             addColumn(RegistersColumnKind.NAME, new NameCellRenderer(inspection()), null);
             addColumn(RegistersColumnKind.VALUE, new ValueCellRenderer(inspection()), null);
             addColumn(RegistersColumnKind.REGION, new RegionCellRenderer(), null);
@@ -82,7 +82,7 @@ public final class RegistersTable extends InspectorTable {
             super(inspection);
             this.thread = thread;
             final MaxRegisterSet registers = thread.registers();
-            nRegisters = registers.allRegisters().length();
+            nRegisters = registers.allRegisters().size();
             registerHistories = new RegisterHistory[nRegisters];
             displayModes = new WordValueLabel.ValueMode[nRegisters];
             int row = 0;
@@ -114,7 +114,7 @@ public final class RegistersTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return RegistersColumnKind.VALUES.length();
+            return RegistersColumnKind.VALUES.size();
         }
 
         public int getRowCount() {

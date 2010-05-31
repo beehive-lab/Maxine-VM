@@ -22,7 +22,6 @@ package com.sun.max.tele.debug;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
@@ -74,12 +73,12 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
             return teleThreadLocalsArea.thread().localsBlock().memoryRegion();
         }
 
-        public IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> children() {
+        public List<MaxEntityMemoryRegion<? extends MaxEntity>> children() {
             final int variableCount = teleThreadLocalsArea.variableCount();
-            final VariableSequence<MaxEntityMemoryRegion<? extends MaxEntity>> regions =
-                new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(variableCount);
+            final List<MaxEntityMemoryRegion<? extends MaxEntity>> regions =
+                new ArrayList<MaxEntityMemoryRegion<? extends MaxEntity>>(variableCount);
             for (int index = 0; index < variableCount; index++) {
-                regions.append(teleThreadLocalsArea.getThreadLocalVariable(index).memoryRegion());
+                regions.add(teleThreadLocalsArea.getThreadLocalVariable(index).memoryRegion());
             }
             return regions;
         }

@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.unsafe.*;
 
 /**
@@ -45,7 +46,7 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      *
      * @return descriptions for all allocated regions in the VM.
      */
-    IndexedSequence<MaxHeapRegion> heapRegions();
+    List<MaxHeapRegion> heapRegions();
 
     /**
      * Finds a heap region by location.

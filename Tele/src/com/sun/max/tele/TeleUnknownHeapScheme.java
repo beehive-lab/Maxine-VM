@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.unsafe.*;
 
 /**
@@ -42,8 +43,8 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
         return null;
     }
 
-    public Sequence<MaxCodeLocation> inspectableMethods() {
-        return Sequence.Static.empty(MaxCodeLocation.class);
+    public List<MaxCodeLocation> inspectableMethods() {
+        return Collections.emptyList();
     }
 
     public Offset gcForwardingPointerOffset() {

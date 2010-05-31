@@ -118,7 +118,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
     private static final Map<TeleObject, TargetABI> abiCache = new HashMap<TeleObject, TargetABI>();
 
-    private IndexedSequence<TargetCodeInstruction> instructions;
+    private List<TargetCodeInstruction> instructions;
 
     /**
      * @see  StopPositions
@@ -155,7 +155,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     /**
      * @return disassembled target code instructions
      */
-    public final IndexedSequence<TargetCodeInstruction> getInstructions() {
+    public final List<TargetCodeInstruction> getInstructions() {
         if (instructions == null) {
             final byte[] code = getCode();
             if (code != null) {
@@ -399,8 +399,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
     // [tw] Warning: duplicated code!
     public MachineCodeInstructionArray getTargetCodeInstructions() {
-        final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
-        final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
+        final List<TargetCodeInstruction> instructions = getInstructions();
+        final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.size()];
         for (int i = 0; i < result.length; i++) {
             final TargetCodeInstruction ins = instructions.get(i);
             result[i] = new MachineCodeInstruction(ins.mnemonic, ins.position, ins.address.toLong(), ins.label, ins.bytes, ins.operands, ins.getTargetAddressAsLong());

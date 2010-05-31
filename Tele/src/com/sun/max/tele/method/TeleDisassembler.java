@@ -21,6 +21,7 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
@@ -38,7 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * Disassembler for machine code in the target VM.
+ * Disassembler for machine code in the VM.
  *
  * @author Doug Simon
  * @author Michael Van De Vanter
@@ -83,7 +84,7 @@ public final class TeleDisassembler {
      *
      * @return the code disassembled into instructions.
      */
-    public static IndexedSequence<TargetCodeInstruction> decode(ProcessorKind processorKind, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors) {
+    public static List<TargetCodeInstruction> decode(ProcessorKind processorKind, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors) {
         final Disassembler disassembler = createDisassembler(processorKind, codeStart, InlineDataDecoder.createFrom(encodedInlineDataDescriptors));
         final LoadLiteralParser literalParser = createLiteralParser(processorKind, disassembler, codeStart, code);
         return create(codeStart, code, disassembler, literalParser);
@@ -326,23 +327,22 @@ public final class TeleDisassembler {
         return null;
     }
 
-    private static IndexedSequence<TargetCodeInstruction> create(
+    private static List<TargetCodeInstruction> create(
                     Address codeStart,
                     byte[] code,
                     Disassembler disassembler,
                     LoadLiteralParser literalParser) {
 
-        IndexedSequence<DisassembledObject> disassembledObjects;
+        List<DisassembledObject> disassembledObjects;
         try {
-            final Class<IndexedSequence<DisassembledObject>> type = null;
-            disassembledObjects = StaticLoophole.cast(type, disassembler.scan(new BufferedInputStream(new ByteArrayInputStream(code))));
+            disassembledObjects = IndexedSequence.Static.toList(disassembler.scan(new BufferedInputStream(new ByteArrayInputStream(code))));
         } catch (Throwable throwable) {
             ProgramWarning.message("Could not completely disassemble given code stream - trying partial disassembly instead [error: " + throwable + "]");
             final BufferedInputStream bufferedInputStream = new BufferedInputStream(new ByteArrayInputStream(code));
-            final AppendableIndexedSequence<DisassembledObject> objects = new ArrayListSequence<DisassembledObject>();
+            final List<DisassembledObject> objects = new ArrayList<DisassembledObject>();
             try {
                 while (bufferedInputStream.available() > 0) {
-                    objects.append((DisassembledObject) disassembler.scanOne(bufferedInputStream).first());
+                    objects.add((DisassembledObject) disassembler.scanOne(bufferedInputStream).first());
                 }
             } catch (Throwable t) {
                 ProgramWarning.message("Only partially disassembled given code stream [error: " + t + "]");
@@ -350,7 +350,7 @@ public final class TeleDisassembler {
             disassembledObjects = objects;
         }
 
-        final AppendableIndexedSequence<TargetCodeInstruction> targetCodeInstructions = new ArrayListSequence<TargetCodeInstruction>(disassembledObjects.length());
+        final List<TargetCodeInstruction> targetCodeInstructions = new ArrayList<TargetCodeInstruction>(disassembledObjects.size());
 
         for (DisassembledObject disassembledObject : disassembledObjects) {
             final DisassembledLabel label = disassembler.addressMapper().labelAt(disassembledObject);
@@ -401,7 +401,7 @@ public final class TeleDisassembler {
                                                 targetAddress,
                                                 null);
             }
-            targetCodeInstructions.append(targetCodeInstruction);
+            targetCodeInstructions.add(targetCodeInstruction);
         }
         return targetCodeInstructions;
     }

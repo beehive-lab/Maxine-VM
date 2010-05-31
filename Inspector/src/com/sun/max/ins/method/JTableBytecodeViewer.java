@@ -286,7 +286,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final class BytecodeTableColumnModel extends InspectorTableColumnModel<BytecodeColumnKind> {
 
         BytecodeTableColumnModel(BytecodeViewPreferences instanceViewPreferences) {
-            super(BytecodeColumnKind.VALUES.length(), instanceViewPreferences);
+            super(BytecodeColumnKind.VALUES.size(), instanceViewPreferences);
             addColumn(BytecodeColumnKind.TAG, new TagRenderer(), null);
             addColumn(BytecodeColumnKind.NUMBER, new NumberRenderer(), null);
             addColumn(BytecodeColumnKind.POSITION, new PositionRenderer(), null);
@@ -308,7 +308,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         public int getColumnCount() {
-            return BytecodeColumnKind.VALUES.length();
+            return BytecodeColumnKind.VALUES.size();
         }
 
         public int getRowCount() {

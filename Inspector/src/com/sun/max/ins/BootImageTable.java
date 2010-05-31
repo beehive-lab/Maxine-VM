@@ -63,7 +63,7 @@ public final class BootImageTable extends InspectorTable {
     private final class BootImageColumnModel extends InspectorTableColumnModel<BootImageColumnKind> {
 
         private BootImageColumnModel(BootImageViewPreferences viewPreferences) {
-            super(BootImageColumnKind.VALUES.length(), viewPreferences);
+            super(BootImageColumnKind.VALUES.size(), viewPreferences);
             addColumn(BootImageColumnKind.NAME, new NameCellRenderer(inspection()), null);
             addColumn(BootImageColumnKind.VALUE, new ValueCellRenderer(), null);
             addColumn(BootImageColumnKind.REGION, new RegionCellRenderer(), null);
@@ -162,7 +162,7 @@ public final class BootImageTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return BootImageColumnKind.VALUES.length();
+            return BootImageColumnKind.VALUES.size();
         }
 
         public int getRowCount() {

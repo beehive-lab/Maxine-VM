@@ -20,7 +20,7 @@
  */
 package com.sun.max.ins.debug;
 
-import com.sun.max.collect.*;
+import java.util.*;
 
 /**
  * Defines the columns that can be displayed describing a watchpoint in the VM.
@@ -82,5 +82,5 @@ public enum WatchpointsColumnKind implements ColumnKind {
         return defaultVisibility;
     }
 
-    public static final IndexedSequence<WatchpointsColumnKind> VALUES = new ArraySequence<WatchpointsColumnKind>(values());
+    public static final List<WatchpointsColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 }
