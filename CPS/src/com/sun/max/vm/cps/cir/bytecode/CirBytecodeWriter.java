@@ -25,7 +25,6 @@ import static com.sun.max.vm.cps.cir.bytecode.CirBytecode.Opcode.*;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.cps.cir.*;
@@ -61,7 +60,7 @@ public class CirBytecodeWriter extends CirVisitor {
     private static final int TRACE_LEVEL = 6;
 
     private final ByteArrayOutputStream stream;
-    private final GrowableMapping<Object, Integer> constantPoolMap;
+    private final HashMap<Object, Integer> constantPoolMap;
     private final BlockIdMap blocks = new BlockIdMap();
     private final Map<CirVariable, Integer> variables = new HashMap<CirVariable, Integer>();
     private int maxReferencedVariableSerial;
@@ -91,7 +90,7 @@ public class CirBytecodeWriter extends CirVisitor {
 
     public CirBytecodeWriter(CirNode node, Object context) {
         stream = new ByteArrayOutputStream();
-        constantPoolMap = new HashEntryChainedHashMapping<Object, Integer>();
+        constantPoolMap = new HashMap<Object, Integer>();
 
         depthFirstTraversal = new CirDepthFirstTraversal(blocks);
         depthFirstTraversal.run(node, this);
@@ -105,8 +104,8 @@ public class CirBytecodeWriter extends CirVisitor {
 
     public CirBytecode bytecode() {
         final byte[] code = stream.toByteArray();
-        final Object[] constantPool = new Object[constantPoolMap.length() + 1];
-        final Iterator<Object> keys = constantPoolMap.keys().iterator();
+        final Object[] constantPool = new Object[constantPoolMap.size() + 1];
+        final Iterator<Object> keys = constantPoolMap.keySet().iterator();
         final Iterator<Integer> values = constantPoolMap.values().iterator();
         while (keys.hasNext()) {
             final int index = values.next();
@@ -130,7 +129,7 @@ public class CirBytecodeWriter extends CirVisitor {
         protected void writeSerial(CirVariable variable) {
             final int serial = variable.serial();
             assert !variables.containsKey(variable);
-            assert !variables.containsValue(serial) : "variables have the same serial number: " + variable + " and " + Maps.key(variables, serial);
+            assert !variables.containsValue(serial) : "2 or more variables have the same serial number";
             variables.put(variable, serial);
             writeUnsignedInt(serial);
         }
@@ -210,7 +209,7 @@ public class CirBytecodeWriter extends CirVisitor {
         } else {
             Integer index = constantPoolMap.get(object);
             if (index == null) {
-                index = constantPoolMap.length() + 1;
+                index = constantPoolMap.size() + 1;
                 constantPoolMap.put(object, index);
             }
             writeUnsignedInt(index);

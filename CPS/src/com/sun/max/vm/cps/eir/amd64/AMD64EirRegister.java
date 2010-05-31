@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.cps.eir.amd64;
 
+import java.util.*;
+import java.util.Arrays;
+
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.x86.*;
 import com.sun.max.collect.*;
@@ -87,7 +90,7 @@ public abstract class AMD64EirRegister extends EirRegister {
 
         private static final General[] values = {RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15};
 
-        public static final IndexedSequence<General> VALUES = new ArraySequence<General>(values);
+        public static final List<General> VALUES = Arrays.asList(values);
 
         private static final PoolSet<AMD64EirRegister> poolSet = PoolSet.of(pool, values);
 
@@ -175,7 +178,7 @@ public abstract class AMD64EirRegister extends EirRegister {
 
         private static final XMM[] values = {XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15};
 
-        public static final IndexedSequence<XMM> VALUES = new ArraySequence<XMM>(values);
+        public static final List<XMM> VALUES = Arrays.asList(values);
 
         private static final PoolSet<AMD64EirRegister> poolSet = PoolSet.of(pool, values);
 

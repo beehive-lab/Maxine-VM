@@ -27,7 +27,6 @@ import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 import com.sun.max.util.*;
 
 /**
@@ -127,11 +126,11 @@ public enum OperandCode implements WrappableSpecification {
     }
 
     public TestArgumentExclusion excludeDisassemblerTestArguments(Argument... arguments) {
-        return new TestArgumentExclusion(AssemblyTestComponent.DISASSEMBLER, this, Sets.from(arguments));
+        return new TestArgumentExclusion(AssemblyTestComponent.DISASSEMBLER, this, new HashSet<Argument>(Arrays.asList(arguments)));
     }
 
     public TestArgumentExclusion excludeExternalTestArguments(Argument... arguments) {
-        return new TestArgumentExclusion(AssemblyTestComponent.EXTERNAL_ASSEMBLER, this, Sets.from(arguments));
+        return new TestArgumentExclusion(AssemblyTestComponent.EXTERNAL_ASSEMBLER, this, new HashSet<Argument>(Arrays.asList(arguments)));
     }
 
     public TestArgumentExclusion excludeExternalTestArguments(Enumerator... argumentEnumerators) {

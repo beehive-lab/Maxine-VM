@@ -22,9 +22,7 @@ package com.sun.max.vm.stack;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.runtime.*;
@@ -146,7 +144,7 @@ public abstract class CompiledStackFrameLayout {
      * {@linkplain #iterator() iterating} over the slots goes from the slot with the highest offset to the slot with the
      * lowest offset.
      */
-    public class Slots implements IterableWithLength<Slot> {
+    public class Slots implements Iterable<Slot> {
 
         protected final Slot[] slots;
 
@@ -195,7 +193,7 @@ public abstract class CompiledStackFrameLayout {
             return -1;
         }
 
-        public int length() {
+        public int size() {
             return slots.length;
         }
 
@@ -231,7 +229,7 @@ public abstract class CompiledStackFrameLayout {
          * @return an iterator of the slots that iterates over the slots in descending order of their {@linkplain Slot#offset() offsets}
          */
         public Iterator<Slot> iterator() {
-            return Arrays.iterator(slots);
+            return Arrays.asList(slots).iterator();
         }
 
         /**

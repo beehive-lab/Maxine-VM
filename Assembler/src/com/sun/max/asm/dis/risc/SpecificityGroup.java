@@ -20,7 +20,7 @@
  */
 package com.sun.max.asm.dis.risc;
 
-import com.sun.max.collect.*;
+import java.util.*;
 
 /**
  *
@@ -31,9 +31,9 @@ import com.sun.max.collect.*;
 public class SpecificityGroup {
 
     private final int specificity;
-    private final Sequence<OpcodeMaskGroup> opcodeMaskGroups;
+    private final List<OpcodeMaskGroup> opcodeMaskGroups;
 
-    public SpecificityGroup(int specificity, Sequence<OpcodeMaskGroup> opcodeMaskGroups) {
+    public SpecificityGroup(int specificity, List<OpcodeMaskGroup> opcodeMaskGroups) {
         this.specificity = specificity;
         this.opcodeMaskGroups = opcodeMaskGroups;
     }
@@ -42,7 +42,7 @@ public class SpecificityGroup {
         return specificity;
     }
 
-    public Sequence<OpcodeMaskGroup> opcodeMaskGroups() {
+    public List<OpcodeMaskGroup> opcodeMaskGroups() {
         return opcodeMaskGroups;
     }
 

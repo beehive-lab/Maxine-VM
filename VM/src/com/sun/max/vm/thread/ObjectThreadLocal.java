@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.thread;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
 
@@ -73,7 +73,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
             setVariableReference(Reference.fromJava(value));
         }
         Class<Type> type = null;
-        return StaticLoophole.cast(type, value);
+        return Utils.cast(type, value);
     }
 
     /**
@@ -92,7 +92,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
             return null;
         }
         Class<Type> type = null;
-        return StaticLoophole.cast(type, value);
+        return Utils.cast(type, value);
     }
 
     /**

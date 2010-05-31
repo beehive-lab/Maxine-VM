@@ -20,13 +20,14 @@
  */
 package com.sun.max.asm.dis.sparc;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
-import com.sun.max.collect.*;
 
 /**
  *
@@ -40,7 +41,7 @@ public class SPARC32Disassembler extends SPARCDisassembler {
     }
 
     @Override
-    protected DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, IndexedSequence<Argument> arguments) {
+    protected DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, List<Argument> arguments) {
         return new DisassembledInstruction(this, position, bytes, template, arguments);
     }
 

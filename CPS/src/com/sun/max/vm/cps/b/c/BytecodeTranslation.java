@@ -27,7 +27,7 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -252,9 +252,9 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         if (Stoppable.Static.canStop(cirRoutine)) {
             createJavaFrameDescriptor();
         }
-
         final CirValue exceptionContinuation = Stoppable.Static.canStopWithException(cirRoutine) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
-        currentCall.setArguments(Arrays.append(CirValue.class, regularArguments, normalContinuation, exceptionContinuation));
+        CirValue[] arguments = Utils.concat(regularArguments, normalContinuation, exceptionContinuation);
+        currentCall.setArguments(arguments);
         currentCall.setProcedure((CirProcedure) cirRoutine);
         if (normalContinuation != CirValue.UNDEFINED) {
             currentCall = new CirCall();
@@ -289,7 +289,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected void stackCall(CirRoutine cirRoutine) {
         final Kind[] parameterKinds = cirRoutine.parameterKinds();
         final int numberOfArguments = parameterKinds.length;
-        final CirValue[] arguments = CirClosure.newParameters(numberOfArguments);
+        final CirValue[] arguments = CirCall.newArguments(numberOfArguments);
         for (int i = numberOfArguments - 1; i >= 0; i--) {
             arguments[i] = pop(parameterKinds[i]);
         }
@@ -1381,7 +1381,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void multianewarray(int index, int nDimensions) {
         final JavaOperator op = new MultiANewArray(constantPool, index, nDimensions);
-        final CirVariable[] dimensions = CirClosure.newParameters(nDimensions);
+        final CirValue[] dimensions = CirCall.newArguments(nDimensions);
         for (int i = 1; i <= nDimensions; i++) {
             dimensions[nDimensions - i] = pop(Kind.INT);
         }

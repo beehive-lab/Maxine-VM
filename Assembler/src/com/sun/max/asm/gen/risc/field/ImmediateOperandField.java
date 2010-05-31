@@ -21,11 +21,11 @@
 package com.sun.max.asm.gen.risc.field;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.collect.*;
 
 /**
  * A field that contains an immediate value.
@@ -42,7 +42,7 @@ public class ImmediateOperandField extends OperandField<ImmediateArgument> imple
         return minArgumentValue() + " <= " + value + " && " + value + " <= " + maxArgumentValue();
     }
 
-    public boolean check(Template template, IndexedSequence<Argument> arguments) {
+    public boolean check(Template template, List<Argument> arguments) {
         final long value = evaluate(template, arguments);
         return minArgumentValue() <= value && value <= maxArgumentValue();
     }
@@ -121,32 +121,30 @@ public class ImmediateOperandField extends OperandField<ImmediateArgument> imple
     private Iterable<? extends Argument> testArguments;
     private Iterable<? extends Argument> illegalTestArguments;
 
-    private static final MapFunction<Integer, Immediate32Argument> ARGUMENT_WRAPPER = new MapFunction<Integer, Immediate32Argument>() {
-        public Immediate32Argument map(Integer integer) {
-            return new Immediate32Argument(integer);
-        }
-    };
-
     public Iterable<? extends Argument> getLegalTestArguments() {
         if (testArguments == null) {
-            final Sequence<Integer> integers = signDependentOperations().legalTestArgumentValues(minArgumentValue(), maxArgumentValue(), grain());
-            testArguments = LinkSequence.map(integers, Immediate32Argument.class, ARGUMENT_WRAPPER);
+            final List<Integer> integers = signDependentOperations().legalTestArgumentValues(minArgumentValue(), maxArgumentValue(), grain());
+            List<Argument> result = new ArrayList<Argument>(integers.size());
+            for (Integer i : integers) {
+                result.add(new Immediate32Argument(i));
+            }
+            testArguments = result;
         }
         return testArguments;
     }
 
     public Iterable<? extends Argument> getIllegalTestArguments() {
         if (this.illegalTestArguments == null) {
-            final AppendableSequence<Immediate32Argument> illegalArguments = new LinkSequence<Immediate32Argument>();
+            final List<Immediate32Argument> illegalArguments = new LinkedList<Immediate32Argument>();
             final int min = minArgumentValue();
             if (min != Integer.MIN_VALUE) {
-                illegalArguments.append(new Immediate32Argument(min - 1));
-                illegalArguments.append(new Immediate32Argument(Integer.MIN_VALUE));
+                illegalArguments.add(new Immediate32Argument(min - 1));
+                illegalArguments.add(new Immediate32Argument(Integer.MIN_VALUE));
             }
             final int max = maxArgumentValue();
             if (max != Integer.MAX_VALUE) {
-                illegalArguments.append(new Immediate32Argument(max + 1));
-                illegalArguments.append(new Immediate32Argument(Integer.MAX_VALUE));
+                illegalArguments.add(new Immediate32Argument(max + 1));
+                illegalArguments.add(new Immediate32Argument(Integer.MAX_VALUE));
             }
             this.illegalTestArguments = illegalArguments;
         }
@@ -154,7 +152,7 @@ public class ImmediateOperandField extends OperandField<ImmediateArgument> imple
     }
 
     public TestArgumentExclusion excludeExternalTestArguments(Argument... arguments) {
-        return new TestArgumentExclusion(AssemblyTestComponent.EXTERNAL_ASSEMBLER, this, Sets.from(arguments));
+        return new TestArgumentExclusion(AssemblyTestComponent.EXTERNAL_ASSEMBLER, this, new HashSet<Argument>(Arrays.asList(arguments)));
     }
 
     @Override

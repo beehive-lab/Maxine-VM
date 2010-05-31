@@ -20,14 +20,14 @@
  */
 package com.sun.max.vm.cps.cir.transform;
 
-import static com.sun.max.collect.SequenceBag.MapType.*;
+import static com.sun.max.vm.cps.collect.ListBag.MapType.*;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.Arrays;
+import com.sun.max.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.variable.*;
+import com.sun.max.vm.cps.collect.*;
 
 /**
  * Beta reduction: substitution of formal parameters by actual parameters (arguments).
@@ -68,21 +68,27 @@ public abstract class CirBetaReduction {
 
         Multiple(CirVariable[] parameters, CirValue[] arguments) {
             assert parameters.length == arguments.length || parameters.length == arguments.length + 2 :  parameters.length + "," + arguments.length;
-            this.parameters = Arrays.subArray(parameters, 0, arguments.length);
+            this.parameters = java.util.Arrays.copyOfRange(parameters, 0, arguments.length);
             this.arguments = arguments;
         }
 
-        private final Bag<CirContinuation, CirContinuation, Sequence<CirContinuation>> continuationsBag = new SequenceBag<CirContinuation, CirContinuation>(HASHED);
+        private final ListBag<CirContinuation, CirContinuation> continuationsBag = new ListBag<CirContinuation, CirContinuation>(HASHED);
 
         private void updateContinuations() {
             for (CirContinuation oldContinuation : continuationsBag.keys()) {
-                final Sequence<CirContinuation> newContinuations = continuationsBag.get(oldContinuation);
-                if (newContinuations.length() > 1) {
+                final List<CirContinuation> newContinuations = continuationsBag.get(oldContinuation);
+                if (newContinuations.size() > 1) {
                     final CirBlock block = new CirBlock(oldContinuation.body());
                     CirFreeVariableSearch.applyClosureConversion(block.closure());
                     for (CirContinuation newContinuation : newContinuations) {
                         final CirVariable[] parameters = block.closure().parameters();
-                        final CirValue[] arguments = parameters.length > 0 ? Arrays.from(CirValue.class, parameters) : CirCall.NO_ARGUMENTS;
+                        final CirValue[] arguments;
+                        if (parameters.length > 0) {
+                            arguments = new CirValue[parameters.length];
+                            System.arraycopy(parameters, 0, arguments, 0, arguments.length);
+                        } else {
+                            arguments = CirCall.NO_ARGUMENTS;
+                        }
                         final CirCall newBlockCall = new CirCall(block, arguments);
                         newContinuation.setBody(newBlockCall);
                     }
@@ -100,7 +106,7 @@ public abstract class CirBetaReduction {
 
         @Override
         protected CirNode transformVariable(CirVariable variable) {
-            final int index = Arrays.find(parameters, variable);
+            final int index = Utils.indexOfIdentical(parameters, variable);
             if (index >= 0) {
                 if (arguments[index] instanceof CirContinuation) {
                     return gatherContinuation((CirContinuation) arguments[index]);

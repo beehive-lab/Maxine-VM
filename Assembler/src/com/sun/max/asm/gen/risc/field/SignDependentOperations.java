@@ -20,8 +20,9 @@
  */
 package com.sun.max.asm.gen.risc.field;
 
+import java.util.*;
+
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.collect.*;
 
 /**
  * @author Bernd Mathiske
@@ -52,12 +53,12 @@ public enum SignDependentOperations {
         }
 
         @Override
-        public AppendableSequence<Integer> legalTestArgumentValues(int min, int max, int grain) {
+        public List<Integer> legalTestArgumentValues(int min, int max, int grain) {
             assert min == 0;
             assert grain > 0;
             assert max >= grain;
-            final AppendableSequence<Integer> result = smallContiguousRange(min, max, grain);
-            return result == null ? new ArrayListSequence<Integer>(new Integer[]{0, grain, max - grain, max }) : result;
+            final List<Integer> result = smallContiguousRange(min, max, grain);
+            return result == null ? Arrays.asList(0, grain, max - grain, max) : result;
         }
     },
 
@@ -84,12 +85,12 @@ public enum SignDependentOperations {
         }
 
         @Override
-        public AppendableSequence<Integer> legalTestArgumentValues(int min, int max, int grain) {
+        public List<Integer> legalTestArgumentValues(int min, int max, int grain) {
             assert min < 0;
             assert grain > 0;
             assert max >= grain;
-            final AppendableSequence<Integer> result = smallContiguousRange(min, max, grain);
-            return result == null ? new ArrayListSequence<Integer>(new Integer[]{min, min + grain, -grain, 0, grain, max - grain, max }) : null;
+            final List<Integer> result = smallContiguousRange(min, max, grain);
+            return result == null ? Arrays.asList(min, min + grain, -grain, 0, grain, max - grain, max) : null;
         }
     },
 
@@ -116,16 +117,16 @@ public enum SignDependentOperations {
         }
 
         @Override
-        public AppendableSequence<Integer> legalTestArgumentValues(int min, int max, int grain) {
+        public List<Integer> legalTestArgumentValues(int min, int max, int grain) {
             assert min < 0;
             assert grain > 0;
             assert max >= grain;
-            final AppendableSequence<Integer> result = smallContiguousRange(min, max, grain);
-            return result == null ? new ArrayListSequence<Integer>(new Integer[]{
+            final List<Integer> result = smallContiguousRange(min, max, grain);
+            return result == null ? Arrays.asList(
                 // We only test positive arguments, since negative ones would be returned as positive by extract()
                 // and that is correct, because there is no way to tell just by the instruction which sign was meant
                 0, grain, max / 2, max - grain, max
-            }) : null;
+            ) : null;
         }
     };
 
@@ -133,12 +134,12 @@ public enum SignDependentOperations {
      * Creates a sequence of all the integers inclusive between a given min and max if the
      * sequence contains 32 or less items. Otherwise, this method returns null.
      */
-    public static AppendableSequence<Integer> smallContiguousRange(int min, int max, int grain) {
+    public static List<Integer> smallContiguousRange(int min, int max, int grain) {
         final long range = (((long) max - (long) min) + 1) / grain;
         if (range > 0 && range <= 32) {
-            final AppendableSequence<Integer> result = new ArrayListSequence<Integer>((int) range);
+            final List<Integer> result = new ArrayList<Integer>((int) range);
             for (int i = min; i <= max; i += grain * 2) {
-                result.append(i);
+                result.add(i);
             }
             return result;
         }
@@ -157,5 +158,5 @@ public enum SignDependentOperations {
 
     public abstract int extract(int instruction, BitRange bitRange);
 
-    public abstract AppendableSequence<Integer> legalTestArgumentValues(int min, int max, int grain);
+    public abstract List<Integer> legalTestArgumentValues(int min, int max, int grain);
 }

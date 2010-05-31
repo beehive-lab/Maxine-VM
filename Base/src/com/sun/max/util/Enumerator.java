@@ -22,32 +22,29 @@ package com.sun.max.util;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
-import com.sun.max.program.*;
+import com.sun.max.*;
 
 /**
  * @see Enumerable
  *
  * @author Bernd Mathiske
  */
-public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerable<Enumerable_Type>>
-    implements Symbolizer<Enumerable_Type>, IndexedSequence<Enumerable_Type> {
+public class Enumerator<E extends Enum<E> & Enumerable<E>>
+    implements Symbolizer<E> {
 
-    private final Class<Enumerable_Type> type;
-    private final Enumerable_Type[] ordinalMap;
-    private final Enumerable_Type[] valueMap;
+    private final Class<E> type;
+    private final E[] ordinalMap;
+    private final E[] valueMap;
     private final int lowestValue;
 
-    public Enumerator(Class<Enumerable_Type> type) {
+    public Enumerator(Class<E> type) {
         this.type = type;
         ordinalMap = type.getEnumConstants();
 
         int lowValue = 0;
         int highestValue = ordinalMap.length - 1;
         boolean valuesAreSameAsOrdinals = true;
-        for (Enumerable_Type e : ordinalMap) {
+        for (E e : ordinalMap) {
             final int value = e.value();
             if (value != e.ordinal()) {
                 valuesAreSameAsOrdinals = false;
@@ -64,10 +61,10 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
             valueMap = ordinalMap;
         } else {
             final int valueMapLength = (highestValue - lowValue) + 1;
-            final Class<Enumerable_Type[]> arrayType = null;
+            final Class<E[]> arrayType = null;
             this.lowestValue = lowValue;
-            valueMap = StaticLoophole.cast(arrayType, new Enum[valueMapLength]);
-            for (Enumerable_Type e : ordinalMap) {
+            valueMap = Utils.cast(arrayType, new Enum[valueMapLength]);
+            for (E e : ordinalMap) {
                 final int value = e.value();
                 // The enumerable with the lowest ordinal is stored in the value map:
                 if (valueMap[value] == null) {
@@ -77,7 +74,7 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
         }
     }
 
-    public Class<Enumerable_Type> type() {
+    public Class<E> type() {
         return type;
     }
 
@@ -91,44 +88,18 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
      * @param set
      *                the set to which the enumerable constants are to be added
      */
-    public void addAll(Set<Enumerable_Type> set) {
-        for (Enumerable_Type e : this) {
+    public void addAll(Set<E> set) {
+        for (E e : this) {
             set.add(e);
         }
     }
 
-    public Enumerable_Type first() {
-        return ordinalMap[0];
-    }
-
-    public boolean isEmpty() {
-        return ordinalMap.length == 0;
-    }
-
-    public Enumerable_Type last() {
-        return ordinalMap[length() - 1];
-    }
-
-    public int length() {
+    public int size() {
         return ordinalMap.length;
     }
 
-    public Iterator<Enumerable_Type> iterator() {
-        return Arrays.iterator(ordinalMap);
-    }
-
-    @Override
-    public Sequence<Enumerable_Type> clone() {
-        try {
-            return StaticLoophole.cast(super.clone());
-        } catch (CloneNotSupportedException e) {
-            ProgramError.unexpected();
-            return null;
-        }
-    }
-
-    public Collection<Enumerable_Type> toCollection() {
-        return java.util.Arrays.asList(ordinalMap);
+    public Iterator<E> iterator() {
+        return Arrays.asList(ordinalMap).iterator();
     }
 
     /**
@@ -139,7 +110,7 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
      * @throws IndexOutOfBoundsException
      *                 if {@code 0 < ordinal || ordinal >= length()}
      */
-    public Enumerable_Type get(int ordinal) throws IndexOutOfBoundsException {
+    public E get(int ordinal) throws IndexOutOfBoundsException {
         return ordinalMap[ordinal];
     }
 
@@ -150,7 +121,7 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
      * enumerable with a matching value in which case the matching enumerable with the lowest
      * {@linkplain Enum#ordinal() ordinal} is returned.
      */
-    public Enumerable_Type fromValue(int value) {
+    public E fromValue(int value) {
         final int index = value - lowestValue;
         if (index >= 0 && index < valueMap.length) {
             return valueMap[index];

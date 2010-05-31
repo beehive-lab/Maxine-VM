@@ -20,13 +20,18 @@
  */
 package com.sun.max.jdwp.handlers;
 
-import java.util.regex.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import com.sun.max.collect.*;
-import com.sun.max.jdwp.data.*;
-import com.sun.max.jdwp.protocol.*;
-import com.sun.max.jdwp.protocol.EventRequestCommands.*;
-import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.jdwp.data.JDWPException;
+import com.sun.max.jdwp.data.JDWPLocation;
+import com.sun.max.jdwp.data.JDWPNotImplementedException;
+import com.sun.max.jdwp.protocol.EventRequestCommands;
+import com.sun.max.jdwp.protocol.EventRequestCommands.Set;
+import com.sun.max.jdwp.vm.proxy.ReferenceTypeProvider;
+import com.sun.max.jdwp.vm.proxy.ThreadProvider;
 
 /**
  * @author Thomas Wuerthinger
@@ -37,37 +42,37 @@ public interface JDWPEventModifier {
 
     public static class Static {
 
-        public static Sequence<JDWPEventModifier> createSequence(JDWPSession session, EventRequestCommands.Set.Modifier[] modifiers) throws JDWPException {
+        public static List<JDWPEventModifier> createList(JDWPSession session, EventRequestCommands.Set.Modifier[] modifiers) throws JDWPException {
 
-            final AppendableSequence<JDWPEventModifier> result = new LinkSequence<JDWPEventModifier>();
+            final List<JDWPEventModifier> result = new LinkedList<JDWPEventModifier>();
             for (Set.Modifier m : modifiers) {
                 final Set.Modifier.ModifierCommon mc = m.aModifierCommon;
                 if (mc instanceof Set.Modifier.ClassExclude) {
-                    result.append(new JDWPEventModifier.ClassExclude(((Set.Modifier.ClassExclude) mc).classPattern));
+                    result.add(new JDWPEventModifier.ClassExclude(((Set.Modifier.ClassExclude) mc).classPattern));
                 } else if (mc instanceof Set.Modifier.ClassMatch) {
-                    result.append(new JDWPEventModifier.ClassMatch(((Set.Modifier.ClassMatch) mc).classPattern));
+                    result.add(new JDWPEventModifier.ClassMatch(((Set.Modifier.ClassMatch) mc).classPattern));
                 } else if (mc instanceof Set.Modifier.ClassOnly) {
-                    result.append(new JDWPEventModifier.ClassOnly(session.getReferenceType(((Set.Modifier.ClassOnly) mc).clazz)));
+                    result.add(new JDWPEventModifier.ClassOnly(session.getReferenceType(((Set.Modifier.ClassOnly) mc).clazz)));
                 } else if (mc instanceof Set.Modifier.Conditional) {
                     throw new JDWPNotImplementedException();
                 } else if (mc instanceof Set.Modifier.Count) {
-                    result.append(new JDWPEventModifier.Count(((Set.Modifier.Count) mc).count));
+                    result.add(new JDWPEventModifier.Count(((Set.Modifier.Count) mc).count));
                 } else if (mc instanceof Set.Modifier.ExceptionOnly) {
                     final Set.Modifier.ExceptionOnly emc = (Set.Modifier.ExceptionOnly) mc;
-                    result.append(new JDWPEventModifier.ExceptionOnly(session.getReferenceType(emc.exceptionOrNull), emc.caught, emc.uncaught));
+                    result.add(new JDWPEventModifier.ExceptionOnly(session.getReferenceType(emc.exceptionOrNull), emc.caught, emc.uncaught));
                 } else if (mc instanceof Set.Modifier.FieldOnly) {
                     throw new JDWPNotImplementedException();
                 } else if (mc instanceof Set.Modifier.InstanceOnly) {
                     throw new JDWPNotImplementedException();
                 } else if (mc instanceof Set.Modifier.LocationOnly) {
-                    result.append(new JDWPEventModifier.LocationOnly(((Set.Modifier.LocationOnly) mc).loc));
+                    result.add(new JDWPEventModifier.LocationOnly(((Set.Modifier.LocationOnly) mc).loc));
                 } else if (mc instanceof Set.Modifier.SourceNameMatch) {
                     throw new JDWPNotImplementedException();
                 } else if (mc instanceof Set.Modifier.Step) {
                     final Set.Modifier.Step stepModifier = (Set.Modifier.Step) mc;
-                    result.append(new JDWPEventModifier.Step(session.getThread(stepModifier.thread), stepModifier.size, stepModifier.depth));
+                    result.add(new JDWPEventModifier.Step(session.getThread(stepModifier.thread), stepModifier.size, stepModifier.depth));
                 } else if (mc instanceof Set.Modifier.ThreadOnly) {
-                    result.append(new JDWPEventModifier.ThreadOnly(session.getThread(((Set.Modifier.ThreadOnly) mc).thread)));
+                    result.add(new JDWPEventModifier.ThreadOnly(session.getThread(((Set.Modifier.ThreadOnly) mc).thread)));
                 } else {
                     throw new JDWPNotImplementedException();
                 }

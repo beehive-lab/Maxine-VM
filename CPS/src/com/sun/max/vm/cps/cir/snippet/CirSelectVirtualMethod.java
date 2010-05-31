@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.cps.cir.snippet;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -50,7 +51,7 @@ public final class CirSelectVirtualMethod extends CirSnippet {
     private enum Parameter {
         receiver, declaredVirtualMethodActor, normalContinuation, exceptionContinuation;
 
-        public static final IndexedSequence<Parameter> VALUES = new ArraySequence<Parameter>(values());
+        public static final List<Parameter> VALUES = Arrays.asList(values());
     }
 
     @Override
@@ -76,14 +77,14 @@ public final class CirSelectVirtualMethod extends CirSnippet {
 
     @Override
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        assert arguments.length == Parameter.VALUES.length();
+        assert arguments.length == Parameter.VALUES.size();
         return true;
     }
 
     @Override
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         final CirGenerator cirGenerator = cirOptimizer.cirGenerator();
-        assert arguments.length == Parameter.VALUES.length();
+        assert arguments.length == Parameter.VALUES.size();
         if (isConstantArgument(arguments, Parameter.declaredVirtualMethodActor)) {
             final VirtualMethodActor declaredMethod = (VirtualMethodActor) getConstantArgumentValue(arguments, Parameter.declaredVirtualMethodActor).asObject();
             if (declaredMethod.isFinal() || declaredMethod.holder().isFinal() || declaredMethod.holder().kind.isWord) {

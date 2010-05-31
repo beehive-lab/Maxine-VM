@@ -24,7 +24,7 @@ import java.io.*;
 import java.util.*;
 import java.util.Arrays;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.profile.Metrics.*;
 import com.sun.max.util.timer.*;
 
@@ -36,11 +36,11 @@ public class GlobalMetrics {
         }
     }
 
-    static class MetricSet<Metric_Type extends Metric> {
-        private final Class<Metric_Type> clazz;
-        private final Map<String, Metric_Type> metrics = new HashMap<String, Metric_Type>();
+    static class MetricSet<T extends Metric> {
+        private final Class<T> clazz;
+        private final Map<String, T> metrics = new HashMap<String, T>();
 
-        MetricSet(Class<Metric_Type> mClass) {
+        MetricSet(Class<T> mClass) {
             clazz = mClass;
         }
     }
@@ -99,10 +99,10 @@ public class GlobalMetrics {
         return rate;
     }
 
-    public static <Metric_Type extends Metric> Metric_Type getMetric(String name, Class<Metric_Type> mClass) {
-        final MetricSet<Metric_Type> metricSet = StaticLoophole.cast(metricSets.get(mClass));
+    public static <T extends Metric> T getMetric(String name, Class<T> mClass) {
+        final MetricSet<T> metricSet = Utils.cast(metricSets.get(mClass));
         if (metricSet != null) {
-            final Metric_Type metric = metricSet.metrics.get(name);
+            final T metric = metricSet.metrics.get(name);
             if (metric != null) {
                 return metric;
             }
@@ -110,10 +110,10 @@ public class GlobalMetrics {
         return null;
     }
 
-    public static <Metric_Type extends Metric> Metric_Type setMetric(String name, Class<Metric_Type> mClass, Metric_Type metric) {
-        MetricSet<Metric_Type> metricSet = StaticLoophole.cast(metricSets.get(mClass));
+    public static <T extends Metric> T setMetric(String name, Class<T> mClass, T metric) {
+        MetricSet<T> metricSet = Utils.cast(metricSets.get(mClass));
         if (metricSet == null) {
-            metricSet = new MetricSet<Metric_Type>(mClass);
+            metricSet = new MetricSet<T>(mClass);
             metricSets.put(mClass, metricSet);
         }
         metricSet.metrics.put(name, metric);
@@ -142,7 +142,7 @@ public class GlobalMetrics {
             allMetrics.putAll(metricSet.metrics);
         }
 
-        Map.Entry<String, Metric>[] array = StaticLoophole.cast(new Map.Entry[allMetrics.size()]);
+        Map.Entry<String, Metric>[] array = Utils.cast(new Map.Entry[allMetrics.size()]);
         array = allMetrics.entrySet().toArray(array);
         Arrays.sort(array, new GlobalMetrics.EntryComparator());
         for (Map.Entry<String, Metric> entry : array) {

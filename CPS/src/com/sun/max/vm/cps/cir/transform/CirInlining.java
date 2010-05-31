@@ -22,11 +22,11 @@ package com.sun.max.vm.cps.cir.transform;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.CirTraceObserver.*;
 import com.sun.max.vm.cps.cir.optimize.*;
+import com.sun.max.vm.cps.collect.*;
 
 /**
  * Applies CIR block and method inlining within a CIR graph as often and as long as the given optimizer's inlining policy requires.

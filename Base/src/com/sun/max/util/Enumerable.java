@@ -35,10 +35,10 @@ package com.sun.max.util;
  *
  * @author Bernd Mathiske
  */
-public interface Enumerable<Enumerable_Type extends Enum<Enumerable_Type> & Enumerable<Enumerable_Type>> extends Symbol {
+public interface Enumerable<E extends Enum<E> & Enumerable<E>> extends Symbol {
 
     // We are merely declaring this method to lock in the same parameter type for the corresponding enumerator,
     // not for any actual use
-    Enumerator<Enumerable_Type> enumerator();
+    Enumerator<E> enumerator();
 
 }

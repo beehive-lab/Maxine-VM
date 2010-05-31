@@ -22,10 +22,10 @@ package com.sun.max.vm.hotpath;
 
 import java.util.concurrent.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.profile.Metrics.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.hotpath.compiler.*;
 
@@ -85,7 +85,7 @@ public class AsynchronousProfiler implements Runnable {
     }
 
     private abstract static class TreeEvent extends Event {
-        private static final GrowableDeterministicSet<TirTree> trees = new LinkedIdentityHashSet<TirTree>();
+        private static final LinkedIdentityHashSet<TirTree> trees = new LinkedIdentityHashSet<TirTree>();
         private final TirTree tree;
         public TreeEvent(TirTree tree) {
             this.tree = tree;

@@ -28,7 +28,6 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.Bytes;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -124,12 +123,12 @@ public abstract class BytecodeToTargetTranslator {
     /**
      * List of forward branches that need to be fixed up.
      */
-    private AppendableSequence<ForwardBranch> forwardBranches = new LinkSequence<ForwardBranch>();
+    private List<ForwardBranch> forwardBranches = new LinkedList<ForwardBranch>();
 
     /**
      * List of tableswitch and lookupswitch instructions that need to be fixed up.
      */
-    private AppendableSequence<Switch> switches = new LinkSequence<Switch>();
+    private List<Switch> switches = new LinkedList<Switch>();
 
     /**
      * Adapter generator when using both an optimizing and jit compiler.
@@ -202,12 +201,12 @@ public abstract class BytecodeToTargetTranslator {
     }
 
     protected void addForwardBranch(ForwardBranch branch) {
-        forwardBranches.append(branch);
+        forwardBranches.add(branch);
         startBlock(branch.targetBytecodePosition);
     }
 
     protected void addSwitch(Switch aSwitch) {
-        switches.append(aSwitch);
+        switches.add(aSwitch);
         startBlock(aSwitch.defaultTargetBytecodePosition);
         startBlocks(aSwitch.targetBytecodePositions);
     }
@@ -464,24 +463,24 @@ public abstract class BytecodeToTargetTranslator {
      * @see TargetMethod#throwAddressToCatchAddress(boolean, com.sun.max.unsafe.Address, Class)
      */
     public void buildExceptionHandlingInfo() {
-        Sequence<ExceptionHandlerEntry> exceptionHandlers = classMethodActor.codeAttribute().exceptionHandlerTable();
-        if (exceptionHandlers.isEmpty()) {
+        ExceptionHandlerEntry[] exceptionHandlers = classMethodActor.codeAttribute().exceptionHandlerTable();
+        if (exceptionHandlers.length == 0) {
             return;
         }
 
         // Deal with simple, single-handler, case first.
-        if (exceptionHandlers.length() == 1) {
-            ExceptionHandlerEntry einfo = exceptionHandlers.first();
+        if (exceptionHandlers.length == 1) {
+            ExceptionHandlerEntry einfo = exceptionHandlers[0];
             catchRangePositions = new int[] {bytecodeToTargetCodePosition(einfo.startPosition()), bytecodeToTargetCodePosition(einfo.endPosition())};
             catchBlockPositions = new int[] {bytecodeToTargetCodePosition(einfo.handlerPosition()), 0};
             return;
         }
         // Over-allocate to the maximum possible size (i.e., when no two ranges are contiguous)
         // The arrays will be trimmed later at the end.
-        int[] catchRangePosns = new int[exceptionHandlers.length() * 2 + 1];
+        int[] catchRangePosns = new int[exceptionHandlers.length * 2 + 1];
         int[] catchBlockPosns = new int[catchRangePosns.length];
         int index = 0;
-        int nextRange = exceptionHandlers.first().startPosition();
+        int nextRange = exceptionHandlers[0].startPosition();
         for (ExceptionHandlerEntry einfo : exceptionHandlers) {
             if (nextRange < einfo.startPosition()) {
                 // There's a gap between the two catch ranges. Insert a range with no handler.
@@ -529,17 +528,17 @@ public abstract class BytecodeToTargetTranslator {
 
     protected abstract void loadTemplateArgumentRelativeToInstructionPointer(Kind kind, int parameterIndex, int offsetFromInstructionPointer);
 
-    private PrependableSequence<Object> referenceLiterals = new LinkSequence<Object>();
+    private LinkedList<Object> referenceLiterals = new LinkedList<Object>();
 
     public final Object[] packReferenceLiterals() {
         if (referenceLiterals.isEmpty()) {
             return null;
         }
         if (MaxineVM.isHosted()) {
-            return Sequence.Static.toArray(referenceLiterals, new Object[referenceLiterals.length()]);
+            return referenceLiterals.toArray();
         }
         // Must not cause checkcast here, since some reference literals may be static tuples.
-        Object[] result = new Object[referenceLiterals.length()];
+        Object[] result = new Object[referenceLiterals.size()];
         int i = 0;
         for (Object literal : referenceLiterals) {
             ArrayAccess.setObject(result, i, literal);
@@ -564,8 +563,8 @@ public abstract class BytecodeToTargetTranslator {
      * @return the offset of the literal relative to the current code position
      */
     protected int createReferenceLiteral(Object literal) {
-        int literalOffset = computeReferenceLiteralOffset(1 + referenceLiterals.length());
-        referenceLiterals.prepend(literal);
+        int literalOffset = computeReferenceLiteralOffset(1 + referenceLiterals.size());
+        referenceLiterals.addFirst(literal);
         if (DebugHeap.isTagging()) {
             // Account for the DebugHeap tag in front of the code object:
             literalOffset += VMConfiguration.target().wordWidth().numberOfBytes;

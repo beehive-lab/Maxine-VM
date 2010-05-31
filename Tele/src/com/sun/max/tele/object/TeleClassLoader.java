@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.prototype.*;
@@ -36,10 +37,10 @@ public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvi
 
     protected TeleClassLoader(TeleVM teleVM, Reference classLoaderReference) {
         super(teleVM, classLoaderReference);
-        teleClassLoaders.append(this);
+        teleClassLoaders.add(this);
     }
 
-    private static final AppendableSequence<TeleClassLoader> teleClassLoaders = new LinkSequence<TeleClassLoader>();
+    private static final List<TeleClassLoader> teleClassLoaders = new LinkedList<TeleClassLoader>();
 
     @Override
     protected Object createDeepCopy(DeepCopier context) {
@@ -48,7 +49,7 @@ public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvi
         return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
     }
 
-    public static Sequence<TeleClassLoader> teleClassLoaders() {
+    public static List<TeleClassLoader> teleClassLoaders() {
         return teleClassLoaders;
     }
 

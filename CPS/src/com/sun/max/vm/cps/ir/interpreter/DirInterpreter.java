@@ -23,6 +23,7 @@ package com.sun.max.vm.cps.ir.interpreter;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
@@ -128,7 +129,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
         Evaluator(DirMethod dirMethod, DirValue[] arguments) {
             this.dirMethod = dirMethod;
-            block = dirMethod.blocks().first();
+            block = Utils.first(dirMethod.blocks());
             environment = new Environment(dirMethod.parameters(), arguments);
         }
 
@@ -261,7 +262,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
             final DirValue uninitializedObject = environment.lookup(arguments[0]);
 
             try {
-                final Value[] valueArguments = environment.lookupValues(com.sun.max.lang.Arrays.subArray(arguments, 1));
+                final Value[] valueArguments = environment.lookupValues(Arrays.copyOfRange(arguments, 1, arguments.length));
                 final Value initializedObject = classMethodActor.invokeConstructor(valueArguments);
                 Objects.copy(initializedObject.asObject(), uninitializedObject.value().asObject());
                 environment.bind(dirMethodCall.result(), new DirConstant(VoidValue.VOID));

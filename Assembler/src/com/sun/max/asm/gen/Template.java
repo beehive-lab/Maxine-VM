@@ -21,9 +21,10 @@
 package com.sun.max.asm.gen;
 
 import java.lang.reflect.*;
+import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
@@ -75,7 +76,7 @@ public abstract class Template implements Cloneable, Comparable<Template> {
         if (labelParameterIndex != -1) {
             ProgramError.unexpected("a template can have at most one label parameter");
         }
-        labelParameterIndex = parameters().length();
+        labelParameterIndex = parameters().size();
     }
 
     public abstract String assemblerMethodName();
@@ -128,26 +129,26 @@ public abstract class Template implements Cloneable, Comparable<Template> {
         return instructionDescription.isExternallyTestable();
     }
 
-    public abstract Sequence<? extends Operand> operands();
+    public abstract List<? extends Operand> operands();
 
-    public abstract IndexedSequence<? extends Parameter> parameters();
+    public abstract List<? extends Parameter> parameters();
 
     /**
      * Gets the argument from a given list of arguments corresponding to a parameter of this template.
      *
      * @return the argument at index {@code i} in {@code arguments} where {@code parameter == parameters().get(i)}
      */
-    public Argument bindingFor(Parameter parameter, IndexedSequence<Argument> arguments) {
-        final Sequence< ? extends Parameter> parameters = parameters();
-        assert arguments.length() == parameters.length();
-        final int index = Sequence.Static.indexOfIdentical(parameters, parameter);
+    public Argument bindingFor(Parameter parameter, List<Argument> arguments) {
+        final List< ? extends Parameter> parameters = parameters();
+        assert arguments.size() == parameters.size();
+        final int index = Utils.indexOfIdentical(parameters, parameter);
         ProgramError.check(index != -1, parameter + " is not a parameter of " + externalName());
         return arguments.get(index);
     }
 
     public Class[] parameterTypes() {
-        final Class[] parameterTypes = new Class[parameters().length()];
-        for (int i = 0; i < parameters().length(); i++) {
+        final Class[] parameterTypes = new Class[parameters().size()];
+        for (int i = 0; i < parameters().size(); i++) {
             parameterTypes[i] = parameters().get(i).type();
         }
         return parameterTypes;
@@ -169,16 +170,16 @@ public abstract class Template implements Cloneable, Comparable<Template> {
         if (result != 0) {
             return result;
         }
-        final IndexedSequence<? extends Parameter> myParameters = parameters();
-        final IndexedSequence<? extends Parameter> otherParameters = other.parameters();
-        final int n = Math.min(myParameters.length(), otherParameters.length());
+        final List<? extends Parameter> myParameters = parameters();
+        final List<? extends Parameter> otherParameters = other.parameters();
+        final int n = Math.min(myParameters.size(), otherParameters.size());
         for (int i = 0; i < n; i++) {
             result = myParameters.get(i).compareTo(otherParameters.get(i));
             if (result != 0) {
                 return result;
             }
         }
-        return new Integer(myParameters.length()).compareTo(otherParameters.length());
+        return new Integer(myParameters.size()).compareTo(otherParameters.size());
     }
 
     public final boolean isEquivalentTo(Template other) {

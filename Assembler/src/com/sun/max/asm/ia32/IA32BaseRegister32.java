@@ -20,8 +20,9 @@
  */
 package com.sun.max.asm.ia32;
 
+import java.util.Arrays;
+
 import com.sun.max.asm.x86.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.util.*;
 
@@ -40,7 +41,7 @@ public enum IA32BaseRegister32 implements GeneralRegister<IA32BaseRegister32> {
     EDI_BASE;
 
     public static IA32BaseRegister32 from(GeneralRegister generalRegister) {
-        return new ArraySequence<IA32BaseRegister32>(values()).get(generalRegister.id());
+        return Arrays.asList(values()).get(generalRegister.id());
     }
 
     public WordWidth width() {

@@ -57,7 +57,7 @@ public class LinkedIdentityHashMapTest extends MaxTestCase {
             assertSame(key, keys[i++]);
         }
         assertEquals(i, n + 1);
-        assertEquals(i, table.length());
+        assertEquals(i, table.size());
     }
 
     public void test_serial() {

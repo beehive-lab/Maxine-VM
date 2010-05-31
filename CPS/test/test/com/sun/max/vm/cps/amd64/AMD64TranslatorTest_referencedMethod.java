@@ -25,7 +25,6 @@ import java.util.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -37,6 +36,7 @@ import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.transform.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
@@ -112,7 +112,7 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
 
     private Iterable<MethodActor> methodActorsReferencedByStaticCalls(TargetMethod targetMethod) {
         final CirGenerator cirGenerator = ((CirGeneratorScheme) CompilerTestSetup.compilerScheme()).cirGenerator();
-        final AppendableSequence<MethodActor> result = new LinkSequence<MethodActor>();
+        final List<MethodActor> result = new LinkedList<MethodActor>();
         final CirMethod cirMethod = cirGenerator.getCirMethod(targetMethod.classMethodActor());
         final CirVisitor collector = new CirVisitor() {
             @Override
@@ -123,7 +123,7 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
                         private void addStaticCall(int index) {
                             final ConstantPool pool = location.classMethodActor.codeAttribute().constantPool;
                             final MethodActor methodActor = pool.classMethodAt(index).resolve(pool, index);
-                            result.append(methodActor);
+                            result.add(methodActor);
                         }
                         @Override
                         protected void invokestatic(int index) {

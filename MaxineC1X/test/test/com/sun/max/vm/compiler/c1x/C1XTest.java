@@ -30,7 +30,6 @@ import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
 import com.sun.max.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -126,7 +125,7 @@ public class C1XTest {
         for (String arg : args) {
             if (arg.charAt(0) == '@') {
                 File file = new File(arg.substring(1));
-                result.addAll(Files.readLines(file).toCollection());
+                result.addAll(Files.readLines(file));
             } else {
                 result.add(arg);
             }
@@ -470,13 +469,13 @@ public class C1XTest {
             final PatternMatcher classNamePattern = new PatternMatcher(colonIndex == -1 ? argument : argument.substring(0, colonIndex));
 
             // search for matching classes on the class path
-            final AppendableSequence<String> matchingClasses = new ArrayListSequence<String>();
+            final List<String> matchingClasses = new ArrayList<String>();
             if (verboseOption.getValue() > 0) {
                 out.print("Classes " + classNamePattern.type + " '" + classNamePattern.pattern + "'... ");
             }
 
             if (classNamePattern.type == EXACT) {
-                matchingClasses.append(classNamePattern.pattern);
+                matchingClasses.add(classNamePattern.pattern);
             } else {
                 new ClassSearch() {
                     @Override
@@ -488,7 +487,7 @@ public class C1XTest {
                                         return true;
                                     }
                                 }
-                                matchingClasses.append(className);
+                                matchingClasses.add(className);
                             }
                         }
                         return true;
@@ -497,7 +496,7 @@ public class C1XTest {
             }
 
             if (verboseOption.getValue() > 0) {
-                out.println(matchingClasses.length());
+                out.println(matchingClasses.size());
             }
 
             final int startMethods = methods.size();

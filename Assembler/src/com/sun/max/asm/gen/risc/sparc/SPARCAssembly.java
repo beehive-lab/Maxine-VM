@@ -20,10 +20,11 @@
  */
 package com.sun.max.asm.gen.risc.sparc;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.collect.*;
 
 /**
  * @author Bernd Mathiske
@@ -53,7 +54,7 @@ public final class SPARCAssembly extends RiscAssembly {
     }
 
     @Override
-    protected Sequence<RiscTemplate> createTemplates() {
+    protected List<RiscTemplate> createTemplates() {
         final RiscTemplateCreator creator = new RiscTemplateCreator();
         creator.createTemplates(new MemoryAccess(creator));
         creator.createTemplates(new MemorySynchronization(creator));

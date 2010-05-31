@@ -33,7 +33,7 @@ import com.sun.max.lang.*;
  *
  * @author Doug Simon
  */
-public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolObject_Type> {
+public class PoolSet64<T extends PoolObject> extends PoolSet<T> {
 
     public static final int MAX_POOL_SIZE = 64;
 
@@ -45,13 +45,13 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
     /**
      * Creates an empty pool set for a pool with 64objects or less.
      */
-    public PoolSet64(Pool<PoolObject_Type> pool) {
+    public PoolSet64(Pool<T> pool) {
         super(pool);
         assert pool.length() <= MAX_POOL_SIZE : pool.length() + " > " + MAX_POOL_SIZE;
     }
 
     @Override
-    public int length() {
+    public int size() {
         return Long.bitCount(set);
     }
 
@@ -78,7 +78,7 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
     }
 
     @Override
-    public boolean contains(PoolObject_Type value) {
+    public boolean contains(T value) {
         if (value == null) {
             return false;
         }
@@ -89,31 +89,31 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
     }
 
     @Override
-    public void add(PoolObject_Type value) {
+    public void add(T value) {
         final int serial = value.serial();
         assert pool.get(serial) == value;
         set |= serialToBit(serial);
     }
 
     @Override
-    public PoolSet64<PoolObject_Type> addAll() {
+    public PoolSet64<T> addAll() {
         final int poolLength = pool.length();
         if (poolLength != 0) {
             final long highestBit = 1L << poolLength - 1;
             set = highestBit | (highestBit - 1);
-            assert length() == poolLength;
+            assert size() == poolLength;
         }
         return this;
     }
 
     @Override
-    public void or(PoolSet<PoolObject_Type> others) {
+    public void or(PoolSet<T> others) {
         if (others instanceof PoolSet64) {
             final PoolSet64 poolSet64 = (PoolSet64) others;
             set |= poolSet64.set;
         } else {
             if (!others.isEmpty()) {
-                for (PoolObject_Type element : others) {
+                for (T element : others) {
                     add(element);
                 }
             }
@@ -121,7 +121,7 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
     }
 
     @Override
-    public boolean remove(PoolObject_Type value) {
+    public boolean remove(T value) {
         if (!isEmpty()) {
             final int serial = value.serial();
             assert pool.get(serial) == value;
@@ -134,7 +134,7 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
     }
 
     @Override
-    public PoolObject_Type removeOne() {
+    public T removeOne() {
         if (isEmpty()) {
             throw new NoSuchElementException();
         }
@@ -144,7 +144,7 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
     }
 
     @Override
-    public void and(PoolSet<PoolObject_Type> others) {
+    public void and(PoolSet<T> others) {
         if (others instanceof PoolSet64) {
             final PoolSet64 poolSet64 = (PoolSet64) others;
             set &= poolSet64.set;
@@ -162,7 +162,7 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
     }
 
     @Override
-    public boolean containsAll(PoolSet<PoolObject_Type> others) {
+    public boolean containsAll(PoolSet<T> others) {
         if (others instanceof PoolSet64) {
             final PoolSet64 poolSet64 = (PoolSet64) others;
             return (set & poolSet64.set) == poolSet64.set;
@@ -171,8 +171,8 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
     }
 
     @Override
-    public PoolSet<PoolObject_Type> clone() {
-        final PoolSet64<PoolObject_Type> clone = new PoolSet64<PoolObject_Type>(pool);
+    public PoolSet<T> clone() {
+        final PoolSet64<T> clone = new PoolSet64<T>(pool);
         clone.set = set;
         return clone;
     }
@@ -180,8 +180,8 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
     /**
      * Gets an iterator over all the values in this set.
      */
-    public Iterator<PoolObject_Type> iterator() {
-        return new Iterator<PoolObject_Type>() {
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
 
             private long current = set;
             private long currentBit = -1L;
@@ -191,7 +191,7 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
                 return current != 0;
             }
 
-            public PoolObject_Type next() {
+            public T next() {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }

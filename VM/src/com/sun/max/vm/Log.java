@@ -23,9 +23,9 @@ package com.sun.max.vm;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
@@ -868,8 +868,8 @@ public final class Log {
                 lockDisabledSafepoints = lock();
             }
             if (!all) {
-                final IndexedSequence<VmThreadLocal> values = VmThreadLocal.values();
-                for (int i = 0; i != values.length(); i++) {
+                final List<VmThreadLocal> values = VmThreadLocal.values();
+                for (int i = 0; i != values.size(); i++) {
                     final VmThreadLocal vmThreadLocal = values.get(i);
                     for (int j = 0; j < 45 - vmThreadLocal.name.length(); j++) {
                         print(' ');
@@ -880,11 +880,11 @@ public final class Log {
                     println();
                 }
             } else {
-                final IndexedSequence<VmThreadLocal> values = VmThreadLocal.values();
+                final List<VmThreadLocal> values = VmThreadLocal.values();
                 final Pointer enabled = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
                 final Pointer disabled = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
                 final Pointer triggered = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                for (int i = 0; i != values.length(); i++) {
+                for (int i = 0; i != values.size(); i++) {
                     final VmThreadLocal vmThreadLocal = values.get(i);
                     for (int j = 0; j < 45 - vmThreadLocal.name.length(); j++) {
                         print(' ');

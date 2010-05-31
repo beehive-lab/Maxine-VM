@@ -21,9 +21,10 @@
 
 package com.sun.max.ins.debug;
 
+import java.util.*;
+
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 
@@ -36,7 +37,7 @@ import com.sun.max.ins.gui.*;
 public abstract class InspectorTableColumnModel<ColumnKind_Type extends  ColumnKind> extends DefaultTableColumnModel implements Prober {
 
     private final TableColumn[] columns;
-    private final GrowableMapping<Integer, ColumnKind_Type> columnKinds;
+    private final Map<Integer, ColumnKind_Type> columnKinds;
     private final TableColumnVisibilityPreferences<ColumnKind_Type> viewPreferences;
 
     /**
@@ -47,7 +48,7 @@ public abstract class InspectorTableColumnModel<ColumnKind_Type extends  ColumnK
      */
     public InspectorTableColumnModel(int columnKindCount, TableColumnVisibilityPreferences<ColumnKind_Type> viewPreferences) {
         this.columns = new TableColumn[columnKindCount];
-        this.columnKinds = new IdentityHashMapping<Integer, ColumnKind_Type>();
+        this.columnKinds = new IdentityHashMap<Integer, ColumnKind_Type>();
         this.viewPreferences = viewPreferences;
     }
 

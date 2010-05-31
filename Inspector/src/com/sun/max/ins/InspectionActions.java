@@ -28,7 +28,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.java.*;
@@ -2211,10 +2211,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View compiled code for method in class...", "Select");
             if (teleClassActor != null) {
-                final Sequence<MaxCompiledCode> compilations =
+                final List<MaxCompiledCode> compilations =
                     TargetMethodSearchDialog.show(inspection(), teleClassActor, "View Compiled Code for Method...", "View Code", false);
                 if (compilations != null) {
-                    focus().setCodeLocation(compilations.first().getCallEntryLocation());
+                    focus().setCodeLocation(Utils.first(compilations).getCallEntryLocation());
                 }
             }
         }
@@ -2243,10 +2243,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Sequence<MaxCompiledCode> compilations =
+            final List<MaxCompiledCode> compilations =
                 TargetMethodSearchDialog.show(inspection(), null, "View Compiled Code for Method...", "View Code", false);
             if (compilations != null) {
-                focus().setCodeLocation(compilations.first().getCallEntryLocation(), false);
+                focus().setCodeLocation(Utils.first(compilations).getCallEntryLocation(), false);
             }
         }
     }
@@ -3056,7 +3056,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final TeleClassActor teleClassActor =
                 ClassActorSearchDialog.show(inspection(), "Class for machine code entry breakpoints...", "Select");
             if (teleClassActor != null) {
-                final Sequence<MaxCompiledCode> compilations =
+                final List<MaxCompiledCode> compilations =
                     TargetMethodSearchDialog.show(inspection(), teleClassActor, "Compiled Method Entry Breakpoints", "Set Breakpoints", true);
                 if (compilations != null) {
                     try {

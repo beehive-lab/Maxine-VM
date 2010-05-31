@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -53,7 +52,7 @@ public abstract class SPARCAssemblyTester extends RiscAssemblyTester<RiscTemplat
     private RiscTemplate lastTemplate;
 
     @Override
-    protected void assembleExternally(IndentWriter writer, RiscTemplate template, Sequence<Argument> argumentList, String label) {
+    protected void assembleExternally(IndentWriter writer, RiscTemplate template, List<Argument> argumentList, String label) {
 
         // This is a workaround for SPARC V9 ABI compliance checks: http://developers.sun.com/solaris/articles/sparcv9abi.html
         if (lastTemplate == null || template != lastTemplate) {

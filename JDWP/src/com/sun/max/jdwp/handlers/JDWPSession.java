@@ -20,16 +20,54 @@
  */
 package com.sun.max.jdwp.handlers;
 
-import java.util.logging.*;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.logging.Logger;
 
-import com.sun.max.collect.*;
-import com.sun.max.jdwp.constants.*;
+import com.sun.max.Utils;
 import com.sun.max.jdwp.constants.Error;
-import com.sun.max.jdwp.data.*;
-import com.sun.max.jdwp.data.ID.*;
-import com.sun.max.jdwp.vm.core.*;
-import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.lang.*;
+import com.sun.max.jdwp.constants.SuspendStatus;
+import com.sun.max.jdwp.constants.Tag;
+import com.sun.max.jdwp.constants.ThreadStatus;
+import com.sun.max.jdwp.constants.TypeTag;
+import com.sun.max.jdwp.data.ID;
+import com.sun.max.jdwp.data.JDWPException;
+import com.sun.max.jdwp.data.JDWPLocation;
+import com.sun.max.jdwp.data.JDWPNotImplementedException;
+import com.sun.max.jdwp.data.JDWPValue;
+import com.sun.max.jdwp.data.ID.ArrayID;
+import com.sun.max.jdwp.data.ID.ArrayTypeID;
+import com.sun.max.jdwp.data.ID.ClassID;
+import com.sun.max.jdwp.data.ID.ClassLoaderID;
+import com.sun.max.jdwp.data.ID.ClassObjectID;
+import com.sun.max.jdwp.data.ID.FieldID;
+import com.sun.max.jdwp.data.ID.FrameID;
+import com.sun.max.jdwp.data.ID.InterfaceID;
+import com.sun.max.jdwp.data.ID.MethodID;
+import com.sun.max.jdwp.data.ID.ObjectID;
+import com.sun.max.jdwp.data.ID.ReferenceTypeID;
+import com.sun.max.jdwp.data.ID.StringID;
+import com.sun.max.jdwp.data.ID.ThreadGroupID;
+import com.sun.max.jdwp.data.ID.ThreadID;
+import com.sun.max.jdwp.vm.core.Provider;
+import com.sun.max.jdwp.vm.proxy.ArrayProvider;
+import com.sun.max.jdwp.vm.proxy.ArrayTypeProvider;
+import com.sun.max.jdwp.vm.proxy.ClassLoaderProvider;
+import com.sun.max.jdwp.vm.proxy.ClassObjectProvider;
+import com.sun.max.jdwp.vm.proxy.ClassProvider;
+import com.sun.max.jdwp.vm.proxy.FieldProvider;
+import com.sun.max.jdwp.vm.proxy.FrameProvider;
+import com.sun.max.jdwp.vm.proxy.InterfaceProvider;
+import com.sun.max.jdwp.vm.proxy.JdwpCodeLocation;
+import com.sun.max.jdwp.vm.proxy.MethodProvider;
+import com.sun.max.jdwp.vm.proxy.ObjectProvider;
+import com.sun.max.jdwp.vm.proxy.ReferenceTypeProvider;
+import com.sun.max.jdwp.vm.proxy.StringProvider;
+import com.sun.max.jdwp.vm.proxy.ThreadGroupProvider;
+import com.sun.max.jdwp.vm.proxy.ThreadProvider;
+import com.sun.max.jdwp.vm.proxy.VMAccess;
+import com.sun.max.jdwp.vm.proxy.VMValue;
 
 /**
  * This class is respondible for handling a JDWP session in terms of managing the JDWP object space.
@@ -44,30 +82,22 @@ public class JDWPSession {
 
     private VMAccess vm;
 
-    private VariableMapping<ID, Provider> idToProvider;
-    private VariableMapping<Provider, ID> providerToID;
+    private Map<ID, Provider> idToProvider;
+    private Map<Provider, ID> providerToID;
 
-    private VariableMapping<MethodProvider, ReferenceTypeProvider> methodToReferenceType;
-    private VariableMapping<FieldProvider, ReferenceTypeProvider> fieldToReferenceType;
-    private VariableMapping<FrameProvider, ThreadProvider> frameToThread;
+    private Map<MethodProvider, ReferenceTypeProvider> methodToReferenceType;
+    private Map<FieldProvider, ReferenceTypeProvider> fieldToReferenceType;
+    private Map<FrameProvider, ThreadProvider> frameToThread;
     private long lastID;
 
     public JDWPSession(VMAccess vm) {
         assert vm != null : "Virtual machine abstraction must not be null";
         this.vm = vm;
-        idToProvider = new ChainedHashMapping<ID, Provider>();
-
-        final Class<HashIdentity<Provider>> type = null;
-        providerToID = new ChainedHashMapping<Provider, ID>(HashIdentity.instance(type));
-
-        final Class<HashIdentity<MethodProvider>> type2 = null;
-        methodToReferenceType = new ChainedHashMapping<MethodProvider, ReferenceTypeProvider>(HashIdentity.instance(type2));
-
-        final Class<HashIdentity<FieldProvider>> type3 = null;
-        fieldToReferenceType = new ChainedHashMapping<FieldProvider, ReferenceTypeProvider>(HashIdentity.instance(type3));
-
-        final Class<HashIdentity<FrameProvider>> type4 = null;
-        frameToThread = new ChainedHashMapping<FrameProvider, ThreadProvider>(HashIdentity.instance(type4));
+        idToProvider = new HashMap<ID, Provider>();
+        providerToID = new IdentityHashMap<Provider, ID>();
+        methodToReferenceType = new IdentityHashMap<MethodProvider, ReferenceTypeProvider>();
+        fieldToReferenceType = new IdentityHashMap<FieldProvider, ReferenceTypeProvider>();
+        frameToThread = new IdentityHashMap<FrameProvider, ThreadProvider>();
     }
 
     public static int getValueTypeTag(VMValue.Type type) {
@@ -177,7 +207,7 @@ public class JDWPSession {
         // throw new JDWPException(errorCode, "The object found at id " + id + " is not a valid instance of " +
         // klass.getName() + " but: " + result);
         // }
-        return StaticLoophole.cast(klass, result);
+        return Utils.cast(klass, result);
     }
 
     public ClassObjectProvider getClassObject(ClassObjectID id) throws JDWPException {

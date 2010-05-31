@@ -25,8 +25,8 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 
 import java.io.*;
 import java.lang.reflect.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -108,31 +108,31 @@ public abstract class VerificationType {
     public static final ObjectType DOUBLE_ARRAY = new ResolvedArrayType((ArrayClassActor) ClassActor.fromJava(double[].class), DOUBLE);
     public static final ObjectType LONG_ARRAY = new ResolvedArrayType((ArrayClassActor) ClassActor.fromJava(long[].class), LONG);
 
-    public static final Sequence<VerificationType> PRIMITIVE_TYPES;
-    public static final Sequence<ArrayType> PRIMITIVE_ARRAY_TYPES;
-    public static final Sequence<ObjectType> PREDEFINED_OBJECT_TYPES;
-    public static final Sequence<VerificationType> ALL_PREDEFINED_TYPES;
+    public static final List<VerificationType> PRIMITIVE_TYPES;
+    public static final List<ArrayType> PRIMITIVE_ARRAY_TYPES;
+    public static final List<ObjectType> PREDEFINED_OBJECT_TYPES;
+    public static final List<VerificationType> ALL_PREDEFINED_TYPES;
 
     static {
-        final AppendableSequence<VerificationType> primitiveTypes = new ArrayListSequence<VerificationType>();
-        final AppendableSequence<ArrayType> primitiveArrayTypes = new ArrayListSequence<ArrayType>();
-        final AppendableSequence<VerificationType> allPredefinedTypes = new ArrayListSequence<VerificationType>();
-        final AppendableSequence<ObjectType> predefinedObjectTypes = new ArrayListSequence<ObjectType>();
+        final List<VerificationType> primitiveTypes = new ArrayList<VerificationType>();
+        final List<ArrayType> primitiveArrayTypes = new ArrayList<ArrayType>();
+        final List<VerificationType> allPredefinedTypes = new ArrayList<VerificationType>();
+        final List<ObjectType> predefinedObjectTypes = new ArrayList<ObjectType>();
         for (Field field : VerificationType.class.getDeclaredFields()) {
             if ((field.getModifiers() & Modifier.STATIC) != 0) {
                 if (VerificationType.class.isAssignableFrom(field.getType())) {
                     try {
                         final VerificationType type = (VerificationType) field.get(null);
-                        allPredefinedTypes.append(type);
+                        allPredefinedTypes.add(type);
                         if (type instanceof ObjectType) {
                             final ObjectType objectType = (ObjectType) type;
-                            predefinedObjectTypes.append(objectType);
+                            predefinedObjectTypes.add(objectType);
                             if (type.isArray() && JavaTypeDescriptor.isPrimitive(type.componentType().typeDescriptor())) {
-                                primitiveArrayTypes.append((ArrayType) type);
+                                primitiveArrayTypes.add((ArrayType) type);
                             }
                         }
                         if (type.typeDescriptor() != null && JavaTypeDescriptor.isPrimitive(type.typeDescriptor())) {
-                            primitiveTypes.append(type);
+                            primitiveTypes.add(type);
                         }
                     } catch (IllegalAccessException illegalAccessException) {
                         ProgramError.unexpected("could not get value of field: " + field);

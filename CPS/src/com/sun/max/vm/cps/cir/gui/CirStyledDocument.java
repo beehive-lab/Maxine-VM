@@ -20,13 +20,16 @@
  */
 package com.sun.max.vm.cps.cir.gui;
 
-import static com.sun.max.collect.SequenceBag.MapType.*;
+import static com.sun.max.vm.cps.collect.ListBag.MapType.*;
+
+import java.util.*;
 
 import javax.swing.text.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.cps.cir.*;
+import com.sun.max.vm.cps.collect.*;
 
 /**
  * A styled document derived from an annotated CIR trace.
@@ -40,7 +43,7 @@ class CirStyledDocument extends DefaultStyledDocument {
     public CirAnnotatedTrace.ParenthesisElement collapsedDual;
     public CirAnnotatedTrace cirAnnotatedTrace;
     public IntHashMap<CirAnnotatedTrace.Element> offsetToElement = new IntHashMap<CirAnnotatedTrace.Element>();
-    public Bag<CirNode, CirAnnotatedTrace.Element, Sequence<CirAnnotatedTrace.Element>> elementsPerNode = new SequenceBag<CirNode, CirAnnotatedTrace.Element>(IDENTITY);
+    public ListBag<CirNode, CirAnnotatedTrace.Element> elementsPerNode = new ListBag<CirNode, CirAnnotatedTrace.Element>(IDENTITY);
 
     public CirStyledDocument(CirAnnotatedTrace cirAnnotatedTrace) {
         this.collapsedOffset = -1;
@@ -73,11 +76,11 @@ class CirStyledDocument extends DefaultStyledDocument {
         return offsetToElement.get(offset);
     }
 
-    public Sequence<CirAnnotatedTrace.Element> occurrences(CirAnnotatedTrace.Element element) {
+    public List<CirAnnotatedTrace.Element> occurrences(CirAnnotatedTrace.Element element) {
         if (element.node() == null) {
-            return new ArraySequence<CirAnnotatedTrace.Element>(element);
+            return Arrays.asList(element);
         }
-        final Sequence<CirAnnotatedTrace.Element> occurrences = elementsPerNode.get(element.node());
+        final List<CirAnnotatedTrace.Element> occurrences = elementsPerNode.get(element.node());
         return occurrences;
     }
 }

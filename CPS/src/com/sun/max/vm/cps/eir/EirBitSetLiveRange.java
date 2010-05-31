@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.eir.allocate.*;
 import com.sun.max.vm.runtime.*;
 
@@ -36,8 +37,8 @@ public final class EirBitSetLiveRange extends EirLiveRange {
         super(variable);
     }
 
-    private GrowableDeterministicSet<EirBlock> coverageBlocks = new LinkedIdentityHashSet<EirBlock>();
-    private DeterministicMap<EirBlock, BitSet> blockToCoverage = new LinkedIdentityHashMap<EirBlock, BitSet>();
+    private LinkedIdentityHashSet<EirBlock> coverageBlocks = new LinkedIdentityHashSet<EirBlock>();
+    private LinkedIdentityHashMap<EirBlock, BitSet> blockToCoverage = new LinkedIdentityHashMap<EirBlock, BitSet>();
 
     private BitSet makeCoverage(EirBlock block) {
         BitSet coverage = blockToCoverage.get(block);
@@ -65,14 +66,14 @@ public final class EirBitSetLiveRange extends EirLiveRange {
     }
 
     private boolean isCoverageExtendingBeyondBlock(BitSet coverage, EirBlock block) {
-        return coverage.get(block.instructions().length());
+        return coverage.get(block.instructions().size());
     }
 
     private void expandLiveRangeToBlock(EirBlock block) {
         final BitSet coverage = makeCoverage(block);
 
         if (!isCoverageExtendingBeyondBlock(coverage, block)) {
-            final int length = block.instructions().length();
+            final int length = block.instructions().size();
             coverage.set(length);
             expandLiveRange(coverage, block, length);
         }
@@ -133,9 +134,9 @@ public final class EirBitSetLiveRange extends EirLiveRange {
     @Override
     public void forAllLiveInstructions(EirInstruction.Procedure procedure) {
         for (EirBlock block : coverageBlocks) {
-            final IndexedSequence<EirInstruction> instructions = block.instructions();
+            final List<EirInstruction> instructions = block.instructions();
             final BitSet coverage = blockToCoverage.get(block);
-            for (int i = coverage.nextSetBit(0); 0 <= i && i < instructions.length(); i = coverage.nextSetBit(i + 1)) {
+            for (int i = coverage.nextSetBit(0); 0 <= i && i < instructions.size(); i = coverage.nextSetBit(i + 1)) {
                 final EirInstruction<?, ?> instruction = instructions.get(i);
                 procedure.run(instruction);
             }
@@ -156,7 +157,7 @@ public final class EirBitSetLiveRange extends EirLiveRange {
     public boolean equals(Object other) {
         if (other instanceof EirBitSetLiveRange) {
             final EirBitSetLiveRange r = (EirBitSetLiveRange) other;
-            if (coverageBlocks.length() != r.coverageBlocks.length() || blockToCoverage.length() != r.blockToCoverage.length()) {
+            if (coverageBlocks.size() != r.coverageBlocks.size() || blockToCoverage.size() != r.blockToCoverage.size()) {
                 traceLiveRange(r);
                 return false;
             }
@@ -216,9 +217,9 @@ public final class EirBitSetLiveRange extends EirLiveRange {
     @Override
     public void visitInstructions(EirInstruction.Procedure procedure) {
         for (EirBlock block : coverageBlocks) {
-            final IndexedSequence<EirInstruction> instructions = block.instructions();
+            final List<EirInstruction> instructions = block.instructions();
             final BitSet coverage = blockToCoverage.get(block);
-            for (int i = coverage.nextSetBit(0); 0 <= i && i < instructions.length(); i = coverage.nextSetBit(i + 1)) {
+            for (int i = coverage.nextSetBit(0); 0 <= i && i < instructions.size(); i = coverage.nextSetBit(i + 1)) {
                 final EirInstruction<?, ?> instruction = instructions.get(i);
                 procedure.run(instruction);
             }

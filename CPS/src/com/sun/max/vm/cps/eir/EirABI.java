@@ -20,8 +20,11 @@
  */
 package com.sun.max.vm.cps.eir;
 
+import java.lang.reflect.*;
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -203,12 +206,12 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
     /**
      * @return the integer parameter registers in parameter order
      */
-    public abstract Sequence<EirRegister_Type> integerParameterRegisters();
+    public abstract List<EirRegister_Type> integerParameterRegisters();
 
     /**
      * @return the floating point parameter registers in parameter order
      */
-    public abstract Sequence<EirRegister_Type> floatingPointParameterRegisters();
+    public abstract List<EirRegister_Type> floatingPointParameterRegisters();
 
     /**
      * @return all registers that must be saved before a call
@@ -219,7 +222,13 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
 
     public EirRegister_Type[] callerSavedRegisterArray() {
         if (callerSavedRegisterArray == null) {
-            callerSavedRegisterArray = Arrays.from(registerType, callerSavedRegisters());
+            PoolSet<EirRegister_Type> callerSavedRegisters = callerSavedRegisters();
+            Class<EirRegister_Type[]> type = null;
+            callerSavedRegisterArray = Utils.cast(type, Array.newInstance(registerType, callerSavedRegisters.size()));
+            Iterator<EirRegister_Type> iterator = callerSavedRegisters.iterator();
+            for (int i = 0; i < callerSavedRegisterArray.length; i++) {
+                callerSavedRegisterArray[i] = iterator.next();
+            }
         }
         return callerSavedRegisterArray;
     }
@@ -228,7 +237,7 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
      * Gets the registers that must be restored before returning from a call. This is an ordered
      * sequence that determines the order of the stack frame slots used to save the registers.
      */
-    public abstract Sequence<EirRegister_Type> calleeSavedRegisters();
+    public abstract List<EirRegister_Type> calleeSavedRegisters();
 
     public abstract TargetABI targetABI();
 

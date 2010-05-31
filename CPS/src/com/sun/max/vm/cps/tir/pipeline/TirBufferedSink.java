@@ -20,13 +20,14 @@
  */
 package com.sun.max.vm.cps.tir.pipeline;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.cps.tir.TirMessage.*;
 
 public class TirBufferedSink extends TirInstructionAdapter implements TirMessageSink  {
-    private VariableSequence<TirMessage> prolog = new ArrayListSequence<TirMessage>();
-    private VariableSequence<TirMessage> messages = new ArrayListSequence<TirMessage>();
+    private List<TirMessage> prolog = new ArrayList<TirMessage>();
+    private List<TirMessage> messages = new ArrayList<TirMessage>();
 
     private TirTreeBegin treeBegin;
     private TirTreeEnd treeEnd;
@@ -61,9 +62,9 @@ public class TirBufferedSink extends TirInstructionAdapter implements TirMessage
     @Override
     public void visit(TirMessage message) {
         if (inTrace) {
-            messages.append(message);
+            messages.add(message);
         } else {
-            prolog.append(message);
+            prolog.add(message);
         }
     }
 

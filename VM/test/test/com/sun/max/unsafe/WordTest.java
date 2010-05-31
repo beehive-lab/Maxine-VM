@@ -59,7 +59,7 @@ public class WordTest extends WordTestCase {
         for (int i = 1; i <= 1024; i++) {
             final Address address = addressMax.unsignedShiftedRight(i);
             if (address.equals(0) || address.equals(addressMax)) {
-                for (WordWidth width : WordWidth.values()) {
+                for (WordWidth width : WordWidth.VALUES) {
                     if (width.numberOfBits == i) {
                         assertTrue(Word.widthValue().equals(width));
                         return;

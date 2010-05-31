@@ -20,9 +20,10 @@
  */
 package com.sun.max.asm.gen.cisc.amd64;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.cisc.x86.*;
-import com.sun.max.collect.*;
 
 /**
  * @author Bernd Mathiske
@@ -34,7 +35,7 @@ public final class AMD64Assembly extends X86Assembly<AMD64Template> {
     }
 
     @Override
-    protected Sequence<AMD64Template> createTemplates() {
+    protected List<AMD64Template> createTemplates() {
         final AMD64TemplateCreator creator = new AMD64TemplateCreator();
         creator.createTemplates(new OneByteOpcodeMap());
         creator.createTemplates(new TwoByteOpcodeMap());

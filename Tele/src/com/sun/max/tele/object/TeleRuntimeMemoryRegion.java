@@ -113,13 +113,13 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
         }
         if (vm().tryLock()) {
             try {
-                final Size newRegionSize = vm().teleFields().RuntimeMemoryRegion_size.readWord(reference()).asSize();
+                final Size newRegionSize = vm().teleFields().MemoryRegion_size.readWord(reference()).asSize();
 
-                final Reference regionNameStringReference = vm().teleFields().RuntimeMemoryRegion_regionName.readReference(reference());
+                final Reference regionNameStringReference = vm().teleFields().MemoryRegion_regionName.readReference(reference());
                 final TeleString teleString = (TeleString) vm().makeTeleObject(regionNameStringReference);
                 final String newRegionName = teleString == null ? "<null>" : teleString.getString();
 
-                Address newRegionStart = vm().teleFields().RuntimeMemoryRegion_start.readWord(reference()).asAddress();
+                Address newRegionStart = vm().teleFields().MemoryRegion_start.readWord(reference()).asAddress();
                 if (newRegionStart.isZero() && newRegionName != null) {
                     if (newRegionName.equals(vm().heap().bootHeapRegionName())) {
                         // Ugly special case:  the regionStart field of the static that defines the boot heap region

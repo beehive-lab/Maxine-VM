@@ -20,10 +20,11 @@
  */
 package com.sun.max.asm.gen.risc.ppc;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.collect.*;
 
 /**
  * @author Doug Simon
@@ -67,7 +68,7 @@ public final class PPCAssembly extends RiscAssembly {
     }
 
     @Override
-    protected Sequence<RiscTemplate> createTemplates() {
+    protected List<RiscTemplate> createTemplates() {
         final RiscTemplateCreator creator = new RiscTemplateCreator();
         creator.createTemplates(new RawInstructions(creator));
         creator.createTemplates(new SyntheticInstructions(creator));

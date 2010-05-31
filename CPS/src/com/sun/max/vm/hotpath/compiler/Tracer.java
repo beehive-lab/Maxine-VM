@@ -20,7 +20,9 @@
  */
 package com.sun.max.vm.hotpath.compiler;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.cps.tir.*;
@@ -193,11 +195,11 @@ public abstract class Tracer {
         }
     }
 
-    private VariableSequence<Scope> scopes = new ArrayListSequence<Scope>();
+    private List<Scope> scopes = new ArrayList<Scope>();
     private BytecodeLocation currentLocation;
 
     protected Scope active() {
-        return scopes.last();
+        return Utils.last(scopes);
     }
 
     protected boolean begin(TreeAnchor anchor) {
@@ -249,7 +251,7 @@ public abstract class Tracer {
     public void visitAnchor(TreeAnchor anchor) {
         if (isRecording()) {
             // Attempt to complete traces.
-            for (int i = scopes.length() - 1; i >= 0; i--) {
+            for (int i = scopes.size() - 1; i >= 0; i--) {
                 final Scope scope = scopes.get(i);
                 if (scope.isRecording) {
                     if (scope.treeAnchor == anchor) {
@@ -282,7 +284,7 @@ public abstract class Tracer {
                 AsynchronousProfiler.eventExecute(anchor.tree());
                 final Bailout bailout = evaluateTree(anchor.tree());
                 AsynchronousProfiler.eventBailout(anchor.tree(), bailout);
-                if (bailout.tree().traces().length() < numberOfBranchesAllowed.getValue() + 1) {
+                if (bailout.tree().traces().size() < numberOfBranchesAllowed.getValue() + 1) {
                     createScope(bailout);
                 }
                 return;
@@ -346,7 +348,7 @@ public abstract class Tracer {
             Console.println(Color.RED, "RECORDING STARTED AT SIDE EXIT @" + traceAnchor);
         }
         final Scope scope = new Branch(treeAnchor, traceAnchor, guard);
-        scopes.append(scope);
+        scopes.add(scope);
     }
 
     private void createScope(TreeAnchor anchor) {
@@ -354,10 +356,10 @@ public abstract class Tracer {
             Console.println(Color.RED, "RECORDING STARTED @" + anchor);
         }
         final Scope scope = new Trunk(anchor);
-        scopes.append(scope);
+        scopes.add(scope);
     }
 
-    public Sequence<Scope> scopes() {
+    public List<Scope> scopes() {
         return  scopes;
     }
 

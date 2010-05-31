@@ -21,28 +21,30 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 
 /**
  * A focus traversal policy that is given a sequence of components.
- * 
+ *
  * @author Doug Simon
  */
 public class ExplicitFocusTraversalPolicy extends FocusTraversalPolicy {
 
-    private final IndexedSequence<Component> order;
+    private final List<Component> order;
 
-    public ExplicitFocusTraversalPolicy(IndexedSequence<Component> components) {
+    public ExplicitFocusTraversalPolicy(List<Component> components) {
         order = components;
     }
 
     public ExplicitFocusTraversalPolicy(Component... components) {
-        this(new ArraySequence<Component>(components));
+        this(Arrays.asList(components));
     }
 
     private int indexOf(Component component) {
-        return Sequence.Static.indexOfIdentical(order, component);
+        return Utils.indexOfIdentical(order, component);
     }
 
     @Override
@@ -51,7 +53,7 @@ public class ExplicitFocusTraversalPolicy extends FocusTraversalPolicy {
         int index = currentIndex;
         Component result;
         do {
-            index = (index + 1) % order.length();
+            index = (index + 1) % order.size();
             result = order.get(index);
         } while (!result.isFocusable() && index != currentIndex);
         return result;
@@ -65,7 +67,7 @@ public class ExplicitFocusTraversalPolicy extends FocusTraversalPolicy {
         do {
             --index;
             if (index < 0) {
-                index = order.length() - 1;
+                index = order.size() - 1;
             }
             result = order.get(index);
         } while (!result.isFocusable() && index != currentIndex);
@@ -79,7 +81,7 @@ public class ExplicitFocusTraversalPolicy extends FocusTraversalPolicy {
 
     @Override
     public Component getLastComponent(Container focusCycleRoot) {
-        return order.last();
+        return Utils.last(order);
     }
 
     @Override

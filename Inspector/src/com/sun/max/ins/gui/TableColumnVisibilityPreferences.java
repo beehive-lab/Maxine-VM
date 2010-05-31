@@ -28,7 +28,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.*;
 
-import com.sun.max.collect.*;
+import com.sun.cri.ci.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
@@ -75,8 +75,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
      */
     protected final SaveSettingsListener saveSettingsListener;
 
-    private final IdentityHashSet<TableColumnViewPreferenceListener> tableColumnViewPreferenceListeners =
-        new IdentityHashSet<TableColumnViewPreferenceListener>();
+    private final Set<TableColumnViewPreferenceListener> tableColumnViewPreferenceListeners = CiUtil.newIdentityHashSet();
 
     private final List<ColumnKind_Type> columnTypeValues;
 

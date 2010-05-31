@@ -71,7 +71,7 @@ public final class SymbolTable {
      * Searching and adding entries to this map is only performed by {@linkplain #makeSymbol(String) one method} which
      * is synchronized.
      */
-    private static final GrowableMapping<String, Utf8ConstantEntry> symbolTable = new ChainingValueChainedHashMapping<String, Utf8ConstantEntry>(40000);
+    private static final Mapping<String, Utf8ConstantEntry> symbolTable = new ChainingValueChainedHashMapping<String, Utf8ConstantEntry>(40000);
 
     public static final Utf8Constant INIT = makeSymbol("<init>");
     public static final Utf8Constant CLINIT = makeSymbol("<clinit>");

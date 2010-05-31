@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.tir.pipeline;
 
-import com.sun.max.collect.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.hotpath.state.*;
 
@@ -35,7 +35,7 @@ public class TirDeadCodeElimination extends TirPipelineFilter {
         super(TirPipelineOrder.REVERSE, receiver);
     }
 
-    private VariableDeterministicSet<TirInstruction> live = new LinkedIdentityHashSet<TirInstruction>();
+    private LinkedIdentityHashSet<TirInstruction> live = new LinkedIdentityHashSet<TirInstruction>();
 
     /**
      * Ignore dead instructions.

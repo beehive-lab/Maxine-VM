@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 
@@ -50,7 +49,7 @@ public abstract class PPCAssemblyTester extends RiscAssemblyTester<RiscTemplate>
     }
 
     @Override
-    protected void assembleExternally(IndentWriter writer, RiscTemplate template, Sequence<Argument> argumentList, String label) {
+    protected void assembleExternally(IndentWriter writer, RiscTemplate template, List<Argument> argumentList, String label) {
         final RiscExternalInstruction instruction = new RiscExternalInstruction(template, argumentList);
         writer.println(instruction.toString());
     }

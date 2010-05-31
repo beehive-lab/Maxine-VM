@@ -22,7 +22,6 @@ package com.sun.max.vm.classfile;
 
 import java.io.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.bytecode.graft.*;
 
@@ -90,9 +89,9 @@ public final class ExceptionHandlerEntry {
     /**
      * Checks the invariant that all exception handlers are disjoint.
      */
-    public static void ensureExceptionDispatchersAreDisjoint(Sequence<ExceptionHandlerEntry> exceptionHandlerTable) {
+    public static void ensureExceptionDispatchersAreDisjoint(ExceptionHandlerEntry[] exceptionHandlerTable) {
         // Check the invariant required by the opto compiler that all exception handlers are disjoint
-        if (!exceptionHandlerTable.isEmpty()) {
+        if (exceptionHandlerTable.length != 0) {
         outerLoop:
             for (ExceptionHandlerEntry entry : exceptionHandlerTable) {
                 for (ExceptionHandlerEntry otherEntry : exceptionHandlerTable) {
@@ -116,8 +115,8 @@ public final class ExceptionHandlerEntry {
 
     }
 
-    public static void encode(IterableWithLength<ExceptionHandlerEntry> entries, DataOutputStream dataOutputStream) throws IOException {
-        final int length = entries.length();
+    public static void encode(ExceptionHandlerEntry[] entries, DataOutputStream dataOutputStream) throws IOException {
+        final int length = entries.length;
         assert length > 0 && length <= Short.MAX_VALUE;
         dataOutputStream.writeShort(length);
         boolean byteEncoding = true;
@@ -145,7 +144,7 @@ public final class ExceptionHandlerEntry {
         }
     }
 
-    public static Sequence<ExceptionHandlerEntry> decode(DataInputStream dataInputStream) throws IOException {
+    public static ExceptionHandlerEntry[] decode(DataInputStream dataInputStream) throws IOException {
         final int length = dataInputStream.readUnsignedShort();
         assert length != 0;
         final ExceptionHandlerEntry[] entries = new ExceptionHandlerEntry[length];
@@ -169,7 +168,7 @@ public final class ExceptionHandlerEntry {
                 entries[i] = entry;
             }
         }
-        return new ArraySequence<ExceptionHandlerEntry>(entries);
+        return entries;
     }
 
     /**

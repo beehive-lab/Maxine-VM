@@ -25,8 +25,7 @@ import java.net.*;
 import java.text.*;
 import java.util.*;
 
-import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
+import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.Option.Error;
 
@@ -113,23 +112,23 @@ public class OptionTypes {
         }
     }
 
-    public static class ListType<Value_Type> extends Option.Type<List<Value_Type>> {
+    public static class ListType<T> extends Option.Type<List<T>> {
         protected final char separator;
-        public final Option.Type<Value_Type> elementOptionType;
+        public final Option.Type<T> elementOptionType;
 
-        private static <Value_Type> Class<List<Value_Type>> listClass(Class<Value_Type> valueClass) {
-            final Class<Class<List<Value_Type>>> type = null;
-            return StaticLoophole.cast(type, List.class);
+        private static <T> Class<List<T>> listClass(Class<T> valueClass) {
+            final Class<Class<List<T>>> type = null;
+            return Utils.cast(type, List.class);
         }
 
-        public ListType(char separator, Option.Type<Value_Type> elementOptionType) {
+        public ListType(char separator, Option.Type<T> elementOptionType) {
             super(listClass(elementOptionType.type), "list");
             this.separator = separator;
             this.elementOptionType = elementOptionType;
         }
 
         @Override
-        public String unparseValue(List<Value_Type> value) {
+        public String unparseValue(List<T> value) {
             final StringBuilder buffer = new StringBuilder();
             boolean previous = false;
             for (Object object : value) {
@@ -143,8 +142,8 @@ public class OptionTypes {
         }
 
         @Override
-        public List<Value_Type> parseValue(String val) {
-            final List<Value_Type> list = new LinkedList<Value_Type>();
+        public List<T> parseValue(String val) {
+            final List<T> list = new LinkedList<T>();
             if (val.isEmpty()) {
                 return list;
             }
@@ -170,20 +169,20 @@ public class OptionTypes {
         }
     }
 
-    public static class EnumType<Enum_Type extends Enum<Enum_Type>> extends Option.Type<Enum_Type> {
-        public final Enum_Type[] values;
+    public static class EnumType<T extends Enum<T>> extends Option.Type<T> {
+        public final T[] values;
 
-        public EnumType(Class<Enum_Type> enumClass) {
+        public EnumType(Class<T> enumClass) {
             super(enumClass, enumClass.getName());
             values = enumClass.getEnumConstants();
         }
 
         @Override
-        public Enum_Type parseValue(String string) {
+        public T parseValue(String string) {
             if (string == null) {
                 return null;
             }
-            for (Enum_Type value : values) {
+            for (T value : values) {
                 if (value.name().equalsIgnoreCase(string)) {
                     return value;
                 }
@@ -193,7 +192,7 @@ public class OptionTypes {
 
         @Override
         public String getValueFormat() {
-            return Arrays.toString(values, "|");
+            return Utils.toString(values, "|");
         }
     }
 
@@ -218,8 +217,8 @@ public class OptionTypes {
      * @return An option type that takes a class name as its value. It reflectively creates an instance
      * of the specified class. If the class is not found, it tries to prefix the class name with "com.sum.max.".
      */
-    public static final <Instance_Type> Option.Type<Instance_Type> createInstanceOptionType(final Class<Instance_Type> klass) {
-        return new Option.Type<Instance_Type>(klass, "instance") {
+    public static final <T> Option.Type<T> createInstanceOptionType(final Class<T> klass) {
+        return new Option.Type<T>(klass, "instance") {
 
             @Override
             public String getValueFormat() {
@@ -227,12 +226,12 @@ public class OptionTypes {
             }
 
             @Override
-            public Instance_Type parseValue(String string) throws Error {
+            public T parseValue(String string) throws Error {
                 try {
                     try {
-                        return StaticLoophole.cast(klass, Class.forName(string).newInstance());
+                        return Utils.cast(klass, Class.forName(string).newInstance());
                     } catch (ClassNotFoundException e) {
-                        return StaticLoophole.cast(klass, Class.forName("com.sun.max." + string).newInstance());
+                        return Utils.cast(klass, Class.forName("com.sun.max." + string).newInstance());
                     }
                 } catch (InstantiationException e) {
                     ProgramError.unexpected("Could not instantiate class " + string, e);
@@ -252,8 +251,8 @@ public class OptionTypes {
      * @return An option type that takes a list of class names as its value. Then it reflectively creates instances
      * of these classes and returns them as a list.
      */
-    public static final <Instance_Type> ListType<Instance_Type> createInstanceListOptionType(final Class<Instance_Type> klass, char separator) {
-        return new ListType<Instance_Type>(separator, createInstanceOptionType(klass));
+    public static final <T> ListType<T> createInstanceListOptionType(final Class<T> klass, char separator) {
+        return new ListType<T>(separator, createInstanceOptionType(klass));
     }
 
     public static final Option.Type<Double> DOUBLE_TYPE = new Option.Type<Double>(Double.class, "double") {
@@ -377,9 +376,9 @@ public class OptionTypes {
         }
     }
 
-    public static class EnumListType<Enum_Type extends Enum<Enum_Type>> extends ListType<Enum_Type> {
-        public EnumListType(Class<Enum_Type> enumClass, char separator) {
-            super(separator, new EnumType<Enum_Type>(enumClass));
+    public static class EnumListType<T extends Enum<T>> extends ListType<T> {
+        public EnumListType(Class<T> enumClass, char separator) {
+            super(separator, new EnumType<T>(enumClass));
         }
     }
 

@@ -24,7 +24,7 @@ import java.io.*;
 import java.util.*;
 import java.util.Arrays;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
 
@@ -116,7 +116,7 @@ public class TestEngine {
             testCase.test();
             final Class<TestHarness<TestCase>> type = null;
             // evaluate the result of test
-            final TestResult result = StaticLoophole.cast(type, testCase.harness).evaluateTest(this, testCase);
+            final TestResult result = Utils.cast(type, testCase.harness).evaluateTest(this, testCase);
             testCase.result = result;
         } catch (Throwable t) {
             // there was an exception evaluating the result of the test

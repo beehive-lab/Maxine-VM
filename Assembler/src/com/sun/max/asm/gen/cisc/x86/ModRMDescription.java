@@ -20,8 +20,9 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
+import java.util.*;
+
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 
 /**
  * @author Bernd Mathiske
@@ -31,7 +32,7 @@ public final class ModRMDescription extends InstructionDescription {
     private final ModRMGroup.Opcode opcode;
     private final String name;
 
-    public ModRMDescription(ModRMGroup.Opcode opcode, String name, MutableSequence<Object> specifications) {
+    public ModRMDescription(ModRMGroup.Opcode opcode, String name, List<Object> specifications) {
         super(specifications);
         this.opcode = opcode;
         this.name = name;

@@ -26,10 +26,10 @@ import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.lang.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
@@ -72,11 +72,11 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         // set up well known registers
         TargetABI abi = vmConfiguration.targetABIsScheme().optimizedJavaABI;
         Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> amd64Abi = StaticLoophole.cast(type, abi);
+        TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> amd64Abi = Utils.cast(type, abi);
 
         RegisterRoleAssignment roles = abi.registerRoleAssignment;
 
-        integerRegisterRoleMap = new CiRegister[Role.VALUES.length()];
+        integerRegisterRoleMap = new CiRegister[Role.VALUES.size()];
         for (Role role : Role.VALUES) {
             Symbol register = roles.integerRegisterActingAs(role);
             if (register != null) {
@@ -101,7 +101,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         assert returnRegisterFloat != null;
 
         // allocate the array which indicates the reference map order
-        registerReferenceMapOrder = new CiRegister[AMD64GeneralRegister64.ENUMERATOR.length()];
+        registerReferenceMapOrder = new CiRegister[AMD64GeneralRegister64.ENUMERATOR.size()];
         // configure the allocatable registers
         List<CiRegister> allocatable = new ArrayList<CiRegister>(arch.registers.length);
         int index = 0;

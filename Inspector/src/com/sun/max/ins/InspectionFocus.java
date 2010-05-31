@@ -20,7 +20,9 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
+import com.sun.cri.ci.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -47,7 +49,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         super(inspection);
     }
 
-    private IdentityHashSet<ViewFocusListener> listeners = new IdentityHashSet<ViewFocusListener>();
+    private Set<ViewFocusListener> listeners = CiUtil.newIdentityHashSet();
 
     public void addListener(ViewFocusListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "adding listener: " + listener);
@@ -57,6 +59,10 @@ public class InspectionFocus extends AbstractInspectionHolder {
     public void removeListener(ViewFocusListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + " removing listener: " + listener);
         listeners.remove(listener);
+    }
+
+    public ViewFocusListener[] copyListeners() {
+        return listeners.toArray(new ViewFocusListener[listeners.size()]);
     }
 
     private MaxCodeLocation codeLocation = null;
@@ -105,7 +111,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             try {
                 this.codeLocation = codeLocation;
                 Trace.line(TRACE_VALUE, codeLocationTracer);
-                for (ViewFocusListener listener : listeners.clone()) {
+                for (ViewFocusListener listener : copyListeners()) {
                     listener.codeLocationFocusSet(codeLocation, interactiveForNative);
                 }
                 // User Model Policy: when setting code location, if it happens to match a stack frame of the current thread then focus on that frame.
@@ -169,7 +175,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             final MaxThread oldThread = this.thread;
             this.thread = thread;
             Trace.line(TRACE_VALUE, threadFocusTracer);
-            for (ViewFocusListener listener : listeners.clone()) {
+            for (ViewFocusListener listener : copyListeners()) {
                 listener.threadFocusSet(oldThread, thread);
             }
             // User Model Policy:  when thread focus changes, restore an old frame focus if possible.
@@ -206,7 +212,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     // Remember most recent frame selection per thread, and restore this selection (if possible) when thread focus changes.
-    private final VariableMapping<MaxThread, MaxStackFrame> frameSelections = HashMapping.<MaxThread, MaxStackFrame>createVariableEqualityMapping();
+    private final Map<MaxThread, MaxStackFrame> frameSelections = new HashMap<MaxThread, MaxStackFrame>();
 
     private MaxStackFrame stackFrame;
     // Since frames don't record what stack they're in, we must keep a reference to the thread of the frame.
@@ -243,7 +249,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             Trace.line(TRACE_VALUE, stackFrameFocusTracer);
             // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
             setThread(newThread);
-            for (ViewFocusListener listener : listeners.clone()) {
+            for (ViewFocusListener listener : copyListeners()) {
                 listener.stackFrameFocusChanged(oldStackFrame, newStackFrame);
             }
         }
@@ -293,7 +299,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             final Address oldAddress = this.address;
             this.address = address;
             Trace.line(TRACE_VALUE, addressFocusTracer);
-            for (ViewFocusListener listener : listeners.clone()) {
+            for (ViewFocusListener listener : copyListeners()) {
                 listener.addressFocusChanged(oldAddress, address);
             }
             // User Model Policy:  select the memory region that contains the newly selected address; clears if not known.
@@ -338,7 +344,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             final MaxMemoryRegion oldMemoryRegion = this.memoryRegion;
             this.memoryRegion = memoryRegion;
             Trace.line(TRACE_VALUE, memoryRegionFocusTracer);
-            for (ViewFocusListener listener : listeners.clone()) {
+            for (ViewFocusListener listener : copyListeners()) {
                 listener.memoryRegionFocusChanged(oldMemoryRegion, memoryRegion);
             }
             // User Model Policy:  When a stack memory region gets selected for focus, also set focus to the thread owning the stack.
@@ -384,7 +390,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             final MaxBreakpoint oldMaxBreakpoint = breakpoint;
             breakpoint = maxBreakpoint;
             Trace.line(TRACE_VALUE, breakpointFocusTracer);
-            for (ViewFocusListener listener : listeners.clone()) {
+            for (ViewFocusListener listener : copyListeners()) {
                 listener.breakpointFocusSet(oldMaxBreakpoint, maxBreakpoint);
             }
         }
@@ -440,7 +446,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             final MaxWatchpoint oldWatchpoint = this.watchpoint;
             this.watchpoint = watchpoint;
             Trace.line(TRACE_VALUE, watchpointFocusTracer);
-            for (ViewFocusListener listener : listeners.clone()) {
+            for (ViewFocusListener listener : copyListeners()) {
                 listener.watchpointFocusSet(oldWatchpoint, watchpoint);
             }
         }
@@ -478,7 +484,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             final TeleObject oldTeleObject = this.heapObject;
             this.heapObject = heapObject;
             Trace.line(TRACE_VALUE, objectFocusTracer);
-            for (ViewFocusListener listener : listeners.clone()) {
+            for (ViewFocusListener listener : copyListeners()) {
                 listener.heapObjectFocusChanged(oldTeleObject, heapObject);
             }
         }

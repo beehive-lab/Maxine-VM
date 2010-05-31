@@ -20,8 +20,9 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
+import java.util.*;
+
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 
 /**
  * Description of an assembly instruction operand.
@@ -33,7 +34,7 @@ public abstract class X86Operand implements Operand {
     public enum Designation {
         DESTINATION, SOURCE, OTHER;
 
-        public static final IndexedSequence<Designation> VALUES = new ArraySequence<Designation>(values());
+        public static final List<Designation> VALUES = Arrays.asList(values());
     }
 
     private final Designation designation;

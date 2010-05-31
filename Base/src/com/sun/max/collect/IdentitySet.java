@@ -22,7 +22,7 @@ package com.sun.max.collect;
 
 import java.util.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 
 /**
  * Similar to IdentityHashSet, but not recording 'null' as a set member
@@ -33,7 +33,7 @@ import com.sun.max.lang.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
+public class IdentitySet<T> implements Iterable<T> {
 
     /**
      * The default initial capacity - MUST be a power of two.
@@ -65,7 +65,7 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
     /**
      * The table, resized as necessary. Length MUST Always be a power of two.
      */
-    private Element_Type[] table;
+    private T[] table;
 
     /**
      * The next size value at which to resize (capacity * load factor).
@@ -102,19 +102,19 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
             capacity <<= 1;
         }
 
-        final Class<Element_Type[]> type = null;
-        table = StaticLoophole.cast(type, new Object[capacity]);
+        final Class<T[]> type = null;
+        table = Utils.cast(type, new Object[capacity]);
         setThreshold();
     }
 
     private void resize(int newTableLength) {
-        final Element_Type[] oldTable = table;
-        final Class<Element_Type[]> type = null;
-        table = StaticLoophole.cast(type, new Object[newTableLength]);
+        final T[] oldTable = table;
+        final Class<T[]> type = null;
+        table = Utils.cast(type, new Object[newTableLength]);
         setThreshold();
         numberOfElements = 0;
         for (int i = 0; i < oldTable.length; i++) {
-            final Element_Type oldValue = oldTable[i];
+            final T oldValue = oldTable[i];
             if (oldValue != null) {
                 add(oldValue);
             }
@@ -149,7 +149,7 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
      * @param element the element to add
      * @throws IllegalArgumentException if {@code element == null}
      */
-    public void add(Element_Type element) {
+    public void add(T element) {
         if (element == null) {
             throw new IllegalArgumentException("Element cannot be null");
         }
@@ -159,7 +159,7 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
         final int start = indexFor(System.identityHashCode(element), table.length);
         int i = start;
         do {
-            final Element_Type entry = table[i];
+            final T entry = table[i];
             if (entry == null) {
                 table[i] = element;
                 numberOfElements++;
@@ -181,7 +181,7 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
      * @return {@code true} if {@code element} is in this set, {@code false} otherwise
      * @throws IllegalArgumentException if {@code element == null}
      */
-    public boolean contains(Element_Type element) {
+    public boolean contains(T element) {
         if (element == null) {
             throw new IllegalArgumentException("Element cannot be null");
         }
@@ -191,7 +191,7 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
         final int start = indexFor(System.identityHashCode(element), table.length);
         int i = start;
         while (true) {
-            final Element_Type entry = table[i];
+            final T entry = table[i];
             if (entry == element) {
                 return true;
             }
@@ -205,16 +205,16 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
         }
     }
 
-    public Iterator<Element_Type> iterator() {
-        final Class<Element_Type[]> type = null;
-        final Element_Type[] array = StaticLoophole.cast(type, new Object[numberOfElements()]);
+    public Iterator<T> iterator() {
+        final Class<T[]> type = null;
+        final T[] array = Utils.cast(type, new Object[numberOfElements()]);
         int j = 0;
         for (int i = 0; i < table.length; i++) {
-            final Element_Type element = table[i];
+            final T element = table[i];
             if (element != null) {
                 array[j++] = element;
             }
         }
-        return com.sun.max.lang.Arrays.iterator(array);
+        return Arrays.asList(array).iterator();
     }
 }

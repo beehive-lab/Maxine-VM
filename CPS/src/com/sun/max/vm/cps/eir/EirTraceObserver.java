@@ -22,9 +22,8 @@ package com.sun.max.vm.cps.eir;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.io.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
 
@@ -107,7 +106,7 @@ public class EirTraceObserver extends IrTraceObserver {
 
         void traceEirBlocks(Object context, IndentWriter writer) {
             final Class<Iterable<EirBlock>> type = null;
-            final Iterable<EirBlock> eirBlocks = StaticLoophole.cast(type, context);
+            final Iterable<EirBlock> eirBlocks = Utils.cast(type, context);
             for (EirBlock block : eirBlocks) {
                 block.printTo(writer);
             }
@@ -115,7 +114,7 @@ public class EirTraceObserver extends IrTraceObserver {
 
         void traceLiveRanges(Object context, IndentWriter writer) {
             final Class<Iterable<EirVariable>> type = null;
-            final Iterable<EirVariable> variables = StaticLoophole.cast(type, context);
+            final Iterable<EirVariable> variables = Utils.cast(type, context);
             for (EirVariable variable : variables) {
                 writer.println(variable + " is live at: " + variable.liveRange());
             }
@@ -124,7 +123,7 @@ public class EirTraceObserver extends IrTraceObserver {
 
         void traceInterferenceGraph(Object context, IndentWriter writer) {
             final Class<Iterable<EirVariable>> type = null;
-            final Iterable<EirVariable> variables = StaticLoophole.cast(type, context);
+            final Iterable<EirVariable> variables = Utils.cast(type, context);
             for (EirVariable variable : variables) {
                 // Cannot sort variable's by their weight as they may not yet have been calculated: use serial numbers instead
                 final Comparator<EirVariable> serialNumberComparator = new Comparator<EirVariable>() {
@@ -136,7 +135,9 @@ public class EirTraceObserver extends IrTraceObserver {
                     writer.println(variable + " interferes with:");
                 } else {
                     final Set<EirVariable> sortedSet = new TreeSet<EirVariable>(serialNumberComparator);
-                    sortedSet.addAll(Iterables.toCollection(variable.interferingVariables()));
+                    for (EirVariable v : variable.interferingVariables()) {
+                        sortedSet.add(v);
+                    }
                     writer.println(variable + " interferes with: " + sortedSet);
                 }
             }

@@ -22,9 +22,8 @@ package com.sun.max.vm.cps.eir;
 
 import java.io.*;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.io.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.cps.ir.*;
@@ -39,7 +38,7 @@ public class EirMethod extends AbstractIrMethod {
     public final EirABI abi;
     private int frameSize;
     private EirLiteralPool literalPool;
-    private IndexedSequence<EirBlock> blocks;
+    private EirBlock[] blocks;
 
     /**
      * Locations where this method retrieves its parameters.
@@ -133,7 +132,7 @@ public class EirMethod extends AbstractIrMethod {
         }
     }
 
-    public IndexedSequence<EirBlock> blocks() {
+    public EirBlock[] blocks() {
         return blocks;
     }
 
@@ -141,7 +140,7 @@ public class EirMethod extends AbstractIrMethod {
         return literalPool;
     }
 
-    public void setGenerated(IndexedSequence<EirBlock> blocks, EirLiteralPool literalPool, EirLocation[] parameterLocations,
+    public void setGenerated(EirBlock[] blocks, EirLiteralPool literalPool, EirLocation[] parameterLocations,
                              final EirLocation resultLocation, int frameSize, int stackBlocksSize) {
         this.blocks = blocks;
         this.literalPool = literalPool;
@@ -159,7 +158,7 @@ public class EirMethod extends AbstractIrMethod {
     public String traceToString() {
         final CharArrayWriter charArrayWriter = new CharArrayWriter();
         final IndentWriter writer = new IndentWriter(charArrayWriter);
-        writer.println("EirCompiledMethod: " + classMethodActor().holder() + "." + name() + "(" + ((parameterLocations() == null) ? null : Arrays.toString(parameterLocations(), ", ")) + ") -> " + resultLocation());
+        writer.println("EirCompiledMethod: " + classMethodActor().holder() + "." + name() + "(" + ((parameterLocations() == null) ? null : Utils.toString(parameterLocations(), ", ")) + ") -> " + resultLocation());
         if (isGenerated()) {
             writer.indent();
             for (EirBlock block : blocks) {

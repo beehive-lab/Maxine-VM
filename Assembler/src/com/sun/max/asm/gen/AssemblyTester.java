@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.Arrays;
 import java.util.concurrent.*;
 
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.collect.*;
@@ -109,14 +110,14 @@ public abstract class AssemblyTester<Template_Type extends Template> {
      *
      * @author Doug Simon
      */
-    class ArgumentListIterator implements Iterator<IndexedSequence<Argument>> {
+    class ArgumentListIterator implements Iterator<List<Argument>> {
 
         private final Template_Type template;
         private final Parameter[] parameters;
         private final Iterator<? extends Argument>[] testArgumentIterators;
         private final int count;
         private final Argument[] arguments;
-        private final IndexedSequence<Argument> next;
+        private final List<Argument> next;
         private final TestCaseLegality testCaseLegality;
 
         private boolean hasNext;
@@ -137,12 +138,12 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         ArgumentListIterator(Template_Type template, TestCaseLegality testCaseLegality) {
             this.testCaseLegality  = testCaseLegality;
             this.template = template;
-            this.parameters = Sequence.Static.toArray(template.parameters(), new Parameter[template.parameters().length()]);
-            this.count = template.parameters().length();
+            this.parameters = template.parameters().toArray(new Parameter[template.parameters().size()]);
+            this.count = template.parameters().size();
             this.arguments = new Argument[count];
-            this.next = new ArraySequence<Argument>(arguments);
+            this.next = Arrays.asList(arguments);
             final Class<Iterator<? extends Argument>[]> type = null;
-            this.testArgumentIterators = StaticLoophole.cast(type, new Iterator[count]);
+            this.testArgumentIterators = Utils.cast(type, new Iterator[count]);
             this.hasNext = advance();
         }
 
@@ -167,7 +168,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
          * The returned sequence is only valid for a single iteration and so should be copied
          * if needed after this iteration.
          */
-        public IndexedSequence<Argument> next() {
+        public List<Argument> next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
@@ -248,7 +249,11 @@ public abstract class AssemblyTester<Template_Type extends Template> {
                         // the last legal value is used. This involves retrieving the iterator twice but
                         // that's much cheaper than many more redundant iterations.
                         iterator = parameter.getLegalTestArguments().iterator();
-                        int n = Iterables.countIterations(iterator);
+                        int n = 0;
+                        while (iterator.hasNext()) {
+                            ++n;
+                            iterator.next();
+                        }
                         iterator = parameter.getLegalTestArguments().iterator();
                         while (n-- > 1) {
                             iterator.next();
@@ -274,16 +279,16 @@ public abstract class AssemblyTester<Template_Type extends Template> {
     /**
      * Determines if a given set of arguments for a given template is legal.
      */
-    protected abstract boolean isLegalArgumentList(Template_Type template, IndexedSequence<Argument> arguments);
+    protected abstract boolean isLegalArgumentList(Template_Type template, List<Argument> arguments);
 
-    protected abstract void assembleExternally(IndentWriter stream, Template_Type template, Sequence<Argument> argumentList, String label);
+    protected abstract void assembleExternally(IndentWriter stream, Template_Type template, List<Argument> argumentList, String label);
 
     private final String tmpFilePrefix;
     private static final String SOURCE_EXTENSION = ".s";
     private static final String BINARY_EXTENSION = ".o";
 
-    private boolean findExcludedDisassemblerTestArgument(IndexedSequence<? extends Parameter> parameters, IndexedSequence<Argument> arguments) {
-        for (int i = 0; i < parameters.length(); i++) {
+    private boolean findExcludedDisassemblerTestArgument(List<? extends Parameter> parameters, List<Argument> arguments) {
+        for (int i = 0; i < parameters.size(); i++) {
             if (parameters.get(i).excludedDisassemblerTestArguments().contains(arguments.get(i))) {
                 return true;
             }
@@ -291,8 +296,8 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         return false;
     }
 
-    private boolean findExcludedExternalTestArgument(IndexedSequence<? extends Parameter> parameters, IndexedSequence<Argument> arguments) {
-        for (int i = 0; i < parameters.length(); i++) {
+    private boolean findExcludedExternalTestArgument(List<? extends Parameter> parameters, List<Argument> arguments) {
+        for (int i = 0; i < parameters.size(); i++) {
             final Parameter parameter = parameters.get(i);
             if (parameter.excludedExternalTestArguments().contains(arguments.get(i))) {
                 return true;
@@ -307,7 +312,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
 
     protected final int nNOPs = 10;
 
-    private File createExternalSourceFile(Template_Type template, Iterator<IndexedSequence<Argument>> argumentLists) throws IOException {
+    private File createExternalSourceFile(Template_Type template, Iterator<List<Argument>> argumentLists) throws IOException {
         final File sourceFile = File.createTempFile(tmpFilePrefix + template.internalName(), SOURCE_EXTENSION);
         final IndentWriter stream = new IndentWriter(new PrintWriter(new BufferedWriter(new FileWriter(sourceFile))));
         stream.indent();
@@ -323,10 +328,10 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         return sourceFile;
     }
 
-    private void createExternalSource(Template_Type template, Iterator<IndexedSequence<Argument>> argumentLists, IndentWriter stream) {
+    private void createExternalSource(Template_Type template, Iterator<List<Argument>> argumentLists, IndentWriter stream) {
         int i = 0;
         while (argumentLists.hasNext()) {
-            final IndexedSequence<Argument> argumentList = argumentLists.next();
+            final List<Argument> argumentList = argumentLists.next();
             if (!findExcludedExternalTestArgument(template.parameters(), argumentList)) {
                 final String label = "label" + i;
                 assembleExternally(stream, template, argumentList, label);
@@ -498,11 +503,11 @@ public abstract class AssemblyTester<Template_Type extends Template> {
      * It would have been much more clean to override 'equals()' of those argument classes,
      * but they are enums and Java predeclares methods inherited via Enum final :-(
      */
-    private boolean equals(IndexedSequence<Argument> arguments1, IndexedSequence<Argument> arguments2) {
-        if (arguments1.length() != arguments2.length()) {
+    private boolean equals(List<Argument> arguments1, List<Argument> arguments2) {
+        if (arguments1.size() != arguments2.size()) {
             return false;
         }
-        for (int i = 0; i < arguments1.length(); i++) {
+        for (int i = 0; i < arguments1.size(); i++) {
             final Argument argument1 = arguments1.get(i);
             final Argument argument2 = arguments2.get(i);
             if (!argument1.equals(argument2)) {
@@ -522,12 +527,12 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         }
     }
 
-    private void testDisassembler(Template_Type template, IndexedSequence<Argument> argumentList, byte[] internalResult) throws IOException, AssemblyException {
+    private void testDisassembler(Template_Type template, List<Argument> argumentList, byte[] internalResult) throws IOException, AssemblyException {
         final BufferedInputStream disassemblyStream = new BufferedInputStream(new ByteArrayInputStream(internalResult));
         final Disassembler disassembler = createTestDisassembler();
         disassembler.setAbstractionPreference(template.instructionDescription().isSynthetic() ? Disassembler.AbstractionPreference.SYNTHETIC : Disassembler.AbstractionPreference.RAW);
-        disassembler.setExpectedNumberOfArguments(argumentList.length());
-        final Sequence<DisassembledObject> disassembledObjects = disassembler.scanOne(disassemblyStream);
+        disassembler.setExpectedNumberOfArguments(argumentList.size());
+        final List<DisassembledObject> disassembledObjects = disassembler.scanOne(disassemblyStream);
 
         boolean matchFound = false;
         for (DisassembledObject disassembledObject : disassembledObjects) {
@@ -542,7 +547,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
 
         final int available = disassemblyStream.available();
         if (available != 0 || !matchFound) {
-            System.err.println("internal disassembler test failed - " + disassembledObjects.length() + " false matches found: ");
+            System.err.println("internal disassembler test failed - " + disassembledObjects.size() + " false matches found: ");
 //final Assembler assembler = createTestAssembler();
 //assembly().assemble(assembler, template, argumentList);
 //disassemblyStream.reset();
@@ -579,7 +584,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         disassemblyStream.close();
     }
 
-    private void testTemplate(final Template_Type template, AppendableSequence<File> temporaryFiles) throws IOException, InterruptedException, AssemblyException {
+    private void testTemplate(final Template_Type template, List<File> temporaryFiles) throws IOException, InterruptedException, AssemblyException {
         final boolean testingExternally = components.contains(AssemblyTestComponent.EXTERNAL_ASSEMBLER) && template.isExternallyTestable();
 
         // Process legal test cases
@@ -589,9 +594,9 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         final PushbackInputStream externalInputStream;
         if (testingExternally) {
             final File sourceFile =  createExternalSourceFile(template, argumentLists);
-            temporaryFiles.append(sourceFile);
+            temporaryFiles.add(sourceFile);
             binaryFile =  createExternalBinaryFile(sourceFile);
-            temporaryFiles.append(binaryFile);
+            temporaryFiles.add(binaryFile);
             externalInputStream = new PushbackInputStream(new BufferedInputStream(new FileInputStream(binaryFile)));
             if (!findStart(externalInputStream)) {
                 ProgramError.unexpected("could not find start sequence in: " + binaryFile.getAbsolutePath());
@@ -604,7 +609,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         int testCaseNumber = 0;
 
         for (final ArgumentListIterator iterator = new ArgumentListIterator(template, TestCaseLegality.LEGAL); iterator.hasNext();) {
-            final IndexedSequence<Argument> argumentList = iterator.next();
+            final List<Argument> argumentList = iterator.next();
             final Assembler assembler = createTestAssembler();
             assembly().assemble(assembler, template, argumentList);
             final byte[] internalResult = assembler.toByteArray();
@@ -642,7 +647,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         final Set<String> uniqueExceptionMessages = new HashSet<String>();
         for (TestCaseLegality testCaseLegality : new TestCaseLegality[]{TestCaseLegality.ILLEGAL_BY_CONSTRAINT, TestCaseLegality.ILLEGAL_BY_ARGUMENT}) {
             for (final ArgumentListIterator iterator = new ArgumentListIterator(template, testCaseLegality); iterator.hasNext();) {
-                final IndexedSequence<Argument> argumentList = iterator.next();
+                final List<Argument> argumentList = iterator.next();
                 final Assembler assembler = createTestAssembler();
                 Trace.line(3, "assembleInternally-negative[" + illegalTestCaseNumber + "]: " + assembly().createMethodCallString(template, argumentList));
                 try {
@@ -717,7 +722,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
 
         final CompletionService<Template_Type> compilationCompletionService = new ExecutorCompletionService<Template_Type>(compilerService);
         long submittedTests = 0;
-        final AppendableSequence<Template_Type> errors = new LinkSequence<Template_Type>();
+        final List<Template_Type> errors = new LinkedList<Template_Type>();
         for (final Template_Type template : assembly().templates()) {
             if (template.serial() > endTemplateSerial) {
                 break;
@@ -728,14 +733,14 @@ public abstract class AssemblyTester<Template_Type extends Template> {
                     ++submittedTests;
                     compilationCompletionService.submit(new Callable<Template_Type>() {
                         public Template_Type call() {
-                            final AppendableSequence<File> temporaryFiles = new ArrayListSequence<File>();
+                            final List<File> temporaryFiles = new ArrayList<File>();
                             try {
                                 testTemplate(template, temporaryFiles);
                             } catch (Throwable throwable) {
                                 Trace.line(2, "template: " + template + " failed testing");
                                 throwable.printStackTrace();
                                 synchronized (errors) {
-                                    errors.append(template);
+                                    errors.add(template);
                                 }
                             } finally {
                                 for (File temporaryFile : temporaryFiles) {
@@ -773,7 +778,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
             for (Template_Type template : errors) {
                 System.err.println("    " + template);
             }
-            ProgramError.unexpected(errors.length() + " templates failed testing: see previous stack dumps in test output");
+            ProgramError.unexpected(errors.size() + " templates failed testing: see previous stack dumps in test output");
         }
     }
 
@@ -790,7 +795,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
      *            where to print the generate source. The caller takes responsibility for closing the stream.
      */
     public void createExternalSource(int startTemplateSerial, int endTemplateSerial, IndentWriter stream) {
-        final AppendableSequence<Template_Type> errors = new LinkSequence<Template_Type>();
+        final List<Template_Type> errors = new LinkedList<Template_Type>();
 
         for (Template_Type template : assembly().templates()) {
             if (template.serial() > endTemplateSerial) {
@@ -809,7 +814,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
             for (Template_Type template : errors) {
                 System.err.println("    " + template);
             }
-            ProgramError.unexpected(errors.length() + " templates failed testing: see previous stack dumps in test output");
+            ProgramError.unexpected(errors.size() + " templates failed testing: see previous stack dumps in test output");
         }
     }
 }

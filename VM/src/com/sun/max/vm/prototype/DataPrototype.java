@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.prototype;
 
+import static com.sun.max.vm.type.ClassRegistry.*;
+
 import java.io.*;
 import java.lang.ref.*;
 import java.util.*;
@@ -27,7 +29,6 @@ import java.util.Arrays;
 import java.util.concurrent.*;
 
 import com.sun.max.atomic.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -120,7 +121,7 @@ public final class DataPrototype extends Prototype {
         return true;
     }
 
-    private AppendableIndexedSequence<Object> codeObjects = new ArrayListSequence<Object>();
+    private List<Object> codeObjects = new ArrayList<Object>();
 
     /**
      * Allocates a cell for a given object which is referenced from a given target bundle.
@@ -136,7 +137,7 @@ public final class DataPrototype extends Prototype {
             assert !cellSize.isZero();
             final Pointer cell = start.plus(targetBundleLayout.cellOffset(field)).asPointer();
             if (assignCell(object, cell)) {
-                codeObjects.append(object);
+                codeObjects.add(object);
                 assert HostObjectAccess.getSize(object).equals(cellSize);
             }
         }
@@ -161,7 +162,7 @@ public final class DataPrototype extends Prototype {
         Trace.end(1, "assignCodeCells: " + n + " target methods");
     }
 
-    private AppendableIndexedSequence<Object> heapObjects = new ArrayListSequence<Object>();
+    private List<Object> heapObjects = new ArrayList<Object>();
 
     /**
      * Assigns a heap cell to the specified object.
@@ -171,7 +172,7 @@ public final class DataPrototype extends Prototype {
      */
     private void assignHeapCell(Object object, Address cell) {
         if (assignCell(object, cell)) {
-            heapObjects.append(object);
+            heapObjects.add(object);
         } else {
             ProgramError.unexpected("null found in list of heap objects");
         }
@@ -260,7 +261,7 @@ public final class DataPrototype extends Prototype {
         Trace.begin(1, tracePrefix);
         int count = 0;
         final Address mark = heapRegion.getAllocationMark();
-        final AppendableSequence<Object> mutableHeapObjects = new ArrayListSequence<Object>(graphPrototype.objects().length());
+        final List<Object> mutableHeapObjects = new ArrayList<Object>(graphPrototype.objects().size());
         for (Object object : graphPrototype.objects()) {
             final ClassInfo classInfo = graphPrototype.classInfoFor(object);
             if (classInfo.containsMutableReferences(object) == objectsWithMutableReferences) {
@@ -274,7 +275,7 @@ public final class DataPrototype extends Prototype {
                     assignHeapCell(object, cell);
 
                     if (objectsWithMutableReferences) {
-                        mutableHeapObjects.append(object);
+                        mutableHeapObjects.add(object);
                     }
                     if (++count % 200000 == 0) {
                         Trace.line(1, ": " + count);
@@ -296,12 +297,12 @@ public final class DataPrototype extends Prototype {
      * @param heapRegion the boot heap region
      * @param mutableHeapObjects the mutable objects in the boot heap
      */
-    private void createHeapReferenceMap(BootHeapRegion heapRegion, Sequence<Object> mutableHeapObjects) {
+    private void createHeapReferenceMap(BootHeapRegion heapRegion, List<Object> mutableHeapObjects) {
         Trace.begin(1, "createHeapReferenceMap:");
         final int mutableHeapObjectsSize = heapRegion.getAllocationMark().toInt();
         final int heapReferenceMapSize = Size.fromLong(ByteArrayBitMap.computeBitMapSize(mutableHeapObjectsSize / Word.size())).wordAligned().toInt();
         final ByteArrayBitMap referenceMap = new ByteArrayBitMap(new byte[heapReferenceMapSize]);
-        final AppendableSequence<Reference> specialReferences = new ArrayListSequence<Reference>();
+        final List<Reference> specialReferences = new ArrayList<Reference>();
 
         int count = 0;
         for (Object object : mutableHeapObjects) {
@@ -350,7 +351,7 @@ public final class DataPrototype extends Prototype {
                 }
 
                 if (object instanceof Reference) {
-                    specialReferences.append((Reference) object);
+                    specialReferences.add((Reference) object);
                 }
             }
             if (++count % 100000 == 0) {
@@ -379,7 +380,7 @@ public final class DataPrototype extends Prototype {
             assert length == referenceMapBytes.length;
         }
 
-        final Reference[] specialReferenceArray = specialReferences.toCollection().toArray(new Reference[specialReferences.length()]);
+        final Reference[] specialReferenceArray = specialReferences.toArray(new Reference[specialReferences.size()]);
         assignHeapCell(referenceMapBytes, heapRegion.allocate(HostObjectAccess.getSize(referenceMapBytes), true));
         assignHeapCell(specialReferenceArray, heapRegion.allocate(HostObjectAccess.getSize(specialReferenceArray), true));
         heapRegion.init(referenceMapBytes, specialReferenceArray);
@@ -799,7 +800,7 @@ public final class DataPrototype extends Prototype {
      * @param memoryRegionVisitor the memory region visitor to apply after visiting the objects and assigning cells
      * @return the number of bytes of data (including padding bytes) initialized for region
      */
-    private int createData(final IndexedSequence<Object> objects, MemoryRegionVisitor memoryRegionVisitor) {
+    private int createData(final List<Object> objects, MemoryRegionVisitor memoryRegionVisitor) {
         final String regionName = memoryRegionVisitor.name;
         Trace.begin(1, "createData: " + regionName);
         final byte[] tagBytes = DebugHeap.tagBytes(dataModel);
@@ -807,7 +808,7 @@ public final class DataPrototype extends Prototype {
         final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
 
-        for (int n = 0; n < objects.length(); n += BATCH) {
+        for (int n = 0; n < objects.size(); n += BATCH) {
             final MemoryRegionVisitor m = memoryRegionVisitor.clone(); // prevent 'setOffset()' below from causing a
                                                                         // sharing conflict
             final Address regionStart = m.region.start();
@@ -815,7 +816,7 @@ public final class DataPrototype extends Prototype {
             completionService.submit(new Callable<Integer>() {
                 public Integer call() throws Exception {
                     int numberOfBytes = 0;
-                    final int end = Math.min(objects.length(), start + BATCH);
+                    final int end = Math.min(objects.size(), start + BATCH);
                     int previousSize = 0;
                     int previousOffset = 0;
                     Object previousObject = null;
@@ -853,7 +854,7 @@ public final class DataPrototype extends Prototype {
             });
         }
         int numberOfBytes = 0;
-        for (int n = 0; n < objects.length(); n += BATCH) {
+        for (int n = 0; n < objects.size(); n += BATCH) {
             try {
                 numberOfBytes += completionService.take().get();
                 Trace.line(1, "createData - objects: " + n + ", bytes: " + numberOfBytes);
@@ -877,7 +878,7 @@ public final class DataPrototype extends Prototype {
             objectToCell.put(object, objectToCell.get(object).plus(delta));
         }
 
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             if (classActor instanceof ReferenceClassActor) {
                 final DynamicHub dynamicHub = classActor.dynamicHub();
 
@@ -1005,19 +1006,19 @@ public final class DataPrototype extends Prototype {
      * @param objects a list of all the objects for which to set the relocation flags
      * @param name the name of visitor
      */
-    private void assignObjectRelocationFlags(final IndexedSequence<Object> objects, String name) {
+    private void assignObjectRelocationFlags(final List<Object> objects, String name) {
         Trace.begin(1, "assignObjectRelocationFlags: " + name);
         final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
 
         int numberOfRelocations = 0;
-        for (int n = 0; n < objects.length(); n += BATCH) {
+        for (int n = 0; n < objects.size(); n += BATCH) {
             final int start = n;
             completionService.submit(new Callable<Integer>() {
                 public Integer call() throws Exception {
                     try {
                         int numberOfRelocationsInBatch = 0;
-                        final int end = Math.min(objects.length(), start + BATCH);
+                        final int end = Math.min(objects.size(), start + BATCH);
                         for (int i = start; i < end; i++) {
                             final Object object = objects.get(i);
                             numberOfRelocationsInBatch += setRelocationFlags(object, objectToCell.get(object));
@@ -1031,7 +1032,7 @@ public final class DataPrototype extends Prototype {
             });
         }
 
-        for (int n = 0; n < objects.length(); n += BATCH) {
+        for (int n = 0; n < objects.size(); n += BATCH) {
             try {
                 numberOfRelocations += completionService.take().get();
             } catch (Throwable throwable) {
@@ -1049,7 +1050,7 @@ public final class DataPrototype extends Prototype {
     private void assignMethodDispatchTableRelocationFlags() {
         Trace.begin(1, "assignMethodDispatchTableRelocationFlags");
         final WordArrayLayout wordArrayLayout = layoutScheme.wordArrayLayout;
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             if (classActor instanceof ReferenceClassActor) {
                 final DynamicHub dynamicHub = classActor.dynamicHub();
                 final Address hubCell = objectToCell.get(dynamicHub);

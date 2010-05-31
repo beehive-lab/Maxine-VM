@@ -22,8 +22,8 @@ package com.sun.max.vm.cps.eir;
 
 import java.lang.reflect.*;
 
+import com.sun.max.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 
 /**
  * @author Bernd Mathiske
@@ -125,10 +125,10 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
             s = result.toString() + " := " + s;
         }
         if (arguments != null) {
-            s += " (" + Arrays.toString(arguments) + ")";
+            s += " (" + Utils.toString(arguments, ", ") + ")";
         }
         if (callerSavedOperands != null) {
-            s += " [Caller saved: " + Arrays.toString(callerSavedOperands) + "]";
+            s += " [Caller saved: " + Utils.toString(callerSavedOperands, ", ") + "]";
         }
         s += " " + javaFrameDescriptor();
         if (isNativeFunctionCall) {

@@ -56,17 +56,6 @@ public class EnumsTest extends MaxTestCase {
         assertEquals(Enums.fromString(Day.class, "THURSDAY"), Day.THURSDAY);
     }
 
-    public void test_powerSequence() {
-        final IndexedSequence<IndexedSequence <EmptyEnum> > empty = Enums.powerSequence(EmptyEnum.class);
-        assertEquals(empty.length(), 1);    // There's always the empty subset
-
-        final IndexedSequence<IndexedSequence <Day> > indSeq = Enums.powerSequence(Day.class);
-        final IndexedSequence<Day> weekends = indSeq.get(65);
-        assertEquals(weekends.length(), 2);
-        assertEquals(weekends.get(0), Day.SUNDAY);
-        assertEquals(weekends.get(1), Day.SATURDAY);
-    }
-
     public void test_powerSequenceIndex() {
         assertEquals(Enums.powerSequenceIndex(Day.SUNDAY), 1);
         assertEquals(Enums.powerSequenceIndex(Day.SATURDAY), 64);

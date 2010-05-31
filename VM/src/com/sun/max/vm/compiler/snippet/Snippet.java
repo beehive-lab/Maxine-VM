@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.compiler.snippet;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -43,9 +44,9 @@ import com.sun.max.vm.runtime.*;
  */
 public abstract class Snippet extends Routine {
 
-    private static final AppendableIndexedSequence<Snippet> snippets = new ArrayListSequence<Snippet>();
+    private static final List<Snippet> snippets = new ArrayList<Snippet>();
 
-    public static IndexedSequence<Snippet> snippets() {
+    public static List<Snippet> snippets() {
         return snippets;
     }
 
@@ -57,8 +58,8 @@ public abstract class Snippet extends Routine {
 
     public Snippet() {
         super(null);
-        serial = snippets.length();
-        snippets.append(this);
+        serial = snippets.size();
+        snippets.add(this);
         executable.beUnsafe();
     }
 

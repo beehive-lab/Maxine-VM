@@ -21,6 +21,8 @@
 
 package com.sun.max.asm.dis.arm;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.arm.complete.*;
 import com.sun.max.asm.dis.*;
@@ -28,7 +30,6 @@ import com.sun.max.asm.dis.risc.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.arm.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
@@ -46,7 +47,7 @@ public class ARMDisassembler extends RiscDisassembler{
     }
 
     @Override
-    protected DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, IndexedSequence<Argument> arguments) {
+    protected DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, List<Argument> arguments) {
         return new DisassembledInstruction(this, position, bytes, template, arguments);
     }
 }

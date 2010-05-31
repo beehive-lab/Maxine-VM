@@ -23,6 +23,7 @@ package com.sun.max.vm.cps.jit.amd64;
 import static com.sun.max.asm.x86.Scale.*;
 import static com.sun.max.vm.bytecode.BranchCondition.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.Assembler.*;
@@ -429,7 +430,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
          * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
          */
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        TARGET_ABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI);
+        TARGET_ABI = Utils.cast(type, VMConfiguration.target().targetABIsScheme().jitABI);
         // Initialization of the few hand-crafted templates
         final byte rel8 = 0;
         final int rel32 = 0;

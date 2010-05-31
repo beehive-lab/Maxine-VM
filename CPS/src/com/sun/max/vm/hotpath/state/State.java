@@ -20,12 +20,14 @@
  */
 package com.sun.max.vm.hotpath.state;
 
+import java.util.*;
+
 import com.sun.cri.bytecode.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.type.*;
 
@@ -38,25 +40,25 @@ import com.sun.max.vm.type.*;
  */
 public abstract class State<Element_Type extends Classifiable> {
 
-    protected final VariableSequence<Element_Type> slots;
-    protected final VariableSequence<Frame> frames;
+    protected final ArrayList<Element_Type> slots;
+    protected final ArrayList<Frame> frames;
 
     /**
      * Creates an empty state.
      */
     protected State() {
-        slots = new ArrayListSequence<Element_Type>();
-        frames = new ArrayListSequence<Frame>();
+        slots = new ArrayList<Element_Type>();
+        frames = new ArrayList<Frame>();
     }
 
     /**
      * Copies an existing state.
      */
     protected State(State<Element_Type> state) {
-        slots = (VariableSequence<Element_Type>) state.slots.clone();
-        frames = new ArrayListSequence<Frame>();
+        slots = new ArrayList<Element_Type>(state.slots);
+        frames = new ArrayList<Frame>();
         for (Frame frame : state.frames) {
-            frames.append(new Frame(frame));
+            frames.add(new Frame(frame));
         }
     }
 
@@ -64,43 +66,43 @@ public abstract class State<Element_Type extends Classifiable> {
      * Creates a state by copying a sequence of frames from an existing state. Copied frames are normalized.
      */
     protected State(State<Element_Type> state, int frameIndex, int frameCount) {
-        assert frameIndex >= 0 && frameIndex + frameCount <= state.frames.length();
+        assert frameIndex >= 0 && frameIndex + frameCount <= state.frames.size();
 
         final int slotIndex = state.frames.get(frameIndex).lp;
         final int slotOffset = -slotIndex;
         final int slotCount = state.frames.get(frameIndex + frameCount - 1).sp;
 
-        slots = new ArrayListSequence<Element_Type>(slotCount);
+        slots = new ArrayList<Element_Type>(slotCount);
         for (int i = 0; i < slotCount; i++) {
-            slots.append(state.slots.get(slotIndex + i));
+            slots.add(state.slots.get(slotIndex + i));
         }
 
-        frames = new ArrayListSequence<Frame>(frameCount);
+        frames = new ArrayList<Frame>(frameCount);
         for (int i = 0; i < frameCount; i++) {
-            frames.append(new Frame(state.frames.get(frameIndex + i), slotOffset));
+            frames.add(new Frame(state.frames.get(frameIndex + i), slotOffset));
         }
     }
 
-    public Sequence<Frame> frames() {
+    public List<Frame> frames() {
         return frames;
     }
 
     public Frame last() {
-        return frames.last();
+        return frames.get(frames.size() - 1);
     }
 
     public Frame first() {
-        return frames.first();
+        return frames.get(0);
     }
 
     /**
      * Gets the stack element at the specified index.
      */
     public Element_Type getOne(int index) {
-        if (index < slots.length()) {
+        if (index < slots.size()) {
             return slots.get(index);
-        } else if (index == slots.length()) {
-            slots.append(undefined());
+        } else if (index == slots.size()) {
+            slots.add(undefined());
             return undefined();
         } else {
             ProgramError.unexpected();
@@ -112,10 +114,10 @@ public abstract class State<Element_Type extends Classifiable> {
      * Sets a stack element at a specified index.
      */
     public Element_Type setOne(int index, Element_Type element) {
-        if (index < slots.length()) {
+        if (index < slots.size()) {
             return slots.set(index, element);
-        } else if (index == slots.length()) {
-            slots.append(element);
+        } else if (index == slots.size()) {
+            slots.add(element);
         } else {
             ProgramError.unexpected();
         }
@@ -176,7 +178,7 @@ public abstract class State<Element_Type extends Classifiable> {
                 i++;
             }
         }
-        return Arrays.subArray(slotArrays, 0, localIndex);
+        return java.util.Arrays.copyOfRange(slotArrays, 0, localIndex);
     }
 
     public Element_Type [] getSlots(int slot, int count) {
@@ -275,7 +277,7 @@ public abstract class State<Element_Type extends Classifiable> {
         for (int i = method.numberOfParameterSlots(); i < method.codeAttribute().maxLocals; i++) {
             setOne(frame.lp + i, undefined());
         }
-        frames.append(frame);
+        frames.add(frame);
     }
 
     public final void leave() {
@@ -284,14 +286,14 @@ public abstract class State<Element_Type extends Classifiable> {
         if (resultKind != Kind.VOID) {
             result = pop();
         }
-        frames.removeLast();
+        frames.remove(frames.size() - 1);
         if (resultKind != Kind.VOID) {
             push(result);
         }
     }
 
     public final void leaveWithoutReturn() {
-        frames.removeLast();
+        frames.remove(frames.size() - 1);
     }
 
     public final void execute(int opcode) {
@@ -412,20 +414,20 @@ public abstract class State<Element_Type extends Classifiable> {
         return last().sp;
     }
 
-    public void append(Sequence<Frame> frameList) {
-        assert this.frames.last().method() == frameList.first().method();
-        final Frame active = this.frames.removeLast();
+    public void append(List<Frame> frameList) {
+        assert this.frames.get(this.frames.size() - 1).method() == Utils.first(frameList).method();
+        final Frame active = this.frames.remove(this.frames.size() - 1);
         for (Frame frame : frameList) {
-            this.frames.append(new Frame(frame, active.lp()));
+            this.frames.add(new Frame(frame, active.lp()));
         }
     }
 
     public <Other_Element_Type extends Classifiable> boolean matchesSliceOf(State<Other_Element_Type> other) {
-        if (frames.length() > other.frames.length()) {
+        if (frames.size() > other.frames.size()) {
             return false;
         }
-        for (int i = 1; i <= frames.length(); i++) {
-            if (frames.get(frames.length() - i).matches(other.frames.get(other.frames.length() - i)) == false) {
+        for (int i = 1; i <= frames.size(); i++) {
+            if (frames.get(frames.size() - i).matches(other.frames.get(other.frames.size() - i)) == false) {
                 return false;
             }
         }
@@ -433,10 +435,10 @@ public abstract class State<Element_Type extends Classifiable> {
     }
 
     public <Other_Element_Type extends Classifiable> boolean matches(State<Other_Element_Type> other) {
-        if (frames.length() != other.frames.length()) {
+        if (frames.size() != other.frames.size()) {
             return false;
         }
-        for (int i = frames.length() - 1; i >= 0; i--) {
+        for (int i = frames.size() - 1; i >= 0; i--) {
             if (frames.get(i).matches(other.frames.get(i)) == false) {
                 return false;
             }
@@ -461,7 +463,7 @@ public abstract class State<Element_Type extends Classifiable> {
     }
 
     public final void printDetailed(MapFunction<Element_Type, String> labelMap) {
-        for (int i = 0; i < frames.length(); i++) {
+        for (int i = 0; i < frames.size(); i++) {
             final Frame frame = frames.get(i);
             final ClassMethodActor method = frame.method;
             int locals = 0;
@@ -490,7 +492,7 @@ public abstract class State<Element_Type extends Classifiable> {
         String framesString = "";
         String valuesString = "";
 
-        for (int i = 0; i < this.frames.length(); i++) {
+        for (int i = 0; i < this.frames.size(); i++) {
             final Frame frame = this.frames.get(i);
             final ClassMethodActor method = frame.method;
             String methodName = "null";
@@ -510,7 +512,7 @@ public abstract class State<Element_Type extends Classifiable> {
                 }
             }
 
-            if (i < this.frames.length() - 1) {
+            if (i < this.frames.size() - 1) {
                 framesString += " | ";
                 valuesString += " | ";
             } else {

@@ -27,7 +27,6 @@ import com.sun.max.asm.dis.ia32.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.ia32.complete.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
@@ -55,7 +54,7 @@ public class IA32AssemblyTester extends X86AssemblyTester<IA32Template> {
     }
 
     @Override
-    protected boolean isLegalArgumentList(IA32Template template, IndexedSequence<Argument> arguments) {
+    protected boolean isLegalArgumentList(IA32Template template, List<Argument> arguments) {
         return true;
     }
 }

@@ -21,18 +21,19 @@
 package com.sun.max.vm.run.java;
 
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.io.*;
 import java.lang.instrument.*;
 import java.lang.reflect.*;
 import java.net.*;
 import java.security.*;
+import java.util.*;
 import java.util.jar.*;
 
 import sun.misc.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
@@ -83,19 +84,19 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      * identifiers for native code, and need to be re-executed upon startup.
      */
     @HOSTED_ONLY
-    public IterableWithLength<? extends MethodActor> gatherNativeInitializationMethods() {
-        final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
+    public List<? extends MethodActor> gatherNativeInitializationMethods() {
+        final List<StaticMethodActor> methods = new LinkedList<StaticMethodActor>();
         final String maxinePackagePrefix = new com.sun.max.Package().name();
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             if (!classActor.name.toString().startsWith(maxinePackagePrefix)) { // non-Maxine class => JDK class
                 for (StaticMethodActor method : classActor.localStaticMethodActors()) {
                     if (method.name.equals("initIDs") && (method.descriptor().numberOfParameters() == 0) && method.resultKind() == Kind.VOID) {
-                        methods.append(method);
+                        methods.add(method);
                     }
                 }
             }
         }
-        initIDMethods = Sequence.Static.toArray(methods, new StaticMethodActor[methods.length()]);
+        initIDMethods = methods.toArray(new StaticMethodActor[methods.size()]);
         return methods;
     }
 
@@ -103,7 +104,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      * Runs all the native initializer methods gathered while bootstrapping.
      */
     public void runNativeInitializationMethods() {
-        final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
+        final List<StaticMethodActor> methods = new LinkedList<StaticMethodActor>();
         for (StaticMethodActor method : initIDMethods) {
             try {
                 if (method.currentTargetMethod() == null) {
@@ -112,11 +113,11 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 method.invoke();
             } catch (UnsatisfiedLinkError unsatisfiedLinkError) {
                 // Library not present yet - try again next time:
-                methods.append(method);
+                methods.add(method);
             } catch (InvocationTargetException invocationTargetException) {
                 if (invocationTargetException.getTargetException() instanceof UnsatisfiedLinkError) {
                     // Library not present yet - try again next time:
-                    methods.append(method);
+                    methods.add(method);
                 } else {
                     ProgramError.unexpected(invocationTargetException.getTargetException());
                 }
@@ -124,7 +125,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 ProgramError.unexpected(throwable);
             }
         }
-        initIDMethods = Sequence.Static.toArray(methods, new StaticMethodActor[methods.length()]);
+        initIDMethods = methods.toArray(new StaticMethodActor[methods.size()]);
     }
 
     /**

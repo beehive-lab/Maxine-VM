@@ -20,9 +20,11 @@
  */
 package com.sun.max.ins.memory;
 
+import java.util.*;
+
 import javax.swing.*;
 
-import com.sun.max.collect.*;
+import com.sun.cri.ci.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -42,7 +44,7 @@ import com.sun.max.unsafe.*;
  */
 public final class MemoryBytesInspector extends Inspector {
 
-    private static final IdentityHashSet<MemoryBytesInspector> memoryInspectors = new IdentityHashSet<MemoryBytesInspector>();
+    private static final Set<MemoryBytesInspector> memoryInspectors = CiUtil.newIdentityHashSet();
 
     /**
      * Displays a new inspector for a region of memory.
