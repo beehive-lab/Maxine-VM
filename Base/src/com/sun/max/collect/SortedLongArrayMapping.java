@@ -34,13 +34,10 @@ public class SortedLongArrayMapping<V> {
     public SortedLongArrayMapping() {
     }
 
-    private long[] keys;
-    private Object[] values;
+    private long[] keys = {};
+    private Object[] values = {};
 
     private int findIndex(long key) {
-        if (keys == null) {
-            return 0;
-        }
         int left = 0;
         int right = keys.length;
         while (right > left) {
@@ -62,9 +59,6 @@ public class SortedLongArrayMapping<V> {
      * @return the value corresponding to the key or null if the key is not found
      */
     public V get(long key) {
-        if (keys == null) {
-            return null;
-        }
         final int index = findIndex(key);
         if (index < keys.length && keys[index] == key) {
             final Class<V> type = null;
@@ -75,7 +69,7 @@ public class SortedLongArrayMapping<V> {
 
     public void put(long key, V value) {
         final int index = findIndex(key);
-        if (keys != null && index < keys.length && keys[index] == key) {
+        if (index < keys.length && keys[index] == key) {
             values[index] = value;
         } else {
             long[] newKeys = new long[keys.length + 1];
@@ -87,15 +81,12 @@ public class SortedLongArrayMapping<V> {
             Object[] newValues = new Object[values.length + 1];
             System.arraycopy(values, 0, newValues, 0, index);
             System.arraycopy(values, index, newValues, index + 1, values.length - index);
-            newValues[index] = key;
+            newValues[index] = value;
             values = newValues;
         }
     }
 
     public void remove(long key) {
-        if (keys == null) {
-            return;
-        }
         final int index = findIndex(key);
         if (keys[index] == key) {
             int newLength = keys.length - 1;
