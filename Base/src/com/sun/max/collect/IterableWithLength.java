@@ -20,14 +20,12 @@
  */
 package com.sun.max.collect;
 
-import java.util.*;
 
 /**
- * An iterable that knows the size of the collection it iterates over. An IterableWithLength can be
- * {@linkplain Iterables#toCollection(IterableWithLength) converted} to a {@link Collection}.
- * 
+ * An iterable that knows the size of the collection it iterates over.
+ *
  * @author Doug Simon
  */
 public interface IterableWithLength<Type> extends Iterable<Type> {
-    int length();
+    int size();
 }

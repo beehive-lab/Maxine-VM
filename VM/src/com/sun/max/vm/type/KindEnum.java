@@ -21,10 +21,10 @@
 package com.sun.max.vm.type;
 
 import java.io.*;
+import java.util.*;
 import java.util.regex.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
@@ -70,7 +70,7 @@ public enum KindEnum {
      * Convenient way to get an immutable view of all the values of this enumerated type without paying the cost of
      * an array clone operation.
      */
-    public static final IndexedSequence<KindEnum> VALUES = new ArraySequence<KindEnum>(values());
+    public static final List<KindEnum> VALUES = Arrays.asList(values());
 
     static {
         // Sanity check to ensure that the values in Native/substrate/kind.h match those of this enum

@@ -146,7 +146,7 @@ public final class Metrics {
      *
      * @author Ben L. Titzer
      */
-    public static class Distribution<Value_Type> implements Metric {
+    public static class Distribution<T> implements Metric {
 
         static class Counted implements Comparable<Counted> {
             final int total;
@@ -174,7 +174,7 @@ public final class Metrics {
             return total;
         }
 
-        public int getCount(Value_Type value) {
+        public int getCount(T value) {
             return -1;
         }
 
@@ -182,16 +182,16 @@ public final class Metrics {
             total = 0;
         }
 
-        public Map<Value_Type, Integer> asMap() {
+        public Map<T, Integer> asMap() {
             return Collections.emptyMap();
         }
 
         public void report(String name, PrintStream stream) {
             stream.println(name + ": ");
-            final Map<Value_Type, Integer> asMap = asMap();
+            final Map<T, Integer> asMap = asMap();
             final Counted[] counts = new Counted[asMap.size()];
             int i = 0;
-            for (Map.Entry<Value_Type, Integer> entry : asMap.entrySet()) {
+            for (Map.Entry<T, Integer> entry : asMap.entrySet()) {
                 counts[i++] = new Counted(entry.getKey(), entry.getValue());
             }
             Arrays.sort(counts);

@@ -23,8 +23,8 @@ package com.sun.max.vm.cps.ir.igv;
 import java.io.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.collect.*;
-import com.sun.max.io.*;
 
 /**
  * Utility class for writing a graph document as an XML stream.
@@ -186,19 +186,19 @@ public class GraphWriter {
 
         private Graph graph;
         private String name;
-        private AppendableSequence<Block> successors;
-        private AppendableSequence<Block> predecessors;
-        private AppendableSequence<Node> nodes;
+        private List<Block> successors;
+        private List<Block> predecessors;
+        private List<Node> nodes;
 
         private Block(Graph graph, String name) {
             this.graph = graph;
             this.name = name;
-            successors = new LinkSequence<Block>();
-            predecessors = new LinkSequence<Block>();
-            nodes = new LinkSequence<Node>();
+            successors = new LinkedList<Block>();
+            predecessors = new LinkedList<Block>();
+            nodes = new LinkedList<Node>();
         }
 
-        public Sequence<Node> getNodes() {
+        public List<Node> getNodes() {
             return nodes;
         }
 
@@ -206,11 +206,11 @@ public class GraphWriter {
             return graph;
         }
 
-        public Sequence<Block> getSuccessors() {
+        public List<Block> getSuccessors() {
             return successors;
         }
 
-        public Sequence<Block> getPredecessors() {
+        public List<Block> getPredecessors() {
             return predecessors;
         }
 
@@ -218,19 +218,19 @@ public class GraphWriter {
             assert n.getGraph() == getGraph();
             assert n.block == null;
             n.block = this;
-            nodes.append(n);
+            nodes.add(n);
         }
 
         public void addSuccessor(Block b) {
-            assert !Sequence.Static.containsIdentical(successors, b);
+            assert !(Utils.indexOfIdentical(successors, b) != -1);
             assert b.getGraph() == graph;
-            successors.append(b);
+            successors.add(b);
         }
 
         public void addPredecessor(Block b) {
-            assert !Sequence.Static.containsIdentical(predecessors, b);
+            assert !(Utils.indexOfIdentical(predecessors, b) != -1);
             assert b.getGraph() == graph;
-            predecessors.append(b);
+            predecessors.add(b);
         }
 
         public String getName() {
@@ -242,14 +242,14 @@ public class GraphWriter {
 
         private Set<Node> nodes;
         private Set<Edge> edges;
-        private AppendableSequence<Block> blocks;
-        private GrowableMapping<Integer, Node> nodesMapping;
+        private List<Block> blocks;
+        private Mapping<Integer, Node> nodesMapping;
 
         private Graph(String name) {
             this.getProperties().setProperty(GRAPH_NAME_PROPERTY, name);
             nodes = new HashSet<Node>();
             edges = new HashSet<Edge>();
-            blocks = new LinkSequence<Block>();
+            blocks = new LinkedList<Block>();
             nodesMapping = new ChainedHashMapping<Integer, Node>();
         }
 
@@ -285,32 +285,32 @@ public class GraphWriter {
 
         public Block createBlock(String name) {
             final Block b = new Block(this, name);
-            blocks.append(b);
+            blocks.add(b);
             return b;
         }
 
-        public Sequence<Block> getBlocks() {
+        public List<Block> getBlocks() {
             return blocks;
         }
     }
 
     public static class Group extends PropertyObject {
 
-        private AppendableSequence<Graph> graphs;
+        private List<Graph> graphs;
         private Method method;
 
         public Group(String name) {
             this.getProperties().setProperty(METHOD_NAME_PROPERTY, name);
-            graphs = new LinkSequence<Graph>();
+            graphs = new LinkedList<Graph>();
         }
 
         public Graph createGraph(String name) {
             final Graph g = new Graph(name);
-            graphs.append(g);
+            graphs.add(g);
             return g;
         }
 
-        public Sequence<Graph> getGraphs() {
+        public List<Graph> getGraphs() {
             return graphs;
         }
 
@@ -332,23 +332,23 @@ public class GraphWriter {
         private String name;
         private String shortName;
         private String bytecodes;
-        private AppendableSequence<Method> inlinedMethods;
+        private List<Method> inlinedMethods;
 
         public Method(int bci, String name, String shortName, String bytecodes) {
             this.bci = bci;
             this.name = name;
             this.shortName = shortName;
             this.bytecodes = bytecodes;
-            inlinedMethods = new LinkSequence<Method>();
+            inlinedMethods = new LinkedList<Method>();
         }
 
-        public Sequence<Method> getInlinedMethods() {
+        public List<Method> getInlinedMethods() {
             return inlinedMethods;
         }
 
         public Method createInlined(int methodBci, String methodName, String methodShortName, String methodBytecodes) {
             final Method m = new Method(methodBci, methodName, methodShortName, methodBytecodes);
-            inlinedMethods.append(m);
+            inlinedMethods.add(m);
             return m;
         }
 
@@ -371,24 +371,23 @@ public class GraphWriter {
 
     public static final class Document extends PropertyObject {
 
-        private VariableSequence<Group> groups;
+        private ArrayList<Group> groups;
 
         private Document() {
-            groups = new ArrayListSequence<Group>();
+            groups = new ArrayList<Group>();
         }
 
-        public Sequence<Group> getGroups() {
+        public List<Group> getGroups() {
             return groups;
         }
 
         public void removeGroup(Group g) {
-            assert Sequence.Static.containsIdentical(groups, g);
-            groups.remove(Sequence.Static.indexOfIdentical(groups, g));
+            groups.remove(g);
         }
 
         public Group createGroup(String name) {
             final Group g = new Group(name);
-            groups.append(g);
+            groups.add(g);
             return g;
         }
     }
@@ -423,7 +422,7 @@ public class GraphWriter {
         p.setProperty(METHOD_SHORT_NAME_PROPERTY, m.getShortName());
         out.begin(METHOD_ELEMENT, p);
 
-        if (m.getInlinedMethods().length() > 0) {
+        if (m.getInlinedMethods().size() > 0) {
             out.begin(INLINE_ELEMENT);
             for (Method im : m.getInlinedMethods()) {
                 writeMethod(im);

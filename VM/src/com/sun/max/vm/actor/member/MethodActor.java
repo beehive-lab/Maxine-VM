@@ -26,13 +26,14 @@ import static com.sun.max.vm.type.ClassRegistry.Property.*;
 import java.io.*;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
+import java.util.*;
 
 import sun.reflect.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ri.*;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -419,7 +420,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
                 return resultKind.asValue(javaMethod.invoke(null, arguments));
             }
             final Object receiver = getBoxedJavaValue(argumentValues[0], javaMethod.getDeclaringClass());
-            final Object[] arguments = getBoxedJavaValues(Arrays.subArray(argumentValues, 1), parameterTypes);
+            final Object[] arguments = getBoxedJavaValues(Arrays.copyOfRange(argumentValues, 1, argumentValues.length), parameterTypes);
             return resultKind.asValue(javaMethod.invoke(receiver, arguments));
         }
         final GeneratedMethodStub stub = UnsafeCast.asGeneratedMethodStub(makeInvocationStub());
@@ -463,7 +464,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
             if (MaxineVM.isHosted()) {
                 final Word word = value.unboxWord();
                 final Class<Class<? extends Word>> type = null;
-                final Class<? extends Word> wordType = StaticLoophole.cast(type, parameterType);
+                final Class<? extends Word> wordType = Utils.cast(type, parameterType);
                 return word.as(wordType);
             }
             throw ProgramError.unexpected();

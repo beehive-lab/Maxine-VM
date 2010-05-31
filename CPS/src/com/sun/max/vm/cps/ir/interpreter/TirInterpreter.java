@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.ir.interpreter;
 
 import java.lang.reflect.*;
 
+import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -41,10 +42,10 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 public class TirInterpreter extends IrInterpreter<TirTree> {
-    private VariableMapping<TirInstruction, Value> contextValues = new IdentityHashMapping<TirInstruction, Value>();
-    private VariableMapping<TirInstruction, Value> invariantValues = new IdentityHashMapping<TirInstruction, Value>();
-    private VariableMapping<TirInstruction, Value> variantValues = new IdentityHashMapping<TirInstruction, Value>();
-    private VariableMapping<TirTreeCall, BirState> callResults = new IdentityHashMapping<TirTreeCall, BirState>();
+    private Mapping<TirInstruction, Value> contextValues = new IdentityHashMapping<TirInstruction, Value>();
+    private Mapping<TirInstruction, Value> invariantValues = new IdentityHashMapping<TirInstruction, Value>();
+    private Mapping<TirInstruction, Value> variantValues = new IdentityHashMapping<TirInstruction, Value>();
+    private Mapping<TirTreeCall, BirState> callResults = new IdentityHashMapping<TirTreeCall, BirState>();
 
     private static ClassMethodActor createTupleOrHybridMethodActor = ClassMethodActor.findStatic(CreateTupleOrHybrid.class, "createTupleOrHybrid");
 
@@ -91,7 +92,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
 
         isInvariant = false;
         while (hasBailedOut == false) {
-            execute(tirTree.traces().first());
+            execute(Utils.first(tirTree.traces()));
         }
         return exitGuard;
     }
@@ -164,7 +165,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
 
     private void loop(TirTrace trace) {
         assert trace.tailState().matches(tree.entryState());
-        final VariableMapping<TirInstruction, Value> newContext = new IdentityHashMapping<TirInstruction, Value>();
+        final Mapping<TirInstruction, Value> newContext = new IdentityHashMapping<TirInstruction, Value>();
         trace.tailState().compare(tree.entryState(), new StatePairVisitor<TirInstruction, TirInstruction>() {
             @Override
             public void visit(TirInstruction tail, TirInstruction entry) {

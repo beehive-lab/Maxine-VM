@@ -20,11 +20,14 @@
  */
 package com.sun.max.vm.cps.tir.pipeline;
 
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.transform.*;
 import com.sun.max.vm.cps.ir.IrBlock.*;
@@ -44,18 +47,18 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         }
 
         private int serial = 0;
-        private final VariableSequence<DirVariable>[] dirtyStacks;
-        private VariableSequence<DirVariable> dirtyStack(Kind kind) {
+        private final ArrayList<DirVariable>[] dirtyStacks;
+        private ArrayList<DirVariable> dirtyStack(Kind kind) {
             return dirtyStacks[kind.asEnum.ordinal()];
         }
 
-        private VariableMapping<TirInstruction, DirVariable> bindings = new IdentityHashMapping<TirInstruction, DirVariable>();
+        private Mapping<TirInstruction, DirVariable> bindings = new IdentityHashMapping<TirInstruction, DirVariable>();
 
         public VariableAllocator() {
-            Class<VariableSequence<DirVariable>[]> type = null;
-            dirtyStacks = StaticLoophole.cast(type, Arrays.newInstance(VariableSequence.class, KindEnum.VALUES.length()));
+            Class<ArrayList<DirVariable>[]> type = null;
+            dirtyStacks = Utils.cast(type, new ArrayList[KindEnum.VALUES.size()]);
             for (Kind kind : new Kind[] {Kind.INT, Kind.FLOAT, Kind.LONG, Kind.DOUBLE, Kind.REFERENCE, Kind.VOID}) {
-                dirtyStacks[kind.asEnum.ordinal()] = new ArrayListSequence<DirVariable>();
+                dirtyStacks[kind.asEnum.ordinal()] = new ArrayList<DirVariable>();
             }
         }
 
@@ -63,7 +66,8 @@ public class TirToDirTranslator extends TirPipelineFilter  {
             if (type == VariableType.CLEAN || dirtyStack(kind).isEmpty()) {
                 return new DirVariable(kind, serial++);
             }
-            return dirtyStack(kind).removeLast();
+            ArrayList<DirVariable> dirtyStack = dirtyStack(kind);
+            return dirtyStack.remove(dirtyStack.size() - 1);
         }
 
         public void bind(TirInstruction instruction, DirVariable variable) {
@@ -90,7 +94,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         public void free(TirInstruction instruction) {
             final DirVariable variable = bindings.remove(instruction);
             ProgramError.check(variable != null);
-            dirtyStack(variable.kind()).append(variable);
+            dirtyStack(variable.kind()).add(variable);
         }
     }
 
@@ -99,8 +103,8 @@ public class TirToDirTranslator extends TirPipelineFilter  {
 
     private DirTree dirTree;
     private DirVariable[] parameters;
-    private VariableSequence<DirBlock> blocks = new ArrayListSequence<DirBlock>();
-    private GrowableDeterministicSet<DirGoto> loopPatchList = new LinkedIdentityHashSet<DirGoto>();
+    private LinkedList<DirBlock> blocks = new LinkedList<DirBlock>();
+    private LinkedIdentityHashSet<DirGoto> loopPatchList = new LinkedIdentityHashSet<DirGoto>();
     private VariableAllocator allocator = new VariableAllocator();
 
     /*
@@ -134,7 +138,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
     }
 
     private DirBlock current() {
-        return blocks.first();
+        return blocks.getFirst();
     }
 
     private void emitBlockIfNotEmpty(DirBlock block) {
@@ -144,11 +148,11 @@ public class TirToDirTranslator extends TirPipelineFilter  {
     }
 
     private void emitBlock(DirBlock block) {
-        block.setSerial(blocks.length());
+        block.setSerial(blocks.size());
         if (blocks.isEmpty() == false) {
             link(block, current());
         }
-        blocks.prepend(block);
+        blocks.addFirst(block);
     }
 
     private void link(DirBlock a, DirBlock b) {
@@ -158,7 +162,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
 
     private void emitInstruction(DirInstruction... instructions) {
         for (int i = instructions.length - 1; i >= 0; i--) {
-            current().instructions().prepend(instructions[i]);
+            current().instructions().add(0, instructions[i]);
         }
     }
 
@@ -255,7 +259,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         patchLoops();
         emitBlockIfNotEmpty(prologueBlock);
         emitBlockIfNotEmpty(localBlock);
-        dirTree.setGenerated(parameters, new ArrayListSequence<DirBlock>(blocks), false);
+        dirTree.setGenerated(parameters, new ArrayList<DirBlock>(blocks), false);
     }
 
     @Override
@@ -276,8 +280,8 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         final DirSwitch dirSwitch = new DirSwitch(guard.kind(),
                                                   guard.valueComparator().complement(),
                                                   use(guard.operand0()),
-                                                  Arrays.fromElements(use(guard.operand1())),
-                                                  Arrays.fromElements(bailoutBlock), current());
+                                                  new DirValue[] {use(guard.operand1())},
+                                                  new DirBlock[] {bailoutBlock}, current());
         emitBlock(new DirBlock(Role.NORMAL));
         emitInstruction(dirSwitch);
 
@@ -322,7 +326,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
      *
      */
     private void emitLoopbacks(TirState entryState, TirState tailState) {
-        final VariableSequence<Pair<TirInstruction, TirLocal>> writes = new ArrayListSequence<Pair<TirInstruction, TirLocal>>();
+        final ArrayList<Pair<TirInstruction, TirLocal>> writes = new ArrayList<Pair<TirInstruction, TirLocal>>();
 
         // Accumulate loop variables that need to be written back. These are locals that are used
         // in the trace tree and then updated.
@@ -331,7 +335,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
             public void visit(TirInstruction entry, TirInstruction tail) {
                 final TirLocal local = (TirLocal) entry;
                 if (local.flags().isRead() && local != tail) {
-                    writes.append(new Pair<TirInstruction, TirLocal>(tail, local));
+                    writes.add(new Pair<TirInstruction, TirLocal>(tail, local));
                 }
             }
         });
@@ -340,11 +344,11 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         // temporary variable.
         // Checkstyle: stop
         while (writes.isEmpty() == false) {
-            for (int i = 0; i < writes.length(); i++) {
+            for (int i = 0; i < writes.size(); i++) {
                 final Pair<TirInstruction, TirLocal> write = writes.get(i);
                 boolean writeDestinationIsUsed = false;
                 // Can we find another write that has a dependency on the destination?
-                for (int j = 0; j < writes.length(); j++) {
+                for (int j = 0; j < writes.size(); j++) {
                     if (writes.get(j).first() == write.second() && i != j) {
                         writeDestinationIsUsed = true;
                         break;
@@ -374,11 +378,11 @@ public class TirToDirTranslator extends TirPipelineFilter  {
 
     }
 
-    private Sequence<DirBlock> inline(DirMethod method, DirValue... arguments) {
+    private List<DirBlock> inline(DirMethod method, DirValue... arguments) {
         Trace.stream().println(method.traceToString());
 
-        final GrowableMapping<DirBlock, DirBlock> blockMap = new IdentityHashMapping<DirBlock, DirBlock>();
-        final GrowableMapping<DirValue, DirValue> valueMap = new IdentityHashMapping<DirValue, DirValue>();
+        final IdentityHashMap<DirBlock, DirBlock> blockMap = new IdentityHashMap<DirBlock, DirBlock>();
+        final IdentityHashMap<DirValue, DirValue> valueMap = new IdentityHashMap<DirValue, DirValue>();
 
         // Map parameters onto arguments.
         for (int i = 0; i < method.parameters().length; i++) {
@@ -440,6 +444,6 @@ public class TirToDirTranslator extends TirPipelineFilter  {
             }
         }
 
-        return new ArrayListSequence<DirBlock>(blockMap.values());
+        return new ArrayList<DirBlock>(blockMap.values());
     }
 }

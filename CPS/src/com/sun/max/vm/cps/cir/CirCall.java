@@ -21,8 +21,8 @@
 package com.sun.max.vm.cps.cir;
 
 import com.sun.cri.bytecode.*;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
@@ -90,7 +90,7 @@ public final class CirCall extends CirNode {
      *            {@code arguments} must be {@link #NO_ARGUMENTS}.
      */
     public void setArguments(CirValue... arguments) {
-        assert (arguments.length > 0 && Arrays.find(arguments, null) == -1) || arguments == NO_ARGUMENTS;
+        assert (arguments.length > 0 && Utils.indexOfIdentical(arguments, null) == -1) || arguments == NO_ARGUMENTS;
         this.arguments = arguments;
         assert arguments.getClass() == CirValue[].class;
     }
@@ -113,7 +113,11 @@ public final class CirCall extends CirNode {
             arguments = NO_ARGUMENTS;
         } else {
             assert arguments.length > 0;
-            arguments = Arrays.remove(CirValue.class, arguments, index);
+            int newLength = arguments.length - 1;
+            CirValue[] newArguments = new CirValue[newLength];
+            System.arraycopy(arguments, 0, newArguments, 0, index);
+            System.arraycopy(arguments, index + 1, newArguments, index, newLength - index);
+            arguments = newArguments;
         }
     }
 

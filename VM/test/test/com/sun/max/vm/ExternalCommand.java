@@ -27,8 +27,8 @@ import java.util.*;
 
 import test.com.sun.max.vm.MaxineTester.*;
 
+import com.sun.max.*;
 import com.sun.max.io.*;
-import com.sun.max.lang.Arrays;
 
 /**
  * The {@code ExternalCommand} class represents an external command with input and output files.
@@ -73,7 +73,7 @@ public class ExternalCommand {
 
             if (logs.base != null) {
                 final PrintStream ps = new PrintStream(new FileOutputStream(logs.get(COMMAND)));
-                ps.println(Arrays.toString(cmdarray, " "));
+                ps.println(Utils.toString(cmdarray, " "));
                 for (int i = 0; i < cmdarray.length; ++i) {
                     ps.println("Command array[" + i + "] = \"" + cmdarray[i] + "\"");
                 }

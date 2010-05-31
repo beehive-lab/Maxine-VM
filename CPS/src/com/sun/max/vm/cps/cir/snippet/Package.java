@@ -23,7 +23,6 @@ package com.sun.max.vm.cps.cir.snippet;
 import java.util.*;
 
 import com.sun.max.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 
 /**
@@ -41,7 +40,7 @@ public class Package extends VMPackage {
         final MaxPackage p1 = new com.sun.max.vm.cps.cir.builtin.Package();
         final MaxPackage p2 = new com.sun.max.vm.compiler.snippet.Package();
         final MaxPackage p3 = new com.sun.max.vm.hotpath.Package();
-        return Sets.from(p1, p2, p3);
+        return new HashSet<MaxPackage>(Arrays.asList(p1, p2, p3));
     }
 
 }

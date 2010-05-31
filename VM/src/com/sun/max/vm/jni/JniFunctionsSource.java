@@ -26,6 +26,7 @@ import static com.sun.max.vm.jni.JniFunctions.*;
 import java.lang.reflect.*;
 import java.nio.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -207,7 +208,7 @@ public final class JniFunctionsSource {
             parameterTypes = new Class[1];
             parameterTypes[0] = String.class;
         }
-        constructor = StaticLoophole.cast(type, throwableClass.unhand()).getConstructor(parameterTypes);
+        constructor = Utils.cast(type, throwableClass.unhand()).getConstructor(parameterTypes);
         Throwable throwable = message.isZero() ? constructor.newInstance() : constructor.newInstance(CString.utf8ToJava(message));
         VmThread.fromJniEnv(env).setPendingException(throwable);
         return JNI_OK;

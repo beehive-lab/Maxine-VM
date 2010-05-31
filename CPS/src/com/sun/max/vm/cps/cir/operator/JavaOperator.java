@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.cps.cir.operator;
 
+import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
@@ -178,7 +179,7 @@ public abstract class JavaOperator extends CirOperator {
          */
         public void resolve() {
             final Class<Actor_Type> type = null;
-            actor = StaticLoophole.cast(type, constantPool.resolvableAt(index).resolve(constantPool, index));
+            actor = Utils.cast(type, constantPool.resolvableAt(index).resolve(constantPool, index));
         }
 
         public final Kind resultKind() {

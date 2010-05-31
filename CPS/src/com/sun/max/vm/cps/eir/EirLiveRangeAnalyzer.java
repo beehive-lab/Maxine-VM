@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.cps.eir;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.actor.member.*;
 
 /**
@@ -56,7 +57,7 @@ public interface EirLiveRangeAnalyzer {
      * Notifies this analyzer that the variables corresponding to the registers used for parameter passing (as specified
      * by the {@linkplain #abi() ABI}) are defined by the current instruction being analyzed.
      */
-    Sequence<EirValue> calleeSavedRegisterVariables();
+    List<EirValue> calleeSavedRegisterVariables();
 
     EirABI abi();
 

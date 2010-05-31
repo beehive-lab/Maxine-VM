@@ -21,9 +21,9 @@
 package com.sun.max.vm.compiler.target;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -313,11 +313,11 @@ public abstract class TargetLocation {
             }
         }
 
-        public static final IndexedSequence<Tag> VALUES = new ArraySequence<Tag>(values());
+        public static final List<Tag> VALUES = Arrays.asList(values());
         static {
             if (MaxineVM.isHosted()) {
                 // Ensure that a Tag ordinal can be encoded as an unsigned byte.
-                ProgramError.check(VALUES.length() <= 0xFF);
+                ProgramError.check(VALUES.size() <= 0xFF);
 
                 for (Tag tag : VALUES) {
                     tag.initializeImplicitOperandTags();

@@ -22,9 +22,10 @@ package com.sun.max.vm.cps.eir.allocate.some;
 
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.EirTraceObserver.*;
 import com.sun.max.vm.cps.eir.allocate.*;
@@ -118,7 +119,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
                 variable.setWeight(weight);
             }
         }
-        final EirVariable[] array = PoolSet.toArray(variables, EirVariable.class);
+        final EirVariable[] array = variables.toArray(new EirVariable[variables.size()]);
         java.util.Arrays.sort(array);
         return array;
     }
@@ -151,7 +152,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
      */
     protected void removeInterferingRegisters(EirVariable variable, PoolSet<EirRegister_Type> availableRegisters) {
         final Class<EirRegister_Type> type = null;
-        final EirRegister_Type register = StaticLoophole.cast(type, variable.location());
+        final EirRegister_Type register = Utils.cast(type, variable.location());
         availableRegisters.remove(register);
     }
 
@@ -229,7 +230,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
     private boolean isUnallocatableRegister(EirLocation location) {
         if (location instanceof EirRegister) {
             final Class<EirRegister_Type> type = null;
-            final EirRegister_Type register = StaticLoophole.cast(type, location);
+            final EirRegister_Type register = Utils.cast(type, location);
             return !allocatableIntegerRegisters().contains(register) && !allocatableFloatingPointRegisters().contains(register);
         }
         return false;
@@ -250,7 +251,13 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
                     return;
                 }
             }
-            for (EirOperand operand : Sequence.Static.toArray(variable.operands(), new EirOperand[variable.operands().length()])) {
+            EirOperand[] operands = new EirOperand[variable.operands().size()];
+            int i = 0;
+            for (EirOperand element : variable.operands()) {
+                operands[i] = element;
+                i++;
+            }
+            for (EirOperand operand : operands) {
                 operand.setEirValue(preallocatedValue);
             }
             variable.setLocation(null);
@@ -288,7 +295,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
      * @param operands {@code acquiree}'s operands are copied into this set if coalescing is successful
      * @return true if {@code acquiree} is coalesced into {@code acquirer}, false otherwise
      */
-    private boolean coalesce(final EirVariable acquirer, EirInstruction assignment, final EirVariable acquiree, GrowableDeterministicSet<EirOperand> operands) {
+    private boolean coalesce(final EirVariable acquirer, EirInstruction assignment, final EirVariable acquiree, LinkedIdentityHashSet<EirOperand> operands) {
         assert !acquirer.isInterferingWith(acquiree);
         if (isUnallocatableRegister(acquirer.location()) || acquiree.isLocationFixed() || !acquirer.isReferenceCompatibleWith(acquiree)) {
             return false;
@@ -332,7 +339,14 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         removeInstruction(assignment);
 
         // Make a copy of acquiree's current operands as this set is potentially modified by the following loop
-        final EirOperand[] originalOperands = Sequence.Static.toArray(acquiree.operands(), new EirOperand[acquiree.operands().length()]);
+        EirOperand[] operandsCopy = new EirOperand[acquiree.operands().size()];
+        int i = 0;
+        for (EirOperand element : acquiree.operands()) {
+            operandsCopy[i] = element;
+            i++;
+        }
+
+        final EirOperand[] originalOperands = operandsCopy;
         for (EirOperand operand : originalOperands) {
             operands.add(operand);
             operand.setEirValue(acquirer);
@@ -345,12 +359,12 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
 
     private void coalesceVariable(EirVariable variable) {
         EirVariable v = variable;
-        final VariableDeterministicSet<EirOperand> operands = new LinkedIdentityHashSet<EirOperand>();
+        final LinkedIdentityHashSet<EirOperand> operands = new LinkedIdentityHashSet<EirOperand>();
         for (EirOperand operand : v.operands()) {
             operands.add(operand);
         }
         while (!operands.isEmpty()) {
-            final EirOperand operand = operands.first();
+            final EirOperand operand = operands.getOne();
             operands.remove(operand);
 
             final EirInstruction instruction = operand.instruction();
@@ -408,7 +422,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
     private void trim() {
         for (EirBlock block : methodGeneration().eirBlocks()) {
             int i = 0;
-            while (i < block.instructions().length()) {
+            while (i < block.instructions().size()) {
                 if (block.instructions().get(i).isRedundant()) {
                     block.removeInstruction(i);
                 } else {

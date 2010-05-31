@@ -23,6 +23,7 @@ package com.sun.max.vm.runtime;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -114,7 +115,7 @@ public abstract class Safepoint {
         ENABLED(SAFEPOINTS_ENABLED_THREAD_LOCALS),
         DISABLED(SAFEPOINTS_DISABLED_THREAD_LOCALS);
 
-        public static final IndexedSequence<State> CONSTANTS = new ArraySequence<State>(values());
+        public static final List<State> CONSTANTS = Arrays.asList(values());
 
         private final VmThreadLocal key;
 

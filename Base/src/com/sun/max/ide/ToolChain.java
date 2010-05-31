@@ -28,7 +28,6 @@ import java.util.*;
 import javax.tools.*;
 import javax.tools.JavaCompiler.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
@@ -101,9 +100,9 @@ public final class ToolChain {
 
         final Classpath classPath = JavaProject.getClassPath(true);
         final Classpath sourcePath = JavaProject.getSourcePath(true);
-        final String outputDirectory = classPath.entries().first().toString();
+        final String outputDirectory = classPath.entries().get(0).toString();
 
-        final AppendableSequence<File> sourceFiles = new ArrayListSequence<File>(classNames.length);
+        final ArrayList<File> sourceFiles = new ArrayList<File>(classNames.length);
         for (String className : classNames) {
             final String sourceFilePathSuffix = className.replace('.', File.separatorChar) + ".java";
             final File sourceFile = sourcePath.findFile(sourceFilePathSuffix);
@@ -111,27 +110,34 @@ public final class ToolChain {
                 ProgramWarning.message("Could not find source file for " + className);
                 return false;
             }
-            sourceFiles.append(sourceFile);
+            sourceFiles.add(sourceFile);
         }
 
         final JavaCompiler compiler = javaCompiler();
         final String compilerName = compiler.getClass().getName();
-        final AppendableSequence<String> opts = new ArrayListSequence<String>(new String[] {"-cp", classPath.toString(), "-d", outputDirectory});
+        final List<String> opts = new ArrayList<String>(Arrays.asList(new String[] {"-cp", classPath.toString(), "-d", outputDirectory}));
         if (compilerName.equals("com.sun.tools.javac.api.JavacTool")) {
-            AppendableSequence.Static.appendAll(opts, "-cp", classPath.toString(), "-d", outputDirectory);
+            opts.add("-cp");
+            opts.add(classPath.toString());
+            opts.add("-d");
+            opts.add(outputDirectory);
             for (String option : options) {
                 if (option.equals("-noinlinejsr")) {
-                    opts.append("-source");
-                    opts.append("1.4");
-                    opts.append("-target");
-                    opts.append("1.4");
-                    opts.append("-XDjsrlimit=0");
+                    opts.add("-source");
+                    opts.add("1.4");
+                    opts.add("-target");
+                    opts.add("1.4");
+                    opts.add("-XDjsrlimit=0");
                 } else {
                     throw new IllegalArgumentException("Unsupported compiler option " + option);
                 }
             }
         } else if (compiler.getClass().getName().equals("org.eclipse.jdt.internal.compiler.tool.EclipseCompiler")) {
-            AppendableSequence.Static.appendAll(opts, "-cp", classPath.toString(), "-d", outputDirectory, "-noExit");
+            opts.add("-cp");
+            opts.add(classPath.toString());
+            opts.add("-d");
+            opts.add(outputDirectory);
+            opts.add("-noExit");
             boolean inlineJSR = true;
             for (String option : options) {
                 if (option.equals("-noinlinejsr")) {
@@ -141,16 +147,19 @@ public final class ToolChain {
                 }
             }
             if (inlineJSR) {
-                opts.append("-inlineJSR");
+                opts.add("-inlineJSR");
             } else {
-                opts.append("-source");
-                opts.append("1.4");
-                opts.append("-target");
-                opts.append("1.4");
+                opts.add("-source");
+                opts.add("1.4");
+                opts.add("-target");
+                opts.add("1.4");
             }
         } else {
             ProgramWarning.message("Unknown Java compiler may not accept same command line options as javac: " + compilerName);
-            AppendableSequence.Static.appendAll(opts, "-cp", classPath.toString(), "-d", outputDirectory);
+            opts.add("-cp");
+            opts.add(classPath.toString());
+            opts.add("-d");
+            opts.add(outputDirectory);
         }
 
         final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();

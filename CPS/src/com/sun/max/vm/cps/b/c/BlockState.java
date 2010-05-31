@@ -20,7 +20,9 @@
  */
 package com.sun.max.vm.cps.b.c;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.bir.*;
 import com.sun.max.vm.cps.cir.*;
@@ -33,7 +35,7 @@ import com.sun.max.vm.cps.cir.*;
 public class BlockState {
 
     private final BirBlock birBlock;
-    private AppendableSequence<CirBlock> cirBlockList;
+    private List<CirBlock> cirBlockList;
     private JavaFrame frame = null;
     private JavaStack stack = null;
 
@@ -58,13 +60,13 @@ public class BlockState {
      * for unreachable code, inevitably causing problems for subsequent CIR compilation.
      */
     public CirBlock cirBlock() {
-        return cirBlockList().first();
+        return Utils.first(cirBlockList());
     }
 
-    public AppendableSequence<CirBlock>  cirBlockList() {
+    public List<CirBlock>  cirBlockList() {
         if (cirBlockList == null) {
-            cirBlockList = new LinkSequence<CirBlock>();
-            cirBlockList.append(new CirBlock(birBlock.role()));
+            cirBlockList = new LinkedList<CirBlock>();
+            cirBlockList.add(new CirBlock(birBlock.role()));
         }
         return cirBlockList;
     }
@@ -74,7 +76,7 @@ public class BlockState {
             Log.println("cirBlockList is null");
             assert false;
         }
-        cirBlockList.append(cirBlock);
+        cirBlockList.add(cirBlock);
     }
 
     public JavaFrame frame() {

@@ -20,13 +20,14 @@
  */
 package com.sun.max.asm.gen.cisc.amd64;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.x86.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -590,7 +591,7 @@ public class AMD64Template extends X86Template {
         }
     }
 
-    public boolean hasRexPrefix(Sequence<Argument> arguments) {
+    public boolean hasRexPrefix(List<Argument> arguments) {
         if (instructionDescription().defaultOperandSize() == WordWidth.BITS_64) {
             return false;
         }

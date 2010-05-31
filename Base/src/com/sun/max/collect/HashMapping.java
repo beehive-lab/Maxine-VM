@@ -31,16 +31,16 @@ import java.util.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class HashMapping<Key_Type, Value_Type> implements Mapping<Key_Type, Value_Type> {
+public abstract class HashMapping<K, V> implements Mapping<K, V> {
 
-    private final HashEquivalence<Key_Type> equivalence;
+    private final HashEquivalence<K> equivalence;
 
     /**
      * Determines if two given keys are equal.
      * <p>
      * Subclasses override this method to define equivalence without delegating to a {@link HashEquivalence} object.
      */
-    protected boolean equivalent(Key_Type key1, Key_Type key2) {
+    protected boolean equivalent(K key1, K key2) {
         return equivalence.equivalent(key1, key2);
     }
 
@@ -49,7 +49,7 @@ public abstract class HashMapping<Key_Type, Value_Type> implements Mapping<Key_T
      * <p>
      * Subclasses override this method to compute a hash code without delegating to a {@link HashEquivalence} object.
      */
-    protected int hashCode(Key_Type key) {
+    protected int hashCode(K key) {
         // Don't guard against a negative number here as the caller needs to convert the hash code into a valid index
         // which will involve range checking anyway
         return equivalence.hashCode(key);
@@ -62,21 +62,21 @@ public abstract class HashMapping<Key_Type, Value_Type> implements Mapping<Key_T
      *            the semantics to be used for comparing keys. If {@code null} is provided, then {@link HashEquality} is
      *            used.
      */
-    protected HashMapping(HashEquivalence<Key_Type> equivalence) {
+    protected HashMapping(HashEquivalence<K> equivalence) {
         if (equivalence == null) {
-            final Class<HashEquality<Key_Type>> type = null;
+            final Class<HashEquality<K>> type = null;
             this.equivalence = HashEquality.instance(type);
         } else {
             this.equivalence = equivalence;
         }
     }
 
-    public boolean containsKey(Key_Type key) {
+    public boolean containsKey(K key) {
         return get(key) != null;
     }
 
     protected abstract class HashMappingIterable<Type> implements IterableWithLength<Type> {
-        public int length() {
+        public int size() {
             return HashMapping.this.length();
         }
     }
@@ -86,18 +86,18 @@ public abstract class HashMapping<Key_Type, Value_Type> implements Mapping<Key_T
      * <p>
      * Subclasses will most likely override this method with a more efficient implementation.
      */
-    public IterableWithLength<Value_Type> values() {
-        return new HashMappingIterable<Value_Type>() {
-            private final IterableWithLength<Key_Type> keys = keys();
-            public Iterator<Value_Type> iterator() {
-                return new Iterator<Value_Type>() {
-                    private final Iterator<Key_Type> keyIterator = keys.iterator();
+    public IterableWithLength<V> values() {
+        return new HashMappingIterable<V>() {
+            private final IterableWithLength<K> keys = keys();
+            public Iterator<V> iterator() {
+                return new Iterator<V>() {
+                    private final Iterator<K> keyIterator = keys.iterator();
 
                     public boolean hasNext() {
                         return keyIterator.hasNext();
                     }
 
-                    public Value_Type next() {
+                    public V next() {
                         return get(keyIterator.next());
                     }
 
@@ -109,31 +109,31 @@ public abstract class HashMapping<Key_Type, Value_Type> implements Mapping<Key_T
         };
     }
 
-    public static <Key_Type, Value_Type> GrowableMapping<Key_Type, Value_Type> createMapping(HashEquivalence<Key_Type> equivalence) {
-        return new OpenAddressingHashMapping<Key_Type, Value_Type>(equivalence);
+    public static <K, V> Mapping<K, V> createMapping(HashEquivalence<K> equivalence) {
+        return new OpenAddressingHashMapping<K, V>(equivalence);
     }
 
-    public static <Key_Type, Value_Type> GrowableMapping<Key_Type, Value_Type> createIdentityMapping() {
-        final Class<HashIdentity<Key_Type>> type = null;
+    public static <K, V> Mapping<K, V> createIdentityMapping() {
+        final Class<HashIdentity<K>> type = null;
         return createMapping(HashIdentity.instance(type));
     }
 
-    public static <Key_Type, Value_Type> GrowableMapping<Key_Type, Value_Type> createEqualityMapping() {
-        final Class<HashEquality<Key_Type>> type = null;
+    public static <K, V> Mapping<K, V> createEqualityMapping() {
+        final Class<HashEquality<K>> type = null;
         return createMapping(HashEquality.instance(type));
     }
 
-    public static <Key_Type, Value_Type> VariableMapping<Key_Type, Value_Type> createVariableMapping(HashEquivalence<Key_Type> equivalence) {
-        return new ChainedHashMapping<Key_Type, Value_Type>(equivalence);
+    public static <K, V> Mapping<K, V> createVariableMapping(HashEquivalence<K> equivalence) {
+        return new ChainedHashMapping<K, V>(equivalence);
     }
 
-    public static <Key_Type, Value_Type> VariableMapping<Key_Type, Value_Type> createVariableIdentityMapping() {
-        final Class<HashIdentity<Key_Type>> type = null;
+    public static <K, V> Mapping<K, V> createVariableIdentityMapping() {
+        final Class<HashIdentity<K>> type = null;
         return createVariableMapping(HashIdentity.instance(type));
     }
 
-    public static <Key_Type, Value_Type> VariableMapping<Key_Type, Value_Type> createVariableEqualityMapping() {
-        final Class<HashEquality<Key_Type>> type = null;
+    public static <K, V> Mapping<K, V> createVariableEqualityMapping() {
+        final Class<HashEquality<K>> type = null;
         return createVariableMapping(HashEquality.instance(type));
     }
 }

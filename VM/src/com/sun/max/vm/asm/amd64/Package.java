@@ -24,12 +24,11 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Doug Simon
  */
 public class Package extends VMPackage {
@@ -41,7 +40,7 @@ public class Package extends VMPackage {
     @Override
     public Set<MaxPackage> excludes() {
         final MaxPackage p = new com.sun.max.asm.amd64.complete.Package();
-        return Sets.from(p);
+        return Collections.singleton(p);
     }
 
 }

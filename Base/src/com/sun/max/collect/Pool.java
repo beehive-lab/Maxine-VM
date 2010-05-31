@@ -27,12 +27,12 @@ package com.sun.max.collect;
  * 
  * @author Doug Simon
  */
-public abstract class Pool<PoolObject_Type extends PoolObject> implements Iterable<PoolObject_Type> {
+public abstract class Pool<T extends PoolObject> implements Iterable<T> {
 
     /**
      * Gets the object in the pool identified by a given serial number.
      */
-    public abstract PoolObject_Type get(int serial);
+    public abstract T get(int serial);
 
     /**
      * The number of objects in this pool. All objects in the pool must have a unique serial number in the range

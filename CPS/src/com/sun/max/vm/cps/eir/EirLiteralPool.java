@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.eir;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.value.*;
 
 public class EirLiteralPool {
@@ -32,14 +31,14 @@ public class EirLiteralPool {
 
     private Map<Value, EirLiteral> referenceLiterals = new LinkedHashMap<Value, EirLiteral>();
 
-    public Sequence<EirLiteral> referenceLiterals() {
-        return new ArraySequence<EirLiteral>(referenceLiterals.values());
+    public Collection<EirLiteral> referenceLiterals() {
+        return referenceLiterals.values();
     }
 
     private Map<Value, EirLiteral> scalarLiterals = new LinkedHashMap<Value, EirLiteral>();
 
-    public Sequence<EirLiteral> scalarLiterals() {
-        return new ArraySequence<EirLiteral>(scalarLiterals.values());
+    public Collection<EirLiteral> scalarLiterals() {
+        return scalarLiterals.values();
     }
 
     public boolean hasLiterals() {

@@ -31,11 +31,8 @@ import java.util.concurrent.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -54,7 +51,7 @@ import com.sun.max.vm.type.*;
 public class JavaPrototype extends Prototype {
 
     private static JavaPrototype theJavaPrototype;
-    private Sequence<MaxPackage> basePackages;
+    private List<MaxPackage> basePackages;
     private final Map<MaxPackage, MaxPackage> excludedMaxPackages = new HashMap<MaxPackage, MaxPackage>();
     private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
@@ -80,15 +77,16 @@ public class JavaPrototype extends Prototype {
      * @param rootPackage the root package in which to begin the search
      * @return a sequence of the packages that match the criteria
      */
-    private Sequence<MaxPackage> getPackages(final Class<? extends MaxPackage> maxPackageClass, MaxPackage rootPackage) {
-        final Sequence<MaxPackage> packages = Sequence.Static.filter(rootPackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath()), new Predicate<MaxPackage>() {
-            public boolean evaluate(MaxPackage maxPackage) {
-                return maxPackageClass.isInstance(maxPackage) && vmConfiguration().isMaxineVMPackage(maxPackage);
+    private List<MaxPackage> getPackages(final Class<? extends MaxPackage> maxPackageClass, MaxPackage rootPackage) {
+        final List<MaxPackage> packages = new LinkedList<MaxPackage>();
+        for (MaxPackage maxPackage : rootPackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath())) {
+            if (maxPackageClass.isInstance(maxPackage) && vmConfiguration().isMaxineVMPackage(maxPackage)) {
+                packages.add(maxPackage);
             }
-        });
-        MaxPackage[] result = Sequence.Static.toArray(packages, new MaxPackage[packages.length()]);
+        }
+        MaxPackage[] result = packages.toArray(new MaxPackage[packages.size()]);
         java.util.Arrays.sort(result);
-        return new ArraySequence<MaxPackage>(result);
+        return java.util.Arrays.asList(result);
     }
 
     /**
@@ -96,35 +94,35 @@ public class JavaPrototype extends Prototype {
      *
      * @return a sequence of all basic packages
      */
-    public Sequence<MaxPackage> basePackages() {
+    public List<MaxPackage> basePackages() {
         if (basePackages == null) {
             basePackages = getPackages(BasePackage.class, new com.sun.max.Package());
         }
         return basePackages;
     }
 
-    private Sequence<MaxPackage> asmPackages;
+    private List<MaxPackage> asmPackages;
 
     /**
      * Returns a sequence of all the assembler packages.
      *
      * @return a sequence of all the assembler packages
      */
-    public Sequence<MaxPackage> asmPackages() {
+    public List<MaxPackage> asmPackages() {
         if (asmPackages == null) {
             asmPackages = getPackages(AsmPackage.class, new com.sun.max.asm.Package());
         }
         return asmPackages;
     }
 
-    private Sequence<MaxPackage> vmPackages;
+    private List<MaxPackage> vmPackages;
 
     /**
      * Returns a sequence of all the VM packages.
      *
      * @return a sequence of VM packages
      */
-    public Sequence<MaxPackage> vmPackages() {
+    public List<MaxPackage> vmPackages() {
         if (vmPackages == null) {
             vmPackages = getPackages(VMPackage.class, new com.sun.max.vm.Package());
         }
@@ -196,7 +194,7 @@ public class JavaPrototype extends Prototype {
      * @param recursive a boolean indicating whether to load all subpackages of the specified package
      * @return a sequence of all the classes loaded from the specified package (and potentially its subpackages).
      */
-    public Sequence<Class> loadPackage(String name, boolean recursive) {
+    public List<Class> loadPackage(String name, boolean recursive) {
         return packageLoader.load(name, recursive);
     }
 
@@ -214,7 +212,7 @@ public class JavaPrototype extends Prototype {
      *
      * @param packages the packages to load
      */
-    private void loadPackages(Sequence<MaxPackage> packages) {
+    private void loadPackages(List<MaxPackage> packages) {
         for (MaxPackage p : packages) {
             loadPackage(p);
         }
@@ -280,9 +278,9 @@ public class JavaPrototype extends Prototype {
         }
     }
 
-    private static Sequence<Class> mainPackageClasses = new ArrayListSequence<Class>();
+    private static List<Class> mainPackageClasses = new ArrayList<Class>();
 
-    public static Sequence<Class> mainPackageClasses() {
+    public static List<Class> mainPackageClasses() {
         return mainPackageClasses;
     }
 
@@ -294,8 +292,7 @@ public class JavaPrototype extends Prototype {
      * applied to them).
      */
     private static void initializeMaxClasses() {
-        final ClassActor[] classActors = Arrays.from(ClassActor.class, ClassRegistry.BOOT_CLASS_REGISTRY);
-        for (ClassActor classActor : classActors) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses()) {
             if (MaxineVM.isMaxineClass(classActor)) {
                 try {
                     Classes.initialize(classActor.toJava());

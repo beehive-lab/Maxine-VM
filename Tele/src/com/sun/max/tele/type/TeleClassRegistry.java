@@ -125,15 +125,15 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
                 }
             } else {
                 final Reference typeDescriptorToClassActorReference = vm().teleFields().ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryReference);
-                final Reference tableReference = vm().teleFields().ChainedHashMapping_table.readReference(typeDescriptorToClassActorReference);
+                final Reference tableReference = vm().teleFields().HashMap_table.readReference(typeDescriptorToClassActorReference);
                 final int length = vm().layoutScheme().arrayHeaderLayout.readLength(tableReference);
                 for (int i = 0; i < length; i++) {
                     Reference entryReference = vm().readReference(tableReference, i);
                     while (!entryReference.isZero()) {
-                        final Reference classActorReference = vm().teleFields().ChainedHashMapping$DefaultEntry_value.readReference(entryReference);
+                        final Reference classActorReference = vm().teleFields().HashMap$Entry_value.readReference(entryReference);
                         addToRegistry(classActorReference);
                         count++;
-                        entryReference = vm().teleFields().ChainedHashMapping$DefaultEntry_next.readReference(entryReference);
+                        entryReference = vm().teleFields().HashMap$Entry_next.readReference(entryReference);
                     }
                 }
             }

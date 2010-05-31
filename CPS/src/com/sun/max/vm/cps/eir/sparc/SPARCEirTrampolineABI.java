@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.sparc;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.*;
 
 /**
@@ -40,6 +41,7 @@ public class SPARCEirTrampolineABI extends SPARCEirJavaABI {
         }
 
         // Make all potential parameters of the trampoline's compilee callee-saved
-        calleeSavedRegisters = Sequence.Static.concatenated(integerParameterRegisters(), floatingPointParameterRegisters());
+        calleeSavedRegisters = new ArrayList<SPARCEirRegister>(integerParameterRegisters());
+        calleeSavedRegisters.addAll(floatingPointParameterRegisters());
     }
 }

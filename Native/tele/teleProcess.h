@@ -102,13 +102,13 @@ extern ThreadLocals teleProcess_findThreadLocals(ProcessHandle ph, Address threa
  * Makes the upcall to TeleProcess.jniGatherThread
  *
  * @param teleProcess the TeleProcess object gathering the threads
- * @param threads a Sequence<TeleNativeThread> object used to gather the threads
+ * @param threads a List<TeleNativeThread> object used to gather the threads
  * @param localHandle the debug handle to a thread (which may differ from the native thread handle in the VM's address space)
  * @param state the execution state of the thread
  * @param instructionPointer
  * @param tl the thread locals found based on the stack pointer of the thread or NULL if no such thread locals were found
  */
-extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong localHandle, ThreadState_t state, jlong instructionPointer, ThreadLocals tl);
+extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadList, jlong localHandle, ThreadState_t state, jlong instructionPointer, ThreadLocals tl);
 
 /**
  * Copies bytes from the tele process into a given direct ByteBuffer or byte array.

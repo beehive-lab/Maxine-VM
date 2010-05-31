@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.cps.eir;
 
+import java.util.*;
+import java.util.Arrays;
+
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -41,7 +44,7 @@ public enum EirLocationCategory implements PoolObject {
     STACK_SLOT("S"),
     LITERAL("L");
 
-    public static final IndexedSequence<EirLocationCategory> VALUES = new ArraySequence<EirLocationCategory>(values());
+    public static final List<EirLocationCategory> VALUES = Arrays.asList(values());
 
     private final String shortName;
 
@@ -75,7 +78,7 @@ public enum EirLocationCategory implements PoolObject {
 
     public EirLocationCategory next() {
         final int index = ordinal() + 1;
-        if (index >= VALUES.length()) {
+        if (index >= VALUES.size()) {
             return null;
         }
         return VALUES.get(index);

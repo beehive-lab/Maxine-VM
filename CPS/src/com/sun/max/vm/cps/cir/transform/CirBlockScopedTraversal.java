@@ -22,9 +22,9 @@ package com.sun.max.vm.cps.cir.transform;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.variable.*;
+import com.sun.max.vm.cps.collect.*;
 
 /**
  * Traverses a CIR graph,

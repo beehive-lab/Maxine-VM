@@ -26,11 +26,11 @@ import static com.sun.max.asm.amd64.AMD64GeneralRegister64.*;
 import static com.sun.max.asm.amd64.AMD64GeneralRegister8.*;
 import static com.sun.max.asm.gen.cisc.amd64.AMD64ModRMGroup.*;
 import static com.sun.max.asm.gen.cisc.x86.AddressingMethodCode.*;
+import static com.sun.max.asm.gen.cisc.x86.HexByte.*;
 import static com.sun.max.asm.gen.cisc.x86.OperandCode.*;
 import static com.sun.max.asm.gen.cisc.x86.OperandTypeCode.*;
 import static com.sun.max.asm.gen.cisc.x86.RegisterOperandCode.*;
 import static com.sun.max.asm.gen.cisc.x86.X86Opcode.*;
-import static com.sun.max.util.HexByte.*;
 
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.gen.cisc.x86.*;

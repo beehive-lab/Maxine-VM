@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -225,7 +226,7 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
         }
     }
 
-    private VariableDeterministicSet<EirVariable> aliasedVariables;
+    private LinkedIdentityHashSet<EirVariable> aliasedVariables;
 
     /**
      * Establishes the relationship between this variable and another whereby the
@@ -245,7 +246,7 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
     /**
      * @see #setAliasedVariable(EirVariable)
      */
-    public DeterministicSet<EirVariable> aliasedVariables() {
+    public LinkedIdentityHashSet<EirVariable> aliasedVariables() {
         return aliasedVariables;
     }
 

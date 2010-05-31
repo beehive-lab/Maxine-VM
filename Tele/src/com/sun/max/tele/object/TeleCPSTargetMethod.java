@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
@@ -40,18 +41,18 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
         targetMethod().traceBundle(writer);
     }
 
-    private IndexedSequence<TargetJavaFrameDescriptor> javaFrameDescriptors = null;
+    private List<TargetJavaFrameDescriptor> javaFrameDescriptors = null;
 
     @Override
-    public IndexedSequence<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
+    public List<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
         if (javaFrameDescriptors == null) {
             final byte[] compressedDescriptors = ((CPSTargetMethod) targetMethod()).compressedJavaFrameDescriptors();
             if (compressedDescriptors == null) {
                 return null;
             }
             try {
-                javaFrameDescriptors = TeleClassRegistry.usingTeleClassIDs(new Function<IndexedSequence<TargetJavaFrameDescriptor>>() {
-                    public IndexedSequence<TargetJavaFrameDescriptor> call() {
+                javaFrameDescriptors = TeleClassRegistry.usingTeleClassIDs(new Function<List<TargetJavaFrameDescriptor>>() {
+                    public List<TargetJavaFrameDescriptor> call() {
                         return TargetJavaFrameDescriptor.inflate(compressedDescriptors);
                     }
                 });
@@ -71,8 +72,8 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
      */
     @Override
     public BytecodeLocation getBytecodeLocation(int stopIndex) {
-        final IndexedSequence<TargetJavaFrameDescriptor> javaFrameDescriptors = getJavaFrameDescriptors();
-        if (javaFrameDescriptors != null && stopIndex < javaFrameDescriptors.length()) {
+        final List<TargetJavaFrameDescriptor> javaFrameDescriptors = getJavaFrameDescriptors();
+        if (javaFrameDescriptors != null && stopIndex < javaFrameDescriptors.size()) {
             return javaFrameDescriptors.get(stopIndex);
         }
         return null;

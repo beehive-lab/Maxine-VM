@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
 
@@ -135,17 +134,17 @@ public final class Files {
         }
     }
 
-    public static void readLines(File file, AppendableSequence<String> lines) throws IOException {
+    public static void readLines(File file, List<String> lines) throws IOException {
         final BufferedReader reader = new BufferedReader(new FileReader(file));
         String line;
         while ((line = reader.readLine()) != null) {
-            lines.append(line);
+            lines.add(line);
         }
         reader.close();
     }
 
-    public static Sequence<String> readLines(File file) throws IOException {
-        final AppendableSequence<String> lines = new ArrayListSequence<String>();
+    public static List<String> readLines(File file) throws IOException {
+        final List<String> lines = new ArrayList<String>();
         readLines(file, lines);
         return lines;
     }
@@ -304,7 +303,7 @@ public final class Files {
         }
     }
 
-    public static Sequence<File> find(File directory, final String suffix, AppendableSequence<File> listing) {
+    public static List<File> find(File directory, final String suffix, List<File> listing) {
         final Predicate<File> suffixPredicate = new Predicate<File>() {
             public boolean evaluate(File file) {
                 return file.getName().endsWith(suffix);
@@ -314,19 +313,19 @@ public final class Files {
         return find(directory, suffixPredicate, listing);
     }
 
-    public static Sequence<File> find(File directory, Predicate<File> filter, AppendableSequence<File> listing) {
+    public static List<File> find(File directory, Predicate<File> filter, List<File> listing) {
         assert directory.isDirectory();
-        return find(directory, listing == null ? new LinkSequence<File>() : listing, filter);
+        return find(directory, listing == null ? new LinkedList<File>() : listing, filter);
     }
 
-    private static AppendableSequence<File> find(File directory, AppendableSequence<File> listing, Predicate<File> filter) {
+    private static List<File> find(File directory, List<File> listing, Predicate<File> filter) {
         assert directory.isDirectory();
         final File[] entries = directory.listFiles();
         if (entries != null) {
             for (File entry : entries) {
                 if (!entry.isDirectory()) {
                     if (filter == null || filter.evaluate(entry)) {
-                        listing.append(entry);
+                        listing.add(entry);
                     }
                 } else {
                     find(entry, listing, filter);

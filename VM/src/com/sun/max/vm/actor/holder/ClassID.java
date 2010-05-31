@@ -23,7 +23,6 @@ package com.sun.max.vm.actor.holder;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 
 /**
@@ -34,7 +33,7 @@ public final class ClassID {
     private ClassID() {
     }
 
-    private static VariableSequence<ClassActor> idToClassActor = new ArrayListSequence<ClassActor>();
+    private static List<ClassActor> idToClassActor = new ArrayList<ClassActor>();
 
     private static BitSet usedIDs = new BitSet();
 
@@ -70,8 +69,8 @@ public final class ClassID {
 
     static synchronized int create() {
         final int id = usedIDs.nextClearBit(0);
-        if (id == idToClassActor.length()) {
-            idToClassActor.append(null);
+        if (id == idToClassActor.size()) {
+            idToClassActor.add(null);
         }
         usedIDs.set(id);
         return id;

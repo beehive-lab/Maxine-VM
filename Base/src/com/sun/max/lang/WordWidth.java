@@ -20,7 +20,7 @@
  */
 package com.sun.max.lang;
 
-import com.sun.max.collect.*;
+import java.util.*;
 
 /**
  * A word width value describes how many bits there are in a machine word.
@@ -34,7 +34,7 @@ public enum WordWidth {
     BITS_32(32, int.class, Integer.MIN_VALUE, Integer.MAX_VALUE, 5),
     BITS_64(64, long.class, Long.MIN_VALUE, Long.MAX_VALUE, 6);
 
-    public static final IndexedSequence<WordWidth> VALUES = new ArraySequence<WordWidth>(values());
+    public static final List<WordWidth> VALUES = java.util.Arrays.asList(values());
 
     /**
      * Number of bits in a Word.

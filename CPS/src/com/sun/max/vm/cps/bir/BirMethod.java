@@ -21,8 +21,8 @@
 package com.sun.max.vm.cps.bir;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -35,10 +35,10 @@ public class BirMethod extends AbstractIrMethod {
     private int maxStack;
     private int maxLocals;
     private byte[] code;
-    private IndexedSequence<BirBlock> blocks;
+    private List<BirBlock> blocks;
     private BirBlock[] blockMap;
 
-    private Sequence<ExceptionHandlerEntry> exceptionDispatcherTable;
+    private ExceptionHandlerEntry[] exceptionDispatcherTable;
 
     public BirMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor);
@@ -60,7 +60,7 @@ public class BirMethod extends AbstractIrMethod {
         return code;
     }
 
-    public Sequence<BirBlock> blocks() {
+    public List<BirBlock> blocks() {
         return blocks;
     }
 
@@ -72,11 +72,11 @@ public class BirMethod extends AbstractIrMethod {
         return blockMap[bytecodeAddress];
     }
 
-    public Sequence<ExceptionHandlerEntry> exceptionDispatcherTable() {
+    public ExceptionHandlerEntry[] exceptionDispatcherTable() {
         return exceptionDispatcherTable;
     }
 
-    public void setGenerated(byte[] code, int maxStack, int maxLocals, IndexedSequence<BirBlock> blocks, BirBlock[] blockMap, Sequence<ExceptionHandlerEntry> exceptionDispatcherTable) {
+    public void setGenerated(byte[] code, int maxStack, int maxLocals, List<BirBlock> blocks, BirBlock[] blockMap, ExceptionHandlerEntry[] exceptionDispatcherTable) {
         this.code = code;
         this.maxStack = maxStack;
         this.maxLocals = maxLocals;
@@ -108,7 +108,7 @@ public class BirMethod extends AbstractIrMethod {
                     writer.println(block.toString());
                 }
             }
-            if (!exceptionDispatcherTable.isEmpty()) {
+            if (exceptionDispatcherTable.length != 0) {
                 writer.println("Exception handlers:");
                 for (ExceptionHandlerEntry entry : exceptionDispatcherTable) {
                     writer.println(entry.toString());

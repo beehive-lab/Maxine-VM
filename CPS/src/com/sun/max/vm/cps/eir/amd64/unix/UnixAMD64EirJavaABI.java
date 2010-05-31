@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.amd64.unix;
 
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.eir.amd64.*;
@@ -44,10 +46,10 @@ public class UnixAMD64EirJavaABI extends UnixAMD64EirABI {
     /**
      * No callee saved registers.
      */
-    protected Sequence<AMD64EirRegister> calleeSavedRegisters = Sequence.Static.empty(AMD64EirRegister.class);
+    protected List<AMD64EirRegister> calleeSavedRegisters = Collections.emptyList();
 
     @Override
-    public Sequence<AMD64EirRegister> calleeSavedRegisters() {
+    public List<AMD64EirRegister> calleeSavedRegisters() {
         return calleeSavedRegisters;
     }
 }

@@ -20,8 +20,7 @@
  */
 package com.sun.max.asm.gen;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
+import java.util.*;
 
 /**
  * Wraps mere object arrays into instruction descriptions.
@@ -41,19 +40,31 @@ public abstract class InstructionDescriptionCreator<InstructionDescription_Type 
         return assembly;
     }
 
-    protected abstract InstructionDescription_Type createInstructionDescription(MutableSequence<Object> specifications);
+    protected abstract InstructionDescription_Type createInstructionDescription(List<Object> specifications);
 
-    protected InstructionDescription_Type defineInstructionDescription(MutableSequence<Object> specifications) {
+    protected InstructionDescription_Type defineInstructionDescription(List<Object> specifications) {
         final InstructionDescription_Type instructionDescription = createInstructionDescription(specifications);
-        instructionDescriptions.append(instructionDescription);
+        instructionDescriptions.add(instructionDescription);
         instructionDescription.setArchitectureManualSection(currentArchitectureManualSection);
         return instructionDescription;
     }
 
-    private final AppendableSequence<InstructionDescription_Type> instructionDescriptions = new LinkSequence<InstructionDescription_Type>();
+    private final List<InstructionDescription_Type> instructionDescriptions = new LinkedList<InstructionDescription_Type>();
+
+    private static void deepCopy(Object[] src, List<Object> dst) {
+        for (Object object : src) {
+            if (object instanceof Object[]) {
+                deepCopy((Object[]) object, dst);
+            } else {
+                dst.add(object);
+            }
+        }
+    }
 
     protected InstructionDescription_Type define(Object... specifications) {
-        return defineInstructionDescription(new ArraySequence<Object>(Arrays.flatten(specifications)));
+        List<Object> specList = new ArrayList<Object>(specifications.length * 2);
+        deepCopy(specifications, specList);
+        return defineInstructionDescription(specList);
     }
 
     private String currentArchitectureManualSection;
@@ -66,7 +77,7 @@ public abstract class InstructionDescriptionCreator<InstructionDescription_Type 
         currentArchitectureManualSection = section;
     }
 
-    public Sequence<InstructionDescription_Type> instructionDescriptions() {
+    public List<InstructionDescription_Type> instructionDescriptions() {
         return instructionDescriptions;
     }
 }

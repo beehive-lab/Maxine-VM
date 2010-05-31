@@ -20,10 +20,10 @@
  */
 package com.sun.max.vm.cps;
 
+import java.util.*;
+
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
@@ -58,7 +58,7 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
     }
 
-    protected abstract Sequence<IrGenerator> irGenerators();
+    protected abstract List<IrGenerator> irGenerators();
 
     @Override
     public void initialize(Phase phase) {
@@ -120,7 +120,7 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         Class irMethodType = irGenerator().irMethodType;
         if (TargetMethod.class.isAssignableFrom(irMethodType)) {
             Class<Class<Type>> type = null;
-            return StaticLoophole.cast(type, irMethodType);
+            return Utils.cast(type, irMethodType);
         }
         return null;
     }

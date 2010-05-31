@@ -24,6 +24,7 @@ import static com.sun.max.unsafe.WithoutAccessCheck.*;
 
 import java.lang.reflect.*;
 
+import com.sun.max.*;
 import com.sun.max.program.*;
 
 /**
@@ -93,6 +94,6 @@ public final class Objects {
         final Constructor constructor = javaClass.getDeclaredConstructor();
         constructor.setAccessible(true);
         final Object object = constructor.newInstance();
-        return StaticLoophole.cast(javaClass, object);
+        return Utils.cast(javaClass, object);
     }
 }

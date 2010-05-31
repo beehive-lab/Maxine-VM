@@ -20,10 +20,11 @@
  */
 package com.sun.max.vm.cps.tir;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.type.*;
 
-public class TirInstructionStack extends ArrayListSequence<TirInstruction> {
+public class TirInstructionStack extends ArrayList<TirInstruction> {
 
     public static final TirInstruction.NOP NOP = new TirInstruction.NOP();
 

@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.b.c;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.cps.bir.*;
 import com.sun.max.vm.type.*;
@@ -80,12 +79,12 @@ final class BlockTranslator {
         scanReachableBlocks(root);
     }
 
-    private Sequence<BirBlock> scanExceptionDispatchersWithKnownFrame(Sequence<BirBlock> exceptionDispatchers) {
-        final AppendableSequence<BirBlock> remainingExceptionDispatchers = new LinkSequence<BirBlock>();
+    private List<BirBlock> scanExceptionDispatchersWithKnownFrame(List<BirBlock> exceptionDispatchers) {
+        final List<BirBlock> remainingExceptionDispatchers = new LinkedList<BirBlock>();
         for (BirBlock exceptionDispatcher : exceptionDispatchers) {
             final BlockState blockState = translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start);
             if (blockState.frame() == null) {
-                remainingExceptionDispatchers.append(exceptionDispatcher);
+                remainingExceptionDispatchers.add(exceptionDispatcher);
             } else {
                 assert blockState.stack() == null;
                 final JavaStack stack = translation.createStack();
@@ -100,10 +99,10 @@ final class BlockTranslator {
     }
 
     private void scanExceptionDispatchers() {
-        Sequence<BirBlock> exceptionDispatchers = translation.birExceptionDispatchers();
+        List<BirBlock> exceptionDispatchers = translation.birExceptionDispatchers();
         while (true) {
-            final Sequence<BirBlock> remainingExceptionDispatchers = scanExceptionDispatchersWithKnownFrame(exceptionDispatchers);
-            if (remainingExceptionDispatchers.length() == exceptionDispatchers.length()) {
+            final List<BirBlock> remainingExceptionDispatchers = scanExceptionDispatchersWithKnownFrame(exceptionDispatchers);
+            if (remainingExceptionDispatchers.size() == exceptionDispatchers.size()) {
                 for (BirBlock exceptionDispatcher : remainingExceptionDispatchers) {
                     assert !translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start).hasCirBlock();
                     //ProgramWarning.message("unreachable exception dispatcher: " + exceptionDispatcher);

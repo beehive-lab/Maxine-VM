@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.cir;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
@@ -75,12 +75,12 @@ public final class CirJavaFrameDescriptor extends JavaFrameDescriptor<CirValue> 
         if (value instanceof CirVariable) {
             final CirVariable variable = (CirVariable) value;
             final CirClosure closure = block.closure();
-            if (Arrays.contains(closure.parameters(), variable)) {
+            if (Utils.indexOfIdentical(closure.parameters(), variable) >= 0) {
                 return;
             }
-            closure.setParameters(Arrays.append(closure.parameters(), variable));
+            closure.setParameters(Utils.concat(closure.parameters(), variable));
             for (CirCall call : block.calls()) {
-                call.setArguments(Arrays.append(call.arguments(), variable));
+                call.setArguments(Utils.concat(call.arguments(), variable));
             }
             for (CirCall call : block.calls()) {
                 final CirBlock scope = scopedBlockUpdating.scope(call);

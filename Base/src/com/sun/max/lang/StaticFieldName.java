@@ -21,8 +21,8 @@
 package com.sun.max.lang;
 
 import java.lang.reflect.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 public interface StaticFieldName {
@@ -44,8 +44,8 @@ public interface StaticFieldName {
         private Static() {
         }
 
-        public static Sequence<StaticFieldName> initialize(Class staticNameFieldClass, StringFunction stringFunction, Procedure procedure) {
-            final AppendableSequence<StaticFieldName> sequence = new LinkSequence<StaticFieldName>();
+        public static List<StaticFieldName> initialize(Class staticNameFieldClass, StringFunction stringFunction, Procedure procedure) {
+            final List<StaticFieldName> sequence = new LinkedList<StaticFieldName>();
             for (Field field : staticNameFieldClass.getDeclaredFields()) {
                 if ((field.getModifiers() & Modifier.STATIC) != 0 && StaticFieldName.class.isAssignableFrom(field.getType())) {
                     field.setAccessible(true);
@@ -61,7 +61,7 @@ public interface StaticFieldName {
                         if (procedure != null) {
                             procedure.procedure(value);
                         }
-                        sequence.append(value);
+                        sequence.add(value);
                     } catch (IllegalAccessException illegalAccessException) {
                         ProgramError.unexpected("could not name value of field: " + field);
                     }
@@ -70,15 +70,15 @@ public interface StaticFieldName {
             return sequence;
         }
 
-        public static Sequence<StaticFieldName> initialize(Class staticNameFieldClass, StringFunction stringFunction) {
+        public static List<StaticFieldName> initialize(Class staticNameFieldClass, StringFunction stringFunction) {
             return initialize(staticNameFieldClass, stringFunction, null);
         }
 
-        public static Sequence<StaticFieldName> initialize(Class staticNameFieldClass, Procedure procedure) {
+        public static List<StaticFieldName> initialize(Class staticNameFieldClass, Procedure procedure) {
             return initialize(staticNameFieldClass, null, procedure);
         }
 
-        public static Sequence<StaticFieldName> initialize(Class staticNameFieldClass) {
+        public static List<StaticFieldName> initialize(Class staticNameFieldClass) {
             return initialize(staticNameFieldClass, null, null);
         }
     }

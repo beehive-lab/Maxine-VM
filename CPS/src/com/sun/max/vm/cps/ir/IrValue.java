@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.cps.ir;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -43,17 +41,4 @@ public interface IrValue {
      * @return the encapsulated Value or 'null' if none, i.e. this is not a compile time constant,
      */
     Value value();
-
-    public static final class Static {
-        private Static() {
-        }
-
-        public static Kind[] toKinds(IrValue[] irValues) {
-            return Arrays.map(irValues, Kind.class, new MapFunction<IrValue, Kind>() {
-                public Kind map(IrValue irValue) {
-                    return irValue.kind();
-                }
-            });
-        }
-    }
 }

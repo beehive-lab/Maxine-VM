@@ -21,9 +21,9 @@
 package com.sun.max.vm.thread;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -92,7 +92,7 @@ import com.sun.max.vm.stack.*;
  */
 public class VmThreadLocal {
 
-    private static final AppendableIndexedSequence<VmThreadLocal> VALUES = new ArrayListSequence<VmThreadLocal>();
+    private static final List<VmThreadLocal> VALUES = new ArrayList<VmThreadLocal>();
 
     /**
      * Must be first as needed by {@link Safepoint#initializePrimordial(Pointer)}.
@@ -309,7 +309,7 @@ public class VmThreadLocal {
     /**
      * Gets the complete set of declared VM thread locals.
      */
-    public static IndexedSequence<VmThreadLocal> values() {
+    public static List<VmThreadLocal> values() {
         return VALUES;
     }
 
@@ -337,18 +337,18 @@ public class VmThreadLocal {
     public static void completeInitialization() {
         assert valuesNeedingInitialization == null : "Cannot call completeInitialization() more than once";
         try {
-            final AppendableSequence<VmThreadLocal> valuesNeedingInitialization = new ArrayListSequence<VmThreadLocal>();
+            final List<VmThreadLocal> valuesNeedingInitialization = new ArrayList<VmThreadLocal>();
             final Method emptyInitializeMethod = VmThreadLocal.class.getMethod("initialize");
             for (VmThreadLocal value : VALUES) {
                 if (!emptyInitializeMethod.equals(value.getClass().getMethod("initialize"))) {
-                    valuesNeedingInitialization.append(value);
+                    valuesNeedingInitialization.add(value);
                 }
                 if (value.isReference) {
                     assert value.index <= 63 : "Need larger reference map for thread locals";
                     REFERENCE_MAP |= 1L << value.index;
                 }
             }
-            VmThreadLocal.valuesNeedingInitialization = Sequence.Static.toArray(valuesNeedingInitialization, new VmThreadLocal[valuesNeedingInitialization.length()]);
+            VmThreadLocal.valuesNeedingInitialization = valuesNeedingInitialization.toArray(new VmThreadLocal[valuesNeedingInitialization.size()]);
         } catch (NoSuchMethodException e) {
             throw ProgramError.unexpected(e);
         }
@@ -370,7 +370,7 @@ public class VmThreadLocal {
      * This value is guaranteed to be word-aligned
      */
     public static Size threadLocalsAreaSize() {
-        return Size.fromInt(VALUES.length() * Word.size());
+        return Size.fromInt(VALUES.size() * Word.size());
     }
 
     @INLINE
@@ -538,9 +538,9 @@ public class VmThreadLocal {
     public VmThreadLocal(String name, boolean isReference, String description) {
         this.isReference = isReference;
         this.name = name;
-        this.index = VALUES.length();
+        this.index = VALUES.size();
         this.offset = index * Word.size();
-        VALUES.append(this);
+        VALUES.add(this);
         this.description = description;
         this.declaration = findDeclaration(name, new Throwable().getStackTrace());
     }

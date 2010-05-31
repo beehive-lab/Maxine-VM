@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.compiler.*;
@@ -41,9 +42,9 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
     public final int stackBias;
     public final int stackFrameAlignment;
     public final RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> registerRoleAssignment;
-    public final IndexedSequence<IntegerRegister_Type> integerIncomingParameterRegisters;
-    public final IndexedSequence<IntegerRegister_Type> integerOutgoingParameterRegisters;
-    public final IndexedSequence<FloatingPointRegister_Type> floatingPointParameterRegisters;
+    public final List<IntegerRegister_Type> integerIncomingParameterRegisters;
+    public final List<IntegerRegister_Type> integerOutgoingParameterRegisters;
+    public final List<FloatingPointRegister_Type> floatingPointParameterRegisters;
 
     /**
      * The call entry point of methods {@linkplain TargetMethod#abi() compiled with} with this ABI.
@@ -108,9 +109,9 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
      * @see Role
      */
     public TargetABI(RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> registerRoleAssignment, CallEntryPoint callEntryPoint,
-                    IndexedSequence<IntegerRegister_Type> integerIncomingParameterRegisters,
-                    IndexedSequence<IntegerRegister_Type> integerOutgoingParameterRegisters,
-                    IndexedSequence<FloatingPointRegister_Type> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress, int stackFrameAlignment, int stackBias) {
+                    List<IntegerRegister_Type> integerIncomingParameterRegisters,
+                    List<IntegerRegister_Type> integerOutgoingParameterRegisters,
+                    List<FloatingPointRegister_Type> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress, int stackFrameAlignment, int stackBias) {
         this.registerRoleAssignment = registerRoleAssignment;
         this.callEntryPoint = callEntryPoint;
         this.integerIncomingParameterRegisters = integerIncomingParameterRegisters;
@@ -155,7 +156,7 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         int floatIndex = 0;
         int stackIndex = 0;
         for (int i = 0; i < parameterKinds.length; i++) {
-            IndexedSequence<? extends Symbol> sequence = null;
+            List<? extends Symbol> sequence = null;
             int index = 0;
             if (putIntoIntegerRegister(parameterKinds[i])) {
                 sequence = this.integerIncomingParameterRegisters;
@@ -167,7 +168,7 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
                 floatIndex++;
             }
 
-            if (index >= sequence.length()) {
+            if (index >= sequence.size()) {
                 // Get from stack slot
                 result[i] = new TargetLocation.ParameterStackSlot(stackIndex);
                 stackIndex++;

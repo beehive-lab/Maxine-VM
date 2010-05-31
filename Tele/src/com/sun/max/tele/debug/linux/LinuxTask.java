@@ -23,6 +23,7 @@ package com.sun.max.tele.debug.linux;
 import java.io.*;
 import java.nio.*;
 
+import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
@@ -163,7 +164,7 @@ public final class LinuxTask {
                 }
             });
         } catch (Exception exception) {
-            throw Exceptions.cast(IOException.class, exception);
+            throw Utils.cast(IOException.class, exception);
         }
     }
 
@@ -190,7 +191,7 @@ public final class LinuxTask {
                 }
             });
         } catch (Exception exception) {
-            throw Exceptions.cast(OSExecutionRequestException.class, exception);
+            throw Utils.cast(OSExecutionRequestException.class, exception);
         }
     }
 
@@ -246,7 +247,7 @@ public final class LinuxTask {
                 }
             });
         } catch (Exception exception) {
-            throw Exceptions.cast(OSExecutionRequestException.class, exception);
+            throw Utils.cast(OSExecutionRequestException.class, exception);
         }
     }
 

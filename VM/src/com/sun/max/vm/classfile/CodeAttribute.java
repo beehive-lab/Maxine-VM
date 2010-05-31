@@ -23,7 +23,6 @@ package com.sun.max.vm.classfile;
 import java.io.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -37,7 +36,7 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public final class CodeAttribute {
 
-    public static final Sequence<ExceptionHandlerEntry> NO_EXCEPTION_HANDLER_TABLE = Sequence.Static.empty(ExceptionHandlerEntry.class);
+    public static final ExceptionHandlerEntry[] NO_EXCEPTION_HANDLER_TABLE = ExceptionHandlerEntry.NONE;
 
     @INSPECTED
     public final ConstantPool constantPool;
@@ -58,7 +57,7 @@ public final class CodeAttribute {
                     byte[] code,
                     char maxStack,
                     char maxLocals,
-                    Sequence<ExceptionHandlerEntry> exceptionHandlerTable,
+                    ExceptionHandlerEntry[] exceptionHandlerTable,
                     LineNumberTable lineNumberTable,
                     LocalVariableTable localVariableTable,
                     StackMapTable stackMapTable) {
@@ -77,7 +76,7 @@ public final class CodeAttribute {
 
         try {
             dataOutputStream.write(code);
-            if (!exceptionHandlerTable.isEmpty()) {
+            if (exceptionHandlerTable.length != 0) {
                 exceptionHandlerTableOff = encodingStream.size();
                 ExceptionHandlerEntry.encode(exceptionHandlerTable, dataOutputStream);
             }
@@ -146,9 +145,9 @@ public final class CodeAttribute {
         }
     }
 
-    public Sequence<ExceptionHandlerEntry> exceptionHandlerTable() {
+    public ExceptionHandlerEntry[] exceptionHandlerTable() {
         try {
-            return exceptionHandlerTableOffset == -1 ? Sequence.Static.empty(ExceptionHandlerEntry.class) : ExceptionHandlerEntry.decode(encodedData(exceptionHandlerTableOffset));
+            return exceptionHandlerTableOffset == -1 ? ExceptionHandlerEntry.NONE : ExceptionHandlerEntry.decode(encodedData(exceptionHandlerTableOffset));
         } catch (IOException e) {
             throw ProgramError.unexpected(e);
         }

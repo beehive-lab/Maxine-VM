@@ -22,8 +22,8 @@ package com.sun.max.tele.debug.linux;
 
 import java.io.*;
 import java.nio.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
@@ -96,7 +96,7 @@ public final class LinuxTeleProcess extends TeleProcess {
         return result;
     }
 
-    private native void nativeGatherThreads(long pid, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
+    private native void nativeGatherThreads(long pid, List<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
 
     @Override
     protected TeleNativeThread createTeleNativeThread(Params params) {
@@ -104,7 +104,7 @@ public final class LinuxTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected void gatherThreads(final AppendableSequence<TeleNativeThread> threads) {
+    protected void gatherThreads(final List<TeleNativeThread> threads) {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws IOException {

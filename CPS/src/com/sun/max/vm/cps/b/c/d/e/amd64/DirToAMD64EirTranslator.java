@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.amd64;
 
+import java.util.*;
+
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.eir.amd64.*;
@@ -44,7 +46,8 @@ public class DirToAMD64EirTranslator extends AMD64EirGenerator {
         final DirToAMD64EirMethodTranslation translation = new DirToAMD64EirMethodTranslation(this, eirMethod, dirMethod);
         translation.translateMethod();
 
-        eirMethod.setGenerated(translation.eirBlocks(), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize(), translation.stackBlocksSize());
+        ArrayList<EirBlock> eirBlocks = translation.eirBlocks();
+        eirMethod.setGenerated(eirBlocks.toArray(new EirBlock[eirBlocks.size()]), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize(), translation.stackBlocksSize());
     }
 
     private TreeEirMethod createTreeEirMethod(ClassMethodActor classMethodActor) {
@@ -58,7 +61,8 @@ public class DirToAMD64EirTranslator extends AMD64EirGenerator {
         final TreeEirMethod tirMethod = createTreeEirMethod(dirMethod.classMethodActor());
         final DirToAMD64EirMethodTranslation translation = new DirToAMD64EirMethodTranslation(this, tirMethod, dirMethod);
         translation.translateMethod();
-        tirMethod.setGenerated(translation.eirBlocks(), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize(), translation.stackBlocksSize());
+        ArrayList<EirBlock> eirBlocks = translation.eirBlocks();
+        tirMethod.setGenerated(eirBlocks.toArray(new EirBlock[eirBlocks.size()]), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize(), translation.stackBlocksSize());
         return tirMethod;
     }
 

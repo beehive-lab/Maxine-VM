@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.amd64.unix;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 
@@ -34,10 +35,11 @@ public class UnixAMD64EirTrampolineABI extends UnixAMD64EirJavaABI {
         super(vmConfiguration);
 
         // Make all potential parameters of the trampoline's compilee callee-saved
-        calleeSavedRegisters = Sequence.Static.concatenated(integerParameterRegisters(), floatingPointParameterRegisters());
+        calleeSavedRegisters = new ArrayList<AMD64EirRegister>(integerParameterRegisters());
+        calleeSavedRegisters.addAll(floatingPointParameterRegisters());
 
         // Make the JIT frame pointer (RBP) callee-saved
-        calleeSavedRegisters = Sequence.Static.appended(calleeSavedRegisters, AMD64EirRegister.General.RBP);
+        calleeSavedRegisters.add(AMD64EirRegister.General.RBP);
     }
 }
 

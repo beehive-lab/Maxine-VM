@@ -41,6 +41,7 @@ import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.gui.CirAnnotatedTrace.*;
 import com.sun.max.vm.cps.cir.gui.CirAnnotatedTrace.Element;
 import com.sun.max.vm.cps.cir.transform.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -364,15 +365,15 @@ final class CirTraceVisualizer extends JPanel {
                             refreshView();
                         }
                         if (actorCheck.isSelected()) {
-                            final VariableSequence<Range> actorRanges = getSearchStringRanges(currentCir, currentCir.classMethodActor().format("%H.%n(%p)"), actorText.getText(), false);
+                            final List<Range> actorRanges = getSearchStringRanges(currentCir, currentCir.classMethodActor().format("%H.%n(%p)"), actorText.getText(), false);
                             final String newLabelText = getHighlightedLabelText(currentCir.classMethodActor().format("%H.%n(%p)"), actorRanges);
                             headerPanel.classMethodActorLabel.setText(newLabelText);
                         }
                         if (nodeCheck.isSelected()) {
-                            final VariableSequence<Range> leftNodeRanges = getSearchStringRanges(currentCir, currentCir.trace(), nodeText.getText(), true);
+                            final List<Range> leftNodeRanges = getSearchStringRanges(currentCir, currentCir.trace(), nodeText.getText(), true);
                             showSearchResults(leftTracePane, leftNodeRanges);
                             if (currentCir2 != null) {
-                                final VariableSequence<Range> rightNodeRanges = getSearchStringRanges(currentCir2, currentCir2.trace(), nodeText.getText(), true);
+                                final List<Range> rightNodeRanges = getSearchStringRanges(currentCir2, currentCir2.trace(), nodeText.getText(), true);
                                 showSearchResults(rightTracePane, rightNodeRanges);
                             }
                         }
@@ -389,15 +390,15 @@ final class CirTraceVisualizer extends JPanel {
                             refreshView();
                         }
                         if (actorCheck.isSelected()) {
-                            final VariableSequence<Range> actorRanges = getSearchStringRanges(currentCir, currentCir.classMethodActor().format("%H.%n(%p)"), actorText.getText(), false);
+                            final List<Range> actorRanges = getSearchStringRanges(currentCir, currentCir.classMethodActor().format("%H.%n(%p)"), actorText.getText(), false);
                             final String newLabelText = getHighlightedLabelText(currentCir.classMethodActor().format("%H.%n(%p)"), actorRanges);
                             headerPanel.classMethodActorLabel.setText(newLabelText);
                         }
                         if (nodeCheck.isSelected()) {
-                            final VariableSequence<Range> leftNodeRanges = getSearchStringRanges(currentCir, currentCir.trace(), nodeText.getText(), true);
+                            final List<Range> leftNodeRanges = getSearchStringRanges(currentCir, currentCir.trace(), nodeText.getText(), true);
                             showSearchResults(leftTracePane, leftNodeRanges);
                             if (currentCir2 != null) {
-                                final VariableSequence<Range> rightNodeRanges = getSearchStringRanges(currentCir2, currentCir2.trace(), nodeText.getText(), true);
+                                final List<Range> rightNodeRanges = getSearchStringRanges(currentCir2, currentCir2.trace(), nodeText.getText(), true);
                                 showSearchResults(rightTracePane, rightNodeRanges);
                             }
                         }
@@ -431,7 +432,7 @@ final class CirTraceVisualizer extends JPanel {
 
     private final Map<ClassMethodActor, List<CirAnnotatedTrace>> traceMap = new HashMap<ClassMethodActor, List<CirAnnotatedTrace>>();
 
-    private VariableSequence<CirAnnotatedTrace> allTraces = new ArrayListSequence<CirAnnotatedTrace>();
+    private List<CirAnnotatedTrace> allTraces = new ArrayList<CirAnnotatedTrace>();
 
     private List<List<CirAnnotatedTrace>> allTraceLists = new ArrayList<List<CirAnnotatedTrace>>();
     private int indexWithinTrace = -1;
@@ -617,12 +618,12 @@ final class CirTraceVisualizer extends JPanel {
             private IntHashMap<Element> tempOffsetToElement;
             private IntHashMap<Element> newOffsetToElement;
             private int oldNoOffsets;
-            private Bag<CirNode, Element, Sequence<Element>> oldElementsPerNode;
-            private Bag<CirNode, Element, Sequence<Element>> oldElementsPerNode2;
-            private Bag<CirNode, Element, Sequence<Element>> newElementsPerNode;
+            private ListBag<CirNode, CirAnnotatedTrace.Element> oldElementsPerNode;
+            private ListBag<CirNode, CirAnnotatedTrace.Element> oldElementsPerNode2;
+            private ListBag<CirNode, CirAnnotatedTrace.Element> newElementsPerNode;
             private Element currentOccurrenceElement;
             private Highlighter.HighlightPainter secondaryHighlighterPainter = new DefaultHighlighter.DefaultHighlightPainter(leftTracePane.getSelectionColor().darker());
-            private final VariableSequence<Object> occurrenceHighlights = new ArrayListSequence<Object>();
+            private final ArrayList<Object> occurrenceHighlights = new ArrayList<Object>();
 
             /**
              * Clears all highlights marking the occurrence(s) of the CIR node last denoted by a mouse movement.
@@ -679,7 +680,7 @@ final class CirTraceVisualizer extends JPanel {
                         element.visitAssociatedRanges(new RangeVisitor() {
                             public void visitRange(Range range) {
                                 try {
-                                    occurrenceHighlights.append(traceHighlighter.addHighlight(range.start(), range.end(), secondaryHighlighterPainter));
+                                    occurrenceHighlights.add(traceHighlighter.addHighlight(range.start(), range.end(), secondaryHighlighterPainter));
                                     //System.err.printAddress("secondary range: " + range);
                                 } catch (BadLocationException badLocationException) {
                                     ProgramWarning.message("error highlighting element range " + range);
@@ -690,7 +691,7 @@ final class CirTraceVisualizer extends JPanel {
                             occurrence.visitRanges(new RangeVisitor() {
                                 public void visitRange(Range range) {
                                     try {
-                                        occurrenceHighlights.append(traceHighlighter.addHighlight(range.start(), range.end(), DefaultHighlighter.DefaultPainter));
+                                        occurrenceHighlights.add(traceHighlighter.addHighlight(range.start(), range.end(), DefaultHighlighter.DefaultPainter));
                                         //System.err.printAddress("primary range: " + range);
                                     } catch (BadLocationException badLocationException) {
                                         ProgramWarning.message("error highlighting element range " + range);
@@ -737,7 +738,7 @@ final class CirTraceVisualizer extends JPanel {
                             if (currentDocument.collapsedOffset == -1) {
                                 currentDocument.collapsedDual = dualRangeElement;
                                 newOffsetToElement = new IntHashMap<Element>();
-                                newElementsPerNode = new SequenceBag<CirNode, Element>(SequenceBag.MapType.IDENTITY);
+                                newElementsPerNode = new ListBag<CirNode, Element>(ListBag.MapType.IDENTITY);
                                 foldStart = ((ParenthesisElement) element).firstRange().start();
                                 foldEnd = ((ParenthesisElement) element).secondRange().start();
                                 oldNoOffsets = currentDocument.getLength();
@@ -1167,7 +1168,7 @@ final class CirTraceVisualizer extends JPanel {
     }
 
     public synchronized void add(CirAnnotatedTrace cirAnnotatedTrace) {
-        allTraces.append(cirAnnotatedTrace);
+        allTraces.add(cirAnnotatedTrace);
         List<CirAnnotatedTrace> traceList = traceMap.get(cirAnnotatedTrace.classMethodActor());
         if (traceList == null) {
             traceList = new ArrayList<CirAnnotatedTrace>();
@@ -1227,7 +1228,7 @@ final class CirTraceVisualizer extends JPanel {
         showDiffs(rightDocument, rElements, diff.insertions(), DIFF_INSERTION);
     }
 
-    private void showDiffs(CirStyledDocument document, List<SimpleElement> elements, Sequence<Range> changes, Style changeStyle) {
+    private void showDiffs(CirStyledDocument document, List<SimpleElement> elements, List<Range> changes, Style changeStyle) {
         int shift = 0;
         if (document.collapsedOffset != -1) {
             shift = document.collapsedDual.secondRange().start() - document.collapsedDual.firstRange().start() - 4;
@@ -1288,8 +1289,8 @@ final class CirTraceVisualizer extends JPanel {
         final boolean inNodes = searchPanel.nodeCheck.isSelected();
         final boolean currentHighlighted = this.isCurrentHighlighted;
         final boolean isWrapSearch = searchPanel.wrapSearch.isSelected();
-        final IndexedSequence<CirAnnotatedTrace> traces = allTraces;
-        final int lastIndex = traces.length() - 1;
+        final List<CirAnnotatedTrace> traces = allTraces;
+        final int lastIndex = traces.size() - 1;
 
         //decide from which index to search
         final int startIndex;
@@ -1317,8 +1318,8 @@ final class CirTraceVisualizer extends JPanel {
             if (result) {
                 return index;
             }
-            index = direction.nextIndex(index, traces.length(), startIndex, isWrapSearch);
-            if (index == -1 || index == traces.length() - 1) {
+            index = direction.nextIndex(index, traces.size(), startIndex, isWrapSearch);
+            if (index == -1 || index == traces.size() - 1) {
                 break;
             }
         }
@@ -1335,17 +1336,17 @@ final class CirTraceVisualizer extends JPanel {
      * @param inTrace boolean which tells if current search is in a signature or a trace.
      * @return sequence of matching ranges.
      */
-    private VariableSequence<Range> getSearchStringRanges(CirAnnotatedTrace trace, String searchIn, String lookFor, boolean inTrace) {
+    private List<Range> getSearchStringRanges(CirAnnotatedTrace trace, String searchIn, String lookFor, boolean inTrace) {
         final boolean ignoreCase = !searchPanel.matchCaseCheck.isSelected();
         final boolean regex = searchPanel.regexCheck.isSelected();
 
-        final VariableSequence<Range> ranges = new ArrayListSequence<Range>();
+        final List<Range> ranges = new ArrayList<Range>();
         int rangeStart = 0;
         if (!regex) {
             while (rangeStart <= (searchIn.length() - lookFor.length())) {
                 if (searchIn.regionMatches(ignoreCase, rangeStart, lookFor, 0, lookFor.length())) {
                     final Range range = new Range(rangeStart, rangeStart + lookFor.length());
-                    ranges.append(range);
+                    ranges.add(range);
                 }
                 rangeStart++;
             }
@@ -1366,7 +1367,7 @@ final class CirTraceVisualizer extends JPanel {
             if (matcher.matches()) {
                 final int start = matcher.start(1);
                 final Range range = new Range(start, start + matcher.group(1).length());
-                ranges.append(range);
+                ranges.add(range);
             }
             return ranges;
         }
@@ -1386,7 +1387,7 @@ final class CirTraceVisualizer extends JPanel {
             if (matcher.matches()) {
                 final int start = simpleElements.get(i).range().start() + matcher.start(1);
                 final Range range = new Range(start, start + matcher.group(1).length());
-                ranges.append(range);
+                ranges.add(range);
             }
         }
         return ranges;
@@ -1398,7 +1399,7 @@ final class CirTraceVisualizer extends JPanel {
      * @param textPane
      * @param ranges
      */
-    private void showSearchResults(JTextPane textPane, VariableSequence<Range> ranges) {
+    private void showSearchResults(JTextPane textPane, List<Range> ranges) {
         final Highlighter highlighter = textPane.getHighlighter();
         highlighter.removeAllHighlights();
         for (Range range : ranges) {
@@ -1420,7 +1421,7 @@ final class CirTraceVisualizer extends JPanel {
      *            matched text in signature.
      * @return html text for the signature.
      */
-    private String getHighlightedLabelText(String currentText, VariableSequence<Range> ranges) {
+    private String getHighlightedLabelText(String currentText, List<Range> ranges) {
         final StringBuffer newText = new StringBuffer("<html>" + currentText + "</html>");
         final String startTag = "<font bgcolor=\"#00FFFF\">";
         final String endTag = "</font>";

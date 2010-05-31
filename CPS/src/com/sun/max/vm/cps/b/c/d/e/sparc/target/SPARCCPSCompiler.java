@@ -20,11 +20,12 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.sparc.target;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
@@ -84,8 +85,12 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
     }
 
     @Override
-    public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.appended(super.irGenerators(), irGenerator());
+    public List<IrGenerator> irGenerators() {
+        List<IrGenerator> sequence = super.irGenerators();
+        IrGenerator element = irGenerator();
+        final List<IrGenerator> result = new LinkedList<IrGenerator>(sequence);
+        result.add(element);
+        return result;
     }
 
     private EirABI optimizedABI() {

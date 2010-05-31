@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.cps.eir;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -59,18 +60,18 @@ public abstract class EirEpilogue<EirInstructionVisitor_Type extends EirInstruct
         return resultOperand.eirValue();
     }
 
-    private final AppendableSequence<EirOperand> useOperands = new LinkSequence<EirOperand>();
+    private final List<EirOperand> useOperands = new LinkedList<EirOperand>();
 
     public void addUse(EirValue usedValue) {
         final EirOperand operand = new EirOperand(this, EirOperand.Effect.USE, usedValue.location().category().asSet());
         operand.setEirValue(usedValue);
-        useOperands.append(operand);
+        useOperands.add(operand);
     }
 
     public void addStackSlotUse(EirValue usedValue) {
         final EirOperand operand = new EirOperand(this, EirOperand.Effect.USE, EirLocationCategory.S);
         operand.setEirValue(usedValue);
-        useOperands.append(operand);
+        useOperands.add(operand);
     }
 
     public EirEpilogue(EirBlock block, EirMethod eirMethod,
@@ -113,7 +114,7 @@ public abstract class EirEpilogue<EirInstructionVisitor_Type extends EirInstruct
     public String toString() {
         String s = "epilogue (" + (resultOperand == null ? "" : resultOperand.toString()) + ")";
         if (calleeSavedOperands.length != 0) {
-            s += "[Callee saved: " + Arrays.toString(calleeSavedOperands) + "]";
+            s += "[Callee saved: " + Utils.toString(calleeSavedOperands, ", ") + "]";
         }
         if (!useOperands.isEmpty()) {
             s += "[Used: " + useOperands + "]";

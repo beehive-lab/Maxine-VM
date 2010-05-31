@@ -24,14 +24,13 @@ import java.awt.*;
 import java.awt.print.*;
 import java.text.*;
 import java.util.*;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.*;
 
+import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -271,7 +270,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
 
     protected InspectorFrame createTabFrame(TabbedInspector<Inspector_Type> parent) {
         final Class<Inspector_Type> type = null;
-        final Inspector_Type thisInspector = StaticLoophole.cast(type, this);
+        final Inspector_Type thisInspector = Utils.cast(type, this);
         frame = new InspectorRootPane<Inspector_Type>(thisInspector, parent, true);
         setTitle();
         createView();

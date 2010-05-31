@@ -31,7 +31,6 @@ import java.util.concurrent.locks.*;
 import java.util.logging.*;
 
 import com.sun.max.*;
-import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.jdwp.vm.core.*;
 import com.sun.max.jdwp.vm.proxy.*;
@@ -461,7 +460,7 @@ public abstract class TeleVM implements MaxVM {
      */
     private MaxBreakpoint gcCompletedBreakpoint = null;
 
-    private IndexedSequence<MaxMemoryRegion> allMemoryRegions = new ArrayListSequence<MaxMemoryRegion>(0);
+    private List<MaxMemoryRegion> allMemoryRegions = new ArrayList<MaxMemoryRegion>(0);
 
     private final TeleProcess teleProcess;
 
@@ -896,7 +895,7 @@ public abstract class TeleVM implements MaxVM {
                     TeleWatchpointEvent teleWatchpointEvent) {
 
         // Rebuild list of all allocated memory regions
-        final List<MaxMemoryRegion> memoryRegions = new ArrayListSequence<MaxMemoryRegion>(teleVMState.memoryRegions().size());
+        final List<MaxMemoryRegion> memoryRegions = new ArrayList<MaxMemoryRegion>(teleVMState.memoryRegions().size());
         for (MaxHeapRegion heapRegion : teleHeap.heapRegions()) {
             memoryRegions.add(heapRegion.memoryRegion());
         }
@@ -1701,7 +1700,7 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-    private final VariableSequence<VMListener> jdwpListeners = new ArrayListSequence<VMListener>();
+    private final ArrayList<VMListener> jdwpListeners = new ArrayList<VMListener>();
 
     /**
      * Informs all JDWP listeners that the VM died.
@@ -2132,11 +2131,11 @@ public abstract class TeleVM implements MaxVM {
         }
 
         public void addListener(VMListener listener) {
-            jdwpListeners.append(listener);
+            jdwpListeners.add(listener);
         }
 
         public void removeListener(VMListener listener) {
-            jdwpListeners.remove(Sequence.Static.indexOfIdentical(jdwpListeners, listener));
+            jdwpListeners.remove(listener);
         }
 
         /**
@@ -2258,9 +2257,9 @@ public abstract class TeleVM implements MaxVM {
         }
 
         public ThreadProvider[] getAllThreads() {
-            final IterableWithLength<TeleNativeThread> threads = teleProcess().threads();
-            final ThreadProvider[] threadProviders = new ThreadProvider[threads.length()];
-            return Iterables.toCollection(threads).toArray(threadProviders);
+            final Collection<TeleNativeThread> threads = teleProcess().threads();
+            final ThreadProvider[] threadProviders = new ThreadProvider[threads.size()];
+            return threads.toArray(threadProviders);
         }
 
         public String[] getBootClassPath() {
@@ -2308,7 +2307,7 @@ public abstract class TeleVM implements MaxVM {
 
             // Try to find a matching class actor that lives within the VM based on
             // the signature.
-            final AppendableSequence<ReferenceTypeProvider> result = new LinkSequence<ReferenceTypeProvider>();
+            final List<ReferenceTypeProvider> result = new LinkedList<ReferenceTypeProvider>();
             for (TypeDescriptor typeDescriptor : TeleVM.this.typeDescriptors()) {
                 if (typeDescriptor.toString().equals(signature)) {
                     final TeleClassActor teleClassActor = TeleVM.this.findTeleClassActor(typeDescriptor);
@@ -2318,7 +2317,7 @@ public abstract class TeleVM implements MaxVM {
                     // created this way then do
                     // not really live within the VM, but on the JDWP server side.
                     if (!(teleClassActor instanceof TeleArrayClassActor)) {
-                        result.append(teleClassActor);
+                        result.add(teleClassActor);
                     }
                 }
             }
@@ -2326,18 +2325,18 @@ public abstract class TeleVM implements MaxVM {
             // If no class living in the VM was found, try to lookup Java class
             // known to the JDWP server. If such a class is found, then a JDWP
             // reference type is faked for it.
-            if (result.length() == 0) {
+            if (result.size() == 0) {
                 try {
                     final Class klass = JavaTypeDescriptor.resolveToJavaClass(
                             JavaTypeDescriptor.parseTypeDescriptor(signature), getClass().getClassLoader());
-                    result.append(javaProviderFactory.getReferenceTypeProvider(klass));
+                    result.add(javaProviderFactory.getReferenceTypeProvider(klass));
                 } catch (NoClassDefFoundError noClassDefFoundError) {
                     LOGGER.log(Level.SEVERE,
                             "Error while looking up class based on signature", noClassDefFoundError);
                 }
             }
 
-            return Sequence.Static.toArray(result, new ReferenceTypeProvider[result.length()]);
+            return result.toArray(new ReferenceTypeProvider[result.size()]);
         }
 
         public ThreadGroupProvider[] getThreadGroups() {

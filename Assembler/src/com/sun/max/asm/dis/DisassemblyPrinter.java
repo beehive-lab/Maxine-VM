@@ -21,8 +21,9 @@
 package com.sun.max.asm.dis;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.lang.*;
 
 /**
@@ -47,9 +48,9 @@ public class DisassemblyPrinter {
      * @param outputStream the stream to which the disassembly wil be printed
      * @param disassembledObjects the disassembled objects to be printed
      */
-    public void print(Disassembler disassembler, OutputStream outputStream, Sequence<DisassembledObject> disassembledObjects) throws IOException {
+    public void print(Disassembler disassembler, OutputStream outputStream, List<DisassembledObject> disassembledObjects) throws IOException {
         final PrintStream stream = outputStream instanceof PrintStream ? (PrintStream) outputStream : new PrintStream(outputStream);
-        final int nOffsetChars = Integer.toString(disassembledObjects.last().startPosition()).length();
+        final int nOffsetChars = Integer.toString(Utils.last(disassembledObjects).startPosition()).length();
         final int nLabelChars = disassembler.addressMapper().maximumLabelNameLength();
         if (includeHeader) {
             printHeading(disassembler, stream, nOffsetChars, nLabelChars);

@@ -20,9 +20,10 @@
  */
 package com.sun.max.asm.gen.risc;
 
+import java.util.*;
+
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.field.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
@@ -32,7 +33,7 @@ import com.sun.max.program.*;
  */
 public final class RiscInstructionDescription extends InstructionDescription {
 
-    public RiscInstructionDescription(MutableSequence<Object> specifications) {
+    public RiscInstructionDescription(List<Object> specifications) {
         super(specifications);
 
         int bits = 0;

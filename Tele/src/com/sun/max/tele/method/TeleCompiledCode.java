@@ -27,7 +27,6 @@ import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
@@ -137,7 +136,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
     private final TeleTargetMethod teleTargetMethod;
     private CodeLocation codeStartLocation = null;
     private final CompiledCodeMemoryRegion compiledCodeMemoryRegion;
-    private IndexedSequence<MachineCodeLocation> instructionLocations;
+    private List<MachineCodeLocation> instructionLocations;
 
     /**
      * Creates an object that describes a region of VM memory used to hold a single compiled method.

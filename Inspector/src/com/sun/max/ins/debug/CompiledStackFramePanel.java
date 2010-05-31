@@ -26,12 +26,12 @@ import java.util.List;
 
 import javax.swing.*;
 
+import com.sun.max.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
-import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
@@ -68,7 +68,7 @@ abstract class CompiledStackFramePanel extends InspectorPanel {
 
     public final void setStackFrame(MaxStackFrame stackFrame) {
         final Class<MaxStackFrame.Compiled> type = null;
-        this.stackFrame = StaticLoophole.cast(type, stackFrame);
+        this.stackFrame = Utils.cast(type, stackFrame);
         refresh(true);
     }
 

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.sparc;
 
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.lang.StaticFieldName;
 import com.sun.max.vm.type.Kind;
@@ -95,19 +97,19 @@ public class SPARCEirRegisters {
                                                         L0, L1, L2, L3, L4, L5, L6, L7,
                                                         I0, I1, I2, I3, I4, I5, I6, I7};
 
-        public static final IndexedSequence<GeneralPurpose> VALUES = new ArraySequence<GeneralPurpose>(values);
+        public static final List<GeneralPurpose> VALUES = Arrays.asList(values);
 
         private static final GeneralPurpose[] locals = {L0, L1, L2, L3, L4, L5, L6, L7};
 
-        public static final IndexedSequence<GeneralPurpose> LOCAL_REGISTERS = new ArraySequence<GeneralPurpose>(locals);
+        public static final List<GeneralPurpose> LOCAL_REGISTERS = Arrays.asList(locals);
 
         private static final GeneralPurpose[] ins = {I0, I1, I2, I3, I4, I5, I6, I7};
 
-        public static final IndexedSequence<GeneralPurpose> IN_REGISTERS = new ArraySequence<GeneralPurpose>(ins);
+        public static final List<GeneralPurpose> IN_REGISTERS = Arrays.asList(ins);
 
         private static final GeneralPurpose[] outs = {O0, O1, O2, O3, O4, O5, O6, O7};
 
-        public static final IndexedSequence<GeneralPurpose> OUT_REGISTERS = new ArraySequence<GeneralPurpose>(outs);
+        public static final List<GeneralPurpose> OUT_REGISTERS = Arrays.asList(outs);
 
         private static final PoolSet<SPARCEirRegister> poolSet = PoolSet.of(pool, values);
 
@@ -271,17 +273,17 @@ public class SPARCEirRegisters {
         /**
          * A sequence describing all the EIR representations of the floating-point registers.
          */
-        public static final IndexedSequence<SinglePrecision> VALUES = new ArraySequence<SinglePrecision>(values);
+        public static final List<SinglePrecision> VALUES = Arrays.asList(values);
 
         /**
          * A sequence describing all the EIR representations of the single-precision floating-point registers.
          */
-        public static final IndexedSequence<SinglePrecision> SINGLE_PRECISION_VALUES = new ArraySequence<SinglePrecision>(singlePrecisionValues);
+        public static final List<SinglePrecision> SINGLE_PRECISION_VALUES = Arrays.asList(singlePrecisionValues);
 
         /**
          * A sequence describing all the EIR representations of the double-precision floating-point registers.
          */
-        public static final IndexedSequence<SinglePrecision> DOUBLE_PRECISION_VALUES = new ArraySequence<SinglePrecision>(doublePrecisionValues);
+        public static final List<DoublePrecision> DOUBLE_PRECISION_VALUES = Arrays.asList(doublePrecisionValues);
 
         private static final PoolSet<SPARCEirRegister> poolSet = PoolSet.of(pool, values);
         private static final PoolSet<SPARCEirRegister> doublePrecisionPoolSet = PoolSet.of(pool, doublePrecisionValues);

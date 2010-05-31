@@ -46,29 +46,29 @@ public class OpcodeMaskGroup {
 
     private final Set<RiscTemplate> templates = new HashSet<RiscTemplate>();
 
-    private final IntHashMap<AppendableSequence<RiscTemplate>> templatesForOpcodes = new IntHashMap<AppendableSequence<RiscTemplate>>();
-    private final Sequence<RiscTemplate> empty = new LinkSequence<RiscTemplate>();
+    private final IntHashMap<List<RiscTemplate>> templatesForOpcodes = new IntHashMap<List<RiscTemplate>>();
+    private final List<RiscTemplate> empty = new LinkedList<RiscTemplate>();
 
     public void add(RiscTemplate template) {
         assert template.opcodeMask() == mask;
         templates.add(template);
-        AppendableSequence<RiscTemplate> templatesForOpcode = templatesForOpcodes.get(template.opcode());
+        List<RiscTemplate> templatesForOpcode = templatesForOpcodes.get(template.opcode());
         if (templatesForOpcode == null) {
-            templatesForOpcode = new LinkSequence<RiscTemplate>();
+            templatesForOpcode = new LinkedList<RiscTemplate>();
             templatesForOpcodes.put(template.opcode(), templatesForOpcode);
         }
-        templatesForOpcode.append(template);
+        templatesForOpcode.add(template);
     }
 
-    public Sequence<RiscTemplate> templatesFor(int opcode) {
-        final Sequence<RiscTemplate> result = templatesForOpcodes.get(opcode);
+    public List<RiscTemplate> templatesFor(int opcode) {
+        final List<RiscTemplate> result = templatesForOpcodes.get(opcode);
         if (result == null) {
             return empty;
         }
         return result;
     }
 
-    public Sequence<RiscTemplate> templates() {
-        return new ArraySequence<RiscTemplate>(templates);
+    public Collection<RiscTemplate> templates() {
+        return templates;
     }
 }

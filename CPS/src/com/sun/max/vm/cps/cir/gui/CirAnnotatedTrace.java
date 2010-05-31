@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.cir.gui;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.cir.*;
@@ -38,7 +37,7 @@ class CirAnnotatedTrace implements Iterable<CirAnnotatedTrace.Element> {
 
     private final String trace;
 
-    private final Sequence<Element> elements;
+    private final List<Element> elements;
 
     private final ClassMethodActor classMethodActor;
 
@@ -167,9 +166,9 @@ class CirAnnotatedTrace implements Iterable<CirAnnotatedTrace.Element> {
      */
     public static class MultiRangeElement extends CirAnnotatedTrace.Element {
 
-        private final Sequence<Range> ranges;
+        private final List<Range> ranges;
 
-        public MultiRangeElement(CirNode node, Sequence<Range> ranges) {
+        public MultiRangeElement(CirNode node, List<Range> ranges) {
             super(node);
             assert !ranges.isEmpty();
             this.ranges = ranges;
@@ -184,11 +183,11 @@ class CirAnnotatedTrace implements Iterable<CirAnnotatedTrace.Element> {
 
         @Override
         public String toString() {
-            return nodeType() + '{' + Sequence.Static.toString(ranges, null, ",") + '}';
+            return nodeType() + '{' + ranges + '}';
         }
     }
 
-    public CirAnnotatedTrace(String trace, Sequence<Element> elements, ClassMethodActor classMethodActor, String description) {
+    public CirAnnotatedTrace(String trace, List<Element> elements, ClassMethodActor classMethodActor, String description) {
         this.trace = trace;
         this.elements = elements;
         this.classMethodActor = classMethodActor;
@@ -199,7 +198,7 @@ class CirAnnotatedTrace implements Iterable<CirAnnotatedTrace.Element> {
         return trace;
     }
 
-    public Sequence<Element> elements() {
+    public List<Element> elements() {
         return elements;
     }
 

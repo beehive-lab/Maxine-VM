@@ -401,4 +401,15 @@ public class CiUtil {
         CiKind kind = CiKind.fromJavaClass(method.getReturnType());
         return CiConstant.forBoxed(kind, result);
     }
+    
+    /**
+     * Creates a set that uses reference-equality instead of {@link Object#equals(Object)}
+     * when comparing values.
+     * 
+     * @param <T> the type of elements in the set
+     * @return a set based on reference-equality
+     */
+    public static <T> Set<T> newIdentityHashSet() {
+        return Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
+    }
 }

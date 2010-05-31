@@ -23,9 +23,10 @@ package com.sun.max.vm.compiler.target.sparc;
 import static com.sun.max.asm.sparc.GPR.*;
 import static com.sun.max.asm.sparc.FPR.*;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.asm.sparc.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -42,27 +43,27 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
     }
 
     @HOSTED_ONLY
-    protected static IndexedSequence<GPR> incomingIntegerparameterregisters() {
-        return new ArraySequence<GPR>(I0, I1, I2, I3, I4, I5);
+    protected static List<GPR> incomingIntegerparameterregisters() {
+        return Arrays.asList(I0, I1, I2, I3, I4, I5);
     }
 
     @HOSTED_ONLY
-    protected static IndexedSequence<GPR> outgoingIntegerParameterRegisters() {
-        return new ArraySequence<GPR>(O0, O1, O2, O3, O4, O5);
+    protected static List<GPR> outgoingIntegerParameterRegisters() {
+        return Arrays.asList(O0, O1, O2, O3, O4, O5);
     }
 
     @HOSTED_ONLY
-    protected static IndexedSequence<FPR> floatingPointParameterRegisters() {
-        return new ArraySequence<FPR>(
-                        F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
-                        F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31);
+    protected static List<FPR> floatingPointParameterRegisters() {
+        return Arrays.asList(new FPR[] {
+            F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16,
+            F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31});
     }
 
     @HOSTED_ONLY
     public static TargetABI<GPR, FPR> createSPARC64TargetABI(RegisterRoleAssignment<GPR, FPR> registerRoleAssignment, CallEntryPoint callEntryPoint,
-                    IndexedSequence<GPR> integerIncomingParameterRegisters,
-                    IndexedSequence<GPR> integerOutgoingParameterRegisters,
-                    IndexedSequence<FPR> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress) {
+                    List<GPR> integerIncomingParameterRegisters,
+                    List<GPR> integerOutgoingParameterRegisters,
+                    List<FPR> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress) {
         return new TargetABI<GPR, FPR>(registerRoleAssignment, callEntryPoint,
                         integerIncomingParameterRegisters, integerOutgoingParameterRegisters, floatingPointParameterRegisters,
                         useRegisterWindows, callPushesReturnAddress,
@@ -71,7 +72,7 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
 
     @HOSTED_ONLY
     public static TargetABI<GPR, FPR> createSPARC64TargetABI(RegisterRoleAssignment<GPR, FPR> registerRoleAssignment, CallEntryPoint callEntryPoint,
-                    IndexedSequence<FPR> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress) {
+                    List<FPR> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress) {
         return createSPARC64TargetABI(
                         registerRoleAssignment,
                         callEntryPoint,

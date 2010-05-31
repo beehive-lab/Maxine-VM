@@ -29,7 +29,6 @@ import com.sun.max.asm.arm.complete.*;
 import com.sun.max.asm.dis.arm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 
@@ -55,7 +54,7 @@ public class ARMAssemblyTester extends RiscAssemblyTester<RiscTemplate> {
     }
 
     @Override
-    protected void assembleExternally(IndentWriter writer, RiscTemplate template, Sequence<Argument> argumentList, String label) {
+    protected void assembleExternally(IndentWriter writer, RiscTemplate template, List<Argument> argumentList, String label) {
         final RiscExternalInstruction instruction = new RiscExternalInstruction(template, argumentList);
         writer.println(instruction.toString());
     }

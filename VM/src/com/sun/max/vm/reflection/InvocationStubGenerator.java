@@ -28,7 +28,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -501,11 +500,11 @@ public class InvocationStubGenerator<T> {
         // Generate exception table. We cover the entire code sequence
         // with an exception handler which catches ClassCastException and
         // converts it into an IllegalArgumentException.
-        final Sequence<ExceptionHandlerEntry> exceptionHandlerEntries = new ArraySequence<ExceptionHandlerEntry>(
+        final ExceptionHandlerEntry[] exceptionHandlerEntries = new ExceptionHandlerEntry[] {
             new ExceptionHandlerEntry(illegalArgStartPC, invokeStartPC, classCastHandler, ClassCastException),
             new ExceptionHandlerEntry(illegalArgStartPC, invokeStartPC, classCastHandler, NullPointerException),
             new ExceptionHandlerEntry(invokeStartPC, invokeEndPC, invocationTargetHandler, 0)
-        );
+        };
 
         final CodeAttribute codeAttribute = new CodeAttribute(
                         constantPoolEditor.pool(),
@@ -647,15 +646,15 @@ public class InvocationStubGenerator<T> {
 
     // Pool constants shared by all stubs
 
-    private static AppendableSequence<PoolConstant> prototypeConstants;
+    private static List<PoolConstant> prototypeConstants;
 
     private static int register(PoolConstant constant) {
         if (prototypeConstants == null) {
-            prototypeConstants = new ArrayListSequence<PoolConstant>();
-            prototypeConstants.append(InvalidConstant.VALUE);
+            prototypeConstants = new ArrayList<PoolConstant>();
+            prototypeConstants.add(InvalidConstant.VALUE);
         }
-        final int index = prototypeConstants.length();
-        prototypeConstants.append(constant);
+        final int index = prototypeConstants.size();
+        prototypeConstants.add(constant);
         return index;
     }
 
@@ -771,6 +770,6 @@ public class InvocationStubGenerator<T> {
      * This must be the last thing executed in the static initializer.
      */
     static {
-        PROTOTYPE_CONSTANTS = Sequence.Static.toArray(prototypeConstants, new PoolConstant[prototypeConstants.length()]);
+        PROTOTYPE_CONSTANTS = prototypeConstants.toArray(new PoolConstant[prototypeConstants.size()]);
     }
 }

@@ -25,7 +25,6 @@ import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
@@ -53,8 +52,8 @@ public abstract class RiscAssemblyTester<Template_Type extends RiscTemplate>
     }
 
     @Override
-    protected boolean isLegalArgumentList(Template_Type template, IndexedSequence<Argument> arguments) {
-        final Sequence<InstructionConstraint> constraints = template.instructionDescription().constraints();
+    protected boolean isLegalArgumentList(Template_Type template, List<Argument> arguments) {
+        final List<InstructionConstraint> constraints = template.instructionDescription().constraints();
         for (InstructionConstraint constraint : constraints) {
             if (!(constraint.check(template, arguments))) {
                 return false;

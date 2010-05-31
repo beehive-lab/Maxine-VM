@@ -25,6 +25,7 @@ import static com.sun.max.vm.reflection.GeneratedStub.*;
 
 import java.io.*;
 import java.lang.reflect.*;
+import java.util.*;
 
 import org.junit.runner.*;
 
@@ -36,12 +37,10 @@ import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
-import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -75,7 +74,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
         super(name);
     }
 
-    private final AppendableSequence<ClassMethodActor> compiledMethods = new LinkSequence<ClassMethodActor>();
+    private final List<ClassMethodActor> compiledMethods = new LinkedList<ClassMethodActor>();
 
     @Override
     public void tearDown() {
@@ -148,7 +147,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
 
     protected CompilerTestSetup<Method_Type> compilerTestSetup() {
         final Class<CompilerTestSetup<Method_Type>> compilerTestSetupType = null;
-        return StaticLoophole.cast(compilerTestSetupType, CompilerTestSetup.compilerTestSetup());
+        return Utils.cast(compilerTestSetupType, CompilerTestSetup.compilerTestSetup());
     }
 
     private void reportNondeterministicTranslation(Method_Type method1, Method_Type method2) {
@@ -181,7 +180,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
     }
 
     protected Method_Type compileMethod(final ClassMethodActor classMethodActor) {
-        compiledMethods.append(classMethodActor);
+        compiledMethods.add(classMethodActor);
         return MaxineVM.usingTarget(new Function<Method_Type>() {
             public Method_Type call() {
                 try {
@@ -303,7 +302,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
         Trace.end(1, "compiling package: " + p.name());
     }
 
-    protected void compilePackages(Sequence<MaxPackage> packages) {
+    protected void compilePackages(List<MaxPackage> packages) {
         for (MaxPackage p : packages) {
             compilePackage(p);
         }
@@ -501,7 +500,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
                     try {
                         final ClassMethodActor classMethodActor = method.classMethodActor();
                         final boolean isConstructor = classMethodActor.isInstanceInitializer();
-                        final Value[] executeArguments = isConstructor ? Arrays.prepend(arguments, newInstance(classMethodActor.holder())) : arguments;
+                        final Value[] executeArguments = isConstructor ? Utils.prepend(arguments, newInstance(classMethodActor.holder())) : arguments;
                         final SignatureDescriptor signature = classMethodActor.descriptor();
                         int argumentIndex = arguments.length - 1;
                         int parameterIndex = signature.numberOfParameters() - 1;
@@ -527,19 +526,19 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
                 }
             });
         } catch (Exception exception) {
-            throw Exceptions.cast(InvocationTargetException.class, exception);
+            throw Utils.cast(InvocationTargetException.class, exception);
         }
     }
 
     protected final Value executeWithReceiverAndException(Method_Type method, Value... arguments) throws InvocationTargetException {
-        return executeWithException(method, Arrays.prepend(arguments, (Value) ReferenceValue.from(this)));
+        return executeWithException(method, Utils.prepend(arguments, (Value) ReferenceValue.from(this)));
     }
 
     protected Value execute(Method_Type method, Value... arguments) {
         try {
             return executeWithException(method, arguments);
         } catch (InvocationTargetException invocationTargetException) {
-            fail(Exceptions.stackTraceAsString(invocationTargetException));
+            fail(Utils.stackTraceAsString(invocationTargetException));
             return null;
         }
     }
@@ -548,7 +547,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
         try {
             return executeWithReceiverAndException(method, arguments);
         } catch (InvocationTargetException invocationTargetException) {
-            fail(Exceptions.stackTraceAsString(invocationTargetException));
+            fail(Utils.stackTraceAsString(invocationTargetException));
             return null;
         }
     }
@@ -568,7 +567,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
                 fail("expected " + expectedExceptionType.getName());
             }
             if (!expectedExceptionType.isAssignableFrom(exception.getClass())) {
-                fail("expected " + expectedExceptionType.getName() + " but got " + Exceptions.stackTraceAsString(exception));
+                fail("expected " + expectedExceptionType.getName() + " but got " + Utils.stackTraceAsString(exception));
             }
         }
     }
@@ -588,7 +587,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
                 fail("expected " + expectedExceptionType.getName());
             }
             if (!expectedExceptionType.isAssignableFrom(exception.getClass())) {
-                fail("expected " + expectedExceptionType.getName() + " but got " + Exceptions.stackTraceAsString(exception));
+                fail("expected " + expectedExceptionType.getName() + " but got " + Utils.stackTraceAsString(exception));
             }
         }
     }

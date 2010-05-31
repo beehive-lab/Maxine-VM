@@ -22,6 +22,8 @@ package com.sun.max.lang;
 
 import java.lang.reflect.*;
 
+import com.sun.max.*;
+
 /**
  * Methods that might be members of java.lang.Class.
  *
@@ -231,7 +233,7 @@ public final class Classes {
                 }
             } while (declaringClass != null);
         }
-        throw new NoSuchMethodError(returnType.getName() + " " + javaClass.getName() + "." + name + "(" + Arrays.toString(parameterTypes, ", ") + ")");
+        throw new NoSuchMethodError(returnType.getName() + " " + javaClass.getName() + "." + name + "(" + Utils.toString(parameterTypes, ", ") + ")");
     }
 
     /**
@@ -365,7 +367,7 @@ public final class Classes {
                 }
             }
         }
-        throw new NoSuchMethodError(returnType.getName() + " " + clazz.getName() + "." + name + "(" + Arrays.toString(parameterTypes, ",") + ")");
+        throw new NoSuchMethodError(returnType.getName() + " " + clazz.getName() + "." + name + "(" + Utils.toString(parameterTypes, ",") + ")");
     }
 
     /**
@@ -375,7 +377,7 @@ public final class Classes {
         try {
             return clazz.getDeclaredMethod(name, parameterTypes);
         } catch (NoSuchMethodException noSuchMethodException) {
-            throw (NoSuchMethodError) new NoSuchMethodError(clazz.getName() + "." + name + "(" + Arrays.toString(parameterTypes, ",") + ")").initCause(noSuchMethodException);
+            throw (NoSuchMethodError) new NoSuchMethodError(clazz.getName() + "." + name + "(" + Utils.toString(parameterTypes, ",") + ")").initCause(noSuchMethodException);
         }
     }
 
@@ -386,7 +388,7 @@ public final class Classes {
         try {
             return clazz.getDeclaredConstructor(parameterTypes);
         } catch (NoSuchMethodException noSuchMethodException) {
-            throw (NoSuchMethodError) new NoSuchMethodError(clazz.getName() + "(" + Arrays.toString(parameterTypes, ",") + ")").initCause(noSuchMethodException);
+            throw (NoSuchMethodError) new NoSuchMethodError(clazz.getName() + "(" + Utils.toString(parameterTypes, ",") + ")").initCause(noSuchMethodException);
         }
     }
 

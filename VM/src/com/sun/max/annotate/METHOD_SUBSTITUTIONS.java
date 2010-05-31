@@ -21,9 +21,9 @@
 package com.sun.max.annotate;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -56,12 +56,12 @@ public @interface METHOD_SUBSTITUTIONS {
         /**
          * A map from a method that is substituted to the method that substitutes it.
          */
-        private static final GrowableMapping<ClassMethodActor, ClassMethodActor> originalToSubstitute = HashMapping.createIdentityMapping();
+        private static final HashMap<ClassMethodActor, ClassMethodActor> originalToSubstitute = new HashMap<ClassMethodActor, ClassMethodActor>();
 
         /**
          * The converse mapping.
          */
-        private static final GrowableMapping<ClassMethodActor, ClassMethodActor> substituteToOriginal = HashMapping.createIdentityMapping();
+        private static final HashMap<ClassMethodActor, ClassMethodActor> substituteToOriginal = new HashMap<ClassMethodActor, ClassMethodActor>();
 
         /**
          * @param substitutee a class that has one or more methods to be substituted

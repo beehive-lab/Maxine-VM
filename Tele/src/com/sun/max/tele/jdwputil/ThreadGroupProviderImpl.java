@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.jdwputil;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -51,13 +52,13 @@ public class ThreadGroupProviderImpl implements ThreadGroupProvider {
     }
 
     public ThreadProvider[] getThreadChildren() {
-        final AppendableSequence<ThreadProvider> result = new LinkSequence<ThreadProvider>();
+        final List<ThreadProvider> result = new LinkedList<ThreadProvider>();
         for (TeleNativeThread t : teleVM.teleProcess().threads()) {
             if (t.isJava() == containsJavaThreads) {
-                result.append(t);
+                result.add(t);
             }
         }
-        return Sequence.Static.toArray(result, new ThreadProvider[result.length()]);
+        return result.toArray(new ThreadProvider[result.size()]);
     }
 
     public ThreadGroupProvider[] getThreadGroupChildren() {

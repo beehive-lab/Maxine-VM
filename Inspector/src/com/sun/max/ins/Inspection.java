@@ -29,7 +29,7 @@ import java.util.*;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
+import com.sun.cri.ci.*;
 import com.sun.max.ins.InspectionPreferences.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
@@ -313,6 +313,14 @@ public final class Inspection implements InspectionHolder {
     private MaxVMState lastVMStateProcessed = null;
 
     /**
+     * Gets a copy of the current set of inspection listeners. This is useful for iterating
+     * over the listeners where the body of the loop may change {@link #inspectionListeners}.
+     */
+    private InspectionListener[] copyInspectionListeners() {
+        return inspectionListeners.toArray(new InspectionListener[inspectionListeners.size()]);
+    }
+
+    /**
      * Handles reported changes in the {@linkplain MaxVM#state()  VM process state}.
      * Must only be run in AWT event thread.
      */
@@ -343,7 +351,7 @@ public final class Inspection implements InspectionHolder {
                 // Clear any possibly misleading view state.
                 focus().clearAll();
                 // Give all process-sensitive views a chance to shut down
-                for (InspectionListener listener : inspectionListeners.clone()) {
+                for (InspectionListener listener : copyInspectionListeners()) {
                     listener.vmProcessTerminated();
                 }
                 // Clear any possibly misleading view state.
@@ -406,7 +414,7 @@ public final class Inspection implements InspectionHolder {
             Runnable runnable = new Runnable() {
                 public void run() {
                     Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
-                    for (InspectionListener listener : inspectionListeners.clone()) {
+                    for (InspectionListener listener : copyInspectionListeners()) {
                         listener.breakpointStateChanged();
                     }
                     Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
@@ -431,7 +439,7 @@ public final class Inspection implements InspectionHolder {
             Runnable runnable = new Runnable() {
                 public void run() {
                     Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
-                    for (InspectionListener listener : inspectionListeners.clone()) {
+                    for (InspectionListener listener : copyInspectionListeners()) {
                         listener.watchpointSetChanged();
                     }
                     Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
@@ -466,7 +474,7 @@ public final class Inspection implements InspectionHolder {
         return currentAction != null ? currentAction.name() : INSPECTOR_NAME;
     }
 
-    private IdentityHashSet<InspectionListener> inspectionListeners = new IdentityHashSet<InspectionListener>();
+    private Set<InspectionListener> inspectionListeners = CiUtil.newIdentityHashSet();
 
     /**
      * Adds a listener for view update when VM state changes.
@@ -493,7 +501,7 @@ public final class Inspection implements InspectionHolder {
     public void refreshAll(boolean force) {
         Tracer tracer = null;
         // Additional listeners may come and go during the update cycle, which can be ignored.
-        for (InspectionListener listener : inspectionListeners.clone()) {
+        for (InspectionListener listener : copyInspectionListeners()) {
             if (Trace.hasLevel(TRACE_VALUE)) {
                 tracer = new Tracer("refresh: " + listener);
             }
