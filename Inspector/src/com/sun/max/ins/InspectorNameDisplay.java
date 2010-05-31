@@ -23,7 +23,6 @@ package com.sun.max.ins;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -445,7 +444,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * @param registers a possibly empty list of registers
      * @return a string containing the register names, separated by comma-space
      */
-    public String registerNameList(Sequence<MaxRegister> registers) {
+    public String registerNameList(List<MaxRegister> registers) {
         String nameList = "";
         for (MaxRegister register : registers) {
             if (nameList.length() > 0) {

@@ -23,6 +23,7 @@ package com.sun.max.ins.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -77,7 +78,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
     private final IdentityHashSet<TableColumnViewPreferenceListener> tableColumnViewPreferenceListeners =
         new IdentityHashSet<TableColumnViewPreferenceListener>();
 
-    private final IndexedSequence<ColumnKind_Type> columnTypeValues;
+    private final List<ColumnKind_Type> columnTypeValues;
 
     /**
      * Mode 1:  Global, persistent preferences.
@@ -94,7 +95,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
      */
     protected TableColumnVisibilityPreferences(Inspection inspection,
                     String name,
-                    IndexedSequence<ColumnKind_Type> columnTypeValues) {
+                    List<ColumnKind_Type> columnTypeValues) {
         this.inspection = inspection;
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         this.visibleColumns = new HashMap<ColumnKind_Type, Boolean>();
@@ -242,7 +243,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
      * Gets a panel that has controls for specifying which columns should be visible.
      */
     public JPanel getPanel() {
-        final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[columnTypeValues.length()];
+        final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[columnTypeValues.size()];
 
         final ItemListener itemListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {

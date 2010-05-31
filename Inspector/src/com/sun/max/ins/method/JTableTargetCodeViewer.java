@@ -76,7 +76,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
         this.tableModel = new TargetCodeTableModel(inspection, machineCode);
-        this.columns = new TableColumn[TargetCodeColumnKind.VALUES.length()];
+        this.columns = new TableColumn[TargetCodeColumnKind.VALUES.size()];
         instanceViewPreferences = new TargetCodeViewPreferences(TargetCodeViewPreferences.globalPreferences(inspection())) {
             @Override
             public void setIsVisible(TargetCodeColumnKind columnKind, boolean visible) {
@@ -310,7 +310,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     private final class TargetCodeTableColumnModel extends InspectorTableColumnModel<TargetCodeColumnKind> {
 
         private TargetCodeTableColumnModel(TargetCodeViewPreferences viewPreferences) {
-            super(TargetCodeColumnKind.VALUES.length(), viewPreferences);
+            super(TargetCodeColumnKind.VALUES.size(), viewPreferences);
             final Address startAddress = tableModel.rowToInstruction(0).address;
             addColumn(TargetCodeColumnKind.TAG, new TagRenderer(), null);
             addColumn(TargetCodeColumnKind.NUMBER, new NumberRenderer(), null);
@@ -338,7 +338,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public int getColumnCount() {
-            return TargetCodeColumnKind.VALUES.length();
+            return TargetCodeColumnKind.VALUES.size();
         }
 
         public int getRowCount() {

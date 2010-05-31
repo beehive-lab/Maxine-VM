@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.vm.actor.member.*;
@@ -61,9 +62,9 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
         if (bytecodeToTargetCodePositionMap == null) {
             return super.getPositionToBytecodeLocationMap();
         }
-        final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
+        final List<TargetCodeInstruction> instructions = getInstructions();
         int bytecodeIndex = 0; // position cursor in the original bytecode stream, used if we have a bytecode-> machine code map
-        for (int index = 0; index < instructions.length(); index++) {
+        for (int index = 0; index < instructions.size(); index++) {
             final TargetCodeInstruction instruction = instructions.get(index);
             // offset in bytes of this machine code instruction from beginning
             final int position = instruction.position;

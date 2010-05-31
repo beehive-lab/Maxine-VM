@@ -20,7 +20,9 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
+import com.sun.max.*;
 
 /**
  * Inspector support for a specific implementation of a {@link Scheme} in the VM.
@@ -40,6 +42,6 @@ public interface TeleScheme {
      *
      * @return descriptions of methods unique to a specific scheme implementation.
      */
-    Sequence<MaxCodeLocation> inspectableMethods();
+    List<MaxCodeLocation> inspectableMethods();
 
 }

@@ -33,7 +33,8 @@ import com.sun.max.vm.actor.member.*;
 public interface MaxCompiledCode extends MaxMachineCode<MaxCompiledCode> {
 
     /**
-     * @return the sequence number of this compilation
+     * @return the 0-based sequence number of this compilation among the
+     * possibly multiple compilations of the method.
      */
     int compilationIndex();
 

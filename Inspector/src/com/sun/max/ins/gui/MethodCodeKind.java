@@ -20,7 +20,7 @@
  */
 package com.sun.max.ins.gui;
 
-import com.sun.max.collect.*;
+import java.util.*;
 
 /**
  * Constants denoting the kinds of code that can be inspected for a method.
@@ -65,5 +65,5 @@ public enum MethodCodeKind {
         return defaultVisibility;
     }
 
-    public static final IndexedSequence<MethodCodeKind> VALUES = new ArraySequence<MethodCodeKind>(values());
+    public static final List<MethodCodeKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 }

@@ -23,12 +23,12 @@ package com.sun.max.ins.object;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
@@ -83,7 +83,7 @@ public final class ObjectFieldsTable extends InspectorTable {
                 return aOffset.compareTo(b.offset());
             }
         });
-        if (fieldActors.size() > 0) {
+        if (!fieldActors.isEmpty()) {
             startOffset =  this.fieldActors[0].offset();
             final FieldActor lastFieldActor = this.fieldActors[this.fieldActors.length - 1];
             endOffset = lastFieldActor.offset() + lastFieldActor.kind.width.numberOfBytes;
@@ -106,9 +106,9 @@ public final class ObjectFieldsTable extends InspectorTable {
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setFieldWatchpoint(teleObject, tableModel.rowToFieldActor(row), "Watch this field's memory").perform();
-                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
-                    if (watchpoints.length() > 0) {
-                        return watchpoints.first();
+                    final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (!watchpoints.isEmpty()) {
+                        return watchpoints.get(0);
                     }
                     return null;
                 }
@@ -126,9 +126,9 @@ public final class ObjectFieldsTable extends InspectorTable {
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setFieldWatchpoint(teleObject, tableModel.rowToFieldActor(row), "Watch this field's memory").perform();
-                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
-                    if (watchpoints.length() > 0) {
-                        return watchpoints.first();
+                    final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (!watchpoints.isEmpty()) {
+                        return watchpoints.get(0);
                     }
                     return null;
                 }
@@ -171,7 +171,7 @@ public final class ObjectFieldsTable extends InspectorTable {
     private final class ObjectFieldsTableColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 
         ObjectFieldsTableColumnModel(ObjectViewPreferences viewPreferences) {
-            super(ObjectColumnKind.VALUES.length(), viewPreferences);
+            super(ObjectColumnKind.VALUES.size(), viewPreferences);
             addColumn(ObjectColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(ObjectColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
             addColumn(ObjectColumnKind.OFFSET, new PositionRenderer(inspection()), null);
@@ -196,7 +196,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return ObjectColumnKind.VALUES.length();
+            return ObjectColumnKind.VALUES.size();
         }
 
         public int getRowCount() {

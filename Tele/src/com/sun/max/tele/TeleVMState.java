@@ -23,7 +23,6 @@ package com.sun.max.tele;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 
 /**
@@ -33,32 +32,33 @@ import com.sun.max.tele.debug.*;
  */
 public final class TeleVMState implements MaxVMState {
 
-    private static final Sequence<TeleNativeThread> EMPTY_THREAD_SEQUENCE = Sequence.Static.empty(TeleNativeThread.class);
-    private static final Collection<TeleNativeThread> EMPTY_THREAD_COLLECTION = Collections.emptyList();
-    private static final Sequence<MaxThread> EMPTY_MAXTHREAD_SEQUENCE  = Sequence.Static.empty(MaxThread.class);
-    private static final Sequence<MaxBreakpointEvent>   EMPTY_MAXBREAKPOINTEVENT_SEQUENCE = Sequence.Static.empty(MaxBreakpointEvent.class);
+    private static final List<TeleNativeThread> EMPTY_THREAD_LIST = Collections.emptyList();
+    private static final List<MaxThread> EMPTY_MAXTHREAD_LIST  = Collections.emptyList();
+    private static final List<TeleBreakpointEvent> EMPTY_BREAKPOINTEVENT_LIST = Collections.emptyList();
+    private static final List<MaxBreakpointEvent> EMPTY_MAXBREAKPOINTEVENT_LIST = Collections.emptyList();
+    private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
 
     public static final TeleVMState NONE = new TeleVMState(
         ProcessState.UNKNOWN,
         -1L,
-        Sequence.Static.empty(MaxMemoryRegion.class),
-        EMPTY_THREAD_COLLECTION,
+        EMPTY_MAXMEMORYREGION_LIST,
+        EMPTY_THREAD_LIST,
         (TeleNativeThread) null,
-        EMPTY_THREAD_SEQUENCE,
-        EMPTY_THREAD_SEQUENCE,
-        Sequence.Static.empty(TeleBreakpointEvent.class),
+        EMPTY_THREAD_LIST,
+        EMPTY_THREAD_LIST,
+        EMPTY_BREAKPOINTEVENT_LIST,
         (TeleWatchpointEvent) null,
         false, (TeleVMState) null);
 
     private final ProcessState processState;
     private final long serialID;
     private final long epoch;
-    private final Sequence<MaxMemoryRegion> memoryRegions;
-    private final Sequence<MaxThread> threads;
+    private final List<MaxMemoryRegion> memoryRegions;
+    private final List<MaxThread> threads;
     private final MaxThread singleStepThread;
-    private final Sequence<MaxThread> threadsStarted;
-    private final Sequence<MaxThread> threadsDied;
-    private final Sequence<MaxBreakpointEvent> breakpointEvents;
+    private final List<MaxThread> threadsStarted;
+    private final List<MaxThread> threadsDied;
+    private final List<MaxBreakpointEvent> breakpointEvents;
     private final MaxWatchpointEvent maxWatchpointEvent;
     private final boolean isInGC;
     private final TeleVMState previous;
@@ -79,12 +79,12 @@ public final class TeleVMState implements MaxVMState {
     public TeleVMState(
                     ProcessState processState,
                     long epoch,
-                    Sequence<MaxMemoryRegion> memoryRegions,
+                    List<MaxMemoryRegion> memoryRegions,
                     Collection<TeleNativeThread> threads,
                     TeleNativeThread singleStepThread,
-                    Sequence<TeleNativeThread> threadsStarted,
-                    Sequence<TeleNativeThread> threadsDied,
-                    Sequence<TeleBreakpointEvent> breakpointEvents,
+                    List<TeleNativeThread> threadsStarted,
+                    List<TeleNativeThread> threadsDied,
+                    List<TeleBreakpointEvent> breakpointEvents,
                     TeleWatchpointEvent teleWatchpointEvent,
                     boolean isInGC, TeleVMState previous) {
         this.processState = processState;
@@ -92,16 +92,32 @@ public final class TeleVMState implements MaxVMState {
         this.epoch = epoch;
 
         // Reuse old list of memory regions if unchanged
-        if (previous != null && Sequence.Static.equals(previous.memoryRegions, memoryRegions)) {
+        if (previous != null && previous.memoryRegions.equals(memoryRegions)) {
             this.memoryRegions = previous.memoryRegions;
         } else {
-            this.memoryRegions = new ArrayListSequence<MaxMemoryRegion>(memoryRegions);
+            this.memoryRegions = Collections.unmodifiableList(memoryRegions);
         }
 
         this.singleStepThread = singleStepThread;
-        this.threadsStarted = threadsStarted.length() == 0 ? EMPTY_MAXTHREAD_SEQUENCE : new ArrayListSequence<MaxThread>(threadsStarted);
-        this.threadsDied = threadsDied.length() == 0 ? EMPTY_MAXTHREAD_SEQUENCE : new ArrayListSequence<MaxThread>(threadsDied);
-        this.breakpointEvents = breakpointEvents.isEmpty() ? EMPTY_MAXBREAKPOINTEVENT_SEQUENCE : new ArrayListSequence<MaxBreakpointEvent>(breakpointEvents);
+
+        if (threadsStarted.size() == 0) {
+            this.threadsStarted = EMPTY_MAXTHREAD_LIST;
+        } else {
+            this.threadsStarted = Collections.unmodifiableList(new ArrayList<MaxThread>(threadsStarted));
+        }
+
+        if (threadsDied.size() == 0) {
+            this.threadsDied = EMPTY_MAXTHREAD_LIST;
+        } else {
+            this.threadsDied = Collections.unmodifiableList(new ArrayList<MaxThread>(threadsDied));
+        }
+
+        if (breakpointEvents.isEmpty()) {
+            this.breakpointEvents = EMPTY_MAXBREAKPOINTEVENT_LIST;
+        } else {
+            this.breakpointEvents = Collections.unmodifiableList(new ArrayList<MaxBreakpointEvent>(breakpointEvents));
+        }
+
         this.maxWatchpointEvent = teleWatchpointEvent;
         this.isInGC = isInGC;
         this.previous = previous;
@@ -109,13 +125,13 @@ public final class TeleVMState implements MaxVMState {
         // Compute the current active thread list.
         if (previous == null) {
             // First state transition in the history.
-            this.threads = new ArrayListSequence<MaxThread>(threadsStarted);
-        } else if (threadsStarted.length() + threadsDied.length() == 0)  {
-            // No changes since predecessor; share the thread list.
+            this.threads = Collections.unmodifiableList(new ArrayList<MaxThread>(threadsStarted));
+        } else if (threadsStarted.size() + threadsDied.size() == 0)  {
+            // No changes since predecessor; share the thread list.  This is the most common case.
             this.threads = previous.threads();
         } else {
             // There have been some thread changes; make a new (immutable) sequence for the new state
-            this.threads = new ArrayListSequence<MaxThread>(threads);
+            this.threads = Collections.unmodifiableList(new ArrayList<MaxThread>(threads));
         }
     }
 
@@ -131,11 +147,11 @@ public final class TeleVMState implements MaxVMState {
         return epoch;
     }
 
-    public Sequence<MaxMemoryRegion> memoryRegions() {
+    public List<MaxMemoryRegion> memoryRegions() {
         return memoryRegions;
     }
 
-    public Sequence<MaxThread> threads() {
+    public List<MaxThread> threads() {
         return threads;
     }
 
@@ -143,15 +159,15 @@ public final class TeleVMState implements MaxVMState {
         return singleStepThread;
     }
 
-    public Sequence<MaxThread> threadsStarted() {
+    public List<MaxThread> threadsStarted() {
         return threadsStarted;
     }
 
-    public  Sequence<MaxThread> threadsDied() {
+    public  List<MaxThread> threadsDied() {
         return threadsDied;
     }
 
-    public  Sequence<MaxBreakpointEvent> breakpointEvents() {
+    public  List<MaxBreakpointEvent> breakpointEvents() {
         return breakpointEvents;
     }
 
@@ -210,7 +226,7 @@ public final class TeleVMState implements MaxVMState {
             }
             if (state.previous() != null && state.threads() == state.previous().threads()) {
                 printStream.println("\tthreads active: <unchanged>");
-            } else if (state.threads().length() == 0) {
+            } else if (state.threads().size() == 0) {
                 printStream.println("\tthreads active: <empty>");
             } else {
                 printStream.println("\tthreads active:");
@@ -218,19 +234,19 @@ public final class TeleVMState implements MaxVMState {
                     printStream.println("\t\t" + thread.toShortString());
                 }
             }
-            if (state.threadsStarted().length() > 0) {
+            if (state.threadsStarted().size() > 0) {
                 printStream.println("\tthreads newly started:");
                 for (MaxThread thread : state.threadsStarted()) {
                     printStream.println("\t\t" + thread.toShortString());
                 }
             }
-            if (state.threadsDied().length() > 0) {
+            if (state.threadsDied().size() > 0) {
                 printStream.println("\tthreads newly died:");
                 for (MaxThread thread : state.threadsDied()) {
                     printStream.println("\t\t" + thread.toShortString());
                 }
             }
-            if (state.breakpointEvents().length() > 0) {
+            if (state.breakpointEvents().size() > 0) {
                 printStream.println("\tbreakpoint events");
                 for (MaxBreakpointEvent breakpointEvent : state.breakpointEvents()) {
                     printStream.println("\t\t" + breakpointEvent.toString());

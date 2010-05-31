@@ -23,7 +23,7 @@ package com.sun.max.tele;
 import static com.sun.max.tele.debug.ProcessState.*;
 
 import java.io.*;
-import java.lang.reflect.Constructor;
+import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -35,7 +35,7 @@ import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.jdwp.vm.core.*;
 import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.jdwp.vm.proxy.VMValue.*;
+import com.sun.max.jdwp.vm.proxy.VMValue.Type;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.*;
@@ -252,7 +252,7 @@ public abstract class TeleVM implements MaxVM {
             case CREATE:
                 final String value = options.vmArguments.getValue();
                 final String[] commandLineArguments = "".equals(value) ? new String[0] : value.trim().split(" ");
-                // Guest VM CREATE is more like ATTACH in that it needs the process id, but also may need to be advanced to entry point
+                // Guest VM CREATE is more like ATTACH in that it needs the process id, but also needs to be advanced to entry point
                 teleVM = create(bootImageFile, sourcepath, commandLineArguments, options.debuggeeIdOption.getValue());
                 teleVM.teleProcess().initializeState();
                 try {
@@ -263,12 +263,18 @@ public abstract class TeleVM implements MaxVM {
                 break;
 
             case ATTACH:
+            case DUMP:
+                /* TODO The fundamental difference in this mode is that VM has executed for a while.
+                 * This means that boot heap relocation has (almost certainly) been performed
+                 * AND the boot heap will contain references to the dynamic heap.
+                 * So the delicate dance that us normally performed when setting up the
+                 * TeleClassRegistry is neither necessary nor sufficient.
+                 */
                 teleVM = create(bootImageFile, sourcepath, null, options.debuggeeIdOption.getValue());
                 teleVM.teleProcess().initializeState();
                 break;
 
             case IMAGE:
-            case DUMP:
                 String heap = options.heapOption.getValue();
                 if (heap != null) {
                     assert System.getProperty(ReadOnlyTeleProcess.HEAP_PROPERTY) == null;
@@ -884,25 +890,25 @@ public abstract class TeleVM implements MaxVM {
                     long epoch,
                     TeleNativeThread singleStepThread,
                     Collection<TeleNativeThread> threads,
-                    Sequence<TeleNativeThread> threadsStarted,
-                    Sequence<TeleNativeThread> threadsDied,
-                    Sequence<TeleBreakpointEvent> breakpointEvents,
+                    List<TeleNativeThread> threadsStarted,
+                    List<TeleNativeThread> threadsDied,
+                    List<TeleBreakpointEvent> breakpointEvents,
                     TeleWatchpointEvent teleWatchpointEvent) {
 
         // Rebuild list of all allocated memory regions
-        final VariableSequence<MaxMemoryRegion> memoryRegions = new ArrayListSequence<MaxMemoryRegion>(teleVMState.memoryRegions().length());
+        final List<MaxMemoryRegion> memoryRegions = new ArrayListSequence<MaxMemoryRegion>(teleVMState.memoryRegions().size());
         for (MaxHeapRegion heapRegion : teleHeap.heapRegions()) {
-            memoryRegions.append(heapRegion.memoryRegion());
+            memoryRegions.add(heapRegion.memoryRegion());
         }
         if (teleHeap.rootsMemoryRegion() != null) {
-            memoryRegions.append(teleHeap.rootsMemoryRegion());
+            memoryRegions.add(teleHeap.rootsMemoryRegion());
         }
         for (MaxThread thread : threads) {
-            memoryRegions.append(thread.stack().memoryRegion());
-            memoryRegions.append(thread.localsBlock().memoryRegion());
+            memoryRegions.add(thread.stack().memoryRegion());
+            memoryRegions.add(thread.localsBlock().memoryRegion());
         }
         for (MaxCompiledCodeRegion compiledCodeRegion : teleCodeCache.compiledCodeRegions()) {
-            memoryRegions.append(compiledCodeRegion.memoryRegion());
+            memoryRegions.add(compiledCodeRegion.memoryRegion());
         }
 
         this.teleVMState = new TeleVMState(processState,
@@ -1494,11 +1500,9 @@ public abstract class TeleVM implements MaxVM {
         this.typesOnClasspath = typesOnClasspath;
     }
 
-    public final Sequence<MaxCodeLocation> inspectableMethods() {
-        final AppendableSequence<MaxCodeLocation> methods = new ArrayListSequence<MaxCodeLocation>(teleMethods.clientInspectableMethods());
-        for (MaxCodeLocation method : teleHeap.inspectableMethods()) {
-            methods.append(method);
-        }
+    public final List<MaxCodeLocation> inspectableMethods() {
+        final List<MaxCodeLocation> methods = new ArrayList<MaxCodeLocation>(teleMethods.clientInspectableMethods());
+        methods.addAll(teleHeap.inspectableMethods());
         return methods;
     }
 
