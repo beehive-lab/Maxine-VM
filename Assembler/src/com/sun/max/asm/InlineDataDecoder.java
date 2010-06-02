@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.asm.InlineDataDescriptor.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
 
@@ -62,14 +61,14 @@ public class InlineDataDecoder {
      * @return null if {@code inlineDataRecorder} does not contain any entries
      */
     public static InlineDataDecoder createFrom(InlineDataRecorder inlineDataRecorder) {
-        final Sequence<InlineDataDescriptor> descriptors = inlineDataRecorder.descriptors();
+        final List<InlineDataDescriptor> descriptors = inlineDataRecorder.descriptors();
         if (descriptors != null) {
             return new InlineDataDecoder(descriptors);
         }
         return null;
     }
 
-    public InlineDataDecoder(Sequence<InlineDataDescriptor> descriptors) {
+    public InlineDataDecoder(List<InlineDataDescriptor> descriptors) {
         positionToDescriptorMap = new TreeMap<Integer, InlineDataDescriptor>();
         for (InlineDataDescriptor descriptor : descriptors) {
             positionToDescriptorMap.put(descriptor.startPosition(), descriptor);

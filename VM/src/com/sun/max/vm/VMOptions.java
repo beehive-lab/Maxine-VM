@@ -25,10 +25,8 @@ import java.util.*;
 
 import sun.misc.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -293,7 +291,7 @@ public final class VMOptions {
     }
 
     @HOSTED_ONLY
-    private static VMOption[] addOption(VMOption[] options, VMOption option, Iterable<VMOption> allOptions) {
+    private static VMOption[] addOption(VMOption[] options, VMOption option, ArrayList<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
             final int prefixLength = option instanceof VMBooleanXXOption ? "-XX:+".length() : "-XX:".length();
             final String name = option.prefix.substring(prefixLength);
@@ -302,7 +300,7 @@ public final class VMOptions {
         for (VMOption existingOption : allOptions) {
             ProgramError.check(!existingOption.prefix.equals(option.prefix), "VM option prefix is not unique: " + option.prefix);
         }
-        return Arrays.append(options, option);
+        return Utils.concat(options, option);
     }
 
     /**
@@ -316,7 +314,7 @@ public final class VMOptions {
     @HOSTED_ONLY
     public static <T extends VMOption> T register(VMOption option, MaxineVM.Phase phase) {
         assert phase != null;
-        final Iterable<VMOption> allOptions =  Iterables.from(Arrays.append(pristinePhaseOptions, startingPhaseOptions));
+        final ArrayList<VMOption> allOptions = allOptions();
         if (phase == MaxineVM.Phase.PRISTINE) {
             pristinePhaseOptions = addOption(pristinePhaseOptions, option, allOptions);
         } else if (phase == MaxineVM.Phase.STARTING) {
@@ -327,7 +325,7 @@ public final class VMOptions {
         }
         option.findMatchingArgumentAndParse();
         final Class<T> type = null;
-        return StaticLoophole.cast(type, option);
+        return Utils.cast(type, option);
     }
 
     /**
@@ -592,12 +590,12 @@ public final class VMOptions {
     }
 
     /**
-     * Gets all the registered VM options as an {@code IterableWithLength} object.
-     *
-     * @return all the registered VM options as an {@code IterableWithLength} object
+     * Gets all the registered VM options as an {@code ArrayList} object.
      */
-    public static IterableWithLength<VMOption> allOptions() {
-        return Iterables.join(Arrays.iterable(pristinePhaseOptions), Arrays.iterable(startingPhaseOptions));
+    public static ArrayList<VMOption> allOptions() {
+        ArrayList<VMOption> result = new ArrayList<VMOption>(Arrays.asList(pristinePhaseOptions));
+        result.addAll(Arrays.asList(startingPhaseOptions));
+        return result;
     }
 
     /**

@@ -22,7 +22,7 @@ package com.sun.max.vm.bytecode;
 
 import java.util.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 
 /**
  * An efficient, meta-circular safe enum map for {@link BranchCondition} keys. Unlike {@link EnumMap}, this data
@@ -36,7 +36,7 @@ public class BranchConditionMap<Value_Type> implements Cloneable {
      * Defined at build image time so not subject to the meta-circular issues involved in calling the
      * {@code values()} on {@link BranchCondition}.
      */
-    private static final Object[] VALUES_PROTOTYPE = new Object[BranchCondition.VALUES.length()];
+    private static final Object[] VALUES_PROTOTYPE = new Object[BranchCondition.VALUES.size()];
 
     /**
      * The values for the {@link BranchCondition} keys. The value corresponding to a given key is at index {@code i} in
@@ -45,7 +45,7 @@ public class BranchConditionMap<Value_Type> implements Cloneable {
     protected final Value_Type[] values;
 
     public BranchConditionMap() {
-        values = StaticLoophole.cast(VALUES_PROTOTYPE.clone());
+        values = Utils.cast(VALUES_PROTOTYPE.clone());
     }
 
     /**

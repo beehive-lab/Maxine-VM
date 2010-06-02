@@ -20,7 +20,7 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.collect.*;
+import java.util.*;
 
 /**
  * Description of a region of memory in the VM that is used to represent some entity of interest in the VM.
@@ -60,7 +60,7 @@ public interface MaxEntityMemoryRegion<Entity_Type extends MaxEntity> extends Ma
      *
      * @return enclosed memory regions that represent entities in the VM
      */
-    IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> children();
+    List<MaxEntityMemoryRegion<? extends MaxEntity>> children();
 
     /**
      * Gets the VM entity that uses or is represented by this span of memory.

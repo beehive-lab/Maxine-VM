@@ -23,6 +23,7 @@ package com.sun.max.vm.cps.target;
 import java.io.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -30,8 +31,8 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
@@ -58,9 +59,9 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
      * @param javaFrameDescriptors the target Java frame descriptors to compress
      * @return a byte array encoding {@code javaFrameDescriptors} that can be {@linkplain #inflate(byte[]) inflated}
      */
-    public static byte[] compress(Sequence<TargetJavaFrameDescriptor> javaFrameDescriptors) {
-        final GrowableDeterministicSet<TargetJavaFrameDescriptor> parents = new LinkedIdentityHashSet<TargetJavaFrameDescriptor>();
-        final GrowableDeterministicSet<ClassMethodActor> methods = new LinkedIdentityHashSet<ClassMethodActor>();
+    public static byte[] compress(List<TargetJavaFrameDescriptor> javaFrameDescriptors) {
+        final LinkedIdentityHashSet<TargetJavaFrameDescriptor> parents = new LinkedIdentityHashSet<TargetJavaFrameDescriptor>();
+        final LinkedIdentityHashSet<ClassMethodActor> methods = new LinkedIdentityHashSet<ClassMethodActor>();
         int maxSlots = 0;
         for (TargetJavaFrameDescriptor descriptor : javaFrameDescriptors) {
             if (descriptor != null) {
@@ -70,7 +71,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
             }
         }
 
-        final GrowableMapping<JavaFrameDescriptor, Integer> descriptorToSerial = HashMapping.createIdentityMapping();
+        final Mapping<JavaFrameDescriptor, Integer> descriptorToSerial = HashMapping.createIdentityMapping();
         int parentSerial = FIRST_SERIAL;
         for (TargetJavaFrameDescriptor parent : parents) {
             methods.add(parent.classMethodActor);
@@ -79,7 +80,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
             parentSerial++;
         }
 
-        final GrowableMapping<ClassMethodActor, Integer> methodToSerial = HashMapping.createEqualityMapping();
+        final Mapping<ClassMethodActor, Integer> methodToSerial = HashMapping.createEqualityMapping();
         int methodSerial = 0;
         for (ClassMethodActor method : methods) {
             methodToSerial.put(method, methodSerial);
@@ -90,16 +91,16 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         try {
             final DataOutput stream = new DataOutputStream(byteArrayOutputStream);
             final Writer writer;
-            if (parentSerial <= CompactWriter.MAX_SERIAL && methodSerial <= CompactWriter.MAX_SERIAL && javaFrameDescriptors.length() <= CompactWriter.MAX_COUNT && maxSlots < CompactWriter.MAX_COUNT) {
+            if (parentSerial <= CompactWriter.MAX_SERIAL && methodSerial <= CompactWriter.MAX_SERIAL && javaFrameDescriptors.size() <= CompactWriter.MAX_COUNT && maxSlots < CompactWriter.MAX_COUNT) {
                 writer = new CompactWriter(stream, descriptorToSerial, methodToSerial);
                 stream.writeBoolean(true);
             } else {
                 writer = new Writer(stream, descriptorToSerial, methodToSerial);
                 stream.writeBoolean(false);
             }
-            writer.writeMethods(methods);
-            writer.writeDescriptors(parents);
-            writer.writeDescriptors(javaFrameDescriptors);
+            writer.writeMethods(methods, methods.size());
+            writer.writeDescriptors(parents, parents.size());
+            writer.writeDescriptors(javaFrameDescriptors, javaFrameDescriptors.size());
         } catch (IOException ioException) {
             ProgramError.unexpected(ioException);
         }
@@ -118,7 +119,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
      * @param descriptor the descriptor to add
      * @param descriptors the set to which {@code descriptor} and its parent chain should be added
      */
-    private static void gatherParents(TargetJavaFrameDescriptor descriptor, GrowableDeterministicSet<TargetJavaFrameDescriptor> descriptors) {
+    private static void gatherParents(TargetJavaFrameDescriptor descriptor, LinkedIdentityHashSet<TargetJavaFrameDescriptor> descriptors) {
         if (descriptor == null || descriptors.contains(descriptor)) {
             return;
         }
@@ -127,9 +128,9 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
     }
 
     @HOSTED_ONLY
-    private static void testInflation(Sequence<TargetJavaFrameDescriptor> original, byte[] compressedJavaFrameDescriptors) {
+    private static void testInflation(List<TargetJavaFrameDescriptor> original, byte[] compressedJavaFrameDescriptors) {
         try {
-            final Sequence<TargetJavaFrameDescriptor> inflated = inflate(compressedJavaFrameDescriptors);
+            final List<TargetJavaFrameDescriptor> inflated = inflate(compressedJavaFrameDescriptors);
             final Iterator<TargetJavaFrameDescriptor> originalIterator = original.iterator();
             final Iterator<TargetJavaFrameDescriptor> inflatedIterator = inflated.iterator();
             int index = 0;
@@ -149,10 +150,10 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
                 }
                 index++;
             }
-            if (index != original.length()) {
+            if (index != original.size()) {
                 ProgramError.unexpected("Less inflated descriptors than original");
             }
-            if (index != inflated.length()) {
+            if (index != inflated.size()) {
                 ProgramError.unexpected("More inflated descriptors than original");
             }
         } catch (Throwable throwable) {
@@ -168,12 +169,12 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
      * Inflates a byte array encoding a set of target Java frame descriptors.
      *
      * @param compressedJavaFrameDescriptors a byte array conforming to the format produced by
-     *            {@link #compress(Sequence)}
+     *            {@link #compress(List)}
      * @return an object containing the set of target Java frame descriptors decoded from
      *         {@code compressedJavaFrameDescriptors} and an estimation of the heap space occupied by the inflated
      *         descriptors
      */
-    private static Memoizer.Function.Result<IndexedSequence<TargetJavaFrameDescriptor>> inflateForMemoizer(byte[] compressedJavaFrameDescriptors) {
+    private static Memoizer.Function.Result<List<TargetJavaFrameDescriptor>> inflateForMemoizer(byte[] compressedJavaFrameDescriptors) {
         Size size = Size.zero();
         try {
             final DataInput stream = new DataInputStream(new ByteArrayInputStream(compressedJavaFrameDescriptors));
@@ -209,7 +210,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
             }
 
             final int length = reader.readCount();
-            final MutableSequence<TargetJavaFrameDescriptor> descriptors = new ArraySequence<TargetJavaFrameDescriptor>(length);
+            final List<TargetJavaFrameDescriptor> descriptors = Utils.newArrayAsList(length);
             size = size.plus(getSize(descriptors));
             for (int i = 0; i < length; i++) {
                 final int parentSerial = reader.readSerial();
@@ -232,7 +233,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
                     descriptors.set(i, descriptor);
                 }
             }
-            return new Memoizer.Function.Result<IndexedSequence<TargetJavaFrameDescriptor>>(descriptors, size);
+            return new Memoizer.Function.Result<List<TargetJavaFrameDescriptor>>(descriptors, size);
         } catch (IOException ioException) {
             throw ProgramError.unexpected(ioException);
         }
@@ -242,12 +243,12 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
      * Inflates a byte array encoding a set of target Java frame descriptors.
      *
      * @param compressedJavaFrameDescriptors a byte array conforming to the format produced by
-     *            {@link #compress(Sequence)}
+     *            {@link #compress(List)}
      * @return set of target Java frame descriptors decoded from {@code compressedJavaFrameDescriptors}
      */
-    public static IndexedSequence<TargetJavaFrameDescriptor> inflate(byte[] compressedJavaFrameDescriptors) {
+    public static List<TargetJavaFrameDescriptor> inflate(byte[] compressedJavaFrameDescriptors) {
         if (compressedJavaFrameDescriptors == null) {
-            return IndexedSequence.Static.empty(TargetJavaFrameDescriptor.class);
+            return Collections.emptyList();
         }
         return inflateForMemoizer(compressedJavaFrameDescriptors).value();
     }
@@ -276,17 +277,17 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         return size;
     }
 
-    private static final Memoizer.Function<CPSTargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> inflate = new Memoizer.Function<CPSTargetMethod, IndexedSequence<TargetJavaFrameDescriptor>>() {
+    private static final Memoizer.Function<CPSTargetMethod, List<TargetJavaFrameDescriptor>> inflate = new Memoizer.Function<CPSTargetMethod, List<TargetJavaFrameDescriptor>>() {
 
-        public Memoizer.Function.Result<IndexedSequence<TargetJavaFrameDescriptor>> create(CPSTargetMethod targetMethod) {
+        public Memoizer.Function.Result<List<TargetJavaFrameDescriptor>> create(CPSTargetMethod targetMethod) {
             return inflateForMemoizer(targetMethod.compressedJavaFrameDescriptors());
         }
     };
 
-    private static final Mapping<CPSTargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> methodToJavaFrameDescriptors = Memoizer.create(inflate);
+    private static final Mapping<CPSTargetMethod, List<TargetJavaFrameDescriptor>> methodToJavaFrameDescriptors = Memoizer.create(inflate);
 
     public static final TargetJavaFrameDescriptor get(CPSTargetMethod targetMethod, int index) {
-        final IndexedSequence<TargetJavaFrameDescriptor> indexedSequence = methodToJavaFrameDescriptors.get(targetMethod);
+        final List<TargetJavaFrameDescriptor> indexedSequence = methodToJavaFrameDescriptors.get(targetMethod);
         if (indexedSequence != null) {
             return indexedSequence.get(index);
         }
@@ -341,15 +342,15 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
             }
         }
 
-        public final void writeDescriptors(Sequence<TargetJavaFrameDescriptor> descriptors) throws IOException {
-            writeCount(descriptors.length());
+        public final void writeDescriptors(Iterable<TargetJavaFrameDescriptor> descriptors, int size) throws IOException {
+            writeCount(size);
             for (TargetJavaFrameDescriptor descriptor : descriptors) {
                 writeDescriptor(descriptor);
             }
         }
 
-        public final void writeMethods(Sequence<ClassMethodActor> methods) throws IOException {
-            writeCount(methods.length());
+        public final void writeMethods(Iterable<ClassMethodActor> methods, int size) throws IOException {
+            writeCount(size);
             for (ClassMethodActor method : methods) {
                 method.write(stream);
             }

@@ -20,12 +20,13 @@
  */
 package com.sun.max.asm.gen.risc.field;
 
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.util.*;
 
 /**
@@ -103,22 +104,22 @@ public class SymbolicOperandField<Argument_Type extends SymbolicArgument> extend
     }
 
     public Iterable<? extends Argument> getIllegalTestArguments() {
-        return Iterables.empty();
+        return Collections.emptyList();
     }
 
     @Override
     public SymbolicOperandField<Argument_Type> withExcludedExternalTestArguments(Argument... arguments) {
         final Class<SymbolicOperandField<Argument_Type>> type = null;
-        return StaticLoophole.cast(type, super.withExcludedExternalTestArguments(arguments));
+        return Utils.cast(type, super.withExcludedExternalTestArguments(arguments));
     }
 
     public TestArgumentExclusion excludeExternalTestArguments(Argument... arguments) {
-        return new TestArgumentExclusion(AssemblyTestComponent.EXTERNAL_ASSEMBLER, this, Sets.from(arguments));
+        return new TestArgumentExclusion(AssemblyTestComponent.EXTERNAL_ASSEMBLER, this, new HashSet<Argument>(Arrays.asList(arguments)));
     }
 
     @Override
     public SymbolicOperandField<Argument_Type> bindTo(Expression expression) {
         final Class<SymbolicOperandField<Argument_Type>> type = null;
-        return StaticLoophole.cast(type, super.bindTo(expression));
+        return Utils.cast(type, super.bindTo(expression));
     }
 }

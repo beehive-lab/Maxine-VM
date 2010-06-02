@@ -26,13 +26,13 @@ package com.sun.max.collect;
  *
  * @author Doug Simon
  */
-public class HashEntryChainedHashMapping<Key_Type, Value_Type> extends ChainedHashMapping<Key_Type, Value_Type> {
+public class HashEntryChainedHashMapping<K, V> extends ChainedHashMapping<K, V> {
 
-    public static class HashEntry<Key_Type, Value_Type> extends DefaultEntry<Key_Type, Value_Type> {
+    public static class HashEntry<K, V> extends DefaultEntry<K, V> {
 
         final int hashOfKey;
 
-        public HashEntry(int hashOfKey, Key_Type key, Value_Type value, Entry<Key_Type, Value_Type> next) {
+        public HashEntry(int hashOfKey, K key, V value, Entry<K, V> next) {
             super(key, value, next);
             this.hashOfKey = hashOfKey;
         }
@@ -46,7 +46,7 @@ public class HashEntryChainedHashMapping<Key_Type, Value_Type> extends ChainedHa
      * @param initialCapacity
      *            the initial capacity of the table
      */
-    public HashEntryChainedHashMapping(HashEquivalence<Key_Type> equivalence, int initialCapacity) {
+    public HashEntryChainedHashMapping(HashEquivalence<K> equivalence, int initialCapacity) {
         super(equivalence, initialCapacity);
     }
 
@@ -68,7 +68,7 @@ public class HashEntryChainedHashMapping<Key_Type, Value_Type> extends ChainedHa
      * @param equivalence
      *            the semantics of key comparison and hashing. If {@code null}, then {@link HashEquality} is used.
      */
-    public HashEntryChainedHashMapping(HashEquivalence<Key_Type> equivalence) {
+    public HashEntryChainedHashMapping(HashEquivalence<K> equivalence) {
         super(equivalence);
     }
 
@@ -81,13 +81,13 @@ public class HashEntryChainedHashMapping<Key_Type, Value_Type> extends ChainedHa
     }
 
     @Override
-    protected Entry<Key_Type, Value_Type> createEntry(int hashOfKey, Key_Type key, Value_Type value, Entry<Key_Type, Value_Type> next) {
-        return new HashEntryChainedHashMapping.HashEntry<Key_Type, Value_Type>(hashOfKey, key, value, next);
+    protected Entry<K, V> createEntry(int hashOfKey, K key, V value, Entry<K, V> next) {
+        return new HashEntryChainedHashMapping.HashEntry<K, V>(hashOfKey, key, value, next);
     }
 
     @Override
-    protected boolean matches(Entry<Key_Type, Value_Type> entry, Key_Type key, int hashForKey) {
-        final Key_Type entryKey = entry.key();
+    protected boolean matches(Entry<K, V> entry, K key, int hashForKey) {
+        final K entryKey = entry.key();
         return entryKey == key || (hashForKey == ((HashEntryChainedHashMapping.HashEntry) entry).hashOfKey && key.equals(entryKey));
     }
 }

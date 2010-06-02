@@ -22,7 +22,6 @@ package com.sun.max.vm.bytecode.graft;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
@@ -100,7 +99,7 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
         codeStream = new SeekableByteArrayOutputStream();
 
         final ExceptionDispatcher[] dispatcherMap = synthesizeExceptionDispatchers(codeAttribute.code(), codeAttribute.exceptionHandlerTable());
-        final Sequence<ExceptionHandlerEntry> exceptionDispatcherTable = exceptionDispatcherTable(dispatcherMap);
+        final ExceptionHandlerEntry[] exceptionDispatcherTable = exceptionDispatcherTable(dispatcherMap);
 
         fixup();
 
@@ -131,7 +130,7 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
         return result;
     }
 
-    private ExceptionDispatcher[] synthesizeExceptionDispatchers(byte[] code, Sequence<ExceptionHandlerEntry> exceptionHandlerEntries) {
+    private ExceptionDispatcher[] synthesizeExceptionDispatchers(byte[] code, ExceptionHandlerEntry[] exceptionHandlerEntries) {
         final ExceptionDispatcher[] dispatcherMap = new ExceptionDispatcher[code.length];
         final ExceptionHandler[] handlerMap = ExceptionHandler.createHandlerMap(code.length, exceptionHandlerEntries);
         final Map<ExceptionHandler, ExceptionDispatcher> handlerToDispatcherMap = new IdentityHashMap<ExceptionHandler, ExceptionDispatcher>();
@@ -158,8 +157,8 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
      * Gets a table of {@linkplain ExceptionHandlerEntry exception handlers}s that map ranges of bytecode to exception dispatchers.
      * Each dispatcher covers a disjoint range of code and not all code ranges are necessarily covered.
      */
-    private Sequence<ExceptionHandlerEntry> exceptionDispatcherTable(ExceptionDispatcher[] dispatcherMap) {
-        final AppendableSequence<ExceptionHandlerEntry> exceptionDispatcherTable = new ArrayListSequence<ExceptionHandlerEntry>();
+    private ExceptionHandlerEntry[] exceptionDispatcherTable(ExceptionDispatcher[] dispatcherMap) {
+        ArrayList<ExceptionHandlerEntry> table = new ArrayList<ExceptionHandlerEntry>();
         int i = 0;
         while (i < dispatcherMap.length) {
             final ExceptionDispatcher dispatcher = dispatcherMap[i];
@@ -170,12 +169,12 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
                     ++endAddress;
                 }
                 final ExceptionHandlerEntry dispatcherInfo = new ExceptionHandlerEntry(startAddress, endAddress, dispatcher.position(), 0);
-                exceptionDispatcherTable.append(dispatcherInfo);
+                table.add(dispatcherInfo);
                 i = endAddress;
             } else {
                 ++i;
             }
         }
-        return exceptionDispatcherTable;
+        return table.toArray(new ExceptionHandlerEntry[table.size()]);
     }
 }

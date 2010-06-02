@@ -23,7 +23,6 @@ package com.sun.max.tele;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
@@ -350,7 +349,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      *
      * @return possibly interesting, predefined methods.
      */
-    Sequence<MaxCodeLocation> inspectableMethods();
+    List<MaxCodeLocation> inspectableMethods();
 
     /**
      * @param id an id assigned to each heap object in the VM as needed, unique for the duration of a VM execution.

@@ -21,10 +21,10 @@
 package com.sun.max.asm.gen.cisc.ia32;
 
 import static com.sun.max.asm.gen.cisc.ia32.IA32ModRMGroup.*;
+import static com.sun.max.asm.gen.cisc.x86.HexByte.*;
 import static com.sun.max.asm.gen.cisc.x86.OperandCode.*;
 import static com.sun.max.asm.ia32.IA32GeneralRegister8.*;
 import static com.sun.max.asm.x86.SegmentRegister.*;
-import static com.sun.max.util.HexByte.*;
 
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.ia32.*;

@@ -22,11 +22,10 @@ package com.sun.max.asm.gen.risc;
 
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
 import com.sun.max.asm.gen.risc.field.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**
@@ -43,7 +42,7 @@ public abstract class RiscInstructionDescriptionCreator extends InstructionDescr
     }
 
     @Override
-    protected RiscInstructionDescription createInstructionDescription(MutableSequence<Object> specifications) {
+    protected RiscInstructionDescription createInstructionDescription(List<Object> specifications) {
         return new RiscInstructionDescription(specifications);
     }
 
@@ -103,7 +102,7 @@ public abstract class RiscInstructionDescriptionCreator extends InstructionDescr
     }
 
     private RiscInstructionDescription createSyntheticInstructionDescription(String name, RiscTemplate template, Object[] patterns) {
-        final List<Object> specifications = new ArrayListSequence<Object>(template.instructionDescription().specifications());
+        final List<Object> specifications = new ArrayList<Object>(template.instructionDescription().specifications());
         for (Object pattern : patterns) {
             if (!updateSpecifications(specifications, pattern)) {
                 // InstructionDescription with the same name, but different specifications, skip it:
@@ -112,8 +111,8 @@ public abstract class RiscInstructionDescriptionCreator extends InstructionDescr
             }
         }
         setFirstString(specifications, name);
-        final Class<MutableSequence<Object>> type = null;
-        return (RiscInstructionDescription) defineInstructionDescription(StaticLoophole.cast(type, specifications)).beSynthetic();
+        final Class<List<Object>> type = null;
+        return (RiscInstructionDescription) defineInstructionDescription(Utils.cast(type, specifications)).beSynthetic();
     }
 
     /**
@@ -126,16 +125,16 @@ public abstract class RiscInstructionDescriptionCreator extends InstructionDescr
      * @return the newly created instruction descriptions resulting from the substitution wrapped in a RiscInstructionDescriptionModifier
      */
     protected RiscInstructionDescriptionModifier synthesize(String name, String templateName, Object... patterns) {
-        final AppendableSequence<RiscInstructionDescription> instructionDescriptions = new ArrayListSequence<RiscInstructionDescription>();
+        final List<RiscInstructionDescription> instructionDescriptions = new ArrayList<RiscInstructionDescription>();
         // Creating a new VariableSequence here prevents iterator comodification below:
-        final Sequence<? extends RiscTemplate> nameTemplates = templateCreator.nameToTemplates(templateName);
+        final List<? extends RiscTemplate> nameTemplates = templateCreator.nameToTemplates(templateName);
         if (!nameTemplates.isEmpty()) {
-            final Sequence<RiscTemplate> templates = new ArrayListSequence<RiscTemplate>(nameTemplates);
+            final List<RiscTemplate> templates = new ArrayList<RiscTemplate>(nameTemplates);
             assert !templates.isEmpty();
             for (RiscTemplate template : templates) {
                 final RiscInstructionDescription instructionDescription = createSyntheticInstructionDescription(name, template, patterns);
                 if (instructionDescription != null) {
-                    instructionDescriptions.append(instructionDescription);
+                    instructionDescriptions.add(instructionDescription);
                 }
             }
         }

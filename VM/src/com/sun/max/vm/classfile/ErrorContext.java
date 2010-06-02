@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.classfile;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.thread.*;
@@ -80,47 +81,48 @@ public final class ErrorContext {
     private ErrorContext() {
     }
 
-    private static final ObjectThreadLocal<VariableSequence<Object>> ERROR_CONTEXTS = new ObjectThreadLocal<VariableSequence<Object>>("ERROR_CONTEXTS", "Nested error contexts during class loading") {
+    private static final ObjectThreadLocal<List<Object>> ERROR_CONTEXTS = new ObjectThreadLocal<List<Object>>("ERROR_CONTEXTS", "Nested error contexts during class loading") {
         @Override
-        protected com.sun.max.collect.VariableSequence<Object> initialValue() {
-            return new ArrayListSequence<Object>();
+        protected List<Object> initialValue() {
+            return new ArrayList<Object>();
         }
     };
 
-    private static VariableSequence<Object> makeContexts() {
+    private static List<Object> makeContexts() {
         return ERROR_CONTEXTS.get();
     }
 
     /**
      * Gets the current error contexts for the current thread.
      */
-    public static Sequence<Object> contexts() {
-        final VariableSequence<Object> contexts = ERROR_CONTEXTS.getWithoutInitialization();
+    public static List<Object> contexts() {
+        final List<Object> contexts = ERROR_CONTEXTS.getWithoutInitialization();
         if (contexts == null) {
-            return Sequence.Static.empty(Object.class);
+            return Collections.emptyList();
         }
         return contexts;
     }
 
     public static void enterContext(Object context) {
-        makeContexts().append(context);
+        makeContexts().add(context);
     }
 
     public static void exitContext() {
         try {
-            makeContexts().removeLast();
+            List<Object> contexts = makeContexts();
+            contexts.remove(contexts.size() - 1);
         } catch (IndexOutOfBoundsException e) {
             ProgramWarning.message("Unstructured use of error contexts");
         }
     }
 
     public static void perform(Object context, Runnable runnable) {
-        final VariableSequence<Object> contextStack = makeContexts();
-        contextStack.append(context);
+        final List<Object> contextStack = makeContexts();
+        contextStack.add(context);
         try {
             runnable.run();
         } finally {
-            contextStack.removeLast();
+            contextStack.remove(contextStack.size() - 1);
         }
     }
 
@@ -130,7 +132,9 @@ public final class ErrorContext {
             sb.append(message);
         }
         final String lineSeparator = System.getProperty("line.separator", "\n");
-        for (Object context : Sequence.Static.reverse(contexts())) {
+        List<Object> contexts = new ArrayList<Object>(contexts());
+        for (int i = contexts.size() - 1; i >= 0; --i) {
+            Object context = contexts.get(i);
             if (sb.length() != 0) {
                 sb.append(lineSeparator).append("    ");
             }

@@ -22,7 +22,6 @@ package com.sun.max.tele;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.memory.*;
@@ -109,7 +108,10 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
     // Keep track of the VM objects representing heap regions and the entities we use to model their state
     private final HashMap<TeleRuntimeMemoryRegion, TeleHeapRegion> regionToTeleHeapRegion = new HashMap<TeleRuntimeMemoryRegion, TeleHeapRegion>();
 
-    private volatile IndexedSequence<MaxHeapRegion> allHeapRegions;
+    /**
+     * Unmodifiable list of all currently known heap regions.
+     */
+    private volatile List<MaxHeapRegion> allHeapRegions;
 
     private Pointer teleRuntimeMemoryRegionRegistrationPointer = Pointer.zero();
 
@@ -119,6 +121,8 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
     private TeleFixedMemoryRegion rootsRegion = null;
 
     private final TeleHeapScheme teleHeapScheme;
+
+    private List<MaxCodeLocation> inspectableMethods = null;
 
     protected TeleHeap(TeleVM teleVM, TeleHeapScheme teleHeapScheme) {
         super(teleVM);
@@ -132,9 +136,9 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
         final Size bootHeapSize = Size.fromInt(vm().bootImage().header.heapSize);
         final TeleFixedHeapRegion provisionalBootHeapRegion =
             new TeleFixedHeapRegion(teleVM, "Fake Heap-boot region", bootHeapStart, bootHeapSize, true);
-        final VariableSequence<MaxHeapRegion> heapRegions = new ArrayListSequence<MaxHeapRegion>(1);
-        heapRegions.append(provisionalBootHeapRegion);
-        allHeapRegions = heapRegions;
+        final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>(1);
+        heapRegions.add(provisionalBootHeapRegion);
+        allHeapRegions = Collections.unmodifiableList(heapRegions);
     }
 
     /**
@@ -182,8 +186,8 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
             Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
             final long startTimeMillis = System.currentTimeMillis();
             updatingHeapMemoryRegions = true;
-            final VariableSequence<MaxHeapRegion> heapRegions = new ArrayListSequence<MaxHeapRegion>(allHeapRegions.length());
-            heapRegions.append(bootHeapRegion);
+            final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>(allHeapRegions.size());
+            heapRegions.add(bootHeapRegion);
             final Reference runtimeHeapRegionsArrayReference = vm().teleFields().InspectableHeapInfo_memoryRegions.readReference(vm());
             if (!runtimeHeapRegionsArrayReference.isZero()) {
                 final TeleArrayObject teleArrayObject = (TeleArrayObject) vm().makeTeleObject(runtimeHeapRegionsArrayReference);
@@ -196,10 +200,10 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
                         final TeleHeapRegion teleHeapRegion = regionToTeleHeapRegion.get(teleRegion);
                         if (teleHeapRegion != null) {
                             // We've seen this VM heap region object before and already have an entity that models the state
-                            heapRegions.append(teleHeapRegion);
+                            heapRegions.add(teleHeapRegion);
                         } else {
                             final TeleHeapRegion newTeleHeapRegion = new TeleHeapRegion(vm(), teleRegion, false);
-                            heapRegions.append(newTeleHeapRegion);
+                            heapRegions.add(newTeleHeapRegion);
                             regionToTeleHeapRegion.put(teleRegion, newTeleHeapRegion);
                         }
                         teleRuntimeMemoryRegions[next++] = teleRegion;
@@ -235,9 +239,9 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
                 }
             }
             if (immortalHeapRegion != null) {
-                heapRegions.append(immortalHeapRegion);
+                heapRegions.add(immortalHeapRegion);
             }
-            allHeapRegions = heapRegions;
+            allHeapRegions = Collections.unmodifiableList(heapRegions);
             Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
         }
     }
@@ -263,7 +267,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
             // In this situation we need only consult the boot heap region.
             // In particular, we must avoid any call to {@link TeleObject#make()}, which depends
             // on {@link TeleClassRegistry}, which probably hasn't been set up yet.
-            return allHeapRegions.first().contains(address);
+            return allHeapRegions.get(0).contains(address);
         }
         if (updatingHeapMemoryRegions) {
             // The call is nested within a call to {@link #refresh}, assume all is well in order
@@ -287,12 +291,12 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
         return immortalHeapRegion;
     }
 
-    public IndexedSequence<MaxHeapRegion> heapRegions() {
+    public List<MaxHeapRegion> heapRegions() {
         return allHeapRegions;
     }
 
     public MaxHeapRegion findHeapRegion(Address address) {
-        final IndexedSequence<MaxHeapRegion> heapRegions = allHeapRegions;
+        final List<MaxHeapRegion> heapRegions = allHeapRegions;
         for (MaxHeapRegion heapRegion : heapRegions) {
             if (heapRegion.memoryRegion().contains(address)) {
                 return heapRegion;
@@ -372,15 +376,16 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
         return teleHeapScheme.heapSchemeClass();
     }
 
-    public Sequence<MaxCodeLocation> inspectableMethods() {
-        final AppendableSequence<MaxCodeLocation> locations = new LinkSequence<MaxCodeLocation>();
-        locations.append(CodeLocation.createMachineCodeLocation(vm(), vm().teleMethods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
-        locations.append(CodeLocation.createMachineCodeLocation(vm(), vm().teleMethods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
-        // There may be implementation-specific methods of interest
-        for (MaxCodeLocation codeLocation : teleHeapScheme.inspectableMethods()) {
-            locations.append(codeLocation);
+    public List<MaxCodeLocation> inspectableMethods() {
+        if (inspectableMethods == null) {
+            final List<MaxCodeLocation> locations = new ArrayList<MaxCodeLocation>();
+            locations.add(CodeLocation.createMachineCodeLocation(vm(), vm().teleMethods().HeapScheme$Inspect_inspectableIncreaseMemoryRequested, "Increase heap memory"));
+            locations.add(CodeLocation.createMachineCodeLocation(vm(), vm().teleMethods().HeapScheme$Inspect_inspectableDecreaseMemoryRequested, "Decrease heap memory"));
+            // There may be implementation-specific methods of interest
+            locations.addAll(teleHeapScheme.inspectableMethods());
+            inspectableMethods = Collections.unmodifiableList(locations);
         }
-        return locations;
+        return inspectableMethods;
     }
 
     public Offset gcForwardingPointerOffset() {

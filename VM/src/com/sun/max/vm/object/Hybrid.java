@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -165,14 +164,7 @@ public abstract class Hybrid {
         if (MaxineVM.isHosted()) {
             assert intIndex >= firstIntIndex();
             final Expansion expansion = hybridToExpansion.get(this);
-            try {
-                return expansion.ints[intIndex];
-            } catch (RuntimeException e) {
-                for (Map.Entry<Hybrid, Expansion> entry : hybridToExpansion.entrySet()) {
-                    Trace.line(1, entry.getKey() + " -> Word[" + entry.getValue().words.length + "], int[" + entry.getValue().ints.length + "]");
-                }
-                throw ProgramError.unexpected("Error while accessing expansion for " + this, e);
-            }
+            return expansion.ints[intIndex];
         }
         return ArrayAccess.getInt(this, intIndex);
     }

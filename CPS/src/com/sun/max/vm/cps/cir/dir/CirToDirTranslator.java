@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.cps.cir.dir;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.cir.*;
@@ -56,7 +57,7 @@ public class CirToDirTranslator extends DirGenerator {
         }
 
         final CirToDirMethodTranslation translation = new CirToDirMethodTranslation(cirMethod.resultKind(), closure, dirMethod, this);
-        final IndexedSequence<DirBlock> dirBlocks = translation.translateMethod();
+        final List<DirBlock> dirBlocks = translation.translateMethod();
 
         final DirVariable[] dirParameters = new DirVariable[closure.parameters().length - 2]; // exclude continuations
         for (int i = 0; i < dirParameters.length; i++) {

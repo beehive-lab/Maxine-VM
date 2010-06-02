@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.tele;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.actor.holder.*;
 
 /**
@@ -54,7 +55,7 @@ public final class InspectableClassInfo {
                 classActors = new ClassActor[100];
             }
             if (classActorCount == classActors.length) {
-                classActors = Arrays.extend(classActors, classActorCount * 2);
+                classActors = Arrays.copyOf(classActors, classActorCount * 2);
             }
             // The classActor needs to be set up before we increment classActorCount
             // otherwise we have a race condition where the Inspector might see

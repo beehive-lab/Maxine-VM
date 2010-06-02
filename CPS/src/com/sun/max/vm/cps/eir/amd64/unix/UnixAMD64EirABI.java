@@ -23,9 +23,12 @@ package com.sun.max.vm.cps.eir.amd64.unix;
 import static com.sun.max.vm.cps.eir.amd64.AMD64EirRegister.General.*;
 import static com.sun.max.vm.cps.eir.amd64.AMD64EirRegister.XMM.*;
 
+import java.util.*;
+import java.util.Arrays;
+
+import com.sun.max.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
@@ -52,17 +55,17 @@ import com.sun.max.vm.type.*;
  */
 public abstract class UnixAMD64EirABI extends AMD64EirABI {
 
-    private static final IndexedSequence<AMD64EirRegister> generalParameterRegisters = new ArraySequence<AMD64EirRegister>(RDI, RSI, RDX, RCX, R8, R9);
+    private static final List<AMD64EirRegister> generalParameterRegisters = Arrays.asList(new AMD64EirRegister[] {RDI, RSI, RDX, RCX, R8, R9});
 
     @Override
-    public Sequence<AMD64EirRegister> integerParameterRegisters() {
+    public List<AMD64EirRegister> integerParameterRegisters() {
         return generalParameterRegisters;
     }
 
-    private static final IndexedSequence<AMD64EirRegister> xmmParameterRegisters = new ArraySequence<AMD64EirRegister>(XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7);
+    private static final List<AMD64EirRegister> xmmParameterRegisters = Arrays.asList(new AMD64EirRegister[] {XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7});
 
     @Override
-    public Sequence<AMD64EirRegister> floatingPointParameterRegisters() {
+    public List<AMD64EirRegister> floatingPointParameterRegisters() {
         return xmmParameterRegisters;
     }
 
@@ -81,7 +84,7 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
                 case LONG:
                 case WORD:
                 case REFERENCE: {
-                    if (iGeneral < generalParameterRegisters.length()) {
+                    if (iGeneral < generalParameterRegisters.size()) {
                         result[i] = generalParameterRegisters.get(iGeneral);
                         iGeneral++;
                     }
@@ -89,7 +92,7 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
                 }
                 case FLOAT:
                 case DOUBLE: {
-                    if (iXMM < xmmParameterRegisters.length()) {
+                    if (iXMM < xmmParameterRegisters.size()) {
                         result[i] = xmmParameterRegisters.get(iXMM);
                         iXMM++;
                     }
@@ -153,8 +156,8 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
     }
 
     private static AMD64GeneralRegister64[] getTargetIntegerParameterRegisters() {
-        final AMD64GeneralRegister64[] result = new AMD64GeneralRegister64[generalParameterRegisters.length()];
-        for (int i = 0; i < generalParameterRegisters.length(); i++) {
+        final AMD64GeneralRegister64[] result = new AMD64GeneralRegister64[generalParameterRegisters.size()];
+        for (int i = 0; i < generalParameterRegisters.size(); i++) {
             final AMD64EirRegister.General r = (AMD64EirRegister.General) generalParameterRegisters.get(i);
             result[i] = r.as64();
         }
@@ -162,8 +165,8 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
     }
 
     private static AMD64XMMRegister[] getTargetFloatingPointParameterRegisters() {
-        final AMD64XMMRegister[] result = new AMD64XMMRegister[xmmParameterRegisters.length()];
-        for (int i = 0; i < xmmParameterRegisters.length(); i++) {
+        final AMD64XMMRegister[] result = new AMD64XMMRegister[xmmParameterRegisters.size()];
+        for (int i = 0; i < xmmParameterRegisters.size(); i++) {
             final AMD64EirRegister.XMM r = (AMD64EirRegister.XMM) xmmParameterRegisters.get(i);
             result[i] = r.as();
         }
@@ -177,7 +180,7 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
 
     private static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI(VMConfiguration vmConfiguration) {
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        return StaticLoophole.cast(type, vmConfiguration.targetABIsScheme().optimizedJavaABI);
+        return Utils.cast(type, vmConfiguration.targetABIsScheme().optimizedJavaABI);
     }
 
     protected UnixAMD64EirABI(VMConfiguration vmConfiguration) {

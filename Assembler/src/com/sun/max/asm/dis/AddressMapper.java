@@ -23,7 +23,6 @@ package com.sun.max.asm.dis;
 import java.util.*;
 
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 
 /**
  * A facility for mapping addresses to {@linkplain DisassembledLabel labels} and {@linkplain DisassembledObject
@@ -89,7 +88,7 @@ public class AddressMapper {
      * @param disassembledObject the disassembled object to consider
      */
     public void add(DisassembledObject disassembledObject) {
-        add(new ArraySequence<DisassembledObject>(new DisassembledObject[] {disassembledObject}));
+        add(Arrays.asList(new DisassembledObject[] {disassembledObject}));
     }
 
     /**
@@ -99,7 +98,7 @@ public class AddressMapper {
      *
      * @param disassembledObjects the disassembled objects to consider
      */
-    public synchronized void add(Sequence<DisassembledObject> disassembledObjects) {
+    public synchronized void add(List<DisassembledObject> disassembledObjects) {
         for (DisassembledObject disassembledObject : disassembledObjects) {
             final ImmediateArgument address = disassembledObject.startAddress();
             objectMap.put(address, disassembledObject);

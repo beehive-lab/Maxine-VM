@@ -31,9 +31,7 @@ import java.util.List;
 import javax.swing.*;
 
 import com.sun.max.*;
-import com.sun.max.collect.*;
 import com.sun.max.gui.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 
@@ -47,13 +45,13 @@ public class OptionsDialog extends JDialog {
 
     public static final int TEXT_FIELD_COLUMNS = 40;
 
-    protected abstract static class GUIOption<Value_Type> implements ItemListener {
-        protected final Option<Value_Type> option;
+    protected abstract static class GUIOption<T> implements ItemListener {
+        protected final Option<T> option;
         protected final JCheckBox guard;
         protected final JLabel label;
         protected JComponent input;
 
-        protected GUIOption(Option<Value_Type> opt) {
+        protected GUIOption(Option<T> opt) {
             this.option = opt;
             guard = new JCheckBox();
             label = new JLabel(option.getName());
@@ -91,9 +89,9 @@ public class OptionsDialog extends JDialog {
             label.setEnabled(enabled);
         }
 
-        public abstract Value_Type getValue() throws Option.Error;
+        public abstract T getValue() throws Option.Error;
 
-        public abstract void setValue(Value_Type value);
+        public abstract void setValue(T value);
 
         public void commitOption() {
             if (guard.isSelected()) {
@@ -372,15 +370,15 @@ public class OptionsDialog extends JDialog {
 
             final MaxPackageOptionType type = (MaxPackageOptionType) option.getType();
 
-            final AppendableSequence<MaxPackage> maxPackages = new LinkSequence<MaxPackage>();
+            final List<MaxPackage> maxPackages = new LinkedList<MaxPackage>();
             for (MaxPackage maxPackage : type.superPackage.getTransitiveSubPackages(Classpath.fromSystem())) {
-                final Class<Scheme> schemeClass = StaticLoophole.cast(type.classType);
+                final Class<Scheme> schemeClass = Utils.cast(type.classType);
                 if (maxPackage.schemeTypeToImplementation(schemeClass) != null) {
-                    maxPackages.append(maxPackage);
+                    maxPackages.add(maxPackage);
                 }
             }
 
-            final MaxPackage[] pkgs = Sequence.Static.toArray(maxPackages, new MaxPackage[maxPackages.length()]);
+            final MaxPackage[] pkgs = maxPackages.toArray(new MaxPackage[maxPackages.size()]);
             Arrays.sort(pkgs, new Comparator<MaxPackage>() {
                 public int compare(MaxPackage o1, MaxPackage o2) {
                     return o1.name().compareTo(o2.name());
@@ -436,15 +434,15 @@ public class OptionsDialog extends JDialog {
             return new FileGUIOption(opt);
         }
         if (type instanceof OptionTypes.EnumType) {
-            final Option<Object> opt = StaticLoophole.cast(option);
+            final Option<Object> opt = Utils.cast(option);
             return new EnumGUIOption(opt);
         }
         if (type instanceof OptionTypes.ListType) {
-            final Option<List<Object>> opt = StaticLoophole.cast(option);
+            final Option<List<Object>> opt = Utils.cast(option);
             return new ListGUIOption(opt);
         }
         if (type instanceof MaxPackageOptionType) {
-            final Option<MaxPackage> opt = StaticLoophole.cast(option);
+            final Option<MaxPackage> opt = Utils.cast(option);
             return new PackageGUIOption(opt);
         }
         return null;

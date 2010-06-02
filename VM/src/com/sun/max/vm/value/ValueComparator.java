@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.value;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.vm.bytecode.*;
 
@@ -159,7 +160,7 @@ public enum ValueComparator {
         }
     };
 
-    public static final IndexedSequence<ValueComparator> VALUES = new ArraySequence<ValueComparator>(values());
+    public static final List<ValueComparator> VALUES = Arrays.asList(values());
     public abstract ValueComparator complement();
 
     /**

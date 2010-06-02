@@ -24,7 +24,6 @@ import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
@@ -88,12 +87,12 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
      * Map: Reference to {@link Object}s in the VM --> canonical local {@link TeleObject} that represents the
      * object in the VM. Relies on References being canonical and GC-safe.
      */
-    private  final GrowableMapping<Reference, WeakReference<TeleObject>> referenceToTeleObject = HashMapping.createIdentityMapping();
+    private  final Map<Reference, WeakReference<TeleObject>> referenceToTeleObject = new IdentityHashMap<Reference, WeakReference<TeleObject>>();
 
     /**
      * Map: OID --> {@link TeleObject}.
      */
-    private final GrowableMapping<Long, WeakReference<TeleObject>> oidToTeleObject = HashMapping.createEqualityMapping();
+    private final Map<Long, WeakReference<TeleObject>> oidToTeleObject = new HashMap<Long, WeakReference<TeleObject>>();
 
     /**
      * Constructors for specific classes of tuple objects in the heap in the {@teleVM}.
@@ -352,7 +351,9 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
 
         TimerPerType timePerType = new TimerPerType();
 
-        for (WeakReference<TeleObject> teleObjectRef : referenceToTeleObject.values()) {
+        // Make a copy to prevent ConcurrentModificationExceptions while iterating
+        ArrayList<WeakReference<TeleObject>> teleObjectRefs = new ArrayList<WeakReference<TeleObject>>(referenceToTeleObject.values());
+        for (WeakReference<TeleObject> teleObjectRef : teleObjectRefs) {
             if (teleObjectRef != null) {
                 TeleObject teleObject = teleObjectRef.get();
                 if (teleObject != null) {
@@ -364,7 +365,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
                 }
             }
         }
-        final int currentTeleObjectCount = referenceToTeleObject.length();
+        final int currentTeleObjectCount = referenceToTeleObject.size();
         final StringBuilder sb = new StringBuilder(100);
         sb.append(tracePrefix());
         sb.append("refreshing, count=").append(Integer.toString(currentTeleObjectCount));

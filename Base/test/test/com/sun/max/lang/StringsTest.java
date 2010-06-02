@@ -20,6 +20,9 @@
  */
 package test.com.sun.max.lang;
 
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
 
@@ -109,7 +112,7 @@ public class StringsTest extends MaxTestCase {
     private void assertSplitCommandEquals(String command, String... parts) {
         final String[] parsedParts = Strings.splitCommand(command);
         final boolean result = Arrays.equals(parsedParts, parts);
-        assertTrue(Arrays.toString(parsedParts, " "), result);
+        assertTrue(Utils.toString(parsedParts, " "), result);
     }
 
     private void assertSplitCommandThrowsException(String command) {

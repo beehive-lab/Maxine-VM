@@ -39,7 +39,6 @@ import test.com.sun.max.vm.ExternalCommand.*;
 import test.com.sun.max.vm.ExternalCommand.Result;
 import test.com.sun.max.vm.MaxineTesterConfiguration.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -95,7 +94,7 @@ public class MaxineTester {
                     "can be specified by appending a ':' followed by a '+' separated list of test name substrings. For example:\n\n" +
                     "-tests=specjvm98:jess+db,dacapo:pmd+fop\n\nwill " +
                     "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo benchmarks.\n\n" +
-                    "Output tests: " + MaxineTesterConfiguration.zeeOutputTests + "\n\n" +
+                    "Output tests: " + MaxineTesterConfiguration.zeeOutputTests.toString().replace("class ", "") + "\n\n" +
                     "Dacapo tests: " + MaxineTesterConfiguration.zeeDacapoTests + "\n\n" +
                     "SpecJVM98 tests: " + MaxineTesterConfiguration.zeeSpecjvm98Tests + "\n\n" +
                     "Shootout tests: " + MaxineTesterConfiguration.zeeShootoutTests);
@@ -437,7 +436,7 @@ public class MaxineTester {
             if (file.exists()) {
                 System.out.println("Only running the tests listed in " + file.getAbsolutePath());
                 try {
-                    return new HashSet<String>(Iterables.toCollection(Files.readLines(file)));
+                    return new HashSet<String>(Files.readLines(file));
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
@@ -535,7 +534,7 @@ public class MaxineTester {
     /**
      * A list of the {@linkplain JUnitHarness JUnit tests} that caused the Java process to exit with an exception.
      */
-    private static AppendableSequence<String> junitTestsWithExceptions = new ArrayListSequence<String>();
+    private static List<String> junitTestsWithExceptions = new ArrayList<String>();
 
     /**
      * Determines if {@linkplain #failFastOption fail fast} has been requested and at least one unexpected failure has
@@ -1084,7 +1083,7 @@ public class MaxineTester {
                 } else {
                     out.print(" (exit value == " + exitValue + ")");
                 }
-                junitTestsWithExceptions.append(junitTest);
+                junitTestsWithExceptions.add(junitTest);
             }
             final long runTime = System.currentTimeMillis() - start;
             out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
@@ -1107,7 +1106,7 @@ public class MaxineTester {
          */
         void parseAutoTestResults(File resultsFile, boolean passed, Set<String> unexpectedResults) {
             try {
-                final Sequence<String> lines = Files.readLines(resultsFile);
+                final List<String> lines = Files.readLines(resultsFile);
                 for (String testName : lines) {
                     final boolean expectedResult = addTestResult(testName, passed ? null : "failed", MaxineTesterConfiguration.expectedResult(testName, null));
                     if (unexpectedResults != null && !expectedResult) {
@@ -1183,7 +1182,7 @@ public class MaxineTester {
             String lastTestNumber = null;
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(outputFile));
-                AppendableSequence<String> failedLines = new ArrayListSequence<String>();
+                List<String> failedLines = new ArrayList<String>();
                 try {
                     while (true) {
                         String line = reader.readLine();
@@ -1219,7 +1218,7 @@ public class MaxineTester {
                             if (lastTest != null) {
                                 if (!addTestResult(lastTest, line)) {
                                     // add the line if it was not an expected failure
-                                    failedLines.append(line);
+                                    failedLines.add(line);
                                 }
                             }
                             lastTest = null;
@@ -1228,7 +1227,7 @@ public class MaxineTester {
                     }
                     if (lastTest != null) {
                         addTestResult(lastTest, "never returned a result");
-                        failedLines.append("\t" + lastTestNumber + ", " + lastTest + ": crashed or hung the VM");
+                        failedLines.add("\t" + lastTestNumber + ", " + lastTest + ": crashed or hung the VM");
                     }
                     if (failedLines.isEmpty()) {
                         return new JTResult("no unexpected failures", nextTestOption);

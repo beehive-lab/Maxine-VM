@@ -22,8 +22,8 @@ package com.sun.max.vm.cps.ir;
 
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -46,7 +46,7 @@ public abstract class IrGenerator<CompilerScheme_Type extends RuntimeCompilerSch
         this.irName = irName;
         Class<Class<IrMethod_Type>> type = null;
         try {
-            irMethodType = StaticLoophole.cast(type, getClass().getMethod("createIrMethod", ClassMethodActor.class).getReturnType());
+            irMethodType = Utils.cast(type, getClass().getMethod("createIrMethod", ClassMethodActor.class).getReturnType());
         } catch (Exception e) {
             throw FatalError.unexpected("Error getting exact IrMethod type for compiler", e);
         }

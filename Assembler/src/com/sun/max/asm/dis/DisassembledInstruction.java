@@ -20,9 +20,10 @@
  */
 package com.sun.max.asm.dis;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 
 /**
  * A assembly instruction in internal format, combined with the bytes that it was disassembled from.
@@ -38,9 +39,9 @@ public class DisassembledInstruction implements DisassembledObject {
     private final int startPosition;
     private final byte[] bytes;
     private final Template template;
-    private final IndexedSequence<Argument> arguments;
+    private final List<Argument> arguments;
 
-    public DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template template, IndexedSequence<Argument> arguments) {
+    public DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template template, List<Argument> arguments) {
         assert bytes.length != 0;
         this.disassembler = disassembler;
         this.startPosition = position;
@@ -80,7 +81,7 @@ public class DisassembledInstruction implements DisassembledObject {
         return true;
     }
 
-    public IndexedSequence<Argument> arguments() {
+    public List<Argument> arguments() {
         return arguments;
     }
 

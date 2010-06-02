@@ -29,10 +29,9 @@ import java.lang.reflect.*;
 import java.security.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -63,7 +62,7 @@ import com.sun.max.vm.value.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public final class ClassRegistry implements IterableWithLength<ClassActor> {
+public final class ClassRegistry {
 
     /**
      * The class registry associated with the boot class loader.
@@ -160,15 +159,13 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     private static ClassRegistry testClassRegistry;
 
     @INSPECTED
-    private final GrowableMapping<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new ChainedHashMapping<TypeDescriptor, ClassActor>(5000);
-    private final VariableMapping<Object, Object>[] propertyMaps;
+    private final HashMap<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new HashMap<TypeDescriptor, ClassActor>(5000);
+    private final HashMap<Object, Object>[] propertyMaps;
 
     public final ClassLoader classLoader;
 
     private ClassRegistry(ClassLoader classLoader) {
-        VariableMapping[] map = new VariableMapping[Property.VALUES.length()];
-        Class<VariableMapping<Object, Object>[]> type = null;
-        propertyMaps = StaticLoophole.cast(type, map);
+        propertyMaps = Utils.cast(new HashMap[Property.VALUES.size()]);
         for (Property property : Property.VALUES) {
             propertyMaps[property.ordinal()] = property.createMap();
         }
@@ -205,7 +202,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
             classActor = ClassfileReader.defineClassActor(name, HOSTED_BOOT_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry, false);
         }
         Class<ClassActor_Type> type = null;
-        return StaticLoophole.cast(type, classActor);
+        return Utils.cast(type, classActor);
     }
 
     @HOSTED_ONLY
@@ -283,7 +280,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         } else {
             methodActor = MethodActor.fromJava(Classes.getDeclaredMethod(declaringClass, name, parameterTypes));
         }
-        ProgramError.check(methodActor != null, "Could not find " + name + ".(" + Arrays.toString(parameterTypes) + ") in " + declaringClass);
+        ProgramError.check(methodActor != null, "Could not find " + name + ".(" + Utils.toString(parameterTypes, ", ") + ") in " + declaringClass);
         if (methodActor instanceof ClassMethodActor) {
             // Some of these methods are called during VM startup
             // so they are compiled in the image.
@@ -337,26 +334,35 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     }
 
     public int numberOfClassActors() {
-        return typeDescriptorToClassActor.length();
+        return typeDescriptorToClassActor.size();
     }
+
+    @HOSTED_ONLY
+    private ClassActor[] classesCache;
 
     /**
-     * This iterator is not thread-safe. It must not be used while any other thread could possibly
-     * {@linkplain #put(ClassActor) add} another class to the registry.
+     * Gets a snapshot of the classes currently in this registry. This method synchronizes
+     * on {@link #classLoader} associated with this registry to ensure it is not taking
+     * the snapshot while another thread is {@linkplain #put(ClassActor) adding} entries.
      */
-    public Iterator<ClassActor> iterator() {
-        return typeDescriptorToClassActor.values().iterator();
-    }
-
-    public int length() {
-        return numberOfClassActors();
+    @HOSTED_ONLY
+    public ClassActor[] copyOfClasses() {
+        synchronized (classLoader) {
+            int n = numberOfClassActors();
+            if (classesCache != null && classesCache.length == n) {
+                return classesCache;
+            }
+            classesCache = typeDescriptorToClassActor.values().toArray(new ClassActor[typeDescriptorToClassActor.size()]);
+            assert classesCache.length == n;
+            return classesCache;
+        }
     }
 
     /**
      * Adds a class to this registry.
      *
      * The caller must only add classes that are known to not already be in this registry.
-     * The best way to guarantee this is have this call be in a block that synchronizes on
+     * The only way to guarantee this is have this call be in a block that synchronizes on
      * {@link #classLoader} which first {@linkplain #get(TypeDescriptor) tests} whether
      * {@code classActor} is already in this registry.
      *
@@ -377,7 +383,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      * Adds a class to the registry associated with its class loader.
      *
      * The caller must only add classes that are known to not already be in the registry.
-     * The best way to guarantee this is have this call be in a block that synchronizes on
+     * The only way to guarantee this is have this call be in a block that synchronizes on
      * {@link #classLoader} which first {@linkplain #get(TypeDescriptor) tests} whether
      * {@code classActor} is already in the registry.
      *
@@ -460,7 +466,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         INVOCATION_STUB(false, MethodActor.class, GeneratedStub.class, null),
         RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES(MethodActor.class, byte[].class, MethodActor.NO_RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES);
 
-        public static final IndexedSequence<Property> VALUES = new ArraySequence<Property>(values());
+        public static final List<Property> VALUES = java.util.Arrays.asList(values());
 
         private final Class keyType;
         private final Class valueType;
@@ -493,8 +499,8 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
             this(true, keyType, valueType, defaultValue);
         }
 
-        VariableMapping<Object, Object> createMap() {
-            return new ChainedHashMapping<Object, Object>();
+        HashMap<Object, Object> createMap() {
+            return new HashMap<Object, Object>();
         }
 
         /**
@@ -504,7 +510,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
          * @param object the object for which the value of this property is to be retrieved
          * @param value the value to be set
          */
-        void set(VariableMapping<Object, Object> mapping, Object object, Object value) {
+        void set(HashMap<Object, Object> mapping, Object object, Object value) {
             assert keyType.isInstance(object);
             if (value != null) {
                 assert valueType.isInstance(value);
@@ -521,7 +527,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
          * @param mapping the mapping from keys to values for this property
          * @param object the object for which the value of this property is to be retrieved
          */
-        Object get(VariableMapping<Object, Object> mapping, Object object) {
+        Object get(HashMap<Object, Object> mapping, Object object) {
             assert keyType.isInstance(object);
             final Object value = mapping.get(object);
             if (value != null) {
@@ -543,7 +549,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      */
     public synchronized <Key_Type, Value_Type> Value_Type get(Property property, Key_Type object) {
         final Class<Value_Type> type = null;
-        return StaticLoophole.cast(type, property.get(propertyMaps[property.ordinal()], object));
+        return Utils.cast(type, property.get(propertyMaps[property.ordinal()], object));
     }
 
     public void trace(int level) {

@@ -21,8 +21,8 @@
 package com.sun.max.vm.cps.ir.interpreter.eir;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -488,7 +488,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
     protected static class TextTableColumn {
 
         private final String header;
-        private final AppendableIndexedSequence<String> entries = new ArrayListSequence<String>();
+        private final List<String> entries = new ArrayList<String>();
         private int width = 0;
 
         public TextTableColumn(String header) {
@@ -496,7 +496,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
         }
 
         public void add(String entry) {
-            entries.append(entry);
+            entries.add(entry);
             width = Math.max(width, entry.length());
         }
 
@@ -508,21 +508,21 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
             return width;
         }
 
-        public IndexedSequence<String> entries() {
+        public List<String> entries() {
             return entries;
         }
 
         public static void printTable(PrintStream stream, TextTableColumn... columns) {
             int height = 0;
             for (TextTableColumn column : columns) {
-                height = Math.max(height, column.entries().length());
+                height = Math.max(height, column.entries().size());
             }
 
             for (int i = 0; i != height; ++i) {
                 stream.print("                            ");
                 for (TextTableColumn column : columns) {
                     final int width = column.width() + 2;
-                    final String entry = i < column.entries().length() ? Strings.padLengthWithSpaces(column.entries().get(i), width) : Strings.spaces(width);
+                    final String entry = i < column.entries().size() ? Strings.padLengthWithSpaces(column.entries().get(i), width) : Strings.spaces(width);
                     stream.print(entry);
                 }
                 stream.println();

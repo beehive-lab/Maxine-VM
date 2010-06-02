@@ -22,9 +22,10 @@ package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 
+import java.util.*;
+
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -168,7 +169,7 @@ public final class VMRegister {
         Role() {
         }
 
-        public static final IndexedSequence<Role> VALUES = new ArraySequence<Role>(values());
+        public static final List<Role> VALUES = Arrays.asList(values());
 
         public Kind kind() {
             return null;

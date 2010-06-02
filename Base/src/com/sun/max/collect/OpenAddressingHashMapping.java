@@ -22,6 +22,7 @@ package com.sun.max.collect;
 
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.lang.*;
 
 /**
@@ -30,7 +31,7 @@ import com.sun.max.lang.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Type, Value_Type> implements VariableMapping<Key_Type, Value_Type> {
+public class OpenAddressingHashMapping<K, V> extends HashMapping<K, V> implements Mapping<K, V> {
 
     // Note: this implementation is partly derived from java.util.IdentityHashMap in the standard JDK
 
@@ -102,7 +103,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
      *            the semantics to be used for comparing keys. If {@code null} is provided, then {@link HashEquality} is
      *            used.
      */
-    public OpenAddressingHashMapping(HashEquivalence<Key_Type> equivalence) {
+    public OpenAddressingHashMapping(HashEquivalence<K> equivalence) {
         this(equivalence, (DEFAULT_CAPACITY * 2) / 3);
     }
 
@@ -129,7 +130,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
      * @throws IllegalArgumentException
      *             if {@code expectedMaximumSize} is negative
      */
-    public OpenAddressingHashMapping(HashEquivalence<Key_Type> equivalence, int expectedMaximumSize) {
+    public OpenAddressingHashMapping(HashEquivalence<K> equivalence, int expectedMaximumSize) {
         super(equivalence);
         if (expectedMaximumSize < 0) {
             throw new IllegalArgumentException("Illegal initial capacity: " + expectedMaximumSize);
@@ -180,7 +181,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
         return i + 2 < length ? i + 2 : 0;
     }
 
-    public Value_Type get(Key_Type key) {
+    public V get(K key) {
         if (key == null) {
             throw new IllegalArgumentException("Key cannot be null");
         }
@@ -191,11 +192,11 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
         int index = indexFor(hash, tbl.length);
         while (true) {
             final Object item = tbl[index];
-            final Class<Key_Type> keyType = null;
-            final Key_Type entryKey = StaticLoophole.cast(keyType, item);
+            final Class<K> keyType = null;
+            final K entryKey = Utils.cast(keyType, item);
             if (equivalent(entryKey, key)) {
-                final Class<Value_Type> valueType = null;
-                return StaticLoophole.cast(valueType, tbl[index + 1]);
+                final Class<V> valueType = null;
+                return Utils.cast(valueType, tbl[index + 1]);
             }
             if (item == null) {
                 return null;
@@ -204,7 +205,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
         }
     }
 
-    public Value_Type put(Key_Type key, Value_Type value) {
+    public V put(K key, V value) {
         if (key == null) {
             throw new IllegalArgumentException("Key cannot be null");
         }
@@ -219,11 +220,11 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
 
         Object item = tbl[index];
         while (item != null) {
-            final Class<Key_Type> keyType = null;
-            final Key_Type entryKey = StaticLoophole.cast(keyType, item);
+            final Class<K> keyType = null;
+            final K entryKey = Utils.cast(keyType, item);
             if (equivalent(entryKey, key)) {
-                final Class<Value_Type> valueType = null;
-                final Value_Type oldValue = StaticLoophole.cast(valueType, tbl[index + 1]);
+                final Class<V> valueType = null;
+                final V oldValue = Utils.cast(valueType, tbl[index + 1]);
                 tbl[index + 1] = value;
                 return oldValue;
             }
@@ -240,7 +241,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
 
     }
 
-    public Value_Type remove(Key_Type key) {
+    public V remove(K key) {
         if (key == null) {
             throw new IllegalArgumentException("Key cannot be null");
         }
@@ -252,12 +253,12 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
 
         while (true) {
             final Object item = tbl[index];
-            final Class<Key_Type> keyType = null;
-            final Key_Type entryKey = StaticLoophole.cast(keyType, item);
+            final Class<K> keyType = null;
+            final K entryKey = Utils.cast(keyType, item);
             if (equivalent(entryKey, key)) {
                 numberOfEntries--;
-                final Class<Value_Type> valueType = null;
-                final Value_Type oldValue =  StaticLoophole.cast(valueType, tbl[index + 1]);
+                final Class<V> valueType = null;
+                final V oldValue =  Utils.cast(valueType, tbl[index + 1]);
                 tbl[index + 1] = null;
                 tbl[index] = null;
                 return oldValue;
@@ -302,8 +303,8 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
         threshold = newLength / 3;
 
         for (int i = 0; i < oldLength; i += 2) {
-            final Class<Key_Type> keyType = null;
-            final Key_Type key = StaticLoophole.cast(keyType, oldTable[i]);
+            final Class<K> keyType = null;
+            final K key = Utils.cast(keyType, oldTable[i]);
             if (key != null) {
                 final Object value = oldTable[i + 1];
                 oldTable[i] = null;
@@ -361,32 +362,32 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
         }
     }
 
-    private class KeyIterator extends HashIterator<Key_Type> {
-        public Key_Type next() {
-            final Class<Key_Type> keyType = null;
-            return StaticLoophole.cast(keyType, table[nextIndex()]);
+    private class KeyIterator extends HashIterator<K> {
+        public K next() {
+            final Class<K> keyType = null;
+            return Utils.cast(keyType, table[nextIndex()]);
         }
     }
 
-    private class ValueIterator extends HashIterator<Value_Type> {
-        public Value_Type next() {
-            final Class<Value_Type> valueType = null;
-            return StaticLoophole.cast(valueType, table[nextIndex() + 1]);
+    private class ValueIterator extends HashIterator<V> {
+        public V next() {
+            final Class<V> valueType = null;
+            return Utils.cast(valueType, table[nextIndex() + 1]);
         }
     }
 
-    public IterableWithLength<Key_Type> keys() {
-        return new HashMappingIterable<Key_Type>() {
-            public Iterator<Key_Type> iterator() {
+    public IterableWithLength<K> keys() {
+        return new HashMappingIterable<K>() {
+            public Iterator<K> iterator() {
                 return new KeyIterator();
             }
         };
     }
 
     @Override
-    public IterableWithLength<Value_Type> values() {
-        return new HashMappingIterable<Value_Type>() {
-            public Iterator<Value_Type> iterator() {
+    public IterableWithLength<V> values() {
+        return new HashMappingIterable<V>() {
+            public Iterator<V> iterator() {
                 return new ValueIterator();
             }
         };

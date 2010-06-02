@@ -21,8 +21,8 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -45,7 +45,7 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      *
      * @return descriptions for all compiled code regions in the VM.
      */
-    IndexedSequence<MaxCompiledCodeRegion> compiledCodeRegions();
+    List<MaxCompiledCodeRegion> compiledCodeRegions();
 
     /**
      * Finds a code cache region by location.
@@ -83,7 +83,7 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
     /**
      * @return gets all compilations of a method in the VM, empty if none
      */
-    IndexedSequence<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor);
+    List<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor);
 
     /**
      * Gets the most recent compilation of a method in the VM, null if none.

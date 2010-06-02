@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -488,7 +487,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     }
 
     /**
-     * @see TargetJavaFrameDescriptor#compress(com.sun.max.collect.Sequence)
+     * @see TargetJavaFrameDescriptor#compress(java.util.List)
      */
     public final byte[] compressedJavaFrameDescriptors() {
         return compressedJavaFrameDescriptors;
@@ -506,7 +505,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         }
 
         if (!classMethodActor.isTemplate()) {
-            final IndexedSequence<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(compressedJavaFrameDescriptors);
+            final List<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(compressedJavaFrameDescriptors);
             final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
             for (int stopIndex = numberOfDirectCalls(); stopIndex < numberOfCalls; ++stopIndex) {
                 final BytecodeLocation location = frameDescriptors.get(stopIndex);
@@ -592,8 +591,8 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         if (compressedJavaFrameDescriptors != null) {
             writer.println("Frame Descriptors:");
             writer.indent();
-            final IndexedSequence<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(compressedJavaFrameDescriptors);
-            for (int stopIndex = 0; stopIndex < frameDescriptors.length(); ++stopIndex) {
+            final List<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(compressedJavaFrameDescriptors);
+            for (int stopIndex = 0; stopIndex < frameDescriptors.size(); ++stopIndex) {
                 final TargetJavaFrameDescriptor frameDescriptor = frameDescriptors.get(stopIndex);
                 final int stopPosition = stopPosition(stopIndex);
                 writer.println(stopPosition + ": " + frameDescriptor);

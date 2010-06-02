@@ -31,7 +31,7 @@ public class BirState extends State<Value> {
      * facilitate parameter passing.
      */
     public BirState() {
-        frames.append(new Frame());
+        frames.add(new Frame());
     }
 
     /**
@@ -53,7 +53,7 @@ public class BirState extends State<Value> {
      * Slices a specified number of frames from this state.
      */
     public BirState slice(int frameCount) {
-        return new BirState(this, this.frames.length() - frameCount, frameCount);
+        return new BirState(this, this.frames.size() - frameCount, frameCount);
     }
 
     @Override

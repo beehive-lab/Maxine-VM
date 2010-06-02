@@ -51,7 +51,7 @@ public class GraphPrototype extends Prototype {
     public final CompiledPrototype compiledPrototype;
     private final Map<Object, Link> objectToParent = new IdentityHashMap<Object, Link>();
     private LinkedList<Object> worklist = new LinkedList<Object>();
-    private Sequence<Object> fixedObjects;
+    private List<Object> fixedObjects;
 
     final IdentitySet<Object> objects = new IdentitySet<Object>(Ints.M);
     final Map<Class, ClassInfo> classInfos = new IdentityHashMap<Class, ClassInfo>();
@@ -201,8 +201,8 @@ public class GraphPrototype extends Prototype {
         final boolean instanceIsMutable;
         final boolean staticTupleIsMutable;
 
-        final Sequence<ReferenceFieldInfo> instanceFields;
-        final Sequence<ReferenceFieldInfo> staticFields;
+        final List<ReferenceFieldInfo> instanceFields;
+        final List<ReferenceFieldInfo> staticFields;
 
         ClassStats stats;
 
@@ -214,12 +214,12 @@ public class GraphPrototype extends Prototype {
         ClassInfo(Class clazz, ClassInfo superInfo) {
             this.clazz = clazz;
 
-            final AppendableSequence<ReferenceFieldInfo> instanceFields = new LinkSequence<ReferenceFieldInfo>();
-            final AppendableSequence<ReferenceFieldInfo> staticFields = new LinkSequence<ReferenceFieldInfo>();
+            final List<ReferenceFieldInfo> instanceFields = new LinkedList<ReferenceFieldInfo>();
+            final List<ReferenceFieldInfo> staticFields = new LinkedList<ReferenceFieldInfo>();
 
             if (superInfo != null) {
                 // propagate information from super class field lists to this new class info
-                AppendableSequence.Static.appendAll(instanceFields, superInfo.instanceFields);
+                instanceFields.addAll(superInfo.instanceFields);
             }
 
             // Need to iterate over the fields using actors instead of reflection otherwise we'll
@@ -245,7 +245,7 @@ public class GraphPrototype extends Prototype {
             return componentType != null && !componentType.isPrimitive() && !Word.class.isAssignableFrom(componentType);
         }
 
-        private static boolean addClassInfoFields(AppendableSequence<ReferenceFieldInfo> fieldInfos, FieldActor[] fieldActors) {
+        private static boolean addClassInfoFields(List<ReferenceFieldInfo> fieldInfos, FieldActor[] fieldActors) {
             boolean foundMutableField = false;
             for (FieldActor fieldActor : fieldActors) {
                 if (fieldActor.kind.isReference) {
@@ -254,12 +254,12 @@ public class GraphPrototype extends Prototype {
                     if (interceptedField != null) {
                         interceptedField.fieldActor = fieldActor;
                         fieldInfo = new InterceptedReferenceFieldInfo(interceptedField);
-                        fieldInfos.append(fieldInfo);
+                        fieldInfos.add(fieldInfo);
                     } else {
                         if (!fieldActor.isInjected()) {
                             try {
                                 fieldInfo = new ReflectedReferenceFieldInfo(fieldActor);
-                                fieldInfos.append(fieldInfo);
+                                fieldInfos.add(fieldInfo);
                             } catch (NoSuchFieldError noSuchFieldError) {
                                 ProgramWarning.message("Ignoring field hidden by JDK to reflection: " + fieldActor.format("%H.%n"));
                             }
@@ -315,7 +315,7 @@ public class GraphPrototype extends Prototype {
          * @return the static field of this class if {@code object} is a {@link StaticTuple} instance; otherwise the
          *         instance fields
          */
-        public Sequence<ReferenceFieldInfo> fieldInfos(Object object) {
+        public List<ReferenceFieldInfo> fieldInfos(Object object) {
             if (object instanceof StaticTuple) {
                 return staticFields;
             }
@@ -364,15 +364,15 @@ public class GraphPrototype extends Prototype {
      *
      * @return a collection of all objects in this graph
      */
-    public synchronized IterableWithLength<Object> objects() {
+    public synchronized List<Object> objects() {
         if (this.fixedObjects == null) {
-            final AppendableSequence<Object> fixedObjects = new ArrayListSequence<Object>(objects.numberOfElements());
+            final List<Object> fixedObjects = new ArrayList<Object>(objects.numberOfElements());
             for (Object object : objects) {
-                fixedObjects.append(object);
+                fixedObjects.add(object);
             }
             this.fixedObjects = fixedObjects;
         } else {
-            ProgramError.check(this.fixedObjects.length() == objects.numberOfElements());
+            ProgramError.check(this.fixedObjects.size() == objects.numberOfElements());
         }
         return this.fixedObjects;
     }
@@ -597,7 +597,7 @@ public class GraphPrototype extends Prototype {
         classRef.resolveClassActor();
     }
 
-    private void walkFields(Object object, Sequence<ReferenceFieldInfo> fieldInfos) throws ProgramError {
+    private void walkFields(Object object, List<ReferenceFieldInfo> fieldInfos) throws ProgramError {
         for (ReferenceFieldInfo fieldInfo : fieldInfos) {
             try {
                 final Object value = HostObjectAccess.hostToTarget(fieldInfo.getValue(object));

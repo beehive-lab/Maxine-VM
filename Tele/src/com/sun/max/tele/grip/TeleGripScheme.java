@@ -21,8 +21,8 @@
 package com.sun.max.tele.grip;
 
 import java.lang.ref.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -80,24 +80,32 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
      * apparent at the conclusion of a GC when the root table gets refreshed.  At that point, this map, which is intended
      * keep Grips canonical, is unreliable and must be rebuilt.  Duplicates may be discovered, which must then be resolved.
      */
-    private VariableMapping<Long, WeakReference<RemoteTeleGrip>> rawGripToRemoteTeleGrip = HashMapping.createVariableEqualityMapping();
+    private Map<Long, WeakReference<RemoteTeleGrip>> rawGripToRemoteTeleGrip = new HashMap<Long, WeakReference<RemoteTeleGrip>>();
 
     /**
      * Called by MutableTeleGrip.finalize() and CanonicalConstantTeleGrip.finalize().
      */
     synchronized void finalizeCanonicalConstantTeleGrip(CanonicalConstantTeleGrip canonicalConstantTeleGrip) {
-        rawGripToRemoteTeleGrip.remove(canonicalConstantTeleGrip.raw().toLong());
+        // This is not necessary; the loop below in refreshTeleGripCanonicalization() will remove
+        // a finalized grip. More importantly, this method will be most likely be called on a
+        // special VM thread used for running finalizers. In that case, modifying the map can
+        // cause a ConcurrentModificationException in refreshTeleGripCanonicalization().
+//        rawGripToRemoteTeleGrip.remove(canonicalConstantTeleGrip.raw().toLong());
     }
 
     /**
      * Rebuild the canonicalization table when we know that the raw (remote) bits of the remote location have changed by GC.
      */
     private void refreshTeleGripCanonicalization() {
-        final VariableMapping<Long, WeakReference<RemoteTeleGrip>> newMapping = HashMapping.createVariableEqualityMapping();
-        for (WeakReference<RemoteTeleGrip> r : rawGripToRemoteTeleGrip.values()) {
+        final Map<Long, WeakReference<RemoteTeleGrip>> newMap = new HashMap<Long, WeakReference<RemoteTeleGrip>>();
+
+        // Make a copy of the values in the map as the loop may alter the map by causing 'finalizeCanonicalConstantTeleGrip()'
+        // to be called as weak references are cleaned up.
+        ArrayList<WeakReference<RemoteTeleGrip>> remoteTeleGrips = new ArrayList<WeakReference<RemoteTeleGrip>>(rawGripToRemoteTeleGrip.values());
+        for (WeakReference<RemoteTeleGrip> r : remoteTeleGrips) {
             final RemoteTeleGrip remoteTeleGrip = r.get();
             if (remoteTeleGrip != null && !remoteTeleGrip.raw().equals(Word.zero())) {
-                WeakReference<RemoteTeleGrip> remoteTeleGripRef = newMapping.get(remoteTeleGrip.raw().toLong());
+                WeakReference<RemoteTeleGrip> remoteTeleGripRef = newMap.get(remoteTeleGrip.raw().toLong());
                 if (remoteTeleGripRef != null) {
                     RemoteTeleGrip alreadyInstalledRemoteTeleGrip = remoteTeleGripRef.get();
                     Log.println("Drop Duplicate: " + remoteTeleGrip.toString() + " " + alreadyInstalledRemoteTeleGrip.makeOID() + " " + remoteTeleGrip.makeOID());
@@ -112,15 +120,15 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
                     } else {
                         teleRoots.unregister(((MutableTeleGrip) alreadyInstalledRemoteTeleGrip).index());
                         ((MutableTeleGrip) alreadyInstalledRemoteTeleGrip).setForwardedTeleGrip(remoteTeleGrip);
-                        newMapping.put(remoteTeleGrip.raw().toLong(), r);
+                        newMap.put(remoteTeleGrip.raw().toLong(), r);
                     }
 
                 } else {
-                    newMapping.put(remoteTeleGrip.raw().toLong(), r);
+                    newMap.put(remoteTeleGrip.raw().toLong(), r);
                 }
             }
         }
-        rawGripToRemoteTeleGrip = newMapping;
+        rawGripToRemoteTeleGrip = newMap;
     }
 
     // TODO (mlvdv) Debug this and replace the above
@@ -225,7 +233,7 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
         teleRoots.unregister(index);
     }
 
-    private final VariableMapping<Object, WeakReference<LocalTeleGrip>> objectToLocalTeleGrip = HashMapping.createVariableIdentityMapping();
+    private final Map<Object, WeakReference<LocalTeleGrip>> objectToLocalTeleGrip = new HashMap<Object, WeakReference<LocalTeleGrip>>();
 
     /**
      * Called by LocalTeleGrip.finalize().

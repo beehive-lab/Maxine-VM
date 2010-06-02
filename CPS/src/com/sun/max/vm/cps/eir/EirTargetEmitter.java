@@ -22,6 +22,8 @@ package com.sun.max.vm.cps.eir;
 
 import static com.sun.max.asm.dis.Disassembler.*;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -92,15 +94,15 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         currentEirBlock = eirBlock;
     }
 
-    private final AppendableSequence<Label> catchRangeLabels = new LinkSequence<Label>();
+    private final List<Label> catchRangeLabels = new LinkedList<Label>();
 
-    public Sequence<Label> catchRangeLabels() {
+    public List<Label> catchRangeLabels() {
         return catchRangeLabels;
     }
 
-    private final AppendableIndexedSequence<EirBlock> catchBlocks = new ArrayListSequence<EirBlock>();
+    private final List<EirBlock> catchBlocks = new ArrayList<EirBlock>();
 
-    public IndexedSequence<EirBlock> catchBlocks() {
+    public List<EirBlock> catchBlocks() {
         return catchBlocks;
     }
 
@@ -113,8 +115,8 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         currentCatchBlock = catchBlock;
         final Label label = new Label();
         assembler.bindLabel(label);
-        catchRangeLabels.append(label);
-        catchBlocks.append(catchBlock);
+        catchRangeLabels.add(label);
+        catchBlocks.add(catchBlock);
     }
 
     public static class ExtraCallInfo {
@@ -129,9 +131,9 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         }
     }
 
-    final AppendableSequence<ExtraCallInfo> extraCallInfos = new LinkSequence<ExtraCallInfo>();
+    final List<ExtraCallInfo> extraCallInfos = new LinkedList<ExtraCallInfo>();
 
-    public Sequence<ExtraCallInfo> extraCallInfos() {
+    public List<ExtraCallInfo> extraCallInfos() {
         return extraCallInfos;
     }
 
@@ -139,19 +141,19 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         // TODO: Re-enable recording of reference calls once they are needed for deoptimization
         final boolean isReferenceCall = false && call.result() != null && call.result().eirValue().kind().isReference;
         if (isReferenceCall || call.isNativeFunctionCall) {
-            extraCallInfos.append(new ExtraCallInfo(label, isReferenceCall, call.isNativeFunctionCall));
+            extraCallInfos.add(new ExtraCallInfo(label, isReferenceCall, call.isNativeFunctionCall));
         }
     }
 
-    final AppendableSequence<Label> directCallLabels = new LinkSequence<Label>();
+    final List<Label> directCallLabels = new LinkedList<Label>();
 
-    public Sequence<Label> directCallLabels() {
+    public List<Label> directCallLabels() {
         return directCallLabels;
     }
 
-    private final AppendableSequence<EirCall> directCalls = new LinkSequence<EirCall>();
+    private final List<EirCall> directCalls = new LinkedList<EirCall>();
 
-    public Sequence<EirCall> directCalls() {
+    public List<EirCall> directCalls() {
         return directCalls;
     }
 
@@ -163,7 +165,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return result;
     }
 
-    private final GrowableMapping<EirJavaFrameDescriptor, TargetJavaFrameDescriptor> eirToTargetJavaFrameDescriptor = HashMapping.createEqualityMapping();
+    private final Mapping<EirJavaFrameDescriptor, TargetJavaFrameDescriptor> eirToTargetJavaFrameDescriptor = HashMapping.createEqualityMapping();
 
     private TargetJavaFrameDescriptor eirToTargetJavaFrameDescriptor(EirJavaFrameDescriptor eirJavaFrameDescriptor) {
         if (eirJavaFrameDescriptor == null) {
@@ -184,70 +186,70 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     public void addDirectCall(EirCall call) {
         final Label label = new Label();
         assembler.bindLabel(label);
-        directCallLabels.append(label);
-        directCalls.append(call);
+        directCallLabels.add(label);
+        directCalls.add(call);
         recordExtraCallInfo(call, label);
     }
 
-    final AppendableSequence<Label> indirectCallLabels = new LinkSequence<Label>();
+    final List<Label> indirectCallLabels = new LinkedList<Label>();
 
-    public Sequence<Label> indirectCallLabels() {
+    public List<Label> indirectCallLabels() {
         return indirectCallLabels;
     }
 
-    final AppendableSequence<EirCall> indirectCalls = new LinkSequence<EirCall>();
+    final List<EirCall> indirectCalls = new LinkedList<EirCall>();
 
-    public Sequence<EirCall> indirectCalls() {
+    public List<EirCall> indirectCalls() {
         return indirectCalls;
     }
 
     public void addIndirectCall(EirCall call) {
         final Label label = new Label();
         assembler.bindLabel(label);
-        indirectCallLabels.append(label);
-        indirectCalls.append(call);
+        indirectCallLabels.add(label);
+        indirectCalls.add(call);
         recordExtraCallInfo(call, label);
     }
 
-    private final AppendableSequence<Label> safepointLabels = new LinkSequence<Label>();
+    private final List<Label> safepointLabels = new LinkedList<Label>();
 
-    public Sequence<Label> safepointLabels() {
+    public List<Label> safepointLabels() {
         return safepointLabels;
     }
 
-    private final AppendableSequence<EirSafepoint> safepoints = new LinkSequence<EirSafepoint>();
+    private final List<EirSafepoint> safepoints = new LinkedList<EirSafepoint>();
 
-    Sequence<EirSafepoint> safepoints() {
+    List<EirSafepoint> safepoints() {
         return safepoints;
     }
 
     public void addSafepoint(EirSafepoint eirSafepoint) {
         final Label label = new Label();
         assembler.bindLabel(label);
-        safepointLabels.append(label);
-        safepoints.append(eirSafepoint);
+        safepointLabels.add(label);
+        safepoints.add(eirSafepoint);
     }
 
-    private final AppendableSequence<EirGuardpoint> guardpoints = new LinkSequence<EirGuardpoint>();
+    private final List<EirGuardpoint> guardpoints = new LinkedList<EirGuardpoint>();
 
-    Sequence<EirGuardpoint> guardpoints() {
+    List<EirGuardpoint> guardpoints() {
         return guardpoints;
     }
 
     public void addGuardpoint(EirGuardpoint guardpoint) {
-        guardpoints.append(guardpoint);
+        guardpoints.add(guardpoint);
     }
 
-    private void appendTargetJavaFrameDescriptors(Iterable<? extends EirStop> stops, AppendableSequence<TargetJavaFrameDescriptor> descriptors) {
+    private void appendTargetJavaFrameDescriptors(Iterable<? extends EirStop> stops, List<TargetJavaFrameDescriptor> descriptors) {
         for (EirStop stop : stops) {
             final EirJavaFrameDescriptor javaFrameDescriptor = stop.javaFrameDescriptor();
             assert javaFrameDescriptor != null : " stop " + stop + " is missing a Java frame descriptor";
-            descriptors.append(eirToTargetJavaFrameDescriptor(javaFrameDescriptor));
+            descriptors.add(eirToTargetJavaFrameDescriptor(javaFrameDescriptor));
         }
     }
 
-    private Sequence<TargetJavaFrameDescriptor> getTargetJavaFrameDescriptors() {
-        final AppendableSequence<TargetJavaFrameDescriptor> descriptors = new ArrayListSequence<TargetJavaFrameDescriptor>(directCalls.length() + indirectCalls.length() + safepoints.length() + guardpoints.length());
+    private List<TargetJavaFrameDescriptor> getTargetJavaFrameDescriptors() {
+        final List<TargetJavaFrameDescriptor> descriptors = new ArrayList<TargetJavaFrameDescriptor>(directCalls.size() + indirectCalls.size() + safepoints.size() + guardpoints.size());
         appendTargetJavaFrameDescriptors(directCalls, descriptors);
         appendTargetJavaFrameDescriptors(indirectCalls, descriptors);
         appendTargetJavaFrameDescriptors(safepoints, descriptors);

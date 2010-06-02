@@ -24,7 +24,7 @@ import static com.sun.max.vm.classfile.StackMapTable.*;
 
 import java.io.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.verifier.types.*;
@@ -115,8 +115,8 @@ public class FullFrame extends StackMapFrame {
         return "frame_type = " + frameType() + " /* full_frame */\n" +
                "  offset_delta = " + positionDelta() + "\n" +
                "  number_of_locals = " + locals.length + "\n" +
-               "  locals = [ " + Arrays.toString(locals, ", ") + " ]\n" +
+               "  locals = [ " + Utils.toString(locals, ", ") + " ]\n" +
                "  number_of_stack_items = " + stack.length + "\n" +
-               "  stack = [ " + Arrays.toString(stack, ", ") + " ]";
+               "  stack = [ " + Utils.toString(stack, ", ") + " ]";
     }
 }

@@ -20,9 +20,10 @@
  */
 package com.sun.max.asm.gen.risc;
 
+import java.util.*;
+
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.field.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
@@ -32,11 +33,11 @@ import com.sun.max.program.*;
  */
 public class RiscTemplate extends Template implements RiscInstructionDescriptionVisitor {
 
-    private final AppendableSequence<RiscField> allFields = new LinkSequence<RiscField>();
-    private final AppendableSequence<OperandField> operandFields = new LinkSequence<OperandField>();
-    private final AppendableSequence<OptionField> optionFields = new LinkSequence<OptionField>();
-    private final AppendableIndexedSequence<OperandField> parameters = new ArrayListSequence<OperandField>();
-    private final AppendableSequence<Option> options = new LinkSequence<Option>();
+    private final List<RiscField> allFields = new LinkedList<RiscField>();
+    private final List<OperandField> operandFields = new LinkedList<OperandField>();
+    private final List<OptionField> optionFields = new LinkedList<OptionField>();
+    private final List<OperandField> parameters = new ArrayList<OperandField>();
+    private final List<Option> options = new LinkedList<Option>();
 
     private int opcode;
     private int opcodeMask;
@@ -79,18 +80,18 @@ public class RiscTemplate extends Template implements RiscInstructionDescription
     }
 
     public void visitField(RiscField field) {
-        allFields.append(field);
+        allFields.add(field);
         if (field instanceof OperandField) {
             final OperandField operandField = (OperandField) field;
             if (field instanceof OffsetParameter) {
                 setLabelParameterIndex();
             }
             if (operandField.boundTo() == null) {
-                parameters.append(operandField);
+                parameters.add(operandField);
             }
-            operandFields.append(operandField);
+            operandFields.add(operandField);
         } else if (field instanceof OptionField) {
-            optionFields.append((OptionField) field);
+            optionFields.add((OptionField) field);
         } else if (field instanceof ReservedField) {
             organizeConstant(field, 0);
         } else {
@@ -116,7 +117,7 @@ public class RiscTemplate extends Template implements RiscInstructionDescription
         }
     }
 
-    public Sequence<OperandField> operandFields() {
+    public List<OperandField> operandFields() {
         return operandFields;
     }
 
@@ -128,13 +129,13 @@ public class RiscTemplate extends Template implements RiscInstructionDescription
         return opcodeMask;
     }
 
-    public Sequence<OptionField> optionFields() {
+    public List<OptionField> optionFields() {
         return optionFields;
     }
 
     public void addOptionField(OptionField f) {
-        allFields.append(f);
-        optionFields.append(f);
+        allFields.add(f);
+        optionFields.add(f);
     }
 
     public int specificity() {
@@ -151,7 +152,7 @@ public class RiscTemplate extends Template implements RiscInstructionDescription
             ProgramError.unexpected("Option: " + option.name() + " does not fit in field " + option.field().name());
         }
 
-        options.append(option);
+        options.add(option);
         if (option.isRedundant()) {
             this.canonicalRepresentative = canonicalRepresentative;
         }
@@ -168,12 +169,12 @@ public class RiscTemplate extends Template implements RiscInstructionDescription
     }
 
     @Override
-    public Sequence<Operand> operands() {
+    public List<Operand> operands() {
         throw ProgramError.unexpected("unimplemented");
     }
 
     @Override
-    public IndexedSequence<OperandField> parameters() {
+    public List<OperandField> parameters() {
         return parameters;
     }
 

@@ -20,10 +20,10 @@
  */
 package com.sun.max.vm.cps.jit.sparc;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -128,7 +128,7 @@ public class SPARCJitCompiler extends JitCompiler {
     @Override
     public <Type extends TargetMethod> Class<Type> compiledType() {
         Class<Class<Type>> type = null;
-        return StaticLoophole.cast(type, SPARCOptimizedTargetMethod.class);
+        return Utils.cast(type, SPARCOptimizedTargetMethod.class);
     }
 
     @Override

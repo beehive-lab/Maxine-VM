@@ -22,8 +22,8 @@ package com.sun.max.vm.cps.b.c;
 
 import static com.sun.max.vm.cps.cir.CirTraceObserver.TransformationType.*;
 
+import com.sun.max.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -141,7 +141,7 @@ public class BirToCirTranslator extends CirGenerator {
         if (compilerScheme().optimizing()) {
             CirInliningPolicy cirInliningPolicy = CirInliningPolicy.DYNAMIC;
             Class<Class<? extends Accessor>> type = null;
-            Class<? extends Accessor> accessor = StaticLoophole.cast(type, cirMethod.classMethodActor().accessor());
+            Class<? extends Accessor> accessor = Utils.cast(type, cirMethod.classMethodActor().accessor());
             if (accessor != null) {
                 cirInliningPolicy = new CirInliningPolicy(accessor);
             }

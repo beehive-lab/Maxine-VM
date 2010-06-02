@@ -21,8 +21,8 @@
 package com.sun.max.vm.cps.dir;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -42,14 +42,14 @@ public class DirMethod extends AbstractIrMethod {
     }
 
     private DirVariable[] parameters = null;
-    private IndexedSequence<DirBlock> blocks = null;
+    private List<DirBlock> blocks = null;
     private boolean usesMakeStackVariable;
 
     public DirVariable[] parameters() {
         return parameters;
     }
 
-    public IndexedSequence<DirBlock> blocks() {
+    public List<DirBlock> blocks() {
         return blocks;
     }
 
@@ -57,7 +57,7 @@ public class DirMethod extends AbstractIrMethod {
         return usesMakeStackVariable;
     }
 
-    public void setGenerated(DirVariable[] parameters, IndexedSequence<DirBlock> blocks, boolean usesMakeStackVariable) {
+    public void setGenerated(DirVariable[] parameters, List<DirBlock> blocks, boolean usesMakeStackVariable) {
         this.parameters = parameters;
         this.blocks = blocks;
         this.usesMakeStackVariable = usesMakeStackVariable;

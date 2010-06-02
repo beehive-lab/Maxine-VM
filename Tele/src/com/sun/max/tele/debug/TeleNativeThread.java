@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.logging.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
@@ -81,7 +80,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     /**
      * A cached stack trace for this thread, never null.
      */
-    private IndexedSequence<StackFrame> frames = IndexedSequence.Static.empty(StackFrame.class);
+    private List<StackFrame> frames = Collections.emptyList();
 
     /**
      * Only if this value is less than the {@linkplain TeleProcess#epoch() epoch} of this thread's tele process, does
@@ -279,16 +278,16 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     /**
      * @return the most currently refreshed frames on the thread's stack, never null.
      */
-    final IndexedSequence<StackFrame> frames() {
+    final List<StackFrame> frames() {
         final long currentProcessEpoch = teleProcess().epoch();
         if (framesRefreshedEpoch < currentProcessEpoch) {
             Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + currentProcessEpoch + ") for " + this);
             threadLocalsBlock.refresh();
-            final IndexedSequence<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.vm(), this).frames();
+            final List<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.vm(), this).frames();
             assert !newFrames.isEmpty();
             // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
             // frame may have changed.
-            if (newFrames.length() != this.frames.length()) {
+            if (newFrames.size() != this.frames.size()) {
                 // Clear structural change; lengths are different
                 framesLastChangedEpoch = currentProcessEpoch;
             } else {
@@ -322,7 +321,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
 
     /**
      * Updates this thread with the information information made available while
-     * {@linkplain TeleProcess#gatherThreads(AppendableSequence) gathering} threads. This information is made available
+     * {@linkplain TeleProcess#gatherThreads(List) gathering} threads. This information is made available
      * by the native tele layer as threads are discovered. Subsequent refreshing of cached thread state (such a
      * {@linkplain TeleRegisterSet#refresh() registers}, {@linkplain #refreshFrames(boolean) stack frames} and
      * {@linkplain #refreshThreadLocals() VM thread locals}) depends on this information being available and up to date.
@@ -413,7 +412,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      * Clears the current list of frames.
      */
     private synchronized void clearFrames() {
-        frames = IndexedSequence.Static.empty(StackFrame.class);
+        frames = Collections.emptyList();
         framesLastChangedEpoch = teleProcess().epoch();
     }
 
@@ -426,11 +425,11 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
             Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
             threadLocalsBlock.refresh();
             final TeleVM teleVM = teleProcess.vm();
-            final IndexedSequence<StackFrame> newFrames = new TeleStackFrameWalker(teleVM, this).frames();
+            final List<StackFrame> newFrames = new TeleStackFrameWalker(teleVM, this).frames();
             assert !newFrames.isEmpty();
             // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
             // frame may have changed.
-            if (newFrames.length() != this.frames.length()) {
+            if (newFrames.size() != this.frames.size()) {
                 // Clear structural change; lengths are different
                 framesLastChangedEpoch = processEpoch;
             } else {
@@ -708,7 +707,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         return getFrames()[depth];
     }
 
-    private Sequence<StackFrame> oldFrames;
+    private List<StackFrame> oldFrames;
 
     public synchronized FrameProvider[] getFrames() {
 
@@ -720,7 +719,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                 return frameCache;
             }
 
-            final AppendableSequence<FrameProvider> result = new LinkSequence<FrameProvider>();
+            final List<FrameProvider> result = new LinkedList<FrameProvider>();
             int z = 0;
             for (final StackFrame stackFrame : frames()) {
                 z++;
@@ -762,7 +761,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                         if (vm().findTeleMethodActor(TeleClassMethodActor.class, compiledCode.classMethodActor()) == null) {
                             LOGGER.warning("Could not find tele method!");
                         } else {
-                            result.append(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, null, compiledCode.classMethodActor(), 0));
+                            result.add(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, null, compiledCode.classMethodActor(), 0));
                         }
                     } else {
 
@@ -770,7 +769,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                             final TeleClassMethodActor curTma = vm().findTeleMethodActor(TeleClassMethodActor.class, descriptor.classMethodActor);
 
                             LOGGER.info("Found part frame " + descriptor + " tele method actor: " + curTma);
-                            result.append(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, descriptor));
+                            result.add(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, descriptor));
                             descriptor = descriptor.parent();
                         }
                     }
@@ -779,12 +778,12 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                     if (vm().findTeleMethodActor(TeleClassMethodActor.class, compiledCode.classMethodActor()) == null) {
                         LOGGER.warning("Could not find tele method!");
                     } else {
-                        result.append(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, null, compiledCode.classMethodActor(), 0));
+                        result.add(new FrameProviderImpl(z == 1, compiledCode.teleTargetMethod(), stackFrame, null, compiledCode.classMethodActor(), 0));
                     }
                 }
             }
 
-            frameCache = Sequence.Static.toArray(result, new FrameProvider[result.length()]);
+            frameCache = result.toArray(new FrameProvider[result.size()]);
             return frameCache;
         }
     }

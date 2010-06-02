@@ -20,7 +20,9 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
-import com.sun.max.collect.*;
+import java.util.*;
+import java.util.Arrays;
+
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -40,7 +42,7 @@ public class X86TemplateContext implements Cloneable {
         MOD_2,
         MOD_3;
 
-        public static final IndexedSequence<ModCase> VALUES = new ArraySequence<ModCase>(values());
+        public static final List<ModCase> VALUES = Arrays.asList(values());
 
         public int value() {
             return ordinal();
@@ -56,7 +58,7 @@ public class X86TemplateContext implements Cloneable {
         SWORD(6), // indirect signed 16-bit displacement, e.g. [disp16]; see "Table A-13. ModRM Memory References, 16-Bit Addressing"
         SDWORD(5); // indirect signed 32-bit displacement, e.g. [disp32] or [rIP+disp32]; see "Table A-15. ModRM Memory References, 32-Bit and 64-Bit Addressing"
 
-        public static final IndexedSequence<RMCase> VALUES = new ArraySequence<RMCase>(values());
+        public static final List<RMCase> VALUES = Arrays.asList(values());
 
         private final int rmFieldValue;
 
@@ -76,7 +78,7 @@ public class X86TemplateContext implements Cloneable {
         GENERAL_REGISTER, // index register specified
         NONE; // SIB index = 100b and REX.X = 0 - no index register specified
 
-        public static final IndexedSequence<SibIndexCase> VALUES = new ArraySequence<SibIndexCase>(values());
+        public static final List<SibIndexCase> VALUES = Arrays.asList(values());
     }
 
     /**
@@ -86,7 +88,7 @@ public class X86TemplateContext implements Cloneable {
         GENERAL_REGISTER, // general purpose register base
         SPECIAL; // /5 - immediate displacement base / rBP / r13)
 
-        public static final IndexedSequence<SibBaseCase> VALUES = new ArraySequence<SibBaseCase>(values());
+        public static final List<SibBaseCase> VALUES = Arrays.asList(values());
     }
 
     public X86TemplateContext() {

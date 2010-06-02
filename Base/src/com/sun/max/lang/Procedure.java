@@ -23,8 +23,8 @@ package com.sun.max.lang;
 /**
  * @author Bernd Mathiske
  */
-public interface Procedure<Argument_Type> {
+public interface Procedure<T> {
 
-    void run(Argument_Type argument);
+    void run(T argument);
 
 }

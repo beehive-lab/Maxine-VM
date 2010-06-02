@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.runtime.FatalError;
 
 /**
@@ -96,7 +97,7 @@ public enum StopType {
         }
     };
 
-    public static final IndexedSequence<StopType> VALUES = new ArraySequence<StopType>(values());
+    public static final List<StopType> VALUES = Arrays.asList(values());
 
     /**
      * Gets the index of the {@code n}th stop of this type in the {@linkplain TargetMethod#stopPositions() stop positions array} of a target method.

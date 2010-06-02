@@ -83,7 +83,7 @@ public abstract class TypeDescriptor extends Descriptor {
      * Searching and adding entries to this map is only performed by
      * {@linkplain #makeTypeDescriptor(String) one method} which synchronizes on the map before using it.
      */
-    private static final GrowableMapping<String, TypeDescriptorEntry> canonicalTypeDescriptors = new ChainingValueChainedHashMapping<String, TypeDescriptorEntry>();
+    private static final Mapping<String, TypeDescriptorEntry> canonicalTypeDescriptors = new ChainingValueChainedHashMapping<String, TypeDescriptorEntry>();
 
     static {
         for (Class c : Word.getSubclasses()) {

@@ -35,7 +35,7 @@ public abstract class TirMessage implements Cloneable {
         }
     }
 
-    protected TirMessage clone(GrowableMapping<TirMessage, TirMessage> map) {
+    protected TirMessage clone(Mapping<TirMessage, TirMessage> map) {
         if (isCloned(map)) {
             return map.get(this);
         }
@@ -44,7 +44,7 @@ public abstract class TirMessage implements Cloneable {
         return message;
     }
 
-    protected final boolean isCloned(GrowableMapping<TirMessage, TirMessage> map) {
+    protected final boolean isCloned(Mapping<TirMessage, TirMessage> map) {
         return map.containsKey(this);
     }
 

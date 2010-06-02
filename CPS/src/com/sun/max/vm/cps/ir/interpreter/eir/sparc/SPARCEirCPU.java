@@ -23,7 +23,6 @@ package com.sun.max.vm.cps.ir.interpreter.eir.sparc;
 import java.io.*;
 
 import com.sun.max.asm.sparc.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -47,7 +46,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
     public enum IntegerConditionFlag {
         C, V, Z, N;
 
-        public static final IndexedSequence<IntegerConditionFlag> VALUES = new ArraySequence<IntegerConditionFlag>(values());
+        public static final IntegerConditionFlag[] VALUES = values();
     }
 
     /**
@@ -56,7 +55,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
     public enum FCCValue {
         E, L, G, U;
 
-        public static final IndexedSequence<FCCValue> VALUES = new ArraySequence<FCCValue>(values());
+        public static final FCCValue[] VALUES = values();
     }
 
     /**
@@ -68,8 +67,8 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         final Value [] ins;
 
         RegisterWindow() {
-            locals = new Value[SPARCEirRegisters.GeneralPurpose.LOCAL_REGISTERS.length()];
-            ins = new Value[SPARCEirRegisters.GeneralPurpose.IN_REGISTERS.length()];
+            locals = new Value[SPARCEirRegisters.GeneralPurpose.LOCAL_REGISTERS.size()];
+            ins = new Value[SPARCEirRegisters.GeneralPurpose.IN_REGISTERS.size()];
         }
 
         private RegisterWindow(RegisterWindow registerWindow) {
@@ -136,16 +135,16 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
 
     public SPARCEirCPU(EirInterpreter interpreter) {
         super(interpreter);
-        generalRegisterContents = new Value[SPARCEirRegisters.GeneralPurpose.VALUES.length()];
+        generalRegisterContents = new Value[SPARCEirRegisters.GeneralPurpose.VALUES.size()];
 
         java.util.Arrays.fill(generalRegisterContents, WordValue.ZERO);
 
-        sFPRegisterContents = new Value[SPARCEirRegisters.SinglePrecision.SINGLE_PRECISION_VALUES.length()];
-        final int numberOfNonOverlappingDoubleRegister = SPARCEirRegisters.SinglePrecision.DOUBLE_PRECISION_VALUES.length() - SPARCEirRegisters.SinglePrecision.SINGLE_PRECISION_VALUES.length()  / 2;
+        sFPRegisterContents = new Value[SPARCEirRegisters.SinglePrecision.SINGLE_PRECISION_VALUES.size()];
+        final int numberOfNonOverlappingDoubleRegister = SPARCEirRegisters.SinglePrecision.DOUBLE_PRECISION_VALUES.size() - SPARCEirRegisters.SinglePrecision.SINGLE_PRECISION_VALUES.size()  / 2;
         dFPRegisterContents = new Value[numberOfNonOverlappingDoubleRegister];
 
-        icc = new boolean[IntegerConditionFlag.VALUES.length()];
-        xcc = new boolean[IntegerConditionFlag.VALUES.length()];
+        icc = new boolean[IntegerConditionFlag.VALUES.length];
+        xcc = new boolean[IntegerConditionFlag.VALUES.length];
         fcc = new FCCValue[FCCOperand.all().length];
 
         final EirABI abi = interpreter.abi();

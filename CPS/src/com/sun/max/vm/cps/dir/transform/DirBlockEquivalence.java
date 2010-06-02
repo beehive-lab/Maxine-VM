@@ -86,10 +86,10 @@ public final class DirBlockEquivalence {
         if (a.role() != b.role()) {
             return pair.makeFalse();
         }
-        if (a.instructions().length() != b.instructions().length()) {
+        if (a.instructions().size() != b.instructions().size()) {
             return pair.makeFalse();
         }
-        for (int i = 0; i < a.instructions().length(); i++) {
+        for (int i = 0; i < a.instructions().size(); i++) {
             if (!a.instructions().get(i).isEquivalentTo(b.instructions().get(i), this)) {
                 return pair.makeFalse();
             }

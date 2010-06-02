@@ -23,7 +23,7 @@ package com.sun.max.vm.heap.beltway.profile;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.profile.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
@@ -36,18 +36,18 @@ import com.sun.max.vm.*;
 public class HeapTimer {
 
     // HashMap that holds all timing facilities per collection
-    private static AppendableIndexedSequence<Map<String, SingleUseTimer>> timers;
+    private static List<Map<String, SingleUseTimer>> timers;
     private static String[] timersLabels;
     private static Clock clockType;
 
     public HeapTimer(String[] labels, Clock clockType) {
         timersLabels = labels;
         HeapTimer.clockType = clockType;
-        timers = new ArrayListSequence<Map<String, SingleUseTimer>>();
+        timers = new ArrayList<Map<String, SingleUseTimer>>();
     }
 
     public HeapTimer() {
-        timers = new ArrayListSequence<Map<String, SingleUseTimer>>();
+        timers = new ArrayList<Map<String, SingleUseTimer>>();
     }
 
     public static void initializeTimers(Clock clockType, String... labels) {
@@ -57,7 +57,7 @@ public class HeapTimer {
 
     public static void addCollectionProfiling() {
         final Map<String, SingleUseTimer> newTimerBuffer = initializeTimers();
-        timers.append(newTimerBuffer);
+        timers.add(newTimerBuffer);
     }
 
     private static Map<String, SingleUseTimer> initializeTimers() {
@@ -70,24 +70,24 @@ public class HeapTimer {
     }
 
     public static void startTimers() {
-        final Map<String, SingleUseTimer> timerBuffer = timers.last();
+        final Map<String, SingleUseTimer> timerBuffer = Utils.last(timers);
         for (int i = 0; i < timersLabels.length; i++) {
             timerBuffer.get(timersLabels[i]).start();
         }
     }
 
     public static void stopTimer(String timer) {
-        final Map<String, SingleUseTimer> timerBuffer = timers.last();
+        final Map<String, SingleUseTimer> timerBuffer = Utils.last(timers);
         timerBuffer.get(timer).stop();
     }
 
     public static void startTimer(String timer) {
-        final Map<String, SingleUseTimer> timerBuffer = timers.last();
+        final Map<String, SingleUseTimer> timerBuffer = Utils.last(timers);
         timerBuffer.get(timer).start();
     }
 
     public static void stopTimers() {
-        final Map<String, SingleUseTimer> timerBuffer = timers.last();
+        final Map<String, SingleUseTimer> timerBuffer = Utils.last(timers);
         for (int i = 0; i < timersLabels.length; i++) {
             timerBuffer.get(timersLabels[i]).stop();
         }
@@ -95,7 +95,7 @@ public class HeapTimer {
 
     public static void printLastCollection() {
         Log.println("Time statistics of Last Collections: ");
-        printCollection(timers.length());
+        printCollection(timers.size());
     }
 
     public static void printCollection(int collectionNum) {
@@ -109,7 +109,7 @@ public class HeapTimer {
 
     public static void printAllCollections() {
         Log.println("Time statistics of ALL Collections: ");
-        for (int i = 0; i < timers.length(); i++) {
+        for (int i = 0; i < timers.size(); i++) {
             printCollection(i);
         }
     }

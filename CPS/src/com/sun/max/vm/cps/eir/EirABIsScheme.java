@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.cps.eir;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
@@ -83,7 +84,7 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
         this.c2jFunctionABI = c2jFunctionABI;
         this.nativeABI = nativeABI;
         this.treeABI = treeABI;
-        assert Sequence.Static.containsIdentical(nativeABI.calleeSavedRegisters(), safepointLatchRegister());
+        assert Utils.indexOfIdentical(nativeABI.calleeSavedRegisters(), safepointLatchRegister()) != -1;
     }
 
     /**

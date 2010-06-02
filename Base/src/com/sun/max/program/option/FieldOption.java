@@ -20,7 +20,7 @@
  */
 package com.sun.max.program.option;
 
-import com.sun.max.lang.StaticLoophole;
+import com.sun.max.*;
 import com.sun.max.program.ProgramError;
 
 import java.lang.reflect.Field;
@@ -31,13 +31,13 @@ import java.lang.reflect.Field;
  *
  * @author Ben L. Titzer
  */
-public class FieldOption<Value_Type> extends Option<Value_Type> {
+public class FieldOption<T> extends Option<T> {
 
     protected final Object object;
     protected final Field field;
-    protected Value_Type nullValue;
+    protected T nullValue;
 
-    public FieldOption(String name, Object object, Field field, Value_Type defaultValue, Type<Value_Type> type, String help) {
+    public FieldOption(String name, Object object, Field field, T defaultValue, Type<T> type, String help) {
         super(name, defaultValue, type, help);
         this.object = object;
         this.field = field;
@@ -50,9 +50,9 @@ public class FieldOption<Value_Type> extends Option<Value_Type> {
      * @return the value of this option
      */
     @Override
-    public Value_Type getValue() {
+    public T getValue() {
         try {
-            return StaticLoophole.<Value_Type>cast(field.get(object));
+            return Utils.<T>cast(field.get(object));
         } catch (IllegalAccessException e) {
             throw ProgramError.unexpected(e);
         }
@@ -64,7 +64,7 @@ public class FieldOption<Value_Type> extends Option<Value_Type> {
      * @param value the value to set the new value to
      */
     @Override
-    public void setValue(Value_Type value) {
+    public void setValue(T value) {
         try {
             if (value == null) {
                 field.set(object, nullValue);

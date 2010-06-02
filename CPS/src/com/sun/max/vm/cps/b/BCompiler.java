@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.cps.b;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.bir.*;
@@ -48,7 +49,7 @@ public class BCompiler extends CPSAbstractCompiler implements BirGeneratorScheme
     }
 
     @Override
-    public Sequence<IrGenerator> irGenerators() {
-        return new ArraySequence<IrGenerator>(actorToBirTranslator);
+    public List<IrGenerator> irGenerators() {
+        return Collections.singletonList((IrGenerator) actorToBirTranslator);
     }
 }

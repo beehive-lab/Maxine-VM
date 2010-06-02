@@ -22,7 +22,6 @@ package com.sun.max.tele.object;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
@@ -94,10 +93,10 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      * @return local surrogates for all {@link TargetMethod}s in the VM that include code compiled for the
      *         method matching {@code methodKey}
      */
-    public static Sequence<TeleTargetMethod> get(TeleVM teleVM, MethodKey methodKey) {
+    public static List<TeleTargetMethod> get(TeleVM teleVM, MethodKey methodKey) {
         TeleClassActor teleClassActor = teleVM.findTeleClassActor(methodKey.holder());
         if (teleClassActor != null) {
-            final AppendableSequence<TeleTargetMethod> result = new LinkSequence<TeleTargetMethod>();
+            final List<TeleTargetMethod> result = new LinkedList<TeleTargetMethod>();
             for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
                 if (teleClassMethodActor.hasTargetMethod()) {
                     ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
@@ -105,7 +104,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                         for (int i = 0; i < teleClassMethodActor.numberOfCompilations(); ++i) {
                             TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCompilation(i);
                             if (teleTargetMethod != null) {
-                                result.append(teleTargetMethod);
+                                result.add(teleTargetMethod);
                             }
                         }
                     }
@@ -113,12 +112,12 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             }
             return result;
         }
-        return Sequence.Static.empty(TeleTargetMethod.class);
+        return Collections.emptyList();
     }
 
     private static final Map<TeleObject, TargetABI> abiCache = new HashMap<TeleObject, TargetABI>();
 
-    private IndexedSequence<TargetCodeInstruction> instructions;
+    private List<TargetCodeInstruction> instructions;
 
     /**
      * @see  StopPositions
@@ -155,7 +154,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     /**
      * @return disassembled target code instructions
      */
-    public final IndexedSequence<TargetCodeInstruction> getInstructions() {
+    public final List<TargetCodeInstruction> getInstructions() {
         if (instructions == null) {
             final byte[] code = getCode();
             if (code != null) {
@@ -311,13 +310,13 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         return null;
     }
 
-    public IndexedSequence<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
+    public List<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
         return null;
     }
 
     public TargetJavaFrameDescriptor getTargetFrameDescriptor(int instructionIndex) {
         final TargetCodeInstruction instruction = getInstructions().get(instructionIndex);
-        final IndexedSequence<TargetJavaFrameDescriptor> javaFrameDescriptors = getJavaFrameDescriptors();
+        final List<TargetJavaFrameDescriptor> javaFrameDescriptors = getJavaFrameDescriptors();
         if (javaFrameDescriptors != null) {
             final StopPositions stopPositions = getStopPositions();
             if (stopPositions != null) {
@@ -399,8 +398,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
     // [tw] Warning: duplicated code!
     public MachineCodeInstructionArray getTargetCodeInstructions() {
-        final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
-        final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
+        final List<TargetCodeInstruction> instructions = getInstructions();
+        final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.size()];
         for (int i = 0; i < result.length; i++) {
             final TargetCodeInstruction ins = instructions.get(i);
             result[i] = new MachineCodeInstruction(ins.mnemonic, ins.position, ins.address.toLong(), ins.label, ins.bytes, ins.operands, ins.getTargetAddressAsLong());

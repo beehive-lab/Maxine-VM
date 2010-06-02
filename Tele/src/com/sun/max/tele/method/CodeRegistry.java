@@ -95,7 +95,7 @@ final class CodeRegistry extends AbstractTeleVMHolder {
                 machineCodeMemoryRegions.add(memoryRegion);
             }
         }
-        final int entryCount = machineCodeMemoryRegions.length();
+        final int entryCount = machineCodeMemoryRegions.size();
         final int newEntryCount =  entryCount - previousEntryCount;
         previousEntryCount = entryCount;
         Trace.end(TRACE_VALUE, tracePrefix() + " refreshing, " + entryCount + " entries, " + newEntryCount + " new, "  + unallocatedMachineCodeMemoryRegions.size() + " unallocated");

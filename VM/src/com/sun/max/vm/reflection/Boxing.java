@@ -25,7 +25,7 @@ import static com.sun.max.vm.reflection.InvocationStubGenerator.*;
 
 import java.lang.reflect.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -148,7 +148,7 @@ public enum Boxing {
 
         @Override
         Class[] runtimeParameterTypes(Class[] parameterTypes, Class declaringClass, boolean isStatic, boolean isConstructor) {
-            return (isStatic || isConstructor) ? parameterTypes : Arrays.prepend(parameterTypes, declaringClass);
+            return (isStatic || isConstructor) ? parameterTypes : Utils.prepend(parameterTypes, declaringClass);
         }
 
         @Override

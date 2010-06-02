@@ -23,7 +23,6 @@ package com.sun.max.asm.sparc;
 import java.util.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.util.*;
 
 /**
@@ -71,14 +70,14 @@ public final class MembarOperand extends AbstractSymbolicArgument {
 
     public static final Symbolizer<MembarOperand> SYMBOLIZER = new Symbolizer<MembarOperand>() {
 
-        private final Sequence<MembarOperand> values = new ArraySequence<MembarOperand>(new MembarOperand[]{NO_MEMBAR, LOAD_LOAD, STORE_LOAD, LOAD_STORE, STORE_STORE, LOOKASIDE, MEM_ISSUE, SYNC});
+        private final List<MembarOperand> values = Arrays.asList(new MembarOperand[]{NO_MEMBAR, LOAD_LOAD, STORE_LOAD, LOAD_STORE, STORE_STORE, LOOKASIDE, MEM_ISSUE, SYNC});
 
         public Class<MembarOperand> type() {
             return MembarOperand.class;
         }
 
         public int numberOfValues() {
-            return values.length();
+            return values.size();
         }
 
         public MembarOperand fromValue(int value) {

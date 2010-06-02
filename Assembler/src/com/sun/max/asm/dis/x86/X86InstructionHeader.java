@@ -24,9 +24,7 @@ import java.util.*;
 
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.x86.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.util.*;
 
 /**
  * Info about the first few bytes of an x86 instruction,
@@ -91,16 +89,16 @@ public class X86InstructionHeader {
         return result;
     }
 
-    public static Map<X86InstructionHeader, AppendableSequence<X86Template>> createMapping(Assembly<? extends X86Template> assembly, WordWidth addressWidth) {
-        final Map<X86InstructionHeader, AppendableSequence<X86Template>> result = new HashMap<X86InstructionHeader, AppendableSequence<X86Template>>();
+    public static Map<X86InstructionHeader, List<X86Template>> createMapping(Assembly<? extends X86Template> assembly, WordWidth addressWidth) {
+        final Map<X86InstructionHeader, List<X86Template>> result = new HashMap<X86InstructionHeader, List<X86Template>>();
         for (X86Template template : assembly.templates()) {
             X86InstructionHeader header = new X86InstructionHeader(addressWidth, template);
-            AppendableSequence<X86Template> matchingTemplates = result.get(header);
+            List<X86Template> matchingTemplates = result.get(header);
             if (matchingTemplates == null) {
-                matchingTemplates = new LinkSequence<X86Template>();
+                matchingTemplates = new LinkedList<X86Template>();
                 result.put(header, matchingTemplates);
             }
-            matchingTemplates.append(template);
+            matchingTemplates.add(template);
             for (X86Parameter parameter : template.parameters()) {
                 switch (parameter.place()) {
                     case OPCODE1_REXB:

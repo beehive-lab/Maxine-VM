@@ -21,7 +21,8 @@
 
 package com.sun.max.vm.cps.b.c.d;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.b.c.*;
 import com.sun.max.vm.cps.cir.dir.*;
@@ -50,7 +51,9 @@ public class BcdCompiler extends BcCompiler implements DirGeneratorScheme {
     }
 
     @Override
-    public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.appended(super.irGenerators(), cirToDirTranslator);
+    public List<IrGenerator> irGenerators() {
+        final List<IrGenerator> result = new LinkedList<IrGenerator>(super.irGenerators());
+        result.add(cirToDirTranslator);
+        return result;
     }
 }

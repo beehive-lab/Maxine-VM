@@ -26,7 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 
 /**
- * Tests for {@link IndexedSequencePool}.
+ * Tests for {@link Pool}.
  *
  * @author Michael Van De Vanter
  */
@@ -54,15 +54,7 @@ public class PoolTest extends MaxTestCase {
     }
 
     public void test_empty() {
-        Pool<TestElement> pool = new IndexedSequencePool<TestElement>(IndexedSequence.Static.empty(TestElement.class));
-        assertEquals(pool.length(), 0);
-        try {
-            final TestElement elem = pool.get(0);
-            fail(elem + " should not be in empty collection");
-        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-        }
-
-        pool = new ArrayPool<TestElement>(new TestElement[0]);
+        Pool<TestElement> pool = new ArrayPool<TestElement>(new TestElement[0]);
         assertEquals(pool.length(), 0);
         try {
             final TestElement elem = pool.get(0);
@@ -88,9 +80,7 @@ public class PoolTest extends MaxTestCase {
     }
 
     public void test_pool() {
-        Pool<TestElement> pool = new IndexedSequencePool<TestElement>(new ArraySequence<TestElement>(elems));
-        check_pool(pool, nElems);
-        pool = new ArrayPool<TestElement>(elems);
+        Pool<TestElement> pool = new ArrayPool<TestElement>(elems);
         check_pool(pool, nElems);
     }
 }

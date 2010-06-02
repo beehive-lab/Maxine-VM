@@ -22,9 +22,10 @@ package com.sun.max.vm.cps.cir.transform;
 
 import static com.sun.max.vm.cps.cir.CirTraceObserver.TransformationType.*;
 
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -35,6 +36,7 @@ import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.transform.CirDepthFirstTraversal.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.VMRegister.*;
+import com.sun.max.vm.template.*;
 
 /**
  * Tests the CIR for a {@linkplain BYTECODE_TEMPLATE bytecode template} to ensure it does not write to a Java stack or
@@ -57,7 +59,7 @@ public final class CirTemplateChecker extends CirVisitor {
     /**
      * Maps a closure/block/call to a stop instruction reachable from the node.
      */
-    private final VariableMapping<CirNode, CirCall> stops = new ChainedHashMapping<CirNode, CirCall>();
+    private final HashMap<CirNode, CirCall> stops = new HashMap<CirNode, CirCall>();
 
     private boolean changed;
 
@@ -76,9 +78,9 @@ public final class CirTemplateChecker extends CirVisitor {
     private void reportError(CirCall call, CirCall stop) {
         final StringBuilder sb = new StringBuilder("In a bytecode template, the Java stack or locals array must not be updated before a safepoint or call.\n");
         sb.append("[in " + classMethodActor.format("%H.%n(%p)") + " ]\n");
-        sb.append("Stack/local update: " + call.procedure() + "(" + Arrays.toString(call.arguments(), ", ") + ")\n");
+        sb.append("Stack/local update: " + call.procedure() + "(" + Utils.toString(call.arguments(), ", ") + ")\n");
         sb.append("    at " + call.javaFrameDescriptor().toStackTraceElement() + "\n");
-        sb.append("Safepoint/call:     " + stop.procedure() + "(" + Arrays.toString(stop.arguments(), ", ") + ")\n");
+        sb.append("Safepoint/call:     " + stop.procedure() + "(" + Utils.toString(stop.arguments(), ", ") + ")\n");
         sb.append("    at " + stop.javaFrameDescriptor().toStackTraceElement() + "\n");
         sb.append("Stop reason(s): " + Stoppable.Static.reasonsMayStopToString((Stoppable) stop.procedure()));
         ProgramError.unexpected(sb.toString());

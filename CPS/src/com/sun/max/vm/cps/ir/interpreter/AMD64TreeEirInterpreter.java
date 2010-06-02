@@ -21,8 +21,8 @@
 package com.sun.max.vm.cps.ir.interpreter;
 
 import java.lang.reflect.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.eir.*;
@@ -61,13 +61,13 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
         }
     }
 
-    private IndexedSequence<EirJavaFrameDescriptor> getGuardpointDescriptors(EirMethod method) {
-        final VariableSequence<EirJavaFrameDescriptor> descriptors = new ArrayListSequence<EirJavaFrameDescriptor>();
+    private List<EirJavaFrameDescriptor> getGuardpointDescriptors(EirMethod method) {
+        final List<EirJavaFrameDescriptor> descriptors = new ArrayList<EirJavaFrameDescriptor>();
         for (EirBlock block : method.blocks()) {
             for (EirInstruction instruction : block.instructions()) {
                 if (instruction instanceof EirGuardpoint) {
                     final EirGuardpoint guardpoint = (EirGuardpoint) instruction;
-                    descriptors.append(guardpoint.javaFrameDescriptor());
+                    descriptors.add(guardpoint.javaFrameDescriptor());
                 }
             }
         }
@@ -76,7 +76,7 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
 
     private void writeback(TirGuard guard) {
 
-        final IndexedSequence<EirJavaFrameDescriptor> descriptors = getGuardpointDescriptors(tree.targetTree().treeEirMethod());
+        final List<EirJavaFrameDescriptor> descriptors = getGuardpointDescriptors(tree.targetTree().treeEirMethod());
 
         final EirJavaFrameDescriptor descriptor = descriptors.get(tree.getNumber(guard));
         Console.println("EXITED AT: " + descriptor.toMultiLineString());

@@ -22,8 +22,8 @@ package com.sun.max.vm.prototype;
 
 import java.io.*;
 import java.util.*;
+import java.util.Arrays;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -70,7 +70,7 @@ public final class BootImageObjectTree {
          */
         CUSTOM;
 
-        public static final IndexedSequence<TO_STRING_TAG> VALUES = new ArraySequence<TO_STRING_TAG>(values());
+        public static final List<TO_STRING_TAG> VALUES = Arrays.asList(values());
     }
 
     /**
@@ -86,7 +86,7 @@ public final class BootImageObjectTree {
         private long aggregateSize = 0L;
         private final String toString;
 
-        private AppendableSequence<Node> children;
+        private List<Node> children;
         private String parentLink;
 
         /**
@@ -113,9 +113,9 @@ public final class BootImageObjectTree {
          */
         void addChild(Node child, String link) {
             if (children == null) {
-                children = new ArrayListSequence<Node>();
+                children = new ArrayList<Node>();
             }
-            children.append(child);
+            children.add(child);
             child.parentLink = link;
         }
 
@@ -124,8 +124,9 @@ public final class BootImageObjectTree {
          *
          * @return a sequence of the children
          */
-        public Sequence<Node> children() {
-            return children == null ? Sequence.Static.empty(Node.class) : children;
+        public List<Node> children() {
+            List<Node> empty = Collections.emptyList();
+            return children == null ? empty : children;
         }
 
         /**
@@ -188,7 +189,7 @@ public final class BootImageObjectTree {
          */
         private static void printTree(Node node, boolean showTreeLines, PrintWriter printWriter, String prefix, boolean lastChild, int addressRadix, long relocation) {
             printWriter.println(prefix + (showTreeLines ? (!lastChild ? LAST_SIBLING_PREFIX : OTHER_SIBLING_PREFIX) : "    ") + node.toString(addressRadix, relocation));
-            final Sequence<Node> children = node.children();
+            final List<Node> children = node.children();
             if (!children.isEmpty()) {
                 final String childPrefix = prefix + (showTreeLines ? (lastChild ? LAST_CHILD_INDENT : OTHER_CHILD_INDENT) : "    ");
                 for (final Iterator<Node> iterator = children.iterator(); iterator.hasNext();) {

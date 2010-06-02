@@ -20,7 +20,9 @@
  */
 package com.sun.max.tele.method;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -222,9 +224,9 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             }
             // TODO (mlvdv) when the class registry is complete, this should not be necessary
             // Try to locate TeleClassMethodActor via compiled methods in the tele VM.
-            final Sequence<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(vm(), methodKey);
-            if (teleTargetMethods.length() > 0) {
-                return teleTargetMethods.first().getTeleClassMethodActor();
+            final List<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(vm(), methodKey);
+            if (teleTargetMethods.size() > 0) {
+                return Utils.first(teleTargetMethods).getTeleClassMethodActor();
             }
             return null;
         } finally {

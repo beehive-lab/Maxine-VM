@@ -21,8 +21,8 @@
 package com.sun.max.tele.page;
 
 import java.nio.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -66,7 +66,7 @@ public class PageDataAccess extends DataAccessAdapter {
         return address.toInt() & offsetMask;
     }
 
-    private final VariableMapping<Long, Page> indexToPage = HashMapping.createVariableEqualityMapping();
+    private final HashMap<Long, Page> indexToPage = new HashMap<Long, Page>();
 
     private static void checkNullPointer(Address address) {
         if (address.isZero()) {
@@ -102,8 +102,8 @@ public class PageDataAccess extends DataAccessAdapter {
         if (page == null) {
             page = new Page(teleIO, index, byteOrder);
             indexToPage.put(index, page);
-            if ((indexToPage.length() % 1000) == 0) {
-                Trace.line(TRACE_VALUE, tracePrefix() + "Memory cache: " + indexToPage.length() + " pages");
+            if ((indexToPage.size() % 1000) == 0) {
+                Trace.line(TRACE_VALUE, tracePrefix() + "Memory cache: " + indexToPage.size() + " pages");
             }
         }
         return page;

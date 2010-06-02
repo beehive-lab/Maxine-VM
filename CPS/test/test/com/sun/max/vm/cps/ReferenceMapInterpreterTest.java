@@ -25,7 +25,6 @@ import java.util.*;
 
 import junit.framework.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -53,14 +52,14 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         junit.textui.TestRunner.run(ReferenceMapInterpreterTest.suite());
     }
 
-    Sequence<String> readClassNames(File file) throws IOException {
-        final AppendableSequence<String> lines = new ArrayListSequence<String>();
+    List<String> readClassNames(File file) throws IOException {
+        final List<String> lines = new ArrayList<String>();
         final BufferedReader reader = new BufferedReader(new FileReader(file));
         String line;
         while ((line = reader.readLine()) != null) {
             final String className = line.trim();
             if (!line.startsWith("#") && line.length() > 0) {
-                lines.append(className);
+                lines.add(className);
             }
         }
         return lines;
@@ -134,18 +133,18 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
 
         InterpreterMapMaker(BirMethod birMethod) {
             classMethodActor = birMethod.classMethodActor();
-            blocks = Sequence.Static.toArray(birMethod.blocks(), new BirBlock[birMethod.blocks().length()]);
+            blocks = birMethod.blocks().toArray(new BirBlock[birMethod.blocks().size()]);
             blockFrames = ReferenceMapInterpreter.createFrames(this);
             final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
             exceptionHandlerMap = ExceptionHandler.createHandlerMap(codeAttribute);
             referenceMaps = new ReferenceMap[codeAttribute.code().length];
 
-            final AppendableIndexedSequence<Integer> bytecodePositions = new ArrayListSequence<Integer>();
+            final List<Integer> bytecodePositions = new ArrayList<Integer>();
             final BytecodeAdapter bytecodeAdapter = new BytecodeAdapter() {
                 @Override
                 protected void opcodeDecoded() {
                     final int bytecodePosition = bytecodeScanner().currentOpcodePosition();
-                    bytecodePositions.append(bytecodePosition);
+                    bytecodePositions.add(bytecodePosition);
                     referenceMaps[bytecodePosition] = new ReferenceMap(codeAttribute.maxLocals, codeAttribute.maxStack);
                 }
             };
@@ -154,13 +153,13 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
             bytecodePositionIterator = new BytecodePositionIterator() {
                 private int index;
                 public int bytecodePosition() {
-                    if (index < bytecodePositions.length()) {
+                    if (index < bytecodePositions.size()) {
                         return bytecodePositions.get(index);
                     }
                     return -1;
                 }
                 public int next() {
-                    if (++index < bytecodePositions.length()) {
+                    if (++index < bytecodePositions.size()) {
                         return bytecodePositions.get(index);
                     }
                     return -1;

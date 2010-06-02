@@ -32,7 +32,6 @@ import com.sun.max.asm.amd64.complete.*;
 import com.sun.max.asm.dis.amd64.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.amd64.*;
-import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 
 /**
@@ -73,8 +72,8 @@ public class BoundLabelTest extends MaxTestCase {
 
     private byte[] assemble(long startAddress, int labelDelta) throws IOException, AssemblyException {
         final AMD64Assembler assembler = new AMD64Assembler(startAddress);
-        final Sequence<AMD64Template> labelTemplates = AMD64Assembly.ASSEMBLY.labelTemplates();
-        final Label[] labels = new Label[labelTemplates.length() + LABEL_DELTA];
+        final List<AMD64Template> labelTemplates = AMD64Assembly.ASSEMBLY.labelTemplates();
+        final Label[] labels = new Label[labelTemplates.size() + LABEL_DELTA];
         for (int i = 0; i < labels.length; i++) {
             labels[i] = new Label();
         }
@@ -87,8 +86,8 @@ public class BoundLabelTest extends MaxTestCase {
         }
         for (AMD64Template template : labelTemplates) {
             assembler.bindLabel(labels[bindIndex]);
-            final MutableSequence<Argument> arguments = new ArraySequence<Argument>(template.parameters().length());
-            for (int parameterIndex = 0; parameterIndex < template.parameters().length(); parameterIndex++) {
+            final List<Argument> arguments = new ArrayList<Argument>(template.parameters().size());
+            for (int parameterIndex = 0; parameterIndex < template.parameters().size(); parameterIndex++) {
                 if (parameterIndex == template.labelParameterIndex()) {
                     arguments.set(parameterIndex, labels[labelIndex]);
                 } else {

@@ -27,8 +27,6 @@ import junit.framework.*;
 import test.com.sun.max.vm.*;
 import test.com.sun.max.vm.bytecode.*;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.holder.*;
@@ -101,14 +99,14 @@ public class VerifierTest extends VmTestCase {
 
     private static boolean initialized;
 
-    Sequence<String> readClassNames(File file) throws IOException {
-        final AppendableSequence<String> lines = new ArrayListSequence<String>();
+    List<String> readClassNames(File file) throws IOException {
+        final List<String> lines = new ArrayList<String>();
         final BufferedReader reader = new BufferedReader(new FileReader(file));
         String line;
         while ((line = reader.readLine()) != null) {
             final String className = line.trim();
             if (!line.startsWith("#") && line.length() > 0) {
-                lines.append(className);
+                lines.add(className);
             }
         }
         return lines;
@@ -161,7 +159,7 @@ public class VerifierTest extends VmTestCase {
 
         int classActorIndex = 0;
         if (numberOfClassesVerified == 0 || VMCLASSES.getValue()) {
-            ClassActor[] classActors = Arrays.from(ClassActor.class, ClassRegistry.BOOT_CLASS_REGISTRY);
+            ClassActor[] classActors = ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses();
             while (true) {
                 while (classActorIndex != classActors.length) {
                     final ClassActor classActor = classActors[classActorIndex++];
@@ -176,7 +174,7 @@ public class VerifierTest extends VmTestCase {
                 if (classActorIndex == ClassRegistry.BOOT_CLASS_REGISTRY.numberOfClassActors()) {
                     break;
                 }
-                classActors = Arrays.from(ClassActor.class, ClassRegistry.BOOT_CLASS_REGISTRY);
+                classActors = ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses();
             }
         }
     }

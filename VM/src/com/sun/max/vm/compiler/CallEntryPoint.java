@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.compiler;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
@@ -66,7 +67,7 @@ public enum CallEntryPoint {
      */
     C_ENTRY_POINT;
 
-    public static final IndexedSequence<CallEntryPoint> VALUES = new ArraySequence<CallEntryPoint>(values());
+    public static final List<CallEntryPoint> VALUES = Arrays.asList(values());
 
     /**
      * The offset of this call entry point in a target method associated (via its

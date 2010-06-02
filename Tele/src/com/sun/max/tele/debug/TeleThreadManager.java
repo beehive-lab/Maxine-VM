@@ -22,8 +22,8 @@ package com.sun.max.tele.debug;
 
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
@@ -38,7 +38,7 @@ public class TeleThreadManager extends AbstractTeleVMHolder implements MaxThread
         super(teleVM);
     }
 
-    public Sequence<MaxThread> threads() {
+    public List<MaxThread> threads() {
         return vm().state().threads();
     }
 

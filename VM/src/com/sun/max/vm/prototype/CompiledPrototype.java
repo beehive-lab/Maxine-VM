@@ -21,6 +21,7 @@
 package com.sun.max.vm.prototype;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -58,17 +59,17 @@ import com.sun.max.vm.type.*;
 public class CompiledPrototype extends Prototype {
 
     private class ClassInfo {
-        private final IdentityHashSet<MethodActor> indirectCalls = new IdentityHashSet<MethodActor>();
-        private final IdentityHashSet<ClassActor> subClasses = new IdentityHashSet<ClassActor>();
-        private final IdentityHashSet<ClassActor> implementors = new IdentityHashSet<ClassActor>();
+        private final HashSet<MethodActor> indirectCalls = new HashSet<MethodActor>();
+        private final HashSet<ClassActor> subClasses = new HashSet<ClassActor>();
+        private final HashSet<ClassActor> implementors = new HashSet<ClassActor>();
     }
 
-    private final Map<ClassActor, ClassInfo> classActorInfo = new IdentityHashMap<ClassActor, ClassInfo>();
-    private final Map<MethodActor, GrowableDeterministicSet<ClassActor>> anonymousClasses = new IdentityHashMap<MethodActor, GrowableDeterministicSet<ClassActor>>();
+    private final HashMap<ClassActor, ClassInfo> classActorInfo = new HashMap<ClassActor, ClassInfo>();
+    private final HashMap<MethodActor, Set<ClassActor>> anonymousClasses = new HashMap<MethodActor, Set<ClassActor>>();
 
     private static final HashMap<MethodActor, RuntimeCompilerScheme> recommendedCompiler = new HashMap<MethodActor, RuntimeCompilerScheme>();
 
-    private final VariableMapping<MethodActor, Link> methodActors = new ChainedHashMapping<MethodActor, Link>();
+    private final HashMap<MethodActor, Link> methodActors = new HashMap<MethodActor, Link>();
     private final LinkedList<MethodActor> worklist = new LinkedList<MethodActor>();
 
     private static RuntimeCompilerScheme c1xCompiler;
@@ -76,7 +77,7 @@ public class CompiledPrototype extends Prototype {
     /**
      * Methods that must be statically compiled in the boot image.
      */
-    private static final GrowableDeterministicSet<ClassMethodActor> imageMethodActors = new LinkedIdentityHashSet<ClassMethodActor>();
+    private static final Set<ClassMethodActor> imageMethodActors = Collections.newSetFromMap(new IdentityHashMap<ClassMethodActor, Boolean>());
 
     /**
      * The link from a <i>referrer</i> method to a <i>referent</i> method where the referrer caused the referent to be
@@ -148,7 +149,7 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    public IterableWithLength<Link> links() {
+    public Collection<Link> links() {
         return methodActors.values();
     }
 
@@ -169,23 +170,23 @@ public class CompiledPrototype extends Prototype {
         return info;
     }
 
-    private GrowableDeterministicSet<ClassActor> getAnonymousClasses(MethodActor actor) {
-        GrowableDeterministicSet<ClassActor> anonymousClasses = this.anonymousClasses.get(actor);
+    private Set<ClassActor> getAnonymousClasses(MethodActor actor) {
+        Set<ClassActor> anonymousClasses = this.anonymousClasses.get(actor);
         if (anonymousClasses == null) {
-            anonymousClasses = new LinkedIdentityHashSet<ClassActor>();
+            anonymousClasses = new HashSet<ClassActor>();
             this.anonymousClasses.put(actor, anonymousClasses);
         }
         return anonymousClasses;
     }
 
-    private GrowableDeterministicSet<ClassActor> lookupAnonymousClasses(MethodActor actor) {
+    private Set<ClassActor> lookupAnonymousClasses(MethodActor actor) {
         return anonymousClasses.get(actor);
     }
 
     private void gatherNewClasses() {
         Trace.begin(1, "gatherNewClasses");
-        final LinkSequence<ClassActor> newClasses = new LinkSequence<ClassActor>();
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+        final LinkedList<ClassActor> newClasses = new LinkedList<ClassActor>();
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses()) {
             if (lookupInfo(classActor) == null) {
                 final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
                 if (enclosingMethod != null) {
@@ -193,12 +194,12 @@ public class CompiledPrototype extends Prototype {
                     gatherNewAnonymousClass(newClasses, classActor, enclosingMethod);
                 } else {
                     traceNewClass(classActor);
-                    newClasses.append(classActor);
+                    newClasses.add(classActor);
                 }
             }
         }
         Trace.end(1, "gatherNewClasses");
-        Trace.begin(1, "processNewClasses " + newClasses.length());
+        Trace.begin(1, "processNewClasses " + newClasses.size());
         for (ClassActor classActor : newClasses) {
             processNewClass(classActor);
         }
@@ -211,14 +212,14 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    private void gatherNewAnonymousClass(final LinkSequence<ClassActor> newClasses, ClassActor classActor, final Method enclosingMethod) {
+    private void gatherNewAnonymousClass(final LinkedList<ClassActor> newClasses, ClassActor classActor, final Method enclosingMethod) {
         if (!MaxineVM.isHostedOnly(enclosingMethod)) {
             final MethodActor methodActor = MethodActor.fromJava(enclosingMethod);
             if (methodActor != null) {
                 getAnonymousClasses(methodActor).add(classActor);
                 if (methodActors.containsKey(methodActor)) {
                     traceNewClass(classActor);
-                    newClasses.append(classActor);
+                    newClasses.add(classActor);
                 }
             }
         }
@@ -265,7 +266,7 @@ public class CompiledPrototype extends Prototype {
         traceNewTargetMethod(targetMethod);
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         // if this method contains anonymous classes, add them:
-        final GrowableDeterministicSet<ClassActor> anonymousClasses = lookupAnonymousClasses(classMethodActor);
+        final Set<ClassActor> anonymousClasses = lookupAnonymousClasses(classMethodActor);
         if (anonymousClasses != null) {
             for (ClassActor classActor : anonymousClasses) {
                 processNewClass(classActor);
@@ -424,14 +425,14 @@ public class CompiledPrototype extends Prototype {
         return c1xCompiler;
     }
 
-    private static AppendableSequence<MethodActor> imageInvocationStubMethodActors = new LinkSequence<MethodActor>();
-    private static AppendableSequence<MethodActor> imageConstructorStubMethodActors = new LinkSequence<MethodActor>();
+    private static List<MethodActor> imageInvocationStubMethodActors = new LinkedList<MethodActor>();
+    private static List<MethodActor> imageConstructorStubMethodActors = new LinkedList<MethodActor>();
 
     /**
      * Request the given method have a statically generated and compiled invocation stub in the boot image.
      */
     public static void registerImageInvocationStub(MethodActor methodActorWithInvocationStub) {
-        imageInvocationStubMethodActors.append(methodActorWithInvocationStub);
+        imageInvocationStubMethodActors.add(methodActorWithInvocationStub);
     }
 
     /**
@@ -439,7 +440,7 @@ public class CompiledPrototype extends Prototype {
      * @param methodActor
      */
     public static void registerImageConstructorStub(MethodActor methodActor) {
-        imageConstructorStubMethodActors.append(methodActor);
+        imageConstructorStubMethodActors.add(methodActor);
     }
 
     private void addVMEntryPoints() {
@@ -551,7 +552,7 @@ public class CompiledPrototype extends Prototype {
                 }
                 ++totalCompilations;
                 if (totalCompilations % 200 == 0) {
-                    Trace.line(1, "compiled: " + totalCompilations + " (" + methodActors.length() + " methods)");
+                    Trace.line(1, "compiled: " + totalCompilations + " (" + methodActors.size() + " methods)");
                 }
             }
 
@@ -594,7 +595,7 @@ public class CompiledPrototype extends Prototype {
 
     public void compileFoldableMethods() {
         Trace.begin(1, "compiling foldable methods");
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     if (classMethodActor.isDeclaredFoldable()) {
@@ -619,6 +620,9 @@ public class CompiledPrototype extends Prototype {
         final CodeRegion region = Code.bootCodeRegion;
         region.setSize(Size.fromInt(Integer.MAX_VALUE / 4)); // enable virtually infinite allocations
         // 2. add only entrypoint methods and methods not to be compiled.
+
+        //add(MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(String.class, int[].class, int.class, int.class)), null, null);
+
         addMethodsReferencedByExistingTargetCode();
         addVMEntryPoints();
     }
@@ -656,7 +660,7 @@ public class CompiledPrototype extends Prototype {
 
     private void linkVTableEntries() {
         Trace.begin(1, "linkVTableEntries");
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             if (classActor.isReferenceClassActor()) {
                 linkVTable(classActor);
             }
@@ -679,14 +683,15 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "linkITableEntries");
 
         final IntHashMap<InterfaceActor> serialToInterfaceActor = new IntHashMap<InterfaceActor>();
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+        ClassActor[] classes = BOOT_CLASS_REGISTRY.copyOfClasses();
+        for (ClassActor classActor : classes) {
             if (classActor instanceof InterfaceActor) {
                 final InterfaceActor interfaceActor = (InterfaceActor) classActor;
                 serialToInterfaceActor.put(interfaceActor.id, interfaceActor);
             }
         }
 
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+        for (ClassActor classActor : classes) {
             if (classActor.isReferenceClassActor()) {
                 linkITable(classActor, serialToInterfaceActor);
             }

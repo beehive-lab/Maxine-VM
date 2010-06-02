@@ -21,11 +21,11 @@
 package com.sun.max.ins.method;
 
 import java.io.*;
+import java.util.*;
 import java.util.Arrays;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.io.*;
@@ -111,7 +111,7 @@ public abstract class BytecodeViewer extends CodeViewer {
     /**
      * Disassembled target code instructions from the associated compilation of the method, null if none associated.
      */
-    private IndexedSequence<TargetCodeInstruction> targetCodeInstructions = null;
+    private List<TargetCodeInstruction> targetCodeInstructions = null;
 
     private boolean haveTargetCodeAddresses = false;
 
@@ -122,9 +122,9 @@ public abstract class BytecodeViewer extends CodeViewer {
         return haveTargetCodeAddresses;
     }
 
-    private AppendableIndexedSequence<BytecodeInstruction> bytecodeInstructions = null;
+    private List<BytecodeInstruction> bytecodeInstructions = null;
 
-    protected AppendableIndexedSequence<BytecodeInstruction> bytecodeInstructions() {
+    protected List<BytecodeInstruction> bytecodeInstructions() {
         return bytecodeInstructions;
     }
 
@@ -144,7 +144,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         localConstantPool = teleConstantPool.getTeleHolder().classActor().constantPool();
         methodBytes = teleCodeAttribute.readBytecodes();
         buildView();
-        rowToStackFrame = new MaxStackFrame[bytecodeInstructions.length()];
+        rowToStackFrame = new MaxStackFrame[bytecodeInstructions.size()];
     }
 
     private void buildView() {
@@ -158,7 +158,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                 haveTargetCodeAddresses = true;
             }
         }
-        bytecodeInstructions = new ArrayListSequence<BytecodeInstruction>(10);
+        bytecodeInstructions = new ArrayList<BytecodeInstruction>(10);
         int currentBytecodeOffset = 0;
         int bytecodeRow = 0;
         int targetCodeRow = 0;
@@ -178,7 +178,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                 }
                 final BytecodeInstruction instruction = new BytecodeInstruction(bytecodeRow, currentBytecodeOffset, instructionBytes, bytecodePrinter.opcode(), bytecodePrinter.operand1(),
                                 bytecodePrinter.operand2(), targetCodeRow, targetCodeFirstAddress);
-                bytecodeInstructions.append(instruction);
+                bytecodeInstructions.add(instruction);
                 bytecodeRow++;
                 currentBytecodeOffset = nextBytecodeOffset;
             } catch (Throwable throwable) {
@@ -197,7 +197,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                 // before the first byte location of the first target instruction for this bytecode
                 return false;
             }
-            if (row < (bytecodeInstructions.length() - 1)) {
+            if (row < (bytecodeInstructions.size() - 1)) {
                 // All but last bytecode instruction: see if before the first byte location of the first target instruction for the next bytecode
                 return address.lessThan(bytecodeInstructions.get(row + 1).targetCodeFirstAddress);
             }
@@ -217,7 +217,7 @@ public abstract class BytecodeViewer extends CodeViewer {
     protected void updateStackCache() {
         if (haveTargetCodeAddresses()) {
             Arrays.fill(rowToStackFrame, null);
-            for (int row = 0; row < bytecodeInstructions.length(); row++) {
+            for (int row = 0; row < bytecodeInstructions.size(); row++) {
                 for (MaxStackFrame frame : focus().thread().stack().frames()) {
                     if (rowContainsAddress(row, frame.codeLocation().address())) {
                         rowToStackFrame[row] = frame;
@@ -232,12 +232,12 @@ public abstract class BytecodeViewer extends CodeViewer {
      * Determines if the compiled code for the bytecode has a target breakpoint set at this location in the VM, in
      * situations where we can map between locations.
      */
-    protected Sequence<MaxBreakpoint> getTargetBreakpointsAtRow(int row) {
-        final AppendableSequence<MaxBreakpoint> breakpoints = new LinkSequence<MaxBreakpoint>();
+    protected List<MaxBreakpoint> getTargetBreakpointsAtRow(int row) {
+        final List<MaxBreakpoint> breakpoints = new LinkedList<MaxBreakpoint>();
         if (haveTargetCodeAddresses) {
             for (MaxBreakpoint breakpoint : vm().breakpointManager().breakpoints()) {
                 if (!breakpoint.isBytecodeBreakpoint() && rowContainsAddress(row, breakpoint.codeLocation().address())) {
-                    breakpoints.append(breakpoint);
+                    breakpoints.add(breakpoint);
                 }
             }
         }

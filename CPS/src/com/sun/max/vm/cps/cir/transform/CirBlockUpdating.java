@@ -22,8 +22,8 @@ package com.sun.max.vm.cps.cir.transform;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.cps.cir.*;
+import com.sun.max.vm.cps.collect.*;
 
 /**
  * Reset all reachable blocks and update their respective call count,

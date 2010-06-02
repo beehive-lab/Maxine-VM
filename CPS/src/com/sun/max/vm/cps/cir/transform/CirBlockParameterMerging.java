@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm.cps.cir.transform;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.CirTraceObserver.*;
 import com.sun.max.vm.cps.cir.optimize.*;
 import com.sun.max.vm.cps.cir.variable.*;
+import com.sun.max.vm.cps.collect.*;
 
 /**
  * If a CIR block has several parameters
@@ -105,7 +105,7 @@ public final class CirBlockParameterMerging {
 
     private static boolean applyOnce(CirBlock block) {
         final IdentityHashSet<CirValue> values = new IdentityHashSet<CirValue>();
-        final CirValue[] arguments = block.calls().first().arguments();
+        final CirValue[] arguments = block.calls().getFirst().arguments();
         for (int i = 0; i < arguments.length; i++) {
             final CirValue argument = arguments[i];
             if (values.contains(argument)) {

@@ -23,7 +23,6 @@ package com.sun.max.asm.gen.cisc.x86;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.*;
 import com.sun.max.asm.x86.*;
-import com.sun.max.util.*;
 
 /**
  * Empty default implementations for X86InstructionDescriptionVisitor.

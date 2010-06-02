@@ -23,12 +23,12 @@ package com.sun.max.ins.memory;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
@@ -72,9 +72,9 @@ public final class MemoryWordsTable extends InspectorTable {
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setRegionWatchpoint(tableModel.getMemoryRegion(row), null, null).perform();
-                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
-                    if (watchpoints.length() > 0) {
-                        return watchpoints.first();
+                    final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (!watchpoints.isEmpty()) {
+                        return watchpoints.get(0);
                     }
                     return null;
                 }
@@ -93,9 +93,9 @@ public final class MemoryWordsTable extends InspectorTable {
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setRegionWatchpoint(tableModel.getMemoryRegion(row), null, null).perform();
-                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
-                    if (watchpoints.length() > 0) {
-                        return watchpoints.first();
+                    final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (!watchpoints.isEmpty()) {
+                        return watchpoints.get(0);
                     }
                     return null;
                 }
@@ -166,7 +166,7 @@ public final class MemoryWordsTable extends InspectorTable {
     private final class MemoryWordsColumnModel extends InspectorTableColumnModel<MemoryWordsColumnKind> {
 
         private MemoryWordsColumnModel(TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences) {
-            super(MemoryWordsColumnKind.VALUES.length(), instanceViewPreferences);
+            super(MemoryWordsColumnKind.VALUES.size(), instanceViewPreferences);
             addColumn(MemoryWordsColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(MemoryWordsColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
             addColumn(MemoryWordsColumnKind.WORD, new WordOffsetRenderer(inspection()), null);
@@ -221,7 +221,7 @@ public final class MemoryWordsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return MemoryWordsColumnKind.VALUES.length();
+            return MemoryWordsColumnKind.VALUES.size();
         }
 
         public int getRowCount() {

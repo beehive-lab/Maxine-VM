@@ -22,11 +22,12 @@ package com.sun.max.vm.cps.b.c;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
+import com.sun.max.vm.cps.collect.*;
 
 /**
  * Augments every block in a method
@@ -105,12 +106,12 @@ final class FreeVariableCapturing {
             this.block = block;
         }
 
-        private final AppendableSequence<BlockCallSite> callSites = new LinkSequence<BlockCallSite>();
-        private final GrowableDeterministicSet<CirVariable> freeVariables = new LinkedIdentityHashSet<CirVariable>();
+        private final List<BlockCallSite> callSites = new LinkedList<BlockCallSite>();
+        private final LinkedIdentityHashSet<CirVariable> freeVariables = new LinkedIdentityHashSet<CirVariable>();
     }
 
     private final BirToCirMethodTranslation translation;
-    private final AppendableSequence<BlockInfo> blockInfos = new LinkSequence<BlockInfo>();
+    private final List<BlockInfo> blockInfos = new LinkedList<BlockInfo>();
     private final Map<CirBlock, BlockInfo> blockInfoMap = new IdentityHashMap<CirBlock, BlockInfo>();
 
     private BlockInfo blockToInfo(CirBlock block) {
@@ -122,7 +123,7 @@ final class FreeVariableCapturing {
         public void visitBlock(CirBlock block) {
             if (!blockInfoMap.containsKey(block)) {
                 final BlockInfo info = new BlockInfo(block);
-                blockInfos.append(info);
+                blockInfos.add(info);
                 blockInfoMap.put(block, info);
             }
         }
@@ -170,7 +171,7 @@ final class FreeVariableCapturing {
                     final BlockInfo calleeInfo = blockToInfo((CirBlock) node);
                     assert calleeInfo != null : "no callee info found";
                     assert calleeInfo.callSites != null;
-                    calleeInfo.callSites.append(new BlockCallSite(info, binding, call));
+                    calleeInfo.callSites.add(new BlockCallSite(info, binding, call));
                 }
             } else {
                 assert node instanceof CirValue;
@@ -263,7 +264,7 @@ final class FreeVariableCapturing {
     private void declareFreeVariablesAsParameters() {
         for (BlockInfo info : blockInfos) {
             traceDeclareFreeVariables(info);
-            final CirVariable[] free = Sequence.Static.toArray(info.freeVariables, new CirVariable[info.freeVariables.length()]);
+            final CirVariable[] free = info.freeVariables.toArray(new CirVariable[info.freeVariables.size()]);
             final CirVariable[] params = info.block.closure().parameters();
 
             final CirVariable[] all = CirClosure.newParameters(free.length + params.length);
@@ -291,7 +292,7 @@ final class FreeVariableCapturing {
             return;
         }
 
-        final CirValue[] free = Sequence.Static.toArray(info.freeVariables, new CirValue[info.freeVariables.length()]);
+        final CirValue[] free = info.freeVariables.toArray(new CirVariable[info.freeVariables.size()]);
         final CirValue[] all = CirCall.newArguments(free.length + args.length);
         for (int i = 0; i < free.length; i++) {
             all[i] = free[i];
@@ -324,7 +325,7 @@ final class FreeVariableCapturing {
         final CirVariable[] parameters = closure.parameters();
         final CirValue[] arguments = closure.body().arguments();
         for (int i = 0; i < arguments.length; i++) {
-            if (!com.sun.max.lang.Arrays.contains(parameters, arguments[i])) {
+            if (!(com.sun.max.Utils.indexOfIdentical(parameters, arguments[i]) >= 0)) {
                 arguments[i] = CirValue.UNDEFINED;
             }
         }
@@ -390,7 +391,7 @@ final class FreeVariableCapturing {
                 addCanonicalArgumentsToCall(callSite.call, info);
             }
         }
-        addCanonicalArgumentsToCall(translation.cirClosure().body(), blockInfos.first());
+        addCanonicalArgumentsToCall(translation.cirClosure().body(), Utils.first(blockInfos));
         terminateJavaLocals();
     }
 

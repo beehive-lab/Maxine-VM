@@ -21,6 +21,9 @@
 
 package com.sun.max.vm.cps.tir;
 
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -29,13 +32,14 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.cps.b.c.d.*;
 import com.sun.max.vm.cps.cir.dir.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.transform.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.type.*;
 
 public class DirTracer {
-    private static final GrowableMapping<ClassMethodActor, DirMethod> translationCache = new OpenAddressingHashMapping<ClassMethodActor, DirMethod>();
+    private static final Mapping<ClassMethodActor, DirMethod> translationCache = new OpenAddressingHashMapping<ClassMethodActor, DirMethod>();
 
     /**
      * Translates a {@link Snippet} into Trace IR.
@@ -66,8 +70,8 @@ public class DirTracer {
     }
 
     private final DirMethod method;
-    private final GrowableDeterministicSet<DirBlock> tracedBlocks = new LinkedIdentityHashSet<DirBlock>();
-    private final GrowableMapping<DirValue, TirInstruction> values = new OpenAddressingHashMapping<DirValue, TirInstruction>();
+    private final LinkedIdentityHashSet<DirBlock> tracedBlocks = new LinkedIdentityHashSet<DirBlock>();
+    private final Mapping<DirValue, TirInstruction> values = new OpenAddressingHashMapping<DirValue, TirInstruction>();
     private TirInstruction returnInstruction;
 
     protected DirTracer(DirMethod method) {
@@ -80,8 +84,8 @@ public class DirTracer {
             values.put(method.parameters()[i], arguments[i]);
         }
 
-        final AppendableSequence<TirInstruction> path = new ArrayListSequence<TirInstruction>();
-        final boolean isTraceable = trace(method.blocks().first(), path, trace, recorder);
+        final List<TirInstruction> path = new ArrayList<TirInstruction>();
+        final boolean isTraceable = trace(Utils.first(method.blocks()), path, trace, recorder);
 
         if (isTraceable) {
             trace.append(path);
@@ -114,7 +118,7 @@ public class DirTracer {
         return instructions;
     }
 
-    private boolean trace(DirBlock block, final AppendableSequence<TirInstruction> path, final TirTrace trace, final TirRecorder recorder) {
+    private boolean trace(DirBlock block, final List<TirInstruction> path, final TirTrace trace, final TirRecorder recorder) {
         final MutableInnerClassGlobal<Boolean> isTraceable = new MutableInnerClassGlobal<Boolean>(true);
         tracedBlocks.add(block);
 
@@ -142,7 +146,7 @@ public class DirTracer {
                         assert dirBuiltinCall.result() != null;
                         values.put(dirBuiltinCall.result(), call);
                     }
-                    path.append(call);
+                    path.add(call);
                 }
 
                 @Override
@@ -168,7 +172,7 @@ public class DirTracer {
                         final TirInstruction operand0 = map(dirSwitch.tag());
                         final TirInstruction operand1 = map(dirSwitch.matches()[0]);
                         final TirGuard guard = new TirGuard(operand0, operand1, dirSwitch.valueComparator(), recorder.takeSnapshot(), trace, thrownException);
-                        path.append(guard);
+                        path.add(guard);
                         isTraceable.setValue(trace(dirSwitch.targetBlocks()[0], path, trace, recorder));
                     } else {
                         // We can't trace control flow.

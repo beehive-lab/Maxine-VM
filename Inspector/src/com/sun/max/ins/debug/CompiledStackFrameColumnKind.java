@@ -20,7 +20,7 @@
  */
 package com.sun.max.ins.debug;
 
-import com.sun.max.collect.*;
+import java.util.*;
 
 /**
  * Defines the columns that can be displayed describing a compiled stack frame in the VM.
@@ -80,6 +80,6 @@ public enum CompiledStackFrameColumnKind implements ColumnKind {
         return defaultVisibility;
     }
 
-    public static final IndexedSequence<CompiledStackFrameColumnKind> VALUES = new ArraySequence<CompiledStackFrameColumnKind>(values());
+    public static final List<CompiledStackFrameColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 
 }

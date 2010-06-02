@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.cps.cir;
 
-import com.sun.max.lang.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
 import com.sun.max.vm.type.*;
@@ -112,7 +111,11 @@ public class CirClosure extends CirProcedure {
     }
 
     public void removeParameter(int index) {
-        parameters = Arrays.remove(CirVariable.class, parameters, index);
+        int newLength = parameters.length - 1;
+        CirVariable[] newParameters = new CirVariable[newLength];
+        System.arraycopy(parameters, 0, newParameters, 0, index);
+        System.arraycopy(parameters, index + 1, newParameters, index, newLength - index);
+        parameters = newParameters;
     }
 
     public boolean hasTheseParameters(CirValue[] values) {
@@ -156,7 +159,13 @@ public class CirClosure extends CirProcedure {
         final CirBlock block = new CirBlock(body());
         CirFreeVariableSearch.applyClosureConversion(block.closure());
         final CirVariable[] parameters = block.closure().parameters();
-        final CirValue[] arguments = parameters.length > 0 ? Arrays.from(CirValue.class, parameters) : CirCall.NO_ARGUMENTS;
+        final CirValue[] arguments;
+        if (parameters.length > 0) {
+            arguments = new CirValue[parameters.length];
+            System.arraycopy(parameters, 0, arguments, 0, arguments.length);
+        } else {
+            arguments = CirCall.NO_ARGUMENTS;
+        }
         setBody(new CirCall(block, arguments));
     }
 

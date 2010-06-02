@@ -24,7 +24,6 @@ import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.*;
 import com.sun.max.asm.x86.*;
 import com.sun.max.program.*;
-import com.sun.max.util.*;
 
 /**
  * Almost like the visitor pattern.

@@ -21,9 +21,9 @@
 package com.sun.max.tele.method;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -73,19 +73,19 @@ public class TeleMethods extends AbstractTeleVMHolder {
     private CodeLocation gcCompleted = CodeLocation.createMachineCodeLocation(vm(), InspectableHeapInfo_inspectableGCCompleted, "GC completed (internal)");
     private CodeLocation gcStarted = CodeLocation.createMachineCodeLocation(vm(), InspectableHeapInfo_inspectableGCStarted, "GC started (internal)");
 
-    private final Sequence<CodeLocation> clientInspectableMethods;
+    private final List<CodeLocation> clientInspectableMethods;
 
     public TeleMethods(TeleVM teleVM) {
         super(teleVM);
         // Uncomment to enable verifying that the generated content in this class is up to date when running the inspector
         // updateSource(true);
         // Note that for this to work correctly, the named methods must be compiled into the boot heap.
-        final VariableSequence<CodeLocation> methods = new ArrayListSequence<CodeLocation>();
-        methods.append(CodeLocation.createMachineCodeLocation(vm(), HeapScheme$Inspect_inspectableGCStarted, "Start of GC"));
-        methods.append(CodeLocation.createMachineCodeLocation(vm(), HeapScheme$Inspect_inspectableGCCompleted, "End of GC"));
-        methods.append(CodeLocation.createMachineCodeLocation(vm(), HeapScheme$Inspect_inspectableObjectRelocated, "Object relocated"));
-        methods.append(CodeLocation.createMachineCodeLocation(vm(), CompilationScheme$Inspect_inspectableCompilationComplete, "End of method compilation"));
-        clientInspectableMethods = methods;
+        final List<CodeLocation> methods = new ArrayList<CodeLocation>();
+        methods.add(CodeLocation.createMachineCodeLocation(vm(), HeapScheme$Inspect_inspectableGCStarted, "Start of GC"));
+        methods.add(CodeLocation.createMachineCodeLocation(vm(), HeapScheme$Inspect_inspectableGCCompleted, "End of GC"));
+        methods.add(CodeLocation.createMachineCodeLocation(vm(), HeapScheme$Inspect_inspectableObjectRelocated, "Object relocated"));
+        methods.add(CodeLocation.createMachineCodeLocation(vm(), CompilationScheme$Inspect_inspectableCompilationComplete, "End of method compilation"));
+        clientInspectableMethods = Collections.unmodifiableList(methods);
     }
 
     /**
@@ -97,7 +97,7 @@ public class TeleMethods extends AbstractTeleVMHolder {
      *
      * @return methods suitable for setting client-requested breakpoints.
      */
-    public final Sequence<CodeLocation> clientInspectableMethods() {
+    public final List<CodeLocation> clientInspectableMethods() {
         return clientInspectableMethods;
     }
 

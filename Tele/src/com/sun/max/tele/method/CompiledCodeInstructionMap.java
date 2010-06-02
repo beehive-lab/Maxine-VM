@@ -23,7 +23,6 @@ package com.sun.max.tele.method;
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxMachineCode.*;
 import com.sun.max.tele.method.CodeLocation.*;
@@ -85,7 +84,7 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
     };
 
     private final TeleTargetMethod teleTargetMethod;
-    private IndexedSequence<TargetCodeInstruction> instructions = null;
+    private List<TargetCodeInstruction> instructions = null;
     private MachineCodeLocation[] instructionLocations = null;
 
     /**
@@ -111,9 +110,9 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
     private int[] callees = null;
 
     /**
-     * List of indexes for instructions that are labeled.
+     * Unmodifiable list of indexes for instructions that are labeled.
      */
-    private IndexedSequence<Integer> labelIndexes = null;
+    private List<Integer> labelIndexes = null;
 
     private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
 
@@ -125,7 +124,7 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
     private void initialize() {
         if (instructions == null) {
             instructions = teleTargetMethod.getInstructions();
-            final int instructionCount = instructions.length();
+            final int instructionCount = instructions.size();
 
             byte[] bytecodes = null;
             final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
@@ -155,14 +154,14 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
             Arrays.fill(callees, -1);
 
             // Fill in list of labels (index of instruction)
-            final VariableSequence<Integer> labels = new ArrayListSequence<Integer>();
+            final List<Integer> labels = new ArrayList<Integer>();
 
             int bytecodeIndex = 0; // position cursor in the original bytecode stream, used if we have a bytecode-> machine code map
             for (int index = 0; index < instructionCount; index++) {
                 final TargetCodeInstruction instruction = instructions.get(index);
                 instructionLocations[index] = codeManager().createMachineCodeLocation(instruction.address, "native target code instruction");
                 if (instruction.label != null) {
-                    labels.append(index);
+                    labels.add(index);
                 }
 
                 // offset in bytes of this machine code instruction from beginning
@@ -213,7 +212,7 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
                     }
                 }
             }
-            labelIndexes = labels;
+            labelIndexes = Collections.unmodifiableList(labels);
         }
     }
 
@@ -233,12 +232,12 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
 
     public int length() {
         initialize();
-        return instructions.length();
+        return instructions.size();
     }
 
     public TargetCodeInstruction instruction(int index) throws IllegalArgumentException {
         initialize();
-        if (index < 0 || index >= instructions.length()) {
+        if (index < 0 || index >= instructions.size()) {
             throw new IllegalArgumentException();
         }
         return instructions.get(index);
@@ -246,15 +245,15 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
 
     public int findInstructionIndex(Address address) {
         initialize();
-        final int length = instructions.length();
-        if (address.greaterEqual(instructions.first().address)) {
+        final int length = instructions.size();
+        if (address.greaterEqual(instructions.get(0).address)) {
             for (int index = 1; index < length; index++) {
                 instructions.get(index);
                 if (address.lessThan(instructions.get(index).address)) {
                     return index - 1;
                 }
             }
-            final TargetCodeInstruction lastInstruction = instructions.last();
+            final TargetCodeInstruction lastInstruction = instructions.get(instructions.size() - 1);
             if (address.lessThan(lastInstruction.address.plus(lastInstruction.bytes.length))) {
                 return length - 1;
             }
@@ -263,7 +262,7 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
     }
     public MachineCodeLocation instructionLocation(int index) {
         initialize();
-        if (index < 0 || index >= instructions.length()) {
+        if (index < 0 || index >= instructions.size()) {
             throw new IllegalArgumentException();
         }
         return instructionLocations[index];
@@ -271,7 +270,7 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
 
     public boolean isStop(int index) throws IllegalArgumentException {
         initialize();
-        if (index < 0 || index >= instructions.length()) {
+        if (index < 0 || index >= instructions.size()) {
             throw new IllegalArgumentException();
         }
         return codeStopKinds[index] != null;
@@ -279,7 +278,7 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
 
     public boolean isCall(int index) throws IllegalArgumentException {
         initialize();
-        if (index < 0 || index >= instructions.length()) {
+        if (index < 0 || index >= instructions.size()) {
             throw new IllegalArgumentException();
         }
         final CodeStopKind stopKind = codeStopKinds[index];
@@ -288,7 +287,7 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
 
     public boolean isNativeCall(int index) throws IllegalArgumentException {
         initialize();
-        if (index < 0 || index >= instructions.length()) {
+        if (index < 0 || index >= instructions.size()) {
             throw new IllegalArgumentException();
         }
         final CodeStopKind stopKind = codeStopKinds[index];
@@ -297,7 +296,7 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
 
     public boolean isBytecodeBoundary(int index) throws IllegalArgumentException {
         initialize();
-        if (index < 0 || index >= instructions.length()) {
+        if (index < 0 || index >= instructions.size()) {
             throw new IllegalArgumentException();
         }
         return opcodes[index] >= 0;
@@ -305,7 +304,7 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
 
     public BytecodeLocation bytecodeLocation(int index) throws IllegalArgumentException {
         initialize();
-        if (index < 0 || index >= instructions.length()) {
+        if (index < 0 || index >= instructions.size()) {
             throw new IllegalArgumentException();
         }
         return bytecodeLocations[index];
@@ -313,14 +312,14 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
 
     public TargetJavaFrameDescriptor targetFrameDescriptor(int index) throws IllegalArgumentException {
         initialize();
-        if (index < 0 || index >= instructions.length()) {
+        if (index < 0 || index >= instructions.size()) {
             throw new IllegalArgumentException();
         }
         return teleTargetMethod.getTargetFrameDescriptor(index);
     }
 
     public int opcode(int index) throws IllegalArgumentException {
-        if (index < 0 || index >= instructions.length()) {
+        if (index < 0 || index >= instructions.size()) {
             throw new IllegalArgumentException();
         }
         return opcodes[index];
@@ -328,13 +327,13 @@ public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements 
 
     public int calleeConstantPoolIndex(int index) {
         initialize();
-        if (index < 0 || index >= instructions.length()) {
+        if (index < 0 || index >= instructions.size()) {
             throw new IllegalArgumentException();
         }
         return callees[index];
     }
 
-    public IndexedSequence<Integer> labelIndexes() {
+    public List<Integer> labelIndexes() {
         initialize();
         return labelIndexes;
     }

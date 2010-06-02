@@ -21,11 +21,12 @@
 
 package com.sun.max.asm.gen.risc.arm;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.arm.*;
 import com.sun.max.asm.gen.risc.*;
-import com.sun.max.collect.*;
 
 /**
  * The program entry point for the ARM assembler generator.
@@ -52,7 +53,7 @@ public final class ARMAssemblerGenerator extends RiscAssemblerGenerator<RiscTemp
     }
 
     @Override
-    protected DisassembledInstruction generateExampleInstruction(RiscTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
+    protected DisassembledInstruction generateExampleInstruction(RiscTemplate template, List<Argument> arguments) throws AssemblyException {
         return new DisassembledInstruction(new ARMDisassembler(0, null), 0, new byte[] {0, 0, 0, 0}, template, arguments);
     }
 

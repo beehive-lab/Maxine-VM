@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.b;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.cps.bir.*;
@@ -151,8 +150,8 @@ public class ControlFlowAnalyzer extends ControlFlowAdapter {
      *
      * @return the basic blocks in the byte code stream, aggregated in bytecode position order in an array
      */
-    private AppendableIndexedSequence<BirBlock> createBasicBlocks() {
-        final AppendableIndexedSequence<BirBlock> blocks = new ArrayListSequence<BirBlock>();
+    private List<BirBlock> createBasicBlocks() {
+        final List<BirBlock> blocks = new ArrayList<BirBlock>();
         int start = -1;
         for (int i = 0; i < code().length; i++) {
             if (starts[i]) {
@@ -162,7 +161,7 @@ public class ControlFlowAnalyzer extends ControlFlowAdapter {
             assert start != -1;
             if (stops[i] && start != -1) {
                 final BirBlock block = new BirBlock(new BytecodeBlock(code(), start, i));
-                blocks.append(block);
+                blocks.add(block);
                 Arrays.fill(blockMap, start, i + 1, block);
                 start = -1;
             }
@@ -195,10 +194,10 @@ public class ControlFlowAnalyzer extends ControlFlowAdapter {
     /**
      * @return an array of spatially ordered basic blocks, which are also interconnected by their successor/predecessor relationships
      */
-    public IndexedSequence<BirBlock> run() {
+    public List<BirBlock> run() {
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(this);
         bytecodeScanner.scan(new BytecodeBlock(code));
-        final IndexedSequence<BirBlock> blocks = createBasicBlocks();
+        final List<BirBlock> blocks = createBasicBlocks();
         connectJumpsAndDetermineSafepoints(blockMap);
         return blocks;
     }

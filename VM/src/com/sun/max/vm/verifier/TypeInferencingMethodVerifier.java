@@ -26,7 +26,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -127,12 +126,12 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
      *         {@linkplain TypeCheckingMethodVerifier type checking}
      */
     public StackMapTable generateStackMapTable(ConstantPoolEditor constantPoolEditor) {
-        final AppendableSequence<StackMapFrame> stackMapFrames = new ArrayListSequence<StackMapFrame>();
+        final List<StackMapFrame> stackMapFrames = new ArrayList<StackMapFrame>();
         TypeState previousTypeState = typeStateMap()[0];
         for (TypeState typeState : typeStateMap()) {
             if (typeState != null && typeState.visited() && typeState.position() != 0) {
                 final StackMapFrame stackMapFrame = typeState.asStackMapFrame(previousTypeState);
-                stackMapFrames.append(stackMapFrame);
+                stackMapFrames.add(stackMapFrame);
                 previousTypeState = typeState;
             }
         }
@@ -140,7 +139,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         if (stackMapFrames.isEmpty()) {
             return null;
         }
-        return new StackMapTable(Sequence.Static.toArray(stackMapFrames, new StackMapFrame[stackMapFrames.length()]), constantPoolEditor);
+        return new StackMapTable(stackMapFrames.toArray(new StackMapFrame[stackMapFrames.size()]), constantPoolEditor);
     }
 
     @Override

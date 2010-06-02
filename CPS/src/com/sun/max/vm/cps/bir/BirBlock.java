@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.cps.bir;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.ir.*;
 
 /**
@@ -33,8 +33,8 @@ public class BirBlock implements IrBlock {
 
     private BytecodeBlock bytecodeBlock;
     private IrBlock.Role role;
-    private GrowableDeterministicSet<BirBlock> predecessors = new LinkedIdentityHashSet<BirBlock>();
-    private GrowableDeterministicSet<BirBlock> successors = new LinkedIdentityHashSet<BirBlock>();
+    private LinkedIdentityHashSet<BirBlock> predecessors = new LinkedIdentityHashSet<BirBlock>();
+    private LinkedIdentityHashSet<BirBlock> successors = new LinkedIdentityHashSet<BirBlock>();
     private boolean hasSafepoint;
 
     public BytecodeBlock bytecodeBlock() {
@@ -71,7 +71,7 @@ public class BirBlock implements IrBlock {
         predecessors.add(predecessor);
     }
 
-    public DeterministicSet<BirBlock> predecessors() {
+    public LinkedIdentityHashSet<BirBlock> predecessors() {
         return predecessors;
     }
 
@@ -79,7 +79,7 @@ public class BirBlock implements IrBlock {
         successors.add(successor);
     }
 
-    public DeterministicSet<BirBlock> successors() {
+    public LinkedIdentityHashSet<BirBlock> successors() {
         return successors;
     }
 

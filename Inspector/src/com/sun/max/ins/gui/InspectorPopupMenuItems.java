@@ -24,7 +24,6 @@ import java.util.*;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 
 /**
@@ -36,17 +35,17 @@ import com.sun.max.ins.*;
  */
 public class InspectorPopupMenuItems implements Iterable<Object>{
 
-    private final LinkSequence<Object> items = new LinkSequence<Object>();
+    private final List<Object> items = new ArrayList<Object>();
 
     public Iterator<Object> iterator() {
         return items.iterator();
     }
 
     public void add(JMenu menu) {
-        items.append(menu);
+        items.add(menu);
     }
 
     public void add(InspectorAction action) {
-        items.append(action);
+        items.add(action);
     }
 }

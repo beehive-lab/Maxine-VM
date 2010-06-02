@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.gui.*;
@@ -472,7 +473,7 @@ public class OptionSet {
      * @return an iterable collection of {@code Option} instances, sorted according to insertion order
      */
     public Iterable<Option<?>> getOptions() {
-        return StaticLoophole.cast(optionMap.values());
+        return Utils.cast(optionMap.values());
     }
 
     /**
@@ -509,7 +510,7 @@ public class OptionSet {
     public void printHelp(PrintStream stream, int width) {
         printHelpHeader(stream);
         for (Option<?> option : getSortedOptions()) {
-            final Option<Object> opt = StaticLoophole.cast(option);
+            final Option<Object> opt = Utils.cast(option);
             stream.print("    " + getUsage(opt));
             final Object defaultValue = opt.getDefaultValue();
             if (defaultValue != null) {
@@ -614,7 +615,7 @@ public class OptionSet {
         } else if (fieldType == File.class) {
             return addOption(new FieldOption<File>(optionName, object, field, (File) defaultValue, OptionTypes.FILE_TYPE, help));
         } else if (fieldType.isEnum()) {
-            final Class<? extends Enum> enumClass = StaticLoophole.cast(fieldType);
+            final Class<? extends Enum> enumClass = Utils.cast(fieldType);
             return addOption(makeEnumFieldOption(optionName, object, field, defaultValue, enumClass, help));
         }
         return null;
@@ -622,7 +623,7 @@ public class OptionSet {
 
     private <T extends Enum<T>> FieldOption<T> makeEnumFieldOption(String name, Object object, Field field, Object defaultValue, Class<T> enumClass, String help) {
         final OptionTypes.EnumType<T> optionType = new OptionTypes.EnumType<T>(enumClass);
-        final T defaultV = StaticLoophole.<T>cast(defaultValue);
+        final T defaultV = Utils.<T>cast(defaultValue);
         return new FieldOption<T>(name, object, field, defaultV, optionType, help);
     }
 
@@ -664,9 +665,9 @@ public class OptionSet {
         return addOption(new Option<List<String>>(name, defaultValue == null ? null : type.parseValue(defaultValue), type, help));
     }
 
-    public <Value_Type> Option<List<Value_Type>> newListOption(String name, String defaultValue, Option.Type<Value_Type> elementOptionType, char separator, String help) {
-        final OptionTypes.ListType<Value_Type> type = new OptionTypes.ListType<Value_Type>(separator, elementOptionType);
-        return addOption(new Option<List<Value_Type>>(name, defaultValue == null ? null : type.parseValue(defaultValue), type, help));
+    public <T> Option<List<T>> newListOption(String name, String defaultValue, Option.Type<T> elementOptionType, char separator, String help) {
+        final OptionTypes.ListType<T> type = new OptionTypes.ListType<T>(separator, elementOptionType);
+        return addOption(new Option<List<T>>(name, defaultValue == null ? null : type.parseValue(defaultValue), type, help));
     }
 
     public Option<File> newFileOption(String name, String defaultValue, String help) {
@@ -681,13 +682,13 @@ public class OptionSet {
         return addOption(new Option<URL>(name, defaultValue, OptionTypes.URL_TYPE, help));
     }
 
-    public <Instance_Type> Option<Instance_Type> newInstanceOption(String name, Class<Instance_Type> klass, Instance_Type defaultValue, String help) {
-        return addOption(new Option<Instance_Type>(name, defaultValue, OptionTypes.createInstanceOptionType(klass), help));
+    public <T> Option<T> newInstanceOption(String name, Class<T> klass, T defaultValue, String help) {
+        return addOption(new Option<T>(name, defaultValue, OptionTypes.createInstanceOptionType(klass), help));
     }
 
-    public <Instance_Type> Option<List<Instance_Type>> newListInstanceOption(String name, String defaultValue, Class<Instance_Type> klass, char separator, String help) {
-        final OptionTypes.ListType<Instance_Type> type = OptionTypes.createInstanceListOptionType(klass, separator);
-        return addOption(new Option<List<Instance_Type>>(name, (defaultValue == null) ? null : type.parseValue(defaultValue), type, help));
+    public <T> Option<List<T>> newListInstanceOption(String name, String defaultValue, Class<T> klass, char separator, String help) {
+        final OptionTypes.ListType<T> type = OptionTypes.createInstanceListOptionType(klass, separator);
+        return addOption(new Option<List<T>>(name, (defaultValue == null) ? null : type.parseValue(defaultValue), type, help));
     }
 
     public Option<Boolean> newBooleanOption(String name, Boolean defaultValue, String help) {
@@ -697,34 +698,34 @@ public class OptionSet {
         return addOption(new Option<Boolean>(name, defaultValue, OptionTypes.BOOLEAN_TYPE, help));
     }
 
-    public <Object_Type> Option<Object_Type> newOption(String name, String defaultValue, Option.Type<Object_Type> type, String help) {
+    public <T> Option<T> newOption(String name, String defaultValue, Option.Type<T> type, String help) {
         return newOption(name, type.parseValue(defaultValue), type, Syntax.REQUIRES_EQUALS, help);
     }
 
-    public <Object_Type> Option<Object_Type> newOption(String name, Object_Type defaultValue, Option.Type<Object_Type> type, Syntax syntax, String help) {
-        return addOption(new Option<Object_Type>(name, defaultValue, type, help), syntax);
+    public <T> Option<T> newOption(String name, T defaultValue, Option.Type<T> type, Syntax syntax, String help) {
+        return addOption(new Option<T>(name, defaultValue, type, help), syntax);
     }
 
-    public <Enum_Type extends Enum<Enum_Type>> Option<Enum_Type> newEnumOption(String name, Enum_Type defaultValue, Class<Enum_Type> enumClass, String help) {
-        return addOption(new Option<Enum_Type>(name, defaultValue, new OptionTypes.EnumType<Enum_Type>(enumClass), help));
+    public <E extends Enum<E>> Option<E> newEnumOption(String name, E defaultValue, Class<E> enumClass, String help) {
+        return addOption(new Option<E>(name, defaultValue, new OptionTypes.EnumType<E>(enumClass), help));
     }
 
-    public <Enum_Type extends Enum<Enum_Type>> Option<List<Enum_Type>> newEnumListOption(String name, Iterable<Enum_Type> defaultValue, Class<Enum_Type> enumClass, String help) {
-        final List<Enum_Type> list;
+    public <E extends Enum<E>> Option<List<E>> newEnumListOption(String name, Iterable<E> defaultValue, Class<E> enumClass, String help) {
+        final List<E> list;
         if (defaultValue == null) {
             list = null;
         } else if (defaultValue instanceof List) {
-            list = StaticLoophole.cast(defaultValue);
+            list = Utils.cast(defaultValue);
         } else if (defaultValue instanceof Collection) {
-            final Collection<Enum_Type> collection = StaticLoophole.cast(defaultValue);
-            list = new ArrayList<Enum_Type>(collection);
+            final Collection<E> collection = Utils.cast(defaultValue);
+            list = new ArrayList<E>(collection);
         } else {
-            list = new ArrayList<Enum_Type>();
-            for (Enum_Type value : defaultValue) {
+            list = new ArrayList<E>();
+            for (E value : defaultValue) {
                 list.add(value);
             }
         }
-        final Option<List<Enum_Type>> option = new Option<List<Enum_Type>>(name, list, new OptionTypes.EnumListType<Enum_Type>(enumClass, ','), help);
+        final Option<List<E>> option = new Option<List<E>>(name, list, new OptionTypes.EnumListType<E>(enumClass, ','), help);
         return addOption(option);
     }
 

@@ -22,8 +22,7 @@ package com.sun.max.vm.cps.eir;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.Arrays;
+import com.sun.max.*;
 import com.sun.max.vm.cps.eir.allocate.*;
 
 /**
@@ -47,15 +46,15 @@ public abstract class EirPrologue<EirInstructionVisitor_Type extends EirInstruct
         return eirMethod;
     }
 
-    AppendableSequence<EirOperand> calleeSavedOperands = new LinkSequence<EirOperand>();
+    List<EirOperand> calleeSavedOperands = new LinkedList<EirOperand>();
     private final EirOperand[] parameterOperands;
 
-    private final AppendableSequence<EirOperand> definitionOperands = new LinkSequence<EirOperand>();
+    private final List<EirOperand> definitionOperands = new LinkedList<EirOperand>();
 
     public void addDefinition(EirValue definedValue) {
         final EirOperand operand = new EirOperand(this, EirOperand.Effect.DEFINITION, definedValue.location().category().asSet());
         operand.setEirValue(definedValue);
-        definitionOperands.append(operand);
+        definitionOperands.add(operand);
     }
 
     protected EirPrologue(EirBlock block, EirMethod eirMethod,
@@ -74,7 +73,7 @@ public abstract class EirPrologue<EirInstructionVisitor_Type extends EirInstruct
                 final EirOperand operand = new EirOperand(this, EirOperand.Effect.DEFINITION, register.category().asSet());
                 operand.setRequiredLocation(register);
                 operand.setEirValue(calleeSavedValues[i]);
-                calleeSavedOperands.append(operand);
+                calleeSavedOperands.add(operand);
             }
         }
 
@@ -102,7 +101,7 @@ public abstract class EirPrologue<EirInstructionVisitor_Type extends EirInstruct
 
     @Override
     public String toString() {
-        String s = "prologue (" + Arrays.toString(parameterOperands) + ")";
+        String s = "prologue (" + Utils.toString(parameterOperands, ", ") + ")";
         if (!calleeSavedOperands.isEmpty()) {
             s += "[Callee saved: " + calleeSavedOperands.toString() + "]";
         }

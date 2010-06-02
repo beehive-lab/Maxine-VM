@@ -23,11 +23,12 @@ package com.sun.max.ins.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.program.*;
 
@@ -45,7 +46,7 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
     protected final DefaultListModel listModel = new DefaultListModel();
     protected final JList list = new JList(EMPTY_LIST_MODEL);
 
-    private AppendableSequence<Type> selectedObjects;
+    private List<Type> selectedObjects;
 
     /**
      * The value representing that no object was selected.
@@ -59,10 +60,10 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
      * multi-selection enabled, returns the first selection.
      */
     public Type selectedObject() {
-        return (selectedObjects != null && selectedObjects.length() > 0) ? selectedObjects.first() :  noSelectedObject();
+        return (selectedObjects != null && selectedObjects.size() > 0) ? Utils.first(selectedObjects) :  noSelectedObject();
     }
 
-    public Sequence<Type> selectedObjects() {
+    public List<Type> selectedObjects() {
         return selectedObjects;
     }
 
@@ -83,9 +84,9 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
         @Override
         protected void procedure() {
             final int[] selectedIndices = list.getSelectedIndices();
-            selectedObjects = new LinkSequence<Type>();
+            selectedObjects = new LinkedList<Type>();
             for (int i = 0; i < selectedIndices.length; i++) {
-                selectedObjects.append(convertSelectedItem(listModel.get(selectedIndices[i])));
+                selectedObjects.add(convertSelectedItem(listModel.get(selectedIndices[i])));
             }
             dispose();
         }

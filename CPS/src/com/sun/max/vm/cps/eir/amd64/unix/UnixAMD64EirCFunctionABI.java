@@ -22,6 +22,8 @@ package com.sun.max.vm.cps.eir.amd64.unix;
 
 import static com.sun.max.vm.cps.eir.amd64.AMD64EirRegister.General.*;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
@@ -57,7 +59,7 @@ public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
      */
     public UnixAMD64EirCFunctionABI(VMConfiguration vmConfiguration, boolean isVmEntryPoint) {
         super(vmConfiguration);
-        calleeSavedRegisters = new ArraySequence<AMD64EirRegister>(RBX, RBP, R12, R13, R14, R15);
+        calleeSavedRegisters = Arrays.asList(new AMD64EirRegister[] {RBX, RBP, R12, R13, R14, R15});
         // Native target ABI uses different entry point.
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = targetABI();
         final CallEntryPoint callEntryPoint = isVmEntryPoint ? CallEntryPoint.C_ENTRY_POINT : CallEntryPoint.OPTIMIZED_ENTRY_POINT;

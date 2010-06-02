@@ -20,7 +20,8 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.ins.debug.*;
 import com.sun.max.vm.*;
 
@@ -77,5 +78,5 @@ public enum BootImageColumnKind implements ColumnKind {
         return defaultVisibility;
     }
 
-    public static final IndexedSequence<BootImageColumnKind> VALUES = new ArraySequence<BootImageColumnKind>(values());
+    public static final List<BootImageColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 }

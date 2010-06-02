@@ -20,7 +20,9 @@
  */
 package com.sun.max.vm.cps.tir;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.tir.pipeline.*;
@@ -50,11 +52,11 @@ public class TirTree extends AbstractIrMethod {
         this.targetTree = targetTree;
     }
 
-    private AppendableIndexedSequence<TirLocal> locals = new ArrayListSequence<TirLocal>();
-    private AppendableIndexedSequence<TirInstruction> prologue = new ArrayListSequence<TirInstruction>();
-    private AppendableIndexedSequence<TirTrace> traces = new ArrayListSequence<TirTrace>();
+    private List<TirLocal> locals = new ArrayList<TirLocal>();
+    private List<TirInstruction> prologue = new ArrayList<TirInstruction>();
+    private List<TirTrace> traces = new ArrayList<TirTrace>();
 
-    public Sequence<TirTrace> traces() {
+    public List<TirTrace> traces() {
         return traces;
     }
 
@@ -71,15 +73,15 @@ public class TirTree extends AbstractIrMethod {
     }
 
     public void append(TirLocal local) {
-        locals.append(local);
+        locals.add(local);
     }
 
     public void append(TirInstruction instruction) {
-        prologue.append(instruction);
+        prologue.add(instruction);
     }
 
     public void append(TirTrace trace) {
-        traces.append(trace);
+        traces.add(trace);
     }
 
     public void send(TirMessageSink sink) {
@@ -91,26 +93,26 @@ public class TirTree extends AbstractIrMethod {
     }
 
     private void sendTraces(TirMessageSink sink) {
-        for (int i = traces.length() - 1; i >= 0; i--) {
+        for (int i = traces.size() - 1; i >= 0; i--) {
             traces.get(i).send(sink);
         }
     }
 
     private void sendPrologue(TirMessageSink sink) {
-        for (int i = prologue.length() - 1; i >= 0; i--) {
+        for (int i = prologue.size() - 1; i >= 0; i--) {
             sink.receive(prologue.get(i));
         }
     }
 
     private void sendLocals(TirMessageSink sink) {
-        for (int i = locals.length() - 1; i >= 0; i--) {
+        for (int i = locals.size() - 1; i >= 0; i--) {
             sink.receive(locals.get(i));
         }
     }
 
     @Override
     public String toString() {
-        return entryState.frames().first().toString();
+        return Utils.first(entryState.frames()).toString();
     }
 
     public boolean isGenerated() {
@@ -125,11 +127,11 @@ public class TirTree extends AbstractIrMethod {
         return anchor;
     }
 
-    public Sequence<TirInstruction> prologue() {
+    public List<TirInstruction> prologue() {
         return prologue;
     }
 
-    public Sequence<TirLocal> locals() {
+    public List<TirLocal> locals() {
         return locals;
     }
 

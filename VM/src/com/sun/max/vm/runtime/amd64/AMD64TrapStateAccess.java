@@ -75,8 +75,8 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
     private static final String[] xmmNames;
 
     static {
-        final int gprCount = AMD64GeneralRegister64.ENUMERATOR.length();
-        final int xmmCount = AMD64XMMRegister.ENUMERATOR.length();
+        final int gprCount = AMD64GeneralRegister64.ENUMERATOR.size();
+        final int xmmCount = AMD64XMMRegister.ENUMERATOR.size();
         gprNames = new String[gprCount];
         xmmNames = new String[xmmCount];
         for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {

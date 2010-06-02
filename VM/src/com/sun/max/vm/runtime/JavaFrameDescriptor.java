@@ -23,7 +23,7 @@ package com.sun.max.vm.runtime;
 import java.security.*;
 import java.util.Arrays;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 
@@ -117,7 +117,7 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
     public boolean equals(Object other) {
         if (getClass().isInstance(other)) {
             final Class<JavaFrameDescriptor<Slot_Type>> type = null;
-            final JavaFrameDescriptor<Slot_Type> descriptor = StaticLoophole.cast(type, other);
+            final JavaFrameDescriptor<Slot_Type> descriptor = Utils.cast(type, other);
             if (classMethodActor.equals(descriptor.classMethodActor) &&
                             bytecodePosition == descriptor.bytecodePosition &&
                             slotsEqual(locals, descriptor.locals) &&
@@ -165,8 +165,8 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
             final int bytecodePosition = javaFrameDescriptor.bytecodePosition;
             s += String.format("<<%s@%s locals:[%s] stack:[%s]>>", classMethodActor.format("%h.%n(%s)", bytecodePosition),
                             bytecodePosition,
-                            com.sun.max.lang.Arrays.toString(javaFrameDescriptor.locals, ", "),
-                            com.sun.max.lang.Arrays.toString(javaFrameDescriptor.stackSlots, ", "));
+                            com.sun.max.Utils.toString(javaFrameDescriptor.locals, ", "),
+                            com.sun.max.Utils.toString(javaFrameDescriptor.stackSlots, ", "));
             javaFrameDescriptor = javaFrameDescriptor.parent();
         } while (javaFrameDescriptor != null);
         return s;

@@ -22,11 +22,13 @@ package com.sun.max.asm.gen.risc;
 
 import static com.sun.max.asm.gen.LabelParameter.*;
 
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
 import com.sun.max.asm.gen.risc.field.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -63,7 +65,7 @@ public abstract class RiscAssemblerGenerator<Template_Type extends RiscTemplate>
         writer.println("int instruction = " + Ints.toHexLiteral(template.opcode()) + ";");
 
         // Print argument constraint checking statements
-        final Sequence<InstructionConstraint> constraints = template.instructionDescription().constraints();
+        final List<InstructionConstraint> constraints = template.instructionDescription().constraints();
         for (InstructionConstraint constraint : constraints) {
             if (!(constraint instanceof TestOnlyInstructionConstraint)) {
                 final String constraintExpression = constraint.asJavaExpression();
@@ -86,7 +88,7 @@ public abstract class RiscAssemblerGenerator<Template_Type extends RiscTemplate>
 
     @Override
     protected void printLabelMethod(final IndentWriter indentWriter, final Template_Type labelTemplate, String assemblerClassName) {
-        final Sequence<Parameter> parameters = getParameters(labelTemplate, true);
+        final List<Parameter> parameters = getParameters(labelTemplate, true);
         final InstructionWithLabelSubclass labelInstructionSubclass = new InstructionWithLabelSubclass(labelTemplate, InstructionWithOffset.class, "");
         printLabelMethodHelper(indentWriter, labelTemplate, parameters, 4, assemblerClassName, labelInstructionSubclass);
     }
@@ -95,15 +97,15 @@ public abstract class RiscAssemblerGenerator<Template_Type extends RiscTemplate>
      * Prints the reference to the raw method from which a synthetic method was defined.
      */
     @Override
-    protected void printExtraMethodJavadoc(IndentWriter writer, Template_Type template, AppendableSequence<String> extraLinks, boolean forLabelAssemblerMethod) {
+    protected void printExtraMethodJavadoc(IndentWriter writer, Template_Type template, List<String> extraLinks, boolean forLabelAssemblerMethod) {
         if (template.instructionDescription().isSynthetic()) {
             final RiscTemplate syntheticTemplate = template;
             final RiscTemplate rawTemplate = syntheticTemplate.synthesizedFrom();
-            final Sequence<? extends Parameter> parameters = getParameters(rawTemplate, forLabelAssemblerMethod);
+            final List<? extends Parameter> parameters = getParameters(rawTemplate, forLabelAssemblerMethod);
             final String ref = rawTemplate.internalName() + "(" + formatParameterList("", parameters, true) + ")";
             writer.println(" * <p>");
             writer.print(" * This is a synthetic instruction equivalent to: {@code " + rawTemplate.internalName() + "(");
-            extraLinks.append("#" + ref);
+            extraLinks.add("#" + ref);
 
             boolean firstOperand = true;
             for (OperandField rawOperand : rawTemplate.operandFields()) {
@@ -130,7 +132,7 @@ public abstract class RiscAssemblerGenerator<Template_Type extends RiscTemplate>
      *                a parameter of {@code rawTemplate}
      */
     private String getRawOperandReplacement(RiscTemplate syntheticTemplate, RiscTemplate rawTemplate, OperandField rawOperand, boolean forLabelAssemblerMethod) {
-        if (Sequence.Static.containsIdentical(syntheticTemplate.operandFields(), rawOperand)) {
+        if (Utils.indexOfIdentical(syntheticTemplate.operandFields(), rawOperand) != -1) {
             if (rawOperand instanceof OffsetParameter && forLabelAssemblerMethod) {
                 return LABEL.variableName();
             }

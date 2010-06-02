@@ -20,9 +20,10 @@
  */
 package com.sun.max.ins.gui;
 
+import java.util.*;
+
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.lang.*;
@@ -128,11 +129,11 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         return methodInspector;
     }
 
-    private static final VariableMapping<MaxMachineCode, MethodInspector> machineCodeToMethodInspector =
-        new IdentityHashMapping<MaxMachineCode, MethodInspector>();
+    private static final Map<MaxMachineCode, MethodInspector> machineCodeToMethodInspector =
+        new IdentityHashMap<MaxMachineCode, MethodInspector>();
 
-    private static final VariableMapping<TeleClassMethodActor, MethodInspector> teleClassMethodActorToMethodInspector =
-        new IdentityHashMapping<TeleClassMethodActor, MethodInspector>();
+    private static final Map<TeleClassMethodActor, MethodInspector> teleClassMethodActorToMethodInspector =
+        new IdentityHashMap<TeleClassMethodActor, MethodInspector>();
 
     /**
      * Makes an inspector displaying code for specified code location. Should always work for

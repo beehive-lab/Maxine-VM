@@ -22,7 +22,6 @@ package com.sun.max.ins.method;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectorNameDisplay.*;
 import com.sun.max.ins.gui.*;
@@ -151,13 +150,13 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
      * @param multi allow multiple selections if true
      * @return references to the selected {@link TargetMethod}s in the tele VM, null if user canceled.
      */
-    public static Sequence<MaxCompiledCode> show(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multi) {
+    public static List<MaxCompiledCode> show(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multi) {
         final TargetMethodSearchDialog dialog = new TargetMethodSearchDialog(inspection, teleClassActor, title, actionName, multi);
         dialog.setVisible(true);
         return dialog.selectedObjects();
 //        final Sequence<MaxMachineCode> teleObjects = dialog.selectedObjects();
 //        if (teleObjects != null) {
-//            final AppendableSequence<TeleTargetMethod> teleTargetMethods = new LinkSequence<TeleTargetMethod>();
+//            final AppendableSequence<TeleTargetMethod> teleTargetMethods = new LinkedList<TeleTargetMethod>();
 //            for (MaxMachineCode teleObject : teleObjects) {
 //                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleObject;
 //                teleTargetMethods.append(teleTargetMethod);

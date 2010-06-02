@@ -26,7 +26,6 @@ import java.util.*;
 import junit.framework.*;
 
 import com.sun.max.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**
@@ -88,7 +87,7 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
         for (Class javaClass : packageLoader.load(maxPackage, false)) {
             if (isJUnitTestCaseClass(javaClass)) {
                 final Class<Class<? extends TestCase>> type = null;
-                add(StaticLoophole.cast(type, javaClass));
+                add(Utils.cast(type, javaClass));
             }
         }
         return this;
@@ -106,7 +105,7 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
             if (isJUnitTestCaseClass(c)) {
                 remove(c);
                 final Class<Class<? extends TestCase>> type = null;
-                add(StaticLoophole.cast(type, c));
+                add(Utils.cast(type, c));
             } else {
                 ProgramWarning.message("Class is not an instantiable subclass of TestCase: " + c);
             }

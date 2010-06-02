@@ -20,9 +20,11 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
+import java.util.*;
+import java.util.Arrays;
+
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -35,13 +37,13 @@ import com.sun.max.vm.type.*;
 public abstract class Builtin extends Routine implements Comparable<Builtin>, Stoppable {
 
     @CONSTANT
-    private static IndexedSequence<Builtin> builtins = new ArrayListSequence<Builtin>();
+    private static List<Builtin> builtins = new ArrayList<Builtin>();
 
-    public static IndexedSequence<Builtin> builtins() {
+    public static List<Builtin> builtins() {
         return builtins;
     }
 
-    private static final GrowableMapping<ClassMethodActor, Builtin> classMethodActorToBuiltin = HashMapping.createIdentityMapping();
+    private static final HashMap<ClassMethodActor, Builtin> classMethodActorToBuiltin = new HashMap<ClassMethodActor, Builtin>();
 
     public static Builtin get(ClassMethodActor classMethodActor) {
         return classMethodActorToBuiltin.get(classMethodActor);
@@ -89,10 +91,10 @@ public abstract class Builtin extends Routine implements Comparable<Builtin>, St
 
     public Builtin(Class executableHolder) {
         super(executableHolder);
-        this.serial = builtins.length();
-        final Class<AppendableIndexedSequence<Builtin>> type = null;
-        final AppendableIndexedSequence<Builtin> builtinList = StaticLoophole.cast(type, builtins);
-        builtinList.append(this);
+        this.serial = builtins.size();
+        final Class<List<Builtin>> type = null;
+        final List<Builtin> builtinList = Utils.cast(type, builtins);
+        builtinList.add(this);
         this.hostedExecutable = getExecutable(getClass(), name, false);
         assert hostedExecutable == null || executableHolder == null || hostedExecutable.holder() != ClassActor.fromJava(executableHolder);
     }
@@ -102,10 +104,10 @@ public abstract class Builtin extends Routine implements Comparable<Builtin>, St
      */
     @HOSTED_ONLY
     public static void initialize() {
-        Builtin[] result = Sequence.Static.toArray(builtins, new Builtin[builtins.length()]);
-        java.util.Arrays.sort(result);
-        builtins = new ArraySequence<Builtin>(result);
-        for (int i = 0; i < builtins.length(); i++) {
+        Builtin[] result = builtins.toArray(new Builtin[builtins.size()]);
+        Arrays.sort(result);
+        builtins = Arrays.asList(result);
+        for (int i = 0; i < builtins.size(); i++) {
             final Builtin builtin = builtins.get(i);
             builtin.serial = i;
         }
@@ -113,7 +115,7 @@ public abstract class Builtin extends Routine implements Comparable<Builtin>, St
 
     @HOSTED_ONLY
     public static void register(BootstrapCompilerScheme compilerScheme) {
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses()) {
             for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {
                 registerMethod(classMethodActor);
             }

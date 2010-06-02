@@ -22,12 +22,12 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
@@ -66,9 +66,9 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setThreadLocalWatchpoint(tableModel.getValueAt(row, 0), null).perform();
-                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
-                    if (watchpoints.length() > 0) {
-                        return watchpoints.first();
+                    final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (!watchpoints.isEmpty()) {
+                        return watchpoints.get(0);
                     }
                     return null;
                 }
@@ -86,9 +86,9 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setThreadLocalWatchpoint(tableModel.getValueAt(row, 0), null).perform();
-                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
-                    if (watchpoints.length() > 0) {
-                        return watchpoints.first();
+                    final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (!watchpoints.isEmpty()) {
+                        return watchpoints.get(0);
                     }
                     return null;
                 }
@@ -129,7 +129,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
     private final class ThreadLocalsAreaTableColumnModel extends InspectorTableColumnModel<ThreadLocalVariablesColumnKind> {
 
         ThreadLocalsAreaTableColumnModel(ThreadLocalsViewPreferences viewPreferences) {
-            super(ThreadLocalVariablesColumnKind.VALUES.length(), viewPreferences);
+            super(ThreadLocalVariablesColumnKind.VALUES.size(), viewPreferences);
             addColumn(ThreadLocalVariablesColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(ThreadLocalVariablesColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
             addColumn(ThreadLocalVariablesColumnKind.POSITION, new PositionRenderer(inspection()), null);
@@ -153,7 +153,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return ThreadLocalVariablesColumnKind.VALUES.length();
+            return ThreadLocalVariablesColumnKind.VALUES.size();
         }
 
         public int getRowCount() {

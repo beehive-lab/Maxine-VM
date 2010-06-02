@@ -555,16 +555,16 @@ public final class ClassfileReader {
         return new ExceptionHandlerEntry(startAddress, endAddress, handlerAddress, catchClassIndex);
     }
 
-    protected Sequence<ExceptionHandlerEntry> readExceptionHandlerTable(int codeLength) {
+    protected ExceptionHandlerEntry[] readExceptionHandlerTable(int codeLength) {
         final int nEntries = classfileStream.readUnsigned2();
         if (nEntries != 0) {
             final ExceptionHandlerEntry[] entries = new ExceptionHandlerEntry[nEntries];
             for (int i = 0; i < nEntries; i++) {
                 entries[i] = readExceptionHandlerEntry(codeLength);
             }
-            return new ArraySequence<ExceptionHandlerEntry>(entries);
+            return entries;
         }
-        return Sequence.Static.empty(ExceptionHandlerEntry.class);
+        return ExceptionHandlerEntry.NONE;
     }
 
     // CheckStyle: stop parameter assignment check
@@ -598,7 +598,7 @@ public final class ClassfileReader {
         }
 
         final byte[] code = classfileStream.readByteArray(codeLength);
-        final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = readExceptionHandlerTable(code.length);
+        final ExceptionHandlerEntry[] exceptionHandlerTable = readExceptionHandlerTable(code.length);
 
         LineNumberTable lineNumberTable = LineNumberTable.EMPTY;
         LocalVariableTable localVariableTable = LocalVariableTable.EMPTY;

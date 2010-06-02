@@ -46,7 +46,7 @@ public class GraphIrObserver extends IrObserverAdapter {
     public static final String DEFAULT_FILENAME = "graph.xml";
 
     private final GraphWriter.Document document = GraphWriter.createDocument();
-    private final VariableMapping<IrMethod, GraphWriter.Group> groupMapping = new ChainedHashMapping<IrMethod, GraphWriter.Group>();
+    private final Mapping<IrMethod, GraphWriter.Group> groupMapping = new ChainedHashMapping<IrMethod, GraphWriter.Group>();
     private int nestingLevel;
 
     private void begin(IrMethod irMethod) {
@@ -83,7 +83,7 @@ public class GraphIrObserver extends IrObserverAdapter {
         groupMapping.remove(irMethod);
 
         // Do not include groups with no graphs
-        if (group.getGraphs().length() == 0) {
+        if (group.getGraphs().size() == 0) {
             document.removeGroup(group);
         }
 
@@ -162,7 +162,7 @@ public class GraphIrObserver extends IrObserverAdapter {
             final GraphWriter graphWriter = new GraphWriter(fileWriter);
             graphWriter.write(document);
             graphWriter.close();
-            Trace.line(2, document.getGroups().length() + " groups of graphs written to file " + fileName);
+            Trace.line(2, document.getGroups().size() + " groups of graphs written to file " + fileName);
         } catch (IOException e) {
             ProgramError.unexpected("Error while writing to file " + fileName, e);
         }

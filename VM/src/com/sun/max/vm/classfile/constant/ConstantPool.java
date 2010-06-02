@@ -25,6 +25,8 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 
+import java.util.*;
+
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -170,7 +172,7 @@ public final class ConstantPool implements RiConstantPool {
             }
         }
 
-        public static final IndexedSequence<Tag> VALUES = new ArraySequence<Tag>(values());
+        public static final List<Tag> VALUES = Arrays.asList(values());
     }
 
     /**
@@ -467,7 +469,7 @@ public final class ConstantPool implements RiConstantPool {
     }
 
     static ClassFormatError unexpectedEntry(int index, Tag tag, String description, Tag... expected) {
-        throw verifyError("Constant pool entry" + (description == null ? "" : " for " + description) + " at " + index + " is a " + tag + ", expected " + com.sun.max.lang.Arrays.toString(expected, " or "));
+        throw verifyError("Constant pool entry" + (description == null ? "" : " for " + description) + " at " + index + " is a " + tag + ", expected " + com.sun.max.Utils.toString(expected, " or "));
     }
 
     private ClassFormatError unexpectedEntry(int index, String description, Tag... expected) {

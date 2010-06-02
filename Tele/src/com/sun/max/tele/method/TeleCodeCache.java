@@ -21,8 +21,8 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
@@ -65,7 +65,11 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     private final String bootCodeRegionName;
     private TeleCompiledCodeRegion bootCodeRegion = null;
     private TeleCompiledCodeRegion dynamicCodeRegion = null;
-    private VariableSequence<MaxCompiledCodeRegion> compiledCodeRegions = new ArrayListSequence<MaxCompiledCodeRegion>(2);
+
+    /**
+     * Unmodifiable list of all regions in which compiled code is stored.
+     */
+    private List<MaxCompiledCodeRegion> compiledCodeRegions = Collections.emptyList();
 
     /**
      * Creates the object that models the cache of compiled code in the VM.
@@ -116,8 +120,10 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         bootCodeRegion = new TeleCompiledCodeRegion(vm(), teleCodeManager.teleBootCodeRegion(), true);
         dynamicCodeRegion = new TeleCompiledCodeRegion(vm(), teleCodeManager.teleRuntimeCodeRegion(), false);
 
-        compiledCodeRegions.append(bootCodeRegion);
-        compiledCodeRegions.append(dynamicCodeRegion);
+        List<MaxCompiledCodeRegion> regions = new ArrayList<MaxCompiledCodeRegion>(2);
+        regions.add(bootCodeRegion);
+        regions.add(dynamicCodeRegion);
+        compiledCodeRegions = Collections.unmodifiableList(regions);
 
         int methodCount = 0;
         for (TeleTargetMethod teleTargetMethod : bootCodeRegion().teleTargetMethods()) {
@@ -159,7 +165,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return bootCodeRegion;
     }
 
-    public IndexedSequence<MaxCompiledCodeRegion> compiledCodeRegions() {
+    public List<MaxCompiledCodeRegion> compiledCodeRegions() {
         return compiledCodeRegions;
     }
 
@@ -207,12 +213,12 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return teleCompiledCode;
     }
 
-    public IndexedSequence<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor) {
-        final VariableSequence<MaxCompiledCode> compilations = new ArrayListSequence<MaxCompiledCode>(teleClassMethodActor.numberOfCompilations());
+    public List<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor) {
+        final List<MaxCompiledCode> compilations = new ArrayList<MaxCompiledCode>(teleClassMethodActor.numberOfCompilations());
         for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
-            compilations.append(findCompiledCode(teleTargetMethod.getRegionStart()));
+            compilations.add(findCompiledCode(teleTargetMethod.getRegionStart()));
         }
-        return compilations;
+        return Collections.unmodifiableList(compilations);
     }
 
     public TeleCompiledCode latestCompilation(TeleClassMethodActor teleClassMethodActor) {

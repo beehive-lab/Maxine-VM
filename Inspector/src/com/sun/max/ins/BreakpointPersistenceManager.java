@@ -20,7 +20,8 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -95,21 +96,21 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     }
 
     public void saveSettings(SaveSettingsEvent settings) {
-        final AppendableSequence<MaxBreakpoint> targetBreakpoints = new LinkSequence<MaxBreakpoint>();
-        final AppendableSequence<MaxBreakpoint> bytecodeBreakpoints = new LinkSequence<MaxBreakpoint>();
+        final List<MaxBreakpoint> targetBreakpoints = new LinkedList<MaxBreakpoint>();
+        final List<MaxBreakpoint> bytecodeBreakpoints = new LinkedList<MaxBreakpoint>();
         for (MaxBreakpoint breakpoint : inspection.vm().breakpointManager().breakpoints()) {
             if (breakpoint.isBytecodeBreakpoint()) {
-                bytecodeBreakpoints.append(breakpoint);
+                bytecodeBreakpoints.add(breakpoint);
             } else {
-                targetBreakpoints.append(breakpoint);
+                targetBreakpoints.add(breakpoint);
             }
         }
         saveTargetCodeBreakpoints(settings, targetBreakpoints);
         saveBytecodeBreakpoints(settings, bytecodeBreakpoints);
     }
 
-    private void saveTargetCodeBreakpoints(SaveSettingsEvent settings, IterableWithLength<MaxBreakpoint> targetBreakpoints) {
-        settings.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, targetBreakpoints.length());
+    private void saveTargetCodeBreakpoints(SaveSettingsEvent settings, List<MaxBreakpoint> targetBreakpoints) {
+        settings.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, targetBreakpoints.size());
         int index = 0;
         for (MaxBreakpoint breakpoint : targetBreakpoints) {
             final String prefix = TARGET_BREAKPOINT_KEY + index++;
@@ -154,9 +155,9 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         }
     }
 
-    private void saveBytecodeBreakpoints(SaveSettingsEvent settings, IterableWithLength<MaxBreakpoint> bytecodeBreakpoints) {
+    private void saveBytecodeBreakpoints(SaveSettingsEvent settings, List<MaxBreakpoint> bytecodeBreakpoints) {
         int index;
-        settings.save(BYTECODE_BREAKPOINT_KEY + "." + COUNT_KEY, bytecodeBreakpoints.length());
+        settings.save(BYTECODE_BREAKPOINT_KEY + "." + COUNT_KEY, bytecodeBreakpoints.size());
         index = 0;
         for (MaxBreakpoint breakpoint : bytecodeBreakpoints) {
             final String prefix = BYTECODE_BREAKPOINT_KEY + index++;
