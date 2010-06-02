@@ -224,11 +224,12 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
         if (callerSavedRegisterArray == null) {
             PoolSet<EirRegister_Type> callerSavedRegisters = callerSavedRegisters();
             Class<EirRegister_Type[]> type = null;
-            callerSavedRegisterArray = Utils.cast(type, Array.newInstance(registerType, callerSavedRegisters.size()));
+            EirRegister_Type[] callerSavedRegisterArray = Utils.cast(type, Array.newInstance(registerType, callerSavedRegisters.size()));
             Iterator<EirRegister_Type> iterator = callerSavedRegisters.iterator();
             for (int i = 0; i < callerSavedRegisterArray.length; i++) {
                 callerSavedRegisterArray[i] = iterator.next();
             }
+            this.callerSavedRegisterArray = callerSavedRegisterArray;
         }
         return callerSavedRegisterArray;
     }
