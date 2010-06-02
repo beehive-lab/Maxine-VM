@@ -26,6 +26,7 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.grip.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
@@ -87,6 +88,17 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
      */
     private int dynamicallyLoadedClassCount = 0;
 
+
+
+    /**
+     * A list of indices in the class registry table that need processing after the {@link TeleHeap} is fully initialized.
+     */
+    private List<Integer> attachFixupList = new ArrayList<Integer>();
+    /**
+     * Cache of of table reference to support processing the fixup list.
+     */
+    private Reference tableReference;
+
     /**
      * Create a registry that contains summary information about all classes known to have been
      * loaded into the {@link TeleVM}, initialized at registry creation with classes pre-loaded
@@ -125,14 +137,20 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
                 }
             } else {
                 final Reference typeDescriptorToClassActorReference = vm().teleFields().ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryReference);
-                final Reference tableReference = vm().teleFields().HashMap_table.readReference(typeDescriptorToClassActorReference);
+                tableReference = vm().teleFields().HashMap_table.readReference(typeDescriptorToClassActorReference);
                 final int length = vm().layoutScheme().arrayHeaderLayout.readLength(tableReference);
                 for (int i = 0; i < length; i++) {
                     Reference entryReference = vm().readReference(tableReference, i);
                     while (!entryReference.isZero()) {
-                        final Reference classActorReference = vm().teleFields().HashMap$Entry_value.readReference(entryReference);
-                        addToRegistry(classActorReference);
-                        count++;
+                        if (entryReference.toGrip() instanceof TemporaryTeleGrip && TeleVM.isAttaching()) {
+                            // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not fully initialized yet.
+                            // so we add it to a fixup list and handle it later
+                            attachFixupList.add(i);
+                        } else {
+                            final Reference classActorReference = vm().teleFields().HashMap$Entry_value.readReference(entryReference);
+                            addToRegistry(classActorReference);
+                            count++;
+                        }
                         entryReference = vm().teleFields().HashMap$Entry_next.readReference(entryReference);
                     }
                 }
@@ -143,6 +161,16 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
         }
         preLoadedClassCount = count;
         Trace.end(1, tracePrefix() + " initializing (" + preLoadedClassCount + " pre-loaded entries)", startTimeMillis);
+    }
+
+    public void processAttachFixupList() {
+        Trace.begin(1, tracePrefix() + " adding entries from attach fixup list");
+        for (Integer i : attachFixupList) {
+            Reference entryReference = vm().readReference(tableReference, i);
+            final Reference classActorReference = vm().teleFields().HashMap$Entry_value.readReference(entryReference);
+            addToRegistry(classActorReference);
+        }
+        Trace.end(1, tracePrefix() + "adding entries from attach fixup list  (" + attachFixupList.size() + " additional entries)");
     }
 
     /**
