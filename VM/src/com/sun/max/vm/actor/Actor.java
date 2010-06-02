@@ -25,7 +25,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -489,18 +488,6 @@ public abstract class Actor {
     public static boolean hasFinalizer(int flags) {
         return (flags & FINALIZER) != 0;
     }
-
-    public static Predicate<Actor> staticPredicate = new Predicate<Actor>() {
-        public boolean evaluate(Actor actor) {
-            return actor.isStatic();
-        }
-    };
-
-    public static Predicate<Actor> dynamicPredicate = new Predicate<Actor>() {
-        public boolean evaluate(Actor actor) {
-            return !actor.isStatic();
-        }
-    };
 
     /**
      * Gets the name of this actor qualified by it's declaring class (if known).

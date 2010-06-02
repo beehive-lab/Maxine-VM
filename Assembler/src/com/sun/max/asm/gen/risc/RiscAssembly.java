@@ -21,6 +21,7 @@
 package com.sun.max.asm.gen.risc;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.risc.*;
@@ -38,7 +39,7 @@ public abstract class RiscAssembly extends Assembly<RiscTemplate> {
         super(instructionSet, templateType);
     }
 
-    private AppendableSequence<SpecificityGroup> specificityGroups;
+    private List<SpecificityGroup> specificityGroups;
 
     private void initialize() {
         final IntHashMap<IntHashMap<OpcodeMaskGroup>> specificityTable = new IntHashMap<IntHashMap<OpcodeMaskGroup>>();
@@ -58,13 +59,13 @@ public abstract class RiscAssembly extends Assembly<RiscTemplate> {
                 opcodeMaskGroup.add(template);
             }
         }
-        specificityGroups = new LinkSequence<SpecificityGroup>();
+        specificityGroups = new LinkedList<SpecificityGroup>();
         for (int specificity = 33; specificity >= 0; specificity--) {
             final IntHashMap<OpcodeMaskGroup> opcodeGroupTable = specificityTable.get(specificity);
             if (opcodeGroupTable != null) {
-                final Sequence<OpcodeMaskGroup> opcodeMaskGroups = opcodeGroupTable.toSequence();
+                final List<OpcodeMaskGroup> opcodeMaskGroups = opcodeGroupTable.toList();
                 final SpecificityGroup specificityGroup = new SpecificityGroup(specificity, opcodeMaskGroups);
-                specificityGroups.append(specificityGroup);
+                specificityGroups.add(specificityGroup);
             }
         }
     }
@@ -81,7 +82,7 @@ public abstract class RiscAssembly extends Assembly<RiscTemplate> {
         }
     }
 
-    public Sequence<SpecificityGroup> specificityGroups() {
+    public List<SpecificityGroup> specificityGroups() {
         if (specificityGroups == null) {
             initialize();
         }

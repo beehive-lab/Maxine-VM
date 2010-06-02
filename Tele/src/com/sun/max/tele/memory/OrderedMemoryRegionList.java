@@ -21,10 +21,8 @@
 package com.sun.max.tele.memory;
 
 import java.util.*;
-import java.util.Arrays;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
@@ -36,7 +34,7 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class OrderedMemoryRegionList<MemoryRegion_Type extends MaxMemoryRegion> implements IterableWithLength<MemoryRegion_Type> {
+public final class OrderedMemoryRegionList<MemoryRegion_Type extends MaxMemoryRegion> implements Iterable<MemoryRegion_Type> {
 
     public static final Comparator<MaxMemoryRegion> COMPARATOR = new Comparator<MaxMemoryRegion>() {
         @Override
@@ -62,7 +60,7 @@ public final class OrderedMemoryRegionList<MemoryRegion_Type extends MaxMemoryRe
 
     public OrderedMemoryRegionList(int initialCapacity) {
         Class<MemoryRegion_Type[]> type = null;
-        memoryRegions = StaticLoophole.cast(type, new MaxMemoryRegion[initialCapacity]);
+        memoryRegions = Utils.cast(type, new MaxMemoryRegion[initialCapacity]);
     }
 
     private MemoryRegion_Type[] memoryRegions;
@@ -93,7 +91,7 @@ public final class OrderedMemoryRegionList<MemoryRegion_Type extends MaxMemoryRe
         return null;
     }
 
-    public int length() {
+    public int size() {
         return size;
     }
 

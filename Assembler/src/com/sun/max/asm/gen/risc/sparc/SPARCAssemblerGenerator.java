@@ -20,12 +20,13 @@
  */
 package com.sun.max.asm.gen.risc.sparc;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.sparc.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.sparc.complete.*;
-import com.sun.max.collect.*;
 
 /**
  *
@@ -52,7 +53,7 @@ public final class SPARCAssemblerGenerator extends RiscAssemblerGenerator<RiscTe
     }
 
     @Override
-    protected DisassembledInstruction generateExampleInstruction(RiscTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
+    protected DisassembledInstruction generateExampleInstruction(RiscTemplate template, List<Argument> arguments) throws AssemblyException {
         final SPARCAssembler assembler = new SPARC64Assembler(0);
         assembly().assemble(assembler, template, arguments);
         final byte[] bytes = assembler.toByteArray();

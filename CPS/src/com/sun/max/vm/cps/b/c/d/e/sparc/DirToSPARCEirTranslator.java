@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.sparc;
 
+import java.util.*;
+
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.eir.sparc.*;
 import com.sun.max.vm.cps.eir.*;
@@ -43,6 +45,7 @@ public class DirToSPARCEirTranslator extends SPARCEirGenerator {
         final DirToSPARCEirMethodTranslation translation = new DirToSPARCEirMethodTranslation(this, eirMethod, dirMethod);
         translation.translateMethod();
 
-        eirMethod.setGenerated(translation.eirBlocks(), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize(), translation.stackBlocksSize());
+        ArrayList<EirBlock> eirBlocks = translation.eirBlocks();
+        eirMethod.setGenerated(eirBlocks.toArray(new EirBlock[eirBlocks.size()]), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize(), translation.stackBlocksSize());
     }
 }

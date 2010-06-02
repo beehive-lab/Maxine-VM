@@ -20,7 +20,9 @@
  */
 package com.sun.max.vm.cps.tir.pipeline;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.cps.tir.TirMessage.*;
 
@@ -29,10 +31,10 @@ public class TirReverse extends TirInstructionFilter {
         super(receiver);
     }
 
-    private VariableSequence<TirMessage> prolog = new ArrayListSequence<TirMessage>();
-    private VariableSequence<TirMessage> instructions = prolog;
-    private VariableSequence<Pair<TirTraceBegin, VariableSequence<TirMessage>>> traces =
-        new ArrayListSequence<Pair<TirTraceBegin, VariableSequence<TirMessage>>>();
+    private ArrayList<TirMessage> prolog = new ArrayList<TirMessage>();
+    private ArrayList<TirMessage> instructions = prolog;
+    private ArrayList<Pair<TirTraceBegin, ArrayList<TirMessage>>> traces =
+        new ArrayList<Pair<TirTraceBegin, ArrayList<TirMessage>>>();
 
     private TirTreeBegin treeBegin;
     private TirTraceBegin traceBegin;
@@ -45,13 +47,13 @@ public class TirReverse extends TirInstructionFilter {
     @Override
     public void visit(TirTraceBegin traceBegin) {
         this.traceBegin = traceBegin;
-        instructions = new ArrayListSequence<TirMessage>();
+        instructions = new ArrayList<TirMessage>();
     }
 
     @Override
     public void visit(TirTraceEnd traceEnd) {
-        final Pair<TirTraceBegin, VariableSequence<TirMessage>> trace = new Pair<TirTraceBegin, VariableSequence<TirMessage>>(traceBegin, instructions);
-        traces.append(trace);
+        final Pair<TirTraceBegin, ArrayList<TirMessage>> trace = new Pair<TirTraceBegin, ArrayList<TirMessage>>(traceBegin, instructions);
+        traces.add(trace);
         instructions = prolog;
     }
 
@@ -62,20 +64,21 @@ public class TirReverse extends TirInstructionFilter {
         forward(treeBegin);
         if (order == TirPipelineOrder.FORWARD) {
             while (instructions.isEmpty() == false) {
-                forward(prolog.removeLast());
+                forward(prolog.remove(prolog.size()));
             }
         }
         while (traces.isEmpty() == false) {
-            final Pair<TirTraceBegin, VariableSequence<TirMessage>> trace = traces.removeLast();
+            final Pair<TirTraceBegin, ArrayList<TirMessage>> trace = traces.remove(traces.size() - 1);
             forward(trace.first());
             while (trace.second().isEmpty() == false) {
-                forward(trace.second().removeLast());
+                ArrayList<TirMessage> second = trace.second();
+                forward(second.remove(second.size() - 1));
             }
             forward(new TirMessage.TirTraceEnd());
         }
         if (order == TirPipelineOrder.REVERSE) {
             while (instructions.isEmpty() == false) {
-                forward(prolog.removeLast());
+                forward(prolog.remove(prolog.size() - 1));
             }
         }
         forward(new TirMessage.TirTreeEnd());
@@ -83,6 +86,6 @@ public class TirReverse extends TirInstructionFilter {
 
     @Override
     public void visit(TirInstruction instruction) {
-        instructions.append(instruction);
+        instructions.add(instruction);
     }
 }

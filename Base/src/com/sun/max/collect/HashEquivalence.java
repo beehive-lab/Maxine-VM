@@ -25,16 +25,16 @@ package com.sun.max.collect;
  * 
  * @author Bernd Mathiske
  */
-public interface HashEquivalence<Object_Type> {
+public interface HashEquivalence<T> {
 
     /**
      * Determines if two given keys are equal.
      */
-    boolean equivalent(Object_Type object1, Object_Type object2);
+    boolean equivalent(T object1, T object2);
 
     /**
      * Computes a hash code for a given key.
      */
-    int hashCode(Object_Type object);
+    int hashCode(T object);
 
 }

@@ -30,10 +30,11 @@ import static com.sun.max.asm.gen.cisc.x86.ModRMGroup.Opcode.*;
 import static com.sun.max.asm.gen.cisc.x86.OperandCode.*;
 import static com.sun.max.asm.gen.cisc.x86.OperandTypeCode.*;
 
+import java.util.*;
+
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.x86.*;
-import com.sun.max.collect.*;
 
 /**
  * See A-7 in the book.
@@ -271,7 +272,7 @@ public enum AMD64ModRMGroup implements ModRMGroup {
     );
 
     private static ModRMDescription modRM(ModRMGroup.Opcode opcode, String name, Object... specifications) {
-        return new ModRMDescription(opcode, name, new ArraySequence<Object>(specifications));
+        return new ModRMDescription(opcode, name, Arrays.asList(specifications));
     }
 
     private final ModRMDescription[] instructionDescriptions;

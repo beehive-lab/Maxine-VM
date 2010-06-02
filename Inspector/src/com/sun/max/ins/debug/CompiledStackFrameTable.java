@@ -23,12 +23,12 @@ package com.sun.max.ins.debug;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
@@ -77,9 +77,9 @@ public class CompiledStackFrameTable extends InspectorTable {
                     final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
                     final String regionDescription =  "Stack: thread="  + inspection().nameDisplay().shortName(compiledStackFrame.stack().thread());
                     actions().setRegionWatchpoint(memoryRegion, "Set memory watchpoint", regionDescription).perform();
-                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
-                    if (watchpoints.length() > 0) {
-                        return watchpoints.first();
+                    final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (!watchpoints.isEmpty()) {
+                        return watchpoints.get(0);
                     }
                     return null;
                 }
@@ -101,9 +101,9 @@ public class CompiledStackFrameTable extends InspectorTable {
                 public MaxWatchpoint setWatchpoint() {
 
                     actions().setRegionWatchpoint(memoryRegion, "Set memory watchpoint", regionDescription).perform();
-                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
-                    if (watchpoints.length() > 0) {
-                        return watchpoints.first();
+                    final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (!watchpoints.isEmpty()) {
+                        return watchpoints.get(0);
                     }
                     return null;
                 }
@@ -144,7 +144,7 @@ public class CompiledStackFrameTable extends InspectorTable {
     private final class CompiledStackFrameTableColumnModel extends InspectorTableColumnModel<CompiledStackFrameColumnKind> {
 
         CompiledStackFrameTableColumnModel(CompiledStackFrameViewPreferences viewPreferences) {
-            super(CompiledStackFrameColumnKind.VALUES.length(), viewPreferences);
+            super(CompiledStackFrameColumnKind.VALUES.size(), viewPreferences);
             addColumn(CompiledStackFrameColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(CompiledStackFrameColumnKind.NAME, new NameRenderer(inspection()), null);
             addColumn(CompiledStackFrameColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
@@ -174,7 +174,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             this.javaStackFrame = javaStackFrame;
             frameSize = javaStackFrame.layout().frameSize();
             slots = javaStackFrame.layout().slots();
-            regions = new MaxMemoryRegion[slots.length()];
+            regions = new MaxMemoryRegion[slots.size()];
             int index = 0;
             for (Slot slot : slots) {
                 regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().wordSize());
@@ -183,11 +183,11 @@ public class CompiledStackFrameTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return CompiledStackFrameColumnKind.VALUES.length();
+            return CompiledStackFrameColumnKind.VALUES.size();
         }
 
         public int getRowCount() {
-            return javaStackFrame.layout().slots().length();
+            return javaStackFrame.layout().slots().size();
         }
 
         public Object getValueAt(int rowIndex, int columnIndex) {
@@ -202,7 +202,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         @Override
         public int findRow(Address address) {
             final int wordOffset = address.minus(getOrigin()).dividedBy(vm().wordSize()).toInt();
-            return (wordOffset >= 0 && wordOffset < slots.length()) ? wordOffset : -1;
+            return (wordOffset >= 0 && wordOffset < slots.size()) ? wordOffset : -1;
         }
 
         @Override

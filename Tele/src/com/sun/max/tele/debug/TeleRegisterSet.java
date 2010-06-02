@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.debug;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -35,6 +36,8 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
 
     private static final int TRACE_LEVEL = 2;
 
+    private static final List<MaxRegister> EMPTY_REGISTER_LIST = Collections.emptyList();
+
     private final String entityName;
     private final String entityDescription;
     final TeleNativeThread teleNativeThread;
@@ -44,10 +47,10 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
     private final TeleFloatingPointRegisters teleFloatingPointRegisters;
     private final TeleStateRegisters teleStateRegisters;
 
-    private final VariableSequence<MaxRegister> allRegisters;
-    private final VariableSequence<MaxRegister> integerRegisters;
-    private final VariableSequence<MaxRegister> floatingPointRegisters;
-    private final VariableSequence<MaxRegister> stateRegisters;
+    private final List<MaxRegister> allRegisters;
+    private final List<MaxRegister> integerRegisters;
+    private final List<MaxRegister> floatingPointRegisters;
+    private final List<MaxRegister> stateRegisters;
 
     public TeleRegisterSet(TeleVM teleVM, TeleNativeThread teleNativeThread) {
         super(teleVM);
@@ -62,25 +65,33 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
         final int floatingPointRegisterCount = teleFloatingPointRegisters.symbolizer().numberOfValues();
         final int stateRegisterCount = teleStateRegisters.symbolizer().numberOfValues();
 
-        this.allRegisters = new ArrayListSequence<MaxRegister>(integerRegisterCount + floatingPointRegisterCount + stateRegisterCount);
-        this.integerRegisters = new ArrayListSequence<MaxRegister>(integerRegisterCount);
+        final List<MaxRegister> all = new ArrayList<MaxRegister>(integerRegisterCount + floatingPointRegisterCount + stateRegisterCount);
+
+        final List<MaxRegister> iRegisters = new ArrayList<MaxRegister>(integerRegisterCount);
         for (Symbol register : teleIntegerRegisters.symbolizer()) {
             final TeleRegister teleRegister = new TeleRegister(teleIntegerRegisters, register, teleNativeThread);
-            integerRegisters.append(teleRegister);
-            allRegisters.append(teleRegister);
+            iRegisters.add(teleRegister);
+            all.add(teleRegister);
         }
-        this.floatingPointRegisters = new ArrayListSequence<MaxRegister>(floatingPointRegisterCount);
+        this.integerRegisters = Collections.unmodifiableList(iRegisters);
+
+        final List<MaxRegister> fRegisters = new ArrayList<MaxRegister>(floatingPointRegisterCount);
         for (Symbol register : teleFloatingPointRegisters.symbolizer()) {
             final TeleRegister teleRegister = new TeleRegister(teleFloatingPointRegisters, register, teleNativeThread);
-            floatingPointRegisters.append(teleRegister);
-            allRegisters.append(teleRegister);
+            fRegisters.add(teleRegister);
+            all.add(teleRegister);
         }
-        this.stateRegisters = new ArrayListSequence<MaxRegister>(stateRegisterCount);
+        this.floatingPointRegisters = Collections.unmodifiableList(fRegisters);
+
+        final List<MaxRegister> sRegisters = new ArrayList<MaxRegister>(stateRegisterCount);
         for (Symbol register : teleStateRegisters.symbolizer()) {
             final TeleRegister teleRegister = new TeleRegister(teleStateRegisters, register, teleNativeThread);
-            stateRegisters.append(teleRegister);
-            allRegisters.append(teleRegister);
+            sRegisters.add(teleRegister);
+            all.add(teleRegister);
         }
+        this.stateRegisters = Collections.unmodifiableList(sRegisters);
+
+        this.allRegisters = Collections.unmodifiableList(all);
     }
 
     public String entityName() {
@@ -124,41 +135,39 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
         return live ? teleIntegerRegisters.getCallRegisterValue() : Pointer.zero();
     }
 
-    public Sequence<MaxRegister> find(MaxMemoryRegion memoryRegion) {
+    public List<MaxRegister> find(MaxMemoryRegion memoryRegion) {
         refresh();
-        AppendableSequence<MaxRegister> registers = null;
+        // Gets called a lot, usually empty result;  allocate as little a possible
+        List<MaxRegister> registers = null;
         if (live && memoryRegion != null) {
             for (Symbol symbol : teleIntegerRegisters.symbolizer()) {
                 if (memoryRegion.contains(teleIntegerRegisters.getValue(symbol))) {
                     if (registers == null) {
-                        registers = new ArrayListSequence<MaxRegister>(4);
+                        registers = new ArrayList<MaxRegister>(4);
                     }
-                    registers.append(new TeleRegister(teleIntegerRegisters, symbol, teleNativeThread));
+                    registers.add(new TeleRegister(teleIntegerRegisters, symbol, teleNativeThread));
                 }
             }
         }
-        if (registers != null) {
-            return registers;
-        }
-        return Sequence.Static.empty(MaxRegister.class);
+        return registers == null ? EMPTY_REGISTER_LIST : registers;
     }
 
-    public Sequence<MaxRegister> allRegisters() {
+    public List<MaxRegister> allRegisters() {
         refresh();
         return live ? allRegisters : null;
     }
 
-    public Sequence<MaxRegister> integerRegisters() {
+    public List<MaxRegister> integerRegisters() {
         refresh();
         return live ? integerRegisters : null;
     }
 
-    public Sequence<MaxRegister> floatingPointRegisters() {
+    public List<MaxRegister> floatingPointRegisters() {
         refresh();
         return live ? floatingPointRegisters : null;
     }
 
-    public Sequence<MaxRegister> stateRegisters() {
+    public List<MaxRegister> stateRegisters() {
         refresh();
         return live ? stateRegisters : null;
     }

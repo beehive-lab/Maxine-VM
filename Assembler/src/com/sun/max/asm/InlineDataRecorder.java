@@ -23,7 +23,6 @@ package com.sun.max.asm;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
@@ -35,7 +34,7 @@ import com.sun.max.program.*;
  */
 public class InlineDataRecorder {
 
-    private VariableSequence<InlineDataDescriptor> descriptors;
+    private List<InlineDataDescriptor> descriptors;
     private boolean normalized;
 
     /**
@@ -44,9 +43,9 @@ public class InlineDataRecorder {
     public void add(InlineDataDescriptor inlineData) {
         if (inlineData.size() != 0) {
             if (descriptors == null) {
-                descriptors = new ArrayListSequence<InlineDataDescriptor>();
+                descriptors = new ArrayList<InlineDataDescriptor>();
             }
-            descriptors.append(inlineData);
+            descriptors.add(inlineData);
             normalized = false;
         }
     }
@@ -61,7 +60,7 @@ public class InlineDataRecorder {
      *
      * @return null if no descriptors have been added to this object
      */
-    public Sequence<InlineDataDescriptor> descriptors() {
+    public List<InlineDataDescriptor> descriptors() {
         if (!normalized) {
             normalize();
         }
@@ -80,7 +79,7 @@ public class InlineDataRecorder {
             normalize();
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
-            dataOutputStream.writeInt(descriptors.length());
+            dataOutputStream.writeInt(descriptors.size());
             for (InlineDataDescriptor inlineDataDescriptor : descriptors) {
                 inlineDataDescriptor.writeTo(dataOutputStream);
             }
@@ -93,12 +92,12 @@ public class InlineDataRecorder {
 
     private void normalize() {
         if (descriptors != null && !normalized) {
-            final SortedSet<InlineDataDescriptor> sortedEntries = new TreeSet<InlineDataDescriptor>(Iterables.toCollection(descriptors));
-            final VariableSequence<InlineDataDescriptor> entries = new ArrayListSequence<InlineDataDescriptor>(descriptors.length());
+            final SortedSet<InlineDataDescriptor> sortedEntries = new TreeSet<InlineDataDescriptor>(descriptors);
+            final List<InlineDataDescriptor> entries = new ArrayList<InlineDataDescriptor>(descriptors.size());
             int lastEnd = 0;
             for (InlineDataDescriptor inlineDataDescriptor : sortedEntries) {
                 if (inlineDataDescriptor.startPosition() >= lastEnd) {
-                    entries.append(inlineDataDescriptor);
+                    entries.add(inlineDataDescriptor);
                     lastEnd = inlineDataDescriptor.endPosition();
                 }
             }

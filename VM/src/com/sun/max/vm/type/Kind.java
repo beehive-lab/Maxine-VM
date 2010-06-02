@@ -23,6 +23,7 @@ package com.sun.max.vm.type;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 
 import com.sun.cri.ci.*;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -874,13 +875,13 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
     public static final Kind[] PRIMITIVE_VALUES = {BYTE, BOOLEAN, SHORT, CHAR, INT, FLOAT, LONG, DOUBLE};
 
-    public static final Kind[] PRIMITIVE_JAVA_CLASSES = Arrays.append(PRIMITIVE_VALUES, VOID);
+    public static final Kind[] PRIMITIVE_JAVA_CLASSES = Utils.concat(PRIMITIVE_VALUES, VOID);
 
-    public static final Kind[] EXTENDED_PRIMITIVE_VALUES = Arrays.append(PRIMITIVE_VALUES, WORD);
+    public static final Kind[] EXTENDED_PRIMITIVE_VALUES = Utils.concat(PRIMITIVE_VALUES, WORD);
 
-    public static final Kind[] VALUES = Arrays.append(EXTENDED_PRIMITIVE_VALUES, REFERENCE);
+    public static final Kind[] VALUES = Utils.concat(EXTENDED_PRIMITIVE_VALUES, REFERENCE);
 
-    public static final Kind[] ALL = Arrays.append(VALUES, VOID);
+    public static final Kind[] ALL = Utils.concat(VALUES, VOID);
 
     public static final Kind[] NONE = {};
 

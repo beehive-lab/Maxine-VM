@@ -21,16 +21,17 @@
 package com.sun.max.ins.debug;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
-import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
@@ -67,7 +68,7 @@ abstract class CompiledStackFramePanel extends InspectorPanel {
 
     public final void setStackFrame(MaxStackFrame stackFrame) {
         final Class<MaxStackFrame.Compiled> type = null;
-        this.stackFrame = StaticLoophole.cast(type, stackFrame);
+        this.stackFrame = Utils.cast(type, stackFrame);
         refresh(true);
     }
 
@@ -91,7 +92,7 @@ abstract class CompiledStackFramePanel extends InspectorPanel {
     private final class CompiledStackFrameHeaderPanel extends InspectorPanel {
 
         // Labels that may need updating
-        private final AppendableSequence<InspectorLabel> labels = new LinkSequence<InspectorLabel>();
+        private final List<InspectorLabel> labels = new ArrayList<InspectorLabel>();
 
         public CompiledStackFrameHeaderPanel(Inspection inspection, MaxStackFrame.Compiled stackFrame) {
             super(inspection, new SpringLayout());
@@ -137,7 +138,7 @@ abstract class CompiledStackFramePanel extends InspectorPanel {
 
         private void addInspectorLabel(InspectorLabel label) {
             add(label);
-            labels.append(label);
+            labels.add(label);
         }
 
         @Override

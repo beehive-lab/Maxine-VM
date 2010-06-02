@@ -31,7 +31,6 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
@@ -286,7 +285,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final class BytecodeTableColumnModel extends InspectorTableColumnModel<BytecodeColumnKind> {
 
         BytecodeTableColumnModel(BytecodeViewPreferences instanceViewPreferences) {
-            super(BytecodeColumnKind.VALUES.length(), instanceViewPreferences);
+            super(BytecodeColumnKind.VALUES.size(), instanceViewPreferences);
             addColumn(BytecodeColumnKind.TAG, new TagRenderer(), null);
             addColumn(BytecodeColumnKind.NUMBER, new NumberRenderer(), null);
             addColumn(BytecodeColumnKind.POSITION, new PositionRenderer(), null);
@@ -300,19 +299,19 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private final class BytecodeTableModel extends InspectorTableModel {
 
-        private AppendableIndexedSequence<BytecodeInstruction> bytecodeInstructions;
+        private List<BytecodeInstruction> bytecodeInstructions;
 
-        public BytecodeTableModel(Inspection inspection, AppendableIndexedSequence<BytecodeInstruction> bytecodeInstructions) {
+        public BytecodeTableModel(Inspection inspection, List<BytecodeInstruction> bytecodeInstructions) {
             super(inspection);
             this.bytecodeInstructions = bytecodeInstructions;
         }
 
         public int getColumnCount() {
-            return BytecodeColumnKind.VALUES.length();
+            return BytecodeColumnKind.VALUES.size();
         }
 
         public int getRowCount() {
-            return bytecodeInstructions().length();
+            return bytecodeInstructions().size();
         }
 
         public Object getValueAt(int row, int col) {
@@ -459,7 +458,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             }
             setText(rowToTagText(row));
             final MaxBreakpoint bytecodeBreakpoint = getBytecodeBreakpointAtRow(row);
-            final Sequence<MaxBreakpoint> targetBreakpoints = getTargetBreakpointsAtRow(row);
+            final List<MaxBreakpoint> targetBreakpoints = getTargetBreakpointsAtRow(row);
             if (bytecodeBreakpoint != null) {
                 toolTipText.append(bytecodeBreakpoint);
                 toolTipText.append("; ");
@@ -468,7 +467,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 } else {
                     setBorder(style().debugDisabledBytecodeBreakpointTagBorder());
                 }
-            } else if (targetBreakpoints.length() > 0) {
+            } else if (targetBreakpoints.size() > 0) {
                 boolean enabled = false;
                 for (MaxBreakpoint targetBreakpoint : targetBreakpoints) {
                     toolTipText.append(targetBreakpoint);

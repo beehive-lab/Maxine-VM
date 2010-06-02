@@ -27,7 +27,6 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -83,7 +82,7 @@ public final class JDK_java_lang_Throwable {
         boolean atImplicitExceptionThrow = false;
         boolean inFiller = true;
 
-        final Sequence<StackFrame> stackFrames = stackFrameWalker.frames(null, instructionPointer, cpuStackPointer, cpuFramePointer);
+        final List<StackFrame> stackFrames = stackFrameWalker.frames(null, instructionPointer, cpuStackPointer, cpuFramePointer);
         final List<StackTraceElement> result = new ArrayList<StackTraceElement>();
         for (StackFrame stackFrame : stackFrames) {
             if (stackFrame instanceof AdapterStackFrame) {

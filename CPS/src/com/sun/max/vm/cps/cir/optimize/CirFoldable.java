@@ -21,6 +21,7 @@
 package com.sun.max.vm.cps.cir.optimize;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -94,7 +95,7 @@ public interface CirFoldable {
         public static Value evaluate(MethodActor methodActor, CirValue[] cirArguments) throws CirFoldingException {
             try {
                 if (methodActor.isInstanceInitializer()) {
-                    final CirValue[] constructorArguments = Arrays.subArray(cirArguments, 1);
+                    final CirValue[] constructorArguments = Arrays.copyOfRange(cirArguments, 1, cirArguments.length);
                     final Object uninitializedObject = cirArguments[0].value().asObject();
                     try {
                         final Object initializedObject = methodActor.invokeConstructor(cirArgumentsToValues(constructorArguments, methodActor)).asObject();

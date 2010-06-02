@@ -34,27 +34,27 @@ import com.sun.max.program.*;
  *
  * @author Ben L. Titzer
  */
-public class Registry<Class_Type> {
+public class Registry<C> {
 
     protected final boolean loadClass;
-    protected final Class<Class_Type> classClass;
-    protected final Map<String, Class<? extends Class_Type>> classMap;
-    protected final Map<String, Class_Type> objectMap;
+    protected final Class<C> classClass;
+    protected final Map<String, Class<? extends C>> classMap;
+    protected final Map<String, C> objectMap;
     protected final Map<String, String> stringMap;
 
-    public Registry(Class<Class_Type> classType, boolean loadClass) {
+    public Registry(Class<C> classType, boolean loadClass) {
         this.loadClass = loadClass;
         this.classClass = classType;
-        this.classMap = new HashMap<String, Class<? extends Class_Type>>();
-        this.objectMap = new HashMap<String, Class_Type>();
+        this.classMap = new HashMap<String, Class<? extends C>>();
+        this.objectMap = new HashMap<String, C>();
         this.stringMap = new HashMap<String, String>();
     }
 
-    public void registerObject(String alias, Class_Type object) {
+    public void registerObject(String alias, C object) {
         objectMap.put(alias, object);
     }
 
-    public void registerClass(String alias, Class<? extends Class_Type> classType) {
+    public void registerClass(String alias, Class<? extends C> classType) {
         classMap.put(alias, classType);
     }
 
@@ -62,16 +62,16 @@ public class Registry<Class_Type> {
         stringMap.put(alias, className);
     }
 
-    public Class_Type getInstance(String alias) {
+    public C getInstance(String alias) {
         return getInstance(alias, true);
     }
 
-    public Class_Type getInstance(String alias, boolean fatal) {
-        final Class_Type object = objectMap.get(alias);
+    public C getInstance(String alias, boolean fatal) {
+        final C object = objectMap.get(alias);
         if (object != null) {
             return object;
         }
-        Class<? extends Class_Type> classRef = classMap.get(alias);
+        Class<? extends C> classRef = classMap.get(alias);
         String className = alias;
         try {
             if (classRef == null) {
@@ -105,7 +105,7 @@ public class Registry<Class_Type> {
         return lista;
     }
 
-    private Class_Type genError(boolean fatal, String message, String alias, String className) {
+    private C genError(boolean fatal, String message, String alias, String className) {
         if (!fatal) {
             return null;
         }

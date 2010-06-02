@@ -100,7 +100,7 @@ public class CirSnippet extends CirMethod {
 
     @HOSTED_ONLY
     private static CirSnippet[] createCirSnippets() {
-        final int numberOfSnippets = Snippet.snippets().length();
+        final int numberOfSnippets = Snippet.snippets().size();
         final CirSnippet[] snippets = new CirSnippet[numberOfSnippets];
 
         register(snippets, new CirCheckCast());

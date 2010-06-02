@@ -27,7 +27,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
@@ -65,7 +64,7 @@ public class SubroutineInliner {
     public CodeAttribute rewriteCode() {
         rewriteOneSubroutine(SubroutineCall.TOP);
         final byte[] newCode = fixupCode();
-        final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = fixupExceptionHandlers(newCode);
+        final ExceptionHandlerEntry[] exceptionHandlerTable = fixupExceptionHandlers(newCode);
         final LineNumberTable lineNumberTable = fixupLineNumberTable();
         final LocalVariableTable localVariableTable = fixupLocalVariableTable();
 
@@ -343,10 +342,10 @@ public class SubroutineInliner {
         throw verifier.verifyError("Cannot find new position for instruction that used to be at " + oldToPosition);
     }
 
-    private Sequence<ExceptionHandlerEntry> fixupExceptionHandlers(byte[] newCode) {
+    private ExceptionHandlerEntry[] fixupExceptionHandlers(byte[] newCode) {
         final CodeAttribute codeAttribute = verifier.codeAttribute();
-        final Sequence<ExceptionHandlerEntry> oldHandlers = codeAttribute.exceptionHandlerTable();
-        if (oldHandlers.isEmpty()) {
+        final ExceptionHandlerEntry[] oldHandlers = codeAttribute.exceptionHandlerTable();
+        if (oldHandlers.length == 0) {
             return oldHandlers;
         }
 
@@ -391,8 +390,7 @@ public class SubroutineInliner {
             }
         }
 
-        ExceptionHandlerEntry[] newHandlersArray = newHandlers.toArray(new ExceptionHandlerEntry[newHandlers.size()]);
-        return new ArraySequence<ExceptionHandlerEntry>(newHandlersArray);
+        return newHandlers.toArray(new ExceptionHandlerEntry[newHandlers.size()]);
     }
 
     private LineNumberTable fixupLineNumberTable() {
@@ -427,20 +425,20 @@ public class SubroutineInliner {
         }
 
         int currentLineNumber = -1;
-        final AppendableSequence<LineNumberTable.Entry> newEntries = new ArrayListSequence<LineNumberTable.Entry>();
+        final List<LineNumberTable.Entry> newEntries = new ArrayList<LineNumberTable.Entry>();
         for (InstructionHandle instructionHandle : instructionHandles) {
             if (instructionHandle.flag != SKIP) {
                 final Instruction instruction = instructionHandle.instruction;
                 final int nextLineNumber = oldPositionToLineNumberMap[instruction.position()];
                 if (nextLineNumber != currentLineNumber) {
                     final LineNumberTable.Entry entry = new LineNumberTable.Entry((char) instructionHandle.position, (char) nextLineNumber);
-                    newEntries.append(entry);
+                    newEntries.add(entry);
                     currentLineNumber = nextLineNumber;
                 }
             }
         }
 
-        return new LineNumberTable(Sequence.Static.toArray(newEntries, new LineNumberTable.Entry[newEntries.length()]));
+        return new LineNumberTable(newEntries.toArray(new LineNumberTable.Entry[newEntries.size()]));
     }
 
     private LocalVariableTable fixupLocalVariableTable() {
@@ -449,7 +447,7 @@ public class SubroutineInliner {
         if (localVariableTable.isEmpty()) {
             return LocalVariableTable.EMPTY;
         }
-        final AppendableSequence<LocalVariableTable.Entry> newEntries = new ArrayListSequence<LocalVariableTable.Entry>();
+        final ArrayList<LocalVariableTable.Entry> newEntries = new ArrayList<LocalVariableTable.Entry>();
         final LocalVariableTable.Entry[] entries = localVariableTable.entries();
         for (LocalVariableTable.Entry entry : entries) {
             final int startPc = entry.startPosition();
@@ -472,7 +470,7 @@ public class SubroutineInliner {
                                                          (char) entry.nameIndex(),
                                                          (char) entry.descriptorIndex(),
                                                          (char) entry.signatureIndex());
-                        newEntries.append(newEntry);
+                        newEntries.add(newEntry);
                         lastMatchedHandle = null;
                     }
                 }
@@ -485,10 +483,10 @@ public class SubroutineInliner {
                                     (char) entry.nameIndex(),
                                     (char) entry.descriptorIndex(),
                                     (char) entry.signatureIndex());
-                newEntries.append(newEntry);
+                newEntries.add(newEntry);
             }
         }
 
-        return new LocalVariableTable(Sequence.Static.toList(newEntries));
+        return new LocalVariableTable(newEntries);
     }
 }

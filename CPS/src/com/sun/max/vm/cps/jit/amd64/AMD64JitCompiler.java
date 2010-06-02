@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.cps.jit.amd64;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -63,7 +63,7 @@ public class AMD64JitCompiler extends JitCompiler {
     @Override
     public <Type extends TargetMethod> Class<Type> compiledType() {
         Class<Class<Type>> type = null;
-        return StaticLoophole.cast(type, AMD64JitTargetMethod.class);
+        return Utils.cast(type, AMD64JitTargetMethod.class);
     }
 
     @Override

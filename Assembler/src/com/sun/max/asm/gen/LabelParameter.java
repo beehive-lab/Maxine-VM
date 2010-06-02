@@ -23,7 +23,6 @@ package com.sun.max.asm.gen;
 import java.util.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 
 /**
  * @author Bernd Mathiske
@@ -52,7 +51,7 @@ public final class LabelParameter implements Parameter {
     }
 
     public Iterable<Label> getLegalTestArguments() {
-        return Iterables.empty();
+        return Collections.emptyList();
     }
 
     public Argument getExampleArgument() {
@@ -60,15 +59,15 @@ public final class LabelParameter implements Parameter {
     }
 
     public Iterable<? extends Argument> getIllegalTestArguments() {
-        return Iterables.empty();
+        return Collections.emptyList();
     }
 
     public Set<Argument> excludedDisassemblerTestArguments() {
-        return Sets.empty(Argument.class);
+        return Collections.emptySet();
     }
 
     public Set<Argument> excludedExternalTestArguments() {
-        return Sets.empty(Argument.class);
+        return Collections.emptySet();
     }
 
     public int compareTo(Parameter other) {

@@ -20,11 +20,13 @@
  */
 package com.sun.max.vm.prototype;
 
+import static com.sun.max.vm.type.ClassRegistry.*;
+
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
@@ -82,7 +84,7 @@ public final class HostedBootClassLoader extends ClassLoader {
      */
     public static void omitPackage(String packageName, boolean retrospective) {
         if (retrospective) {
-            for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+            for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
                 ProgramError.check(!classActor.packageName().equals(packageName), "Cannot omit a package that contains a class already in VM class registry: " + classActor.name);
             }
         }
@@ -188,7 +190,7 @@ public final class HostedBootClassLoader extends ClassLoader {
                 }
             });
         } catch (Exception exception) {
-            throw Exceptions.cast(ClassNotFoundException.class, exception);
+            throw Utils.cast(ClassNotFoundException.class, exception);
         }
     }
 
@@ -306,7 +308,7 @@ public final class HostedBootClassLoader extends ClassLoader {
                 }
             });
         } catch (Exception exception) {
-            throw Exceptions.cast(ClassNotFoundException.class, exception);
+            throw Utils.cast(ClassNotFoundException.class, exception);
         }
     }
 }

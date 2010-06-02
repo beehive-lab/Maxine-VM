@@ -22,8 +22,8 @@ package com.sun.max.vm.cps.dir.eir;
 
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.eir.*;
@@ -100,7 +100,11 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         final EirVariable[] sharedEirVariables = new EirVariable[abi.registerPool().length()];
         sharedEirVariables[safepointLatchRegister.serial()] = safepointLatchVariable;
 
-        final Kind[] parameterKinds = IrValue.Static.toKinds(dirMethod.parameters());
+        DirVariable[] parameters = dirMethod.parameters();
+        Kind[] parameterKinds = new Kind[parameters.length];
+        for (int i1 = 0; i1 < parameters.length; i1++) {
+            parameterKinds[i1] = parameters[i1].kind();
+        }
         parameterEirLocations = abi.getParameterLocations(dirMethod.classMethodActor(), EirStackSlot.Purpose.PARAMETER, parameterKinds);
 
         Map<EirVariable, EirVariable> refParamToLocalMoves = null;
@@ -133,8 +137,8 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
             }
         }
 
-        final Sequence<EirRegister> calleeSavedRegisters = StaticLoophole.cast(abi.calleeSavedRegisters());
-        calleeSavedEirRegisters = com.sun.max.lang.Arrays.from(EirRegister.class, calleeSavedRegisters);
+        final List<EirRegister> calleeSavedRegisters = Utils.cast(abi.calleeSavedRegisters());
+        calleeSavedEirRegisters = calleeSavedRegisters.toArray(new EirRegister[calleeSavedRegisters.size()]);
 
         calleeSavedEirVariables = new EirVariable[calleeSavedEirRegisters.length];
         calleeRepositoryEirVariables = new EirVariable[calleeSavedEirRegisters.length];
@@ -166,7 +170,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         }
 
         final Class<PoolSet<EirRegister>> type = null;
-        final PoolSet<EirRegister> callerSavedRegisters = StaticLoophole.cast(type, abi.callerSavedRegisters());
+        final PoolSet<EirRegister> callerSavedRegisters = Utils.cast(type, abi.callerSavedRegisters());
         if (callerSavedRegisters.contains(abi.framePointer())) {
             prologue.addDefinition(framePointerVariable());
             addEpilogueUse(framePointerVariable());
@@ -175,7 +179,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
         createBodyEirBlocks();
 
-        addJump(prologueBlock, dirToEirBlock.get(dirMethod.blocks().first()));
+        addJump(prologueBlock, dirToEirBlock.get(Utils.first(dirMethod.blocks())));
     }
 
     private final EirMethod eirMethod;
@@ -270,11 +274,11 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
     }
 
     private EirValue[] dirToEirValues(DirValue[] dirValues) {
-        return com.sun.max.lang.Arrays.map(dirValues, EirValue.class, new MapFunction<DirValue, EirValue>() {
-            public EirValue map(DirValue dirValue) {
-                return dirToEirValue(dirValue);
-            }
-        });
+        EirValue[] eirValues = new EirValue[dirValues.length];
+        for (int i = 0; i < eirValues.length; i++) {
+            eirValues[i] = dirToEirValue(dirValues[i]);
+        }
+        return eirValues;
     }
 
     public EirJavaFrameDescriptor dirToEirJavaFrameDescriptor(DirJavaFrameDescriptor dirJavaFrameDescriptor,

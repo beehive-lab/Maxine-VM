@@ -30,7 +30,6 @@ import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -100,15 +99,15 @@ public class BootImage {
         }
 
         static Field[] fields(Class holder, final Class fieldType) {
-            return Arrays.filter(holder.getDeclaredFields(), new Predicate<Field>() {
-                public boolean evaluate(Field field) {
-                    final int flags = Actor.ACC_FINAL | Actor.ACC_PUBLIC;
-                    if ((field.getModifiers() & flags) == flags && field.getType().equals(fieldType)) {
-                        return true;
-                    }
-                    return false;
+            Field[] declaredFields = holder.getDeclaredFields();
+            ArrayList<Field> result = new ArrayList<Field>(declaredFields.length);
+            for (Field declaredField : declaredFields) {
+                final int flags = Actor.ACC_FINAL | Actor.ACC_PUBLIC;
+                if ((declaredField.getModifiers() & flags) == flags && declaredField.getType().equals(fieldType)) {
+                    result.add(declaredField);
                 }
-            }, new Field[0]);
+            }
+            return result.toArray(new Field[result.size()]);
         }
 
         /**

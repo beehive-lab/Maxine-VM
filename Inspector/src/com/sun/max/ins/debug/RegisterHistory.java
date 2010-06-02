@@ -34,7 +34,7 @@ import com.sun.max.vm.value.*;
 public final class RegisterHistory {
 
     private final MaxRegister register;
-    private final ValueHistory<Value> valueHistory;
+    private final ArrayValueHistory<Value> valueHistory;
 
     public RegisterHistory(MaxRegister register) {
         this.register = register;

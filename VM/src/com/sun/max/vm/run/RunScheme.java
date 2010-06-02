@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.run;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -51,7 +52,7 @@ public interface RunScheme extends VMScheme {
      * @return the set of methods gathered
      */
     @HOSTED_ONLY
-    IterableWithLength<? extends MethodActor> gatherNativeInitializationMethods();
+    List<? extends MethodActor> gatherNativeInitializationMethods();
 
     /**
      * At target startup, run the above methods.

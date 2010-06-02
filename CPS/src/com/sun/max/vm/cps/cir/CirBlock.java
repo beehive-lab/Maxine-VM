@@ -20,12 +20,15 @@
  */
 package com.sun.max.vm.cps.cir;
 
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.cps.cir.optimize.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
 import com.sun.max.vm.cps.ir.*;
+import com.sun.max.vm.cps.ir.IrBlock.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -57,7 +60,7 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
     private final IrBlock.Role role;
     private CirClosure closure;
 
-    private LinkSequence<CirCall> calls;
+    private LinkedList<CirCall> calls;
 
     public CirBlock(IrBlock.Role role) {
         this.role = role;
@@ -136,11 +139,11 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
 
     public void addCall(CirCall call) {
         if (calls == null) {
-            calls = new LinkSequence<CirCall>();
+            calls = new LinkedList<CirCall>();
         }
         assert call.arguments().length == closure().parameters().length;
-        assert !Sequence.Static.containsIdentical(calls, call);
-        calls.append(call);
+        assert !(Utils.indexOfIdentical(calls, call) != -1);
+        calls.add(call);
     }
 
     /**
@@ -149,12 +152,12 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
      *
      * @return list of calls to this block or 'null' if none
      */
-    public LinkSequence<CirCall> calls() {
+    public LinkedList<CirCall> calls() {
         return calls;
     }
 
     public int numberOfCalls() {
-        return calls == null ? 0 : calls.length();
+        return calls == null ? 0 : calls.size();
     }
 
     private int findIndex(CirVariable[] parameters, CirValue argument) {

@@ -35,7 +35,6 @@ import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -223,12 +222,47 @@ public abstract class ClassActor extends Actor implements RiType {
 
         this.localInterfaceActors = interfaceActors;
 
-        this.localStaticMethodActors = Arrays.filter(methodActors, StaticMethodActor.class, NO_STATIC_METHODS);
-        this.localVirtualMethodActors = Arrays.filter(methodActors, VirtualMethodActor.class, NO_VIRTUAL_METHODS);
-        this.localInterfaceMethodActors = Arrays.filter(methodActors, InterfaceMethodActor.class, NO_INTERFACE_METHODS);
+        List<StaticMethodActor> staticMethods = new ArrayList<StaticMethodActor>(methodActors.length);
+        List<VirtualMethodActor> virtualMethods = Collections.emptyList();
+        List<InterfaceMethodActor> interfaceMethods = Collections.emptyList();
 
-        this.localStaticFieldActors = InjectedFieldActor.Static.injectFieldActors(true, Arrays.filter(fieldActors, Actor.staticPredicate, NO_FIELDS), typeDescriptor);
-        this.localInstanceFieldActors = InjectedFieldActor.Static.injectFieldActors(false, Arrays.filter(fieldActors, Actor.dynamicPredicate, NO_FIELDS), typeDescriptor);
+        if (isInterface()) {
+            interfaceMethods = new ArrayList<InterfaceMethodActor>(methodActors.length);
+        } else {
+            virtualMethods = new ArrayList<VirtualMethodActor>(methodActors.length);
+        }
+
+        for (MethodActor methodActor : methodActors) {
+            if (methodActor.isStatic()) {
+                staticMethods.add((StaticMethodActor) methodActor);
+            } else if (isInterface()) {
+                assert methodActor instanceof InterfaceMethodActor;
+                interfaceMethods.add((InterfaceMethodActor) methodActor);
+            } else {
+                assert methodActor instanceof VirtualMethodActor;
+                virtualMethods.add((VirtualMethodActor) methodActor);
+            }
+        }
+
+        this.localStaticMethodActors = staticMethods.toArray(new StaticMethodActor[staticMethods.size()]);
+        this.localVirtualMethodActors = virtualMethods.toArray(new VirtualMethodActor[virtualMethods.size()]);
+        this.localInterfaceMethodActors = interfaceMethods.toArray(new InterfaceMethodActor[interfaceMethods.size()]);
+
+        ArrayList<FieldActor> staticFields = new ArrayList<FieldActor>(fieldActors.length);
+        ArrayList<FieldActor> instanceFields = new ArrayList<FieldActor>(fieldActors.length);
+
+        for (FieldActor fieldActor : fieldActors) {
+            if (fieldActor.isStatic()) {
+                staticFields.add(fieldActor);
+            } else {
+                instanceFields.add(fieldActor);
+            }
+        }
+        InjectedFieldActor.Static.injectFieldActors(true, staticFields, typeDescriptor);
+        InjectedFieldActor.Static.injectFieldActors(false, instanceFields, typeDescriptor);
+
+        this.localStaticFieldActors = staticFields.toArray(new FieldActor[staticFields.size()]);
+        this.localInstanceFieldActors = instanceFields.toArray(new FieldActor[instanceFields.size()]);
 
         this.clinit = findLocalStaticMethodActor(SymbolTable.CLINIT);
 
@@ -236,7 +270,7 @@ public abstract class ClassActor extends Actor implements RiType {
 
         // A map for matching methods based on their name and descriptor (and not holder)
         final int maxVtableSize = computeMaxVTableSize(superClassActor, localVirtualMethodActors);
-        final GrowableMapping<MethodActor, VirtualMethodActor> methodLookup = new ChainedHashMapping<MethodActor, VirtualMethodActor>(maxVtableSize) {
+        final Mapping<MethodActor, VirtualMethodActor> methodLookup = new ChainedHashMapping<MethodActor, VirtualMethodActor>(maxVtableSize) {
             @Override
             public boolean equivalent(MethodActor methodActor1, MethodActor methodActor2) {
                 return methodActor1.matchesNameAndType(methodActor2.name, methodActor2.descriptor());
@@ -255,9 +289,9 @@ public abstract class ClassActor extends Actor implements RiType {
                 ClassActor.this.staticHub = sHub.expand(staticReferenceMap, getRootClassActorId());
                 ClassActor.this.staticTuple = StaticTuple.create(ClassActor.this);
 
-                final IdentityHashSet<InterfaceActor> allInterfaceActors = getAllInterfaceActors();
-                Sequence<VirtualMethodActor> virtualMethodActors = gatherVirtualMethodActors(allInterfaceActors, methodLookup);
-                ClassActor.this.allVirtualMethodActors = Sequence.Static.toArray(virtualMethodActors, new VirtualMethodActor[virtualMethodActors.length()]);
+                final HashSet<InterfaceActor> allInterfaceActors = getAllInterfaceActors();
+                List<VirtualMethodActor> virtualMethodActors = gatherVirtualMethodActors(allInterfaceActors, methodLookup);
+                ClassActor.this.allVirtualMethodActors = virtualMethodActors.toArray(new VirtualMethodActor[virtualMethodActors.size()]);
                 assignHolderToLocalMethodActors();
                 if (isReferenceClassActor() || isInterface()) {
                     final Size dynamicTupleSize = layoutFields(specificLayout);
@@ -873,18 +907,18 @@ public abstract class ClassActor extends Actor implements RiType {
 
     public final boolean forAllClassMethodActors(Predicate<ClassMethodActor> predicate) {
         final Class<Predicate<VirtualMethodActor>> dynamicType = null;
-        if (!forAllVirtualMethodActors(StaticLoophole.cast(dynamicType, predicate))) {
+        if (!forAllVirtualMethodActors(Utils.cast(dynamicType, predicate))) {
             return false;
         }
         final Class<Predicate<StaticMethodActor>> staticType = null;
-        return forAllStaticMethodActors(StaticLoophole.cast(staticType, predicate));
+        return forAllStaticMethodActors(Utils.cast(staticType, predicate));
     }
 
     public final void forAllClassMethodActors(Procedure<ClassMethodActor> procedure) {
         final Class<Procedure<VirtualMethodActor>> dynamicType = null;
-        forAllVirtualMethodActors(StaticLoophole.cast(dynamicType, procedure));
+        forAllVirtualMethodActors(Utils.cast(dynamicType, procedure));
         final Class<Procedure<StaticMethodActor>> staticType = null;
-        forAllStaticMethodActors(StaticLoophole.cast(staticType, procedure));
+        forAllStaticMethodActors(Utils.cast(staticType, procedure));
     }
 
     /**
@@ -1000,18 +1034,18 @@ public abstract class ClassActor extends Actor implements RiType {
         return null;
     }
 
-    private Sequence<VirtualMethodActor> gatherVirtualMethodActors(IdentityHashSet<InterfaceActor> allInterfaceActors, GrowableMapping<MethodActor, VirtualMethodActor> lookup) {
+    private List<VirtualMethodActor> gatherVirtualMethodActors(HashSet<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> lookup) {
         if (!isReferenceClassActor()) {
-            return Sequence.Static.empty(VirtualMethodActor.class);
+            return Collections.emptyList();
         }
 
-        final VariableSequence<VirtualMethodActor> result = new ArrayListSequence<VirtualMethodActor>();
+        final ArrayList<VirtualMethodActor> result = new ArrayList<VirtualMethodActor>();
         int vTableIndex = Hub.vTableStartIndex();
 
         // Copy the super class' dynamic methods:
         if (superClassActor != null) {
             for (VirtualMethodActor virtualMethodActor : superClassActor.allVirtualMethodActors()) {
-                result.append(virtualMethodActor);
+                result.add(virtualMethodActor);
                 if (!virtualMethodActor.isInstanceInitializer() && !virtualMethodActor.isPrivate()) {
                     lookup.put(virtualMethodActor, virtualMethodActor);
                 } else {
@@ -1027,7 +1061,7 @@ public abstract class ClassActor extends Actor implements RiType {
                 final VirtualMethodActor superMethod;
                 superMethod = lookup.put(virtualMethodActor, virtualMethodActor);
                 if (superMethod == null) {
-                    result.append(virtualMethodActor);
+                    result.add(virtualMethodActor);
                     virtualMethodActor.setVTableIndex(vTableIndex);
                     vTableIndex++;
                 } else {
@@ -1052,7 +1086,7 @@ public abstract class ClassActor extends Actor implements RiType {
                     memberIndex++;
                     lookup.put(mirandaMethodActor, mirandaMethodActor);
 
-                    result.append(mirandaMethodActor);
+                    result.add(mirandaMethodActor);
                     mirandaMethodActor.setVTableIndex(vTableIndex);
                     vTableIndex++;
                 }
@@ -1063,7 +1097,7 @@ public abstract class ClassActor extends Actor implements RiType {
         if (numberOfLocalMirandaMethods != 0) {
             final VirtualMethodActor[] newLocalVirtualMethodActors = new VirtualMethodActor[localVirtualMethodActors.length + numberOfLocalMirandaMethods];
             System.arraycopy(localVirtualMethodActors, 0, newLocalVirtualMethodActors, 0, localVirtualMethodActors.length);
-            int resultIndex = result.length() - numberOfLocalMirandaMethods;
+            int resultIndex = result.size() - numberOfLocalMirandaMethods;
             memberIndex = localVirtualMethodActors().length;
             for (int i = 0; i != numberOfLocalMirandaMethods; ++i) {
                 newLocalVirtualMethodActors[memberIndex++] = result.get(resultIndex++);
@@ -1253,8 +1287,8 @@ public abstract class ClassActor extends Actor implements RiType {
      * Gets all the interfaces specified by this class and its super-classes and super-interfaces.
      * That is, the transitive closure of interfaces inherited or declared by this class actor.
      */
-    public final IdentityHashSet<InterfaceActor> getAllInterfaceActors() {
-        final IdentityHashSet<InterfaceActor> result = new IdentityHashSet<InterfaceActor>();
+    public final HashSet<InterfaceActor> getAllInterfaceActors() {
+        final HashSet<InterfaceActor> result = new HashSet<InterfaceActor>();
         if (isInterface()) {
             result.add((InterfaceActor) this);
         }
@@ -1271,12 +1305,15 @@ public abstract class ClassActor extends Actor implements RiType {
     /**
      * Gets all the methods declared by this class actor.
      */
-    public Sequence<MethodActor> getLocalMethodActors() {
-        final AppendableSequence<MethodActor> result = new LinkSequence<MethodActor>();
-        AppendableSequence.Static.appendAll(result, localVirtualMethodActors());
-        AppendableSequence.Static.appendAll(result, localStaticMethodActors());
-        AppendableSequence.Static.appendAll(result, localInterfaceMethodActors());
-        return result;
+    public List<MethodActor> getLocalMethodActors() {
+        MethodActor[] result = new MethodActor[localVirtualMethodActors.length + localStaticMethodActors.length + localInterfaceMethodActors.length];
+        int cursor = 0;
+        System.arraycopy(localVirtualMethodActors, 0, result, cursor, localVirtualMethodActors.length);
+        cursor += localVirtualMethodActors.length;
+        System.arraycopy(localStaticMethodActors, 0, result, cursor, localStaticMethodActors.length);
+        cursor += localStaticMethodActors.length;
+        System.arraycopy(localInterfaceMethodActors, 0, result, cursor, localInterfaceMethodActors.length);
+        return java.util.Arrays.asList(result);
     }
 
     public final boolean hasSuperClass(ClassActor superClass) {

@@ -23,9 +23,9 @@ package com.sun.max.vm.cps.ir.interpreter.eir;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -341,7 +341,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
         final InstructionAddress returnAddress = callAndLink(eirMethod);
 
-        cpu().gotoBlock(eirMethod.blocks().get(0));
+        cpu().gotoBlock(eirMethod.blocks()[0]);
         if (trace) {
             indent();
             Trace.stream().println(traceIndentation + "ENTER: " + eirMethod);
@@ -419,7 +419,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         while (cpu().nextInstructionAddress() != returnAddress) {
             try {
                 final Class<EirInstruction<EirInstructionVisitor, ?>> type = null;
-                final EirInstruction<EirInstructionVisitor, ?> instruction = StaticLoophole.cast(type, cpu().nextInstruction());
+                final EirInstruction<EirInstructionVisitor, ?> instruction = Utils.cast(type, cpu().nextInstruction());
                 if (trace) {
                     if (traceCpu) {
                         cpu().dump(Trace.stream());
@@ -620,10 +620,11 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         final EirABI abi = eirGenerator().createIrMethod(classMethodActor).abi;
         final boolean isStatic = classMethodActor.isStatic();
         final Kind[] parameterKinds = classMethodActor.getParameterKinds();
-        final Kind[] jniParameterKinds = Arrays.prepend(parameterKinds, Kind.WORD, Kind.WORD);
+        final Kind[] jniParameterKinds = Utils.prepend(parameterKinds, Kind.WORD, Kind.WORD);
         final int firstJavaParameterIndex = isStatic ? 2 : 1;
-        final EirLocation[] javaArgumentLocations = Arrays.subArray(abi.getParameterLocations(EirStackSlot.Purpose.LOCAL, jniParameterKinds), firstJavaParameterIndex);
-        final Kind[] javaParameterKinds = Arrays.subArray(jniParameterKinds, firstJavaParameterIndex);
+        EirLocation[] parameterLocations = abi.getParameterLocations(EirStackSlot.Purpose.LOCAL, jniParameterKinds);
+        final EirLocation[] javaArgumentLocations = Arrays.copyOfRange(parameterLocations, firstJavaParameterIndex, parameterLocations.length);
+        final Kind[] javaParameterKinds = Arrays.copyOfRange(jniParameterKinds, firstJavaParameterIndex, jniParameterKinds.length);
         callViaReflection(true, classMethodActor, javaParameterKinds, javaArgumentLocations);
     }
 

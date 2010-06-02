@@ -30,9 +30,10 @@ import static com.sun.max.asm.ia32.IA32GeneralRegister16.*;
 import static com.sun.max.asm.ia32.IA32GeneralRegister32.*;
 import static com.sun.max.asm.ia32.IA32GeneralRegister8.*;
 
+import java.util.*;
+
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.x86.*;
-import com.sun.max.collect.*;
 
 /**
  * See A-7 in the book.
@@ -238,7 +239,7 @@ public enum IA32ModRMGroup implements ModRMGroup {
     );
 
     private static ModRMDescription modRM(ModRMGroup.Opcode opcode, String name, Object... specifications) {
-        return new ModRMDescription(opcode, name, new ArrayListSequence<Object>(specifications));
+        return new ModRMDescription(opcode, name, Arrays.asList(specifications));
     }
 
     private final ModRMDescription[] instructionDescriptions;

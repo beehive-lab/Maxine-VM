@@ -21,8 +21,8 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 
 /**
@@ -84,7 +84,7 @@ public interface MaxVMState  {
      *
      * @return the regions of memory that the VM has allocated from the OS.
      */
-    Sequence<MaxMemoryRegion> memoryRegions();
+    List<MaxMemoryRegion> memoryRegions();
 
     /**
      * Enumerates all threads live in the VM at this state transition.
@@ -98,7 +98,7 @@ public interface MaxVMState  {
      * @see #threadsStarted()
      * @see #threadsDied()
      */
-    Sequence<MaxThread> threads();
+    List<MaxThread> threads();
 
     /**
      * When the VM stops, the thread, if any, that was single stepped.
@@ -125,7 +125,7 @@ public interface MaxVMState  {
      * @see #threads()
      * @see #threadsDied()
      */
-    Sequence<MaxThread> threadsStarted();
+    List<MaxThread> threadsStarted();
 
     /**
      * Threads that have died since the last state transition.
@@ -141,7 +141,7 @@ public interface MaxVMState  {
      * @see #threads()
      * @see #threadsStarted()
      */
-    Sequence<MaxThread> threadsDied();
+    List<MaxThread> threadsDied();
 
     /**
      * When the VM stops, describes threads that are currently at breakpoints.
@@ -152,7 +152,7 @@ public interface MaxVMState  {
      *
      * @return descriptions of threads currently stopped at breakpoints, empty if none.
      */
-    Sequence<MaxBreakpointEvent> breakpointEvents();
+    List<MaxBreakpointEvent> breakpointEvents();
 
     /**
      * When the VM has stopped because a thread hit a memory watchpoint,

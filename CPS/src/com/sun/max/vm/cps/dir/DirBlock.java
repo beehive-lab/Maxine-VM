@@ -20,8 +20,10 @@
  */
 package com.sun.max.vm.cps.dir;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.io.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.dir.transform.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.type.*;
@@ -37,7 +39,7 @@ import com.sun.max.vm.type.*;
 public class DirBlock extends DirValue implements IrBlock {
 
     private final IrBlock.Role role;
-    private final VariableSequence<DirInstruction> instructions = new ArrayListSequence<DirInstruction>();
+    private final ArrayList<DirInstruction> instructions = new ArrayList<DirInstruction>();
 
     public DirBlock(IrBlock.Role role) {
         this.role = role;
@@ -60,7 +62,7 @@ public class DirBlock extends DirValue implements IrBlock {
         if (instructions.isEmpty()) {
             return 0;
         }
-        return instructions.length() ^ instructions.first().hashCodeForBlock() + instructions.last().hashCodeForBlock();
+        return instructions.size() ^ instructions.get(0).hashCodeForBlock() + instructions.get(instructions.size() - 1).hashCodeForBlock();
     }
 
     @Override
@@ -95,39 +97,39 @@ public class DirBlock extends DirValue implements IrBlock {
         this.serial = serial;
     }
 
-    private GrowableDeterministicSet<DirBlock> predecessors = new LinkedIdentityHashSet<DirBlock>();
+    private LinkedIdentityHashSet<DirBlock> predecessors = new LinkedIdentityHashSet<DirBlock>();
 
-    public GrowableDeterministicSet<DirBlock> predecessors() {
+    public LinkedIdentityHashSet<DirBlock> predecessors() {
         return predecessors;
     }
 
-    public void setPredecessors(GrowableDeterministicSet<DirBlock> predecessors) {
+    public void setPredecessors(LinkedIdentityHashSet<DirBlock> predecessors) {
         this.predecessors = predecessors;
     }
 
-    private GrowableDeterministicSet<DirBlock> successors = new LinkedIdentityHashSet<DirBlock>();
+    private LinkedIdentityHashSet<DirBlock> successors = new LinkedIdentityHashSet<DirBlock>();
 
-    public GrowableDeterministicSet<DirBlock> successors() {
+    public LinkedIdentityHashSet<DirBlock> successors() {
         return successors;
     }
 
-    public void setSuccessors(GrowableDeterministicSet<DirBlock> successors) {
+    public void setSuccessors(LinkedIdentityHashSet<DirBlock> successors) {
         this.successors = successors;
     }
 
-    public VariableSequence<DirInstruction> instructions() {
+    public ArrayList<DirInstruction> instructions() {
         return instructions;
     }
 
     public void appendInstruction(DirInstruction instruction) {
-        instructions.append(instruction);
+        instructions.add(instruction);
     }
 
     /**
      * @return whether this block only contains a goto and no other instructions
      */
     public boolean isTrivial() {
-        return instructions.length() == 1 && instructions.first() instanceof DirGoto;
+        return instructions.size() == 1 && instructions.get(0) instanceof DirGoto;
     }
 
     /**

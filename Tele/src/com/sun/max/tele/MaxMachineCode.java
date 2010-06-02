@@ -21,8 +21,8 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.unsafe.*;
@@ -160,7 +160,7 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
          *
          * @return the index of instructions with labels, empty if none.
          */
-        Sequence<Integer> labelIndexes();
+        List<Integer> labelIndexes();
 
         // TODO (mlvdv) should abstract this interface further so this doesn't need to be exposed.
         int[] bytecodeToTargetCodePositionMap();

@@ -22,8 +22,6 @@ package com.sun.max.asm.gen.risc.bitRange;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
-
 /**
  * A range of bits that is composed of several disjoint subranges.
  * 
@@ -38,14 +36,14 @@ public class CompoundBitRange extends BitRange {
         super();
     }
 
-    private AppendableIndexedSequence<ContiguousBitRange> contiguousBitRanges = new ArrayListSequence<ContiguousBitRange>();
+    private List<ContiguousBitRange> contiguousBitRanges = new ArrayList<ContiguousBitRange>();
 
-    public Sequence<ContiguousBitRange> contiguousBitRanges() {
+    public List<ContiguousBitRange> contiguousBitRanges() {
         return contiguousBitRanges;
     }
 
     public void add(ContiguousBitRange contiguousBitRange) {
-        contiguousBitRanges.append(contiguousBitRange);
+        contiguousBitRanges.add(contiguousBitRange);
     }
 
     @Override
@@ -154,7 +152,7 @@ public class CompoundBitRange extends BitRange {
     public int assembleUncheckedSignedInt(int signedInt) throws IndexOutOfBoundsException {
         int value = signedInt;
         int result = 0;
-        for (int i = contiguousBitRanges.length() - 1; i >= 0; i--) {
+        for (int i = contiguousBitRanges.size() - 1; i >= 0; i--) {
             final ContiguousBitRange contiguousBitRange = contiguousBitRanges.get(i);
             result |= contiguousBitRange.assembleUncheckedSignedInt(value);
             value >>= contiguousBitRange.width();
@@ -166,7 +164,7 @@ public class CompoundBitRange extends BitRange {
     public int assembleUncheckedUnsignedInt(int unsignedInt) throws IndexOutOfBoundsException {
         int value = unsignedInt;
         int result = 0;
-        for (int i = contiguousBitRanges.length() - 1; i >= 0; i--) {
+        for (int i = contiguousBitRanges.size() - 1; i >= 0; i--) {
             final ContiguousBitRange contiguousBitRange = contiguousBitRanges.get(i);
             result |= contiguousBitRange.assembleUncheckedUnsignedInt(value);
             value >>>= contiguousBitRange.width();
@@ -178,7 +176,7 @@ public class CompoundBitRange extends BitRange {
     public String encodingString(String value, boolean signed, boolean checked) {
         final StringBuilder sb = new StringBuilder();
         int shift = 0;
-        for (int i = contiguousBitRanges.length() - 1; i >= 0; i--) {
+        for (int i = contiguousBitRanges.size() - 1; i >= 0; i--) {
             final ContiguousBitRange contiguousBitRange = contiguousBitRanges.get(i);
             final String bits = (shift == 0) ? value : "(" + value + (signed ? " >> " : " >>> ") + shift + ")";
             final String encoding = contiguousBitRange.encodingString(bits, signed, false);

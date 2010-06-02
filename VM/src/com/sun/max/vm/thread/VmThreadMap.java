@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.thread;
 
-import java.util.ArrayList;
+import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -131,7 +131,7 @@ public final class VmThreadMap {
             final int length = freeList.length;
             if (nextID >= length) {
                 // grow the free list and initialize the new part
-                final int[] newFreeList = Arrays.grow(freeList, length * 2);
+                final int[] newFreeList = Arrays.copyOf(freeList, length * 2);
                 for (int i = length; i < newFreeList.length; i++) {
                     newFreeList[i] = i + 1;
                 }

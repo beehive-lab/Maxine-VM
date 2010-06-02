@@ -22,6 +22,9 @@ package com.sun.max.vm.cps.eir;
 
 import static com.sun.max.vm.cps.eir.EirStackSlot.Purpose.*;
 
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -93,8 +96,8 @@ public abstract class EirMethodGeneration {
         this.isTemplate = isTemplate;
         this.usesSharedEpilogue = usesSharedEpilogue;
 
-        this.integerRegisterRoleValues = new EirValue[VMRegister.Role.VALUES.length()];
-        this.floatingPointRegisterRoleValues = new EirValue[VMRegister.Role.VALUES.length()];
+        this.integerRegisterRoleValues = new EirValue[VMRegister.Role.VALUES.size()];
+        this.floatingPointRegisterRoleValues = new EirValue[VMRegister.Role.VALUES.size()];
         for (VMRegister.Role role : VMRegister.Role.VALUES) {
             integerRegisterRoleValues[role.ordinal()] = preallocate(abi.integerRegisterActingAs(role), role.kind());
             floatingPointRegisterRoleValues[role.ordinal()] = preallocate(abi.floatingPointRegisterActingAs(role), role.kind());
@@ -113,11 +116,11 @@ public abstract class EirMethodGeneration {
         eirGenerator.notifyAfterTransformation(eirMethod(), context, transform);
     }
 
-    private VariableSequence<EirBlock> eirBlocks = new ArrayListSequence<EirBlock>();
+    private ArrayList<EirBlock> eirBlocks = new ArrayList<EirBlock>();
 
-    private AppendableIndexedSequence<EirBlock> result;
+    private ArrayList<EirBlock> result;
 
-    public IndexedSequence<EirBlock> eirBlocks() {
+    public ArrayList<EirBlock> eirBlocks() {
         if (result != null) {
             return result;
         }
@@ -135,7 +138,8 @@ public abstract class EirMethodGeneration {
 
     public Pool<EirBlock> eirBlockPool() {
         if (eirBlockPool == null) {
-            eirBlockPool = new ArrayPool<EirBlock>(Sequence.Static.toArray(eirBlocks(), new EirBlock[eirBlocks().length()]));
+            ArrayList<EirBlock> eirBlocks = eirBlocks();
+            eirBlockPool = new ArrayPool<EirBlock>(eirBlocks.toArray(new EirBlock[eirBlocks.size()]));
         }
         return eirBlockPool;
     }
@@ -143,9 +147,9 @@ public abstract class EirMethodGeneration {
     protected abstract EirMethod eirMethod();
 
     public EirBlock createEirBlock(IrBlock.Role role) {
-        final int serial = eirBlocks.length();
+        final int serial = eirBlocks.size();
         final EirBlock eirBlock = new EirBlock(eirMethod(), role, serial);
-        eirBlocks.append(eirBlock);
+        eirBlocks.add(eirBlock);
         clearBlockPool();
         return eirBlock;
     }
@@ -154,33 +158,33 @@ public abstract class EirMethodGeneration {
      * Slots in the frame of the method being generated. That is, the offsets of these slots are relative SP after it
      * has been adjusted upon entry to the method.
      */
-    private final AppendableIndexedSequence<EirStackSlot> localStackSlots = new ArrayListSequence<EirStackSlot>();
+    private final List<EirStackSlot> localStackSlots = new ArrayList<EirStackSlot>();
 
     /**
      * Slots in the frame of the caller of method being generated. That is, the offsets of these slots are relative to
      * SP before it has been adjusted upon entry to the method.
      */
-    private final AppendableIndexedSequence<EirStackSlot> parameterStackSlots = new ArrayListSequence<EirStackSlot>();
+    private final List<EirStackSlot> parameterStackSlots = new ArrayList<EirStackSlot>();
 
-    public Sequence<EirStackSlot> allocatedStackSlots() {
+    public List<EirStackSlot> allocatedStackSlots() {
         return localStackSlots;
     }
 
     public EirStackSlot allocateSpillStackSlot() {
-        final EirStackSlot stackSlot = new EirStackSlot(EirStackSlot.Purpose.LOCAL, localStackSlots.length() * abi.stackSlotSize());
-        localStackSlots.append(stackSlot);
+        final EirStackSlot stackSlot = new EirStackSlot(EirStackSlot.Purpose.LOCAL, localStackSlots.size() * abi.stackSlotSize());
+        localStackSlots.add(stackSlot);
         return stackSlot;
     }
 
     public int getLocalStackSlotCount() {
-        return localStackSlots.length();
+        return localStackSlots.size();
     }
 
     /**
      * Gets the size of the stack frame currently allocated used for local variables.
      */
     public int frameSize() {
-        return abi.frameSize(localStackSlots.length(), stackBlocksSize);
+        return abi.frameSize(localStackSlots.size(), stackBlocksSize);
     }
 
     /**
@@ -192,23 +196,23 @@ public abstract class EirMethodGeneration {
     }
 
     public EirStackSlot localStackSlotFromIndex(int index) {
-        if (index >= localStackSlots.length()) {
+        if (index >= localStackSlots.size()) {
             // Fill in the missing stack slots
-            for (int i = localStackSlots.length(); i <= index; i++) {
-                localStackSlots.append(new EirStackSlot(EirStackSlot.Purpose.LOCAL, i * abi.stackSlotSize()));
+            for (int i = localStackSlots.size(); i <= index; i++) {
+                localStackSlots.add(new EirStackSlot(EirStackSlot.Purpose.LOCAL, i * abi.stackSlotSize()));
             }
         }
         return localStackSlots.get(index);
     }
 
-    private EirStackSlot canonicalizeStackSlot(EirStackSlot stackSlot, AppendableIndexedSequence<EirStackSlot> slots) {
+    private EirStackSlot canonicalizeStackSlot(EirStackSlot stackSlot, List<EirStackSlot> slots) {
         final int index = stackSlot.offset / abi.stackSlotSize();
-        if (index >= slots.length()) {
+        if (index >= slots.size()) {
             // Fill in the missing stack slots
-            for (int i = slots.length(); i < index; i++) {
-                slots.append(new EirStackSlot(stackSlot.purpose, i * abi.stackSlotSize()));
+            for (int i = slots.size(); i < index; i++) {
+                slots.add(new EirStackSlot(stackSlot.purpose, i * abi.stackSlotSize()));
             }
-            slots.append(stackSlot);
+            slots.add(stackSlot);
             return stackSlot;
         }
         return slots.get(index);
@@ -222,11 +226,11 @@ public abstract class EirMethodGeneration {
      */
     public EirStackSlot canonicalizeStackSlot(EirStackSlot stackSlot) {
         assert stackSlot.purpose != BLOCK;
-        final AppendableIndexedSequence<EirStackSlot> stackSlots = stackSlot.purpose == PARAMETER ? parameterStackSlots : localStackSlots;
+        final List<EirStackSlot> stackSlots = stackSlot.purpose == PARAMETER ? parameterStackSlots : localStackSlots;
         return canonicalizeStackSlot(stackSlot, stackSlots);
     }
 
-    private final GrowableMapping<EirLocation, EirValue> locationToValue = HashMapping.createEqualityMapping();
+    private final Mapping<EirLocation, EirValue> locationToValue = HashMapping.createEqualityMapping();
 
     public EirValue preallocate(EirLocation location, Kind kind) {
         if (location == null) {
@@ -239,7 +243,7 @@ public abstract class EirMethodGeneration {
         return value;
     }
 
-    private VariableSequence<EirVariable> variables = new ArrayListSequence<EirVariable>();
+    private List<EirVariable> variables = new ArrayList<EirVariable>();
 
     private Pool<EirVariable> variablePool;
 
@@ -251,7 +255,7 @@ public abstract class EirMethodGeneration {
      */
     public Pool<EirVariable> variablePool() {
         if (variablePool == null) {
-            variablePool = new ArrayPool<EirVariable>(Sequence.Static.toArray(variables, new EirVariable[variables.length()]));
+            variablePool = new ArrayPool<EirVariable>(variables.toArray(new EirVariable[variables.size()]));
         }
         return variablePool;
     }
@@ -263,36 +267,36 @@ public abstract class EirMethodGeneration {
     /**
      * Gets the set of variables that have been allocated.
      */
-    public Sequence<EirVariable> variables() {
+    public List<EirVariable> variables() {
         return variables;
     }
 
-    public void setVariables(IterableWithLength<EirVariable> variables) {
+    public void setVariables(List<EirVariable> variables) {
         assert variablePool == null : "can't allocate EIR variables once a variable pool exists";
-        this.variables = new ArrayListSequence<EirVariable>(variables);
+        this.variables = new ArrayList<EirVariable>(variables);
 
-        for (int i = 0; i < variables.length(); i++) {
+        for (int i = 0; i < variables.size(); i++) {
             this.variables.get(i).setSerial(i);
         }
     }
 
     public EirVariable createEirVariable(Kind kind) {
         assert variablePool == null : "can't allocate EIR variables once a variable pool exists";
-        final int serial = variables.length();
+        final int serial = variables.size();
         final EirVariable eirVariable = new EirVariable(eirGenerator.eirKind(kind), serial);
-        variables.append(eirVariable);
+        variables.add(eirVariable);
         return eirVariable;
     }
 
-    private final AppendableSequence<EirConstant> constants = new ArrayListSequence<EirConstant>();
+    private final List<EirConstant> constants = new ArrayList<EirConstant>();
 
-    public Sequence<EirConstant> constants() {
+    public List<EirConstant> constants() {
         return constants;
     }
 
     public EirConstant createEirConstant(Value value) {
-        final EirConstant constant = (value.kind().isReference) ? new EirConstant.Reference(value, constants.length()) : new EirConstant(value);
-        constants.append(constant);
+        final EirConstant constant = (value.kind().isReference) ? new EirConstant.Reference(value, constants.size()) : new EirConstant(value);
+        constants.add(constant);
         return constant;
     }
 
@@ -374,17 +378,17 @@ public abstract class EirMethodGeneration {
     }
 
     private EirBlock selectSuccessor(EirBlock block, PoolSet<EirBlock> rest) {
-        final EirInstruction<?, ?> instruction = block.instructions().last();
+        final EirInstruction<?, ?> instruction = Utils.last(block.instructions());
         return instruction.selectSuccessorBlock(rest);
     }
 
-    private EirBlock gatherUnconditionalSuccessors(EirBlock eirBlock, PoolSet<EirBlock> rest, AppendableSequence<EirBlock> blocks) {
+    private EirBlock gatherUnconditionalSuccessors(EirBlock eirBlock, PoolSet<EirBlock> rest, List<EirBlock> blocks) {
         EirBlock block = eirBlock;
         while (rest.contains(block)) {
             rest.remove(block);
-            blocks.append(block);
-            if (block.instructions().last() instanceof EirJump) {
-                final EirJump jump = (EirJump) block.instructions().last();
+            blocks.add(block);
+            if (Utils.last(block.instructions()) instanceof EirJump) {
+                final EirJump jump = (EirJump) Utils.last(block.instructions());
                 block = jump.target();
             } else {
                 return block;
@@ -396,7 +400,7 @@ public abstract class EirMethodGeneration {
     private EirBlock selectUnconditionalPredecessor(EirBlock block, final PoolSet<EirBlock> rest) {
         for (EirBlock predecessor : block.predecessors()) {
             if (rest.contains(predecessor)) {
-                if (predecessor.instructions().last() instanceof EirJump) {
+                if (Utils.last(predecessor.instructions()) instanceof EirJump) {
                     return predecessor;
                 }
             }
@@ -404,36 +408,36 @@ public abstract class EirMethodGeneration {
         return null;
     }
 
-    private void gatherUnconditionalPredecessors(EirBlock eirBlock, PoolSet<EirBlock> rest, PrependableSequence<EirBlock> blocks) {
+    private void gatherUnconditionalPredecessors(EirBlock eirBlock, PoolSet<EirBlock> rest, List<EirBlock> blocks) {
         EirBlock block = eirBlock;
         while (rest.contains(eirBlock)) {
-            blocks.prepend(block);
+            blocks.add(0, block);
             rest.remove(block);
             block = selectUnconditionalPredecessor(block, rest);
         }
     }
 
-    private void gatherSuccessors(EirBlock eirBlock, PoolSet<EirBlock> rest, AppendableSequence<EirBlock> blocks) {
+    private void gatherSuccessors(EirBlock eirBlock, PoolSet<EirBlock> rest, List<EirBlock> blocks) {
         EirBlock block = eirBlock;
         while (rest.contains(block)) {
             rest.remove(block);
-            blocks.append(block);
+            blocks.add(block);
             block = selectSuccessor(block, rest);
         }
     }
 
     protected void rearrangeBlocks() {
-        final int eirBlocksLength = eirBlocks.length();
-        final Pool<EirBlock> blockPool = new IndexedSequencePool<EirBlock>(eirBlocks);
+        final int eirBlocksLength = eirBlocks.size();
+        final Pool<EirBlock> blockPool = new ArrayPool<EirBlock>(eirBlocks.toArray(new EirBlock[eirBlocksLength]));
         final PoolSet<EirBlock> rest = PoolSet.noneOf(blockPool);
-        result = new ArrayListSequence<EirBlock>();
+        result = new ArrayList<EirBlock>();
         rest.addAll();
 
-        final EirBlock head = gatherUnconditionalSuccessors(eirBlocks.first(), rest, result);
+        final EirBlock head = gatherUnconditionalSuccessors(eirBlocks.get(0), rest, result);
 
-        PrependableSequence<EirBlock> tail = null;
+        LinkedList<EirBlock> tail = null;
         if (eirEpilogueBlock != null) {
-            tail = new ArrayListSequence<EirBlock>();
+            tail = new LinkedList<EirBlock>();
             gatherUnconditionalPredecessors(eirEpilogueBlock, rest, tail);
         }
         gatherSuccessors(head, rest, result);
@@ -452,7 +456,7 @@ public abstract class EirMethodGeneration {
         }
 
         if (tail != null) {
-            AppendableSequence.Static.appendAll(result, tail);
+            result.addAll(tail);
         }
 
         int serial = 0;
@@ -460,7 +464,7 @@ public abstract class EirMethodGeneration {
             block.setSerial(serial);
             serial++;
         }
-        assert eirBlocksLength == eirBlocks.length();
+        assert eirBlocksLength == eirBlocks.size();
         eirBlocks = null;
     }
 
@@ -528,9 +532,9 @@ public abstract class EirMethodGeneration {
     }
 
     public void introduceInstructionAfter(EirInstruction<?, ?> position, EirInstruction instruction) {
-        final IndexedSequence<EirInstruction> instructions = position.block().instructions();
+        final List<EirInstruction> instructions = position.block().instructions();
         final int nextIndex = position.index() + 1;
-        if (nextIndex == instructions.length()) {
+        if (nextIndex == instructions.size()) {
             position.block().appendInstruction(instruction);
             return;
         }
@@ -611,7 +615,7 @@ public abstract class EirMethodGeneration {
     }
 
     public void allocateConstants() {
-        final MutableQueue<EirConstant> constants = new MutableQueue<EirConstant>();
+        final LinkedList<EirConstant> constants = new LinkedList<EirConstant>();
 
         for (EirConstant constant : constants()) {
             constants.add(constant);
@@ -649,9 +653,9 @@ public abstract class EirMethodGeneration {
         return a.sourceOperand();
     }
 
-    private void allocateConstant(EirConstant constant, MutableQueue<EirConstant> constants) {
-        final EirLocationCategory[] categories = new EirLocationCategory[constant.operands().length()];
-        final EirOperand[] operands = new EirOperand[constant.operands().length()];
+    private void allocateConstant(EirConstant constant, LinkedList<EirConstant> constants) {
+        final EirLocationCategory[] categories = new EirLocationCategory[constant.operands().size()];
+        final EirOperand[] operands = new EirOperand[constant.operands().size()];
         int i = 0;
         for (EirOperand operand : constant.operands()) {
             operands[i] = operand;
@@ -667,7 +671,7 @@ public abstract class EirMethodGeneration {
             i++;
         }
 
-        assert constant.operands().length() == 0;
+        assert constant.operands().size() == 0;
 
         for (i = 0; i < operands.length; i++) {
             if (categories[i] == null) {
@@ -678,7 +682,7 @@ public abstract class EirMethodGeneration {
         }
 
         EirConstant original = constant;
-        final EirConstant[] categoryToConstant = new EirConstant[EirLocationCategory.VALUES.length()];
+        final EirConstant[] categoryToConstant = new EirConstant[EirLocationCategory.VALUES.size()];
         for (i = 0; i < operands.length; i++) {
             final int categoryIndex = categories[i].ordinal();
             EirConstant c = categoryToConstant[categoryIndex];
@@ -725,18 +729,18 @@ public abstract class EirMethodGeneration {
     public void clearEmptyVariables() {
         boolean variablesToRemove = false;
         for (EirVariable variable : this.variables) {
-            if (variable.operands().length() == 0) {
+            if (variable.operands().size() == 0) {
                 variablesToRemove = true;
                 break;
             }
         }
 
         if (variablesToRemove) {
-            final AppendableSequence<EirVariable> newVariables = new ArrayListSequence<EirVariable>(variables.length());
+            final List<EirVariable> newVariables = new ArrayList<EirVariable>(variables.size());
 
             for (EirVariable variable : this.variables) {
-                if (variable.operands().length() > 0) {
-                    newVariables.append(variable);
+                if (variable.operands().size() > 0) {
+                    newVariables.add(variable);
                 }
             }
 

@@ -21,8 +21,9 @@
 package com.sun.max.vm.cps.ir.observer;
 
 import java.lang.reflect.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.cps.ir.*;
@@ -89,7 +90,7 @@ public class IrObserverConfiguration {
      *
      * @param generator the new generator to which to attach the global observers
      */
-    public static void attach(Sequence<IrGenerator> generators) {
+    public static void attach(List<IrGenerator> generators) {
         final String[] methodsToBeTraced = parseMaxIrTraceProperty();
         final String irObservers = addTraceObservers(System.getProperty("max.ir.observers", ""), methodsToBeTraced);
         final String irFilters = addTraceFilters(System.getProperty("max.ir.observer.filters", ""), methodsToBeTraced);
@@ -162,7 +163,7 @@ public class IrObserverConfiguration {
             // attach the filters in a chain to the specified observer
             try {
                 final Class<Class<? extends IrObserver>> type = null;
-                final Class<? extends IrObserver> irObserverClass = StaticLoophole.cast(type, getObserver(className));
+                final Class<? extends IrObserver> irObserverClass = Utils.cast(type, getObserver(className));
                 result = irObserverClass.getConstructor(IrObserver.class).newInstance(result);
             } catch (ClassCastException e) {
                 throw ProgramError.unexpected("Could not initialize IR filter implemented by " + className, e);
@@ -193,7 +194,7 @@ public class IrObserverConfiguration {
     private static IrObserver instantiateObserver(String className) {
         try {
             final Class<Class<? extends IrObserver>> type = null;
-            final Class<? extends IrObserver> irObserverClass = StaticLoophole.cast(type, getObserver(className));
+            final Class<? extends IrObserver> irObserverClass = Utils.cast(type, getObserver(className));
             return irObserverClass.newInstance();
         } catch (ClassCastException e) {
             throw ProgramError.unexpected("Could not initialize IR observer implemented by " + className, e);

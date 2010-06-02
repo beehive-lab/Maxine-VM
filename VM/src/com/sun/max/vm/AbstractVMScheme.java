@@ -21,7 +21,6 @@
 package com.sun.max.vm;
 
 import com.sun.max.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**
@@ -42,17 +41,17 @@ public abstract class AbstractVMScheme extends AbstractScheme {
         Class<?> implementation = getClass();
         ProgramError.check(VMScheme.class.isAssignableFrom(implementation), "Subclass of " + AbstractVMScheme.class + " must implement " + VMScheme.class + ": " + implementation);
         final Class<Class<? extends VMScheme>> type = null;
-        Class<? extends VMScheme> last = StaticLoophole.cast(type, implementation);
+        Class<? extends VMScheme> last = Utils.cast(type, implementation);
         while (!implementation.equals(AbstractVMScheme.class) && specification == null) {
             for (Class<?> interfaceClass : implementation.getInterfaces()) {
                 if (!VMScheme.class.equals(interfaceClass) && VMScheme.class.isAssignableFrom(interfaceClass)) {
-                    specification = StaticLoophole.cast(type, interfaceClass);
+                    specification = Utils.cast(type, interfaceClass);
                     break;
                 }
             }
             implementation = implementation.getSuperclass();
             if (!VMScheme.class.equals(implementation) && VMScheme.class.isAssignableFrom(implementation)) {
-                last = StaticLoophole.cast(type, implementation);
+                last = Utils.cast(type, implementation);
             }
         }
         if (specification == null) {

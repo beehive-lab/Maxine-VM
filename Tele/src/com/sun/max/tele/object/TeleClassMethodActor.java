@@ -20,9 +20,10 @@
  */
 package com.sun.max.tele.object;
 
+import java.util.*;
+
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -156,9 +157,9 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      */
     public Iterable<TeleTargetMethod> compilations() {
         if (hasTargetMethod()) {
-            return Arrays.iterable(teleTargetMethodHistory);
+            return Arrays.asList(teleTargetMethodHistory);
         }
-        return Arrays.iterable(NO_TELE_TARGET_METHODS);
+        return Arrays.asList(NO_TELE_TARGET_METHODS);
     }
 
    /**

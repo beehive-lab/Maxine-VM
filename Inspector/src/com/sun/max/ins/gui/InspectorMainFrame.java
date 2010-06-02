@@ -28,9 +28,9 @@ import java.io.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
+import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -94,6 +94,20 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      */
     private final class MainFrameTransferHandler extends TransferHandler {
 
+        /**
+         * Returns true iff there is at least one element that is contained in both arrays.
+         */
+        private boolean containsAny(DataFlavor[] array1, DataFlavor[] array2) {
+            for (DataFlavor element1 : array1) {
+                for (DataFlavor element2 : array2) {
+                    if (element1 == element2) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         @Override
         public boolean canImport(TransferHandler.TransferSupport support) {
             // Only support drops
@@ -105,7 +119,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 return false;
             }
             // Only support the enumerated data flavors.
-            if (!Arrays.containsAny(support.getDataFlavors(),  supportedDropDataFlavors)) {
+            if (!containsAny(support.getDataFlavors(),  supportedDropDataFlavors)) {
                 return false;
             }
 
@@ -320,7 +334,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 }
                 // This component may contain other InspectorFrames, e.g. if it is related to a tabbed frame.
                 if (inspector instanceof InspectorContainer) {
-                    final InspectorContainer<? extends Inspector> inspectorContainer = StaticLoophole.cast(inspector);
+                    final InspectorContainer<? extends Inspector> inspectorContainer = Utils.cast(inspector);
                     for (Inspector containedInspector : inspectorContainer) {
                         if (predicate.evaluate(containedInspector)) {
                             return containedInspector;

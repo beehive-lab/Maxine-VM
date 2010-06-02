@@ -21,9 +21,9 @@
 package com.sun.max.asm.gen;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 
 /**
  * These instruction constraints are only used for generating test cases.
@@ -43,7 +43,7 @@ public class TestOnlyInstructionConstraint implements InstructionConstraint {
         return delegate.asJavaExpression();
     }
 
-    public boolean check(Template template, IndexedSequence<Argument> arguments) {
+    public boolean check(Template template, List<Argument> arguments) {
         return delegate.check(template, arguments);
     }
 

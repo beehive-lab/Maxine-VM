@@ -21,8 +21,8 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
@@ -52,8 +52,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
      */
     private static final class ExternalCodeMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxExternalCode> {
 
-        private static final IndexedSequence<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY =
-            new ArrayListSequence<MaxEntityMemoryRegion<? extends MaxEntity>>(0);
+        private static final List<MaxEntityMemoryRegion<? extends MaxEntity>> EMPTY = Collections.emptyList();
 
         private MaxExternalCode owner;
 
@@ -66,7 +65,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
             return null;
         }
 
-        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+        public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
             return EMPTY;
         }
 
@@ -87,8 +86,12 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
      */
     private final class ExternalCodeInstructionMap implements InstructionMap {
 
-        private IndexedSequence<MachineCodeLocation> instructionLocations = null;
-        private IndexedSequence<Integer> labelIndexes = null;
+        private List<MachineCodeLocation> instructionLocations = null;
+
+        /**
+         * Unmodifiable list of all instruction indexes where a label is present.
+         */
+        private List<Integer> labelIndexes = null;
 
         ExternalCodeInstructionMap() {
         }
@@ -96,29 +99,29 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         private void initialize() {
             if (instructions == null) {
                 instructions = getInstructions();
-                final int length = instructions.length();
-                final VariableSequence<MachineCodeLocation> locations = new ArrayListSequence<MachineCodeLocation>(length);
-                final VariableSequence<Integer> labels = new ArrayListSequence<Integer>();
+                final int length = instructions.size();
+                final List<MachineCodeLocation> locations = new ArrayList<MachineCodeLocation>(length);
+                final List<Integer> labels = new ArrayList<Integer>();
                 for (int index = 0; index < length; index++) {
                     final TargetCodeInstruction targetCodeInstruction = instructions.get(index);
-                    locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, "external machine code instruction"));
+                    locations.add(codeManager().createMachineCodeLocation(targetCodeInstruction.address, "external machine code instruction"));
                     if (targetCodeInstruction.label != null) {
-                        labels.append(index);
+                        labels.add(index);
                     }
                 }
                 instructionLocations = locations;
-                labelIndexes = labels;
+                labelIndexes = Collections.unmodifiableList(labels);
             }
         }
 
         public int length() {
             initialize();
-            return instructions.length();
+            return instructions.size();
         }
 
         public TargetCodeInstruction instruction(int index) throws IllegalArgumentException {
             initialize();
-            if (index < 0 || index >= instructions.length()) {
+            if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
             return instructions.get(index);
@@ -127,15 +130,15 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         public int findInstructionIndex(Address address) {
             if (address != null) {
                 initialize();
-                final int length = instructions.length();
-                if (address.greaterEqual(instructions.first().address)) {
+                final int length = instructions.size();
+                if (address.greaterEqual(instructions.get(0).address)) {
                     for (int index = 1; index < length; index++) {
                         instructions.get(index);
                         if (address.lessThan(instructions.get(index).address)) {
                             return index - 1;
                         }
                     }
-                    final TargetCodeInstruction lastInstruction = instructions.last();
+                    final TargetCodeInstruction lastInstruction = instructions.get(instructions.size() - 1);
                     if (address.lessThan(lastInstruction.address.plus(lastInstruction.bytes.length))) {
                         return length - 1;
                     }
@@ -146,14 +149,14 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
         public MachineCodeLocation instructionLocation(int index) {
             initialize();
-            if (index < 0 || index >= instructions.length()) {
+            if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
             return instructionLocations.get(index);
         }
 
         public boolean isStop(int index) throws IllegalArgumentException {
-            if (index < 0 || index >= instructions.length()) {
+            if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
             return false;
@@ -169,14 +172,14 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         }
 
         public boolean isBytecodeBoundary(int index) throws IllegalArgumentException {
-            if (index < 0 || index >= instructions.length()) {
+            if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
             return false;
         }
 
         public BytecodeLocation bytecodeLocation(int index) throws IllegalArgumentException {
-            if (index < 0 || index >= instructions.length()) {
+            if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
             return null;
@@ -187,20 +190,20 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         }
 
         public int opcode(int index) throws IllegalArgumentException {
-            if (index < 0 || index >= instructions.length()) {
+            if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
             return -1;
         }
 
         public int calleeConstantPoolIndex(int index) throws IllegalArgumentException {
-            if (index < 0 || index >= instructions.length()) {
+            if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
             return -1;
         }
 
-        public IndexedSequence<Integer> labelIndexes() {
+        public List<Integer> labelIndexes() {
             initialize();
             return labelIndexes;
         }
@@ -231,8 +234,8 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
     private InstructionMap instructionMap = null;
 
-    private IndexedSequence<TargetCodeInstruction> instructions;
-    private IndexedSequence<MachineCodeLocation> instructionLocations;
+    private List<TargetCodeInstruction> instructions;
+    private List<MachineCodeLocation> instructionLocations;
     private CodeLocation codeStartLocation = null;
 
     private TeleExternalCode(TeleVM teleVM, Address start, Size size, String name) {
@@ -243,7 +246,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         vm().codeCache().register(this);
     }
 
-    private IndexedSequence<TargetCodeInstruction> getInstructions() {
+    private List<TargetCodeInstruction> getInstructions() {
         if (instructions == null && vm().tryLock()) {
             byte[] code = null;
             try {

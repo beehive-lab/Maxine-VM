@@ -90,7 +90,7 @@ public class IdentityHashMappingTest extends MaxTestCase {
             values2[i] = new Value(i * 2);
             map.put(keys[i], values[i]);
             assertTrue(map.containsKey(keys[i]));
-            assertEquals(i + 1, map.keys().length());
+            assertEquals(i + 1, map.keys().size());
         }
         for (int i = 0; i < num; i++) {
             assertTrue(map.containsKey(keys[i]));

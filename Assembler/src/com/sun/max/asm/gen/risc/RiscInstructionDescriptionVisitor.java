@@ -20,9 +20,10 @@
  */
 package com.sun.max.asm.gen.risc;
 
+import java.util.*;
+
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.field.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
@@ -58,7 +59,7 @@ public interface RiscInstructionDescriptionVisitor {
             }
         }
 
-        private static void visitSpecifications(RiscInstructionDescriptionVisitor visitor, Sequence<Object> specifications) {
+        private static void visitSpecifications(RiscInstructionDescriptionVisitor visitor, List<Object> specifications) {
             for (Object specification : specifications) {
                 visitSpecification(visitor, specification);
             }

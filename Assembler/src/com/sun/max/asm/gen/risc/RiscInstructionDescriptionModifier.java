@@ -20,7 +20,9 @@
  */
 package com.sun.max.asm.gen.risc;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
+import com.sun.max.*;
 
 /**
  * This class provides a mechanism for making modifications to a set of RISC instruction descriptions.
@@ -29,9 +31,9 @@ import com.sun.max.collect.*;
  */
 public class RiscInstructionDescriptionModifier {
 
-    private final Sequence<RiscInstructionDescription> instructionDescriptions;
+    private final List<RiscInstructionDescription> instructionDescriptions;
 
-    public RiscInstructionDescriptionModifier(Sequence<RiscInstructionDescription> instructionDescriptions) {
+    public RiscInstructionDescriptionModifier(List<RiscInstructionDescription> instructionDescriptions) {
         this.instructionDescriptions = instructionDescriptions;
     }
 
@@ -43,8 +45,8 @@ public class RiscInstructionDescriptionModifier {
      */
     public RiscInstructionDescriptionModifier replace(Object before, Object after) {
         for (RiscInstructionDescription instructionDescription : instructionDescriptions) {
-            final MutableSequence<Object> specifications = instructionDescription.specifications();
-            for (int i = 0; i < specifications.length(); i++) {
+            final List<Object> specifications = instructionDescription.specifications();
+            for (int i = 0; i < specifications.size(); i++) {
                 if (specifications.get(i).equals(before)) {
                     specifications.set(i, after);
                 }
@@ -55,9 +57,9 @@ public class RiscInstructionDescriptionModifier {
 
     public RiscInstructionDescriptionModifier swap(Object a, Object b) {
         for (RiscInstructionDescription instructionDescription : instructionDescriptions) {
-            final MutableSequence<Object> specifications = instructionDescription.specifications();
-            final int aIndex = Sequence.Static.indexOfIdentical(specifications, a);
-            final int bIndex = Sequence.Static.indexOfIdentical(specifications, b);
+            final List<Object> specifications = instructionDescription.specifications();
+            final int aIndex = Utils.indexOfIdentical(specifications, a);
+            final int bIndex = Utils.indexOfIdentical(specifications, b);
             if (aIndex != -1 && bIndex != -1) {
                 specifications.set(aIndex, b);
                 specifications.set(bIndex, a);

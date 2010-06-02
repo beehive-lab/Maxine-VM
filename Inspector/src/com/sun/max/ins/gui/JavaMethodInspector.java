@@ -50,7 +50,7 @@ public class JavaMethodInspector extends MethodInspector {
     /**
      * Shared check boxes to be used in all UI code view selection.
      */
-    private final JCheckBoxMenuItem[] codeViewCheckBoxes = new JCheckBoxMenuItem[MethodCodeKind.VALUES.length()];
+    private final JCheckBoxMenuItem[] codeViewCheckBoxes = new JCheckBoxMenuItem[MethodCodeKind.VALUES.size()];
 
     private final TeleClassMethodActor teleClassMethodActor;
     private final MethodCodeKind requestedCodeKind;
@@ -435,7 +435,7 @@ public class JavaMethodInspector extends MethodInspector {
 
         public ViewOptionsPanel(Inspection inspection) {
             super(inspection, new BorderLayout());
-            final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[MethodCodeKind.VALUES.length()];
+            final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[MethodCodeKind.VALUES.size()];
 
             final ItemListener itemListener = new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {

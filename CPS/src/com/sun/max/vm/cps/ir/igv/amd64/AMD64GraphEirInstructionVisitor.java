@@ -22,7 +22,7 @@ package com.sun.max.vm.cps.ir.igv.amd64;
 
 import java.lang.reflect.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.ir.igv.*;
@@ -100,8 +100,8 @@ public class AMD64GraphEirInstructionVisitor extends AMD64EirInstructionAdapter 
         super.visit(call);
         this.node.getProperties().setProperty("name", call.function().toString());
         this.node.getProperties().setProperty("result", call.result().toString());
-        this.node.getProperties().setProperty("arguments", Arrays.toString(call.arguments));
-        this.node.getProperties().setProperty("callerSavedOperands", Arrays.toString(call.callerSavedOperands()));
+        this.node.getProperties().setProperty("arguments", Utils.toString(call.arguments, ", "));
+        this.node.getProperties().setProperty("callerSavedOperands", Utils.toString(call.callerSavedOperands(), ", "));
         this.node.getProperties().setProperty("argumentCount", Integer.toString(call.arguments.length));
         if (call.result() != null) {
             this.node.getProperties().setProperty("result", call.result().toString());

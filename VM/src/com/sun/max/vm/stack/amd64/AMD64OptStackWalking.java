@@ -267,7 +267,7 @@ public class AMD64OptStackWalking {
             }
             if (abi.putIntoIntegerRegister(parameterKind)) {
                 parameterRegisterIndex++;
-                if (parameterRegisterIndex >= abi.integerIncomingParameterRegisters.length()) {
+                if (parameterRegisterIndex >= abi.integerIncomingParameterRegisters.size()) {
                     // done since all subsequent parameters are known to be passed on the stack
                     // and covered by the reference map for the stack at this call point
                     return;

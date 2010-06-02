@@ -23,7 +23,7 @@ package com.sun.max.collect;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 
 /**
  * A subclass of {@link Properties} that {@linkplain Collections#sort(java.util.List) sorts} its properties as they
@@ -45,6 +45,6 @@ public class SortedProperties extends Properties {
         }
         Collections.sort(keyList);
         final Class<Enumeration<Object>> type = null;
-        return StaticLoophole.cast(type, keyList.elements());
+        return Utils.cast(type, keyList.elements());
     }
 }

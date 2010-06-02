@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.sparc;
 
+import java.util.*;
+
 import com.sun.max.asm.sparc.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
@@ -45,7 +47,7 @@ public class SPARCEirCFunctionABI extends SPARCEirJavaABI {
      */
     public SPARCEirCFunctionABI(VMConfiguration vmConfiguration, boolean onlyCalledFromC) {
         super(vmConfiguration);
-        calleeSavedRegisters = new ArraySequence<SPARCEirRegister>(SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment.integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+        calleeSavedRegisters = Collections.singletonList((SPARCEirRegister) SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment.integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
         callerSavedRegisters =  super.callerSavedRegisters();
         if (!onlyCalledFromC) {
             // Have to save the SAFEPOINT latch global register.

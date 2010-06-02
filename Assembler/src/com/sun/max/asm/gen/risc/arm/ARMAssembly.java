@@ -21,10 +21,11 @@
 
 package com.sun.max.asm.gen.risc.arm;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.collect.*;
 
 /**
  *
@@ -45,7 +46,7 @@ public final class ARMAssembly extends RiscAssembly {
     }
 
     @Override
-    protected Sequence<RiscTemplate> createTemplates() {
+    protected List<RiscTemplate> createTemplates() {
         final RiscTemplateCreator creator = new RiscTemplateCreator();
         creator.createTemplates(new RawInstructions(creator));
         return creator.templates();

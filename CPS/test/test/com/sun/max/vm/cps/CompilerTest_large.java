@@ -21,7 +21,6 @@
 package test.com.sun.max.vm.cps;
 
 import com.sun.cri.bytecode.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.type.*;
@@ -39,10 +38,6 @@ public abstract class CompilerTest_large<Method_Type extends IrMethod> extends C
         // Set the system property that overrides the default behaviour of ClassfileReader when it encounters
         // a <clinit> while MaxineVM.isPrototying() returns true. The default behaviour is to discard such methods.
         System.setProperty("max.loader.preserveClinitMethods", "");
-    }
-
-    public void test_HexByte_clinit() {
-        compileMethod(HexByte.class, SymbolTable.CLINIT.toString(), SignatureDescriptor.create(void.class));
     }
 
     public void test_Bytecode_clinit() {

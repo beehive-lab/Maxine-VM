@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.cps.b.c;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -69,7 +70,7 @@ public class BirToCirMethodTranslation {
 
     private final BlockState[] blockStateMap;
 
-    private final Sequence<BirBlock> birExceptionDispatchers;
+    private final List<BirBlock> birExceptionDispatchers;
     private final BlockState[] exceptionDispatcherBlockStateMap;
 
     BirToCirMethodTranslation(BirMethod birMethod, CirVariableFactory variableFactory, CirGenerator cirGenerator) {
@@ -83,7 +84,7 @@ public class BirToCirMethodTranslation {
         stackVariableFactory = new StackVariableFactory(variableFactory, birMethod.maxStack());
 
         blockStateMap = new BlockState[birMethod.code().length];
-        final AppendableSequence<BirBlock> dispatchers = new LinkSequence<BirBlock>();
+        final List<BirBlock> dispatchers = new LinkedList<BirBlock>();
         for (BirBlock birBlock : birMethod.blocks()) {
             if (birBlock.isReachable()) {
                 final BlockState blockState = new BlockState(birBlock);
@@ -92,7 +93,7 @@ public class BirToCirMethodTranslation {
                 }
 
                 if (birBlock.role() == IrBlock.Role.EXCEPTION_DISPATCHER) {
-                    dispatchers.append(birBlock);
+                    dispatchers.add(birBlock);
                 }
             } else {
                 //ProgramWarning.message("unreachable block: " + birBlock + "  " + birMethod);
@@ -100,7 +101,7 @@ public class BirToCirMethodTranslation {
         }
         this.birExceptionDispatchers = dispatchers;
 
-        if (birMethod.exceptionDispatcherTable().isEmpty()) {
+        if (birMethod.exceptionDispatcherTable().length == 0) {
             exceptionDispatcherBlockStateMap = null;
         } else {
             exceptionDispatcherBlockStateMap = new BlockState[birMethod.code().length];
@@ -123,7 +124,7 @@ public class BirToCirMethodTranslation {
         return birMethod;
     }
 
-    public Sequence<BirBlock> birExceptionDispatchers() {
+    public List<BirBlock> birExceptionDispatchers() {
         return birExceptionDispatchers;
     }
 

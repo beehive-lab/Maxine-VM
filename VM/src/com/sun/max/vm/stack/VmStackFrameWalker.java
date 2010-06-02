@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.stack;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
@@ -88,7 +89,7 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     @INLINE
     public static ClassMethodActor getCallerClassMethodActor() {
         // TODO: a full stack walk is not necessary here.
-        LinkSequence<StackFrame> frames = new LinkSequence<StackFrame>();
+        LinkedList<StackFrame> frames = new LinkedList<StackFrame>();
         new VmStackFrameWalker(VmThread.current().vmThreadLocals()).frames(frames, VMRegister.getInstructionPointer(),
                                                        VMRegister.getCpuStackPointer(),
                                                        VMRegister.getCpuFramePointer());

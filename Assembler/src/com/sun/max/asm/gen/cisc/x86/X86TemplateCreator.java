@@ -23,7 +23,6 @@ package com.sun.max.asm.gen.cisc.x86;
 import java.util.*;
 
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
@@ -43,26 +42,26 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
         this.addressWidth = addressWidth;
     }
 
-    private final AppendableSequence<Template_Type> templates = new ArrayListSequence<Template_Type>();
+    private final List<Template_Type> templates = new ArrayList<Template_Type>();
 
-    public Sequence<Template_Type> templates() {
+    public List<Template_Type> templates() {
         return templates;
     }
 
-    private final Map<String, AppendableSequence<Template_Type>> internalNameToTemplates = new HashMap<String, AppendableSequence<Template_Type>>();
+    private final Map<String, List<Template_Type>> internalNameToTemplates = new HashMap<String, List<Template_Type>>();
 
     private void addTemplate(Template_Type template) {
-        templates.append(template);
-        AppendableSequence<Template_Type> t = internalNameToTemplates.get(template.internalName());
+        templates.add(template);
+        List<Template_Type> t = internalNameToTemplates.get(template.internalName());
         if (t == null) {
-            t = new LinkSequence<Template_Type>();
+            t = new LinkedList<Template_Type>();
             internalNameToTemplates.put(template.internalName(), t);
         }
-        t.append(template);
+        t.add(template);
     }
 
     private void computeRedundancy(X86Template template) {
-        final Sequence<Template_Type> t = internalNameToTemplates.get(template.internalName());
+        final List<Template_Type> t = internalNameToTemplates.get(template.internalName());
         if (t != null) {
             for (X86Template other : t) {
                 if (template.computeRedundancyWith(other)) {

@@ -20,7 +20,7 @@
  */
 package com.sun.max.collect;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 
 /**
  * Two arrays: one holding sorted long keys,
@@ -29,18 +29,15 @@ import com.sun.max.lang.*;
  *
  * @author Bernd Mathiske
  */
-public class SortedLongArrayMapping<Value_Type> {
+public class SortedLongArrayMapping<V> {
 
     public SortedLongArrayMapping() {
     }
 
-    private long[] keys;
-    private Object[] values;
+    private long[] keys = {};
+    private Object[] values = {};
 
     private int findIndex(long key) {
-        if (keys == null) {
-            return 0;
-        }
         int left = 0;
         int right = keys.length;
         while (right > left) {
@@ -61,36 +58,47 @@ public class SortedLongArrayMapping<Value_Type> {
      * Binary search in the key array.
      * @return the value corresponding to the key or null if the key is not found
      */
-    public Value_Type get(long key) {
-        if (keys == null) {
-            return null;
-        }
+    public V get(long key) {
         final int index = findIndex(key);
         if (index < keys.length && keys[index] == key) {
-            final Class<Value_Type> type = null;
-            return StaticLoophole.cast(type, values[index]);
+            final Class<V> type = null;
+            return Utils.cast(type, values[index]);
         }
         return null;
     }
 
-    public void put(long key, Value_Type value) {
+    public void put(long key, V value) {
         final int index = findIndex(key);
-        if (keys != null && index < keys.length && keys[index] == key) {
+        if (index < keys.length && keys[index] == key) {
             values[index] = value;
         } else {
-            keys = Longs.insert(keys, index, key);
-            values = Arrays.insert(Object.class, values, index, value);
+            long[] newKeys = new long[keys.length + 1];
+            System.arraycopy(keys, 0, newKeys, 0, index);
+            System.arraycopy(keys, index, newKeys, index + 1, keys.length - index);
+            newKeys[index] = key;
+            keys = newKeys;
+
+            Object[] newValues = new Object[values.length + 1];
+            System.arraycopy(values, 0, newValues, 0, index);
+            System.arraycopy(values, index, newValues, index + 1, values.length - index);
+            newValues[index] = value;
+            values = newValues;
         }
     }
 
     public void remove(long key) {
-        if (keys == null) {
-            return;
-        }
         final int index = findIndex(key);
         if (keys[index] == key) {
-            keys = Longs.remove(keys, index);
-            values = Arrays.remove(Object.class, values, index);
+            int newLength = keys.length - 1;
+            long[] newKeys = new long[newLength];
+            System.arraycopy(keys, 0, newKeys, 0, index);
+            System.arraycopy(keys, index + 1, newKeys, index, newLength - index);
+            keys = newKeys;
+
+            Object[] newValues = new Object[newLength];
+            System.arraycopy(values, 0, newValues, 0, index);
+            System.arraycopy(values, index + 1, newValues, index, newLength - index);
+            values = newValues;
         }
     }
 }

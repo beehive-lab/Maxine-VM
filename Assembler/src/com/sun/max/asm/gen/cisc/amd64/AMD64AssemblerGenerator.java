@@ -20,13 +20,14 @@
  */
 package com.sun.max.asm.gen.cisc.amd64;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.amd64.complete.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.amd64.*;
 import com.sun.max.asm.gen.cisc.x86.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -171,7 +172,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
 
     @Override
     protected void printModVariants(IndentWriter writer, AMD64Template template) {
-        if (template.modCase() != X86TemplateContext.ModCase.MOD_0 || template.parameters().length() == 0) {
+        if (template.modCase() != X86TemplateContext.ModCase.MOD_0 || template.parameters().size() == 0) {
             return;
         }
         switch (template.rmCase()) {
@@ -215,7 +216,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
 
     @Override
     protected void printSibVariants(IndentWriter writer, AMD64Template template) {
-        if (template.parameters().length() == 0 || template.modCase() == null || template.modCase() == X86TemplateContext.ModCase.MOD_3 || template.rmCase() != X86TemplateContext.RMCase.NORMAL) {
+        if (template.parameters().size() == 0 || template.modCase() == null || template.modCase() == X86TemplateContext.ModCase.MOD_3 || template.rmCase() != X86TemplateContext.RMCase.NORMAL) {
             return;
         }
         switch (template.modCase()) {
@@ -241,7 +242,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
     }
 
     @Override
-    protected DisassembledInstruction generateExampleInstruction(AMD64Template template, IndexedSequence<Argument> arguments) throws AssemblyException {
+    protected DisassembledInstruction generateExampleInstruction(AMD64Template template, List<Argument> arguments) throws AssemblyException {
         final AMD64Assembler assembler = new AMD64Assembler(0);
         assembly().assemble(assembler, template, arguments);
         final byte[] bytes = assembler.toByteArray();

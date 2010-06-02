@@ -20,7 +20,7 @@
  */
 package com.sun.max.util;
 
-import com.sun.max.collect.*;
+import java.util.*;
 
 /**
  * Deferred Runnables.
@@ -43,27 +43,27 @@ public abstract class Deferrable implements Runnable {
 
     public static final class Queue {
 
-        private AppendableSequence<Deferrable> deferrables;
+        private List<Deferrable> deferrables;
 
         private Queue() {
         }
 
         synchronized void handle(Deferrable deferrable) {
             if (deferrables != null) {
-                deferrables.append(deferrable);
+                deferrables.add(deferrable);
             } else {
                 deferrable.run();
             }
         }
 
         public synchronized void deferAll() {
-            deferrables = new LinkSequence<Deferrable>();
+            deferrables = new LinkedList<Deferrable>();
         }
 
         public synchronized void runAll() {
             while (deferrables != null) {
-                final Sequence<Deferrable> oldDeferrables = this.deferrables;
-                this.deferrables = new LinkSequence<Deferrable>();
+                final List<Deferrable> oldDeferrables = this.deferrables;
+                this.deferrables = new LinkedList<Deferrable>();
                 for (Deferrable deferrable : oldDeferrables) {
                     deferrable.run();
                 }

@@ -50,8 +50,8 @@ public class SavingsEstimator {
         int totalRefs = 0;
         for (GraphPrototype.ClassInfo info : cstats) {
             final GraphStats.ClassStats s = GraphStats.getClassStats(info);
-            int instanceRefs = info.instanceFields.length();
-            int staticRefs = info.staticFields.length();
+            int instanceRefs = info.instanceFields.size();
+            int staticRefs = info.staticFields.size();
             int savedRefs = instanceRefs * s.objectCount + staticRefs;
             if (savedRefs > 0) {
                 // save instance refs and static refs

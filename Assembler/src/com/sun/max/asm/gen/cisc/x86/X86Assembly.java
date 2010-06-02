@@ -68,7 +68,7 @@ public abstract class X86Assembly<Template_Type extends X86Template> extends Ass
     private static <Template_Type extends X86Template> boolean parametersMatching(Template_Type original, Template_Type candidate, Class argumentType) {
         int i = 0;
         int j = 0;
-        while (i < original.parameters().length()) {
+        while (i < original.parameters().size()) {
             final Class originalType = original.parameters().get(i).type();
             Class candidateType = candidate.parameters().get(j).type();
             if (originalType == argumentType) {

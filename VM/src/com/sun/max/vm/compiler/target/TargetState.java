@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.lang.Arrays;
+import com.sun.max.*;
 import com.sun.max.program.ProgramError;
 import com.sun.max.vm.actor.member.*;
 
@@ -97,7 +97,7 @@ public class TargetState {
             return new TargetMethod[] {targetMethod, (TargetMethod) targetState};
         } else if (targetState instanceof TargetMethod[]) {
             // compiled multiple times, make this the latest
-            return Arrays.prepend((TargetMethod[]) targetState, targetMethod);
+            return Utils.prepend((TargetMethod[]) targetState, targetMethod);
         }
         throw ProgramError.unexpected("Unknown or invalid TargetState: " + targetState);
     }

@@ -21,8 +21,8 @@
 package com.sun.max.tele;
 
 import java.lang.reflect.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.core.*;
 import com.sun.max.jdwp.vm.proxy.*;
 
@@ -36,7 +36,7 @@ final class VMValueImpl implements VMValue {
 
     public static final VMValue VOID_VALUE = new VMValueImpl();
 
-    private static GrowableMapping<Object, ObjectProvider> objectProviderCache = new IdentityHashMapping<Object, ObjectProvider>();
+    private static Map<Object, ObjectProvider> objectProviderCache = new IdentityHashMap<Object, ObjectProvider>();
 
     private Type type;
     private Object value;

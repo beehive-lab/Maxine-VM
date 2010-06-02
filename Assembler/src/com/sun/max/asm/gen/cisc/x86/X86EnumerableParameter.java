@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
 
@@ -92,7 +91,7 @@ public class X86EnumerableParameter<EnumerableArgument_Type extends Enum<Enumera
     }
 
     public Iterable<? extends Argument> getIllegalTestArguments() {
-        return Iterables.empty();
+        return Collections.emptyList();
     }
 
     public Argument getExampleArgument() {

@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
@@ -1081,7 +1080,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
         private void updateAfterWatchpointChanges() {
             clientWatchpointsCache = Collections.unmodifiableList(new ArrayList<MaxWatchpoint>(clientWatchpoints));
-            systemWatchpointsCache = new ArrayListSequence<MaxWatchpoint>(systemWatchpoints);
+            systemWatchpointsCache = new ArrayList<MaxWatchpoint>(systemWatchpoints);
             // Ensure that the manager listens for GC completion events iff
             // there are watchpoints.
             if (watchpointCount() > 0) {

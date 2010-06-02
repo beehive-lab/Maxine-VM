@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.grip.prototype;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -132,7 +133,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
         ProgramError.check(displacement == ((ArrayLayout) specificLayout).getElementOffsetFromOrigin(0).toInt(), "invalid array displacement");
         final Kind kind = Kind.fromJava(type);
         final Class<T> castType = null;
-        return StaticLoophole.cast(castType, mirror.readElement(kind, index).asBoxedJavaValue());
+        return Utils.cast(castType, mirror.readElement(kind, index).asBoxedJavaValue());
     }
 
     private void writeValue(Grip grip, int offset, Object wordOrBoxedJavaValue) {
@@ -164,7 +165,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
             final StaticTuple staticTuple = (StaticTuple) object;
             final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
             try {
-                return StaticLoophole.cast(castType, WithoutAccessCheck.getStaticField(staticTuple.classActor().toJava(), fieldActor.name.toString()));
+                return Utils.cast(castType, WithoutAccessCheck.getStaticField(staticTuple.classActor().toJava(), fieldActor.name.toString()));
             } catch (Throwable throwable) {
                 ProgramError.unexpected("could not read field: " + fieldActor, throwable);
             }
@@ -176,7 +177,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
 
         final Kind kind = Kind.fromJava(type);
         final Value value = specificLayout.readValue(kind, mirror, offset);
-        return StaticLoophole.cast(castType, value.asBoxedJavaValue());
+        return Utils.cast(castType, value.asBoxedJavaValue());
     }
 
     public byte readByte(Grip grip, Offset offset) {

@@ -22,9 +22,10 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.vm.runtime.VMRegister.Role.*;
 
-import com.sun.max.annotate.*;
+import java.lang.reflect.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.runtime.*;
 
@@ -89,8 +90,8 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
                     Class<FloatingPointRegister_Type> floatingPointRegisterType,
                     FloatingPointRegister_Type floatingPointReturn, FloatingPointRegister_Type floatingPointScratch,
                     IntegerRegister_Type linkAddress) {
-        final int roleCount = VMRegister.Role.VALUES.length();
-        integerRegisters = Arrays.newInstance(integerRegisterType, roleCount);
+        final int roleCount = VMRegister.Role.VALUES.size();
+        integerRegisters = Utils.cast(Array.newInstance(integerRegisterType, roleCount));
         integerRegisters[CPU_STACK_POINTER.ordinal()] = cpuStackPointer;
         integerRegisters[CPU_FRAME_POINTER.ordinal()] = cpuFramePointer;
         integerRegisters[ABI_STACK_POINTER.ordinal()] = abiStackPointer;
@@ -102,7 +103,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
         integerRegisters[LITERAL_BASE_POINTER.ordinal()] = literalBasePointer;
         integerRegisters[LINK_ADDRESS.ordinal()] = linkAddress;
 
-        floatingPointRegisters = Arrays.newInstance(floatingPointRegisterType, roleCount);
+        floatingPointRegisters = Utils.cast(Array.newInstance(floatingPointRegisterType, roleCount));
         floatingPointRegisters[ABI_RETURN.ordinal()] = floatingPointReturn;
         floatingPointRegisters[ABI_RESULT.ordinal()] = floatingPointReturn;
         floatingPointRegisters[ABI_SCRATCH.ordinal()] = floatingPointScratch;

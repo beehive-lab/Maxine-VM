@@ -20,14 +20,13 @@
  */
 package com.sun.max.vm.cps.cir.dir;
 
-import static com.sun.max.collect.SequenceBag.MapType.*;
+import static com.sun.max.vm.cps.collect.ListBag.MapType.*;
 
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.io.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
@@ -35,6 +34,7 @@ import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.snippet.*;
 import com.sun.max.vm.cps.cir.variable.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.DirTraceObserver.*;
 import com.sun.max.vm.cps.dir.transform.*;
@@ -72,7 +72,7 @@ class CirToDirMethodTranslation {
     /**
      * All generated blocks.
      */
-    private final GrowableDeterministicSet<DirBlock> dirExceptionDispatchers = new LinkedIdentityHashSet<DirBlock>();
+    private final LinkedIdentityHashSet<DirBlock> dirExceptionDispatchers = new LinkedIdentityHashSet<DirBlock>();
 
     final CirVariableFactory variableFactory = new CirVariableFactory();
 
@@ -141,7 +141,7 @@ class CirToDirMethodTranslation {
             return oldTranslation;
         }
         translations.put(newTranslation, newTranslation);
-        translationList.append(newTranslation);
+        translationList.add(newTranslation);
         return newTranslation;
     }
 
@@ -192,37 +192,31 @@ class CirToDirMethodTranslation {
     }
 
     private DirValue[] cirToDirValues(CirValue[] cirValues) {
-        return com.sun.max.lang.Arrays.map(cirValues, DirValue.class, new MapFunction<CirValue, DirValue>() {
-            public DirValue map(CirValue cirValue) {
-                return cirToDirValue(cirValue);
-            }
-        });
-    }
-
-    private final MapFunction<CirValue, DirValue> mapCirValueToDirValue = new MapFunction<CirValue, DirValue>() {
-        public DirValue map(CirValue cirValue) {
-            return cirToDirValue(cirValue);
+        final DirValue[] to = new DirValue[cirValues.length];
+        for (int i = 0; i < cirValues.length; i++) {
+            to[i] = cirToDirValue(cirValues[i]);
         }
-    };
+        return to;
+    }
 
     private void generateDirReturn(Translation translation, CirValue[] cirArguments) {
         if (cirArguments.length == 0) {
-            translation.dirBlock.instructions().append(new DirReturn(DirConstant.VOID));
+            translation.dirBlock.instructions().add(new DirReturn(DirConstant.VOID));
         } else {
             assert cirArguments.length == 1;
-            translation.dirBlock.instructions().append(new DirReturn(cirToDirValue(cirArguments[0])));
+            translation.dirBlock.instructions().add(new DirReturn(cirToDirValue(cirArguments[0])));
         }
     }
 
     private void generateDirThrow(Translation translation, CirValue[] cirArguments) {
         assert cirArguments.length == 1;
-        translation.dirBlock.instructions().append(new DirThrow(cirToDirValue(cirArguments[0])));
+        translation.dirBlock.instructions().add(new DirThrow(cirToDirValue(cirArguments[0])));
     }
 
     private void generateDirAssign(Translation translation, CirVariable cirVariable, DirValue dirValue) {
         final DirVariable dirVariable = cirToDirVariable(cirVariable);
         if (dirValue != dirVariable) {
-            translation.dirBlock.instructions().append(new DirAssign(dirVariable, dirValue));
+            translation.dirBlock.instructions().add(new DirAssign(dirVariable, dirValue));
         }
     }
 
@@ -236,7 +230,7 @@ class CirToDirMethodTranslation {
     }
 
     private void generateDirGoto(Translation fromTranslation, Translation toTranslation) {
-        fromTranslation.dirBlock.instructions().append(new DirGoto(toTranslation.dirBlock));
+        fromTranslation.dirBlock.instructions().add(new DirGoto(toTranslation.dirBlock));
         link(fromTranslation.dirBlock, toTranslation.dirBlock);
     }
 
@@ -273,14 +267,16 @@ class CirToDirMethodTranslation {
     }
 
     private void generateDirSwitch(Translation translation, CirSwitch cirSwitch, CirValue[] cirArguments) {
-        final CirValue[] cirMatches = Arrays.subArray(cirArguments, 1, cirSwitch.numberOfMatches());
-        final DirValue[] dirMatches = Arrays.map(cirMatches, DirValue.class, mapCirValueToDirValue);
+        final DirValue[] dirMatches = new DirValue[cirSwitch.numberOfMatches()];
+        for (int i = 0; i < dirMatches.length; i++) {
+            dirMatches[i] = cirToDirValue(cirArguments[i + 1]);
+        }
         final DirBlock[] targetBlocks = new DirBlock[cirSwitch.numberOfMatches()];
         for (int i = 0; i < targetBlocks.length; i++) {
             targetBlocks[i] = translateSwitchTarget(translation, cirArguments[1 + cirSwitch.numberOfMatches() + i]);
         }
         final DirBlock defaultTargetBlock = translateSwitchTarget(translation, cirArguments[cirArguments.length - 1]);
-        translation.dirBlock.instructions().append(new DirSwitch(cirSwitch.comparisonKind(), cirSwitch.valueComparator(), cirToDirValue(cirArguments[0]), dirMatches, targetBlocks, defaultTargetBlock));
+        translation.dirBlock.instructions().add(new DirSwitch(cirSwitch.comparisonKind(), cirSwitch.valueComparator(), cirToDirValue(cirArguments[0]), dirMatches, targetBlocks, defaultTargetBlock));
     }
 
     private final Map<CirJavaFrameDescriptor, DirJavaFrameDescriptor> cirToDirJavaFrameDescriptor =
@@ -337,7 +333,7 @@ class CirToDirMethodTranslation {
     private DirBlock getReturnBlock() {
         if (returnBlock == null) {
             returnBlock = new DirBlock(IrBlock.Role.NORMAL);
-            returnBlock.instructions().append(new DirReturn(getReturnVariable()));
+            returnBlock.instructions().add(new DirReturn(getReturnVariable()));
         }
         return returnBlock;
     }
@@ -410,21 +406,24 @@ class CirToDirMethodTranslation {
                 catchBlock = (DirCatchBlock) makeExceptionDispatcherTranslation(exceptionContinuation, translation).dirBlock;
             }
 
-            final CirValue[] a = Arrays.subArray(cirArguments, 0, cirArguments.length - 2); // clip the exception arguments
-            final DirValue[] dirArguments = Arrays.map(a, DirValue.class, mapCirValueToDirValue);
+            // clip the exception arguments
+            final DirValue[] dirArguments = new DirValue[cirArguments.length - 2];
+            for (int i = 0; i < dirArguments.length; i++) {
+                dirArguments[i] = cirToDirValue(cirArguments[i]);
+            }
 
-            translation.dirBlock.instructions().append(createCallInstruction(result, cirProcedure, dirArguments, catchBlock, isNativeCall, javaFrameDescriptor));
+            translation.dirBlock.instructions().add(createCallInstruction(result, cirProcedure, dirArguments, catchBlock, isNativeCall, javaFrameDescriptor));
 
             if (cc != null) {
                 generateDirGoto(translation, cc, result);
             } else if (normalContinuation instanceof CirNormalContinuationParameter) {
-                translation.dirBlock.instructions().append(new DirReturn(result));
+                translation.dirBlock.instructions().add(new DirReturn(result));
             } else {
                 if (normalContinuation == CirValue.UNDEFINED) {
                     assert cirProcedure == CirSnippet.get(Snippet.RaiseThrowable.SNIPPET);
                 } else {
                     assert normalContinuation instanceof CirExceptionContinuationParameter;
-                    translation.dirBlock.instructions().append(new DirThrow(result));
+                    translation.dirBlock.instructions().add(new DirThrow(result));
                 }
             }
         }
@@ -460,7 +459,7 @@ class CirToDirMethodTranslation {
     boolean usesMakeStackVariable;
 
     private void translateClosureCall(Translation translation, CirClosure closure, CirValue[] cirArguments) {
-        final int temporaryVariableInsertionIndex = translation.dirBlock.instructions().length();
+        final int temporaryVariableInsertionIndex = translation.dirBlock.instructions().size();
         final CirVariable[] cirParameters = closure.parameters();
 
         // Have to search for continuation variables among the parameters
@@ -481,7 +480,7 @@ class CirToDirMethodTranslation {
                         ce = makeExceptionDispatcherTranslation(cirArgument, translation);
                     }
                 }
-            } else if (cirArgument instanceof CirVariable && Arrays.contains(cirParameters, cirArgument)) {
+            } else if (cirArgument instanceof CirVariable && (Utils.indexOfIdentical(cirParameters, cirArgument) >= 0)) {
                 if (cirArgument != cirParameter) {
                     // Assignment ordering problem in recursive block calls: at least one variable is both parameter and argument.
 
@@ -489,7 +488,7 @@ class CirToDirMethodTranslation {
                     final DirVariable dirTemporary = new DirVariable(cirArgument.kind(), -1);
 
                     // Prepend an assignment to a temp var to solve the ordering problem:
-                    translation.dirBlock.instructions().insert(temporaryVariableInsertionIndex, new DirAssign(dirTemporary, dirArgument));
+                    translation.dirBlock.instructions().add(temporaryVariableInsertionIndex, new DirAssign(dirTemporary, dirArgument));
 
                     // Append an assignment from the temp var:
                     generateDirAssign(translation, cirParameter, dirTemporary);
@@ -554,11 +553,11 @@ class CirToDirMethodTranslation {
         }
     }
 
-    private final VariableSequence<Translation> translationList = new ArrayListSequence<Translation>();
+    private final List<Translation> translationList = new ArrayList<Translation>();
 
     private void translate() {
         while (!translationList.isEmpty()) {
-            final Translation translation = translationList.removeFirst();
+            final Translation translation = translationList.remove(0);
             translate(translation);
         }
     }
@@ -571,15 +570,15 @@ class CirToDirMethodTranslation {
      */
     private void assimilateSuccessors(DirBlock block) {
         DirBlock current = block;
-        while (current.successors().length() == 1) {
+        while (current.successors().size() == 1) {
             final DirBlock tail = current.successors().iterator().next();
-            assert tail.predecessors().length() > 0;
-            if (tail.predecessors().length() > 1) {
+            assert tail.predecessors().size() > 0;
+            if (tail.predecessors().size() > 1) {
                 tail.predecessors().add(block);
                 return;
             }
-            block.instructions().removeLast();
-            AppendableSequence.Static.appendAll(block.instructions(), tail.instructions());
+            block.instructions().remove(block.instructions().size() - 1);
+            block.instructions().addAll(tail.instructions());
             block.setSuccessors(tail.successors());
             current = tail;
         }
@@ -588,14 +587,16 @@ class CirToDirMethodTranslation {
     private DirBlock getNonTrivialSuccessor(DirBlock trivialBlock) {
         DirBlock block = trivialBlock;
         do {
-            final DirGoto dirGoto = (DirGoto) block.instructions().last();
+            ArrayList<DirInstruction> s = block.instructions();
+            final DirGoto dirGoto = (DirGoto) s.get(s.size() - 1);
             block = dirGoto.targetBlock();
         } while (block.isTrivial());
         return block;
     }
 
     private void forwardTrivialGotos(DirBlock block) {
-        final DirInstruction lastInstruction = block.instructions().last();
+        ArrayList<DirInstruction> s = block.instructions();
+        final DirInstruction lastInstruction = s.get(s.size() - 1);
         if (lastInstruction instanceof DirGoto) {
             final DirGoto dirGoto = (DirGoto) lastInstruction;
             if (dirGoto.targetBlock().isTrivial()) {
@@ -617,14 +618,14 @@ class CirToDirMethodTranslation {
 
     private int serial = 0;
 
-    private void gatherMergedDirBlocks(DirBlock dirBlock, AppendableSequence<DirBlock> result) {
+    private void gatherMergedDirBlocks(DirBlock dirBlock, List<DirBlock> result) {
         final LinkedList<DirBlock> toDo = new LinkedList<DirBlock>();
         toDo.add(dirBlock);
         while (!toDo.isEmpty()) {
             final DirBlock block = toDo.removeFirst();
             if (block.serial() < 0) {
                 if (!block.isTrivial()) {
-                    result.append(block);
+                    result.add(block);
                     block.setSerial(serial);
                     serial++;
                     assimilateSuccessors(block);
@@ -646,26 +647,26 @@ class CirToDirMethodTranslation {
      * @param blocks generated DIR blocks
      * @return the fix point of merging equivalent blocks
      */
-    private IndexedSequence<DirBlock> unifyBlocks(IndexedSequence<DirBlock> blocks) {
-        final Bag<Integer, DirBlock, Sequence<DirBlock>> hashBag = new SequenceBag<Integer, DirBlock>(HASHED);
+    private List<DirBlock> unifyBlocks(List<DirBlock> blocks) {
+        final ListBag<Integer, DirBlock> hashBag = new ListBag<Integer, DirBlock>(HASHED);
         for (DirBlock block : blocks) {
             hashBag.add(block.hashCode(), block);
         }
         final Map<DirBlock, DirBlock> blockMap = new IdentityHashMap<DirBlock, DirBlock>();
         final DirBlockEquivalence dirBlockEquivalence = new DirBlockEquivalence();
-        for (Sequence<DirBlock> sequence : hashBag.collections())  {
-            switch (sequence.length()) {
+        for (List<DirBlock> sequence : hashBag.collections())  {
+            switch (sequence.size()) {
                 case 1: {
                     break;
                 }
                 case 2: {
-                    if (dirBlockEquivalence.evaluate(sequence.first(), sequence.last())) {
-                        blockMap.put(sequence.last(), sequence.first());
+                    if (dirBlockEquivalence.evaluate(Utils.first(sequence), Utils.last(sequence))) {
+                        blockMap.put(Utils.last(sequence), Utils.first(sequence));
                     }
                     break;
                 }
                 default: {
-                    final DirBlock[] array = Sequence.Static.toArray(sequence, new DirBlock[sequence.length()]);
+                    final DirBlock[] array = sequence.toArray(new DirBlock[sequence.size()]);
                     for (int i = 0; i < array.length; i++) {
                         final DirBlock a = array[i];
                         if (blockMap.get(a) == null) {
@@ -682,11 +683,11 @@ class CirToDirMethodTranslation {
                 }
             }
         }
-        final AppendableIndexedSequence<DirBlock> result = new ArrayListSequence<DirBlock>();
+        final List<DirBlock> result = new ArrayList<DirBlock>();
         for (DirBlock block : blocks) {
             final DirBlock unifiedBlock = blockMap.get(block);
             if (unifiedBlock == null || unifiedBlock == block) {
-                result.append(block);
+                result.add(block);
                 for (DirInstruction instruction : block.instructions()) {
                     instruction.substituteBlocks(blockMap);
                 }
@@ -698,11 +699,11 @@ class CirToDirMethodTranslation {
     /**
      * @return DIR blocks generated from the CIR closure of the method
      */
-    IndexedSequence<DirBlock> translateMethod() {
+    List<DirBlock> translateMethod() {
         final Translation translation = makeTranslation(IrBlock.Role.NORMAL, cirClosure, null, null);
         translate();
 
-        final AppendableIndexedSequence<DirBlock> mergedBlocks = new ArrayListSequence<DirBlock>();
+        final List<DirBlock> mergedBlocks = new ArrayList<DirBlock>();
         // In principle, we could now add the exception dispatcher translations also,
         // but by gathering only the normal control flow first,
         // we end up with all the "normal" blocks at the beginning,
@@ -715,7 +716,7 @@ class CirToDirMethodTranslation {
         }
 
         dirGenerator.notifyBeforeTransformation(dirMethod, mergedBlocks, Transformation.BLOCK_UNIFICATION);
-        final IndexedSequence<DirBlock> unifiedBlocks = unifyBlocks(mergedBlocks);
+        final List<DirBlock> unifiedBlocks = unifyBlocks(mergedBlocks);
         dirGenerator.notifyAfterTransformation(dirMethod, mergedBlocks, Transformation.BLOCK_UNIFICATION);
 
         return unifiedBlocks;

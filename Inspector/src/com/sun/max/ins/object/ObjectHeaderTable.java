@@ -22,12 +22,12 @@ package com.sun.max.ins.object;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
@@ -67,7 +67,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         @Override
         protected void procedure() {
-            final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+            final List<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
             if (watchpoints.isEmpty()) {
                 final HeaderField headerField = headerFields[row];
                 actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory").perform();
@@ -146,7 +146,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     private final class ObjectHeaderColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 
         ObjectHeaderColumnModel(ObjectViewPreferences viewPreferences) {
-            super(ObjectColumnKind.VALUES.length(), viewPreferences);
+            super(ObjectColumnKind.VALUES.size(), viewPreferences);
             addColumn(ObjectColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(ObjectColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
             addColumn(ObjectColumnKind.OFFSET, new PositionRenderer(inspection()), null);
@@ -174,7 +174,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return ObjectColumnKind.VALUES.length();
+            return ObjectColumnKind.VALUES.size();
         }
 
         public int getRowCount() {

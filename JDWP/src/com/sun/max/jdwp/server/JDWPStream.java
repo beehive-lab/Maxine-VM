@@ -23,8 +23,8 @@ package com.sun.max.jdwp.server;
 import java.io.*;
 import java.util.logging.*;
 
+import com.sun.max.Utils;
 import com.sun.max.jdwp.data.*;
-import com.sun.max.lang.*;
 
 /**
  *
@@ -162,7 +162,7 @@ class JDWPStream implements JDWPSender {
 
         try {
             final IncomingData incomingData = handler.createIncomingDataObject();
-            final CommandHandler<IncomingData, OutgoingData> handlerDownCast = StaticLoophole.cast(handler);
+            final CommandHandler<IncomingData, OutgoingData> handlerDownCast = Utils.cast(handler);
 
             incomingData.read(new JDWPInputStream(new ByteArrayInputStream(data), handlerDownCast, incomingData));
             final IncomingPacket<? extends IncomingData, ? extends OutgoingData> p = createIncomingPacket(length, id, flags, commandSetId, commandId, incomingData, handler);
@@ -179,8 +179,8 @@ class JDWPStream implements JDWPSender {
     private IncomingPacket<? extends IncomingData, ? extends OutgoingData> createIncomingPacket(int length, int id, byte flags, byte commandSetId, byte commandId, IncomingData data,
                     CommandHandler handler) {
         final Class<CommandHandler<IncomingData, OutgoingData>> klass = null;
-        final IncomingPacket incomingPacket = new IncomingPacket<IncomingData, OutgoingData>(length, id, flags, commandSetId, commandId, data, StaticLoophole.cast(klass, handler));
-        final IncomingPacket<? extends IncomingData, ? extends OutgoingData> p = StaticLoophole.cast(incomingPacket);
+        final IncomingPacket incomingPacket = new IncomingPacket<IncomingData, OutgoingData>(length, id, flags, commandSetId, commandId, data, Utils.cast(klass, handler));
+        final IncomingPacket<? extends IncomingData, ? extends OutgoingData> p = Utils.cast(incomingPacket);
         return p;
     }
 }

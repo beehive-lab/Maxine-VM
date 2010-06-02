@@ -20,7 +20,7 @@
  */
 package com.sun.max.program.option;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 
 /**
  * The {@code Option} class represents a command-line or other configuration
@@ -28,17 +28,17 @@ import com.sun.max.lang.*;
  *
  * @author Ben L. Titzer
  */
-public class Option<Value_Type> implements Cloneable {
+public class Option<T> implements Cloneable {
 
     /**
      * The {@code Option.Type} class represents a type for an option. This class
      * implements method for parsing and unparsing values from strings.
      */
-    public abstract static class Type<Value_Type> {
+    public abstract static class Type<T> {
         protected final String typeName;
-        public final Class<Value_Type> type;
+        public final Class<T> type;
 
-        protected Type(Class<Value_Type> type, String typeName) {
+        protected Type(Class<T> type, String typeName) {
             this.typeName = typeName;
             this.type = type;
         }
@@ -47,16 +47,16 @@ public class Option<Value_Type> implements Cloneable {
             return typeName;
         }
 
-        public String unparseValue(Value_Type value) {
+        public String unparseValue(T value) {
             return String.valueOf(value);
         }
 
-        public abstract Value_Type parseValue(String string) throws Option.Error;
+        public abstract T parseValue(String string) throws Option.Error;
 
         public abstract String getValueFormat();
 
-        public Option<Value_Type> cast(Option option) {
-            return StaticLoophole.cast(option);
+        public Option<T> cast(Option option) {
+            return Utils.cast(option);
         }
     }
 
@@ -68,10 +68,10 @@ public class Option<Value_Type> implements Cloneable {
     }
 
     protected final String name;
-    protected Value_Type defaultValue;
-    protected final Type<Value_Type> type;
+    protected T defaultValue;
+    protected final Type<T> type;
     protected final String help;
-    protected Value_Type value;
+    protected T value;
 
     /**
      * The constructor for the {@code Option} class creates constructs a new
@@ -83,7 +83,7 @@ public class Option<Value_Type> implements Cloneable {
      * @param help     a help description which is usually used to generate a formatted
      *                 help output
      */
-    public Option(String name, Value_Type defaultValue, Type<Value_Type> type, String help) {
+    public Option(String name, T defaultValue, Type<T> type, String help) {
         this.defaultValue = defaultValue;
         this.name = name;
         this.type = type;
@@ -106,7 +106,7 @@ public class Option<Value_Type> implements Cloneable {
      *
      * @param val the default value of the option
      */
-    public void setDefaultValue(Value_Type val) {
+    public void setDefaultValue(T val) {
         defaultValue = val;
     }
 
@@ -116,7 +116,7 @@ public class Option<Value_Type> implements Cloneable {
      *
      * @return the default value of the option
      */
-    public Value_Type getDefaultValue() {
+    public T getDefaultValue() {
         return defaultValue;
     }
 
@@ -125,7 +125,7 @@ public class Option<Value_Type> implements Cloneable {
      *
      * @return the current value of this option
      */
-    public Value_Type getValue() {
+    public T getValue() {
         return value == null ? defaultValue : value;
     }
 
@@ -134,7 +134,7 @@ public class Option<Value_Type> implements Cloneable {
      *
      * @param value the new value to this option
      */
-    public void setValue(Value_Type value) {
+    public void setValue(T value) {
         this.value = value;
     }
 
@@ -154,7 +154,7 @@ public class Option<Value_Type> implements Cloneable {
      * The {@code getType()} method returns the type of this option.
      * @return the type of this option.
      */
-    public Type<Value_Type> getType() {
+    public Type<T> getType() {
         return type;
     }
 

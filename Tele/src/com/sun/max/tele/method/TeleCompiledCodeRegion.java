@@ -22,7 +22,6 @@ package com.sun.max.tele.method;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
@@ -46,8 +45,7 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
      */
     private static final class CompiledCodeRegionMemoryRegion extends TeleDelegatedMemoryRegion implements MaxEntityMemoryRegion<MaxCompiledCodeRegion> {
 
-        private static final IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY =
-            new ArrayListSequence<MaxEntityMemoryRegion< ? extends MaxEntity>>(0);
+        private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY = Collections.emptyList();
 
         private final MaxCompiledCodeRegion owner;
         private final boolean isBootRegion;
@@ -70,7 +68,7 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
             return null;
         }
 
-        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+        public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
             // We don't break a compiled code memory region into any smaller entities.
             return EMPTY;
         }
@@ -87,7 +85,7 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
     private final TeleCodeRegion teleCodeRegion;
     private final CompiledCodeRegionMemoryRegion compiledCodeRegionMemoryRegion;
     private final String entityDescription;
-    private final ArrayList<MaxCompiledCode> compilations = new ArrayList<MaxCompiledCode>();
+    private final List<MaxCompiledCode> compilations = new ArrayList<MaxCompiledCode>();
 
     /**
      * Creates an object that models an allocation region in the VM that is used for compiled code.
@@ -143,6 +141,6 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
                 compilations.add(vm().codeCache().findCompiledCode(teleTargetMethods.get(index).getRegionStart()));
             }
         }
-        return compilations;
+        return Collections.unmodifiableList(compilations);
     }
 }

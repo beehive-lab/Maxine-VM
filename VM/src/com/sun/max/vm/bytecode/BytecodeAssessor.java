@@ -20,8 +20,10 @@
  */
 package com.sun.max.vm.bytecode;
 
+import java.util.*;
+
 import com.sun.cri.bytecode.*;
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -33,7 +35,7 @@ public final class BytecodeAssessor {
 
     private static final int MAX_STRAIGHT_LINE_CODE_LENGTH = 20;
 
-    private static boolean hasStraightLineCode(final ClassMethodActor classMethodActor, final Cons<ClassMethodActor> callers) {
+    private static boolean hasStraightLineCode(final ClassMethodActor classMethodActor, final List<ClassMethodActor> callers) {
         if (classMethodActor.isDeclaredNeverInline()) {
             return false;
         }
@@ -44,7 +46,7 @@ public final class BytecodeAssessor {
         if (classMethodActor.codeAttribute().code().length > MAX_STRAIGHT_LINE_CODE_LENGTH) {
             return false;
         }
-        if (Cons.containsIdentical(callers, classMethodActor)) {
+        if (Utils.indexOfIdentical(callers, classMethodActor) != -1) {
             return false;
         }
         final ConstantPool constantPool = classMethodActor.codeAttribute().constantPool;
@@ -63,7 +65,9 @@ public final class BytecodeAssessor {
                     if (constant.isResolvableWithoutClassLoading(constantPool)) {
                         try {
                             final ClassMethodActor callee = (ClassMethodActor) constant.resolve(constantPool, index);
-                            if (hasStraightLineCode(callee, new Cons<ClassMethodActor>(classMethodActor, callers))) {
+                            LinkedList<ClassMethodActor> innerCallers = new LinkedList<ClassMethodActor>(callers);
+                            innerCallers.addFirst(classMethodActor);
+                            if (hasStraightLineCode(callee, innerCallers)) {
                                 return;
                             }
                         } catch (NoSuchMethodError noSuchMethodError) {
@@ -100,7 +104,8 @@ public final class BytecodeAssessor {
      * Return true if this dynamic method is a simple accessor (i.e., its body follows the pattern aload_0, getfield, return).
      */
     public static boolean hasSmallStraightlineCode(ClassMethodActor classMethodActor) {
-        return hasStraightLineCode(classMethodActor, null);
+        List<ClassMethodActor> callers = Collections.emptyList();
+        return hasStraightLineCode(classMethodActor, callers);
     }
 
 }

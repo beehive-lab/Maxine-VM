@@ -28,7 +28,6 @@ import java.lang.reflect.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -179,15 +178,15 @@ public abstract class ClassMethodActor extends MethodActor {
             return exceptionHandlers;
         }
 
-        Sequence<ExceptionHandlerEntry> exceptionHandlerTable = Sequence.Static.empty(ExceptionHandlerEntry.class);
+        ExceptionHandlerEntry[] exceptionHandlerTable = ExceptionHandlerEntry.NONE;
         CodeAttribute codeAttribute = originalCodeAttribute();
         if (codeAttribute != null) {
             exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
         }
-        if (exceptionHandlerTable.length() == 0) {
+        if (exceptionHandlerTable.length == 0) {
             exceptionHandlers = RiExceptionHandler.NONE;
         } else {
-            exceptionHandlers = new RiExceptionHandler[exceptionHandlerTable.length()];
+            exceptionHandlers = new RiExceptionHandler[exceptionHandlerTable.length];
             int i = 0;
             for (ExceptionHandlerEntry entry : exceptionHandlerTable) {
                 RiType catchType;

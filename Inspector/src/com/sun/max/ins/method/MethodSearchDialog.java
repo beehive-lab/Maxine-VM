@@ -23,6 +23,7 @@ package com.sun.max.ins.method;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
@@ -50,7 +51,7 @@ public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
     @Override
     protected MethodKey convertSelectedItem(Object listItem) {
         final Class<MethodKey> type = null;
-        return StaticLoophole.cast(type, listItem);
+        return Utils.cast(type, listItem);
     }
 
     @Override

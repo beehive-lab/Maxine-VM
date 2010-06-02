@@ -23,7 +23,6 @@ package com.sun.max.vm.cps.cir.bytecode;
 import java.util.*;
 
 import com.sun.max.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.cir.*;
 
@@ -45,7 +44,7 @@ public class Package extends VMPackage {
     @Override
     public Set<MaxPackage> prerequisites() {
         final MaxPackage p = new com.sun.max.vm.compiler.builtin.Package();
-        return Sets.from(p);
+        return Collections.singleton(p);
     }
 
 }

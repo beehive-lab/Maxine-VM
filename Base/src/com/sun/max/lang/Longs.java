@@ -151,31 +151,4 @@ public final class Longs {
         }
         return Long.parseLong(value);
     }
-
-    public static long[] insert(long[] array, int index, long element) {
-        if (array == null) {
-            final long[] result = new long[1];
-            result[index] = element;
-            return result;
-        }
-        final long[] result = new long[array.length + 1];
-        if (index > 0) {
-            System.arraycopy(array, 0, result, 0, index);
-        }
-        result[index] = element;
-        if (index < array.length) {
-            System.arraycopy(array, index, result, index + 1, array.length - index);
-        }
-        return result;
-    }
-
-    public static long[] remove(long[] array, int index) {
-        final int newLength = array.length - 1;
-        final long[] result = new long[newLength];
-        System.arraycopy(array, 0, result, 0, index);
-        if (index < newLength) {
-            System.arraycopy(array, index + 1, result, index, newLength - index);
-        }
-        return result;
-    }
 }
