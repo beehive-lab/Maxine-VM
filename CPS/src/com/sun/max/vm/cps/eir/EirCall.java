@@ -89,7 +89,8 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
         for (int i = 0; i < callerSavedRegisters.length; i++) {
             final EirRegister register = callerSavedRegisters[i];
             if (register != resultLocation) {
-                callerSavedOperands[i] = new EirOperand(this, EirOperand.Effect.DEFINITION, register.category().asSet());
+                EirLocationCategory category = register.category();
+                callerSavedOperands[i] = new EirOperand(this, EirOperand.Effect.DEFINITION, category.asSet());
                 callerSavedOperands[i].setRequiredLocation(register);
                 final EirVariable variable = methodGeneration.makeRegisterVariable(register);
                 callerSavedOperands[i].setEirValue(variable);
