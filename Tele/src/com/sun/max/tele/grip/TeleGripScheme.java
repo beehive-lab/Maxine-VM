@@ -86,7 +86,11 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
      * Called by MutableTeleGrip.finalize() and CanonicalConstantTeleGrip.finalize().
      */
     synchronized void finalizeCanonicalConstantTeleGrip(CanonicalConstantTeleGrip canonicalConstantTeleGrip) {
-        rawGripToRemoteTeleGrip.remove(canonicalConstantTeleGrip.raw().toLong());
+        // This is not necessary; the loop below in refreshTeleGripCanonicalization() will remove
+        // a finalized grip. More importantly, this method will be most likely be called on a
+        // special VM thread used for running finalizers. In that case, modifying the map can
+        // cause a ConcurrentModificationException in refreshTeleGripCanonicalization().
+//        rawGripToRemoteTeleGrip.remove(canonicalConstantTeleGrip.raw().toLong());
     }
 
     /**
@@ -94,7 +98,11 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
      */
     private void refreshTeleGripCanonicalization() {
         final Map<Long, WeakReference<RemoteTeleGrip>> newMap = new HashMap<Long, WeakReference<RemoteTeleGrip>>();
-        for (WeakReference<RemoteTeleGrip> r : rawGripToRemoteTeleGrip.values()) {
+
+        // Make a copy of the values in the map as the loop may alter the map by causing 'finalizeCanonicalConstantTeleGrip()'
+        // to be called as weak references are cleaned up.
+        ArrayList<WeakReference<RemoteTeleGrip>> remoteTeleGrips = new ArrayList<WeakReference<RemoteTeleGrip>>(rawGripToRemoteTeleGrip.values());
+        for (WeakReference<RemoteTeleGrip> r : remoteTeleGrips) {
             final RemoteTeleGrip remoteTeleGrip = r.get();
             if (remoteTeleGrip != null && !remoteTeleGrip.raw().equals(Word.zero())) {
                 WeakReference<RemoteTeleGrip> remoteTeleGripRef = newMap.get(remoteTeleGrip.raw().toLong());

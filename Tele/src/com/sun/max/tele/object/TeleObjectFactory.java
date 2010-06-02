@@ -351,7 +351,9 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
 
         TimerPerType timePerType = new TimerPerType();
 
-        for (WeakReference<TeleObject> teleObjectRef : referenceToTeleObject.values()) {
+        // Make a copy to prevent ConcurrentModificationExceptions while iterating
+        ArrayList<WeakReference<TeleObject>> teleObjectRefs = new ArrayList<WeakReference<TeleObject>>(referenceToTeleObject.values());
+        for (WeakReference<TeleObject> teleObjectRef : teleObjectRefs) {
             if (teleObjectRef != null) {
                 TeleObject teleObject = teleObjectRef.get();
                 if (teleObject != null) {
