@@ -51,7 +51,7 @@ class GraphDirInstructionVisitor extends DirAdapter {
     private static final int DIRVALUE_OFFSET = 100000000;
 
     private final GraphWriter.Graph graph;
-    private final GrowableMapping<DirValue, Integer> mapping = new IdentityHashMapping<DirValue, Integer>();
+    private final Mapping<DirValue, Integer> mapping = new IdentityHashMapping<DirValue, Integer>();
     private GraphWriter.Block valueBlock;
 
     GraphDirInstructionVisitor(GraphWriter.Graph graph) {
@@ -60,7 +60,7 @@ class GraphDirInstructionVisitor extends DirAdapter {
 
     private int visitValue(DirValue value) {
         if (!mapping.containsKey(value)) {
-            final int id = DIRVALUE_OFFSET + mapping.keys().length();
+            final int id = DIRVALUE_OFFSET + mapping.keys().size();
             mapping.put(value, id);
             final GraphWriter.Node node = graph.createNode(id);
             node.getProperties().setProperty("name", value.toString());
@@ -69,7 +69,7 @@ class GraphDirInstructionVisitor extends DirAdapter {
             if (valueBlock == null) {
                 valueBlock = graph.createBlock("Values");
                 for (GraphWriter.Block block : graph.getBlocks()) {
-                    if (block.getPredecessors().length() == 0) {
+                    if (block.getPredecessors().size() == 0) {
                         valueBlock.addSuccessor(block);
                     }
                 }
@@ -113,12 +113,12 @@ class GraphDirInstructionVisitor extends DirAdapter {
 
         z = 0;
         if (dirSwitch.defaultTargetBlock() != null) {
-            graph.createEdge(z, 0, dirSwitch.serial(), dirSwitch.defaultTargetBlock().instructions().first().serial());
+            graph.createEdge(z, 0, dirSwitch.serial(), dirSwitch.defaultTargetBlock().instructions().get(0).serial());
             z++;
         }
 
         for (int i = 0; i < dirSwitch.targetBlocks().length; i++) {
-            graph.createEdge(z, 0, dirSwitch.serial(), dirSwitch.targetBlocks()[i].instructions().first().serial());
+            graph.createEdge(z, 0, dirSwitch.serial(), dirSwitch.targetBlocks()[i].instructions().get(0).serial());
             z++;
         }
     }
@@ -126,7 +126,7 @@ class GraphDirInstructionVisitor extends DirAdapter {
     @Override
     public void visitGoto(DirGoto dirGoto) {
         super.visitGoto(dirGoto);
-        graph.createEdge(0, 0, dirGoto.serial(), dirGoto.targetBlock().instructions().first().serial());
+        graph.createEdge(0, 0, dirGoto.serial(), dirGoto.targetBlock().instructions().get(0).serial());
     }
 
     @Override
@@ -181,7 +181,7 @@ class GraphDirInstructionVisitor extends DirAdapter {
         final GraphWriter.Node node = graph.getNode(dirThrow.serial());
         if (dirThrow.catchBlock() != null) {
             node.getProperties().setProperty("catchBlock", Integer.toString(dirThrow.catchBlock().id()));
-            graph.createEdge(1, 0, dirThrow.serial(), dirThrow.catchBlock().instructions().first().serial());
+            graph.createEdge(1, 0, dirThrow.serial(), dirThrow.catchBlock().instructions().get(0).serial());
         }
         node.getProperties().setProperty("throwable", dirThrow.throwable().toString());
     }

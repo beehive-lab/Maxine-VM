@@ -30,11 +30,11 @@
 
 static jmethodID jniGatherThreadID = NULL;
 
-void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong localHandle, ThreadState_t state, jlong instructionPointer, ThreadLocals tl) {
+void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadList, jlong localHandle, ThreadState_t state, jlong instructionPointer, ThreadLocals tl) {
     if (jniGatherThreadID == NULL) {
         jclass c = (*env)->GetObjectClass(env, teleProcess);
         c_ASSERT(c != NULL);
-        jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IJJIJJJJJI)V");
+        jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Ljava/util/List;IJJIJJJJJI)V");
         c_ASSERT(jniGatherThreadID != NULL);
     }
     const int tlaSize = threadLocalsAreaSize();
@@ -75,7 +75,7 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
                     ntl->tlBlockSize,
                     tlaSize);
 
-    (*env)->CallVoidMethod(env, teleProcess, jniGatherThreadID, threadSequence,
+    (*env)->CallVoidMethod(env, teleProcess, jniGatherThreadID, threadList,
                     getThreadLocal(int, tl, ID),
                     localHandle,
                     ntl->handle,

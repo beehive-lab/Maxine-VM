@@ -88,7 +88,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
      * @return a GUI panel for setting these preferences
      */
     public JPanel getPanel() {
-        final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[MethodCodeKind.VALUES.length()];
+        final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[MethodCodeKind.VALUES.size()];
 
         final ItemListener itemListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {

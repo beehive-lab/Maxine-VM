@@ -23,9 +23,10 @@ package com.sun.max.vm.compiler.target.amd64;
 import static com.sun.max.asm.amd64.AMD64GeneralRegister64.*;
 import static com.sun.max.asm.amd64.AMD64XMMRegister.*;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -58,8 +59,8 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
                         RAX, R11, R14,
                         AMD64XMMRegister.class, XMM0, XMM15);
 
-    private static final IndexedSequence<AMD64GeneralRegister64> integerParameterRegisters = new ArraySequence<AMD64GeneralRegister64>(RDI, RSI, RDX, RCX, R8, R9);
-    private static final IndexedSequence<AMD64XMMRegister> floatingPointParameterRegisters = new ArraySequence<AMD64XMMRegister>(XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7);
+    private static final List<AMD64GeneralRegister64> integerParameterRegisters = Arrays.asList(RDI, RSI, RDX, RCX, R8, R9);
+    private static final List<AMD64XMMRegister> floatingPointParameterRegisters = Arrays.asList(XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7);
 
     private static final int NULL_STACK_BIAS = 0;
 

@@ -24,12 +24,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.ref.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
@@ -96,7 +96,7 @@ public final class WatchpointsTable extends InspectorTable {
     private final class WatchpointsColumnModel extends InspectorTableColumnModel<WatchpointsColumnKind> {
 
         private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
-            super(WatchpointsColumnKind.VALUES.length(), viewPreferences);
+            super(WatchpointsColumnKind.VALUES.size(), viewPreferences);
             addColumn(WatchpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
             addColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()), null);
             addColumn(WatchpointsColumnKind.SIZE, new SizeCellRenderer(inspection()), null);
@@ -126,7 +126,7 @@ public final class WatchpointsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return WatchpointsColumnKind.VALUES.length();
+            return WatchpointsColumnKind.VALUES.size();
         }
 
         public int getRowCount() {
@@ -309,7 +309,7 @@ public final class WatchpointsTable extends InspectorTable {
             // See if any registers point here
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                final Sequence<MaxRegister> registers = thread.registers().find(watchpoint.memoryRegion());
+                final List<MaxRegister> registers = thread.registers().find(watchpoint.memoryRegion());
                 if (registers.isEmpty()) {
                     label.setForeground(style().memoryDefaultTagTextColor());
                 } else {

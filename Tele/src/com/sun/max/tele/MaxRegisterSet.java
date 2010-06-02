@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.unsafe.*;
 
 /**
@@ -82,33 +83,33 @@ public interface MaxRegisterSet extends MaxEntity<MaxRegisterSet> {
      * @param memoryRegion description of a region of memory in the VM
      * @return all registers that currently point into the region; empty if none.
      */
-    Sequence<MaxRegister> find(MaxMemoryRegion memoryRegion);
+    List<MaxRegister> find(MaxMemoryRegion memoryRegion);
 
     /**
-     * This threads registers:  integer, floating point, and state.
+     * This thread's registers:  integer, floating point, and state.
      */
-    Sequence<MaxRegister> allRegisters();
+    List<MaxRegister> allRegisters();
 
     /**
      * This thread's integer registers.
      *
      * @return the integer registers; null after thread dies.
      */
-    Sequence<MaxRegister> integerRegisters();
+    List<MaxRegister> integerRegisters();
 
     /**
      * This thread's floating point registers.
      *
      * @return the floating point registers; null after thread dies.
      */
-    Sequence<MaxRegister> floatingPointRegisters();
+    List<MaxRegister> floatingPointRegisters();
 
     /**
      * This thread's state registers.
      *
      * @return the state registers; null after thread dies.
      */
-    Sequence<MaxRegister> stateRegisters();
+    List<MaxRegister> stateRegisters();
 
     /**
      * Visualizes a processor state registers in terms of flags.

@@ -32,8 +32,8 @@ import sun.reflect.*;
 import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -146,7 +146,7 @@ public class FieldActor extends MemberActor implements RiField {
 
     public Value readValue(Reference reference) {
         if (MaxineVM.isHosted() && this instanceof InjectedFieldActor) {
-            final InjectedFieldActor injectedFieldActor = StaticLoophole.cast(this);
+            final InjectedFieldActor injectedFieldActor = Utils.cast(this);
             return injectedFieldActor.readInjectedValue(reference);
         }
 

@@ -21,8 +21,9 @@
 package test.com.sun.max.vm.cps;
 
 import java.lang.reflect.*;
+import java.util.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -67,7 +68,7 @@ public abstract class CompilerTest_reflection<Method_Type extends IrMethod> exte
 
         @Override
         public String toString() {
-            return "_word=" + word + ", _int=" + i + ", _string=" + string + ", _byte=" + b + ", _array=[" + Arrays.toString(array, ",") + "]";
+            return "_word=" + word + ", _int=" + i + ", _string=" + string + ", _byte=" + b + ", _array=[" + Utils.toString(array, ",") + "]";
         }
 
         @Override

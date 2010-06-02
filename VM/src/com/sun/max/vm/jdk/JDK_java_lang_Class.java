@@ -22,9 +22,9 @@ package com.sun.max.vm.jdk;
 
 import java.lang.reflect.*;
 import java.security.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -194,14 +194,14 @@ final class JDK_java_lang_Class {
      */
     @SUBSTITUTE
     public Class[] getInterfaces() {
-        final AppendableSequence<Class> javaInterfaces = new LinkSequence<Class>();
+        final List<Class> javaInterfaces = new LinkedList<Class>();
         final ClassActor thisClassActor = thisClassActor();
         if (thisClassActor != null) {
             for (InterfaceActor interfaceActor : thisClassActor.localInterfaceActors()) {
-                javaInterfaces.append(interfaceActor.javaClass());
+                javaInterfaces.add(interfaceActor.javaClass());
             }
         }
-        return Sequence.Static.toArray(javaInterfaces, new Class[javaInterfaces.length()]);
+        return javaInterfaces.toArray(new Class[javaInterfaces.size()]);
     }
 
     /**
@@ -365,18 +365,18 @@ final class JDK_java_lang_Class {
     @SUBSTITUTE
     private Field[] getDeclaredFields0(boolean publicOnly) {
         final ClassActor classActor = thisClassActor();
-        final AppendableSequence<Field> result = new LinkSequence<Field>();
+        final List<Field> result = new LinkedList<Field>();
         for (FieldActor fieldActor : classActor.localInstanceFieldActors()) {
             if (!fieldActor.isHiddenToReflection() && (!publicOnly || fieldActor.isPublic())) {
-                result.append(fieldActor.toJava());
+                result.add(fieldActor.toJava());
             }
         }
         for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
             if (!fieldActor.isHiddenToReflection() && (!publicOnly || fieldActor.isPublic())) {
-                result.append(fieldActor.toJava());
+                result.add(fieldActor.toJava());
             }
         }
-        return Sequence.Static.toArray(result, new Field[result.length()]);
+        return result.toArray(new Field[result.size()]);
     }
 
     /**
@@ -388,23 +388,23 @@ final class JDK_java_lang_Class {
     @SUBSTITUTE
     private Method[] getDeclaredMethods0(boolean publicOnly) {
         final ClassActor classActor = thisClassActor();
-        final AppendableSequence<Method> result = new LinkSequence<Method>();
+        final List<Method> result = new LinkedList<Method>();
         for (MethodActor methodActor : classActor.localVirtualMethodActors()) {
             if (!methodActor.isHiddenToReflection() && (!publicOnly || methodActor.isPublic())) {
-                result.append(methodActor.toJava());
+                result.add(methodActor.toJava());
             }
         }
         for (MethodActor methodActor : classActor.localStaticMethodActors()) {
             if (!methodActor.isHiddenToReflection() && (!publicOnly || methodActor.isPublic())) {
-                result.append(methodActor.toJava());
+                result.add(methodActor.toJava());
             }
         }
         for (MethodActor methodActor : classActor.localInterfaceMethodActors()) {
             if (!methodActor.isHiddenToReflection() && (!publicOnly || methodActor.isPublic())) {
-                result.append(methodActor.toJava());
+                result.add(methodActor.toJava());
             }
         }
-        return Sequence.Static.toArray(result, new Method[result.length()]);
+        return result.toArray(new Method[result.size()]);
     }
 
     /**
@@ -416,13 +416,13 @@ final class JDK_java_lang_Class {
     @SUBSTITUTE
     private Constructor[] getDeclaredConstructors0(boolean publicOnly) {
         final ClassActor classActor = thisClassActor();
-        final AppendableSequence<Constructor> result = new LinkSequence<Constructor>();
+        final List<Constructor> result = new LinkedList<Constructor>();
         for (MethodActor methodActor : classActor.localVirtualMethodActors()) {
             if (methodActor.isInstanceInitializer() && (!publicOnly || methodActor.isPublic())) {
-                result.append(methodActor.toJavaConstructor());
+                result.add(methodActor.toJavaConstructor());
             }
         }
-        return Sequence.Static.toArray(result, new Constructor[result.length()]);
+        return result.toArray(new Constructor[result.size()]);
     }
 
     /**

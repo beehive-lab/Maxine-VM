@@ -25,9 +25,7 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.cps.b.c.d.*;
@@ -49,8 +47,10 @@ public abstract class BcdeCompiler<EirGenerator_Type extends EirGenerator> exten
     }
 
     @Override
-    public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.appended(super.irGenerators(), eirGenerator());
+    public List<IrGenerator> irGenerators() {
+        final List<IrGenerator> result = new LinkedList<IrGenerator>(super.irGenerators());
+        result.add(eirGenerator());
+        return result;
     }
 
     private boolean[] isBuiltinImplemented;
@@ -66,16 +66,14 @@ public abstract class BcdeCompiler<EirGenerator_Type extends EirGenerator> exten
     @Override
     public void createBuiltins(PackageLoader packageLoader) {
         super.createBuiltins(packageLoader);
+        Method[] declaredMethods = builtinTranslationClass().getDeclaredMethods();
+        final Set<String> methodNames = new HashSet<String>();
+        for (Method method : declaredMethods) {
+            methodNames.add(method.getName());
+        }
 
-        final Set<String> methodNames = Sets.from(Arrays.map(builtinTranslationClass().getDeclaredMethods(), String.class,
-            new MapFunction<Method, String>() {
-                public String map(Method method) {
-                    return method.getName();
-                }
-            }));
-
-        isBuiltinImplemented = new boolean[Builtin.builtins().length()];
-        for (int i = 0; i < Builtin.builtins().length(); i++) {
+        isBuiltinImplemented = new boolean[Builtin.builtins().size()];
+        for (int i = 0; i < Builtin.builtins().size(); i++) {
             final Builtin builtin = Builtin.builtins().get(i);
             isBuiltinImplemented[i] = methodNames.contains("visit" + Strings.firstCharToUpperCase(builtin.name));
         }

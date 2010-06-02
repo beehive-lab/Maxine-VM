@@ -23,13 +23,12 @@ package com.sun.max.asm.gen.cisc.x86;
 import static com.sun.max.asm.gen.cisc.x86.X86AssemblerGenerator.*;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.util.*;
 
 /**
  * An assembler that creates binary instructions from templates and arguments.
@@ -131,7 +130,7 @@ public class X86TemplateAssembler {
         return X86Field.BASE.extract(s) == 5;
     }
 
-    public byte[] assemble(IndexedSequence<Argument> arguments) {
+    public byte[] assemble(List<Argument> arguments) {
         int rexByte = 0;
         final boolean unconditionalRexBit = template.operandSizeAttribute() == WordWidth.BITS_64 && template.instructionDescription().defaultOperandSize() != WordWidth.BITS_64;
         if (unconditionalRexBit) {
@@ -142,7 +141,7 @@ public class X86TemplateAssembler {
         int modRMByte = createModRMByte();
         int sibByte = createSibByte();
         final ByteArrayOutputStream appendStream = new ByteArrayOutputStream();
-        for (int i = 0; i < arguments.length(); i++) {
+        for (int i = 0; i < arguments.size(); i++) {
             final X86Parameter parameter = template.parameters().get(i);
             final long argument = arguments.get(i).asLong();
             switch (parameter.place()) {

@@ -30,14 +30,14 @@ import com.sun.max.program.*;
  *
  * @author Michael Van De Vanter
  */
-public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
+public class ArrayValueHistory<E> {
 
-    private final ArrayDeque<Value_Type> generations;
+    private final ArrayDeque<E> generations;
     private final int limit;
     private int age = -1;
 
     public ArrayValueHistory(int limit) {
-        this.generations = new ArrayDeque<Value_Type>();
+        this.generations = new ArrayDeque<E>();
         this.limit = limit;
     }
 
@@ -45,7 +45,11 @@ public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
         this (Integer.MAX_VALUE);
     }
 
-    public void add(Value_Type newValue) {
+    /**
+     * Adds a new value, which becomes the current generation.
+     * The generation of all previously recorded values increases by 1.
+     */
+    public void add(E newValue) {
         if (generations.size() > 0) {
             if (newValue.equals(generations.getFirst())) {
                 if (age >= 0) {
@@ -61,7 +65,11 @@ public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
         }
     }
 
-    public Value_Type get() {
+    /**
+     * @return the "current" value (at generation 0).
+     * Error if no values have been recorded.
+     */
+    public E get() {
         if (generations.size() > 0) {
             return generations.getFirst();
         }
@@ -69,8 +77,12 @@ public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
         return null;
     }
 
-    public Value_Type get(int generation) {
-        final Iterator<Value_Type> iterator = generations.iterator();
+    /**
+     * @return The value at a specified generation.
+     * Error if generation does not exist.
+     */
+    public E get(int generation) {
+        final Iterator<E> iterator = generations.iterator();
         int index = 0;
         while (iterator.hasNext()) {
             if (index == generation) {
@@ -82,19 +94,34 @@ public class ArrayValueHistory<Value_Type> implements ValueHistory<Value_Type> {
         return null;
     }
 
+    /**
+     * @return the age, in generations, of the current value, since recording began.
+     * 0 if different from immediate predecessor; -1 if no different value ever recorded
+     * Comparison uses {@linkplain Object#equals(Object) equals}.
+     */
     public int getAge() {
         return age;
     }
 
+    /**
+     * @return the maximum number of generations that can be recorded.
+     */
     public int getLimit() {
         return limit;
     }
 
+    /**
+     * @return the number of generations recorded; initially 0.
+     */
     public int getSize() {
         return generations.size();
     }
 
-    public Iterator<Value_Type> values() {
+    /**
+     * @return iteration of the values recorded in the history, starting with the current
+     * generation and proceeding backward in time.
+     */
+    public Iterator<E> values() {
         return generations.iterator();
     }
 

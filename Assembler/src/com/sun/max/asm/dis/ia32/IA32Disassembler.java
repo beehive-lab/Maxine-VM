@@ -28,9 +28,7 @@ import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.ia32.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.ia32.complete.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.util.*;
 
 /**
  * Instantiate this class to disassemble IA32 instruction streams.
@@ -53,10 +51,10 @@ public class IA32Disassembler extends X86Disassembler {
         return new IA32Assembler((int) startAddress().asLong() + position);
     }
 
-    private static Map<X86InstructionHeader, AppendableSequence<X86Template>> headerToTemplates = X86InstructionHeader.createMapping(IA32Assembly.ASSEMBLY, WordWidth.BITS_32);
+    private static Map<X86InstructionHeader, List<X86Template>> headerToTemplates = X86InstructionHeader.createMapping(IA32Assembly.ASSEMBLY, WordWidth.BITS_32);
 
     @Override
-    protected Map<X86InstructionHeader, AppendableSequence<X86Template>> headerToTemplates() {
+    protected Map<X86InstructionHeader, List<X86Template>> headerToTemplates() {
         return headerToTemplates;
     }
 }

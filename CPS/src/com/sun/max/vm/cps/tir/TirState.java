@@ -31,7 +31,7 @@ public class TirState extends State<TirInstruction> {
         final TirState state = new TirState();
         final TirTree tree = new TirTree(anchor, state);
         final Frame frame = new Frame(anchor.location(), anchor.stackHeight());
-        state.frames.append(frame);
+        state.frames.add(frame);
         for (int i = 0; i < anchor.stackHeight(); i++) {
             final TirLocal context = new TirLocal(i);
             state.setOne(i, context);
@@ -73,6 +73,6 @@ public class TirState extends State<TirInstruction> {
     }
 
     public boolean hasFrames() {
-        return frames().length() > 0;
+        return frames().size() > 0;
     }
 }

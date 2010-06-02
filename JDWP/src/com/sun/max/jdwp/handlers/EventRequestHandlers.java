@@ -20,12 +20,21 @@
  */
 package com.sun.max.jdwp.handlers;
 
-import com.sun.max.collect.*;
-import com.sun.max.jdwp.constants.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import com.sun.max.jdwp.constants.Error;
-import com.sun.max.jdwp.data.*;
-import com.sun.max.jdwp.protocol.*;
-import com.sun.max.jdwp.protocol.EventRequestCommands.*;
+import com.sun.max.jdwp.constants.EventKind;
+import com.sun.max.jdwp.data.CommandHandlerRegistry;
+import com.sun.max.jdwp.data.JDWPException;
+import com.sun.max.jdwp.data.JDWPNotImplementedException;
+import com.sun.max.jdwp.data.JDWPSender;
+import com.sun.max.jdwp.protocol.EventRequestCommands;
+import com.sun.max.jdwp.protocol.EventRequestCommands.Clear;
+import com.sun.max.jdwp.protocol.EventRequestCommands.ClearAllBreakpoints;
+import com.sun.max.jdwp.protocol.EventRequestCommands.Set;
 
 /**
  * @author Thomas Wuerthinger
@@ -33,11 +42,11 @@ import com.sun.max.jdwp.protocol.EventRequestCommands.*;
  */
 public class EventRequestHandlers extends Handlers {
 
-    private VariableMapping<Integer, JDWPEventRequest> eventRequests;
+    private Map<Integer, JDWPEventRequest> eventRequests;
 
     public EventRequestHandlers(JDWPSession session) {
         super(session);
-        eventRequests = new ChainedHashMapping<Integer, JDWPEventRequest>();
+        eventRequests = new HashMap<Integer, JDWPEventRequest>();
     }
 
     @Override
@@ -167,10 +176,10 @@ public class EventRequestHandlers extends Handlers {
         @Override
         public ClearAllBreakpoints.Reply handle(ClearAllBreakpoints.IncomingRequest incomingRequest) {
 
-            final AppendableSequence<JDWPEventRequest> toRemove = new LinkSequence<JDWPEventRequest>();
+            final List<JDWPEventRequest> toRemove = new LinkedList<JDWPEventRequest>();
             for (JDWPEventRequest r : eventRequests.values()) {
                 if (r.eventKind() == EventKind.BREAKPOINT) {
-                    toRemove.append(r);
+                    toRemove.add(r);
                 }
             }
 

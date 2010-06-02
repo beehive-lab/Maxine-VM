@@ -21,8 +21,8 @@
 package com.sun.max.asm;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -60,8 +60,8 @@ public abstract class Assembler {
      */
     public Assembler reset() {
         boundLabels.clear();
-        ((LinkSequence) assembledObjects).clear();
-        ((LinkSequence) mutableAssembledObjects).clear();
+        assembledObjects.clear();
+        mutableAssembledObjects.clear();
         padOutput = false;
         potentialExpansionSize = 0;
         selectingLabelInstructions = true;
@@ -77,8 +77,7 @@ public abstract class Assembler {
     }
 
     /**
-     * A facility for including output during assembly that may not necessarily be decoded interpreted as
-     * {@linkplain Type#CODE code}.
+     * A facility for including output during assembly that may not necessarily be decoded interpreted as code.
      *
      * @author David Liu
      * @author Doug Simon
@@ -226,9 +225,9 @@ public abstract class Assembler {
         return selectingLabelInstructions;
     }
 
-    private final IdentityHashSet<Label> boundLabels = new IdentityHashSet<Label>();
+    private final Set<Label> boundLabels = Collections.newSetFromMap(new IdentityHashMap<Label, Boolean>());
 
-    public IdentityHashSet<Label> boundLabels() {
+    public Set<Label> boundLabels() {
         return boundLabels;
     }
 
@@ -247,8 +246,8 @@ public abstract class Assembler {
         boundLabels.add(label);
     }
 
-    private final AppendableSequence<AssembledObject> assembledObjects = new LinkSequence<AssembledObject>();
-    private final AppendableSequence<MutableAssembledObject> mutableAssembledObjects = new LinkSequence<MutableAssembledObject>();
+    private final List<AssembledObject> assembledObjects = new LinkedList<AssembledObject>();
+    private final List<MutableAssembledObject> mutableAssembledObjects = new LinkedList<MutableAssembledObject>();
 
     private int potentialExpansionSize;
 
@@ -258,9 +257,9 @@ public abstract class Assembler {
      * @param fixedSizeAssembledObject
      */
     void addFixedSizeAssembledObject(AssembledObject fixedSizeAssembledObject) {
-        assembledObjects.append(fixedSizeAssembledObject);
+        assembledObjects.add(fixedSizeAssembledObject);
         if (fixedSizeAssembledObject instanceof MutableAssembledObject) {
-            mutableAssembledObjects.append((MutableAssembledObject) fixedSizeAssembledObject);
+            mutableAssembledObjects.add((MutableAssembledObject) fixedSizeAssembledObject);
         }
     }
 
@@ -271,8 +270,8 @@ public abstract class Assembler {
      * @param spanDependentInstruction
      */
     void addSpanDependentInstruction(InstructionWithOffset spanDependentInstruction) {
-        assembledObjects.append(spanDependentInstruction);
-        mutableAssembledObjects.append(spanDependentInstruction);
+        assembledObjects.add(spanDependentInstruction);
+        mutableAssembledObjects.add(spanDependentInstruction);
         // A span-dependent instruction's offset operand can potentially grow from 8 bits to 32 bits.
         // Also, some instructions need an extra byte for encoding when not using an 8-bit operand.
         // Together, this might enlarge every span-dependent label instruction by maximally 4 bytes.
@@ -280,13 +279,13 @@ public abstract class Assembler {
     }
 
     void addAlignmentPadding(AlignmentPadding alignmentPadding) {
-        assembledObjects.append(alignmentPadding);
-        mutableAssembledObjects.append(alignmentPadding);
+        assembledObjects.add(alignmentPadding);
+        mutableAssembledObjects.add(alignmentPadding);
         potentialExpansionSize += alignmentPadding.alignment() - alignmentPadding.size();
     }
 
     void addInlineData(int startPosition, int size) {
-        assembledObjects.append(new AssembledObject(startPosition, startPosition + size) {
+        assembledObjects.add(new AssembledObject(startPosition, startPosition + size) {
             public boolean isCode() {
                 return false;
             }

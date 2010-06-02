@@ -25,6 +25,7 @@ import com.sun.c1x.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
@@ -68,7 +69,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     @Override
     public <Type extends TargetMethod> Class<Type> compiledType() {
         Class<Class<Type>> type = null;
-        return StaticLoophole.cast(type, C1XTargetMethod.class);
+        return Utils.cast(type, C1XTargetMethod.class);
     }
 
     @Override

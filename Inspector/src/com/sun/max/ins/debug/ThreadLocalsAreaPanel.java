@@ -21,10 +21,11 @@
 package com.sun.max.ins.debug;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
@@ -85,7 +86,7 @@ public final class ThreadLocalsAreaPanel extends InspectorPanel {
 
     private final class ThreadLocalsAreaHeaderPanel extends InspectorPanel {
 
-        private final AppendableSequence<InspectorLabel> labels = new LinkSequence<InspectorLabel>();
+        private final List<InspectorLabel> labels = new ArrayList<InspectorLabel>();
 
         public ThreadLocalsAreaHeaderPanel(Inspection inspection, MaxThreadLocalsArea threadLocalsArea) {
             super(inspection);
@@ -102,7 +103,7 @@ public final class ThreadLocalsAreaPanel extends InspectorPanel {
 
         private void addInspectorLabel(InspectorLabel label) {
             add(label);
-            labels.append(label);
+            labels.add(label);
         }
 
         @Override

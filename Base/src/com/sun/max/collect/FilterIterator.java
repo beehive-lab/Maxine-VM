@@ -29,14 +29,14 @@ import com.sun.max.util.*;
  *
  * @author Doug Simon
  */
-public class FilterIterator<Element_Type> implements Iterator<Element_Type> {
+public class FilterIterator<T> implements Iterator<T> {
 
-    private final Iterator<? extends Element_Type> iterator;
-    private final Predicate<Element_Type> predicate;
-    private Element_Type next;
+    private final Iterator<? extends T> iterator;
+    private final Predicate<T> predicate;
+    private T next;
     private boolean advanced;
 
-    public FilterIterator(Iterator<? extends Element_Type> iterator, Predicate<Element_Type> predicate) {
+    public FilterIterator(Iterator<? extends T> iterator, Predicate<T> predicate) {
         this.iterator = iterator;
         this.predicate = predicate;
     }
@@ -48,7 +48,7 @@ public class FilterIterator<Element_Type> implements Iterator<Element_Type> {
         return advance();
     }
 
-    public Element_Type next() {
+    public T next() {
         if (!advanced) {
             if (!advance()) {
                 throw new NoSuchElementException();
@@ -67,7 +67,7 @@ public class FilterIterator<Element_Type> implements Iterator<Element_Type> {
 
     private boolean advance() {
         while (iterator.hasNext()) {
-            final Element_Type n = iterator.next();
+            final T n = iterator.next();
             if (predicate.evaluate(n)) {
                 next = n;
                 advanced = true;

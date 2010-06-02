@@ -21,11 +21,11 @@
 package com.sun.max.asm.gen;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
@@ -62,24 +62,24 @@ public abstract class Assembly<Template_Type extends Template> {
         return instructionSetPackage(instructionSet);
     }
 
-    protected abstract Sequence<Template_Type> createTemplates();
+    protected abstract List<Template_Type> createTemplates();
 
-    private Sequence<Template_Type> templates;
-    private AppendableSequence<Template_Type> labelTemplates;
+    private List<Template_Type> templates;
+    private List<Template_Type> labelTemplates;
 
-    public final Sequence<Template_Type> templates() {
+    public final List<Template_Type> templates() {
         if (templates == null) {
             templates = createTemplates();
         }
         return templates;
     }
 
-    public final Sequence<Template_Type> labelTemplates() {
+    public final List<Template_Type> labelTemplates() {
         if (labelTemplates == null) {
-            labelTemplates = new LinkSequence<Template_Type>();
+            labelTemplates = new LinkedList<Template_Type>();
             for (Template_Type template : templates()) {
                 if (!template.isRedundant() && template.labelParameterIndex() >= 0) {
-                    labelTemplates.append(template);
+                    labelTemplates.add(template);
                 }
             }
         }
@@ -96,10 +96,10 @@ public abstract class Assembly<Template_Type extends Template> {
         return argument;
     }
 
-    public final String createMethodCallString(Template template, IndexedSequence<Argument> argumentList) {
-        assert argumentList.length() == template.parameters().length();
+    public final String createMethodCallString(Template template, List<Argument> argumentList) {
+        assert argumentList.size() == template.parameters().size();
         String call = template.assemblerMethodName() + "(";
-        for (int i = 0; i < argumentList.length(); i++) {
+        for (int i = 0; i < argumentList.size(); i++) {
             call += ((i == 0) ? "" : ", ") + getBoxedJavaValue(argumentList.get(i));
         }
         return call + ")";
@@ -113,7 +113,7 @@ public abstract class Assembly<Template_Type extends Template> {
         }
     }
 
-    private Method getAssemblerMethod(Assembler assembler, Template template, IndexedSequence<Argument> arguments) throws NoSuchAssemblerMethodError {
+    private Method getAssemblerMethod(Assembler assembler, Template template, List<Argument> arguments) throws NoSuchAssemblerMethodError {
         final Class[] parameterTypes = template.parameterTypes();
         final int index = template.labelParameterIndex();
         if (index >= 0 && arguments.get(index) instanceof Label) {
@@ -126,11 +126,11 @@ public abstract class Assembly<Template_Type extends Template> {
         return template.assemblerMethod;
     }
 
-    public void assemble(Assembler assembler, Template template, IndexedSequence<Argument> arguments) throws AssemblyException, NoSuchAssemblerMethodError {
-        assert arguments.length() == template.parameters().length();
+    public void assemble(Assembler assembler, Template template, List<Argument> arguments) throws AssemblyException, NoSuchAssemblerMethodError {
+        assert arguments.size() == template.parameters().size();
         final Method assemblerMethod = getAssemblerMethod(assembler, template, arguments);
-        final Object[] objects = new Object[arguments.length()];
-        for (int i = 0; i < arguments.length(); i++) {
+        final Object[] objects = new Object[arguments.size()];
+        for (int i = 0; i < arguments.size(); i++) {
             objects[i] = getBoxedJavaValue(arguments.get(i));
         }
         try {

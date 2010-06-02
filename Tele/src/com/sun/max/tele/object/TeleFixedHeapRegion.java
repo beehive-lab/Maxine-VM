@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.unsafe.*;
@@ -39,8 +40,7 @@ public class TeleFixedHeapRegion extends AbstractTeleVMHolder implements MaxHeap
      */
     private static final class FixedHeapRegionMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxHeapRegion> {
 
-        private static final IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY =
-            new ArrayListSequence<MaxEntityMemoryRegion< ? extends MaxEntity>>(0);
+        private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY = Collections.emptyList();
 
         private final TeleFixedHeapRegion owner;
         private final boolean isBootRegion;
@@ -56,7 +56,7 @@ public class TeleFixedHeapRegion extends AbstractTeleVMHolder implements MaxHeap
             return null;
         }
 
-        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+        public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
             // We don't break a heap memory region into any smaller entities, but could.
             return EMPTY;
         }

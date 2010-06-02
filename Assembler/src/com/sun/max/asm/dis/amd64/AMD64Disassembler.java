@@ -28,9 +28,7 @@ import com.sun.max.asm.dis.x86.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.amd64.*;
 import com.sun.max.asm.gen.cisc.x86.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.util.*;
 
 /**
  * Instantiate this class to disassemble AMD64 instruction streams.
@@ -53,10 +51,10 @@ public class AMD64Disassembler extends X86Disassembler {
         return new AMD64Assembler(startAddress().asLong() + position);
     }
 
-    private static Map<X86InstructionHeader, AppendableSequence<X86Template>> headerToTemplates = X86InstructionHeader.createMapping(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);
+    private static Map<X86InstructionHeader, List<X86Template>> headerToTemplates = X86InstructionHeader.createMapping(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);
 
     @Override
-    protected Map<X86InstructionHeader, AppendableSequence<X86Template>> headerToTemplates() {
+    protected Map<X86InstructionHeader, List<X86Template>> headerToTemplates() {
         return headerToTemplates;
     }
 }

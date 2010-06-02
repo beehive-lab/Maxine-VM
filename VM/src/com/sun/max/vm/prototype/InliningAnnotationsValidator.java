@@ -21,9 +21,10 @@
 package com.sun.max.vm.prototype;
 
 import java.lang.reflect.*;
+import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -142,5 +143,5 @@ public final class InliningAnnotationsValidator {
         ProgramError.check(condition, errorMessage);
     }
 
-    private static IdentityHashSet<Method> checked = new IdentityHashSet<Method>();
+    private static Set<Method> checked = CiUtil.newIdentityHashSet();
 }

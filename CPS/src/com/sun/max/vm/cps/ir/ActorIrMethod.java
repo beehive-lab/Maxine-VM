@@ -56,7 +56,7 @@ public class ActorIrMethod extends AbstractIrMethod {
             writer.outdent();
             final ConstantPool constantPool = codeAttribute.constantPool;
             writer.print(BytecodePrinter.toString(constantPool, new BytecodeBlock(codeAttribute.code())));
-            if (!codeAttribute.exceptionHandlerTable().isEmpty()) {
+            if (codeAttribute.exceptionHandlerTable().length != 0) {
                 writer.println("Exception handlers:");
                 for (ExceptionHandlerEntry entry : codeAttribute.exceptionHandlerTable()) {
                     writer.println(entry.toString());

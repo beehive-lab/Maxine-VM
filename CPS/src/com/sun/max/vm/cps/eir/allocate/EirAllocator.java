@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.allocate;
 
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.cps.eir.*;
@@ -49,10 +51,15 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
 
     protected void splitVariables() {
         // Make a copy of the existing variables so that they iterated over while new variables are being created:
-        final EirVariable[] variables = Sequence.Static.toArray(methodGeneration().variables(), new EirVariable[methodGeneration().variables().length()]);
+        final EirVariable[] variables = methodGeneration().variables().toArray(new EirVariable[methodGeneration().variables().size()]);
         for (EirVariable variable : variables) {
             if (!variable.isLocationFixed() && !variable.isSpillingPrevented() && variable.kind() != Kind.VOID) {
-                final EirOperand[] operands = Sequence.Static.toArray(variable.operands(), new EirOperand[variable.operands().length()]);
+                EirOperand[] operands = new EirOperand[variable.operands().size()];
+                int i = 0;
+                for (EirOperand element : variable.operands()) {
+                    operands[i] = element;
+                    i++;
+                }
                 for (EirOperand operand : operands) {
                     if (!operand.locationCategories().contains(EirLocationCategory.STACK_SLOT) ||
                                     operand.requiredLocation() != null ||
@@ -79,8 +86,8 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
 
     private void gatherUses() {
         for (EirBlock eirBlock : methodGeneration().eirBlocks()) {
-            final IndexedSequence<EirInstruction> instructions = eirBlock.instructions();
-            for (int i = instructions.length() - 1; i >= 0; i--) {
+            final List<EirInstruction> instructions = eirBlock.instructions();
+            for (int i = instructions.size() - 1; i >= 0; i--) {
                 instructions.get(i).visitOperands(new EirOperand.Procedure() {
                     public void run(EirOperand operand) {
                         operand.recordUse();
@@ -135,7 +142,7 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
         return true;
     }
 
-    protected boolean hasUniqueLocation(EirVariable variable, Sequence<EirVariable> variables) {
+    protected boolean hasUniqueLocation(EirVariable variable, List<EirVariable> variables) {
         for (EirVariable v : variables) {
             if (v != variable && v.location() == variable.location()) {
                 return false;
@@ -176,7 +183,7 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
     }
 
     protected EirLocationCategory decideVariableLocationCategory(PoolSet<EirLocationCategory> categories) {
-        if (categories.length() == 1) {
+        if (categories.size() == 1) {
             return categories.iterator().next();
         }
         for (EirLocationCategory category : EirLocationCategory.VALUES) {

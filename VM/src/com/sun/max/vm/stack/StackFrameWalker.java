@@ -24,9 +24,10 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -704,11 +705,11 @@ public abstract class StackFrameWalker {
      * @return a sequence of all the stack frames, including native, adapter, and non-application visible stack frames,
      *         with the top frame as the first frame
      */
-    public Sequence<StackFrame> frames(AppendableSequence<StackFrame> stackFrames, Pointer ip, Pointer sp, Pointer fp) {
-        final AppendableSequence<StackFrame> frames = stackFrames == null ? new LinkSequence<StackFrame>() : stackFrames;
+    public List<StackFrame> frames(List<StackFrame> stackFrames, Pointer ip, Pointer sp, Pointer fp) {
+        final List<StackFrame> frames = stackFrames == null ? new LinkedList<StackFrame>() : stackFrames;
         final StackFrameVisitor visitor = new StackFrameVisitor() {
             public boolean visitFrame(StackFrame stackFrame) {
-                frames.append(stackFrame);
+                frames.add(stackFrame);
                 return true;
             }
         };
@@ -728,8 +729,8 @@ public abstract class StackFrameWalker {
      * @param ignoreUntilNativeFrame true if all frames before the first native frame are to be ignored
      * @return a sequence of class method actors representing the call stack
      */
-    public static Sequence<ClassMethodActor> extractClassMethodActors(Iterable<StackFrame> stackFrames, boolean topFrame, boolean adapterFrames, boolean invisibleFrames, boolean ignoreUntilNativeFrame) {
-        final LinkSequence<ClassMethodActor> result = new LinkSequence<ClassMethodActor>();
+    public static List<ClassMethodActor> extractClassMethodActors(Iterable<StackFrame> stackFrames, boolean topFrame, boolean adapterFrames, boolean invisibleFrames, boolean ignoreUntilNativeFrame) {
+        final LinkedList<ClassMethodActor> result = new LinkedList<ClassMethodActor>();
         boolean top = true;
         boolean seenNativeFrame = false;
         for (StackFrame stackFrame : stackFrames) {
@@ -787,7 +788,7 @@ public abstract class StackFrameWalker {
         return null;
     }
 
-    private static void appendCallers(AppendableSequence<ClassMethodActor> result, BytecodeLocation bytecodeLocation, boolean invisibleFrames) {
+    private static void appendCallers(List<ClassMethodActor> result, BytecodeLocation bytecodeLocation, boolean invisibleFrames) {
         // this recursive method appends inlined bytecode locations to the frame list (i.e. parent first)
         if (bytecodeLocation.parent() != null) {
             appendCallers(result, bytecodeLocation.parent(), invisibleFrames);
@@ -795,9 +796,9 @@ public abstract class StackFrameWalker {
         appendClassMethodActor(result, bytecodeLocation.classMethodActor, invisibleFrames);
     }
 
-    private static void appendClassMethodActor(final AppendableSequence<ClassMethodActor> result, final ClassMethodActor classMethodActor, boolean invisibleFrames) {
+    private static void appendClassMethodActor(final List<ClassMethodActor> result, final ClassMethodActor classMethodActor, boolean invisibleFrames) {
         if (classMethodActor.isApplicationVisible() || invisibleFrames) {
-            result.append(classMethodActor);
+            result.add(classMethodActor);
         }
     }
 

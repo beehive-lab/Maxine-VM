@@ -20,14 +20,14 @@
  */
 package com.sun.max.util;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 
 /**
  * @author Bernd Mathiske
  */
-public interface Predicate<Type> {
+public interface Predicate<T> {
 
-    boolean evaluate(Type object);
+    boolean evaluate(T object);
 
     public static final class Static {
         private Static() {
@@ -39,9 +39,9 @@ public interface Predicate<Type> {
             }
         };
 
-        public static <Object_Type> Predicate<Object_Type> alwaysTrue(Class<Object_Type> type) {
-            final Class<Predicate<Object_Type>> predicateType = null;
-            return StaticLoophole.cast(predicateType, alwaysTrue);
+        public static <T> Predicate<T> alwaysTrue(Class<T> type) {
+            final Class<Predicate<T>> predicateType = null;
+            return Utils.cast(predicateType, alwaysTrue);
         }
     }
 

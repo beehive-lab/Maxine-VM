@@ -29,7 +29,6 @@ import com.sun.max.asm.dis.amd64.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.x86.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
@@ -57,7 +56,7 @@ public class AMD64AssemblyTester extends X86AssemblyTester<AMD64Template> {
     }
 
     @Override
-    protected boolean isLegalArgumentList(AMD64Template template, IndexedSequence<Argument> arguments) {
+    protected boolean isLegalArgumentList(AMD64Template template, List<Argument> arguments) {
         final WordWidth externalCodeSizeAttribute = template.externalCodeSizeAttribute();
         for (Argument argument : arguments) {
             if (argument instanceof AMD64GeneralRegister8) {

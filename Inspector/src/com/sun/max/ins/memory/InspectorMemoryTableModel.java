@@ -20,7 +20,8 @@
  */
 package com.sun.max.ins.memory;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
@@ -32,6 +33,8 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  */
 public abstract class InspectorMemoryTableModel extends InspectorTableModel {
+
+    private static final List<MaxWatchpoint> EMPTY_WATCHPOINT_LIST = Collections.emptyList();
 
     private final Size wordSize;
 
@@ -69,25 +72,21 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      * @param row a row in the table model of memory
      * @return memory watchpoints whose region intersects the memory for this row in the model, empty sequence if none.
      */
-    public Sequence<MaxWatchpoint> getWatchpoints(int row) {
-        DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
+    public List<MaxWatchpoint> getWatchpoints(int row) {
+        // Gets called a lot, usually empty result;  allocate as little as possible
+        List<MaxWatchpoint> watchpoints = null;
+        final MaxMemoryRegion rowMemoryRegion = getMemoryRegion(row);
         if (vm().watchpointManager() != null) {
             for (MaxWatchpoint watchpoint : vm().watchpointManager().watchpoints()) {
-                if (watchpoint.memoryRegion().overlaps(getMemoryRegion(row))) {
-                    if (watchpoints.isEmpty()) {
-                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
-                    } else if (watchpoints.length() == 1) {
-                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
-                        newSet.add(watchpoint);
-                        watchpoints = newSet;
-                    } else {
-                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
-                        growableSet.add(watchpoint);
+                if (watchpoint.memoryRegion().overlaps(rowMemoryRegion)) {
+                    if (watchpoints == null) {
+                        watchpoints = new ArrayList<MaxWatchpoint>(4);
                     }
+                    watchpoints.add(watchpoint);
                 }
             }
         }
-        return watchpoints;
+        return watchpoints == null ? EMPTY_WATCHPOINT_LIST : watchpoints;
     }
 
     /**

@@ -51,7 +51,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
     public static Option<Boolean> printState = optionSet.newBooleanOption("PS", false, "(P)rints the Interpreter's Execution (S)tate.");
 
     public static class BirMethodCache {
-        private static GrowableMapping<ClassMethodActor, BirMethod> methods = new IdentityHashMapping<ClassMethodActor, BirMethod>();
+        private static Mapping<ClassMethodActor, BirMethod> methods = new IdentityHashMapping<ClassMethodActor, BirMethod>();
 
         public static BirMethod lookup(ClassMethodActor classMethodActor) {
             BirMethod method = methods.get(classMethodActor);

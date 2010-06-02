@@ -60,17 +60,17 @@ public class PoolSetTest extends MaxTestCase {
     }
 
     public void test_emptyPoolSet() {
-        final Pool<TestElement> emptyPool = new IndexedSequencePool<TestElement>(IndexedSequence.Static.empty(TestElement.class));
+        final Pool<TestElement> emptyPool = new ArrayPool<TestElement>();
         final PoolSet<TestElement> poolSet = PoolSet.noneOf(emptyPool);
         assertSame(poolSet.pool(), emptyPool);
-        assertEquals(poolSet.length(), 0);
+        assertEquals(poolSet.size(), 0);
         assertTrue(poolSet.isEmpty());
         poolSet.clear();
         poolSet.addAll();
         assertTrue(poolSet.isEmpty());
         final PoolSet<TestElement> clone = poolSet.clone();
         assertSame(clone.pool(), emptyPool);
-        assertEquals(clone.length(), 0);
+        assertEquals(clone.size(), 0);
         assertTrue(clone.isEmpty());
     }
 
@@ -85,15 +85,13 @@ public class PoolSetTest extends MaxTestCase {
             for (int i = 0; i < numElems; i++) {
                 elems[i] = new TestElement(i);
             }
-            pool = new IndexedSequencePool<TestElement>(new ArraySequence<TestElement>(elems));
-            runnable.run();
             pool = new ArrayPool<TestElement>(elems);
             runnable.run();
         }
     }
 
     private void check_poolSet(PoolSet<TestElement> poolSet, int n) {
-        assertEquals(poolSet.length(), n);
+        assertEquals(poolSet.size(), n);
         for (int i = 0; i < n; i++) {
             assertTrue(poolSet.contains(elems[i]));
         }
@@ -120,12 +118,12 @@ public class PoolSetTest extends MaxTestCase {
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(pool);
                 poolSet.addAll();
-                assertEquals(poolSet.length(), nElems);
+                assertEquals(poolSet.size(), nElems);
                 for (int i = 0; i < nElems; i++) {
                     assertTrue(poolSet.contains(elems[i]));
                     poolSet.remove(elems[i]);
                     assertFalse(poolSet.contains(elems[i]));
-                    assertEquals(poolSet.length(), nElems - i - 1);
+                    assertEquals(poolSet.size(), nElems - i - 1);
                 }
             }
         });
@@ -136,11 +134,11 @@ public class PoolSetTest extends MaxTestCase {
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(pool);
                 poolSet.addAll();
-                assertEquals(poolSet.length(), nElems);
+                assertEquals(poolSet.size(), nElems);
                 if (nElems > 0) {
                     final TestElement elem = poolSet.removeOne();
                     assertFalse(poolSet.contains(elem));
-                    assertEquals(poolSet.length(), nElems - 1);
+                    assertEquals(poolSet.size(), nElems - 1);
                 } else {
                     try {
                         poolSet.removeOne();
@@ -168,7 +166,7 @@ public class PoolSetTest extends MaxTestCase {
                 poolSet.addAll();
                 poolSet.clear();
                 check_poolSet(poolSet, 0);
-                assertEquals(poolSet.length(), 0);
+                assertEquals(poolSet.size(), 0);
                 for (int i = 0; i < nElems; i++) {
                     assertFalse(poolSet.contains(elems[i]));
                 }
@@ -193,9 +191,9 @@ public class PoolSetTest extends MaxTestCase {
                 }
                 final PoolSet<TestElement> poolSet2 = PoolSet.noneOf(pool);
                 poolSet2.or(oddSet);
-                assertEquals(poolSet2.length(), nElems / 2);
+                assertEquals(poolSet2.size(), nElems / 2);
                 poolSet2.or(evenSet);
-                assertEquals(poolSet2.length(), nElems);
+                assertEquals(poolSet2.size(), nElems);
                 check_poolSet(poolSet2, nElems);
             }
         });
@@ -211,7 +209,7 @@ public class PoolSetTest extends MaxTestCase {
                     oddSet.add(elems[i]);
                 }
                 poolSet.and(oddSet);
-                assertEquals(poolSet.length(), oddSet.length());
+                assertEquals(poolSet.size(), oddSet.size());
                 for (TestElement elem : poolSet) {
                     assertTrue(oddSet.contains(elem));
                 }
@@ -269,7 +267,7 @@ public class PoolSetTest extends MaxTestCase {
                 }
                 final PoolSet<TestElement> clone = evenSet.clone();
                 assertSame(clone.pool(), pool);
-                assertEquals(evenSet.length(), clone.length());
+                assertEquals(evenSet.size(), clone.size());
                 for (TestElement elem : evenSet) {
                     assertTrue(clone.contains(elem));
                 }
@@ -315,19 +313,19 @@ public class PoolSetTest extends MaxTestCase {
         foreachPool(new Runnable() {
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(pool);
-                PoolSet.addAll(poolSet, java.util.Arrays.asList(elems));
+                PoolSet.addAll(poolSet, Arrays.asList(elems));
                 check_poolSet(poolSet, nElems);
             }
         });
     }
 
-    public void test_staticToArray() {
+    public void test_toArray() {
         foreachPool(new Runnable() {
             public void run() {
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(pool);
                 poolSet.addAll();
-                final TestElement[] array = PoolSet.toArray(poolSet, TestElement.class);
-                assertTrue(java.util.Arrays.equals(array, elems));
+                final TestElement[] array = poolSet.toArray(new TestElement[poolSet.size()]);
+                assertTrue(Arrays.equals(array, elems));
             }
         });
     }

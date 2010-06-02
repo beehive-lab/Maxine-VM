@@ -31,26 +31,32 @@ import java.util.*;
  * <li>The iterators derived from {@link #keys()} and {@link #values()} do not support
  * {@linkplain Iterator#remove() removal} and are <b>not</b> fail-fast (see {@link HashMap} for a description of fail-fast).
  * </ul>
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public interface Mapping<Key_Type, Value_Type> {
+public interface Mapping<K, V> {
 
-    Value_Type get(Key_Type key);
+    V get(K key);
 
-    boolean containsKey(Key_Type key);
+    V put(K key, V value);
+
+    V remove(K key);
+
+    void clear();
+
+    boolean containsKey(K key);
 
     int length();
 
     /**
      * Gets an iterable view of the keys in this map.
      */
-    IterableWithLength<Key_Type> keys();
+    IterableWithLength<K> keys();
 
     /**
      * Gets an iterable view of the values in this map.
      */
-    IterableWithLength<Value_Type> values();
+    IterableWithLength<V> values();
 
 }

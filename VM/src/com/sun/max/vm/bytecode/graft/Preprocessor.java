@@ -86,7 +86,7 @@ public final class Preprocessor {
             return null;
         }
 
-        if (!codeAttribute.exceptionHandlerTable().isEmpty()) {
+        if (codeAttribute.exceptionHandlerTable().length != 0) {
             codeAttribute = new ExceptionDispatchingPreprocessor(constantPoolEditor(), codeAttribute).codeAttribute();
             reason = reason + " dispatching";
         }

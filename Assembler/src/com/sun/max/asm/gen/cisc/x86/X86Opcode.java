@@ -20,9 +20,7 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
-import static com.sun.max.util.HexByte.*;
-
-import com.sun.max.util.*;
+import static com.sun.max.asm.gen.cisc.x86.HexByte.*;
 
 /**
  * x86 instruction prefix bytes.

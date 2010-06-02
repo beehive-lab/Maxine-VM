@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.bytecode;
 
+import java.util.*;
+
 import com.sun.cri.bytecode.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -139,5 +140,5 @@ public enum BranchCondition {
     /**
      * Immutable (and thus sharable) view of the enum constants defined by this class.
      */
-    public static final IndexedSequence<BranchCondition> VALUES = new ArraySequence<BranchCondition>(values());
+    public static final List<BranchCondition> VALUES = Arrays.asList(values());
 }

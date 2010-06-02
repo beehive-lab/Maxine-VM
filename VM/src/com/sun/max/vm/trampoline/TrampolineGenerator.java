@@ -22,7 +22,8 @@ package com.sun.max.vm.trampoline;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
@@ -34,7 +35,7 @@ public abstract class TrampolineGenerator {
     /**
      * Indexed sequence of available trampolines. The trampoline for a method with index i is the ith element of the sequence.
      */
-    private final AppendableIndexedSequence<DynamicTrampoline> trampolines = new ArrayListSequence<DynamicTrampoline>();
+    private final List<DynamicTrampoline> trampolines = new ArrayList<DynamicTrampoline>();
 
     private void traceDynamicTrampolines(int i) {
         if (i % 1000 == 0 && i != 0) {
@@ -45,10 +46,10 @@ public abstract class TrampolineGenerator {
     public abstract DynamicTrampoline createTrampoline(int dispatchTableIndex);
 
     public synchronized Address makeCallEntryPoint(int dispatchTableIndex) {
-        if (trampolines.length() <= dispatchTableIndex) {
-            for (int i = trampolines.length(); i <= dispatchTableIndex; i++) {
+        if (trampolines.size() <= dispatchTableIndex) {
+            for (int i = trampolines.size(); i <= dispatchTableIndex; i++) {
                 traceDynamicTrampolines(i);
-                trampolines.append(createTrampoline(i));
+                trampolines.add(createTrampoline(i));
             }
         }
         return VTABLE_ENTRY_POINT.in(trampolines.get(dispatchTableIndex).trampolineTargetMethod());

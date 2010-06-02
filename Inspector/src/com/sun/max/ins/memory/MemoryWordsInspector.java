@@ -23,10 +23,10 @@ package com.sun.max.ins.memory;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
@@ -90,7 +90,7 @@ public final class MemoryWordsInspector extends Inspector {
             return nextToolTip;
         }
 
-        public static final IndexedSequence<ViewMode> VALUES = new ArraySequence<ViewMode>(values());
+        public static final List<ViewMode> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 
     }
 

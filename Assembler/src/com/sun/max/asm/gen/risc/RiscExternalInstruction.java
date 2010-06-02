@@ -26,7 +26,6 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.field.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
@@ -54,20 +53,20 @@ import com.sun.max.lang.*;
 public class RiscExternalInstruction implements RiscInstructionDescriptionVisitor {
 
     protected final RiscTemplate template;
-    protected final Queue<Argument> arguments;
+    protected final LinkedList<Argument> arguments;
     protected final ImmediateArgument address;
     protected final AddressMapper addressMapper;
 
-    public RiscExternalInstruction(RiscTemplate template, Sequence<Argument> arguments) {
+    public RiscExternalInstruction(RiscTemplate template, List<Argument> arguments) {
         this.template = template;
-        this.arguments = new MutableQueue<Argument>(arguments);
+        this.arguments = new LinkedList<Argument>(arguments);
         this.address = null;
         this.addressMapper = null;
     }
 
-    public RiscExternalInstruction(RiscTemplate template, Sequence<Argument> arguments, ImmediateArgument address, AddressMapper addressMapper) {
+    public RiscExternalInstruction(RiscTemplate template, List<Argument> arguments, ImmediateArgument address, AddressMapper addressMapper) {
         this.template = template;
-        this.arguments = new MutableQueue<Argument>(arguments);
+        this.arguments = new LinkedList<Argument>(arguments);
         this.address = address;
         this.addressMapper = addressMapper;
     }

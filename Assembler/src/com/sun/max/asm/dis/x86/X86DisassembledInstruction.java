@@ -20,14 +20,15 @@
  */
 package com.sun.max.asm.dis.x86;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.cisc.x86.*;
-import com.sun.max.collect.*;
 
 public class X86DisassembledInstruction extends DisassembledInstruction {
 
-    public X86DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, X86Template template, IndexedSequence<Argument> arguments) {
+    public X86DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, X86Template template, List<Argument> arguments) {
         super(disassembler, position, bytes, template, arguments);
     }
 

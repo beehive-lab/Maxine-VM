@@ -20,9 +20,10 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.amd64.target;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -97,8 +98,10 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     }
 
     @Override
-    public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.appended(super.irGenerators(), targetGenerator());
+    public List<IrGenerator> irGenerators() {
+        final List<IrGenerator> result = new LinkedList<IrGenerator>(super.irGenerators());
+        result.add((IrGenerator) targetGenerator());
+        return result;
     }
 
     @INLINE

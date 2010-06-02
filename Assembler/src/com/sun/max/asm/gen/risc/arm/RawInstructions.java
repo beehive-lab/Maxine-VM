@@ -26,12 +26,12 @@ import static com.sun.max.asm.gen.InstructionConstraint.Static.*;
 import static com.sun.max.asm.gen.risc.arm.ARMFields.*;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.arm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
-import com.sun.max.collect.*;
 
 /**
  * Definitions of ARM instructions.
@@ -293,7 +293,7 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
      */
     public static Expression encodeShifterOperand(final Object term) {
         return new Expression() {
-            public long evaluate(Template template, IndexedSequence<Argument> arguments) {
+            public long evaluate(Template template, List<Argument> arguments) {
                 return ARMImmediates.calculateShifter((int) Static.evaluateTerm(term, template, arguments));
             }
 

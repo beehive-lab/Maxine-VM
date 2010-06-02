@@ -20,8 +20,9 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
+import java.util.*;
+
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 
 /**
  * 
@@ -35,7 +36,7 @@ public class X86InstructionDescriptionCreator extends InstructionDescriptionCrea
     }
 
     @Override
-    protected X86InstructionDescription createInstructionDescription(MutableSequence<Object> specifications) {
+    protected X86InstructionDescription createInstructionDescription(List<Object> specifications) {
         return new X86InstructionDescription(specifications);
     }
 }

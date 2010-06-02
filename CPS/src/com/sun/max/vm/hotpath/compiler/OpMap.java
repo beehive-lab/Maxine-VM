@@ -20,17 +20,19 @@
  */
 package com.sun.max.vm.hotpath.compiler;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.bytecode.BytecodeAggregatingVisitor.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.type.*;
 
 public class OpMap {
-    private static GrowableMapping<Pair<Operation, Kind>, Snippet> operationSnippets;
-    private static GrowableMapping<Pair<Operation, Kind>, Builtin> operationBuiltins;
-    private static GrowableMapping<Pair<Kind, Kind>, Snippet> conversionSnippets;
-    private static GrowableMapping<Pair<Kind, Kind>, Builtin> conversionBuiltins;
+    private static Map<Pair<Operation, Kind>, Snippet> operationSnippets;
+    private static Map<Pair<Operation, Kind>, Builtin> operationBuiltins;
+    private static Map<Pair<Kind, Kind>, Snippet> conversionSnippets;
+    private static Map<Pair<Kind, Kind>, Builtin> conversionBuiltins;
 
     private static Pair<Operation, Kind> from(Operation operation, Kind kind) {
         return new Pair<Operation, Kind>(operation, kind);
@@ -58,7 +60,7 @@ public class OpMap {
 
     static {
         // Operation Snippets
-        operationSnippets = new OpenAddressingHashMapping<Pair<Operation, Kind>, Snippet>();
+        operationSnippets = new HashMap<Pair<Operation, Kind>, Snippet>();
         operationSnippets.put(from(Operation.ALOAD, Kind.INT), ArrayGetSnippet.GetInt.SNIPPET);
         operationSnippets.put(from(Operation.ALOAD, Kind.LONG), ArrayGetSnippet.GetLong.SNIPPET);
         operationSnippets.put(from(Operation.ALOAD, Kind.FLOAT), ArrayGetSnippet.GetFloat.SNIPPET);
@@ -109,7 +111,7 @@ public class OpMap {
         operationSnippets.put(from(Operation.PUTFIELD, Kind.REFERENCE), FieldWriteSnippet.WriteReference.SNIPPET);
 
         // Operation Builtins
-        operationBuiltins = new OpenAddressingHashMapping<Pair<Operation, Kind>, Builtin>();
+        operationBuiltins = new HashMap<Pair<Operation, Kind>, Builtin>();
         operationBuiltins.put(from(Operation.ADD, Kind.INT), JavaBuiltin.IntPlus.BUILTIN);
         operationBuiltins.put(from(Operation.ADD, Kind.LONG), JavaBuiltin.LongPlus.BUILTIN);
         operationBuiltins.put(from(Operation.ADD, Kind.FLOAT), JavaBuiltin.FloatPlus.BUILTIN);
@@ -167,7 +169,7 @@ public class OpMap {
         operationBuiltins.put(from(Operation.CMPG, Kind.DOUBLE), JavaBuiltin.DoubleCompareG.BUILTIN);
 
         // Conversion Snippets
-        conversionSnippets = new OpenAddressingHashMapping<Pair<Kind, Kind>, Snippet>();
+        conversionSnippets = new HashMap<Pair<Kind, Kind>, Snippet>();
         conversionSnippets.put(from(Kind.FLOAT, Kind.INT), Snippet.ConvertFloatToInt.SNIPPET);
         conversionSnippets.put(from(Kind.FLOAT, Kind.LONG), Snippet.ConvertFloatToLong.SNIPPET);
 
@@ -175,7 +177,7 @@ public class OpMap {
         conversionSnippets.put(from(Kind.DOUBLE, Kind.LONG), Snippet.ConvertDoubleToLong.SNIPPET);
 
         // Conversion Builtins
-        conversionBuiltins = new OpenAddressingHashMapping<Pair<Kind, Kind>, Builtin>();
+        conversionBuiltins = new HashMap<Pair<Kind, Kind>, Builtin>();
         conversionBuiltins.put(from(Kind.INT, Kind.LONG), JavaBuiltin.ConvertIntToLong.BUILTIN);
         conversionBuiltins.put(from(Kind.INT, Kind.FLOAT), JavaBuiltin.ConvertIntToFloat.BUILTIN);
         conversionBuiltins.put(from(Kind.INT, Kind.DOUBLE), JavaBuiltin.ConvertIntToDouble.BUILTIN);

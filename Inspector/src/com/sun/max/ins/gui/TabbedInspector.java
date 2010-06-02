@@ -27,9 +27,9 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.lang.*;
 
 /**
  * An {@link Inspector} that contains within it a collection of inspectors in a tabbed frame.
@@ -89,7 +89,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
         if (component instanceof InspectorInternalFrame) {
             final InspectorFrame inspectorFrame = (InspectorFrame) component;
             final Class<Inspector_Type> type = null;
-            return StaticLoophole.cast(type, inspectorFrame.inspector());
+            return Utils.cast(type, inspectorFrame.inspector());
         }
         return null;
     }

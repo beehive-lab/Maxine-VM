@@ -51,7 +51,7 @@ public final class BootImageMethodTree {
     public static class Node {
 
         private final String name;
-        private AppendableSequence<Node> referents;
+        private List<Node> referents;
         private Relationship relationshipToReferrer;
 
         /**
@@ -71,9 +71,9 @@ public final class BootImageMethodTree {
          */
         void addReferent(Node referent, Relationship relationshipToReferent) {
             if (referents == null) {
-                referents = new ArrayListSequence<Node>();
+                referents = new ArrayList<Node>();
             }
-            referents.append(referent);
+            referents.add(referent);
             referent.relationshipToReferrer = relationshipToReferent;
         }
 
@@ -82,9 +82,9 @@ public final class BootImageMethodTree {
          *
          * @return a sequence of all the nodes that are children of this node
          */
-        public Sequence<Node> referents() {
+        public List<Node> referents() {
             if (referents == null) {
-                return Sequence.Static.empty(Node.class);
+                return Collections.emptyList();
             }
             return referents;
         }
@@ -130,7 +130,7 @@ public final class BootImageMethodTree {
          */
         private static void printTree(Node node, boolean showTreeLines, PrintWriter printWriter, String prefix, boolean lastChild) {
             printWriter.println(prefix + (showTreeLines ? (!lastChild ? LAST_SIBLING_PREFIX : OTHER_SIBLING_PREFIX) : "    ") + node);
-            final Sequence<Node> referents = node.referents();
+            final List<Node> referents = node.referents();
             if (!referents.isEmpty()) {
                 final String childPrefix = prefix + (showTreeLines ? (lastChild ? LAST_CHILD_INDENT : OTHER_CHILD_INDENT) : "    ");
                 for (final Iterator<Node> iterator = referents.iterator(); iterator.hasNext();) {
@@ -167,15 +167,15 @@ public final class BootImageMethodTree {
      * @param links the links to write to the data output stream
      * @throws IOException if there is a problem writing to the output stream
      */
-    public static void saveTree(DataOutputStream dataOutputStream, IterableWithLength<Link> links) throws IOException {
-        final GrowableMapping<String, Integer> methodPool = new ChainedHashMapping<String, Integer>();
-        final AppendableSequence<String> methodIds = new ArrayListSequence<String>(links.length() * 2);
+    public static void saveTree(DataOutputStream dataOutputStream, Collection<Link> links) throws IOException {
+        final Map<String, Integer> methodPool = new HashMap<String, Integer>();
+        final List<String> methodIds = new ArrayList<String>(links.size() * 2);
         int methodId = 0;
         methodPool.put("", methodId++);
         for (Link link : links) {
             final String referentName = link.referentName();
             if (!methodPool.containsKey(referentName)) {
-                methodIds.append(referentName);
+                methodIds.add(referentName);
                 methodPool.put(referentName, methodId++);
             }
             final String referrerName = link.referrerName();
@@ -183,14 +183,14 @@ public final class BootImageMethodTree {
                 if (referentName.equals(referrerName)) {
                     ProgramWarning.message("link with same name for referrer and referent: " + referentName);
                 }
-                methodIds.append(referentName);
+                methodIds.add(referentName);
                 methodPool.put(referrerName, methodId++);
             }
         }
-        assert methodId == methodPool.length();
-        assert methodId == methodIds.length() + 1;
+        assert methodId == methodPool.size();
+        assert methodId == methodIds.size() + 1;
 
-        dataOutputStream.writeInt(methodPool.length());
+        dataOutputStream.writeInt(methodPool.size());
         final Iterator<String> iterator = methodIds.iterator();
         while (iterator.hasNext()) {
             dataOutputStream.writeUTF(iterator.next());

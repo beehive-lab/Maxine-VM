@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.debug;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.unsafe.*;
@@ -46,8 +47,7 @@ public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements Max
      */
     private static final class ThreadLocalVariableMemoryRegion extends TeleFixedMemoryRegion implements MaxEntityMemoryRegion<MaxThreadLocalVariable> {
 
-        private static final IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY =
-            new ArrayListSequence<MaxEntityMemoryRegion< ? extends MaxEntity>>(0);
+        private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY = Collections.emptyList();
 
         private final MaxThreadLocalVariable owner;
 
@@ -61,7 +61,7 @@ public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements Max
             return threadLocalVariable.thread().localsBlock().threadLocalsAreaFor(threadLocalVariable.safepointState()).memoryRegion();
         }
 
-        public IndexedSequence<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
+        public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {
             return EMPTY;
         }
 

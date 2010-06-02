@@ -22,9 +22,9 @@ package com.sun.max.vm.cps.cir.transform;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.variable.*;
+import com.sun.max.vm.cps.collect.*;
 
 /**
  * A utility class for finding free variables within a CIR node. A free variable is one that is
@@ -134,7 +134,7 @@ public final class CirFreeVariableSearch {
         }
     }
 
-    public static void findFreeVariables(CirNode node, GrowableDeterministicSet<CirVariable> freeVariables) {
+    public static void findFreeVariables(CirNode node, LinkedIdentityHashSet<CirVariable> freeVariables) {
         final Queue<Inspection> inspectionQueue = new LinkedList<Inspection>();
         Binding scope = null;
         CirNode currentNode = node;
@@ -176,19 +176,19 @@ public final class CirFreeVariableSearch {
      * @param node
      * @return the set of free variables within {@code node}.
      */
-    public static DeterministicSet<CirVariable> run(CirNode node) {
+    public static LinkedIdentityHashSet<CirVariable> run(CirNode node) {
         if (node instanceof CirContinuationVariable) {
-            return DeterministicSet.Static.empty(CirVariable.class);
+            return new LinkedIdentityHashSet<CirVariable>();
         }
-        final GrowableDeterministicSet<CirVariable> freeVariableSet = new LinkedIdentityHashSet<CirVariable>();
+        final LinkedIdentityHashSet<CirVariable> freeVariableSet = new LinkedIdentityHashSet<CirVariable>();
         findFreeVariables(node, freeVariableSet);
         return freeVariableSet;
     }
 
     public static void applyClosureConversion(CirClosure closure) {
-        final GrowableDeterministicSet<CirVariable> freeVariableSet = new LinkedIdentityHashSet<CirVariable>();
+        final LinkedIdentityHashSet<CirVariable> freeVariableSet = new LinkedIdentityHashSet<CirVariable>();
         findFreeVariables(closure, freeVariableSet);
-        final CirVariable[] parameters = Sequence.Static.toArray(freeVariableSet, new CirVariable[freeVariableSet.length()]);
+        final CirVariable[] parameters = freeVariableSet.toArray(new CirVariable[freeVariableSet.size()]);
         closure.setParameters(parameters);
 
     }

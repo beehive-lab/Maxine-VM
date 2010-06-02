@@ -20,10 +20,11 @@
  */
 package com.sun.max.asm.gen.risc.field;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.collect.*;
 
 /**
  * An instruction field whose encoded value does not include bits for
@@ -52,7 +53,7 @@ public class AlignedImmediateOperandField extends ImmediateOperandField {
     }
 
     @Override
-    public boolean check(Template template, IndexedSequence<Argument> arguments) {
+    public boolean check(Template template, List<Argument> arguments) {
         if (!super.check(template, arguments)) {
             return false;
         }

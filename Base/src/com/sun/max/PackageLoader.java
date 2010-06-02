@@ -22,7 +22,6 @@ package com.sun.max;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -67,15 +66,15 @@ public class PackageLoader {
      *            denoted by {@code packageName} are loaded
      * @return the loaded classes
      */
-    public Sequence<Class> load(final String packageName, final boolean recursive) {
+    public List<Class> load(final String packageName, final boolean recursive) {
         Trace.line(traceLevel, "loading: " + packageName);
-        final AppendableSequence<Class> classes = new ArrayListSequence<Class>();
+        final List<Class> classes = new ArrayList<Class>();
         String[] classNames = listClassesInPackage(packageName, recursive);
         for (String className : classNames) {
             final Class javaClass = loadClass(className);
             if (javaClass != null) {
                 Classes.link(javaClass);
-                classes.append(javaClass);
+                classes.add(javaClass);
             }
         }
         ProgramWarning.check(classNames.length != 0, "no classes found in package: " + packageName);
@@ -116,7 +115,7 @@ public class PackageLoader {
      *            {@code maxPackage} are loaded
      * @return the loaded classes
      */
-    public Sequence<Class> load(MaxPackage maxPackage, boolean recursive) {
+    public List<Class> load(MaxPackage maxPackage, boolean recursive) {
         return load(maxPackage.name(), recursive);
     }
 

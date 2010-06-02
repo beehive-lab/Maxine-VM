@@ -20,13 +20,14 @@
  */
 package com.sun.max.asm.dis.ppc;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.risc.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.ppc.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
@@ -41,7 +42,7 @@ public abstract class PPCDisassembler extends RiscDisassembler {
     }
 
     @Override
-    protected DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, IndexedSequence<Argument> arguments) {
+    protected DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, List<Argument> arguments) {
         return new DisassembledInstruction(this, position, bytes, template, arguments);
     }
 }

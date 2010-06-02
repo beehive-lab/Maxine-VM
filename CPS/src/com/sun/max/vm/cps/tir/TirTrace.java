@@ -20,7 +20,9 @@
  */
 package com.sun.max.vm.cps.tir;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.cps.tir.pipeline.*;
 import com.sun.max.vm.hotpath.compiler.*;
@@ -29,7 +31,7 @@ import com.sun.max.vm.hotpath.state.*;
 public class TirTrace {
     private TirTree tree;
     private TraceAnchor anchor;
-    private AppendableIndexedSequence<TirInstruction> instructions = new ArrayListSequence<TirInstruction>();
+    private List<TirInstruction> instructions = new ArrayList<TirInstruction>();
     private TirState tailState;
 
     public TirTrace(TirTree tree, TraceAnchor anchor) {
@@ -37,18 +39,18 @@ public class TirTrace {
         this.anchor = anchor;
     }
 
-    public Sequence<TirInstruction> instructions() {
+    public List<TirInstruction> instructions() {
         return instructions;
     }
 
-    public void append(Sequence<TirInstruction> instructionList) {
+    public void append(List<TirInstruction> instructionList) {
         for (TirInstruction instruction : instructionList) {
             append(instruction);
         }
     }
 
     public void append(TirInstruction instruction) {
-        instructions.append(instruction);
+        instructions.add(instruction);
     }
 
     public void send(TirMessageSink sink) {
@@ -58,7 +60,7 @@ public class TirTrace {
     }
 
     public void sendInstructions(TirMessageSink sink) {
-        for (int i = instructions.length() - 1; i >= 0; i--) {
+        for (int i = instructions.size() - 1; i >= 0; i--) {
             sink.receive(instructions.get(i));
         }
     }
@@ -69,7 +71,7 @@ public class TirTrace {
 
     public void complete(TirState tailState) {
         ProgramError.check(tree.entryState().matches(tailState), "Tail state should match entry state!");
-        ProgramError.check(Sequence.Static.containsIdentical(tree.traces(), this), "This trace should already be in the tree!");
+        ProgramError.check(Utils.indexOfIdentical(tree.traces(), this) != -1, "This trace should already be in the tree!");
         this.tailState = tailState;
 
         // Inspect locals that were modified on this trace.

@@ -22,6 +22,7 @@ package com.sun.max.vm.grip.prototype;
 
 import java.lang.reflect.*;
 
+import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -148,7 +149,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
         try {
             if (fieldDescriptor.toKind().isWord) {
                 final Class<Class<? extends Word>> type = null;
-                final Word word = value.toWord().as(StaticLoophole.cast(type, field.getType()));
+                final Word word = value.toWord().as(Utils.cast(type, field.getType()));
                 field.set(object, word);
             } else {
                 field.set(object, fieldActor.kind.convert(value).asBoxedJavaValue());

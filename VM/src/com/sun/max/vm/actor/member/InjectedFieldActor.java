@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.actor.member;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.reference.*;
@@ -71,24 +73,21 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
         /**
          * Appends the injected fields (if any) for a given class.
          *
-         * @param staticFields specifies if {@code fieldActors} contains only static fields or only dynamic fields
-         * @param fieldActors the fields explicitly declared for the class (e.g. in a class file). This sequence will
+         * @param isStatic specifies if {@code fieldActors} contains only static fields or only instance fields
+         * @param fieldActors the fields explicitly declared for the class (e.g. in a class file). This list will
          *            have one or more fields appended to it if {@code holder} denotes a class for which there are
          *            injected fields
          * @param holder the holder of {@code fieldActors}
-         * @return the result of appending the injected fields (if any) to {@code fieldActors}
          */
-        public static FieldActor[] injectFieldActors(boolean staticFields, FieldActor[] fieldActors, TypeDescriptor holder) {
-            FieldActor[] result = fieldActors;
+        public static void injectFieldActors(boolean isStatic, List<FieldActor> fieldActors, TypeDescriptor holder) {
             for (InjectedFieldActor injectedFieldActor : injectedFieldActors) {
                 if (injectedFieldActor.holderTypeDescriptor().equals(holder)) {
                     final FieldActor fieldActor = (FieldActor) injectedFieldActor;
-                    if (fieldActor.isStatic() == staticFields) {
-                        result = Arrays.append(result, fieldActor);
+                    if (fieldActor.isStatic() == isStatic) {
+                        fieldActors.add(fieldActor);
                     }
                 }
             }
-            return result;
         }
     }
 }

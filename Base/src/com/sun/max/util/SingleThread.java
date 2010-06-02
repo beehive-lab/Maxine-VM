@@ -22,6 +22,7 @@ package com.sun.max.util;
 
 import java.util.concurrent.*;
 
+import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -48,7 +49,7 @@ public class SingleThread extends Thread {
 
     private static final boolean disabled = false;
 
-    public static synchronized <Result_Type> Result_Type execute(Function<Result_Type> function) {
+    public static synchronized <V> V execute(Function<V> function) {
         if (disabled || Thread.currentThread() == worker) {
             try {
                 return function.call();
@@ -56,24 +57,24 @@ public class SingleThread extends Thread {
                 ProgramError.unexpected(exception);
             }
         }
-        final Future<Result_Type> future = executorService.submit(function);
+        final Future<V> future = executorService.submit(function);
         while (true) {
             try {
                 return future.get();
             } catch (ExecutionException e) {
-                throw Exceptions.cast(RuntimeException.class, e.getCause());
+                throw Utils.cast(RuntimeException.class, e.getCause());
             } catch (InterruptedException exception) {
                 // continue
             }
         }
     }
 
-    public static <Result_Type> Result_Type executeWithException(Function<Result_Type> function) throws Exception {
+    public static <V> V executeWithException(Function<V> function) throws Exception {
         if (disabled || Thread.currentThread() == worker) {
             return function.call();
         }
         synchronized (executorService) {
-            final Future<Result_Type> future = executorService.submit(function);
+            final Future<V> future = executorService.submit(function);
             while (true) {
                 try {
                     return future.get();

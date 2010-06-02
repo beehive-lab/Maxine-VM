@@ -22,8 +22,8 @@ package com.sun.max.tele.debug.solaris;
 
 import java.io.*;
 import java.nio.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxWatchpoint.*;
@@ -123,10 +123,10 @@ public final class SolarisTeleProcess extends TeleProcess {
         return ProcessState.VALUES[result];
     }
 
-    private native void nativeGatherThreads(long processHandle, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialVmThreadLocals);
+    private native void nativeGatherThreads(long processHandle, List<TeleNativeThread> threads, long threadLocalsList, long primordialVmThreadLocals);
 
     @Override
-    protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
+    protected void gatherThreads(List<TeleNativeThread> threads) {
         final Word primordialVmThreadLocals = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.primordialThreadLocalsOffset));
         final Word threadLocalsList = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.threadLocalsListHeadOffset));
         nativeGatherThreads(processHandle, threads, threadLocalsList.asAddress().toLong(), primordialVmThreadLocals.asAddress().toLong());

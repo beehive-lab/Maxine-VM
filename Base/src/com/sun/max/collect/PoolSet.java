@@ -22,8 +22,6 @@ package com.sun.max.collect;
 
 import java.util.*;
 
-import com.sun.max.lang.Arrays;
-
 /**
  * A representation for a subset of objects in a {@linkplain Pool pool}. The recommended mechanism for creating a pool
  * set is by calling {@link #noneOf(Pool)}, {@link #allOf(Pool)}, {@link #of(Pool, PoolObject[])} or
@@ -32,34 +30,34 @@ import com.sun.max.lang.Arrays;
  *
  * @author Doug Simon
  */
-public abstract class PoolSet<PoolObject_Type extends PoolObject> implements Cloneable, IterableWithLength<PoolObject_Type> {
+public abstract class PoolSet<T extends PoolObject> implements Cloneable, Iterable<T> {
 
-    protected final Pool<PoolObject_Type> pool;
+    protected final Pool<T> pool;
 
-    protected PoolSet(Pool<PoolObject_Type> pool) {
+    protected PoolSet(Pool<T> pool) {
         this.pool = pool;
     }
 
     /**
      * Gets the number of objects in this set.
      */
-    public abstract int length();
+    public abstract int size();
 
     /**
      * Adds a value to this set. The value must be in the {@linkplain #pool() underlying pool}.
      */
-    public abstract void add(PoolObject_Type value);
+    public abstract void add(T value);
 
     /**
      * Determines if a given value is in this set. The value must be in the {@linkplain #pool() underlying pool}.
      */
-    public abstract boolean contains(PoolObject_Type value);
+    public abstract boolean contains(T value);
 
     /**
      * Determines if this set contains all the values present in a given set.
      */
-    public boolean containsAll(PoolSet<PoolObject_Type> others) {
-        for (PoolObject_Type value : others) {
+    public boolean containsAll(PoolSet<T> others) {
+        for (T value : others) {
             if (!contains(value)) {
                 return false;
             }
@@ -72,19 +70,19 @@ public abstract class PoolSet<PoolObject_Type extends PoolObject> implements Clo
      *
      * @return true if this set contained {@code value}
      */
-    public abstract boolean remove(PoolObject_Type value);
+    public abstract boolean remove(T value);
 
     /**
      * Removes an arbitrary value from this set. The value must be in the {@linkplain #pool() underlying pool}.
      *
      * @throws NoSuchElementException if this set is empty
      */
-    public abstract PoolObject_Type removeOne() throws NoSuchElementException;
+    public abstract T removeOne() throws NoSuchElementException;
 
     /**
      * Gets the pool containing the values that are in or may be added to this set.
      */
-    public Pool<PoolObject_Type> pool() {
+    public Pool<T> pool() {
         return pool;
     }
 
@@ -98,13 +96,13 @@ public abstract class PoolSet<PoolObject_Type extends PoolObject> implements Clo
      *
      * @return this set
      */
-    public abstract PoolSet<PoolObject_Type> addAll();
+    public abstract PoolSet<T> addAll();
 
     /**
      * Adds all entries from another pool set to this set.
      */
-    public void or(PoolSet<PoolObject_Type> others) {
-        for (PoolObject_Type element : others) {
+    public void or(PoolSet<T> others) {
+        for (T element : others) {
             add(element);
         }
     }
@@ -112,13 +110,13 @@ public abstract class PoolSet<PoolObject_Type extends PoolObject> implements Clo
     /**
      * Removes all the entries from this set that are not in a given set.
      */
-    public abstract void and(PoolSet<PoolObject_Type> others);
+    public abstract void and(PoolSet<T> others);
 
     /**
      * Creates a copy of this pool set. The copy has the same pool object as this pool set.
      */
     @Override
-    public abstract PoolSet<PoolObject_Type> clone();
+    public abstract PoolSet<T> clone();
 
     /**
      * @return true if there are no values in this set
@@ -133,48 +131,57 @@ public abstract class PoolSet<PoolObject_Type extends PoolObject> implements Clo
         return toString(this);
     }
 
+    public T[] toArray(T[] a) {
+        assert a.length == size();
+        int i = 0;
+        for (T element : this) {
+            a[i++] = element;
+        }
+        return a;
+    }
+
     /**
      * Creates an empty pool set for a given pool.
      *
-     * @param <PoolObject_Type> the type of objects in {@code pool}
+     * @param <T> the type of objects in {@code pool}
      * @param pool the pool of objects that the returned set provides a view upon
      * @return an empty pool set that can be subsequently modified to contain objects from {@code pool}
      */
-    public static <PoolObject_Type extends PoolObject> PoolSet<PoolObject_Type> noneOf(Pool<PoolObject_Type> pool) {
+    public static <T extends PoolObject> PoolSet<T> noneOf(Pool<T> pool) {
         if (pool.length() <= PoolSet64.MAX_POOL_SIZE) {
-            return new PoolSet64<PoolObject_Type>(pool);
+            return new PoolSet64<T>(pool);
         }
         if (pool.length() <= PoolSet128.MAX_POOL_SIZE) {
-            return new PoolSet128<PoolObject_Type>(pool);
+            return new PoolSet128<T>(pool);
         }
-        return new PoolBitSet<PoolObject_Type>(pool);
+        return new PoolBitSet<T>(pool);
     }
 
     /**
      * Creates a pool set initially containing all the objects in a given pool.
      *
-     * @param <PoolObject_Type> the type of objects in {@code pool}
+     * @param <T> the type of objects in {@code pool}
      * @param pool the pool of objects that the returned set provides a view upon
      * @return a pool set containing all the objects in {@code pool}
      */
-    public static <PoolObject_Type extends PoolObject> PoolSet<PoolObject_Type> allOf(Pool<PoolObject_Type> pool) {
+    public static <T extends PoolObject> PoolSet<T> allOf(Pool<T> pool) {
         return noneOf(pool).addAll();
     }
 
     /**
      * Creates a pool set initially containing one or more objects from a given pool.
      *
-     * @param <PoolObject_Type> the type of objects in {@code pool}
-     * @param <PoolObject_SubType> the type of objects that can be added to the pool by this method
+     * @param <T> the type of objects in {@code pool}
+     * @param <S> the type of objects that can be added to the pool by this method
      * @param pool the pool of objects that the returned set provides a view upon
      * @param first an object that will be in the returned set
      * @param rest zero or more objects that will be in the returned set
      * @return a pool set containing {@code first} and all the objects in {@code rest}
      */
-    public static <PoolObject_Type extends PoolObject, PoolObject_SubType extends PoolObject_Type> PoolSet<PoolObject_Type> of(Pool<PoolObject_Type> pool, PoolObject_SubType first, PoolObject_SubType... rest) {
-        final PoolSet<PoolObject_Type> poolSet = noneOf(pool);
+    public static <T extends PoolObject, S extends T> PoolSet<T> of(Pool<T> pool, S first, S... rest) {
+        final PoolSet<T> poolSet = noneOf(pool);
         poolSet.add(first);
-        for (PoolObject_Type object : rest) {
+        for (T object : rest) {
             poolSet.add(object);
         }
         return poolSet;
@@ -183,15 +190,15 @@ public abstract class PoolSet<PoolObject_Type extends PoolObject> implements Clo
     /**
      * Creates a pool set initially containing all the objects specified by a given array that are also in a given pool.
      *
-     * @param <PoolObject_Type> the type of objects in {@code pool}
-     * @param <PoolObject_SubType> the type of objects that can be added to the pool by this method
+     * @param <T> the type of objects in {@code pool}
+     * @param <S> the type of objects that can be added to the pool by this method
      * @param pool the pool of objects that the returned set provides a view upon
      * @param objects zero or more objects that will be in the returned set
      * @return a pool set containing all the objects in {@code objects}
      */
-    public static <PoolObject_Type extends PoolObject, PoolObject_SubType extends PoolObject_Type> PoolSet<PoolObject_Type> of(Pool<PoolObject_Type> pool, PoolObject_SubType[] objects) {
-        final PoolSet<PoolObject_Type> poolSet = noneOf(pool);
-        for (PoolObject_Type object : objects) {
+    public static <T extends PoolObject, S extends T> PoolSet<T> of(Pool<T> pool, S[] objects) {
+        final PoolSet<T> poolSet = noneOf(pool);
+        for (T object : objects) {
             poolSet.add(object);
         }
         return poolSet;
@@ -200,39 +207,22 @@ public abstract class PoolSet<PoolObject_Type extends PoolObject> implements Clo
     /**
      * Adds all objects returned by a given iterable's iterator to a given pool set.
      *
-     * @param <PoolObject_Type> the type of objects in {@code poolSet}
+     * @param <T> the type of objects in {@code poolSet}
      * @param poolSet the set to which the objects are added
      * @param elements a collection of objects
      */
-    public static <PoolObject_Type extends PoolObject> void addAll(PoolSet<PoolObject_Type> poolSet, Iterable<PoolObject_Type> elements) {
-        for (PoolObject_Type element : elements) {
+    public static <T extends PoolObject> void addAll(PoolSet<T> poolSet, Iterable<T> elements) {
+        for (T element : elements) {
             poolSet.add(element);
         }
     }
 
-    /**
-     * Copies the objects in a given pool set into an array.
-     *
-     * @param <PoolObject_Type> the type of objects in {@code poolSet}
-     * @param poolSet a set of objects in a pool
-     * @param elementType the class literal for the type of objects in {@code poolSet}
-     * @return an array of the objects in {@code poolSet}, ordered by their serial numbers
-     */
-    public static <PoolObject_Type extends PoolObject> PoolObject_Type[] toArray(PoolSet<PoolObject_Type> poolSet, Class<PoolObject_Type> elementType) {
-        final PoolObject_Type[] array = Arrays.newInstance(elementType, poolSet.length());
-        int i = 0;
-        for (PoolObject_Type element : poolSet) {
-            array[i++] = element;
-        }
-        return array;
-    }
-
-    public static <PoolObject_Type extends PoolObject> boolean match(PoolSet<PoolObject_Type> poolSet1, PoolSet<PoolObject_Type> poolSet2) {
+    public static <T extends PoolObject> boolean match(PoolSet<T> poolSet1, PoolSet<T> poolSet2) {
         if (!poolSet1.pool().equals(poolSet2.pool())) {
             return false;
         }
-        final Iterator<PoolObject_Type> iterator1 = poolSet1.iterator();
-        final Iterator<PoolObject_Type> iterator2 = poolSet2.iterator();
+        final Iterator<T> iterator1 = poolSet1.iterator();
+        final Iterator<T> iterator2 = poolSet2.iterator();
         while (iterator1.hasNext() && iterator2.hasNext()) {
             if (!iterator1.next().equals(iterator2.next())) {
                 return false;

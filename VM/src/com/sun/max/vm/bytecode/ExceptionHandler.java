@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.bytecode;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 
@@ -106,10 +107,11 @@ public final class ExceptionHandler {
      *
      * @return an array mapping each byte code position to an exception handler list (or null)
      */
-    public static ExceptionHandler[] createHandlerMap(int codeLength, Sequence<ExceptionHandlerEntry> exceptionHandlerEntries) {
+    public static ExceptionHandler[] createHandlerMap(int codeLength, ExceptionHandlerEntry[] exceptionHandlerEntries) {
         final ExceptionHandler[] handlerMap = new ExceptionHandler[codeLength];
-        final GrowableMapping<ExceptionHandler, ExceptionHandler> handlers = new HashEntryChainedHashMapping<ExceptionHandler, ExceptionHandler>(null);
-        for (ExceptionHandlerEntry info : Sequence.Static.reverse(exceptionHandlerEntries)) {
+        final HashMap<ExceptionHandler, ExceptionHandler> handlers = new HashMap<ExceptionHandler, ExceptionHandler>();
+        for (int i = exceptionHandlerEntries.length - 1; i >= 0; i--) {
+            ExceptionHandlerEntry info = exceptionHandlerEntries[i];
             final int catchTypeIndex = info.catchTypeIndex();
             for (int position = info.startPosition(); position < info.endPosition(); position++) {
                 final ExceptionHandler candidate = new ExceptionHandler(handlerMap[position], catchTypeIndex, info.handlerPosition());
@@ -125,8 +127,8 @@ public final class ExceptionHandler {
     }
 
     public static ExceptionHandler[] createHandlerMap(CodeAttribute codeAttribute) {
-        final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
-        if (exceptionHandlerTable.isEmpty()) {
+        final ExceptionHandlerEntry[] exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
+        if (exceptionHandlerTable.length == 0) {
             return null;
         }
         return createHandlerMap(codeAttribute.code().length, exceptionHandlerTable);

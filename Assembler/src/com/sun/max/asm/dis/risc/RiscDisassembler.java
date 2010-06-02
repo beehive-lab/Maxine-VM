@@ -21,15 +21,16 @@
 package com.sun.max.asm.dis.risc;
 
 import java.io.*;
+import java.util.*;
 import java.util.Arrays;
 
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
 import com.sun.max.asm.gen.risc.field.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -66,20 +67,20 @@ public abstract class RiscDisassembler extends Disassembler {
      * @return the decoded arguments for each operand or null if at least one operand has
      *         an invalid value in the encoded instruction
      */
-    private IndexedSequence<Argument> disassemble(int instruction, RiscTemplate template) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
+    private List<Argument> disassemble(int instruction, RiscTemplate template) {
+        final List<Argument> arguments = new ArrayList<Argument>();
         for (OperandField operandField : template.parameters()) {
             final Argument argument = operandField.disassemble(instruction);
             if (argument == null) {
                 return null;
             }
-            arguments.append(argument);
+            arguments.add(argument);
         }
         return arguments;
     }
 
-    private boolean isLegalArgumentList(RiscTemplate template, IndexedSequence<Argument> arguments) {
-        final Sequence<InstructionConstraint> constraints = template.instructionDescription().constraints();
+    private boolean isLegalArgumentList(RiscTemplate template, List<Argument> arguments) {
+        final List<InstructionConstraint> constraints = template.instructionDescription().constraints();
         for (InstructionConstraint constraint : constraints) {
             if (!(constraint.check(template, arguments))) {
                 return false;
@@ -98,12 +99,12 @@ public abstract class RiscDisassembler extends Disassembler {
      * @param arguments the arguments of the instruction encoded in {@code bytes}
      * @return a disassembled instruction representing the result of decoding {@code bytes} into an instruction
      */
-    protected abstract DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, IndexedSequence<Argument> arguments);
+    protected abstract DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, List<Argument> arguments);
 
     @Override
-    public Sequence<DisassembledObject> scanOne0(BufferedInputStream stream) throws IOException, AssemblyException {
+    public List<DisassembledObject> scanOne0(BufferedInputStream stream) throws IOException, AssemblyException {
         final int instruction = endianness().readInt(stream);
-        final AppendableSequence<DisassembledObject> result = new LinkSequence<DisassembledObject>();
+        final List<DisassembledObject> result = new LinkedList<DisassembledObject>();
         final byte[] instructionBytes = endianness().toBytes(instruction);
         for (SpecificityGroup specificityGroup : assembly().specificityGroups()) {
             for (OpcodeMaskGroup opcodeMaskGroup : specificityGroup.opcodeMaskGroups()) {
@@ -112,8 +113,8 @@ public abstract class RiscDisassembler extends Disassembler {
                     // Skip synthetic instructions when preference is for raw instructions,
                     // and skip instructions with a different number of arguments than requested if so (i.e. when running the AssemblyTester):
                     if (template != null && template.isDisassemblable() && ((abstractionPreference() == AbstractionPreference.SYNTHETIC) || !template.instructionDescription().isSynthetic())) {
-                        final IndexedSequence<Argument> arguments = disassemble(instruction, template);
-                        if (arguments != null && (expectedNumberOfArguments() < 0 || arguments.length() == expectedNumberOfArguments())) {
+                        final List<Argument> arguments = disassemble(instruction, template);
+                        if (arguments != null && (expectedNumberOfArguments() < 0 || arguments.size() == expectedNumberOfArguments())) {
                             if (isLegalArgumentList(template, arguments)) {
                                 final Assembler assembler = createAssembler(currentPosition);
                                 try {
@@ -121,7 +122,7 @@ public abstract class RiscDisassembler extends Disassembler {
                                     final byte[] bytes = assembler.toByteArray();
                                     if (Arrays.equals(bytes, instructionBytes)) {
                                         final DisassembledInstruction disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
-                                        result.append(disassembledInstruction);
+                                        result.add(disassembledInstruction);
                                     }
                                 } catch (AssemblyException assemblyException) {
                                     ProgramWarning.message("could not assemble matching instruction: " + template);
@@ -137,7 +138,7 @@ public abstract class RiscDisassembler extends Disassembler {
                 stream.reset();
                 final InlineData inlineData = new InlineData(currentPosition, instructionBytes);
                 final DisassembledData disassembledData = createDisassembledDataObjects(inlineData).iterator().next();
-                result.append(disassembledData);
+                result.add(disassembledData);
             } else {
                 throw new AssemblyException("instruction could not be disassembled: " + Bytes.toHexLiteral(endianness().toBytes(instruction)));
             }
@@ -147,21 +148,21 @@ public abstract class RiscDisassembler extends Disassembler {
     }
 
     @Override
-    public IndexedSequence<DisassembledObject> scan0(BufferedInputStream stream) throws IOException, AssemblyException {
-        final AppendableIndexedSequence<DisassembledObject> result = new ArrayListSequence<DisassembledObject>();
+    public List<DisassembledObject> scan0(BufferedInputStream stream) throws IOException, AssemblyException {
+        final List<DisassembledObject> result = new ArrayList<DisassembledObject>();
         try {
             while (true) {
 
                 scanInlineData(stream, result);
 
-                final Sequence<DisassembledObject> disassembledObjects = scanOne(stream);
+                final List<DisassembledObject> disassembledObjects = scanOne(stream);
                 boolean foundSyntheticDisassembledInstruction = false;
                 if (abstractionPreference() == AbstractionPreference.SYNTHETIC) {
                     for (DisassembledObject disassembledObject : disassembledObjects) {
                         if (disassembledObject instanceof DisassembledInstruction) {
                             final DisassembledInstruction disassembledInstruction = (DisassembledInstruction) disassembledObject;
                             if (disassembledInstruction.template().instructionDescription().isSynthetic()) {
-                                result.append(disassembledInstruction);
+                                result.add(disassembledInstruction);
                                 foundSyntheticDisassembledInstruction = true;
                                 break;
                             }
@@ -169,7 +170,7 @@ public abstract class RiscDisassembler extends Disassembler {
                     }
                 }
                 if (!foundSyntheticDisassembledInstruction) {
-                    result.append(disassembledObjects.first());
+                    result.add(Utils.first(disassembledObjects));
                 }
             }
         } catch (IOException ioException) {

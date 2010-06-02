@@ -20,10 +20,11 @@
  */
 package com.sun.max.asm.gen.risc.field;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
@@ -70,7 +71,7 @@ public class OptionField extends RiscField {
         return defaultOption;
     }
 
-    protected AppendableSequence<Option> options = new LinkSequence<Option>();
+    protected List<Option> options = new LinkedList<Option>();
 
     public Iterable<Option> options() {
         return options;
@@ -79,7 +80,7 @@ public class OptionField extends RiscField {
     @Override
     public OptionField clone() {
         final OptionField result = (OptionField) super.clone();
-        result.options = new LinkSequence<Option>(options);
+        result.options = new LinkedList<Option>(options);
         return result;
     }
 
@@ -99,7 +100,7 @@ public class OptionField extends RiscField {
                 ProgramError.unexpected("duplicate option: " + option);
             }
         }
-        result.options.append(newOption);
+        result.options.add(newOption);
 
         if (name.equals("")) {
             result.defaultOption = newOption;

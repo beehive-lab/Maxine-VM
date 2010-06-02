@@ -23,6 +23,7 @@ package com.sun.max.vm.cps.eir;
 import static com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
@@ -50,7 +51,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         super(targetGeneratorScheme, instructionSet);
     }
 
-    private Address fixLiteralLabels(EirTargetEmitter emitter, Sequence<EirLiteral> literals, Address address) {
+    private Address fixLiteralLabels(EirTargetEmitter emitter, Collection<EirLiteral> literals, Address address) {
         Address a = address;
         for (EirLiteral literal : literals) {
             emitter.fixLabel(literal.asLabel(), a);
@@ -59,12 +60,11 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         return a;
     }
 
-    private byte[] packScalarLiteralBytes(Sequence<EirLiteral> scalarLiterals, DataModel dataModel) {
+    private byte[] packScalarLiteralBytes(Collection<EirLiteral> scalarLiterals, DataModel dataModel) {
         if (scalarLiterals.isEmpty()) {
             return null;
         }
-        final EirLiteral lastLiteral = scalarLiterals.last();
-        final ByteArrayOutputStream stream = new ByteArrayOutputStream(lastLiteral.index() + lastLiteral.value().kind().width.numberOfBytes);
+        final ByteArrayOutputStream stream = new ByteArrayOutputStream(64);
         for (EirLiteral literal : scalarLiterals) {
             try {
                 assert literal.index() == stream.size();
@@ -76,11 +76,11 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         return stream.toByteArray();
     }
 
-    private Object[] packReferenceLiterals(Sequence<EirLiteral> referenceLiterals) {
+    private Object[] packReferenceLiterals(Collection<EirLiteral> referenceLiterals) {
         if (referenceLiterals.isEmpty()) {
             return null;
         }
-        final Object[] result = new Object[referenceLiterals.length()];
+        final Object[] result = new Object[referenceLiterals.size()];
         int i = 0;
         for (EirLiteral referenceLiteral : referenceLiterals) {
             if (MaxineVM.isHosted()) {
@@ -94,17 +94,17 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         return result;
     }
 
-    private int[] packLabelPositions(Sequence... labelSequences) {
+    private int[] packLabelPositions(List... labelSequences) {
         int n = 0;
-        for (Sequence labels : labelSequences) {
-            n += labels.length();
+        for (List labels : labelSequences) {
+            n += labels.size();
         }
         if (n == 0) {
             return null;
         }
         final int[] positions = new int[n];
         int i = 0;
-        for (Sequence<Label> labels : labelSequences) {
+        for (List<Label> labels : labelSequences) {
             try {
                 for (Label label : labels) {
                     positions[i] = label.position();
@@ -139,13 +139,13 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         }
     }
 
-    private int[] packCatchBlockPositions(IndexedSequence<EirBlock> eirBlocks) {
+    private int[] packCatchBlockPositions(List<EirBlock> eirBlocks) {
         if (eirBlocks.isEmpty()) {
             return null;
         }
-        final int[] positions = new int[eirBlocks.length()];
+        final int[] positions = new int[eirBlocks.size()];
         try {
-            for (int i = 0; i < eirBlocks.length(); i++) {
+            for (int i = 0; i < eirBlocks.size(); i++) {
                 final EirBlock eirBlock = eirBlocks.get(i);
                 if (eirBlock == null) {
                     positions[i] = 0; // indicate non-catching by an impossible value for a catch block position
@@ -159,11 +159,11 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         return positions;
     }
 
-    private ClassMethodActor[] packDirectCallees(Sequence<EirCall> directCalls) {
+    private ClassMethodActor[] packDirectCallees(List<EirCall> directCalls) {
         if (directCalls.isEmpty()) {
             return null;
         }
-        final ClassMethodActor[] callees = new ClassMethodActor[directCalls.length()];
+        final ClassMethodActor[] callees = new ClassMethodActor[directCalls.size()];
         int i = 0;
         for (EirCall call : directCalls) {
             final EirMethodValue methodValue =  (EirMethodValue) call.function().eirValue();
@@ -226,8 +226,8 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
         final DataModel dataModel = compilerScheme().vmConfiguration().platform().processorKind.dataModel;
 
-        final Sequence<EirLiteral> scalarLiterals = eirMethod.literalPool().scalarLiterals();
-        final Sequence<EirLiteral> referenceLiterals = eirMethod.literalPool().referenceLiterals();
+        final Collection<EirLiteral> scalarLiterals = eirMethod.literalPool().scalarLiterals();
+        final Collection<EirLiteral> referenceLiterals = eirMethod.literalPool().referenceLiterals();
 
         final byte[] scalarLiteralBytes = packScalarLiteralBytes(scalarLiterals, dataModel);
         final Object[] referenceLiteralObjects = packReferenceLiterals(referenceLiterals);
@@ -259,14 +259,14 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         targetBundleLayout.update(ArrayField.code, code.length);
         Code.allocate(targetBundleLayout, targetMethod);
 
-        final Sequence<EirCall> directCalls = emitter.directCalls();
+        final List<EirCall> directCalls = emitter.directCalls();
         final int[] stopPositions = packLabelPositions(emitter.directCallLabels(), emitter.indirectCallLabels(), emitter.safepointLabels());
         encodeExtraStopPositionInfo(stopPositions, emitter);
         final byte[] compressedJavaFrameDescriptors = targetMethod.classMethodActor().isTemplate() ? null : emitter.getCompressedJavaFrameDescriptors();
 
-        final int numberOfDirectCalls = emitter.directCallLabels().length();
-        final int numberOfIndirectCalls = emitter.indirectCallLabels().length();
-        final int numberOfSafepoints = emitter.safepointLabels().length();
+        final int numberOfDirectCalls = emitter.directCallLabels().size();
+        final int numberOfIndirectCalls = emitter.indirectCallLabels().size();
+        final int numberOfSafepoints = emitter.safepointLabels().size();
         final int registerReferenceMapSize = targetMethod.registerReferenceMapSize();
         int referenceMapsSize = CPSTargetMethod.computeReferenceMapsSize(numberOfDirectCalls, numberOfIndirectCalls, numberOfSafepoints, frameReferenceMapSize, registerReferenceMapSize);
 
@@ -276,8 +276,8 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         stopPositions,
                         compressedJavaFrameDescriptors,
                         packDirectCallees(directCalls),
-                        emitter.indirectCallLabels().length(),
-                        emitter.safepointLabels().length(),
+                        emitter.indirectCallLabels().size(),
+                        emitter.safepointLabels().size(),
                         packReferenceMaps(referenceMapsSize, emitter, frameReferenceMapSize, registerReferenceMapSize),
                         scalarLiteralBytes,
                         referenceLiteralObjects,

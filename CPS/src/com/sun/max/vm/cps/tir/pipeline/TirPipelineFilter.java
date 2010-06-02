@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.tir.pipeline;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.cps.tir.TirMessage.*;
@@ -91,7 +91,7 @@ public class TirPipelineFilter extends TirInstructionFilter {
     protected boolean isInvariant(TirInstruction instruction) {
         if (instruction instanceof TirLocal) {
             return true;
-        } else if (Sequence.Static.containsIdentical(tree().prologue(), instruction)) {
+        } else if (Utils.indexOfIdentical(tree().prologue(), instruction) != -1) {
             return true;
         } else {
             return false;

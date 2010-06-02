@@ -20,8 +20,11 @@
  */
 package com.sun.max.vm.cps.eir;
 
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -36,7 +39,7 @@ public abstract class EirValue implements IrValue {
     /**
      * Gets the set of operands representing all the uses of this value by the instructions of an EIR method.
      */
-    public final Sequence<EirOperand> operands() {
+    public final IterableWithLength<EirOperand> operands() {
         return operands;
     }
 
@@ -200,15 +203,15 @@ public abstract class EirValue implements IrValue {
             fixLocation(location);
         }
 
-        private final AppendableSequence<EirOperand> definitions = new LinkSequence<EirOperand>();
+        private final List<EirOperand> definitions = new LinkedList<EirOperand>();
 
-        public Sequence<EirOperand> definitions() {
+        public List<EirOperand> definitions() {
             return definitions;
         }
 
         @Override
         public void recordDefinition(EirOperand operand) {
-            definitions.append(operand);
+            definitions.add(operand);
         }
 
         @Override

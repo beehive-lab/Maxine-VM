@@ -24,27 +24,15 @@ package com.sun.max.collect;
  * A chained hash table where the value type also doubles as an {@linkplain ChainedHashMapping.Entry entry} in a chain.
  * Such tables are more memory efficient than a chained hash table which uses separate objects for keys, values and
  * buckets.
- * 
+ *
  * @author Doug Simon
  */
-public class ChainingValueChainedHashMapping<Key_Type, Value_Type extends ChainedHashMapping.Entry<Key_Type, Value_Type>> extends ChainedHashMapping<Key_Type, Value_Type> {
-
-    /**
-     * Creates a chained hash table whose values double as the {@linkplain ChainedHashMapping.Entry entry} in a chain.
-     * 
-     * @param equivalence
-     *            the semantics of key comparison and hashing. If {@code null}, then {@link HashEquality} is used.
-     * @param initialCapacity
-     *            the initial capacity of the table
-     */
-    public ChainingValueChainedHashMapping(HashEquivalence<Key_Type> equivalence, int initialCapacity) {
-        super(equivalence, initialCapacity);
-    }
+public class ChainingValueChainedHashMapping<K, V extends ChainedHashMapping.Entry<K, V>> extends ChainedHashMapping<K, V> {
 
     /**
      * Creates a chained hash table with {@linkplain HashEquality equality} key semantics and whose values double as the
      * {@linkplain ChainedHashMapping.Entry entry} in a chain.
-     * 
+     *
      * @param initialCapacity
      *            the initial capacity of the table
      */
@@ -53,27 +41,15 @@ public class ChainingValueChainedHashMapping<Key_Type, Value_Type extends Chaine
     }
 
     /**
-     * Creates a chained hash table with an initial capacity of {@value ChainedHashMapping#DEFAULT_INITIAL_CAPACITY}
-     * whose values double as the {@linkplain ChainedHashMapping.Entry entry} in a chain.
-     * 
-     * @param equivalence
-     *            the semantics of key comparison and hashing. If {@code null}, then {@link HashEquality} is used.
-     */
-    public ChainingValueChainedHashMapping(HashEquivalence<Key_Type> equivalence) {
-        super(equivalence);
-    }
-
-    /**
      * Creates a chained hash table with {@linkplain HashEquality equality} key semantics and an initial capacity of
      * {@value ChainedHashMapping#DEFAULT_INITIAL_CAPACITY} whose values double as the
      * {@linkplain ChainedHashMapping.Entry entry} in a chain.
      */
     public ChainingValueChainedHashMapping() {
-        super();
     }
 
     @Override
-    protected Entry<Key_Type, Value_Type> createEntry(int hashForKey, Key_Type key, Value_Type value, Entry<Key_Type, Value_Type> next) {
+    protected Entry<K, V> createEntry(int hashForKey, K key, V value, Entry<K, V> next) {
         value.setNext(next);
         return value;
     }

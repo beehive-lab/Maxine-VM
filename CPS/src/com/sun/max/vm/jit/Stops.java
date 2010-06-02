@@ -82,7 +82,7 @@ public class Stops {
 
         public StopsBuilder(int initialCapacity) {
             stops = new Stop[initialCapacity];
-            stopTypeCount = new int[StopType.VALUES.length()];
+            stopTypeCount = new int[StopType.VALUES.size()];
         }
 
         private void ensureCapacity(int minCapacity) {

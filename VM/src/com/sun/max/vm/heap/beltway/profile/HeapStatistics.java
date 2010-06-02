@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.heap.beltway.profile;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.*;
 
 /**
@@ -40,52 +41,52 @@ public class HeapStatistics {
     private static volatile int matureCollections = 0;
 
     private static volatile long heapAllocations = 0;
-    private static AppendableSequence<Long> totalHeapAllocations = new ArrayListSequence<Long>();
+    private static List<Long> totalHeapAllocations = new ArrayList<Long>();
 
     private static volatile long mutatorTlabAllocations = 0;
-    private static AppendableSequence<Long> totalMutatorTlabAllocations = new ArrayListSequence<Long>();
+    private static List<Long> totalMutatorTlabAllocations = new ArrayList<Long>();
 
     private static volatile long edenAllocations = 0;
-    private static AppendableSequence<Long> totalEdenAllocations = new ArrayListSequence<Long>();
+    private static List<Long> totalEdenAllocations = new ArrayList<Long>();
 
     private static volatile long toSpaceAllocations = 0;
-    private static AppendableSequence<Long> totalToSpaceAllocations = new ArrayListSequence<Long>();
+    private static List<Long> totalToSpaceAllocations = new ArrayList<Long>();
 
     private static volatile long matureAllocations = 0;
-    private static AppendableSequence<Long> totalMatureAllocations = new ArrayListSequence<Long>();
+    private static List<Long> totalMatureAllocations = new ArrayList<Long>();
 
     private static volatile long edenSurvivors = 0;
-    private static AppendableSequence<Long> totalEdenSurvivors = new ArrayListSequence<Long>();
+    private static List<Long> totalEdenSurvivors = new ArrayList<Long>();
 
     private static volatile long toSpaceSurvivors = 0;
-    private static AppendableSequence<Long> totalToSpaceSurvivors = new ArrayListSequence<Long>();
+    private static List<Long> totalToSpaceSurvivors = new ArrayList<Long>();
 
     private static volatile long matureSpaceSurvivors = 0;
-    private static AppendableSequence<Long> totalMatureSpaceSurvivors = new ArrayListSequence<Long>();
+    private static List<Long> totalMatureSpaceSurvivors = new ArrayList<Long>();
 
     private static volatile long sumSurvivors = 0;
-    private static AppendableSequence<Long> totalSumSurvivors = new ArrayListSequence<Long>();
+    private static List<Long> totalSumSurvivors = new ArrayList<Long>();
 
     private static volatile long minObjectSize = 0;
-    private static AppendableSequence<Long> minObjectSizePerMutation = new ArrayListSequence<Long>();
+    private static List<Long> minObjectSizePerMutation = new ArrayList<Long>();
 
     private static volatile long maxObjectSize = 0;
-    private static AppendableSequence<Long> maxObjectSizePerMutation = new ArrayListSequence<Long>();
+    private static List<Long> maxObjectSizePerMutation = new ArrayList<Long>();
 
     public static  void flushMutatorStatsToBuffers() {
-        totalHeapAllocations.append(heapAllocations);
+        totalHeapAllocations.add(heapAllocations);
         heapAllocations = 0;
 
-        totalMutatorTlabAllocations.append(mutatorTlabAllocations);
+        totalMutatorTlabAllocations.add(mutatorTlabAllocations);
         mutatorTlabAllocations = 0;
 
-        totalEdenAllocations.append(edenAllocations);
+        totalEdenAllocations.add(edenAllocations);
         edenAllocations = 0;
 
-        minObjectSizePerMutation.append(minObjectSize);
+        minObjectSizePerMutation.add(minObjectSize);
         minObjectSize = 0;
 
-        maxObjectSizePerMutation.append(maxObjectSize);
+        maxObjectSizePerMutation.add(maxObjectSize);
         maxObjectSize = 0;
 
         mutatorCycles++;
@@ -113,22 +114,22 @@ public class HeapStatistics {
     }
 
     public static  void flushGCStatsToBuffers() {
-        totalToSpaceAllocations.append(toSpaceAllocations);
+        totalToSpaceAllocations.add(toSpaceAllocations);
         toSpaceAllocations = 0;
 
-        totalMatureAllocations.append(matureAllocations);
+        totalMatureAllocations.add(matureAllocations);
         matureAllocations = 0;
 
-        totalEdenSurvivors.append(edenSurvivors);
+        totalEdenSurvivors.add(edenSurvivors);
         edenSurvivors = 0;
 
-        totalToSpaceSurvivors.append(toSpaceSurvivors);
+        totalToSpaceSurvivors.add(toSpaceSurvivors);
         toSpaceSurvivors = 0;
 
-        totalMatureSpaceSurvivors.append(matureSpaceSurvivors);
+        totalMatureSpaceSurvivors.add(matureSpaceSurvivors);
         matureSpaceSurvivors = 0;
 
-        totalSumSurvivors.append(sumSurvivors);
+        totalSumSurvivors.add(sumSurvivors);
         sumSurvivors = 0;
 
     }

@@ -22,7 +22,6 @@ package com.sun.max.vm.bytecode;
 
 import java.io.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.classfile.*;
@@ -100,8 +99,8 @@ public final class CodeAttributePrinter {
      *                where to print the contents of the exception table
      */
     public static void printExceptionHandlerTable(CodeAttribute codeAttribute, final PrintWriter printWriter) {
-        final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
-        if (!exceptionHandlerTable.isEmpty()) {
+        final ExceptionHandlerEntry[] exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
+        if (exceptionHandlerTable.length != 0) {
             printWriter.println("Exception Handlers:");
             printWriter.println("  from  to  target  type");
             for (ExceptionHandlerEntry entry : exceptionHandlerTable) {

@@ -30,7 +30,7 @@ import java.util.concurrent.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public interface Function<Result_Type> extends Callable<Result_Type> {
+public interface Function<T> extends Callable<T> {
 
     /**
      * Computes a result, or throws an exception if unable to do so.
@@ -38,6 +38,6 @@ public interface Function<Result_Type> extends Callable<Result_Type> {
      * @return computed result (which will be {@code null} if {@code Result_Type} is {@link Void})
      * @throws Exception if unable to compute a result
      */
-    Result_Type call() throws Exception;
+    T call() throws Exception;
 
 }

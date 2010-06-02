@@ -20,10 +20,11 @@
  */
 package com.sun.max.ins.gui;
 
+import java.util.*;
+
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
@@ -53,14 +54,14 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
      * @param watchpoints the watchpoints at this location, null if none.
      * @return a component for displaying the cell
      */
-    public final JLabel getRenderer(MaxMemoryRegion memoryRegion, MaxThread thread, Sequence<MaxWatchpoint> watchpoints) {
+    public final JLabel getRenderer(MaxMemoryRegion memoryRegion, MaxThread thread, List<MaxWatchpoint> watchpoints) {
         JLabel label = this;
         String labelText = "";
         String toolTipText = "";
         setFont(style().defaultFont());
         // See if any registers point here
         if (thread != null) {
-            final Sequence<MaxRegister> registers = thread.registers().find(memoryRegion);
+            final List<MaxRegister> registers = thread.registers().find(memoryRegion);
             if (registers.isEmpty()) {
                 label.setForeground(style().memoryDefaultTagTextColor());
             } else {
@@ -79,7 +80,7 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
             label.setForeground(null);
         }
         if (!watchpoints.isEmpty()) {
-            toolTipText += "  " + (watchpoints.length() == 1 ? watchpoints.first().toString() : "multiple watchpoints");
+            toolTipText += "  " + (watchpoints.size() == 1 ? watchpoints.get(0).toString() : "multiple watchpoints");
             label.setText(labelText);
             label.setToolTipText(toolTipText);
             label.setBorder(style().debugDisabledTargetBreakpointTagBorder());

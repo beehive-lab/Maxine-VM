@@ -20,10 +20,11 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -71,7 +72,7 @@ public abstract class X86NumericalParameter extends X86Parameter implements Appe
     }
 
     public Iterable<? extends Argument> getIllegalTestArguments() {
-        return Iterables.empty();
+        return Collections.emptyList();
     }
 
     public Argument getExampleArgument() {

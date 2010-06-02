@@ -22,11 +22,11 @@ package test.com.sun.max.vm.cps;
 
 import java.io.*;
 import java.lang.reflect.*;
+import java.util.*;
 
 import junit.framework.*;
 import test.com.sun.max.vm.jit.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -115,14 +115,14 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
             final int colonIndex = argument.indexOf(':');
             final String classNamePattern = colonIndex == -1 ? argument : argument.substring(0, colonIndex);
 
-            final AppendableSequence<Class<?>> matchingClasses = new ArrayListSequence<Class<?>>();
+            final List<Class<?>> matchingClasses = new ArrayList<Class<?>>();
             new ClassSearch() {
                 @Override
                 protected boolean visitClass(String className) {
                     if (!className.endsWith("package-info")) {
                         if (className.contains(classNamePattern)) {
                             try {
-                                matchingClasses.append(Class.forName(className, false, CompilerRunner.class.getClassLoader()));
+                                matchingClasses.add(Class.forName(className, false, CompilerRunner.class.getClassLoader()));
                             } catch (ClassNotFoundException classNotFoundException) {
                                 ProgramWarning.message(classNotFoundException.toString());
                             }

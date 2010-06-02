@@ -20,7 +20,7 @@
  */
 package com.sun.max.collect;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 
 /**
  * Defines the semantics of key comparison in a {@linkplain HashMapping hash based data structure} that delegate to
@@ -30,19 +30,19 @@ import com.sun.max.lang.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public final class HashEquality<Object_Type> implements HashEquivalence<Object_Type> {
+public final class HashEquality<T> implements HashEquivalence<T> {
 
     private HashEquality() {
     }
 
-    public boolean equivalent(Object_Type object1, Object_Type object2) {
+    public boolean equivalent(T object1, T object2) {
         if (object1 == null) {
             return object2 == null;
         }
         return object1.equals(object2);
     }
 
-    public int hashCode(Object_Type object) {
+    public int hashCode(T object) {
         if (object == null) {
             return 0;
         }
@@ -51,7 +51,7 @@ public final class HashEquality<Object_Type> implements HashEquivalence<Object_T
 
     private static final HashEquality equality = new HashEquality<Object>();
 
-    public static <Object_Type> HashEquality<Object_Type> instance(Class<HashEquality<Object_Type>> type) {
-        return StaticLoophole.cast(type, equality);
+    public static <T> HashEquality<T> instance(Class<HashEquality<T>> type) {
+        return Utils.cast(type, equality);
     }
 }

@@ -21,8 +21,8 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -59,7 +59,7 @@ public interface MaxStack extends MaxEntity<MaxStack> {
      *
      * @return the frames in the stack
      */
-    IndexedSequence<MaxStackFrame> frames();
+    List<MaxStackFrame> frames();
 
     /**
      * Gets the frame, if any, whose memory location in the VM includes an address.

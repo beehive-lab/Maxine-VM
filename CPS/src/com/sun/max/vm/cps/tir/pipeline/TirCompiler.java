@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.cps.tir.pipeline;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
@@ -76,7 +77,7 @@ public class TirCompiler {
             Visualizer.print(dirTranslator.method());
             Trace.stream().println(eirMethod.traceToString());
             targetMethod.disassemble(System.out);
-            final IndexedSequence<TargetJavaFrameDescriptor> descriptors = TargetJavaFrameDescriptor.inflate(((CPSTargetMethod) targetMethod).compressedJavaFrameDescriptors());
+            final List<TargetJavaFrameDescriptor> descriptors = TargetJavaFrameDescriptor.inflate(((CPSTargetMethod) targetMethod).compressedJavaFrameDescriptors());
             for (TargetJavaFrameDescriptor descriptor : descriptors) {
                 if (descriptor != null) {
                     Console.println(descriptor.toMultiLineString());

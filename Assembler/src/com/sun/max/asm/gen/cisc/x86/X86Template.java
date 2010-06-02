@@ -20,11 +20,13 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.*;
 import com.sun.max.asm.x86.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
@@ -41,9 +43,9 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     private HexByte opcode2;
     private ModRMGroup modRMGroup;
     private ModRMGroup.Opcode modRMGroupOpcode;
-    private AppendableSequence<X86Operand> operands = new LinkSequence<X86Operand>();
-    private AppendableSequence<X86ImplicitOperand> implicitOperands = new LinkSequence<X86ImplicitOperand>();
-    private AppendableIndexedSequence<X86Parameter> parameters = new ArrayListSequence<X86Parameter>();
+    private List<X86Operand> operands = new LinkedList<X86Operand>();
+    private List<X86ImplicitOperand> implicitOperands = new LinkedList<X86ImplicitOperand>();
+    private List<X86Parameter> parameters = new ArrayList<X86Parameter>();
     protected boolean isLabelMethodWritten;
 
     protected X86Template(X86InstructionDescription instructionDescription, int serial, InstructionAssessment instructionFamily, X86TemplateContext context) {
@@ -176,8 +178,8 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     public String canonicalName() {
         if (canonicalName == null) {
             canonicalName = namePrefix + internalName();
-            if (implicitOperands.length() == 1) {
-                final X86ImplicitOperand implicitOperand = implicitOperands.first();
+            if (implicitOperands.size() == 1) {
+                final X86ImplicitOperand implicitOperand = Utils.first(implicitOperands);
                 switch (implicitOperand.designation()) {
                     case DESTINATION:
                     case OTHER:
@@ -216,8 +218,8 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     }
 
     protected <Parameter_Type extends X86Parameter> Parameter_Type addParameter(Parameter_Type parameter) {
-        parameters.append(parameter);
-        operands.append(parameter);
+        parameters.add(parameter);
+        operands.add(parameter);
         if (parameter instanceof X86AddressParameter) {
             useNamePrefix("m_");
         }
@@ -240,21 +242,21 @@ public abstract class X86Template extends Template implements X86InstructionDesc
     }
 
     protected void addImplicitOperand(X86ImplicitOperand implicitOperand) {
-        implicitOperands.append(implicitOperand);
-        operands.append(implicitOperand);
+        implicitOperands.add(implicitOperand);
+        operands.add(implicitOperand);
     }
 
-    public Sequence<X86ImplicitOperand> implicitOperands() {
+    public List<X86ImplicitOperand> implicitOperands() {
         return implicitOperands;
     }
 
     @Override
-    public Sequence<X86Operand> operands() {
+    public List<X86Operand> operands() {
         return operands;
     }
 
     @Override
-    public IndexedSequence<X86Parameter> parameters() {
+    public List<X86Parameter> parameters() {
         return parameters;
     }
 
@@ -428,10 +430,10 @@ public abstract class X86Template extends Template implements X86InstructionDesc
         if (!canonicalName().equals(other.canonicalName())) {
             return false;
         }
-        if (parameters.length() != other.parameters.length()) {
+        if (parameters.size() != other.parameters.size()) {
             return false;
         }
-        for (int i = 0; i < parameters.length(); i++) {
+        for (int i = 0; i < parameters.size(); i++) {
             if (!parameters.get(i).type().equals(other.parameters.get(i).type())) {
                 return false;
             }

@@ -57,16 +57,16 @@ public class MappingTest extends MaxTestCase {
         }
     }
 
-    private Sequence<GrowableMapping<Integer, Object>> mappings() {
-        final AppendableSequence<GrowableMapping<Integer, Object>> mappings = new ArrayListSequence<GrowableMapping<Integer, Object>>();
-        mappings.append(new OpenAddressingHashMapping<Integer, Object>());
-        mappings.append(new ChainedHashMapping<Integer, Object>());
+    private List<Mapping<Integer, Object>> mappings() {
+        final List<Mapping<Integer, Object>> mappings = new ArrayList<Mapping<Integer, Object>>();
+        mappings.add(new OpenAddressingHashMapping<Integer, Object>());
+        mappings.add(new ChainedHashMapping<Integer, Object>());
         return mappings;
     }
 
     public void test_serialPut() {
         initialize();
-        for (GrowableMapping<Integer, Object> table : mappings()) {
+        for (Mapping<Integer, Object> table : mappings()) {
             for (int i = 0; i < N; i++) {
                 final Integer key = i;
                 assertEquals(table.get(key), null);
@@ -79,7 +79,7 @@ public class MappingTest extends MaxTestCase {
 
     public void test_randomPut() {
         initialize();
-        for (GrowableMapping<Integer, Object> table : mappings()) {
+        for (Mapping<Integer, Object> table : mappings()) {
             final Random random = new Random();
             final int[] keys = new int[N];
             for (int i = 0; i < N; i++) {

@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.bytecode.graft;
 
+import java.util.*;
+
 import com.sun.cri.bytecode.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -67,7 +68,7 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
 
         trackingStack = false;
         final byte[] code = code();
-        final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = fixupExceptionHandlerTable(
+        final ExceptionHandlerEntry[] exceptionHandlerTable = fixupExceptionHandlerTable(
                         monitorExitHandlerAddress,
                         monitorExitHandlerEndAddress,
                         code,
@@ -128,33 +129,33 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
      * @param relocator
      * @return the fixed up exception handler table
      */
-    private Sequence<ExceptionHandlerEntry> fixupExceptionHandlerTable(int monitorExitHandlerAddress,
+    private ExceptionHandlerEntry[] fixupExceptionHandlerTable(int monitorExitHandlerAddress,
                                                                        int monitorExitHandlerEndAddress,
                                                                        byte[] code,
-                                                                       Sequence<ExceptionHandlerEntry> exceptionHandlerTable, OpcodePositionRelocator relocator) {
+                                                                       ExceptionHandlerEntry[] exceptionHandlerTable, OpcodePositionRelocator relocator) {
         final int codeLength = code.length;
         final int relocatedCodeStartAddress = relocator.relocate(0);
         assert (code[codeLength - 1] & 0xff) == Bytecodes.ATHROW;
-        if (exceptionHandlerTable.isEmpty()) {
-            return new ArraySequence<ExceptionHandlerEntry>(new ExceptionHandlerEntry(relocatedCodeStartAddress, codeLength - 1, monitorExitHandlerAddress, 0));
+        if (exceptionHandlerTable.length == 0) {
+            return new ExceptionHandlerEntry[] {new ExceptionHandlerEntry(relocatedCodeStartAddress, codeLength - 1, monitorExitHandlerAddress, 0)};
         }
 
-        final AppendableSequence<ExceptionHandlerEntry> updatedExceptionHandlerTable = new ArrayListSequence<ExceptionHandlerEntry>();
+        final ArrayList<ExceptionHandlerEntry> table = new ArrayList<ExceptionHandlerEntry>();
         int previousEntryEndAddress = relocatedCodeStartAddress;
         for (ExceptionHandlerEntry entry : exceptionHandlerTable) {
             final ExceptionHandlerEntry relocatedEntry = entry.relocate(relocator);
             if (previousEntryEndAddress < relocatedEntry.startPosition()) {
                 // There's a gap between the previous catch range and the current catch range. Insert a range with whose handler is the monitor exit handler.
-                updatedExceptionHandlerTable.append(new ExceptionHandlerEntry(previousEntryEndAddress, relocatedEntry.startPosition(), monitorExitHandlerAddress, 0));
+                table.add(new ExceptionHandlerEntry(previousEntryEndAddress, relocatedEntry.startPosition(), monitorExitHandlerAddress, 0));
             }
-            updatedExceptionHandlerTable.append(relocatedEntry);
+            table.add(relocatedEntry);
             previousEntryEndAddress = relocatedEntry.endPosition();
         }
 
         // Cover the range of any generated exception dispatchers as well as the monitor exit exception handler itself
         if (previousEntryEndAddress < monitorExitHandlerAddress) {
-            updatedExceptionHandlerTable.append(new ExceptionHandlerEntry(previousEntryEndAddress, monitorExitHandlerEndAddress, monitorExitHandlerAddress, 0));
+            table.add(new ExceptionHandlerEntry(previousEntryEndAddress, monitorExitHandlerEndAddress, monitorExitHandlerAddress, 0));
         }
-        return updatedExceptionHandlerTable;
+        return table.toArray(new ExceptionHandlerEntry[table.size()]);
     }
 }

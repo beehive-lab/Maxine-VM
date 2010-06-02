@@ -21,12 +21,12 @@
 package test.com.sun.max.vm.cps;
 
 import java.io.*;
+import java.util.*;
 
 import test.com.sun.max.vm.jit.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -148,7 +148,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
         final int level = Trace.level();
         try {
             Trace.off();
-            final Sequence<CodeTranslation> codeTranslations = codeTranslations(jitTargetMethod);
+            final List<CodeTranslation> codeTranslations = codeTranslations(jitTargetMethod);
             final Disassembler disassembler = disassemblerFor(targetMethod);
             if (disassembler == null) {
                 return;
@@ -192,24 +192,24 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
      * @param jitTargetMethod the JIT target method
      * @return a sequence of code translations for each bytecode
      */
-    public static Sequence<CodeTranslation> codeTranslations(JitTargetMethod jitTargetMethod) {
-        final AppendableSequence<CodeTranslation> translations = new ArrayListSequence<CodeTranslation>();
+    public static List<CodeTranslation> codeTranslations(JitTargetMethod jitTargetMethod) {
+        final List<CodeTranslation> translations = new ArrayList<CodeTranslation>();
         int startBytecodePosition = 0;
         int[] positionMap = jitTargetMethod.bytecodeToTargetCodePositionMap();
         int startTargetCodePosition = positionMap[0];
         assert startTargetCodePosition != 0;
-        translations.append(new CodeTranslation(0, 0, 0, startTargetCodePosition));
+        translations.add(new CodeTranslation(0, 0, 0, startTargetCodePosition));
         for (int bytecodePosition = 1; bytecodePosition != positionMap.length; ++bytecodePosition) {
             final int targetCodePosition = positionMap[bytecodePosition];
             if (targetCodePosition != 0) {
                 final CodeTranslation codeTranslation = new CodeTranslation(startBytecodePosition, bytecodePosition - startBytecodePosition, startTargetCodePosition, targetCodePosition - startTargetCodePosition);
-                translations.append(codeTranslation);
+                translations.add(codeTranslation);
                 startTargetCodePosition = targetCodePosition;
                 startBytecodePosition = bytecodePosition;
             }
         }
         if (startTargetCodePosition < jitTargetMethod.code().length) {
-            translations.append(new CodeTranslation(0, 0, startTargetCodePosition, jitTargetMethod.code().length - startTargetCodePosition));
+            translations.add(new CodeTranslation(0, 0, startTargetCodePosition, jitTargetMethod.code().length - startTargetCodePosition));
         }
         return translations;
     }

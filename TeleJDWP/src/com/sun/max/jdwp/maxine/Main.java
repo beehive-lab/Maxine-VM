@@ -105,7 +105,7 @@ public class Main {
         try {
             final Options options = new Options();
             options.sourcepathOption.setValue(Arrays.asList(sourcepath.toStringArray()));
-            options.vmArguments.setValue(com.sun.max.lang.Arrays.toString(arguments, " "));
+            options.vmArguments.setValue(com.sun.max.Utils.toString(arguments, " "));
             t = TeleVM.create(options);
         } catch (BootImageException e) {
             LOGGER.severe("Exception occurred while creating TeleVM process: " + e.toString());

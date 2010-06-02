@@ -242,7 +242,7 @@ public abstract class Word {
             return wordType;
         }
         final Class<Class<? extends Word_Type>> type = null;
-        return StaticLoophole.cast(type, unboxedToBoxedTypes.get(wordType));
+        return Utils.cast(type, unboxedToBoxedTypes.get(wordType));
     }
 
     @HOSTED_ONLY

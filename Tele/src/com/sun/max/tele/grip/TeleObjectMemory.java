@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.grip;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.tele.object.*;
 
 /**
@@ -51,7 +52,7 @@ public interface TeleObjectMemory {
             return label;
         }
 
-        public static final IndexedSequence<State> VALUES = new ArraySequence<State>(values());
+        public static final List<State> VALUES = Arrays.asList(values());
     }
 
     /**

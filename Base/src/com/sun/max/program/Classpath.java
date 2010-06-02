@@ -21,12 +21,10 @@
 package com.sun.max.program;
 
 import java.io.*;
+import java.util.*;
 import java.util.zip.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
-
-import java.util.*;
 
 /**
  * @author Bernd Mathiske
@@ -34,9 +32,11 @@ import java.util.*;
  */
 public class Classpath {
 
-    public static final Classpath EMPTY = new Classpath(Sequence.Static.empty(Entry.class));
+    private static final List<Entry> EMPTY_LIST = Collections.emptyList();
 
-    private final Sequence<Entry> entries;
+    public static final Classpath EMPTY = new Classpath(EMPTY_LIST);
+
+    private final List<Entry> entries;
 
     private final Map<String, ClasspathFile> classpathFileMap = new HashMap<String, ClasspathFile>();
 
@@ -210,7 +210,7 @@ public class Classpath {
      *
      * @return a sequence of {@code Entry} objects
      */
-    public Sequence<Entry> entries() {
+    public List<Entry> entries() {
         return entries;
     }
 
@@ -243,7 +243,7 @@ public class Classpath {
             final String path = paths[i];
             entryArray[i] = createEntry(path);
         }
-        this.entries = new ArraySequence<Entry>(entryArray);
+        this.entries = Arrays.asList(entryArray);
     }
 
     /**
@@ -251,7 +251,7 @@ public class Classpath {
      *
      * @param paths a sequence of classpath entries
      */
-    public Classpath(Sequence<Entry> entries) {
+    public Classpath(List<Entry> entries) {
         this.entries = entries;
     }
 
@@ -312,7 +312,7 @@ public class Classpath {
     public static Classpath bootClassPath() {
         final String value = System.getProperty("sun.boot.class.path");
         if (value == null) {
-            return new Classpath(Sequence.Static.empty(Entry.class));
+            return EMPTY;
         }
         return new Classpath(value.split(File.pathSeparator));
     }
@@ -324,7 +324,10 @@ public class Classpath {
      * @return the result of prepending {@code classpath} to this classpath
      */
     public Classpath prepend(Classpath classpath) {
-        return new Classpath(Sequence.Static.concatenated(classpath.entries, entries));
+        ArrayList<Entry> entries = new ArrayList<Entry>(this.entries.size() + classpath.entries.size());
+        entries.addAll(classpath.entries);
+        entries.addAll(this.entries);
+        return new Classpath(entries);
     }
 
     /**
@@ -334,7 +337,9 @@ public class Classpath {
      * @return the result of prepending {@code classpath} to this classpath
      */
     public Classpath prepend(String path) {
-        return new Classpath(Sequence.Static.prepended(createEntry(path), entries));
+        ArrayList<Entry> entries = new ArrayList<Entry>(this.entries);
+        entries.add(createEntry(path));
+        return new Classpath(entries);
     }
 
     /**
@@ -421,7 +426,11 @@ public class Classpath {
 
     @Override
     public String toString() {
-        return Sequence.Static.toString(entries, null, File.pathSeparator);
+        if (entries == null || entries.isEmpty()) {
+            return "";
+        }
+        String s = entries.toString().replace(", ", File.pathSeparator);
+        return s.substring(1, s.length() - 2);
     }
 
     public ClasspathFile classpathFileForPackage(String name) {
@@ -429,12 +438,12 @@ public class Classpath {
     }
 
     /**
-     * Converts a Classpath object to a String array with one array element for each classpath entry.
-     * @param cp the classpath to be converted to a String array
+     * Converts this object to a String array with one array element for each classpath entry.
+     *
      * @return the newly created String array with one element per classpath entry
      */
     public String[] toStringArray() {
-        final String[] result = new String[entries().length()];
+        final String[] result = new String[entries().size()];
         int z = 0;
         for (Classpath.Entry e : entries()) {
             result[z] = e.path();

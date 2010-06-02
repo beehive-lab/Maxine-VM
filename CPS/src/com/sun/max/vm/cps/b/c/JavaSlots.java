@@ -20,7 +20,9 @@
  */
 package com.sun.max.vm.cps.b.c;
 
-import com.sun.max.lang.*;
+//import com.sun.max.lang.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.variable.*;
@@ -62,7 +64,7 @@ abstract class JavaSlots implements Cloneable {
     public JavaSlots copy() {
         try {
             final JavaSlots result = (JavaSlots) clone();
-            result.slots = Arrays.copy(slots, new JavaStackSlot[slots.length]);
+            result.slots = Arrays.copyOf(slots, slots.length);
             return result;
         } catch (CloneNotSupportedException e) {
             throw ProgramError.unexpected(e);

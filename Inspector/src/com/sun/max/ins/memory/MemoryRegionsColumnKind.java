@@ -20,7 +20,8 @@
  */
 package com.sun.max.ins.memory;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.ins.debug.*;
 
 /**
@@ -81,5 +82,5 @@ public enum MemoryRegionsColumnKind implements ColumnKind {
         return defaultVisibility;
     }
 
-    public static final IndexedSequence<MemoryRegionsColumnKind> VALUES = new ArraySequence<MemoryRegionsColumnKind>(values());
+    public static final List<MemoryRegionsColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 }

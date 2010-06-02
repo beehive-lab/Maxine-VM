@@ -23,7 +23,6 @@ package com.sun.max;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -143,7 +142,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         return name().startsWith(superPackage.name());
     }
 
-    public Sequence<MaxPackage> getTransitiveSubPackages(Classpath classpath) {
+    public List<MaxPackage> getTransitiveSubPackages(Classpath classpath) {
         final Set<String> packageNames = new TreeSet<String>();
         new ClassSearch() {
             @Override
@@ -156,13 +155,13 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
             }
         }.run(classpath, name().replace('.', '/'));
 
-        final AppendableSequence<MaxPackage> packages = new ArrayListSequence<MaxPackage>(packageNames.size());
+        final List<MaxPackage> packages = new ArrayList<MaxPackage>(packageNames.size());
         for (String pkgName : packageNames) {
             final MaxPackage maxPackage = MaxPackage.fromName(pkgName);
             if (maxPackage == null) {
                 System.err.println("WARNING: missing Package class in package: " + pkgName);
             } else {
-                packages.append(maxPackage);
+                packages.add(maxPackage);
             }
         }
         return packages;
@@ -170,7 +169,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
 
     private Map<Class<? extends Scheme>, Class<? extends Scheme>> schemeTypeToImplementation;
 
-    public synchronized <Scheme_Type extends Scheme> void registerScheme(Class<Scheme_Type> schemeType, Class<? extends Scheme_Type> schemeImplementation) {
+    public synchronized <S extends Scheme> void registerScheme(Class<S> schemeType, Class<? extends S> schemeImplementation) {
         assert schemeType.isInterface() || Modifier.isAbstract(schemeType.getModifiers());
         assert schemeImplementation.getPackage().getName().equals(name());
         if (schemeTypeToImplementation == null) {
@@ -186,7 +185,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
      * @return the class directly within this package that implements {@code scheme} or null if no such class
      *         exists
      */
-    public synchronized <Scheme_Type extends Scheme> Class<? extends Scheme_Type> schemeTypeToImplementation(Class<Scheme_Type> schemeType) {
+    public synchronized <S extends Scheme> Class<? extends S> schemeTypeToImplementation(Class<S> schemeType) {
         if (schemeTypeToImplementation == null) {
             return null;
         }
@@ -221,7 +220,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
     }
 
     public Set<MaxPackage> prerequisites() {
-        return Sets.empty(MaxPackage.class);
+        return Collections.emptySet();
     }
 
     /**
@@ -231,7 +230,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
      * package that excludes them.
      */
     public Set<MaxPackage> excludes() {
-        return Sets.empty(MaxPackage.class);
+        return Collections.emptySet();
     }
 
     public int compareTo(MaxPackage other) {
@@ -259,8 +258,8 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         return packageName.compareTo(other.packageName);
     }
 
-    private synchronized <Scheme_Type extends Scheme> Class<? extends Scheme_Type> loadSchemeImplementation(Class<Scheme_Type> schemeType) {
-        final Class<? extends Scheme_Type> schemeImplementation = schemeTypeToImplementation(schemeType);
+    private synchronized <S extends Scheme> Class<? extends S> loadSchemeImplementation(Class<S> schemeType) {
+        final Class<? extends S> schemeImplementation = schemeTypeToImplementation(schemeType);
         if (schemeImplementation == null) {
             ProgramError.unexpected("could not find subclass of " + schemeType + " in " + this);
         } else {
@@ -277,8 +276,8 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
      * @param arguments arguments passed to constructor of the scheme implementation class
      * @return a new instance of the scheme implementation class
      */
-    public synchronized <Scheme_Type extends Scheme> Scheme_Type loadAndInstantiateScheme(Class<Scheme_Type> schemeType, Object... arguments) {
-        final Class<? extends Scheme_Type> schemeImplementation = loadSchemeImplementation(schemeType);
+    public synchronized <S extends Scheme> S loadAndInstantiateScheme(Class<S> schemeType, Object... arguments) {
+        final Class<? extends S> schemeImplementation = loadSchemeImplementation(schemeType);
         try {
             final Class[] argumentTypes = new Class[arguments.length];
             for (int i = 0; i < arguments.length; i++) {

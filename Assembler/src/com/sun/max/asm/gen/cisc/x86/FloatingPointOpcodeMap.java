@@ -21,9 +21,9 @@
 package com.sun.max.asm.gen.cisc.x86;
 
 import static com.sun.max.asm.gen.cisc.x86.FloatingPointOperandCode.*;
+import static com.sun.max.asm.gen.cisc.x86.HexByte.*;
 import static com.sun.max.asm.ia32.IA32GeneralRegister16.*;
 import static com.sun.max.asm.x86.FPStackRegister.*;
-import static com.sun.max.util.HexByte.*;
 
 import com.sun.max.asm.gen.*;
 

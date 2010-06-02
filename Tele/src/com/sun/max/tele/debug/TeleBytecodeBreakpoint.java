@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.*;
@@ -115,7 +114,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     private void createTargetBreakpointForMethod(TeleTargetMethod teleTargetMethod) throws MaxVMBusyException {
         assert enabled;
         // Delegate creation of the target breakpoints to the manager.
-        final Sequence<TeleTargetBreakpoint> newBreakpoints = bytecodeBreakpointManager.createTeleTargetBreakpoints(this, teleTargetMethod);
+        final List<TeleTargetBreakpoint> newBreakpoints = bytecodeBreakpointManager.createTeleTargetBreakpoints(this, teleTargetMethod);
         if (newBreakpoints.isEmpty()) {
             Trace.line(TRACE_VALUE, tracePrefix() + "failed to create teleTargetBreakpoint for " + this);
         } else {
@@ -298,7 +297,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      */
     public static final class BytecodeBreakpointManager extends AbstractTeleVMHolder {
 
-        private static final Sequence<TeleBytecodeBreakpoint> EMPTY_BREAKPOINT_SEQUENCE = Sequence.Static.empty(TeleBytecodeBreakpoint.class);
+        private static final List<TeleBytecodeBreakpoint> EMPTY_BREAKPOINT_SEQUENCE = Collections.emptyList();
 
         private final TeleTargetBreakpoint.TargetBreakpointManager teleTargetBreakpointManager;
         private final String tracePrefix;
@@ -312,12 +311,12 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         /**
          * Map:  method {@link MethodPositionKey} -> existing bytecode breakpoint (whether enabled or not).
          */
-        private final VariableMapping<MethodPositionKey, TeleBytecodeBreakpoint> breakpoints = HashMapping.createVariableEqualityMapping();
+        private final Map<MethodPositionKey, TeleBytecodeBreakpoint> breakpoints = new HashMap<MethodPositionKey, TeleBytecodeBreakpoint>();
 
         /**
          * A cache of the existing breakpoints for fast traversal without allocation.
          */
-        private Sequence<TeleBytecodeBreakpoint> breakpointCache = EMPTY_BREAKPOINT_SEQUENCE;
+        private List<TeleBytecodeBreakpoint> breakpointCache = EMPTY_BREAKPOINT_SEQUENCE;
 
         /**
          * A breakpoint that interrupts the compiler just as it finishes compiling a method.  Non-null and active
@@ -472,10 +471,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
 
         private void updateBreakpointCache() {
-            if (breakpoints.length() == 0) {
+            if (breakpoints.size() == 0) {
                 breakpointCache = EMPTY_BREAKPOINT_SEQUENCE;
             } else {
-                breakpointCache = new ArrayListSequence<TeleBytecodeBreakpoint>(breakpoints.values());
+                breakpointCache = new ArrayList<TeleBytecodeBreakpoint>(breakpoints.values());
             }
         }
 
@@ -486,7 +485,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @throws MaxVMBusyException
          */
         private TeleBytecodeBreakpoint createBreakpoint(CodeLocation codeLocation, MethodPositionKey key, BreakpointKind kind) throws MaxVMBusyException {
-            if (breakpoints.length() == 0) {
+            if (breakpoints.size() == 0) {
                 createCompilerBreakpoint();
             }
             final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(vm(), this, codeLocation, kind, key);
@@ -511,7 +510,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private void removeBreakpoint(TeleBytecodeBreakpoint teleBytecodeBreakpoint) {
             final TeleBytecodeBreakpoint removedBreakpoint = breakpoints.remove(teleBytecodeBreakpoint.methodPositionKey);
             ProgramWarning.check(removedBreakpoint != null, "Failed to remove breakpoint" + teleBytecodeBreakpoint);
-            if (breakpoints.length() == 0) {
+            if (breakpoints.size() == 0) {
                 try {
                     removeCompilerBreakpoint();
                 } catch (MaxVMBusyException maxVMBusyException) {
@@ -605,9 +604,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * to the bytecode location specified in the key; null if unable to create.
          * @throws MaxVMBusyException
          */
-        private Sequence<TeleTargetBreakpoint> createTeleTargetBreakpoints(final TeleBytecodeBreakpoint owner, TeleTargetMethod teleTargetMethod) throws MaxVMBusyException {
+        private List<TeleTargetBreakpoint> createTeleTargetBreakpoints(final TeleBytecodeBreakpoint owner, TeleTargetMethod teleTargetMethod) throws MaxVMBusyException {
             assert owner != null;
-            final AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
+            final List<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkedList<TeleTargetBreakpoint>();
             final int bytecodePosition = owner.methodPositionKey.bytecodePosition;
             Address address = Address.zero();
             if (teleTargetMethod instanceof TeleJitTargetMethod) {
@@ -637,7 +636,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                         return owner.handleTriggerEvent(teleNativeThread);
                     }
                 };
-                teleTargetBreakpoints.append(teleTargetBreakpointManager.makeSystemBreakpoint(location, vmTriggerEventHandler, owner));
+                teleTargetBreakpoints.add(teleTargetBreakpointManager.makeSystemBreakpoint(location, vmTriggerEventHandler, owner));
             } else {
                 Trace.line(TRACE_VALUE, tracePrefix + "Target breakpoint already exists at 0x" + address.toHexString() + " in " + teleTargetMethod);
             }

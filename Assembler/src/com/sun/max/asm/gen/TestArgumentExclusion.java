@@ -23,7 +23,6 @@ package com.sun.max.asm.gen;
 import java.util.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 
 /**
  * @author Bernd Mathiske
@@ -52,9 +51,11 @@ public class TestArgumentExclusion {
         return arguments;
     }
 
+    private static final Set<Argument> NO_ARGUMENTS = Collections.emptySet();
+
     public static final TestArgumentExclusion NONE = new TestArgumentExclusion(AssemblyTestComponent.EXTERNAL_ASSEMBLER, new WrappableSpecification() {
         public TestArgumentExclusion excludeExternalTestArguments(Argument... args) {
             return TestArgumentExclusion.NONE;
         }
-    }, Sets.empty(Argument.class));
+    }, NO_ARGUMENTS);
 }

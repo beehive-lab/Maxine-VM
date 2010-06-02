@@ -44,7 +44,7 @@ public class TirPrintSink extends TirBufferedSink {
     }
 
     private class PrintSink extends TirInstructionFilter {
-        private GrowableMapping<TirMessage, String> labelMap = new IdentityHashMapping<TirMessage, String>();
+        private Mapping<TirMessage, String> labelMap = new IdentityHashMapping<TirMessage, String>();
         private OperandVisitor operandVisitor = new OperandVisitor();
         private TirTreeBegin treeBegin;
         private TirTraceBegin traceBegin;

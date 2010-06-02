@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.cir.gui;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.gui.CirAnnotatedTrace.*;
@@ -37,7 +36,7 @@ import com.sun.max.vm.cps.cir.variable.*;
 final class CirAnnotatedTraceBuilder extends CirVisitor {
 
     private final StringBuilder buffer;
-    private final AppendableSequence<Element> elements = new ArrayListSequence<Element>();
+    private final List<Element> elements = new ArrayList<Element>();
 
     private CirMethod method;
     private boolean atStartOfLine = true;
@@ -54,7 +53,7 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
     }
 
     private void append(final Element element) {
-        elements.append(element);
+        elements.add(element);
     }
 
     private void append(String text) {
@@ -230,7 +229,7 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
         return buffer.toString();
     }
 
-    public Sequence<Element> elements() {
+    public List<Element> elements() {
         return elements;
     }
 }

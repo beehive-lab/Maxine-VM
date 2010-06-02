@@ -47,7 +47,16 @@ public abstract class ClassVerifier extends Verifier {
         if (traceLevel >= TRACE_CLASS) {
             Log.println("[Verifying class " + classActor.name + "]");
         }
-        for (MethodActor methodActor : classActor.getLocalMethodActors()) {
+        verifyMethods(classActor.localVirtualMethodActors());
+        verifyMethods(classActor.localStaticMethodActors());
+        verifyMethods(classActor.localInterfaceMethodActors());
+        if (traceLevel >= TRACE_CLASS) {
+            Log.println("[Verified class " + classActor.name + "]");
+        }
+    }
+
+    private void verifyMethods(MethodActor[] methodActors) {
+        for (MethodActor methodActor : methodActors) {
             if (methodActor instanceof ClassMethodActor) {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
                 if (traceLevel >= TRACE_METHOD) {
@@ -58,9 +67,6 @@ public abstract class ClassVerifier extends Verifier {
                     Log.println(classMethodActor.format("[Verified method %n(%P)]"));
                 }
             }
-        }
-        if (traceLevel >= TRACE_CLASS) {
-            Log.println("[Verified class " + classActor.name + "]");
         }
     }
 
