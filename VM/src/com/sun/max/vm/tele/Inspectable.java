@@ -51,7 +51,7 @@ public final class Inspectable {
      * additional steps to facilitate inspection should be activated.
      */
     @INSPECTED
-    private static int flags = INSPECTED;  // temp hack
+    private static int flags;
 
     private static boolean optionChecked;
 
@@ -59,18 +59,18 @@ public final class Inspectable {
      * Determines if the VM process is being inspected.
      */
     public static boolean isVmInspected() {
-//        Log.print("isInspected is "); Log.print((flags & INSPECTED) != 0); Log.println();
         if ((flags & INSPECTED) != 0) {
             return true;
         }
-        if (optionChecked) {
+        if (optionChecked || MaxineVM.isHosted()) {
+            // A hosted VM is never inspected, plus it avoids setting optionChecked
+            // during a build, which would then need resetting
             return false;
         }
         if (makeInspectable.getValue()) {
             flags = INSPECTED;
         }
         optionChecked = true;
-//        Log.print("isInspected is "); Log.print((flags & INSPECTED) != 0); Log.println();
         return (flags & INSPECTED) != 0;
     }
 
