@@ -407,7 +407,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         epoch++;
         refreshThreads();
         // now update state to reflect the discovered threads, all of which will appear as STARTED
-        updateState(STOPPED, TeleProcess.EMPTY_BREAKPOINTEVENT_SEQUENCE, null);
+        updateState(STOPPED, TeleProcess.EMPTY_BREAKPOINTEVENT_LIST, null);
     }
 
     /**
