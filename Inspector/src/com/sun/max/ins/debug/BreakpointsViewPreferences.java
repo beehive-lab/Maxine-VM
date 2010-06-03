@@ -59,7 +59,7 @@ public final class BreakpointsViewPreferences extends TableColumnVisibilityPrefe
     * persistent global choices are identical.
     */
     private BreakpointsViewPreferences(Inspection inspection) {
-        super(inspection, BREAKPOINTS_COLUMN_PREFERENCE, BreakpointsColumnKind.VALUES);
+        super(inspection, BREAKPOINTS_COLUMN_PREFERENCE, BreakpointsColumnKind.values());
         // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

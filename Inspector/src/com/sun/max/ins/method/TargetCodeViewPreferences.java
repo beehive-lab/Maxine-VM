@@ -46,7 +46,7 @@ public class TargetCodeViewPreferences extends TableColumnVisibilityPreferences<
      * Creates the global, persistent set of preferences.
      */
     private TargetCodeViewPreferences(Inspection inspection) {
-        super(inspection, TARGET_CODE_COLUMN_PREFERENCE, TargetCodeColumnKind.VALUES);
+        super(inspection, TARGET_CODE_COLUMN_PREFERENCE, TargetCodeColumnKind.values());
         // There are no view preferences beyond the column choices, so no additional saving needed here.
     }
 

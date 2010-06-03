@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele;
 
-import java.util.*;
-
 import com.sun.max.vm.thread.*;
 
 /**
@@ -77,8 +75,6 @@ public enum MaxThreadState {
      * Denotes that a thread is not suspended.
      */
     RUNNING("Running", false);
-
-    public static final List<MaxThreadState> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 
     private final String asString;
     private final boolean allowsDataAccess;

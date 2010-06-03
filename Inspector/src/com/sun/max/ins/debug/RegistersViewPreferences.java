@@ -59,7 +59,7 @@ public final class RegistersViewPreferences extends TableColumnVisibilityPrefere
      * persistent global choices are identical.
      */
     private RegistersViewPreferences(Inspection inspection) {
-        super(inspection, REGISTERS_COLUMN_PREFERENCE, RegistersColumnKind.VALUES);
+        super(inspection, REGISTERS_COLUMN_PREFERENCE, RegistersColumnKind.values());
         // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

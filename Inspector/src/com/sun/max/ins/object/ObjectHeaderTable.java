@@ -146,7 +146,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     private final class ObjectHeaderColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 
         ObjectHeaderColumnModel(ObjectViewPreferences viewPreferences) {
-            super(ObjectColumnKind.VALUES.size(), viewPreferences);
+            super(ObjectColumnKind.values().length, viewPreferences);
             addColumn(ObjectColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(ObjectColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
             addColumn(ObjectColumnKind.OFFSET, new PositionRenderer(inspection()), null);
@@ -174,7 +174,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return ObjectColumnKind.VALUES.size();
+            return ObjectColumnKind.values().length;
         }
 
         public int getRowCount() {

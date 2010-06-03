@@ -58,7 +58,7 @@ public final class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.Tabl
     * persistent global choices are identical.
     */
     private MemoryRegionsViewPreferences(Inspection inspection) {
-        super(inspection, MEMORY_REGIONS_COLUMN_PREFERENCE, MemoryRegionsColumnKind.VALUES);
+        super(inspection, MEMORY_REGIONS_COLUMN_PREFERENCE, MemoryRegionsColumnKind.values());
         // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

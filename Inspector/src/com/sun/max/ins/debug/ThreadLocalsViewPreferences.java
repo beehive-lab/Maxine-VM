@@ -58,7 +58,7 @@ public final class ThreadLocalsViewPreferences extends TableColumnVisibilityPref
      * Creates a persistent, global set of preferences for view preferences.
      */
     private ThreadLocalsViewPreferences(Inspection inspection) {
-        super(inspection, THREAD_LOCALS_COLUMN_PREFERENCE, ThreadLocalVariablesColumnKind.VALUES);
+        super(inspection, THREAD_LOCALS_COLUMN_PREFERENCE, ThreadLocalVariablesColumnKind.values());
         // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

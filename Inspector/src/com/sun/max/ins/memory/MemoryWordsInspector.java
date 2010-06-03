@@ -23,7 +23,6 @@ package com.sun.max.ins.memory;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 
@@ -90,8 +89,6 @@ public final class MemoryWordsInspector extends Inspector {
             return nextToolTip;
         }
 
-        public static final List<ViewMode> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
-
     }
 
     private static MemoryWordsViewPreferences globalPreferences;
@@ -121,7 +118,7 @@ public final class MemoryWordsInspector extends Inspector {
          * Creates global preferences for this inspector.
          */
         private MemoryWordsViewPreferences(Inspection inspection) {
-            super(inspection, MEMORY_WORDS_COLUMN_PREFERENCE, MemoryWordsColumnKind.VALUES);
+            super(inspection, MEMORY_WORDS_COLUMN_PREFERENCE, MemoryWordsColumnKind.values());
             this.memoryWordsInspector = null;
         }
 

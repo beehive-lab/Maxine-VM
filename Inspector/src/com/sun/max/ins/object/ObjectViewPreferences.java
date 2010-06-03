@@ -73,7 +73,7 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
      * Creates global preferences for object inspectors.
      */
     private ObjectViewPreferences(Inspection inspection) {
-        super(inspection, OBJECT_COLUMN_PREFERENCE, ObjectColumnKind.VALUES);
+        super(inspection, OBJECT_COLUMN_PREFERENCE, ObjectColumnKind.values());
         final InspectionSettings settings = inspection.settings();
         final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(OBJECT_INSPECTOR_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
