@@ -113,7 +113,7 @@ public final class BreakpointsTable extends InspectorTable {
     private final class BreakpointsColumnModel extends InspectorTableColumnModel<BreakpointsColumnKind>  {
 
         private BreakpointsColumnModel(BreakpointsViewPreferences viewPreferences) {
-            super(BreakpointsColumnKind.VALUES.size(), viewPreferences);
+            super(BreakpointsColumnKind.values().length, viewPreferences);
             addColumn(BreakpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
             addColumn(BreakpointsColumnKind.ENABLED, null, new DefaultCellEditor(new JCheckBox()));
             addColumn(BreakpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
@@ -138,7 +138,7 @@ public final class BreakpointsTable extends InspectorTable {
         private final Set<BreakpointData> breakpoints = new TreeSet<BreakpointData>();
 
         public int getColumnCount() {
-            return BreakpointsColumnKind.VALUES.size();
+            return BreakpointsColumnKind.values().length;
         }
 
         public int getRowCount() {
@@ -150,7 +150,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         public Object getValueAt(int row, int col) {
             final BreakpointData breakpointData = get(row);
-            switch (BreakpointsColumnKind.VALUES.get(col)) {
+            switch (BreakpointsColumnKind.values()[col]) {
                 case TAG:
                     return breakpointData.kindTag();
                 case ENABLED:
@@ -172,7 +172,7 @@ public final class BreakpointsTable extends InspectorTable {
         public void setValueAt(Object value, int row, int column) {
             final BreakpointData breakpointData = get(row);
 
-            switch (BreakpointsColumnKind.VALUES.get(column)) {
+            switch (BreakpointsColumnKind.values()[column]) {
                 case ENABLED:
                     final Boolean newState = (Boolean) value;
                     try {
@@ -204,7 +204,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public boolean isCellEditable(int row, int col) {
-            switch (BreakpointsColumnKind.VALUES.get(col)) {
+            switch (BreakpointsColumnKind.values()[col]) {
                 case ENABLED:
                     return true;
                 case CONDITION:
@@ -218,7 +218,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public Class< ? > getColumnClass(int c) {
-            switch (BreakpointsColumnKind.VALUES.get(c)) {
+            switch (BreakpointsColumnKind.values()[c]) {
                 case TAG:
                     return String.class;
                 case ENABLED:

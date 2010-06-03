@@ -58,6 +58,6 @@ public final class ThreadsViewPreferences extends com.sun.max.ins.gui.TableColum
     * persistent global choices are identical.
     */
     private ThreadsViewPreferences(Inspection inspection) {
-        super(inspection, THREADS_COLUMN_PREFERENCE, ThreadsColumnKind.VALUES);
+        super(inspection, THREADS_COLUMN_PREFERENCE, ThreadsColumnKind.values());
     }
 }

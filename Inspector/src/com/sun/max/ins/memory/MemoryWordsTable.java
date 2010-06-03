@@ -166,7 +166,7 @@ public final class MemoryWordsTable extends InspectorTable {
     private final class MemoryWordsColumnModel extends InspectorTableColumnModel<MemoryWordsColumnKind> {
 
         private MemoryWordsColumnModel(TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences) {
-            super(MemoryWordsColumnKind.VALUES.size(), instanceViewPreferences);
+            super(MemoryWordsColumnKind.values().length, instanceViewPreferences);
             addColumn(MemoryWordsColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(MemoryWordsColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
             addColumn(MemoryWordsColumnKind.WORD, new WordOffsetRenderer(inspection()), null);
@@ -221,7 +221,7 @@ public final class MemoryWordsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return MemoryWordsColumnKind.VALUES.size();
+            return MemoryWordsColumnKind.values().length;
         }
 
         public int getRowCount() {

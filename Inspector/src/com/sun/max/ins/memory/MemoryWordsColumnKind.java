@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins.memory;
 
-import java.util.*;
-
 import com.sun.max.ins.debug.*;
 
 /**
@@ -78,7 +76,5 @@ public enum MemoryWordsColumnKind implements ColumnKind {
     public boolean defaultVisibility() {
         return defaultVisibility;
     }
-
-    public static final List<MemoryWordsColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 
 }

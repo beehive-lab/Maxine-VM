@@ -144,7 +144,7 @@ public class CompiledStackFrameTable extends InspectorTable {
     private final class CompiledStackFrameTableColumnModel extends InspectorTableColumnModel<CompiledStackFrameColumnKind> {
 
         CompiledStackFrameTableColumnModel(CompiledStackFrameViewPreferences viewPreferences) {
-            super(CompiledStackFrameColumnKind.VALUES.size(), viewPreferences);
+            super(CompiledStackFrameColumnKind.values().length, viewPreferences);
             addColumn(CompiledStackFrameColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(CompiledStackFrameColumnKind.NAME, new NameRenderer(inspection()), null);
             addColumn(CompiledStackFrameColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
@@ -183,7 +183,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return CompiledStackFrameColumnKind.VALUES.size();
+            return CompiledStackFrameColumnKind.values().length;
         }
 
         public int getRowCount() {

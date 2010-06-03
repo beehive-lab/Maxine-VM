@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins.debug;
 
-import java.util.*;
 
 /**
  * Defines the columns that can be displayed describing thread local variables in the VM.
@@ -83,5 +82,4 @@ public enum ThreadLocalVariablesColumnKind implements ColumnKind {
         return defaultVisibility;
     }
 
-    public static final List<ThreadLocalVariablesColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 }

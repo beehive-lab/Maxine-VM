@@ -76,7 +76,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
         this.tableModel = new TargetCodeTableModel(inspection, machineCode);
-        this.columns = new TableColumn[TargetCodeColumnKind.VALUES.size()];
+        this.columns = new TableColumn[TargetCodeColumnKind.values().length];
         instanceViewPreferences = new TargetCodeViewPreferences(TargetCodeViewPreferences.globalPreferences(inspection())) {
             @Override
             public void setIsVisible(TargetCodeColumnKind columnKind, boolean visible) {
@@ -310,7 +310,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     private final class TargetCodeTableColumnModel extends InspectorTableColumnModel<TargetCodeColumnKind> {
 
         private TargetCodeTableColumnModel(TargetCodeViewPreferences viewPreferences) {
-            super(TargetCodeColumnKind.VALUES.size(), viewPreferences);
+            super(TargetCodeColumnKind.values().length, viewPreferences);
             final Address startAddress = tableModel.rowToInstruction(0).address;
             addColumn(TargetCodeColumnKind.TAG, new TagRenderer(), null);
             addColumn(TargetCodeColumnKind.NUMBER, new NumberRenderer(), null);
@@ -338,7 +338,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public int getColumnCount() {
-            return TargetCodeColumnKind.VALUES.size();
+            return TargetCodeColumnKind.values().length;
         }
 
         public int getRowCount() {
@@ -347,7 +347,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         public Object getValueAt(int row, int col) {
             final TargetCodeInstruction targetCodeInstruction = rowToInstruction(row);
-            switch (TargetCodeColumnKind.VALUES.get(col)) {
+            switch (TargetCodeColumnKind.values()[col]) {
                 case TAG:
                     return null;
                 case NUMBER:
@@ -374,7 +374,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         @Override
         public Class< ? > getColumnClass(int col) {
-            switch (TargetCodeColumnKind.VALUES.get(col)) {
+            switch (TargetCodeColumnKind.values()[col]) {
                 case TAG:
                     return Object.class;
                 case NUMBER:

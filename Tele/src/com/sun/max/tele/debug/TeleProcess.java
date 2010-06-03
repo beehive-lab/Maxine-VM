@@ -913,7 +913,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     long tlb,
                     long tlbSize,
                     int tlaSize) {
-        assert state >= 0 && state < MaxThreadState.VALUES.size() : state;
+        assert state >= 0 && state < MaxThreadState.values().length : state;
         TeleNativeThread thread = handleToThreadMap.get(localHandle);
 
         final TeleFixedMemoryRegion stackRegion = new TeleFixedMemoryRegion(vm(), "stack region", Address.fromLong(stackBase), Size.fromLong(stackSize));
@@ -945,7 +945,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             }
         }
 
-        thread.updateAfterGather(MaxThreadState.VALUES.get(state), Pointer.fromLong(instructionPointer), threadLocalsRegion, tlaSize);
+        thread.updateAfterGather(MaxThreadState.values()[state], Pointer.fromLong(instructionPointer), threadLocalsRegion, tlaSize);
         threads.add(thread);
     }
 

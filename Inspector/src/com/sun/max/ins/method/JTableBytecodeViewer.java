@@ -285,7 +285,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final class BytecodeTableColumnModel extends InspectorTableColumnModel<BytecodeColumnKind> {
 
         BytecodeTableColumnModel(BytecodeViewPreferences instanceViewPreferences) {
-            super(BytecodeColumnKind.VALUES.size(), instanceViewPreferences);
+            super(BytecodeColumnKind.values().length, instanceViewPreferences);
             addColumn(BytecodeColumnKind.TAG, new TagRenderer(), null);
             addColumn(BytecodeColumnKind.NUMBER, new NumberRenderer(), null);
             addColumn(BytecodeColumnKind.POSITION, new PositionRenderer(), null);
@@ -307,7 +307,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         public int getColumnCount() {
-            return BytecodeColumnKind.VALUES.size();
+            return BytecodeColumnKind.values().length;
         }
 
         public int getRowCount() {
@@ -316,7 +316,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         public Object getValueAt(int row, int col) {
             final BytecodeInstruction instruction = rowToInstruction(row);
-            switch (BytecodeColumnKind.VALUES.get(col)) {
+            switch (BytecodeColumnKind.values()[col]) {
                 case TAG:
                     return null;
                 case NUMBER:
@@ -340,7 +340,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         @Override
         public Class< ? > getColumnClass(int col) {
-            switch (BytecodeColumnKind.VALUES.get(col)) {
+            switch (BytecodeColumnKind.values()[col]) {
                 case TAG:
                     return Object.class;
                 case NUMBER:
