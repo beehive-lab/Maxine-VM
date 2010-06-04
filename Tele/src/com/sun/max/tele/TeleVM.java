@@ -1178,6 +1178,9 @@ public abstract class TeleVM implements MaxVM {
      * at a valid heap object.
      */
     private void checkReference(Reference reference) throws InvalidReferenceException {
+        if (reference.toGrip().toOrigin().toLong() == 1099564415432L) {
+            System.console();
+        }
         if (!isValidOrigin(reference.toGrip().toOrigin())) {
             throw new InvalidReferenceException(reference);
         }
@@ -1589,6 +1592,8 @@ public abstract class TeleVM implements MaxVM {
             teleCodeCache = new TeleCodeCache(this);
             teleCodeCache.initialize();
             if (isAttaching()) {
+                // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
+                ProgramError.check((teleFields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
                 teleClassRegistry.processAttachFixupList();
             }
         }
