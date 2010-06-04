@@ -57,17 +57,6 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
                         "Below this size, the space is ignored (dark matter)"),
                         MaxineVM.Phase.PRISTINE);
 
-    private static final VMBooleanXXOption doImpreciseSweepOption = register(new VMBooleanXXOption("-XX:+",
-                    "ImpreciseSweep",
-                    "Perform imprecise sweeping phase"),
-                    MaxineVM.Phase.PRISTINE);
-
-     //  Debug tracing
-    private static final VMBooleanXXOption traceSweepingOption =  register(new VMBooleanXXOption("-XX:+",
-                    "TraceSweep",
-                    "Trace heap sweep operations. Do nothing for PRODUCT images"),
-                    MaxineVM.Phase.PRISTINE);
-
     public static final VMBooleanXXOption traceTLABOption =  register(new VMBooleanXXOption("-XX:+",
                     "TraceTLAB",
                     "Trace TLAB allocation Do nothing for PRODUCT images"),
@@ -345,7 +334,6 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
      * committed space, whereas the end is the end of the reserved memory.
      */
     private final ContiguousHeapSpace committedHeapSpace;
-    private boolean doImpreciseSweep;
     private final HeapSpaceAllocator smallObjectAllocator;
     private boolean useTLABBin;
 
@@ -847,7 +835,6 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         minLargeObjectSize = Size.fromInt(Integer.highestOneBit(largeObjectsMinSizeOption.getValue()));
         log2FirstBinSize = Integer.numberOfTrailingZeros(minLargeObjectSize.toInt());
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
-        doImpreciseSweep = doImpreciseSweepOption.getValue();
         TraceSweep = MaxineVM.isDebug() ? traceSweepingOption.getValue() : false;
         TraceTLAB = MaxineVM.isDebug() ? traceTLABOption.getValue() : false;
         smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, minLargeObjectSize);
@@ -867,24 +854,18 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         return lockedFreeSpaceLeft();
     }
 
-    public Size reclaim(TricolorHeapMarker heapMarker) {
+    @Override
+    public Size beginSweep(boolean precise) {
         for (int i = 0; i < freeChunkBins.length; i++) {
             freeChunkBins[i].reset();
         }
         totalFreeChunkSpace = 0;
+        endOfLastVisitedObject = committedHeapSpace.start().asPointer();
+        return minReclaimableSpace;
+    }
 
-        if (doImpreciseSweep) {
-            if (Heap.traceGCPhases()) {
-                Log.println("Imprecise sweeping of the heap...");
-            }
-            heapMarker.impreciseSweep(this, minReclaimableSpace);
-        } else {
-            if (Heap.traceGCPhases()) {
-                Log.println("Precise sweeping of the heap...");
-            }
-            endOfLastVisitedObject = committedHeapSpace.start().asPointer();
-            heapMarker.sweep(this);
-        }
+    @Override
+    public Size endSweep() {
         useTLABBin = tlabFreeSpaceList.totalSize > 0;
         if (MaxineVM.isDebug()) {
             checkBinFreeSpace();

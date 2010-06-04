@@ -43,7 +43,7 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
     private static final int PREV_INDEX;
 
     static {
-        PREV_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("prev")).offset() >> Word.widthValue().log2numberOfBytes;
+        PREV_INDEX = DLINKED_HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("prev")).offset() >> Word.widthValue().log2numberOfBytes;
     }
 
     @INLINE
@@ -153,16 +153,6 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
             chunk.prev = next.prev;
             next.prev = chunk;
         }
-    }
-
-    public static void fifoInsert(Pointer head, Address chunk) {
-        DLinkedHeapFreeChunk first = asDLinkedHeapFreeChunk(head.getWord());
-        DLinkedHeapFreeChunk newHead = asDLinkedHeapFreeChunk(chunk);
-        FatalError.check(first != null, "DLinkedHeapFreeChunk list head must not be null on FIFO insert");
-        first.prev = newHead;
-        newHead.next = first;
-        newHead.prev = null;
-        head.setWord(chunk);
     }
 
     public static boolean isDLinkedHeapFreeChunk(Pointer cell) {

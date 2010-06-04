@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.heap.gcx.ms;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -46,6 +48,12 @@ import com.sun.max.vm.thread.*;
  */
 public class MSHeapScheme extends HeapSchemeWithTLAB {
     private static final int WORDS_COVERED_PER_BIT = 1;
+
+    // TODO: this should be an interface as soon as it is better supported.
+
+    static final VMBooleanXXOption doImpreciseSweepOption =
+        register(new VMBooleanXXOption("-XX:+", "ImpreciseSweep", "Perform imprecise sweeping phase"),
+                        MaxineVM.Phase.PRISTINE);
 
     /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
@@ -81,6 +89,8 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     private StopTheWorldGCDaemon collectorThread;
 
+    private boolean doImpreciseSweep;
+
     final AfterMarkSweepVerifier afterGCVerifier;
 
     public MSHeapScheme(VMConfiguration vmConfiguration) {
@@ -100,6 +110,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             // The monitor for the collector must be allocated in the image
             JavaMonitorManager.bindStickyMonitor(this);
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
+            doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
         } else if (phase == MaxineVM.Phase.STARTING) {
             collectorThread = new StopTheWorldGCDaemon("GC", collect);
@@ -264,6 +275,23 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             Log.unlock(lockDisabledSafepoints);
         }
 
+        private Size reclaim() {
+            Size minReclaimableSpace = freeSpace.beginSweep(doImpreciseSweep);
+
+            if (Heap.traceGCPhases()) {
+                Log.print(doImpreciseSweep ? "Imprecise" : "Precise");
+                Log.println(" sweeping of the heap...");
+            }
+
+            if (doImpreciseSweep) {
+                heapMarker.impreciseSweep(freeSpace, minReclaimableSpace);
+            } else {
+                heapMarker.sweep(freeSpace);
+            }
+
+            return freeSpace.endSweep();
+        }
+
         private HeapResizingPolicy heapResizingPolicy = new HeapResizingPolicy();
 
         @Override
@@ -287,7 +315,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
             stopTimer(weakRefTimer);
             startTimer(reclaimTimer);
-            Size freeSpaceAfterGC = freeSpace.reclaim(heapMarker);
+            Size freeSpaceAfterGC = reclaim();
             stopTimer(reclaimTimer);
             if (MaxineVM.isDebug()) {
                 afterGCVerifier.run();

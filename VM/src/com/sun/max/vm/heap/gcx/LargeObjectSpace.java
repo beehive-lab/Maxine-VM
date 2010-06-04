@@ -56,6 +56,7 @@ import com.sun.max.vm.runtime.*;
  *
  * TODO: investigate interface and mechanism to enable temporary lease of dark matter
  * to other garbage collected space with evacuation support
+ * TODO: enable downward growth and allocation (i.e., from high to low addresses).
  *
  * @author Laurent Daynes
  */
@@ -64,7 +65,7 @@ public class LargeObjectSpace extends HeapSweeper {
     protected static final int MIN_LARGE_OBJECT_SIZE = Size.K.times(4).toInt();
     protected static final int BLOCK_SIZE = Size.K.times(2).toInt();
     protected static final int VERY_LARGE_CHUNK_SIZE = Size.K.times(64).toInt();
-
+    protected static final int ALIGNMENT_REQUIREMENT = Size.K.times(64).toInt();
     protected static final int LOG2_BLOCK_SIZE = Integer.highestOneBit(BLOCK_SIZE);
     protected static final int MIN_NUM_BLOCKS = MIN_LARGE_OBJECT_SIZE >>> LOG2_BLOCK_SIZE;
     protected static final int VERY_LARGE_CHUNK_LIST = (VERY_LARGE_CHUNK_SIZE >>> LOG2_BLOCK_SIZE) + 1;
@@ -117,9 +118,30 @@ public class LargeObjectSpace extends HeapSweeper {
      */
     private Pointer realEnd;
 
+    /**
+     * Large object space sweeping support for tracking the last processed address.
+     */
+
+    /**
+     * Total number of free blocks (i.e., blocks of chunk greater or equal than {@link LargeObjectSpace#MIN_LARGE_OBJECT_SIZE}.
+     * This is what can be allocated.
+     */
+    long totalFreeBlocks;
+
+    /**
+     * Total number of blocks of chunks that cannot be allocated because too small
+     * (i.e., smaller than {@link LargeObjectSpace#MIN_LARGE_OBJECT_SIZE}).
+     */
+    long totalUnusableBlocks;
+
+    private Address endOfLastProcessedChunk;
 
     private long bitmaskForList(int listIndex) {
         return 1L << listIndex;
+    }
+
+    private boolean isListEmpty(int listIndex) {
+        return (sizeTableSummary & bitmaskForList(listIndex)) != 0L;
     }
 
     private void addToSummary(int listIndex) {
@@ -145,10 +167,14 @@ public class LargeObjectSpace extends HeapSweeper {
         sizeTableSummary = 0L;
     }
 
+    public Size alignment() {
+        return Size.fromInt(ALIGNMENT_REQUIREMENT);
+    }
 
     public void initialize(Address start, Size initSize, Size maxSize) {
         FatalError.check(initSize.lessEqual(maxSize) &&
-                        maxSize.greaterEqual(MIN_LARGE_OBJECT_SIZE),
+                        maxSize.greaterEqual(MIN_LARGE_OBJECT_SIZE) &&
+                        start.isAligned(ALIGNMENT_REQUIREMENT),
                         "Incorrect initial setup for large object space");
 
         Size adjustedMaxSize = maxSize.roundedUpBy(MIN_LARGE_OBJECT_SIZE);
@@ -160,12 +186,22 @@ public class LargeObjectSpace extends HeapSweeper {
         if (!committedHeapSpace.growCommittedSpace(adjustedInitSize)) {
             MaxineVM.reportPristineMemoryFailure("large object space", "commit", adjustedInitSize);
         }
-        top = committedHeapSpace.start().asPointer();
+
+        // Initial set up.
 
         int index = listIndex(adjustedInitSize);
+        addChunk(getHeadAddress(index), committedHeapSpace.start().asPointer(), adjustedInitSize);
+
         if (index < VERY_LARGE_CHUNK_LIST) {
-            addChunk(index, top);
-            top = top.plus(adjustedInitSize);
+            addToSummary(index);
+            totalFreeBlocks = index;
+            // No space for tail allocation.
+            top = Pointer.zero();
+            end = Pointer.zero();
+            realEnd = Pointer.zero();
+        } else {
+            totalFreeBlocks = adjustedInitSize.unsignedShiftedRight(LOG2_BLOCK_SIZE).toLong();
+            refillTail();
         }
 
     }
@@ -230,18 +266,6 @@ public class LargeObjectSpace extends HeapSweeper {
     protected void addChunk(Pointer headPointer, Pointer chunk, Size sizeInBytes) {
         HeapFreeChunk.format(chunk, sizeInBytes, headPointer.getWord().asPointer());
         headPointer.setWord(chunk);
-    }
-    /**
-     * Add a chunk to the list of free chunk at the specified index of the chunkSizeTable.
-     * The chunk is formatted as a free chunk list element before being inserted at the
-     * head of the list.
-     *
-     * @param index index to the free list of chunk
-     * @param chunk chunk to be added.
-     */
-    protected void addChunk(int index, Pointer chunk) {
-        addChunk(getHeadAddress(index), chunk, numBlocksToBytes(index));
-        addToSummary(index);
     }
 
     protected Pointer nextChunk(Pointer chunk) {
@@ -332,10 +356,8 @@ public class LargeObjectSpace extends HeapSweeper {
      */
     private Pointer splitAllocate(int listIndex, int splitListIndex, int numBlocks) {
         // Remove the chunk from its list.
-        Pointer allocated = getHead(listIndex);
-        Pointer newHead = nextChunk(allocated);
-        setHead(newHead, listIndex);
-        if (newHead.isZero()) {
+        Pointer allocated = HeapFreeChunk.removeFirst(getHead(listIndex));
+        if (getHead(listIndex).isZero()) {
             removeFromSummary(listIndex);
         }
         // Split the chunk and add the remainder to the appropriate list.
@@ -345,6 +367,46 @@ public class LargeObjectSpace extends HeapSweeper {
         setHead(splitOff, splitListIndex);
         return allocated;
     }
+
+    public Pointer allocate2(Size size) {
+        if (sizeTableSummary != 0L && size.lessEqual(VERY_LARGE_CHUNK_SIZE)) {
+            // At least one list is not empty.
+            int numBlocks = smallSizeToNumBlocks(size);
+            int listIndex = numBlocks;
+            Pointer allocated = HeapFreeChunk.removeFirst(getHead(listIndex));
+            if (!allocated.isZero()) {
+                totalFreeBlocks -= numBlocks;
+                if (getHead(listIndex).isZero()) {
+                    removeFromSummary(listIndex);
+                }
+                return allocated;
+            }
+
+            // Search for a coarser chunk that we can split without leaving dark matter.
+            listIndex += MIN_NUM_BLOCKS;
+
+            int bitIndex = Pointer.fromLong(sizeTableSummary >>> listIndex).leastSignificantBitSet();
+            if (bitIndex >= 0) {
+                listIndex += bitIndex;
+                int remainderListIndex = listIndex - numBlocks;
+                addToSummary(remainderListIndex);
+                totalFreeBlocks -= numBlocks;
+                return splitAllocate(listIndex, remainderListIndex, numBlocks);
+            }
+
+            // Didn't find a list
+            // Try lists that will leave dark matter behind.
+            bitIndex = Pointer.fromLong(sizeTableSummary >>> numBlocks).leastSignificantBitSet();
+            if (bitIndex >= 0) {
+                listIndex = numBlocks + bitIndex;
+                totalFreeBlocks -= listIndex;
+                totalUnusableBlocks += bitIndex;
+                return splitAllocate(listIndex, bitIndex, numBlocks);
+            }
+        }
+        return tailAllocate(size);
+    }
+
 
     private Pointer handleBlockAllocationFailure(int numBlocks) {
         if (sizeTableSummary != 0L) {
@@ -371,6 +433,7 @@ public class LargeObjectSpace extends HeapSweeper {
         // Carve up the end of the large object space.
         return tailAllocate(numBlocksToBytes(numBlocks));
     }
+
 
     protected Pointer getNextChunk(Pointer chunk) {
         return HeapFreeChunk.getFreeChunkNext(chunk).asPointer();
@@ -405,9 +468,28 @@ public class LargeObjectSpace extends HeapSweeper {
     }
 
     @Override
-    public void processDeadSpace(Address freeChunk, Size size) {
-        // TODO Auto-generated method stub
+    public Size beginSweep(boolean precise) {
+        endOfLastProcessedChunk = committedHeapSpace.start();
+        for (int i = 0; i < chunkSizeTable.length; i++) {
+            chunkSizeTable[i] = Pointer.zero();
+        }
+        return Size.fromInt(BLOCK_SIZE);
+    }
 
+    @Override
+    public Size endSweep() {
+        return Size.zero();
+    }
+
+    @Override
+    public void processDeadSpace(Address freeChunk, Size size) {
+        if (MaxineVM.isDebug()) {
+            FatalError.check(committedHeapSpace.contains(freeChunk) &&
+                            size.remainder(BLOCK_SIZE) == 0,
+                            "Large object space dead space should always be an integral number of blocks");
+            FatalError.check(freeChunk.greaterEqual(endOfLastProcessedChunk), "dead space alread swept");
+        }
+        // addChunk(listIndex(size), freeChunk);
     }
 
     @Override
