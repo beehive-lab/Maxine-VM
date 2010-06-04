@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins.method;
 
-import java.util.*;
-
 import com.sun.max.ins.debug.*;
 
 /**
@@ -85,6 +83,5 @@ public enum TargetCodeColumnKind implements ColumnKind {
         return label;
     }
 
-    public static final List<TargetCodeColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 }
 

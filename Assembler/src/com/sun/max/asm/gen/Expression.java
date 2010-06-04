@@ -20,8 +20,9 @@
  */
 package com.sun.max.asm.gen;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 
 /**
  * An expression can provide the value of an operand field. This enables synthetic instructions to be generated where
@@ -36,7 +37,7 @@ public interface Expression {
     /**
      * Evaluates the expression given a template and a set of arguments.
      */
-    long evaluate(Template template, IndexedSequence<Argument> arguments);
+    long evaluate(Template template, List<Argument> arguments);
 
     /**
      * @return a Java expression that performs the {@link #evaluate evaluation}
@@ -54,7 +55,7 @@ public interface Expression {
          * @param term
          *            a {@link Number}, {@link Expression} or {@link Parameter} instance
          */
-        public static long evaluateTerm(Object term, Template template, IndexedSequence<Argument> arguments) {
+        public static long evaluateTerm(Object term, Template template, List<Argument> arguments) {
             if (term instanceof Number) {
                 return ((Number) term).longValue();
             }
@@ -93,7 +94,7 @@ public interface Expression {
         public static Expression add(final Object first, final Object second) {
             return new Expression() {
 
-                public long evaluate(Template template, IndexedSequence<Argument> arguments) {
+                public long evaluate(Template template, List<Argument> arguments) {
                     return evaluateTerm(first, template, arguments) + evaluateTerm(second, template, arguments);
                 }
 
@@ -114,7 +115,7 @@ public interface Expression {
         public static Expression sub(final Object first, final Object second) {
             return new Expression() {
 
-                public long evaluate(Template template, IndexedSequence<Argument> arguments) {
+                public long evaluate(Template template, List<Argument> arguments) {
                     return evaluateTerm(first, template, arguments) - evaluateTerm(second, template, arguments);
                 }
 
@@ -133,7 +134,7 @@ public interface Expression {
         public static Expression neg(final Object term) {
             return new Expression() {
 
-                public long evaluate(Template template, IndexedSequence<Argument> arguments) {
+                public long evaluate(Template template, List<Argument> arguments) {
                     return -evaluateTerm(term, template, arguments);
                 }
 
@@ -155,7 +156,7 @@ public interface Expression {
         public static Expression div(final Object term1, final Object term2) {
             return new Expression() {
 
-                public long evaluate(Template template, IndexedSequence<Argument> arguments) {
+                public long evaluate(Template template, List<Argument> arguments) {
                     return evaluateTerm(term1, template, arguments) / evaluateTerm(term2, template, arguments);
                 }
 
@@ -172,7 +173,7 @@ public interface Expression {
         public static Expression mod(final Object term1, final Object term2) {
             return new Expression() {
 
-                public long evaluate(Template template, IndexedSequence<Argument> arguments) {
+                public long evaluate(Template template, List<Argument> arguments) {
                     return evaluateTerm(term1, template, arguments) % evaluateTerm(term2, template, arguments);
                 }
 
@@ -189,7 +190,7 @@ public interface Expression {
         public static Expression rightShift(final Object term1, final Object term2) {
             return new Expression() {
 
-                public long evaluate(Template template, IndexedSequence<Argument> arguments) {
+                public long evaluate(Template template, List<Argument> arguments) {
                     return evaluateTerm(term1, template, arguments) >> evaluateTerm(term2, template, arguments);
                 }
 
@@ -206,7 +207,7 @@ public interface Expression {
         public static Expression and(final Object term1, final Object term2) {
             return new Expression() {
 
-                public long evaluate(Template template, IndexedSequence<Argument> arguments) {
+                public long evaluate(Template template, List<Argument> arguments) {
                     return evaluateTerm(term1, template, arguments) & evaluateTerm(term2, template, arguments);
                 }
 

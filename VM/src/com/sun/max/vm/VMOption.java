@@ -22,8 +22,8 @@ package com.sun.max.vm;
 
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -302,7 +302,7 @@ public class VMOption {
 
     @HOSTED_ONLY
     private static ProgramError parseError(String message, int index) {
-        final StringBuilder sb = new StringBuilder(String.format("Error parsing VM option: %s:%n%s%n", message, Arrays.toString(vmArguments, " ")));
+        final StringBuilder sb = new StringBuilder(String.format("Error parsing VM option: %s:%n%s%n", message, Utils.toString(vmArguments, " ")));
         for (int i = 0; i < index; ++i) {
             sb.append(' ');
         }

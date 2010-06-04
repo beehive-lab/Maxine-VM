@@ -210,7 +210,7 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
 
     @HOSTED_ONLY
     private static CirBuiltin[] createCirBuiltins() {
-        final int numberOfBuiltins = Builtin.builtins().length();
+        final int numberOfBuiltins = Builtin.builtins().size();
         final CirBuiltin[] builtins = new CirBuiltin[numberOfBuiltins];
 
         register(builtins, new CirReducibleAddressComparison(GreaterEqual.BUILTIN, ValueComparator.UNSIGNED_GREATER_EQUAL, Address.max(), Address.zero(), true));

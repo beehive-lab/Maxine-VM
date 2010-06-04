@@ -33,18 +33,16 @@ public class FileTraversal {
 
     /**
      * Handles a standard file resource encountered during the traversal.
-     * 
-     * @param file
-     *                a file resource for which {@link File#isFile()} returns {@code true}
+     *
+     * @param file a file resource for which {@link File#isFile()} returns {@code true}
      */
     protected void visitFile(File file) {
     }
 
     /**
      * Handles a directory encountered during the traversal.
-     * 
-     * @param directory
-     *                a file resource for which {@link File#isDirectory()} returns {@code true}
+     *
+     * @param directory a file resource for which {@link File#isDirectory()} returns {@code true}
      * @return true if the traversal should process the file system hierarchy rooted at {@code directory}, false if it
      *         should be skipped
      */
@@ -54,9 +52,9 @@ public class FileTraversal {
 
     /**
      * Handles a file resource encountered during the traversal that is neither a standard file or directory.
-     * 
-     * @param other
-     *                a file resource for which neither {@link File#isFile()} nor {@link File#isDirectory()} returns {@code true}
+     *
+     * @param other a file resource for which neither {@link File#isFile()} nor {@link File#isDirectory()} returns
+     *            {@code true}
      */
     protected void visitOther(File other) {
     }
@@ -73,9 +71,8 @@ public class FileTraversal {
     /**
      * Traverses the file hierarchy rooted at a given file. The {@linkplain #wasStopped() stopped} status of this
      * traversal object is reset to {@code false} before the traversal begins.
-     * 
-     * @param file
-     *                the file or directory at which to start the traversal
+     *
+     * @param file the file or directory at which to start the traversal
      */
     public void run(File file) {
         stopped = false;

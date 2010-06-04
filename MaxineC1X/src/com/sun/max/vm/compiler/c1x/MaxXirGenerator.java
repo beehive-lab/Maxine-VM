@@ -33,8 +33,8 @@ import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.*;
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -396,13 +396,13 @@ public class MaxXirGenerator extends RiXirGenerator {
         int rank = lengths.length;
         if (!type.isResolved() || rank >= SMALL_MULTIANEWARRAY_RANK) {
             XirArgument guard = guardFor(type, ResolveClass.SNIPPET);
-            return new XirSnippet(multiNewArrayTemplate[rank].unresolved, Arrays.append(lengths, guard));
+            return new XirSnippet(multiNewArrayTemplate[rank].unresolved, Utils.concat(lengths, guard));
         }
         if (rank >= multiNewArrayTemplate.length) {
             FatalError.unimplemented();
         }
         XirArgument hub = XirArgument.forObject(hubFor(type));
-        return new XirSnippet(multiNewArrayTemplate[rank].resolved, Arrays.append(lengths, hub));
+        return new XirSnippet(multiNewArrayTemplate[rank].resolved, Utils.concat(lengths, hub));
     }
 
     @Override
@@ -813,7 +813,7 @@ public class MaxXirGenerator extends RiXirGenerator {
                 lengths[i] = asm.createInputParameter("lengths[" + i + "]", CiKind.Int);
             }
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
-            callRuntimeThroughStub(asm, "allocateMultiArray" + rank, result, Arrays.prepend(lengths, hub));
+            callRuntimeThroughStub(asm, "allocateMultiArray" + rank, result, Utils.prepend(lengths, hub));
             resolved = finishTemplate(asm, "multianewarray<" + rank + ">");
         }
 

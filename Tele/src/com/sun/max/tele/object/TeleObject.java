@@ -23,8 +23,8 @@ package com.sun.max.tele.object;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.grip.*;
@@ -513,7 +513,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
                         }
                     } else if (fieldActor.kind.isWord) {
                         final Class<Class< ? extends Word>> type = null;
-                        final Class< ? extends Word> wordType = StaticLoophole.cast(type, fieldActor.toJava().getType());
+                        final Class< ? extends Word> wordType = Utils.cast(type, fieldActor.toJava().getType());
                         newJavaValue = value.asWord().as(wordType);
                     } else {
                         newJavaValue = value.asBoxedJavaValue();

@@ -26,6 +26,7 @@ import static com.sun.max.vm.stack.JitStackFrameLayout.*;
 
 import java.io.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.Assembler.*;
@@ -149,7 +150,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
          * to better factor this out.
          */
         final Class<TargetABI<GPR, FPR>> type = null;
-        TARGET_ABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI);
+        TARGET_ABI = Utils.cast(type, VMConfiguration.target().targetABIsScheme().jitABI);
         CPU_FRAME_POINTER = TARGET_ABI.registerRoleAssignment.integerRegisterActingAs(Role.CPU_FRAME_POINTER);
         PROLOGUE_SCRATCH_REGISTER = TARGET_ABI.scratchRegister();
 

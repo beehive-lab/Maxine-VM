@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.dir;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
@@ -82,7 +82,7 @@ public class DirTraceObserver extends IrTraceObserver {
 
     private void traceDirBlocks(Object context) {
         final Class<Iterable<DirBlock>> type = null;
-        final Iterable<DirBlock> dirBlocks = StaticLoophole.cast(type, context);
+        final Iterable<DirBlock> dirBlocks = Utils.cast(type, context);
         for (DirBlock block : dirBlocks) {
             block.printTo(out);
         }

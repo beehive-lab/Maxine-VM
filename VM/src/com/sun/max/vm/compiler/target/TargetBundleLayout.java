@@ -22,7 +22,9 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField.*;
 
-import com.sun.max.collect.*;
+import java.util.*;
+import java.util.Arrays;
+
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -47,7 +49,7 @@ public final class TargetBundleLayout {
         referenceLiterals(false),
         code(true);
 
-        public static final IndexedSequence<ArrayField> VALUES = new ArraySequence<ArrayField>(values());
+        public static final List<ArrayField> VALUES = Arrays.asList(values());
 
         public final ArrayLayout arrayLayout;
 
@@ -121,7 +123,7 @@ public final class TargetBundleLayout {
 
         final LinearAllocatorHeapRegion region = new LinearAllocatorHeapRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE), "TargetBundle");
 
-        final int numberOfFields = ArrayField.VALUES.length();
+        final int numberOfFields = ArrayField.VALUES.size();
         lengths = new int[numberOfFields];
         cellSizes = new Size[numberOfFields];
         cellOffsets = new Offset[numberOfFields];

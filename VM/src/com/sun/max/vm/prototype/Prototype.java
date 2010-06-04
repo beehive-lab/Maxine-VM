@@ -22,6 +22,7 @@ package com.sun.max.vm.prototype;
 
 import java.io.*;
 
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -128,7 +129,7 @@ public abstract class Prototype {
             final File projectPath = JavaProject.findVcsProjectDirectory();
             final File workspacePath = projectPath.getParentFile();
             final String[] usrPaths = (String[]) WithoutAccessCheck.getStaticField(ClassLoader.class, "usr_paths");
-            final String libraryPath = new File(workspacePath, LIBRARY_BUILD_PATH).getPath() + File.pathSeparator + Arrays.toString(usrPaths, File.pathSeparator);
+            final String libraryPath = new File(workspacePath, LIBRARY_BUILD_PATH).getPath() + File.pathSeparator + Utils.toString(usrPaths, File.pathSeparator);
             JDKInterceptor.setLibraryPath(libraryPath);
             isPathHacked = true;
         }

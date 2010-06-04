@@ -36,7 +36,7 @@ public class HotpathProfiler implements Profiler {
     public static OptionSet optionSet = new OptionSet();
     public static Option<Boolean> printState = optionSet.newBooleanOption("PP", false, "(P)rints the Profiler's Execution (S)tate.");
 
-    private GrowableMapping<BytecodeLocation, TreeAnchor> anchors = new OpenAddressingHashMapping<BytecodeLocation, TreeAnchor>();
+    private Mapping<BytecodeLocation, TreeAnchor> anchors = new OpenAddressingHashMapping<BytecodeLocation, TreeAnchor>();
 
     private boolean isTracing = false;
 

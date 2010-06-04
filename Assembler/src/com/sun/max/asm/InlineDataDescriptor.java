@@ -21,9 +21,9 @@
 package com.sun.max.asm;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.asm.Label.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
@@ -87,7 +87,7 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
          */
         public abstract InlineDataDescriptor decode(DataInputStream dataInputStream) throws IOException;
 
-        public static final IndexedSequence<Tag> VALUES = new ArraySequence<Tag>(values());
+        public static final List<Tag> VALUES = Arrays.asList(values());
     }
 
     /**

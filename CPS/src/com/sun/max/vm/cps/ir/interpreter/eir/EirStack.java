@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.ir.interpreter.eir;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.value.*;
@@ -62,7 +61,7 @@ public class EirStack {
     protected EirStack(EirStack copy) {
         ceiling = copy.ceiling;
         sp = copy.sp;
-        slots = new ArrayListSequence<Value>(copy.slots);
+        slots = new ArrayList<Value>(copy.slots);
     }
 
     /**
@@ -85,7 +84,7 @@ public class EirStack {
         sp = address;
     }
 
-    private List<Value> slots = new ArrayListSequence<Value>();
+    private List<Value> slots = new ArrayList<Value>();
 
     private int addressToSlotIndex(Address address) {
         if (address.lessThan(sp) || address.greaterEqual(ceiling)) {

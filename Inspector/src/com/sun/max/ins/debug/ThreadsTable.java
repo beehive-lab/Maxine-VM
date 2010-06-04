@@ -86,7 +86,7 @@ public final class ThreadsTable extends InspectorTable {
     private final class ThreadsColumnModel extends InspectorTableColumnModel<ThreadsColumnKind> {
 
         private ThreadsColumnModel(ThreadsViewPreferences viewPreferences) {
-            super(ThreadsColumnKind.VALUES.size(), viewPreferences);
+            super(ThreadsColumnKind.values().length, viewPreferences);
             addColumn(ThreadsColumnKind.ID, new IDCellRenderer(inspection()), null);
             addColumn(ThreadsColumnKind.HANDLE, new HandleCellRenderer(inspection()), null);
             addColumn(ThreadsColumnKind.LOCAL_HANDLE, new LocalHandleCellRenderer(inspection()), null);
@@ -108,7 +108,7 @@ public final class ThreadsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return ThreadsColumnKind.VALUES.size();
+            return ThreadsColumnKind.values().length;
         }
 
         public int getRowCount() {

@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.field.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -51,9 +50,9 @@ public abstract class InstructionDescription implements Iterable<Object>, Clonea
     /**
      * The components of the description.
      */
-    private final MutableSequence<Object> specifications;
+    private final List<Object> specifications;
 
-    public InstructionDescription(MutableSequence<Object> specifications) {
+    public InstructionDescription(List<Object> specifications) {
         this.specifications = specifications;
         this.serial = nextSerial++;
     }
@@ -65,18 +64,23 @@ public abstract class InstructionDescription implements Iterable<Object>, Clonea
     /**
      * @return the objects from which this description is composed
      */
-    public MutableSequence<Object> specifications() {
+    public List<Object> specifications() {
         return specifications;
     }
 
-    private Sequence<InstructionConstraint> constraints;
+    private List<InstructionConstraint> constraints;
 
     /**
      * @return the {@link InstructionConstraint} instances (if any) within this description
      */
-    public Sequence<InstructionConstraint> constraints() {
+    public List<InstructionConstraint> constraints() {
         if (constraints == null) {
-            constraints = Sequence.Static.filter(specifications, InstructionConstraint.class);
+            constraints = new ArrayList<InstructionConstraint>(specifications.size());
+            for (Object s : specifications) {
+                if (s instanceof InstructionConstraint) {
+                    constraints.add((InstructionConstraint) s);
+                }
+            }
         }
         return constraints;
     }

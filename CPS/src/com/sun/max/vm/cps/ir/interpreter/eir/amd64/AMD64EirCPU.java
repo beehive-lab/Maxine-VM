@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.ir.interpreter.eir.amd64;
 
 import java.io.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -42,7 +41,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         SF,
         PF;
 
-        public static final IndexedSequence<ConditionFlag> VALUES = new ArraySequence<ConditionFlag>(values());
+        public static final ConditionFlag[] VALUES = values();
     }
 
     private final Value[] generalRegisterContents;
@@ -52,9 +51,9 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
 
     public AMD64EirCPU(AMD64EirInterpreter interpreter) {
         super(interpreter);
-        generalRegisterContents = new Value[AMD64EirRegister.General.VALUES.length()];
-        xmmRegisterContents = new Value[AMD64EirRegister.XMM.VALUES.length()];
-        conditionFlags = new boolean[ConditionFlag.VALUES.length()];
+        generalRegisterContents = new Value[AMD64EirRegister.General.VALUES.size()];
+        xmmRegisterContents = new Value[AMD64EirRegister.XMM.VALUES.size()];
+        conditionFlags = new boolean[ConditionFlag.VALUES.length];
 
         final EirStack stack = stack();
         final Address topSP = stack.ceiling.minus(VmThreadLocal.threadLocalsAreaSize().plus(Word.size()));

@@ -23,7 +23,6 @@ package com.sun.max.vm.cps.eir.amd64;
 import java.util.*;
 
 import com.sun.max.asm.amd64.*;
-import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.asm.amd64.*;
@@ -119,7 +118,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
 
         // now load the trap parameter information into registers from the VM thread locals
         final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI;
-        final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters;
+        final List parameterRegisters = targetABI.integerIncomingParameterRegisters;
         // load the trap number into the first parameter register
         asm.mov((AMD64GeneralRegister64) parameterRegisters.get(0), VmThreadLocal.TRAP_NUMBER.offset, latchRegister.indirect());
         // load the trap state pointer into the second parameter register

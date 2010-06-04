@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.cps.cir.bytecode;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.snippet.*;
@@ -504,7 +505,7 @@ public class CirBytecode {
          */
         UNDEFINED;
 
-        public static final IndexedSequence<Opcode> VALUES = new ArraySequence<Opcode>(values());
+        public static final List<Opcode> VALUES = Arrays.asList(values());
 
         /**
          * Gets the value of the operand implicit in the opcode.

@@ -26,22 +26,22 @@ package com.sun.max.lang;
  *
  * @author Bernd Mathiske
  */
-public class MutableInnerClassGlobal<Object_Type> {
+public class MutableInnerClassGlobal<T> {
 
-    private Object_Type value;
+    private T value;
 
-    public Object_Type value() {
+    public T value() {
         return value;
     }
 
     public MutableInnerClassGlobal() {
     }
 
-    public MutableInnerClassGlobal(Object_Type value) {
+    public MutableInnerClassGlobal(T value) {
         this.value = value;
     }
 
-    public void setValue(Object_Type value) {
+    public void setValue(T value) {
         this.value = value;
     }
 

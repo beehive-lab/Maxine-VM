@@ -23,11 +23,12 @@ package com.sun.max.ins.gui;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
+import com.sun.cri.ci.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.tele.*;
@@ -373,7 +374,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return inspection.actions();
     }
 
-    private IdentityHashSet<ColumnChangeListener> columnChangeListeners = new IdentityHashSet<ColumnChangeListener>();
+    private Set<ColumnChangeListener> columnChangeListeners = CiUtil.newIdentityHashSet();
 
     /**
      * Adds a listener for view update when column visibility changes.
@@ -393,7 +394,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * Notifies listeners that the column visibility preferences for the table have changed.
      */
     public void fireColumnPreferenceChanged() {
-        for (ColumnChangeListener listener : columnChangeListeners.clone()) {
+        ColumnChangeListener[] copy = columnChangeListeners.toArray(new ColumnChangeListener[columnChangeListeners.size()]);
+        for (ColumnChangeListener listener : copy) {
             listener.columnPreferenceChanged();
         }
     }

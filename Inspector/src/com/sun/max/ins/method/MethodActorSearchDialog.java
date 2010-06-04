@@ -23,7 +23,6 @@ package com.sun.max.ins.method;
 import java.util.*;
 import java.util.Arrays;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
@@ -51,7 +50,7 @@ public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
         final Iterator<TeleMethodActor> teleMethodActors = localTeleMethodActors.iterator();
 
         int i = 0;
-        final NamedTeleObject[] methods = new NamedTeleObject[localTeleMethodActors.length()];
+        final NamedTeleObject[] methods = new NamedTeleObject[localTeleMethodActors.size()];
 
         final String filterLowerCase = filterText.toLowerCase();
         while (teleMethodActors.hasNext()) {
@@ -72,13 +71,13 @@ public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
         }
     }
 
-    private final AppendableSequence<TeleMethodActor> localTeleMethodActors = new LinkSequence<TeleMethodActor>();
+    private final List<TeleMethodActor> localTeleMethodActors = new LinkedList<TeleMethodActor>();
 
     private MethodActorSearchDialog(Inspection inspection, TeleClassActor teleClassActor, Predicate<TeleMethodActor> filter, String title, String actionName) {
         super(inspection, title == null ? "Select Method" : title, "Method Name", actionName, false);
         for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
             if (filter.evaluate(teleMethodActor)) {
-                localTeleMethodActors.append(teleMethodActor);
+                localTeleMethodActors.add(teleMethodActor);
             }
         }
         rebuildList();

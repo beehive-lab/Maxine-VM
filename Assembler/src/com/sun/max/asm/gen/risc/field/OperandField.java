@@ -22,12 +22,11 @@ package com.sun.max.asm.gen.risc.field;
 
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 
 /**
  * An operand field defines an instruction field whose value is given as a parameter in the generated
@@ -96,7 +95,7 @@ public abstract class OperandField<Argument_Type extends Argument> extends RiscF
     @Override
     public OperandField<Argument_Type> clone() {
         final Class<OperandField<Argument_Type>> type = null;
-        return StaticLoophole.cast(type, super.clone());
+        return Utils.cast(type, super.clone());
     }
 
     public OperandField<Argument_Type> beSigned() {
@@ -143,7 +142,7 @@ public abstract class OperandField<Argument_Type extends Argument> extends RiscF
         return variableName();
     }
 
-    private Set<Argument> excludedDisassemblerTestArguments = Sets.empty(Argument.class);
+    private Set<Argument> excludedDisassemblerTestArguments = Collections.emptySet();
 
     public OperandField<Argument_Type> withExcludedDisassemblerTestArguments(Set<Argument> arguments) {
         final OperandField<Argument_Type> result = clone();
@@ -152,14 +151,14 @@ public abstract class OperandField<Argument_Type extends Argument> extends RiscF
     }
 
     public OperandField<Argument_Type> withExcludedDisassemblerTestArguments(Argument... arguments) {
-        return withExcludedDisassemblerTestArguments(Sets.from(arguments));
+        return withExcludedDisassemblerTestArguments(new HashSet<Argument>(Arrays.asList(arguments)));
     }
 
     public Set<Argument> excludedDisassemblerTestArguments() {
         return excludedDisassemblerTestArguments;
     }
 
-    private Set<Argument> excludedExternalTestArguments = Sets.empty(Argument.class);
+    private Set<Argument> excludedExternalTestArguments = Collections.emptySet();
 
     public OperandField<Argument_Type> withExcludedExternalTestArguments(Set<Argument> arguments) {
         final OperandField<Argument_Type> result = clone();
@@ -168,7 +167,7 @@ public abstract class OperandField<Argument_Type extends Argument> extends RiscF
     }
 
     public OperandField<Argument_Type> withExcludedExternalTestArguments(Argument... arguments) {
-        return withExcludedExternalTestArguments(Sets.from(arguments));
+        return withExcludedExternalTestArguments(new HashSet<Argument>(Arrays.asList(arguments)));
     }
 
     public Set<Argument> excludedExternalTestArguments() {
@@ -179,7 +178,7 @@ public abstract class OperandField<Argument_Type extends Argument> extends RiscF
         return type().getName().compareTo(other.type().getName());
     }
 
-    public long evaluate(Template template, IndexedSequence<Argument> arguments) {
+    public long evaluate(Template template, List<Argument> arguments) {
         if (boundTo() != null) {
             return boundTo().evaluate(template, arguments);
         }

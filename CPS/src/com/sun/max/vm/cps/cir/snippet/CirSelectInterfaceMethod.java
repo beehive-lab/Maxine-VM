@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.cps.cir.snippet;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -50,7 +51,7 @@ public final class CirSelectInterfaceMethod extends CirSnippet {
     private enum Parameter {
         receiver, declaredMethod, normalContinuation, exceptionContinuation;
 
-        public static final IndexedSequence<Parameter> VALUES = new ArraySequence<Parameter>(values());
+        public static final List<Parameter> VALUES = Arrays.asList(values());
     }
 
     @Override
@@ -75,7 +76,7 @@ public final class CirSelectInterfaceMethod extends CirSnippet {
 
     @Override
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        assert arguments.length == Parameter.VALUES.length();
+        assert arguments.length == Parameter.VALUES.size();
         if (isConstantArgument(arguments, Parameter.declaredMethod)) {
             if (isConstantArgument(arguments, Parameter.receiver)) {
                 return true;
@@ -94,7 +95,7 @@ public final class CirSelectInterfaceMethod extends CirSnippet {
 
     @Override
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
-        assert arguments.length == Parameter.VALUES.length();
+        assert arguments.length == Parameter.VALUES.size();
         final InterfaceMethodActor declaredMethod = (InterfaceMethodActor) getConstantArgumentValue(arguments, Parameter.declaredMethod).asObject();
         VirtualMethodActor selectedMethod = null;
         if (isConstantArgument(arguments, Parameter.receiver)) {

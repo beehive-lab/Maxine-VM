@@ -20,18 +20,22 @@
  */
 package com.sun.max.collect;
 
+import java.util.*;
+
+import com.sun.max.*;
+
 /**
  * Similar to java.util.HashMap, but with plain primitive ints as keys.
  * Unsynchronized.
  *
  * @author Bernd Mathiske
  */
-public class IntHashMap<Value_Type> {
+public class IntHashMap<T> {
 
     private static final int INITIAL_SIZE = 4;
 
     private int[] keys;
-    private MutableSequence<Value_Type> values;
+    private T[] values;
     private int numberOfValues;
     private int threshold;
     private static final float LOAD_FACTOR = 0.75f;
@@ -57,7 +61,8 @@ public class IntHashMap<Value_Type> {
         }
 
         keys = new int[capacity];
-        values = new ArraySequence<Value_Type>(capacity);
+        Class<T[]> type = null;
+        values = Utils.newArray(type, capacity);
         setThreshold();
     }
 
@@ -82,7 +87,7 @@ public class IntHashMap<Value_Type> {
         return key & (length - 1);
     }
 
-    public Value_Type get(int key) {
+    public T get(int key) {
         if (keys == null) {
             return null;
         }
@@ -92,12 +97,12 @@ public class IntHashMap<Value_Type> {
         }
         final int start = index;
         do {
-            final Value_Type value = values.get(index);
+            final T value = values[index];
             if (value == null) {
                 return null;
             }
             if (keys[index] == key) {
-                return values.get(index);
+                return values[index];
             }
             index++;
             index %= keys.length;
@@ -106,25 +111,27 @@ public class IntHashMap<Value_Type> {
     }
 
     private void setThreshold() {
-        assert keys.length == values.length();
+        assert keys.length == values.length;
         threshold = (int) (keys.length * LOAD_FACTOR);
     }
 
     public void grow() {
         if (keys == null) {
             keys = new int[INITIAL_SIZE];
-            values = new ArraySequence<Value_Type>(INITIAL_SIZE);
+            Class<T[]> type = null;
+            values = Utils.newArray(type, INITIAL_SIZE);
             setThreshold();
         } else {
             final int[] ks = this.keys;
-            final IndexedSequence<Value_Type> vs = this.values;
+            final T[] vs = this.values;
             final int length = ks.length * 2;
             this.keys = new int[length];
-            this.values = new ArraySequence<Value_Type>(length);
+            Class<T[]> type = null;
+            this.values = Utils.newArray(type, length);
             numberOfValues = 0;
             setThreshold();
             for (int i = 0; i < ks.length; i++) {
-                final Value_Type value = vs.get(i);
+                final T value = vs[i];
                 if (value != null) {
                     put(ks[i], value);
                 }
@@ -132,7 +139,7 @@ public class IntHashMap<Value_Type> {
         }
     }
 
-    public Value_Type put(int key, Value_Type value) {
+    public T put(int key, T value) {
         assert value != null;
         if (numberOfValues >= threshold) {
             grow();
@@ -142,35 +149,34 @@ public class IntHashMap<Value_Type> {
             index *= -1;
         }
         final int start = index;
-        while (values.get(index) != null) {
+        while (values[index] != null) {
             if (keys[index] == key) {
-                return values.set(index, value);
+                T oldValue = values[index];
+                values[index] = value;
+                return oldValue;
             }
             index++;
             index %= keys.length;
             assert index != start;
         }
         keys[index] = key;
-        values.set(index, value);
+        values[index] = value;
         numberOfValues++;
         return null;
     }
 
-    public Sequence<Value_Type> toSequence() {
+    public List<T> toList() {
         if (values == null) {
-            final Class<Value_Type> type = null;
-            return Sequence.Static.empty(type);
+            return Collections.emptyList();
         }
-        final MutableSequence<Value_Type> sequence = new ArraySequence<Value_Type>(numberOfValues);
-        int n = 0;
-        for (int i = 0; i < values.length(); i++) {
-            final Value_Type value = values.get(i);
+        final List<T> list = new ArrayList<T>(numberOfValues);
+        for (int i = 0; i < values.length; i++) {
+            final T value = values[i];
             if (value != null) {
-                sequence.set(n, value);
-                n++;
+                list.add(value);
             }
         }
-        return sequence;
+        return list;
     }
 
     public int count() {

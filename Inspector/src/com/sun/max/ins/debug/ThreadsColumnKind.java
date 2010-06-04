@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins.debug;
 
-import java.util.*;
 
 /**
  * Defines the columns that can be displayed describing a thread in the VM.
@@ -79,5 +78,4 @@ public enum ThreadsColumnKind implements ColumnKind {
         return defaultVisibility;
     }
 
-    public static final List<ThreadsColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 }

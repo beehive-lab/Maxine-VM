@@ -27,16 +27,16 @@ import java.util.*;
  *
  * @author Doug Simon
  */
-public class ArrayPool<PoolObject_Type extends PoolObject> extends Pool<PoolObject_Type> {
+public class ArrayPool<T extends PoolObject> extends Pool<T> {
 
-    protected final PoolObject_Type[] objects;
+    protected final T[] objects;
 
-    public ArrayPool(PoolObject_Type... objects) {
+    public ArrayPool(T... objects) {
         this.objects = objects;
     }
 
     @Override
-    public PoolObject_Type get(int serial) {
+    public T get(int serial) {
         return objects[serial];
     }
 
@@ -45,7 +45,7 @@ public class ArrayPool<PoolObject_Type extends PoolObject> extends Pool<PoolObje
         return objects.length;
     }
 
-    public Iterator<PoolObject_Type> iterator() {
-        return Iterators.iterator(objects);
+    public Iterator<T> iterator() {
+        return Arrays.asList(objects).iterator();
     }
 }

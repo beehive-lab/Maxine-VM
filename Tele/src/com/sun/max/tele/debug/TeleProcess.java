@@ -27,7 +27,6 @@ import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.gui.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -401,6 +400,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
+     * Initializes the state history for attach/dump modes.
+     */
+    public final void initializeStateOnAttach() {
+        initializeState();
+        epoch++;
+        refreshThreads();
+        // now update state to reflect the discovered threads, all of which will appear as STARTED
+        updateState(STOPPED, TeleProcess.EMPTY_BREAKPOINTEVENT_LIST, null);
+    }
+
+    /**
      * Gets the singleton for creating and managing VM watchpoints; null if not enabled
      * on this platform.
      *
@@ -639,8 +649,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      *
      * @return the threads in the process
      */
-    public final IterableWithLength<TeleNativeThread> threads() {
-        return Iterables.toIterableWithLength(handleToThreadMap.values());
+    public final Collection<TeleNativeThread> threads() {
+        return handleToThreadMap.values();
     }
 
     /**
@@ -693,7 +703,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     private void refreshThreads() {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
         final long startTimeMillis = System.currentTimeMillis();
-        final AppendableSequence<TeleNativeThread> currentThreads = new ArrayListSequence<TeleNativeThread>(handleToThreadMap.size());
+        final List<TeleNativeThread> currentThreads = new ArrayList<TeleNativeThread>(handleToThreadMap.size());
         gatherThreads(currentThreads);
 
         final SortedMap<Long, TeleNativeThread> newHandleToThreadMap = new TreeMap<Long, TeleNativeThread>();
@@ -864,7 +874,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      */
     protected abstract ProcessState waitUntilStopped();
 
-    protected abstract void gatherThreads(AppendableSequence<TeleNativeThread> threads);
+    protected abstract void gatherThreads(List<TeleNativeThread> threads);
 
     /**
      * Creates a native thread; platform-specific implementation.
@@ -892,7 +902,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @param tlbSize the size of the thread locals region
      * @param tlaSize the size of a thread locals area
      */
-    public final void jniGatherThread(AppendableSequence<TeleNativeThread> threads,
+    public final void jniGatherThread(List<TeleNativeThread> threads,
                     int id,
                     long localHandle,
                     long handle,
@@ -903,7 +913,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     long tlb,
                     long tlbSize,
                     int tlaSize) {
-        assert state >= 0 && state < MaxThreadState.VALUES.size() : state;
+        assert state >= 0 && state < MaxThreadState.values().length : state;
         TeleNativeThread thread = handleToThreadMap.get(localHandle);
 
         final TeleFixedMemoryRegion stackRegion = new TeleFixedMemoryRegion(vm(), "stack region", Address.fromLong(stackBase), Size.fromLong(stackSize));
@@ -935,8 +945,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             }
         }
 
-        thread.updateAfterGather(MaxThreadState.VALUES.get(state), Pointer.fromLong(instructionPointer), threadLocalsRegion, tlaSize);
-        threads.append(thread);
+        thread.updateAfterGather(MaxThreadState.values()[state], Pointer.fromLong(instructionPointer), threadLocalsRegion, tlaSize);
+        threads.add(thread);
     }
 
     /**

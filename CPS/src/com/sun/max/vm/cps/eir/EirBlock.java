@@ -20,11 +20,15 @@
  */
 package com.sun.max.vm.cps.eir;
 
+import java.util.*;
+
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.ir.*;
 
 /**
@@ -140,9 +144,9 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
         }
     }
 
-    private VariableDeterministicSet<EirBlock> predecessors = new LinkedIdentityHashSet<EirBlock>();
+    private LinkedIdentityHashSet<EirBlock> predecessors = new LinkedIdentityHashSet<EirBlock>();
 
-    public DeterministicSet<EirBlock> predecessors() {
+    public LinkedIdentityHashSet<EirBlock> predecessors() {
         return predecessors;
     }
 
@@ -168,37 +172,37 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
     }
 
     public void visitSuccessors(Procedure procedure) {
-        if (instructions.length() > 0) {
-            instructions.last().visitSuccessorBlocks(procedure);
+        if (instructions.size() > 0) {
+            instructions.get(instructions.size() - 1).visitSuccessorBlocks(procedure);
         }
     }
 
-    private Sequence<EirBlock> cachedNormalSuccessors;
-    private Sequence<EirBlock> cachedAllSuccessors;
+    private List<EirBlock> cachedNormalSuccessors;
+    private List<EirBlock> cachedAllSuccessors;
 
     /**
      * (tw) Returns normal unique successors of a block without exception successors.
      * @return
      */
-    public Sequence<EirBlock> normalUniqueSuccessors() {
+    public List<EirBlock> normalUniqueSuccessors() {
 
         if (cachedNormalSuccessors != null) {
             return cachedNormalSuccessors;
         }
 
         final IdentityHashSet<EirBlock> blocks = new LinkedIdentityHashSet<EirBlock>();
-        final AppendableSequence<EirBlock> result = new ArrayListSequence<EirBlock>(3);
+        final List<EirBlock> result = new ArrayList<EirBlock>(3);
 
         final Procedure filterProcedure = new Procedure() {
             public void run(EirBlock block) {
                 if (!blocks.contains(block)) {
                     blocks.add(block);
-                    result.append(block);
+                    result.add(block);
                 }
             }
         };
 
-        instructions().last().visitSuccessorBlocks(filterProcedure);
+        Utils.last(instructions()).visitSuccessorBlocks(filterProcedure);
 
         cachedNormalSuccessors = result;
         return result;
@@ -213,20 +217,20 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
      * (tw) Returns all unique successors of a block.
      * @return
      */
-    public Sequence<EirBlock> allUniqueSuccessors() {
+    public List<EirBlock> allUniqueSuccessors() {
 
         if (cachedAllSuccessors != null) {
             return cachedAllSuccessors;
         }
 
         final IdentityHashSet<EirBlock> blocks = new LinkedIdentityHashSet<EirBlock>();
-        final AppendableSequence<EirBlock> result = new ArrayListSequence<EirBlock>(3);
+        final List<EirBlock> result = new ArrayList<EirBlock>(3);
 
         final Procedure filterProcedure = new Procedure() {
             public void run(EirBlock block) {
                 if (!blocks.contains(block)) {
                     blocks.add(block);
-                    result.append(block);
+                    result.add(block);
                 }
             }
         };
@@ -248,9 +252,9 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
         this.loopNestingDepth = loopNestingDepth;
     }
 
-    private final VariableSequence<EirInstruction> instructions = new ArrayListSequence<EirInstruction>();
+    private final ArrayList<EirInstruction> instructions = new ArrayList<EirInstruction>();
 
-    public IndexedSequence<EirInstruction> instructions() {
+    public List<EirInstruction> instructions() {
         return instructions;
     }
 
@@ -260,18 +264,18 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
     }
 
     public void appendInstruction(EirInstruction instruction) {
-        instruction.setIndex(instructions.length());
-        instructions.append(instruction);
+        instruction.setIndex(instructions.size());
+        instructions.add(instruction);
     }
 
     private void updateIndices(int startIndex) {
-        for (int i = startIndex; i < instructions.length(); i++) {
+        for (int i = startIndex; i < instructions.size(); i++) {
             instructions.get(i).setIndex(i);
         }
     }
 
     public void insertInstruction(int index, EirInstruction instruction) {
-        instructions.insert(index, instruction);
+        instructions.add(index, instruction);
         updateIndices(index);
     }
 
@@ -357,7 +361,7 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
         writer.println();
         writer.indent();
         int i = 0;
-        while (i < instructions.length()) {
+        while (i < instructions.size()) {
             writer.println(":" + Integer.toString(i) + " (" + Integer.toString(instructions.get(i).number()) + ") " + instructions.get(i).toString());
             i++;
         }
@@ -390,7 +394,7 @@ public class EirBlock extends EirValue implements IrBlock, PoolObject {
      * Substitutes all predecessor blocks based on a set of substitution pairs.
      * @param mapping a mapping object containing the substitution pairs
      */
-    public void substitutePredecessorBlocks(VariableMapping<EirBlock, EirBlock> mapping) {
+    public void substitutePredecessorBlocks(Mapping<EirBlock, EirBlock> mapping) {
         for (EirBlock block : mapping.keys()) {
             if (predecessors.contains(block)) {
                 final EirBlock substitute = mapping.get(block);

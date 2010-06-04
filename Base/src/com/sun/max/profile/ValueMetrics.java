@@ -23,7 +23,7 @@ package com.sun.max.profile;
 import java.util.*;
 import java.util.Arrays;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.profile.Metrics.*;
 import com.sun.max.program.*;
 
@@ -404,15 +404,15 @@ public class ValueMetrics {
      *
      * @author Ben L. Titzer
      */
-    public abstract static class ObjectDistribution<Value_Type> extends Distribution<Value_Type> {
-        public abstract void record(Value_Type value);
+    public abstract static class ObjectDistribution<T> extends Distribution<T> {
+        public abstract void record(T value);
     }
 
-    public static class HashedObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {
-        private Map<Value_Type, Distribution> map;
-        private Map<Value_Type, Distribution> map() {
+    public static class HashedObjectDistribution<T> extends ObjectDistribution<T> {
+        private Map<T, Distribution> map;
+        private Map<T, Distribution> map() {
             if (map == null) {
-                map = new IdentityHashMap<Value_Type, Distribution>();
+                map = new IdentityHashMap<T, Distribution>();
             }
             return map;
         }
@@ -421,7 +421,7 @@ public class ValueMetrics {
         }
 
         @Override
-        public void record(Value_Type value) {
+        public void record(T value) {
             total++;
             Distribution distribution = map().get(value);
             if (distribution == null) {
@@ -431,7 +431,7 @@ public class ValueMetrics {
             distribution.total++;
         }
         @Override
-        public int getCount(Value_Type value) {
+        public int getCount(T value) {
             final Distribution distribution = map().get(value);
             if (distribution != null) {
                 return distribution.total;
@@ -440,9 +440,9 @@ public class ValueMetrics {
         }
 
         @Override
-        public Map<Value_Type, Integer> asMap() {
-            final Map<Value_Type, Integer> result = new IdentityHashMap<Value_Type, Integer>();
-            for (Map.Entry<Value_Type, Distribution> entry : map().entrySet()) {
+        public Map<T, Integer> asMap() {
+            final Map<T, Integer> result = new IdentityHashMap<T, Integer>();
+            for (Map.Entry<T, Distribution> entry : map().entrySet()) {
                 result.put(entry.getKey(), entry.getValue().total);
             }
             return result;
@@ -455,19 +455,19 @@ public class ValueMetrics {
         }
     }
 
-    public static class FixedSetObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {
+    public static class FixedSetObjectDistribution<T> extends ObjectDistribution<T> {
 
-        private final Value_Type[] set;
+        private final T[] set;
         private final int[] count;
         private int missed;
 
-        public FixedSetObjectDistribution(Value_Type[] set) {
+        public FixedSetObjectDistribution(T[] set) {
             this.set = set.clone();
             count = new int[set.length];
         }
 
         @Override
-        public void record(Value_Type value) {
+        public void record(T value) {
             total++;
             for (int i = 0; i < set.length; i++) {
                 if (set[i] == value) {
@@ -478,7 +478,7 @@ public class ValueMetrics {
             missed++;
         }
         @Override
-        public int getCount(Value_Type value) {
+        public int getCount(T value) {
             for (int i = 0; i < set.length; i++) {
                 if (set[i] == value) {
                     return count[i];
@@ -488,8 +488,8 @@ public class ValueMetrics {
         }
 
         @Override
-        public Map<Value_Type, Integer> asMap() {
-            final Map<Value_Type, Integer> map = new IdentityHashMap<Value_Type, Integer>();
+        public Map<T, Integer> asMap() {
+            final Map<T, Integer> map = new IdentityHashMap<T, Integer>();
             for (int i = 0; i != count.length; ++i) {
                 map.put(set[i], count[i]);
             }
@@ -592,58 +592,58 @@ public class ValueMetrics {
     /**
      * This method creates a new distribution capable of recording individual objects.
      *
-     * @param <Value_Type> the type of objects being profiled
+     * @param <T> the type of objects being profiled
      * @param name the name of the metric; if non-null, then a shared, global metric of the specified name will be
      * returned
      * @param approx the approximation for the distribution
      * @return a new distribution capable of profiling the occurrence of objects
      */
-    public static <Value_Type> ObjectDistribution<Value_Type> newObjectDistribution(String name, Approximation approx) {
+    public static <T> ObjectDistribution<T> newObjectDistribution(String name, Approximation approx) {
         if (name != null) {
-            final ObjectDistribution<Value_Type> prev = StaticLoophole.cast(GlobalMetrics.getMetric(name, ObjectDistribution.class));
+            final ObjectDistribution<T> prev = Utils.cast(GlobalMetrics.getMetric(name, ObjectDistribution.class));
             if (prev != null) {
                 return prev;
             }
-            return StaticLoophole.cast(GlobalMetrics.setMetric(name, ObjectDistribution.class, createObjectDistribution(approx)));
+            return Utils.cast(GlobalMetrics.setMetric(name, ObjectDistribution.class, createObjectDistribution(approx)));
         }
         return createObjectDistribution(approx);
     }
 
-    private static <Value_Type> ObjectDistribution<Value_Type> createObjectDistribution(Approximation approx) {
+    private static <T> ObjectDistribution<T> createObjectDistribution(Approximation approx) {
         if (approx instanceof FixedApproximation) {
             final FixedApproximation fixedApprox = (FixedApproximation) approx;
-            final Value_Type[] values = StaticLoophole.cast(fixedApprox.values);
-            return new FixedSetObjectDistribution<Value_Type>(values);
+            final T[] values = Utils.cast(fixedApprox.values);
+            return new FixedSetObjectDistribution<T>(values);
         }
         if (approx == EXACT) {
-            return new HashedObjectDistribution<Value_Type>();
+            return new HashedObjectDistribution<T>();
         }
         // default is to use the hashed object distribution
-        return new HashedObjectDistribution<Value_Type>();
+        return new HashedObjectDistribution<T>();
     }
 
     /**
      * This is a utility method to create a new object distribution that only records occurrences of
      * objects in the specified set.
      *
-     * @param <Value_Type> the type of the objects being profiled
+     * @param <T> the type of the objects being profiled
      * @param name the name of the metric
      * @param set the set of objects for which to record exact profiling information
      * @return a new distribution capable of producing an exact profile of the occurence of the specified objects
      */
-    public static <Value_Type> ObjectDistribution<Value_Type> newObjectDistribution(String name, Value_Type... set) {
+    public static <T> ObjectDistribution<T> newObjectDistribution(String name, T... set) {
         return newObjectDistribution(name, new FixedApproximation(set));
     }
 
     /**
      * This is utility method to create a new object distribution with an exact profile.
      *
-     * @param <Value_Type> the type of the objects being profiled
+     * @param <T> the type of the objects being profiled
      * @param name the name of metric
      * @return a new distribution capable of producing an exact profile of the occurrences of all of the specified
      * objects.
      */
-    public static <Value_Type> ObjectDistribution<Value_Type> newObjectDistribution(String name) {
+    public static <T> ObjectDistribution<T> newObjectDistribution(String name) {
         return newObjectDistribution(name, EXACT);
     }
 
@@ -681,28 +681,28 @@ public class ValueMetrics {
 
     }
 
-    private static class ThreadsafeObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {
+    private static class ThreadsafeObjectDistribution<T> extends ObjectDistribution<T> {
 
-        private final ObjectDistribution<Value_Type> distribution;
+        private final ObjectDistribution<T> distribution;
 
-        ThreadsafeObjectDistribution(ObjectDistribution<Value_Type> distribution) {
+        ThreadsafeObjectDistribution(ObjectDistribution<T> distribution) {
             this.distribution = distribution;
         }
         @Override
-        public void record(Value_Type value) {
+        public void record(T value) {
             synchronized (distribution) {
                 distribution.record(value);
             }
         }
         @Override
-        public int getCount(Value_Type value) {
+        public int getCount(T value) {
             synchronized (distribution) {
                 return distribution.getCount(value);
             }
         }
 
         @Override
-        public Map<Value_Type, Integer> asMap() {
+        public Map<T, Integer> asMap() {
             synchronized (distribution) {
                 return distribution.asMap();
             }
@@ -727,7 +727,7 @@ public class ValueMetrics {
      * @param distribution the distribution to wrap in a synchronization
      * @return a synchronized view of the distribution
      */
-    public static <Value_Type> ObjectDistribution<Value_Type> threadSafe(ObjectDistribution<Value_Type> distribution) {
-        return new ThreadsafeObjectDistribution<Value_Type>(distribution);
+    public static <T> ObjectDistribution<T> threadSafe(ObjectDistribution<T> distribution) {
+        return new ThreadsafeObjectDistribution<T>(distribution);
     }
 }

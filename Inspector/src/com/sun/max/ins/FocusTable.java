@@ -21,8 +21,6 @@
 package com.sun.max.ins;
 
 import java.awt.*;
-import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -86,7 +84,6 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             return label;
         }
 
-        public static final List<FocusColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
     }
 
     /**
@@ -112,7 +109,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         private static final String FOCUS_COLUMN_PREFERENCE = "focusViewColumn";
 
         private FocusViewPreferences(Inspection inspection) {
-            super(inspection, FOCUS_COLUMN_PREFERENCE, FocusColumnKind.VALUES);
+            super(inspection, FOCUS_COLUMN_PREFERENCE, FocusColumnKind.values());
             // There are no view preferences beyond the column choices, so no additional machinery needed here.
         }
     }
@@ -158,7 +155,6 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             return label;
         }
 
-        public static final List<FocusRowKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
     }
 
     private final FocusTableModel tableModel;
@@ -175,7 +171,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
     private final class FocusColumnModel extends InspectorTableColumnModel<FocusColumnKind> {
 
         private FocusColumnModel(FocusViewPreferences viewPreferences) {
-            super(FocusColumnKind.VALUES.size(), viewPreferences);
+            super(FocusColumnKind.values().length, viewPreferences);
             addColumn(FocusColumnKind.NAME, new NameCellRenderer(inspection()), null);
             addColumn(FocusColumnKind.VALUE, new ValueCellRenderer(inspection()), null);
         }
@@ -188,11 +184,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         }
 
         public int getColumnCount() {
-            return FocusColumnKind.VALUES.size();
+            return FocusColumnKind.values().length;
         }
 
         public int getRowCount() {
-            return FocusRowKind.VALUES.size();
+            return FocusRowKind.values().length;
         }
 
         public Object getValueAt(int row, int col) {
@@ -211,7 +207,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final FocusRowKind focusRowKind = FocusRowKind.VALUES.get(row);
+            final FocusRowKind focusRowKind = FocusRowKind.values()[row];
             setText(focusRowKind.label());
             setToolTipText(focusRowKind.toolTipText());
             return this;
@@ -224,7 +220,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
     private final class ValueCellRenderer  implements TableCellRenderer, Prober {
 
         // A "value" label per row, each suitable for the particular kind of value.
-        private InspectorLabel[] labels = new InspectorLabel[FocusRowKind.VALUES.size()];
+        private InspectorLabel[] labels = new InspectorLabel[FocusRowKind.values().length];
 
         public ValueCellRenderer(final Inspection inspection) {
             labels[FocusRowKind.THREAD.ordinal()] = new JavaNameLabel(inspection, "") {

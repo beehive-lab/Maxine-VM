@@ -99,7 +99,7 @@ public final class MemoryRegionsTable extends InspectorTable {
     private final class MemoryRegionsColumnModel extends InspectorTableColumnModel<MemoryRegionsColumnKind> {
 
         private MemoryRegionsColumnModel(MemoryRegionsViewPreferences viewPreferences) {
-            super(MemoryRegionsColumnKind.VALUES.size(), viewPreferences);
+            super(MemoryRegionsColumnKind.values().length, viewPreferences);
             addColumn(MemoryRegionsColumnKind.TAG, new TagCellRenderer(inspection()), null);
             addColumn(MemoryRegionsColumnKind.NAME, new NameCellRenderer(), null);
             addColumn(MemoryRegionsColumnKind.START, new StartAddressCellRenderer(), null);
@@ -136,7 +136,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return MemoryRegionsColumnKind.VALUES.size();
+            return MemoryRegionsColumnKind.values().length;
         }
 
         @Override

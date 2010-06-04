@@ -24,10 +24,10 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.InlineDataDescriptor.*;
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -184,7 +184,7 @@ public abstract class Disassembler {
      * @param inlineData some inline data decoded by this disassembler's {@linkplain #inlineDataDecoder() inline data decoder}
      * @return a sequence of disassembled data objects representing {@code inlineData}
      */
-    protected IterableWithLength<DisassembledData> createDisassembledDataObjects(final InlineData inlineData) {
+    protected List<DisassembledData> createDisassembledDataObjects(final InlineData inlineData) {
         final InlineDataDescriptor descriptor = inlineData.descriptor();
         final int startPosition = descriptor.startPosition();
         switch (descriptor.tag()) {
@@ -203,7 +203,7 @@ public abstract class Disassembler {
                         return toString(addressMapper());
                     }
                 };
-                return Iterables.toIterableWithLength(Collections.singleton(disassembledData));
+                return Collections.singletonList(disassembledData);
             }
             case ASCII: {
                 final String mnemonic = ".ascii";
@@ -219,11 +219,11 @@ public abstract class Disassembler {
                         return toString(addressMapper());
                     }
                 };
-                return Iterables.toIterableWithLength(Collections.singleton(disassembledData));
+                return Collections.singletonList(disassembledData);
             }
             case JUMP_TABLE32: {
                 final JumpTable32 jumpTable32 = (JumpTable32) descriptor;
-                final AppendableSequence<DisassembledData> result = new ArrayListSequence<DisassembledData>(jumpTable32.numberOfEntries());
+                final List<DisassembledData> result = new ArrayList<DisassembledData>(jumpTable32.numberOfEntries());
 
                 int caseValue = jumpTable32.low();
                 final InputStream stream = new ByteArrayInputStream(inlineData.data());
@@ -257,7 +257,7 @@ public abstract class Disassembler {
                                 return toString(addressMapper());
                             }
                         };
-                        result.append(disassembledData);
+                        result.add(disassembledData);
                         casePosition += 4;
                         caseValue++;
                     } catch (IOException ioException) {
@@ -269,7 +269,7 @@ public abstract class Disassembler {
             }
             case LOOKUP_TABLE32: {
                 final LookupTable32 lookupTable32 = (LookupTable32) descriptor;
-                final AppendableSequence<DisassembledData> result = new ArrayListSequence<DisassembledData>(lookupTable32.numberOfEntries());
+                final List<DisassembledData> result = new ArrayList<DisassembledData>(lookupTable32.numberOfEntries());
 
                 final InputStream stream = new ByteArrayInputStream(inlineData.data());
                 final int lookupTable = startPosition;
@@ -305,7 +305,7 @@ public abstract class Disassembler {
                                 return toString(addressMapper());
                             }
                         };
-                        result.append(disassembledData);
+                        result.add(disassembledData);
                         casePosition += 8;
                     } catch (IOException ioException) {
                         throw ProgramError.unexpected(ioException);
@@ -328,10 +328,10 @@ public abstract class Disassembler {
      * <p>
      * @return the disassembled forms that match the first encoded instruction in {@code stream}
      */
-    public final Sequence<DisassembledObject> scanOne(BufferedInputStream stream) throws IOException, AssemblyException {
-        final Sequence<DisassembledObject> disassembledObjects = scanOne0(stream);
+    public final List<DisassembledObject> scanOne(BufferedInputStream stream) throws IOException, AssemblyException {
+        final List<DisassembledObject> disassembledObjects = scanOne0(stream);
         if (!disassembledObjects.isEmpty()) {
-            addressMapper.add(disassembledObjects.first());
+            addressMapper.add(Utils.first(disassembledObjects));
         }
         return disassembledObjects;
     }
@@ -339,7 +339,7 @@ public abstract class Disassembler {
     /**
      * Does the actual scanning for {@link #scanOne(BufferedInputStream)}.
      */
-    protected abstract Sequence<DisassembledObject> scanOne0(BufferedInputStream stream) throws IOException, AssemblyException;
+    protected abstract List<DisassembledObject> scanOne0(BufferedInputStream stream) throws IOException, AssemblyException;
 
     /**
      * Scans an instruction stream and disassembles the encoded objects. If an encoded instruction has
@@ -349,8 +349,8 @@ public abstract class Disassembler {
      * The {@link #scanOne} method can be used to obtain all the disassembled forms
      * for each instruction in an instruction stream.
      */
-    public final IndexedSequence<DisassembledObject> scan(BufferedInputStream stream) throws IOException, AssemblyException {
-        final IndexedSequence<DisassembledObject> disassembledObjects = scan0(stream);
+    public final List<DisassembledObject> scan(BufferedInputStream stream) throws IOException, AssemblyException {
+        final List<DisassembledObject> disassembledObjects = scan0(stream);
         addressMapper.add(disassembledObjects);
         return disassembledObjects;
 
@@ -359,9 +359,9 @@ public abstract class Disassembler {
     /**
      * Does the actual scanning for {@link #scan(BufferedInputStream)}.
      */
-    protected abstract IndexedSequence<DisassembledObject> scan0(BufferedInputStream stream) throws IOException, AssemblyException;
+    protected abstract List<DisassembledObject> scan0(BufferedInputStream stream) throws IOException, AssemblyException;
 
-    protected final void scanInlineData(BufferedInputStream stream, AppendableIndexedSequence<DisassembledObject> disassembledObjects) throws IOException {
+    protected final void scanInlineData(BufferedInputStream stream, List<DisassembledObject> disassembledObjects) throws IOException {
         if (inlineDataDecoder() != null) {
             InlineData inlineData;
             while ((inlineData = inlineDataDecoder().decode(currentPosition, stream)) != null) {
@@ -370,10 +370,10 @@ public abstract class Disassembler {
         }
     }
 
-    protected int addDisassembledDataObjects(AppendableIndexedSequence<DisassembledObject> disassembledObjects, InlineData inlineData) {
-        final IterableWithLength<DisassembledData> dataObjects = createDisassembledDataObjects(inlineData);
+    protected int addDisassembledDataObjects(List<DisassembledObject> disassembledObjects, InlineData inlineData) {
+        final List<DisassembledData> dataObjects = createDisassembledDataObjects(inlineData);
         for (DisassembledData dataObject : dataObjects) {
-            disassembledObjects.append(dataObject);
+            disassembledObjects.add(dataObject);
         }
         return inlineData.size();
     }
@@ -393,7 +393,7 @@ public abstract class Disassembler {
         if (printer == null) {
             scanAndPrint(bufferedInputStream, outputStream);
         } else {
-            final IndexedSequence<DisassembledObject> disassembledObjects = scan(bufferedInputStream);
+            final List<DisassembledObject> disassembledObjects = scan(bufferedInputStream);
             printer.print(this, outputStream, disassembledObjects);
         }
     }

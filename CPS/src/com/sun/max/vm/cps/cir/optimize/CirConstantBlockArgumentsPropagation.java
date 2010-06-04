@@ -20,11 +20,13 @@
  */
 package com.sun.max.vm.cps.cir.optimize;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.CirTraceObserver.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
+import com.sun.max.vm.cps.collect.*;
 
 /**
  * Propagate constant block call arguments into block bodies.
@@ -41,10 +43,10 @@ public final class CirConstantBlockArgumentsPropagation {
     private CirConstantBlockArgumentsPropagation() {
     }
 
-    private static int getArgumentIndex(CirVariable variable, Sequence<CirCall> calls) {
+    private static int getArgumentIndex(CirVariable variable, List<CirCall> calls) {
         int index = -1;
         for (CirCall call : calls) {
-            final int i = com.sun.max.lang.Arrays.find(call.arguments(), variable);
+            final int i = com.sun.max.Utils.indexOfIdentical(call.arguments(), variable);
             if (i < 0) {
                 return -1;
             } else if (index < 0) {
@@ -65,7 +67,7 @@ public final class CirConstantBlockArgumentsPropagation {
      *
      * @return whether these free variables would add up to having more than maximally one ce among the closure's parameters
      */
-    private static boolean continuationParameterOverflow(CirClosure closure, Sequence<CirVariable> additionalParameters, Class parameterClass) {
+    private static boolean continuationParameterOverflow(CirClosure closure, Iterable<CirVariable> additionalParameters, Class parameterClass) {
         int n = 0;
         for (CirVariable variable : closure.parameters()) {
             if (parameterClass.isInstance(variable)) {
@@ -89,8 +91,8 @@ public final class CirConstantBlockArgumentsPropagation {
      * Otherwise we extend the parameter list of the block by the free variable
      * and pass it as an argument at every call.
      */
-    private static boolean propagateFreeVariablesFromContinuation(CirClosure closure, Sequence<CirCall> calls, int index, CirContinuation continuation) {
-        final DeterministicSet<CirVariable> freeVariables = CirFreeVariableSearch.run(continuation);
+    private static boolean propagateFreeVariablesFromContinuation(CirClosure closure, List<CirCall> calls, int index, CirContinuation continuation) {
+        final LinkedIdentityHashSet<CirVariable> freeVariables = CirFreeVariableSearch.run(continuation);
         if (closure.parameters()[index] instanceof CirNormalContinuationParameter) {
             if (continuationParameterOverflow(closure, freeVariables, CirExceptionContinuationParameter.class)) {
                 return false;
@@ -100,26 +102,26 @@ public final class CirConstantBlockArgumentsPropagation {
                 return false;
             }
         }
-        final AppendableSequence<CirVariable> remainingFreeVariables = new LinkSequence<CirVariable>();
+        final List<CirVariable> remainingFreeVariables = new LinkedList<CirVariable>();
         for (CirVariable variable : freeVariables) {
             final int i = getArgumentIndex(variable, calls);
             if (i >= 0) {
                 CirBetaReduction.applySingle(continuation, variable, closure.parameters()[i]);
             } else {
-                remainingFreeVariables.append(variable);
+                remainingFreeVariables.add(variable);
             }
         }
         if (!remainingFreeVariables.isEmpty()) {
-            final CirVariable[] variables = Sequence.Static.toArray(remainingFreeVariables, new CirVariable[remainingFreeVariables.length()]);
-            closure.setParameters(com.sun.max.lang.Arrays.append(closure.parameters(), variables));
+            final CirVariable[] variables = remainingFreeVariables.toArray(new CirVariable[remainingFreeVariables.size()]);
+            closure.setParameters(com.sun.max.Utils.concat(closure.parameters(), variables));
             for (CirCall call : calls) {
-                call.setArguments(com.sun.max.lang.Arrays.append(call.arguments(), variables));
+                call.setArguments(com.sun.max.Utils.concat(call.arguments(), variables));
             }
         }
         return true;
     }
 
-    private static boolean propagateConstantArgument(CirBlock block, Sequence<CirCall> calls, int index, CirValue argument) {
+    private static boolean propagateConstantArgument(CirBlock block, List<CirCall> calls, int index, CirValue argument) {
         final CirClosure closure = block.closure();
         final CirVariable parameter = closure.parameters()[index];
         if (argument instanceof CirContinuation) {
@@ -158,10 +160,20 @@ public final class CirConstantBlockArgumentsPropagation {
 
     private static boolean apply(CirBlock block) {
         boolean propagatedAny = false;
-        final LinkSequence<CirCall> calls = block.calls();
+        final LinkedList<CirCall> calls = block.calls();
         if (calls != null) {
-            final CirCall call = calls.first();
-            final Iterable<CirCall> otherCalls = calls.tail();
+            final CirCall call = calls.getFirst();
+            final Iterable<CirCall> otherCalls = new Iterable<CirCall>() {
+                @Override
+                public Iterator<CirCall> iterator() {
+                    Iterator<CirCall> iterator = calls.iterator();
+                    if (iterator.hasNext()) {
+                        // skip first element
+                        iterator.next();
+                    }
+                    return iterator;
+                }
+            };
             int i = 0;
             while (i < call.arguments().length) {
                 final CirValue argument = call.arguments()[i];

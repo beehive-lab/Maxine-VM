@@ -23,12 +23,11 @@ package com.sun.max.ins.gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.*;
 
-import com.sun.max.collect.*;
+import com.sun.cri.ci.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
@@ -75,10 +74,9 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
      */
     protected final SaveSettingsListener saveSettingsListener;
 
-    private final IdentityHashSet<TableColumnViewPreferenceListener> tableColumnViewPreferenceListeners =
-        new IdentityHashSet<TableColumnViewPreferenceListener>();
+    private final Set<TableColumnViewPreferenceListener> tableColumnViewPreferenceListeners = CiUtil.newIdentityHashSet();
 
-    private final List<ColumnKind_Type> columnTypeValues;
+    private final ColumnKind_Type[] columnTypeValues;
 
     /**
      * Mode 1:  Global, persistent preferences.
@@ -95,7 +93,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
      */
     protected TableColumnVisibilityPreferences(Inspection inspection,
                     String name,
-                    List<ColumnKind_Type> columnTypeValues) {
+                    ColumnKind_Type[] columnTypeValues) {
         this.inspection = inspection;
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         this.visibleColumns = new HashMap<ColumnKind_Type, Boolean>();
@@ -243,7 +241,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
      * Gets a panel that has controls for specifying which columns should be visible.
      */
     public JPanel getPanel() {
-        final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[columnTypeValues.size()];
+        final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[columnTypeValues.length];
 
         final ItemListener itemListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {

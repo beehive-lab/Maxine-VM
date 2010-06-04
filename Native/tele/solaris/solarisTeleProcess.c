@@ -210,7 +210,7 @@ typedef struct GatherThreadArgument {
     struct ps_prochandle *ph;
     JNIEnv *env;
     jobject teleProcess;
-    jobject threadSequence;
+    jobject threadList;
     Address threadLocalsList;
     Address primordialThreadLocals;
 } *GatherThreadArgument;
@@ -226,20 +226,20 @@ static int gatherThread(void *data, const lwpstatus_t *ls) {
     Address stackPointer = ls->pr_reg[R_SP];
     Address instructionPointer = ls->pr_reg[R_PC];
     ThreadLocals tl = teleProcess_findThreadLocals(a->ph, a->threadLocalsList, a->primordialThreadLocals, stackPointer, threadLocals, &nativeThreadLocalsStruct);
-    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadSequence, lwpId, threadState, instructionPointer, tl);
+    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadList, lwpId, threadState, instructionPointer, tl);
 
     return 0;
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEnv *env, jobject teleProcess, jlong processHandle, jobject threadSequence, long threadLocalsList, long primordialThreadLocals) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEnv *env, jobject teleProcess, jlong processHandle, jobject threadList, long threadLocalsList, long primordialThreadLocals) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 
     struct GatherThreadArgument a;
     a.ph = ph;
     a.env = env;
     a.teleProcess = teleProcess;
-    a.threadSequence = threadSequence;
+    a.threadList = threadList;
     a.threadLocalsList = threadLocalsList;
     a.primordialThreadLocals = primordialThreadLocals;
 

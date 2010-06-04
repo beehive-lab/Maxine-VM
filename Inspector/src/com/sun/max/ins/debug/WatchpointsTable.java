@@ -96,7 +96,7 @@ public final class WatchpointsTable extends InspectorTable {
     private final class WatchpointsColumnModel extends InspectorTableColumnModel<WatchpointsColumnKind> {
 
         private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
-            super(WatchpointsColumnKind.VALUES.size(), viewPreferences);
+            super(WatchpointsColumnKind.values().length, viewPreferences);
             addColumn(WatchpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
             addColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()), null);
             addColumn(WatchpointsColumnKind.SIZE, new SizeCellRenderer(inspection()), null);
@@ -126,7 +126,7 @@ public final class WatchpointsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return WatchpointsColumnKind.VALUES.size();
+            return WatchpointsColumnKind.values().length;
         }
 
         public int getRowCount() {
@@ -135,7 +135,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Object getValueAt(int row, int col) {
             final MaxWatchpoint watchpoint = rowToWatchpoint(row);
-            switch (WatchpointsColumnKind.VALUES.get(col)) {
+            switch (WatchpointsColumnKind.values()[col]) {
                 case TAG:
                 case START:
                 case SIZE:
@@ -163,7 +163,7 @@ public final class WatchpointsTable extends InspectorTable {
         public void setValueAt(Object value, int row, int column) {
             final MaxWatchpoint watchpoint = rowToWatchpoint(row);
 
-            switch (WatchpointsColumnKind.VALUES.get(column)) {
+            switch (WatchpointsColumnKind.values()[column]) {
                 case READ: {
                     final Boolean newState = (Boolean) value;
                     try {
@@ -229,7 +229,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         @Override
         public boolean isCellEditable(int row, int column) {
-            switch (WatchpointsColumnKind.VALUES.get(column)) {
+            switch (WatchpointsColumnKind.values()[column]) {
                 case READ:
                     return true;
                 case WRITE:
@@ -245,7 +245,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         @Override
         public Class< ? > getColumnClass(int c) {
-            switch (WatchpointsColumnKind.VALUES.get(c)) {
+            switch (WatchpointsColumnKind.values()[c]) {
                 case READ:
                     return Boolean.class;
                 case WRITE:

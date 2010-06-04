@@ -20,13 +20,10 @@
  */
 package com.sun.max.asm.gen.risc;
 
-import static com.sun.max.collect.SequenceBag.MapType.*;
-
 import java.util.*;
 
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.field.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
@@ -39,9 +36,9 @@ public class RiscTemplateCreator {
     public RiscTemplateCreator() {
     }
 
-    private AppendableSequence<RiscTemplate> templates = new LinkSequence<RiscTemplate>();
+    private List<RiscTemplate> templates = new LinkedList<RiscTemplate>();
 
-    public Sequence<RiscTemplate> templates() {
+    public List<RiscTemplate> templates() {
         return templates;
     }
 
@@ -49,8 +46,8 @@ public class RiscTemplateCreator {
         return new RiscTemplate(instructionDescription);
     }
 
-    public Sequence<RiscTemplate> createOptionTemplates(Sequence<RiscTemplate> templateList, OptionField optionField) {
-        final AppendableSequence<RiscTemplate> newTemplates = new LinkSequence<RiscTemplate>();
+    public List<RiscTemplate> createOptionTemplates(List<RiscTemplate> templateList, OptionField optionField) {
+        final List<RiscTemplate> newTemplates = new LinkedList<RiscTemplate>();
         for (RiscTemplate template : templateList) {
             RiscTemplate canonicalRepresentative = null;
             if (optionField.defaultOption() != null) {
@@ -59,11 +56,11 @@ public class RiscTemplateCreator {
             }
             for (Option option : optionField.options()) {
                 if (option.equals(optionField.defaultOption())) {
-                    newTemplates.append(canonicalRepresentative);
+                    newTemplates.add(canonicalRepresentative);
                 } else {
                     final RiscTemplate templateWithOption = (RiscTemplate) template.clone();
                     templateWithOption.organizeOption(option, canonicalRepresentative);
-                    newTemplates.append(templateWithOption);
+                    newTemplates.add(templateWithOption);
                 }
             }
         }
@@ -71,40 +68,55 @@ public class RiscTemplateCreator {
     }
 
     private int serial;
-    private Bag<String, RiscTemplate, Sequence<RiscTemplate>> nameToTemplates = new SequenceBag<String, RiscTemplate>(HASHED);
+    private HashMap<String, List<RiscTemplate>> nameToTemplates = new HashMap<String, List<RiscTemplate>>() {
+        @Override
+        public List<RiscTemplate> get(Object key) {
+            List<RiscTemplate> list = super.get(key);
+            if (list == null) {
+                list = new ArrayList<RiscTemplate>();
+                put((String) key, list);
+            }
+            return list;
+        }
+    };
 
-    public Sequence<RiscTemplate> nameToTemplates(String name) {
+    public List<RiscTemplate> nameToTemplates(String name) {
         return nameToTemplates.get(name);
     }
 
     public void createTemplates(RiscInstructionDescriptionCreator instructionDescriptionCreator) {
-        final AppendableSequence<RiscTemplate> initialTemplates = new LinkSequence<RiscTemplate>();
+        final List<RiscTemplate> initialTemplates = new LinkedList<RiscTemplate>();
         for (InstructionDescription instructionDescription : instructionDescriptionCreator.instructionDescriptions()) {
             final RiscTemplate template = createTemplate(instructionDescription);
-            initialTemplates.append(template);
+            initialTemplates.add(template);
             RiscInstructionDescriptionVisitor.Static.visitInstructionDescription(template, instructionDescription);
         }
         for (RiscTemplate initialTemplate : initialTemplates) {
-            Sequence<RiscTemplate> newTemplates = new LinkSequence<RiscTemplate>(initialTemplate);
+            List<RiscTemplate> newTemplates = new LinkedList<RiscTemplate>();
+            newTemplates.add(initialTemplate);
             for (OptionField optionField : initialTemplate.optionFields()) {
                 newTemplates = createOptionTemplates(newTemplates, optionField);
             }
             for (RiscTemplate template : newTemplates) {
                 serial++;
                 template.setSerial(serial);
-                templates.append(template);
-                nameToTemplates.add(template.internalName(), template);
+                templates.add(template);
+                nameToTemplates.get(template.internalName()).add(template);
 
                 // Create the link to the non-synthetic instruction from which a synthetic instruction is derived.
                 if (template.instructionDescription().isSynthetic()) {
                     boolean found = false;
-                    final Iterator<RiscTemplate> iterator = nameToTemplates.iterator();
-                    while (iterator.hasNext() && !found) {
-                        final RiscTemplate rawTemplate = iterator.next();
-                        if (!rawTemplate.instructionDescription().isSynthetic() && (template.opcodeMask() & rawTemplate.opcodeMask()) == rawTemplate.opcodeMask() &&
-                                        (template.opcode() & rawTemplate.opcodeMask()) == rawTemplate.opcode()) {
-                            template.setSynthesizedFrom(rawTemplate);
-                            found = true;
+                outerLoop:
+                    for (List<RiscTemplate> list : nameToTemplates.values()) {
+                        final Iterator<RiscTemplate> iterator = list.iterator();
+                        while (iterator.hasNext()) {
+                            final RiscTemplate rawTemplate = iterator.next();
+                            if (!rawTemplate.instructionDescription().isSynthetic() && (template.opcodeMask() & rawTemplate.opcodeMask()) == rawTemplate.opcodeMask() &&
+                                            (template.opcode() & rawTemplate.opcodeMask()) == rawTemplate.opcode()) {
+                                template.setSynthesizedFrom(rawTemplate);
+                                found = true;
+                                break outerLoop;
+                            }
                         }
                     }
                     ProgramError.check(found);

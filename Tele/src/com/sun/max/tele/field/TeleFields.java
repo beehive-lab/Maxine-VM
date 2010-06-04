@@ -27,8 +27,6 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
-import com.sun.max.collect.*;
-import com.sun.max.collect.ChainedHashMapping.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
@@ -92,7 +90,6 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess CPSTargetMethod_compressedJavaFrameDescriptors = new TeleInstanceReferenceFieldAccess(CPSTargetMethod.class, "compressedJavaFrameDescriptors", byte[].class);
     public final TeleInstanceReferenceFieldAccess CPSTargetMethod_encodedInlineDataDescriptors = new TeleInstanceReferenceFieldAccess(CPSTargetMethod.class, "encodedInlineDataDescriptors", byte[].class);
     public final TeleInstanceIntFieldAccess CPSTargetMethod_frameReferenceMapSize = new TeleInstanceIntFieldAccess(CPSTargetMethod.class, "frameReferenceMapSize");
-    public final TeleInstanceReferenceFieldAccess ChainedHashMapping_table = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.class, "table", Entry[].class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classLoader = new TeleInstanceReferenceFieldAccess(ClassActor.class, "classLoader", ClassLoader.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classfile = new TeleInstanceReferenceFieldAccess(ClassActor.class, "classfile", byte[].class);
     public final TeleInstanceReferenceFieldAccess ClassActor_componentClassActor = new TeleInstanceReferenceFieldAccess(ClassActor.class, "componentClassActor", ClassActor.class);
@@ -107,7 +104,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ClassActor_typeDescriptor = new TeleInstanceReferenceFieldAccess(ClassActor.class, "typeDescriptor", TypeDescriptor.class);
     public final TeleInstanceReferenceFieldAccess ClassMethodActor_codeAttribute = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "codeAttribute", CodeAttribute.class);
     public final TeleInstanceReferenceFieldAccess ClassMethodActor_targetState = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "targetState", Object.class);
-    public final TeleInstanceReferenceFieldAccess ClassRegistry_typeDescriptorToClassActor = new TeleInstanceReferenceFieldAccess(ClassRegistry.class, "typeDescriptorToClassActor", GrowableMapping.class);
+    public final TeleInstanceReferenceFieldAccess ClassRegistry_typeDescriptorToClassActor = new TeleInstanceReferenceFieldAccess(ClassRegistry.class, "typeDescriptorToClassActor", HashMap.class);
     public final TeleStaticReferenceFieldAccess Code_CODE_BOOT_NAME = new TeleStaticReferenceFieldAccess(Code.class, "CODE_BOOT_NAME", String.class);
     public final TeleStaticReferenceFieldAccess Code_bootCodeRegion = new TeleStaticReferenceFieldAccess(Code.class, "bootCodeRegion", CodeRegion.class);
     public final TeleStaticReferenceFieldAccess Code_codeManager = new TeleStaticReferenceFieldAccess(Code.class, "codeManager", CodeManager.class);
@@ -118,8 +115,6 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess Compilation_previousTargetState = new TeleInstanceReferenceFieldAccess(Compilation.class, "previousTargetState", Object.class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_constants = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "constants", PoolConstant[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_holder = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "holder", ClassActor.class);
-    public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_next = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "next", Entry.class);
-    public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_value = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "value", Object.class);
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "string", String.class);
     public final TeleStaticReferenceFieldAccess Heap_HEAP_BOOT_NAME = new TeleStaticReferenceFieldAccess(Heap.class, "HEAP_BOOT_NAME", String.class);
     public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "bootHeapRegion", BootHeapRegion.class);
@@ -151,14 +146,14 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess MemberActor_descriptor = new TeleInstanceReferenceFieldAccess(MemberActor.class, "descriptor", Descriptor.class);
     public final TeleInstanceReferenceFieldAccess MemberActor_holder = new TeleInstanceReferenceFieldAccess(MemberActor.class, "holder", ClassActor.class);
     public final TeleInstanceCharFieldAccess MemberActor_memberIndex = new TeleInstanceCharFieldAccess(MemberActor.class, "memberIndex");
+    public final TeleInstanceReferenceFieldAccess MemoryRegion_regionName = new TeleInstanceReferenceFieldAccess(MemoryRegion.class, "regionName", String.class);
+    public final TeleInstanceWordFieldAccess MemoryRegion_size = new TeleInstanceWordFieldAccess(MemoryRegion.class, "size");
+    public final TeleInstanceWordFieldAccess MemoryRegion_start = new TeleInstanceWordFieldAccess(MemoryRegion.class, "start");
     public final TeleInstanceReferenceFieldAccess ObjectReferenceValue_value = new TeleInstanceReferenceFieldAccess(ObjectReferenceValue.class, "value", Object.class);
     public final TeleInstanceReferenceFieldAccess ClassConstant$Resolved_classActor = new TeleInstanceReferenceFieldAccess(ClassConstant.Resolved.class, "classActor", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess FieldRefConstant$Resolved_fieldActor = new TeleInstanceReferenceFieldAccess(FieldRefConstant.Resolved.class, "fieldActor", FieldActor.class);
     public final TeleInstanceReferenceFieldAccess ResolvedMethodRefConstant_methodActor = new TeleInstanceReferenceFieldAccess(ResolvedMethodRefConstant.class, "methodActor", MethodActor.class);
     public final TeleInstanceLongFieldAccess RootTableMemoryRegion_wordsUsed = new TeleInstanceLongFieldAccess(RootTableMemoryRegion.class, "wordsUsed");
-    public final TeleInstanceReferenceFieldAccess RuntimeMemoryRegion_regionName = new TeleInstanceReferenceFieldAccess(MemoryRegion.class, "regionName", String.class);
-    public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_size = new TeleInstanceWordFieldAccess(MemoryRegion.class, "size");
-    public final TeleInstanceWordFieldAccess RuntimeMemoryRegion_start = new TeleInstanceWordFieldAccess(MemoryRegion.class, "start");
     public final TeleInstanceReferenceFieldAccess SortedMemoryRegionList_memoryRegions = new TeleInstanceReferenceFieldAccess(SortedMemoryRegionList.class, "memoryRegions", MemoryRegion[].class);
     public final TeleInstanceIntFieldAccess SortedMemoryRegionList_size = new TeleInstanceIntFieldAccess(SortedMemoryRegionList.class, "size");
     public final TeleInstanceReferenceFieldAccess StringConstant_value = new TeleInstanceReferenceFieldAccess(StringConstant.class, "value", String.class);
@@ -190,6 +185,10 @@ public class TeleFields extends AbstractTeleVMHolder {
 
     // Other JDK fields:
 
+    private final Class HashMap$Entry = Classes.getInnerClass(HashMap.class, "Entry");
+    public final TeleInstanceReferenceFieldAccess HashMap_table = new TeleInstanceReferenceFieldAccess(HashMap.class, "table", Array.newInstance(HashMap$Entry, 0).getClass());
+    public final TeleInstanceReferenceFieldAccess HashMap$Entry_next = new TeleInstanceReferenceFieldAccess(HashMap$Entry, "next", HashMap$Entry);
+    public final TeleInstanceReferenceFieldAccess HashMap$Entry_value = new TeleInstanceReferenceFieldAccess(HashMap$Entry, "value", Object.class);
     public final TeleInstanceReferenceFieldAccess ArrayList_elementData = new TeleInstanceReferenceFieldAccess(ArrayList.class, "elementData", Object[].class);
     public final TeleInstanceIntFieldAccess Enum_ordinal = new TeleInstanceIntFieldAccess(Enum.class, "ordinal");
     public final TeleInstanceIntFieldAccess String_count = new TeleInstanceIntFieldAccess(String.class, "count");

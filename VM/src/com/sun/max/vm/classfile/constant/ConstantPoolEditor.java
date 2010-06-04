@@ -39,7 +39,7 @@ import java.io.*;
 public final class ConstantPoolEditor {
 
     private ConstantPool pool;
-    private GrowableMapping<PoolConstantKey, Integer> constantsToIndices;
+    private Mapping<PoolConstantKey, Integer> constantsToIndices;
     private final Thread owner;
     private final boolean allowAppending;
     private int acquistionCount;
@@ -66,7 +66,7 @@ public final class ConstantPoolEditor {
      * By constructing this data structure lazily, the cost of acquiring a ConstantPoolEditor is minimized - only upon
      * the first modification or search of the pool is a significant cost paid.
      */
-    private GrowableMapping<PoolConstantKey, Integer> constantsToIndices() {
+    private Mapping<PoolConstantKey, Integer> constantsToIndices() {
         if (constantsToIndices == null) {
             constantsToIndices = new HashEntryChainedHashMapping<PoolConstantKey, Integer>(pool.constants().length);
 
@@ -161,7 +161,7 @@ public final class ConstantPoolEditor {
     }
 
     private int find(PoolConstantKey key, PoolConstant constant, boolean appendIfAbsent) {
-        final GrowableMapping<PoolConstantKey, Integer> map = constantsToIndices();
+        final Mapping<PoolConstantKey, Integer> map = constantsToIndices();
         Integer index = map.get(key);
         if (index == null) {
             if (!appendIfAbsent) {

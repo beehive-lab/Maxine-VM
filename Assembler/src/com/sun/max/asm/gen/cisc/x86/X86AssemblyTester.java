@@ -23,13 +23,12 @@ package com.sun.max.asm.gen.cisc.x86;
 import java.io.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.x86.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
-import com.sun.max.util.*;
 
 /**
  * @author Bernd Mathiske
@@ -44,7 +43,7 @@ public abstract class X86AssemblyTester<Template_Type extends X86Template>
     @Override
     public X86Assembly<Template_Type> assembly() {
         final Class<X86Assembly<Template_Type>> type = null;
-        return StaticLoophole.cast(type, super.assembly());
+        return Utils.cast(type, super.assembly());
     }
 
     private String getSibIndexAndScale(Queue<X86Operand> operands, Queue<Argument> arguments) {
@@ -122,15 +121,15 @@ public abstract class X86AssemblyTester<Template_Type extends X86Template>
      * we want to keep the code in this file here stable.
      */
     @Override
-    protected void assembleExternally(IndentWriter stream, Template_Type template, Sequence<Argument> argumentList, String label) {
+    protected void assembleExternally(IndentWriter stream, Template_Type template, List<Argument> argumentList, String label) {
         final WordWidth externalCodeSizeAttribute = template.externalCodeSizeAttribute();
         if (externalCodeSizeAttribute != null) {
             stream.println(".code" + externalCodeSizeAttribute.numberOfBits);
         } else {
             stream.println(".code" + addressWidth().numberOfBits);
         }
-        final Queue<X86Operand> operandQueue = new MutableQueue<X86Operand>(template.operands());
-        final Queue<Argument> argumentQueue = new MutableQueue<Argument>(argumentList);
+        final LinkedList<X86Operand> operandQueue = new LinkedList<X86Operand>(template.operands());
+        final LinkedList<Argument> argumentQueue = new LinkedList<Argument>(argumentList);
         String first = "";
         if (!operandQueue.isEmpty()) {
             first = getOperand(template, operandQueue, argumentQueue, label);

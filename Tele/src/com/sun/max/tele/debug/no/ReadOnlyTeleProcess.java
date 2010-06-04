@@ -24,8 +24,8 @@ import java.io.*;
 import java.math.*;
 import java.nio.*;
 import java.nio.channels.FileChannel.*;
+import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -117,7 +117,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     private static final String FAIL_MESSAGE = "Attempt to run/write/modify a read-only bootimage VM with no live process";
 
     @Override
-    protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
+    protected void gatherThreads(List<TeleNativeThread> threads) {
         ProgramError.unexpected(FAIL_MESSAGE);
     }
 

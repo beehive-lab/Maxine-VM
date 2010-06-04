@@ -25,7 +25,7 @@ import static com.sun.max.vm.classfile.StackMapTable.*;
 
 import java.io.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.verifier.types.*;
@@ -97,6 +97,6 @@ public class AppendFrame extends StackMapFrame {
     public String toString() {
         return "frame_type = " + frameType() + " /* append_frame */\n" +
                "  offset_delta = " + positionDelta() + "\n" +
-               "  locals = [ " + Arrays.toString(locals, ", ") + " ]";
+               "  locals = [ " + Utils.toString(locals, ", ") + " ]";
     }
 }

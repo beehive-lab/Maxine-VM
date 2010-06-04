@@ -20,22 +20,28 @@
  */
 package com.sun.max.jdwp.handlers;
 
-import java.io.*;
-import java.util.logging.*;
+import java.io.IOException;
+import java.util.List;
+import java.util.logging.Logger;
 
-import com.sun.max.collect.*;
-import com.sun.max.jdwp.constants.*;
-import com.sun.max.jdwp.data.*;
-import com.sun.max.jdwp.protocol.*;
-import com.sun.max.jdwp.protocol.EventCommands.*;
-import com.sun.max.jdwp.vm.data.*;
-import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.lang.*;
+import com.sun.max.Utils;
+import com.sun.max.jdwp.constants.StepDepth;
+import com.sun.max.jdwp.constants.SuspendPolicy;
+import com.sun.max.jdwp.data.JDWPException;
+import com.sun.max.jdwp.data.JDWPLocation;
+import com.sun.max.jdwp.data.JDWPNotImplementedException;
+import com.sun.max.jdwp.data.JDWPSender;
+import com.sun.max.jdwp.protocol.EventRequestCommands;
+import com.sun.max.jdwp.protocol.EventCommands.Composite;
+import com.sun.max.jdwp.vm.data.LineTableEntry;
+import com.sun.max.jdwp.vm.proxy.JdwpCodeLocation;
+import com.sun.max.jdwp.vm.proxy.ThreadProvider;
+import com.sun.max.jdwp.vm.proxy.VMListener;
 
 public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Events.EventsCommon> {
 
     private static final Logger LOGGER = Logger.getLogger(JDWPEventRequest.class.getName());
-    private VariableSequence<JDWPEventModifier> modifiers;
+    private List<JDWPEventModifier> modifiers;
     private JDWPSession session;
     private EventRequestCommands.Set.IncomingRequest incomingRequest;
     private int id;
@@ -46,7 +52,7 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
     private JDWPEventRequest(EventRequestCommands.Set.IncomingRequest incomingRequest, JDWPSender sender, JDWPSession session) throws JDWPException {
         this.incomingRequest = incomingRequest;
         this.session = session;
-        this.modifiers = new ArrayListSequence<JDWPEventModifier>(JDWPEventModifier.Static.createSequence(session, incomingRequest.modifiers));
+        this.modifiers = JDWPEventModifier.Static.createList(session, incomingRequest.modifiers);
         this.sender = sender;
         assignId();
     }
@@ -72,7 +78,7 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
         return session;
     }
 
-    public Sequence<JDWPEventModifier> modifiers() {
+    public List<JDWPEventModifier> modifiers() {
         return modifiers;
     }
 
@@ -81,15 +87,14 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
     public abstract void uninstall();
 
     private void removeModifier(JDWPEventModifier modifier) {
-        assert Sequence.Static.indexOfIdentical(modifiers, modifier) != -1;
-        modifiers.remove(Sequence.Static.indexOfIdentical(modifiers, modifier));
+        modifiers.remove(modifier);
     }
 
     private <JDWPEventModifier_Type extends JDWPEventModifier> JDWPEventModifier_Type lookupMandatoryModifier(Class<JDWPEventModifier_Type> klass) throws JDWPException {
 
         for (JDWPEventModifier m : modifiers) {
             if (m.getClass().equals(klass)) {
-                return StaticLoophole.cast(klass, m);
+                return Utils.cast(klass, m);
             }
         }
 
@@ -118,7 +123,7 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
     }
 
     public Class<? extends JDWPEventModifier>[] validModifiers() {
-        return StaticLoophole.cast(new Class[0]);
+        return Utils.cast(new Class[0]);
     }
 
     public static class ClassPrepare extends JDWPEventRequest<Composite.Events.ClassUnload> {

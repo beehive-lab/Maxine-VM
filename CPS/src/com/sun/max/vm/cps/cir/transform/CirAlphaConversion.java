@@ -22,9 +22,9 @@ package com.sun.max.vm.cps.cir.transform;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.variable.*;
+import com.sun.max.vm.cps.collect.*;
 
 /**
  * Rename every variable declaration in a CIR graph and rename every variable use according to lexical scoping.

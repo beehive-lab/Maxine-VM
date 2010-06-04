@@ -24,9 +24,9 @@ import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.lang.reflect.*;
 import java.security.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -144,7 +144,7 @@ final class JDK_java_security_AccessController {
      */
     private static class Context implements RawStackFrameVisitor {
 
-        final AppendableSequence<ProtectionDomain> protectionDomains = new LinkSequence<ProtectionDomain>();
+        final List<ProtectionDomain> protectionDomains = new LinkedList<ProtectionDomain>();
         final VmThread.PrivilegedElement privilegedElement = VmThread.current().getTopPrivilegedElement();
         AccessControlContext privilegedContext;
         ProtectionDomain prevProtectionDomain;
@@ -186,7 +186,7 @@ final class JDK_java_security_AccessController {
             }
 
             if (prevProtectionDomain != protectionDomain && protectionDomain != null) {
-                protectionDomains.append(protectionDomain);
+                protectionDomains.add(protectionDomain);
                 prevProtectionDomain = protectionDomain;
             }
 
@@ -225,7 +225,7 @@ final class JDK_java_security_AccessController {
                 return null;
             }
         } else {
-            protectionDomains = Sequence.Static.toArray(context.protectionDomains, new ProtectionDomain[context.protectionDomains.length()]);
+            protectionDomains = context.protectionDomains.toArray(new ProtectionDomain[context.protectionDomains.size()]);
         }
 
         try {

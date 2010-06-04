@@ -23,9 +23,9 @@ package com.sun.max.asm.gen.cisc.x86;
 import java.io.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -49,7 +49,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
     @Override
     public X86Assembly<Template_Type> assembly() {
         final Class<X86Assembly<Template_Type>> type = null;
-        return StaticLoophole.cast(type, super.assembly());
+        return Utils.cast(type, super.assembly());
     }
 
     public WordWidth addressWidth() {
@@ -391,10 +391,10 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
     }
 
     private boolean parametersMatching(Template_Type candidate, Template_Type original) {
-        if (candidate.parameters().length() != original.parameters().length()) {
+        if (candidate.parameters().size() != original.parameters().size()) {
             return false;
         }
-        for (int i = 0; i < candidate.parameters().length(); i++) {
+        for (int i = 0; i < candidate.parameters().size(); i++) {
             if (i == original.labelParameterIndex()) {
                 assert candidate.parameters().get(i).getClass() == X86OffsetParameter.class || candidate.parameters().get(i).getClass() == X86AddressParameter.class;
                 assert candidate.parameters().get(i).getClass() == original.parameters().get(i).getClass();
@@ -415,7 +415,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
         }
     }
 
-    private String getValidSizesMaskExpression(Sequence<LabelWidthCase> labelWidthCases) {
+    private String getValidSizesMaskExpression(List<LabelWidthCase> labelWidthCases) {
         final Iterator<LabelWidthCase> iterator = labelWidthCases.iterator();
         String mask = String.valueOf(iterator.next().width.numberOfBytes);
         while (iterator.hasNext()) {
@@ -424,8 +424,8 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
         return mask;
     }
 
-    private Sequence<LabelWidthCase> getRelatedLabelTemplatesByWidth(Template_Type template) {
-        final MutableSequence<LabelWidthCase> array = new ArraySequence<LabelWidthCase>(WordWidth.VALUES.length());
+    private List<LabelWidthCase> getRelatedLabelTemplatesByWidth(Template_Type template) {
+        final List<LabelWidthCase> array = Utils.newArrayAsList(WordWidth.VALUES.size());
         for (Template_Type t : labelTemplates()) {
             if (t.assemblerMethodName().equals(template.assemblerMethodName()) && t.labelParameterIndex() == template.labelParameterIndex() && parametersMatching(t, template)) {
                 final X86NumericalParameter numericalParameter = (X86NumericalParameter) t.parameters().get(template.labelParameterIndex());
@@ -436,28 +436,28 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
         }
 
         // Report the found cases in the order of ascending width:
-        final AppendableSequence<LabelWidthCase> result = new LinkSequence<LabelWidthCase>();
-        for (int i = 0; i < array.length(); i++) {
+        final List<LabelWidthCase> result = new LinkedList<LabelWidthCase>();
+        for (int i = 0; i < array.size(); i++) {
             final LabelWidthCase labelWidthCase = array.get(i);
             if (labelWidthCase != null) {
-                assert result.isEmpty() || labelWidthCase.width.greaterThan(result.last().width);
-                result.append(labelWidthCase);
+                assert result.isEmpty() || labelWidthCase.width.greaterThan(Utils.last(result).width);
+                result.add(labelWidthCase);
             }
         }
-        assert result.length() > 0;
+        assert result.size() > 0;
         return result;
     }
 
     private void printOffsetLabelMethod(final IndentWriter indentWriter,
                     Template_Type template,
-                    final Sequence<Parameter> parameters,
+                    final List<Parameter> parameters,
                     String assemblerClassName) {
-        final Sequence<LabelWidthCase> labelWidthCases = getRelatedLabelTemplatesByWidth(template);
+        final List<LabelWidthCase> labelWidthCases = getRelatedLabelTemplatesByWidth(template);
         final InstructionWithLabelSubclass labelInstructionSubclass = new InstructionWithLabelSubclass(template, InstructionWithOffset.class, ", " + getValidSizesMaskExpression(labelWidthCases)) {
             @Override
             public void printAssembleMethodBody(IndentWriter writer, Template t) {
-                if (labelWidthCases.length() == 1) {
-                    final LabelWidthCase labelWidthCase = labelWidthCases.first();
+                if (labelWidthCases.size() == 1) {
+                    final LabelWidthCase labelWidthCase = Utils.first(labelWidthCases);
                     super.printAssembleMethodBody(writer, labelWidthCase.template);
                 } else {
                     writer.println("final int labelSize = labelSize();");
@@ -487,7 +487,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
     private void printAddressLabelMethod(
                     final IndentWriter indentWriter,
                     final Template_Type template,
-                    final Sequence<Parameter> parameters,
+                    final List<Parameter> parameters,
                     String assemblerClassName) {
         final InstructionWithLabelSubclass labelInstructionSubclass = new InstructionWithLabelSubclass(template, InstructionWithAddress.class, "");
         printLabelMethodHelper(indentWriter,
@@ -508,7 +508,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
         if (labelTemplate.addressSizeAttribute() == addressWidth()) {
             if (!labelTemplate.isLabelMethodWritten) {
                 labelTemplate.isLabelMethodWritten = true;
-                final Sequence<Parameter> parameters = getParameters(labelTemplate, true);
+                final List<Parameter> parameters = getParameters(labelTemplate, true);
                 final X86Parameter parameter = labelTemplate.parameters().get(labelTemplate.labelParameterIndex());
                 if (parameter instanceof X86OffsetParameter) {
                     printOffsetLabelMethod(writer, labelTemplate, parameters, assemblerClassName);

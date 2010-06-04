@@ -129,7 +129,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
     private final class ThreadLocalsAreaTableColumnModel extends InspectorTableColumnModel<ThreadLocalVariablesColumnKind> {
 
         ThreadLocalsAreaTableColumnModel(ThreadLocalsViewPreferences viewPreferences) {
-            super(ThreadLocalVariablesColumnKind.VALUES.size(), viewPreferences);
+            super(ThreadLocalVariablesColumnKind.values().length, viewPreferences);
             addColumn(ThreadLocalVariablesColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(ThreadLocalVariablesColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
             addColumn(ThreadLocalVariablesColumnKind.POSITION, new PositionRenderer(inspection()), null);
@@ -153,7 +153,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return ThreadLocalVariablesColumnKind.VALUES.size();
+            return ThreadLocalVariablesColumnKind.values().length;
         }
 
         public int getRowCount() {

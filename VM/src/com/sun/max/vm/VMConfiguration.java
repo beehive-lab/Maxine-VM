@@ -23,11 +23,12 @@ package com.sun.max.vm;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import java.io.*;
+import java.util.*;
+import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -67,7 +68,7 @@ public final class VMConfiguration {
     public final Safepoint safepoint;
     public final TrapStateAccess trapStateAccess;
 
-    private AppendableIndexedSequence<VMScheme> vmSchemes = new ArrayListSequence<VMScheme>();
+    private ArrayList<VMScheme> vmSchemes = new ArrayList<VMScheme>();
     private boolean areSchemesLoadedAndInstantiated = false;
 
     @CONSTANT_WHEN_NOT_ZERO
@@ -195,20 +196,20 @@ public final class VMConfiguration {
         return runScheme;
     }
 
-    public Sequence<MaxPackage> packages() {
-        return new ArraySequence<MaxPackage>(
-                        referencePackage,
-                        layoutPackage,
-                        heapPackage,
-                        monitorPackage,
-                        bootCompilerPackage,
-                        trampolinePackage,
-                        targetABIsPackage,
-                        gripPackage,
-                        runPackage);
+    public List<MaxPackage> packages() {
+        return Arrays.asList(new MaxPackage[] {
+            referencePackage,
+            layoutPackage,
+            heapPackage,
+            monitorPackage,
+            bootCompilerPackage,
+            trampolinePackage,
+            targetABIsPackage,
+            gripPackage,
+            runPackage});
     }
 
-    public Sequence<VMScheme> vmSchemes() {
+    public List<VMScheme> vmSchemes() {
         return vmSchemes;
     }
 
@@ -217,7 +218,7 @@ public final class VMConfiguration {
             throw ProgramError.unexpected("Package not found for scheme: " + vmSchemeType.getSimpleName());
         }
         final VMScheme_Type vmScheme = p.loadAndInstantiateScheme(vmSchemeType, arguments);
-        vmSchemes.append(vmScheme);
+        vmSchemes.add(vmScheme);
         return vmScheme;
     }
 
@@ -265,7 +266,7 @@ public final class VMConfiguration {
         }
 
         compilationScheme = new AdaptiveCompilationScheme(this);
-        vmSchemes.append(compilationScheme);
+        vmSchemes.add(compilationScheme);
 
         runScheme = loadAndInstantiateScheme(runPackage, RunScheme.class, this);
         areSchemesLoadedAndInstantiated = true;
@@ -283,13 +284,13 @@ public final class VMConfiguration {
     }
 
     public void initializeSchemes(MaxineVM.Phase phase) {
-        for (int i = 0; i < vmSchemes.length(); i++) {
+        for (int i = 0; i < vmSchemes.size(); i++) {
             vmSchemes.get(i).initialize(phase);
         }
     }
 
     public void finalizeSchemes(MaxineVM.Phase phase) {
-        for (int i = 0; i < vmSchemes.length(); i++) {
+        for (int i = 0; i < vmSchemes.size(); i++) {
             vmSchemes.get(i).finalize(phase);
         }
     }

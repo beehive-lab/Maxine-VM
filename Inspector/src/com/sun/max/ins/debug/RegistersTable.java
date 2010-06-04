@@ -54,7 +54,7 @@ public final class RegistersTable extends InspectorTable {
     private final class RegistersColumnModel extends InspectorTableColumnModel<RegistersColumnKind> {
 
         private RegistersColumnModel(RegistersViewPreferences viewPreferences) {
-            super(RegistersColumnKind.VALUES.size(), viewPreferences);
+            super(RegistersColumnKind.values().length, viewPreferences);
             addColumn(RegistersColumnKind.NAME, new NameCellRenderer(inspection()), null);
             addColumn(RegistersColumnKind.VALUE, new ValueCellRenderer(inspection()), null);
             addColumn(RegistersColumnKind.REGION, new RegionCellRenderer(), null);
@@ -114,7 +114,7 @@ public final class RegistersTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return RegistersColumnKind.VALUES.size();
+            return RegistersColumnKind.values().length;
         }
 
         public int getRowCount() {

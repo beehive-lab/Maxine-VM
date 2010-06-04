@@ -20,8 +20,9 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
+import java.util.*;
+
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
@@ -29,7 +30,7 @@ import com.sun.max.lang.*;
  */
 public final class X86InstructionDescription extends InstructionDescription {
 
-    public X86InstructionDescription(MutableSequence<Object> specifications) {
+    public X86InstructionDescription(List<Object> specifications) {
         super(specifications);
     }
 

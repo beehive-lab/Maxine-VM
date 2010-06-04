@@ -25,7 +25,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -106,9 +105,9 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     private static final String SPECFILE_PROPERTY_NAME = "max.vm.run.extendimage.specfile";
     private static final String TESTER_PROPERTY_NAME = "max.vm.run.extendimage.testrun";
     private static String mainClassName;
-    private static AppendableSequence<StaticMethodActor> callMethods = new LinkSequence<StaticMethodActor>();
-    private static AppendableSequence<ClassActor> reinitClasses = new LinkSequence<ClassActor>();
-    private static AppendableSequence<FieldActor> reinitFields = new LinkSequence<FieldActor>();
+    private static List<StaticMethodActor> callMethods = new LinkedList<StaticMethodActor>();
+    private static List<ClassActor> reinitClasses = new LinkedList<ClassActor>();
+    private static List<FieldActor> reinitFields = new LinkedList<FieldActor>();
     private static Properties properties = new Properties();
     private static Map<String, byte[]> imageFS = new HashMap<String, byte[]>();
     private static String imageFSPrefix = "";
@@ -418,7 +417,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
             final StaticMethodActor methodActor = classActor.findLocalStaticMethodActor(methodName);
             Trace.line(1, "arranging to call " +  methodActor.qualifiedName() + " prior to main");
-            callMethods.append(methodActor);
+            callMethods.add(methodActor);
             forceInvocationStub(argument);
         }  catch (Exception ex) {
             ProgramError.unexpected("failed to find: " + argument);
@@ -453,7 +452,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             forceCompileMethod(argument + ".<clinit>");
             if (reinit) {
                 Trace.line(1, "arranging to reinitialize " +  className + " prior to main");
-                reinitClasses.append(classActor);
+                reinitClasses.add(classActor);
             }
             return classActor;
         }  catch (Exception ex) {

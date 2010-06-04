@@ -22,8 +22,8 @@ package com.sun.max.util;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.Arrays;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
@@ -37,12 +37,12 @@ import com.sun.max.lang.*;
  *
  * @author Bernd Mathiske
  */
-public interface Symbolizer<Symbol_Type extends Symbol> extends Iterable<Symbol_Type> {
+public interface Symbolizer<S extends Symbol> extends Iterable<S> {
 
     /**
      * @return the concrete type of the symbols in the group
      */
-    Class<Symbol_Type> type();
+    Class<S> type();
 
     /**
      * Gets the symbol in the group whose primitive value equals {@code value}.
@@ -50,7 +50,7 @@ public interface Symbolizer<Symbol_Type extends Symbol> extends Iterable<Symbol_
      * @param value the search key
      * @return the found symbol or {@code null} if no symbol is found for {@code value}
      */
-    Symbol_Type fromValue(int value);
+    S fromValue(int value);
 
     int numberOfValues();
 
@@ -72,60 +72,67 @@ public interface Symbolizer<Symbol_Type extends Symbol> extends Iterable<Symbol_
         /**
          * Gets a map from name to symbol for all the symbols represented by a given symbolizer.
          *
-         * @param <Symbol_Type> the type of the symbol
+         * @param <S> the type of the symbol
          * @param symbolizer a set of symbols
          * @return a map from symbol name to symbol
          */
-        public static <Symbol_Type extends Symbol> Map<String, Symbol_Type> toSymbolMap(Symbolizer<Symbol_Type> symbolizer) {
-            final Map<String, Symbol_Type> map = new HashMap<String, Symbol_Type>(symbolizer.numberOfValues());
-            for (Symbol_Type symbol : symbolizer) {
+        public static <S extends Symbol> Map<String, S> toSymbolMap(Symbolizer<S> symbolizer) {
+            final Map<String, S> map = new HashMap<String, S>(symbolizer.numberOfValues());
+            for (S symbol : symbolizer) {
                 map.put(symbol.name(), symbol);
             }
             return map;
         }
 
-        public static <Symbol_Type extends Symbol> Symbolizer<Symbol_Type> from(Class<Symbol_Type> symbolType, Symbol_Type... symbols) {
-            return new SequenceSymbolizer<Symbol_Type>(symbolType, new ArraySequence<Symbol_Type>(symbols));
+        public static <S extends Symbol> Symbolizer<S> from(Class<S> symbolType, S... symbols) {
+            return new ListSymbolizer<S>(symbolType, Arrays.asList(symbols));
         }
 
-        public static <Symbol_Type extends Symbol> Symbolizer<Symbol_Type> fromSequence(Class<Symbol_Type> symbolType, Iterable< ? extends Symbol_Type> symbols,
-                        final Symbol_Type... additionalSymbols) {
-            final AppendableSequence<Symbol_Type> sequence = new ArrayListSequence<Symbol_Type>(additionalSymbols);
-            for (Symbol_Type symbol : symbols) {
-                sequence.append(symbol);
+        public static <S extends Symbol> Symbolizer<S> fromList(Class<S> symbolType, Iterable< ? extends S> symbols,
+                        final S... additionalSymbols) {
+            final List<S> list = new ArrayList<S>(Arrays.asList(additionalSymbols));
+            for (S symbol : symbols) {
+                list.add(symbol);
             }
-            return new SequenceSymbolizer<Symbol_Type>(symbolType, sequence);
+            return new ListSymbolizer<S>(symbolType, list);
         }
 
-        public static <Symbol_Type extends Symbol> Symbolizer<Symbol_Type> append(Symbolizer<Symbol_Type> symbolizer, Symbol_Type... symbols) {
-            return fromSequence(symbolizer.type(), symbolizer, symbols);
+        public static <S extends Symbol> Symbolizer<S> append(Symbolizer<S> symbolizer, S... symbols) {
+            return fromList(symbolizer.type(), symbolizer, symbols);
         }
 
-        public static <Symbol_Type extends Symbol> Symbolizer<Symbol_Type> append(Class<Symbol_Type> symbolType, Symbolizer< ? extends Symbol_Type> symbolizer,
-                        final Symbol_Type... symbols) {
-            return fromSequence(symbolType, symbolizer, symbols);
+        public static <S extends Symbol> Symbolizer<S> append(Class<S> symbolType, Symbolizer< ? extends S> symbolizer,
+                        final S... symbols) {
+            return fromList(symbolType, symbolizer, symbols);
         }
 
-        public static <Symbol_Type extends Symbol> Symbolizer<Symbol_Type> initialize(Class staticNameFieldClass, Class<Symbol_Type> symbolType) {
-            final AppendableSequence<Symbol_Type> sequence = new ArrayListSequence<Symbol_Type>();
-            final Sequence<StaticFieldName> staticFieldNames = StaticFieldName.Static.initialize(staticNameFieldClass);
+        public static <S extends Symbol> Symbolizer<S> initialize(Class staticNameFieldClass, Class<S> symbolType) {
+            final List<S> list = new ArrayList<S>();
+            final List<StaticFieldName> staticFieldNames = StaticFieldName.Static.initialize(staticNameFieldClass);
             for (StaticFieldName staticFieldName : staticFieldNames) {
                 if (symbolType.isInstance(staticFieldName)) {
-                    sequence.append(symbolType.cast(staticFieldName));
+                    list.add(symbolType.cast(staticFieldName));
                 }
             }
-            return new SequenceSymbolizer<Symbol_Type>(symbolType, sequence);
+            return new ListSymbolizer<S>(symbolType, list);
         }
 
-        public static <Symbol_Type extends Symbol> Symbolizer<Symbol_Type> initialize(Class<Symbol_Type> symbolType) {
+        public static <S extends Symbol> Symbolizer<S> initialize(Class<S> symbolType) {
             return initialize(symbolType, symbolType);
         }
 
-        public static <Symbol_Type extends Symbol> Symbolizer<Symbol_Type> fromSymbolizer(Symbolizer<Symbol_Type> symbolizer, Predicate<Symbol_Type> predicate) {
+        public static <S extends Symbol> Symbolizer<S> fromSymbolizer(Symbolizer<S> symbolizer, Predicate<S> predicate) {
             if (predicate == null) {
                 return symbolizer;
             }
-            return fromSequence(symbolizer.type(), Sequence.Static.filter(symbolizer, predicate));
+            final List<S> result = new LinkedList<S>();
+            for (S element : symbolizer) {
+                if (predicate.evaluate(element)) {
+                    result.add(element);
+                }
+            }
+            List<S> filtered = result;
+            return fromList(symbolizer.type(), filtered);
         }
 
     }

@@ -23,7 +23,7 @@ package com.sun.max.vm.cps.cir.bytecode;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -143,7 +143,7 @@ public final class CirBytecodeReader {
     private <T> T readConstant() {
         final Class<T> type = null;
         final int index = readUnsignedInt();
-        final T constant = StaticLoophole.cast(type, constantPool[index]);
+        final T constant = Utils.cast(type, constantPool[index]);
         if (traceStream != null) {
             detailedInstructionTrace += " " + constant;
         }
@@ -178,7 +178,7 @@ public final class CirBytecodeReader {
     private <Node_Type extends CirNode> Node_Type[] pop(Node_Type[] values) {
         for (int i = values.length - 1; i >= 0; --i) {
             final Class<Node_Type> type = null;
-            final Node_Type value = StaticLoophole.cast(type, pop());
+            final Node_Type value = Utils.cast(type, pop());
             values[i] = value;
         }
         return values;
@@ -186,7 +186,7 @@ public final class CirBytecodeReader {
 
     private <Node_Type extends CirNode> Node_Type pop() {
         final Class<Node_Type> type = null;
-        return StaticLoophole.cast(type, stack.pop());
+        return Utils.cast(type, stack.pop());
     }
 
     private void push(Object object) {
@@ -490,6 +490,6 @@ public final class CirBytecodeReader {
             }
         }
         final Class<Node_Type> type = null;
-        return StaticLoophole.cast(type, pop());
+        return Utils.cast(type, pop());
     }
 }

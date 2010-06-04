@@ -518,7 +518,7 @@ public class TirRecorder {
 
         @Override
         protected void methodReturn(Kind kind) {
-            if (state.frames().length() > 1) {
+            if (state.frames().size() > 1) {
                 state.leave();
             } else {
                 tracer.abort(AbortReason.BREACHED_SCOPE);

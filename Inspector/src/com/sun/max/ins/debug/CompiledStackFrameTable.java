@@ -144,7 +144,7 @@ public class CompiledStackFrameTable extends InspectorTable {
     private final class CompiledStackFrameTableColumnModel extends InspectorTableColumnModel<CompiledStackFrameColumnKind> {
 
         CompiledStackFrameTableColumnModel(CompiledStackFrameViewPreferences viewPreferences) {
-            super(CompiledStackFrameColumnKind.VALUES.size(), viewPreferences);
+            super(CompiledStackFrameColumnKind.values().length, viewPreferences);
             addColumn(CompiledStackFrameColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(CompiledStackFrameColumnKind.NAME, new NameRenderer(inspection()), null);
             addColumn(CompiledStackFrameColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
@@ -174,7 +174,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             this.javaStackFrame = javaStackFrame;
             frameSize = javaStackFrame.layout().frameSize();
             slots = javaStackFrame.layout().slots();
-            regions = new MaxMemoryRegion[slots.length()];
+            regions = new MaxMemoryRegion[slots.size()];
             int index = 0;
             for (Slot slot : slots) {
                 regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().wordSize());
@@ -183,11 +183,11 @@ public class CompiledStackFrameTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return CompiledStackFrameColumnKind.VALUES.size();
+            return CompiledStackFrameColumnKind.values().length;
         }
 
         public int getRowCount() {
-            return javaStackFrame.layout().slots().length();
+            return javaStackFrame.layout().slots().size();
         }
 
         public Object getValueAt(int rowIndex, int columnIndex) {
@@ -202,7 +202,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         @Override
         public int findRow(Address address) {
             final int wordOffset = address.minus(getOrigin()).dividedBy(vm().wordSize()).toInt();
-            return (wordOffset >= 0 && wordOffset < slots.length()) ? wordOffset : -1;
+            return (wordOffset >= 0 && wordOffset < slots.size()) ? wordOffset : -1;
         }
 
         @Override

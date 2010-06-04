@@ -24,8 +24,9 @@ import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 
+import java.util.*;
+
 import com.sun.cri.bytecode.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
@@ -271,7 +272,7 @@ public abstract class BytecodeAssembler {
      */
     public abstract byte[] code();
 
-    private AppendableSequence<LabelInstruction> unboundInstructions = new LinkSequence<LabelInstruction>();
+    private List<LabelInstruction> unboundInstructions = new LinkedList<LabelInstruction>();
 
     /**
      * Constructor for assembling code for a new method.
@@ -376,7 +377,7 @@ public abstract class BytecodeAssembler {
         } else {
             final int opcodeAddress = currentAddress;
             branch(opcode, currentAddress);
-            unboundInstructions.append(new LabelInstruction(opcodeAddress, 3){
+            unboundInstructions.add(new LabelInstruction(opcodeAddress, 3){
                 @Override
                 public void assemble(BytecodeAssembler assembler) {
                     branch(opcode, label.address());
@@ -404,7 +405,7 @@ public abstract class BytecodeAssembler {
             for (LabelInstruction unboundInstruction : unboundInstructions) {
                 unboundInstruction.fixup();
             }
-            unboundInstructions = new LinkSequence<LabelInstruction>();
+            unboundInstructions = new LinkedList<LabelInstruction>();
         }
     }
 
@@ -986,7 +987,7 @@ public abstract class BytecodeAssembler {
         decStack();
         tableswitch0(0, lowMatch, highMatch, null);
         final int size = currentAddress - opcodeAddress;
-        unboundInstructions.append(new LabelInstruction(opcodeAddress, size){
+        unboundInstructions.add(new LabelInstruction(opcodeAddress, size){
             @Override
             public void assemble(BytecodeAssembler assembler) {
                 final int[] boundTargets = new int[targets.length];
@@ -1036,7 +1037,7 @@ public abstract class BytecodeAssembler {
         decStack();
         lookupswitch0(0, matches.length, null, null);
         final int size = currentAddress - opcodeAddress;
-        unboundInstructions.append(new LabelInstruction(opcodeAddress, size){
+        unboundInstructions.add(new LabelInstruction(opcodeAddress, size){
             @Override
             public void assemble(BytecodeAssembler assembler) {
                 final int[] boundTargets = new int[targets.length];

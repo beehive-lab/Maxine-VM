@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.heap;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -39,7 +40,7 @@ public class TupleReferenceMap {
     /**
      * The set of word-scaled offsets to references.
      */
-    private AppendableSequence<Integer> indexes = new LinkSequence<Integer>();
+    private List<Integer> indexes = new LinkedList<Integer>();
 
     /**
      * Builds a reference map for a given set of static fields. This is the reference map that
@@ -50,7 +51,7 @@ public class TupleReferenceMap {
         for (FieldActor staticFieldActor : staticFieldActors) {
             if (staticFieldActor.kind.isReference) {
                 final int fieldIndex = Unsigned.idiv(staticFieldActor.offset(), Word.size());
-                indexes.append(fieldIndex);
+                indexes.add(fieldIndex);
             }
         }
     }
@@ -66,7 +67,7 @@ public class TupleReferenceMap {
             for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
                 if (instanceFieldActor.kind.isReference && !instanceFieldActor.isSpecialReference()) {
                     final int fieldIndex = Unsigned.idiv(instanceFieldActor.offset(), Word.size());
-                    indexes.append(fieldIndex);
+                    indexes.add(fieldIndex);
                 }
             }
             c = c.superClassActor;
@@ -79,7 +80,7 @@ public class TupleReferenceMap {
      * Gets the number of entries in this reference map.
      */
     public int numberOfEntries() {
-        return indexes.length();
+        return indexes.size();
     }
 
     public void copyIntoHub(Hub hub) {

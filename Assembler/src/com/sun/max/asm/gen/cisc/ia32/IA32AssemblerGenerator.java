@@ -20,13 +20,14 @@
  */
 package com.sun.max.asm.gen.cisc.ia32;
 
+import java.util.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.ia32.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.ia32.*;
 import com.sun.max.asm.ia32.complete.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 
@@ -49,7 +50,7 @@ public class IA32AssemblerGenerator extends X86AssemblerGenerator<IA32Template> 
 
     @Override
     protected void printModVariants(IndentWriter stream, IA32Template template) {
-        if (template.modCase() != X86TemplateContext.ModCase.MOD_0 || template.parameters().length() == 0) {
+        if (template.modCase() != X86TemplateContext.ModCase.MOD_0 || template.parameters().size() == 0) {
             return;
         }
         switch (template.rmCase()) {
@@ -85,13 +86,13 @@ public class IA32AssemblerGenerator extends X86AssemblerGenerator<IA32Template> 
         if (template.modCase() != null && template.modCase() != X86TemplateContext.ModCase.MOD_3 &&
                                           template.rmCase() == X86TemplateContext.RMCase.NORMAL &&
                                           template.addressSizeAttribute() == WordWidth.BITS_32 &&
-                                          template.parameters().length() > 0) {
+                                          template.parameters().size() > 0) {
             printSibVariant(stream, template, IA32IndirectRegister32.ESP_INDIRECT);
         }
     }
 
     @Override
-    protected DisassembledInstruction generateExampleInstruction(IA32Template template, IndexedSequence<Argument> arguments) throws AssemblyException {
+    protected DisassembledInstruction generateExampleInstruction(IA32Template template, List<Argument> arguments) throws AssemblyException {
         final IA32Assembler assembler = new IA32Assembler(0);
         assembly().assemble(assembler, template, arguments);
         final byte[] bytes = assembler.toByteArray();

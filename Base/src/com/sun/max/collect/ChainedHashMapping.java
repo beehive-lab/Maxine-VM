@@ -22,11 +22,10 @@ package com.sun.max.collect;
 
 import java.util.*;
 
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
+import com.sun.max.*;
 
 /**
- * Hash table based implementation of the {@link VariableMapping} interface. Compared to {@link HashMap}, this data
+ * Hash table based implementation of the {@link Mapping} interface. Compared to {@link HashMap}, this data
  * structure can provide better space utilization (the {@link DefaultEntry} chained entry type has one less field than
  * the chained entry type in HashMap) and extensibility (subclasses can override how keys produce a
  * {@link #hashCode(Object) hash code} and how they are tested for {@linkplain #equivalent(Object, Object) equality}).
@@ -39,10 +38,13 @@ import com.sun.max.lang.*;
  * {@value #MIN_LOAD_FACTOR} after {@link ChainedHashMapping#remove(Object) removing} an entry.</li>
  * </ul>
  *
+ * @param <K> the type of keys maintained by this map
+ * @param <V> the type of mapped values
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Type, Value_Type> implements VariableMapping<Key_Type, Value_Type> {
+public class ChainedHashMapping<K, V> extends HashMapping<K, V> implements Mapping<K, V> {
 
     // Note: this implementation is partly derived from java.util.HashMap in the standard JDK
     // In particular, it uses a table whose length is guaranteed to be a power of 2.
@@ -65,48 +67,46 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
     /**
      * The interface for the chained entries of a bucket in a {@link ChainedHashMapping}.
      */
-    public static interface Entry<Key_Type, Value_Type> {
-        Key_Type key();
-        Value_Type value();
-        void setValue(Value_Type value);
-        Entry<Key_Type, Value_Type> next();
-        void setNext(Entry<Key_Type, Value_Type> next);
+    public static interface Entry<K, V> {
+        K key();
+        V value();
+        void setValue(V value);
+        Entry<K, V> next();
+        void setNext(Entry<K, V> next);
     }
 
     /**
      * The default chained entry type used by {@link ChainedHashMapping}. This type of chained entry does not cache the hash value of the key. If the
      * computing this hash code is an expensive operation, then using a {@link HashEntryChainedHashMapping} may provide better performance.
      */
-    public static class DefaultEntry<Key_Type, Value_Type> implements Entry<Key_Type, Value_Type> {
-        final Key_Type key;
-        @INSPECTED
-        Value_Type value;
-        @INSPECTED
-        Entry<Key_Type, Value_Type> next;
+    public static class DefaultEntry<K, V> implements Entry<K, V> {
+        final K key;
+        V value;
+        Entry<K, V> next;
 
-        public DefaultEntry(Key_Type key, Value_Type value, Entry<Key_Type, Value_Type> next) {
+        public DefaultEntry(K key, V value, Entry<K, V> next) {
             this.key = key;
             this.value = value;
             this.next = next;
         }
 
-        public final Key_Type key() {
+        public final K key() {
             return key;
         }
 
-        public final Entry<Key_Type, Value_Type> next() {
+        public final Entry<K, V> next() {
             return next;
         }
 
-        public void setNext(Entry<Key_Type, Value_Type> next) {
+        public void setNext(Entry<K, V> next) {
             this.next = next;
         }
 
-        public void setValue(Value_Type value) {
+        public void setValue(V value) {
             this.value = value;
         }
 
-        public final Value_Type value() {
+        public final V value() {
             return value;
         }
 
@@ -116,8 +116,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         }
     }
 
-    @INSPECTED
-    private Entry<Key_Type, Value_Type>[] table;
+    private Entry<K, V>[] table;
 
     private int numberOfEntries;
     private int growThreshold;
@@ -142,7 +141,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
      * @param equivalence
      *            the semantics of key comparison and hashing. If {@code null}, then {@link HashEquality} is used.
      */
-    public ChainedHashMapping(HashEquivalence<Key_Type> equivalence) {
+    public ChainedHashMapping(HashEquivalence<K> equivalence) {
         this(equivalence, DEFAULT_INITIAL_CAPACITY);
     }
 
@@ -164,7 +163,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
      * @param initialCapacity
      *            the initial capacity of the table
      */
-    public ChainedHashMapping(HashEquivalence<Key_Type> equivalence, int initialCapacity) {
+    public ChainedHashMapping(HashEquivalence<K> equivalence, int initialCapacity) {
         super(equivalence);
         if (initialCapacity < 0) {
             throw new IllegalArgumentException("Illegal initial capacity: " + initialCapacity);
@@ -176,8 +175,8 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
             capacity <<= 1;
         }
 
-        final Class<Entry<Key_Type, Value_Type>[]> type = null;
-        table = StaticLoophole.cast(type, new Entry[capacity]);
+        final Class<Entry<K, V>[]> type = null;
+        table = Utils.cast(type, new Entry[capacity]);
         setThreshold();
     }
 
@@ -221,17 +220,17 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
      * @param hashForKey
      *            the hash value for {@code key}
      */
-    protected boolean matches(Entry<Key_Type, Value_Type> entry, Key_Type key, int hashForKey) {
+    protected boolean matches(Entry<K, V> entry, K key, int hashForKey) {
         return equivalent(entry.key(), key);
     }
 
-    public Value_Type get(Key_Type key) {
+    public V get(K key) {
         if (key == null) {
             throw new IllegalArgumentException("Key cannot be null");
         }
         final int hashForKey = hash(hashCode(key));
         final int index = indexFor(hashForKey, table.length);
-        for (Entry<Key_Type, Value_Type> entry = table[index]; entry != null; entry = entry.next()) {
+        for (Entry<K, V> entry = table[index]; entry != null; entry = entry.next()) {
             if (matches(entry, key, hashForKey)) {
                 return entry.value();
             }
@@ -240,8 +239,8 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
     }
 
     private void resize(int newTableLength) {
-        final Class<Entry<Key_Type, Value_Type>[]> type = null;
-        final Entry<Key_Type, Value_Type>[] newTable = StaticLoophole.cast(type, new Entry[newTableLength]);
+        final Class<Entry<K, V>[]> type = null;
+        final Entry<K, V>[] newTable = Utils.cast(type, new Entry[newTableLength]);
         transfer(newTable);
         table = newTable;
         setThreshold();
@@ -250,14 +249,14 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
     /**
      * Transfers all entries from current table to newTable.
      */
-    private void transfer(Entry<Key_Type, Value_Type>[] newTable) {
-        final Entry<Key_Type, Value_Type>[] src = table;
+    private void transfer(Entry<K, V>[] newTable) {
+        final Entry<K, V>[] src = table;
         final int newCapacity = newTable.length;
         for (int j = 0; j < src.length; j++) {
-            Entry<Key_Type, Value_Type> entry = src[j];
+            Entry<K, V> entry = src[j];
             if (entry != null) {
                 do {
-                    final Entry<Key_Type, Value_Type> next = entry.next();
+                    final Entry<K, V> next = entry.next();
                     final int hash = hash(hashCode(entry.key()));
                     final int index = indexFor(hash, newCapacity);
                     entry.setNext(newTable[index]);
@@ -268,18 +267,18 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         }
     }
 
-    public Value_Type remove(Key_Type key) {
+    public V remove(K key) {
         if (key == null) {
             throw new IllegalArgumentException("Key cannot be null");
         }
 
         final int hashForKey = hash(hashCode(key));
         final int index = indexFor(hashForKey, table.length);
-        Entry<Key_Type, Value_Type> prev = table[index];
-        Entry<Key_Type, Value_Type> entry = prev;
+        Entry<K, V> prev = table[index];
+        Entry<K, V> entry = prev;
 
         while (entry != null) {
-            final Entry<Key_Type, Value_Type> next = entry.next();
+            final Entry<K, V> next = entry.next();
             if (matches(entry, key, hashForKey)) {
                 if (prev == entry) {
                     table[index] = next;
@@ -298,7 +297,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         return null;
     }
 
-    public Value_Type put(Key_Type key, Value_Type value) {
+    public V put(K key, V value) {
         if (value == null) {
             return remove(key);
         }
@@ -308,9 +307,9 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
 
         final int hashForKey = hash(hashCode(key));
         final int index = indexFor(hashForKey, table.length);
-        for (Entry<Key_Type, Value_Type> entry = table[index]; entry != null; entry = entry.next()) {
+        for (Entry<K, V> entry = table[index]; entry != null; entry = entry.next()) {
             if (matches(entry, key, hashForKey)) {
-                final Value_Type oldValue = entry.value();
+                final V oldValue = entry.value();
                 entry.setValue(value);
                 return oldValue;
             }
@@ -324,14 +323,14 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
     }
 
     public void clear() {
-        final Class<Entry<Key_Type, Value_Type>[]> type = null;
-        table = StaticLoophole.cast(type, new Entry[1]);
+        final Class<Entry<K, V>[]> type = null;
+        table = Utils.cast(type, new Entry[1]);
         numberOfEntries = 0;
         setThreshold();
     }
 
-    protected Entry<Key_Type, Value_Type> createEntry(int hashOfKey, Key_Type key, Value_Type value, Entry<Key_Type, Value_Type> next) {
-        return new DefaultEntry<Key_Type, Value_Type>(key, value, next);
+    protected Entry<K, V> createEntry(int hashOfKey, K key, V value, Entry<K, V> next) {
+        return new DefaultEntry<K, V>(key, value, next);
     }
 
     protected abstract class HashIterator<Type> implements Iterator<Type> {
@@ -339,7 +338,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         /**
          * Next entry to return.
          */
-        Entry<Key_Type, Value_Type> nextEntry;
+        Entry<K, V> nextEntry;
 
         /**
          * Index at which to start searching for the next entry.
@@ -349,7 +348,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         HashIterator() {
             // advance to first entry
             if (numberOfEntries > 0) {
-                final Entry<Key_Type, Value_Type>[] t = table;
+                final Entry<K, V>[] t = table;
                 while (index < t.length && nextEntry == null) {
                     nextEntry = t[index++];
                 }
@@ -360,15 +359,15 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
             return nextEntry != null;
         }
 
-        final Entry<Key_Type, Value_Type> nextEntry() {
-            final Entry<Key_Type, Value_Type> entry = nextEntry;
+        final Entry<K, V> nextEntry() {
+            final Entry<K, V> entry = nextEntry;
             if (entry == null) {
                 throw new NoSuchElementException();
             }
 
             nextEntry = entry.next();
             if (nextEntry == null) {
-                final Entry<Key_Type, Value_Type>[] t = table;
+                final Entry<K, V>[] t = table;
                 while (index < t.length && nextEntry == null) {
                     nextEntry = t[index++];
                 }
@@ -381,36 +380,36 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         }
     }
 
-    protected final class ValueIterator extends HashIterator<Value_Type> {
-        public Value_Type next() {
+    protected final class ValueIterator extends HashIterator<V> {
+        public V next() {
             return nextEntry().value();
         }
     }
 
-    protected final class KeyIterator extends HashIterator<Key_Type> {
-        public Key_Type next() {
+    protected final class KeyIterator extends HashIterator<K> {
+        public K next() {
             return nextEntry().key();
         }
     }
 
-    protected final class EntryIterator extends HashIterator<Entry<Key_Type, Value_Type>> {
-        public Entry<Key_Type, Value_Type> next() {
+    protected final class EntryIterator extends HashIterator<Entry<K, V>> {
+        public Entry<K, V> next() {
             return nextEntry();
         }
     }
 
-    public IterableWithLength<Key_Type> keys() {
-        return new HashMappingIterable<Key_Type>() {
-            public Iterator<Key_Type> iterator() {
+    public IterableWithLength<K> keys() {
+        return new HashMappingIterable<K>() {
+            public Iterator<K> iterator() {
                 return new KeyIterator();
             }
         };
     }
 
     @Override
-    public IterableWithLength<Value_Type> values() {
-        return new HashMappingIterable<Value_Type>() {
-            public Iterator<Value_Type> iterator() {
+    public IterableWithLength<V> values() {
+        return new HashMappingIterable<V>() {
+            public Iterator<V> iterator() {
                 return new ValueIterator();
             }
         };

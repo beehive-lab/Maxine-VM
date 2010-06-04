@@ -78,7 +78,7 @@ public abstract class SignatureDescriptor extends Descriptor implements RiSignat
      * Searching and adding entries to this map is only performed by
      * {@linkplain #createSignatureDescriptor(String, TypeDescriptor[]) one method} which is synchronized.
      */
-    private static final GrowableMapping<String, SignatureDescriptorEntry> canonicalSignatureDescriptors = new ChainingValueChainedHashMapping<String, SignatureDescriptorEntry>();
+    private static final Mapping<String, SignatureDescriptorEntry> canonicalSignatureDescriptors = new ChainingValueChainedHashMapping<String, SignatureDescriptorEntry>();
 
     static {
         // Ensures Kind is initialized

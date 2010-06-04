@@ -1976,7 +1976,7 @@ public class LinearScan {
 
                 // Spill optimization: when the stack value is guaranteed to be always correct,
                 // then it must be added to the oop map even if the interval is currently in a register
-                if (interval.alwaysInMemory() && op.id > interval.spillDefinitionPos() && interval.operand.equals(interval.spillSlot())) {
+                if (interval.alwaysInMemory() && op.id > interval.spillDefinitionPos() && !interval.location().equals(interval.spillSlot())) {
                     assert interval.spillDefinitionPos() > 0 : "position not set correctly";
                     assert interval.spillSlot() != null : "no spill slot assigned";
                     assert !interval.operand.isRegister() : "interval is on stack :  so stack slot is registered twice";

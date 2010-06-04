@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.cps.b;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.cps.bir.*;
 
@@ -39,7 +40,7 @@ public class ActorToBirTranslator extends BirGenerator {
     private void translate(BirMethod birMethod) {
         final CodeAttribute codeAttribute = birMethod.classMethodActor().compilee().codeAttribute();
         final ControlFlowAnalyzer controlFlowAnalyzer = new ControlFlowAnalyzer(birMethod.classMethodActor(), codeAttribute.code());
-        final IndexedSequence<BirBlock> blocks = controlFlowAnalyzer.run();
+        final List<BirBlock> blocks = controlFlowAnalyzer.run();
         final BirBlock[] blockMap = controlFlowAnalyzer.blockMap();
 
         birMethod.setGenerated(

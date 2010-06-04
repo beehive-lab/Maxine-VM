@@ -23,8 +23,8 @@ package com.sun.max.vm.type;
 import java.io.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -109,10 +109,10 @@ public final class BootClassLoader extends ClassLoader {
         final Object nativeLibrary = createNativeLibrary(fileName, handle);
 
         final Class<Vector<Object>> type = null;
-        final Vector<Object> loadedLibraryNames = StaticLoophole.cast(type, TupleAccess.readObject(StaticTuple.fromJava(ClassLoader.class), ClassRegistry.ClassLoader_loadedLibraryNames.offset()));
+        final Vector<Object> loadedLibraryNames = Utils.cast(type, TupleAccess.readObject(StaticTuple.fromJava(ClassLoader.class), ClassRegistry.ClassLoader_loadedLibraryNames.offset()));
         loadedLibraryNames.addElement(fileName);
 
-        final Vector<Object> nativeLibraries = StaticLoophole.cast(type, TupleAccess.readObject(this, ClassRegistry.ClassLoader_nativeLibraries.offset()));
+        final Vector<Object> nativeLibraries = Utils.cast(type, TupleAccess.readObject(this, ClassRegistry.ClassLoader_nativeLibraries.offset()));
         nativeLibraries.addElement(nativeLibrary);
     }
 

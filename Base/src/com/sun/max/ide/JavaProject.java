@@ -21,9 +21,9 @@
 package com.sun.max.ide;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.*;
 
@@ -64,13 +64,13 @@ public final class JavaProject {
      *                             project depends upon
      */
     public static Classpath getClassPath(boolean includeDependencies) {
-        final AppendableSequence<Entry> classPathEntries = new LinkSequence<Entry>();
+        ArrayList<Entry> classPathEntries = new ArrayList<Entry>();
         for (Entry entry : Classpath.fromSystem().entries()) {
             if (entry.isDirectory()) {
                 final String packageName = MaxPackage.class.getPackage().getName();
                 final File file = new File(entry.path(), packageName.replace('.', File.separatorChar));
-                if (file.exists() && file.isDirectory() && !Sequence.Static.containsEqual(classPathEntries, entry)) {
-                    classPathEntries.append(entry);
+                if (file.exists() && file.isDirectory() && !classPathEntries.contains(entry)) {
+                    classPathEntries.add(entry);
                     if (!includeDependencies) {
                         break;
                     }
@@ -78,7 +78,7 @@ public final class JavaProject {
             } else if (entry.isArchive()) {
                 if (IDE.current() == IDE.NETBEANS) {
                     if (entry.file().getParentFile().getName().equals("dist")) {
-                        classPathEntries.append(entry);
+                        classPathEntries.add(entry);
                     }
                 }
             }
@@ -95,7 +95,7 @@ public final class JavaProject {
      *         subdirectory
      */
     public static File findClassesOnClasspath() {
-        return getClassPath(false).entries().first().file();
+        return getClassPath(false).entries().get(0).file();
     }
 
     /**
@@ -107,18 +107,18 @@ public final class JavaProject {
      */
     public static Classpath getSourcePath(boolean includeDependencies) {
         final Classpath classPath = getClassPath(includeDependencies);
-        final AppendableSequence<String> sourcePath = new LinkSequence<String>();
+        final List<String> sourcePath = new LinkedList<String>();
         for (Entry entry : classPath.entries()) {
             final File projectDirectory = IDE.current().findVcsProjectDirectoryFromClasspathEntry(entry.file());
             if (projectDirectory != null) {
                 final File srcDirectory = new File(projectDirectory, SOURCE_DIRECTORY_NAME);
                 if (srcDirectory.exists() && srcDirectory.isDirectory()) {
-                    sourcePath.append(srcDirectory.getPath());
+                    sourcePath.add(srcDirectory.getPath());
                 }
 
                 final File testDirectory = new File(projectDirectory, TEST_SOURCE_DIRECTORY_NAME);
                 if (testDirectory.exists() && testDirectory.isDirectory()) {
-                    sourcePath.append(testDirectory.getPath());
+                    sourcePath.add(testDirectory.getPath());
                 }
                 if (!includeDependencies) {
                     break;
@@ -128,11 +128,11 @@ public final class JavaProject {
         if (sourcePath.isEmpty()) {
             throw new JavaProjectNotFoundException("Could not find path to Java project sources");
         }
-        return new Classpath(Sequence.Static.toArray(sourcePath, new String[sourcePath.length()]));
+        return new Classpath(sourcePath.toArray(new String[sourcePath.size()]));
     }
 
     public static File findSourceDirectory() {
-        return getSourcePath(false).entries().first().file();
+        return getSourcePath(false).entries().get(0).file();
     }
 
     /**

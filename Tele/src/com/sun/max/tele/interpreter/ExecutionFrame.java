@@ -22,7 +22,6 @@ package com.sun.max.tele.interpreter;
 
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -163,7 +162,7 @@ class ExecutionFrame {
      */
     public boolean handleException(ClassActor throwableClassActor) {
         final int bcp = currentOpcodePosition;
-        final Sequence<ExceptionHandlerEntry> handlers = method().codeAttribute().exceptionHandlerTable();
+        final ExceptionHandlerEntry[] handlers = method().codeAttribute().exceptionHandlerTable();
         for (ExceptionHandlerEntry handler : handlers) {
             if (bcp >= handler.startPosition() && bcp < handler.endPosition()) {
                 if (handler.catchTypeIndex() == 0) {

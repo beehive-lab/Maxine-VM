@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -63,8 +62,10 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
     }
 
     @Override
-    public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.appended(super.irGenerators(), birToCirTranslator);
+    public List<IrGenerator> irGenerators() {
+        final List<IrGenerator> result = new LinkedList<IrGenerator>(super.irGenerators());
+        result.add(birToCirTranslator);
+        return result;
     }
 
     @HOSTED_ONLY
@@ -82,7 +83,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
     @HOSTED_ONLY
     private void translateSnippets() {
         Trace.begin(1, "translateSnippets");
-        for (int i = 0; i < Snippet.snippets().length(); i++) {
+        for (int i = 0; i < Snippet.snippets().size(); i++) {
             final CirSnippet cirSnippet = CirSnippet.get(Snippet.snippets().get(i));
             try {
                 cirGenerator().notifyBeforeGeneration(cirSnippet);
@@ -105,8 +106,8 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         // Each snippet optimization must proceed without encountering prior folding,
         // so store all results on the side without reusing them yet
         // and then assign them in a separate pass below:
-        final CirClosure[] optimizedClosures = new CirClosure[Snippet.snippets().length()];
-        for (int i = 0; i < Snippet.snippets().length(); i++) {
+        final CirClosure[] optimizedClosures = new CirClosure[Snippet.snippets().size()];
+        for (int i = 0; i < Snippet.snippets().size(); i++) {
             final CirSnippet cirSnippet = CirSnippet.get(Snippet.snippets().get(i));
             final CirClosure cirClosure = cirSnippet.copyClosure();
             optimizedClosures[i] = cirClosure;
@@ -121,7 +122,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         cleanupAfterSnippets();
 
         // Updated each snippet's closure with the respective optimized version:
-        for (int i = 0; i < Snippet.snippets().length(); i++) {
+        for (int i = 0; i < Snippet.snippets().size(); i++) {
             final CirSnippet cirSnippet = CirSnippet.get(Snippet.snippets().get(i));
             cirGenerator().notifyBeforeGeneration(cirSnippet);
             cirSnippet.setGenerated(optimizedClosures[i]);
@@ -136,7 +137,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
      */
     @HOSTED_ONLY
     private void cleanupAfterSnippets() {
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses()) {
             for (ClassMethodActor classMethodActor : classActor.localVirtualMethodActors()) {
                 CompilationScheme.Static.resetMethodState(classMethodActor);
             }

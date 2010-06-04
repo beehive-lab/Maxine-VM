@@ -25,28 +25,28 @@ import java.util.*;
 /**
  * @author Bernd Mathiske
  */
-public class IdentityHashMapping<Key_Type, Value_Type> implements VariableMapping<Key_Type, Value_Type> {
+public class IdentityHashMapping<K, V> implements Mapping<K, V> {
 
-    private final Map<Key_Type, Value_Type> delegate;
+    private final Map<K, V> delegate;
 
     public IdentityHashMapping() {
-        delegate = new IdentityHashMap<Key_Type, Value_Type>();
+        delegate = new IdentityHashMap<K, V>();
     }
 
     public IdentityHashMapping(int expectedMaxSize) {
-        delegate = new IdentityHashMap<Key_Type, Value_Type>(expectedMaxSize);
+        delegate = new IdentityHashMap<K, V>(expectedMaxSize);
     }
 
-    public synchronized Value_Type put(Key_Type key, Value_Type value) {
+    public synchronized V put(K key, V value) {
         return delegate.put(key, value);
     }
 
-    public synchronized Value_Type get(Key_Type key) {
-        final Value_Type value = delegate.get(key);
+    public synchronized V get(K key) {
+        final V value = delegate.get(key);
         return value;
     }
 
-    public synchronized boolean containsKey(Key_Type key) {
+    public synchronized boolean containsKey(K key) {
         return delegate.containsKey(key);
     }
 
@@ -58,31 +58,31 @@ public class IdentityHashMapping<Key_Type, Value_Type> implements VariableMappin
         delegate.clear();
     }
 
-    public Value_Type remove(Key_Type key) {
+    public V remove(K key) {
         return delegate.remove(key);
     }
 
-    public IterableWithLength<Key_Type> keys() {
-        return new IterableWithLength<Key_Type>() {
+    public IterableWithLength<K> keys() {
+        return new IterableWithLength<K>() {
 
-            public int length() {
+            public int size() {
                 return delegate.size();
             }
 
-            public Iterator<Key_Type> iterator() {
+            public Iterator<K> iterator() {
                 return delegate.keySet().iterator();
             }
         };
     }
 
-    public IterableWithLength<Value_Type> values() {
-        return new IterableWithLength<Value_Type>() {
+    public IterableWithLength<V> values() {
+        return new IterableWithLength<V>() {
 
-            public int length() {
+            public int size() {
                 return delegate.size();
             }
 
-            public Iterator<Value_Type> iterator() {
+            public Iterator<V> iterator() {
                 return delegate.values().iterator();
             }
         };

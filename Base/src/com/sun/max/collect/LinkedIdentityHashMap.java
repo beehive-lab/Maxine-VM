@@ -22,14 +22,14 @@ package com.sun.max.collect;
 
 import java.util.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.*;
 
 /**
  * @author Bernd Mathiske
  */
-public class LinkedIdentityHashMap<Key_Type, Value_Type> extends IdentityHashMap<Key_Type, Value_Type> implements DeterministicMap<Key_Type, Value_Type> {
+public class LinkedIdentityHashMap<K, V> extends IdentityHashMap<K, V> implements Iterable<K> {
 
-    private final LinkedList<Key_Type> order = new LinkedList<Key_Type>();
+    private final LinkedList<K> order = new LinkedList<K>();
 
     public LinkedIdentityHashMap() {
     }
@@ -39,8 +39,8 @@ public class LinkedIdentityHashMap<Key_Type, Value_Type> extends IdentityHashMap
     }
 
     @Override
-    public Value_Type put(Key_Type key, Value_Type value) {
-        final Value_Type oldValue = super.put(key, value);
+    public V put(K key, V value) {
+        final V oldValue = super.put(key, value);
         if (oldValue == null) {
             if (value != null) {
                 order.add(key);
@@ -53,19 +53,15 @@ public class LinkedIdentityHashMap<Key_Type, Value_Type> extends IdentityHashMap
         return oldValue;
     }
 
-    public Iterator<Key_Type> iterator() {
+    public Iterator<K> iterator() {
         return order.iterator();
     }
 
-    public int length() {
-        return order.size();
-    }
-
-    public Key_Type first() {
+    public K first() {
         return order.getFirst();
     }
 
-    public Key_Type last() {
+    public K last() {
         return order.getLast();
     }
 
@@ -77,7 +73,7 @@ public class LinkedIdentityHashMap<Key_Type, Value_Type> extends IdentityHashMap
                 return false;
             }
             final Iterator iterator = map.order.iterator();
-            for (Key_Type key : order) {
+            for (K key : order) {
                 if (key != iterator.next() || !get(key).equals(map.get(key))) {
                     return false;
                 }
@@ -93,11 +89,11 @@ public class LinkedIdentityHashMap<Key_Type, Value_Type> extends IdentityHashMap
     }
 
     @Override
-    public LinkedIdentityHashMap<Key_Type, Value_Type> clone() {
-        return StaticLoophole.cast(super.clone());
+    public LinkedIdentityHashMap<K, V> clone() {
+        return Utils.cast(super.clone());
     }
 
-    public Collection<Key_Type> toCollection() {
+    public Collection<K> toCollection() {
         return keySet();
     }
 }

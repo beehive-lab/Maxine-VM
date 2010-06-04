@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -197,7 +196,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // Setup return address -- to enable stack walker
         asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset, GPR.I7);
         // Setup arguments for the trapStub
-        final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters;
+        final List parameterRegisters = targetABI.integerIncomingParameterRegisters;
         asm.ldx(latchRegister, VmThreadLocal.TRAP_NUMBER.offset, (GPR) parameterRegisters.get(0));
         asm.add(stackPointer, trapStateOffset, (GPR) parameterRegisters.get(1));
         asm.ldx(latchRegister, VmThreadLocal.TRAP_FAULT_ADDRESS.offset, (GPR) parameterRegisters.get(2));
