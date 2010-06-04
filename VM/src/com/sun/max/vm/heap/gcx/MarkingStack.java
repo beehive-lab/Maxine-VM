@@ -48,6 +48,10 @@ public class MarkingStack {
         abstract void visitFlushedCell(Pointer cell);
     }
 
+    /**
+     * Interface that a heap tracer has to implement to handle overflow of the marking stack.
+     * The heap tracer is responsible for recovering from the overflow.
+     */
     interface OverflowHandler {
         void recoverFromOverflow();
     }
@@ -65,6 +69,10 @@ public class MarkingStack {
         drainingCellVisitor = cellVisitor;
     }
 
+    /**
+     * Sets an overflow handler.
+     * @param handler an marking stack overflow handler.
+     */
     void setOverflowHandler(OverflowHandler handler) {
         overflowHandler = handler;
     }
@@ -73,7 +81,7 @@ public class MarkingStack {
     }
 
     void initialize() {
-        // FIXME: a better solution might be to allocate this in the heap, outside of the covered area, as a  reference array,
+        // FIXME: a better solution might be to allocate this in the heap, outside of the covered area, as a reference array,
         // Root marking will skip it.
         // Same with the other GC data structures (i.e., rescan map and mark bitmap)
         final int length = markingStackSizeOption.getValue();
