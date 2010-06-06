@@ -1321,7 +1321,7 @@ function run_jtest() {
         esac
         shift
     done
-    run ${jvm_exe} -classpath $(get_project_cp Base):$(get_project_cp VM) $vm_args test.com.sun.max.vm.compiler.JavaTester $jtester_args
+    run ${jvm_exe} -classpath $maxine_cp $vm_args test.com.sun.max.vm.compiler.JavaTester $jtester_args
 }
 
 #=======================================
