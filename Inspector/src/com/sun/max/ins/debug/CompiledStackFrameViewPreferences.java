@@ -74,7 +74,7 @@ public final class CompiledStackFrameViewPreferences extends TableColumnVisibili
      * Creates a persistent, global set of preferences for view preferences.
      */
     private CompiledStackFrameViewPreferences(Inspection inspection) {
-        super(inspection, STACK_FRAME_COLUMN_PREFERENCE, CompiledStackFrameColumnKind.VALUES);
+        super(inspection, STACK_FRAME_COLUMN_PREFERENCE, CompiledStackFrameColumnKind.values());
         final InspectionSettings settings = inspection.settings();
         final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(STACK_INSPECTOR_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {

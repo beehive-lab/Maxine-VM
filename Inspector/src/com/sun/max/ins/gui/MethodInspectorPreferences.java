@@ -68,7 +68,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
             }
         };
         settings.addSaveSettingsListener(saveSettingsListener);
-        for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
+        for (MethodCodeKind codeKind : MethodCodeKind.values()) {
             final boolean defaultVisibility = codeKind.defaultVisibility();
             final String name = codeKind.name().toLowerCase();
             final Boolean value = settings.get(saveSettingsListener, name, OptionTypes.BOOLEAN_TYPE, defaultVisibility);
@@ -88,12 +88,12 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
      * @return a GUI panel for setting these preferences
      */
     public JPanel getPanel() {
-        final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[MethodCodeKind.VALUES.size()];
+        final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[MethodCodeKind.values().length];
 
         final ItemListener itemListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final Object source = e.getItemSelectable();
-                for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
+                for (MethodCodeKind codeKind : MethodCodeKind.values()) {
                     final InspectorCheckBox checkBox = checkBoxes[codeKind.ordinal()];
                     if (source == checkBox) {
                         visibleCodeKinds.put(codeKind, checkBox.isSelected());
@@ -106,7 +106,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
         final JPanel content = new InspectorPanel(inspection());
         content.add(new TextLabel(inspection(), "View:  "));
         final String toolTipText = "Should new Method inspectors initially display this code, when available?";
-        for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
+        for (MethodCodeKind codeKind : MethodCodeKind.values()) {
             final boolean currentValue = visibleCodeKinds.get(codeKind);
             final InspectorCheckBox checkBox =
                 new InspectorCheckBox(inspection(), codeKind.toString(), toolTipText, currentValue);

@@ -59,7 +59,7 @@ public final class BootImageViewPreferences extends TableColumnVisibilityPrefere
     * persistent global choices are identical.
     */
     private BootImageViewPreferences(Inspection inspection) {
-        super(inspection, BOOTIMAGE_COLUMN_PREFERENCE, BootImageColumnKind.VALUES);
+        super(inspection, BOOTIMAGE_COLUMN_PREFERENCE, BootImageColumnKind.values());
         // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

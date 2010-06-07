@@ -79,7 +79,7 @@ public final class WatchpointsViewPreferences extends TableColumnVisibilityPrefe
     * persistent global choices are identical.
     */
     private WatchpointsViewPreferences(Inspection inspection) {
-        super(inspection, WATCHPOINT_COLUMN_PREFERENCE, WatchpointsColumnKind.VALUES);
+        super(inspection, WATCHPOINT_COLUMN_PREFERENCE, WatchpointsColumnKind.values());
         final InspectionSettings settings = inspection.settings();
         final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(WATCHPOINT_INSPECTOR_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {

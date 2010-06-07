@@ -62,7 +62,7 @@ public class BytecodeViewPreferences  extends TableColumnVisibilityPreferences<B
      * Creates the global, persistent set of preferences, initializing from stored values if available.
      */
     private BytecodeViewPreferences(Inspection inspection) {
-        super(inspection, BYTECODE_COLUMN_PREFERENCE, BytecodeColumnKind.VALUES);
+        super(inspection, BYTECODE_COLUMN_PREFERENCE, BytecodeColumnKind.values());
         final InspectionSettings settings = inspection.settings();
         final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(BYTECODE_VIEWER_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {

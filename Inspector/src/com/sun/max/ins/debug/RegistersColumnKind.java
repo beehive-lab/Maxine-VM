@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins.debug;
 
-import java.util.*;
 
 /**
  * Defines the columns that can be displayed describing register values in the VM.
@@ -75,5 +74,4 @@ public enum RegistersColumnKind implements ColumnKind {
         return defaultVisibility;
     }
 
-    public static final List<RegistersColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 }

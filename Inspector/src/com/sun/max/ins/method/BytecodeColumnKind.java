@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins.method;
 
-import java.util.*;
-
 import com.sun.max.ins.debug.*;
 
 /**
@@ -84,6 +82,5 @@ public enum BytecodeColumnKind implements ColumnKind {
         return label;
     }
 
-    public static final List<BytecodeColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 }
 

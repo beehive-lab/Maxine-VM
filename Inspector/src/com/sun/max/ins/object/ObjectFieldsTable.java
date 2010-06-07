@@ -171,7 +171,7 @@ public final class ObjectFieldsTable extends InspectorTable {
     private final class ObjectFieldsTableColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 
         ObjectFieldsTableColumnModel(ObjectViewPreferences viewPreferences) {
-            super(ObjectColumnKind.VALUES.size(), viewPreferences);
+            super(ObjectColumnKind.values().length, viewPreferences);
             addColumn(ObjectColumnKind.TAG, new TagRenderer(inspection()), null);
             addColumn(ObjectColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
             addColumn(ObjectColumnKind.OFFSET, new PositionRenderer(inspection()), null);
@@ -196,7 +196,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return ObjectColumnKind.VALUES.size();
+            return ObjectColumnKind.values().length;
         }
 
         public int getRowCount() {

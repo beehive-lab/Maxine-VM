@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins.object;
 
-import java.util.*;
-
 import com.sun.max.ins.debug.*;
 
 /**
@@ -81,5 +79,4 @@ public enum ObjectColumnKind implements ColumnKind {
         return label;
     }
 
-    public static final List<ObjectColumnKind> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
 }
