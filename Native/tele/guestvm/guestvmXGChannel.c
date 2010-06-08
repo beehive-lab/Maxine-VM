@@ -86,7 +86,6 @@ static struct tele_xg_thread *tele_xg_thread_list;  // local copy of important s
 
 static int tele_xg_readbytes(uint64_t src, char *buf, unsigned short size) {
     unsigned short result = (unsigned short) xg_read_mem(src, buf, size, 0);
-//    log_println("tele_xg_readbytes(%llx, %u): %u", src, size, result);
     return size - result;
 }
 
@@ -112,7 +111,7 @@ Java_com_sun_max_tele_debug_guestvm_dbchannel_agent_AgentXGProtocol_teleThreadLo
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_dbchannel_xg_XGProtocol_nativeAttach(JNIEnv *env, jclass c, jint domainId, jlong extra1) {
     thread_list_address = extra1;
-    /*tele_*/log_println("Calling xg_attach on domId=%d, thread_list_addr %lx", domainId, extra1);
+    tele_log_println("Calling xg_attach on domId=%d, thread_list_addr %lx", domainId, extra1);
     return xg_attach(domainId);
 }
 
@@ -132,6 +131,9 @@ static ThreadState_t toThreadState(int state) {
     if (state & WATCH_FLAG) {
         return TS_WATCHPOINT;
     }
+    if (state & RUNNING_FLAG) {
+        return TS_RUNNING;
+    }
     // default
     return TS_SUSPENDED;
 }
@@ -143,37 +145,38 @@ static void tele_xg_gather_threads() {
     char list_head_struct_buffer[STRUCT_LIST_HEAD_SIZE] ;
     char  thread_struct_buffer[STRUCT_THREAD_SIZE];
     uint64_t thread_struct_address;
-    /*tele_*/log_println("tele_xg_gather_threads ");
+    tele_log_println("tele_xg_gather_threads ");
     // we read the guk thread list from the target, ignoring the guk threads
     c_ASSERT(tele_xg_readbytes(thread_list_address, &list_head_struct_buffer[0], STRUCT_LIST_HEAD_SIZE) == STRUCT_LIST_HEAD_SIZE);
     thread_struct_address = get_target_value(list_head_struct_buffer, uint64_t, NEXT_OFFSET);
     while (thread_struct_address != thread_list_address) {
+        tele_log_println("tele_xg_gather_threads, thread_struct_address %lx", thread_struct_address);
         thread_struct_address -= THREAD_LIST_OFFSET;
         c_ASSERT(tele_xg_readbytes(thread_struct_address, &thread_struct_buffer[0], STRUCT_THREAD_SIZE) == STRUCT_THREAD_SIZE);
         uint32_t flags = get_target_value(thread_struct_buffer, uint32_t, FLAGS_OFFSET);
         uint16_t id = get_target_value(thread_struct_buffer, uint16_t, ID_OFFSET);
         if ((id == MAXINE_THREAD_ID) || (flags & UKERNEL_FLAG) == 0 ) {
             uint32_t cpu = get_target_value(thread_struct_buffer, uint32_t, CPU_OFFSET);
-            /*tele_*/log_println("tele_xg_gather_threads %d, cpu %d", id, cpu);
+            tele_log_println("tele_xg_gather_threads %d, cpu %d", id, cpu);
 
             struct tele_xg_thread *tcb = malloc(sizeof(struct tele_xg_thread));
             tcb->id = id;
             tcb->flags = flags;
             tcb->cpu = cpu;
             if (flags & RUNNING_FLAG) {
-                /*tele_*/log_println("tele_xg_gather_threads thread is running");
+                tele_log_println("tele_xg_gather_threads thread is running");
                 c_ASSERT(xg_regs_read(GX_GPRS, cpu, &tcb->regs, 64) == 0);
             } else {
-                /*tele_*/log_println("tele_xg_gather_threads thread is not running");
+                tele_log_println("tele_xg_gather_threads thread is not running");
                 memset(&tcb->regs, 0, sizeof(struct xg_gdb_regs));
                 tcb->regs.u.xregs_64.rip = get_target_value(thread_struct_buffer, uint64_t, IP_OFFSET);
                 tcb->regs.u.xregs_64.rsp = get_target_value(thread_struct_buffer, uint64_t, SP_OFFSET);
-                /*tele_*/log_println("tele_xg_gather_threads ip %lx, sp %lx", tcb->regs.u.xregs_64.rip, tcb->regs.u.xregs_64.rsp);
+                tele_log_println("tele_xg_gather_threads ip %lx, sp %lx", tcb->regs.u.xregs_64.rip, tcb->regs.u.xregs_64.rsp);
             }
             tcb->next = tele_xg_thread_list;
             tele_xg_thread_list = tcb;
         } else {
-            /*tele_*/log_println("tele_xg_gather_threads ignoring kernel thread %d,", id);
+            tele_log_println("tele_xg_gather_threads ignoring kernel thread %d,", id);
         }
         uint64_t next = get_target_value(thread_struct_buffer, uint64_t, THREAD_LIST_OFFSET);
         thread_struct_address =  next;
@@ -198,7 +201,7 @@ Java_com_sun_max_tele_debug_guestvm_dbchannel_xg_XGProtocol_nativeGatherThreads(
     tele_xg_gather_threads();
     struct tele_xg_thread *tcb = tele_xg_thread_list;
     while (tcb != NULL) {
-            /*tele_*/log_println("nativeGatherThreads processing thread %d,", tcb->id);
+            tele_log_println("nativeGatherThreads processing thread %d,", tcb->id);
             ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
             NativeThreadLocalsStruct nativeThreadLocalsStruct;
             threadLocals = teleProcess_findThreadLocals(&xg_memory_handler, threadLocalsList, primordialThreadLocals, tcb->regs.u.xregs_64.rsp, threadLocals, &nativeThreadLocalsStruct);
@@ -210,7 +213,7 @@ Java_com_sun_max_tele_debug_guestvm_dbchannel_xg_XGProtocol_nativeGatherThreads(
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_dbchannel_xg_XGProtocol_nativeResume(JNIEnv *env, jobject domain) {
-    /*tele_*/log_println("Calling xg_resume_n_wait");
+    tele_log_println("Calling xg_resume_n_wait");
     int vcpu = xg_resume_n_wait(64);
     return 0;
 }
@@ -230,7 +233,7 @@ Java_com_sun_max_tele_debug_guestvm_dbchannel_xg_XGProtocol_nativeWriteBytes(JNI
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_dbchannel_xg_XGProtocol_nativeSingleStep(JNIEnv *env, jclass c, jint threadId) {
-    /*tele_*/log_println("nativeSingleStep %d", threadId);
+    tele_log_println("nativeSingleStep %d", threadId);
     struct tele_xg_thread *tcb = get_thread(threadId);
     int rc = xg_step(tcb->cpu, 64);
     c_ASSERT(rc == 0);
@@ -239,7 +242,7 @@ Java_com_sun_max_tele_debug_guestvm_dbchannel_xg_XGProtocol_nativeSingleStep(JNI
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_guestvm_dbchannel_xg_XGProtocol_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint threadId, jlong ip) {
-    /*tele_*/log_println("nativeSetInstructionPointer %d %lx", threadId, ip);
+    tele_log_println("nativeSetInstructionPointer %d %lx", threadId, ip);
     struct tele_xg_thread *tcb = get_thread(threadId);
     tcb->regs.u.xregs_64.rip = ip;
     c_ASSERT(xg_regs_write(GX_GPRS, tcb->cpu, &tcb->regs, 64) == 0);
@@ -272,7 +275,7 @@ Java_com_sun_max_tele_debug_guestvm_dbchannel_xg_XGProtocol_nativeReadRegisters(
         return false;
     }
 
-    /*tele_*/log_println("nativereadRegisters %d", threadId);
+    tele_log_println("nativereadRegisters %d", threadId);
     struct tele_xg_thread *tcb = get_thread(threadId);
     db_regs.r15 = tcb->regs.u.xregs_64.r15;
     db_regs.r14 = tcb->regs.u.xregs_64.r14;
