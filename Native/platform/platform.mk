@@ -276,7 +276,11 @@ ifeq ($(OS),guestvm)
     LINK_AR = $(AR) r $(LIB_PREFIX)$(LIB)$(LIBA_SUFFIX)
     ifeq ($(GUK),1)
         XG_ROOT = $(XEN_ROOT)/tools/debugger/gdbsx/xg
-        LINK_LIB = $(CC) -shared -lc -lm $(mf)  -L ../../../../../guk/tools/db-front$(tdir) -lguk_db $(XG_ROOT)/xg_main.o $(XG_ROOT)/xg_64.o $(XG_ROOT)/xg_32.o
+        ifeq "$(realpath $(XG_ROOT))" ""
+            LINK_LIB = $(CC) -shared -lc -lm $(mf)  -L ../../../../../guk/tools/db-front$(tdir) -lguk_db
+        else
+            LINK_LIB = $(CC) -shared -lc -lm $(mf)  -L ../../../../../guk/tools/db-front$(tdir) -lguk_db $(XG_ROOT)/xg_main.o $(XG_ROOT)/xg_64.o $(XG_ROOT)/xg_32.o
+        endif
     else
         LINK_LIB = $(CC) -shared -lc -lm $(mf)
     endif
