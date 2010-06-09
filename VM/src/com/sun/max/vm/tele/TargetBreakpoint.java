@@ -22,8 +22,6 @@ package com.sun.max.vm.tele;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.asm.amd64.complete.*;
-import com.sun.max.asm.ia32.complete.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
@@ -44,15 +42,9 @@ public final class TargetBreakpoint {
     public static byte[] createBreakpointCode(InstructionSet instructionSet) {
         try {
             switch (instructionSet) {
-                case AMD64: {
-                    final AMD64Assembler assembler = new AMD64Assembler();
-                    assembler.int_3();
-                    return assembler.toByteArray();
-                }
+                case AMD64:
                 case IA32: {
-                    final IA32Assembler assembler = new IA32Assembler();
-                    assembler.int_3();
-                    return assembler.toByteArray();
+                    return new byte[] {(byte) 0xCC};
                 }
                 case SPARC: {
                     final WordWidth wordWidth = VMConfiguration.target().platform().processorKind.dataModel.wordWidth;
