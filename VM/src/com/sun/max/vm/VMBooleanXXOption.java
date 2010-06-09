@@ -53,6 +53,18 @@ public class VMBooleanXXOption extends VMOption {
         this(getXXPrefix(name), name.substring(5), help);
     }
 
+    /**
+     * Creates a new boolean option.
+     *
+     * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option in the
+     * global registry or VM options.</b>
+     *
+     * @param a prefix that must end with {@code '+'} or {@code '-'} to indicate te default value of the option
+     * @param name the name of the option, including the leading '-' character. The default {@linkplain #getValue()
+     *            value} of the option is true or false depending on whether the prefix starts with "-XX:+" or "-XX:-"
+     *            respectively.
+     * @param help the help text for the option
+     */
     public VMBooleanXXOption(String prefix, String name, String help) {
         super(prefix + name + " ", help);
         plusOrMinusIndex = prefix.length() - 1;
