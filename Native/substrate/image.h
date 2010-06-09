@@ -29,68 +29,57 @@
 #include "word.h"
 #include "jni.h"
 
+/*
+ * Definition of fields in the image header struct.
+ */
+#define IMAGE_HEADER_FIELDS(f) \
+    f(isBigEndian) /* 0: LITTLE, anything else: BIG. Must be first.  */ \
+    f(identification) /* Magic number that must be present and have the same value in every Maxine boot image file  */ \
+    f(version) /* Version of boot image file format  */ \
+    f(randomID) /* Specific to one particular instance of boot image file  */ \
+    f(wordSize) /* 4 or 8  */ \
+    f(cacheAlignment) \
+    f(pageSize) /* multiple of 1024  */ \
+    f(vmRunMethodOffset) \
+    f(vmThreadAddMethodOffset) \
+    f(vmThreadRunMethodOffset) \
+    f(vmThreadAttachMethodOffset) \
+    f(vmThreadDetachMethodOffset) \
+    f(classRegistryOffset) \
+    f(stringDataSize) \
+    f(relocationDataSize) \
+    f(heapSize) /* multiple of 'pageSize'  */ \
+    f(codeSize) /* multiple of 'pageSize'  */ \
+    f(heapRegionsPointerOffset) \
+    f(auxiliarySpaceSize) /* Some extra space that the substrate allocates by malloc(). Used e.g. for the primordial card table.  */ \
+    f(threadLocalsListHeadOffset) /* See the comment for the 'threadLocalsListHead' field in the VmThreadMap class.  */ \
+    f(primordialThreadLocalsOffset) \
+    f(threadLocalsAreaSize) /* The size of a thread locals area.  */ \
+    f(SAFEPOINT_LATCH) \
+    f(SAFEPOINTS_ENABLED_THREAD_LOCALS) \
+    f(SAFEPOINTS_DISABLED_THREAD_LOCALS) \
+    f(SAFEPOINTS_TRIGGERED_THREAD_LOCALS) \
+    f(NATIVE_THREAD_LOCALS) \
+    f(FORWARD_LINK) \
+    f(BACKWARD_LINK) \
+    f(ID) \
+    f(JNI_ENV) \
+    f(LAST_JAVA_FRAME_ANCHOR) \
+    f(TRAP_NUMBER) \
+    f(TRAP_INSTRUCTION_POINTER) \
+    f(TRAP_FAULT_ADDRESS) \
+    f(TRAP_LATCH_REGISTER) \
+    f(STACK_REFERENCE_MAP) \
+    f(STACK_REFERENCE_MAP_SIZE)
+
+#define DEFINE_IMAGE_HEADER_FIELD(name) jint name;
+
 /**
  *  ATTENTION: this struct and the below items must match
  *             'com.sun.max.vm.prototype.BootImage.Header'.
  */
 typedef struct image_Header {
-    jint isBigEndian;        /* 0: LITTLE, anything else: BIG. Must be first. */
-
-    jint identification;     /* Magic number that must be present and have the same value in every Maxine boot image file */
-    jint version;            /* Version of boot image file format */
-    jint randomID;           /* Specific to one particular instance of boot image file */
-
-    jint wordSize;           /* 4 or 8 */
-    jint cacheAlignment;
-
-    jint pageSize;           /* multiple of 1024 */
-
-    jint vmRunMethodOffset;
-    jint vmThreadAddMethodOffset;
-    jint vmThreadRunMethodOffset;
-    jint vmThreadAttachMethodOffset;
-    jint vmThreadDetachMethodOffset;
-
-    jint classRegistryOffset;
-
-    jint stringDataSize;
-    jint relocationDataSize;
-
-    jint heapSize;     /* multiple of 'pageSize' */
-    jint codeSize;     /* multiple of 'pageSize' */
-
-    jint heapRegionsPointerOffset;
-
-    /* Some extra space that the substrate allocates by malloc().
-     * Used e.g. for the primordial card table. */
-    jint auxiliarySpaceSize;
-
-    /* See the comment for the 'threadLocalsListHead' field in the VmThreadMap class. */
-    jint threadLocalsListHeadOffset;
-
-    jint primordialThreadLocalsOffset;
-
-    /* The size of a thread locals area. */
-    jint threadLocalsAreaSize;
-
-    /* The indexes of the VM thread locals accessed directly by C code. */
-    jint SAFEPOINT_LATCH;
-    jint SAFEPOINTS_ENABLED_THREAD_LOCALS;
-    jint SAFEPOINTS_DISABLED_THREAD_LOCALS;
-    jint SAFEPOINTS_TRIGGERED_THREAD_LOCALS;
-    jint NATIVE_THREAD_LOCALS;
-    jint FORWARD_LINK;
-    jint BACKWARD_LINK;
-    jint ID;
-    jint JNI_ENV;
-    jint LAST_JAVA_FRAME_ANCHOR;
-    jint TRAP_NUMBER;
-    jint TRAP_INSTRUCTION_POINTER;
-    jint TRAP_FAULT_ADDRESS;
-    jint TRAP_LATCH_REGISTER;
-    jint STACK_REFERENCE_MAP;
-    jint STACK_REFERENCE_MAP_SIZE;
-
+   IMAGE_HEADER_FIELDS(DEFINE_IMAGE_HEADER_FIELD)
 } *image_Header;
 
 /**
