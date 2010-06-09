@@ -354,6 +354,9 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                 Log.println("--");
             }
             invocationCount++;
+            if (Heap.TraceGCSuppressionCount > 0) {
+                Heap.TraceGCSuppressionCount--;
+            }
         }
 
         /**
