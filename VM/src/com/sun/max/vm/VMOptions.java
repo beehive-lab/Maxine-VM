@@ -27,6 +27,7 @@ import sun.misc.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -371,15 +372,28 @@ public final class VMOptions {
     }
 
     /**
-     * Creates and registers a "-XX" VM option whose value is stored in a given non-{@code final} {@code static} field.
+     * Creates and registers a VM option whose value is stored in a given non-final {@code static} field.
      *
-     * @param prefix
+     * @param prefix the prefix to use for the option (e.g. {@code "-XX:"} or {@code "-C1X:"})
+     * @param name the name of the option
+     * @param declaringClass the class in which a field named {@code name} backing the option
+     * @param help the help text for the option
+     */
+    @HOSTED_ONLY
+    public static VMOption addFieldOption(String prefix, String name, Class declaringClass, String help) {
+        return addFieldOption(prefix, name, Classes.getDeclaredField(declaringClass, name), help);
+    }
+
+    /**
+     * Creates and registers a VM option whose value is stored in a given non-final {@code static} field.
+     *
+     * @param prefix the prefix to use for the option (e.g. {@code "-XX:"} or {@code "-C1X:"})
      * @param name the name of the option
      * @param field the field backing the option
      * @param help the help text for the option
      */
     @HOSTED_ONLY
-    public static void addFieldOption(String prefix, String name, Field field, String help) {
+    public static VMOption addFieldOption(String prefix, String name, Field field, String help) {
         try {
             MaxineVM.Phase phase = MaxineVM.Phase.STARTING;
             assert Modifier.isStatic(field.getModifiers());
@@ -390,25 +404,27 @@ public final class VMOptions {
             if (MaxineVM.isHosted()) {
                 field.setAccessible(true);
             }
+            VMOption option;
             if (fieldType == boolean.class) {
                 boolean defaultValue = field.getBoolean(null);
-                VMBooleanXXOption option = new BooleanFieldOption(prefix + (defaultValue ? '+' : '-'), name, help, fieldActor, holder);
+                option = new BooleanFieldOption(prefix + (defaultValue ? '+' : '-'), name, help, fieldActor, holder);
                 register(option, phase);
             } else if (fieldType == int.class) {
                 int defaultValue = field.getInt(null);
-                VMIntOption option = new IntFieldOption(prefix + name + "=", defaultValue, help, holder, fieldActor);
+                option = new IntFieldOption(prefix + name + "=", defaultValue, help, holder, fieldActor);
                 register(option, phase);
             } else if (fieldType == float.class) {
                 float defaultValue = field.getFloat(null);
-                VMFloatOption option = new FloatFieldOption(prefix + name + "=", defaultValue, help, holder, fieldActor);
+                option = new FloatFieldOption(prefix + name + "=", defaultValue, help, holder, fieldActor);
                 register(option, phase);
             } else if (fieldType == String.class) {
                 String defaultValue = (String) field.get(null);
-                VMStringOption option = new StringFieldOption(prefix + name + "=", false, defaultValue, help, holder, fieldActor);
+                option = new StringFieldOption(prefix + name + "=", false, defaultValue, help, holder, fieldActor);
                 register(option, phase);
             } else {
                 throw new RuntimeException("Field type unsupported by VM options");
             }
+            return option;
         } catch (Exception e) {
             throw ProgramError.unexpected("Error creating VM option for " + field, e);
         }
