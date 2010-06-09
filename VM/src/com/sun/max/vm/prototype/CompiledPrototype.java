@@ -507,6 +507,10 @@ public class CompiledPrototype extends Prototype {
                     RuntimeCompilerScheme compiler = recommendedCompiler.get(methodActor);
                     TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, compiler);
                     processNewTargetMethod(targetMethod);
+                    ++totalCompilations;
+                    if (totalCompilations % 200 == 0) {
+                        Trace.line(1, "compiled: " + totalCompilations + " (" + methodActors.size() + " methods)");
+                    }
                 }
             }
         } else {
