@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * A Circular doubly linked list of free heap chunk.
- *
+ * Ease fast insertion and removal.
  *
  * @author Laurent Daynes
  */

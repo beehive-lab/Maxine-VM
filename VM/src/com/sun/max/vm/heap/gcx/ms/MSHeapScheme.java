@@ -39,10 +39,11 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A simple mark-sweep collector, without TLABs support. Only used for testing / debugging
- * marking and sweeping algorithms. Allocation is a simple linear allocation out of a linked list
- * of free space, initially set to a single memory area that equals the heap initial size, then
- * a linked list of free space threaded over the heap by the sweeper.
+ * A simple mark-sweep collector. Only used for testing / debugging
+ * marking and sweeping algorithms.
+ * Implements TLAB over a linked list of free chunk provided by an object space manager.
+ *
+ * @see FreeHeapSpaceManager.
  *
  * @author Laurent Daynes
  */
@@ -53,6 +54,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         register(new VMBooleanXXOption("-XX:+", "ImpreciseSweep", "Use an imprecise sweeping phase"),
                         MaxineVM.Phase.PRISTINE);
 
+    // In progress.
     static final VMBooleanXXOption useLargeObjectSpaceOption =
         register(new VMBooleanXXOption("-XX:+", "UseLOS", "Use a large object space"),
                         MaxineVM.Phase.PRISTINE);

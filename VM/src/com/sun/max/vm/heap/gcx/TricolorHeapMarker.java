@@ -33,7 +33,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size tiny marking stack, a rescan map, and a
+ * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size marking stack, a rescan map, and a
  * finger. The tricolor mark-bitmap encodes three colors using two consecutive bits but consumes as much space overhead as
  * a single-bit mark bitmap, thanks to padding rare tiny objects to guarantee two color bits for every objects.
  * Tracing algorithm uses a single-bit mark bitmap and a fairly large marking stack (from several thousands of references, up
