@@ -32,7 +32,12 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
-
+/**
+ * A Circular doubly linked list of free heap chunk.
+ * Ease fast insertion and removal.
+ *
+ * @author Laurent Daynes
+ */
 public class DLinkedHeapFreeChunk extends HeapFreeChunk {
 
     public static final DynamicHub DLINKED_HEAP_FREE_CHUNK_HUB = ClassActor.fromJava(DLinkedHeapFreeChunk.class).dynamicHub();
@@ -43,7 +48,7 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
     private static final int PREV_INDEX;
 
     static {
-        PREV_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("prev")).offset() >> Word.widthValue().log2numberOfBytes;
+        PREV_INDEX = DLINKED_HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("prev")).offset() >> Word.widthValue().log2numberOfBytes;
     }
 
     @INLINE
@@ -141,30 +146,6 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
         return nextChunk;
     }
 
-    public static void insertBefore(Address dlinkedChunkAddress, Address nextChunkAddress) {
-        DLinkedHeapFreeChunk chunk = asDLinkedHeapFreeChunk(dlinkedChunkAddress);
-        if (nextChunkAddress.isZero()) {
-            chunk.next = null;
-            chunk.prev = null;
-        } else {
-            DLinkedHeapFreeChunk next = asDLinkedHeapFreeChunk(nextChunkAddress);
-            chunk.next = next;
-            next.prev.next = chunk;
-            chunk.prev = next.prev;
-            next.prev = chunk;
-        }
-    }
-
-    public static void fifoInsert(Pointer head, Address chunk) {
-        DLinkedHeapFreeChunk first = asDLinkedHeapFreeChunk(head.getWord());
-        DLinkedHeapFreeChunk newHead = asDLinkedHeapFreeChunk(chunk);
-        FatalError.check(first != null, "DLinkedHeapFreeChunk list head must not be null on FIFO insert");
-        first.prev = newHead;
-        newHead.next = first;
-        newHead.prev = null;
-        head.setWord(chunk);
-    }
-
     public static boolean isDLinkedHeapFreeChunk(Pointer cell) {
         return Layout.readHubReference(cell).equals(DLINKED_HEAP_FREE_CHUNK_HUB);
     }
@@ -192,26 +173,24 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
         return from(after).asPointer();
     }
 
-    public static Pointer removeFirstFit(Pointer head, Size size) {
-        DLinkedHeapFreeChunk first = asDLinkedHeapFreeChunk(head.getWord());
-        HeapFreeChunk chunk = first;
-        while (chunk != null) {
-            if (chunk.size.greaterEqual(size)) {
-                DLinkedHeapFreeChunk found = (DLinkedHeapFreeChunk) chunk;
-                DLinkedHeapFreeChunk next = (DLinkedHeapFreeChunk) found.next;
-                if (next != null) {
-                    next.prev = found.prev;
-                }
-                if (found == first) {
-                    head.setWord(from(next));
-                } else {
-                    found.prev.next = next;
-                }
-                return from(found).asPointer();
-            }
-            chunk = chunk.next;
+
+    void insertBefore(DLinkedHeapFreeChunk chunk) {
+        chunk.next = this;
+        chunk.prev = prev;
+        prev.next = chunk;
+        prev = chunk;
+    }
+
+
+    public static void insertUnformattedBefore(Pointer listHead, Address address, Size size) {
+        Address first = listHead.getWord().asAddress();
+        if (first.isZero()) {
+            format(address, size, address, address);
+            listHead.setWord(address);
+        } else {
+            DLinkedHeapFreeChunk headOfList = asDLinkedHeapFreeChunk(first);
+            headOfList.insertBefore(format(address, size));
         }
-        return Pointer.zero();
     }
 
     DLinkedHeapFreeChunk prev;
