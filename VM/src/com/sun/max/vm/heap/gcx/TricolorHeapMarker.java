@@ -1307,11 +1307,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         forwardScanState.visitGreyObjects();
     }
 
-
-    public Pointer firstBlackObject() {
-        return firstBlackObject(coveredAreaStart, blackRightmost);
-    }
-
     public Pointer firstBlackObject(Address start, Address end) {
         final int bitIndex = firstBlackMark(bitIndexOf(start), bitIndexOf(end));
         if (bitIndex >= 0) {
