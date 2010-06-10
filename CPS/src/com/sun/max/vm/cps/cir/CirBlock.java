@@ -28,7 +28,6 @@ import com.sun.max.vm.cps.cir.optimize.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
 import com.sun.max.vm.cps.ir.*;
-import com.sun.max.vm.cps.ir.IrBlock.*;
 import com.sun.max.vm.type.*;
 
 /**

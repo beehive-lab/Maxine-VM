@@ -33,7 +33,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size tiny marking stack, a rescan map, and a
+ * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size marking stack, a rescan map, and a
  * finger. The tricolor mark-bitmap encodes three colors using two consecutive bits but consumes as much space overhead as
  * a single-bit mark bitmap, thanks to padding rare tiny objects to guarantee two color bits for every objects.
  * Tracing algorithm uses a single-bit mark bitmap and a fairly large marking stack (from several thousands of references, up
@@ -847,9 +847,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     if (bitmapWord != 0) {
                         // FIXME:
                         // This way of scanning the mark bitmap may cause black objects to end up on the marking stack. Here's how.
-                        // If the object pointed by the finger contains backward references to objects covered by the same word of the mark bitmap,
-                        // and its end is covered by the same word, we will end up visiting these objects although there were pushed on the
-                        // marking stack.
+                        // If the object pointed by the finger contains backward references to objects covered by the same word
+                        // of the mark bitmap, and its end is covered by the same word, we will end up visiting these objects although
+                        // there were pushed on the marking stack.
                         // One way to avoid that is to leave the finger set to the beginning of the word and iterate over all grey marks
                         // of the word until reaching a fix point where all mark are white or black on the mark bitmap word.
                         final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
