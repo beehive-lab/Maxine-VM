@@ -847,9 +847,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     if (bitmapWord != 0) {
                         // FIXME:
                         // This way of scanning the mark bitmap may cause black objects to end up on the marking stack. Here's how.
-                        // If the object pointed by the finger contains backward references to objects covered by the same word of the mark bitmap,
-                        // and its end is covered by the same word, we will end up visiting these objects although there were pushed on the
-                        // marking stack.
+                        // If the object pointed by the finger contains backward references to objects covered by the same word
+                        // of the mark bitmap, and its end is covered by the same word, we will end up visiting these objects although
+                        // there were pushed on the marking stack.
                         // One way to avoid that is to leave the finger set to the beginning of the word and iterate over all grey marks
                         // of the word until reaching a fix point where all mark are white or black on the mark bitmap word.
                         final long greyMarksInWord = bitmapWord & (bitmapWord >>> 1);
