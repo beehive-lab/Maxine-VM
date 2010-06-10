@@ -81,9 +81,6 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
     /**
      * A linear space allocator.
      * Allocate space linearly from a region of the heap.
-     *
-     * FIXME: needs HEADROOM like semi-space to make sure we're never left with not enough space
-     * at the end of a chunk to plant a dead object (for heap parsability).
      */
     class HeapSpaceAllocator extends LinearAllocationMemoryRegion {
         /**
@@ -733,6 +730,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
     @Override
     public final void processDeadSpace(Address freeChunk, Size size) {
         recordFreeSpace(freeChunk, size);
+        endOfLastVisitedObject = freeChunk.plus(size).asPointer();
     }
 
     /**
@@ -744,13 +742,6 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
      * Pointer to the end of the last dead object notified by the sweeper. Used  for precise sweeping.
      */
     private Pointer endOfLastVisitedObject;
-
-    @INLINE
-    private Pointer setEndOfLastVisitedObject(Pointer cell) {
-        final Pointer origin = Layout.cellToOrigin(cell);
-        endOfLastVisitedObject = cell.plus(Layout.size(origin));
-        return endOfLastVisitedObject;
-    }
 
     @Override
     public Pointer processLiveObject(Pointer liveObject) {

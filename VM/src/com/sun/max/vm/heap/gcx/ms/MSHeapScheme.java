@@ -49,10 +49,12 @@ import com.sun.max.vm.thread.*;
 public class MSHeapScheme extends HeapSchemeWithTLAB {
     private static final int WORDS_COVERED_PER_BIT = 1;
 
-    // TODO: this should be an interface as soon as it is better supported.
-
     static final VMBooleanXXOption doImpreciseSweepOption =
-        register(new VMBooleanXXOption("-XX:+", "ImpreciseSweep", "Perform imprecise sweeping phase"),
+        register(new VMBooleanXXOption("-XX:+", "ImpreciseSweep", "Use an imprecise sweeping phase"),
+                        MaxineVM.Phase.PRISTINE);
+
+    static final VMBooleanXXOption useLargeObjectSpaceOption =
+        register(new VMBooleanXXOption("-XX:+", "UseLOS", "Use a large object space"),
                         MaxineVM.Phase.PRISTINE);
 
     /**
@@ -79,9 +81,18 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     final TricolorHeapMarker heapMarker;
 
     /**
-     * Free Space Manager. Also implement sweeping.
+     * Space where objects are allocated from by default.
+     * Implements the {@link HeapSweeper} interface to be notified by a sweeper of
+     * free space.
      */
-    final FreeHeapSpaceManager freeSpace;
+    final FreeHeapSpaceManager objectSpace;
+
+    /**
+     * Space where large object are allocated from if {@link MSHeapScheme#useLargeObjectSpaceOption} is true.
+     * Implements the {@link HeapSweeper} interface to be notified by a sweeper of
+     * free space.
+     */
+    final LargeObjectSpace largeObjectSpace;
 
     Size totalUsedSpace;
 
@@ -96,9 +107,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     public MSHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
-        freeSpace = new FreeHeapSpaceManager();
+        objectSpace = new FreeHeapSpaceManager();
+        largeObjectSpace = new LargeObjectSpace();
         totalUsedSpace = Size.zero();
-        afterGCVerifier = MaxineVM.isDebug() ? new AfterMarkSweepVerifier(heapMarker, freeSpace) : null;
+        afterGCVerifier = MaxineVM.isDebug() ? new AfterMarkSweepVerifier(heapMarker, objectSpace) : null;
     }
 
     @Override
@@ -133,7 +145,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             FatalError.unimplemented();
         }
         final Address heapStart = endOfCodeRegion;
-        freeSpace.initialize(heapStart, initSize, maxSize);
+        objectSpace.initialize(heapStart, initSize, maxSize);
 
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
         final Address heapMarkerDataStart = heapStart.plus(maxSize);
@@ -142,7 +154,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
         }
 
-        ContiguousHeapSpace markedSpace = freeSpace.committedHeapSpace();
+        ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();
         heapMarker.initialize(markedSpace.start(), markedSpace.committedEnd(), heapMarkerDataStart, heapMarkerDatasize);
     }
 
@@ -159,15 +171,15 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             return true;
         }
         // We may reach here after a race. Don't run GC if request can be satisfied.
-        if (freeSpace.canSatisfyAllocation(requestedFreeSpace)) {
+        if (objectSpace.canSatisfyAllocation(requestedFreeSpace)) {
             return true;
         }
         collectorThread.execute();
-        return freeSpace.canSatisfyAllocation(requestedFreeSpace);
+        return objectSpace.canSatisfyAllocation(requestedFreeSpace);
     }
 
     public boolean contains(Address address) {
-        return freeSpace.committedHeapSpace().inCommittedSpace(address);
+        return objectSpace.committedHeapSpace().inCommittedSpace(address);
     }
 
     public final void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
@@ -188,7 +200,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public Size reportFreeSpace() {
-        return freeSpace.freeSpaceLeft();
+        return objectSpace.freeSpaceLeft();
     }
 
     public Size reportUsedSpace() {
@@ -276,7 +288,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
 
         private Size reclaim() {
-            Size minReclaimableSpace = freeSpace.beginSweep(doImpreciseSweep);
+            Size minReclaimableSpace = objectSpace.beginSweep(doImpreciseSweep);
 
             if (Heap.traceGCPhases()) {
                 Log.print(doImpreciseSweep ? "Imprecise" : "Precise");
@@ -284,12 +296,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
 
             if (doImpreciseSweep) {
-                heapMarker.impreciseSweep(freeSpace, minReclaimableSpace);
+                heapMarker.impreciseSweep(objectSpace, minReclaimableSpace);
             } else {
-                heapMarker.sweep(freeSpace);
+                heapMarker.sweep(objectSpace);
             }
 
-            return freeSpace.endSweep();
+            return objectSpace.endSweep();
         }
 
         private HeapResizingPolicy heapResizingPolicy = new HeapResizingPolicy();
@@ -309,7 +321,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
                 Log.print("Begin mark-sweep #");
                 Log.println(collectionCount);
             }
-            freeSpace.makeParsable();
+            objectSpace.makeParsable();
             heapMarker.markAll();
             startTimer(weakRefTimer);
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
@@ -322,10 +334,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
-            if (heapResizingPolicy.resizeAfterCollection(freeSpace.totalSpace(), freeSpaceAfterGC, freeSpace)) {
+            if (heapResizingPolicy.resizeAfterCollection(objectSpace.totalSpace(), freeSpaceAfterGC, objectSpace)) {
                 // Heap was resized.
                 // Update heapMarker's coveredArea.
-                ContiguousHeapSpace markedSpace = freeSpace.committedHeapSpace();
+                ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();
                 heapMarker.setCoveredArea(markedSpace.start(), markedSpace.committedEnd());
             }
             if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
@@ -377,7 +389,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
         if (size.greaterThan(effectiveSize))  {
             // Don't bother with searching another TLAB chunk that fits. Allocate out of TLAB.
-            return freeSpace.allocate(size);
+            return objectSpace.allocate(size);
         }
         Address nextChunk = HeapFreeChunk.getFreeChunkNext(chunk);
         fillWithDeadObject(tlabMark, tlabHardLimit);
@@ -394,7 +406,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
     private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
-        Pointer tlab = freeSpace.allocateTLAB(tlabSize);
+        Pointer tlab = objectSpace.allocateTLAB(tlabSize);
         Size effectiveSize = setNextTLABChunk(tlab);
 
         if (Heap.traceAllocation()) {
@@ -424,7 +436,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             if (!usesTLAB()) {
                 // We're not using TLAB. So let's assign the never refill tlab policy.
                 TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, NEVER_REFILL_TLAB);
-                return freeSpace.allocate(size);
+                return objectSpace.allocate(size);
             }
             // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
             final Size tlabSize = initialTlabSize();
@@ -441,7 +453,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         final Size nextTLABSize = refillPolicy.nextTlabSize();
         if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
-            return freeSpace.allocate(size);
+            return objectSpace.allocate(size);
         }
         // TLAB may have been wiped out by a previous direct allocation routine.
         if (!tlabEnd.isZero()) {
@@ -468,7 +480,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
             if (!refillPolicy.shouldRefill(size, tlabMark)) {
                 // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
-                return freeSpace.allocate(size);
+                return objectSpace.allocate(size);
             }
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
