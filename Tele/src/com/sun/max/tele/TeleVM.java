@@ -1589,6 +1589,8 @@ public abstract class TeleVM implements MaxVM {
             teleCodeCache = new TeleCodeCache(this);
             teleCodeCache.initialize();
             if (isAttaching()) {
+                // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
+                ProgramError.check((teleFields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
                 teleClassRegistry.processAttachFixupList();
             }
         }
