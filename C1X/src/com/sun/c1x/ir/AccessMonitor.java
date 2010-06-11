@@ -30,8 +30,15 @@ import com.sun.cri.ci.*;
  */
 public abstract class AccessMonitor extends StateSplit {
 
+    /**
+     * The object locked or unlocked by this instruction.
+     */
     Value object;
-    final int lockNumber;
+
+    /**
+     * The lock number of this monitor access.
+     */
+    public final int lockNumber;
 
     /**
      * Creates a new AccessMonitor instruction.
@@ -46,19 +53,10 @@ public abstract class AccessMonitor extends StateSplit {
     }
 
     /**
-     * Gets the instruction producing the object input to this instruction.
-     * @return the instruction producing the object
+     * Gets the instruction producing the object locked or unlocked by this instruction.
      */
     public Value object() {
         return object;
-    }
-
-    /**
-     * Gets the lock number of this monitor access.
-     * @return the lock number
-     */
-    public int lockNumber() {
-        return lockNumber;
     }
 
     /**
