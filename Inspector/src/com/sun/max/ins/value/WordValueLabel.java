@@ -395,7 +395,7 @@ public class WordValueLabel extends ValueLabel {
             case INVALID: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordInvalidDataColor());
-                setText("invalid");
+                setText(hexString);
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
                     setToolTipText("invalid" + toolTipSuffix);
                 }
