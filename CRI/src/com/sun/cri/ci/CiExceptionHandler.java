@@ -74,4 +74,18 @@ public class CiExceptionHandler implements RiExceptionHandler {
     public RiType catchKlass() {
         return classType;
     }
+    
+    @Override
+    public String toString() {
+        return new StringBuilder(20).
+            append('[').
+            append(startBCI).
+            append(" - ").
+            append(endBCI).
+            append(") -> ").
+            append(handlerBCI).
+            append(" type=").
+            append(classType == null ? "*any*" : classType.name()).
+            toString();
+    }
 }

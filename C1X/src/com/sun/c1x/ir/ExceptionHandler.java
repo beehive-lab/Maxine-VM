@@ -62,7 +62,7 @@ public class ExceptionHandler {
 
     @Override
     public String toString() {
-        return "XHandler(Block=" + entryBlock.blockID + ")";
+        return "XHandler(Block=" + entryBlock.blockID + ") " + handler;
     }
 
     /**
