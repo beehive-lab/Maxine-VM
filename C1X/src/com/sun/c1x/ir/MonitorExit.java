@@ -37,7 +37,14 @@ public final class MonitorExit extends AccessMonitor {
      */
     public MonitorExit(Value object, int lockNumber, FrameState stateBefore) {
         super(object, stateBefore, lockNumber);
-        // XXX: unbalanced locks can cause IllegalMonitorState or NullPointerException
+        if (object.isNonNull()) {
+            redundantNullCheck();
+        }
+    }
+
+    @Override
+    public boolean canTrap() {
+        return true;
     }
 
     /**
