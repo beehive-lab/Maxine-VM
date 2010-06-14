@@ -141,6 +141,7 @@ public final class ClassRegistry {
         new CriticalNativeMethod(Log.class, "log_print_double");
         new CriticalNativeMethod(Log.class, "log_print_word");
         new CriticalNativeMethod(Log.class, "log_print_newline");
+        new CriticalNativeMethod(Log.class, "log_print_symbol");
 
         new CriticalNativeMethod(MaxineVM.class, "native_exit");
         new CriticalNativeMethod(MaxineVM.class, "native_trap_exit");
