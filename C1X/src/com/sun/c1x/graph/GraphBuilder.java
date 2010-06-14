@@ -143,8 +143,7 @@ public final class GraphBuilder {
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
 
-            RiExceptionHandler desc = newDefaultExceptionHandler(rootMethod);
-            ExceptionHandler h = new ExceptionHandler(desc);
+            ExceptionHandler h = new ExceptionHandler(new CiExceptionHandler(0, rootMethod.code().length, -1, 0, null));
             h.setEntryBlock(syncHandler);
             scopeData.addExceptionHandler(h);
         } else {
@@ -217,10 +216,6 @@ public final class GraphBuilder {
         startBlock.setEnd(base);
         assert stdEntry.stateBefore() == null;
         stdEntry.merge(stateAfter);
-    }
-
-    private RiExceptionHandler newDefaultExceptionHandler(RiMethod method) {
-        return new CiExceptionHandler(0, method.code().length, -1, 0, null);
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
@@ -433,6 +428,17 @@ public final class GraphBuilder {
         return exceptionHandlers;
     }
 
+    /**
+     * Adds an exception handler to the {@linkplain BlockBegin#exceptionHandlerBlocks() list}
+     * of exception handlers for the {@link #curBlock current block}.
+     *
+     * @param exceptionHandlers
+     * @param handler
+     * @param curScopeData
+     * @param curState
+     * @param scopeCount
+     * @return {@code true} if handler catches all exceptions (i.e. {@code handler.isCatchAll() == true})
+     */
     private boolean addExceptionHandler(ArrayList<ExceptionHandler> exceptionHandlers, ExceptionHandler handler, ScopeData curScopeData, FrameState curState, int scopeCount) {
         compilation.setHasExceptionHandlers();
 
@@ -1642,10 +1648,9 @@ public final class GraphBuilder {
         genMonitorEnter(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         syncHandler.setExceptionEntry();
         syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
-        RiExceptionHandler handler = newDefaultExceptionHandler(method());
-        ExceptionHandler h = new ExceptionHandler(handler);
-        h.setEntryBlock(syncHandler);
-        scopeData.addExceptionHandler(h);
+        ExceptionHandler handler = new ExceptionHandler(new CiExceptionHandler(0, method().code().length, -1, 0, null));
+        handler.setEntryBlock(syncHandler);
+        scopeData.addExceptionHandler(handler);
     }
 
     void fillSyncHandler(Value lock, BlockBegin syncHandler, boolean inlinedMethod) {
