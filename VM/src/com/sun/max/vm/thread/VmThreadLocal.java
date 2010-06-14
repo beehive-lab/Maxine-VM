@@ -35,7 +35,9 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * The predefined VM thread local variables and mechanisms for accessing them.
+ * VM thread local variables and mechanisms for accessing them. The majority of thread locals
+ * are defined as static field of this class itself. However, thread locals can also be defined
+ * in other {@linkplain VMScheme scheme}-specific classes.
  *
  * All thread local variables occupy one word and
  * the {@linkplain #SAFEPOINT_LATCH safepoint latch} must be first.
@@ -581,6 +583,8 @@ public class VmThreadLocal {
      * The initialization logic should not perform any synchronization or heap allocation.
      *
      * The set of VM thread locals that override this method can be obtained via {@link #valuesNeedingInitialization()}.
+     *
+     * Note: this method is accessed via reflection in {@link #completeInitialization()}.
      */
     public void initialize() {
     }
