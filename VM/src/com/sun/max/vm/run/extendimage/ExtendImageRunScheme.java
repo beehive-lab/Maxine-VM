@@ -34,6 +34,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.run.java.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A run scheme that allows additional classes to be added to the boot image but otherwise reuses the Java run scheme.
@@ -133,7 +134,11 @@ public class ExtendImageRunScheme extends JavaRunScheme {
 
         if (phase == MaxineVM.Phase.STARTING) {
             for (ClassActor classActor : reinitClasses) {
-                classActor.callInitializer();
+                try {
+                    classActor.callInitializer();
+                } catch (Exception e) {
+                    FatalError.unexpected("Error re-initializing" + classActor.name(), e);
+                }
             }
         }
 
@@ -170,11 +175,16 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     @Override
     protected void resetLauncher(ClassActor launcherClassActor) {
         if (resetLauncher) {
-            final FieldActor rfa = ClassActor.fromJava(sun.misc.Launcher.class).findLocalStaticFieldActor("bootstrapClassPath");
+            ClassActor classActor = ClassActor.fromJava(sun.misc.Launcher.class);
+            final FieldActor rfa = classActor.findLocalStaticFieldActor("bootstrapClassPath");
             if (rfa != null) {
                 TupleAccess.writeObject(rfa.holder().staticTuple(), rfa.offset(), null);
             }
-            launcherClassActor.callInitializer();
+            try {
+                launcherClassActor.callInitializer();
+            } catch (Exception e) {
+                FatalError.unexpected("Error re-initializing" + classActor.name(), e);
+            }
         }
     }
 
