@@ -53,7 +53,7 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
     }
 
     public boolean isInLiveMemory(Address address) {
-        if (vm().isInGC()) {
+        if (vm().heap().isInGC()) {
             return true;
         }
         for (MaxHeapRegion heapRegion : vm().heap().heapRegions()) {

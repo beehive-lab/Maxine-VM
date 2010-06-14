@@ -171,6 +171,7 @@ subtype
 tabbed
 tele
 temp
+terse
 throwable
 toolbar
 tooltip

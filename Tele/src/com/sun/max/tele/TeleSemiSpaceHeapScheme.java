@@ -62,7 +62,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
 
     public boolean isInLiveMemory(Address address) {
 
-        if (vm().isInGC()) { // this assumption needs to be proofed; basically it means that during GC both heaps are valid
+        if (vm().heap().isInGC()) { // this assumption needs to be proofed; basically it means that during GC both heaps are valid
             return true;
         }
 

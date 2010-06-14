@@ -524,15 +524,6 @@ public abstract class TeleVM implements MaxVM {
     private final TeleObjectFactory teleObjectFactory;
     private TeleClassRegistry teleClassRegistry;
 
-    private boolean isInGC = false;
-
-    /**
-     * @return whether the VM is currently performing Garbage Collection
-     */
-    public final boolean isInGC() {
-        return isInGC;
-    }
-
     /**
      * A lock designed to keep all non-thread-safe client calls from being handled during the VM setup/execute/refresh cycle.
      */
@@ -928,7 +919,8 @@ public abstract class TeleVM implements MaxVM {
             threadsDied,
             breakpointEvents,
             teleWatchpointEvent,
-            isInGC, teleVMState);
+            teleHeap.isInGC(),
+            teleVMState);
         for (final MaxVMStateListener listener : vmStateListeners) {
             listener.stateChanged(teleVMState);
         }
@@ -958,7 +950,7 @@ public abstract class TeleVM implements MaxVM {
         teleFields().Trace_threshold.writeLong(this, newThreshold);
     }
 
-    private TeleGripScheme gripScheme() {
+    public TeleGripScheme gripScheme() {
         return (TeleGripScheme) vmConfiguration.gripScheme();
     }
 
@@ -1005,31 +997,6 @@ public abstract class TeleVM implements MaxVM {
         return teleObjectFactory.make(forwardedObjectReference);
     }
 
-    /**
-     * @return offset in heap objects of the word used by GC to assign forwarding pointer
-     */
-    public final Offset gcForwardingPointerOffset() {
-        return teleHeap.gcForwardingPointerOffset();
-    }
-
-    /**
-     * Address of the field incremented each time a GC begins.
-     * @return memory location of the field holding the collection epoch
-     * @see #readCollectionEpoch()
-     */
-    public final Address collectionEpochAddress() {
-        return teleHeap.collectionEpochAddress();
-    }
-
-    /**
-     * Address of the field incremented each time a GC completes.
-     * @return memory location of the field holding the root epoch
-     * @see #readRootEpoch()
-     */
-    public final Address rootEpochAddress() {
-        return teleHeap.rootEpochAddress();
-    }
-
     private RemoteTeleGrip createTemporaryRemoteTeleGrip(Word rawGrip) {
         return gripScheme().createTemporaryRemoteTeleGrip(rawGrip.asAddress());
     }
@@ -1055,7 +1022,7 @@ public abstract class TeleVM implements MaxVM {
             if (!heap().contains(origin) && (codeCache() == null || !codeCache().contains(origin))) {
                 return false;
             }
-            if (false && isInGC() && heap().containsInDynamicHeap(origin)) {
+            if (false && teleHeap.isInGC() && heap().containsInDynamicHeap(origin)) {
                 //  Assume that any reference to the dynamic heap is invalid during GC.
                 return false;
             }
@@ -1534,44 +1501,14 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.transportDebugLevel();
     }
 
-    /**
-     * Identifies the most recent GC for which the local copy of the tele root
-     * table in the VM is valid.
-     */
-    private long cachedCollectionEpoch;
-
-    private final Tracer refreshReferencesTracer = new Tracer("refresh references");
-
-    /**
-     * Refreshes the values that describe VM state such as the
-     * current GC epoch.
-     */
-    private void refreshReferences() {
-        Trace.begin(TRACE_VALUE, refreshReferencesTracer);
-        final long startTimeMillis = System.currentTimeMillis();
-        final long teleRootEpoch = teleHeap.readRootEpoch();
-        final long teleCollectionEpoch = teleHeap.readCollectionEpoch();
-        if (teleCollectionEpoch != teleRootEpoch) {
-            // A GC is in progress, local cache is out of date by definition but can't update yet
-            assert teleCollectionEpoch != cachedCollectionEpoch;
-            isInGC = true;
-        } else if (teleCollectionEpoch == cachedCollectionEpoch) {
-            // GC not in progress, local cache is up to date
-            assert !isInGC;
-        } else {
-            // GC not in progress, local cache is out of date
-            gripScheme().refresh();
-            cachedCollectionEpoch = teleCollectionEpoch;
-            isInGC = false;
-        }
-        Trace.end(TRACE_VALUE, refreshReferencesTracer, startTimeMillis);
-    }
-
     private final Tracer refreshTracer = new Tracer("refresh");
 
     /**
-     * Updates all cached information about the state of the running VM.
-     * Does some initialization that is delayed to avoid cycles during startup.
+     * Updates cached information about the state of the VM.
+     * This is recorded relative to the execution {@linkplain TeleProcess#epoch() epoch}
+     * of the process (or 0 if there is no process).
+     * <br>
+     * Some lazy initialization may be performed here, in order to avoid cycles during startup.
      */
     public final synchronized void refresh(long processEpoch) {
         Trace.begin(TRACE_VALUE, refreshTracer);
@@ -1594,11 +1531,8 @@ public abstract class TeleVM implements MaxVM {
                 teleClassRegistry.processAttachFixupList();
             }
         }
-        refreshReferences();
-        //if (!isInGC()) { ATTETION: Could produce bugs.
         teleHeap.refresh(processEpoch);
         teleClassRegistry.refresh(processEpoch);
-        //}
         teleObjectFactory.refresh(processEpoch);
         teleCodeCache.refresh();
 

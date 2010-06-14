@@ -29,6 +29,7 @@ import com.sun.max.util.*;
 
 /**
  * Access to register state for a thread in the VM.
+ * Updates cache of VM state lazily, based on the process {@linkplain TeleProcess#epoch() epoch}.
  *
  * @author Michael Van De Vanter
  */
@@ -116,27 +117,27 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
     }
 
     public Pointer instructionPointer() {
-        refresh();
+        update();
         return live ? teleStateRegisters.instructionPointer() : Pointer.zero();
     }
 
     public Pointer stackPointer() {
-        refresh();
+        update();
         return live ? teleIntegerRegisters.stackPointer() : Pointer.zero();
     }
 
     public Pointer framePointer() {
-        refresh();
+        update();
         return live ? teleIntegerRegisters.framePointer() : Pointer.zero();
     }
 
     public Address getCallRegisterValue() {
-        refresh();
+        update();
         return live ? teleIntegerRegisters.getCallRegisterValue() : Pointer.zero();
     }
 
     public List<MaxRegister> find(MaxMemoryRegion memoryRegion) {
-        refresh();
+        update();
         // Gets called a lot, usually empty result;  allocate as little a possible
         List<MaxRegister> registers = null;
         if (live && memoryRegion != null) {
@@ -153,22 +154,22 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
     }
 
     public List<MaxRegister> allRegisters() {
-        refresh();
+        update();
         return live ? allRegisters : null;
     }
 
     public List<MaxRegister> integerRegisters() {
-        refresh();
+        update();
         return live ? integerRegisters : null;
     }
 
     public List<MaxRegister> floatingPointRegisters() {
-        refresh();
+        update();
         return live ? floatingPointRegisters : null;
     }
 
     public List<MaxRegister> stateRegisters() {
-        refresh();
+        update();
         return live ? stateRegisters : null;
     }
 
@@ -177,28 +178,28 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
     }
 
     TeleIntegerRegisters teleIntegerRegisters() {
-        refresh();
+        update();
         return live ? teleIntegerRegisters : null;
     }
 
     TeleFloatingPointRegisters teleFloatingPointRegisters() {
-        refresh();
+        update();
         return live ? teleFloatingPointRegisters : null;
     }
 
     TeleStateRegisters teleStateRegisters() {
-        refresh();
+        update();
         return live ? teleStateRegisters : null;
     }
 
     void setInstructionPointer(Address instructionPointer) {
-        refresh();
+        update();
         if (live) {
             teleStateRegisters.setInstructionPointer(instructionPointer);
         }
     }
 
-    private void refresh() {
+    private void update() {
         live = teleNativeThread.isLive();
         final long processEpoch = vm().teleProcess().epoch();
         if (live && lastRefreshedEpoch < processEpoch) {

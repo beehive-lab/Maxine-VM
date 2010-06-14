@@ -124,6 +124,9 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
 
     private List<MaxCodeLocation> inspectableMethods = null;
 
+    private long gcStartedCount = -1;
+    private long gcCompletedCount = -1;
+
     protected TeleHeap(TeleVM teleVM, TeleHeapScheme teleHeapScheme) {
         super(teleVM);
         this.teleHeapScheme = teleHeapScheme;
@@ -185,6 +188,33 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
         if (isInitialized()) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
             final long startTimeMillis = System.currentTimeMillis();
+
+            // Check GC status and update references if a GC has completed since last time we checked
+            final long oldGcStartedCount = gcStartedCount;
+            if (vm().tryLock()) {
+                try {
+                    gcStartedCount = vm().teleFields().InspectableHeapInfo_gcStartedCounter.readLong(vm());
+                    gcCompletedCount = vm().teleFields().InspectableHeapInfo_gcCompletedCounter.readLong(vm());
+                } finally {
+                    vm().unlock();
+                }
+            }
+            //   oldGcStartedCount <= gcCompletedCount <= gcStartedCount
+            if (gcStartedCount != gcCompletedCount) {
+                // A GC is in progress, local cache is out of date by definition but can't update yet
+                // Sanity check; collection count increases monotonically
+                assert  gcCompletedCount < gcStartedCount;
+            } else if (oldGcStartedCount != gcStartedCount) {
+                // GC is not in progress, but a GC has completed since the last time
+                // we checked, so cached reference data is out of date
+                // Sanity check; collection count increases monotonically
+                assert oldGcStartedCount < gcStartedCount;
+                vm().gripScheme().refresh();
+            } else {
+                // oldGcStartedCount == gcStartedCount == gcCompletedCount
+                // GC is not in progress, and no new GCs have happened, so cached reference data is up to date
+            }
+
             updatingHeapMemoryRegions = true;
             final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>(allHeapRegions.size());
             heapRegions.add(bootHeapRegion);
@@ -350,26 +380,10 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
     }
 
     /**
-     * Reads the collection table count; incremented each time a GC begins.
-     * @return one greater than {@link #readRootEpoch()} during GC, otherwise equal
-     */
-    public long readCollectionEpoch() {
-        return vm().teleFields().InspectableHeapInfo_collectionEpoch.readLong(vm());
-    }
-
-    /**
-     * Reads the root table update count; incremented each time a GC completes.
-     * @return number of times inspectable root table updated
-     */
-    public long readRootEpoch() {
-        return vm().teleFields().InspectableHeapInfo_rootEpoch.readLong(vm());
-    }
-
-    /**
      * @ return is the VM in GC
      */
     public boolean isInGC() {
-        return readCollectionEpoch() != readRootEpoch();
+        return gcCompletedCount != gcStartedCount;
     }
 
     public Class heapSchemeClass() {
@@ -412,23 +426,4 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
         return teleHeapScheme.getForwardedOrigin(origin);
     }
 
-    /**
-     * Address of the field incremented each time a GC begins.
-     * @return memory location of the field holding the collection epoch
-     * @see #readCollectionEpoch()
-     */
-    public Address collectionEpochAddress() {
-        final int offset = vm().teleFields().InspectableHeapInfo_collectionEpoch.fieldActor().offset();
-        return vm().teleFields().InspectableHeapInfo_collectionEpoch.staticTupleReference(vm()).toOrigin().plus(offset);
-    }
-
-    /**
-     * Address of the field incremented each time a GC completes.
-     * @return memory location of the field holding the root epoch
-     * @see #readRootEpoch()
-     */
-    public Address rootEpochAddress() {
-        final int offset = vm().teleFields().InspectableHeapInfo_rootEpoch.fieldActor().offset();
-        return vm().teleFields().InspectableHeapInfo_rootEpoch.staticTupleReference(vm()).toOrigin().plus(offset);
-    }
 }
