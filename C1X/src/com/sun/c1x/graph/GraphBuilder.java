@@ -619,10 +619,14 @@ public final class GraphBuilder {
     }
 
     void genArithmeticOp(CiKind kind, int opcode, FrameState state) {
-        Value y = pop(kind);
-        Value x = pop(kind);
-        Value result = append(new ArithmeticOp(opcode, kind, x, y, isStrict(method().accessFlags()), state));
-        push(kind, result);
+        genArithmeticOp(kind, opcode, kind, kind, state);
+    }
+
+    void genArithmeticOp(CiKind result, int opcode, CiKind x, CiKind y, FrameState state) {
+        Value yValue = pop(y);
+        Value xValue = pop(x);
+        Value result1 = append(new ArithmeticOp(opcode, result, xValue, yValue, isStrict(method().accessFlags()), state));
+        push(result, result1);
     }
 
     void genNegateOp(CiKind kind) {
@@ -2052,9 +2056,9 @@ public final class GraphBuilder {
 
                 case WCONST_0       : wpush(appendConstant(CiConstant.ZERO)); break;
                 case WDIV           : // fall through
-                case WDIVI          : // fall through
                 case WREM           : genArithmeticOp(CiKind.Word, opcode, curState.copy()); break;
-                case WREMI          : genArithmeticOp(CiKind.Int, opcode, curState.copy()); break;
+                case WDIVI          : genArithmeticOp(CiKind.Word, opcode, CiKind.Word, CiKind.Int, curState.copy()); break;
+                case WREMI          : genArithmeticOp(CiKind.Int, opcode, CiKind.Word, CiKind.Int, curState.copy()); break;
 
                 case READREG        : genLoadRegister(s.readCPI()); break;
                 case WRITEREG       : genStoreRegister(s.readCPI()); break;
