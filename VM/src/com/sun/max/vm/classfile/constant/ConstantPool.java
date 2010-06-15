@@ -32,6 +32,7 @@ import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
