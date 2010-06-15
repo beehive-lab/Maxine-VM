@@ -43,7 +43,10 @@ import com.sun.max.program.*;
  *
  * The benchmark is executed a given number of times, with a default of {@value #DEFAULT_LOOP_COUNT}. This can be
  * changed at run-time by setting the property {@value #LOOP_COUNT_PROPERTY}. It is also possible to explicitly pass in
- * the loop count at benchmark execution time if required. A warming phase can also be include
+ * the loop count at benchmark execution time if required. A warm-up phase can also be included by setting the property
+ * {@value #WARMUP_COUNT_PROPERTY} to the number of warm-up iterations. No timings are collected for the warm-up phase.
+ * <p>
+ * The non-encapsulating, non-warm-up runs can be traced by setting the property {@value #TRACE_PROPERTY}.
  * <p>
  * Once an instance of the subclass of {@code RunBench} has been created, the benchmark may be run by invoking
  * {@link #runBench}. There are three variants of {@link #runBench}; the first two use the {@value #DEFAULT_LOOP_COUNT
@@ -106,12 +109,14 @@ public class RunBench {
     private long[] encapElapsed;
     private int loopCount;
     private static int warmupCount;
+    private static boolean trace;
     private static final int DEFAULT_LOOP_COUNT = 100;
     private static final int DEFAULT_WARMUP_COUNT = 10;
     private static int defaultLoopCount = DEFAULT_LOOP_COUNT;
     private static final String LOOP_COUNT_PROPERTY = "test.bench.loopcount";
     private static final String WARMUP_COUNT_PROPERTY = "test.bench.warmupcount";
     private static final String DISPLAY_INDIVIDUAL_PROPERTY = "test.bench.displayall";
+    private static final String TRACE_PROPERTY = "test.bench.trace";
     private static final MicroBenchmark emptyEncap = new EmptyEncap();
 
     /**
@@ -130,6 +135,7 @@ public class RunBench {
         } catch (NumberFormatException ex) {
             ProgramError.unexpected("test.bench.loopcount " + lps + " did not parse");
         }
+        trace = System.getProperty(TRACE_PROPERTY) != null;
     }
 
     /*
@@ -240,6 +246,9 @@ public class RunBench {
             bench.prerun();
             bench.run(true);
             bench.postrun();
+            if (trace && bench != encapBench) {
+                System.out.println("warm up run " + i);
+            }
         }
         for (int i = 0; i < loopCount; i++) {
             bench.prerun();
@@ -247,6 +256,9 @@ public class RunBench {
             bench.run(false);
             timings[i] = System.nanoTime() - start;
             bench.postrun();
+            if (trace && bench != encapBench) {
+                System.out.println("run " + i + " elapsed " + timings[i]);
+            }
         }
     }
 
