@@ -133,6 +133,10 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
         return teleCodeRegion.teleTargetMethods();
     }
 
+    public int compilationCount() {
+        return teleCodeRegion.teleTargetMethods().size();
+    }
+
     public List<MaxCompiledCode> compilations() {
         // Assumes no code eviction; no movement; allocated linearly.
         final List<TeleTargetMethod> teleTargetMethods = teleCodeRegion.teleTargetMethods();

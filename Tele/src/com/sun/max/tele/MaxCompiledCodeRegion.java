@@ -36,7 +36,13 @@ public interface MaxCompiledCodeRegion extends MaxEntity<MaxCompiledCodeRegion> 
     boolean isBootRegion();
 
     /**
-     * @return all known compilations in the region
+     * Gets the total number of code compilations currently in the region,
+     * equal to the length of {@link #compilations()}.
+     */
+    int compilationCount();
+
+    /**
+     * @return all known compilations in the region, {@code length = #compilationCount()}
      */
     List<MaxCompiledCode> compilations();
 
