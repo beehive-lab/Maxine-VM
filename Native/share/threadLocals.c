@@ -193,16 +193,16 @@ Address threadLocalsBlock_create(jint id) {
         log_exit(11, "Stack is too small to safely place stack guard zones");
     }
 
-#if os_GUESTVMXEN
-    // all page protection is handled in the following call
-    guestvmXen_initStack(ntl);
-#else
-    ntl->stackBlueZone = ntl->stackYellowZone;
+    ntl->stackBlueZone = ntl->stackYellowZone;  // default is no blue zone
 
+    // no protection for the primordial thread
     if (guardZonePages != 0) {
+#if os_GUESTVMXEN
+        guestvmXen_initStack(ntl);
+#else
         virtualMemory_protectPages(startGuardZone, guardZonePages);
-    }
 #endif
+    }
 
 #if log_THREADS
     log_println("thread %3d: stackEnd     = %p", id, ntl->stackBase + ntl->stackSize);
