@@ -388,6 +388,9 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
+    private final Tracer refreshTracer = new Tracer("refresh");
+
+
     private static VMPackage getInspectorGripPackage(VMPackage gripPackage) {
         final MaxPackage vmGripRootPackage = new com.sun.max.vm.grip.Package();
         final String suffix = gripPackage.name().substring(vmGripRootPackage.name().length());
@@ -608,6 +611,42 @@ public abstract class TeleVM implements MaxVM {
         this.teleBreakpointManager = new TeleBreakpointManager(this, this.bytecodeBreakpointManager);
 
         this.watchpointManager = teleProcess.getWatchpointManager();
+    }
+
+    /**
+     * Updates cached information about the state of the VM.
+     * This is recorded relative to the execution {@linkplain TeleProcess#epoch() epoch}
+     * of the process (or 0 if there is no process).
+     * <br>
+     * Some lazy initialization may be performed here, in order to avoid cycles during startup.
+     */
+    public final synchronized void refresh(long processEpoch) {
+        Trace.begin(TRACE_VALUE, refreshTracer);
+        final long startTimeMillis = System.currentTimeMillis();
+        if (teleClassRegistry == null) {
+            // Must delay creation/initialization of the {@link TeleClassRegistry} until after
+            // we hit the first execution breakpoint; otherwise addresses won't have been relocated.
+            // This depends on the {@link TeleHeap} already existing.
+            teleClassRegistry = new TeleClassRegistry(this);
+            // Can only fully initialize the {@link TeleHeap} once
+            // the {@TeleClassRegistry} is fully initialized, otherwise there's a cycle.
+            teleHeap.initialize(processEpoch);
+
+            // Now set up the map of the compiled code cache
+            teleCodeCache = new TeleCodeCache(this);
+            teleCodeCache.initialize();
+            if (isAttaching()) {
+                // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
+                ProgramError.check((teleFields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
+                teleClassRegistry.processAttachFixupList();
+            }
+        }
+        teleHeap.refresh(processEpoch);
+        teleClassRegistry.refresh(processEpoch);
+        teleObjectFactory.refresh(processEpoch);
+        teleCodeCache.refresh();
+
+        Trace.end(TRACE_VALUE, refreshTracer, startTimeMillis);
     }
 
     public final TeleVM vm() {
@@ -1499,44 +1538,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final int transportDebugLevel() {
         return teleProcess.transportDebugLevel();
-    }
-
-    private final Tracer refreshTracer = new Tracer("refresh");
-
-    /**
-     * Updates cached information about the state of the VM.
-     * This is recorded relative to the execution {@linkplain TeleProcess#epoch() epoch}
-     * of the process (or 0 if there is no process).
-     * <br>
-     * Some lazy initialization may be performed here, in order to avoid cycles during startup.
-     */
-    public final synchronized void refresh(long processEpoch) {
-        Trace.begin(TRACE_VALUE, refreshTracer);
-        final long startTimeMillis = System.currentTimeMillis();
-        if (teleClassRegistry == null) {
-            // Must delay creation/initialization of the {@link TeleClassRegistry} until after
-            // we hit the first execution breakpoint; otherwise addresses won't have been relocated.
-            // This depends on the {@link TeleHeap} already existing.
-            teleClassRegistry = new TeleClassRegistry(this);
-            // Can only fully initialize the {@link TeleHeap} once
-            // the {@TeleClassRegistry} is fully initialized, otherwise there's a cycle.
-            teleHeap.initialize(processEpoch);
-
-            // Now set up the map of the compiled code cache
-            teleCodeCache = new TeleCodeCache(this);
-            teleCodeCache.initialize();
-            if (isAttaching()) {
-                // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
-                ProgramError.check((teleFields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
-                teleClassRegistry.processAttachFixupList();
-            }
-        }
-        teleHeap.refresh(processEpoch);
-        teleClassRegistry.refresh(processEpoch);
-        teleObjectFactory.refresh(processEpoch);
-        teleCodeCache.refresh();
-
-        Trace.end(TRACE_VALUE, refreshTracer, startTimeMillis);
     }
 
     public void advanceToJavaEntryPoint() throws IOException {
