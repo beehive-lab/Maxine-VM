@@ -18,22 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.classfile.constant;
+package com.sun.max.vm;
 
 import java.lang.reflect.*;
 
-import com.sun.max.vm.*;
+import com.sun.max.vm.classfile.constant.*;
 
 /**
  * Thrown when a {@linkplain PoolConstant constant pool entry} for a
- * {@linkplain MaxineVM#isHostedOnly(AccessibleObject) host-only field} is
- * {@linkplain FieldRefConstant#resolve(ConstantPool, int) resolved}.
+ * {@linkplain MaxineVM#isHostedOnly(AccessibleObject) host-only method} is
+ * {@linkplain MethodRefConstant#resolve(ConstantPool, int) resolved}.
  *
  * @author Doug Simon
  */
-public class HostOnlyFieldError extends NoSuchMethodError {
+public class HostOnlyMethodError extends NoSuchMethodError {
 
-    public HostOnlyFieldError(String s) {
+    public HostOnlyMethodError(String s) {
         super(s);
     }
 }

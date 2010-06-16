@@ -1178,9 +1178,6 @@ public abstract class TeleVM implements MaxVM {
      * at a valid heap object.
      */
     private void checkReference(Reference reference) throws InvalidReferenceException {
-        if (reference.toGrip().toOrigin().toLong() == 1099564415432L) {
-            System.console();
-        }
         if (!isValidOrigin(reference.toGrip().toOrigin())) {
             throw new InvalidReferenceException(reference);
         }

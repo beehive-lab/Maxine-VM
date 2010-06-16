@@ -34,7 +34,6 @@ import java.lang.annotation.*;
 import java.lang.instrument.*;
 import java.security.*;
 import java.util.*;
-import java.util.Arrays;
 import java.util.jar.*;
 import java.util.zip.*;
 
@@ -52,7 +51,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.ClassfileWriter.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.instrument.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;

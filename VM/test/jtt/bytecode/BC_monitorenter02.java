@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,18 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.prototype;
+package jtt.bytecode;
 
-import com.sun.max.vm.type.*;
 
-/**
- * Error thrown when an attempt is made to load an {@linkplain HostedBootClassLoader#isOmittedType(TypeDescriptor) omitted}
- * class via the {@link HostedBootClassLoader}.
- *
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: (0, 1) = 0; (1, 1) = 1; (-2, 1) = -2
  */
-public class OmittedClassError extends NoClassDefFoundError {
-    public OmittedClassError(String className) {
-        super(className);
+public class BC_monitorenter02 {
+    static BC_monitorenter02 object = new BC_monitorenter02();
+
+    public static int test(int arg, int arg2) {
+        int result = arg;
+        synchronized (object) {
+            result = arg / arg2;
+        }
+        synchronized (object) {
+            result = arg / arg2;
+        }
+        return result;
     }
 }

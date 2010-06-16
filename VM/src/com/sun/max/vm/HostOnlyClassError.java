@@ -18,41 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+package com.sun.max.vm;
 
-import com.sun.c1x.value.*;
+import com.sun.max.vm.prototype.*;
 
 /**
- * The {@code MonitorExit} instruction represents a monitor release.
+ * Error thrown when an attempt is made to load a {@linkplain MaxineVM#isHostedOnly(Class) host-only}
+ * class via the {@link HostedBootClassLoader}.
  *
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public final class MonitorExit extends AccessMonitor {
-
-    /**
-     * Creates a new MonitorExit instruction.
-     * @param object the instruction produces the object value
-     * @param lockNumber the number of the lock
-     * @param stateBefore the state before executing this instruction
-     */
-    public MonitorExit(Value object, int lockNumber, FrameState stateBefore) {
-        super(object, stateBefore, lockNumber);
-        if (object.isNonNull()) {
-            redundantNullCheck();
-        }
-    }
-
-    @Override
-    public boolean canTrap() {
-        return true;
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitMonitorExit(this);
+public class HostOnlyClassError extends NoClassDefFoundError {
+    public HostOnlyClassError(String className) {
+        super(className);
     }
 }

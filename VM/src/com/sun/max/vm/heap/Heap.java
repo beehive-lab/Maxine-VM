@@ -23,6 +23,7 @@ package com.sun.max.vm.heap;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.Code;
@@ -63,8 +64,6 @@ public final class Heap {
             Log.print("initial heap size must not be greater than max heap size");
         }
     }
-
-    private static final VMBooleanXXOption disableGCOption = register(new VMBooleanXXOption("-XX:-DisableGC", "Disable garbage collection."), MaxineVM.Phase.PRISTINE);
 
     private static Size maxSize;
     private static Size initialSize;
@@ -130,7 +129,7 @@ public final class Heap {
      * Determines if information should be displayed about each garbage collection event.
      */
     public static boolean verbose() {
-        return verboseOption.verboseGC || traceGC || traceRootScanningOption.getValue() || Heap.traceGCTime() || traceGC;
+        return verboseOption.verboseGC || TraceGC || TraceRootScanning || Heap.traceGCTime();
     }
 
     /**
@@ -140,7 +139,7 @@ public final class Heap {
         verboseOption.verboseGC = value;
     }
 
-    private static boolean traceAllocation;
+    private static boolean TraceAllocation;
 
     /**
      * Determines if allocation should be traced.
@@ -149,7 +148,7 @@ public final class Heap {
      */
     @INLINE
     public static boolean traceAllocation() {
-        return MaxineVM.isDebug() && traceAllocation;
+        return MaxineVM.isDebug() && TraceAllocation;
     }
 
     /**
@@ -158,18 +157,12 @@ public final class Heap {
      * so that error situations can be reported without being confused by interleaving allocation traces.
      */
     public static void setTraceAllocation(boolean flag) {
-        traceAllocation = flag;
+        TraceAllocation = flag;
     }
 
     static {
         if (MaxineVM.isDebug()) {
-            register(new VMBooleanXXOption("-XX:-TraceAllocation", "Trace heap allocation.") {
-                @Override
-                public boolean parseValue(Pointer optionValue) {
-                    traceAllocation = getValue();
-                    return true;
-                }
-            }, MaxineVM.Phase.STARTING);
+            VMOptions.addFieldOption("-XX:", "TraceAllocation", Classes.getDeclaredField(Heap.class, "TraceAllocation"), "Trace heap allocation.");
         }
     }
 
@@ -178,7 +171,7 @@ public final class Heap {
      */
     @INLINE
     public static boolean traceGC() {
-        return traceGC;
+        return TraceGC && TraceGCSuppressionCount <= 0;
     }
 
     /**
@@ -186,7 +179,7 @@ public final class Heap {
      */
     @INLINE
     public static boolean traceGCPhases() {
-        return traceGC || traceGCPhasesOption.getValue();
+        return (TraceGC || TraceGCPhases) && TraceGCSuppressionCount <= 0;
     }
 
     /**
@@ -194,7 +187,7 @@ public final class Heap {
      */
     @INLINE
     public static boolean traceRootScanning() {
-        return traceGC || traceRootScanningOption.getValue();
+        return (TraceGC || TraceRootScanning) && TraceGCSuppressionCount <= 0;
     }
 
     /**
@@ -202,36 +195,40 @@ public final class Heap {
      */
     @INLINE
     public static boolean traceGCTime() {
-        return traceGC || timeOption.getValue();
+        return (TraceGC || TimeGC) && TraceGCSuppressionCount <= 0;
     }
 
-    private static boolean traceGC;
+    /**
+     * Disables -XX:-TraceGC, -XX:-TraceRootScanning and -XX:-TraceGCPhases if greater than 0.
+     */
+    public static int TraceGCSuppressionCount;
 
-    private static final VMBooleanXXOption traceGCPhasesOption = register(new VMBooleanXXOption("-XX:-TraceGCPhases",
-        "Trace garbage collection phases."), MaxineVM.Phase.STARTING);
+    private static boolean TraceGC;
+    private static boolean TraceGCPhases;
+    private static boolean TraceRootScanning;
+    private static boolean TimeGC;
+    private static boolean GCDisabled;
 
-    private static final VMBooleanXXOption traceRootScanningOption = register(new VMBooleanXXOption("-XX:-TraceRootScanning",
-        "Trace garbage collection root scanning."), MaxineVM.Phase.STARTING);
+    static {
+        VMOption timeOption = VMOptions.addFieldOption("-XX:", "TimeGC", Heap.class,
+            "Time and print garbage collection activity.");
 
-    private static final VMBooleanXXOption timeOption = register(new VMBooleanXXOption("-XX:-TimeGC",
-        "Time and print garbage collection activity."), MaxineVM.Phase.STARTING);
+        VMOption traceGCPhasesOption = VMOptions.addFieldOption("-XX:", "TraceGCPhases", Heap.class,
+            "Trace garbage collection phases.");
 
-    private static final class TraceGCOption extends VMBooleanXXOption {
-        TraceGCOption() {
-            super("-XX:-TraceGC", "Trace all garbage collection activity. Enabling this option also enables the " +
-                traceRootScanningOption + ", " + traceGCPhasesOption + " and " + timeOption + " options.");
-        }
+        VMOption traceRootScanningOption = VMOptions.addFieldOption("-XX:", "TraceRootScanning", Heap.class,
+            "Trace garbage collection root scanning.");
 
-        @Override
-        public boolean parseValue(Pointer optionValue) {
-            if (getValue()) {
-                traceGC = true;
-            }
-            return true;
-        }
+        VMOption traceGCOption = VMOptions.addFieldOption("-XX:", "TraceGC", Heap.class,
+            "Trace all garbage collection activity. Enabling this option also enables the " +
+            traceRootScanningOption + ", " + traceGCPhasesOption + " and " + timeOption + " options.");
+
+        VMOptions.addFieldOption("-XX:", "TraceGCSuppressionCount", Heap.class,
+                        "Disable " + traceGCOption + ", " + traceRootScanningOption + " and " +
+                        traceGCPhasesOption + " until the n'th GC");
+
+        VMOptions.addFieldOption("-XX:", "DisableGC", Classes.getDeclaredField(Heap.class, "GCDisabled"), "Disable garbage collection.");
     }
-
-    private static final VMBooleanXXOption traceGCOption = register(new TraceGCOption(), MaxineVM.Phase.STARTING);
 
     /**
      * Returns whether the "-XX:+DisableGC" option was specified.
@@ -239,7 +236,7 @@ public final class Heap {
      * @return {@code true} if the user specified "-XX:+DisableGC" on the command line option; {@code false} otherwise
      */
     public static boolean gcDisabled() {
-        return disableGCOption.getValue();
+        return GCDisabled;
     }
 
     /**

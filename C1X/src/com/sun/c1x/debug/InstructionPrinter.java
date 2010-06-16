@@ -555,12 +555,12 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitMonitorEnter(MonitorEnter monitorenter) {
-        out.print("enter monitor[").print(monitorenter.lockNumber()).print("](").print(monitorenter.object()).print(')');
+        out.print("enter monitor[").print(monitorenter.lockNumber).print("](").print(monitorenter.object()).print(')');
     }
 
     @Override
     public void visitMonitorExit(MonitorExit monitorexit) {
-        out.print("exit monitor[").print(monitorexit.lockNumber()).print("](").print(monitorexit.object()).print(')');
+        out.print("exit monitor[").print(monitorexit.lockNumber).print("](").print(monitorexit.object()).print(')');
     }
 
     @Override

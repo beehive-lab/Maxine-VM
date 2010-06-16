@@ -367,8 +367,13 @@ public class C1XTest {
     }
 
     private static boolean isCompilable(MethodActor method) {
-        if (method.isNative() && !MaxRiRuntime.CAN_COMPILE_NATIVE_METHODS) {
-            return false;
+        if (method.isNative()) {
+            if (((ClassMethodActor) method).compilee() == method) {
+                // Non-substituted native method
+                if (!MaxRiRuntime.CAN_COMPILE_NATIVE_METHODS) {
+                    return false;
+                }
+            }
         }
         if (method.accessor() != null && !MaxRiRuntime.CAN_COMPILE_ACCESSOR_METHODS) {
             return false;

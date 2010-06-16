@@ -1527,8 +1527,9 @@ public class LinearScan {
             assert operandNum < numOperands : "live information set for not exisiting interval";
             assert fromBlock.lirBlock.liveOut.get(operandNum) && toBlock.lirBlock.liveIn.get(operandNum) : "interval not live at this edge";
 
-            Interval fromInterval = intervalAtBlockEnd(fromBlock, operands.operandFor(operandNum));
-            Interval toInterval = intervalAtBlockBegin(toBlock, operands.operandFor(operandNum));
+            CiValue liveOperand = operands.operandFor(operandNum);
+            Interval fromInterval = intervalAtBlockEnd(fromBlock, liveOperand);
+            Interval toInterval = intervalAtBlockBegin(toBlock, liveOperand);
 
             if (fromInterval != toInterval && (fromInterval.location() != toInterval.location())) {
                 // need to insert move instruction
@@ -1575,7 +1576,10 @@ public class LinearScan {
         }
     }
 
-    // insert necessary moves (spilling or reloading) at edges between blocks if interval has been split
+    /**
+     * Inserts necessary moves (spilling or reloading) at edges between blocks for intervals that
+     * have been split.
+     */
     void resolveDataFlow() {
         int numBlocks = blockCount();
         MoveResolver moveResolver = new MoveResolver(this);
@@ -1727,24 +1731,27 @@ public class LinearScan {
             // interval at the throwing instruction must be searched using the operands
             // of the phi function
             Value fromValue = phi.inputAt(handler.phiOperand());
+            if (fromValue != phi) {
 
-            // with phi functions it can happen that the same fromValue is used in
-            // multiple mappings, so notify move-resolver that this is allowed
-            moveResolver.setMultipleReadsAllowed();
+                // with phi functions it can happen that the same fromValue is used in
+                // multiple mappings, so notify move-resolver that this is allowed
+                moveResolver.setMultipleReadsAllowed();
 
-            Constant con = null;
-            if (fromValue instanceof Constant) {
-                con = (Constant) fromValue;
+                Constant con = null;
+                if (fromValue instanceof Constant) {
+                    con = (Constant) fromValue;
+                }
+                if (con != null && (con.operand().isIllegal() || con.operand().isConstant())) {
+                    // unpinned constants may have no register, so add mapping from constant to interval
+                    moveResolver.addMapping(con.asConstant(), toInterval);
+                } else {
+                    // search split child at the throwing opId
+                    Interval fromInterval = intervalAtOpId(fromValue.operand(), throwingOpId);
+                    if (fromInterval != toInterval) {
+                        moveResolver.addMapping(fromInterval, toInterval);
+                    }
+                }
             }
-            if (con != null && (con.operand().isIllegal() || con.operand().isConstant())) {
-                // unpinned constants may have no register, so add mapping from constant to interval
-                moveResolver.addMapping(con.asConstant(), toInterval);
-            } else {
-                // search split child at the throwing opId
-                Interval fromInterval = intervalAtOpId(fromValue.operand(), throwingOpId);
-                moveResolver.addMapping(fromInterval, toInterval);
-            }
-
         } else {
             // no phi function, so use regNum also for fromInterval
             // search split child at the throwing opId
@@ -1819,8 +1826,8 @@ public class LinearScan {
 
                 if (opId != -1 && op.hasInfo()) {
                     // visit operation to collect all operands
-                    for (ExceptionHandler h : op.exceptionEdges()) {
-                        resolveExceptionEdge(h, opId, moveResolver);
+                    for (ExceptionHandler handler : op.exceptionEdges()) {
+                        resolveExceptionEdge(handler, opId, moveResolver);
                     }
 
                 } else if (C1XOptions.DetailedAsserts) {

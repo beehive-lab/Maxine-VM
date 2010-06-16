@@ -516,25 +516,21 @@ public class FrameState {
      * Locks a new object within the specified IRScope.
      * @param scope the IRScope in which this locking operation occurs
      * @param obj the object being locked
-     * @return the index of the lock within the lock stack
      */
-    public int lock(IRScope scope, Value obj) {
+    public void lock(IRScope scope, Value obj) {
         if (locks == null) {
             locks = new ArrayList<Value>();
         }
         locks.add(obj);
         int size = locks.size();
         scope.setMinimumNumberOfLocks(size);
-        return size - 1;
     }
 
     /**
      * Unlock the lock on the top of the stack.
-     * @return the index of the lock just unlocked.
      */
-    public int unlock() {
+    public void unlock() {
         locks.remove(locks.size() - 1);
-        return locks.size();
     }
 
     /**
@@ -885,6 +881,6 @@ public class FrameState {
 
     @Override
     public String toString() {
-        return "state [nr locals = " + maxLocals + ", stack depth = " + stackSize() + "] " + scope;
+        return "state [locals=" + maxLocals + ", stack=" + stackSize() + ", locks=" + locksSize() + "] " + scope;
     }
 }

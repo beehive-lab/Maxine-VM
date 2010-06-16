@@ -232,7 +232,7 @@ public class AMD64OptStackWalking {
 
         // figure out what method the caller is trying to call
         if (trampolineMethodActor.isStaticTrampoline()) {
-            int stopIndex = targetMethod.findClosestStopIndex(current.ip());
+            int stopIndex = targetMethod.findClosestStopIndex(current.ip().minus(1));
             callerMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
         } else {
             // this is an virtual or interface call; figure out the receiver method based on the

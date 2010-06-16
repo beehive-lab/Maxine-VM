@@ -52,9 +52,11 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
         final Kind resultKind = classMethodActor.resultKind();
         setStack(resultKind.stackSlots);
         Label returnBlockLabel = synchronizedMethodTransformer.returnBlockLabel;
+        int returnInstructionAddress = -1;
         if (returnBlockLabel != null) {
             returnBlockLabel.bind();
             synchronizedMethodTransformer.releaseMonitor();
+            returnInstructionAddress = currentAddress();
             return_(resultKind);
         }
 
@@ -69,10 +71,10 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
         trackingStack = false;
         final byte[] code = code();
         final ExceptionHandlerEntry[] exceptionHandlerTable = fixupExceptionHandlerTable(
+                        returnInstructionAddress,
                         monitorExitHandlerAddress,
                         monitorExitHandlerEndAddress,
-                        code,
-                        codeAttribute.exceptionHandlerTable(), relocator);
+                        code, codeAttribute.exceptionHandlerTable(), relocator);
         result = new CodeAttribute(
                         constantPool(),
                         code,
@@ -120,24 +122,31 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
     /**
      * Adjusts the exception handler table for a synchronized method to account for the change in bytecode addresses.
      * Also, any code range previously not covered by an exception handler is now covered the monitor exit handler.
-     *
+     * @param returnInstructionAddress TODO
      * @param monitorExitHandlerAddress the entry address of the monitor exit handler (i.e. an exception handler that
      *            tries to release the monitor for the synchronized method before re-throwing the original exception)
      * @param monitorExitHandlerEndAddress
      * @param code the modified bytecode
      * @param exceptionHandlerTable the exception handler table for the original, unmodified bytecode
      * @param relocator
+     *
      * @return the fixed up exception handler table
      */
-    private ExceptionHandlerEntry[] fixupExceptionHandlerTable(int monitorExitHandlerAddress,
+    private ExceptionHandlerEntry[] fixupExceptionHandlerTable(int returnInstructionAddress,
+                                                                       int monitorExitHandlerAddress,
                                                                        int monitorExitHandlerEndAddress,
-                                                                       byte[] code,
-                                                                       ExceptionHandlerEntry[] exceptionHandlerTable, OpcodePositionRelocator relocator) {
+                                                                       byte[] code, ExceptionHandlerEntry[] exceptionHandlerTable, OpcodePositionRelocator relocator) {
         final int codeLength = code.length;
         final int relocatedCodeStartAddress = relocator.relocate(0);
         assert (code[codeLength - 1] & 0xff) == Bytecodes.ATHROW;
         if (exceptionHandlerTable.length == 0) {
-            return new ExceptionHandlerEntry[] {new ExceptionHandlerEntry(relocatedCodeStartAddress, codeLength - 1, monitorExitHandlerAddress, 0)};
+            if (returnInstructionAddress == -1) {
+                return new ExceptionHandlerEntry[] {new ExceptionHandlerEntry(relocatedCodeStartAddress, codeLength - 1, monitorExitHandlerAddress, 0)};
+            }
+            return new ExceptionHandlerEntry[] {
+                new ExceptionHandlerEntry(relocatedCodeStartAddress, returnInstructionAddress, monitorExitHandlerAddress, 0),
+                new ExceptionHandlerEntry(returnInstructionAddress + 1, monitorExitHandlerEndAddress, monitorExitHandlerAddress, 0)
+            };
         }
 
         final ArrayList<ExceptionHandlerEntry> table = new ArrayList<ExceptionHandlerEntry>();
@@ -150,6 +159,13 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
             }
             table.add(relocatedEntry);
             previousEntryEndAddress = relocatedEntry.endPosition();
+        }
+
+        if (returnInstructionAddress != -1) {
+            if (previousEntryEndAddress < returnInstructionAddress) {
+                table.add(new ExceptionHandlerEntry(previousEntryEndAddress, returnInstructionAddress, monitorExitHandlerAddress, 0));
+            }
+            previousEntryEndAddress = returnInstructionAddress + 1;
         }
 
         // Cover the range of any generated exception dispatchers as well as the monitor exit exception handler itself

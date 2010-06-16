@@ -986,6 +986,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         if (!MaxineVM.isDebug() && !verifyReferences) {
             return;
         }
+
+        if (MaxineVM.isDebug()) {
+            zapRegion(fromSpace, when);
+        }
+
         if (Heap.traceGCPhases()) {
             Log.print("Verifying object spaces ");
             Log.println(when);
@@ -1015,10 +1020,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             Log.print("Verifying object spaces ");
             Log.print(when);
             Log.println(": DONE");
-        }
-
-        if (MaxineVM.isDebug()) {
-            zapRegion(fromSpace, when);
         }
     }
 

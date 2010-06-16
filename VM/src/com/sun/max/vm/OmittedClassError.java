@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,22 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.classfile.constant;
+package com.sun.max.vm;
 
-import java.lang.reflect.*;
-
-import com.sun.max.vm.*;
+import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.type.*;
 
 /**
- * Thrown when a {@linkplain PoolConstant constant pool entry} for a
- * {@linkplain MaxineVM#isHostedOnly(AccessibleObject) host-only method} is
- * {@linkplain MethodRefConstant#resolve(ConstantPool, int) resolved}.
+ * Error thrown when an attempt is made to load an {@linkplain HostedBootClassLoader#isOmittedType(TypeDescriptor) omitted}
+ * class via the {@link HostedBootClassLoader}.
  *
  * @author Doug Simon
  */
-public class HostOnlyMethodError extends NoSuchMethodError {
-
-    public HostOnlyMethodError(String s) {
-        super(s);
+public class OmittedClassError extends NoClassDefFoundError {
+    public OmittedClassError(String className) {
+        super(className);
     }
 }
