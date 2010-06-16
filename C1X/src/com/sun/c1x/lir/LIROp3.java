@@ -65,15 +65,6 @@ public class LIROp3 extends LIRInstruction {
     }
 
     /**
-     * Gets the opr3 of this class.
-     *
-     * @return the opr3
-     */
-    public CiValue opr3() {
-        return operand(2);
-    }
-
-    /**
      * Emits assembly code for this instruction.
      *
      * @param masm the target assembler

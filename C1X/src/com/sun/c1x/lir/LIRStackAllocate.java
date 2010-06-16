@@ -38,7 +38,7 @@ public class LIRStackAllocate extends LIRInstruction {
      * @param result
      */
     public LIRStackAllocate(CiValue result, StackBlock stackBlock) {
-        super(LIROpcode.Alloca, result, null, false, null, 0, 0);
+        super(LIROpcode.Alloca, result, null, false, null);
         this.stackBlock = stackBlock;
     }
 

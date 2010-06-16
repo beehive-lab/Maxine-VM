@@ -41,6 +41,8 @@ public abstract class LIRInstruction {
 
     private static final LIROperand ILLEGAL_SLOT = new LIROperand(CiValue.IllegalValue);
 
+    private static final CiValue[] NO_OPERANDS = {};
+
     /**
      * The opcode of this instruction.
      */
@@ -52,9 +54,9 @@ public abstract class LIRInstruction {
     private final LIROperand result;
 
     /**
-     * The input and temp operands of this instruction.
+     * The input and temp operands of this instruction and its {@link #stub}.
      */
-    protected LIROperand[] inputAndTempOperands;
+    protected final LIROperand[] inputAndTempOperands;
 
     /**
      * Used to emit debug information.
@@ -105,10 +107,24 @@ public abstract class LIRInstruction {
      * @param result the operand that holds the operation result of this instruction. This will be
      *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
      * @param info the debug info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
+     * @param info the object holding information needed to perform deoptimization
      * @param hasCall
      * @param stub
-     * @param tempInput
+     */
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall, LocalStub stub) {
+        this(opcode, result, info, hasCall, stub, 0, 0, NO_OPERANDS);
+    }
+
+    /**
+     * Constructs a new Instruction.
+     *
+     * @param opcode the opcode of the new instruction
+     * @param result the operand that holds the operation result of this instruction. This will be
+     *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
+     * @param info the debug info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
      * @param info the object holding information needed to perform deoptimization
+     * @param hasCall
+     * @param stub
      */
     public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall, LocalStub stub, int tempInput, int temp, CiValue... inputAndTempOperands) {
         this.code = opcode;
@@ -130,7 +146,9 @@ public abstract class LIRInstruction {
         }
 
         id = -1;
-        initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
+        CiValue[] stubOperands = stub == null ? null : stub.operands;
+        this.inputAndTempOperands = new LIROperand[inputAndTempOperands.length + (stubOperands == null ? 0 : stubOperands.length)];
+        initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub, stubOperands);
 
         assert verifyOperands();
     }
@@ -204,7 +222,13 @@ public abstract class LIRInstruction {
         }
     }
 
-    protected final CiValue operand(int index) {
+    /**
+     * Gets an input or temp operand of this instruction.
+     *
+     * @param index the index of the operand requested
+     * @return the {@code index}'th operand
+     */
+    public final CiValue operand(int index) {
         if (index >= inputAndTempOperands.length) {
             return CiValue.IllegalValue;
         }
@@ -216,10 +240,8 @@ public abstract class LIRInstruction {
         return inputAndTempOperands[index + (inputAndTempOperands.length - stub.operands.length)].value(this);
     }
 
-    private void initInputsAndTemps(int tempInputCount, int tempCount, CiValue[] operands, LocalStub stub) {
+    private void initInputsAndTemps(int tempInputCount, int tempCount, CiValue[] operands, LocalStub stub, CiValue[] stubOperands) {
 
-        CiValue[] stubOperands = stub == null ? null : stub.operands;
-        this.inputAndTempOperands = new LIROperand[operands.length + (stubOperands == null ? 0 : stubOperands.length)];
         // Addresses in instruction
         for (int i = 0; i < operands.length; i++) {
             CiValue op = operands[i];
