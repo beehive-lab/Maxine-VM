@@ -609,35 +609,6 @@ public class FrameState {
     }
 
     /**
-     * Iterates over all the values in this frame state, including the stack, locals, and locks.
-     * @param closure the closure to apply to each value
-     */
-    public void valuesDo(ValueClosure closure) {
-        final int max = valuesSize();
-        for (int i = 0; i < max; i++) {
-            if (values[i] != null) {
-                Value newValue = closure.apply(values[i]);
-                if (!unsafe && newValue.kind.isWord()) {
-                    unsafe = true;
-                }
-                values[i] = newValue;
-            }
-        }
-        if (locks != null) {
-            for (int i = 0; i < locks.size(); i++) {
-                Value instr = locks.get(i);
-                if (instr != null) {
-                    locks.set(i, closure.apply(instr));
-                }
-            }
-        }
-        FrameState state = this.scope().callerState();
-        if (state != null) {
-            state.valuesDo(closure);
-        }
-    }
-
-    /**
      * Gets the value at a specified index in the set of operand stack and local values represented by this frame.
      * This method should only be used to iterate over all the values in this frame, irrespective of whether
      * they are on the stack or in local variables.
@@ -844,6 +815,42 @@ public class FrameState {
             }
         }
         return false;
+    }
+
+    /**
+     * Iterates over all the values in this frame state and its callers, including the stack, locals, and locks.
+     * @param closure the closure to apply to each value
+     */
+    public void valuesDo(ValueClosure closure) {
+        valuesDo(this, closure);
+    }
+
+    /**
+     * Iterates over all the values of a given frame state and its callers, including the stack, locals, and locks.
+     * @param closure the closure to apply to each value
+     */
+    public static void valuesDo(FrameState state, ValueClosure closure) {
+        do {
+            final int max = state.valuesSize();
+            for (int i = 0; i < max; i++) {
+                if (state.values[i] != null) {
+                    Value newValue = closure.apply(state.values[i]);
+                    if (!state.unsafe && newValue.kind.isWord()) {
+                        state.unsafe = true;
+                    }
+                    state.values[i] = newValue;
+                }
+            }
+            if (state.locks != null) {
+                for (int i = 0; i < state.locks.size(); i++) {
+                    Value instr = state.locks.get(i);
+                    if (instr != null) {
+                        state.locks.set(i, closure.apply(instr));
+                    }
+                }
+            }
+            state = state.scope().callerState();
+        } while (state != null);
     }
 
     /**
