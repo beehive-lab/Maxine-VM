@@ -198,7 +198,10 @@ Address threadLocalsBlock_create(jint id) {
     // no protection for the primordial thread
     if (guardZonePages != 0) {
 #if os_GUESTVMXEN
-        guestvmXen_initStack(ntl);
+        int initStackResult = guestvmXen_initStack(ntl);
+        if (initStackResult == 0) {
+            return 0;
+        }
 #else
         virtualMemory_protectPages(startGuardZone, guardZonePages);
 #endif
