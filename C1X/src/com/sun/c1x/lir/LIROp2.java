@@ -44,7 +44,7 @@ public class LIROp2 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp2(LIROpcode opcode, Condition condition, CiValue opr1, CiValue opr2, LIRDebugInfo info) {
-        super(opcode, CiValue.IllegalValue, info, false, null, 0, 0, opr1, opr2);
+        super(opcode, CiValue.IllegalValue, info, false, 0, 0, opr1, opr2);
         this.condition = condition;
         assert opcode == LIROpcode.Cmp : "Instruction opcode should be of type LIROpcode.Cmp";
     }
@@ -59,7 +59,7 @@ public class LIROp2 extends LIRInstruction {
      * @param result the operand that holds the result of this instruction
      */
     public LIROp2(LIROpcode opcode, Condition condition, CiValue opr1, CiValue opr2, CiValue result) {
-        super(opcode, result, null, false, null, 0, 0, opr1, opr2);
+        super(opcode, result, null, false, 0, 0, opr1, opr2);
         this.condition = condition;
         assert opcode == LIROpcode.Cmove : "Instruction opcode should be of type LIROpcode.Cmove";
     }
@@ -75,7 +75,7 @@ public class LIROp2 extends LIRInstruction {
      * @param kind the kind of this instruction
      */
     public LIROp2(LIROpcode opcode, CiValue opr1, CiValue opr2, CiValue result, LIRDebugInfo info, CiKind kind, boolean hasCall) {
-        super(opcode, result, info, hasCall, null, 0, 0, opr1, opr2);
+        super(opcode, result, info, hasCall, 0, 0, opr1, opr2);
         this.condition = null;
         assert opcode != LIROpcode.Cmp && isInRange(opcode, LIROpcode.BeginOp2, LIROpcode.EndOp2) : "The " + opcode + " is not a valid LIROp2 opcode";
     }
@@ -115,7 +115,7 @@ public class LIROp2 extends LIRInstruction {
      * @param tmp the temporary operand used by this instruction
      */
     public LIROp2(LIROpcode opcode, CiValue opr1, CiValue opr2, CiValue result, CiValue tmp) {
-        super(opcode, result, null, false, null, 0, 1, opr1, opr2, tmp);
+        super(opcode, result, null, false, 0, 1, opr1, opr2, tmp);
         this.condition = null;
         assert opcode != LIROpcode.Cmp && isInRange(opcode, LIROpcode.BeginOp2, LIROpcode.EndOp2) : "The " + opcode + " is not a valid LIROp2 opcode";
     }

@@ -22,7 +22,6 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.stub.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -35,12 +34,16 @@ public class LIRBranch extends LIRInstruction {
     private Condition cond;
     private CiKind kind;
     private Label label;
-    private BlockBegin block;  // if this is a branch to a block, this is the block
+
+    /**
+     * The target block of this branch.
+     */
+    private BlockBegin block;
 
     /**
      * This is the unordered block for a float branch.
      */
-    private BlockBegin unorderedBlock; //
+    private BlockBegin unorderedBlock;
 
     /**
      * Creates a new LIRBranch instruction.
@@ -50,24 +53,9 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(Condition cond, Label label) {
-        super(LIROpcode.Branch, CiValue.IllegalValue, null, false, null);
+        super(LIROpcode.Branch, CiValue.IllegalValue, null, false);
         this.cond = cond;
         this.label = label;
-    }
-
-    /**
-     * Creates a new LIRBranch instruction.
-     *
-     * @param cond the branch condition
-     * @param kind
-     * @param stub
-     *
-     */
-    public LIRBranch(Condition cond, CiKind kind, LocalStub stub) {
-        super(LIROpcode.Branch, CiValue.IllegalValue, null, false, stub);
-        this.cond = cond;
-        this.label = stub.entry;
-        this.kind = kind;
     }
 
     /**
@@ -79,7 +67,7 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(Condition cond, CiKind kind, BlockBegin block) {
-        super(LIROpcode.Branch, CiValue.IllegalValue, null, false, null);
+        super(LIROpcode.Branch, CiValue.IllegalValue, null, false);
         this.cond = cond;
         this.kind = kind;
         this.label = block.label();
@@ -88,7 +76,7 @@ public class LIRBranch extends LIRInstruction {
     }
 
     public LIRBranch(Condition cond, CiKind kind, BlockBegin block, BlockBegin ublock) {
-        super(LIROpcode.CondFloatBranch, CiValue.IllegalValue, null, false, null);
+        super(LIROpcode.CondFloatBranch, CiValue.IllegalValue, null, false);
         this.cond = cond;
         this.kind = kind;
         this.label = block.label();
@@ -135,9 +123,6 @@ public class LIRBranch extends LIRInstruction {
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitBranch(this);
-        if (stub != null) {
-            masm.addCodeStub(stub);
-        }
     }
 
     @Override
@@ -146,14 +131,7 @@ public class LIRBranch extends LIRInstruction {
         if (block() != null) {
             buf.append("[B").append(block.blockID).append(']');
         } else {
-            if (stub != null) {
-                buf.append("[").append(stub.name()).append(": ").append(stub).append(']');
-                if (stub.info != null) {
-                    buf.append(" [bci:").append(stub.info.bci).append(']');
-                }
-            } else {
-                buf.append("[label:0x").append(Integer.toHexString(label().position())).append(']');
-            }
+            buf.append("[label:0x").append(Integer.toHexString(label().position())).append(']');
         }
         if (unorderedBlock() != null) {
             buf.append("unordered: [B").append(unorderedBlock().blockID).append(']');

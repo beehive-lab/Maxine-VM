@@ -418,7 +418,7 @@ public class CFGPrinter {
                 LIRInstruction inst = lir.at(i);
                 out.printf("nr %4d ", inst.id).print(COLUMN_END);
 
-                if (inst.hasInfo()) {
+                if (inst.info != null) {
                     int level = out.indentationLevel();
                     out.adjustIndentation(-level);
                     String state = stateToString(inst.info.state, new CFGOperandFormatter(false));
