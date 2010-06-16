@@ -33,8 +33,16 @@ import com.sun.cri.ci.*;
 public abstract class LocalStub {
 
     public LIRDebugInfo info;
-    public final Label entry = new Label();            // label at the stub entry point
-    public final Label continuation = new Label();     // label where stub continues, if any
+
+    /**
+     * Label at the stub entry point.
+     */
+    public final Label entry = new Label();
+
+    /**
+     * Label where stub continues, if any.
+     */
+    public final Label continuation = new Label();
 
     protected LIRInstruction instruction;
 
