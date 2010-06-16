@@ -604,7 +604,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     protected void emitCompareAndSwap(LIRCompareAndSwap op) {
         CiAddress address = op.address();
         CiRegister newval = op.newValue().asRegister();
-        CiRegister cmpval = op.exepectedValue().asRegister();
+        CiRegister cmpval = op.expectedValue().asRegister();
         assert cmpval == AMD64.rax : "wrong register";
         assert newval != null : "new val must be register";
         assert cmpval != newval : "cmp and new values must be in different registers";
@@ -619,7 +619,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             masm.cmpxchgl(newval, address);
         } else {
             assert op.code == LIROpcode.CasObj || op.code == LIROpcode.CasLong || op.code == LIROpcode.CasWord;
-            masm.cmpxchgptr(newval, address);
+            masm.cmpxchgq(newval, address);
         }
     }
 
