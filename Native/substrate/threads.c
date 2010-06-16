@@ -159,27 +159,21 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     }
 #endif
 
-    struct StartArg *startArg = malloc(sizeof(struct StartArg));
-    if (startArg == 0) {
-        return (Thread) 0;
-    }
     // Allocate the threadLocals block and the struct for passing this to the created thread.
     // We do this to ensure that all memory allocation problems are addressed here before the thread runs.
     Address tlBlock = threadLocalsBlock_create(id, JNI_FALSE, stackSize);
     if (tlBlock == 0) {
-        free(startArg);
         return (Thread) 0;
     }
 
-    startArg->id = id;
-    startArg->threadLocalsBlock = tlBlock;
+    setThreadLocal(tlBlock, ID, id);
 
 #if os_GUESTVMXEN
     thread = guestvmXen_create_thread(
     	(void (*)(void *)) thread_run,
 	    stackSize,
 		priority,
-		(void *) startArg);
+		(void *) tlBlock);
     if (thread == NULL) {
         return (Thread) 0;
     }
@@ -193,7 +187,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     pthread_attr_setguardsize(&attributes, virtualMemory_getPageSize());
     pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_JOINABLE);
 
-    error = pthread_create(&thread, &attributes, (void *(*)(void *)) thread_run, (void *) startArg);
+    error = pthread_create(&thread, &attributes, (void *(*)(void *)) thread_run, (void *) tlBlock);
     pthread_attr_destroy(&attributes);
     if (error != 0) {
         log_println("pthread_create failed with error: %d", error);
@@ -205,7 +199,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     }
     /* The thread library allocates the stack and sets the red-zone
      * guard page just below the bottom of the stack. */
-    error = thr_create((void *) NULL, (size_t) stackSize, thread_run, (void *) startArg, THR_NEW_LWP | THR_BOUND, &thread);
+    error = thr_create((void *) NULL, (size_t) stackSize, thread_run, (void *) tlBlock, THR_NEW_LWP | THR_BOUND, &thread);
     if (error != 0) {
         log_println("thr_create failed with error: %d [%s]", error, strerror(error));
         return (Thread) 0;
@@ -243,13 +237,12 @@ static int thread_join(Thread thread) {
 /**
  * The start routine called by the native threading library once the new thread starts.
  *
- * @param arg struct containing the identifier reserved in the thread map for the thread to be started
- *                     and the pre-allocated, but uninitialized, thread locals block.
+ * @param arg the pre-allocated, but uninitialized, thread locals block.
  */
 void *thread_run(void *arg) {
 
-    struct StartArg *startArg = (struct StartArg *) arg;
-    jint id = startArg->id;;
+    Address tlBlock = (Address) arg;
+    jint id = getThreadLocal(jint, tlBlock, ID);
     Address nativeThread = (Address) thread_current();
 
 #if log_THREADS
@@ -257,8 +250,6 @@ void *thread_run(void *arg) {
 #endif
 
 
-    Address tlBlock = startArg->threadLocalsBlock;
-    free(startArg);  // no longer needed
     threadLocalsBlock_setCurrent(tlBlock);
     // initialize the threadLocalsBlock
     threadLocalsBlock_create(id, JNI_TRUE, 0);
