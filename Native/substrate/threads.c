@@ -181,7 +181,6 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 		priority,
 		(void *) startArg);
     if (thread == NULL) {
-        log_println("thread_create failed");
         return (Thread) 0;
     }
 #elif (os_LINUX || os_DARWIN)
