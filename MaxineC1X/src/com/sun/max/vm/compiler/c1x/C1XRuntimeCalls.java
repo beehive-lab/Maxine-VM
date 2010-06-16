@@ -91,12 +91,6 @@ public class C1XRuntimeCalls {
         }
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ThrowArithmeticException)
-    public static void runtimeThrowDiv0Exception() throws ArithmeticException {
-        verifyRefMaps();
-        throw new ArithmeticException("division by zero");
-    }
-
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.RegisterFinalizer)
     public static void runtimeRegisterFinalizer(Object object) {
         verifyRefMaps();

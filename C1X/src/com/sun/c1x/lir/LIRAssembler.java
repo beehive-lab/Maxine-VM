@@ -28,7 +28,6 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.*;
-import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
@@ -47,7 +46,6 @@ public abstract class LIRAssembler {
     public final AbstractAssembler asm;
     public final FrameMap frameMap;
 
-    protected final List<LocalStub> localStubs;
     protected final List<SlowPath> xirSlowPath;
     protected final List<BlockBegin> branchTargetBlocks;
 
@@ -67,7 +65,6 @@ public abstract class LIRAssembler {
         this.compilation = compilation;
         this.asm = compilation.masm();
         this.frameMap = compilation.frameMap();
-        this.localStubs = new ArrayList<LocalStub>();
         this.branchTargetBlocks = new ArrayList<BlockBegin>();
         this.xirSlowPath = new ArrayList<SlowPath>();
     }
@@ -76,21 +73,11 @@ public abstract class LIRAssembler {
         return compilation.method;
     }
 
-    protected void addCodeStub(LocalStub stub) {
-        assert stub != null;
-        localStubs.add(stub);
-    }
-
     protected void addSlowPath(SlowPath sp) {
         xirSlowPath.add(sp);
     }
 
     public void emitLocalStubs() {
-        for (LocalStub s : localStubs) {
-            emitCode(s);
-            assert s.assertNoUnboundLabels();
-        }
-
         for (SlowPath sp : xirSlowPath) {
             emitSlowPath(sp);
         }
@@ -458,8 +445,6 @@ public abstract class LIRAssembler {
     protected abstract void doPeephole(LIRList list);
 
     protected abstract void emitSlowPath(SlowPath sp);
-
-    protected abstract void emitCode(LocalStub s);
 
     protected abstract void emitAlignment();
 

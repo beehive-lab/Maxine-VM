@@ -152,7 +152,6 @@ public class C1XOptions {
     public static boolean GenSynchronization            = true;
     public static boolean GenArrayStoreCheck            = true;
     public static boolean GenBoundsChecks               = true;
-    public static boolean GenExplicitDiv0Checks         = ____;
     public static boolean GenSpecialDivChecks           = ____;
     public static boolean GenStackBanging               = true;
     public static boolean GenAssertionCode              = ____;
@@ -342,9 +341,6 @@ public class C1XOptions {
         map.put("NormalCPEResolution",
                 "Eagerly resolve constant pool entries when the resolution can be done " +
                 "without triggering class loading.");
-
-        map.put("GenExplicitDiv0Checks",
-                "Generate code to check for division-by-zero instead of relying on a trap.");
 
         map.put("GenSpecialDivChecks",
                 "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " +
