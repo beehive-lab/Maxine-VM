@@ -1125,7 +1125,7 @@ public class MaxineTester {
         }
         name = name.replace(' ', '_');
         List<ExternalCommand> commands = new ArrayList<ExternalCommand>();
-        commands.add(new ExternalCommand(workingDir, inputFile, new Logs(outputDir, "REFVM_" + name, null), command.getExecArgs("java"), null));
+        commands.add(new ExternalCommand(workingDir, inputFile, new Logs(outputDir, "REFVM_" + name, null), command.getExecArgs(javaExecutableOption.getValue()), null));
         for (String config : configs) {
             commands.add(createMaxvmCommand(config, imageDir, command, workingDir, inputFile, new Logs(outputDir, "MAXVM_" + name + "_" + config, null)));
         }
