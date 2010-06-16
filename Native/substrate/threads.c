@@ -246,7 +246,7 @@ void *thread_run(void *arg) {
      *   1. This thread can atomically be added to the thread list
      *   2. This thread is blocked if a GC is currently underway. Once we have the lock,
      *      GC is blocked and cannot occur until we completed the upcall to
-     *      VmThread.attach().
+     *      VmThread.add().
      */
 #if log_THREADS
     log_println("thread_run: t=%p acquiring global GC and thread list lock", nativeThread);
