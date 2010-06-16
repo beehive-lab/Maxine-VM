@@ -55,7 +55,7 @@
     extern int guestvmXen_virtualMemory_protectPages(uint64_t address, int count);
     extern int guestvmXen_virtualMemory_unProtectPages(uint64_t address, int count);
     extern void guestvmXen_set_javaId(guestvmXen_Thread, int id);
-    extern void guestvmXen_initStack(void *nativeThreadLocals);
+    extern int guestvmXen_initStack(void *nativeThreadLocals);
     extern void guestvmXen_blue_zone_trap(void *nativeThreadLocals);
     extern uint64_t guestvmXen_remap_boot_code_region(uint64_t base, size_t size);
     extern void guestvmXen_native_props(native_props_t *native_props);
