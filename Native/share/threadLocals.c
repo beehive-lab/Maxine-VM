@@ -78,25 +78,32 @@ static void deallocateThreadLocalBlock(Address tlBlock, Size tlBlockSize) {
 }
 
 /**
- * Allocates and initializes a thread locals block.
+ * Allocates and/or initializes a thread locals block.
  *
  * @param id  > 0: the identifier reserved in the thread map for the thread being started
  *           == 0: the primordial thread
  *            < 0: temporary identifier (derived from the native thread handle) of a thread
  *                 that is being attached to the VM
+ * @param init true iff initializing a previously created thread locals block
+ * @param stackSize only set if id > 0 && init == false;
  */
-Address threadLocalsBlock_create(jint id) {
-
-    c_ASSERT(threadLocalsBlock_current() == 0);
-
+Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
+    Address tlBlock;
     const int tlSize = threadLocalsAreaSize();
     const int pageSize = virtualMemory_getPageSize();
     const jboolean attaching = id < 0;
     const jboolean primordial = id == 0;
+    const jboolean threadIsCreated = init || attaching || primordial;
 
-    Size stackSize;
     Address stackBase;
-    thread_getStackInfo(&stackBase, &stackSize);
+    if (threadIsCreated) {
+        thread_getStackInfo(&stackBase, &stackSize);
+    }
+
+    if (init) {
+        tlBlock = threadLocalsBlock_current();
+        c_ASSERT(tlBlock != 0);
+    }
 
     /* See diagram at top of threadLocals.h */
     const int triggerPageSize = pageSize;
@@ -108,9 +115,12 @@ Address threadLocalsBlock_create(jint id) {
                             (primordial ? 0 : refMapSize);
 
     c_ASSERT(wordAlign(tlBlockSize) == (Address) tlBlockSize);
-    Address tlBlock = allocateThreadLocalBlock(tlBlockSize);
-    if (tlBlock == 0) {
-        return 0;
+    if (!init) {
+        tlBlock= allocateThreadLocalBlock(tlBlockSize);
+        // if we are creating a VM thread, initialization is deferred.
+        if (!(attaching || primordial)) {
+            return tlBlock;
+        }
     }
 
     ThreadLocals triggered_tl = tlBlock + pageSize - sizeof(Address);
@@ -227,8 +237,14 @@ Address threadLocalsBlock_create(jint id) {
     /* Protect the first page of the TL block (which contains the first word of the triggered thread locals) */
     virtualMemory_protectPages(tlBlock, 1);
 
-    threadLocalsBlock_setCurrent(tlBlock);
+    if (!init) {
+        threadLocalsBlock_setCurrent(tlBlock);
+    }
     return tlBlock;
+}
+
+Address threadLocalsBlock_createForExistingThread(jint id) {
+    return threadLocalsBlock_create(id, JNI_FALSE, 0);
 }
 
 /**

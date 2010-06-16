@@ -369,6 +369,7 @@ public final class VmThreadMap {
                  * an out of memory exception. There is a small possibility that the failure was in the
                  * actual OS thread creation but that would require a way to disambiguate.
                  */
+                decrementNonDaemonThreads();
                 throw new OutOfMemoryError("Unable to create new native thread");
             }
             totalStarted++;

@@ -33,6 +33,14 @@
 #define STACK_RED_ZONE_PAGES 1
 
 /**
+ * Structure passed as argument to start method of a thread.
+ */
+struct StartArg {
+    Address threadLocalsBlock;
+    int id;
+};
+
+/**
  * The signature of the VM entry point for adding a thread to the thread list.
  * This must match the signature of 'com.sun.max.vm.thread.VmThread.add()'.
  */
