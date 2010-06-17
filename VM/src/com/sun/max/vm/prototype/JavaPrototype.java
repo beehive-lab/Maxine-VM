@@ -247,10 +247,6 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.util.jar", false); // needed to load classes from jar files
         loadClass(sun.misc.VM.class);
 
-        // Need all of C1X
-        loadPackage("com.sun.cri", true);
-        loadPackage("com.sun.c1x", true);
-
         // These classes need to be compiled and in the boot image in order to be able to
         // run the optimizing compiler at run time (amongst other reasons)
         loadClass(sun.misc.SharedSecrets.class);
@@ -368,9 +364,9 @@ public class JavaPrototype extends Prototype {
      * Create a new Java prototype with the specified VM configuration.
      *
      * @param vmConfiguration the VM configuration
-     * @param loadPackages a boolean indicating whether to load the Java packages and VM packages
+     * @param complete specifies whether to load more than just the VM scheme packages
      */
-    public JavaPrototype(final VMConfiguration vmConfiguration, final boolean loadPackages) {
+    public JavaPrototype(final VMConfiguration vmConfiguration, final boolean complete) {
         super(vmConfiguration);
 
         packageLoader = new PrototypePackageLoader(HOSTED_BOOT_CLASS_LOADER, HOSTED_BOOT_CLASS_LOADER.classpath());
@@ -402,7 +398,11 @@ public class JavaPrototype extends Prototype {
 
                 loadMethodSubstitutions(vmConfiguration, packageLoader);
 
-                if (loadPackages) {
+                // Need all of C1X
+                loadPackage("com.sun.cri", true);
+                loadPackage("com.sun.c1x", true);
+
+                if (complete) {
 
                     // TODO: Load the following package groups in parallel
                     loadPackages(basePackages());
