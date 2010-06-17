@@ -389,7 +389,7 @@ public final class GraphBuilder {
         int scopeCount = 0;
 
         assert state != null : "exception handler state must be available for " + x;
-        state = state.copy();
+        state = state.immutableCopy();
         do {
             assert curScopeData.scope == state.scope() : "scopes do not match";
             assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream.currentBCI() : "invalid bci";
@@ -487,7 +487,7 @@ public final class GraphBuilder {
     }
 
     void genLoadConstant(int cpi) {
-        FrameState stateBefore = curState.copy();
+        FrameState stateBefore = curState.immutableCopy();
         Object con = constantPool().lookupConstant(cpi);
 
         if (con instanceof RiType) {
@@ -1154,7 +1154,7 @@ public final class GraphBuilder {
         int offset = ts.defaultOffset();
         isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
-        FrameState stateBefore = isBackwards ? curState.copy() : null;
+        FrameState stateBefore = isBackwards ? curState.immutableCopy() : null;
         append(new TableSwitch(ipop(), list, ts.lowKey(), stateBefore, isBackwards));
     }
 
@@ -1175,7 +1175,7 @@ public final class GraphBuilder {
         int offset = ls.defaultOffset();
         isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
-        FrameState stateBefore = isBackwards ? curState.copy() : null;
+        FrameState stateBefore = isBackwards ? curState.immutableCopy() : null;
         append(new LookupSwitch(ipop(), list, keys, stateBefore, isBackwards));
     }
 
@@ -1289,7 +1289,7 @@ public final class GraphBuilder {
         Goto gotoSub = new Goto(jsrStartBlock, null, false);
         gotoSub.setStateAfter(curState.immutableCopy());
         assert jsrStartBlock.stateBefore() == null;
-        jsrStartBlock.setStateBefore(curState.copy());
+        jsrStartBlock.setStateBefore(curState.immutableCopy());
         append(gotoSub);
         curBlock.setEnd(gotoSub);
         lastInstr = curBlock = jsrStartBlock;
@@ -1405,7 +1405,7 @@ public final class GraphBuilder {
         CiKind resultType = returnKind(target);
 
         // create the intrinsic node
-        Intrinsic result = new Intrinsic(resultType.stackKind(), intrinsic, target, args, isStatic, curState.copy(), preservesState, canTrap);
+        Intrinsic result = new Intrinsic(resultType.stackKind(), intrinsic, target, args, isStatic, curState.immutableCopy(), preservesState, canTrap);
         pushReturn(resultType, append(result));
         stats.intrinsicCount++;
         return true;
@@ -1939,12 +1939,12 @@ public final class GraphBuilder {
                 case ISUB           : // fall through
                 case IMUL           : genArithmeticOp(CiKind.Int, opcode); break;
                 case IDIV           : // fall through
-                case IREM           : genArithmeticOp(CiKind.Int, opcode, curState.copy()); break;
+                case IREM           : genArithmeticOp(CiKind.Int, opcode, curState.immutableCopy()); break;
                 case LADD           : // fall through
                 case LSUB           : // fall through
                 case LMUL           : genArithmeticOp(CiKind.Long, opcode); break;
                 case LDIV           : // fall through
-                case LREM           : genArithmeticOp(CiKind.Long, opcode, curState.copy()); break;
+                case LREM           : genArithmeticOp(CiKind.Long, opcode, curState.immutableCopy()); break;
                 case FADD           : // fall through
                 case FSUB           : // fall through
                 case FMUL           : // fall through
@@ -2056,9 +2056,9 @@ public final class GraphBuilder {
 
                 case WCONST_0       : wpush(appendConstant(CiConstant.ZERO)); break;
                 case WDIV           : // fall through
-                case WREM           : genArithmeticOp(CiKind.Word, opcode, curState.copy()); break;
-                case WDIVI          : genArithmeticOp(CiKind.Word, opcode, CiKind.Word, CiKind.Int, curState.copy()); break;
-                case WREMI          : genArithmeticOp(CiKind.Int, opcode, CiKind.Word, CiKind.Int, curState.copy()); break;
+                case WREM           : genArithmeticOp(CiKind.Word, opcode, curState.immutableCopy()); break;
+                case WDIVI          : genArithmeticOp(CiKind.Word, opcode, CiKind.Word, CiKind.Int, curState.immutableCopy()); break;
+                case WREMI          : genArithmeticOp(CiKind.Int, opcode, CiKind.Word, CiKind.Int, curState.immutableCopy()); break;
 
                 case READREG        : genLoadRegister(s.readCPI()); break;
                 case WRITEREG       : genStoreRegister(s.readCPI()); break;
@@ -2424,7 +2424,7 @@ public final class GraphBuilder {
 
 
     private void genArrayLength() {
-        ipush(append(new ArrayLength(apop(), curState.copy())));
+        ipush(append(new ArrayLength(apop(), curState.immutableCopy())));
     }
 
     void killMemoryMap() {

@@ -709,7 +709,7 @@ public final class BlockBegin extends Instruction {
 
     public void addExceptionStates(List<FrameState> exceptHandlerStates) {
         for (FrameState state : exceptHandlerStates) {
-            addExceptionState(state.copy());
+            addExceptionState(state.immutableCopy());
         }
     }
 }
