@@ -58,8 +58,6 @@ public class LIROperand {
     static class LIRVariableOperand extends LIROperand {
         /**
          * Index into an instruction's {@linkplain LIRInstruction#allocatorOperands allocator operands}.
-         * This will be -1 for operands that are bound to a location prior to register allocation (e.g.
-         * method parameters in registers and stack slots).
          */
         final int index;
 
