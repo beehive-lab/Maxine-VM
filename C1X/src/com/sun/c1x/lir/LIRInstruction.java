@@ -27,8 +27,6 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.LIROperand.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -41,6 +39,8 @@ public abstract class LIRInstruction {
 
     private static final LIROperand ILLEGAL_SLOT = new LIROperand(CiValue.IllegalValue);
 
+    private static final CiValue[] NO_OPERANDS = {};
+
     /**
      * The opcode of this instruction.
      */
@@ -52,9 +52,9 @@ public abstract class LIRInstruction {
     private final LIROperand result;
 
     /**
-     * The input and temp operands of this instruction.
+     * The input and temporary operands of this instruction.
      */
-    protected LIROperand[] inputAndTempOperands;
+    protected final LIROperand[] inputAndTempOperands;
 
     /**
      * Used to emit debug information.
@@ -73,7 +73,6 @@ public abstract class LIRInstruction {
 
     public final boolean hasCall;
 
-    public final LocalStub stub;
     public GlobalStub globalStub;
 
     public static final OperandMode[] OPERAND_MODES = OperandMode.values();
@@ -99,29 +98,36 @@ public abstract class LIRInstruction {
     final List<CiValue> allocatorOperands = new ArrayList<CiValue>(3);
 
     /**
-     * Constructs a new Instruction.
+     * Constructs a new LIR instruction.
      *
      * @param opcode the opcode of the new instruction
      * @param result the operand that holds the operation result of this instruction. This will be
      *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
      * @param info the debug info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
-     * @param hasCall
-     * @param stub
-     * @param tempInput
      * @param info the object holding information needed to perform deoptimization
+     * @param hasCall
      */
-    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall, LocalStub stub, int tempInput, int temp, CiValue... inputAndTempOperands) {
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall) {
+        this(opcode, result, info, hasCall, 0, 0, NO_OPERANDS);
+    }
+
+    /**
+     * Constructs a new LIR instruction.
+     *
+     * @param opcode the opcode of the new instruction
+     * @param result the operand that holds the operation result of this instruction. This will be
+     *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
+     * @param info the debug info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
+     * @param info the object holding information needed to perform deoptimization
+     * @param hasCall
+     */
+    public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall, int tempInput, int temp, CiValue... operands) {
         this.code = opcode;
         this.info = info;
         this.hasCall = hasCall;
-        this.stub = stub;
 
         assert opcode != LIROpcode.Move || result != CiValue.IllegalValue;
-        this.result = addOutput(result);
-        if (stub != null) {
-            stub.setInstruction(this);
-            stub.setResultSlot(addOutput(stub.originalResult()));
-        }
+        this.result = initOutput(result);
 
         C1XMetrics.LIRInstructions++;
 
@@ -130,12 +136,13 @@ public abstract class LIRInstruction {
         }
 
         id = -1;
-        initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
+        this.inputAndTempOperands = new LIROperand[operands.length];
+        initInputsAndTemps(tempInput, temp, operands);
 
         assert verifyOperands();
     }
 
-    private LIROperand addOutput(CiValue output) {
+    private LIROperand initOutput(CiValue output) {
         assert output != null;
         if (output != CiValue.IllegalValue) {
             if (output.isAddress()) {
@@ -204,7 +211,13 @@ public abstract class LIRInstruction {
         }
     }
 
-    protected final CiValue operand(int index) {
+    /**
+     * Gets an input or temp operand of this instruction.
+     *
+     * @param index the index of the operand requested
+     * @return the {@code index}'th operand
+     */
+    public final CiValue operand(int index) {
         if (index >= inputAndTempOperands.length) {
             return CiValue.IllegalValue;
         }
@@ -212,77 +225,34 @@ public abstract class LIRInstruction {
         return inputAndTempOperands[index].value(this);
     }
 
-    public final CiValue stubOperand(int index) {
-        return inputAndTempOperands[index + (inputAndTempOperands.length - stub.operands.length)].value(this);
-    }
+    private void initInputsAndTemps(int tempInputCount, int tempCount, CiValue[] operands) {
 
-    private void initInputsAndTemps(int tempInputCount, int tempCount, CiValue[] operands, LocalStub stub) {
-
-        CiValue[] stubOperands = stub == null ? null : stub.operands;
-        this.inputAndTempOperands = new LIROperand[operands.length + (stubOperands == null ? 0 : stubOperands.length)];
         // Addresses in instruction
         for (int i = 0; i < operands.length; i++) {
             CiValue op = operands[i];
             if (op.isAddress()) {
-                inputAndTempOperands[i] = addAddress((CiAddress) op);
+                this.inputAndTempOperands[i] = addAddress((CiAddress) op);
             }
         }
 
-        // Addresses in stub
-        if (stubOperands != null) {
-            for (int i = 0; i < stubOperands.length; i++) {
-                CiValue op = stubOperands[i];
-                if (op.isAddress()) {
-                    inputAndTempOperands[i + operands.length] = addAddress((CiAddress) op);
-                }
-            }
-        }
-
-        // Input operands in instruction
+        // Input-only operands
         for (int i = 0; i < operands.length - tempInputCount - tempCount; i++) {
-            if (inputAndTempOperands[i] == null) {
-                inputAndTempOperands[i] = addOperand(operands[i], true, false);
+            if (this.inputAndTempOperands[i] == null) {
+                this.inputAndTempOperands[i] = addOperand(operands[i], true, false);
             }
         }
 
-        // Input operands in stub
-        if (stubOperands != null) {
-            for (int i = 0; i < stubOperands.length - stub.tempCount - stub.tempInputCount; i++) {
-                if (inputAndTempOperands[i + operands.length] == null) {
-                    inputAndTempOperands[i + operands.length] = addOperand(stubOperands[i], true, false);
-                }
-            }
-        }
-
-        // Input Temp operands in instruction
+        // Operands that are both inputs and temps
         for (int i = operands.length - tempInputCount - tempCount; i < operands.length - tempCount; i++) {
-            if (inputAndTempOperands[i] == null) {
-                inputAndTempOperands[i] = addOperand(operands[i], true, true);
+            if (this.inputAndTempOperands[i] == null) {
+                this.inputAndTempOperands[i] = addOperand(operands[i], true, true);
             }
         }
 
-        // Input Temp operands in stub
-        if (stubOperands != null) {
-            for (int i = stubOperands.length - stub.tempCount - stub.tempInputCount; i < stubOperands.length - stub.tempCount; i++) {
-                if (inputAndTempOperands[i + operands.length] == null) {
-                    inputAndTempOperands[i + operands.length] = addOperand(stubOperands[i], true, true);
-                }
-            }
-        }
-
-        // Temp operands in instruction
+        // Temp-only operands
         for (int i = operands.length - tempCount; i < operands.length; i++) {
-            if (inputAndTempOperands[i] == null) {
-                inputAndTempOperands[i] = addOperand(operands[i], false, true);
-            }
-        }
-
-        // Temp operands in stub
-        if (stubOperands != null) {
-            for (int i = stubOperands.length - stub.tempCount; i < stubOperands.length; i++) {
-                if (inputAndTempOperands[i + operands.length] == null) {
-                    inputAndTempOperands[i + operands.length] = addOperand(stubOperands[i], false, true);
-                }
+            if (this.inputAndTempOperands[i] == null) {
+                this.inputAndTempOperands[i] = addOperand(operands[i], false, true);
             }
         }
     }
@@ -404,11 +374,10 @@ public abstract class LIRInstruction {
     }
 
     public boolean hasOperands() {
-        if (info != null || hasCall || stub != null) {
+        if (info != null || hasCall) {
             return true;
         }
-
-        return this.allocatorOperands.size() > 0;
+        return allocatorOperands.size() > 0;
     }
 
     public boolean hasCall() {
@@ -456,51 +425,12 @@ public abstract class LIRInstruction {
         }
     }
 
-    public boolean hasInfo() {
-        return info != null || (stub != null && stub.info != null);
-    }
-
-    public int infoCount() {
-        int result = 0;
-        if (info != null) {
-            result++;
-        }
-
-        if (stub != null && stub.info != null) {
-            result++;
-        }
-
-        return result;
-    }
-
     public List<ExceptionHandler> exceptionEdges() {
-        int count = infoCount();
-        List<ExceptionHandler> result = null;
-        for (int i = 0; i < count; i++) {
-            List<ExceptionHandler> handlers = infoAt(i).exceptionHandlers;
-            if (handlers != null) {
-                assert result == null : "only one xhandler list allowed per LIR-operation";
-                result = handlers;
-            }
+        if (info != null && info.exceptionHandlers != null) {
+            return info.exceptionHandlers;
         }
 
-        if (result == null) {
-            result = Util.uncheckedCast(Collections.EMPTY_LIST);
-        }
-        return result;
-    }
-
-    public LIRDebugInfo infoAt(int k) {
-        if (k == 1) {
-            return stub.info;
-        } else {
-            assert k == 0;
-            if (info == null) {
-                return stub.info;
-            } else {
-                return info;
-            }
-        }
+        return Collections.emptyList();
     }
 
     @Override
