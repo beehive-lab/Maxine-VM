@@ -223,7 +223,7 @@ public class IR {
         newSucc.setEnd(e);
         // setup states
         FrameState s = source.end().stateAfter();
-        newSucc.setStateBefore(s.copy());
+        newSucc.setStateBefore(s.immutableCopy());
         e.setStateAfter(s.immutableCopy());
         assert newSucc.stateBefore().localsSize() == s.localsSize();
         assert newSucc.stateBefore().stackSize() == s.stackSize();
