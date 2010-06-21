@@ -105,11 +105,18 @@ public class FrameState {
         return s;
     }
 
+    /**
+     * Gets a mutable copy of this frame state.
+     */
     public FrameState copy() {
         return copy(true, true, true);
     }
 
+    /**
+     * Gets an immutable copy of this state.
+     */
     public FrameState immutableCopy() {
+        // TODO: return something that is really immutable!
         return copy(true, true, true);
     }
 
