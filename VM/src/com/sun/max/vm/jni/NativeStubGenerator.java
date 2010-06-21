@@ -289,7 +289,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      */
     private void verboseJniEntry() {
         if (MaxineVM.isHosted() && MaxineVM.isDebug()) {
-            // Stubs generated while bootstrapping need to test the "-verbose" VM program argument
+            // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
             invokestatic(traceJNI, 0, 1);
             final Label noTracing = newLabel();
             ifeq(noTracing);
@@ -313,7 +313,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      */
     private void verboseJniExit() {
         if (MaxineVM.isHosted() && MaxineVM.isDebug()) {
-            // Stubs generated while bootstrapping need to test the "-verbose" VM program argument
+            // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
             invokestatic(traceJNI, 0, 1);
             final Label notVerbose = newLabel();
             ifeq(notVerbose);
