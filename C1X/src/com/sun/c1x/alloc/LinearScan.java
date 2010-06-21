@@ -1729,25 +1729,21 @@ public class LinearScan {
             // interval at the throwing instruction must be searched using the operands
             // of the phi function
             Value fromValue = phi.inputAt(handler.phiOperand());
-            if (fromValue != phi) {
-
-                // with phi functions it can happen that the same fromValue is used in
-                // multiple mappings, so notify move-resolver that this is allowed
-                moveResolver.setMultipleReadsAllowed();
-
-                Constant con = null;
-                if (fromValue instanceof Constant) {
-                    con = (Constant) fromValue;
-                }
-                if (con != null && (con.operand().isIllegal() || con.operand().isConstant())) {
-                    // unpinned constants may have no register, so add mapping from constant to interval
-                    moveResolver.addMapping(con.asConstant(), toInterval);
-                } else {
-                    // search split child at the throwing opId
-                    Interval fromInterval = intervalAtOpId(fromValue.operand(), throwingOpId);
-                    if (fromInterval != toInterval) {
-                        moveResolver.addMapping(fromInterval, toInterval);
-                    }
+            Constant con = null;
+            if (fromValue instanceof Constant) {
+                con = (Constant) fromValue;
+            }
+            if (con != null && (con.operand().isIllegal() || con.operand().isConstant())) {
+                // unpinned constants may have no register, so add mapping from constant to interval
+                moveResolver.addMapping(con.asConstant(), toInterval);
+            } else {
+                // search split child at the throwing opId
+                Interval fromInterval = intervalAtOpId(fromValue.operand(), throwingOpId);
+                if (fromInterval != toInterval) {
+                    moveResolver.addMapping(fromInterval, toInterval);
+                    // with phi functions it can happen that the same fromValue is used in
+                    // multiple mappings, so notify move-resolver that this is allowed
+                    moveResolver.setMultipleReadsAllowed();
                 }
             }
         } else {
