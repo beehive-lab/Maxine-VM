@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include "jni.h"
 #include "log.h"
@@ -121,8 +122,8 @@ jint JVM_GetInterfaceVersion(void) {
 }
 
 #define UNIMPLEMENTED() { \
-    JNIEnv *env = currentJniEnv(); \
     log_println("UNIMPLEMENTED: %s in %s:%d", __func__, __FILE__, __LINE__); \
+    JNIEnv *env = currentJniEnv(); \
     JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "Unimplemented", "()V"); \
     (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod); \
 }
@@ -271,13 +272,13 @@ JVM_ActiveProcessorCount(void) {
 #endif
 }
 
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
 #include <dlfcn.h>
 #endif
 
 void *
 JVM_LoadLibrary(const char *name) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return dlopen(name, RTLD_LAZY);
 #else
     UNIMPLEMENTED();
@@ -287,7 +288,7 @@ JVM_LoadLibrary(const char *name) {
 
 void
 JVM_UnloadLibrary(void * handle) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     dlclose(handle);
 #else
     UNIMPLEMENTED();
@@ -296,7 +297,7 @@ JVM_UnloadLibrary(void * handle) {
 
 void *
 JVM_FindLibraryEntry(void *handle, const char *name) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return dlsym(handle, name);
 #else
     UNIMPLEMENTED();
@@ -1685,14 +1686,14 @@ char *JVM_NativePath(char *path) {
  * success.
  */
 jint JVM_Open(char *fileName, jint flags, jint mode) {
-    int result = open(fileName, flags, mode);
 #if log_JVMNI
     log_println("JVM_Open(%s)", fileName);
 #endif
+    int result = open(fileName, flags, mode);
     if (result >= 0) {
         return result;
     }
-    if (result == EEXIST) {
+    if (errno == EEXIST) {
         return JVM_EEXIST;
     }
     return -1;
@@ -1742,6 +1743,18 @@ JVM_Write(jint fd, char *buf, jint nbytes) {
  */
 jint JVM_Available(jint fd, jlong *pbytes) {
     jlong cur, end;
+    int mode;
+
+    struct stat st;
+    if (fstat(fd, &st) >= 0) {
+        if (S_ISCHR(mode) || S_ISFIFO(mode) || S_ISSOCK(mode)) {
+            int n;
+            if (ioctl(fd, FIONREAD, &n) >= 0) {
+                *pbytes = n;
+                return 1;
+            }
+        }
+    }
     if ((cur = lseek64(fd, 0L, SEEK_CUR)) == -1) {
         return 0;
     } else if ((end = lseek64(fd, 0L, SEEK_END)) == -1) {
@@ -1793,7 +1806,7 @@ JVM_Sync(jint fd) {
 
 jint
 JVM_InitializeSocketLibrary(void) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return 0;
 #else
     UNIMPLEMENTED();
@@ -1801,7 +1814,7 @@ JVM_InitializeSocketLibrary(void) {
 #endif
 }
 
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
 #include <sys/types.h>
 #include <sys/socket.h>
 #else
@@ -1810,7 +1823,7 @@ struct sockaddr;
 
 jint
 JVM_Socket(jint domain, jint type, jint protocol) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return socket(domain, type, protocol);
 #else
     UNIMPLEMENTED();
@@ -1820,7 +1833,7 @@ JVM_Socket(jint domain, jint type, jint protocol) {
 
 jint
 JVM_SocketClose(jint fd) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return close(fd);
 #else
     UNIMPLEMENTED();
@@ -1830,7 +1843,7 @@ JVM_SocketClose(jint fd) {
 
 jint
 JVM_SocketShutdown(jint fd, jint howto) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return shutdown(fd, howto);
 #else
     UNIMPLEMENTED();
@@ -1840,7 +1853,7 @@ JVM_SocketShutdown(jint fd, jint howto) {
 
 jint
 JVM_Recv(jint fd, char *buf, jint nBytes, jint flags) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return recv(fd, buf, nBytes, flags);
 #else
     UNIMPLEMENTED();
@@ -1850,7 +1863,7 @@ JVM_Recv(jint fd, char *buf, jint nBytes, jint flags) {
 
 jint
 JVM_Send(jint fd, char *buf, jint nBytes, jint flags) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return send(fd, buf, nBytes, flags);
 #else
     UNIMPLEMENTED();
@@ -1866,7 +1879,7 @@ JVM_Timeout(int fd, long timeout) {
 
 jint
 JVM_Listen(jint fd, jint count) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return listen(fd, count);
 #else
     UNIMPLEMENTED();
@@ -1876,7 +1889,7 @@ JVM_Listen(jint fd, jint count) {
 
 jint
 JVM_Connect(jint fd, struct sockaddr *him, jint len) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return connect(fd, him, len);
 #else
     UNIMPLEMENTED();
@@ -1886,7 +1899,7 @@ JVM_Connect(jint fd, struct sockaddr *him, jint len) {
 
 jint
 JVM_Bind(jint fd, struct sockaddr *him, jint len) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return bind(fd, him, len);
 #else
     UNIMPLEMENTED();
@@ -1896,7 +1909,7 @@ JVM_Bind(jint fd, struct sockaddr *him, jint len) {
 
 jint
 JVM_Accept(jint fd, struct sockaddr *him, jint *len) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     if (fd < 0) {
         return -1;
     }
@@ -1962,7 +1975,7 @@ JVM_SocketAvailable(jint fd, jint *pbytes) {
 
 jint
 JVM_GetSockName(jint fd, struct sockaddr *him, int *len) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return getsockname(fd, him, (socklen_t*) len);
 #else
     UNIMPLEMENTED();
@@ -1972,7 +1985,7 @@ JVM_GetSockName(jint fd, struct sockaddr *him, int *len) {
 
 jint
 JVM_GetSockOpt(jint fd, int level, int optname, char *optval, int *optlen) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return getsockopt(fd, level, optname, optval, (socklen_t*) optlen);
 #else
     UNIMPLEMENTED();
@@ -1982,7 +1995,7 @@ JVM_GetSockOpt(jint fd, int level, int optname, char *optval, int *optlen) {
 
 jint
 JVM_SetSockOpt(jint fd, int level, int optname, const char *optval, int optlen) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return setsockopt(fd, level, optname, optval, optlen);
 #else
     UNIMPLEMENTED();
