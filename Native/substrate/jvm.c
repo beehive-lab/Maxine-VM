@@ -33,6 +33,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/filio.h>
 
 #include "jni.h"
 #include "log.h"
