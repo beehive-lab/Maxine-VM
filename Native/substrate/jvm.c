@@ -33,7 +33,10 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+
+#if os_SOLARIS
 #include <sys/filio.h>
+#endif
 
 #include "jni.h"
 #include "log.h"
