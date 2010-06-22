@@ -34,7 +34,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
-#if os_SOLARIS
+#if defined(__sun) || defined(SOLARIS)
 #include <sys/filio.h>
 #endif
 
