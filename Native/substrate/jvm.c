@@ -1743,11 +1743,10 @@ JVM_Write(jint fd, char *buf, jint nbytes) {
  */
 jint JVM_Available(jint fd, jlong *pbytes) {
     jlong cur, end;
-    int mode;
 
     struct stat st;
     if (fstat(fd, &st) >= 0) {
-        if (S_ISCHR(mode) || S_ISFIFO(mode) || S_ISSOCK(mode)) {
+        if (S_ISCHR(st.st_mode) || S_ISFIFO(st.st_mode) || S_ISSOCK(st.st_mode)) {
             int n;
             if (ioctl(fd, FIONREAD, &n) >= 0) {
                 *pbytes = n;
