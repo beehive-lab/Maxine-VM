@@ -34,16 +34,16 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
-#if defined(__sun) || defined(SOLARIS)
-#include <sys/filio.h>
-#endif
-
 #include "jni.h"
 #include "log.h"
 #include "mutex.h"
 #include "threads.h"
 #include "maxine.h"
 #include "memory.h"
+
+#if os_SOLARIS
+#include <sys/filio.h>
+#endif
 
 /**
  * Defined in Native/substrate/jni.c
