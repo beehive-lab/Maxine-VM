@@ -177,7 +177,12 @@ public class InvocationStubGenerator<T> {
             final ClassActor declaringClassActor = ClassActor.fromJava(declaringClass);
 
             // Create the (non-shared) constant pool entries specific to this stub
-            final MethodRefConstant targetMethodConstant = createMethodConstant(isInterface, ClassActor.fromJava(declaringClass), name, SignatureDescriptor.create(returnType, parameterTypes));
+            final MethodRefConstant targetMethodConstant;
+            if (isInterface && name != SymbolTable.CLINIT) {
+                targetMethodConstant = createInterfaceMethodConstant(ClassActor.fromJava(declaringClass), name, SignatureDescriptor.create(returnType, parameterTypes));
+            } else {
+                targetMethodConstant = createClassMethodConstant(ClassActor.fromJava(declaringClass), name, SignatureDescriptor.create(returnType, parameterTypes));
+            }
             final StringConstant incorrectArgumentCountMessageConstant = createStringConstant("expected " + runtimeParameterTypes.length + " arguments, received ");
             final ClassConstant[] runtimeParameterTypesPoolConstants = new ClassConstant[runtimeParameterTypes.length];
             for (int i = 0; i != runtimeParameterTypes.length; ++i) {
