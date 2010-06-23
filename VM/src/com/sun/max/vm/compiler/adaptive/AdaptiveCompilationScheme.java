@@ -325,12 +325,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             }
         }
 
-        if (compiler.toString().contains("C1X")) {
-            if (classMethodActor.isExtended() || classMethodActor.holder().name.toString().startsWith("com.sun.max")) {
-                // C1X does not yet recognize the extended bytecodes
-//                return bootCompiler;
-            }
-        }
         return compiler;
     }
 
