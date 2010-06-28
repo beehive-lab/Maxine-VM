@@ -74,6 +74,8 @@ public class InvocationStubGenerator<T> {
                 stubName = STUB_PACKAGE_PREFIX + className + "$init$" + serial;
             }
             stubName = STUB_PACKAGE_PREFIX + className + "$serialization_init$" + serial;
+        } else if (methodName == SymbolTable.CLINIT) {
+            stubName = STUB_PACKAGE_PREFIX + className + "$clinit$" + serial;
         } else {
             stubName = STUB_PACKAGE_PREFIX + className + "$" + methodName + "$" + serial;
         }
