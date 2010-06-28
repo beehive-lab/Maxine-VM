@@ -1330,7 +1330,7 @@ public final class GraphBuilder {
     }
 
     void pushScope(RiMethod target, BlockBegin continuation) {
-        IRScope calleeScope = new IRScope(compilation, scope(), bci(), target, -1);
+        IRScope calleeScope = new IRScope(scope(), bci(), target, -1);
         BlockMap blockMap = compilation.getBlockMap(calleeScope.method, -1);
         calleeScope.setCallerState(curState);
         calleeScope.setStoresInLoops(blockMap.getStoresInLoops());
