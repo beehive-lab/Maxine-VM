@@ -26,13 +26,13 @@ import sun.reflect.*;
 
 import com.sun.max.vm.value.*;
 
-public abstract class GeneratedConstructorStub extends GeneratedStub implements ConstructorAccessor {
+public abstract class MethodInvocationStub extends InvocationStub implements MethodAccessor {
 
-    public Object newInstance(Object[] args) throws InstantiationException, IllegalArgumentException, InvocationTargetException {
+    public Object invoke(Object obj, Object[] args) throws IllegalArgumentException, InvocationTargetException {
         throw new NoSuchMethodError();
     }
 
-    public Value newInstance(Value... args) throws InstantiationException, IllegalArgumentException, InvocationTargetException {
+    public Value invoke(Value... args) throws IllegalArgumentException, InvocationTargetException {
         throw new NoSuchMethodError();
     }
 }

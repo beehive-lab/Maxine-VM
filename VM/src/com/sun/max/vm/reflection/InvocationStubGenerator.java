@@ -51,14 +51,9 @@ import com.sun.max.vm.value.*;
  */
 public class InvocationStubGenerator<T> {
 
-    private static volatile int methodNameSuffix;
-    private static volatile int constructorNameSuffix;
-    private static volatile int serializationConstructorNameSuffix;
+    private static volatile int nextSerial;
 
-    static final String GEN_PACKAGE_NAME = new com.sun.max.vm.reflection.Package().name();
-    static final String SERIALIZATION_CONSTRUCTOR_STUB_BASE = "GeneratedSerializationConstructorStub";
-    static final String CONSTRUCTOR_STUB_BASE = "GeneratedConstructorStub";
-    static final String METHOD_STUB_BASE = "GeneratedMethodStub";
+    static final String STUB_PACKAGE_PREFIX = "$INVOKE_STUB$.";
 
     private static final String SAVE_JAVA_SOURCE_PROPERTY = "max.reflection.InvocationStubGenerator.saveSource";
     private static boolean saveJavaSource = System.getProperty(SAVE_JAVA_SOURCE_PROPERTY) != null;
@@ -66,34 +61,23 @@ public class InvocationStubGenerator<T> {
     /**
      * Determines if a given class name specifies a generated stub class.
      */
-    public static boolean isGeneratedStubClassName(String typeName) {
-        if (typeName.startsWith(GEN_PACKAGE_NAME + ".")) {
-            final String simpleClassName = typeName.substring(GEN_PACKAGE_NAME.length() + 1);
-            return isSimpleGeneratedStubClassName(simpleClassName);
-        }
-        return false;
+    public static boolean isInvocationStubClassName(String typeName) {
+        return typeName.startsWith(STUB_PACKAGE_PREFIX);
     }
 
-    /**
-     * Determines if a given non-qualified class name specifies a generated stub class.
-     */
-    private static boolean isSimpleGeneratedStubClassName(final String simpleClassName) {
-        return simpleClassName.startsWith(METHOD_STUB_BASE) ||
-               simpleClassName.startsWith(CONSTRUCTOR_STUB_BASE) ||
-               simpleClassName.startsWith(SERIALIZATION_CONSTRUCTOR_STUB_BASE);
-    }
-
-    private static synchronized Utf8Constant generateName(boolean isConstructor, boolean forSerialization) {
-        if (isConstructor) {
+    private static synchronized Utf8Constant generateName(Class declaringClass, Utf8Constant methodName, boolean forSerialization) {
+        final int serial = ++nextSerial;
+        String className = declaringClass.getName().replace('.', '_');
+        String stubName;
+        if (methodName == SymbolTable.INIT) {
             if (forSerialization) {
-                final int suffix = ++serializationConstructorNameSuffix;
-                return SymbolTable.makeSymbol(GEN_PACKAGE_NAME + "." + SERIALIZATION_CONSTRUCTOR_STUB_BASE + suffix);
+                stubName = STUB_PACKAGE_PREFIX + className + "$init$" + serial;
             }
-            final int suffix = ++constructorNameSuffix;
-            return SymbolTable.makeSymbol(GEN_PACKAGE_NAME + "." + CONSTRUCTOR_STUB_BASE + suffix);
+            stubName = STUB_PACKAGE_PREFIX + className + "$serialization_init$" + serial;
+        } else {
+            stubName = STUB_PACKAGE_PREFIX + className + "$" + methodName + "$" + serial;
         }
-        final int suffix = ++methodNameSuffix;
-        return SymbolTable.makeSymbol(GEN_PACKAGE_NAME + "." + METHOD_STUB_BASE + suffix);
+        return SymbolTable.makeSymbol(stubName);
     }
 
     private final ConstantPoolEditor constantPoolEditor;
@@ -137,8 +121,8 @@ public class InvocationStubGenerator<T> {
      *
      * @param target the {@linkplain Method method} or {@linkplain Constructor constructor} for which the stub is being
      *            generated
-     * @param superClass the super class of the stub. Must be {@link GeneratedMethodStub} or
-     *            {@link GeneratedConstructorStub}.
+     * @param superClass the super class of the stub. Must be {@link MethodInvocationStub} or
+     *            {@link ConstructorInvocationStub}.
      * @param name the VM-level name of the target (must be "<init>" if target is a constructor)
      * @param declaringClass the class in which the target is declared
      * @param returnType the declared return type of the target
@@ -173,7 +157,7 @@ public class InvocationStubGenerator<T> {
                     forSerialization = true;
                 }
             }
-            final Utf8Constant stubClassName = generateName(isConstructor, forSerialization);
+            final Utf8Constant stubClassName = generateName(declaringClass, name, forSerialization);
             final ClassActor declaringClassActor = ClassActor.fromJava(declaringClass);
 
             // Create the (non-shared) constant pool entries specific to this stub
@@ -293,13 +277,13 @@ public class InvocationStubGenerator<T> {
 
     private ClassMethodActor generateInit(Class superClass) {
         final CodeAttribute codeAttributeTemplate;
-        if (superClass == GeneratedConstructorStub.class) {
+        if (superClass == ConstructorInvocationStub.class) {
             if (generatedConstructorStubInitTemplate == null) {
                 generatedConstructorStubInitTemplate = generateInitCodeAttribute(GeneratedConstructorStub_init);
             }
             codeAttributeTemplate = generatedConstructorStubInitTemplate;
         } else {
-            ProgramError.check(superClass == GeneratedMethodStub.class);
+            ProgramError.check(superClass == MethodInvocationStub.class);
             if (generatedMethodStubInitTemplate == null) {
                 generatedMethodStubInitTemplate = generateInitCodeAttribute(GeneratedMethodStub_init);
             }
@@ -562,9 +546,9 @@ public class InvocationStubGenerator<T> {
                     AccessibleObject target,
                     Boxing boxing,
                     final Utf8Constant stubClassName) throws IOException {
-        final String simpleStubClassName = stubClassName.toString().substring(GEN_PACKAGE_NAME.length() + 1);
+        final String simpleStubClassName = stubClassName.toString().substring(STUB_PACKAGE_PREFIX.length());
         final IndentWriter writer = IndentWriter.traceStreamWriter();
-        writer.println("package " + GEN_PACKAGE_NAME + ";");
+        writer.println("package " + STUB_PACKAGE_PREFIX.substring(0, STUB_PACKAGE_PREFIX.length() - 1) + ";");
         writer.println();
         writer.println("/**");
         writer.println(" * Automatically generated stub for: " + target + ".");
@@ -673,8 +657,8 @@ public class InvocationStubGenerator<T> {
     static final int InvocationTargetException = register(createClassConstant(InvocationTargetException.class));
     static final int StringBuilder = register(createClassConstant(StringBuilder.class));
 
-    static final int GeneratedConstructorStub_init = register(createClassMethodConstant(GeneratedConstructorStub.class));
-    static final int GeneratedMethodStub_init = register(createClassMethodConstant(GeneratedMethodStub.class));
+    static final int GeneratedConstructorStub_init = register(createClassMethodConstant(ConstructorInvocationStub.class));
+    static final int GeneratedMethodStub_init = register(createClassMethodConstant(MethodInvocationStub.class));
     static final int NullPointerException_init = register(createClassMethodConstant(NullPointerException.class));
     static final int IllegalArgumentException_init = register(createClassMethodConstant(IllegalArgumentException.class));
     static final int IllegalArgumentException_init_String = register(createClassMethodConstant(IllegalArgumentException.class, String.class));
