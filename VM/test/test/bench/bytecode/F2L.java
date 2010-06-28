@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,42 +18,55 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.bench.micro;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.bytecode;
+
+import test.bench.util.*;
 
 /**
- * A microbenchmark for floating point to integer conversions.
+ * A microbenchmark for floating point; {@code float} to {@code long} conversions.
+ *
  * @author Ben L. Titzer
+ * @author Mick Jordan
  */
-public class F2I {
+public class  F2L extends RunBench {
 
-    private static int CHUNK_SIZE = 5000;
-    private static final int ITERATIONS = 500000000;
+    protected F2L() {
+        super(new Bench(), new EncapBench());
+    }
+
+    public static boolean test() {
+        return new F2L().runBench(true);
+    }
+
+    static class Bench extends AbstractMicroBenchmark {
+        public void run(boolean warmup) {
+            f2l(0.4F);
+        }
+
+        @SuppressWarnings("unused")
+        private static void f2l(float d) {
+            long i = (int) d;
+        }
+
+    }
+
+    static class EncapBench extends AbstractMicroBenchmark {
+
+        public void run(boolean warmup) {
+            f2i(0.4F);
+        }
+
+        private static void f2i(float d) {
+        }
+
+    }
 
     public static void main(String[] args) {
-        int count = ITERATIONS;
-        if (args.length > 0) {
-            count = Integer.parseInt(args[0]);
-        }
-        benchmark(count);
+        RunBench.runTest(F2L.class, args);
     }
 
-    public static void benchmark(int count) {
-        int chunks = (count + CHUNK_SIZE - 1) / CHUNK_SIZE;
-        float fsum = 0;
-        int isum = 0;
-        for (int i = 0; i <= chunks; i++) {
-            fsum += 0.4;
-            isum = chunk(fsum, isum, CHUNK_SIZE);
-        }
-        System.out.println(fsum);
-        System.out.println(isum);
-    }
-
-    private static int chunk(float fsum, int isum, int count) {
-        for (int i = 0; i < count; i++) {
-            fsum += 0.1;
-            isum = (int) fsum;
-        }
-        return isum;
-    }
 }
