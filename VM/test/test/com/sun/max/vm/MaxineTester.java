@@ -120,7 +120,7 @@ public class MaxineTester {
                     "Report internal and external timing for tests compared to the baseline (external) VM.");
     private static final Option<Integer> timingRunsOption = options.newIntegerOption("timing-runs", 1,
                     "The number of timing runs to perform.");
-    private static final Option<Boolean> execTimesOption = options.newBooleanOption("exec-times", true,
+    private static final Option<Boolean> execTimesOption = options.newBooleanOption("exec-times", false,
                     "Report the time taken for each executed subprocess.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
                     "Show help message and exit.");
