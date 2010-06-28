@@ -511,8 +511,6 @@ public final class MaxineVM {
         // Initialize the trap system:
         Trap.initialize();
 
-        Code.initialize();
-
         ImmortalHeap.initialize();
 
         NativeInterfaces.initialize(jniEnv, jmmInterface);
@@ -526,6 +524,10 @@ public final class MaxineVM {
         vm.phase = Phase.PRISTINE;
 
         if (VMOptions.parsePristine(argc, argv)) {
+
+            // Code manager initialization must happen after parsing of pristine options
+            Code.initialize();
+
             if (!VMOptions.earlyVMExitRequested()) {
                 VmThread.createAndRunMainThread();
             }
