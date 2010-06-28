@@ -70,10 +70,10 @@ public class JVMFunctions {
         return result.toArray(new Class[result.size()]);
     }
 
-    private static final CriticalMethod javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke",
+    static final CriticalMethod javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke",
         SignatureDescriptor.create(Object.class, Object.class, Object[].class));
 
-    private static class LatestUserDefinedLoaderVisitor implements RawStackFrameVisitor {
+    static class LatestUserDefinedLoaderVisitor implements RawStackFrameVisitor {
         ClassLoader result;
         public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
             if (isTopFrame || targetMethod == null || targetMethod instanceof Adapter || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {

@@ -897,7 +897,7 @@ public final class GraphBuilder {
     private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, FrameState stateBefore, int cpi, RiConstantPool constantPool) {
         Value receiver = args[0];
         // attempt to devirtualize the call
-        if (target.isResolved() && target.holder().isResolved()) {
+        if (target.isResolved()) {
             RiType klass = target.holder();
             // 0. check for trivial cases
             if (target.canBeStaticallyBound() && !isAbstract(target.accessFlags())) {
@@ -1330,7 +1330,7 @@ public final class GraphBuilder {
     }
 
     void pushScope(RiMethod target, BlockBegin continuation) {
-        IRScope calleeScope = new IRScope(compilation, scope(), bci(), target, -1);
+        IRScope calleeScope = new IRScope(scope(), bci(), target, -1);
         BlockMap blockMap = compilation.getBlockMap(calleeScope.method, -1);
         calleeScope.setCallerState(curState);
         calleeScope.setStoresInLoops(blockMap.getStoresInLoops());
@@ -2087,41 +2087,6 @@ public final class GraphBuilder {
                 case PAUSE          : genPause(); break;
                 case LSB            : // fall through
                 case MSB            : genSignificantBit(opcode);break;
-
-//                case PCMPSWP: {
-//                    opcode |= readUnsigned2() << 8;
-//                    switch (opcode) {
-//                        case PCMPSWP_INT:
-//                        case PCMPSWP_INT_I:
-//                        case PCMPSWP_WORD:
-//                        case PCMPSWP_WORD_I: {
-//                            popCategory1();
-//                            popCategory1();
-//                            popCategory1();
-//                            break;
-//                        }
-//                        case PCMPSWP_REFERENCE:
-//                        case PCMPSWP_REFERENCE_I: {
-//                            popCategory1();
-//                            popCategory1();
-//                            popCategory1();
-//                            popCategory1();
-//                            pushRef();
-//                            break;
-//                        }
-//                        default: {
-//                            FatalError.unexpected("Unknown bytcode");
-//                        }
-//                    }
-//                    break;
-//                }
-
-//                case MEMBAR: {
-//                    skip2();
-//                    break;
-//                }
-
-
 
                 case BREAKPOINT:
                     throw new CiBailout("concurrent setting of breakpoint");

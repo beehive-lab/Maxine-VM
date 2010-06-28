@@ -37,8 +37,6 @@ public class IRScope {
     public final IRScope caller;
     public final RiMethod method;
     public final int level;
-    public final C1XCompilation compilation; // TODO: remove this field
-
     final int callerBCI;
     CiCodePos callerCodeSite;
 
@@ -49,8 +47,7 @@ public class IRScope {
 
     BitMap storesInLoops;
 
-    public IRScope(C1XCompilation compilation, IRScope caller, int callerBCI, RiMethod method, int osrBCI) {
-        this.compilation = compilation;
+    public IRScope(IRScope caller, int callerBCI, RiMethod method, int osrBCI) {
         this.caller = caller;
         this.callerBCI = callerBCI;
         this.method = method;
