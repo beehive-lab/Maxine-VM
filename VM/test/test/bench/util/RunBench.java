@@ -20,10 +20,11 @@
  */
 package test.bench.util;
 
+import java.lang.reflect.*;
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.program.*;
-
 
 
 /**
@@ -47,6 +48,8 @@ import com.sun.max.program.*;
  * {@value #WARMUP_COUNT_PROPERTY} to the number of warm-up iterations. No timings are collected for the warm-up phase.
  * <p>
  * The non-encapsulating, non-warm-up runs can be traced by setting the property {@value #TRACE_PROPERTY}.
+ *
+ * The non-encapsulating, non-warm-up runs can be saved to a file by setting the property {@value #FILE_PROPERTY}
  * <p>
  * Once an instance of the subclass of {@code RunBench} has been created, the benchmark may be run by invoking
  * {@link #runBench}. There are three variants of {@link #runBench}; the first two use the {@value #DEFAULT_LOOP_COUNT
@@ -116,8 +119,11 @@ public class RunBench {
     private static final String LOOP_COUNT_PROPERTY = "test.bench.loopcount";
     private static final String WARMUP_COUNT_PROPERTY = "test.bench.warmupcount";
     private static final String DISPLAY_INDIVIDUAL_PROPERTY = "test.bench.displayall";
+    private static final String FILE_PROPERTY = "test.bench.file";
     private static final String TRACE_PROPERTY = "test.bench.trace";
     private static final MicroBenchmark emptyEncap = new EmptyEncap();
+    private static String fileNameBase;
+    private static int fileNameIndex;
 
     /**
      * Check if any control properties are set.
@@ -136,6 +142,7 @@ public class RunBench {
             ProgramError.unexpected("test.bench.loopcount " + lps + " did not parse");
         }
         trace = System.getProperty(TRACE_PROPERTY) != null;
+        fileNameBase = System.getProperty(FILE_PROPERTY);
     }
 
     /*
@@ -228,16 +235,38 @@ public class RunBench {
 
             System.out.println("Benchmark results (nanoseconds)");
             System.out.println("  loopcount: " + loopCount);
-            System.out.println("  averge overhead per iteration: " + avgEncapElapsed);
-            System.out.println("  average elapsed per iteration: " + benchElapsed);
-            System.out.println("  median elapsed: " + median(elapsed));
+            System.out.println("  averge overhead per iteration: " + avgEncapElapsed + ", median overhead per iteration " + median(encapElapsed));
+            System.out.println("  average elapsed per iteration: " + avgElapsed + ", median elapsed per iteration " + median(elapsed));
+            System.out.println("  average elapsed minus overhead: " + benchElapsed);
 
             if (getProperty(DISPLAY_INDIVIDUAL_PROPERTY, false) != null) {
                 displayElapsed();
             }
         }
+        if (fileNameBase != null) {
+            fileOutput("E", encapElapsed);
+            fileOutput("R", elapsed);
+            fileNameIndex++;
+        }
         this.loopCount = 0;
         return true;
+    }
+
+    private void fileOutput(String type, long[] timings) {
+        PrintWriter bs = null;
+        try {
+            bs = new PrintWriter(new BufferedWriter(new FileWriter(fileNameBase + "-" + type + fileNameIndex)));
+            for (int i = 0; i < timings.length; i++) {
+                bs.println(timings[i]);
+            }
+        } catch (IOException ex) {
+            System.out.print(ex);
+        } finally {
+            if (bs != null) {
+                bs.close();
+            }
+        }
+
     }
 
     private void doRun(long loopCount, MicroBenchmark bench, long[] timings) throws Throwable {
@@ -302,6 +331,26 @@ public class RunBench {
 
     public static String getRequiredProperty(String name) {
         return getProperty(name, true);
+    }
+
+    public static void runTest(Class<? extends RunBench> testClass, String[] args) {
+        try {
+            Method testMethod = testClass.getDeclaredMethod("test", new Class<?>[]{});
+            int runs = 1;
+            // Checkstyle: stop modified control variable check
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("r")) {
+                    runs = Integer.parseInt(args[++i]);
+                }
+            }
+            // Checkstyle: resume modified control variable check
+            Object[] noArgs = new Object[0];
+            for (int i = 0; i < runs; i++) {
+                testMethod.invoke(null, noArgs);
+            }
+        } catch (Exception ex) {
+            System.err.println(ex);
+        }
     }
 
 }
