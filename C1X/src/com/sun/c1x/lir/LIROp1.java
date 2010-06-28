@@ -47,7 +47,7 @@ public class LIROp1 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp1(LIROpcode opcode, CiValue opr, CiValue result, CiKind kind, LIRDebugInfo info) {
-        super(opcode, result, info, false, null, 0, 0, opr);
+        super(opcode, result, info, false, 0, 0, opr);
         this.kind = kind;
         this.moveKind = LIRMoveKind.Normal;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
@@ -96,7 +96,7 @@ public class LIROp1 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp1(LIRMoveKind moveKind, CiValue operand, CiValue result, CiKind kind, LIRDebugInfo info) {
-        super(LIROpcode.Move, result, info, false, null, 0, 0, operand);
+        super(LIROpcode.Move, result, info, false, 0, 0, operand);
         this.kind = kind;
         this.moveKind = moveKind;
     }
@@ -109,7 +109,7 @@ public class LIROp1 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp1(LIROpcode opcode, CiValue opr, LIRDebugInfo info) {
-        super(opcode, CiValue.IllegalValue, info, false, null, 0, 0, opr);
+        super(opcode, CiValue.IllegalValue, info, false, 0, 0, opr);
         this.kind = CiKind.Illegal;
         this.moveKind = LIRMoveKind.Normal;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";

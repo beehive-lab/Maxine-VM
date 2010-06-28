@@ -177,11 +177,11 @@ public final class PrototypeGenerator {
      * Create the Java prototype, which includes the basic JDK and Maxine classes.
      *
      * @param vmConfiguration the default VM configuration
-     * @param loadingPackages a boolean indicating whether to load the basic VM and JDK packages
+     * @param complete specifies whether to load more than just the VM scheme packages
      * @return a new Java prototype object
      */
-    public JavaPrototype createJavaPrototype(VMConfiguration vmConfiguration, boolean loadingPackages) {
-        return new JavaPrototype(createVMConfiguration(vmConfiguration), loadingPackages);
+    public JavaPrototype createJavaPrototype(VMConfiguration vmConfiguration, boolean complete) {
+        return new JavaPrototype(createVMConfiguration(vmConfiguration), complete);
     }
 
     /**
