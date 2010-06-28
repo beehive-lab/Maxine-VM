@@ -1119,7 +1119,7 @@ public abstract class ClassActor extends Actor implements RiType {
     private void checkProhibited(Utf8Constant typeName) {
         if (prohibitedPackagePrefix != null &&
             !isArrayClass() &&
-            !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString()) &&
+            !InvocationStubGenerator.isInvocationStubClassName(typeName.string) &&
             typeName.string.startsWith(prohibitedPackagePrefix)) {
             throw new ProhibitedPackageError(typeName.string);
         }

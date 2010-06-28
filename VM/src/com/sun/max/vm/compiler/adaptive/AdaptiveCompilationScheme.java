@@ -27,10 +27,12 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.profile.*;
+import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -199,6 +201,11 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 if (targetState == null) {
                     // this is the first compilation.
                     RuntimeCompilerScheme compiler = !retrying ? selectCompiler(classMethodActor, true, recommendedCompiler) : bootCompiler;
+
+                    if (classMethodActor.holder().name.string.contains("_builtin_") && compiler.name().startsWith("C1X")) {
+                        System.console();
+                        selectCompiler(classMethodActor, true, recommendedCompiler);
+                    }
                     compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                     classMethodActor.targetState = compilation;
                 } else if (targetState instanceof Compilation) {
@@ -280,7 +287,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
         int flags = classMethodActor.flags() | classMethodActor.compilee().flags();
         if (Actor.isUnsafe(flags)) {
-            if (!Actor.isNative(flags)) {
+            if (classMethodActor.accessor() != null || classMethodActor.holder().isGenerated()) {
                 return bootCompiler;
             }
             return optCompiler;
@@ -295,8 +302,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (classMethodActor.getAnnotation(SNIPPET.class) != null) {
                 // snippets must be compiled with the boot compiler
                 compiler = bootCompiler;
-            } else if (classMethodActor.isSynthetic()) {
-                // at boot time, invocation stubs must be compiled with the boot compiler
+            } else if (classMethodActor.holder().isGenerated()) {
+                // Invocation stubs for builtins must be compiled with CPS.
+                // To satisfy this, we simply compile all invocation stubs with CPS for now.
                 compiler = bootCompiler;
             } else if (mode == Mode.PROTOTYPE_JIT) {
                 compiler = jitCompiler;

@@ -65,8 +65,8 @@ public final class UnsafeCast {
     @INTRINSIC(UNSAFE_CAST) public static StackUnwindingContext    asStackUnwindingContext(Object object) { return (StackUnwindingContext) object; }
     @INTRINSIC(UNSAFE_CAST) public static Class                    asClass(Object object) { return (Class) object; }
     @INTRINSIC(UNSAFE_CAST) public static ClassRegistry            asClassRegistry(Object object) { return (ClassRegistry) object; }
-    @INTRINSIC(UNSAFE_CAST) public static GeneratedMethodStub      asGeneratedMethodStub(Object object) { return (GeneratedMethodStub) object; }
-    @INTRINSIC(UNSAFE_CAST) public static GeneratedConstructorStub asGeneratedConstructorStub(Object object) { return (GeneratedConstructorStub) object; }
+    @INTRINSIC(UNSAFE_CAST) public static MethodInvocationStub     asMethodInvocationStub(Object object) { return (MethodInvocationStub) object; }
+    @INTRINSIC(UNSAFE_CAST) public static ConstructorInvocationStub asConstructorInvocationStub(Object object) { return (ConstructorInvocationStub) object; }
     @INTRINSIC(UNSAFE_CAST) public static Throwable                asThrowable(Object object) { return (Throwable) object; }
     @INTRINSIC(UNSAFE_CAST) public static int[]                    asIntArray(Object object) { return (int[]) object; }
     @INTRINSIC(UNSAFE_CAST) public static DynamicHub               asDynamicHub(Object object) { return (DynamicHub) object; }

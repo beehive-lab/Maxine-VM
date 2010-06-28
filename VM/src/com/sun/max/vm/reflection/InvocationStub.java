@@ -27,17 +27,17 @@ import com.sun.max.vm.classfile.constant.*;
 
 /**
  * This class serves two purposes. Firstly, it is a marker for classes whose bytecodes should not be verified (a la
- * {@link sun.reflect.MagicAccessorImpl}). Secondly, it provides static methods for generating stubs that are used to
- * implement {@link Method#invoke(Object, Object...)} and {@link Constructor#newInstance(Object...)}.
+ * {@link sun.reflect.MagicAccessorImpl}). Secondly, it provides static methods for generating invocation stubs that
+ * are used to implement {@link Method#invoke(Object, Object...)} and {@link Constructor#newInstance(Object...)}.
  *
  * The bytecode generation is derived from the JDK 1.4 mechanism for the same purpose.
  *
  * @author Doug Simon
  * @see sun.reflect.MethodAccessorGenerator
  */
-public abstract class GeneratedStub {
+public abstract class InvocationStub {
 
-    GeneratedStub() {
+    InvocationStub() {
         // MUST BE EMPTY
     }
 
@@ -86,11 +86,11 @@ public abstract class GeneratedStub {
     /**
      * Generates a stub for invoking a given method reflectively.
      */
-    public static GeneratedMethodStub newMethodStub(Method method, Boxing boxing) {
+    public static MethodInvocationStub newMethodStub(Method method, Boxing boxing) {
 
-        final GeneratedMethodStub stub = new InvocationStubGenerator<GeneratedMethodStub>(
+        final MethodInvocationStub stub = new InvocationStubGenerator<MethodInvocationStub>(
                         method,
-                        GeneratedMethodStub.class,
+                        MethodInvocationStub.class,
                         MethodActor.fromJava(method).name,
                         method.getDeclaringClass(),
                         method.getReturnType(),
@@ -108,10 +108,10 @@ public abstract class GeneratedStub {
      * @param constructor that is to be invoked
      * @param classToInstantiate only non-null in the serialization context where it may differ from constructor.getDeclaringClass()
      */
-    public static GeneratedConstructorStub newConstructorStub(Constructor constructor, Class classToInstantiate, Boxing boxing) {
-        final GeneratedConstructorStub stub = new InvocationStubGenerator<GeneratedConstructorStub>(
+    public static ConstructorInvocationStub newConstructorStub(Constructor constructor, Class classToInstantiate, Boxing boxing) {
+        final ConstructorInvocationStub stub = new InvocationStubGenerator<ConstructorInvocationStub>(
                         constructor,
-                        GeneratedConstructorStub.class,
+                        ConstructorInvocationStub.class,
                         SymbolTable.INIT,
                         constructor.getDeclaringClass(),
                         Void.TYPE,
