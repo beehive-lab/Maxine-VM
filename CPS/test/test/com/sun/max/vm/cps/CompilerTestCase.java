@@ -21,7 +21,7 @@
 package test.com.sun.max.vm.cps;
 
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
-import static com.sun.max.vm.reflection.GeneratedStub.*;
+import static com.sun.max.vm.reflection.InvocationStub.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -320,7 +320,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
 
     protected Method_Type generateAndCompileStubFor(MethodActor classMethodActor, Boxing boxing) {
         if (classMethodActor.isInstanceInitializer()) {
-            final GeneratedConstructorStub stub = newConstructorStub(classMethodActor.toJavaConstructor(), null, boxing);
+            final ConstructorInvocationStub stub = newConstructorStub(classMethodActor.toJavaConstructor(), null, boxing);
             final ClassActor stubActor = ClassActor.fromJava(stub.getClass());
             compileClass(stubActor);
             final ClassMethodActor newInstanceActor = stubActor.findClassMethodActor(makeSymbol("newInstance"), boxing.newInstanceSignature());
@@ -343,7 +343,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
      * @param stub the compiled stub
      * @param arguments the execution arguments
      */
-    protected Value executeGeneratedStub(MethodActor classMethodActor, Method_Type stub, Boxing boxing, Value... arguments) throws InvocationTargetException {
+    protected Value executeInvocationStub(MethodActor classMethodActor, Method_Type stub, Boxing boxing, Value... arguments) throws InvocationTargetException {
         final Value[] boxedArguments;
         if (classMethodActor.isStatic()) {
             assert !classMethodActor.isInstanceInitializer();
@@ -435,7 +435,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
                 try {
                     final Method_Type stub = generateAndCompileStubFor(method.classMethodActor(), boxing);
                     try {
-                        final Value stubReturnValue = executeGeneratedStub(classMethodActor, stub, boxing, arguments);
+                        final Value stubReturnValue = executeInvocationStub(classMethodActor, stub, boxing, arguments);
                         if (stubProperties == null || stubProperties.compareResult()) {
                             if (returnValue.kind().isReference) {
                                 if (boxing == Boxing.VALUE) {
