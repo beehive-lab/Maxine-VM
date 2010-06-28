@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,42 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.bench.micro;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.bytecode;
+
+import test.bench.util.*;
 
 /**
- * A microbenchmark for floating point to integer conversions.
- * @author Ben L. Titzer
+ * Call a method with zero arguments.
+ *
+ * @author Mick Jordan
  */
-public class D2I {
 
-    private static int CHUNK_SIZE = 5000;
-    private static final int ITERATIONS = 500000000;
+public class MethodCall1L extends RunBench {
+
+    protected MethodCall1L() {
+        super(new Bench());
+    }
+
+    public static boolean test() {
+        return new MethodCall1L().runBench(true);
+    }
+
+    static class Bench extends AbstractMicroBenchmark {
+        public void run(boolean warmup) {
+            longArg(Long.MAX_VALUE);
+        }
+
+        private void longArg(long arg) {
+
+        }
+    }
 
     public static void main(String[] args) {
-        int count = ITERATIONS;
-        if (args.length > 0) {
-            count = Integer.parseInt(args[0]);
-        }
-        benchmark(count);
+        RunBench.runTest(MethodCall1L.class, args);
     }
 
-    public static void benchmark(int count) {
-        int chunks = (count + CHUNK_SIZE - 1) / CHUNK_SIZE;
-        double fsum = 0;
-        int isum = 0;
-        for (int i = 0; i <= chunks; i++) {
-            fsum += 0.4;
-            isum = chunk(fsum, isum, CHUNK_SIZE);
-        }
-        System.out.println(fsum);
-        System.out.println(isum);
-    }
-
-    private static int chunk(double fsum, int isum, int count) {
-        for (int i = 0; i < count; i++) {
-            fsum += 0.1;
-            isum = (int) fsum;
-        }
-        return isum;
-    }
 }
