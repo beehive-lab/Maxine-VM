@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ir;
 
+import java.lang.reflect.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -134,9 +136,13 @@ public class IRScope {
             lockStackSize = 0;
             return;
         }
+        // (ds) This calculation seems bogus to me. It's computing the stack depth of the closest caller
+        // that has no exception handlers. If I understand how this value is used, I think the correct
+        // thing to compute is the stack depth of the closest inlined call site not covered by an
+        // exception handler.
         IRScope curScope = this;
-        // TODO: should this calculation be done in ScopeData (because of synchronized handler)?
-        while (curScope != null && curScope.method.exceptionHandlers().length > 0) {
+        // Synchronized methods are implemented with a synthesized exception handler
+        while (curScope != null && (curScope.method.exceptionHandlers().length > 0 || Modifier.isSynchronized(curScope.method.accessFlags()))) {
             curScope = curScope.caller;
         }
         lockStackSize = curScope == null ? 0 : curScope.callerState() == null ? 0 : curScope.callerState().stackSize();
