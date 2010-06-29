@@ -44,7 +44,9 @@ public final class MonitorExit extends AccessMonitor {
 
     @Override
     public boolean canTrap() {
-        return true;
+        // C1X assumes that locks are well balanced and so there no need to handle
+        // IllegalMonitorStateExceptions thrown by monitorexit instructions.
+        return needsNullCheck();
     }
 
     /**
