@@ -27,12 +27,10 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.profile.*;
-import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
 
 /**
