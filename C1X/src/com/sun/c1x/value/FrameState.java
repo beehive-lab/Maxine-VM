@@ -91,20 +91,6 @@ public class FrameState {
         return other;
     }
 
-    public FrameState copyLocks() {
-        int size = scope().lockStackSize();
-        if (stackSize() == 0) {
-            size = 0;
-        }
-        FrameState s = new FrameState(scope(), localsSize(), maxStackSize());
-        s.replaceLocks(this);
-        s.replaceLocals(this);
-        s.replaceStack(this);
-        s.stackIndex = size; // trim stack back to lockstack size
-        s.unsafe = unsafe;
-        return s;
-    }
-
     /**
      * Gets a mutable copy of this frame state.
      */
@@ -575,7 +561,7 @@ public class FrameState {
         assert maxStackSize() >= scope.method.maxStackSize();
         FrameState res = new FrameState(callingScope, callingScope.method.maxLocals(), maxStackSize());
         res.replaceStack(this);
-        res.replaceLocks(this);
+        res.replaceLocks(scope.callerState()); // assumes locks are balanced for each frame
         res.replaceLocals(scope.callerState());
         res.unsafe = unsafe;
         return res;

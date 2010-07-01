@@ -291,6 +291,10 @@ public class C1XOptions {
         OptLocalLoadElimination         = true;
         OptCSEArrayLength               = true;
 
+        // turn on more aggressive inlining
+        OptInlineExcept                 = true;
+        OptInlineSynchronized           = true;
+
         // turn on state merging optimizations
         PhiLoopStores                   = true;
 
