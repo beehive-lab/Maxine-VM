@@ -22,7 +22,6 @@ package com.sun.max.tele.object;
 
 import java.util.*;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -41,8 +40,24 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     private boolean isBootCodeRegion = false;
     private final List<TeleTargetMethod> teleTargetMethods = new ArrayList<TeleTargetMethod>();
 
-    TeleCodeRegion(TeleVM teleVM, Reference codeRegionReference) {
-        super(teleVM, codeRegionReference);
+    private final Object localStatsPrinter = new Object() {
+
+        private int previousMethodCount = 0;
+
+        @Override
+        public String toString() {
+            final int methodCount = teleTargetMethods.size();
+            final int newMethodCount =  methodCount - previousMethodCount;
+            final StringBuilder msg = new StringBuilder();
+            msg.append("#methods=(").append(methodCount);
+            msg.append(",new=").append(newMethodCount).append(")");
+            previousMethodCount = methodCount;
+            return msg.toString();
+        }
+    };
+
+    TeleCodeRegion(TeleVM vm, Reference codeRegionReference) {
+        super(vm, codeRegionReference);
     }
 
     /**
@@ -61,6 +76,30 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     }
 
     @Override
+    protected void updateObjectCache(StatsPrinter statsPrinter) {
+        super.updateObjectCache(statsPrinter);
+        // Register any new compiled methods that have appeared since the previous refresh
+        // Don't try this until the code cache is ready, which it isn't early in the startup sequence.
+        // Also make sure that the region has actually been allocated before trying.
+        if (vm().codeCache().isInitialized() && isAllocated()) {
+            Reference targetMethodsReference = vm().teleFields().CodeRegion_targetMethods.readReference(reference());
+            int size = vm().teleFields().SortedMemoryRegionList_size.readInt(targetMethodsReference);
+            Reference regionsReference = vm().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethodsReference);
+            int index = teleTargetMethods.size();
+            while (index < size) {
+                Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, regionsReference, index).asReference();
+                TeleTargetMethod teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
+                assert teleTargetMethod != null;
+                teleTargetMethods.add(teleTargetMethod);
+                index++;
+            }
+            statsPrinter.addStat(localStatsPrinter);
+        } else {
+            statsPrinter.addStat(" skipping update");
+        }
+    }
+
+    @Override
     public Size getRegionSize() {
         if (isBootCodeRegion()) {
             // The explicit representation of the boot {@link CodeRegion} gets "trimmed" by setting its size
@@ -69,35 +108,6 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
             return Size.fromInt(vm().bootImage().header.codeSize);
         }
         return super.getRegionSize();
-    }
-
-    @Override
-    public void refresh() {
-        super.refresh();
-        // Register any new compiled methods that have appeared since the previous refresh
-        // Don't try this until the code cache is ready, which it isn't early in the startup sequence.
-        // Also make sure that the region has actually been allocated before trying.
-        if (vm().codeCache().isInitialized() && !getRegionStart().isZero() && vm().tryLock()) {
-            try {
-                Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
-                final long startTimeMillis = System.currentTimeMillis();
-                Reference targetMethodsReference = vm().teleFields().CodeRegion_targetMethods.readReference(reference());
-                int size = vm().teleFields().SortedMemoryRegionList_size.readInt(targetMethodsReference);
-                Reference regionsReference = vm().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethodsReference);
-                int index = teleTargetMethods.size();
-                final int delta = size - index;
-                while (index < size) {
-                    Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, regionsReference, index).asReference();
-                    TeleTargetMethod teleTargetMethod = (TeleTargetMethod) vm().makeTeleObject(targetMethodReference);
-                    assert teleTargetMethod != null;
-                    teleTargetMethods.add(teleTargetMethod);
-                    index++;
-                }
-                Trace.end(TRACE_VALUE, tracePrefix() + "refreshing: new target methods =" + delta, startTimeMillis);
-            } finally {
-                vm().unlock();
-            }
-        }
     }
 
     /**

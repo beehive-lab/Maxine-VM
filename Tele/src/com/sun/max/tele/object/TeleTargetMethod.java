@@ -88,13 +88,13 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      *
      * TODO: Once inlining dependencies are tracked, this method needs to use them.
      *
-     * @param teleVM the VM to search
+     * @param vm the VM to search
      * @param methodKey the key denoting a method for which the target methods are being requested
      * @return local surrogates for all {@link TargetMethod}s in the VM that include code compiled for the
      *         method matching {@code methodKey}
      */
-    public static List<TeleTargetMethod> get(TeleVM teleVM, MethodKey methodKey) {
-        TeleClassActor teleClassActor = teleVM.findTeleClassActor(methodKey.holder());
+    public static List<TeleTargetMethod> get(TeleVM vm, MethodKey methodKey) {
+        TeleClassActor teleClassActor = vm.findTeleClassActor(methodKey.holder());
         if (teleClassActor != null) {
             final List<TeleTargetMethod> result = new LinkedList<TeleTargetMethod>();
             for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
@@ -134,14 +134,14 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
     private TargetABI abi;
 
-    protected TeleTargetMethod(TeleVM teleVM, Reference targetMethodReference) {
-        super(teleVM, targetMethodReference);
+    protected TeleTargetMethod(TeleVM vm, Reference targetMethodReference) {
+        super(vm, targetMethodReference);
         // Exception to the general policy of not performing VM i/o during object
         // construction.  This is needed for the code registry.
         // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
-        refresh();
+        updateCache();
         // Register every method compilation, so that they can be located by code address.
-        teleVM.codeCache().register(this);
+        vm.codeCache().register(this);
     }
 
     public final TargetMethod targetMethod() {
@@ -188,7 +188,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 try {
                     final Reference callEntryPointReference =
                         TeleInstanceReferenceFieldAccess.readPath(reference(), vm().teleFields().TargetMethod_abi, vm().teleFields().TargetABI_callEntryPoint);
-                    teleCallEntryPoint = vm().makeTeleObject(callEntryPointReference);
+                    teleCallEntryPoint = heap().makeTeleObject(callEntryPointReference);
                 } finally {
                     vm().unlock();
                 }
@@ -212,7 +212,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         if (teleClassMethodActor == null && vm().tryLock()) {
             try {
                 final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
-                teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
+                teleClassMethodActor = (TeleClassMethodActor) heap().makeTeleObject(classMethodActorReference);
             } finally {
                 vm().unlock();
             }
@@ -361,7 +361,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         if (abi == null && vm().tryLock()) {
             try {
                 final Reference abiReference = vm().teleFields().TargetMethod_abi.readReference(reference());
-                final TeleObject teleTargetABI = vm().makeTeleObject(abiReference);
+                final TeleObject teleTargetABI = heap().makeTeleObject(abiReference);
                 if (teleTargetABI != null) {
                     abi = abiCache.get(teleTargetABI);
                     if (abi == null) {

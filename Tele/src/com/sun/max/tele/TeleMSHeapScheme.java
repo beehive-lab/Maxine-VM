@@ -60,7 +60,7 @@ public final class TeleMSHeapScheme extends AbstractTeleVMHolder implements Tele
     }
 
     public boolean isInLiveMemory(Address address) {
-        if (vm().heap().isInGC()) {
+        if (heap().isInGC()) {
             // Unclear what the semantics of this should be during GC.
             // We should be able to tell past the marking phase if an address point to a live object.
             // But what about during the marking phase ? The only thing that can be told is that

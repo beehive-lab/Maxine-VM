@@ -27,6 +27,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.reference.*;
@@ -44,9 +45,11 @@ import com.sun.max.vm.value.*;
  * @see com.sun.max.vm.code.CodeManager
  * @author Michael Van De Vanter
  */
-public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCodeCache {
+public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMCache, MaxCodeCache {
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
+
+    private final TimedTrace updateTracer;
 
     private final String entityName = "Code Cache";
     private final String entityDescription;
@@ -60,7 +63,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
      * Contains all the compiled code we know about,
      * organized for lookup by address.
      */
-    private CodeRegistry codeRegistry;
+    private final CodeRegistry codeRegistry;
 
     private final String bootCodeRegionName;
     private TeleCompiledCodeRegion bootCodeRegion = null;
@@ -76,18 +79,16 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
      * <br>
      * A subsequent call to {@link #initialize()} is required before this object is functional.
      */
-    public TeleCodeCache(TeleVM teleVM) {
-        super(teleVM);
-        entityDescription = "Storage managment in the " + vm().entityName() + " for method compilations";
-        if (!teleVM.tryLock()) {
-            ProgramError.unexpected("Unable to initialize code cache from VM");
-        }
-        try {
-            final Reference nameReference = vm().teleFields().Code_CODE_BOOT_NAME.readReference(vm());
-            bootCodeRegionName = vm().getString(nameReference);
-        } finally {
-            teleVM.unlock();
-        }
+    public TeleCodeCache(TeleVM vm) {
+        super(vm);
+        assert vm().lockHeldByCurrentThread();
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        tracer.begin();
+        this.codeRegistry = new CodeRegistry(vm);
+        this.entityDescription = "Storage managment in the " + vm().entityName() + " for method compilations";
+        this.bootCodeRegionName = vm().getString(vm().teleFields().Code_CODE_BOOT_NAME.readReference(vm()));
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+        tracer.end(null);
     }
 
     /**
@@ -105,18 +106,11 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
      * the cache of information about method compilations in the boot code region.
      */
     public void initialize() {
-        Trace.begin(1, tracePrefix() + " initializing");
-        final long startTimeMillis = System.currentTimeMillis();
+        assert vm().lockHeldByCurrentThread();
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " initializing");
+        tracer.begin();
 
-        if (!vm().tryLock()) {
-            ProgramError.unexpected("Unable to initialize code cache from VM");
-        }
-        try {
-            teleCodeManager = (TeleCodeManager) vm().makeTeleObject(vm().teleFields().Code_codeManager.readReference(vm()));
-        } finally {
-            vm().unlock();
-        }
-
+        teleCodeManager = (TeleCodeManager) heap().makeTeleObject(vm().teleFields().Code_codeManager.readReference(vm()));
         bootCodeRegion = new TeleCompiledCodeRegion(vm(), teleCodeManager.teleBootCodeRegion(), true);
         dynamicCodeRegion = new TeleCompiledCodeRegion(vm(), teleCodeManager.teleRuntimeCodeRegion(), false);
 
@@ -125,21 +119,16 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         regions.add(dynamicCodeRegion);
         compiledCodeRegions = Collections.unmodifiableList(regions);
 
-        int methodCount = 0;
-        for (TeleTargetMethod teleTargetMethod : bootCodeRegion().teleTargetMethods()) {
-            // Force information about each method to be preloaded from the VM.
-            teleTargetMethod.classMethodActor();
-            methodCount++;
-        }
-        Trace.end(1, tracePrefix() + " initializing (" + methodCount + " methods in boot code region pre-loaded)", startTimeMillis);
+        tracer.end(null);
     }
 
-    public void refresh() {
-        Trace.begin(TRACE_VALUE, tracePrefix() + " refreshing");
-        codeRegistry.refresh();
-        bootCodeRegion.refresh();
-        dynamicCodeRegion.refresh();
-        Trace.end(TRACE_VALUE, tracePrefix() + " refreshing");
+    public void updateCache() {
+        updateTracer.begin();
+        assert vm().lockHeldByCurrentThread();
+        codeRegistry.updateCache();
+        bootCodeRegion.updateCache();
+        dynamicCodeRegion.updateCache();
+        updateTracer.end(null);
     }
 
     public String entityName() {
@@ -180,7 +169,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     }
 
     public MaxMachineCode< ? extends MaxMachineCode> findMachineCode(Address address) {
-        TeleExternalCode externalCode = codeRegistry().getExternalCode(address);
+        TeleExternalCode externalCode = codeRegistry.getExternalCode(address);
         if (externalCode != null) {
             return externalCode;
         }
@@ -188,7 +177,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
     }
 
     public TeleCompiledCode findCompiledCode(Address address) {
-        TeleCompiledCode teleCompiledCode = codeRegistry().getCompiledCode(address);
+        TeleCompiledCode teleCompiledCode = codeRegistry.getCompiledCode(address);
         if (teleCompiledCode == null) {
             // Not a known Java method.
             if (!contains(address)) {
@@ -201,14 +190,14 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
                 final Reference targetMethodReference = vm().teleMethods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
                 // Possible that the address points to an unallocated area of a code region.
                 if (targetMethodReference != null && !targetMethodReference.isZero()) {
-                    vm().makeTeleObject(targetMethodReference);  // Constructor will register the compiled method if successful
+                    heap().makeTeleObject(targetMethodReference);  // Constructor will register the compiled method if successful
                 }
             } catch (MaxVMBusyException maxVMBusyException) {
             } catch (TeleInterpreterException e) {
                 throw ProgramError.unexpected(e);
             }
             // If a new method was discovered, then it will have been added to the registry.
-            teleCompiledCode = codeRegistry().getCompiledCode(address);
+            teleCompiledCode = codeRegistry.getCompiledCode(address);
         }
         return teleCompiledCode;
     }
@@ -221,21 +210,35 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return Collections.unmodifiableList(compilations);
     }
 
-    public TeleCompiledCode latestCompilation(TeleClassMethodActor teleClassMethodActor) {
-        final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
-        return teleTargetMethod == null ? null : findCompiledCode(teleTargetMethod.getRegionStart());
+    public TeleCompiledCode latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException {
+        if (!vm().tryLock()) {
+            throw new MaxVMBusyException();
+        }
+        try {
+            final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentCompilation();
+            return teleTargetMethod == null ? null : findCompiledCode(teleTargetMethod.getRegionStart());
+        } finally {
+            vm().unlock();
+        }
     }
 
     public MaxExternalCode findExternalCode(Address address) {
-        return codeRegistry().getExternalCode(address);
+        return codeRegistry.getExternalCode(address);
     }
 
-    public TeleExternalCode createExternalCode(Address codeStart, Size codeSize, String name) {
-        return TeleExternalCode.create(vm(), codeStart, codeSize, name);
+    public TeleExternalCode createExternalCode(Address codeStart, Size codeSize, String name) throws MaxVMBusyException {
+        if (!vm().tryLock()) {
+            throw new MaxVMBusyException();
+        }
+        try {
+            return TeleExternalCode.create(vm(), codeStart, codeSize, name);
+        } finally {
+            vm().unlock();
+        }
     }
 
     public void writeSummary(PrintStream printStream) {
-        codeRegistry().writeSummary(printStream);
+        codeRegistry.writeSummary(printStream);
     }
 
     /**
@@ -250,15 +253,8 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
         return bootCodeRegionName;
     }
 
-    private synchronized CodeRegistry codeRegistry() {
-        if (codeRegistry == null) {
-            codeRegistry = new CodeRegistry(vm());
-        }
-        return codeRegistry;
-    }
-
     public void register(TeleExternalCode teleExternalCode) {
-        codeRegistry().add(teleExternalCode);
+        codeRegistry.add(teleExternalCode);
 
     }
 
@@ -271,7 +267,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements MaxCode
      */
     public void register(TeleTargetMethod teleTargetMethod) {
         final TeleCompiledCodeRegion teleCompiledCodeRegion = findCompiledCodeRegion(teleTargetMethod.getRegionStart());
-        codeRegistry().add(new TeleCompiledCode(vm(), teleTargetMethod, this, teleCompiledCodeRegion == bootCodeRegion));
+        codeRegistry.add(new TeleCompiledCode(vm(), teleTargetMethod, this, teleCompiledCodeRegion == bootCodeRegion));
     }
 
 }

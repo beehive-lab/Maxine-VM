@@ -333,55 +333,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     Value getElementValue(Kind kind, Reference reference, int index) throws InvalidReferenceException;
 
     /**
-     * Factory for TeleObjects, local surrogates for objects in the heap of the VM, which
-     * provide access to object contents and specialized methods that encapsulate
-     * knowledge of the heap's design.
-     * Special subclasses are created for Maxine implementation objects of special interest,
-     *  and for other objects for which special treatment is needed.
-     *
-     * @param reference a heap object in the VM;
-     * @return a canonical local surrogate for the object, null for the distinguished zero {@link Reference}.
-     */
-    TeleObject makeTeleObject(Reference reference);
-
-    /**
      * Interesting, predefined method entries that might be useful, for example, for setting breakpoints.
      *
      * @return possibly interesting, predefined methods.
      */
     List<MaxCodeLocation> inspectableMethods();
-
-    /**
-     * @param id an id assigned to each heap object in the VM as needed, unique for the duration of a VM execution.
-     * @return an accessor for the specified heap object.
-     */
-    TeleObject findObjectByOID(long id);
-
-    /**
-     * Finds an object whose origin is at the specified address.
-     *
-     * @param origin memory location in the VM
-     * @return surrogate for a VM object, null if none found
-     */
-    TeleObject findObjectAt(Address origin);
-
-    /**
-     * Scans VM memory backwards (smaller address) for an object whose cell begins at the specified address.
-     *
-     * @param cellAddress search starts with word preceding this address
-     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
-     * @return surrogate for a VM object, null if none found
-     */
-    TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent);
-
-    /**
-     * Scans VM memory forward (larger address) for an object whose cell begins at the specified address.
-     *
-     * @param cellAddress search starts with word following this address
-     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
-     * @return surrogate for a VM object, null if none found
-     */
-    TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent);
 
     /**
      * @param id  Class ID of a {@link ClassActor} in the VM.
@@ -545,6 +501,25 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @param fileName name of a file containing commands.
      */
     void executeCommandsFromFile(String fileName);
+
+    /**
+     * Attempt to acquire access to the internal state of the VM, after which the VM will not be busy
+     * and in fact cannot be run until the access is released. This is a temporary measure for allowing
+     * free access to objects in the Tele project that are not yet isolated by interfaces.
+     *
+     * @see #releaseLegacyVMAccess()
+     * @throws MaxVMBusyException if access cannot be acquired
+     */
+    void acquireLegacyVMAccess() throws MaxVMBusyException;
+
+    /**
+     * Release any access to the VM previously acquired; this must be done after access has
+     * been acquired so that the VM can be run. This is a temporary measure for allowing
+     * free access to objects in the Tele project that are not yet isolated by interfaces.
+     *
+     * @see MaxVM#acquireLegacyVMAccess()
+     */
+    void releaseLegacyVMAccess();
 
 }
 

@@ -30,6 +30,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
@@ -43,49 +44,98 @@ import com.sun.max.vm.value.*;
 /**
  * Canonical surrogate for a heap object in the VM.
  *
- * This class and its subclasses play the role of typed wrappers for References to heap objects in the VM,
- * encapsulating implementation details for working with those objects remotely.
- * <br>
- * Each implementation is expected to either avoid caching any values read from the VM, or to update any
- * caches each time {@link #refresh()} is called.
+ * This class and its subclasses play the role of typed wrappers for References to heap objects in the VM, encapsulating
+ * implementation details for working with those objects remotely. <br>
+ * Each implementation is expected to either avoid caching any values read from the VM, or to override
+ * {@link #updateCache()} and refresh the cache(s) when that method is called.
  *
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectProvider, TeleObjectMemory {
+public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMCache, ObjectProvider, TeleObjectMemory {
 
     /**
-     * Identification for the three low-level Maxine heap objects implementations upon which all objects are implemented.
+     * Identification for the three low-level Maxine heap objects implementations upon which all objects are
+     * implemented.
+     *
      * @see com.sun.max.vm.object.ObjectAccess
      */
     public enum ObjectKind {
 
         /**
          * A Maxine implementation object that represents a Java array.
+         *
          * @see com.sun.max.vm.object.ArrayAccess
          */
         ARRAY,
 
         /**
-         * A Maxine implementation object that represents a Java object instance:  a collection of name/value pairs.
+         * A Maxine implementation object that represents a Java object instance: a collection of name/value pairs.
+         *
          * @see com.sun.max.vm.object.TupleAccess
          */
         TUPLE,
 
         /**
-         * A special Maxine implementation object used to implement {@link Hub}s.
-         * These represent special objects that cannot be described in ordinary Java;
-         * they have both fields (as in an object instance) and a collection of
+         * A special Maxine implementation object used to implement {@link Hub}s. These represent special objects that
+         * cannot be described in ordinary Java; they have both fields (as in an object instance) and a collection of
          * specialized arrays.
+         *
          * @see com.sun.max.vm.object.Hybrid
          */
         HYBRID;
     }
 
     /**
+     * A simple class for aggregating lazily printed statistics, represented as a sequence of objects to be converted to
+     * comma separate strings when actually printed.
+     *
+     * @author Michael Van De Vanter
+     */
+    protected final class StatsPrinter {
+
+        private final List<Object> statsPrinters = new ArrayList<Object>(10);
+
+        /**
+         * Adds a statistic to be reported.
+         *
+         * @param obj an object whose string value will be printed
+         * @return a new printer containing nothing to be printed.
+         */
+        public StatsPrinter addStat(Object obj) {
+            statsPrinters.add(obj == null ? "<unitialized stats>" : obj);
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            final int size = statsPrinters.size();
+            if (size == 0) {
+                return "";
+            }
+            StringBuilder sb = new StringBuilder(50);
+            for (int index = 0; index < size; index++) {
+                sb.append(statsPrinters.get(index).toString());
+                if (index < size - 1) {
+                    sb.append(", ");
+                }
+            }
+            return sb.toString();
+        }
+    }
+
+    /**
+     * Default tracing for individual object cache updates, which would generate a tremendous amount of trace output
+     * during each update cycle. Consider overriding for specific subclasses.
+     */
+    private static final int UPDATE_TRACE_VALUE = 3;
+
+    /**
      * Controls tracing for deep object copying.
      */
     protected static final int COPY_TRACE_VALUE = 2;
+
+    private TimedTrace updateTracer = null;
 
     private TeleReference reference;
     private final LayoutScheme layoutScheme;
@@ -96,49 +146,96 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     private Pointer lastValidPointer;
 
     /**
-     * A "surrogate" object that encapsulates information about an object in the VM.
-     * <br>
-     * This is not the same thing as a Proxy, although it can be used that way.  Specific subclasses
-     * encapsulate design information about the structure of the VM that enable useful access
-     * methods beyond simple field or element access.  Most important are the subclasses for
-     * {@link Actor}s, objects in the VM that encapsulate meta-information about the language and
-     * object representation.
-     * <br>
+     * A "surrogate" object that encapsulates information about an object in the VM. <br>
+     * This is not the same thing as a Proxy, although it can be used that way. Specific subclasses encapsulate design
+     * information about the structure of the VM that enable useful access methods beyond simple field or element
+     * access. Most important are the subclasses for {@link Actor}s, objects in the VM that encapsulate meta-information
+     * about the language and object representation. <br>
      * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation.
      *
-     * @param teleVM the VM in which the object resides
+     * @param vm the VM in which the object resides
      * @param reference the location of the object in the VM (whose absolute address can change via GC)
      * @param specificLayout information about the layout of information in the object
      */
-    protected TeleObject(TeleVM teleVM, Reference reference, SpecificLayout specificLayout) {
-        super(teleVM);
+    protected TeleObject(TeleVM vm, Reference reference, SpecificLayout specificLayout) {
+        super(vm);
         this.reference = (TeleReference) reference;
-        this.layoutScheme = teleVM.vmConfiguration().layoutScheme();
+        this.layoutScheme = vm.vmConfiguration().layoutScheme();
         this.specificLayout = specificLayout;
         oid = this.reference.makeOID();
         lastValidPointer = Pointer.zero();
+
     }
 
-    public TeleObjectMemory.State getTeleObjectMemoryState() {
+    private TimedTrace tracer() {
+        if (updateTracer == null) {
+            updateTracer = new TimedTrace(UPDATE_TRACE_VALUE, tracePrefix() + " updating");
+        }
+        return updateTracer;
+    }
+
+    public final void updateCache() {
+        // Note that this method gets called automatically as part of instance creation
+        // in {@link TeleObjectFactory#make(Reference)}
+
+        // TODO (mlvdv) restore thread-lock assertion here for all updates??
+
+        final StatsPrinter statsPrinter = new StatsPrinter();
+
+        // Do some specialized tracing here, since there are subclasses that we
+        // want to contribute to the tracing statistics, and since we want to
+        // selectively trace certain subclasses.
+        tracer().begin(getObjectUpdateTraceValue());
+        updateObjectCache(statsPrinter);
+        tracer().end(getObjectUpdateTraceValue(), statsPrinter);
+
+        /*
+         * if (reference.toOrigin().equals(Pointer.zero())) { live = false; }
+         */
+    }
+
+    /**
+     * Gets the level at which to present a trace of individual object updates, specified
+     * here as the default.  Subclasses should override to lower the level for specific types,
+     * since producing traces for every object update would generate an unworkably large amound
+     * of output.
+     *
+     * @return the trace level that should bye used by this object during updates
+     */
+    protected int getObjectUpdateTraceValue() {
+        return UPDATE_TRACE_VALUE;
+    }
+
+    /**
+     * Internal call to subclasses to update their state, wrapped in the {@link TeleObject} class to provide timing and
+     * update statistics reporting.
+     *
+     * @param statsPrinters list of objects that report statistics for updates performed on this object so far (with no
+     *            newlines)
+     */
+    protected void updateObjectCache(StatsPrinter statsPrinter) {
+    }
+
+    public final TeleObjectMemory.State getTeleObjectMemoryState() {
         return reference.grip().getTeleObjectMemoryState();
     }
 
-    public boolean isLive() {
+    public final boolean isLive() {
         return reference.grip().isLive();
     }
 
-    public boolean isObsolete() {
+    public final boolean isObsolete() {
         return reference.grip().isObsolete();
     }
 
-    public boolean isDead() {
+    public final boolean isDead() {
         return reference.grip().isDead();
     }
 
-    public TeleObject getForwardedTeleObject() {
+    public final TeleObject getForwardedTeleObject() {
         if (isObsolete()) {
             TeleGrip forwardedTeleGrip = reference.grip().getForwardedTeleGrip();
-            TeleObject teleObject = vm().findObjectByOID(forwardedTeleGrip.makeOID());
+            TeleObject teleObject = heap().findObjectByOID(forwardedTeleGrip.makeOID());
             if (teleObject == null) {
                 reference = (TeleReference) forwardedTeleGrip.toReference();
                 return this;
@@ -149,22 +246,9 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * Update any cached state from the VM, if possible.
-     * <br>
-     * Note that this method gets called automatically as part of instance creation.
-     *
-     * @see TeleObjectFactory#make(Reference)
-     */
-    protected void refresh() {
-        /*if (reference.toOrigin().equals(Pointer.zero())) {
-            live = false;
-        }*/
-    }
-
-    /**
      * @return canonical reference to this object in the VM
      */
-    public TeleReference reference() {
+    public final TeleReference reference() {
         return reference;
     }
 
@@ -176,7 +260,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     /**
      * @return a number that uniquely identifies this object in the VM for the duration of the inspection
      */
-    public long getOID() {
+    public final long getOID() {
         return oid;
     }
 
@@ -197,34 +281,30 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * @return local {@link ClassActor}, equivalent to the one in the VM that describes the type
-     * of this object in the VM.
-     * Note that in the singular instance of {@link StaticTuple} this does not correspond to the actual type of the
-     * object, which is an exceptional Maxine object that has no ordinary Java type; it returns in this case
-     * the type of the class that the tuple helps implement.
+     * @return local {@link ClassActor}, equivalent to the one in the VM that describes the type of this object in the
+     *         VM. Note that in the singular instance of {@link StaticTuple} this does not correspond to the actual type
+     *         of the object, which is an exceptional Maxine object that has no ordinary Java type; it returns in this
+     *         case the type of the class that the tuple helps implement.
      */
-    public ClassActor classActorForObjectType() { //TODO: fix class actor lookup
+    public ClassActor classActorForObjectType() { // TODO: fix class actor lookup
         return getTeleHub().getTeleClassActor().classActor();
     }
 
     /**
-     * return local surrogate for the{@link ClassMethodActor} associated with this object in the VM, either
-     * because it is a {@link ClassMethodActor} or because it is a class closely associated with a method that refers to
-     * a {@link ClassMethodActor}. Null otherwise.
+     * return local surrogate for the{@link ClassMethodActor} associated with this object in the VM, either because it
+     * is a {@link ClassMethodActor} or because it is a class closely associated with a method that refers to a
+     * {@link ClassMethodActor}. Null otherwise.
      */
     public TeleClassMethodActor getTeleClassMethodActorForObject() {
         return null;
     }
 
     /**
-     * The current "origin" of the object in VM memory, which
-     * may change through GC as long as the object remains live.
-     * When the object is no longer live, the last live location is
-     * returned.
-     * <br>
-     * Note that the origin is not necessarily beginning of the object's
-     * memory allocation, depending on the particular object layout
-     * used.
+     * The current "origin" of the object in VM memory, which may change through GC as long as the object remains live.
+     * When the object is no longer live, the last live location is returned. <br>
+     * Note that the origin is not necessarily beginning of the object's memory allocation, depending on the particular
+     * object layout used.
+     *
      * @return current absolute location of the object's origin, subject to change by GC
      * @see GeneralLayout
      *
@@ -250,7 +330,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     public final TeleFixedMemoryRegion objectMemoryRegion() {
         if (isObsolete() || isDead()) {
-            //Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
+            // Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
             return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(lastValidPointer), objectSize());
         }
         return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.toOrigin()), objectSize());
@@ -329,7 +409,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public TeleHub getTeleHub() {
         if (teleHub == null) {
             final Reference hubReference = vm().wordToReference(vm().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
-            teleHub = (TeleHub) vm().makeTeleObject(hubReference);
+            teleHub = (TeleHub) heap().makeTeleObject(hubReference);
         }
         return teleHub;
     }
@@ -337,15 +417,15 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     /**
      * Gets the contents of the misc" word in the object's header.
      *
-     * @return the "misc" word from the header of this object in the teleVM
+     * @return the "misc" word from the header of this object in the VM
      */
     public Word getMiscWord() {
         return vm().layoutScheme().generalLayout.readMisc(reference);
     }
 
     /**
-     *  Gets the fields for either a tuple or hybrid object, returns empty set for arrays.
-     *  Returns static fields in the special case of a {@link StaticTuple} object.
+     * Gets the fields for either a tuple or hybrid object, returns empty set for arrays. Returns static fields in the
+     * special case of a {@link StaticTuple} object.
      */
     public Set<FieldActor> getFieldActors() {
         final Set<FieldActor> instanceFieldActors = new HashSet<FieldActor>();
@@ -355,6 +435,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
 
     /**
      * Gathers all instance fields for a class, including inherited fields.
+     *
      * @param classActor description of a class
      * @param instanceFieldActors the set to which collected {@link FieldActor}s will be added.
      */
@@ -384,7 +465,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public abstract Size fieldSize(FieldActor fieldActor);
 
     /**
-     *  The memory region in which field in the object is stored, subject to change by GC relocation.
+     * The memory region in which field in the object is stored, subject to change by GC relocation.
      *
      * @param fieldActor a field in the object
      * @return current memory region occupied by the field in this object in the VM, subject to relocation by GC.
@@ -421,9 +502,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         }
 
         static int totalCopies;
+
         static class Count implements Comparable<Count> {
+
             Class type;
             int value;
+
             @Override
             public int compareTo(Count o) {
                 return value - o.value;
@@ -431,6 +515,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         }
 
         static HashMap<Class, Count> copiesPerType = new HashMap<Class, Count>() {
+
             @Override
             public Count get(Object key) {
                 Count count = super.get(key);
@@ -446,6 +531,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         static {
             if (Trace.hasLevel(1)) {
                 Runtime.getRuntime().addShutdownHook(new Thread("CopiesPerTypePrinter") {
+
                     @Override
                     public void run() {
                         SortedSet<Count> set = new TreeSet<Count>(copiesPerType.values());
@@ -460,6 +546,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
 
         /**
          * Registers a newly copied object in the context to avoid duplication.
+         *
          * @param newInstance specifies {@code object} was just instantiated (as opposed to being a local surrogate)
          */
         protected void register(TeleObject teleObject, Object object, boolean newInstance) {
@@ -505,7 +592,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
                     final Value value = teleObject.readFieldValue(fieldActor);
                     final Object newJavaValue;
                     if (fieldActor.kind.isReference) {
-                        final TeleObject teleFieldReferenceObject = teleObject.vm().makeTeleObject(value.asReference());
+                        final TeleObject teleFieldReferenceObject = teleObject.heap().makeTeleObject(value.asReference());
                         if (teleFieldReferenceObject == null) {
                             newJavaValue = null;
                         } else {
@@ -531,9 +618,8 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * @return produces a deep copy of an object as part of
-     * a larger deep copy in which this particular object may have
-     * already been copied.
+     * @return produces a deep copy of an object as part of a larger deep copy in which this particular object may have
+     *         already been copied.
      */
     protected final Object makeDeepCopy(DeepCopier context) {
         Object newObject = context.teleObjectToObject.get(this);
@@ -547,11 +633,10 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * @return creates a local deep copy of the object, using Maxine-specific shortcuts when
-     * possible to produce a local equivalent without copying.
-     * Implementations that copy recursively must call {@link TeleObject#makeDeepCopy(DeepCopier)},
-     * and must register newly allocated objects before doing so.  This will result in redundant registrations
-     * in those cases.
+     * @return creates a local deep copy of the object, using Maxine-specific shortcuts when possible to produce a local
+     *         equivalent without copying. Implementations that copy recursively must call
+     *         {@link TeleObject#makeDeepCopy(DeepCopier)}, and must register newly allocated objects before doing so.
+     *         This will result in redundant registrations in those cases.
      */
     protected abstract Object createDeepCopy(DeepCopier context);
 

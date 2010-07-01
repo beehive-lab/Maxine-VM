@@ -44,8 +44,8 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
 
     private static final List<MaxCodeLocation> EMPTY_METHOD_LIST = Collections.emptyList();
 
-    TeleSemiSpaceHeapScheme(TeleVM teleVM) {
-        super(teleVM);
+    TeleSemiSpaceHeapScheme(TeleVM vm) {
+        super(vm);
     }
 
     public Class heapSchemeClass() {
@@ -62,11 +62,11 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
 
     public boolean isInLiveMemory(Address address) {
 
-        if (vm().heap().isInGC()) { // this assumption needs to be proofed; basically it means that during GC both heaps are valid
+        if (heap().isInGC()) { // this assumption needs to be proofed; basically it means that during GC both heaps are valid
             return true;
         }
 
-        for (MaxHeapRegion heapRegion : vm().heap().heapRegions()) {
+        for (MaxHeapRegion heapRegion : heap().heapRegions()) {
             if (heapRegion.memoryRegion().contains(address)) {
                 if (heapRegion.entityName().equals(SemiSpaceHeapScheme.FROM_REGION_NAME)) { // everything in from-space is dead
                     return false;

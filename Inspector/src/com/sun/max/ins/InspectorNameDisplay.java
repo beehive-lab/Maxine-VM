@@ -151,7 +151,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
         if (thread.isJava()) {
             final String vmThreadName = thread.vmThreadName();
-            return vmThreadName == null ? "?" : vmThreadName;
+            return vmThreadName == null ? unavailableDataShortText() : vmThreadName;
         }
         return "native unnamed";
     }
@@ -194,14 +194,38 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. an asterisk when a method has been substituted.
      */
     public String methodSubstitutionShortAnnotation(TeleMethodActor teleMethodActor) {
-        return (teleMethodActor != null && teleMethodActor.isSubstituted()) ? " *" : "";
+        if (teleMethodActor == null) {
+            return "";
+        }
+        try {
+            vm().acquireLegacyVMAccess();
+            try {
+                return teleMethodActor.isSubstituted() ? " *" : "";
+            } finally {
+                vm().releaseLegacyVMAccess();
+            }
+        } catch (MaxVMBusyException e) {
+            return unavailableDataShortText();
+        }
     }
 
     /**
      * E.g. an asterisk when a method has been substituted.
      */
     public String methodSubstitutionLongAnnotation(TeleMethodActor teleMethodActor) {
-        return (teleMethodActor != null && teleMethodActor.isSubstituted()) ? " substituted from " + teleMethodActor.teleClassActorSubstitutedFrom().getName() : "";
+        if (teleMethodActor == null) {
+            return "";
+        }
+        try {
+            vm().acquireLegacyVMAccess();
+            try {
+                return teleMethodActor.isSubstituted() ? " substituted from " + teleMethodActor.teleClassActorSubstitutedFrom().getName() : "";
+            } finally {
+                vm().releaseLegacyVMAccess();
+            }
+        } catch (MaxVMBusyException e) {
+            return unavailableDataLongText();
+        }
     }
 
     /**
@@ -209,7 +233,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      */
     public String veryShortName(MaxCompiledCode compiledCode) {
         if (compiledCode == null) {
-            return "<?>";
+            return unavailableDataShortText();
         }
         return compiledCode.classMethodActor() == null ?
                         compiledCode.entityName() :
@@ -221,9 +245,18 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. "foo(Pointer, Word, int[])[0]"
      */
     public String shortName(MaxCompiledCode compiledCode) {
-        return compiledCode.classMethodActor() == null ?
-                        compiledCode.entityName() :
-                            compiledCode.classMethodActor().format("%n(%p)" + methodCompilationID(compiledCode));
+        try {
+            vm().acquireLegacyVMAccess();
+            try {
+                return compiledCode.classMethodActor() == null ?
+                                compiledCode.entityName() :
+                                    compiledCode.classMethodActor().format("%n(%p)" + methodCompilationID(compiledCode));
+            } finally {
+                vm().releaseLegacyVMAccess();
+            }
+        } catch (MaxVMBusyException e) {
+            return unavailableDataShortText();
+        }
     }
 
     /**
@@ -287,7 +320,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      */
     public String longName(MaxCompiledCode compiledCode, Address address) {
         if (compiledCode == null) {
-            return "<?>";
+            return unavailableDataLongText();
         }
         if (compiledCode.classMethodActor() != null) {
             return compiledCode.classMethodActor().format("%r %n(%p)" + methodCompilationID(compiledCode) + positionString(compiledCode, address) + " in %H");
@@ -491,7 +524,14 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 final ReferenceRenderer objectReferenceRenderer = referenceRenderers.get(teleObjectClass);
                 if (objectReferenceRenderer != null) {
                     try {
-                        return objectReferenceRenderer.referenceLabelText(teleObject);
+                        vm().acquireLegacyVMAccess();
+                        try {
+                            return objectReferenceRenderer.referenceLabelText(teleObject);
+                        } finally {
+                            vm().releaseLegacyVMAccess();
+                        }
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        return unavailableDataShortText();
                     } catch (Throwable throwable) {
                         throwable.printStackTrace(Trace.stream());
                         return "(Unexpected error when getting reference label: " + throwable + ")";
@@ -515,7 +555,14 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                     final ReferenceRenderer objectReferenceRenderer = referenceRenderers.get(teleObjectClass);
                     if (objectReferenceRenderer != null) {
                         try {
-                            return objectReferenceRenderer.referenceToolTipText(teleObject);
+                            vm().acquireLegacyVMAccess();
+                            try {
+                                return objectReferenceRenderer.referenceToolTipText(teleObject);
+                            } finally {
+                                vm().releaseLegacyVMAccess();
+                            }
+                        } catch (MaxVMBusyException maxVMBusyException) {
+                            return unavailableDataLongText();
                         } catch (Throwable throwable) {
                             throwable.printStackTrace(Trace.stream());
                             return "(Unexpected error when getting tool tip label: " + throwable + ")";

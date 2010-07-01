@@ -234,9 +234,9 @@ public class JavaMethodInspector extends MethodInspector {
             result =  inspection().nameDisplay().longName(compiledCode);
         } else if (teleClassMethodActor != null) {
             result = inspection().nameDisplay().shortName(teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
-        }
-        if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
-            result = result + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+            if (teleClassMethodActor.isSubstituted()) {
+                result = result + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+            }
         }
         return result;
     }

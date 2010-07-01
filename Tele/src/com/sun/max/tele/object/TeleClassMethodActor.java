@@ -43,8 +43,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     private static final TeleTargetMethod[] NO_TELE_TARGET_METHODS = new TeleTargetMethod[0];
 
     // Keep construction minimal for both performance and synchronization.
-    protected TeleClassMethodActor(TeleVM teleVM, Reference classMethodActorReference) {
-        super(teleVM, classMethodActorReference);
+    protected TeleClassMethodActor(TeleVM vm, Reference classMethodActorReference) {
+        super(vm, classMethodActorReference);
     }
 
    /**
@@ -65,13 +65,13 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         if (vm().tryLock()) {
             try {
                 codeAttributeReference = vm().teleFields().ClassMethodActor_codeAttribute.readReference(reference());
+                if (codeAttributeReference != null) {
+                    return (TeleCodeAttribute) heap().makeTeleObject(codeAttributeReference);
+                }
             } catch (DataIOError dataIOError) {
             } finally {
                 vm().unlock();
             }
-        }
-        if (codeAttributeReference != null) {
-            return (TeleCodeAttribute) vm().makeTeleObject(codeAttributeReference);
         }
         return null;
     }
@@ -104,7 +104,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         final Reference targetStateReference = vm().teleFields().ClassMethodActor_targetState.readReference(reference());
         if (!targetStateReference.isZero()) {
             // the method has been compiled; check the type to determine the number of times
-            translateTargetState(vm().makeTeleObject(targetStateReference));
+            translateTargetState(heap().makeTeleObject(targetStateReference));
         } else {
             teleTargetMethodHistory = NO_TELE_TARGET_METHODS;
         }
@@ -123,14 +123,14 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
             for (int i = 0; i < numberOfCompilations; i++) {
                 // copy the target methods in reverse order (most recent is stored at beginning of array)
                 final Reference targetMethodReference = teleTargetMethodHistoryArray.readElementValue(i).asReference();
-                teleTargetMethodHistory[numberOfCompilations - i - 1] = (TeleTargetMethod) vm().makeTeleObject(targetMethodReference);
+                teleTargetMethodHistory[numberOfCompilations - i - 1] = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
             }
 
         } else if (targetState.classActorForObjectType().javaClass() == Compilation.class) {
             // this is a compilation, get the previous target state from it
             Reference previousTargetStateReference = vm().teleFields().Compilation_previousTargetState.readReference(targetState.reference());
             if (!previousTargetStateReference.isZero()) {
-                translateTargetState(vm().makeTeleObject(previousTargetStateReference));
+                translateTargetState(heap().makeTeleObject(previousTargetStateReference));
             }  else {
                 // this is the first compilation, no previous state
                 teleTargetMethodHistory = NO_TELE_TARGET_METHODS;

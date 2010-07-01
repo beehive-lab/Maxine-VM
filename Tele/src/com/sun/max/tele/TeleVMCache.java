@@ -18,42 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
+package com.sun.max.tele;
 
-import com.sun.max.tele.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
 
 /**
- * Inspector's surrogate for an object of type {@link MemberActor} in the VM.
+ * An object that refers to a resources in in the VM, and which reads
+ * and caches some state from the VM.
  *
  * @author Michael Van De Vanter
  */
-public abstract class TeleMemberActor extends TeleActor {
-
-    protected TeleMemberActor(TeleVM vm, Reference memberActorReference) {
-        super(vm, memberActorReference);
-    }
+public interface TeleVMCache {
 
     /**
-     * @return surrogate for the {@link ClassActor} object in the VM that contains this member
+     * Causes this object to refresh any state that is read and cached from the VM, must
+     * be called in a thread holding the VM lock.
+     *
+     * @see TeleVM#lock()
      */
-    public TeleClassActor getTeleHolder() {
-        final Reference classActorReference = vm().teleFields().MemberActor_holder.readReference(reference());
-        return (TeleClassActor) heap().makeTeleObject(classActorReference);
-    }
+    void updateCache();
 
-    /**
-     * Field is final once non-null so cache it.
-     */
-    private TeleDescriptor descriptor;
-
-    public final TeleDescriptor getTeleDescriptor() {
-        if (descriptor == null) {
-            Reference reference = vm().teleFields().MemberActor_descriptor.readReference(reference());
-            descriptor = (TeleDescriptor) heap().makeTeleObject(reference);
-        }
-        return descriptor;
-    }
 }

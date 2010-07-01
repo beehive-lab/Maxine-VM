@@ -22,7 +22,9 @@ package com.sun.max.tele;
 
 import java.util.*;
 
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Access to the heap in the VM.
@@ -75,5 +77,50 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      * remote copies of addresses being held by references.
      */
     MaxMemoryRegion rootsMemoryRegion();
+
+    /**
+     * Locator for TeleObjects, which
+     * provide access to object contents and specialized methods that encapsulate
+     * knowledge of the heap's design.
+     * Special subclasses are created for Maxine implementation objects of special interest,
+     *  and for other objects for which special treatment is needed.
+     *
+     * @param reference a heap object in the VM;
+     * @return a canonical local surrogate for the object, null for the distinguished zero {@link Reference}.
+     * @throws MaxVMBusyException if data cannot be read from the VM at this time
+     */
+    TeleObject findTeleObject(Reference reference) throws MaxVMBusyException;
+
+    /**
+     * @param id an id assigned to each heap object in the VM as needed, unique for the duration of a VM execution.
+     * @return an accessor for the specified heap object.
+     */
+    TeleObject findObjectByOID(long id);
+
+    /**
+     * Finds an object whose origin is at the specified address.
+     *
+     * @param origin memory location in the VM
+     * @return surrogate for a VM object, null if none found
+     */
+    TeleObject findObjectAt(Address origin);
+
+    /**
+     * Scans VM memory backwards (smaller address) for an object whose cell begins at the specified address.
+     *
+     * @param cellAddress search starts with word preceding this address
+     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
+     * @return surrogate for a VM object, null if none found
+     */
+    TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent);
+
+    /**
+     * Scans VM memory forward (larger address) for an object whose cell begins at the specified address.
+     *
+     * @param cellAddress search starts with word following this address
+     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
+     * @return surrogate for a VM object, null if none found
+     */
+    TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent);
 
 }

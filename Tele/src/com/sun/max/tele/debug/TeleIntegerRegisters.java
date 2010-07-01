@@ -22,6 +22,7 @@ package com.sun.max.tele.debug;
 
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.sparc.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
@@ -40,9 +41,9 @@ public final class TeleIntegerRegisters extends TeleRegisters {
 
     private final Symbol indirectCallRegister;
 
-    public TeleIntegerRegisters(VMConfiguration vmConfiguration) {
-        super(symbolizer(vmConfiguration), vmConfiguration);
-        switch (vmConfiguration.platform().processorKind.instructionSet) {
+    public TeleIntegerRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
+        super(teleVM, teleRegisterSet, symbolizer(teleVM.vmConfiguration()));
+        switch (teleVM.vmConfiguration().platform().processorKind.instructionSet) {
             case AMD64: {
                 indirectCallRegister = AMD64GeneralRegister64.RAX;
                 break;
@@ -112,7 +113,7 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * @return the value of the register denoted by {@code role} and {@code targetABI}
      */
     Pointer get(VMRegister.Role role, TargetABI targetABI) {
-        final TargetABI abi = targetABI == null ? vmConfiguration.targetABIsScheme().nativeABI : targetABI;
+        final TargetABI abi = targetABI == null ? vm().vmConfiguration().targetABIsScheme().nativeABI : targetABI;
         final Symbol register = abi.registerRoleAssignment.integerRegisterActingAs(role);
         return getValue(register).asPointer();
     }

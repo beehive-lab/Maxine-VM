@@ -35,8 +35,8 @@ import com.sun.max.unsafe.*;
  */
 public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme{
 
-    protected TeleUnknownHeapScheme(TeleVM teleVM) {
-        super(teleVM);
+    protected TeleUnknownHeapScheme(TeleVM vm) {
+        super(vm);
     }
 
     public Class heapSchemeClass() {
@@ -53,10 +53,10 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
     }
 
     public boolean isInLiveMemory(Address address) {
-        if (vm().heap().isInGC()) {
+        if (heap().isInGC()) {
             return true;
         }
-        for (MaxHeapRegion heapRegion : vm().heap().heapRegions()) {
+        for (MaxHeapRegion heapRegion : heap().heapRegions()) {
             if (heapRegion.memoryRegion().contains(address)) {
                 return true;
             }

@@ -56,8 +56,8 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
         private MaxExternalCode owner;
 
-        private ExternalCodeMemoryRegion(TeleVM teleVM, MaxExternalCode owner, String name, Address start, Size size) {
-            super(teleVM, name, start, size);
+        private ExternalCodeMemoryRegion(TeleVM vm, MaxExternalCode owner, String name, Address start, Size size) {
+            super(vm, name, start, size);
             this.owner = owner;
         }
 
@@ -86,41 +86,34 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
      */
     private final class ExternalCodeInstructionMap implements InstructionMap {
 
-        private List<MachineCodeLocation> instructionLocations = null;
+        private final List<MachineCodeLocation> instructionLocations;
 
         /**
          * Unmodifiable list of all instruction indexes where a label is present.
          */
-        private List<Integer> labelIndexes = null;
+        private final List<Integer> labelIndexes;
 
         ExternalCodeInstructionMap() {
-        }
-
-        private void initialize() {
-            if (instructions == null) {
-                instructions = getInstructions();
-                final int length = instructions.size();
-                final List<MachineCodeLocation> locations = new ArrayList<MachineCodeLocation>(length);
-                final List<Integer> labels = new ArrayList<Integer>();
-                for (int index = 0; index < length; index++) {
-                    final TargetCodeInstruction targetCodeInstruction = instructions.get(index);
-                    locations.add(codeManager().createMachineCodeLocation(targetCodeInstruction.address, "external machine code instruction"));
-                    if (targetCodeInstruction.label != null) {
-                        labels.add(index);
-                    }
+            instructions = getInstructions();
+            final int length = instructions.size();
+            final List<MachineCodeLocation> locations = new ArrayList<MachineCodeLocation>(length);
+            final List<Integer> labels = new ArrayList<Integer>();
+            for (int index = 0; index < length; index++) {
+                final TargetCodeInstruction targetCodeInstruction = instructions.get(index);
+                locations.add(codeManager().createMachineCodeLocation(targetCodeInstruction.address, "external machine code instruction"));
+                if (targetCodeInstruction.label != null) {
+                    labels.add(index);
                 }
-                instructionLocations = locations;
-                labelIndexes = Collections.unmodifiableList(labels);
             }
+            instructionLocations = locations;
+            labelIndexes = Collections.unmodifiableList(labels);
         }
 
         public int length() {
-            initialize();
             return instructions.size();
         }
 
         public TargetCodeInstruction instruction(int index) throws IllegalArgumentException {
-            initialize();
             if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
@@ -129,7 +122,6 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
         public int findInstructionIndex(Address address) {
             if (address != null) {
-                initialize();
                 final int length = instructions.size();
                 if (address.greaterEqual(instructions.get(0).address)) {
                     for (int index = 1; index < length; index++) {
@@ -148,7 +140,6 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         }
 
         public MachineCodeLocation instructionLocation(int index) {
-            initialize();
             if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
@@ -204,7 +195,6 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         }
 
         public List<Integer> labelIndexes() {
-            initialize();
             return labelIndexes;
         }
 
@@ -214,12 +204,17 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
     }
 
     /**
+     * Creates representation for a block of native code not previously known.
+     * <br>
+     * Must be called in thread with the VM lock held.
+     *
      * @param name a name for the region
      * @return a newly created surrogate for a block of native code discovered in the VM
      * about which little more is known than its location.  The location must not overlap any code
      * region already known.
      */
     public static TeleExternalCode create(TeleVM teleVM, Address codeStart, Size codeSize, String name) {
+        assert teleVM.lockHeldByCurrentThread();
         TeleExternalCode teleExternalCode = null;
         try {
             // Fail if the region specified by 'address' and 'size' overlaps an existing native entry
