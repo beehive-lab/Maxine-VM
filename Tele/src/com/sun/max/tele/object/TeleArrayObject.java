@@ -49,8 +49,8 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     private final Kind componentKind;
 
-    protected TeleArrayObject(TeleVM teleVM, Reference reference, Kind componentKind, SpecificLayout layout) {
-        super(teleVM, reference, layout);
+    protected TeleArrayObject(TeleVM vm, Reference reference, Kind componentKind, SpecificLayout layout) {
+        super(vm, reference, layout);
         this.componentKind = componentKind;
     }
 
@@ -65,7 +65,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     /**
-     * @return length of this array in the {@link TeleVM}.
+     * @return length of this array in the VM.
      */
     public int getLength() {
         if (length < 0) {
@@ -94,7 +94,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     /**
      * @param index
-     * @return the value read from the specified field in this array in the {@link TeleVM}
+     * @return the value read from the specified field in this array in the VM
      */
     public Value readElementValue(int index) {
         return vm().getElementValue(componentKind(), reference(), index);
@@ -151,7 +151,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
                 Object[] referenceArray = (Object[]) newArray;
                 for (int index = 0; index < length; index++) {
                     final Value value = readElementValue(index);
-                    final TeleObject teleValueObject = vm().makeTeleObject(value.asReference());
+                    final TeleObject teleValueObject = heap().makeTeleObject(value.asReference());
                     if (teleValueObject != null) {
                         referenceArray[index] = teleValueObject.makeDeepCopy(context);
                     }

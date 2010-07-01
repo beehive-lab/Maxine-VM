@@ -245,7 +245,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         final WatchpointSettings oldSettings = settings;
         try {
             this.settings = new WatchpointSettings(settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec, enabledDuringGC);
-            if (enabledDuringGC && watchpointManager.vm().heap().isInGC() && !active) {
+            if (enabledDuringGC && watchpointManager.heap().isInGC() && !active) {
                 setActive(true);
             }
             success = reset();
@@ -287,7 +287,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         assert alive;
         assert teleNativeThread.state() == MaxThreadState.WATCHPOINT;
         Trace.begin(TRACE_VALUE, tracePrefix() + "handling trigger event for " + this);
-        if (watchpointManager.vm().heap().isInGC() && !settings.enabledDuringGC) {
+        if (watchpointManager.heap().isInGC() && !settings.enabledDuringGC) {
             // Ignore the event if the VM is in GC and the watchpoint is not to be enabled during GC.
             // This is a lazy policy that avoids the need to interrupt the VM every time GC starts.
             // Just in case such a watchpoint would trigger repeatedly during GC, however, deactivate
@@ -546,16 +546,16 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @throws TooManyWatchpointsException
          */
         private void setRelocationWatchpoint(final Pointer origin) throws TooManyWatchpointsException {
-            final TeleVM teleVM = watchpointManager.vm();
-            final Pointer forwardPointerLocation = origin.plus(teleVM.heap().gcForwardingPointerOffset());
-            final TeleFixedMemoryRegion forwardPointerRegion = new TeleFixedMemoryRegion(vm(), "Forwarding pointer for object relocation watchpoint", forwardPointerLocation, teleVM.wordSize());
+            final TeleVM vm = watchpointManager.vm();
+            final Pointer forwardPointerLocation = origin.plus(heap().gcForwardingPointerOffset());
+            final TeleFixedMemoryRegion forwardPointerRegion = new TeleFixedMemoryRegion(vm(), "Forwarding pointer for object relocation watchpoint", forwardPointerLocation, vm.wordSize());
             relocationWatchpoint = watchpointManager.createSystemWatchpoint("Object relocation watchpoint", forwardPointerRegion, relocationWatchpointSettings);
             relocationWatchpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
                     final TeleObjectWatchpoint thisWatchpoint = TeleObjectWatchpoint.this;
-                    if (teleVM.heap().isObjectForwarded(origin)) {
-                        final TeleObject newTeleObject = teleVM.getForwardedObject(origin);
+                    if (heap().isObjectForwarded(origin)) {
+                        final TeleObject newTeleObject = heap().getForwardedObject(origin);
                         if (newTeleObject == null) {
                             ProgramWarning.message("Unlable to find relocated teleObject" + this);
                         } else {
@@ -746,11 +746,11 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         private volatile List<MaxWatchpointListener> watchpointListeners = new CopyOnWriteArrayList<MaxWatchpointListener>();
 
         /**
-         * Creates a manager for creating and managing watchpoints in the vm.
+         * Creates a manager for creating and managing watchpoints in the VM.
          *
          */
-        WatchpointManager(TeleVM teleVM, TeleProcess teleProcess) {
-            super(teleVM);
+        WatchpointManager(TeleVM vm, TeleProcess teleProcess) {
+            super(vm);
             this.teleProcess = teleProcess;
             vm().addVMStateListener(new MaxVMStateListener() {
 
@@ -1156,7 +1156,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                 msgBuilder.append(teleWatchpoint.memoryRegion().size().toString());
                 throw new DuplicateWatchpointException(msgBuilder.toString());
             }
-            if (!vm().heap().isInGC() || teleWatchpoint.settings.enabledDuringGC) {
+            if (!heap().isInGC() || teleWatchpoint.settings.enabledDuringGC) {
                 // Try to activate the new watchpoint
                 if (!teleWatchpoint.setActive(true)) {
                     clientWatchpoints.remove(teleWatchpoint);

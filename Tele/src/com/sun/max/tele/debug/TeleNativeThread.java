@@ -35,6 +35,7 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -59,14 +60,16 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class TeleNativeThread extends AbstractTeleVMHolder implements Comparable<TeleNativeThread>, MaxThread, ThreadProvider {
+public abstract class TeleNativeThread extends AbstractTeleVMHolder implements TeleVMCache, Comparable<TeleNativeThread>, MaxThread, ThreadProvider {
 
     @Override
     protected String  tracePrefix() {
         return "[TeleNativeThread: " + Thread.currentThread().getName() + "] ";
     }
 
-    private static final int TRACE_LEVEL = 2;
+    private static final int TRACE_VALUE = 1;
+
+    private final TimedTrace updateTracer;
 
     private static final Logger LOGGER = Logger.getLogger(TeleNativeThread.class.getName());
 
@@ -132,6 +135,9 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
 
     protected TeleNativeThread(TeleProcess teleProcess, Params params) {
         super(teleProcess.vm());
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        tracer.begin();
+
         this.teleProcess = teleProcess;
         this.id = params.id;
         this.localHandle = params.localHandle;
@@ -150,6 +156,17 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind.instructionSet == InstructionSet.SPARC;
         final String stackName = this.entityName + " Stack";
         this.teleStack = new TeleStack(teleProcess.vm(), this, stackName, params.stackRegion.start(), params.stackRegion.size());
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+
+        tracer.end(null);
+    }
+
+    public void updateCache() {
+        Trace.line(TRACE_VALUE + 1, tracePrefix() + "refresh thread=" + this);
+        if (state.allowsDataAccess()) {
+            refreshBreakpoint();
+            threadLocalsBlock.updateCache();
+        }
     }
 
     public final String entityName() {
@@ -281,8 +298,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     final List<StackFrame> frames() {
         final long currentProcessEpoch = teleProcess().epoch();
         if (framesRefreshedEpoch < currentProcessEpoch) {
-            Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + currentProcessEpoch + ") for " + this);
-            threadLocalsBlock.refresh();
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + currentProcessEpoch + ") for " + this);
+            threadLocalsBlock.updateCache();
             final List<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.vm(), this).frames();
             assert !newFrames.isEmpty();
             // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
@@ -323,7 +340,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      * Updates this thread with the information information made available while
      * {@linkplain TeleProcess#gatherThreads(List) gathering} threads. This information is made available
      * by the native tele layer as threads are discovered. Subsequent refreshing of cached thread state (such a
-     * {@linkplain TeleRegisterSet#refresh() registers}, {@linkplain #refreshFrames(boolean) stack frames} and
+     * {@linkplain TeleRegisterSet#updateCache() registers}, {@linkplain #refreshFrames(boolean) stack frames} and
      * {@linkplain #refreshThreadLocals() VM thread locals}) depends on this information being available and up to date.
      *
      * @param state the state of the thread
@@ -335,19 +352,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         this.state = state;
         teleRegisterSet.setInstructionPointer(instructionPointer);
         threadLocalsBlock.updateAfterGather(threadLocalsRegion, tlaSize);
-    }
-
-    /**
-     * Refreshes the contents of this object to reflect the data of the corresponding thread in the tele process.
-     *
-     * @param epoch the new epoch of this thread
-     */
-    void refresh(long epoch) {
-        Trace.line(TRACE_LEVEL, tracePrefix() + "refresh(epoch=" + epoch + ") for " + this);
-        if (state.allowsDataAccess()) {
-            refreshBreakpoint();
-            threadLocalsBlock.refresh();
-        }
     }
 
     /**
@@ -368,7 +372,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     void evadeBreakpoint() throws OSExecutionRequestException {
         if (breakpoint != null && !breakpoint.isTransient()) {
             assert !breakpoint.isActive() : "Cannot single step at an activated breakpoint";
-            Trace.line(TRACE_LEVEL, tracePrefix() + "single step to evade breakpoint=" + breakpoint);
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "single step to evade breakpoint=" + breakpoint);
             teleProcess().singleStep(this, true);
         }
     }
@@ -391,14 +395,14 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
 
         if (breakpoint != null) {
 
-            Trace.line(TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") for " + this);
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") for " + this);
 
             state = BREAKPOINT;
             this.breakpoint = breakpoint;
             final Address address = this.breakpoint.codeLocation().address();
             if (updateInstructionPointer(address)) {
                 teleRegisterSet.setInstructionPointer(address);
-                Trace.line(TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoc)h=" + teleProcess().epoch() + ") IP updated for " + this);
+                Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshingBreakpoint (epoc)h=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
                 ProgramError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + address + " was hit: " + this);
             }
@@ -422,8 +426,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     private synchronized void refreshFrames() {
         final long processEpoch = teleProcess().epoch();
         if (framesRefreshedEpoch < processEpoch) {
-            Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
-            threadLocalsBlock.refresh();
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
+            threadLocalsBlock.updateCache();
             final TeleVM teleVM = teleProcess.vm();
             final List<StackFrame> newFrames = new TeleStackFrameWalker(teleVM, this).frames();
             assert !newFrames.isEmpty();

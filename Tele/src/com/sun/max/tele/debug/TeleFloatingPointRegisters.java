@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug;
 
 import com.sun.max.asm.amd64.*;
+import com.sun.max.tele.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
@@ -34,8 +35,8 @@ import com.sun.max.vm.runtime.*;
  */
 public final class TeleFloatingPointRegisters extends TeleRegisters {
 
-    public TeleFloatingPointRegisters(VMConfiguration vmConfiguration) {
-        super(symbolizer(vmConfiguration), vmConfiguration);
+    public TeleFloatingPointRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
+        super(teleVM, teleRegisterSet, symbolizer(teleVM.vmConfiguration()));
     }
 
     /**

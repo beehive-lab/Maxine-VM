@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
@@ -33,9 +34,11 @@ import com.sun.max.util.*;
  *
  * @author Michael Van De Vanter
  */
-public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRegisterSet {
+public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleVMCache, MaxRegisterSet {
 
-    private static final int TRACE_LEVEL = 2;
+    private static final int TRACE_VALUE = 2;
+
+    private final TimedTrace updateTracer;
 
     private static final List<MaxRegister> EMPTY_REGISTER_LIST = Collections.emptyList();
 
@@ -55,12 +58,15 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
 
     public TeleRegisterSet(TeleVM teleVM, TeleNativeThread teleNativeThread) {
         super(teleVM);
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + teleNativeThread.entityName() + " creating");
+        tracer.begin();
         this.entityName = "Thread-" + teleNativeThread.localHandle() + " register set";
         this.entityDescription = "The machine registers, together with their current value in the " + vm().entityName() + " for " + teleNativeThread.entityName();
         this.teleNativeThread = teleNativeThread;
-        this.teleIntegerRegisters = new TeleIntegerRegisters(teleVM.vmConfiguration());
-        this.teleFloatingPointRegisters = new TeleFloatingPointRegisters(teleVM.vmConfiguration());
-        this.teleStateRegisters = new TeleStateRegisters(teleVM.vmConfiguration());
+        this.teleIntegerRegisters = new TeleIntegerRegisters(teleVM, this);
+        this.teleFloatingPointRegisters = new TeleFloatingPointRegisters(teleVM, this);
+        this.teleStateRegisters = new TeleStateRegisters(teleVM, this);
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + teleNativeThread.entityName() + " updating");
 
         final int integerRegisterCount = teleIntegerRegisters.symbolizer().numberOfValues();
         final int floatingPointRegisterCount = teleFloatingPointRegisters.symbolizer().numberOfValues();
@@ -95,6 +101,23 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
         this.allRegisters = Collections.unmodifiableList(all);
     }
 
+    @Override
+    public void updateCache() {
+        updateTracer.begin();
+
+        if (!teleNativeThread.readRegisters(
+                        teleIntegerRegisters.registerData(),
+                        teleFloatingPointRegisters.registerData(),
+                        teleStateRegisters.registerData())) {
+            ProgramError.unexpected("Error while updating registers for thread: " + this);
+        }
+        teleIntegerRegisters.updateCache();
+        teleFloatingPointRegisters.updateCache();
+        teleStateRegisters.updateCache();
+
+        updateTracer.end(null);
+    }
+
     public String entityName() {
         return entityName;
     }
@@ -117,27 +140,27 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
     }
 
     public Pointer instructionPointer() {
-        update();
+        lazyUpdate();
         return live ? teleStateRegisters.instructionPointer() : Pointer.zero();
     }
 
     public Pointer stackPointer() {
-        update();
+        lazyUpdate();
         return live ? teleIntegerRegisters.stackPointer() : Pointer.zero();
     }
 
     public Pointer framePointer() {
-        update();
+        lazyUpdate();
         return live ? teleIntegerRegisters.framePointer() : Pointer.zero();
     }
 
     public Address getCallRegisterValue() {
-        update();
+        lazyUpdate();
         return live ? teleIntegerRegisters.getCallRegisterValue() : Pointer.zero();
     }
 
     public List<MaxRegister> find(MaxMemoryRegion memoryRegion) {
-        update();
+        lazyUpdate();
         // Gets called a lot, usually empty result;  allocate as little a possible
         List<MaxRegister> registers = null;
         if (live && memoryRegion != null) {
@@ -154,22 +177,22 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
     }
 
     public List<MaxRegister> allRegisters() {
-        update();
+        lazyUpdate();
         return live ? allRegisters : null;
     }
 
     public List<MaxRegister> integerRegisters() {
-        update();
+        lazyUpdate();
         return live ? integerRegisters : null;
     }
 
     public List<MaxRegister> floatingPointRegisters() {
-        update();
+        lazyUpdate();
         return live ? floatingPointRegisters : null;
     }
 
     public List<MaxRegister> stateRegisters() {
-        update();
+        lazyUpdate();
         return live ? stateRegisters : null;
     }
 
@@ -178,43 +201,34 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements MaxRe
     }
 
     TeleIntegerRegisters teleIntegerRegisters() {
-        update();
+        lazyUpdate();
         return live ? teleIntegerRegisters : null;
     }
 
     TeleFloatingPointRegisters teleFloatingPointRegisters() {
-        update();
+        lazyUpdate();
         return live ? teleFloatingPointRegisters : null;
     }
 
     TeleStateRegisters teleStateRegisters() {
-        update();
+        lazyUpdate();
         return live ? teleStateRegisters : null;
     }
 
     void setInstructionPointer(Address instructionPointer) {
-        update();
+        lazyUpdate();
         if (live) {
             teleStateRegisters.setInstructionPointer(instructionPointer);
         }
     }
 
-    private void update() {
+    private void lazyUpdate() {
         live = teleNativeThread.isLive();
         final long processEpoch = vm().teleProcess().epoch();
         if (live && lastRefreshedEpoch < processEpoch) {
             if (vm().tryLock()) {
                 try {
-                    Trace.line(TRACE_LEVEL, tracePrefix() + "refreshRegisters (epoch=" + processEpoch + ") for " + this);
-                    if (!teleNativeThread.readRegisters(
-                                    teleIntegerRegisters.registerData(),
-                                    teleFloatingPointRegisters.registerData(),
-                                    teleStateRegisters.registerData())) {
-                        ProgramError.unexpected("Error while updating registers for thread: " + this);
-                    }
-                    teleIntegerRegisters.refresh();
-                    teleFloatingPointRegisters.refresh();
-                    teleStateRegisters.refresh();
+                    updateCache();
                     lastRefreshedEpoch = processEpoch;
                 } finally {
                     vm().unlock();

@@ -29,6 +29,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -67,18 +68,20 @@ import com.sun.max.vm.value.*;
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public final class TeleObjectFactory extends AbstractTeleVMHolder{
+public final class TeleObjectFactory extends AbstractTeleVMHolder implements TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
+
+    private final TimedTrace updateTracer;
 
     private static TeleObjectFactory teleObjectFactory;
 
     /**
      * @return the singleton manager for instances of {@link TeleObject}.
      */
-    public static TeleObjectFactory make(TeleVM teleVM) {
+    public static TeleObjectFactory make(TeleVM teleVM, long processEpoch) {
         if (teleObjectFactory == null) {
-            teleObjectFactory = new TeleObjectFactory(teleVM);
+            teleObjectFactory = new TeleObjectFactory(teleVM, processEpoch);
         }
         return teleObjectFactory;
     }
@@ -91,8 +94,11 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
 
     /**
      * Map: OID --> {@link TeleObject}.
+     * <br>
+     * Synchronized so that it can be read outside the VM lock if needed.
      */
-    private final Map<Long, WeakReference<TeleObject>> oidToTeleObject = new HashMap<Long, WeakReference<TeleObject>>();
+    private final Map<Long, WeakReference<TeleObject>> oidToTeleObject =
+        Collections.synchronizedMap(new HashMap<Long, WeakReference<TeleObject>>());
 
     /**
      * Constructors for specific classes of tuple objects in the heap in the {@teleVM}.
@@ -101,10 +107,26 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
      */
     private final Map<Class, Constructor> classToTeleTupleObjectConstructor = new HashMap<Class, Constructor>();
 
-    private TeleObjectFactory(TeleVM teleVM) {
+    private final Object statsPrinter = new Object() {
+        @Override
+        public String toString() {
+            final int currentTeleObjectCount = referenceToTeleObject.size();
+            final StringBuilder msg = new StringBuilder();
+            msg.append("#objects=(").append(currentTeleObjectCount);
+            msg.append(", new=").append(currentTeleObjectCount - previousTeleObjectCount).append(")");
+            previousTeleObjectCount = currentTeleObjectCount;
+            return msg.toString();
+        }
+    };
+
+    private TeleObjectFactory(TeleVM teleVM, long processEpoch) {
         super(teleVM);
-        Trace.begin(1, tracePrefix() + "initializing");
-        final long startTimeMillis = System.currentTimeMillis();
+        assert vm().lockHeldByCurrentThread();
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        tracer.begin();
+
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+
         // Representation for all tuple objects not otherwise mentioned
         classToTeleTupleObjectConstructor.put(Object.class, getConstructor(TeleTupleObject.class));
         // Some common Java classes
@@ -159,7 +181,37 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         classToTeleTupleObjectConstructor.put(TypeDescriptor.class, getConstructor(TeleTypeDescriptor.class));
         classToTeleTupleObjectConstructor.put(SignatureDescriptor.class, getConstructor(TeleSignatureDescriptor.class));
 
-        Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
+        tracer.end(statsPrinter);
+    }
+
+    public void updateCache() {
+        updateTracer.begin();
+        assert vm().lockHeldByCurrentThread();
+        TimerPerType timePerType = new TimerPerType();
+
+        // Make a copy to prevent ConcurrentModificationExceptions while iterating
+        ArrayList<WeakReference<TeleObject>> teleObjectRefs = new ArrayList<WeakReference<TeleObject>>(referenceToTeleObject.values());
+        for (WeakReference<TeleObject> teleObjectRef : teleObjectRefs) {
+            if (teleObjectRef != null) {
+                TeleObject teleObject = teleObjectRef.get();
+                if (teleObject != null) {
+                    Class type = teleObject.getClass();
+                    long[] time = timePerType.get(type);
+                    long s = System.currentTimeMillis();
+                    teleObject.updateCache();
+                    time[0] += System.currentTimeMillis() - s;
+                }
+            }
+        }
+        updateTracer.end(statsPrinter);
+
+        // Check that we haven't stumbled into a very bad update situation with an object.
+        for (Map.Entry<Class, long[]> entry : timePerType.entrySet()) {
+            long time = entry.getValue()[0];
+            if (time > 100) {
+                Trace.line(TRACE_VALUE, "Excessive refresh time for " + entry.getKey() + ": " + time + "ms");
+            }
+        }
     }
 
     private Constructor getConstructor(Class clazz) {
@@ -184,6 +236,8 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
      * <br>
      * Returns null for the distinguished zero {@link Reference}.
      * <br>
+     * Must be called with current thread holding the VM lock.
+     * <br>
      * Care is taken to avoid I/O with the VM during synchronized
      * access to the canonicalization map.  There is a small exception
      * to this for {@link TeleTargetMethod}.
@@ -196,8 +250,8 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         if (reference.isZero()) {
             return null;
         }
+        //assert vm().lockHeldByCurrentThread();
         TeleObject teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
-
         if (teleObject != null) {
             return teleObject;
         }
@@ -233,8 +287,8 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             classActor = vm().makeClassActor(classActorReference);
         } catch (InvalidReferenceException invalidReferenceException) {
             Log.println("InvalidReferenceException reference: " + reference + "/" + reference.toOrigin() +
-                " hubReference: " + hubReference + "/" + hubReference.toOrigin() + " classActorReference: " +
-                classActorReference + "/" + classActorReference.toOrigin() + " classActor: " + classActor);
+                            " hubReference: " + hubReference + "/" + hubReference.toOrigin() + " classActorReference: " +
+                            classActorReference + "/" + classActorReference.toOrigin() + " classActor: " + classActor);
             return null;
         }
 
@@ -289,13 +343,12 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             Trace.line(TRACE_VALUE, tracePrefix() + "failed to create object at apparently valid origin=0x" + reference.toOrigin().toHexString());
             return null;
         }
-
         oidToTeleObject.put(teleObject.getOID(), new WeakReference<TeleObject>(teleObject));
         //Log.println("OID: " + teleObject.getOID() + " ref: " + teleObject.getCurrentOrigin());
         assert oidToTeleObject.containsKey(teleObject.getOID());
 
         referenceToTeleObject.put(reference,  new WeakReference<TeleObject>(teleObject));
-        teleObject.refresh();
+        teleObject.updateCache();
         return teleObject;
     }
 
@@ -313,14 +366,15 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
     }
 
     /**
-     * @return the {@link TeleObject} with specified OID.
+     * Gets a VM object with a specified OID, if it exists.
+     * <br>
+     * Thread-safe; synchronized lookup does not require the VM lock.
+     *
+     * @return the {@link TeleObject} with specified OID, null if none exists.
      */
     public TeleObject lookupObject(long id) {
         WeakReference<TeleObject> teleObject = oidToTeleObject.get(id);
-        if (teleObject == null) {
-            return null;
-        }
-        return teleObject.get();
+        return teleObject == null ? null : teleObject.get();
     }
 
     private int previousTeleObjectCount = 0;
@@ -342,42 +396,6 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
                 super.put((Class) key, time);
             }
             return time;
-        }
-    }
-
-    public void refresh(long processEpoch) {
-        Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
-        final long startTimeMillis = System.currentTimeMillis();
-
-        TimerPerType timePerType = new TimerPerType();
-
-        // Make a copy to prevent ConcurrentModificationExceptions while iterating
-        ArrayList<WeakReference<TeleObject>> teleObjectRefs = new ArrayList<WeakReference<TeleObject>>(referenceToTeleObject.values());
-        for (WeakReference<TeleObject> teleObjectRef : teleObjectRefs) {
-            if (teleObjectRef != null) {
-                TeleObject teleObject = teleObjectRef.get();
-                if (teleObject != null) {
-                    Class type = teleObject.getClass();
-                    long[] time = timePerType.get(type);
-                    long s = System.currentTimeMillis();
-                    teleObject.refresh();
-                    time[0] += System.currentTimeMillis() - s;
-                }
-            }
-        }
-        final int currentTeleObjectCount = referenceToTeleObject.size();
-        final StringBuilder sb = new StringBuilder(100);
-        sb.append(tracePrefix());
-        sb.append("refreshing, count=").append(Integer.toString(currentTeleObjectCount));
-        sb.append("  new=").append(Integer.toString(currentTeleObjectCount - previousTeleObjectCount));
-        Trace.end(TRACE_VALUE, sb.toString(), startTimeMillis);
-        previousTeleObjectCount = currentTeleObjectCount;
-
-        for (Map.Entry<Class, long[]> entry : timePerType.entrySet()) {
-            long time = entry.getValue()[0];
-            if (time > 100) {
-                Trace.line(TRACE_VALUE, "Excessive refresh time for " + entry.getKey() + ": " + time + "ms");
-            }
         }
     }
 

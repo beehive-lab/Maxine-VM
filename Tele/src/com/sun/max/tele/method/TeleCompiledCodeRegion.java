@@ -28,7 +28,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 
-public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implements MaxCompiledCodeRegion {
+public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implements TeleVMCache, MaxCompiledCodeRegion {
 
     private static final int TRACE_LEVEL = 2;
 
@@ -105,8 +105,8 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
         }
     }
 
-    public void refresh() {
-        teleCodeRegion.refresh();
+    public void updateCache() {
+        teleCodeRegion.updateCache();
     }
 
     public String entityName() {

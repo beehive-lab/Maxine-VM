@@ -23,6 +23,7 @@ package com.sun.max.tele.grip;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.tele.*;
@@ -44,16 +45,15 @@ import com.sun.max.vm.tele.*;
  * @see InspectableHeapInfo
  * @see TeleHeap
  */
-public final class TeleRoots extends AbstractTeleVMHolder{
+public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache {
+
+
+    private static final int TRACE_VALUE = 1;
+
+    private final TimedTrace updateTracer;
 
     private final TeleGripScheme teleGripScheme;
     private final WordArrayLayout wordArrayLayout;
-
-    TeleRoots(TeleGripScheme teleGripScheme) {
-        super(teleGripScheme.teleVM());
-        this.teleGripScheme = teleGripScheme;
-        this.wordArrayLayout = teleGripScheme.teleVM().layoutScheme().wordArrayLayout;
-    }
 
     // Points to the static field {@link TeleHeap#_roots TeleHeap._roots} in the VM, assuming that the
     // static tuple of the class will not be relocated because it is in the boot image.
@@ -62,8 +62,32 @@ public final class TeleRoots extends AbstractTeleVMHolder{
     private final Address[] cachedRoots = new Address[InspectableHeapInfo.MAX_NUMBER_OF_ROOTS];
     private final BitSet usedIndices = new BitSet();
 
+    TeleRoots(TeleGripScheme teleGripScheme) {
+        super(teleGripScheme.vm());
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        tracer.begin();
+
+        this.teleGripScheme = teleGripScheme;
+        this.wordArrayLayout = teleGripScheme.vm().layoutScheme().wordArrayLayout;
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+
+        tracer.end(null);
+    }
+
+    public void updateCache() {
+        updateTracer.begin();
+        // Flush local cache; copy remote contents of Inspectors' root table into Inspector's local cache.
+        final int numberOfIndices = usedIndices.length();
+        for (int i = 0; i < numberOfIndices; i++) {
+            //WordArray.set(cachedRoots, i, wordArrayLayout.getWord(teleRoots(), i).asAddress());
+            WordArray.set(cachedRoots, i, teleRootsGrip().getWord(0, i).asAddress());
+        }
+        updateTracer.end(null);
+    }
+
+
     private RemoteTeleGrip teleRootsGrip() {
-        return teleGripScheme.createTemporaryRemoteTeleGrip(vm().dataAccess().readWord(vm().heap().teleRootsPointer()).asAddress());
+        return teleGripScheme.createTemporaryRemoteTeleGrip(vm().dataAccess().readWord(heap().teleRootsPointer()).asAddress());
     }
 
     /**
@@ -99,17 +123,6 @@ public final class TeleRoots extends AbstractTeleVMHolder{
             System.out.println("Word at " + index + " is zero");
         }*/
         return WordArray.get(cachedRoots, index).asAddress();
-    }
-
-    /**
-     * Flush local cache; copy remote contents of Inspectors' root table into Inspector's local cache.
-     */
-    void refresh() {
-        final int numberOfIndices = usedIndices.length();
-        for (int i = 0; i < numberOfIndices; i++) {
-            //WordArray.set(cachedRoots, i, wordArrayLayout.getWord(teleRoots(), i).asAddress());
-            WordArray.set(cachedRoots, i, teleRootsGrip().getWord(0, i).asAddress());
-        }
     }
 
 }

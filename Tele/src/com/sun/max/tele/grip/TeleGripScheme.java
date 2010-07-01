@@ -50,7 +50,7 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
 
     private final String tracePrefix;
 
-    private TeleVM teleVM;
+    private TeleVM vm;
     private TeleRoots teleRoots;
 
     protected TeleGripScheme(VMConfiguration vmConfiguration) {
@@ -58,13 +58,13 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
-    public void setTeleVM(TeleVM teleVM) {
-        this.teleVM = teleVM;
+    public void setTeleVM(TeleVM vm) {
+        this.vm = vm;
         this.teleRoots = new TeleRoots(this);
     }
 
-    public TeleVM teleVM() {
-        return teleVM;
+    public TeleVM vm() {
+        return vm;
     }
 
     /**
@@ -186,7 +186,7 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
      */
     public void refresh() {
         // Update Inspector's local cache of the remote Inspector root table.
-        teleRoots.refresh();
+        teleRoots.updateCache();
         // Rebuild the canonicalization map.
         refreshTeleGripCanonicalization();
     }
@@ -207,9 +207,9 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
             }
         }
         remoteTeleGrip = createTemporaryRemoteTeleGrip(rawGrip);
-        if (teleVM.isValidOrigin(remoteTeleGrip.toOrigin())) {
-            if (teleVM().heap().containsInDynamicHeap(remoteTeleGrip.toOrigin())) {
-                if (teleVM().heap().isInLiveMemory(remoteTeleGrip.toOrigin())) {
+        if (vm.isValidOrigin(remoteTeleGrip.toOrigin())) {
+            if (vm().heap().containsInDynamicHeap(remoteTeleGrip.toOrigin())) {
+                if (vm().heap().isInLiveMemory(remoteTeleGrip.toOrigin())) {
                     final int index = teleRoots.register(rawGrip);
                     remoteTeleGrip = new MutableTeleGrip(this, index);
                 } else {

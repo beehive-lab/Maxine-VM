@@ -23,9 +23,9 @@ package com.sun.max.tele.debug;
 import java.util.*;
 
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -39,9 +39,11 @@ import com.sun.max.vm.thread.*;
  *
  * @author Michael Van De Vanter
  */
-public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements MaxThreadLocalsBlock {
+public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements TeleVMCache, MaxThreadLocalsBlock {
 
-    private static final int TRACE_LEVEL = 2;
+    private static final int TRACE_VALUE = 2;
+
+    private final TimedTrace updateTracer;
 
     /**
      * Description of the memory region occupied by a {@linkplain MaxThreadLocalsBlock thread locals block} in the VM.
@@ -55,8 +57,8 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
 
         private final TeleThreadLocalsBlock teleThreadLocalsBlock;
 
-        private ThreadLocalsBlockMemoryRegion(TeleVM teleVM, TeleThreadLocalsBlock owner, String regionName, Address start, Size size) {
-            super(teleVM, regionName, start, size);
+        private ThreadLocalsBlockMemoryRegion(TeleVM vm, TeleThreadLocalsBlock owner, String regionName, Address start, Size size) {
+            super(vm, regionName, start, size);
             this.teleThreadLocalsBlock = owner;
         }
 
@@ -120,12 +122,18 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
      */
     public TeleThreadLocalsBlock(TeleNativeThread teleNativeThread, String regionName, Address start, Size size) {
         super(teleNativeThread.vm());
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        tracer.begin();
+
         this.teleNativeThread = teleNativeThread;
         this.entityName = regionName;
         this.threadLocalsBlockMemoryRegion = new ThreadLocalsBlockMemoryRegion(teleNativeThread.vm(), this, regionName, start, size);
         this.areas = new EnumMap<Safepoint.State, TeleThreadLocalsArea>(Safepoint.State.class);
         this.offsetToTriggeredThreadLocals = Platform.target().pageSize - Word.size();
         this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " in the " + teleNativeThread.vm().entityName();
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+
+        tracer.end(null);
     }
 
     /**
@@ -139,12 +147,36 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
      */
     public TeleThreadLocalsBlock(TeleNativeThread teleNativeThread, String name) {
         super(teleNativeThread.vm());
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        tracer.begin();
+
         this.teleNativeThread = teleNativeThread;
         this.entityName = name;
         this.threadLocalsBlockMemoryRegion = null;
         this.areas = null;
         this.offsetToTriggeredThreadLocals = Platform.target().pageSize - Word.size();
         this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " in the " + teleNativeThread.vm().entityName();
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+
+        tracer.end(null);
+    }
+
+    public void updateCache() {
+        if (threadLocalsBlockMemoryRegion != null) {
+            final long processEpoch = vm().teleProcess().epoch();
+            // This gets called redundantly from several places; be sure it only gets done once per epoch.
+            if (lastRefreshedEpoch < processEpoch) {
+                assert vm().lockHeldByCurrentThread();
+                updateTracer.begin();
+                for (TeleThreadLocalsArea teleThreadLocalsArea : areas.values()) {
+                    if (teleThreadLocalsArea != null) {
+                        teleThreadLocalsArea.updateCache();
+                    }
+                }
+                lastRefreshedEpoch = processEpoch;
+                updateTracer.end(null);
+            }
+        }
     }
 
     public String entityName() {
@@ -169,7 +201,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
 
     public TeleThreadLocalsArea threadLocalsAreaFor(State state) {
         if (threadLocalsBlockMemoryRegion != null) {
-            refresh();
+            updateCache();
             return areas.get(state);
         }
         return null;
@@ -188,52 +220,25 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
     }
 
     /**
-     * Update any state that may have changed since the last process execution step.
-     */
-    void refresh() {
-        if (threadLocalsBlockMemoryRegion != null) {
-            final long processEpoch = vm().teleProcess().epoch();
-            if (lastRefreshedEpoch < processEpoch) {
-                if (vm().tryLock()) {
-                    try {
-                        Trace.line(TRACE_LEVEL, tracePrefix() + "refreshThreadLocals (epoch=" + processEpoch + ") for " + this);
-                        final DataAccess dataAccess = vm().teleProcess().dataAccess();
-                        for (TeleThreadLocalsArea teleThreadLocalsArea : areas.values()) {
-                            if (teleThreadLocalsArea != null) {
-                                teleThreadLocalsArea.refresh(dataAccess);
-                            }
-                        }
-                        lastRefreshedEpoch = processEpoch;
-                    } finally {
-                        vm().unlock();
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * Gets the value of the thread local variable holding a reference to the VM thread corresponding to the native
      * thread.
      *
      * @return access to the VM thread corresponding to this thread, if any
      */
     TeleVmThread teleVmThread() {
-        if (threadLocalsBlockMemoryRegion != null) {
-            refresh();
-            final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(Safepoint.State.ENABLED);
-            if (enabledThreadLocalsArea != null) {
-                final Word threadLocalValue = enabledThreadLocalsArea.getWord(VmThreadLocal.VM_THREAD);
-                if (!threadLocalValue.isZero()) {
-                    if (vm().tryLock()) {
-                        try {
-                            final Reference vmThreadReference = vm().wordToReference(threadLocalValue);
-                            teleVmThread = (TeleVmThread) vm().makeTeleObject(vmThreadReference);
-                        } finally {
-                            vm().unlock();
-                        }
+        if (threadLocalsBlockMemoryRegion != null && lastRefreshedEpoch < vm().teleProcess().epoch() && vm().tryLock()) {
+            try {
+                updateCache();
+                final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(Safepoint.State.ENABLED);
+                if (enabledThreadLocalsArea != null) {
+                    final Word threadLocalValue = enabledThreadLocalsArea.getWord(VmThreadLocal.VM_THREAD);
+                    if (!threadLocalValue.isZero()) {
+                        final Reference vmThreadReference = vm().wordToReference(threadLocalValue);
+                        teleVmThread = (TeleVmThread) heap().makeTeleObject(vmThreadReference);
                     }
                 }
+            } finally {
+                vm().unlock();
             }
         }
         return teleVmThread;
@@ -256,7 +261,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
                     areas.put(safepointState, new TeleThreadLocalsArea(vm(), thread(), safepointState, tlaStartPointer));
                 }
             }
-            refresh();
+            updateCache();
         }
     }
 

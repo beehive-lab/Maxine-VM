@@ -202,16 +202,27 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 name = inspection().nameDisplay().veryShortName(compiledCode);
                 toolTip = inspection().nameDisplay().longName(compiledCode, stackFrame.ip());
                 if (compiledCode != null) {
-                    final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
-                    if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
-                        name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+
+                    try {
+                        vm().acquireLegacyVMAccess();
                         try {
-                            toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
-                        } catch (Exception e) {
-                            // There's corner cases where we can't obtain detailed information for the tool tip (e.g., the method we're trying to get the substitution info about
-                            //  is being constructed. Instead of propagating the exception, just use a default tool tip. [Laurent].
-                            toolTip = "?";
+                            final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
+                            if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
+                                name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+                                try {
+                                    toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+                                } catch (Exception e) {
+                                    // There's corner cases where we can't obtain detailed information for the tool tip (e.g., the method we're trying to get the substitution info about
+                                    //  is being constructed. Instead of propagating the exception, just use a default tool tip. [Laurent].
+                                    toolTip = inspection().nameDisplay().unavailableDataLongText();
+                                }
+                            }
+                        } finally {
+                            vm().releaseLegacyVMAccess();
                         }
+                    } catch (MaxVMBusyException e) {
+                        name = inspection().nameDisplay().unavailableDataShortText();
+                        toolTip = inspection().nameDisplay().unavailableDataLongText();
                     }
                 }
             } else if (stackFrame instanceof TruncatedStackFrame) {

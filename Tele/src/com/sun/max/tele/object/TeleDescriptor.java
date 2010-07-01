@@ -25,26 +25,25 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for a  {@link Descriptor} in the {@link TeleVM}.
+ * Canonical surrogate for a {@link Descriptor} in the VM.
  *
  * @author Michael Van De Vanter
- *
  */
 public abstract class TeleDescriptor extends TeleTupleObject {
 
-    protected TeleDescriptor(TeleVM teleVM, Reference descriptorReference) {
-        super(teleVM, descriptorReference);
+    protected TeleDescriptor(TeleVM vm, Reference descriptorReference) {
+        super(vm, descriptorReference);
     }
 
     private Descriptor descriptor;
 
     /**
-     * @return local equivalent of the {@link TypeDescriptor} in the target VM.
+     * @return local equivalent of the {@link TypeDescriptor} in the VM.
      */
     public Descriptor descriptor() {
         if (descriptor == null) {
             final Reference stringReference = vm().teleFields().Descriptor_string.readReference(reference());
-            final TeleString teleString = (TeleString) vm().makeTeleObject(stringReference);
+            final TeleString teleString = (TeleString) heap().makeTeleObject(stringReference);
             String string = teleString.getString();
             if (string != null) {
                 if (this instanceof TeleTypeDescriptor) {
