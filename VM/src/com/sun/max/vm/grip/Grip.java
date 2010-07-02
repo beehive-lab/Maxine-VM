@@ -24,7 +24,6 @@ package com.sun.max.vm.grip;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -64,11 +63,6 @@ public class Grip implements Accessor {
     }
 
     @INLINE
-    public static Grip fromReference(Reference reference) {
-        return gripScheme().fromReference(reference);
-    }
-
-    @INLINE
     public final Reference toReference() {
         return referenceScheme().fromGrip(this);
     }
@@ -81,21 +75,6 @@ public class Grip implements Accessor {
     @INLINE
     public final Pointer toOrigin() {
         return gripScheme().toOrigin(this);
-    }
-
-    @INLINE
-    public final Grip update(Pointer origin) {
-        return gripScheme().updateGrip(this, origin);
-    }
-
-    @INLINE
-    public final Grip readClassGrip() {
-        return Layout.readHubReference(this).toGrip();
-    }
-
-    @INLINE
-    public final Grip forwarded() {
-        return Layout.forwarded(this);
     }
 
     @INLINE
