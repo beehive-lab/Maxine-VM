@@ -158,7 +158,7 @@ public class LivenessMarker {
     private void markRootInstr(Instruction i) {
         FrameState stateBefore = i.stateBefore();
         if (stateBefore != null) {
-            // state before != null implies that this instruction may have side effects
+            // stateBefore != null implies that this instruction may have side effects
             stateBefore.valuesDo(deoptMarker);
             i.inputValuesDo(valueMarker);
             setFlag(i, Value.Flag.LiveSideEffect);

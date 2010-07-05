@@ -270,7 +270,7 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        private void unexpected(Instruction i, Throwable e) {
+        private void raiseException(Instruction i, Throwable e) {
             List<ExceptionHandler> exceptionHandlerList = i.exceptionHandlers();
             for (ExceptionHandler eh : exceptionHandlerList) {
                 if (eh.handler.isCatchAll() || resolveClass(eh.handler.catchKlass()).isAssignableFrom(e.getClass())) {
@@ -306,7 +306,7 @@ public class IRInterpreter {
                 }
                 environment.bind(i, fromBoxedJavaValue(boxedJavaValue), instructionCounter);
             } catch (Throwable e) {
-                unexpected(i, e);
+                raiseException(i, e);
             }
             jumpNextInstruction();
         }
@@ -319,13 +319,13 @@ public class IRInterpreter {
                 field.setAccessible(true);
                 field.set(environment.lookup(i.object()).asObject(), getCompatibleBoxedValue(resolveClass(i.field().type()), i.value()));
             } catch (IllegalAccessException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             } catch (SecurityException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             } catch (NoSuchFieldException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             } catch (Throwable e) {
-                unexpected(i, e);
+                raiseException(i, e);
             }
             jumpNextInstruction();
         }
@@ -342,7 +342,7 @@ public class IRInterpreter {
                 environment.bind(i, CiConstant.forInt(Array.getLength(array.asObject())), instructionCounter);
                 jumpNextInstruction();
             } catch (NullPointerException ne) {
-                unexpected(i, ne);
+                raiseException(i, ne);
             }
         }
 
@@ -352,19 +352,19 @@ public class IRInterpreter {
             try {
                 int arrayIndex = environment.lookup(i.index()).asInt();
                 if (arrayIndex >= Array.getLength(array)) {
-                    unexpected(i, new ArrayIndexOutOfBoundsException());
+                    raiseException(i, new ArrayIndexOutOfBoundsException());
                     return;
                 }
                 Object result = Array.get(array, arrayIndex);
                 environment.bind(i, fromBoxedJavaValue(result), instructionCounter);
             } catch (NullPointerException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             } catch (ArrayIndexOutOfBoundsException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             } catch (IllegalArgumentException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             } catch (ArrayStoreException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             }
             jumpNextInstruction();
         }
@@ -408,11 +408,11 @@ public class IRInterpreter {
                 Class<?> componentType = getElementType(array);
                 Array.set(array, environment.lookup(i.index()).asInt(), getCompatibleBoxedValue(componentType, i.value()));
             } catch (NullPointerException ne) {
-                unexpected(i, ne);
+                raiseException(i, ne);
             } catch (IllegalArgumentException ie) {
-                unexpected(i, new ArrayStoreException());
+                raiseException(i, new ArrayStoreException());
             } catch (ArrayIndexOutOfBoundsException ae) {
-                unexpected(i, ae);
+                raiseException(i, ae);
             }
             jumpNextInstruction();
         }
@@ -471,14 +471,14 @@ public class IRInterpreter {
                     try {
                         environment.bind(i, CiConstant.forInt((xval.asInt() / yval.asInt())), instructionCounter);
                     } catch (ArithmeticException ae) {
-                        unexpected(i, ae);
+                        raiseException(i, ae);
                     }
                     break;
                 case Bytecodes.IREM:
                     try {
                         environment.bind(i, CiConstant.forInt((xval.asInt() % yval.asInt())), instructionCounter);
                     } catch (ArithmeticException ae) {
-                        unexpected(i, ae);
+                        raiseException(i, ae);
                     }
                     break;
 
@@ -495,14 +495,14 @@ public class IRInterpreter {
                     try {
                         environment.bind(i, CiConstant.forLong((xval.asLong() / yval.asLong())), instructionCounter);
                     } catch (ArithmeticException ae) {
-                        unexpected(i, ae);
+                        raiseException(i, ae);
                     }
                     break;
                 case Bytecodes.LREM:
                     try {
                         environment.bind(i, CiConstant.forLong((xval.asLong() % yval.asLong())), instructionCounter);
                     } catch (ArithmeticException ae) {
-                        unexpected(i, ae);
+                        raiseException(i, ae);
                     }
                     break;
 
@@ -792,7 +792,7 @@ public class IRInterpreter {
             if (object.isNonNull()) {
                 environment.bind(i, CiConstant.forObject(object.boxedValue()), instructionCounter);
             } else {
-                unexpected(i, new NullPointerException());
+                raiseException(i, new NullPointerException());
             }
             jumpNextInstruction();
         }
@@ -866,7 +866,7 @@ public class IRInterpreter {
                         Class<?> objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
                         type = runtime.getRiType(objClass);
                     } catch (NullPointerException ne) {
-                        unexpected(i, ne);
+                        raiseException(i, ne);
                         return;
                     }
                     targetMethod = type.resolveMethodImpl(targetMethod);
@@ -879,7 +879,7 @@ public class IRInterpreter {
                         Class<?> objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
                         type = runtime.getRiType(objClass);
                     } catch (NullPointerException ne) {
-                        unexpected(i, ne);
+                        raiseException(i, ne);
                         return;
                     }
                     targetMethod = type.resolveMethodImpl(targetMethod);
@@ -888,7 +888,7 @@ public class IRInterpreter {
             }
             if (!i.isStatic()) {
                 if (environment.lookup(i.arguments()[0]).boxedValue() == null) {
-                    unexpected(i, new NullPointerException());
+                    raiseException(i, new NullPointerException());
                     return;
                 }
             }
@@ -904,9 +904,9 @@ public class IRInterpreter {
                 result = interpreter.execute(methodHir, arguments(i));
                 environment.bind(i, fromBoxedJavaValue(result.boxedValue()), instructionCounter);
             } catch (InvocationTargetException e) {
-                unexpected(i, e.getTargetException());
+                raiseException(i, e.getTargetException());
             } catch (Throwable e) {
-                unexpected(i, e);
+                raiseException(i, e);
             }
             jumpNextInstruction();
         }
@@ -978,9 +978,9 @@ public class IRInterpreter {
                 try {
                     m = methodClass.getDeclaredMethod(methodName, resolveSignature(signature));
                 } catch (SecurityException e1) {
-                    unexpected(i, e1.getCause());
+                    raiseException(i, e1.getCause());
                 } catch (NoSuchMethodException e1) {
-                    unexpected(i, e1);
+                    raiseException(i, e1);
                 }
 
                 Object res = null;
@@ -992,11 +992,11 @@ public class IRInterpreter {
                         throw new Error();
                     }
                 } catch (IllegalArgumentException e) {
-                    unexpected(i, e.getCause());
+                    raiseException(i, e.getCause());
                 } catch (IllegalAccessException e) {
-                    unexpected(i, e.getCause());
+                    raiseException(i, e.getCause());
                 } catch (InvocationTargetException e) {
-                    unexpected(i, e.getTargetException());
+                    raiseException(i, e.getTargetException());
                 }
 
                 environment.bind(i, CiConstant.forBoxed(signature.returnKind(), res), instructionCounter);
@@ -1014,7 +1014,7 @@ public class IRInterpreter {
                 try {
                     methodClass = objref.getClass();
                 } catch (NullPointerException ne) {
-                    unexpected(i, ne);
+                    raiseException(i, ne);
                     return;
                 }
 
@@ -1023,14 +1023,14 @@ public class IRInterpreter {
                     try {
                         m = methodClass.getDeclaredMethod(methodName, resolveSignature(signature));
                     } catch (SecurityException e) {
-                        unexpected(i, e);
+                        raiseException(i, e);
                         return;
                     } catch (NoSuchMethodException e) {
                         methodClass = methodClass.getSuperclass();
                     }
                 }
                 if (methodClass == null) {
-                    unexpected(i, new NoSuchMethodException());
+                    raiseException(i, new NoSuchMethodException());
                     return;
                 }
 
@@ -1043,11 +1043,11 @@ public class IRInterpreter {
                         res = m.invoke(objref, argumentList(i, signature));
                     }
                 } catch (IllegalArgumentException e) {
-                    unexpected(i, e.getCause());
+                    raiseException(i, e.getCause());
                 } catch (IllegalAccessException e) {
-                    unexpected(i, e.getCause());
+                    raiseException(i, e.getCause());
                 } catch (InvocationTargetException e) {
-                    unexpected(i, e.getTargetException());
+                    raiseException(i, e.getTargetException());
                 }
                 environment.bind(i, CiConstant.forBoxed(signature.returnKind(), res), instructionCounter);
             }
@@ -1088,13 +1088,13 @@ public class IRInterpreter {
                 constructor.setAccessible(true);
                 newReference = constructor.newInstance(arglist);
             } catch (InstantiationException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             } catch (InvocationTargetException e) {
-                unexpected(i, e.getTargetException());
+                raiseException(i, e.getTargetException());
             } catch (NoSuchMethodException e) {
-                unexpected(i, new InstantiationException());
+                raiseException(i, new InstantiationException());
             } catch (Exception e) {
-                unexpected(i, new InstantiationException());
+                raiseException(i, new InstantiationException());
             }
             return newReference;
         }
@@ -1194,7 +1194,7 @@ public class IRInterpreter {
                 // bind the NewInstance instruction to the new allocated object
                 environment.bind(i, CiConstant.forObject(unsafe.allocateInstance(javaClass)), instructionCounter);
             } catch (InstantiationException e) {
-                unexpected(i, e.getCause());
+                raiseException(i, e.getCause());
             }
             jumpNextInstruction();
         }
@@ -1205,7 +1205,7 @@ public class IRInterpreter {
             assertKind(i.length().kind, CiKind.Int);
             int length = environment.lookup(i.length()).asInt();
             if (length < 0) {
-                unexpected(i, new NegativeArraySizeException());
+                raiseException(i, new NegativeArraySizeException());
                 return;
             }
             Object newObjectArray = null;
@@ -1245,7 +1245,7 @@ public class IRInterpreter {
         public void visitNewObjectArray(NewObjectArray i) {
             int length = environment.lookup(i.length()).asInt();
             if (length < 0) {
-                unexpected(i, new NegativeArraySizeException());
+                raiseException(i, new NegativeArraySizeException());
                 return;
             }
             Object newObjectArray = Array.newInstance(resolveClass(i.elementClass()), length);
@@ -1266,9 +1266,9 @@ public class IRInterpreter {
             try {
                 newObjectArray = Array.newInstance(elementTypeNewArray(i), dimensions);
             } catch (NegativeArraySizeException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             } catch (Throwable e) {
-                unexpected(i, e);
+                raiseException(i, e);
             }
             environment.bind(i, CiConstant.forObject(newObjectArray), instructionCounter);
             jumpNextInstruction();
@@ -1312,7 +1312,7 @@ public class IRInterpreter {
                 Object obj = environment.lookup(i.object()).asObject();
                 unsafe.monitorEnter(obj);
             } catch (NullPointerException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             }
             jumpNextInstruction();
         }
@@ -1322,9 +1322,9 @@ public class IRInterpreter {
             try {
                 unsafe.monitorExit(environment.lookup(i.object()).asObject());
             } catch (NullPointerException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             } catch (IllegalMonitorStateException e) {
-                unexpected(i, e);
+                raiseException(i, e);
             }
             jumpNextInstruction();
         }
@@ -1523,7 +1523,7 @@ public class IRInterpreter {
                 environment.performPhiMove(i);
                 throw (Throwable) exception.asObject();
             } catch (Throwable e) {
-                unexpected(i, e);
+                raiseException(i, e);
             }
         }
 

@@ -143,8 +143,7 @@ public final class GraphBuilder {
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
 
-            RiExceptionHandler desc = newDefaultExceptionHandler(rootMethod);
-            ExceptionHandler h = new ExceptionHandler(desc);
+            ExceptionHandler h = new ExceptionHandler(new CiExceptionHandler(0, rootMethod.code().length, -1, 0, null));
             h.setEntryBlock(syncHandler);
             scopeData.addExceptionHandler(h);
         } else {
@@ -217,10 +216,6 @@ public final class GraphBuilder {
         startBlock.setEnd(base);
         assert stdEntry.stateBefore() == null;
         stdEntry.merge(stateAfter);
-    }
-
-    private RiExceptionHandler newDefaultExceptionHandler(RiMethod method) {
-        return new CiExceptionHandler(0, method.code().length, -1, 0, null);
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
@@ -388,24 +383,24 @@ public final class GraphBuilder {
             return Util.uncheckedCast(Collections.EMPTY_LIST);
         }
 
-        List<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
+        ArrayList<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
         ScopeData curScopeData = scopeData;
-        FrameState s = x.stateBefore();
+        FrameState state = x.stateBefore();
         int scopeCount = 0;
 
-        assert s != null : "exception handler state must be available for " + x;
-        s = s.copy();
+        assert state != null : "exception handler state must be available for " + x;
+        state = state.immutableCopy();
         do {
-            assert curScopeData.scope == s.scope() : "scopes do not match";
+            assert curScopeData.scope == state.scope() : "scopes do not match";
             assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream.currentBCI() : "invalid bci";
 
             // join with all potential exception handlers
             List<ExceptionHandler> handlers = curScopeData.exceptionHandlers();
             if (handlers != null) {
-                for (ExceptionHandler h : handlers) {
-                    if (h.covers(bci)) {
+                for (ExceptionHandler handler : handlers) {
+                    if (handler.covers(bci)) {
                         // if the handler covers this bytecode index, add it to the list
-                        if (addExceptionHandler(exceptionHandlers, h, curScopeData, s, scopeCount)) {
+                        if (addExceptionHandler(exceptionHandlers, handler, curScopeData, state, scopeCount)) {
                             // if the handler was a default handler, we are done
                             return exceptionHandlers;
                         }
@@ -423,7 +418,7 @@ public final class GraphBuilder {
                 break;
             }
             // there is another level, pop
-            s = s.popScope();
+            state = state.popScope();
             bci = curScopeData.scope.callerBCI();
             curScopeData = curScopeData.parent;
             scopeCount++;
@@ -433,24 +428,34 @@ public final class GraphBuilder {
         return exceptionHandlers;
     }
 
-    private boolean addExceptionHandler(List<ExceptionHandler> exceptionHandlers, ExceptionHandler h, ScopeData curScopeData, FrameState s, int scopeCount) {
+    /**
+     * Adds an exception handler to the {@linkplain BlockBegin#exceptionHandlerBlocks() list}
+     * of exception handlers for the {@link #curBlock current block}.
+     *
+     * @param exceptionHandlers
+     * @param handler
+     * @param curScopeData
+     * @param curState
+     * @param scopeCount
+     * @return {@code true} if handler catches all exceptions (i.e. {@code handler.isCatchAll() == true})
+     */
+    private boolean addExceptionHandler(ArrayList<ExceptionHandler> exceptionHandlers, ExceptionHandler handler, ScopeData curScopeData, FrameState curState, int scopeCount) {
         compilation.setHasExceptionHandlers();
 
-        BlockBegin entry = h.entryBlock();
-        if (entry == curBlock) {
-            throw new CiBailout("Exception handler covers itself");
-        }
-        assert entry.bci() == h.handler.handlerBCI();
+        BlockBegin entry = handler.entryBlock();
+        FrameState entryState = entry.stateBefore();
+
+        assert entry.bci() == handler.handler.handlerBCI();
         assert entry.bci() == -1 || entry == curScopeData.blockAt(entry.bci()) : "blocks must correspond";
-        assert entry.stateBefore() == null || s.locksSize() == entry.stateBefore().locksSize() : "locks do not match";
+        assert entryState == null || curState.locksSize() == entryState.locksSize() : "locks do not match";
 
         // exception handler starts with an empty expression stack
-        s.truncateStack(curScopeData.callerStackSize());
+        curState.truncateStack(curScopeData.callerStackSize());
 
-        entry.merge(s);
+        entry.merge(curState);
 
         // add current state for correct handling of phi functions
-        int phiOperand = entry.addExceptionState(s);
+        int phiOperand = entry.addExceptionState(curState);
 
         // add entry to the list of exception handlers of this block
         curBlock.addExceptionHandler(entry);
@@ -461,21 +466,28 @@ public final class GraphBuilder {
         }
 
         // clone exception handler
-        ExceptionHandler newHandler = new ExceptionHandler(h);
+        ExceptionHandler newHandler = new ExceptionHandler(handler);
         newHandler.setPhiOperand(phiOperand);
         newHandler.setScopeCount(scopeCount);
         exceptionHandlers.add(newHandler);
 
         // fill in exception handler subgraph lazily
-        assert !entry.wasVisited() : "entry must not be visited yet";
-        curScopeData.addToWorkList(entry);
+        if (!entry.wasVisited()) {
+            curScopeData.addToWorkList(entry);
+        } else {
+            // This will occur for exception handlers that cover themselves. This code
+            // pattern is generated by javac for synchronized blocks. See the following
+            // for why this change to javac was made:
+            //
+            //   http://www.cs.arizona.edu/projects/sumatra/hallofshame/java-async-race.html
+        }
 
         // stop when reaching catch all
-        return h.isCatchAll();
+        return handler.isCatchAll();
     }
 
     void genLoadConstant(int cpi) {
-        FrameState stateBefore = curState.copy();
+        FrameState stateBefore = curState.immutableCopy();
         Object con = constantPool().lookupConstant(cpi);
 
         if (con instanceof RiType) {
@@ -607,10 +619,14 @@ public final class GraphBuilder {
     }
 
     void genArithmeticOp(CiKind kind, int opcode, FrameState state) {
-        Value y = pop(kind);
-        Value x = pop(kind);
-        Value result = append(new ArithmeticOp(opcode, kind, x, y, isStrict(method().accessFlags()), state));
-        push(kind, result);
+        genArithmeticOp(kind, opcode, kind, kind, state);
+    }
+
+    void genArithmeticOp(CiKind result, int opcode, CiKind x, CiKind y, FrameState state) {
+        Value yValue = pop(y);
+        Value xValue = pop(x);
+        Value result1 = append(new ArithmeticOp(opcode, result, xValue, yValue, isStrict(method().accessFlags()), state));
+        push(result, result1);
     }
 
     void genNegateOp(CiKind kind) {
@@ -881,7 +897,7 @@ public final class GraphBuilder {
     private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, FrameState stateBefore, int cpi, RiConstantPool constantPool) {
         Value receiver = args[0];
         // attempt to devirtualize the call
-        if (target.isResolved() && target.holder().isResolved()) {
+        if (target.isResolved()) {
             RiType klass = target.holder();
             // 0. check for trivial cases
             if (target.canBeStaticallyBound() && !isAbstract(target.accessFlags())) {
@@ -1074,31 +1090,29 @@ public final class GraphBuilder {
         if (Modifier.isSynchronized(method().accessFlags())) {
             FrameState stateBefore = curState.immutableCopy();
             // unlock before exiting the method
-            append(new MonitorExit(rootMethodSynchronizedObject, curState.unlock(), stateBefore));
+            int lockNumber = curState.locksSize() - 1;
+            append(new MonitorExit(rootMethodSynchronizedObject, lockNumber, stateBefore));
+            curState.unlock();
         }
         append(new Return(x));
     }
 
     void genMonitorEnter(Value x, int bci) {
         FrameState stateBefore = curState.immutableCopy();
-        appendWithoutOptimization(new MonitorEnter(x, curState.lock(scope(), x), stateBefore), bci);
+        int lockNumber = curState.locksSize();
+        appendWithoutOptimization(new MonitorEnter(x, lockNumber, stateBefore), bci);
+        curState.lock(scope(), x);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
     void genMonitorExit(Value x, int bci) {
-        if (curState.locksSize() < 1) {
+        int lockNumber = curState.locksSize() - 1;
+        if (lockNumber < 0) {
             throw new CiBailout("monitor stack underflow");
         }
         FrameState stateBefore = curState.immutableCopy();
-        appendWithoutOptimization(new MonitorExit(x, curState.unlock(), stateBefore), bci);
-        killMemoryMap(); // prevent any optimizations across synchronization
-    }
-
-    void genMonitorExit(int bci, FrameState stateBefore) {
-        if (curState.locksSize() < 1) {
-            throw new CiBailout("monitor stack underflow");
-        }
-        appendWithoutOptimization(new MonitorExit(curState.apop(), curState.unlock(), stateBefore), bci);
+        appendWithoutOptimization(new MonitorExit(x, lockNumber, stateBefore), bci);
+        curState.unlock();
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
@@ -1140,7 +1154,7 @@ public final class GraphBuilder {
         int offset = ts.defaultOffset();
         isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
-        FrameState stateBefore = isBackwards ? curState.copy() : null;
+        FrameState stateBefore = isBackwards ? curState.immutableCopy() : null;
         append(new TableSwitch(ipop(), list, ts.lowKey(), stateBefore, isBackwards));
     }
 
@@ -1161,7 +1175,7 @@ public final class GraphBuilder {
         int offset = ls.defaultOffset();
         isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
-        FrameState stateBefore = isBackwards ? curState.copy() : null;
+        FrameState stateBefore = isBackwards ? curState.immutableCopy() : null;
         append(new LookupSwitch(ipop(), list, keys, stateBefore, isBackwards));
     }
 
@@ -1275,7 +1289,7 @@ public final class GraphBuilder {
         Goto gotoSub = new Goto(jsrStartBlock, null, false);
         gotoSub.setStateAfter(curState.immutableCopy());
         assert jsrStartBlock.stateBefore() == null;
-        jsrStartBlock.setStateBefore(curState.copy());
+        jsrStartBlock.setStateBefore(curState.immutableCopy());
         append(gotoSub);
         curBlock.setEnd(gotoSub);
         lastInstr = curBlock = jsrStartBlock;
@@ -1316,7 +1330,7 @@ public final class GraphBuilder {
     }
 
     void pushScope(RiMethod target, BlockBegin continuation) {
-        IRScope calleeScope = new IRScope(compilation, scope(), bci(), target, -1);
+        IRScope calleeScope = new IRScope(scope(), bci(), target, -1);
         BlockMap blockMap = compilation.getBlockMap(calleeScope.method, -1);
         calleeScope.setCallerState(curState);
         calleeScope.setStoresInLoops(blockMap.getStoresInLoops());
@@ -1391,7 +1405,7 @@ public final class GraphBuilder {
         CiKind resultType = returnKind(target);
 
         // create the intrinsic node
-        Intrinsic result = new Intrinsic(resultType.stackKind(), intrinsic, target, args, isStatic, curState.copy(), preservesState, canTrap);
+        Intrinsic result = new Intrinsic(resultType.stackKind(), intrinsic, target, args, isStatic, curState.immutableCopy(), preservesState, canTrap);
         pushReturn(resultType, append(result));
         stats.intrinsicCount++;
         return true;
@@ -1638,10 +1652,9 @@ public final class GraphBuilder {
         genMonitorEnter(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         syncHandler.setExceptionEntry();
         syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
-        RiExceptionHandler handler = newDefaultExceptionHandler(method());
-        ExceptionHandler h = new ExceptionHandler(handler);
-        h.setEntryBlock(syncHandler);
-        scopeData.addExceptionHandler(h);
+        ExceptionHandler handler = new ExceptionHandler(new CiExceptionHandler(0, method().code().length, -1, 0, null));
+        handler.setEntryBlock(syncHandler);
+        scopeData.addExceptionHandler(handler);
     }
 
     void fillSyncHandler(Value lock, BlockBegin syncHandler, boolean inlinedMethod) {
@@ -1926,12 +1939,12 @@ public final class GraphBuilder {
                 case ISUB           : // fall through
                 case IMUL           : genArithmeticOp(CiKind.Int, opcode); break;
                 case IDIV           : // fall through
-                case IREM           : genArithmeticOp(CiKind.Int, opcode, curState.copy()); break;
+                case IREM           : genArithmeticOp(CiKind.Int, opcode, curState.immutableCopy()); break;
                 case LADD           : // fall through
                 case LSUB           : // fall through
                 case LMUL           : genArithmeticOp(CiKind.Long, opcode); break;
                 case LDIV           : // fall through
-                case LREM           : genArithmeticOp(CiKind.Long, opcode, curState.copy()); break;
+                case LREM           : genArithmeticOp(CiKind.Long, opcode, curState.immutableCopy()); break;
                 case FADD           : // fall through
                 case FSUB           : // fall through
                 case FMUL           : // fall through
@@ -2019,8 +2032,8 @@ public final class GraphBuilder {
                 case ATHROW         : genThrow(s.currentBCI()); break;
                 case CHECKCAST      : genCheckCast(); break;
                 case INSTANCEOF     : genInstanceOf(); break;
-                case MONITORENTER   : genMonitorEnter(s.currentBCI(), curState.copy()); break;
-                case MONITOREXIT    : genMonitorExit(s.currentBCI(), curState.copy()); break;
+                case MONITORENTER   : genMonitorEnter(apop(), s.currentBCI()); break;
+                case MONITOREXIT    : genMonitorExit(apop(), s.currentBCI()); break;
                 case MULTIANEWARRAY : genNewMultiArray(s.readCPI()); break;
                 case IFNULL         : genIfNull(Condition.EQ); break;
                 case IFNONNULL      : genIfNull(Condition.NE); break;
@@ -2043,9 +2056,9 @@ public final class GraphBuilder {
 
                 case WCONST_0       : wpush(appendConstant(CiConstant.ZERO)); break;
                 case WDIV           : // fall through
-                case WDIVI          : // fall through
-                case WREM           : genArithmeticOp(CiKind.Word, opcode, curState.copy()); break;
-                case WREMI          : genArithmeticOp(CiKind.Int, opcode, curState.copy()); break;
+                case WREM           : genArithmeticOp(CiKind.Word, opcode, curState.immutableCopy()); break;
+                case WDIVI          : genArithmeticOp(CiKind.Word, opcode, CiKind.Word, CiKind.Int, curState.immutableCopy()); break;
+                case WREMI          : genArithmeticOp(CiKind.Int, opcode, CiKind.Word, CiKind.Int, curState.immutableCopy()); break;
 
                 case READREG        : genLoadRegister(s.readCPI()); break;
                 case WRITEREG       : genStoreRegister(s.readCPI()); break;
@@ -2074,41 +2087,6 @@ public final class GraphBuilder {
                 case PAUSE          : genPause(); break;
                 case LSB            : // fall through
                 case MSB            : genSignificantBit(opcode);break;
-
-//                case PCMPSWP: {
-//                    opcode |= readUnsigned2() << 8;
-//                    switch (opcode) {
-//                        case PCMPSWP_INT:
-//                        case PCMPSWP_INT_I:
-//                        case PCMPSWP_WORD:
-//                        case PCMPSWP_WORD_I: {
-//                            popCategory1();
-//                            popCategory1();
-//                            popCategory1();
-//                            break;
-//                        }
-//                        case PCMPSWP_REFERENCE:
-//                        case PCMPSWP_REFERENCE_I: {
-//                            popCategory1();
-//                            popCategory1();
-//                            popCategory1();
-//                            popCategory1();
-//                            pushRef();
-//                            break;
-//                        }
-//                        default: {
-//                            FatalError.unexpected("Unknown bytcode");
-//                        }
-//                    }
-//                    break;
-//                }
-
-//                case MEMBAR: {
-//                    skip2();
-//                    break;
-//                }
-
-
 
                 case BREAKPOINT:
                     throw new CiBailout("concurrent setting of breakpoint");
@@ -2167,6 +2145,10 @@ public final class GraphBuilder {
             for (int i = 0; i < curState.stackSize(); ++i) {
                 Value value = curState.stackAt(i);
                 log.println(String.format("|   stack[%d] = %-8s : %s", i, value == null ? "bogus" : value.kind.javaName, value));
+            }
+            for (int i = 0; i < curState.locksSize(); ++i) {
+                Value value = curState.lockAt(i);
+                log.println(String.format("|   lock[%d] = %-8s : %s", i, value == null ? "bogus" : value.kind.javaName, value));
             }
         }
     }
@@ -2407,13 +2389,7 @@ public final class GraphBuilder {
 
 
     private void genArrayLength() {
-        ipush(append(new ArrayLength(apop(), curState.copy())));
-    }
-
-    private void genMonitorEnter(int bci, FrameState stateBefore) {
-        Value object = apop();
-        appendWithoutOptimization(new MonitorEnter(object, curState.lock(scope(), object), stateBefore), bci);
-        killMemoryMap(); // prevent any optimizations across synchronization
+        ipush(append(new ArrayLength(apop(), curState.immutableCopy())));
     }
 
     void killMemoryMap() {

@@ -273,7 +273,7 @@ public class VmThread {
      * a thread to the global list of running threads.
      *
      * As part of the call to {@link #attach(Pointer, JniHandle, boolean, Pointer, Pointer, Pointer)}
-     * made once an attaching thread
+     * made when attaching thread, a new pre-allocated thread object is created.
      */
     private static final AtomicReference threadForAttach = new AtomicReference();
     static {

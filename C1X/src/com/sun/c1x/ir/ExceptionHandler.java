@@ -27,6 +27,12 @@ import com.sun.cri.ri.*;
 
 /**
  * The {@code ExceptionHandler} class represents an exception handler for a Java bytecode method.
+ * There is exactly one instance of this class for every exception handler without any specific
+ * reference to an exception-throwing instruction covered by the handler. Then there is one
+ * instance per exception-throwing instruction that is used to record the frame state before
+ * execution of the instruction. The latter is used to generate exception adapter blocks
+ * (see section 3.4 of the paper <a href="http://www.usenix.org/events/vee05/full_papers/p132-wimmer.pdf">
+ * Optimized Interval Splitting in a Linear Scan Register Allocator</a>) where necessary.
  *
  * @author Ben L. Titzer
  */
@@ -62,7 +68,7 @@ public class ExceptionHandler {
 
     @Override
     public String toString() {
-        return "XHandler(Block=" + entryBlock.blockID + ")";
+        return "XHandler(Block=" + entryBlock.blockID + ") " + handler;
     }
 
     /**

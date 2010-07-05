@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,43 +18,55 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.bytecode;
 
-import com.sun.c1x.value.*;
+import test.bench.util.*;
 
 /**
- * The {@code MonitorExit} instruction represents a monitor release.
+ * A microbenchmark for floating point; {@code float} to {@code int} conversions.
  *
  * @author Ben L. Titzer
+ * @author Mick Jordan
  */
-public final class MonitorExit extends AccessMonitor {
+public class  F2I extends RunBench {
 
-    /**
-     * Creates a new MonitorExit instruction.
-     * @param object the instruction produces the object value
-     * @param lockNumber the number of the lock
-     * @param stateBefore the state before executing this instruction
-     */
-    public MonitorExit(Value object, int lockNumber, FrameState stateBefore) {
-        super(object, stateBefore, lockNumber);
-        if (object.isNonNull()) {
-            redundantNullCheck();
+    protected F2I() {
+        super(new Bench(), new EncapBench());
+    }
+
+    public static boolean test() {
+        return new F2I().runBench(true);
+    }
+
+    static class Bench extends AbstractMicroBenchmark {
+        public void run(boolean warmup) {
+            f2i(0.4F);
         }
+
+        @SuppressWarnings("unused")
+        private static void f2i(float d) {
+            int i = (int) d;
+        }
+
     }
 
-    @Override
-    public boolean canTrap() {
-        // C1X assumes that locks are well balanced and so there no need to handle
-        // IllegalMonitorStateExceptions thrown by monitorexit instructions.
-        return needsNullCheck();
+    static class EncapBench extends AbstractMicroBenchmark {
+
+        public void run(boolean warmup) {
+            f2i(0.4F);
+        }
+
+        private static void f2i(float d) {
+        }
+
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitMonitorExit(this);
+    public static void main(String[] args) {
+        RunBench.runTest(F2I.class, args);
     }
+
 }

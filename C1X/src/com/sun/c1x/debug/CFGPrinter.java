@@ -43,6 +43,10 @@ import com.sun.cri.ri.*;
  * @author Doug Simon
  */
 public class CFGPrinter {
+    private static final String COLUMN_END = " <|@";
+    private static final String HOVER_START = "<@";
+    private static final String HOVER_SEP = "|@";
+    private static final String HOVER_END = ">@";
 
     private static OutputStream cfgFileStream;
 
@@ -261,9 +265,9 @@ public class CFGPrinter {
     }
 
     /**
-     * Formats a given {@linkplain FrameState JVM frame state} as a single line string.
+     * Formats a given {@linkplain FrameState JVM frame state} as a multi line string.
      */
-    private String stateToString(FrameState state) {
+    private String stateToString(FrameState state, CFGOperandFormatter operandFmt) {
         if (state == null) {
             return null;
         }
@@ -272,50 +276,66 @@ public class CFGPrinter {
 
         if (state.stackSize() > 0) {
             int i = 0;
-            buf.append("stack{");
+            buf.append("stack: ");
             while (i < state.stackSize()) {
                 if (i == 0) {
                     buf.append(' ');
                 }
                 Value value = state.stackAt(i);
-                buf.append(Util.valueString(value)).append(' ');
+                buf.append(stateValueToString(value, operandFmt)).append(' ');
                 i++;
             }
-            buf.append("} ");
+            buf.append("\n");
         }
 
         if (state.locksSize() > 0) {
-            buf.append("locks{");
+            buf.append("locks: ");
             for (int i = 0; i < state.locksSize(); ++i) {
                 if (i == 0) {
                     buf.append(' ');
                 }
                 Value value = state.lockAt(i);
-                buf.append(Util.valueString(value)).append(' ');
+                buf.append(stateValueToString(value, operandFmt)).append(' ');
             }
-            buf.append("} ");
+            buf.append("\n");
         }
 
         boolean multipleScopes = state.scope().callerState() != null;
+        int bci = -1;
         do {
             // Only qualify locals with method name if there are multiple scopes (due to inlining)
             if (multipleScopes) {
-                buf.append(CiUtil.format("%h.%n:", state.scope().method, false));
+                buf.append(CiUtil.format("%H.%n(%p)", state.scope().method, false));
+                if (bci >= 0) {
+                    buf.append(" @ ").append(bci);
+                }
+                buf.append('\n');
             }
-            buf.append("locals{");
+            buf.append("locals: ");
             int i = 0;
             while (i < state.localsSize()) {
                 if (i == 0) {
                     buf.append(' ');
                 }
                 Value value = state.localAt(i);
-                buf.append(Util.valueString(value)).append(' ');
+                buf.append(stateValueToString(value, operandFmt)).append(' ');
                 i++;
             }
-            buf.append("} ");
+            buf.append("\n");
+            bci = state.scope().callerBCI();
             state = state.scope().callerState();
         } while (state != null);
         return buf.toString();
+    }
+
+    private String stateValueToString(Value value, OperandFormatter operandFmt) {
+        if (operandFmt == null) {
+            return Util.valueString(value);
+        }
+        if (value == null) {
+            return "-";
+        }
+        return operandFmt.format(value.operand());
     }
 
     /**
@@ -324,13 +344,14 @@ public class CFGPrinter {
      * @param block
      */
     private void printHIR(BlockBegin block) {
-        begin("HIR");
+        begin("IR");
+        out.println("HIR");
         out.disableIndentation();
         for (Instruction i = block.next(); i != null; i = i.next()) {
             printInstructionHIR(i);
         }
         out.enableIndentation();
-        end("HIR");
+        end("IR");
     }
 
     /**
@@ -340,7 +361,7 @@ public class CFGPrinter {
         /**
          * The textual delimiters used for an operand depend on the context in which it is being
          * printed. When printed as part of a frame state or as the result operand in a HIR node listing,
-         * the double-quotes (i.e. {@code "}'s) are used. Otherwise, square brackets are used.
+         * it is enclosed in double-quotes (i.e. {@code "}'s).
          */
         public final boolean asStateOrHIROperandResult;
 
@@ -391,14 +412,26 @@ public class CFGPrinter {
     private void printLIR(BlockBegin block) {
         LIRList lir = block.lir();
         if (lir != null) {
-            begin("LIR");
+            begin("IR");
+            out.println("LIR");
             for (int i = 0; i < lir.length(); i++) {
                 LIRInstruction inst = lir.at(i);
-                out.printf("%4d ", inst.id);
-                out.print(inst.toString(new CFGOperandFormatter(false)));
-                out.println(" <|@ ");
+                out.printf("nr %4d ", inst.id).print(COLUMN_END);
+
+                if (inst.info != null) {
+                    int level = out.indentationLevel();
+                    out.adjustIndentation(-level);
+                    String state = stateToString(inst.info.state, new CFGOperandFormatter(false));
+                    if (state != null) {
+                        out.print(" st ").print(HOVER_START).print("st").print(HOVER_SEP).print(state).print(HOVER_END).print(COLUMN_END);
+                    }
+                    out.adjustIndentation(level);
+                }
+
+                out.print(" instruction ").print(inst.toString(new CFGOperandFormatter(false))).print(COLUMN_END);
+                out.println(COLUMN_END);
             }
-            end("LIR");
+            end("IR");
         }
     }
 
@@ -414,22 +447,20 @@ public class CFGPrinter {
      * @param i the instruction for which HIR will be printed
      */
     private void printInstructionHIR(Instruction i) {
-        if (i.isLive()) {
-            out.print('.');
+        out.print("bci ").print(i.bci()).println(COLUMN_END);
+        if (i.operand().isLegal()) {
+            out.print("result ").print(new CFGOperandFormatter(false).format(i.operand())).println(COLUMN_END);
         }
-        int useCount = 0;
-        out.print(i.bci()).print(' ').print(useCount).print(' ');
-        printOperand(i);
-        out.print(i).print(' ');
-        new InstructionPrinter(out, true, target).printInstruction(i);
-        if (i instanceof StateSplit) {
-            String state = stateToString(((StateSplit) i).stateBefore());
-            if (state != null) {
-                out.print("  [" + state + "]");
-            }
+        out.print("tid ").print(i).println(COLUMN_END);
+
+        String state = stateToString(i.stateBefore(), null);
+        if (state != null) {
+            out.print("st ").print(HOVER_START).print("st").print(HOVER_SEP).print(state).print(HOVER_END).println(COLUMN_END);
         }
 
-        out.println(" <|@");
+        out.print("instruction ");
+        new InstructionPrinter(out, true, target).printInstruction(i);
+        out.print(COLUMN_END).print(' ').println(COLUMN_END);
     }
 
     /**

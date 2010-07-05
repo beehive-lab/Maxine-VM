@@ -29,7 +29,6 @@ import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -202,12 +201,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
                 CiValue divisor = load(x.y());            // divisor can be in any (other) register
 
-                if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
-                    ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArithmeticException), info);
-                    lir.cmp(Condition.EQ, divisor, CiConstant.LONG_0);
-                    lir.branch(Condition.EQ, CiKind.Long, stub);
-                    info = null;
-                }
                 CiValue result = createResultVariable(x);
                 CiValue resultReg;
                 if (opcode == Bytecodes.LREM) {
@@ -265,12 +258,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             CiValue dividend = force(x.x(), RAX_I); // dividend must be in RAX
             CiValue divisor = load(x.y());          // divisor can be in any (other) register
 
-            if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
-                ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArithmeticException), info);
-                lir.cmp(Condition.EQ, divisor, CiConstant.INT_0);
-                lir.branch(Condition.EQ, CiKind.Int, stub);
-                info = null;
-            }
             // idiv and irem use rdx in their implementation so the
             // register allocator must not assign to an interval that overlaps
             // this division instruction.
@@ -344,12 +331,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
                 CiValue divisor = load(x.y());            // divisor can be in any (other) register
 
-                if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
-                    ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArithmeticException), info);
-                    lir.cmp(Condition.EQ, divisor, CiConstant.LONG_0);
-                    lir.branch(Condition.EQ, CiKind.Long, stub);
-                    info = null;
-                }
                 CiValue result = createResultVariable(x);
                 CiValue resultReg;
                 if (opcode == Bytecodes.WREM) {

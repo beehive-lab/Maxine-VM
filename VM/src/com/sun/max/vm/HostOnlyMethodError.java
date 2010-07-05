@@ -18,22 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
-import java.lang.annotation.*;
+package com.sun.max.vm;
+
+import java.lang.reflect.*;
+
+import com.sun.max.vm.classfile.constant.*;
 
 /**
- * This annotation instructs the compiler that a method needs to conform to the native ABI (e.g. implements callee saved
- * registers if necessary) so that it can be called as a C function pointer.
- * <p>
- * No parameter type or return type of an annotated method may refer to object references - only primitive Java values
- * and 'Word' values are allowed.
- * <p>
+ * Thrown when a {@linkplain PoolConstant constant pool entry} for a
+ * {@linkplain MaxineVM#isHostedOnly(AccessibleObject) host-only method} is
+ * {@linkplain MethodRefConstant#resolve(ConstantPool, int) resolved}.
  *
- *
- * @author Bernd Mathiske
  * @author Doug Simon
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface JNI_FUNCTION {
+public class HostOnlyMethodError extends NoSuchMethodError {
+
+    public HostOnlyMethodError(String s) {
+        super(s);
+    }
 }

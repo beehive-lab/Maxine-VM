@@ -155,6 +155,7 @@ public final class Throw {
         }
 
         if (traceExceptionsOption.getValue()) {
+            stackDumpWithException(throwable);
             throwable.printStackTrace(Log.out);
         } else {
             String filter = traceTheseExceptionsOption.getValue();

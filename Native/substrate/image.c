@@ -142,7 +142,11 @@ static void readHeader(int fd) {
     memcpy((void *) theHeader, (void *) &maxvm_image_start, sizeof(struct image_Header));
 #endif
 #if log_LOADER
-    log_println("image.readHeader @ %p", theHeader);
+    log_println("ImageHeader @ %p {", theHeader);
+#define PRINT_IMAGE_HEADER_FIELD(name) log_println("    %35s: %d (0x%04x)", STRINGIZE(name), theHeader->name, theHeader->name);
+    IMAGE_HEADER_FIELDS(PRINT_IMAGE_HEADER_FIELD)
+#undef PRINT_IMAGE_HEADER_FIELD
+    log_println("}");
 #endif
 
     if ((theHeader->isBigEndian != 0) != (word_BIG_ENDIAN != 0)) {
@@ -190,7 +194,7 @@ static void readStringInfo(int fd) {
 #define checkThreadLocalIndex(name) do { \
     if (theHeader->name != name) { \
         log_exit(2, "index of thread local %s in image [%d] conflicts with value declared in threadLocals.h [%d]" \
-        		    "\nEdit the number in threadLocals.h to reflect the current index of the thread local in the image.", \
+                    "\nEdit the number in threadLocals.h to reflect the current index of the thread local in the image.", \
                         STRINGIZE(name), theHeader->name, name); \
     } \
 } while(0)
@@ -281,13 +285,16 @@ static void checkTrailer(int fd) {
 
 static void mapHeapAndCode(int fd) {
     int heapOffsetInImage = virtualMemory_pageAlign(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize);
+    int heapAndCodeSize = theHeader->heapSize + theHeader->codeSize;
+    c_ASSERT(virtualMemory_pageAlign((Size) heapAndCodeSize) == (Size) heapAndCodeSize);
+
 #if log_LOADER
     log_println("image.mapHeapAndCode");
 #endif
 #if MEMORY_IMAGE
     theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
 #elif os_LINUX
-    theHeap = virtualMemory_mapFileIn31BitSpace(theHeader->heapSize + theHeader->codeSize, fd, heapOffsetInImage);
+    theHeap = virtualMemory_mapFileIn31BitSpace(heapAndCodeSize, fd, heapOffsetInImage);
     if (theHeap == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
@@ -302,15 +309,25 @@ static void mapHeapAndCode(int fd) {
     log_println("reserved 1 TB at %p", theHeap);
     log_println("reserved address space ends at %p", theHeap + TERA_BYTE);
 #endif
-    if (virtualMemory_mapFileAtFixedAddress(theHeap, theHeader->heapSize + theHeader->codeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
+    if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
+#ifdef DEBUG_DARWIN_IMAGE_MAPPING_PROBLEM
+    int page;
+    Byte *heapAndCode = (Byte *) theHeap;
+    for (page = (heapAndCodeSize - virtualMemory_getPageSize()) / virtualMemory_getPageSize(); page >= 0; --page) {
+        int offset = page * virtualMemory_getPageSize();
+        log_println("image page %d [heap+%d]", page, offset);
+        heapAndCode[offset] = heapAndCode[offset];
+    }
+#endif
+
 #else
     c_UNIMPLEMENTED();
 #endif
 #if os_GUESTVMXEN
     // heap and code must be mapped together (the method offsets in boot image are relative to heap base)
-    theHeap = guestvmXen_remap_boot_code_region(theHeap, theHeader->heapSize + theHeader->codeSize);
+    theHeap = guestvmXen_remap_boot_code_region(theHeap, heapAndCodeSize);
 #endif
     theCode = theHeap + theHeader->heapSize;
     theCodeEnd = theCode + theHeader->codeSize;
@@ -346,7 +363,10 @@ static void relocate(int fd) {
     relocationData = (Byte*)(((char*)&maxvm_image_start) + wantedFileOffset);
 #endif
 
-    relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
+#if log_LOADER
+    log_println("image.relocate [relocation map: %d bytes]", theHeader->relocationDataSize);
+#endif
+relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
 
 #if !MEMORY_IMAGE
     free(relocationData);
@@ -375,11 +395,11 @@ int image_load(char *imageFileName) {
     checkTrailer(fd);
     mapHeapAndCode(fd);
 #if log_LOADER
-    log_println("code @%p codeEnd @%p heap @%p", theCode,theCodeEnd, theHeap);
+    log_println("code @%p codeEnd @%p heap @%p", theCode, theCodeEnd, theHeap);
 #endif
     relocate(fd);
 #if log_LOADER
-    log_println("code @%p codeEnd @%p heap @%p", theCode,theCodeEnd, theHeap);
+    log_println("code @%p codeEnd @%p heap @%p", theCode, theCodeEnd, theHeap);
 #endif
     return fd;
 }

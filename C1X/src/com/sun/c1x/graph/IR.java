@@ -95,7 +95,7 @@ public class IR {
     }
 
     private void buildGraph() {
-        topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI);
+        topScope = new IRScope(null, -1, compilation.method, compilation.osrBCI);
 
         // Graph builder must set the startBlock and the osrEntryBlock
         new GraphBuilder(compilation, this).build(topScope);
@@ -223,7 +223,7 @@ public class IR {
         newSucc.setEnd(e);
         // setup states
         FrameState s = source.end().stateAfter();
-        newSucc.setStateBefore(s.copy());
+        newSucc.setStateBefore(s.immutableCopy());
         e.setStateAfter(s.immutableCopy());
         assert newSucc.stateBefore().localsSize() == s.localsSize();
         assert newSucc.stateBefore().stackSize() == s.stackSize();

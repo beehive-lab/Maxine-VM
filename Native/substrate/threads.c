@@ -153,23 +153,33 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     log_println("thread_create: id = %d, stack size = %ld", id, stackSize);
 #endif
 
+#if (os_LINUX || os_DARWIN)
+    if (stackSize < PTHREAD_STACK_MIN) {
+        stackSize = PTHREAD_STACK_MIN;
+    }
+#endif
+
+    // Allocate the threadLocals block and the struct for passing this to the created thread.
+    // We do this to ensure that all memory allocation problems are addressed here before the thread runs.
+    Address tlBlock = threadLocalsBlock_create(id, JNI_FALSE, stackSize);
+    if (tlBlock == 0) {
+        return (Thread) 0;
+    }
+
+    setThreadLocal(tlBlock, ID, id);
+
 #if os_GUESTVMXEN
     thread = guestvmXen_create_thread(
     	(void (*)(void *)) thread_run,
 	    stackSize,
 		priority,
-		(void *) (Address) id);
+		(void *) tlBlock);
     if (thread == NULL) {
-        log_println("thread_create failed");
         return (Thread) 0;
     }
 #elif (os_LINUX || os_DARWIN)
     pthread_attr_t attributes;
     pthread_attr_init(&attributes);
-
-    if (stackSize < PTHREAD_STACK_MIN) {
-        stackSize = PTHREAD_STACK_MIN;
-    }
 
     /* The thread library allocates the stack and sets the red-zone
      * guard page at (Linux) or just below (Darwin) the bottom of the stack. */
@@ -177,7 +187,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     pthread_attr_setguardsize(&attributes, virtualMemory_getPageSize());
     pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_JOINABLE);
 
-    error = pthread_create(&thread, &attributes, (void *(*)(void *)) thread_run, (void *) (Address) id);
+    error = pthread_create(&thread, &attributes, (void *(*)(void *)) thread_run, (void *) tlBlock);
     pthread_attr_destroy(&attributes);
     if (error != 0) {
         log_println("pthread_create failed with error: %d", error);
@@ -189,7 +199,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     }
     /* The thread library allocates the stack and sets the red-zone
      * guard page just below the bottom of the stack. */
-    error = thr_create((void *) NULL, (size_t) stackSize, thread_run, (void *) id, THR_NEW_LWP | THR_BOUND, &thread);
+    error = thr_create((void *) NULL, (size_t) stackSize, thread_run, (void *) tlBlock, THR_NEW_LWP | THR_BOUND, &thread);
     if (error != 0) {
         log_println("thr_create failed with error: %d [%s]", error, strerror(error));
         return (Thread) 0;
@@ -227,18 +237,22 @@ static int thread_join(Thread thread) {
 /**
  * The start routine called by the native threading library once the new thread starts.
  *
- * @param arg the identifier reserved in the thread map for the thread to be started
+ * @param arg the pre-allocated, but uninitialized, thread locals block.
  */
 void *thread_run(void *arg) {
 
-    jint id = (int) (Address) arg;
+    Address tlBlock = (Address) arg;
+    jint id = getThreadLocal(jint, tlBlock, ID);
     Address nativeThread = (Address) thread_current();
 
 #if log_THREADS
     log_println("thread_run: BEGIN t=%p", nativeThread);
 #endif
 
-    Address tlBlock = threadLocalsBlock_create(id);
+
+    threadLocalsBlock_setCurrent(tlBlock);
+    // initialize the threadLocalsBlock
+    threadLocalsBlock_create(id, JNI_TRUE, 0);
     ThreadLocals tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
@@ -246,7 +260,7 @@ void *thread_run(void *arg) {
      *   1. This thread can atomically be added to the thread list
      *   2. This thread is blocked if a GC is currently underway. Once we have the lock,
      *      GC is blocked and cannot occur until we completed the upcall to
-     *      VmThread.attach().
+     *      VmThread.add().
      */
 #if log_THREADS
     log_println("thread_run: t=%p acquiring global GC and thread list lock", nativeThread);
@@ -325,7 +339,10 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
     jint handle = (jint) nativeThread;
     jint id = handle < 0 ? handle : -handle;
 
-    Address tlBlock = threadLocalsBlock_create(id);
+    Address tlBlock = threadLocalsBlock_createForExistingThread(id);
+    if (tlBlock == 0) {
+        return JNI_ENOMEM;
+    }
     ThreadLocals tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 

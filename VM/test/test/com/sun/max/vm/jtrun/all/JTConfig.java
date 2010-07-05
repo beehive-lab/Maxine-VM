@@ -209,6 +209,7 @@ public class JTConfig {
         jtt.bytecode.BC_lushr.class,
         jtt.bytecode.BC_lxor.class,
         jtt.bytecode.BC_monitorenter.class,
+        jtt.bytecode.BC_monitorenter02.class,
         jtt.bytecode.BC_multianewarray01.class,
         jtt.bytecode.BC_multianewarray02.class,
         jtt.bytecode.BC_multianewarray03.class,

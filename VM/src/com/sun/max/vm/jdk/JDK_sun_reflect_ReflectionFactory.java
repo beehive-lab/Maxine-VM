@@ -21,7 +21,7 @@
 package com.sun.max.vm.jdk;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.max.vm.reflection.GeneratedStub.*;
+import static com.sun.max.vm.reflection.InvocationStub.*;
 
 import java.lang.reflect.*;
 import java.util.*;

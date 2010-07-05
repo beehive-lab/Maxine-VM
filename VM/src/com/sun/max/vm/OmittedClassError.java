@@ -18,37 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package com.sun.max.vm;
 
-import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.*;
-import com.sun.cri.ci.*;
+import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.type.*;
 
 /**
- * This class implements a local stub that simply throws an exception, typically
- * by calling the runtime system through a global stub.
+ * Error thrown when an attempt is made to load an {@linkplain HostedBootClassLoader#isOmittedType(TypeDescriptor) omitted}
+ * class via the {@link HostedBootClassLoader}.
  *
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public class ThrowStub extends LocalStub {
-
-    public final GlobalStub globalStub;
-
-    public ThrowStub(GlobalStub globalStub, LIRDebugInfo info, CiValue... args) {
-        super(info);
-        this.globalStub = globalStub;
-        if (args != null && args.length > 0) {
-            setOperands(0, 0, args);
-        }
-    }
-
-    @Override
-    public boolean isExceptionThrowStub() {
-        return true;
-    }
-
-    @Override
-    public void accept(LocalStubVisitor visitor) {
-        visitor.visitThrowStub(this);
+public class OmittedClassError extends NoClassDefFoundError {
+    public OmittedClassError(String className) {
+        super(className);
     }
 }

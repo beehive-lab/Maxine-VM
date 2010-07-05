@@ -950,19 +950,19 @@ public class MaxXirGenerator extends RiXirGenerator {
             // resolved checkcast for a leaf class
             asm.restart();
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
-            XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
-            XirOperand temp = asm.createTemp("temp", CiKind.Object);
+            XirParameter checkedHub = asm.createConstantInputParameter("checkedHub", CiKind.Object);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
             XirLabel pass = asm.createInlineLabel("pass");
             XirLabel fail = asm.createOutOfLineLabel("fail");
             if (!nonnull) {
                 // first check against null
                 asm.jeq(pass, object, asm.o(null));
             }
-            asm.pload(CiKind.Object, temp, object, asm.i(hubOffset), !nonnull);
-            asm.jneq(fail, temp, hub);
+            asm.pload(CiKind.Object, hub, object, asm.i(hubOffset), !nonnull);
+            asm.jneq(fail, hub, checkedHub);
             asm.bindInline(pass);
             asm.bindOutOfLine(fail);
-            callRuntimeThroughStub(asm, "throwClassCastException", null, hub, object);
+            callRuntimeThroughStub(asm, "throwClassCastException", null, checkedHub, object);
             resolved = finishTemplate(asm, object, "checkcast-leaf<" + nonnull + ">");
         }
         {
@@ -1003,7 +1003,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.jneq(fail, a, interfaceID);
             asm.bindInline(pass);
             asm.bindOutOfLine(fail);
-            callRuntimeThroughStub(asm, "throwClassCastException", null, hub, object);
+            callRuntimeThroughStub(asm, "throwClassCastException", null, checkedHub, object);
             resolved = finishTemplate(asm, object, "checkcast-interface<" + nonnull + ">");
         }
         {

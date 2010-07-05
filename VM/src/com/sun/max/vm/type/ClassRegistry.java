@@ -141,6 +141,7 @@ public final class ClassRegistry {
         new CriticalNativeMethod(Log.class, "log_print_double");
         new CriticalNativeMethod(Log.class, "log_print_word");
         new CriticalNativeMethod(Log.class, "log_print_newline");
+        new CriticalNativeMethod(Log.class, "log_print_symbol");
 
         new CriticalNativeMethod(MaxineVM.class, "native_exit");
         new CriticalNativeMethod(MaxineVM.class, "native_trap_exit");
@@ -463,7 +464,7 @@ public final class ClassRegistry {
         CONSTANT_VALUE(FieldActor.class, Value.class, null),
         ANNOTATION_DEFAULT_BYTES(MethodActor.class, byte[].class, MethodActor.NO_ANNOTATION_DEFAULT_BYTES),
         ACCESSOR(MethodActor.class, Class.class, null),
-        INVOCATION_STUB(false, MethodActor.class, GeneratedStub.class, null),
+        INVOCATION_STUB(false, MethodActor.class, InvocationStub.class, null),
         RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES(MethodActor.class, byte[].class, MethodActor.NO_RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES);
 
         public static final List<Property> VALUES = java.util.Arrays.asList(values());

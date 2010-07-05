@@ -560,6 +560,7 @@ public abstract class Actor {
         appendFlag(sb, isVmEntryPoint(flags), "vm_entry ");
         appendFlag(sb, isDeclaredFoldable(flags), "fold ");
         appendFlag(sb, isBuiltin(flags), "builtin ");
+        appendFlag(sb, isUnsafe(flags), "unsafe ");
         appendFlag(sb, isLocalSubstitute(flags), "substitute ");
 
         if (sb.length() > 0) {

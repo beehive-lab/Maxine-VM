@@ -133,8 +133,8 @@ public enum Boxing {
      */
     VALUE {
 
-        private final SignatureDescriptor invokeSignature = SignatureDescriptor.fromJava(getDeclaredMethod(GeneratedMethodStub.class, "invoke", Value[].class));
-        private final SignatureDescriptor newInstanceSignature = SignatureDescriptor.fromJava(getDeclaredMethod(GeneratedConstructorStub.class, "newInstance", Value[].class));
+        private final SignatureDescriptor invokeSignature = SignatureDescriptor.fromJava(getDeclaredMethod(MethodInvocationStub.class, "invoke", Value[].class));
+        private final SignatureDescriptor newInstanceSignature = SignatureDescriptor.fromJava(getDeclaredMethod(ConstructorInvocationStub.class, "newInstance", Value[].class));
 
         @Override
         public SignatureDescriptor invokeSignature() {

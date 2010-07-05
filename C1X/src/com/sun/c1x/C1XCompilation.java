@@ -331,7 +331,7 @@ public class C1XCompilation {
             final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this);
             lirAssembler.emitCode(hir.linearScanOrder());
 
-            // generate code or slow cases
+            // generate code for slow cases
             lirAssembler.emitLocalStubs();
 
             // generate exception adapters

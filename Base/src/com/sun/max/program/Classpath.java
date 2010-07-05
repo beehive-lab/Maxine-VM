@@ -337,8 +337,9 @@ public class Classpath {
      * @return the result of prepending {@code classpath} to this classpath
      */
     public Classpath prepend(String path) {
-        ArrayList<Entry> entries = new ArrayList<Entry>(this.entries);
+        ArrayList<Entry> entries = new ArrayList<Entry>(this.entries.size());
         entries.add(createEntry(path));
+        entries.addAll(this.entries);
         return new Classpath(entries);
     }
 
@@ -430,7 +431,7 @@ public class Classpath {
             return "";
         }
         String s = entries.toString().replace(", ", File.pathSeparator);
-        return s.substring(1, s.length() - 2);
+        return s.substring(1, s.length() - 1);
     }
 
     public ClasspathFile classpathFileForPackage(String name) {
