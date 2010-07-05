@@ -426,16 +426,16 @@ public final class Heap {
         if (verbose()) {
             final long afterUsed = reportUsedSpace();
             final long afterFree = reportFreeSpace();
-            final long reclaimed = afterUsed - beforeUsed;
+            final long reclaimed = beforeUsed - afterUsed;
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
             Log.printCurrentThread(false);
             Log.println(" done--");
             Log.print("--After GC   used: ");
             Log.print(afterUsed / k);
-            Log.print("Kb , free: ");
+            Log.print("Kb, free: ");
             Log.print(afterFree / k);
-            Log.print("Kb , reclaimed: ");
+            Log.print("Kb, reclaimed: ");
             Log.print(reclaimed / k);
             Log.println(" Kb --");
             if (freedEnough) {
