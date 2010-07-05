@@ -403,7 +403,7 @@ public final class Heap {
             Log.println("Cannot run GC on a thread still attaching to the VM");
             MaxineVM.native_exit(1);
         }
-
+        final long k = Size.K.toLong();
         long beforeFree = 0L;
         long beforeUsed = 0L;
         if (verbose()) {
@@ -416,27 +416,28 @@ public final class Heap {
             Log.print(requestedFreeSpace.toLong());
             Log.println(" bytes --");
             Log.print("--Before GC   used: ");
-            Log.print(beforeUsed);
-            Log.print(", free: ");
-            Log.print(beforeFree);
-            Log.println("--");
+            Log.print(beforeUsed / k);
+            Log.print(" Kb, free: ");
+            Log.print(beforeFree / k);
+            Log.println(" Kb --");
             Log.unlock(lockDisabledSafepoints);
         }
         final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
         if (verbose()) {
             final long afterUsed = reportUsedSpace();
             final long afterFree = reportFreeSpace();
+            final long reclaimed = afterUsed - beforeUsed;
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
             Log.printCurrentThread(false);
             Log.println(" done--");
             Log.print("--After GC   used: ");
-            Log.print(afterUsed);
-            Log.print(", free: ");
-            Log.print(afterFree);
-            Log.print(", reclaimed: ");
-            Log.print(beforeUsed - afterUsed);
-            Log.println("--");
+            Log.print(afterUsed / k);
+            Log.print("Kb , free: ");
+            Log.print(afterFree / k);
+            Log.print("Kb , reclaimed: ");
+            Log.print(reclaimed / k);
+            Log.println(" Kb --");
             if (freedEnough) {
                 Log.println("--GC freed enough--");
             } else {

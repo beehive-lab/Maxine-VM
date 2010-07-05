@@ -82,7 +82,7 @@ public class LargeObjectSpace extends HeapSweeper {
      * This allows to use a simple shift to find what free list a chunks should be entered too, for chunks
      * smaller or equals to {@link LargeObjectSpace#VERY_LARGE_CHUNK_SIZE}.
      */
-    private Pointer[] chunkSizeTable;
+    private final Pointer[] chunkSizeTable;
 
     /**
      * Virtual start of the chunk size table to enable fast access based on simple shift of the
@@ -155,14 +155,7 @@ public class LargeObjectSpace extends HeapSweeper {
         committedHeapSpace = new ContiguousHeapSpace("LOS");
         int numChunkSizeLists = 1 + VERY_LARGE_CHUNK_SIZE;
         chunkSizeTable = new Pointer[numChunkSizeLists];
-        // The chunkSizeTableStart pointer is set so that chunkSizeTableStart.getWord(size >> LOG2_BLOCK_SIZE)
-        // points to the appropriate list.
-        // Given that BLOCK_SIZE >> LOG2_BLOCK_SIZE == 1, we just need to set the start at the address
-        // of the first element (index 0) minus 1.
-        ReferenceArrayLayout layout = VMConfiguration.target().layoutScheme().referenceArrayLayout;
-        Pointer tableOrigin = Reference.fromJava(chunkSizeTable).toOrigin();
-        Pointer tableFirstElementPointer = tableOrigin.plus(layout.getElementOffsetInCell(0));
-        chunkSizeTableStart = tableFirstElementPointer.minus(layout.getElementOffsetFromOrigin(1));
+
         sizeTableSummary = 0L;
     }
 
@@ -178,6 +171,15 @@ public class LargeObjectSpace extends HeapSweeper {
 
         Size adjustedMaxSize = maxSize.roundedUpBy(MIN_LARGE_OBJECT_SIZE);
         Size adjustedInitSize = maxSize.roundedUpBy(MIN_LARGE_OBJECT_SIZE);
+
+        // The chunkSizeTableStart pointer is set so that chunkSizeTableStart.getWord(size >> LOG2_BLOCK_SIZE)
+        // points to the appropriate list.
+        // Given that BLOCK_SIZE >> LOG2_BLOCK_SIZE == 1, we just need to set the start at the address
+        // of the first element (index 0) minus 1.
+        ReferenceArrayLayout layout = VMConfiguration.target().layoutScheme().referenceArrayLayout;
+        Pointer tableOrigin = Reference.fromJava(chunkSizeTable).toOrigin();
+        Pointer tableFirstElementPointer = tableOrigin.plus(layout.getElementOffsetInCell(0));
+        chunkSizeTableStart = tableFirstElementPointer.minus(layout.getElementOffsetFromOrigin(1));
 
         if (!committedHeapSpace.reserve(start, adjustedMaxSize)) {
             MaxineVM.reportPristineMemoryFailure("large object space", "reserve", adjustedMaxSize);

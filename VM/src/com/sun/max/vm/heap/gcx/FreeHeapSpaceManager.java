@@ -574,6 +574,12 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         return  (l < freeChunkBins.length) ?  (int) l : (freeChunkBins.length - 1);
     }
 
+    /**
+     * Allocate a TLAB from the segregated list of free chunks.
+     * Space allocated to the
+     * @param size
+     * @return  the address of the first chunks allocated to the TLAB
+     */
     private synchronized Address binAllocateTLAB(Size size) {
         long requiredSpace = size.toLong();
         // First, try to allocate from the TLAB bin.

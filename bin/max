@@ -847,7 +847,7 @@ for image_config in ${image_configs[@]}; do
     image_config_args="${image_config/*\#/}"
     image_help=$(printf "%s\n    @%-15s %s" "$image_help" "${image_config/\#*/}" "${image_config_args//,/ }")
 done
-
+s
 image_help="$image_help
 
     An option starting with '--' is interpreted as a VM option of the same name
