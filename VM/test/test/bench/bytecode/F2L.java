@@ -18,22 +18,55 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.classfile.constant;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.bytecode;
 
-import java.lang.reflect.*;
-
-import com.sun.max.vm.*;
+import test.bench.util.*;
 
 /**
- * Thrown when a {@linkplain PoolConstant constant pool entry} for a
- * {@linkplain MaxineVM#isHostedOnly(AccessibleObject) host-only method} is
- * {@linkplain MethodRefConstant#resolve(ConstantPool, int) resolved}.
+ * A microbenchmark for floating point; {@code float} to {@code long} conversions.
  *
- * @author Doug Simon
+ * @author Ben L. Titzer
+ * @author Mick Jordan
  */
-public class HostOnlyMethodError extends NoSuchMethodError {
+public class  F2L extends RunBench {
 
-    public HostOnlyMethodError(String s) {
-        super(s);
+    protected F2L() {
+        super(new Bench(), new EncapBench());
     }
+
+    public static boolean test() {
+        return new F2L().runBench(true);
+    }
+
+    static class Bench extends AbstractMicroBenchmark {
+        public void run(boolean warmup) {
+            f2l(0.4F);
+        }
+
+        @SuppressWarnings("unused")
+        private static void f2l(float d) {
+            long i = (int) d;
+        }
+
+    }
+
+    static class EncapBench extends AbstractMicroBenchmark {
+
+        public void run(boolean warmup) {
+            f2i(0.4F);
+        }
+
+        private static void f2i(float d) {
+        }
+
+    }
+
+    public static void main(String[] args) {
+        RunBench.runTest(F2L.class, args);
+    }
+
 }

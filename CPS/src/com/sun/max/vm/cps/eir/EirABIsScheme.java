@@ -45,8 +45,7 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
 
     /**
      * The ABI for a Java method than is only called from native code. These are all the methods annotated
-     * with {@link VM_ENTRY_POINT} or {@link JNI_FUNCTION}. These methods only need a single entry point and have no frame
-     * adapter
+     * with {@link VM_ENTRY_POINT}. These methods only need a single entry point and have no frame adapter.
      */
     public final EirABI<EirRegister_Type> c2jFunctionABI;
 

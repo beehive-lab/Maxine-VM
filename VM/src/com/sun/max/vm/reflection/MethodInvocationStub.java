@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,32 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.max.vm.reflection;
 
-import com.sun.c1x.lir.FrameMap.*;
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
+import java.lang.reflect.*;
 
-/**
- * LIR instruction used in translating {@link Bytecodes#ALLOCA}.
- *
- * @author Doug Simon
- */
-public class LIRStackAllocate extends LIRInstruction {
+import sun.reflect.*;
 
-    public final StackBlock stackBlock;
+import com.sun.max.vm.value.*;
 
-    /**
-     * Creates an LIR instruction modelling a stack block allocation.
-     * @param result
-     */
-    public LIRStackAllocate(CiValue result, StackBlock stackBlock) {
-        super(LIROpcode.Alloca, result, null, false);
-        this.stackBlock = stackBlock;
+public abstract class MethodInvocationStub extends InvocationStub implements MethodAccessor {
+
+    public Object invoke(Object obj, Object[] args) throws IllegalArgumentException, InvocationTargetException {
+        throw new NoSuchMethodError();
     }
 
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitStackAllocate(stackBlock, this.result());
+    public Value invoke(Value... args) throws IllegalArgumentException, InvocationTargetException {
+        throw new NoSuchMethodError();
     }
 }

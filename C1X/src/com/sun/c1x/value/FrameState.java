@@ -91,25 +91,18 @@ public class FrameState {
         return other;
     }
 
-    public FrameState copyLocks() {
-        int size = scope().lockStackSize();
-        if (stackSize() == 0) {
-            size = 0;
-        }
-        FrameState s = new FrameState(scope(), localsSize(), maxStackSize());
-        s.replaceLocks(this);
-        s.replaceLocals(this);
-        s.replaceStack(this);
-        s.stackIndex = size; // trim stack back to lockstack size
-        s.unsafe = unsafe;
-        return s;
-    }
-
+    /**
+     * Gets a mutable copy of this frame state.
+     */
     public FrameState copy() {
         return copy(true, true, true);
     }
 
+    /**
+     * Gets an immutable copy of this state.
+     */
     public FrameState immutableCopy() {
+        // TODO: return something that is really immutable!
         return copy(true, true, true);
     }
 
@@ -516,25 +509,21 @@ public class FrameState {
      * Locks a new object within the specified IRScope.
      * @param scope the IRScope in which this locking operation occurs
      * @param obj the object being locked
-     * @return the index of the lock within the lock stack
      */
-    public int lock(IRScope scope, Value obj) {
+    public void lock(IRScope scope, Value obj) {
         if (locks == null) {
             locks = new ArrayList<Value>();
         }
         locks.add(obj);
         int size = locks.size();
         scope.setMinimumNumberOfLocks(size);
-        return size - 1;
     }
 
     /**
      * Unlock the lock on the top of the stack.
-     * @return the index of the lock just unlocked.
      */
-    public int unlock() {
+    public void unlock() {
         locks.remove(locks.size() - 1);
-        return locks.size();
     }
 
     /**
@@ -572,7 +561,7 @@ public class FrameState {
         assert maxStackSize() >= scope.method.maxStackSize();
         FrameState res = new FrameState(callingScope, callingScope.method.maxLocals(), maxStackSize());
         res.replaceStack(this);
-        res.replaceLocks(this);
+        res.replaceLocks(scope.callerState()); // assumes locks are balanced for each frame
         res.replaceLocals(scope.callerState());
         res.unsafe = unsafe;
         return res;
@@ -610,35 +599,6 @@ public class FrameState {
             }
         }
         storeLocal(i, new Phi(p.kind, block, i));
-    }
-
-    /**
-     * Iterates over all the values in this frame state, including the stack, locals, and locks.
-     * @param closure the closure to apply to each value
-     */
-    public void valuesDo(ValueClosure closure) {
-        final int max = valuesSize();
-        for (int i = 0; i < max; i++) {
-            if (values[i] != null) {
-                Value newValue = closure.apply(values[i]);
-                if (!unsafe && newValue.kind.isWord()) {
-                    unsafe = true;
-                }
-                values[i] = newValue;
-            }
-        }
-        if (locks != null) {
-            for (int i = 0; i < locks.size(); i++) {
-                Value instr = locks.get(i);
-                if (instr != null) {
-                    locks.set(i, closure.apply(instr));
-                }
-            }
-        }
-        FrameState state = this.scope().callerState();
-        if (state != null) {
-            state.valuesDo(closure);
-        }
     }
 
     /**
@@ -851,6 +811,42 @@ public class FrameState {
     }
 
     /**
+     * Iterates over all the values in this frame state and its callers, including the stack, locals, and locks.
+     * @param closure the closure to apply to each value
+     */
+    public void valuesDo(ValueClosure closure) {
+        valuesDo(this, closure);
+    }
+
+    /**
+     * Iterates over all the values of a given frame state and its callers, including the stack, locals, and locks.
+     * @param closure the closure to apply to each value
+     */
+    public static void valuesDo(FrameState state, ValueClosure closure) {
+        do {
+            final int max = state.valuesSize();
+            for (int i = 0; i < max; i++) {
+                if (state.values[i] != null) {
+                    Value newValue = closure.apply(state.values[i]);
+                    if (!state.unsafe && newValue.kind.isWord()) {
+                        state.unsafe = true;
+                    }
+                    state.values[i] = newValue;
+                }
+            }
+            if (state.locks != null) {
+                for (int i = 0; i < state.locks.size(); i++) {
+                    Value instr = state.locks.get(i);
+                    if (instr != null) {
+                        state.locks.set(i, closure.apply(instr));
+                    }
+                }
+            }
+            state = state.scope().callerState();
+        } while (state != null);
+    }
+
+    /**
      * The interface implemented by a client of {@link FrameState#forEachLiveStateValue(ValueProcedure)}.
      */
     public static interface ValueProcedure {
@@ -885,6 +881,6 @@ public class FrameState {
 
     @Override
     public String toString() {
-        return "state [nr locals = " + maxLocals + ", stack depth = " + stackSize() + "] " + scope;
+        return "state [locals=" + maxLocals + ", stack=" + stackSize() + ", locks=" + locksSize() + "] " + scope;
     }
 }

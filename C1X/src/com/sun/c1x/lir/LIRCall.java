@@ -46,7 +46,7 @@ public class LIRCall extends LIRInstruction {
     }
 
     public LIRCall(LIROpcode opcode, Object target, CiValue result, List<CiValue> arguments, LIRDebugInfo info, boolean calleeSaved) {
-        super(opcode, result, info, !calleeSaved, null, 0, 0, toArray(arguments));
+        super(opcode, result, info, !calleeSaved, 0, 0, toArray(arguments));
         if (opcode == LIROpcode.DirectCall) {
             this.targetAddressIndex = -1;
         } else {

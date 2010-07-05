@@ -30,7 +30,6 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.FrameMap.*;
-import com.sun.c1x.stub.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
@@ -44,7 +43,7 @@ import com.sun.cri.xir.CiXirAssembler.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor {
+public class AMD64LIRAssembler extends LIRAssembler {
 
     private static final Object[] NO_PARAMS = new Object[0];
     private static final long NULLWORD = 0;
@@ -604,7 +603,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
     protected void emitCompareAndSwap(LIRCompareAndSwap op) {
         CiAddress address = op.address();
         CiRegister newval = op.newValue().asRegister();
-        CiRegister cmpval = op.exepectedValue().asRegister();
+        CiRegister cmpval = op.expectedValue().asRegister();
         assert cmpval == AMD64.rax : "wrong register";
         assert newval != null : "new val must be register";
         assert cmpval != newval : "cmp and new values must be in different registers";
@@ -619,7 +618,7 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
             masm.cmpxchgl(newval, address);
         } else {
             assert op.code == LIROpcode.CasObj || op.code == LIROpcode.CasLong || op.code == LIROpcode.CasWord;
-            masm.cmpxchgptr(newval, address);
+            masm.cmpxchgq(newval, address);
         }
     }
 
@@ -1475,11 +1474,6 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         compilation.runtime.codePrologue(compilation.method, asm.codeBuffer);
     }
 
-    @Override
-    protected void emitCode(LocalStub s) {
-        s.accept(this);
-    }
-
     public static Object asRegisterOrConstant(CiValue operand) {
         if (operand.isRegister()) {
             return operand.asRegister();
@@ -1772,28 +1766,5 @@ public class AMD64LIRAssembler extends LIRAssembler implements LocalStubVisitor 
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
         masm.jcc(cflag, label);
-    }
-
-    public void visitThrowStub(ThrowStub stub) {
-        masm.bind(stub.entry);
-        CiValue[] operands = stub.operands;
-        Object[] params;
-        if (operands != null) {
-            params = new Object[operands.length];
-            for (int i = 0; i < params.length; i++) {
-                params[i] = asRegisterOrConstant(stub.operand(i));
-            }
-        } else {
-            params = NO_PARAMS;
-        }
-
-        masm.callGlobalStub(stub.globalStub, stub.info, CiRegister.None, params);
-
-        // Insert nop such that the IP is within the range of the target at the position after the call
-        masm.nop();
-
-        if (C1XOptions.GenAssertionCode) {
-            masm.shouldNotReachHere();
-        }
     }
 }

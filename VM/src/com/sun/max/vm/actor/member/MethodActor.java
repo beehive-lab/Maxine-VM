@@ -371,14 +371,14 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     /**
      * Gets the invocation stub for this method actor, creating it first if necessary.
      */
-    public GeneratedStub makeInvocationStub() {
+    public InvocationStub makeInvocationStub() {
         ClassRegistry classRegistry = holder().classRegistry();
-        GeneratedStub invocationStub = classRegistry.get(INVOCATION_STUB, this);
+        InvocationStub invocationStub = classRegistry.get(INVOCATION_STUB, this);
         if (invocationStub == null) {
             if (isInstanceInitializer()) {
-                invocationStub = GeneratedStub.newConstructorStub(toJavaConstructor(), null, Boxing.VALUE);
+                invocationStub = InvocationStub.newConstructorStub(toJavaConstructor(), null, Boxing.VALUE);
             } else {
-                invocationStub = GeneratedStub.newMethodStub(toJava(), Boxing.VALUE);
+                invocationStub = InvocationStub.newMethodStub(toJava(), Boxing.VALUE);
             }
             classRegistry.set(INVOCATION_STUB, this, invocationStub);
         }
@@ -423,7 +423,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
             final Object[] arguments = getBoxedJavaValues(Arrays.copyOfRange(argumentValues, 1, argumentValues.length), parameterTypes);
             return resultKind.asValue(javaMethod.invoke(receiver, arguments));
         }
-        final GeneratedMethodStub stub = UnsafeCast.asGeneratedMethodStub(makeInvocationStub());
+        final MethodInvocationStub stub = UnsafeCast.asMethodInvocationStub(makeInvocationStub());
         return stub.invoke(argumentValues);
     }
 
@@ -440,7 +440,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
      */
     public Value invokeConstructor(Value... argumentValues) throws InvocationTargetException, IllegalAccessException, InstantiationException {
         assert isInstanceInitializer();
-        final GeneratedConstructorStub stub = UnsafeCast.asGeneratedConstructorStub(makeInvocationStub());
+        final ConstructorInvocationStub stub = UnsafeCast.asConstructorInvocationStub(makeInvocationStub());
         if (MaxineVM.isHosted()) {
             // When running hosted by HotSpot, the generated stub cannot be executed if the target method is inaccessible.
             // In this situation we simply use normal Java reflection.

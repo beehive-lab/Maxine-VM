@@ -20,10 +20,11 @@
  */
 package test.bench.util;
 
+import java.lang.reflect.*;
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.program.*;
-
 
 
 /**
@@ -39,11 +40,17 @@ import com.sun.max.program.*;
  * {@link MicroBenchmark#run} method. For truly micro (nano) benchmarks the overhead of invoking the {@code run} method
  * (and any setup code, e.g. taking a lock), can dominate the timings, so a second instance of {@link MicroBenchmark}
  * can be provided that captures that. This <i>encapsulating<i> benchmark is run first and the timings are subtracted
- * from the full benchmark run timings.
+ * from the full benchmark run timings. For benchmarks that need per-run setup/shutdown steps the {@link MicroBenchmark#prerun}
+ * and {@link MicroBenchmark#postrun} methods can be implemented.
  *
  * The benchmark is executed a given number of times, with a default of {@value #DEFAULT_LOOP_COUNT}. This can be
  * changed at run-time by setting the property {@value #LOOP_COUNT_PROPERTY}. It is also possible to explicitly pass in
- * the loop count at benchmark execution time if required. A warming phase can also be include
+ * the loop count at benchmark execution time if required. A warm-up phase can also be included by setting the property
+ * {@value #WARMUP_COUNT_PROPERTY} to the number of warm-up iterations. No timings are collected for the warm-up phase.
+ * <p>
+ * The non-encapsulating, non-warm-up runs can be traced by setting the property {@value #TRACE_PROPERTY}.
+ *
+ * The non-encapsulating, non-warm-up runs can be saved to a file by setting the property {@value #FILE_PROPERTY}
  * <p>
  * Once an instance of the subclass of {@code RunBench} has been created, the benchmark may be run by invoking
  * {@link #runBench}. There are three variants of {@link #runBench}; the first two use the {@value #DEFAULT_LOOP_COUNT
@@ -64,19 +71,27 @@ public class RunBench {
      */
     protected static interface MicroBenchmark {
 
+        /**
+         * Any per-run setup needed prior to the run.
+         * @throws Exception
+         */
         void prerun() throws Exception;
 
-        /*
+        /**
          * Run one iteration of the benchmark.
          *
          * @param warmup {@code true} if this is a warm up run
          */
         void run(boolean warmup) throws Exception;
 
+        /**
+         * Any per-run shutdown needed.
+         * @throws Exception
+         */
         void postrun() throws Exception;
     }
 
-    /**Provides empty implementations of pre and post run for classes that dont need it.
+    /**Provides empty implementations of pre and post run for classes that don't need it.
      *
      * @author Puneeet Lakhina
      */
@@ -106,13 +121,18 @@ public class RunBench {
     private long[] encapElapsed;
     private int loopCount;
     private static int warmupCount;
+    private static boolean trace;
     private static final int DEFAULT_LOOP_COUNT = 100;
     private static final int DEFAULT_WARMUP_COUNT = 10;
     private static int defaultLoopCount = DEFAULT_LOOP_COUNT;
     private static final String LOOP_COUNT_PROPERTY = "test.bench.loopcount";
     private static final String WARMUP_COUNT_PROPERTY = "test.bench.warmupcount";
     private static final String DISPLAY_INDIVIDUAL_PROPERTY = "test.bench.displayall";
+    private static final String FILE_PROPERTY = "test.bench.file";
+    private static final String TRACE_PROPERTY = "test.bench.trace";
     private static final MicroBenchmark emptyEncap = new EmptyEncap();
+    private static String fileNameBase;
+    private static int fileNameIndex;
 
     /**
      * Check if any control properties are set.
@@ -130,6 +150,8 @@ public class RunBench {
         } catch (NumberFormatException ex) {
             ProgramError.unexpected("test.bench.loopcount " + lps + " did not parse");
         }
+        trace = System.getProperty(TRACE_PROPERTY) != null;
+        fileNameBase = System.getProperty(FILE_PROPERTY);
     }
 
     /*
@@ -222,16 +244,38 @@ public class RunBench {
 
             System.out.println("Benchmark results (nanoseconds)");
             System.out.println("  loopcount: " + loopCount);
-            System.out.println("  averge overhead per iteration: " + avgEncapElapsed);
-            System.out.println("  average elapsed per iteration: " + benchElapsed);
-            System.out.println("  median elapsed: " + median(elapsed));
+            System.out.println("  averge overhead per iteration: " + avgEncapElapsed + ", median overhead per iteration " + median(encapElapsed));
+            System.out.println("  average elapsed per iteration: " + avgElapsed + ", median elapsed per iteration " + median(elapsed));
+            System.out.println("  average elapsed minus overhead: " + benchElapsed);
 
             if (getProperty(DISPLAY_INDIVIDUAL_PROPERTY, false) != null) {
                 displayElapsed();
             }
         }
+        if (fileNameBase != null) {
+            fileOutput("E", encapElapsed);
+            fileOutput("R", elapsed);
+            fileNameIndex++;
+        }
         this.loopCount = 0;
         return true;
+    }
+
+    private void fileOutput(String type, long[] timings) {
+        PrintWriter bs = null;
+        try {
+            bs = new PrintWriter(new BufferedWriter(new FileWriter(fileNameBase + "-" + type + fileNameIndex)));
+            for (int i = 0; i < timings.length; i++) {
+                bs.println(timings[i]);
+            }
+        } catch (IOException ex) {
+            System.out.print(ex);
+        } finally {
+            if (bs != null) {
+                bs.close();
+            }
+        }
+
     }
 
     private void doRun(long loopCount, MicroBenchmark bench, long[] timings) throws Throwable {
@@ -240,6 +284,9 @@ public class RunBench {
             bench.prerun();
             bench.run(true);
             bench.postrun();
+            if (trace && bench != encapBench) {
+                System.out.println("warm up run " + i);
+            }
         }
         for (int i = 0; i < loopCount; i++) {
             bench.prerun();
@@ -247,6 +294,9 @@ public class RunBench {
             bench.run(false);
             timings[i] = System.nanoTime() - start;
             bench.postrun();
+            if (trace && bench != encapBench) {
+                System.out.println("run " + i + " elapsed " + timings[i]);
+            }
         }
     }
 
@@ -290,6 +340,26 @@ public class RunBench {
 
     public static String getRequiredProperty(String name) {
         return getProperty(name, true);
+    }
+
+    public static void runTest(Class<? extends RunBench> testClass, String[] args) {
+        try {
+            Method testMethod = testClass.getDeclaredMethod("test", new Class<?>[]{});
+            int runs = 1;
+            // Checkstyle: stop modified control variable check
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("r")) {
+                    runs = Integer.parseInt(args[++i]);
+                }
+            }
+            // Checkstyle: resume modified control variable check
+            Object[] noArgs = new Object[0];
+            for (int i = 0; i < runs; i++) {
+                testMethod.invoke(null, noArgs);
+            }
+        } catch (Exception ex) {
+            System.err.println(ex);
+        }
     }
 
 }

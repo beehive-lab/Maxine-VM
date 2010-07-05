@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,42 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.bench.micro;
+package jtt.bytecode;
 
-/**
- * A microbenchmark for floating point to integer conversions.
- * @author Ben L. Titzer
+
+/*
+ * @Harness: java
+ * @Runs: (0, 1) = 0; (1, 1) = 1; (-2, 1) = -2
  */
-public class F2I {
+public class BC_monitorenter02 {
+    static BC_monitorenter02 object = new BC_monitorenter02();
 
-    private static int CHUNK_SIZE = 5000;
-    private static final int ITERATIONS = 500000000;
-
-    public static void main(String[] args) {
-        int count = ITERATIONS;
-        if (args.length > 0) {
-            count = Integer.parseInt(args[0]);
+    public static int test(int arg, int arg2) {
+        int result = arg;
+        synchronized (object) {
+            result = arg / arg2;
         }
-        benchmark(count);
-    }
-
-    public static void benchmark(int count) {
-        int chunks = (count + CHUNK_SIZE - 1) / CHUNK_SIZE;
-        float fsum = 0;
-        int isum = 0;
-        for (int i = 0; i <= chunks; i++) {
-            fsum += 0.4;
-            isum = chunk(fsum, isum, CHUNK_SIZE);
+        synchronized (object) {
+            result = arg / arg2;
         }
-        System.out.println(fsum);
-        System.out.println(isum);
-    }
-
-    private static int chunk(float fsum, int isum, int count) {
-        for (int i = 0; i < count; i++) {
-            fsum += 0.1;
-            isum = (int) fsum;
-        }
-        return isum;
+        return result;
     }
 }

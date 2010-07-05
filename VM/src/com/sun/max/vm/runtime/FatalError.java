@@ -56,7 +56,7 @@ public final class FatalError extends Error {
      * fatal errors can be investigated before the VM exits.
      */
     @NEVER_INLINE
-    private static void breakpoint() {
+    public static void breakpoint() {
     }
 
     private FatalError(String msg, Throwable throwable) {

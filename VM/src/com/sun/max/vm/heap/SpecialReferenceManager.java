@@ -304,7 +304,7 @@ public class SpecialReferenceManager {
     private static void startFinalizerThread() {
         if (FINALIZERS_SUPPORTED) {
             // it is sufficient just to reinitialize the finalizer class
-            JDK.java_lang_ref_Finalizer.classActor().callInitializer();
+            JDK.callInitializer(JDK.java_lang_ref_Finalizer.classActor());
         }
     }
 }

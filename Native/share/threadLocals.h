@@ -63,7 +63,7 @@
 extern void threadLocals_initialize(int threadLocalsSize);
 
 /**
- * Creates and initializes the thread locals block (see diagram above) for the current thread.
+ * Creates and/or initializes the thread locals block (see diagram above) for the current thread.
  * This includes protecting certain pages of the stack for stack overflow detection.
  * To clean up these resources, the threadLocalsBlock_destroy() function should be
  * called on the value returned by this function.
@@ -72,11 +72,22 @@ extern void threadLocals_initialize(int threadLocalsSize);
  *           == 0: the primordial thread
  *            < 0: temporary identifier (derived from the native thread handle) of a thread
  *                 that is being attached to the VM
- * @return the thread locals block for the current thread. This value has been registered
- *         as the value associated with the ThreadLocalsKey for this thread. The destructor
+ * @param init true iff initializing a previously created thread locals block, assert id > 0
+ * @param stackSize only set if id > 0 && init == false;
+ * @return the thread locals block for the current thread.
+ *         If init || id <= 0 this value has been registered as the value
+ *         associated with the ThreadLocalsKey for this thread. Otherwise,
+ *         the space is allocated and will be initialized and registered in a
+ *         subsequent call with init = true. The destructor
  *         function specified when registering the value is threadLocalsBlock_destroy().
  */
-extern Address threadLocalsBlock_create(jint id);
+extern Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize);
+
+/**
+ * Simplified version of above, when thread already created by native code, i.e. where id <= 0.
+ */
+
+extern Address threadLocalsBlock_createForExistingThread(jint id);
 
 /**
  * Releases the resources for the current thread allocated and protected by threadLocalsBlock_create().

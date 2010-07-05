@@ -18,22 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.classfile.constant;
-
-import java.lang.reflect.*;
-
-import com.sun.max.vm.*;
+package test.bench;
 
 /**
- * Thrown when a {@linkplain PoolConstant constant pool entry} for a
- * {@linkplain MaxineVM#isHostedOnly(AccessibleObject) host-only field} is
- * {@linkplain FieldRefConstant#resolve(ConstantPool, int) resolved}.
+ * Sub packages of test.bench should contain micro-benchmarks that measure aspects of the VM and JDK platform.
+ * Each micro-benchmark should be written to use the framework in {@link test.bench.util.RunBench}, following the
+ * style of one of the existing micro-benchmarks. The intent is that the micro-benchmarks can be run stand-alone or
+ * under the standard {@link test.com.sun.max.vm.jtrun.JTAbstractRunScheme test framework}.
  *
- * @author Doug Simon
+ * @author Mick Jordan
  */
-public class HostOnlyFieldError extends NoSuchMethodError {
-
-    public HostOnlyFieldError(String s) {
-        super(s);
-    }
-}

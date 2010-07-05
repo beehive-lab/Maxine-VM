@@ -18,42 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.bench.micro;
+package com.sun.max.vm;
+
+import com.sun.max.vm.prototype.*;
 
 /**
- * A microbenchmark for floating point to integer conversions.
- * @author Ben L. Titzer
+ * Error thrown when an attempt is made to load a {@linkplain MaxineVM#isHostedOnly(Class) host-only}
+ * class via the {@link HostedBootClassLoader}.
+ *
+ * @author Doug Simon
  */
-public class D2I {
-
-    private static int CHUNK_SIZE = 5000;
-    private static final int ITERATIONS = 500000000;
-
-    public static void main(String[] args) {
-        int count = ITERATIONS;
-        if (args.length > 0) {
-            count = Integer.parseInt(args[0]);
-        }
-        benchmark(count);
-    }
-
-    public static void benchmark(int count) {
-        int chunks = (count + CHUNK_SIZE - 1) / CHUNK_SIZE;
-        double fsum = 0;
-        int isum = 0;
-        for (int i = 0; i <= chunks; i++) {
-            fsum += 0.4;
-            isum = chunk(fsum, isum, CHUNK_SIZE);
-        }
-        System.out.println(fsum);
-        System.out.println(isum);
-    }
-
-    private static int chunk(double fsum, int isum, int count) {
-        for (int i = 0; i < count; i++) {
-            fsum += 0.1;
-            isum = (int) fsum;
-        }
-        return isum;
+public class HostOnlyClassError extends NoClassDefFoundError {
+    public HostOnlyClassError(String className) {
+        super(className);
     }
 }

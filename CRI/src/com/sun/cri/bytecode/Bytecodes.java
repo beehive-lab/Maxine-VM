@@ -1479,41 +1479,6 @@ public class Bytecodes {
         return null;
     }
 
-    @INTRINSIC(WDIV)
-    public static native long unsignedDivide(long x, long y);
-
-    @INTRINSIC(WDIVI)
-    public static native long unsignedDivideByInt(long x, int y);
-
-    @INTRINSIC(WREM)
-    public static native long unsignedRemainder(long x, long y);
-
-    @INTRINSIC(WREMI)
-    public static native long unsignedRemainderByInt(long x, int y);
-    
-    /**
-     * Attempts to fold a binary operation on two constant word inputs.
-     *
-     * @param opcode the bytecode operation to perform
-     * @param x the first input
-     * @param y the second input
-     * @return a {@code Long} instance representing the result of folding the operation,
-     * if it is foldable, {@code null} otherwise
-     */
-    public static Long foldWordOp2(int opcode, long x, long y) {
-        if (y == 0) {
-            return null;
-        }
-        // attempt to fold a binary operation with constant inputs
-        switch (opcode) {
-            case WDIV:  return unsignedDivide(x, y);
-            case WDIVI: return unsignedDivideByInt(x, (int) y);
-            case WREM:  return unsignedRemainder(x, y);
-            case WREMI: return unsignedRemainderByInt(x, (int) y);
-        }
-        return null;
-    }
-
     /**
      * Attempts to fold a binary operation on two constant {@code float} inputs.
      *

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -264,16 +266,6 @@ public class MaxRiRuntime implements RiRuntime {
         return "";
     }
 
-    public Method getFoldingMethod(RiMethod method) {
-        if (C1XOptions.CanonicalizeFoldableMethods && method.isResolved()) {
-            MethodActor methodActor = (MethodActor) method;
-            if (Actor.isDeclaredFoldable(methodActor.flags())) {
-                return methodActor.toJava();
-            }
-        }
-        return null;
-    }
-
     static class CachedInvocation {
         public CachedInvocation(Value[] args) {
             this.args = args;
@@ -360,6 +352,22 @@ public class MaxRiRuntime implements RiRuntime {
                 }
                 return null;
             }
+        }
+        return null;
+    }
+
+    public CiConstant foldWordOperation(int opcode, CiMethodInvokeArguments args) {
+        CiConstant x = args.nextArg();
+        CiConstant y = args.nextArg();
+        switch (opcode) {
+            case WDIV:
+                return CiConstant.forWord(Address.fromLong(x.asLong()).dividedBy(Address.fromLong(y.asLong())).toLong());
+            case WDIVI:
+                return CiConstant.forWord(Address.fromLong(x.asLong()).dividedBy(y.asInt()).toLong());
+            case WREM:
+                return CiConstant.forWord(Address.fromLong(x.asLong()).remainder(Address.fromLong(y.asLong())).toLong());
+            case WREMI:
+                return CiConstant.forInt(Address.fromLong(x.asLong()).remainder(y.asInt()));
         }
         return null;
     }

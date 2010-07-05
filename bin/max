@@ -60,6 +60,7 @@ verbose=false
 unknown_option=""
 show_help=false
 default_jvm_args="-d64 -ea -Xss2m -Xmx1g"
+default_jvm_dbg_port=8000
 jvm_args="$default_jvm_args"
 jvm_args_prefix=""
 jvm_args_suffix=""
@@ -117,6 +118,9 @@ while [ "${1:0:1}" = "-" ]; do
             ;;
         -J* )
             jvm_args=${1/-J/}
+            ;;
+        -dbg )
+            jvm_dbg_port=$default_jvm_dbg_port
             ;;
         -dbgport )
             shift
@@ -1515,6 +1519,7 @@ function usage() {
     echo " -jvm <path>      Java VM executable (default: bin/java under JAVA_HOME)"
     echo " -dbgport <num>   add following to Java VM arguments to enable attaching a debugger:"
     echo "                      -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=<num>"
+    echo " -dbg             alias for '-dbgport $default_jvm_dbg_port'"
     echo " -J<args>         Java VM arguments (default: ${default_jvm_args})"
     echo " -J/p<args>       prefix Java VM arguments"
     echo " -J/a<args>       suffix Java VM arguments"

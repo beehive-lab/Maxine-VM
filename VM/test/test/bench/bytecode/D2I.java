@@ -18,21 +18,55 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.reflection;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.bytecode;
 
-import java.lang.reflect.*;
+import test.bench.util.*;
 
-import sun.reflect.*;
+/**
+ * A microbenchmark for floating point; {@code double} to {@code int} conversions.
+ *
+ * @author Ben L. Titzer
+ * @author Mick Jordan
+ */
+public class D2I extends RunBench {
 
-import com.sun.max.vm.value.*;
-
-public abstract class GeneratedMethodStub extends GeneratedStub implements MethodAccessor {
-
-    public Object invoke(Object obj, Object[] args) throws IllegalArgumentException, InvocationTargetException {
-        throw new NoSuchMethodError();
+    protected D2I() {
+        super(new Bench(), new EncapBench());
     }
 
-    public Value invoke(Value... args) throws IllegalArgumentException, InvocationTargetException {
-        throw new NoSuchMethodError();
+    public static boolean test() {
+        return new D2I().runBench(true);
     }
+
+    static class Bench extends AbstractMicroBenchmark {
+        public void run(boolean warmup) {
+            d2i(0.4);
+        }
+
+        @SuppressWarnings("unused")
+        private static void d2i(double d) {
+            int i = (int) d;
+        }
+
+    }
+
+    static class EncapBench extends AbstractMicroBenchmark {
+
+        public void run(boolean warmup) {
+            d2i(0.4);
+        }
+
+        private static void d2i(double d) {
+        }
+
+    }
+
+    public static void main(String[] args) {
+        RunBench.runTest(D2I.class, args);
+    }
+
 }

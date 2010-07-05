@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,18 +18,8 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.prototype;
-
-import com.sun.max.vm.type.*;
+package test.bench.util;
 
 /**
- * Error thrown when an attempt is made to load an {@linkplain HostedBootClassLoader#isOmittedType(TypeDescriptor) omitted}
- * class via the {@link HostedBootClassLoader}.
- *
- * @author Doug Simon
+ * Framework for running micro-benchmarks, see {@link test.bench.util.RunBench}.
  */
-public class OmittedClassError extends NoClassDefFoundError {
-    public OmittedClassError(String className) {
-        super(className);
-    }
-}
