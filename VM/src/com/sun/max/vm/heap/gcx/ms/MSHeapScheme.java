@@ -48,6 +48,9 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  */
 public class MSHeapScheme extends HeapSchemeWithTLAB {
+    /**
+     * Number of heap words covered by a single mark.
+     */
     private static final int WORDS_COVERED_PER_BIT = 1;
 
     static final VMBooleanXXOption doImpreciseSweepOption =
@@ -96,8 +99,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      */
     final LargeObjectSpace largeObjectSpace;
 
-    Size totalUsedSpace;
-
     private final Collect collect = new Collect();
 
     private StopTheWorldGCDaemon collectorThread;
@@ -111,7 +112,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
         objectSpace = new FreeHeapSpaceManager();
         largeObjectSpace = new LargeObjectSpace();
-        totalUsedSpace = Size.zero();
         afterGCVerifier = MaxineVM.isDebug() ? new AfterMarkSweepVerifier(heapMarker, objectSpace) : null;
     }
 
@@ -206,7 +206,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public Size reportUsedSpace() {
-        return totalUsedSpace;
+        return objectSpace.committedHeapSpace().committedSize().minus(reportFreeSpace());
     }
 
     public void runFinalization() {
