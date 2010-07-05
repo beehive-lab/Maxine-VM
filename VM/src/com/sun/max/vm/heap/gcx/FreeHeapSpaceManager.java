@@ -232,7 +232,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         }
 
        /**
-         * Allocate space of the specified size.
+         * Allocate a zeroed-out space of the specified size.
          *
          * @param size size requested in bytes.
          * @return
@@ -841,7 +841,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
             MaxineVM.reportPristineMemoryFailure("object heap", "reserve", maxSize);
         }
         if (!committedHeapSpace.growCommittedSpace(initSize)) {
-            MaxineVM.reportPristineMemoryFailure("object heap", "commit", maxSize);
+            MaxineVM.reportPristineMemoryFailure("object heap", "commit", initSize);
         }
         // Round down to power of two.
         minLargeObjectSize = Size.fromInt(Integer.highestOneBit(largeObjectsMinSizeOption.getValue()));

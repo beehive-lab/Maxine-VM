@@ -38,11 +38,6 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
      */
     protected final int lengthOffset;
 
-    /**
-     * The cell offset of the first element in the array.
-     */
-    protected final int elementsOffset;
-
     private final int headerSize;
 
     @INLINE
@@ -57,8 +52,7 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
     OhmArrayHeaderLayout(GripScheme gripScheme) {
         super(gripScheme);
         lengthOffset = miscOffset + Word.size();
-        elementsOffset = lengthOffset + Word.size();
-        headerSize = elementsOffset;
+        headerSize = lengthOffset + Word.size();
     }
 
     public boolean isArrayLayout() {
