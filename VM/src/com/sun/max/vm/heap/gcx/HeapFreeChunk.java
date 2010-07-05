@@ -166,7 +166,19 @@ public class HeapFreeChunk {
     }
 
     public static Pointer firstFit(Pointer head, Size size) {
-        return fromHeapFreeChunk(asHeapFreeChunk(head.getWord()).firstFit(size)).asPointer();
+        return fromHeapFreeChunk(toHeapFreeChunk(head.getWord().asAddress()).firstFit(size)).asPointer();
+    }
+
+    public static Pointer removeFirst(Pointer head) {
+        Pointer first = head.getWord().asPointer();
+        if (!first.isZero()) {
+            toHeapFreeChunk(first).removeFirstFromList(head);
+        }
+        return first;
+    }
+
+    protected void removeFirstFromList(Pointer head) {
+        head.setWord(fromHeapFreeChunk(next));
     }
 
     final HeapFreeChunk firstFit(Size size) {
