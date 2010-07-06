@@ -1201,7 +1201,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 public void menuSelected(MenuEvent e) {
                     removeAll();
-                    for (MaxMemoryRegion memoryRegion : vm().state().memoryRegions()) {
+                    final SortedSet<MaxMemoryRegion> regionSet = new TreeSet<MaxMemoryRegion>(MaxMemoryRegion.Util.nameComparator());
+                    regionSet.addAll(vm().state().memoryRegions());
+                    for (MaxMemoryRegion memoryRegion : regionSet) {
                         //System.out.println(memoryRegion.toString());
                         add(actions().inspectRegionMemoryWords(memoryRegion, memoryRegion.regionName(), memoryRegion.regionName()));
                     }
