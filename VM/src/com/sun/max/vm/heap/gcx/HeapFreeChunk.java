@@ -104,6 +104,7 @@ public class HeapFreeChunk {
         if (MaxineVM.isDebug()) {
             FatalError.check(hub.isSubClassHub(HEAP_FREE_CHUNK_HUB.classActor),
                             "Should format with a sub-class of HeapFreeChunk");
+            FatalError.check(numBytes.greaterEqual(HEAP_FREE_CHUNK_HUB.tupleSize), "Size must be at least a heap free chunk size");
             DebugHeap.writeCellPadding(cell, numBytes.toInt() >> Word.widthValue().log2numberOfBytes);
         }
         Cell.plantTuple(cell, hub);
