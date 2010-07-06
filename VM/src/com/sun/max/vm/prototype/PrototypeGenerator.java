@@ -80,8 +80,8 @@ public final class PrototypeGenerator {
             "Specifies the heap scheme for the target.");
     private final Option<MaxPackage> monitorScheme = schemeOption("monitor", new com.sun.max.vm.monitor.Package(), MonitorScheme.class,
             "Specifies the monitor scheme for the target.");
-    private final Option<MaxPackage> compilerScheme = schemeOption("compiler", new com.sun.max.vm.compiler.Package(), BootstrapCompilerScheme.class,
-            "Specifies the compiler scheme for the target.");
+    private final Option<MaxPackage> bootScheme = schemeOption("boot", new com.sun.max.vm.compiler.Package(), BootstrapCompilerScheme.class,
+            "Specifies the boot compiler scheme for the target.");
     private final Option<MaxPackage> optScheme = schemeOption("opt", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
             "Specifies the optimizing compiler scheme for the target.");
     private final Option<MaxPackage> jitScheme = schemeOption("jit", MaxPackage.fromName("com.sun.max.vm.jit"), RuntimeCompilerScheme.class,
@@ -131,7 +131,7 @@ public final class PrototypeGenerator {
         layoutScheme.setDefaultValue(defaultConfiguration.layoutPackage);
         heapScheme.setDefaultValue(defaultConfiguration.heapPackage);
         monitorScheme.setDefaultValue(defaultConfiguration.monitorPackage);
-        compilerScheme.setDefaultValue(defaultConfiguration.bootCompilerPackage);
+        bootScheme.setDefaultValue(defaultConfiguration.bootCompilerPackage);
         optScheme.setDefaultValue(defaultConfiguration.optCompilerPackage);
         jitScheme.setDefaultValue(defaultConfiguration.jitCompilerPackage);
         trampolineScheme.setDefaultValue(defaultConfiguration.trampolinePackage);
@@ -156,7 +156,7 @@ public final class PrototypeGenerator {
                                     vm(layoutScheme),
                                     vm(heapScheme),
                                     vm(monitorScheme),
-                                    vm(compilerScheme),
+                                    vm(bootScheme),
                                     vm(jitScheme),
                                     vm(optScheme),
                                     vm(trampolineScheme),
@@ -177,11 +177,11 @@ public final class PrototypeGenerator {
      * Create the Java prototype, which includes the basic JDK and Maxine classes.
      *
      * @param vmConfiguration the default VM configuration
-     * @param loadingPackages a boolean indicating whether to load the basic VM and JDK packages
+     * @param complete specifies whether to load more than just the VM scheme packages
      * @return a new Java prototype object
      */
-    public JavaPrototype createJavaPrototype(VMConfiguration vmConfiguration, boolean loadingPackages) {
-        return new JavaPrototype(createVMConfiguration(vmConfiguration), loadingPackages);
+    public JavaPrototype createJavaPrototype(VMConfiguration vmConfiguration, boolean complete) {
+        return new JavaPrototype(createVMConfiguration(vmConfiguration), complete);
     }
 
     /**

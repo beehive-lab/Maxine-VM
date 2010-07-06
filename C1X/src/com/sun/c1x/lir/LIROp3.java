@@ -42,7 +42,7 @@ public class LIROp3 extends LIRInstruction {
      * @param info the debug information, used for deoptimization, associated to this instruction
      */
     public LIROp3(LIROpcode opcode, CiValue opr1, CiValue opr2, CiValue opr3, CiValue result, LIRDebugInfo info) {
-        super(opcode, result, info, false, null, 1, 1, opr1, opr2, opr3);
+        super(opcode, result, info, false, 1, 1, opr1, opr2, opr3);
         assert isInRange(opcode, LIROpcode.BeginOp3, LIROpcode.EndOp3) : "The " + opcode + " is not a valid LIROp3 opcode";
     }
 
@@ -62,15 +62,6 @@ public class LIROp3 extends LIRInstruction {
      */
     public CiValue opr2() {
         return operand(1);
-    }
-
-    /**
-     * Gets the opr3 of this class.
-     *
-     * @return the opr3
-     */
-    public CiValue opr3() {
-        return operand(2);
     }
 
     /**

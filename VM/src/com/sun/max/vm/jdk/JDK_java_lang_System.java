@@ -655,10 +655,10 @@ public final class JDK_java_lang_System {
         }
 
         // 3. reinitialize java.lang.ProcessEnvironment with this process's environment
-        JDK.java_lang_ProcessEnvironment.classActor().callInitializer();
+        JDK.callInitializer(JDK.java_lang_ProcessEnvironment.classActor());
 
         // 3.1. reinitialize java.lang.ApplicationShutdownHooks
-        JDK.java_lang_ApplicationShutdownHooks.classActor().callInitializer();
+        JDK.callInitializer(JDK.java_lang_ApplicationShutdownHooks.classActor());
 
         // 4. perform OS-specific initialization
         switch (Platform.hostOrTarget().operatingSystem) {
@@ -730,10 +730,10 @@ public final class JDK_java_lang_System {
         BootClassLoader.BOOT_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
 
         // 10. initialize the file system with current runtime values as opposed to bootstrapping values
-        ClassActor.fromJava(File.class).callInitializer();
+        JDK.callInitializer(ClassActor.fromJava(File.class));
 
         // 11. initialize the management performance class with current runtime values
-        ClassActor.fromJava(sun.misc.Perf.class).callInitializer();
+        JDK.callInitializer(ClassActor.fromJava(sun.misc.Perf.class));
 
         // 12. load the character encoding class
         final String sunJnuEncodingValue = properties.getProperty("sun.jnu.encoding");

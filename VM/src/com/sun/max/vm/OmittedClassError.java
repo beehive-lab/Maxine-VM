@@ -18,15 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package com.sun.max.vm;
+
+import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.type.*;
 
 /**
- * A visitor interface for local stubs.
+ * Error thrown when an attempt is made to load an {@linkplain HostedBootClassLoader#isOmittedType(TypeDescriptor) omitted}
+ * class via the {@link HostedBootClassLoader}.
  *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public interface LocalStubVisitor {
-
-    void visitThrowStub(ThrowStub throwStub);
+public class OmittedClassError extends NoClassDefFoundError {
+    public OmittedClassError(String className) {
+        super(className);
+    }
 }

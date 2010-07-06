@@ -90,13 +90,6 @@ public final class PoolConstantFactory {
         return createClassMethodConstant(javaMethod);
     }
 
-    public static MethodRefConstant createMethodConstant(boolean isInterface, ClassActor holder, Utf8Constant name, SignatureDescriptor signature) {
-        if (isInterface) {
-            return createInterfaceMethodConstant(holder, name, signature);
-        }
-        return createClassMethodConstant(holder, name, signature);
-    }
-
     public static FieldRefConstant createFieldConstant(Field javaField) {
         return new FieldRefConstant.Resolved(FieldActor.fromJava(javaField));
     }

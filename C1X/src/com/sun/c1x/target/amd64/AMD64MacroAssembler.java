@@ -323,10 +323,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         cmpq(src1, src2);
     }
 
-    void cmpxchgptr(CiRegister reg, CiAddress adr) {
-        cmpxchgq(reg, adr);
-    }
-
     void decrementl(CiRegister reg, int value) {
         if (value == Integer.MIN_VALUE) {
             subl(reg, value);

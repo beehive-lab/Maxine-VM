@@ -536,6 +536,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
             // address is [pointer + disp + (index * scale)]
             assert (x.opcode & 0xff) == PGET || (x.opcode & 0xff) == PSET;
+            assert x.displacement().isConstant() : "displacement for pointer load/store not constant: " + x.displacement();
             int displacement = x.displacement().asConstant().asInt();
             int kindSize = compilation.target.sizeInBytes(kind);
             Scale scale = Scale.fromInt(kindSize);

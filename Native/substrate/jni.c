@@ -817,6 +817,10 @@ jint JNICALL jni_GetEnv(JavaVM *javaVM, void **penv, jint version) {
     return JNI_OK;
 }
 
+jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, void *args) {
+    return c_UNIMPLEMENTED();
+}
+
 jint JNICALL jni_DestroyJavaVM(JavaVM *vm) {
     return c_UNIMPLEMENTED();
 }
@@ -832,6 +836,10 @@ jint JNICALL jni_AttachCurrentThreadAsDaemon(JavaVM *vm, void **penv, void *args
 
 jint JNICALL jni_DetachCurrentThread(JavaVM *vm) {
     return thread_detachCurrent();
+}
+
+jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
+    return c_UNIMPLEMENTED();
 }
 
 const struct JNIInvokeInterface_ jni_InvokeInterface = {

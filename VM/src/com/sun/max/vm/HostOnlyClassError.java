@@ -18,18 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.prototype;
+package com.sun.max.vm;
 
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.prototype.*;
 
 /**
- * Error thrown when an attempt is made to load an {@linkplain HostedBootClassLoader#isOmittedType(TypeDescriptor) omitted}
+ * Error thrown when an attempt is made to load a {@linkplain MaxineVM#isHostedOnly(Class) host-only}
  * class via the {@link HostedBootClassLoader}.
  *
  * @author Doug Simon
  */
-public class OmittedClassError extends NoClassDefFoundError {
-    public OmittedClassError(String className) {
+public class HostOnlyClassError extends NoClassDefFoundError {
+    public HostOnlyClassError(String className) {
         super(className);
     }
 }

@@ -130,8 +130,8 @@ public class Canonicalizer extends DefaultValueVisitor {
     }
 
     private void visitOp2(Op2 i) {
-        Value x = i.x();
-        Value y = i.y();
+        final Value x = i.x();
+        final Value y = i.y();
 
         if (x == y) {
             // the left and right operands are the same value, try reducing some operations
@@ -190,9 +190,23 @@ public class Canonicalizer extends DefaultValueVisitor {
                     break;
                 }
                 case Word: {
-                    Long val = foldWordOp2(i.opcode, x.asConstant().asLong(), y.asConstant().asLong());
+                    CiConstant val = runtime.foldWordOperation(i.opcode, new CiMethodInvokeArguments() {
+                        int argIndex;
+                        @Override
+                        public CiConstant nextArg() {
+                            if (argIndex == 0) {
+                                return x.asConstant();
+                            }
+                            if (argIndex == 1) {
+                                return y.asConstant();
+                            }
+                            argIndex++;
+                            return null;
+                        }
+                    });
+
                     if (val != null) {
-                        setLongConstant(val); // the operation was successfully folded to a word
+                        setConstant(val); // the operation was successfully folded to a word
                         return;
                     }
                     break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,18 +18,55 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.prototype;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.bytecode;
 
-import com.sun.max.vm.*;
+import test.bench.util.*;
 
 /**
- * Error thrown when an attempt is made to load a {@linkplain MaxineVM#isHostedOnly(Class) host-only}
- * class via the {@link HostedBootClassLoader}.
+ * A microbenchmark for floating point; {@code float} to {@code long} conversions.
  *
- * @author Doug Simon
+ * @author Ben L. Titzer
+ * @author Mick Jordan
  */
-public class HostOnlyClassError extends NoClassDefFoundError {
-    public HostOnlyClassError(String className) {
-        super(className);
+public class  F2L extends RunBench {
+
+    protected F2L() {
+        super(new Bench(), new EncapBench());
     }
+
+    public static boolean test() {
+        return new F2L().runBench(true);
+    }
+
+    static class Bench extends AbstractMicroBenchmark {
+        public void run(boolean warmup) {
+            f2l(0.4F);
+        }
+
+        @SuppressWarnings("unused")
+        private static void f2l(float d) {
+            long i = (int) d;
+        }
+
+    }
+
+    static class EncapBench extends AbstractMicroBenchmark {
+
+        public void run(boolean warmup) {
+            f2i(0.4F);
+        }
+
+        private static void f2i(float d) {
+        }
+
+    }
+
+    public static void main(String[] args) {
+        RunBench.runTest(F2L.class, args);
+    }
+
 }
