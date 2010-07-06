@@ -1347,9 +1347,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 int bitIndexInWord = 0;
                 final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;
                 Pointer endOfLastVisitedCell;
+                long w = bitmapWord;
                 do {
                     // First mark is the least set bit.
-                    bitIndexInWord += Pointer.fromLong(bitmapWord).leastSignificantBitSet();
+                    bitIndexInWord += Pointer.fromLong(w).leastSignificantBitSet();
                     final int bitIndexOfBlackMark = bitmapWordFirstBitIndex + bitIndexInWord;
                     endOfLastVisitedCell = sweeper.processLiveObject(addressOf(bitIndexOfBlackMark).asPointer());
                     final int nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
@@ -1361,8 +1362,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     // right-shift the bitmap word to skip the mark bits already processed and loop back to
                     // find the next black object with this word.
                     bitIndexInWord += 2;
-                    bitmapWord = bitmapWord >>> bitIndexInWord;
-                } while(bitmapWord != 0L);
+                    w = bitmapWord >>> bitIndexInWord;
+                } while(w != 0L);
                 bitmapWordIndex++;
                 final int nextCellBitmapWordIndex =  bitmapWordIndex(endOfLastVisitedCell);
                 if (nextCellBitmapWordIndex > bitmapWordIndex) {
@@ -1375,12 +1376,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
     /*
-     * Helper instance variable for debugging purposes.
+     * Helper instance variable for debugging purposes. Make it easier to track when under the inspector.
      */
     Pointer gapLeftObject;
     Pointer gapRightObject;
-    int     gapBitmapWordIndex;
-    int     gapBitIndex;
+    int     debugBitmapWordIndex;
+    int     debugBitIndex;
 
     /**
      * Imprecise sweeping of the heap.
@@ -1396,12 +1397,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         final int minBitsBetweenMark = minReclaimableSpace.toInt() >> log2BytesCoveredPerBit;
         int bitmapWordIndex = 0;
         final Address rightmost = forwardScanState.rightmost;
-        // TODO: Debug helpers. REMOVE
-        gapLeftObject = Pointer.zero();
-        gapRightObject = Pointer.zero();
-        gapBitIndex = 0;
-        gapBitmapWordIndex = 0;
-
+        if (MaxineVM.isDebug()) {
+            gapLeftObject = Pointer.zero();
+            gapRightObject = Pointer.zero();
+            debugBitIndex = 0;
+            debugBitmapWordIndex = 0;
+        }
         // Indicate the closest position the next live mark should be at to make the space reclaimable.
         int nextReclaimableMark = minBitsBetweenMark;
         int lastLiveMark = firstBlackMark(0, bitIndexOf(rightmost));
@@ -1429,7 +1430,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 int bitIndexInWord = 0;
                 final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;
                 int nextCellBitmapWordIndex = bitmapWordIndex + 1;
-                // long w = bitmapWord;
                 long w = bitmapWord;
                 do {
                     // First mark is the least set bit.
@@ -1445,12 +1445,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                             break;
                         }
                     } else {
-                        // Debug helpers. REMOVE
-                        gapBitIndex = bitIndexOfBlackMark;
-                        gapBitmapWordIndex = bitmapWordIndex;
-                        gapLeftObject = addressOf(lastLiveMark).asPointer();
-                        gapRightObject = addressOf(bitIndexOfBlackMark).asPointer();
-
+                        if (MaxineVM.isDebug()) {
+                            debugBitIndex = bitIndexOfBlackMark;
+                            debugBitmapWordIndex = bitmapWordIndex;
+                            gapLeftObject = addressOf(lastLiveMark).asPointer();
+                            gapRightObject = addressOf(bitIndexOfBlackMark).asPointer();
+                        }
                         final Pointer endOfLastVisitedCell = sweeper.processLargeGap(addressOf(lastLiveMark).asPointer(), addressOf(bitIndexOfBlackMark).asPointer());
                         lastLiveMark  = bitIndexOfBlackMark;
                         nextReclaimableMark = bitIndexOf(endOfLastVisitedCell) + minBitsBetweenMark;

@@ -40,7 +40,7 @@ import com.sun.max.vm.heap.*;
  */
 public class MarkingStack {
     private static final VMIntOption markingStackSizeOption =
-        register(new  VMIntOption("-XX:MarkingStackSize=", 1024, "Size of the marking stack in number of references."),
+        register(new  VMIntOption("-XX:MarkingStackSize=", 16 * 1024, "Size of the marking stack in number of references."),
                         MaxineVM.Phase.PRISTINE);
 
     abstract static class MarkingStackCellVisitor {
