@@ -226,7 +226,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
      * @return access to the VM thread corresponding to this thread, if any
      */
     TeleVmThread teleVmThread() {
-        if (threadLocalsBlockMemoryRegion != null && lastRefreshedEpoch < vm().teleProcess().epoch() && vm().tryLock()) {
+        if (threadLocalsBlockMemoryRegion != null && teleVmThread == null && vm().tryLock()) {
             try {
                 updateCache();
                 final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(Safepoint.State.ENABLED);
