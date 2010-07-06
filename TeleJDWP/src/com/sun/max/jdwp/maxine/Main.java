@@ -57,6 +57,7 @@ import com.sun.max.vm.prototype.BootImageException;
 import com.sun.max.vm.prototype.BootImageGenerator;
 import com.sun.max.vm.prototype.Prototype;
 import com.sun.max.vm.prototype.HostedBootClassLoader;
+import com.sun.max.vm.tele.Inspectable;
 
 /**
  * Class containing the main function to startup the Maxine JDWP server. The server is listening for incoming
@@ -150,6 +151,12 @@ public class Main {
         if (teleVM == null) {
             LOGGER.severe("Error creating TeleVM => exiting");
             return;
+        }
+        teleVM.lock();
+        try {
+            teleVM.modifyInspectableFlags(Inspectable.INSPECTED, true);
+        } finally {
+            teleVM.unlock();
         }
 
         // Execute until entry point is reached.

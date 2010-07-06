@@ -260,7 +260,9 @@ public abstract class TeleVM implements MaxVM {
                 vm = create(bootImageFile, sourcepath, commandLineArguments, options.debuggeeIdOption.getValue());
                 vm.lock();
                 try {
+                    vm.updateVMCaches();
                     vm.teleProcess().initializeState();
+                    vm.modifyInspectableFlags(Inspectable.INSPECTED, true);
                 } finally {
                     vm.unlock();
                 }
@@ -287,6 +289,7 @@ public abstract class TeleVM implements MaxVM {
                 vm = create(bootImageFile, sourcepath, null, options.debuggeeIdOption.getValue());
                 vm.lock();
                 try {
+                    vm.updateVMCaches();
                     vm.teleProcess().initializeStateOnAttach();
                 } finally {
                     vm.unlock();
@@ -300,7 +303,7 @@ public abstract class TeleVM implements MaxVM {
                     System.setProperty(ReadOnlyTeleProcess.HEAP_PROPERTY, heap);
                 }
                 vm = createReadOnly(bootImageFile, sourcepath);
-                vm.updateAllCaches();
+                vm.updateVMCaches();
         }
 
         final File commandFile = options.commandFileOption.getValue();
@@ -630,29 +633,34 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * Updates all information about the state of the VM that is read
+     * Updates information about the state of the VM that is read
      * and cached at the end of each VM execution cycle.
+     * <br>
      * This must be called in a context where thread-safe read access to the VM can
      * be achieved.
      * <br>
-     * Some lazy initialization may be performed here, in order to avoid cycles during startup.
+     * Some lazy initialization is done, in order to avoid cycles during startup.
      *
      * @throws ProgramError if unable to acquire the VM lock
      * @see #lock
      */
-    public final void updateAllCaches() {
+    public final void updateVMCaches() {
         if (!tryLock()) {
             ProgramError.unexpected("TeleVM unable to acquire VM lock for update");
         }
         try {
             updateTracer.begin();
             if (teleClassRegistry == null) {
-                // Must delay creation/initialization of the {@link TeleClassRegistry} until after
-                // we hit the first execution breakpoint; otherwise addresses won't have been relocated.
-                // This depends on the {@link TeleHeap} already existing.
+                /*
+                 * Must delay creation/initialization of the {@link TeleClassRegistry} until after
+                 * we hit the first execution breakpoint; otherwise addresses won't have been relocated.
+                 * This depends on the {@link TeleHeap} already existing.
+                 */
                 teleClassRegistry = new TeleClassRegistry(this);
-                // Can only fully initialize the {@link TeleHeap} once
-                // the {@TeleClassRegistry} is fully initialized, otherwise there's a cycle.
+                /*
+                 *  Can only fully initialize the {@link TeleHeap} once
+                 *  the {@TeleClassRegistry} is fully initialized, otherwise there's a cycle.
+                 */
                 heap.initialize();
 
                 // Now set up the map of the compiled code cache
@@ -936,18 +944,6 @@ public abstract class TeleVM implements MaxVM {
             newFlags &= ~flags;
         }
         teleFields.Inspectable_flags.writeInt(this, newFlags);
-    }
-
-    /**
-     * Enables inspector facilities in the VM.
-     */
-    private void setVMInspectable() {
-        lock();
-        try {
-            modifyInspectableFlags(Inspectable.INSPECTED, true);
-        } finally {
-            unlock();
-        }
     }
 
     /**
@@ -1533,7 +1529,6 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public void advanceToJavaEntryPoint() throws IOException {
-        setVMInspectable();
         final Address startEntryAddress = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
         final MachineCodeLocation entryLocation = codeManager().createMachineCodeLocation(startEntryAddress, "vm start address");
         try {
