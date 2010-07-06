@@ -18,22 +18,55 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.classfile.constant;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.bytecode;
 
-import java.lang.reflect.*;
-
-import com.sun.max.vm.*;
+import test.bench.util.*;
 
 /**
- * Thrown when a {@linkplain PoolConstant constant pool entry} for a
- * {@linkplain MaxineVM#isHostedOnly(AccessibleObject) host-only field} is
- * {@linkplain FieldRefConstant#resolve(ConstantPool, int) resolved}.
+ * A microbenchmark for floating point; {@code double} to {@code long} conversions.
  *
- * @author Doug Simon
+ * @author Ben L. Titzer
+ * @author Mick Jordan
  */
-public class HostOnlyFieldError extends NoSuchMethodError {
+public class D2L extends RunBench {
 
-    public HostOnlyFieldError(String s) {
-        super(s);
+    protected D2L() {
+        super(new Bench(), new EncapBench());
     }
+
+    public static boolean test() {
+        return new D2L().runBench(true);
+    }
+
+    static class Bench extends AbstractMicroBenchmark {
+        public void run(boolean warmup) {
+            d2l(0.4);
+        }
+
+        @SuppressWarnings("unused")
+        private static void d2l(double d) {
+            long i = (long) d;
+        }
+
+    }
+
+    static class EncapBench extends AbstractMicroBenchmark {
+
+        public void run(boolean warmup) {
+            d2l(0.4);
+        }
+
+        private static void d2l(double d) {
+        }
+
+    }
+
+    public static void main(String[] args) {
+        RunBench.runTest(D2L.class, args);
+    }
+
 }

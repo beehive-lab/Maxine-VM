@@ -79,7 +79,7 @@ public final class CirSelectInterfaceMethod extends CirSnippet {
         assert arguments.length == Parameter.VALUES.size();
         if (isConstantArgument(arguments, Parameter.declaredMethod)) {
             if (isConstantArgument(arguments, Parameter.receiver)) {
-                return true;
+                return getConstantArgumentValue(arguments, Parameter.receiver).asObject() != null;
             }
             final MethodActor declaredMethod = (MethodActor) getConstantArgumentValue(arguments, Parameter.declaredMethod).asObject();
             return declaredMethod.holder().toJava() == Accessor.class && cirOptimizer.inliningPolicy().accessorClass() != Accessor.class;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,42 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.bench.micro;
+package test.bench;
 
 /**
- * A microbenchmark for floating point to integer conversions.
- * @author Ben L. Titzer
+ * Sub packages of test.bench should contain micro-benchmarks that measure aspects of the VM and JDK platform.
+ * Each micro-benchmark should be written to use the framework in {@link test.bench.util.RunBench}, following the
+ * style of one of the existing micro-benchmarks. The intent is that the micro-benchmarks can be run stand-alone or
+ * under the standard {@link test.com.sun.max.vm.jtrun.JTAbstractRunScheme test framework}.
+ *
+ * @author Mick Jordan
  */
-public class D2I {
-
-    private static int CHUNK_SIZE = 5000;
-    private static final int ITERATIONS = 500000000;
-
-    public static void main(String[] args) {
-        int count = ITERATIONS;
-        if (args.length > 0) {
-            count = Integer.parseInt(args[0]);
-        }
-        benchmark(count);
-    }
-
-    public static void benchmark(int count) {
-        int chunks = (count + CHUNK_SIZE - 1) / CHUNK_SIZE;
-        double fsum = 0;
-        int isum = 0;
-        for (int i = 0; i <= chunks; i++) {
-            fsum += 0.4;
-            isum = chunk(fsum, isum, CHUNK_SIZE);
-        }
-        System.out.println(fsum);
-        System.out.println(isum);
-    }
-
-    private static int chunk(double fsum, int isum, int count) {
-        for (int i = 0; i < count; i++) {
-            fsum += 0.1;
-            isum = (int) fsum;
-        }
-        return isum;
-    }
-}

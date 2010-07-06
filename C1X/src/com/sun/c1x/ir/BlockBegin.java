@@ -194,7 +194,8 @@ public final class BlockBegin extends Instruction {
     }
 
     /**
-     * Gets the exception handlers that cover this basic block.
+     * Gets the exception handlers that cover one or more instructions of this basic block.
+     *
      * @return the exception handlers
      */
     public List<BlockBegin> exceptionHandlerBlocks() {
@@ -335,16 +336,29 @@ public final class BlockBegin extends Instruction {
         }
     }
 
-    public void addExceptionHandler(BlockBegin b) {
-        assert b != null && b.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
+    /**
+     * Adds an exception handler that covers one or more instructions in this block.
+     *
+     * @param handler the entry block for the exception handler to add
+     */
+    public void addExceptionHandler(BlockBegin handler) {
+        assert handler != null && handler.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
         if (exceptionHandlerBlocks == null) {
             exceptionHandlerBlocks = new ArrayList<BlockBegin>();
-            exceptionHandlerBlocks.add(b);
-        } else if (!exceptionHandlerBlocks.contains(b)) {
-            exceptionHandlerBlocks.add(b);
+            exceptionHandlerBlocks.add(handler);
+        } else if (!exceptionHandlerBlocks.contains(handler)) {
+            exceptionHandlerBlocks.add(handler);
         }
     }
 
+    /**
+     * Adds a frame state that merges into the exception handler whose entry is this block.
+     *
+     * @param state the frame state at an instruction that raises an exception that can be caught by the exception
+     *            handler represented by this block
+     * @return the index of {@code state} in the list of frame states merging at this block (i.e. the frames states for
+     *         all instruction throwing an exception caught by this exception handler)
+     */
     public int addExceptionState(FrameState state) {
         assert checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
         if (exceptionHandlerStates == null) {
@@ -695,7 +709,7 @@ public final class BlockBegin extends Instruction {
 
     public void addExceptionStates(List<FrameState> exceptHandlerStates) {
         for (FrameState state : exceptHandlerStates) {
-            addExceptionState(state.copy());
+            addExceptionState(state.immutableCopy());
         }
     }
 }

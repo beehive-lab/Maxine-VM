@@ -33,6 +33,7 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A chunk of free space in the heap.
@@ -46,18 +47,18 @@ import com.sun.max.vm.reference.*;
  * FIXME: need to revisit the visibility of this class.
  * @author Laurent Daynes
  */
-public final class HeapFreeChunk {
+public class HeapFreeChunk {
 
     public static final DynamicHub HEAP_FREE_CHUNK_HUB = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
 
     /**
      * Index of the word storing "next" field of the heap free chunk.
      */
-    private static final int NEXT_INDEX;
+    protected static final int NEXT_INDEX;
     /**
      * Index of the word storing "size" field of the heap free chunk.
      */
-    private static final int SIZE_INDEX;
+    protected static final int SIZE_INDEX;
 
     static {
         NEXT_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("next")).offset() >> Word.widthValue().log2numberOfBytes;
@@ -98,6 +99,20 @@ public final class HeapFreeChunk {
         return false;
     }
 
+    static HeapFreeChunk format(DynamicHub hub, Address deadSpace, Size numBytes, Address nextChunk) {
+        final Pointer cell = deadSpace.asPointer();
+        if (MaxineVM.isDebug()) {
+            FatalError.check(hub.isSubClassHub(HEAP_FREE_CHUNK_HUB.classActor),
+                            "Should format with a sub-class of HeapFreeChunk");
+            FatalError.check(numBytes.greaterEqual(HEAP_FREE_CHUNK_HUB.tupleSize), "Size must be at least a heap free chunk size");
+            DebugHeap.writeCellPadding(cell, numBytes.toInt() >> Word.widthValue().log2numberOfBytes);
+        }
+        Cell.plantTuple(cell, hub);
+        Layout.writeMisc(Layout.cellToOrigin(cell), Word.zero());
+        setFreeChunkSize(cell, numBytes);
+        setFreeChunkNext(cell, nextChunk);
+        return toHeapFreeChunk(cell);
+    }
     /**
      * Format dead space into a free chunk.
      * @param deadSpace pointer to  the first word of the dead space
@@ -105,20 +120,27 @@ public final class HeapFreeChunk {
      * @return a reference to HeapFreeChunk object just planted at the beginning of the free chunk.
      */
     static HeapFreeChunk format(Address deadSpace, Size numBytes, Address nextChunk) {
-        final Pointer cell = deadSpace.asPointer();
-        if (MaxineVM.isDebug()) {
-            DebugHeap.writeCellPadding(cell, numBytes.toInt() >> Word.widthValue().log2numberOfBytes);
-        }
-        Cell.plantTuple(cell, HEAP_FREE_CHUNK_HUB);
-        Layout.writeMisc(Layout.cellToOrigin(cell), Word.zero());
-        setFreeChunkSize(cell, numBytes);
-        setFreeChunkNext(cell, nextChunk);
-        return toHeapFreeChunk(cell);
+        return format(HEAP_FREE_CHUNK_HUB, deadSpace, numBytes, nextChunk);
     }
 
     @INLINE
     static HeapFreeChunk format(Address deadSpace, Size numBytes) {
         return format(deadSpace, numBytes, Address.zero());
+    }
+
+    /**
+     * Split a chunk. Format the right side of the split as a free chunk, and return
+     * its address.
+     * @param chunk the original chunk
+     * @param size size of the left chunk.
+     * @return
+     */
+    static Pointer splitRight(Pointer chunk, Size leftChunkSize, Address rightNextFreeChunk) {
+        HeapFreeChunk leftChunk = toHeapFreeChunk(chunk);
+        Size rightSize = leftChunk.size.minus(leftChunkSize);
+        HeapFreeChunk rightChunk = format(chunk.plus(leftChunkSize), rightSize, rightNextFreeChunk);
+        leftChunk.size = rightSize;
+        return fromHeapFreeChunk(rightChunk).asPointer();
     }
 
     @INTRINSIC(UNSAFE_CAST)
@@ -144,10 +166,36 @@ public final class HeapFreeChunk {
         }
     }
 
+    public static Pointer firstFit(Pointer head, Size size) {
+        return fromHeapFreeChunk(toHeapFreeChunk(head.getWord().asAddress()).firstFit(size)).asPointer();
+    }
+
+    public static Pointer removeFirst(Pointer head) {
+        Pointer first = head.getWord().asPointer();
+        if (!first.isZero()) {
+            toHeapFreeChunk(first).removeFirstFromList(head);
+        }
+        return first;
+    }
+
+    protected void removeFirstFromList(Pointer head) {
+        head.setWord(fromHeapFreeChunk(next));
+    }
+
+    final HeapFreeChunk firstFit(Size size) {
+        HeapFreeChunk chunk = this;
+        while (chunk != null) {
+            if (chunk.size.greaterEqual(size)) {
+                return chunk;
+            }
+        }
+        return null;
+    }
+
     /**
      * Heap Free Chunk are never allocated.
      */
-    private HeapFreeChunk() {
+    protected HeapFreeChunk() {
     }
 
     /**

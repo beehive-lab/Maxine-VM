@@ -26,6 +26,7 @@ import static com.sun.max.vm.type.ClassRegistry.Property.*;
 
 import java.io.*;
 import java.lang.annotation.*;
+import java.lang.reflect.*;
 import java.security.*;
 import java.util.*;
 
@@ -42,8 +43,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
@@ -1120,7 +1119,7 @@ public abstract class ClassActor extends Actor implements RiType {
     private void checkProhibited(Utf8Constant typeName) {
         if (prohibitedPackagePrefix != null &&
             !isArrayClass() &&
-            !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString()) &&
+            !InvocationStubGenerator.isInvocationStubClassName(typeName.string) &&
             typeName.string.startsWith(prohibitedPackagePrefix)) {
             throw new ProhibitedPackageError(typeName.string);
         }
@@ -1465,9 +1464,13 @@ public abstract class ClassActor extends Actor implements RiType {
         return clinit != null;
     }
 
-    public void callInitializer() {
+    public void callInitializer() throws InvocationTargetException {
         if (clinit != null) {
-            SpecialBuiltin.call(CompilationScheme.Static.compile(clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT));
+            try {
+                clinit.invoke();
+            } catch (IllegalAccessException e) {
+                throw FatalError.unexpected("Class initializer of " + name + " not accessible by VM", e);
+            }
         }
         initializationState = INITIALIZED;
     }
@@ -1570,12 +1573,15 @@ public abstract class ClassActor extends Actor implements RiType {
                 callInitializer();
                 terminateInitialization(INITIALIZED);
                 return;
-            } catch (Exception exception) {
-                terminateInitialization(exception);
-                throw new ExceptionInInitializerError(exception);
-            } catch (Error error) {
-                terminateInitialization(error);
-                throw error;
+            } catch (InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof Error) {
+                    Error error = (Error) cause;
+                    terminateInitialization(error);
+                    throw error;
+                }
+                terminateInitialization(cause);
+                throw new ExceptionInInitializerError(cause);
             }
         }
     }

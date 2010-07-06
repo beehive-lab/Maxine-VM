@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,37 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package com.sun.max.vm.reflection;
 
-import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.*;
-import com.sun.cri.ci.*;
+import java.lang.reflect.*;
 
-/**
- * This class implements a local stub that simply throws an exception, typically
- * by calling the runtime system through a global stub.
- *
- * @author Ben L. Titzer
- */
-public class ThrowStub extends LocalStub {
+import sun.reflect.*;
 
-    public final GlobalStub globalStub;
+import com.sun.max.vm.value.*;
 
-    public ThrowStub(GlobalStub globalStub, LIRDebugInfo info, CiValue... args) {
-        super(info);
-        this.globalStub = globalStub;
-        if (args != null && args.length > 0) {
-            setOperands(0, 0, args);
-        }
+public abstract class ConstructorInvocationStub extends InvocationStub implements ConstructorAccessor {
+
+    public Object newInstance(Object[] args) throws InstantiationException, IllegalArgumentException, InvocationTargetException {
+        throw new NoSuchMethodError();
     }
 
-    @Override
-    public boolean isExceptionThrowStub() {
-        return true;
-    }
-
-    @Override
-    public void accept(LocalStubVisitor visitor) {
-        visitor.visitThrowStub(this);
+    public Value newInstance(Value... args) throws InstantiationException, IllegalArgumentException, InvocationTargetException {
+        throw new NoSuchMethodError();
     }
 }

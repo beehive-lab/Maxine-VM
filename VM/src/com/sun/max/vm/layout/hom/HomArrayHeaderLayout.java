@@ -33,17 +33,10 @@ import com.sun.max.vm.type.*;
  * @author Doug Simon
  */
 public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeaderLayout {
-
-    /**
-     * The offset of the first array element.
-     */
-    final int elementsOffset;
-
     protected final int headerSize;
 
     HomArrayHeaderLayout(GripScheme gripScheme) {
         super(gripScheme);
-        elementsOffset = 0;
         headerSize = -arrayLengthOffset;
     }
 

@@ -103,7 +103,9 @@ public abstract class CodeManager {
         Pointer start = currentCodeRegion.allocate(allocationSize, false);
         traceChunkAllocation(allocationTraceDescription, allocationSize, start);
         if (start.isZero()) {
-            FatalError.unexpected("could not allocate code");
+            Safepoint.enable();
+            Heap.enableAllocationForCurrentThread();
+            throw new OutOfMemoryError("PermGen: try larger value for -XX:ReservedCodeCacheSize=<n>)");
         }
 
         targetMethod.setStart(start);

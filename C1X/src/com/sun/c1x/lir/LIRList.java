@@ -30,7 +30,6 @@ import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.*;
-import com.sun.c1x.stub.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -280,10 +279,6 @@ public class LIRList {
         append(new LIRBranch(Condition.TRUE, CiKind.Illegal, block));
     }
 
-    public void jump(LocalStub stub) {
-        append(new LIRBranch(Condition.TRUE, CiKind.Illegal, stub));
-    }
-
     public void branch(Condition cond, Label lbl) {
         append(new LIRBranch(cond, lbl));
     }
@@ -291,11 +286,6 @@ public class LIRList {
     public void branch(Condition cond, CiKind kind, BlockBegin block) {
         assert kind != CiKind.Float && kind != CiKind.Double : "no fp comparisons";
         append(new LIRBranch(cond, kind, block));
-    }
-
-    public void branch(Condition cond, CiKind kind, LocalStub stub) {
-        assert kind != CiKind.Float && kind != CiKind.Double : "no fp comparisons";
-        append(new LIRBranch(cond, kind, stub));
     }
 
     public void branch(Condition cond, CiKind kind, BlockBegin block, BlockBegin unordered) {

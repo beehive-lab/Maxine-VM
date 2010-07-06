@@ -44,11 +44,11 @@ public final class MonitorEnter extends AccessMonitor {
 
     /**
      * Checks whether this instruction can trap.
-     * @return {@code true}, conservatively assuming the instruction may cause an exception
+     * @return {@code true} if this instruction may raise a {@link NullPointerException}
      */
     @Override
     public boolean canTrap() {
-        return true;
+        return needsNullCheck();
     }
 
     /**

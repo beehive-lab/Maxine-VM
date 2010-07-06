@@ -203,4 +203,13 @@ public interface RiRuntime {
      * @return the result of the folding or {@code null} if no folding occurred
      */
     CiConstant invoke(RiMethod method, CiMethodInvokeArguments args);
+    
+    /**
+     * Attempts to compile-time evaluate or "fold" a bytecode operation that involves {@linkplain CiKind#Word word} types.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param the inputs to the operation
+     * @return the result of folding the operation if it is foldable, {@code null} otherwise
+     */
+    CiConstant foldWordOperation(int opcode, CiMethodInvokeArguments args);
 }

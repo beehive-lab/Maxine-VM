@@ -18,21 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.reflection;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.bytecode;
 
-import java.lang.reflect.*;
+import test.bench.util.*;
 
-import sun.reflect.*;
+/**
+ * Call a method with zero arguments.
+ *
+ * @author Mick Jordan
+ */
 
-import com.sun.max.vm.value.*;
+public class MethodCall1L extends RunBench {
 
-public abstract class GeneratedMethodStub extends GeneratedStub implements MethodAccessor {
-
-    public Object invoke(Object obj, Object[] args) throws IllegalArgumentException, InvocationTargetException {
-        throw new NoSuchMethodError();
+    protected MethodCall1L() {
+        super(new Bench());
     }
 
-    public Value invoke(Value... args) throws IllegalArgumentException, InvocationTargetException {
-        throw new NoSuchMethodError();
+    public static boolean test() {
+        return new MethodCall1L().runBench(true);
     }
+
+    static class Bench extends AbstractMicroBenchmark {
+        public void run(boolean warmup) {
+            longArg(Long.MAX_VALUE);
+        }
+
+        private void longArg(long arg) {
+
+        }
+    }
+
+    public static void main(String[] args) {
+        RunBench.runTest(MethodCall1L.class, args);
+    }
+
 }

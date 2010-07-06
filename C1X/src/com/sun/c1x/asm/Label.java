@@ -31,9 +31,11 @@ public final class Label {
 
     private int position = -1;
 
-    // References to instructions that jump to this unresolved label.
-    // These instructions need to be patched when the label is bound
-    // using the platform-specific patchInstruction() method.
+    /**
+     * References to instructions that jump to this unresolved label.
+     * These instructions need to be patched when the label is bound
+     * using the {@link #patchInstructions(AbstractAssembler)} method.
+     */
     private IntList patchPositions = new IntList(4);
 
     /**

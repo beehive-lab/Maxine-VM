@@ -628,9 +628,8 @@ public class LinearScan {
                 }
 
                 // Add uses of live locals from interpreter's point of view for proper debug information generation
-                n = op.infoCount();
-                for (int k = 0; k < n; k++) {
-                    LIRDebugInfo info = op.infoAt(k);
+                LIRDebugInfo info = op.info;
+                if (info != null) {
                     info.state.forEachLiveStateValue(new ValueProcedure() {
                         public void doValue(Value value) {
                             CiValue operand = value.operand();
@@ -1249,9 +1248,8 @@ public class LinearScan {
                 // debug information generation
                 // Treat these operands as temp values (if the live range is extended
                 // to a call site, the value would be in a register at the call otherwise)
-                n = op.infoCount();
-                for (k = 0; k < n; k++) {
-                    LIRDebugInfo info = op.infoAt(k);
+                LIRDebugInfo info = op.info;
+                if (info != null) {
                     info.state.forEachLiveStateValue(new ValueProcedure() {
                         public void doValue(Value value) {
                             CiValue operand = value.operand();
@@ -1527,8 +1525,9 @@ public class LinearScan {
             assert operandNum < numOperands : "live information set for not exisiting interval";
             assert fromBlock.lirBlock.liveOut.get(operandNum) && toBlock.lirBlock.liveIn.get(operandNum) : "interval not live at this edge";
 
-            Interval fromInterval = intervalAtBlockEnd(fromBlock, operands.operandFor(operandNum));
-            Interval toInterval = intervalAtBlockBegin(toBlock, operands.operandFor(operandNum));
+            CiValue liveOperand = operands.operandFor(operandNum);
+            Interval fromInterval = intervalAtBlockEnd(fromBlock, liveOperand);
+            Interval toInterval = intervalAtBlockBegin(toBlock, liveOperand);
 
             if (fromInterval != toInterval && (fromInterval.location() != toInterval.location())) {
                 // need to insert move instruction
@@ -1575,7 +1574,10 @@ public class LinearScan {
         }
     }
 
-    // insert necessary moves (spilling or reloading) at edges between blocks if interval has been split
+    /**
+     * Inserts necessary moves (spilling or reloading) at edges between blocks for intervals that
+     * have been split.
+     */
     void resolveDataFlow() {
         int numBlocks = blockCount();
         MoveResolver moveResolver = new MoveResolver(this);
@@ -1727,11 +1729,6 @@ public class LinearScan {
             // interval at the throwing instruction must be searched using the operands
             // of the phi function
             Value fromValue = phi.inputAt(handler.phiOperand());
-
-            // with phi functions it can happen that the same fromValue is used in
-            // multiple mappings, so notify move-resolver that this is allowed
-            moveResolver.setMultipleReadsAllowed();
-
             Constant con = null;
             if (fromValue instanceof Constant) {
                 con = (Constant) fromValue;
@@ -1742,9 +1739,13 @@ public class LinearScan {
             } else {
                 // search split child at the throwing opId
                 Interval fromInterval = intervalAtOpId(fromValue.operand(), throwingOpId);
-                moveResolver.addMapping(fromInterval, toInterval);
+                if (fromInterval != toInterval) {
+                    moveResolver.addMapping(fromInterval, toInterval);
+                    // with phi functions it can happen that the same fromValue is used in
+                    // multiple mappings, so notify move-resolver that this is allowed
+                    moveResolver.setMultipleReadsAllowed();
+                }
             }
-
         } else {
             // no phi function, so use regNum also for fromInterval
             // search split child at the throwing opId
@@ -1817,10 +1818,10 @@ public class LinearScan {
                 LIRInstruction op = ops.at(j);
                 int opId = op.id;
 
-                if (opId != -1 && op.hasInfo()) {
+                if (opId != -1 && op.info != null) {
                     // visit operation to collect all operands
-                    for (ExceptionHandler h : op.exceptionEdges()) {
-                        resolveExceptionEdge(h, opId, moveResolver);
+                    for (ExceptionHandler handler : op.exceptionEdges()) {
+                        resolveExceptionEdge(handler, opId, moveResolver);
                     }
 
                 } else if (C1XOptions.DetailedAsserts) {
@@ -1992,13 +1993,9 @@ public class LinearScan {
     }
 
     void computeOopMap(IntervalWalker iw, LIRInstruction op) {
-        assert op.hasInfo() : "no oop map needed";
-
-        for (int i = 0; i < op.infoCount(); i++) {
-            LIRDebugInfo info = op.infoAt(i);
-            assert !info.hasDebugInfo() : "oop map already computed for info";
-            computeOopMap(iw, op, info, op.hasCall());
-        }
+        assert op.info != null : "no oop map needed";
+        assert !op.info.hasDebugInfo() : "oop map already computed for info";
+        computeOopMap(iw, op, op.info, op.hasCall());
     }
 
     int appendScopeValueForConstant(CiValue operand, List<CiValue> scopeValues) {
@@ -2189,8 +2186,9 @@ public class LinearScan {
     void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
         assert iw != null : "interval walker needed for debug information";
         computeOopMap(iw, op);
-        for (int i = 0; i < op.infoCount(); i++) {
-            LIRDebugInfo info = op.infoAt(i);
+
+        LIRDebugInfo info = op.info;
+        if (info != null) {
             computeDebugInfo(info, op.id);
         }
     }
@@ -2245,7 +2243,7 @@ public class LinearScan {
                 }
             }
 
-            if (op.hasInfo()) {
+            if (op.info != null) {
                 // exception handling
                 if (compilation.hasExceptionHandlers()) {
                     for (ExceptionHandler handler : op.exceptionEdges()) {
@@ -2539,18 +2537,9 @@ public class LinearScan {
             for (int j = 0; j < instructions.size(); j++) {
                 LIRInstruction op = instructions.get(j);
 
-                if (op.hasInfo()) {
+                if (op.info != null) {
                     iw.walkBefore(op.id);
                     boolean checkLive = true;
-                    LIRBranch branch = null;
-                    if (op instanceof LIRBranch) {
-                        branch = (LIRBranch) op;
-                    }
-                    if (branch != null && branch.stub != null && branch.stub.isExceptionThrowStub()) {
-                        // Don't bother checking the stub in this case since the
-                        // exception stub will never return to normal control flow.
-                        checkLive = false;
-                    }
 
                     // Make sure none of the fixed registers is live across an
                     // oopmap since we can't handle that correctly.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,32 +18,8 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
-import com.sun.c1x.lir.FrameMap.*;
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
+package test.bench.util;
 
 /**
- * LIR instruction used in translating {@link Bytecodes#ALLOCA}.
- *
- * @author Doug Simon
+ * Framework for running micro-benchmarks, see {@link test.bench.util.RunBench}.
  */
-public class LIRStackAllocate extends LIRInstruction {
-
-    public final StackBlock stackBlock;
-
-    /**
-     * Creates an LIR instruction modelling a stack block allocation.
-     * @param result
-     */
-    public LIRStackAllocate(CiValue result, StackBlock stackBlock) {
-        super(LIROpcode.Alloca, result, null, false);
-        this.stackBlock = stackBlock;
-    }
-
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitStackAllocate(stackBlock, this.result());
-    }
-}
