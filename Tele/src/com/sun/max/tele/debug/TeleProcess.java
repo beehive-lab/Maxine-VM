@@ -156,7 +156,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     }
 
                     // Read VM memory and update various bits of cached state about the VM state
-                    vm().updateAllCaches();
+                    vm().updateVMCaches();
                     TeleProcess.this.updateCache();
                     targetBreakpointManager().setActiveAll(false);
 
@@ -419,10 +419,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
     public final void initializeState() {
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " initializing");
         tracer.begin();
-
-        vm().updateAllCaches();
         updateState(processState);
-
         tracer.end(statsPrinter);
     }
 
@@ -433,12 +430,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " initializing on attach");
         tracer.begin();
 
-        vm().updateAllCaches();
         updateState(processState);
         epoch++;
         updateCache();
         // now update state to reflect the discovered threads, all of which will appear as STARTED
-        updateState(STOPPED, TeleProcess.EMPTY_BREAKPOINTEVENT_LIST, null);
+        updateState(STOPPED);
 
         tracer.end(statsPrinter);
     }
