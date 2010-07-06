@@ -749,14 +749,23 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
      */
     private Pointer endOfLastVisitedObject;
 
-    @Override
-    public Pointer processLiveObject(Pointer liveObject) {
-        final Size deadSpace = liveObject.minus(endOfLastVisitedObject).asSize();
-        if (deadSpace.greaterThan(minReclaimableSpace)) {
-            recordFreeSpace(endOfLastVisitedObject, deadSpace);
+    private void printDeadSpace(Size deadSpace) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("Dead space (");
+        Log.print(deadSpace.toLong());
+        Log.print(" bytes) @");
+        Log.print(endOfLastVisitedObject);
+        Log.print(" - ");
+        Log.print(endOfLastVisitedObject.plus(deadSpace));
+
+        if (deadSpace.greaterEqual(minReclaimableSpace)) {
+            Log.print(" => bin #");
+            Log.println(binIndex(deadSpace));
+        } else {
+            Log.println(" => dark matter");
         }
-        endOfLastVisitedObject = liveObject.plus(Layout.size(Layout.cellToOrigin(liveObject)));
-        return endOfLastVisitedObject;
+        Log.unlock(lockDisabledSafepoints);
+
     }
 
     private void printNotifiedGap(Pointer leftLiveObject, Pointer rightLiveObject, Pointer gapAddress, Size gapSize) {
@@ -778,6 +787,20 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
             Log.println(" => dark matter");
         }
         Log.unlock(lockDisabledSafepoints);
+    }
+
+    @Override
+    public Pointer processLiveObject(Pointer liveObject) {
+        final Size deadSpace = liveObject.minus(endOfLastVisitedObject).asSize();
+        if (MaxineVM.isDebug() && TraceSweep && !deadSpace.isZero()) {
+            printDeadSpace(deadSpace);
+        }
+
+        if (deadSpace.greaterThan(minReclaimableSpace)) {
+            recordFreeSpace(endOfLastVisitedObject, deadSpace);
+        }
+        endOfLastVisitedObject = liveObject.plus(Layout.size(Layout.cellToOrigin(liveObject)));
+        return endOfLastVisitedObject;
     }
 
     @Override
