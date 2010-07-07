@@ -40,7 +40,8 @@ import com.sun.max.program.*;
  * {@link MicroBenchmark#run} method. For truly micro (nano) benchmarks the overhead of invoking the {@code run} method
  * (and any setup code, e.g. taking a lock), can dominate the timings, so a second instance of {@link MicroBenchmark}
  * can be provided that captures that. This <i>encapsulating<i> benchmark is run first and the timings are subtracted
- * from the full benchmark run timings.
+ * from the full benchmark run timings. For benchmarks that need per-run setup/shutdown steps the {@link MicroBenchmark#prerun}
+ * and {@link MicroBenchmark#postrun} methods can be implemented.
  *
  * The benchmark is executed a given number of times, with a default of {@value #DEFAULT_LOOP_COUNT}. This can be
  * changed at run-time by setting the property {@value #LOOP_COUNT_PROPERTY}. It is also possible to explicitly pass in
@@ -70,19 +71,27 @@ public class RunBench {
      */
     protected static interface MicroBenchmark {
 
+        /**
+         * Any per-run setup needed prior to the run.
+         * @throws Exception
+         */
         void prerun() throws Exception;
 
-        /*
+        /**
          * Run one iteration of the benchmark.
          *
          * @param warmup {@code true} if this is a warm up run
          */
         void run(boolean warmup) throws Exception;
 
+        /**
+         * Any per-run shutdown needed.
+         * @throws Exception
+         */
         void postrun() throws Exception;
     }
 
-    /**Provides empty implementations of pre and post run for classes that dont need it.
+    /**Provides empty implementations of pre and post run for classes that don't need it.
      *
      * @author Puneeet Lakhina
      */

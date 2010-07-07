@@ -27,7 +27,7 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for the singleton {@link CodeManager} in the VM.
+ * Access to the singleton {@link CodeManager} in the VM.
  *
  * @author Michael Van De Vanter
  * @author Hannes Payer
@@ -44,15 +44,15 @@ public final class TeleCodeManager extends TeleTupleObject {
     private TeleCodeRegion teleBootCodeRegion = null;
 
     /**
-     * Surrogates for the runtime (dynamic) code region created by the {@link CodeManager} in the VM.
+     * Access to the runtime (dynamic) code region created by the {@link CodeManager} in the VM.
      * <br>
      * Assume that the region is created at startup, and that its identity doesn't change, just the
      * address when memory is allocated for it.
      */
     private TeleCodeRegion teleRuntimeCodeRegion = null;
 
-    TeleCodeManager(TeleVM teleVM, Reference codeManagerReference) {
-        super(teleVM, codeManagerReference);
+    TeleCodeManager(TeleVM vm, Reference codeManagerReference) {
+        super(vm, codeManagerReference);
     }
 
     /**
@@ -60,35 +60,24 @@ public final class TeleCodeManager extends TeleTupleObject {
      */
     private void initialize() {
         if (teleBootCodeRegion == null) {
-            if (!vm().tryLock()) {
-                ProgramError.unexpected("Unable to initialize from the code manager in VM");
-            }
-            try {
-                Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
-                final long startTimeMillis = System.currentTimeMillis();
-                final Reference bootCodeRegionReference = vm().teleFields().Code_bootCodeRegion.readReference(vm());
-                teleBootCodeRegion = (TeleCodeRegion) vm().makeTeleObject(bootCodeRegionReference);
+            assert vm().lockHeldByCurrentThread();
+            Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
+            final long startTimeMillis = System.currentTimeMillis();
+            final Reference bootCodeRegionReference = vm().teleFields().Code_bootCodeRegion.readReference(vm());
+            teleBootCodeRegion = (TeleCodeRegion) heap().makeTeleObject(bootCodeRegionReference);
 
-                final Reference runtimeCodeRegionReference = vm().teleFields().CodeManager_runtimeCodeRegion.readReference(vm());
-                teleRuntimeCodeRegion = (TeleCodeRegion) vm().makeTeleObject(runtimeCodeRegionReference);
+            final Reference runtimeCodeRegionReference = vm().teleFields().CodeManager_runtimeCodeRegion.readReference(vm());
+            teleRuntimeCodeRegion = (TeleCodeRegion) heap().makeTeleObject(runtimeCodeRegionReference);
 
-                teleBootCodeRegion.refresh();
-                teleRuntimeCodeRegion.refresh();
+            teleBootCodeRegion.updateCache();
+            teleRuntimeCodeRegion.updateCache();
 
-                Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
-            } finally {
-                vm().unlock();
-            }
+            Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
         }
     }
 
-    @Override
-    public void refresh() {
-        // We aren't caching anything yet, other than the identity of the code regions (see above);
-    }
-
     /**
-     * @return surrogate for the special {@link CodeRegion} in the {@link BootImage} of the VM.
+     * @return access to the special {@link CodeRegion} in the {@link BootImage} of the VM.
      */
     public TeleCodeRegion teleBootCodeRegion() {
         initialize();
@@ -96,7 +85,7 @@ public final class TeleCodeManager extends TeleTupleObject {
     }
 
     /**
-     * @return surrogates for the special Runtime {@link CodeRegion} of the VM.
+     * @return access to the special Runtime {@link CodeRegion} of the VM.
      */
     public TeleCodeRegion teleRuntimeCodeRegion() {
         initialize();

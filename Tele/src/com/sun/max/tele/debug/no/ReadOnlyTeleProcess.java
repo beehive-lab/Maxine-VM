@@ -36,7 +36,7 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.prototype.BootImage.*;
 
 /**
- * A null process that "contains" the boot image for inspection, as if it were a {@link TeleVM}.
+ * A null process that "contains" the boot image for inspection, as if it were a VM.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -44,12 +44,12 @@ import com.sun.max.vm.prototype.BootImage.*;
 public final class ReadOnlyTeleProcess extends TeleProcess {
 
     /**
-     * Name of system property that specifies the address to which the read-only heap should be relocated.
+     * Name of system property that specifies the address to which the read-only heapPointer should be relocated.
      */
     public static final String HEAP_PROPERTY = "max.heap";
 
     private final DataAccess dataAccess;
-    private final Pointer heap;
+    private final Pointer heapPointer;
 
     @Override
     public DataAccess dataAccess() {
@@ -74,7 +74,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
                 throw new BootImageException("Error parsing value of " + HEAP_PROPERTY + " system property: " + heapValue, e);
             }
         }
-        this.heap = Pointer.fromLong(heap);
+        this.heapPointer = Pointer.fromLong(heap);
         try {
             dataAccess = map(teleVM.bootImageFile(), teleVM.bootImage());
         } catch (IOException ioException) {
@@ -83,18 +83,22 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     }
 
     @Override
+    public void updateCache() {
+    }
+
+    @Override
     public int platformWatchpointCount() {
         return 0;
     }
 
-    public Pointer heap() {
-        return heap;
+    public Pointer heapPointer() {
+        return heapPointer;
     }
 
     /**
-     * Maps the heap and code sections of the boot image in a given file into memory.
+     * Maps the heapPointer and code sections of the boot image in a given file into memory.
      *
-     * @param bootImageFile the file containing the heap and code sections to map into memory
+     * @param bootImageFile the file containing the heapPointer and code sections to map into memory
      * @return a {@link DataAccess} object that can be used to access the mapped sections
      * @throws IOException if an IO error occurs while performing the memory mapping
      */
@@ -107,11 +111,11 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
         bootImageBuffer.order(bootImage.vmConfiguration.platform().processorKind.dataModel.endianness.asByteOrder());
         randomAccessFile.close();
 
-        if (!heap.isZero()) {
+        if (!heapPointer.isZero()) {
             long address = (Long) WithoutAccessCheck.getInstanceField(bootImageBuffer, "address");
-            bootImage.relocate(address, heap);
+            bootImage.relocate(address, heapPointer);
         }
-        return new MappedByteBufferDataAccess(bootImageBuffer, heap, header.wordWidth());
+        return new MappedByteBufferDataAccess(bootImageBuffer, heapPointer, header.wordWidth());
     }
 
     private static final String FAIL_MESSAGE = "Attempt to run/write/modify a read-only bootimage VM with no live process";

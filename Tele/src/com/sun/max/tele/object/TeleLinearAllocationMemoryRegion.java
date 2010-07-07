@@ -24,12 +24,15 @@ import java.lang.management.*;
 
 import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
 
 public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
+
+    private static final int TRACE_VALUE = 2;
 
     /**
      * Cached mark field from the object in the VM.
@@ -40,6 +43,25 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
 
     public TeleLinearAllocationMemoryRegion(TeleVM teleVM, Reference linearAllocationMemoryRegionReference) {
         super(teleVM, linearAllocationMemoryRegionReference);
+    }
+
+    @Override
+    protected int getObjectUpdateTraceValue() {
+        return 1;
+    }
+
+    @Override
+    protected void updateObjectCache(StatsPrinter statsPrinter) {
+        super.updateObjectCache(statsPrinter);
+        try {
+            final Reference markReference = vm().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
+            mark = markReference.readWord(AtomicWord.valueOffset()).asPointer();
+        } catch (DataIOError dataIOError) {
+            // No update; data read failed for some reason other than VM availability
+            ProgramWarning.message("TeleLinearAllocationMemoryRegion dataIOError:");
+            dataIOError.printStackTrace();
+            // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
+        }
     }
 
     @Override
@@ -68,22 +90,6 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
      */
     public Address mark() {
         return mark;
-    }
-
-    @Override
-    protected void refresh() {
-        super.refresh();
-        if (vm().tryLock()) {
-            try {
-                final Reference markReference = vm().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
-                mark = markReference.readWord(AtomicWord.valueOffset()).asPointer();
-            } catch (DataIOError dataIOError) {
-                // No update; VM not available for some reason.
-                // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
-            } finally {
-                vm().unlock();
-            }
-        }
     }
 
 }

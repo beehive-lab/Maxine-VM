@@ -33,6 +33,7 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -51,7 +52,7 @@ import com.sun.max.unsafe.*;
  */
 public abstract class Inspector<Inspector_Type extends Inspector> extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
 
     private static final ImageIcon DEFAULT_MENU_ICON = InspectorImageIcon.createDownTriangle(16, 16);
 
@@ -157,8 +158,11 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
 
     private InspectorFrame frame;
 
+    private final TimedTrace updateTracer;
+
     protected Inspector(Inspection inspection) {
         super(inspection);
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "refresh");
     }
 
     /**
@@ -421,7 +425,10 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     public void vmStateChanged(boolean force) {
+        final String title = getTitle();
+        updateTracer.begin(title);
         refreshView(force);
+        updateTracer.end(title);
     }
 
     public void breakpointStateChanged() {

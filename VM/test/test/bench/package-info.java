@@ -18,45 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
-
-import java.lang.reflect.*;
-
-import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+package test.bench;
 
 /**
-* Canonical surrogate for an object of type {@link Field} in the VM.
-*
-* @author Michael Van De Vanter
-*/
-public class TeleField extends TeleTupleObject {
-
-    private Field field;
-
-    protected TeleField(TeleVM vm, Reference fieldReference) {
-        super(vm, fieldReference);
-    }
-
-    /**
-     * @return the local instance of {@link Field} equivalent to this object in the VM.
-     */
-    public Field toJava() {
-        if (field == null) {
-            final Reference fieldActorReference = vm().teleFields().Field_fieldActor.readReference(reference());
-            final TeleFieldActor teleFieldActor = (TeleFieldActor) heap().makeTeleObject(fieldActorReference);
-            field = teleFieldActor.fieldActor().toJava();
-        }
-        return field;
-    }
-    @Override
-    public String maxineRole() {
-        return "Field";
-    }
-
-    @Override
-    public String maxineTerseRole() {
-        return "Field";
-    }
-
-}
+ * Sub packages of test.bench should contain micro-benchmarks that measure aspects of the VM and JDK platform.
+ * Each micro-benchmark should be written to use the framework in {@link test.bench.util.RunBench}, following the
+ * style of one of the existing micro-benchmarks. The intent is that the micro-benchmarks can be run stand-alone or
+ * under the standard {@link test.com.sun.max.vm.jtrun.JTAbstractRunScheme test framework}.
+ *
+ * @author Mick Jordan
+ */

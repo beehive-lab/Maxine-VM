@@ -74,30 +74,124 @@ public class WordValueLabel extends ValueLabel {
      * Possible visual presentations of a word, constrained by the {@linkplain ValueMode valueMode} of the
      * label and its value.
      */
+    /**
+     * @author Michael Van De Vanter
+     *
+     */
+    /**
+     * @author Michael Van De Vanter
+     *
+     */
     private enum DisplayMode {
+
+        /**
+         * Display generically as a word of data, about which nothing is known other than non-null.
+         */
         WORD,
-        NULL,
-        INVALID_OBJECT_REFERENCE, // something about this reference is decidedly broken
+
+        /**
+         * Display generically as a word of data in the special case where the word is the null value.
+         */
+        NULL_WORD,
+
+        /**
+         * Expected to be an object reference, but something about it is broken.
+         */
+        INVALID_OBJECT_REFERENCE,
+
+        /**
+         * Numeric display of a valid object reference.
+         */
         OBJECT_REFERENCE,
+
+        /**
+         * Textual display of a valid object reference.
+         */
         OBJECT_REFERENCE_TEXT,
+
+        /**
+         * Numeric display of a valid pointer into a stack.
+         */
         STACK_LOCATION,
+
+        /**
+         * Textual display of a valid pointer into a stack.
+         */
         STACK_LOCATION_TEXT,
+
+        /**
+         * Numeric display of a valid pointer to a thread local value.
+         */
         THREAD_LOCALS_BLOCK_LOCATION,
+
+        /**
+         * Textual display of a valid pointer to a thread local value.
+         */
         THREAD_LOCALS_BLOCK_LOCATION_TEXT,
+
+        /**
+         * Numeric display of a valid pointer to a method entry in compiled code.
+         */
         CALL_ENTRY_POINT,
+
+        /**
+         * Textual display of a valid pointer to a method entry in compiled code.
+         */
         CALL_ENTRY_POINT_TEXT,
+
+        /**
+         * The internal ID of a {@link ClassActor} in the VM.
+         */
         CLASS_ACTOR_ID,
+
         CLASS_ACTOR,
         CALL_RETURN_POINT,
         CALL_RETURN_POINT_TEXT,
+
+        /**
+         * Display of bits interpreted as flags.
+         */
         FLAGS,
+
+        /**
+         * Display of numeric value in decimal.
+         */
         DECIMAL,
+
+        /**
+         * Display of a floating point value.
+         */
         FLOAT,
+
+        /**
+         * Display of an extended floating point value.
+         */
         DOUBLE,
-        UNCHECKED_REFERENCE, // understood to be a reference, but not checked by reading from the VM.
-        UNCHECKED_CALL_POINT, // understood to be a code pointer, but not checked by reading from the VM.
-        UNCHECKED_WORD, // unknown word value, not checked by reading from the VM..
-        INVALID // this value is completely invalid
+
+        /**
+         * Numeric display of what is expected to be a reference, but which is not checked by reading from the VM.
+         */
+        UNCHECKED_REFERENCE,
+
+        /**
+         * Numeric display of what is expected to point to a code call site, but which is not checked by reading from the VM.
+         */
+        UNCHECKED_CALL_POINT,
+
+        /**
+         * Numeric display of a word for which there are no expectations, and which is not checked by reading from the VM.
+         */
+        UNCHECKED_WORD,
+
+        /**
+         * Numeric display of a word whose value is invalid relative to expectations for it.
+         */
+        INVALID,
+
+        /**
+         * Display in situations where the value cannot be read from the VM.
+         */
+        UNAVAILABLE;
     }
 
     private DisplayMode displayMode;
@@ -202,12 +296,19 @@ public class WordValueLabel extends ValueLabel {
                         switch (displayMode) {
                             case OBJECT_REFERENCE:
                             case OBJECT_REFERENCE_TEXT: {
-                                final TeleObject teleObject = vm().makeTeleObject(vm().wordToReference(value().toWord()));
-                                final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
-                                if (teleClassMethodActor != null) {
-                                    // Add method-related menu items
-                                    final ClassMethodActorMenuItems items = new ClassMethodActorMenuItems(inspection(), teleClassMethodActor);
-                                    items.addTo(menu);
+                                TeleObject teleObject = null;
+                                try {
+                                    teleObject = vm().heap().findTeleObject(vm().wordToReference(value().toWord()));
+                                } catch (MaxVMBusyException e) {
+                                    // Can't learn anything about it right now
+                                }
+                                if (teleObject != null) {
+                                    final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
+                                    if (teleClassMethodActor != null) {
+                                        // Add method-related menu items
+                                        final ClassMethodActorMenuItems items = new ClassMethodActorMenuItems(inspection(), teleClassMethodActor);
+                                        items.addTo(menu);
+                                    }
                                 }
                                 break;
                             }
@@ -278,22 +379,25 @@ public class WordValueLabel extends ValueLabel {
             if (vm().isBootImageRelocated()) {
                 if (newValue == null || newValue.isZero()) {
                     if (valueMode == ValueMode.REFERENCE) {
-                        displayMode = DisplayMode.NULL;
+                        displayMode = DisplayMode.NULL_WORD;
                     }
                 } else if (vm().isValidReference(vm().wordToReference(newValue.toWord()))) {
                     displayMode = (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
                     final TeleReference reference = (TeleReference) vm().wordToReference(newValue.toWord());
 
                     try {
-                        teleObject = vm().makeTeleObject(reference);
+                        teleObject = vm().heap().findTeleObject(reference);
+                        if (teleObject == null) {
+                            displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                        }
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        displayMode = DisplayMode.UNAVAILABLE;
                     } catch (Throwable throwable) {
                         // If we don't catch this the views will not be updated at all.
                         teleObject = null;
+                        displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
                         throwable.printStackTrace(Trace.stream());
-                    }
-                    if (teleObject == null) {
-                        displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                     }
                 } else {
                     final Address address = newValue.toWord().asAddress();
@@ -383,7 +487,7 @@ public class WordValueLabel extends ValueLabel {
                 setToolTipText("Unchecked word");
                 break;
             }
-            case NULL: {
+            case NULL_WORD: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordNullDataColor());
                 setText("null");
@@ -588,6 +692,13 @@ public class WordValueLabel extends ValueLabel {
                 setToolTipText("0x" + hexString + "(as float = " + Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL)) + ")");
                 break;
             }
+            case UNAVAILABLE: {
+                setFont(style().wordDataFont());
+                setForeground(null);
+                setText(inspection().nameDisplay().unavailableDataShortText());
+                setToolTipText(inspection().nameDisplay().unavailableDataLongText());
+                break;
+            }
         }
         if (prefix != null) {
             setText(prefix + getText());
@@ -727,8 +838,15 @@ public class WordValueLabel extends ValueLabel {
             case OBJECT_REFERENCE:
             case UNCHECKED_REFERENCE:
             case OBJECT_REFERENCE_TEXT: {
-                final TeleObject teleObject = vm().makeTeleObject(vm().wordToReference(value.toWord()));
-                action = actions().inspectObject(teleObject, null);
+                TeleObject teleObject = null;
+                try {
+                    teleObject = vm().heap().findTeleObject(vm().wordToReference(value.toWord()));
+                } catch (MaxVMBusyException e) {
+                    // Can't read VM right now
+                }
+                if (teleObject != null) {
+                    action = actions().inspectObject(teleObject, null);
+                }
                 break;
             }
             case CALL_ENTRY_POINT:
@@ -758,14 +876,15 @@ public class WordValueLabel extends ValueLabel {
             case THREAD_LOCALS_BLOCK_LOCATION:
             case THREAD_LOCALS_BLOCK_LOCATION_TEXT:
             case WORD:
-            case NULL:
+            case NULL_WORD:
             case INVALID_OBJECT_REFERENCE:
             case FLAGS:
             case DECIMAL:
             case FLOAT:
             case  DOUBLE:
             case UNCHECKED_WORD:
-            case INVALID: {
+            case INVALID:
+            case UNAVAILABLE: {
                 // no action
                 break;
             }
@@ -802,7 +921,7 @@ public class WordValueLabel extends ValueLabel {
                     break;
                 }
                 case WORD:
-                case NULL:
+                case NULL_WORD:
                 case CLASS_ACTOR_ID:
                 case CLASS_ACTOR:
                 case FLAGS:
@@ -816,6 +935,8 @@ public class WordValueLabel extends ValueLabel {
                     }
                     break;
                 }
+                case UNAVAILABLE:
+                    break;
             }
         }
         return action;
@@ -849,7 +970,7 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT:
                 case UNCHECKED_CALL_POINT:
                 case WORD:
-                case NULL:
+                case NULL_WORD:
                 case CLASS_ACTOR_ID:
                 case CLASS_ACTOR:
                 case FLAGS:
@@ -881,7 +1002,8 @@ public class WordValueLabel extends ValueLabel {
                     }
                     break;
                 }
-
+                case UNAVAILABLE:
+                    break;
             }
         }
         return transferable;

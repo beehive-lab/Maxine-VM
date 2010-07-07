@@ -25,14 +25,14 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant} in the {@link TeleVM}.
+ * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant} in the VM.
  *
  * @author Michael Van De Vanter
  */
 public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
 
-    public TeleClassMethodRefConstant(TeleVM teleVM, Reference classMethodRefConstantReference) {
-        super(teleVM, classMethodRefConstantReference);
+    public TeleClassMethodRefConstant(TeleVM vm, Reference classMethodRefConstantReference) {
+        super(vm, classMethodRefConstantReference);
     }
 
     @Override
@@ -41,7 +41,7 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant.Resolved} in the {@link TeleVM}.
+     * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant.Resolved} in the VM.
      *
      * @author Michael Van De Vanter
      */
@@ -49,8 +49,8 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
 
         private TeleClassMethodActor teleClassMethodActor;
 
-        public Resolved(TeleVM teleVM, Reference resolvedClassMethodRefConstantReference) {
-            super(teleVM, resolvedClassMethodRefConstantReference);
+        public Resolved(TeleVM vm, Reference resolvedClassMethodRefConstantReference) {
+            super(vm, resolvedClassMethodRefConstantReference);
         }
 
         @Override
@@ -59,12 +59,12 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
         }
 
         /**
-         * @return surrogate for the {@ClassMethodActor} in the {@link TeleVM} to which the constant was resolved
+         * @return surrogate for the {@ClassMethodActor} in the VM to which the constant was resolved
          */
         public TeleClassMethodActor getTeleClassMethodActor() {
             if (teleClassMethodActor == null) {
                 final Reference methodActorReference = vm().teleFields().ResolvedMethodRefConstant_methodActor.readReference(reference());
-                teleClassMethodActor = (TeleClassMethodActor) vm().makeTeleObject(methodActorReference);
+                teleClassMethodActor = (TeleClassMethodActor) heap().makeTeleObject(methodActorReference);
             }
             return teleClassMethodActor;
         }
@@ -82,14 +82,14 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant.Unresolved} in the {@link TeleVM}.
+     * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant.Unresolved} in the VM.
      *
      * @author Michael Van De Vanter
      */
     public static final class Unresolved extends TeleClassMethodRefConstant {
 
-        public Unresolved(TeleVM teleVM, Reference resolvedClassMethodRefConstantReference) {
-            super(teleVM, resolvedClassMethodRefConstantReference);
+        public Unresolved(TeleVM vm, Reference resolvedClassMethodRefConstantReference) {
+            super(vm, resolvedClassMethodRefConstantReference);
         }
 
         @Override
@@ -105,14 +105,14 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant.UnresolvedIndices} in the {@link TeleVM}.
+     * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant.UnresolvedIndices} in the VM.
      *
      * @author Michael Van De Vanter
      */
     public static final class UnresolvedIndices extends TeleClassMethodRefConstant {
 
-        public UnresolvedIndices(TeleVM teleVM, Reference resolvedClassMethodRefConstantReference) {
-            super(teleVM, resolvedClassMethodRefConstantReference);
+        public UnresolvedIndices(TeleVM vm, Reference resolvedClassMethodRefConstantReference) {
+            super(vm, resolvedClassMethodRefConstantReference);
         }
 
         @Override

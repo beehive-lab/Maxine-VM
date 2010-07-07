@@ -36,6 +36,7 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.page.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
 
@@ -50,9 +51,11 @@ import com.sun.max.vm.thread.*;
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO {
+public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVMCache, TeleIO {
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;  // Detailed tracing is done at TRACE_VALUE + 1
+
+    private final TimedTrace updateTracer;
 
     // Standard names for process control actions.
     private static final String RUN_TO_INSTRUCTION = "runToInstruction";
@@ -111,7 +114,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
          */
         private void waitUntilProcessStopped(TeleEventRequest request) {
             assert requestHandlingThread == Thread.currentThread();
-            Trace.begin(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request);
+            Trace.begin(TRACE_VALUE + 1, tracePrefix() + "waiting for execution to stop: " + request);
             try {
                 final List<TeleBreakpointEvent> teleBreakpointEvents = new ArrayList<TeleBreakpointEvent>();
                 TeleWatchpointEvent teleWatchpointEvent = null;
@@ -135,6 +138,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
                     // Wait here for VM process to stop
                     ProcessState newState = waitUntilStopped();
+                    ++epoch;
 
                     // Case 1. The process has died; throw an exception.
                     if (newState != ProcessState.STOPPED) {
@@ -143,7 +147,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                         }
                         throw new ProcessTerminatedException("normal exit");
                     }
-                    Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
+                    Trace.line(TRACE_VALUE + 1, tracePrefix() + "Execution stopped: " + request);
 
                     if (lastSingleStepThread != null) {
                         // Case 2. A thread was just single stepped; do not continue execution.
@@ -152,8 +156,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     }
 
                     // Read VM memory and update various bits of cached state about the VM state
-                    vm().refresh(++epoch);
-                    refreshThreads();
+                    vm().updateVMCaches();
+                    TeleProcess.this.updateCache();
                     targetBreakpointManager().setActiveAll(false);
 
                     // Look through all the threads to see which, if any, have events triggered that caused the stop
@@ -163,7 +167,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                 eventCauseFound = true;
                                 final TeleTargetBreakpoint breakpoint = thread.breakpoint();
                                 if (breakpoint.handleTriggerEvent(thread)) {
-                                    Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering breakpoint");
+                                    Trace.line(TRACE_VALUE + 1, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering breakpoint");
                                     // Case 3. At least one thread is at a breakpoint that specifies that execution should halt; record it and do not continue.
                                     // At a breakpoint where we should really stop; create a record
                                     teleBreakpointEvents.add(new TeleBreakpointEvent(breakpoint, thread));
@@ -175,13 +179,13 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                 final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
                                 final TeleWatchpoint systemTeleWatchpoint = watchpointManager.findSystemWatchpoint(triggeredWatchpointAddress);
                                 if (systemTeleWatchpoint != null && systemTeleWatchpoint.handleTriggerEvent(thread)) {
-                                    Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering system watchpoint");
+                                    Trace.line(TRACE_VALUE + 1, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering system watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
                                     resumeExecution = false;
                                 }
                                 final TeleWatchpoint clientTeleWatchpoint = watchpointManager.findClientWatchpointContaining(triggeredWatchpointAddress);
                                 if (clientTeleWatchpoint != null && clientTeleWatchpoint.handleTriggerEvent(thread)) {
-                                    Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering client watchpoint");
+                                    Trace.line(TRACE_VALUE + 1, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering client watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
                                     final int triggeredWatchpointCode = readWatchpointAccessCode();
                                     teleWatchpointEvent = new TeleWatchpointEvent(clientTeleWatchpoint, thread, triggeredWatchpointAddress, triggeredWatchpointCode);
@@ -203,28 +207,28 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     }
                     ProgramError.check(eventCauseFound, "Process halted for no apparent cause");
                     if (resumeExecution) {
-                        Trace.line(TRACE_VALUE, tracePrefix() + "Resuming execution after handling event triggers: " + request);
+                        Trace.line(TRACE_VALUE + 1, tracePrefix() + "Resuming execution after handling event triggers: " + request);
                         restoreBreakpointsAndResume(request.withClientBreakpoints);
                     }
                 } while (resumeExecution);
                 // Finished with these now
                 targetBreakpointManager().removeTransientBreakpoints();
-                Trace.end(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request);
-                Trace.begin(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
+                Trace.end(TRACE_VALUE + 1, tracePrefix() + "waiting for execution to stop: " + request);
+                Trace.begin(TRACE_VALUE + 1, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
-                Trace.end(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
+                Trace.end(TRACE_VALUE + 1, tracePrefix() + "firing execution post-request action: " + request);
                 updateState(STOPPED, teleBreakpointEvents, teleWatchpointEvent);
 
             } catch (ProcessTerminatedException processTerminatedException) {
-                Trace.line(TRACE_VALUE, tracePrefix() + "VM process terminated: " + processTerminatedException.getMessage());
+                Trace.line(TRACE_VALUE + 1, tracePrefix() + "VM process terminated: " + processTerminatedException.getMessage());
                 updateState(TERMINATED);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
                 ThrowableDialog.showLater(throwable, null, tracePrefix() + "Uncaught exception while processing " + request);
             } finally {
-                Trace.begin(TRACE_VALUE, tracePrefix() + "notifying completion of request: " + request);
+                Trace.begin(TRACE_VALUE + 1, tracePrefix() + "notifying completion of request: " + request);
                 request.notifyOfCompletion();
-                Trace.end(TRACE_VALUE, tracePrefix() + "notifying completion of request: " + request);
+                Trace.end(TRACE_VALUE + 1, tracePrefix() + "notifying completion of request: " + request);
             }
         }
 
@@ -248,23 +252,23 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         void scheduleRequest(TeleEventRequest request, boolean isSynchronous) {
             final Thread currentThread = Thread.currentThread();
             if (currentThread == this) {
-                Trace.begin(TRACE_VALUE, tracePrefix() + "immediate execution request: " + traceSuffix(isSynchronous));
+                Trace.begin(TRACE_VALUE + 1, tracePrefix() + "immediate execution request: " + traceSuffix(isSynchronous));
                 execute(request, true);
-                Trace.end(TRACE_VALUE, tracePrefix() + "immediate execution request: " + request + traceSuffix(isSynchronous));
+                Trace.end(TRACE_VALUE + 1, tracePrefix() + "immediate execution request: " + request + traceSuffix(isSynchronous));
             } else {
                 try {
-                    Trace.begin(TRACE_VALUE, tracePrefix() + "scheduled execution request: " + request + traceSuffix(isSynchronous));
+                    Trace.begin(TRACE_VALUE + 1, tracePrefix() + "scheduled execution request: " + request + traceSuffix(isSynchronous));
                     requests.putFirst(request);
-                    Trace.end(TRACE_VALUE, tracePrefix() + "scheduled execution request: " + request + traceSuffix(isSynchronous));
+                    Trace.end(TRACE_VALUE + 1, tracePrefix() + "scheduled execution request: " + request + traceSuffix(isSynchronous));
                 } catch (InterruptedException interruptedException) {
                     ProgramWarning.message(tracePrefix() + "Could not schedule " + request + ": " + interruptedException);
                     return;
                 }
 
                 if (isSynchronous) {
-                    Trace.begin(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
+                    Trace.begin(TRACE_VALUE + 1, tracePrefix() + "waiting for synchronous request to complete: " + request);
                     request.waitUntilComplete();
-                    Trace.end(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
+                    Trace.end(TRACE_VALUE + 1, tracePrefix() + "waiting for synchronous request to complete: " + request);
                 }
             }
         }
@@ -275,10 +279,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             } else {
                 try {
                     lastSingleStepThread = null;
-                    Trace.begin(TRACE_VALUE, tracePrefix() + "executing request: " + request);
+                    Trace.begin(TRACE_VALUE + 1, tracePrefix() + "executing request: " + request);
                     updateState(RUNNING);
                     request.execute();
-                    Trace.end(TRACE_VALUE, tracePrefix() + "executing request: " + request);
+                    Trace.end(TRACE_VALUE + 1, tracePrefix() + "executing request: " + request);
                 } catch (OSExecutionRequestException executionRequestException) {
                     executionRequestException.printStackTrace();
                     return;
@@ -293,9 +297,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 try {
                     final TeleEventRequest request = requests.takeLast();
                     vm().lock();
-                    Trace.begin(TRACE_VALUE, tracePrefix() + "handling execution request: " + request);
+                    Trace.begin(TRACE_VALUE + 1, tracePrefix() + "handling execution request: " + request);
                     execute(request, false);
-                    Trace.end(TRACE_VALUE, tracePrefix() + "handling execution request: " + request);
+                    Trace.end(TRACE_VALUE + 1, tracePrefix() + "handling execution request: " + request);
                 } catch (InterruptedException interruptedException) {
                     ProgramWarning.message(tracePrefix() + "Could not take request from sceduling queue: " + interruptedException);
                 } finally {
@@ -369,6 +373,18 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     private int transportDebugLevel = 0;
 
+    private final Object statsPrinter = new Object() {
+        @Override
+        public String toString() {
+            final int currentThreadCount = handleToThreadMap.values().size();
+            final StringBuilder msg = new StringBuilder();
+            msg.append("#threads=(").append(currentThreadCount);
+            msg.append(", started=").append(threadsStarted.size());
+            msg.append(", died=").append(threadsDied.size()).append(")");
+            return msg.toString();
+        }
+    };
+
     /**
      * @param teleVM the VM with which the Process will be associated
      * @param platform
@@ -376,18 +392,24 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      */
     protected TeleProcess(TeleVM teleVM, Platform platform, ProcessState initialState) {
         super(teleVM);
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        tracer.begin();
+
         this.platform = platform;
         this.processState = initialState;
-        epoch = 0;
+        this.epoch = 0;
         this.targetBreakpointManager = new TeleTargetBreakpoint.TargetBreakpointManager(teleVM);
         this.maximumWatchpointCount = platformWatchpointCount();
         this.watchpointManager = watchpointsEnabled() ? new TeleWatchpoint.WatchpointManager(teleVM, this) : null;
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         //Initiate the thread that continuously waits on the running process.
         this.requestHandlingThread = new RequestHandlingThread();
         if (initialState != ProcessState.UNKNOWN) {
             this.requestHandlingThread.start();
         }
+
+        tracer.end(statsPrinter);
     }
 
     /**
@@ -395,20 +417,70 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * any requests.
      */
     public final void initializeState() {
-        vm().refresh(epoch);
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " initializing");
+        tracer.begin();
         updateState(processState);
+        tracer.end(statsPrinter);
     }
 
     /**
      * Initializes the state history for attach/dump modes.
      */
     public final void initializeStateOnAttach() {
-        initializeState();
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " initializing on attach");
+        tracer.begin();
+
+        updateState(processState);
         epoch++;
-        refreshThreads();
+        updateCache();
         // now update state to reflect the discovered threads, all of which will appear as STARTED
-        updateState(STOPPED, TeleProcess.EMPTY_BREAKPOINTEVENT_LIST, null);
+        updateState(STOPPED);
+
+        tracer.end(statsPrinter);
     }
+
+    public void updateCache() {
+        updateTracer.begin();
+        assert vm().lockHeldByCurrentThread();
+
+        final List<TeleNativeThread> currentThreads = new ArrayList<TeleNativeThread>(handleToThreadMap.size());
+        gatherThreads(currentThreads);
+
+        final SortedMap<Long, TeleNativeThread> newHandleToThreadMap = new TreeMap<Long, TeleNativeThread>();
+        final Set<Long> newInstructionPointers = new HashSet<Long>();
+
+        // List all previously live threads as possibly dead; remove the ones discovered to be current.
+        threadsDied.addAll(handleToThreadMap.values());
+
+        for (TeleNativeThread thread : currentThreads) {
+
+            // Refresh the thread
+            thread.updateCache();
+
+            newHandleToThreadMap.put(thread.localHandle(), thread);
+            final TeleNativeThread oldThread = handleToThreadMap.get(thread.localHandle());
+            if (oldThread != null) {
+                if (oldThread != thread) {
+                    threadsStarted.add(thread);
+                } else {
+                    threadsDied.remove(thread);
+                    Trace.line(TRACE_VALUE + 1, "    "  + thread);
+                }
+            } else {
+                threadsStarted.add(thread);
+                Trace.line(TRACE_VALUE + 1, "    "  + thread + " STARTED");
+            }
+            final Pointer instructionPointer = thread.registers().instructionPointer();
+            if (!instructionPointer.isZero()) {
+                newInstructionPointers.add(instructionPointer.toLong());
+            }
+        }
+        handleToThreadMap = newHandleToThreadMap;
+        instructionPointers = newInstructionPointers;
+
+        updateTracer.end(statsPrinter);
+    }
+
 
     /**
      * Gets the singleton for creating and managing VM watchpoints; null if not enabled
@@ -429,18 +501,18 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @throws OSExecutionRequestException
      */
     public final void singleStepThread(final TeleNativeThread thread, boolean isSynchronous) throws InvalidVMRequestException, OSExecutionRequestException    {
-        Trace.begin(TRACE_VALUE, tracePrefix() + SINGLE_STEP + " schedule");
+        Trace.begin(TRACE_VALUE + 1, tracePrefix() + SINGLE_STEP + " schedule");
         final TeleEventRequest request = new TeleEventRequest(SINGLE_STEP, thread, false) {
             @Override
             public void execute() throws OSExecutionRequestException {
-                Trace.begin(TRACE_VALUE, tracePrefix() + SINGLE_STEP + " perform");
+                Trace.begin(TRACE_VALUE + 1, tracePrefix() + SINGLE_STEP + " perform");
                 updateWatchpointCaches();
                 singleStep(thread, false);
-                Trace.end(TRACE_VALUE, tracePrefix() + SINGLE_STEP + " perform");
+                Trace.end(TRACE_VALUE + 1, tracePrefix() + SINGLE_STEP + " perform");
             }
         };
         requestHandlingThread.scheduleRequest(request, isSynchronous);
-        Trace.end(TRACE_VALUE, tracePrefix() + SINGLE_STEP + " schedule");
+        Trace.end(TRACE_VALUE + 1, tracePrefix() + SINGLE_STEP + " schedule");
     }
 
     /**
@@ -458,7 +530,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @throws OSExecutionRequestException
      */
     public final void stepOver(final TeleNativeThread thread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException {
-        Trace.begin(TRACE_VALUE, STEP_OVER + " schedule");
+        Trace.begin(TRACE_VALUE + 1, STEP_OVER + " schedule");
         final TeleEventRequest request = new TeleEventRequest(STEP_OVER, thread, withClientBreakpoints) {
 
             private Pointer oldInstructionPointer;
@@ -466,12 +538,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
             @Override
             public void execute() throws OSExecutionRequestException {
-                Trace.begin(TRACE_VALUE, tracePrefix() + STEP_OVER + " perform");
+                Trace.begin(TRACE_VALUE + 1, tracePrefix() + STEP_OVER + " perform");
                 updateWatchpointCaches();
                 oldInstructionPointer = thread.registers().instructionPointer();
                 oldReturnAddress = thread.stack().returnLocation().address().asPointer();
                 singleStep(thread, false);
-                Trace.end(TRACE_VALUE, tracePrefix() + STEP_OVER + " perform");
+                Trace.end(TRACE_VALUE + 1, tracePrefix() + STEP_OVER + " perform");
             }
 
             @Override
@@ -490,7 +562,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             }
         };
         requestHandlingThread.scheduleRequest(request, synchronous);
-        Trace.end(TRACE_VALUE, STEP_OVER + " schedule");
+        Trace.end(TRACE_VALUE + 1, STEP_OVER + " schedule");
     }
 
     /**
@@ -507,11 +579,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     public final void runToInstruction(final CodeLocation codeLocation, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
         assert codeLocation instanceof MachineCodeLocation;
         final MachineCodeLocation compiledCodeLocation = (MachineCodeLocation) codeLocation;
-        Trace.begin(TRACE_VALUE, tracePrefix() + RUN_TO_INSTRUCTION + " schedule");
+        Trace.begin(TRACE_VALUE + 1, tracePrefix() + RUN_TO_INSTRUCTION + " schedule");
         final TeleEventRequest request = new TeleEventRequest(RUN_TO_INSTRUCTION, null, withClientBreakpoints) {
             @Override
             public void execute() throws OSExecutionRequestException {
-                Trace.begin(TRACE_VALUE, tracePrefix() + RUN_TO_INSTRUCTION + " perform");
+                Trace.begin(TRACE_VALUE + 1, tracePrefix() + RUN_TO_INSTRUCTION + " perform");
                 updateWatchpointCaches();
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
                 TeleTargetBreakpoint breakpoint = targetBreakpointManager.findClientBreakpoint(compiledCodeLocation);
@@ -524,11 +596,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     breakpoint.setDescription("transient breakpoint for low-level run-to-instruction operation");
                 }
                 restoreBreakpointsAndResume(withClientBreakpoints);
-                Trace.end(TRACE_VALUE, tracePrefix() + RUN_TO_INSTRUCTION + " perform");
+                Trace.end(TRACE_VALUE + 1, tracePrefix() + RUN_TO_INSTRUCTION + " perform");
             }
         };
         requestHandlingThread.scheduleRequest(request, synchronous);
-        Trace.end(TRACE_VALUE, tracePrefix() + RUN_TO_INSTRUCTION + " schedule");
+        Trace.end(TRACE_VALUE + 1, tracePrefix() + RUN_TO_INSTRUCTION + " schedule");
     }
 
     /**
@@ -540,18 +612,18 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @throws InvalidVMRequestException
      */
     public final void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException {
-        Trace.begin(TRACE_VALUE, tracePrefix() + RESUME + " schedule");
+        Trace.begin(TRACE_VALUE + 1, tracePrefix() + RESUME + " schedule");
         final TeleEventRequest request = new TeleEventRequest(RESUME, null, withClientBreakpoints) {
             @Override
             public void execute() throws OSExecutionRequestException {
-                Trace.begin(TRACE_VALUE, tracePrefix() + RESUME + " perform");
+                Trace.begin(TRACE_VALUE + 1, tracePrefix() + RESUME + " perform");
                 updateWatchpointCaches();
                 restoreBreakpointsAndResume(withClientBreakpoints);
-                Trace.end(TRACE_VALUE, tracePrefix() + RESUME + " perform");
+                Trace.end(TRACE_VALUE + 1, tracePrefix() + RESUME + " perform");
             }
         };
         requestHandlingThread.scheduleRequest(request, synchronous);
-        Trace.end(TRACE_VALUE, tracePrefix() + RESUME + " schedule");
+        Trace.end(TRACE_VALUE + 1, tracePrefix() + RESUME + " schedule");
     }
 
     /**
@@ -563,13 +635,13 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @throws OSExecutionRequestException
      */
     public final void pauseProcess() throws InvalidVMRequestException, OSExecutionRequestException {
-        Trace.begin(TRACE_VALUE, tracePrefix() + PAUSE + " perform");
+        Trace.begin(TRACE_VALUE + 1, tracePrefix() + PAUSE + " perform");
         if (processState != RUNNING) {
             throw new InvalidVMRequestException("Can only suspend a running tele process, not a tele process that is " + processState.toString().toLowerCase());
         }
         pauseRequestPending = true;
         suspend();
-        Trace.end(TRACE_VALUE, tracePrefix() + PAUSE + " perform");
+        Trace.end(TRACE_VALUE + 1, tracePrefix() + PAUSE + " perform");
     }
 
     /**
@@ -579,12 +651,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @throws OSExecutionRequestException
      */
     public final void terminateProcess() throws InvalidVMRequestException, OSExecutionRequestException {
-        Trace.begin(TRACE_VALUE, tracePrefix() + TERMINATE + " perform");
+        Trace.begin(TRACE_VALUE + 1, tracePrefix() + TERMINATE + " perform");
         if (processState == TERMINATED) {
             throw new InvalidVMRequestException("Can only terminate a non-terminated tele process, not a tele process that is " + processState.toString().toLowerCase());
         }
         kill();
-        Trace.end(TRACE_VALUE, tracePrefix() + TERMINATE + " perform");
+        Trace.end(TRACE_VALUE + 1, tracePrefix() + TERMINATE + " perform");
     }
 
     /**
@@ -700,46 +772,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      */
     public abstract DataAccess dataAccess();
 
-    private void refreshThreads() {
-        Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
-        final long startTimeMillis = System.currentTimeMillis();
-        final List<TeleNativeThread> currentThreads = new ArrayList<TeleNativeThread>(handleToThreadMap.size());
-        gatherThreads(currentThreads);
-
-        final SortedMap<Long, TeleNativeThread> newHandleToThreadMap = new TreeMap<Long, TeleNativeThread>();
-        final Set<Long> newInstructionPointers = new HashSet<Long>();
-
-        // List all previously live threads as possibly dead; remove the ones discovered to be current.
-        threadsDied.addAll(handleToThreadMap.values());
-
-        for (TeleNativeThread thread : currentThreads) {
-
-            // Refresh the thread
-            thread.refresh(epoch());
-
-            newHandleToThreadMap.put(thread.localHandle(), thread);
-            final TeleNativeThread oldThread = handleToThreadMap.get(thread.localHandle());
-            if (oldThread != null) {
-                if (oldThread != thread) {
-                    threadsStarted.add(thread);
-                } else {
-                    threadsDied.remove(thread);
-                    Trace.line(TRACE_VALUE, "    "  + thread);
-                }
-            } else {
-                threadsStarted.add(thread);
-                Trace.line(TRACE_VALUE, "    "  + thread + " STARTED");
-            }
-            final Pointer instructionPointer = thread.registers().instructionPointer();
-            if (!instructionPointer.isZero()) {
-                newInstructionPointers.add(instructionPointer.toLong());
-            }
-        }
-        Trace.end(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:", startTimeMillis);
-        handleToThreadMap = newHandleToThreadMap;
-        instructionPointers = newInstructionPointers;
-    }
-
     /**
      * Gathers information about this process and posts a thread-safe record of the state change.
      *
@@ -754,7 +786,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
         for (TeleNativeThread thread : this.threadsDied) {
             thread.setDead();
-            Trace.line(TRACE_VALUE, tracePrefix() + "    "  + thread.toShortString() + " DEAD");
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "    "  + thread.toShortString() + " DEAD");
         }
         final List<TeleNativeThread> threadsStarted =
             this.threadsStarted.isEmpty() ? EMPTY_THREAD_LIST : new ArrayList<TeleNativeThread>(this.threadsStarted);

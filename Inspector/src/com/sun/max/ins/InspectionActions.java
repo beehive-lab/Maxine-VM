@@ -1201,7 +1201,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 public void menuSelected(MenuEvent e) {
                     removeAll();
-                    for (MaxMemoryRegion memoryRegion : vm().state().memoryRegions()) {
+                    final SortedSet<MaxMemoryRegion> regionSet = new TreeSet<MaxMemoryRegion>(MaxMemoryRegion.Util.nameComparator());
+                    regionSet.addAll(vm().state().memoryRegions());
+                    for (MaxMemoryRegion memoryRegion : regionSet) {
                         //System.out.println(memoryRegion.toString());
                         add(actions().inspectRegionMemoryWords(memoryRegion, memoryRegion.regionName(), memoryRegion.regionName()));
                     }
@@ -1529,13 +1531,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 @Override
                 public void entered(Address address) {
-                    final Pointer pointer = address.asPointer();
-                    if (vm().isValidOrigin(pointer)) {
-                        final Reference objectReference = vm().originToReference(pointer);
-                        final TeleObject teleObject = vm().makeTeleObject(objectReference);
-                        focus().setHeapObject(teleObject);
-                    } else {
-                        gui().errorMessage("heap object not found at 0x"  + address.toHexString());
+                    try {
+                        final Pointer pointer = address.asPointer();
+                        if (vm().isValidOrigin(pointer)) {
+                            final Reference objectReference = vm().originToReference(pointer);
+                            final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
+                            focus().setHeapObject(teleObject);
+                        } else {
+                            gui().errorMessage("heap object not found at 0x"  + address.toHexString());
+                        }
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        inspection().announceVMBusyFailure(name());
                     }
                 }
             };
@@ -1643,7 +1649,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
             try {
                 final long oid = Long.parseLong(input);
-                final TeleObject teleObject = vm().findObjectByOID(oid);
+                final TeleObject teleObject = vm().heap().findObjectByOID(oid);
                 if (teleObject != null) {
                     focus().setHeapObject(teleObject);
                 } else {
@@ -1677,8 +1683,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleObject teleBootClassRegistry = vm().makeTeleObject(vm().bootClassRegistryReference());
-            focus().setHeapObject(teleBootClassRegistry);
+            try {
+                final TeleObject teleBootClassRegistry = vm().heap().findTeleObject(vm().bootClassRegistryReference());
+                focus().setHeapObject(teleBootClassRegistry);
+            } catch (MaxVMBusyException maxVMBusyException) {
+                inspection().announceVMBusyFailure(name());
+            }
         }
     }
 

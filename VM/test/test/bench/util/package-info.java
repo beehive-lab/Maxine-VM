@@ -18,45 +18,8 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
-
-import java.lang.reflect.*;
-
-import com.sun.max.tele.*;
-import com.sun.max.vm.reference.*;
+package test.bench.util;
 
 /**
-* Canonical surrogate for an object of type {@link Field} in the VM.
-*
-* @author Michael Van De Vanter
-*/
-public class TeleField extends TeleTupleObject {
-
-    private Field field;
-
-    protected TeleField(TeleVM vm, Reference fieldReference) {
-        super(vm, fieldReference);
-    }
-
-    /**
-     * @return the local instance of {@link Field} equivalent to this object in the VM.
-     */
-    public Field toJava() {
-        if (field == null) {
-            final Reference fieldActorReference = vm().teleFields().Field_fieldActor.readReference(reference());
-            final TeleFieldActor teleFieldActor = (TeleFieldActor) heap().makeTeleObject(fieldActorReference);
-            field = teleFieldActor.fieldActor().toJava();
-        }
-        return field;
-    }
-    @Override
-    public String maxineRole() {
-        return "Field";
-    }
-
-    @Override
-    public String maxineTerseRole() {
-        return "Field";
-    }
-
-}
+ * Framework for running micro-benchmarks, see {@link test.bench.util.RunBench}.
+ */
