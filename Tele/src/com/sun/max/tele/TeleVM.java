@@ -119,6 +119,8 @@ public abstract class TeleVM implements MaxVM {
 
     private static final String TELE_LIBRARY_NAME = "tele";
 
+    private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
+
     /**
      * Some configurations of the Inspector (tcp-based remote) do not need the tele library locally.
      */
@@ -953,6 +955,15 @@ public abstract class TeleVM implements MaxVM {
      */
     protected abstract TeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException;
 
+    /**
+     * Gets any memory regions of potential interest that are specific to a particular VM platform.
+     *
+     * @return a list of platform-specific memory regions, empty if none.
+     */
+    protected List<MaxMemoryRegion> platformMemoryRegions() {
+        return EMPTY_MAXMEMORYREGION_LIST;
+    }
+
     protected TeleProcess attachToTeleProcess(int processID) {
         throw FatalError.unimplemented();
     }
@@ -1008,6 +1019,9 @@ public abstract class TeleVM implements MaxVM {
         }
         for (MaxCompiledCodeRegion compiledCodeRegion : teleCodeCache.compiledCodeRegions()) {
             addNonNull(memoryRegions, compiledCodeRegion.memoryRegion());
+        }
+        for (MaxMemoryRegion memoryRegion : platformMemoryRegions()) {
+            addNonNull(memoryRegions, memoryRegion);
         }
 
         this.teleVMState = new TeleVMState(processState,
