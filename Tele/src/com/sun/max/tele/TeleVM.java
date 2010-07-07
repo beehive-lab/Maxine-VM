@@ -485,8 +485,6 @@ public abstract class TeleVM implements MaxVM {
      */
     private MaxBreakpoint gcCompletedBreakpoint = null;
 
-    private List<MaxMemoryRegion> allMemoryRegions = new ArrayList<MaxMemoryRegion>(0);
-
     private final TeleProcess teleProcess;
 
     public final TeleProcess teleProcess() {
