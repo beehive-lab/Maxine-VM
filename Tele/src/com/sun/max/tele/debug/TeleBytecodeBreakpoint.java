@@ -88,13 +88,13 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     /**
      * A new bytecode breakpoint, enabled by default, at a specified location.
      *
-     * @param teleVM the VM
+     * @param vm the VM
      * @param bytecodeBreakpointManager the associated bytecode breakpoint manager
      * @param key an abstract description of the location for this breakpoint, expressed in terms of the method and bytecode offset.
      * @param kind the kind of breakpoint to create
      */
-    private TeleBytecodeBreakpoint(TeleVM teleVM, BytecodeBreakpointManager bytecodeBreakpointManager, CodeLocation codeLocation, BreakpointKind kind, MethodPositionKey methodPositionKey) {
-        super(teleVM, codeLocation, kind, null);
+    private TeleBytecodeBreakpoint(TeleVM vm, BytecodeBreakpointManager bytecodeBreakpointManager, CodeLocation codeLocation, BreakpointKind kind, MethodPositionKey methodPositionKey) {
+        super(vm, codeLocation, kind, null);
         this.bytecodeBreakpointManager = bytecodeBreakpointManager;
         this.methodPositionKey = methodPositionKey;
         final MethodKey methodKey = codeLocation.methodKey();
@@ -334,12 +334,12 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private int breakpointClassDescriptorsEpoch = 0;
 
-        public BytecodeBreakpointManager(TeleVM teleVM) {
-            super(teleVM);
+        public BytecodeBreakpointManager(TeleVM vm) {
+            super(vm);
             this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
             Trace.begin(TRACE_VALUE, tracePrefix + "initializing");
             final long startTimeMillis = System.currentTimeMillis();
-            this.teleTargetBreakpointManager = teleVM.teleProcess().targetBreakpointManager();
+            this.teleTargetBreakpointManager = vm.teleProcess().targetBreakpointManager();
             // Predefine parameter accessors for reading compilation details
             parameter0 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(0);
             parameter1 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(1);
@@ -558,7 +558,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                             // Match; must set a target breakpoint on the method just compiled; is is acceptable to incur some overhead now.
                             if (teleTargetMethod == null) {
                                 final Reference targetMethodReference = vm().wordToReference(teleIntegerRegisters.getValue(parameter3));
-                                teleTargetMethod = (TeleTargetMethod) vm().makeTeleObject(targetMethodReference);
+                                teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
                             }
                             try {
                                 teleBytecodeBreakpoint.handleNewCompilation(teleTargetMethod);

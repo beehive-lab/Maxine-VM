@@ -18,28 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway.profile;
+package com.sun.max.tele;
+
 
 /**
- * This class is the entrypoint of the GC profiler.
+ * An object that refers to a resources in in the VM, and which reads
+ * and caches some state from the VM.
  *
- * @author Christos Kotselidis
+ * @author Michael Van De Vanter
  */
-public class HeapProfiler {
+public interface TeleVMCache {
 
-    private static HeapStatistics heapStatistics = new HeapStatistics();
-    private static HeapTimer heapTimer = new HeapTimer();
-
-    public HeapProfiler() {
-
-    }
-
-    public static HeapTimer getHeapTimer() {
-        return heapTimer;
-    }
-
-    public static HeapStatistics getHeapStatistics() {
-        return heapStatistics;
-    }
+    /**
+     * Causes this object to refresh any state that is read and cached from the VM, must
+     * be called in a thread holding the VM lock.
+     *
+     * @see TeleVM#lock()
+     */
+    void updateCache();
 
 }

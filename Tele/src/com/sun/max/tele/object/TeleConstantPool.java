@@ -27,7 +27,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for an object of type {@link ConstantPool} in the {@link TeleVM} .
+ * Canonical surrogate for an object of type {@link ConstantPool} in the VM .
  *
  * @author Michael Van De Vanter
  */
@@ -35,8 +35,8 @@ public final class TeleConstantPool extends TeleTupleObject{
 
     private Reference constantsArrayReference;
 
-    TeleConstantPool(TeleVM teleVM, Reference constantPoolReference) {
-        super(teleVM, constantPoolReference);
+    TeleConstantPool(TeleVM vm, Reference constantPoolReference) {
+        super(vm, constantPoolReference);
     }
 
     @Override
@@ -51,25 +51,35 @@ public final class TeleConstantPool extends TeleTupleObject{
         }
         return constantsArrayReference;
     }
+
+    // TODO (mlvdv) fix this up when intefaces aded
     /**
      * @param index specifies an entry in this pool
-     * @return surrogate for the entry in the {@link TeleVM}  of this pool
+     * @return surrogate for the entry in the VM  of this pool
+     * @throws MaxVMBusyException TODO
      */
-    public TelePoolConstant readTelePoolConstant(int index) {
-        final Reference poolConstantReference = vm().getElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference();
-        final TeleObject teleObject = vm().makeTeleObject(poolConstantReference);
-        if (!(teleObject instanceof TelePoolConstant)) {
-            return null;
+    public TelePoolConstant readTelePoolConstant(int index) throws MaxVMBusyException {
+        if (!vm().tryLock()) {
+            throw new MaxVMBusyException();
         }
-        return (TelePoolConstant) teleObject;
+        try {
+            final Reference poolConstantReference = vm().getElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference();
+            final TeleObject teleObject = heap().makeTeleObject(poolConstantReference);
+            if (!(teleObject instanceof TelePoolConstant)) {
+                return null;
+            }
+            return (TelePoolConstant) teleObject;
+        } finally {
+            vm().releaseLegacyVMAccess();
+        }
     }
 
     /**
-     * @return surrogate for the {@link ClassActor} object in the {@link TeleVM}  that includes this pool
+     * @return surrogate for the {@link ClassActor} object in the VM  that includes this pool
      */
     public TeleClassActor getTeleHolder() {
         final Reference classActorReference = vm().teleFields().ConstantPool_holder.readReference(reference());
-        return (TeleClassActor) vm().makeTeleObject(classActorReference);
+        return (TeleClassActor) heap().makeTeleObject(classActorReference);
     }
 
     @Override

@@ -62,8 +62,8 @@ public abstract class TeleClassConstant extends TelePoolConstant {
 
         private TeleClassActor teleClassActor;
 
-        public Resolved(TeleVM teleVM, Reference resolvedClassConstantReference) {
-            super(teleVM, resolvedClassConstantReference);
+        public Resolved(TeleVM vm, Reference resolvedClassConstantReference) {
+            super(vm, resolvedClassConstantReference);
         }
 
         @Override
@@ -76,7 +76,7 @@ public abstract class TeleClassConstant extends TelePoolConstant {
         public TeleClassActor getTeleClassActor() {
             if (teleClassActor == null) {
                 final Reference classActorReference = vm().teleFields().ClassConstant$Resolved_classActor.readReference(reference());
-                teleClassActor = (TeleClassActor) vm().makeTeleObject(classActorReference);
+                teleClassActor = (TeleClassActor) heap().makeTeleObject(classActorReference);
             }
             return teleClassActor;
         }

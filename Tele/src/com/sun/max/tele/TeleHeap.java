@@ -28,6 +28,7 @@ import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.type.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.prototype.*;
@@ -62,9 +63,11 @@ import com.sun.max.vm.tele.*;
  * @see HeapScheme
  * @see TeleHeapScheme
  */
-public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, TeleHeapScheme {
+public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache, MaxHeap, TeleHeapScheme {
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
+
+    private final TimedTrace updateTracer;
 
     protected static TeleHeap teleHeap;
 
@@ -72,7 +75,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
      * Returns the singleton manager of cached information about the heap in the VM,
      * specialized for the particular implementation of {@link HeapScheme} in the VM.
      * <br>
-     * Not usable until after a call to {@link #initialize(long)}, which must be called
+     * Not usable until after a call to {@link #initialize()}, which must be called
      * after the {@link TeleClassRegistray} is fully initialized; otherwise, a circular
      * dependency will cause breakage.
      */
@@ -124,8 +127,38 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
 
     private List<MaxCodeLocation> inspectableMethods = null;
 
-    protected TeleHeap(TeleVM teleVM, TeleHeapScheme teleHeapScheme) {
-        super(teleVM);
+    private long gcStartedCount = -1;
+    private long gcCompletedCount = -1;
+
+    private int lastRegionCount = 0;
+
+    private final TeleObjectFactory teleObjectFactory;
+
+    private final Object statsPrinter = new Object() {
+        @Override
+        public String toString() {
+            final StringBuilder msg = new StringBuilder();
+            final int size = allHeapRegions.size();
+            msg.append("#regions=(").append(size);
+            msg.append(", new=").append(size - lastRegionCount).append(")");
+            lastRegionCount = size;
+            if (isInGC()) {
+                msg.append(", IN GC(");
+                msg.append("#starts=").append(gcStartedCount);
+                msg.append(", #complete=").append(gcCompletedCount).append(")");
+            } else if (gcCompletedCount >= 0) {
+                msg.append(", #GCs=").append(gcCompletedCount);
+            }
+            return msg.toString();
+        }
+    };
+
+    protected TeleHeap(TeleVM vm, TeleHeapScheme teleHeapScheme) {
+        super(vm);
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        tracer.begin();
+
+        this.teleObjectFactory = TeleObjectFactory.make(vm, vm.teleProcess().epoch());
         this.teleHeapScheme = teleHeapScheme;
         this.entityDescription = "Object creation and management for the " + vm().entityName();
 
@@ -135,10 +168,13 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
         final Pointer bootHeapStart = vm().bootImageStart();
         final Size bootHeapSize = Size.fromInt(vm().bootImage().header.heapSize);
         final TeleFixedHeapRegion provisionalBootHeapRegion =
-            new TeleFixedHeapRegion(teleVM, "Fake Heap-boot region", bootHeapStart, bootHeapSize, true);
+            new TeleFixedHeapRegion(vm, "Fake Heap-boot region", bootHeapStart, bootHeapSize, true);
         final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>(1);
         heapRegions.add(provisionalBootHeapRegion);
-        allHeapRegions = Collections.unmodifiableList(heapRegions);
+        this.allHeapRegions = Collections.unmodifiableList(heapRegions);
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+
+        tracer.end(statsPrinter);
     }
 
     /**
@@ -157,15 +193,16 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
     /**
      * Lazy initialization; try to keep data reading out of constructor.
      */
-    public void initialize(long processEpoch) {
-        Trace.begin(1, tracePrefix() + "initializing");
-        final long startTimeMillis = System.currentTimeMillis();
+    public void initialize() {
+        assert vm().lockHeldByCurrentThread();
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " initializing");
+        tracer.begin();
 
         final Reference nameReference = vm().teleFields().Heap_HEAP_BOOT_NAME.readReference(vm());
         this.bootHeapRegionName = vm().getString(nameReference);
 
         final Reference bootHeapRegionReference = vm().teleFields().Heap_bootHeapRegion.readReference(vm());
-        this.teleBootHeapRegion = (TeleRuntimeMemoryRegion) vm().makeTeleObject(bootHeapRegionReference);
+        this.teleBootHeapRegion = (TeleRuntimeMemoryRegion) makeTeleObject(bootHeapRegionReference);
         this.bootHeapRegion = new TeleHeapRegion(vm(), teleBootHeapRegion, true);
 
         // The address of the tele roots field must be accessible before any {@link TeleObject}s can be created,
@@ -173,29 +210,53 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
         final int teleRootsOffset = vm().teleFields().InspectableHeapInfo_rootsPointer.fieldActor().offset();
         this.teleRootsPointer = vm().teleFields().InspectableHeapInfo_rootsPointer.staticTupleReference(vm()).toOrigin().plus(teleRootsOffset);
 
-        refresh(processEpoch);
-        Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
+        updateCache();
+        tracer.end(statsPrinter);
     }
 
-    /**
-     * Replaces local cache of information about heap regions in the VM.
-     * During this update, any method calls to check heap containment are handled specially.
-     */
-    public void refresh(long processEpoch) {
-        if (isInitialized()) {
-            Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
-            final long startTimeMillis = System.currentTimeMillis();
+    public void updateObjectCache() {
+        teleObjectFactory.updateCache();
+    }
+
+    public void updateCache() {
+        // Replaces local cache of information about heap regions in the VM.
+        // During this update, any method calls to check heap containment are handled specially.
+        updateTracer.begin();
+        assert vm().lockHeldByCurrentThread();
+        if (!isInitialized()) {
+            updateTracer.end("not initialized yet");
+        } else {
+            // Check GC status and update references if a GC has completed since last time we checked
+            final long oldGcStartedCount = gcStartedCount;
+            gcStartedCount = vm().teleFields().InspectableHeapInfo_gcStartedCounter.readLong(vm());
+            gcCompletedCount = vm().teleFields().InspectableHeapInfo_gcCompletedCounter.readLong(vm());
+            // Invariant:  oldGcStartedCount <= gcCompletedCount <= gcStartedCount
+            if (gcStartedCount != gcCompletedCount) {
+                // A GC is in progress, local cache is out of date by definition but can't update yet
+                // Sanity check; collection count increases monotonically
+                assert  gcCompletedCount < gcStartedCount;
+            } else if (oldGcStartedCount != gcStartedCount) {
+                // GC is not in progress, but a GC has completed since the last time
+                // we checked, so cached reference data is out of date
+                // Sanity check; collection count increases monotonically
+                assert oldGcStartedCount < gcStartedCount;
+                vm().gripScheme().refresh();
+            } else {
+                // oldGcStartedCount == gcStartedCount == gcCompletedCount
+                // GC is not in progress, and no new GCs have happened, so cached reference data is up to date
+            }
+
             updatingHeapMemoryRegions = true;
             final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>(allHeapRegions.size());
             heapRegions.add(bootHeapRegion);
             final Reference runtimeHeapRegionsArrayReference = vm().teleFields().InspectableHeapInfo_memoryRegions.readReference(vm());
             if (!runtimeHeapRegionsArrayReference.isZero()) {
-                final TeleArrayObject teleArrayObject = (TeleArrayObject) vm().makeTeleObject(runtimeHeapRegionsArrayReference);
+                final TeleArrayObject teleArrayObject = (TeleArrayObject) makeTeleObject(runtimeHeapRegionsArrayReference);
                 final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
                 TeleRuntimeMemoryRegion[] teleRuntimeMemoryRegions = new TeleRuntimeMemoryRegion[heapRegionReferences.length];
                 int next = 0;
                 for (int i = 0; i < heapRegionReferences.length; i++) {
-                    final TeleRuntimeMemoryRegion teleRegion = (TeleRuntimeMemoryRegion) vm().makeTeleObject(heapRegionReferences[i]);
+                    final TeleRuntimeMemoryRegion teleRegion = (TeleRuntimeMemoryRegion) makeTeleObject(heapRegionReferences[i]);
                     if (teleRegion != null) {
                         final TeleHeapRegion teleHeapRegion = regionToTeleHeapRegion.get(teleRegion);
                         if (teleHeapRegion != null) {
@@ -220,7 +281,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
             if (teleRootsRegion == null) {
                 final Reference teleRootsRegionReference = vm().teleFields().InspectableHeapInfo_rootTableMemoryRegion.readReference(vm());
                 if (teleRootsRegionReference != null && !teleRootsRegionReference.isZero()) {
-                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) vm().makeTeleObject(teleRootsRegionReference);
+                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) makeTeleObject(teleRootsRegionReference);
                     if (maybeAllocatedRegion != null && maybeAllocatedRegion.isAllocated()) {
                         teleRootsRegion = maybeAllocatedRegion;
                         rootsRegion = new TeleFixedMemoryRegion(vm(), maybeAllocatedRegion.getRegionName(), maybeAllocatedRegion.getRegionStart(), maybeAllocatedRegion.getRegionSize());
@@ -231,7 +292,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
             if (teleImmortalHeapRegion == null) {
                 final Reference immortalHeapReference = vm().teleFields().ImmortalHeap_immortalHeap.readReference(vm());
                 if (immortalHeapReference != null && !immortalHeapReference.isZero()) {
-                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) vm().makeTeleObject(immortalHeapReference);
+                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) makeTeleObject(immortalHeapReference);
                     if (maybeAllocatedRegion != null && maybeAllocatedRegion.isAllocated()) {
                         teleImmortalHeapRegion = maybeAllocatedRegion;
                         immortalHeapRegion = new TeleHeapRegion(vm(), teleImmortalHeapRegion, false);
@@ -242,7 +303,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
                 heapRegions.add(immortalHeapRegion);
             }
             allHeapRegions = Collections.unmodifiableList(heapRegions);
-            Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
+            updateTracer.end(statsPrinter);
         }
     }
 
@@ -314,6 +375,97 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
         return rootsRegion;
     }
 
+    public TeleObject findTeleObject(Reference reference) throws MaxVMBusyException {
+        if (vm().tryLock()) {
+            try {
+                return makeTeleObject(reference);
+            } finally {
+                vm().unlock();
+            }
+        } else {
+            throw new MaxVMBusyException();
+        }
+    }
+
+    public TeleObject makeTeleObject(Reference reference) {
+        return teleObjectFactory.make(reference);
+    }
+
+
+    public TeleObject findObjectByOID(long id) {
+        return teleObjectFactory.lookupObject(id);
+    }
+
+    public TeleObject findObjectAt(Address origin) {
+        if (vm().tryLock()) {
+            try {
+                return makeTeleObject(vm().originToReference(origin.asPointer()));
+            } catch (Throwable throwable) {
+                // Can't resolve the address somehow
+            } finally {
+                vm().unlock();
+            }
+        }
+        return null;
+    }
+
+    public TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent) {
+
+        // Search limit expressed in words
+        long wordSearchExtent = Long.MAX_VALUE;
+        final Size wordSize = vm().wordSize();
+        if (maxSearchExtent > 0) {
+            wordSearchExtent = maxSearchExtent / wordSize.toInt();
+        }
+        try {
+            Pointer origin = cellAddress.asPointer();
+            for (long count = 0; count < wordSearchExtent; count++) {
+                origin = origin.plus(wordSize);
+                if (vm().isValidOrigin(origin)) {
+                    return makeTeleObject(vm().originToReference(origin));
+                }
+            }
+        } catch (Throwable throwable) {
+        }
+        return null;
+    }
+
+    public TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent) {
+
+        // Search limit expressed in words
+        long wordSearchExtent = Long.MAX_VALUE;
+        final Size wordSize = vm().wordSize();
+        if (maxSearchExtent > 0) {
+            wordSearchExtent = maxSearchExtent / wordSize.toInt();
+        }
+        try {
+            Pointer origin = cellAddress.asPointer();
+            for (long count = 0; count < wordSearchExtent; count++) {
+                origin = origin.minus(wordSize);
+                if (vm().isValidOrigin(origin)) {
+                    return makeTeleObject(vm().originToReference(origin));
+                }
+            }
+        } catch (Throwable throwable) {
+        }
+        return null;
+    }
+
+    /**
+     * Finds an object in the VM that has been located at a particular place in memory, but which
+     * may have been relocated.
+     * <br>
+     * Must be called in thread holding the VM lock
+     *
+     * @param origin an object origin in the VM
+     * @return the object originally at the origin, possibly relocated
+     */
+    public TeleObject getForwardedObject(Pointer origin) {
+        final Reference forwardedObjectReference = vm().originToReference(getForwardedOrigin(origin));
+        return teleObjectFactory.make(forwardedObjectReference);
+    }
+
+
     /**
      * Avoid potential circularity problems by handling heap queries specially when we
      * know we are in a refresh cycle during which information about heap regions may not
@@ -350,26 +502,10 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
     }
 
     /**
-     * Reads the collection table count; incremented each time a GC begins.
-     * @return one greater than {@link #readRootEpoch()} during GC, otherwise equal
-     */
-    public long readCollectionEpoch() {
-        return vm().teleFields().InspectableHeapInfo_collectionEpoch.readLong(vm());
-    }
-
-    /**
-     * Reads the root table update count; incremented each time a GC completes.
-     * @return number of times inspectable root table updated
-     */
-    public long readRootEpoch() {
-        return vm().teleFields().InspectableHeapInfo_rootEpoch.readLong(vm());
-    }
-
-    /**
      * @ return is the VM in GC
      */
     public boolean isInGC() {
-        return readCollectionEpoch() != readRootEpoch();
+        return gcCompletedCount != gcStartedCount;
     }
 
     public Class heapSchemeClass() {
@@ -412,23 +548,4 @@ public final class TeleHeap extends AbstractTeleVMHolder implements MaxHeap, Tel
         return teleHeapScheme.getForwardedOrigin(origin);
     }
 
-    /**
-     * Address of the field incremented each time a GC begins.
-     * @return memory location of the field holding the collection epoch
-     * @see #readCollectionEpoch()
-     */
-    public Address collectionEpochAddress() {
-        final int offset = vm().teleFields().InspectableHeapInfo_collectionEpoch.fieldActor().offset();
-        return vm().teleFields().InspectableHeapInfo_collectionEpoch.staticTupleReference(vm()).toOrigin().plus(offset);
-    }
-
-    /**
-     * Address of the field incremented each time a GC completes.
-     * @return memory location of the field holding the root epoch
-     * @see #readRootEpoch()
-     */
-    public Address rootEpochAddress() {
-        final int offset = vm().teleFields().InspectableHeapInfo_rootEpoch.fieldActor().offset();
-        return vm().teleFields().InspectableHeapInfo_rootEpoch.staticTupleReference(vm()).toOrigin().plus(offset);
-    }
 }

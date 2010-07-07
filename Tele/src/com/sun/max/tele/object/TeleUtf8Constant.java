@@ -25,26 +25,26 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for an object of type {@link Utf8Constant} in the {@link TeleVM}.
+ * Canonical surrogate for an object of type {@link Utf8Constant} in the VM.
  *
  * @author Michael Van De Vanter
  */
 public final class TeleUtf8Constant extends TelePoolConstant {
 
-    protected TeleUtf8Constant(TeleVM teleVM, Reference utf8ConstantReference) {
-        super(teleVM, utf8ConstantReference);
+    protected TeleUtf8Constant(TeleVM vm, Reference utf8ConstantReference) {
+        super(vm, utf8ConstantReference);
     }
 
     // The field is final once non-null; cache it.
     private Utf8Constant utf8Constant;
 
     /**
-     * @return a local copy of this object in the {@link TeleVM}.
+     * @return a local copy of this object in the VM.
      */
     public Utf8Constant utf8Constant() {
         if (utf8Constant == null) {
             Reference reference = vm().teleFields().Utf8Constant_string.readReference(reference());
-            TeleString teleString = (TeleString) vm().makeTeleObject(reference);
+            TeleString teleString = (TeleString) heap().makeTeleObject(reference);
             if (teleString != null) {
                 utf8Constant = SymbolTable.makeSymbol(teleString.getString());
             }

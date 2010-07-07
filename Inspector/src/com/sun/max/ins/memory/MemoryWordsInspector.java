@@ -526,7 +526,12 @@ public final class MemoryWordsInspector extends Inspector {
         final StringBuilder titleBuilder = new StringBuilder();
         switch(viewMode()) {
             case OBJECT:
-                final TeleObject teleObject = vm().makeTeleObject(vm().originToReference(origin.asPointer()));
+                TeleObject teleObject = null;
+                try {
+                    teleObject = vm().heap().findTeleObject(vm().originToReference(origin.asPointer()));
+                } catch (MaxVMBusyException e) {
+                    // Can't learn anything about the object right now.
+                }
                 if (teleObject == null) {
                     titleBuilder.append("Memory object: ").append(memoryWordRegion.start().toHexString());
                 } else {
@@ -664,7 +669,7 @@ public final class MemoryWordsInspector extends Inspector {
     }
 
     private void moveToCurrentObject() {
-        TeleObject teleObject = vm().findObjectAt(origin);
+        TeleObject teleObject = vm().heap().findObjectAt(origin);
         if (teleObject != null) {
             MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
@@ -680,7 +685,7 @@ public final class MemoryWordsInspector extends Inspector {
     }
 
     private void moveToPreviousObject() {
-        final TeleObject teleObject = vm().findObjectPreceding(origin, 1000000);
+        final TeleObject teleObject = vm().heap().findObjectPreceding(origin, 1000000);
         if (teleObject != null) {
             MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
@@ -694,7 +699,7 @@ public final class MemoryWordsInspector extends Inspector {
     }
 
     private void moveToNextObject() {
-        final TeleObject teleObject = vm().findObjectFollowing(origin, 1000000);
+        final TeleObject teleObject = vm().heap().findObjectFollowing(origin, 1000000);
         if (teleObject != null) {
             final MaxMemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             // Start stays the same

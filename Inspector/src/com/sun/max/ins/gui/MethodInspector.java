@@ -58,17 +58,21 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
             super(inspection);
         }
 
-        public static void make(Inspection inspection) {
+        public static void make(final Inspection inspection) {
             if (manager == null) {
                 manager = new Manager(inspection);
                 inspection.focus().addListener(new InspectionFocusAdapter() {
 
                     @Override
                     public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
-                        final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), codeLocation, interactiveForNative);
-                        if (methodInspector != null) {
-                            methodInspector.setCodeLocationFocus();
-                            methodInspector.highlightIfNotVisible();
+                        try {
+                            final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), codeLocation, interactiveForNative);
+                            if (methodInspector != null) {
+                                methodInspector.setCodeLocationFocus();
+                                methodInspector.highlightIfNotVisible();
+                            }
+                        } catch (MaxVMBusyException maxVMBusyException) {
+                            inspection.announceVMBusyFailure("Can't view method");
                         }
                     }
                 });
@@ -86,8 +90,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      * @param interactive Should user be prompted for additional address information in case the location is unknown
      *            native code.
      * @return A possibly new inspector, null if unable to view.
+     * @throws MaxVMBusyException if creation of a new inspection fails because the VM is unavailable
      */
-    private static MethodInspector make(final Inspection inspection, Address address, boolean interactive) {
+    private static MethodInspector make(final Inspection inspection, Address address, boolean interactive) throws MaxVMBusyException {
         MethodInspector methodInspector = null;
         final MaxCompiledCode compiledCode = inspection.vm().codeCache().findCompiledCode(address);
         if (compiledCode != null) {
@@ -116,6 +121,8 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                             // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                         } catch (IllegalArgumentException illegalArgumentException) {
                             inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
+                        } catch (MaxVMBusyException maxVMBusyException) {
+                            inspection.announceVMBusyFailure("inspect native code");
                         }
                     }
                     @Override
@@ -141,8 +148,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      *
      * @param codeLocation a code location
      * @return A possibly new inspector, null if unable to view.
+     * @throws MaxVMBusyException if trying to visit a method not yet seen and the VM is unavailable
      */
-    private static MethodInspector make(Inspection inspection, MaxCodeLocation codeLocation, boolean interactiveForNative) {
+    private static MethodInspector make(Inspection inspection, MaxCodeLocation codeLocation, boolean interactiveForNative) throws MaxVMBusyException {
         if (codeLocation.hasAddress()) {
             return make(inspection, codeLocation.address(), interactiveForNative);
         }
@@ -160,8 +168,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      * the method does exist, add a display of the kind of code requested if available.
      *
      * @return A possibly new inspector for the method.
+     * @throws MaxVMBusyException if creation of a new method inspection fails because the VM is unavailable
      */
-    private static JavaMethodInspector make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
+    private static JavaMethodInspector make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) throws MaxVMBusyException {
         JavaMethodInspector javaMethodInspector = null;
         // If there are compilations, then inspect in association with the most recent
         final MaxCompiledCode compiledCode = inspection.vm().codeCache().latestCompilation(teleClassMethodActor);
@@ -171,9 +180,14 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         final MethodInspector methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
         if (methodInspector == null) {
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
-            javaMethodInspector = new JavaMethodInspector(inspection, parent, teleClassMethodActor, codeKind);
-            parent.add(javaMethodInspector);
-            teleClassMethodActorToMethodInspector.put(teleClassMethodActor, javaMethodInspector);
+            inspection.vm().acquireLegacyVMAccess();
+            try {
+                javaMethodInspector = new JavaMethodInspector(inspection, parent, teleClassMethodActor, codeKind);
+                parent.add(javaMethodInspector);
+                teleClassMethodActorToMethodInspector.put(teleClassMethodActor, javaMethodInspector);
+            } finally {
+                inspection.vm().releaseLegacyVMAccess();
+            }
 
         } else {
             javaMethodInspector = (JavaMethodInspector) methodInspector;
@@ -182,10 +196,13 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     }
 
     /**
-     * @return a possibly new {@link MethodInspector} associated with a specific compilation of a Java method in the
-     *         VM, and with the requested code view visible.
+     * Gets the {@link MethodInspector} associated with a specific compilation of a Java method in the VM,
+     * creating a new one if necessary, and makes the requested code visible.
+     *
+     * @return a possibly new inspector with the specified code visible.
+     * @throws MaxVMBusyException if can't create a new method inspection because the VM is unavailable
      */
-    private static JavaMethodInspector make(Inspection inspection, MaxCompiledCode compiledCode, MethodCodeKind codeKind) {
+    private static JavaMethodInspector make(Inspection inspection, MaxCompiledCode compiledCode, MethodCodeKind codeKind) throws MaxVMBusyException {
         JavaMethodInspector javaMethodInspector = null;
 
         // Is there already an inspection open that is bound to this compilation?
@@ -193,21 +210,28 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         if (methodInspector == null) {
             // No existing inspector is bound to this compilation; see if there is an inspector for this method that is
             // unbound
-            TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
-            if (teleClassMethodActor != null) {
-                methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
+            inspection.vm().acquireLegacyVMAccess();
+            try {
+                TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
+                if (teleClassMethodActor != null) {
+                    methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
+                }
+                final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
+                if (methodInspector == null) {
+                    // No existing inspector exists for this method; create new one bound to this compilation
+                    javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledCode, codeKind);
+                } else {
+                    // An inspector exists for the method, but not bound to any compilation; bind it to this compilation
+                    // TODO (mlvdv) Temp patch; just create a new one in this case too.
+                    javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledCode, codeKind);
+                }
+                if (javaMethodInspector != null) {
+                    parent.add(javaMethodInspector);
+                    machineCodeToMethodInspector.put(compiledCode, javaMethodInspector);
+                }
+            } finally {
+                inspection.vm().releaseLegacyVMAccess();
             }
-            final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
-            if (methodInspector == null) {
-                // No existing inspector exists for this method; create new one bound to this compilation
-                javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledCode, codeKind);
-            } else {
-                // An inspector exists for the method, but not bound to any compilation; bind it to this compilation
-                // TODO (mlvdv) Temp patch; just create a new one in this case too.
-                javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledCode, codeKind);
-            }
-            parent.add(javaMethodInspector);
-            machineCodeToMethodInspector.put(compiledCode, javaMethodInspector);
         } else {
             // An existing inspector is bound to this method & compilation; ensure that it has the requested code view
             javaMethodInspector = (JavaMethodInspector) methodInspector;
@@ -218,15 +242,21 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
 
     /**
      * @return A possibly new inspector for a block of native code in the VM already known to the inspector.
+     * @throws MaxVMBusyException if a new inspector cannot be created because the VM is unavailable
      */
-    private static NativeMethodInspector make(Inspection inspection, MaxExternalCode maxExternalCode) {
+    private static NativeMethodInspector make(Inspection inspection, MaxExternalCode maxExternalCode) throws MaxVMBusyException {
         NativeMethodInspector nativeMethodInspector = null;
         MethodInspector methodInspector = machineCodeToMethodInspector.get(maxExternalCode);
         if (methodInspector == null) {
-            final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
-            nativeMethodInspector = new NativeMethodInspector(inspection, parent, maxExternalCode);
-            parent.add(nativeMethodInspector);
-            machineCodeToMethodInspector.put(maxExternalCode, nativeMethodInspector);
+            inspection.vm().acquireLegacyVMAccess();
+            try {
+                final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
+                nativeMethodInspector = new NativeMethodInspector(inspection, parent, maxExternalCode);
+                parent.add(nativeMethodInspector);
+                machineCodeToMethodInspector.put(maxExternalCode, nativeMethodInspector);
+            } finally {
+                inspection.vm().releaseLegacyVMAccess();
+            }
         } else {
             nativeMethodInspector = (NativeMethodInspector) methodInspector;
         }
