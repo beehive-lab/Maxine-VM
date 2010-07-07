@@ -18,23 +18,27 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway.profile;
-
-import com.sun.max.*;
-import com.sun.max.vm.*;
+package com.sun.max.tele.util;
 
 /**
- * @see MaxPackage
- *
- * @author Bernd Mathiske
+ * Ternary logic values.
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
+public enum Ternary {
+    TRUE,
+    FALSE,
+    UNKNOWN;
+
+    public static Ternary fromBoolean(boolean b) {
+        return b ? TRUE : FALSE;
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.heapPackage.name().startsWith("com.sun.max.vm.heap.beltway");
+    public boolean toBoolean() {
+        if (this == TRUE) {
+            return true;
+        } else if (this == FALSE) {
+            return false;
+        } else {
+            throw new UnsupportedOperationException();
+        }
     }
 }

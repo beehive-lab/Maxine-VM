@@ -109,6 +109,20 @@ public interface MaxMemoryRegion {
             return START_COMPARATOR;
         }
 
+        private static final Comparator<MaxMemoryRegion> NAME_COMPARATOR = new Comparator<MaxMemoryRegion>() {
+
+            public int compare(MaxMemoryRegion mr1, MaxMemoryRegion mr2) {
+                return mr1.regionName().compareTo(mr2.regionName());
+            }
+        };
+
+        /**
+         * @return a comparator that operates on the start location of two non-null memory regions
+         */
+        public static Comparator<MaxMemoryRegion> nameComparator() {
+            return NAME_COMPARATOR;
+        }
+
         /**
          * @return whether the VM memory region contains a specific address
          */

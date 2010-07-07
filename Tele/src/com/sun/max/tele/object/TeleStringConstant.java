@@ -25,14 +25,14 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for an object of type {@link StringConstant} in the {@link TeleVM}.
+ * Canonical surrogate for an object of type {@link StringConstant} in the VM.
  *
  * @author Michael Van De Vanter
  */
 public final class TeleStringConstant extends TelePoolConstant {
 
-    protected TeleStringConstant(TeleVM teleVM, Reference stringConstantReference) {
-        super(teleVM, stringConstantReference);
+    protected TeleStringConstant(TeleVM vm, Reference stringConstantReference) {
+        super(vm, stringConstantReference);
     }
 
     // The field is final; cache it.
@@ -44,7 +44,7 @@ public final class TeleStringConstant extends TelePoolConstant {
     public String getString() {
         if (value == null) {
             final Reference stringReference = vm().teleFields().StringConstant_value.readReference(reference());
-            final TeleString teleString = (TeleString) vm().makeTeleObject(stringReference);
+            final TeleString teleString = (TeleString) heap().makeTeleObject(stringReference);
             value = teleString.getString();
         }
         return value;

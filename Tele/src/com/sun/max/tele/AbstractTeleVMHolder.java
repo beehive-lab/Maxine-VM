@@ -24,14 +24,15 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 
 /**
- * Convenience methods for all local objects that refer to something in the VM.
+ * Parent class for objects that refer to state in the VM,
+ * with convenience methods.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class AbstractTeleVMHolder implements TeleVMHolder {
+public abstract class AbstractTeleVMHolder implements TeleVMAccess {
 
-    private final TeleVM teleVM;
+    private final TeleVM vm;
 
     private final String tracePrefix;
 
@@ -43,24 +44,28 @@ public abstract class AbstractTeleVMHolder implements TeleVMHolder {
     }
 
     protected AbstractTeleVMHolder(TeleVM teleVM) {
-        this.teleVM = teleVM;
+        this.vm = teleVM;
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
     public final TeleVM vm() {
-        return teleVM;
+        return vm;
+    }
+
+    public final TeleHeap heap() {
+        return vm.heap();
     }
 
     public CodeManager codeManager() {
-        return teleVM.codeManager();
+        return vm.codeManager();
     }
 
     public TeleBreakpointManager breakpointManager() {
-        return teleVM.breakpointManager();
+        return vm.breakpointManager();
     }
 
     public TeleWatchpoint.WatchpointManager watchpointManager() {
-        return teleVM.watchpointManager();
+        return vm.watchpointManager();
     }
 
 }

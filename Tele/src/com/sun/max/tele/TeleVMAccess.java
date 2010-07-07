@@ -24,15 +24,15 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 
 /**
- * Interface for Tele layer objects that refer to general resources about the VM.
+ * An object that refer to some aspect of the VM state, with
+ * convenience methods for access to other aspects.
  *
- * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public interface TeleVMHolder {
+public interface TeleVMAccess {
 
     /**
-     * @return the instance of {@link TeleVM} being managed by this code.
+     * @return the instance of VM being managed by this code.
      */
     TeleVM vm();
 

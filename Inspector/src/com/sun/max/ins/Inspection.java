@@ -39,6 +39,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -51,6 +52,8 @@ import com.sun.max.vm.classfile.*;
  * @author Michael Van De Vanter
  */
 public final class Inspection implements InspectionHolder {
+
+    private static final String INSPECTOR_NAME = "Maxine Inspector";
 
     private static final int TRACE_VALUE = 1;
 
@@ -95,8 +98,6 @@ public final class Inspection implements InspectionHolder {
         }
         return "[Inspection: " + Thread.currentThread().getName() + "] ";
     }
-
-    private static final String INSPECTOR_NAME = "Maxine Inspector";
 
     private final MaxVM vm;
 
@@ -328,18 +329,15 @@ public final class Inspection implements InspectionHolder {
         // Ensure that we're just looking at one state while making decisions, even
         // though display elements may find the VM in a newer state by the time they
         // attempt to update their state.
-        inspectorMainFrame.refresh(true);
         final MaxVMState vmState = vm().state();
+        final String stateDescription = vm.state().toString();
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "process new VM state=" + stateDescription);
+        tracer.begin();
+        inspectorMainFrame.refresh(true);
         if (!vmState.newerThan(lastVMStateProcessed)) {
-            Trace.line(1, tracePrefix() + "ignoring redundant state change=" + vmState);
+            Trace.line(1, tracePrefix() + "redundant state change=" + stateDescription);
         }
         lastVMStateProcessed = vmState;
-        Tracer tracer = null;
-        if (Trace.hasLevel(1)) {
-            tracer = new Tracer("process " + vmState);
-        }
-        Trace.begin(1, tracer);
-        final long startTimeMillis = System.currentTimeMillis();
         switch (vmState.processState()) {
             case STOPPED:
                 updateAfterVMStopped();
@@ -364,7 +362,7 @@ public final class Inspection implements InspectionHolder {
         }
         inspectorMainFrame.refresh(true);
         inspectionActions.refresh(true);
-        Trace.end(1, tracer, startTimeMillis);
+        tracer.end();
     }
 
     /**
@@ -499,16 +497,9 @@ public final class Inspection implements InspectionHolder {
      * @param force suspend caching behavior; reload state unconditionally.
      */
     public void refreshAll(boolean force) {
-        Tracer tracer = null;
         // Additional listeners may come and go during the update cycle, which can be ignored.
         for (InspectionListener listener : copyInspectionListeners()) {
-            if (Trace.hasLevel(TRACE_VALUE)) {
-                tracer = new Tracer("refresh: " + listener);
-            }
-            Trace.begin(TRACE_VALUE, tracer);
-            final long startTimeMillis = System.currentTimeMillis();
             listener.vmStateChanged(force);
-            Trace.end(TRACE_VALUE, tracer, startTimeMillis);
         }
         inspectionActions.refresh(force);
     }

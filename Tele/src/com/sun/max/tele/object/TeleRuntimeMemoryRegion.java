@@ -36,15 +36,70 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 
     private static final int TRACE_VALUE = 2;
 
+
     private Address regionStart = Address.zero();
     private Size regionSize = Size.zero();
     private String regionName = null;
     private MemoryUsage memoryUsage = null;
 
-    TeleRuntimeMemoryRegion(TeleVM teleVM, Reference runtimeMemoryRegionReference) {
-        super(teleVM, runtimeMemoryRegionReference);
-        refresh();
+    private final Object localStatsPrinter = new Object() {
+
+        @Override
+        public String toString() {
+            return "name=" + (regionName == null ? "<unassigned>" : regionName);
+        }
+    };
+
+    TeleRuntimeMemoryRegion(TeleVM vm, Reference runtimeMemoryRegionReference) {
+        super(vm, runtimeMemoryRegionReference);
+        updateCache();
     }
+
+    @Override
+    protected void updateObjectCache(StatsPrinter statsPrinter) {
+        super.updateObjectCache(statsPrinter);
+        if (!isAllocated()) {
+            statsPrinter.addStat("unallocated");
+        }
+        statsPrinter.addStat(localStatsPrinter);
+        if (!isRelocatable() && isAllocated()) {
+            // Optimization: if we know the region won't be moved by the VM, and
+            // we already have the location information, then don't bother to refresh.
+            statsPrinter.addStat("allocated, not relocatable");
+            return;
+        }
+        try {
+            final Size newRegionSize = vm().teleFields().MemoryRegion_size.readWord(reference()).asSize();
+
+            final Reference regionNameStringReference = vm().teleFields().MemoryRegion_regionName.readReference(reference());
+            final TeleString teleString = (TeleString) heap().makeTeleObject(regionNameStringReference);
+            final String newRegionName = teleString == null ? "<null>" : teleString.getString();
+
+            Address newRegionStart = vm().teleFields().MemoryRegion_start.readWord(reference()).asAddress();
+            if (newRegionStart.isZero() && newRegionName != null) {
+                if (newRegionName.equals(heap().bootHeapRegionName())) {
+                    // Ugly special case:  the regionStart field of the static that defines the boot heap region
+                    // is set at zero in the boot image, only set to the real value when the VM starts running.
+                    // Lie about it.
+                    newRegionStart = vm().bootImageStart();
+                }
+            }
+            if (newRegionStart.isZero()) {
+                Trace.line(TRACE_VALUE, tracePrefix() + "zero start address read from VM for region " + this);
+            }
+            this.regionStart = newRegionStart;
+            this.regionSize = newRegionSize;
+            this.regionName = newRegionName;
+            final long sizeAsLong = this.regionSize.toLong();
+            this.memoryUsage = new MemoryUsage(-1, sizeAsLong, sizeAsLong, -1);
+        } catch (DataIOError dataIOError) {
+            ProgramWarning.message("TeleRuntimeMemoryRegion dataIOError:");
+            dataIOError.printStackTrace();
+            // No update; data unreadable for some reason
+            // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
+        }
+    }
+
 
     /**
      * @return the descriptive name assigned to the memory region object in the VM.
@@ -100,54 +155,6 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
      */
     public boolean isRelocatable() {
         return true;
-    }
-
-    @Override
-    protected void refresh() {
-        super.refresh();
-
-        if (!isRelocatable() && isAllocated()) {
-            // Optimization: if we know the region won't be moved by the VM, and
-            // we already have the location information, then don't bother to refresh.
-            return;
-        }
-        if (vm().tryLock()) {
-            try {
-                final Size newRegionSize = vm().teleFields().MemoryRegion_size.readWord(reference()).asSize();
-
-                final Reference regionNameStringReference = vm().teleFields().MemoryRegion_regionName.readReference(reference());
-                final TeleString teleString = (TeleString) vm().makeTeleObject(regionNameStringReference);
-                final String newRegionName = teleString == null ? "<null>" : teleString.getString();
-
-                Address newRegionStart = vm().teleFields().MemoryRegion_start.readWord(reference()).asAddress();
-                if (newRegionStart.isZero() && newRegionName != null) {
-                    if (newRegionName.equals(vm().heap().bootHeapRegionName())) {
-                        // Ugly special case:  the regionStart field of the static that defines the boot heap region
-                        // is set at zero in the boot image, only set to the real value when the VM starts running.
-                        // Lie about it.
-                        newRegionStart = vm().bootImageStart();
-                    }
-                }
-                // Quasi-atomic update
-                if (newRegionStart.isZero()) {
-                    Trace.line(TRACE_VALUE, tracePrefix() + "zero start address read from VM for region " + this);
-                }
-                this.regionStart = newRegionStart;
-                this.regionSize = newRegionSize;
-                this.regionName = newRegionName;
-                final long sizeAsLong = this.regionSize.toLong();
-                this.memoryUsage = new MemoryUsage(-1, sizeAsLong, sizeAsLong, -1);
-            } catch (DataIOError dataIOError) {
-                ProgramWarning.message("TeleRuntimeMemoryRegion dataIOError:");
-                dataIOError.printStackTrace();
-                // No update; VM not available for some reason.
-                // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
-            } finally {
-                vm().unlock();
-            }
-        } else {
-            ProgramWarning.message("TeleRuntimeMemoryRegion unable to refresh: VM busy");
-        }
     }
 
 }

@@ -31,8 +31,8 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleActor extends TeleTupleObject {
 
-    protected TeleActor(TeleVM teleVM, Reference actorReference) {
-        super(teleVM, actorReference);
+    protected TeleActor(TeleVM vm, Reference actorReference) {
+        super(vm, actorReference);
     }
 
     /**
@@ -50,7 +50,7 @@ public abstract class TeleActor extends TeleTupleObject {
     public final TeleUtf8Constant getTeleName() {
         if (name == null) {
             Reference utf8ConstantReference = vm().teleFields().Actor_name.readReference(reference());
-            name = (TeleUtf8Constant) vm().makeTeleObject(utf8ConstantReference);
+            name = (TeleUtf8Constant) heap().makeTeleObject(utf8ConstantReference);
         }
         return name;
     }

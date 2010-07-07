@@ -26,6 +26,7 @@ import java.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -39,24 +40,58 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-final class CodeRegistry extends AbstractTeleVMHolder {
+final class CodeRegistry extends AbstractTeleVMHolder implements TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
 
-    private int previousEntryCount = 0;
-
-    public CodeRegistry(TeleVM teleVM) {
-        super(teleVM);
-        Trace.begin(TRACE_VALUE, tracePrefix() + " initializing");
-        final long startTimeMillis = System.currentTimeMillis();
-        Trace.end(TRACE_VALUE, tracePrefix() + " initializing", startTimeMillis);
-    }
+    private final TimedTrace updateTracer;
 
     private final OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxMachineCode>> machineCodeMemoryRegions =
         new OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxMachineCode>>();
 
     private final Set<MaxEntityMemoryRegion<? extends MaxMachineCode>> unallocatedMachineCodeMemoryRegions =
         new HashSet<MaxEntityMemoryRegion<? extends MaxMachineCode>>();
+
+    private final Object statsPrinter = new Object() {
+
+        private int previousEntryCount = 0;
+
+        @Override
+        public String toString() {
+            final int entryCount = machineCodeMemoryRegions.size();
+            final int newEntryCount =  entryCount - previousEntryCount;
+            final StringBuilder msg = new StringBuilder();
+            msg.append("#entries=(").append(entryCount);
+            msg.append(",new=").append(newEntryCount);
+            msg.append(",unallocated=").append(unallocatedMachineCodeMemoryRegions.size()).append(")");
+            previousEntryCount = entryCount;
+            return msg.toString();
+        }
+    };
+
+    public CodeRegistry(TeleVM teleVM) {
+        super(teleVM);
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        tracer.begin();
+
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+
+        tracer.end(statsPrinter);
+    }
+
+    public void updateCache() {
+        updateTracer.begin();
+        assert vm().lockHeldByCurrentThread();
+        for (MaxEntityMemoryRegion< ? extends MaxMachineCode> memoryRegion : unallocatedMachineCodeMemoryRegions) {
+            if (!memoryRegion.start().isZero()) {
+                unallocatedMachineCodeMemoryRegions.remove(memoryRegion);
+                Trace.line(TRACE_VALUE, tracePrefix() + " formerly unallocated code memory region promoted to registry: " + memoryRegion.owner().entityName());
+                machineCodeMemoryRegions.add(memoryRegion);
+            }
+        }
+        updateTracer.end(statsPrinter);
+    }
+
 
     /**
      * Adds an entry to the code registry, indexed by code address, that represents a block
@@ -84,21 +119,6 @@ final class CodeRegistry extends AbstractTeleVMHolder {
         } else {
             machineCodeMemoryRegions.add(memoryRegion);
         }
-    }
-
-    public void refresh() {
-        Trace.begin(TRACE_VALUE, tracePrefix() + " refreshing");
-        for (MaxEntityMemoryRegion< ? extends MaxMachineCode> memoryRegion : unallocatedMachineCodeMemoryRegions) {
-            if (!memoryRegion.start().isZero()) {
-                unallocatedMachineCodeMemoryRegions.remove(memoryRegion);
-                Trace.line(TRACE_VALUE, tracePrefix() + " formerly unallocated code memory region promoted to registry: " + memoryRegion.owner().entityName());
-                machineCodeMemoryRegions.add(memoryRegion);
-            }
-        }
-        final int entryCount = machineCodeMemoryRegions.size();
-        final int newEntryCount =  entryCount - previousEntryCount;
-        previousEntryCount = entryCount;
-        Trace.end(TRACE_VALUE, tracePrefix() + " refreshing, " + entryCount + " entries, " + newEntryCount + " new, "  + unallocatedMachineCodeMemoryRegions.size() + " unallocated");
     }
 
     public synchronized TeleExternalCode getExternalCode(Address address) {

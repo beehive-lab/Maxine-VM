@@ -162,104 +162,14 @@ public final class Layout {
 
     @ACCESSOR(Reference.class)
     @INLINE
-    public static Category category(Reference reference) {
-        return generalLayout().category(reference);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Category category(Grip grip) {
-        return generalLayout().category(grip);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static Category category(Pointer origin) {
-        return generalLayout().category(origin);
-    }
-
-    @ACCESSOR(Reference.class)
-    @INLINE
     public static boolean isArray(Reference reference) {
         return generalLayout().isArray(reference);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static boolean isArray(Grip grip) {
-        return generalLayout().isArray(grip);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static boolean isArray(Pointer origin) {
-        return generalLayout().isArray(origin);
-    }
-
-    @ACCESSOR(Reference.class)
-    @INLINE
-    public static boolean isTuple(Reference reference) {
-        return generalLayout().isTuple(reference);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static boolean isTuple(Grip grip) {
-        return generalLayout().isTuple(grip);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static boolean isTuple(Pointer origin) {
-        return generalLayout().isTuple(origin);
-    }
-
-    @ACCESSOR(Reference.class)
-    @INLINE
-    public static boolean isHybrid(Reference reference) {
-        return generalLayout().isHybrid(reference);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static boolean isHybrid(Grip grip) {
-        return generalLayout().isHybrid(grip);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static boolean isHybrid(Pointer origin) {
-        return generalLayout().isHybrid(origin);
-    }
-
-    @ACCESSOR(Reference.class)
-    @INLINE
-    public static SpecificLayout specificLayout(Reference reference) {
-        return generalLayout().specificLayout(reference);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static SpecificLayout specificLayout(Grip grip) {
-        return generalLayout().specificLayout(grip);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static SpecificLayout specificLayout(Pointer origin) {
-        return generalLayout().specificLayout(origin);
     }
 
     @ACCESSOR(Reference.class)
     @INLINE
     public static Size size(Reference reference) {
         return generalLayout().size(reference);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Size size(Grip grip) {
-        return generalLayout().size(grip);
     }
 
     @ACCESSOR(Pointer.class)
@@ -292,12 +202,6 @@ public final class Layout {
         return readHubReference(reference).toGrip();
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Grip readHubGrip(Grip grip) {
-        return readHubReference(grip).toGrip();
-    }
-
     @ACCESSOR(Pointer.class)
     @INLINE
     public static Grip readHubGrip(Pointer origin) {
@@ -322,18 +226,6 @@ public final class Layout {
         generalLayout().writeHubReference(origin, hubReference);
     }
 
-    @ACCESSOR(Reference.class)
-    @INLINE
-    public static void writeHubGrip(Reference reference, Grip hubGrip) {
-        writeHubReference(reference, hubGrip.toReference());
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void writeHubGrip(Grip grip, Grip hubGrip) {
-        writeHubReference(grip, hubGrip.toReference());
-    }
-
     @ACCESSOR(Pointer.class)
     @INLINE
     public static void writeHubGrip(Pointer origin, Grip hubGrip) {
@@ -346,28 +238,10 @@ public final class Layout {
         return generalLayout().readMisc(reference);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Word readMisc(Grip grip) {
-        return generalLayout().readMisc(grip);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static Word readMisc(Pointer pointer) {
-        return generalLayout().readMisc(pointer);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static void writeMisc(Reference reference, Word value) {
         generalLayout().writeMisc(reference, value);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void writeMisc(Grip grip, Word value) {
-        generalLayout().writeMisc(grip, value);
     }
 
     @ACCESSOR(Pointer.class)
@@ -382,46 +256,16 @@ public final class Layout {
         return generalLayout().compareAndSwapMisc(reference, expectedValue, newValue);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Word compareAndSwapMisc(Grip grip, Word expectedValue, Word newValue) {
-        return generalLayout().compareAndSwapMisc(grip, expectedValue, newValue);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static Word compareAndSwapMisc(Pointer origin, Word expectedValue, Word newValue) {
-        return generalLayout().compareAndSwapMisc(origin, expectedValue, newValue);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static int readArrayLength(Reference reference) {
         return arrayHeaderLayout().readLength(reference);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static int readArrayLength(Grip grip) {
-        return arrayHeaderLayout().readLength(grip);
-    }
-
     @ACCESSOR(Pointer.class)
     @INLINE
     public static int readArrayLength(Pointer pointer) {
         return arrayHeaderLayout().readLength(pointer);
-    }
-
-    @ACCESSOR(Reference.class)
-    @INLINE
-    public static void writeArrayLength(Reference reference, int hashCode) {
-        arrayHeaderLayout().writeLength(reference, hashCode);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void writeArrayLength(Grip grip, int hashCode) {
-        arrayHeaderLayout().writeLength(grip, hashCode);
     }
 
     @ACCESSOR(Pointer.class)
@@ -438,24 +282,6 @@ public final class Layout {
         return arrayHeaderLayout().getArraySize(kind, length);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Grip forwarded(Grip grip) {
-        return generalLayout().forwarded(grip);
-    }
-
-    @ACCESSOR(Reference.class)
-    @INLINE
-    public static Grip readForwardGrip(Reference reference) {
-        return generalLayout().readForwardGrip(reference);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Grip readForwardGrip(Grip grip) {
-        return generalLayout().readForwardGrip(grip);
-    }
-
     @ACCESSOR(Pointer.class)
     @INLINE
     public static Grip readForwardGrip(Pointer origin) {
@@ -464,37 +290,8 @@ public final class Layout {
 
     @ACCESSOR(Pointer.class)
     @INLINE
-    public static Grip readForwardGripValue(Pointer origin) {
-        return generalLayout().readForwardGripValue(origin);
-    }
-
-    @ACCESSOR(Reference.class)
-    @INLINE
-    public static void writeForwardGrip(Reference reference, Grip forwardGrip) {
-        generalLayout().writeForwardGrip(reference, forwardGrip);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void writeForwardGrip(Grip grip, Grip forwardGrip) {
-        generalLayout().writeForwardGrip(grip, forwardGrip);
-    }
-
-    @INLINE
-    public static Grip compareAndSwapForwardGrip(Grip grip, Grip suspectedGrip, Grip forwardGrip) {
-        return  generalLayout().compareAndSwapForwardGrip(grip, suspectedGrip, forwardGrip);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
     public static void writeForwardGrip(Pointer origin, Grip forwardGrip) {
         generalLayout().writeForwardGrip(origin, forwardGrip);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static Grip compareAndSwapForwardGrip(Pointer grip, Grip suspectedGrip, Grip forwardGrip) {
-        return  generalLayout().compareAndSwapForwardGrip(grip, suspectedGrip, forwardGrip);
     }
 
     @UNSAFE
@@ -509,33 +306,9 @@ public final class Layout {
         return byteArrayLayout().getByte(array, index);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static byte getByte(Grip array, int index) {
-        return byteArrayLayout().getByte(array, index);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static byte getByte(Pointer array, int index) {
-        return byteArrayLayout().getByte(array, index);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static void setByte(Reference array, int index, byte value) {
-        byteArrayLayout().setByte(array, index, value);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setByte(Grip array, int index, byte value) {
-        byteArrayLayout().setByte(array, index, value);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void setByte(Pointer array, int index, byte value) {
         byteArrayLayout().setByte(array, index, value);
     }
 
@@ -551,33 +324,9 @@ public final class Layout {
         return booleanArrayLayout().getBoolean(array, index);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static boolean getBoolean(Grip array, int index) {
-        return booleanArrayLayout().getBoolean(array, index);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static boolean getBoolean(Pointer array, int index) {
-        return booleanArrayLayout().getBoolean(array, index);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static void setBoolean(Reference array, int index, boolean value) {
-        booleanArrayLayout().setBoolean(array, index, value);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setBoolean(Grip array, int index, boolean value) {
-        booleanArrayLayout().setBoolean(array, index, value);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void setBoolean(Pointer array, int index, boolean value) {
         booleanArrayLayout().setBoolean(array, index, value);
     }
 
@@ -593,33 +342,9 @@ public final class Layout {
         return shortArrayLayout().getShort(array, index);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static short getShort(Grip array, int index) {
-        return shortArrayLayout().getShort(array, index);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static short getShort(Pointer array, int index) {
-        return shortArrayLayout().getShort(array, index);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static void setShort(Reference array, int index, short value) {
-        shortArrayLayout().setShort(array, index, value);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setShort(Grip array, int index, short value) {
-        shortArrayLayout().setShort(array, index, value);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void setShort(Pointer array, int index, short value) {
         shortArrayLayout().setShort(array, index, value);
     }
 
@@ -635,33 +360,9 @@ public final class Layout {
         return charArrayLayout().getChar(array, index);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static char getChar(Grip array, int index) {
-        return charArrayLayout().getChar(array, index);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static char getChar(Pointer array, int index) {
-        return charArrayLayout().getChar(array, index);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static void setChar(Reference array, int index, char value) {
-        charArrayLayout().setChar(array, index, value);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setChar(Grip array, int index, char value) {
-        charArrayLayout().setChar(array, index, value);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void setChar(Pointer array, int index, char value) {
         charArrayLayout().setChar(array, index, value);
     }
 
@@ -677,33 +378,9 @@ public final class Layout {
         return intArrayLayout().getInt(array, index);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static int getInt(Grip array, int index) {
-        return intArrayLayout().getInt(array, index);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static int getInt(Pointer array, int index) {
-        return intArrayLayout().getInt(array, index);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static void setInt(Reference array, int index, int value) {
-        intArrayLayout().setInt(array, index, value);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setInt(Grip array, int index, int value) {
-        intArrayLayout().setInt(array, index, value);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void setInt(Pointer array, int index, int value) {
         intArrayLayout().setInt(array, index, value);
     }
 
@@ -719,33 +396,9 @@ public final class Layout {
         return floatArrayLayout().getFloat(array, index);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static float getFloat(Grip array, int index) {
-        return floatArrayLayout().getFloat(array, index);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static float getFloat(Pointer array, int index) {
-        return floatArrayLayout().getFloat(array, index);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static void setFloat(Reference array, int index, float value) {
-        floatArrayLayout().setFloat(array, index, value);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setFloat(Grip array, int index, float value) {
-        floatArrayLayout().setFloat(array, index, value);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void setFloat(Pointer array, int index, float value) {
         floatArrayLayout().setFloat(array, index, value);
     }
 
@@ -761,33 +414,9 @@ public final class Layout {
         return longArrayLayout().getLong(array, index);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static long getLong(Grip array, int index) {
-        return longArrayLayout().getLong(array, index);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static long getLong(Pointer array, int index) {
-        return longArrayLayout().getLong(array, index);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static void setLong(Reference array, int index, long value) {
-        longArrayLayout().setLong(array, index, value);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setLong(Grip array, int index, long value) {
-        longArrayLayout().setLong(array, index, value);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void setLong(Pointer array, int index, long value) {
         longArrayLayout().setLong(array, index, value);
     }
 
@@ -803,33 +432,9 @@ public final class Layout {
         return doubleArrayLayout().getDouble(array, index);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static double getDouble(Grip array, int index) {
-        return doubleArrayLayout().getDouble(array, index);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static double getDouble(Pointer array, int index) {
-        return doubleArrayLayout().getDouble(array, index);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static void setDouble(Reference array, int index, double value) {
-        doubleArrayLayout().setDouble(array, index, value);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setDouble(Grip array, int index, double value) {
-        doubleArrayLayout().setDouble(array, index, value);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void setDouble(Pointer array, int index, double value) {
         doubleArrayLayout().setDouble(array, index, value);
     }
 
@@ -845,33 +450,9 @@ public final class Layout {
         return wordArrayLayout().getWord(array, index);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Word getWord(Grip array, int index) {
-        return wordArrayLayout().getWord(array, index);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static Word getWord(Pointer array, int index) {
-        return wordArrayLayout().getWord(array, index);
-    }
-
     @ACCESSOR(Reference.class)
     @INLINE
     public static void setWord(Reference array, int index, Word value) {
-        wordArrayLayout().setWord(array, index, value);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setWord(Grip array, int index, Word value) {
-        wordArrayLayout().setWord(array, index, value);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void setWord(Pointer array, int index, Word value) {
         wordArrayLayout().setWord(array, index, value);
     }
 
@@ -952,5 +533,4 @@ public final class Layout {
     public static void setGrip(Pointer array, int index, Grip value) {
         referenceArrayLayout().setReference(array, index, value.toReference());
     }
-
 }

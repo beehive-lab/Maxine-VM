@@ -178,7 +178,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return readByte(grip, offset.toInt());
         }
 
-        return teleVM().dataAccess().readByte(toOrigin(grip), offset);
+        return vm().dataAccess().readByte(toOrigin(grip), offset);
     }
 
     public byte readByte(Grip grip, int offset) {
@@ -187,7 +187,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return result.byteValue();
         }
 
-        return teleVM().dataAccess().readByte(toOrigin(grip), offset);
+        return vm().dataAccess().readByte(toOrigin(grip), offset);
     }
 
     public byte getByte(Grip grip, int displacement, int index) {
@@ -196,7 +196,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return array[index];
         }
 
-        return teleVM().dataAccess().getByte(toOrigin(grip), displacement, index);
+        return vm().dataAccess().getByte(toOrigin(grip), displacement, index);
     }
 
     public boolean readBoolean(Grip grip, Offset offset) {
@@ -204,7 +204,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return readBoolean(grip, offset.toInt());
         }
 
-        return teleVM().dataAccess().readBoolean(toOrigin(grip), offset);
+        return vm().dataAccess().readBoolean(toOrigin(grip), offset);
     }
 
     public boolean readBoolean(Grip grip, int offset) {
@@ -213,7 +213,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return result.booleanValue();
         }
 
-        return teleVM().dataAccess().readBoolean(toOrigin(grip), offset);
+        return vm().dataAccess().readBoolean(toOrigin(grip), offset);
     }
 
     public boolean getBoolean(Grip grip, int displacement, int index) {
@@ -222,7 +222,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return array[index];
         }
 
-        return teleVM().dataAccess().getBoolean(toOrigin(grip), displacement, index);
+        return vm().dataAccess().getBoolean(toOrigin(grip), displacement, index);
     }
 
     public short readShort(Grip grip, Offset offset) {
@@ -230,7 +230,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return readShort(grip, offset.toInt());
         }
 
-        return teleVM().dataAccess().readShort(toOrigin(grip), offset);
+        return vm().dataAccess().readShort(toOrigin(grip), offset);
     }
 
     public short readShort(Grip grip, int offset) {
@@ -239,7 +239,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return result.shortValue();
         }
 
-        return teleVM().dataAccess().readShort(toOrigin(grip), offset);
+        return vm().dataAccess().readShort(toOrigin(grip), offset);
     }
 
     public short getShort(Grip grip, int displacement, int index) {
@@ -248,7 +248,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return array[index];
         }
 
-        return teleVM().dataAccess().getShort(toOrigin(grip), displacement, index);
+        return vm().dataAccess().getShort(toOrigin(grip), displacement, index);
     }
 
     public char readChar(Grip grip, Offset offset) {
@@ -256,7 +256,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return readChar(grip, offset.toInt());
         }
 
-        return teleVM().dataAccess().readChar(toOrigin(grip), offset);
+        return vm().dataAccess().readChar(toOrigin(grip), offset);
     }
 
     public char readChar(Grip grip, int offset) {
@@ -265,7 +265,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return result.charValue();
         }
 
-        return teleVM().dataAccess().readChar(toOrigin(grip), offset);
+        return vm().dataAccess().readChar(toOrigin(grip), offset);
     }
 
     public char getChar(Grip grip, int displacement, int index) {
@@ -274,7 +274,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return array[index];
         }
 
-        return teleVM().dataAccess().getChar(toOrigin(grip), displacement, index);
+        return vm().dataAccess().getChar(toOrigin(grip), displacement, index);
     }
 
     public int readInt(Grip grip, Offset offset) {
@@ -282,7 +282,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return readInt(grip, offset.toInt());
         }
 
-        return teleVM().dataAccess().readInt(toOrigin(grip), offset);
+        return vm().dataAccess().readInt(toOrigin(grip), offset);
     }
 
     public int readInt(Grip grip, int offset) {
@@ -291,7 +291,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return result.intValue();
         }
 
-        return teleVM().dataAccess().readInt(toOrigin(grip), offset);
+        return vm().dataAccess().readInt(toOrigin(grip), offset);
     }
 
     public int getInt(Grip grip, int displacement, int index) {
@@ -300,7 +300,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return array[index];
         }
 
-        return teleVM().dataAccess().getInt(toOrigin(grip), displacement, index);
+        return vm().dataAccess().getInt(toOrigin(grip), displacement, index);
     }
 
     public float readFloat(Grip grip, Offset offset) {
@@ -308,7 +308,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return readFloat(grip, offset.toInt());
         }
 
-        return teleVM().dataAccess().readFloat(toOrigin(grip), offset);
+        return vm().dataAccess().readFloat(toOrigin(grip), offset);
     }
 
     public float readFloat(Grip grip, int offset) {
@@ -317,7 +317,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return result.floatValue();
         }
 
-        return teleVM().dataAccess().readFloat(toOrigin(grip), offset);
+        return vm().dataAccess().readFloat(toOrigin(grip), offset);
     }
 
     public float getFloat(Grip grip, int displacement, int index) {
@@ -326,7 +326,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return array[index];
         }
 
-        return teleVM().dataAccess().getFloat(toOrigin(grip), displacement, index);
+        return vm().dataAccess().getFloat(toOrigin(grip), displacement, index);
     }
 
     public long readLong(Grip grip, Offset offset) {
@@ -334,7 +334,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return readLong(grip, offset.toInt());
         }
 
-        return teleVM().dataAccess().readLong(toOrigin(grip), offset);
+        return vm().dataAccess().readLong(toOrigin(grip), offset);
     }
 
     public long readLong(Grip grip, int offset) {
@@ -343,7 +343,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return result.longValue();
         }
 
-        return teleVM().dataAccess().readLong(toOrigin(grip), offset);
+        return vm().dataAccess().readLong(toOrigin(grip), offset);
     }
 
     public long getLong(Grip grip, int displacement, int index) {
@@ -352,7 +352,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return array[index];
         }
 
-        return teleVM().dataAccess().getLong(toOrigin(grip), displacement, index);
+        return vm().dataAccess().getLong(toOrigin(grip), displacement, index);
     }
 
     public double readDouble(Grip grip, Offset offset) {
@@ -360,7 +360,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return readDouble(grip, offset.toInt());
         }
 
-        return teleVM().dataAccess().readDouble(toOrigin(grip), offset);
+        return vm().dataAccess().readDouble(toOrigin(grip), offset);
     }
 
     public double readDouble(Grip grip, int offset) {
@@ -369,7 +369,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return result.doubleValue();
         }
 
-        return teleVM().dataAccess().readDouble(toOrigin(grip), offset);
+        return vm().dataAccess().readDouble(toOrigin(grip), offset);
     }
 
     public double getDouble(Grip grip, int displacement, int index) {
@@ -378,7 +378,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return array[index];
         }
 
-        return teleVM().dataAccess().getDouble(toOrigin(grip), displacement, index);
+        return vm().dataAccess().getDouble(toOrigin(grip), displacement, index);
     }
 
     public Word readWord(Grip grip, Offset offset) {
@@ -386,7 +386,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return readWord(grip, offset.toInt());
         }
 
-        return teleVM().dataAccess().readWord(toOrigin(grip), offset);
+        return vm().dataAccess().readWord(toOrigin(grip), offset);
     }
 
     public Word readWord(Grip grip, int offset) {
@@ -394,7 +394,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return (Word) readField(grip, offset);
         }
 
-        return teleVM().dataAccess().readWord(toOrigin(grip), offset);
+        return vm().dataAccess().readWord(toOrigin(grip), offset);
     }
 
     public Word getWord(Grip grip, int displacement, int index) {
@@ -403,7 +403,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return array[index];
         }
 
-        return teleVM().dataAccess().getWord(toOrigin(grip), displacement, index);
+        return vm().dataAccess().getWord(toOrigin(grip), displacement, index);
     }
 
     public Grip readGrip(Grip grip, Offset offset) {
@@ -456,7 +456,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeByte(toOrigin(grip), offset, value);
+        vm().dataAccess().writeByte(toOrigin(grip), offset, value);
     }
 
     public void writeByte(Grip grip, int offset, byte value) {
@@ -465,7 +465,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeByte(toOrigin(grip), offset, value);
+        vm().dataAccess().writeByte(toOrigin(grip), offset, value);
     }
 
     public void setByte(Grip grip, int displacement, int index, byte value) {
@@ -475,7 +475,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().setByte(toOrigin(grip), displacement, index, value);
+        vm().dataAccess().setByte(toOrigin(grip), displacement, index, value);
     }
 
     public void writeBoolean(Grip grip, Offset offset, boolean value) {
@@ -484,7 +484,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeBoolean(toOrigin(grip), offset, value);
+        vm().dataAccess().writeBoolean(toOrigin(grip), offset, value);
     }
 
     public void writeBoolean(Grip grip, int offset, boolean value) {
@@ -493,7 +493,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeBoolean(toOrigin(grip), offset, value);
+        vm().dataAccess().writeBoolean(toOrigin(grip), offset, value);
     }
 
     public void setBoolean(Grip grip, int displacement, int index, boolean value) {
@@ -503,7 +503,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().setBoolean(toOrigin(grip), displacement, index, value);
+        vm().dataAccess().setBoolean(toOrigin(grip), displacement, index, value);
     }
 
     public void writeShort(Grip grip, Offset offset, short value) {
@@ -512,7 +512,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeShort(toOrigin(grip), offset, value);
+        vm().dataAccess().writeShort(toOrigin(grip), offset, value);
     }
 
     public void writeShort(Grip grip, int offset, short value) {
@@ -521,7 +521,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeShort(toOrigin(grip), offset, value);
+        vm().dataAccess().writeShort(toOrigin(grip), offset, value);
     }
 
     public void setShort(Grip grip, int displacement, int index, short value) {
@@ -531,7 +531,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().setShort(toOrigin(grip), displacement, index, value);
+        vm().dataAccess().setShort(toOrigin(grip), displacement, index, value);
     }
 
     public void writeChar(Grip grip, Offset offset, char value) {
@@ -540,7 +540,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeChar(toOrigin(grip), offset, value);
+        vm().dataAccess().writeChar(toOrigin(grip), offset, value);
     }
 
     public void writeChar(Grip grip, int offset, char value) {
@@ -549,7 +549,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeChar(toOrigin(grip), offset, value);
+        vm().dataAccess().writeChar(toOrigin(grip), offset, value);
     }
 
     public void setChar(Grip grip, int displacement, int index, char value) {
@@ -559,7 +559,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().setChar(toOrigin(grip), displacement, index, value);
+        vm().dataAccess().setChar(toOrigin(grip), displacement, index, value);
     }
 
     public void writeInt(Grip grip, Offset offset, int value) {
@@ -568,7 +568,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeInt(toOrigin(grip), offset, value);
+        vm().dataAccess().writeInt(toOrigin(grip), offset, value);
     }
 
     public void writeInt(Grip grip, int offset, int value) {
@@ -577,7 +577,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeInt(toOrigin(grip), offset, value);
+        vm().dataAccess().writeInt(toOrigin(grip), offset, value);
     }
 
     public void setInt(Grip grip, int displacement, int index, int value) {
@@ -587,7 +587,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().setInt(toOrigin(grip), displacement, index, value);
+        vm().dataAccess().setInt(toOrigin(grip), displacement, index, value);
     }
 
     public void writeFloat(Grip grip, Offset offset, float value) {
@@ -596,7 +596,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeFloat(toOrigin(grip), offset, value);
+        vm().dataAccess().writeFloat(toOrigin(grip), offset, value);
     }
 
     public void writeFloat(Grip grip, int offset, float value) {
@@ -605,7 +605,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeFloat(toOrigin(grip), offset, value);
+        vm().dataAccess().writeFloat(toOrigin(grip), offset, value);
     }
 
     public void setFloat(Grip grip, int displacement, int index, float value) {
@@ -615,7 +615,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().setFloat(toOrigin(grip), displacement, index, value);
+        vm().dataAccess().setFloat(toOrigin(grip), displacement, index, value);
     }
 
     public void writeLong(Grip grip, Offset offset, long value) {
@@ -624,7 +624,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeLong(toOrigin(grip), offset, value);
+        vm().dataAccess().writeLong(toOrigin(grip), offset, value);
     }
 
     public void writeLong(Grip grip, int offset, long value) {
@@ -633,7 +633,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeLong(toOrigin(grip), offset, value);
+        vm().dataAccess().writeLong(toOrigin(grip), offset, value);
     }
 
     public void setLong(Grip grip, int displacement, int index, long value) {
@@ -643,7 +643,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().setLong(toOrigin(grip), displacement, index, value);
+        vm().dataAccess().setLong(toOrigin(grip), displacement, index, value);
     }
 
     public void writeDouble(Grip grip, Offset offset, double value) {
@@ -652,7 +652,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeDouble(toOrigin(grip), offset, value);
+        vm().dataAccess().writeDouble(toOrigin(grip), offset, value);
     }
 
     public void writeDouble(Grip grip, int offset, double value) {
@@ -661,7 +661,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeDouble(toOrigin(grip), offset, value);
+        vm().dataAccess().writeDouble(toOrigin(grip), offset, value);
     }
 
     public void setDouble(Grip grip, int displacement, int index, double value) {
@@ -671,7 +671,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().setDouble(toOrigin(grip), displacement, index, value);
+        vm().dataAccess().setDouble(toOrigin(grip), displacement, index, value);
     }
 
     public void writeWord(Grip grip, Offset offset, Word value) {
@@ -680,7 +680,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeWord(toOrigin(grip), offset, value);
+        vm().dataAccess().writeWord(toOrigin(grip), offset, value);
     }
 
     public void writeWord(Grip grip, int offset, Word value) {
@@ -690,7 +690,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().writeWord(toOrigin(grip), offset, value);
+        vm().dataAccess().writeWord(toOrigin(grip), offset, value);
     }
 
     public void setWord(Grip grip, int displacement, int index, Word value) {
@@ -700,7 +700,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
             return;
         }
 
-        teleVM().dataAccess().setWord(toOrigin(grip), displacement, index, value);
+        vm().dataAccess().setWord(toOrigin(grip), displacement, index, value);
     }
 
     public void writeGrip(Grip grip, Offset offset, Grip value) {
@@ -763,7 +763,7 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
         if (src instanceof LocalTeleGrip) {
             System.arraycopy(toJava(src), srcIndex, dst, dstIndex, length);
         } else {
-            teleVM().dataAccess().copyElements(toOrigin(src), displacement, srcIndex, dst, dstIndex, length);
+            vm().dataAccess().copyElements(toOrigin(src), displacement, srcIndex, dst, dstIndex, length);
         }
     }
 }

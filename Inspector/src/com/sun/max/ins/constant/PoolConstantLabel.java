@@ -155,6 +155,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             if (teleConstantPool != null) {
                 try {
                     telePoolConstant = teleConstantPool.readTelePoolConstant(index);
+                } catch (MaxVMBusyException maxVMBusyException) {
+                    telePoolConstant = null;
                 } catch (DataIOError dataIOError) {
                     telePoolConstant = null;
                 } catch (InvalidReferenceException invalidReferenceException) {
