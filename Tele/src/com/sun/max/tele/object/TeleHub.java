@@ -37,8 +37,8 @@ import com.sun.max.vm.type.*;
  */
 public abstract class TeleHub extends TeleHybridObject {
 
-    protected TeleHub(TeleVM teleVM, Reference hubReference) {
-        super(teleVM, hubReference);
+    protected TeleHub(TeleVM vm, Reference hubReference) {
+        super(vm, hubReference);
     }
 
     private TeleClassActor teleClassActor = null;
@@ -49,7 +49,7 @@ public abstract class TeleHub extends TeleHybridObject {
     public TeleClassActor getTeleClassActor() {
         if (teleClassActor == null) {
             final Reference classActorReference = vm().teleFields().Hub_classActor.readReference(reference());
-            teleClassActor = (TeleClassActor) vm().makeTeleObject(classActorReference);
+            teleClassActor = (TeleClassActor) heap().makeTeleObject(classActorReference);
         }
         return teleClassActor;
     }

@@ -134,9 +134,17 @@ public final class MiscWordLabel extends ValueLabel {
                     if (javaMonitorReference.isZero()) {
                         setToolTipText("InflatedMonitorLockword64:  bound, monitor=null");
                     } else {
-                        teleJavaMonitor = vm().makeTeleObject(javaMonitorReference);
-                        final String name = teleJavaMonitor.classActorForObjectType().qualifiedName();
-                        setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + name);
+                        try {
+                            teleJavaMonitor = vm().heap().findTeleObject(javaMonitorReference);
+                        } catch (MaxVMBusyException e) {
+                           // can't learn anything about the monitor right now
+                        }
+                        if (teleJavaMonitor == null) {
+                            setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + inspection().nameDisplay().unavailableDataLongText());
+                        } else {
+                            final String name = teleJavaMonitor.classActorForObjectType().qualifiedName();
+                            setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + name);
+                        }
                     }
                 } else {
                     // Field access

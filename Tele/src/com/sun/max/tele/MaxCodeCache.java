@@ -87,8 +87,9 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
 
     /**
      * Gets the most recent compilation of a method in the VM, null if none.
+     * @throws MaxVMBusyException  if the VM is unavailable
      */
-    MaxCompiledCode latestCompilation(TeleClassMethodActor teleClassMethodActor);
+    MaxCompiledCode latestCompilation(TeleClassMethodActor teleClassMethodActor) throws MaxVMBusyException;
 
     /**
      * Create a new MaxExternalCode for a block of external native code in the VM that has not yet been registered.
@@ -97,8 +98,9 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @param codeSize presumed size of the code
      * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
      * @return a newly created TeleExternalCode
+     * @throws MaxVMBusyException if the VM is unavailable
      */
-    MaxExternalCode createExternalCode(Address codeStart, Size codeSize, String name);
+    MaxExternalCode createExternalCode(Address codeStart, Size codeSize, String name) throws MaxVMBusyException;
 
     /**
      * Writes a textual summary describing all instances of {@link MaxMachineCode} known to the VM.

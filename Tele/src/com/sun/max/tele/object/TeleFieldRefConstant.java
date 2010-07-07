@@ -25,14 +25,14 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Inspector's canonical surrogate for an object of type {@link FieldRefConstant} in the {@link TeleVM}.
+ * Inspector's canonical surrogate for an object of type {@link FieldRefConstant} in the VM.
  *
  * @author Michael Van De Vanter
  */
 public abstract class TeleFieldRefConstant extends TelePoolConstant {
 
-    public TeleFieldRefConstant(TeleVM teleVM, Reference fieldRefConstantReference) {
-        super(teleVM, fieldRefConstantReference);
+    public TeleFieldRefConstant(TeleVM vm, Reference fieldRefConstantReference) {
+        super(vm, fieldRefConstantReference);
     }
 
     @Override
@@ -41,14 +41,14 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
     }
 
      /**
-     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Resolved} in the {@link TeleVM}.
+     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Resolved} in the VM.
      *
      * @author Michael Van De Vanter
      */
     public static final class Resolved extends TeleFieldRefConstant {
 
-        public Resolved(TeleVM teleVM, Reference resolvedFieldRefConstantReference) {
-            super(teleVM, resolvedFieldRefConstantReference);
+        public Resolved(TeleVM vm, Reference resolvedFieldRefConstantReference) {
+            super(vm, resolvedFieldRefConstantReference);
         }
 
         @Override
@@ -57,11 +57,11 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
         }
 
         /**
-         * @return surrogate for the {@FieldActor} in the {@link TeleVM} to which the constant was resolved
+         * @return surrogate for the {@FieldActor} in the VM to which the constant was resolved
          */
         public TeleFieldActor getTeleFieldActor() {
             final Reference fieldActorReference = vm().teleFields().FieldRefConstant$Resolved_fieldActor.readReference(reference());
-            return (TeleFieldActor) vm().makeTeleObject(fieldActorReference);
+            return (TeleFieldActor) heap().makeTeleObject(fieldActorReference);
         }
 
         @Override
@@ -72,14 +72,14 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Unresolved} in the {@link TeleVM}.
+     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Unresolved} in the VM.
      *
      * @author Michael Van De Vanter
      */
     public static final class Unresolved extends TeleFieldRefConstant {
 
-        public Unresolved(TeleVM teleVM, Reference unresolvedFieldRefConstantReference) {
-            super(teleVM, unresolvedFieldRefConstantReference);
+        public Unresolved(TeleVM vm, Reference unresolvedFieldRefConstantReference) {
+            super(vm, unresolvedFieldRefConstantReference);
         }
 
         @Override
@@ -95,14 +95,14 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Unresolved} in the {@link TeleVM}.
+     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Unresolved} in the VM.
      *
      * @author Michael Van De Vanter
      */
     public static final class UnresolvedIndices extends TeleFieldRefConstant {
 
-        public UnresolvedIndices(TeleVM teleVM, Reference unresolvedFieldRefConstantReference) {
-            super(teleVM, unresolvedFieldRefConstantReference);
+        public UnresolvedIndices(TeleVM vm, Reference unresolvedFieldRefConstantReference) {
+            super(vm, unresolvedFieldRefConstantReference);
         }
 
         @Override

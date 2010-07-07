@@ -40,7 +40,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * The Interpreter's interface to {@link TeleVM}.  Encapsulates all the state of the VM.
+ * The Interpreter's interface to the VM.  Encapsulates all the state of the VM.
  * Can run without VM for testing.
  *
  * @author Athul Acharya
@@ -49,8 +49,8 @@ public final class Machine extends AbstractTeleVMHolder{
 
     private ExecutionThread currentThread;
 
-    Machine(TeleVM teleVM) {
-        super(teleVM);
+    Machine(TeleVM vm) {
+        super(vm);
         final ExecutionThread mainThread = newThread(java.lang.Thread.NORM_PRIORITY, ExecutionThread.ThreadType.NORMAL_THREAD);
         //JavaThreads.initialize(mainThread);
         activate(mainThread);
@@ -163,14 +163,14 @@ public final class Machine extends AbstractTeleVMHolder{
     /**
      * Converts a given reference to an object to a {@link Throwable} instance.
      *
-     * @param teleVM the tele VM to be used if {@code throwableReference} is a reference in a {@link TeleVM}'s address space
+     * @param vm the tele VM to be used if {@code throwableReference} is a reference in a VM's address space
      * @param throwableReference the reference to be converted to a {@code Throwable instance}
      * @return a {@code Throwable instance} converted from {@code throwableReference}
      */
-    private static Throwable toThrowable(TeleVM teleVM, ReferenceValue throwableReference) {
+    private static Throwable toThrowable(TeleVM vm, ReferenceValue throwableReference) {
         if (throwableReference instanceof TeleReferenceValue) {
             try {
-                return (Throwable) teleVM.makeTeleObject(throwableReference.asReference()).deepCopy();
+                return (Throwable) vm.heap().makeTeleObject(throwableReference.asReference()).deepCopy();
             } catch (Exception e1) {
                 throw ProgramError.unexpected("Could not make a local copy of a remote Throwable", e1);
             }

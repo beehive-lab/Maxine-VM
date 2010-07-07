@@ -21,14 +21,15 @@
 package com.sun.max.tele.debug;
 
 import java.io.*;
-import java.util.Arrays;
+import java.util.*;
 
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.*;
 
 /**
  * Abstract base class for caching the values of a set of ISA defined registers for a given thread.
@@ -38,9 +39,13 @@ import com.sun.max.vm.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-abstract class TeleRegisters {
+abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache {
 
-    protected final VMConfiguration vmConfiguration;
+    private static final int TRACE_VALUE = 2;
+
+    private final TimedTrace updateTracer;
+
+    private final TeleRegisterSet teleRegisterSet;
     final Endianness endianness;
     private final Symbolizer<? extends Symbol> symbolizer;
 
@@ -48,14 +53,37 @@ abstract class TeleRegisters {
     private final byte[] registerData;
     private final ByteArrayInputStream registerDataInputStream;
 
-    protected TeleRegisters(Symbolizer<? extends Symbol> symbolizer, VMConfiguration vmConfiguration) {
+    protected TeleRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet, Symbolizer<? extends Symbol> symbolizer) {
+        super(teleVM);
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + teleRegisterSet.thread().entityName() + " creating");
+        tracer.begin();
+
+        this.teleRegisterSet = teleRegisterSet;
         this.symbolizer = symbolizer;
-        this.vmConfiguration = vmConfiguration;
-        this.endianness = vmConfiguration.platform().processorKind.dataModel.endianness;
+        this.endianness = teleVM.vmConfiguration().platform().processorKind.dataModel.endianness;
         this.registerValues = new Address[symbolizer.numberOfValues()];
         this.registerData = new byte[symbolizer.numberOfValues() * Address.size()];
         this.registerDataInputStream = new ByteArrayInputStream(registerData);
         Arrays.fill(this.registerValues, Address.zero());
+
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + teleRegisterSet.thread().entityName() + " updating");
+
+        tracer.end(null);
+    }
+
+    public final void updateCache() {
+        updateTracer.begin();
+        // Refreshes the register values from the {@linkplain #registerData() raw buffer} holding the registers' values.
+        // This method should be called whenever the raw buffer is updated.
+        registerDataInputStream.reset();
+        for (int i = 0; i != registerValues.length; i++) {
+            try {
+                registerValues[i] = Word.read(registerDataInputStream, endianness).asAddress();
+            } catch (IOException ioException) {
+                ProgramError.unexpected(ioException);
+            }
+        }
+        updateTracer.end(null);
     }
 
     /**
@@ -97,21 +125,6 @@ abstract class TeleRegisters {
 
     final Symbolizer<? extends Symbol> symbolizer() {
         return symbolizer;
-    }
-
-    /**
-     * Refreshes the register values from the {@linkplain #registerData() raw buffer} holding the registers' values.
-     * This method should be called whenever the raw buffer is updated.
-     */
-    final void refresh() {
-        registerDataInputStream.reset();
-        for (int i = 0; i != registerValues.length; i++) {
-            try {
-                registerValues[i] = Word.read(registerDataInputStream, endianness).asAddress();
-            } catch (IOException ioException) {
-                ProgramError.unexpected(ioException);
-            }
-        }
     }
 
     Address getValueAt(int index) {

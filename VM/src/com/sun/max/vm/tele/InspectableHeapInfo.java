@@ -75,7 +75,7 @@ public final class InspectableHeapInfo {
      * Used by the Inspector to determine if the VM is currently collecting.
      */
     @INSPECTED
-    private static long collectionEpoch;
+    private static long gcStartedCounter;
 
     /**
      * Inspectable counter of the number of Garbage Collections that have <strong>completed</strong>.
@@ -84,7 +84,7 @@ public final class InspectableHeapInfo {
      * determine if the Inspector's cache of the root locations is current.
      */
     @INSPECTED
-    private static long rootEpoch;
+    private static long gcCompletedCounter;
 
     /**
      * Old memory cell location of the object most recently relocated.
@@ -154,13 +154,13 @@ public final class InspectableHeapInfo {
      * Records that a GC has just begun, using an inspectable counter.
      */
     public static void notifyGCStarted() {
-        collectionEpoch++;
+        gcStartedCounter++;
         // From the Inspector's perspective, a GC begins when
         // the epoch counter gets incremented.  So the following
         // method call makes it possible
         // for the inspector to take an interrupt, if needed, just
         // as the GC begins.
-        inspectableGCStarted(collectionEpoch);
+        inspectableGCStarted(gcStartedCounter);
     }
 
     /**
@@ -174,7 +174,7 @@ public final class InspectableHeapInfo {
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
-     * @param collectionEpoch the GC epoch that is starting.
+     * @param gcStartedCounter the GC epoch that is starting.
      * @see HeapScheme.Inspect#inspectableGCStarting()
      */
     @INSPECTED
@@ -186,13 +186,13 @@ public final class InspectableHeapInfo {
      * Records that a GC has concluded, using an inspectable counter.
      */
     public static void notifyGCCompleted() {
-        rootEpoch = collectionEpoch;
+        gcCompletedCounter++;
         // From the Inspector's perspective, a GC is complete when
         // the two epoch counters become equal.  The following
         // method call makes it possible
         // for the inspector to take an interrupt, if needed, just
         // after the GC has concluded.
-        inspectableGCCompleted(collectionEpoch);
+        inspectableGCCompleted(gcCompletedCounter);
     }
 
     /**
@@ -206,7 +206,7 @@ public final class InspectableHeapInfo {
      * <strong>Important:</strong> The Inspector assumes that this method is loaded
      * and compiled in the boot image and that it will never be dynamically recompiled.
      *
-     * @param collectionEpoch the GC epoch that is ending.
+     * @param gcStartedCounter the GC epoch that is ending.
      * @see HeapScheme.Inspect#inspectableGCComplete()
      */
     @INSPECTED

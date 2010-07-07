@@ -23,6 +23,7 @@ package com.sun.max.tele.object;
 import java.lang.management.*;
 
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -32,32 +33,49 @@ import com.sun.max.vm.reference.*;
  *
  * @author Michael Van De Vanter
  */
-public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion {
+public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion{
+
+    private static final int TRACE_VALUE = 2;
 
     long wordsUsed = 0;
 
-    public TeleRootTableMemoryRegion(TeleVM teleVM, Reference rootTableMemoryRegionReference) {
-        super(teleVM, rootTableMemoryRegionReference);
+    private final Object localStatsPrinter = new Object() {
+
+        private long previousWordsUsedCount = 0;
+
+        @Override
+        public String toString() {
+            final long wordsUsedCount = wordsUsed;
+            final long newWordsUsedCount =  wordsUsedCount - previousWordsUsedCount;
+            final StringBuilder msg = new StringBuilder();
+            msg.append(", #wordsUsed=(").append(wordsUsedCount);
+            msg.append(",new=").append(newWordsUsedCount).append(")");
+            previousWordsUsedCount = wordsUsedCount;
+            return msg.toString();
+        }
+    };
+
+    public TeleRootTableMemoryRegion(TeleVM vm, Reference rootTableMemoryRegionReference) {
+        super(vm, rootTableMemoryRegionReference);
+    }
+
+    @Override
+    protected void updateObjectCache(StatsPrinter statsPrinter) {
+        super.updateObjectCache(statsPrinter);
+        try {
+            wordsUsed = vm().teleFields().RootTableMemoryRegion_wordsUsed.readLong(getReference());
+        } catch (DataIOError dataIOError) {
+            // No update; data read failed for some reason other than VM availability
+            ProgramWarning.message("TeleLinearAllocationMemoryRegion dataIOError:");
+            dataIOError.printStackTrace();
+            // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
+        }
+        statsPrinter.addStat(localStatsPrinter);
     }
 
     @Override
     public MemoryUsage getUsage() {
         return new MemoryUsage(-1, vm().wordSize().toLong() * wordsUsed, getRegionSize().toLong(), -1);
-    }
-
-    @Override
-    protected void refresh() {
-        if (vm().tryLock()) {
-            try {
-                wordsUsed = vm().teleFields().RootTableMemoryRegion_wordsUsed.readLong(getReference());
-            } catch (DataIOError dataIOError) {
-                // No update; VM not available for some reason.
-                // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
-            } finally {
-                vm().unlock();
-            }
-        }
-        super.refresh();
     }
 
 }

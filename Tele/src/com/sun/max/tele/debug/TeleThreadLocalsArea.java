@@ -47,7 +47,7 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements MaxThreadLocalsArea {
+public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements TeleVMCache, MaxThreadLocalsArea {
 
     private static final int TRACE_LEVEL = 2;
 
@@ -129,6 +129,26 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " when in state " + safepointState + " in the " + teleVM.entityName();
     }
 
+    public void updateCache() {
+        int offset = 0;
+        final DataAccess dataAccess = vm().teleProcess().dataAccess();
+        for (VmThreadLocal vmThreadLocalVariable : VmThreadLocal.values()) {
+            final int index = vmThreadLocalVariable.index;
+            if (offset == 0 && safepointState == State.TRIGGERED) {
+                threadLocalVariables[index].setValue(VoidValue.VOID);
+            } else {
+                try {
+                    final Word word = dataAccess.readWord(memoryRegion().start(), offset);
+                    threadLocalVariables[index].setValue(new WordValue(word));
+                } catch (DataIOError dataIOError) {
+                    ProgramWarning.message("Could not read value of " + vmThreadLocalVariable + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals");
+                    threadLocalVariables[index].setValue(VoidValue.VOID);
+                }
+            }
+            offset += Word.size();
+        }
+    }
+
     public String entityName() {
         return threadLocalsAreaMemoryRegion.regionName();
     }
@@ -170,28 +190,6 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
             }
         }
         return null;
-    }
-
-    /**
-     * Reads and caches all values for this set of {@linkplain VmThreadLocal thread local variables} in the VM.
-     */
-    void refresh(DataAccess dataAccess) {
-        int offset = 0;
-        for (VmThreadLocal vmThreadLocalVariable : VmThreadLocal.values()) {
-            final int index = vmThreadLocalVariable.index;
-            if (offset == 0 && safepointState == State.TRIGGERED) {
-                threadLocalVariables[index].setValue(VoidValue.VOID);
-            } else {
-                try {
-                    final Word word = dataAccess.readWord(memoryRegion().start(), offset);
-                    threadLocalVariables[index].setValue(new WordValue(word));
-                } catch (DataIOError dataIOError) {
-                    ProgramWarning.message("Could not read value of " + vmThreadLocalVariable + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals");
-                    threadLocalVariables[index].setValue(VoidValue.VOID);
-                }
-            }
-            offset += Word.size();
-        }
     }
 
     /**

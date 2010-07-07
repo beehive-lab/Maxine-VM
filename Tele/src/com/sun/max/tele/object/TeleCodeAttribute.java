@@ -25,33 +25,37 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for an object of type {@link CodeAttribute} in the {@link TeleVM}.
+ * Canonical surrogate for an object of type {@link CodeAttribute} in the VM.
  *
  * @author Michael Van De Vanter
- *
  */
 public class TeleCodeAttribute extends TeleTupleObject {
 
     // Keep construction minimal for both performance and synchronization.
-    protected TeleCodeAttribute(TeleVM teleVM, Reference codeAttributeReference) {
-        super(teleVM, codeAttributeReference);
+    protected TeleCodeAttribute(TeleVM vm, Reference codeAttributeReference) {
+        super(vm, codeAttributeReference);
     }
 
     /**
-     * Reads the Java bytecodes from the {@link TeleVM}.
+     * Reads the Java bytecodes from the VM.
+     * <br>
+     * Must be called in a thread holding the VM lock.
+     *
+     * @return the bytecodes in an array.
      */
     public final byte[] readBytecodes() {
+        assert vm().lockHeldByCurrentThread();
         final Reference byteArrayReference = vm().teleFields().CodeAttribute_code.readReference(reference());
-        final TeleArrayObject teleByteArrayObject = (TeleArrayObject) vm().makeTeleObject(byteArrayReference);
+        final TeleArrayObject teleByteArrayObject = (TeleArrayObject) heap().makeTeleObject(byteArrayReference);
         return (byte[]) teleByteArrayObject.shallowCopy();
     }
 
     /**
-     * Gets the local surrogate for the {@link ConstantPool} associated with this code in the {@link TeleVM}.
+     * Gets the local surrogate for the {@link ConstantPool} associated with this code in the VM.
      */
     public final TeleConstantPool getTeleConstantPool() {
         final Reference constantPoolReference = vm().teleFields().CodeAttribute_constantPool.readReference(reference());
-        return (TeleConstantPool) vm().makeTeleObject(constantPoolReference);
+        return (TeleConstantPool) heap().makeTeleObject(constantPoolReference);
     }
 
 }

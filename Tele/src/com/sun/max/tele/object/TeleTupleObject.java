@@ -43,8 +43,8 @@ import com.sun.max.vm.value.*;
   */
 public class TeleTupleObject extends TeleObject {
 
-    protected TeleTupleObject(TeleVM teleVM, Reference reference) {
-        super(teleVM, reference, teleVM.vmConfiguration().layoutScheme().tupleLayout);
+    protected TeleTupleObject(TeleVM vm, Reference reference) {
+        super(vm, reference, vm.vmConfiguration().layoutScheme().tupleLayout);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class TeleTupleObject extends TeleObject {
         final Class<?> javaClass = classActorForObjectType().toJava();
         if (IrMethod.class.isAssignableFrom(javaClass)) {
             final Reference classMethodActorReference = vm().teleFields().IrMethod_classMethodActor(javaClass.asSubclass(IrMethod.class)).readReference(reference());
-            return (TeleClassMethodActor) vm().makeTeleObject(classMethodActorReference);
+            return (TeleClassMethodActor) heap().makeTeleObject(classMethodActorReference);
         }
         return null;
     }

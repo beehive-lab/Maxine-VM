@@ -37,12 +37,11 @@ import com.sun.max.vm.type.*;
  * Canonical surrogate for an object of type {@link MethodActor} in the VM.
  *
  * @author Michael Van De Vanter
- *
  */
 public abstract class TeleMethodActor extends TeleMemberActor implements MethodProvider {
 
     /**
-     * @return local {@link MethodActor} corresponding the the {@link TeleVM}'s {@link MethodActor} for this method.
+     * @return local {@link MethodActor} corresponding the the VM's {@link MethodActor} for this method.
      */
     @Override
     protected Actor initActor() {
@@ -59,8 +58,8 @@ public abstract class TeleMethodActor extends TeleMemberActor implements MethodP
     }
 
     // Keep construction minimal for both performance and synchronization.
-    protected TeleMethodActor(TeleVM teleVM, Reference methodActorReference) {
-        super(teleVM, methodActorReference);
+    protected TeleMethodActor(TeleVM vm, Reference methodActorReference) {
+        super(vm, methodActorReference);
     }
 
     /**
@@ -78,7 +77,7 @@ public abstract class TeleMethodActor extends TeleMemberActor implements MethodP
     public abstract TeleCodeAttribute getTeleCodeAttribute();
 
     /**
-     * @return whether the method in the {@link TeleVM} had its {@link CodeAttribute}  substituted from another class.
+     * @return whether the method in the VM had its {@link CodeAttribute}  substituted from another class.
      */
     public boolean isSubstituted() {
         return teleClassActorSubstitutedFrom() != null;

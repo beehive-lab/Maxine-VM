@@ -26,7 +26,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for an object of type {@link Class} in the tele VM.
+ * Canonical surrogate for an object of type {@link Class} in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -34,8 +34,8 @@ public final class TeleClass extends TeleTupleObject implements ClassObjectProvi
 
     private Class clazz;
 
-    protected TeleClass(TeleVM teleVM, Reference classReference) {
-        super(teleVM, classReference);
+    protected TeleClass(TeleVM vm, Reference classReference) {
+        super(vm, classReference);
     }
 
     /**
@@ -43,7 +43,7 @@ public final class TeleClass extends TeleTupleObject implements ClassObjectProvi
      */
     public TeleClassActor getTeleClassActor() {
         final Reference classActorReference = vm().teleFields().Class_classActor.readReference(reference());
-        final TeleClassActor teleClassActor = (TeleClassActor) vm().makeTeleObject(classActorReference);
+        final TeleClassActor teleClassActor = (TeleClassActor) heap().makeTeleObject(classActorReference);
         return teleClassActor;
     }
 
