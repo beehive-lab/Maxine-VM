@@ -31,21 +31,18 @@ import com.sun.max.ins.*;
 import com.sun.max.program.*;
 
 /**
- * A toolbar containing controls for identifying rows that match a regexp pattern
- * and for navigating forward and backward among the matching rows.
+ * A toolbar containing controls for identifying rows that match a (optionally regexp) pattern.
  *
  * @author Michael Van De Vanter
  */
-public class RowTextSearchToolBar extends InspectorToolBar {
+public class TableRowFilterToolBar extends InspectorToolBar {
 
-    private final RowMatchNavigationListener owner;
-    private final RowTextMatcher rowMatcher;
+    private final RowMatchListener parent;
+    private final TableRowTextMatcher tableRowMatcher;
     private final InspectorCheckBox regexpCheckBox;
     private final JTextField textField;
     private final Color textFieldDefaultBackground;
     private final JLabel statusLabel;
-    private final JButton nextButton;
-    private final JButton previousButton;
 
     private int[] matchingRows = null;
 
@@ -65,22 +62,22 @@ public class RowTextSearchToolBar extends InspectorToolBar {
     }
 
     /**
-     * Creates a toolbar with controls for performing regular expression searching over a row-based view.
+     * Creates a toolbar with controls for performing regular expression filtering over a row-based view.
      *
      * @param inspection
      * @param parent where to send search outcomes and user requests
      * @param rowTextMatcher a regular expression search session wrapped around some row-based data
      */
-    public RowTextSearchToolBar(Inspection inspection, RowMatchNavigationListener parent, RowTextMatcher rowTextMatcher) {
+    public TableRowFilterToolBar(Inspection inspection, RowMatchListener parent, JTable jTable) {
         super(inspection);
-        this.owner = parent;
-        rowMatcher = rowTextMatcher;
+        this.parent = parent;
+        tableRowMatcher = new TableRowTextMatcher(inspection, jTable);
         setBorder(style().defaultPaneBorder());
         setFloatable(false);
         setRollover(true);
-        add(new TextLabel(inspection, "Search: "));
+        add(new TextLabel(inspection, "Filter pattern: "));
 
-        regexpCheckBox = new InspectorCheckBox(inspection, "regexp", "Treat search pattern as a regular expression?", false);
+        regexpCheckBox = new InspectorCheckBox(inspection, "regexp", "Treat filter pattern as a regular expression?", false);
         regexpCheckBox.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 processTextInput();
@@ -92,13 +89,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         textFieldDefaultBackground = textField.getBackground();
         textField.setToolTipText("Search code for regexp pattern, case-insensitive, Return=Next");
         textField.getDocument().addDocumentListener(new SearchTextListener());
-        textField.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                if  (matchingRows.length > 0) {
-                    owner.selectNextResult();
-                }
-            }
-        });
+
         textField.requestFocusInWindow();
         add(textField);
 
@@ -109,36 +100,20 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         statusLabel = new JLabel("");
         add(statusLabel);
 
-        previousButton = new JButton(new AbstractAction() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                owner.selectPreviousResult();
-            }
-        });
-        previousButton.setIcon(style().searchPreviousMatchButtonIcon());
-        previousButton.setText(null);
-        previousButton.setToolTipText("Scroll to previous matching line");
-        previousButton.setEnabled(false);
-        add(previousButton);
-
-        nextButton = new JButton(new AbstractAction() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                owner.selectNextResult();
-            }
-        });
-        nextButton.setIcon(style().searchNextMatchButtonIcon());
-        nextButton.setText(null);
-        nextButton.setToolTipText("Scroll to next matching line");
-        nextButton.setEnabled(false);
-        add(nextButton);
-
         final JButton closeButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
-                owner.closeRequested();
+                TableRowFilterToolBar.this.parent.closeRequested();
             }
         });
         closeButton.setIcon(style().codeViewCloseIcon());
-        closeButton.setToolTipText("Close Search");
+        closeButton.setToolTipText("Close Filter");
         add(closeButton);
+    }
+
+    @Override
+    public void refresh(boolean force) {
+        tableRowMatcher.refresh();
+        processTextInput();
     }
 
     /**
@@ -154,9 +129,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
             textField.setBackground(textFieldDefaultBackground);
             statusLabel.setText("");
             matchingRows = null;
-            owner.setSearchResult(null);
-            nextButton.setEnabled(false);
-            previousButton.setEnabled(false);
+            parent.setSearchResult(null);
         } else {
             Pattern pattern;
             try {
@@ -169,23 +142,18 @@ public class RowTextSearchToolBar extends InspectorToolBar {
                 textField.setBackground(style().searchFailedBackground());
                 statusLabel.setText("regexp error");
                 matchingRows = null;
-                owner.setSearchResult(matchingRows);
+                parent.setSearchResult(matchingRows);
                 return;
             }
-            matchingRows = rowMatcher.findMatches(pattern);
+            matchingRows = tableRowMatcher.findMatches(pattern);
             final int matchCount = matchingRows.length;
-            statusLabel.setText(Integer.toString(matchCount) + "/" + rowMatcher.rowCount() + " rows");
-
+            statusLabel.setText(Integer.toString(matchCount) + "/" + tableRowMatcher.rowCount() + " rows");
             if (matchCount > 0) {
                 textField.setBackground(style().searchMatchedBackground());
-                nextButton.setEnabled(true);
-                previousButton.setEnabled(true);
             } else {
                 textField.setBackground(style().searchFailedBackground());
-                nextButton.setEnabled(false);
-                previousButton.setEnabled(false);
             }
-            owner.setSearchResult(matchingRows);
+            parent.setSearchResult(matchingRows);
         }
     }
 }

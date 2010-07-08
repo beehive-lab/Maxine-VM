@@ -20,38 +20,27 @@
  */
 package com.sun.max.ins.gui;
 
-import java.util.*;
+import java.util.regex.*;
 
 /**
- * Callback interface for views that incorporate of row-based searching.
- * <br>
- * Supports forward and backward navigation among the most recent set of matching rows.
+ * Regular expression pattern matcher; identifies by number the rows that match a pattern.
  *
  * @author Michael Van De Vanter
+ * @see {@link java.util.regex.Pattern}
  */
-public interface RowSearchListener {
+public interface RowTextMatcher {
 
     /**
-     * Notifies the result of a new table search.
+     * @return the number of rows being examined.
+     */
+    int rowCount();
+
+    /**
+     * Find rows matching a regexp pattern.
      *
-     * @param searchMatchingRows the rows that match the supplied pattern, length=0 if no matches, null if pattern is empty (no search).
+     * @param pattern a regular expression pattern
+     * @return rows in the row-based object being searched that match the {@link Pattern}.
      */
-    void searchResult(List<Integer> searchMatchingRows);
+    int[] findMatches(Pattern pattern);
 
-    /**
-     * Notifies that the user has requested to see the next match, relative to the current selection, of the most recent search.
-     * This is not supposed to happen if the most recent search produced no matches.
-     */
-    void selectNextResult();
-
-    /**
-     * Notifies that the user has requested to see the previous match, relative to the current selection, of the most recent search.
-    * This is not supposed to happen if the most recent search produced no matches.
-     */
-    void selectPreviousResult();
-
-    /**
-     * Notifies that the user has requested that the search be closed.
-     */
-    void closeSearch();
 }

@@ -96,6 +96,16 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
     }
 
+    /**
+     * Sets a display filter that will cause only the specified rows
+     * to be displayed.
+     *
+     * @param displayedRows the rows to be displayed, sorted in ascending order, null if all should be displayed.
+     */
+    public void setDisplayedRows(int[] displayedRows) {
+        tableModel.setDisplayedRows(displayedRows);
+    }
+
     private final class MemoryRegionsColumnModel extends InspectorTableColumnModel<MemoryRegionsColumnKind> {
 
         private MemoryRegionsColumnModel(MemoryRegionsViewPreferences viewPreferences) {
@@ -117,6 +127,7 @@ public final class MemoryRegionsTable extends InspectorTable {
     private final class MemoryRegionsTableModel extends InspectorMemoryTableModel {
 
         private MaxMemoryRegion[] sortedRegions = null;
+        private int[] displayedRows = null;
 
         public MemoryRegionsTableModel(Inspection inspection) {
             super(inspection, Address.zero());
@@ -128,11 +139,18 @@ public final class MemoryRegionsTable extends InspectorTable {
             final List<MaxMemoryRegion> memoryRegions = vm().state().memoryRegions();
             sortedRegions = memoryRegions.toArray(new MaxMemoryRegion[memoryRegions.size()]);
             Arrays.sort(sortedRegions, MaxMemoryRegion.Util.startComparator());
+            // Flush any filtering
+            displayedRows = null;
             super.refresh();
         }
 
+        /**
+         * {@inheritDoc}
+         * <p>
+         * The number of rows actually being displayed, possibly filtered.
+         */
         public int getRowCount() {
-            return sortedRegions.length;
+            return displayedRows == null ? sortedRegions.length : displayedRows.length;
         }
 
         public int getColumnCount() {
@@ -150,7 +168,7 @@ public final class MemoryRegionsTable extends InspectorTable {
 
         @Override
         public MaxMemoryRegion getMemoryRegion(int row) {
-            return sortedRegions[row];
+            return sortedRegions[displayed2ModelRow(row)];
         }
 
         @Override
@@ -158,23 +176,46 @@ public final class MemoryRegionsTable extends InspectorTable {
             return Offset.fromLong(getAddress(row).toLong());
         }
 
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Only find rows that are being displayed.
+         */
         @Override
         public int findRow(Address address) {
-            for (int row = 0; row < sortedRegions.length; row++) {
-                if (sortedRegions[row].contains(address)) {
+            final int displayedRowCount = getRowCount();
+            for (int row = 0; row < displayedRowCount; row++) {
+                if (getMemoryRegion(row).contains(address)) {
                     return row;
                 }
             }
             return -1;
         }
 
+        /**
+         * Find the row, if any, whose memory region specifies the same region
+         * of VM memory as the one specified.
+         *
+         * @param memoryRegion description of a region of VM memory
+         * @return
+         */
         int findRow(MaxMemoryRegion memoryRegion) {
-            for (int row = 0; row < sortedRegions.length; row++) {
-                if (sortedRegions[row].sameAs(memoryRegion)) {
+            final int displayedRowCount = getRowCount();
+            for (int row = 0; row < displayedRowCount; row++) {
+                if (getMemoryRegion(row).sameAs(memoryRegion)) {
                     return row;
                 }
             }
             return -1;
+        }
+
+        public void setDisplayedRows(int[] displayedRows) {
+            this.displayedRows = displayedRows;
+            this.fireTableDataChanged();
+        }
+
+        private int displayed2ModelRow(int displayedRow) {
+            return displayedRows == null ? displayedRow : displayedRows[displayedRow];
         }
     }
 

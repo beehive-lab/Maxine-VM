@@ -21,16 +21,22 @@
 package com.sun.max.ins.gui;
 
 /**
- * Objects that are subject to textual search,
- * for example by a {@link TableRowTextMatcher}.
+ * Callback interface for views that incorporate of row-based matching
+ * with user invokable navigation.
  *
  * @author Michael Van De Vanter
  */
-public interface TextSearchable {
+public interface RowMatchNavigationListener extends RowMatchListener {
 
     /**
-     * @return a string suitable for use during text searching.
+     * Notifies that the user has requested to see the next match, relative to the current selection, of the most recent search.
+     * This is not supposed to happen if the most recent search produced no matches.
      */
-    String getSearchableText();
+    void selectNextResult();
 
+    /**
+     * Notifies that the user has requested to see the previous match, relative to the current selection, of the most recent search.
+    * This is not supposed to happen if the most recent search produced no matches.
+     */
+    void selectPreviousResult();
 }
