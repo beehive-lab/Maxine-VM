@@ -160,7 +160,7 @@ public final class ClassRegistry {
     private static ClassRegistry testClassRegistry;
 
     @INSPECTED
-    private final HashMap<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new HashMap<TypeDescriptor, ClassActor>(5000);
+    private final HashMap<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new HashMap<TypeDescriptor, ClassActor>(16384);
     private final HashMap<Object, Object>[] propertyMaps;
 
     public final ClassLoader classLoader;
