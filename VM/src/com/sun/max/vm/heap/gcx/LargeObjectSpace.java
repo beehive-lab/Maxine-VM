@@ -459,9 +459,7 @@ public class LargeObjectSpace extends HeapSweeper {
     public Size beginSweep(boolean precise) {
         endOfLastProcessedChunk = committedHeapSpace.start();
         // Drop every list on the floor.
-        for (int i = 0; i < chunkSizeTable.length; i++) {
-            chunkSizeTable[i] = Pointer.zero();
-        }
+        WordArray.fill(chunkSizeTable,  Pointer.zero());
         return Size.fromInt(BLOCK_SIZE);
     }
 
