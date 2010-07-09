@@ -31,53 +31,57 @@ import com.sun.max.unsafe.*;
  * @author Laurent Daynes
  */
 public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSpace {
-    /**
-     * Pointer to the head of the freelist of the current region.
-     */
-    Pointer currentRegionFreelist;
 
-    int currentRegionId;
+
+    /**
+     * Minimum size to be considered reclaimable.
+     */
+    private Size minReclaimableSpace;
+
+    ThreadedRegionList allocatingRegions;
+    ThreadedRegionList freeRegions;
+    ThreadedRegionList fullRegions;
+    ThreadedRegionList candidatesRegions;
+
+    public RegionBasedFirstFitSpace() {
+    }
 
     @Override
     public Size beginSweep(boolean precise) {
-        // TODO Auto-generated method stub
-        return null;
+        return minReclaimableSpace;
     }
 
     @Override
     public Size endSweep() {
-        // TODO Auto-generated method stub
-        return null;
+        return Size.zero();
     }
 
     @Override
     public void processDeadSpace(Address freeChunk, Size size) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
-        // TODO Auto-generated method stub
-        return null;
+        // TODO
+        return Pointer.zero();
     }
 
     @Override
     public Pointer processLiveObject(Pointer liveObject) {
-        // TODO Auto-generated method stub
-        return null;
+        // TODO
+        return Pointer.zero();
     }
 
     @Override
     public Size growAfterGC(Size delta) {
-        // TODO Auto-generated method stub
-        return null;
+        // TODO
+        return Size.zero();
     }
 
     @Override
     public Size shrinkAfterGC(Size delta) {
-        // TODO Auto-generated method stub
-        return null;
+        // TODO
+        return Size.zero();
     }
 
 }
