@@ -40,10 +40,6 @@ public interface RiRegisterConfig {
 
     CiRegister getScratchRegister();
 
-    CiRegister getSafepointRegister(); // will be deprecated with XIR
-
-    CiRegister getThreadRegister(); // will be deprecated with XIR
-
     /**
      * Gets the calling convention describing a call to or from Java code.
      * 

@@ -63,9 +63,9 @@ public class LinkedIdentityHashSet<T> extends IdentityHashSet<T> implements Iter
     }
 
     @Override
-    public void remove(T element) {
+    public boolean remove(Object element) {
         order.remove(element);
-        super.remove(element);
+        return super.remove(element);
     }
 
     @Override

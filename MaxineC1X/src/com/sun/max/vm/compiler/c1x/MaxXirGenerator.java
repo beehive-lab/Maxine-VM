@@ -49,6 +49,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -128,6 +129,8 @@ public class MaxXirGenerator extends RiXirGenerator {
     private XirPair instanceofForLeafTemplate;
     private XirPair instanceofForClassTemplate;
     private XirPair instanceofForInterfaceTemplate;
+
+    private XirTemplate exceptionObjectTemplate;
 
     private List<XirTemplate> stubs = new ArrayList<XirTemplate>();
 
@@ -228,6 +231,8 @@ public class MaxXirGenerator extends RiXirGenerator {
         instanceofForLeafTemplate = buildInstanceofForLeaf(false);
         instanceofForClassTemplate = buildInstanceofForInterface(false); // XXX: more efficient template for class checks
         instanceofForInterfaceTemplate = buildInstanceofForInterface(false);
+
+        exceptionObjectTemplate = buildExceptionObject();
 
         return stubs;
     }
@@ -473,6 +478,11 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirSnippet(arraylengthTemplate, array);
     }
 
+    @Override
+    public XirSnippet genExceptionObject(XirSite site) {
+        return new XirSnippet(exceptionObjectTemplate);
+    }
+
     private ResolutionGuard guardFor(RiField unresolvedField, ResolutionSnippet snippet) {
         UnresolvedField f = (UnresolvedField) unresolvedField;
         return makeResolutionGuard(f.constantPool, f.cpi, snippet);
@@ -531,6 +541,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     private XirTemplate buildSafepoint() {
         asm.restart(CiKind.Void);
         XirOperand param = asm.createRegister("latch", CiKind.Word, AMD64.r14);
+        asm.safepoint();
         asm.pload(CiKind.Word, param, param, false);
         return finishTemplate(asm, "safepoint");
     }
@@ -1119,6 +1130,13 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
         unresolved = finishTemplate(asm, "instanceof-unresolved<" + nonnull + ">");
         return unresolved;
+    }
+
+    private XirTemplate buildExceptionObject() {
+        XirOperand result = asm.restart(CiKind.Object);
+        XirOperand param = asm.createRegister("thread", CiKind.Word, AMD64.r14);
+        asm.pload(CiKind.Word, result, param, asm.i(VmThreadLocal.EXCEPTION_OBJECT.offset), false);
+        return finishTemplate(asm, "exceptionOffset");
     }
 
     private XirTemplate finishTemplate(CiXirAssembler asm, XirOperand result, String name) {

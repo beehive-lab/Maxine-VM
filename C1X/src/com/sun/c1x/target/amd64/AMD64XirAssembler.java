@@ -136,6 +136,8 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     XirLabel label = (XirLabel) i.extra;
                     currentList = label.inline ? fastPath : slowPath;
                     break;
+                case Safepoint:
+                    break;
                 default:
                     throw Util.unimplemented("XIR operation " + i.op);
             }

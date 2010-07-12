@@ -110,11 +110,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
         masm.leaq(dst.asRegister(), compilation.frameMap().toStackAddress(stackBlock));
     }
 
-    @Override
-    protected void emitSafepoint(CiValue tmp, LIRDebugInfo info) {
-        masm.safepoint(info);
-    }
-
     private void moveRegs(CiRegister fromReg, CiRegister toReg) {
         if (fromReg != toReg) {
             masm.mov(toReg, fromReg);
@@ -1735,6 +1730,10 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     XirLabel l = (XirLabel) inst.extra;
                     Label label = labels[l.index];
                     asm.bind(label);
+                    break;
+                }
+                case Safepoint: {
+                    asm.recordSafepoint(codePos(), info.registerRefMap(), info.stackRefMap(), info.debugInfo());
                     break;
                 }
                 case NullCheck: {

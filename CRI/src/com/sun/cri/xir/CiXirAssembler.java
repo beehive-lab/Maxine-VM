@@ -479,7 +479,11 @@ public abstract class CiXirAssembler {
          * Bind the {@link XirLabel label} identified by {@code extra} to the current instruction and update any references to it.
          * A label may be bound more than once to the same location.
          */
-        Bind
+        Bind,
+        /**
+         * Record a safepoint.
+         */
+        Safepoint
     }
 
     private void append(XirInstruction xirInstruction) {
@@ -619,6 +623,10 @@ public abstract class CiXirAssembler {
     public void bindOutOfLine(XirLabel l) {
         assert !l.inline;
         append(new XirInstruction(CiKind.Void, l, Bind, null));
+    }
+    
+    public void safepoint() {
+        append(new XirInstruction(CiKind.Void, null, Safepoint, null));
     }
 
     public void callStub(XirTemplate stub, XirOperand result, XirOperand... args) {
