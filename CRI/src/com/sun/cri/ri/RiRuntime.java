@@ -77,15 +77,6 @@ public interface RiRuntime {
     boolean mustNotCompile(RiMethod method);
 
     /**
-     * Byte offset of the field of the internal thread representation that contains
-     * the pointer to the thread exception object.
-     * 
-     * TODO: replace with ExceptionObject XIR
-     * @return the byte offset of the exception object field
-     */
-    int threadExceptionOffset();
-
-    /**
      * Offset of the lock within the lock object.
      *
      * @return the offset in bytes

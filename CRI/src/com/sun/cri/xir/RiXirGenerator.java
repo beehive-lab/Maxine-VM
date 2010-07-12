@@ -37,6 +37,8 @@ public abstract class RiXirGenerator {
     public abstract XirSnippet genEntrypoint(XirSite site);
 
     public abstract XirSnippet genSafepoint(XirSite site);
+    
+    public abstract XirSnippet genExceptionObject(XirSite site);
 
     public abstract XirSnippet genResolveClass(XirSite site, RiType type, Representation representation);
 
