@@ -125,13 +125,8 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
          * Triggers safepoints for the thread associated with the given thread locals.
          */
         public void run(Pointer vmThreadLocals) {
-            if (vmThreadLocals.isZero()) {
-                // Thread is still starting up.
-                // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
-            } else {
-                GC_STATE.setVariableWord(vmThreadLocals, Address.fromInt(1));
-                Safepoint.runProcedure(vmThreadLocals, afterSafepoint);
-            }
+            GC_STATE.setVariableWord(vmThreadLocals, Address.fromInt(1));
+            Safepoint.runProcedure(vmThreadLocals, afterSafepoint);
         }
     }
 
