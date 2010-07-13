@@ -286,7 +286,7 @@ public final class JDKInterceptor {
             fieldMap = new HashMap<String, InterceptedField>();
             interceptedFieldMap.put(javaClass.getName(), fieldMap);
         }
-        fieldMap.put(fieldName, new ZeroField(fieldName));
+        fieldMap.put(fieldName, new ZeroField(fieldName, true));
     }
 
     private static Properties buildInitialSystemProperties() {
