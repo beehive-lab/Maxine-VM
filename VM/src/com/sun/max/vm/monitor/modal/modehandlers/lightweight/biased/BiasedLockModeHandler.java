@@ -573,12 +573,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         final class TriggerSafepoints implements Pointer.Procedure {
 
             public void run(Pointer vmThreadLocals) {
-                if (vmThreadLocals.isZero()) {
-                    // Thread is still starting up.
-                    // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
-                } else {
-                    Safepoint.runProcedure(vmThreadLocals, suspend);
-                }
+                Safepoint.runProcedure(vmThreadLocals, suspend);
             }
         }
 
