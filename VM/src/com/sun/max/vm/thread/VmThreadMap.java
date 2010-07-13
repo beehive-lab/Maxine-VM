@@ -388,15 +388,15 @@ public final class VmThreadMap {
      */
     public void joinAllNonDaemons() {
         FatalError.check(VmThread.current() == VmThread.MAIN_VM_THREAD, "Only the main thread should join non-daemon threads");
-        while (nonDaemonThreads > 0) {
-            if (VmThread.TRACE_THREADS_OPTION.getValue()) {
-                boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Main thread waiting for ");
-                Log.print(nonDaemonThreads);
-                Log.println(" non-daemon threads to terminate");
-                Log.unlock(lockDisabledSafepoints);
-            }
-            synchronized (ACTIVE) {
+        synchronized (ACTIVE) {
+            while (nonDaemonThreads > 0) {
+                if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+                    boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("Main thread waiting for ");
+                    Log.print(nonDaemonThreads);
+                    Log.println(" non-daemon threads to terminate");
+                    Log.unlock(lockDisabledSafepoints);
+                }
                 try {
                     ACTIVE.wait();
                 } catch (Exception exception) {
