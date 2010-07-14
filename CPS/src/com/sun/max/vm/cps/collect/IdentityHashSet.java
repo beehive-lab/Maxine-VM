@@ -87,8 +87,9 @@ public class IdentityHashSet<T> extends AbstractSet<T> implements Cloneable {
      *
      * @param element the element to remove.
      */
-    public void remove(T element) {
-        internalMap.remove(element);
+    @Override
+    public boolean remove(Object element) {
+        return internalMap.remove(element) != null;
     }
 
     /**

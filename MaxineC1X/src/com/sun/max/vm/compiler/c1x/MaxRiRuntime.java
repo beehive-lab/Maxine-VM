@@ -47,7 +47,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -154,10 +153,6 @@ public class MaxRiRuntime implements RiRuntime {
             return (ClassMethodActor) method;
         }
         throw new CiUnresolvedException("invalid RiMethod instance: " + method.getClass());
-    }
-
-    public int threadExceptionOffset() {
-        return VmThreadLocal.EXCEPTION_OBJECT.offset;
     }
 
     public int basicObjectLockOffsetInBytes() {
