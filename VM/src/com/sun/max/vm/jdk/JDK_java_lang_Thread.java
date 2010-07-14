@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.jdk;
 
+import com.sun.max.vm.management.*;
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 
@@ -198,7 +199,7 @@ public final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private static StackTraceElement[][] dumpThreads(Thread[] threads) {
-        return VmThreadMap.dumpThreads(threads);
+        return ThreadManagement.dumpThreads(threads);
     }
 
     /**
