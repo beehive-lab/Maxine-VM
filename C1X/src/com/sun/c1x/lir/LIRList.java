@@ -161,10 +161,6 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Return, result));
     }
 
-    public void safepoint(CiValue tmp, LIRDebugInfo info) {
-        append(new LIROp1(LIROpcode.Safepoint, tmp, info));
-    }
-
     public void readPC(CiValue dst) {
         append(new LIROp0(LIROpcode.ReadPC, dst));
     }

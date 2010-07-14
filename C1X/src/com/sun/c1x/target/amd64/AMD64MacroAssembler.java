@@ -567,12 +567,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         stop("should not reach here");
     }
 
-    public void safepoint(LIRDebugInfo info) {
-        CiRegister safepointRegister = compiler.target.registerConfig.getSafepointRegister();
-        recordSafepoint(codeBuffer.position(), info.registerRefMap(), info.stackRefMap(), info.debugInfo());
-        movq(safepointRegister, new CiAddress(CiKind.Word, safepointRegister.asValue(CiKind.Word)));
-    }
-
     public void enter(short imm16, byte imm8) {
         emitByte(0xC8);
         // appended:

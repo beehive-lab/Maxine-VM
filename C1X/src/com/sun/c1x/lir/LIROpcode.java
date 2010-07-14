@@ -53,7 +53,6 @@ public enum LIROpcode {
         Convert,
         Lsb,
         Msb,
-    Safepoint,
     EndOp1,
     BeginOp2,
         Cmp,
