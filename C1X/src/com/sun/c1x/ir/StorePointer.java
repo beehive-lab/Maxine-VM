@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+package com.sun.c1x.ir;
+
+import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+
+/**
+ * The {@code StorePointer} instruction represents a write of a pointer.
+ * This instruction is part of the HIR support for low-level operations, such as safepoints,
+ * stack banging, etc, and does not correspond to a Java operation.
+ *
+ * @author Ben L. Titzer
+ * @author Doug Simon
+ */
+public final class StorePointer extends PointerOp {
+
+    Value value;
+
+    /**
+     * Creates an instruction for a pointer store. If {@code displacement != null}, the effective of the address of the store is
+     * computed as the pointer plus a byte displacement plus a scaled index. Otherwise, the effective address is computed as the
+     * pointer plus a byte offset.
+     * @param pointer the value producing the pointer
+     * @param displacement the value producing the displacement. This may be {@code null}.
+     * @param offsetOrIndex the value producing the scaled-index or the byte offset depending on whether {@code displacement} is {@code null}
+     * @param value the value to write to the pointer
+     * @param stateBefore the state before
+     * @param isVolatile {@code true} if the access is volatile
+     */
+    public StorePointer(int opcode, Value pointer, Value displacement, Value offsetOrIndex, Value value, NewFrameState stateBefore, boolean isVolatile) {
+        super(CiKind.Void, opcode, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
+        this.value = value;
+        setFlag(Flag.LiveStore);
+    }
+
+    /**
+     * Implements this instruction's half of the visitor pattern.
+     * @param v the visitor to accept
+     */
+    @Override
+    public void accept(ValueVisitor v) {
+        v.visitStorePointer(this);
+    }
+
+    public Value value() {
+        return value;
+    }
+
+    @Override
+    public void inputValuesDo(ValueClosure closure) {
+        super.inputValuesDo(closure);
+        value = closure.apply(value);
+    }
+}
