@@ -24,7 +24,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.value.NewFrameState.*;
+import com.sun.c1x.value.FrameState.*;
 
 /**
  * This class implements block merging, which combines adjacent basic blocks into a larger
@@ -69,7 +69,7 @@ public class BlockMerger implements BlockClosure {
     }
 
     private void skipBlock(BlockBegin block, final BlockBegin sux, BlockEnd oldEnd) {
-        final NewFrameState oldState = oldEnd.stateAfter();
+        final FrameState oldState = oldEnd.stateAfter();
         assert sux.stateBefore().scope() == oldState.scope();
         boolean hasAtLeastOnePhi = block.stateBefore().forEachPhi(block, new PhiProcedure() {
             public boolean doPhi(Phi phi) {
@@ -82,7 +82,7 @@ public class BlockMerger implements BlockClosure {
             return;
         }
         for (final BlockBegin pred : block.predecessors()) {
-            final NewFrameState predState = pred.end().stateAfter();
+            final FrameState predState = pred.end().stateAfter();
             if (predState.scope() != oldState.scope() || predState.stackSize() != oldState.stackSize()) {
                 // scopes would not match after skipping this block
                 // XXX: if phi's were smarter about scopes, this would not be necessary

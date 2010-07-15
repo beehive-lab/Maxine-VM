@@ -28,9 +28,9 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 
-public class NewMutableFrameState extends NewFrameState {
+public class MutableFrameState extends FrameState {
 
-    public NewMutableFrameState(IRScope irScope, int maxLocals, int maxStack) {
+    public MutableFrameState(IRScope irScope, int maxLocals, int maxStack) {
         super(irScope, maxLocals, maxStack);
     }
 
@@ -40,7 +40,7 @@ public class NewMutableFrameState extends NewFrameState {
      *
      * @param with the frame state containing the new local variables
      */
-    public void replaceLocals(NewFrameState with) {
+    public void replaceLocals(FrameState with) {
         assert with.maxLocals == maxLocals;
         System.arraycopy(with.values, 0, values, 0, maxLocals);
     }
@@ -50,7 +50,7 @@ public class NewMutableFrameState extends NewFrameState {
      *
      * @param with the frame state containing the new local variables
      */
-    public void replaceStack(NewFrameState with) {
+    public void replaceStack(FrameState with) {
         System.arraycopy(with.values, with.maxLocals, values, maxLocals, with.stackIndex);
         stackIndex = with.stackIndex;
     }
@@ -60,7 +60,7 @@ public class NewMutableFrameState extends NewFrameState {
      *
      * @param with the frame state containing the new local variables
      */
-    public void replaceLocks(NewFrameState with) {
+    public void replaceLocks(FrameState with) {
         if (with.locks == null) {
             locks = null;
         } else {
@@ -312,14 +312,14 @@ public class NewMutableFrameState extends NewFrameState {
     }
 
     /**
-     * Creates a new {@code NewFrameState} corresponding to inlining the specified method into this point in this frame state.
+     * Creates a new {@code FrameState} corresponding to inlining the specified method into this point in this frame state.
      * @param scope the IRScope representing the inlined method
      * @return a new frame state representing the state at the beginning of inlining the specified method into this one
      */
-    public NewFrameState pushScope(IRScope scope) {
+    public FrameState pushScope(IRScope scope) {
         assert scope.caller == this.scope;
         RiMethod method = scope.method;
-        NewMutableFrameState res = new NewMutableFrameState(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
+        MutableFrameState res = new MutableFrameState(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
         res.replaceStack(this);
         res.replaceLocks(this);
         res.unsafe = unsafe;
@@ -327,15 +327,15 @@ public class NewMutableFrameState extends NewFrameState {
     }
 
     /**
-     * Creates a new {@code NewFrameState} corresponding to the state upon returning from this inlined method into the outer
+     * Creates a new {@code FrameState} corresponding to the state upon returning from this inlined method into the outer
      * IRScope.
      * @return a new frame state representing the state at exit from this frame state
      */
-    public NewFrameState popScope() {
+    public FrameState popScope() {
         IRScope callingScope = scope.caller;
         assert callingScope != null;
         assert maxStackSize() >= scope.method.maxStackSize();
-        NewMutableFrameState res = new NewMutableFrameState(callingScope, callingScope.method.maxLocals(), maxStackSize());
+        MutableFrameState res = new MutableFrameState(callingScope, callingScope.method.maxLocals(), maxStackSize());
         res.replaceStack(this);
         res.replaceLocks(scope.callerState()); // assumes locks are balanced for each frame
         res.replaceLocals(scope.callerState());

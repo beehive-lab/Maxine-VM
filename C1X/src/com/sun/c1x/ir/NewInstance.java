@@ -41,7 +41,7 @@ public final class NewInstance extends StateSplit {
      * @param cpi the constant pool index
      * @param stateBefore the state before executing this instruction
      */
-    public NewInstance(RiType type, int cpi, RiConstantPool constantPool, NewFrameState stateBefore) {
+    public NewInstance(RiType type, int cpi, RiConstantPool constantPool, FrameState stateBefore) {
         super(CiKind.Object, stateBefore);
         this.instanceClass = type;
         this.cpi = cpi;

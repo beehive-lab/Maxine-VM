@@ -52,7 +52,7 @@ public final class CompareAndSwap extends PointerOp {
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public CompareAndSwap(int opcode, Value pointer, Value offset, Value expectedValue, Value newValue, NewFrameState stateBefore, boolean isVolatile) {
+    public CompareAndSwap(int opcode, Value pointer, Value offset, Value expectedValue, Value newValue, FrameState stateBefore, boolean isVolatile) {
         super(expectedValue.kind, opcode, pointer, null, offset, stateBefore, isVolatile);
         assert offset != null;
         this.expectedValue = expectedValue;

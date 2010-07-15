@@ -27,12 +27,12 @@ import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
 
 /**
- * The {@code NewFrameState} class encapsulates the frame state (i.e. local variables and
+ * The {@code FrameState} class encapsulates the frame state (i.e. local variables and
  * operand stack) at a particular point in the abstract interpretation.
  *
  * @author Ben L. Titzer
  */
-public abstract class NewFrameState {
+public abstract class FrameState {
 
     protected final Value[] values; // manages both stack and locals
     protected int stackIndex;
@@ -54,7 +54,7 @@ public abstract class NewFrameState {
      */
     private static final int MINIMUM_STACK_SLOTS = 1;
 
-    public NewFrameState(IRScope irScope, int maxLocals, int maxStack) {
+    public FrameState(IRScope irScope, int maxLocals, int maxStack) {
         this.scope = irScope;
         this.values = new Value[maxLocals + Math.max(maxStack, MINIMUM_STACK_SLOTS)];
         this.maxLocals = maxLocals;
@@ -68,8 +68,8 @@ public abstract class NewFrameState {
      * @param withLocks indicates whether to copy the lock state
      * @return a new frame state with the specified components
      */
-    public NewMutableFrameState copy(boolean withLocals, boolean withStack, boolean withLocks) {
-        final NewMutableFrameState other = new NewMutableFrameState(scope, localsSize(), maxStackSize());
+    public MutableFrameState copy(boolean withLocals, boolean withStack, boolean withLocks) {
+        final MutableFrameState other = new MutableFrameState(scope, localsSize(), maxStackSize());
         if (withLocals && withStack) {
             // fast path: use array copy
             System.arraycopy(values, 0, other.values, 0, valuesSize());
@@ -92,18 +92,18 @@ public abstract class NewFrameState {
     /**
      * Gets a mutable copy of this frame state.
      */
-    public NewMutableFrameState copy() {
+    public MutableFrameState copy() {
         return copy(true, true, true);
     }
 
     /**
      * Gets an immutable copy of this state.
      */
-    public NewFrameState immutableCopy() {
+    public FrameState immutableCopy() {
         return copy(true, true, true);
     }
 
-    public boolean isSameAcrossScopes(NewFrameState other) {
+    public boolean isSameAcrossScopes(FrameState other) {
         assert stackSize() == other.stackSize();
         assert localsSize() == other.localsSize();
         assert locksSize() == other.locksSize();
@@ -335,11 +335,11 @@ public abstract class NewFrameState {
     }
 
     public int callerStackSize() {
-        NewFrameState callerState = scope().callerState();
+        FrameState callerState = scope().callerState();
         return callerState == null ? 0 : callerState.stackSize();
     }
 
-    public void checkPhis(BlockBegin block, NewFrameState other) {
+    public void checkPhis(BlockBegin block, FrameState other) {
         checkSize(other);
         final int max = valuesSize();
         for (int i = 0; i < max; i++) {
@@ -362,7 +362,7 @@ public abstract class NewFrameState {
         }
     }
 
-    private void checkSize(NewFrameState other) {
+    private void checkSize(FrameState other) {
         if (other.stackIndex != stackIndex) {
             throw new CiBailout("stack sizes do not match");
         } else if (other.maxLocals != maxLocals) {
@@ -370,7 +370,7 @@ public abstract class NewFrameState {
         }
     }
 
-    public void mergeAndInvalidate(BlockBegin block, NewFrameState other) {
+    public void mergeAndInvalidate(BlockBegin block, FrameState other) {
         checkSize(other);
         for (int i = 0; i < valuesSize(); i++) {
             Value x = values[i];
@@ -408,8 +408,8 @@ public abstract class NewFrameState {
     }
 
     /**
-     * The interface implemented by a client of {@link NewFrameState#forEachPhi(BlockBegin, PhiProcedure)} and
-     * {@link NewFrameState#forEachLivePhi(BlockBegin, PhiProcedure)}.
+     * The interface implemented by a client of {@link FrameState#forEachPhi(BlockBegin, PhiProcedure)} and
+     * {@link FrameState#forEachLivePhi(BlockBegin, PhiProcedure)}.
      */
     public static interface PhiProcedure {
         boolean doPhi(Phi phi);
@@ -485,7 +485,7 @@ public abstract class NewFrameState {
      * Iterates over all the values of a given frame state and its callers, including the stack, locals, and locks.
      * @param closure the closure to apply to each value
      */
-    public static void valuesDo(NewFrameState state, ValueClosure closure) {
+    public static void valuesDo(FrameState state, ValueClosure closure) {
         do {
             final int max = state.valuesSize();
             for (int i = 0; i < max; i++) {
@@ -510,7 +510,7 @@ public abstract class NewFrameState {
     }
 
     /**
-     * The interface implemented by a client of {@link NewFrameState#forEachLiveStateValue(ValueProcedure)}.
+     * The interface implemented by a client of {@link FrameState#forEachLiveStateValue(ValueProcedure)}.
      */
     public static interface ValueProcedure {
         void doValue(Value value);
@@ -524,7 +524,7 @@ public abstract class NewFrameState {
      * @param proc the call back called to process each live value traversed
      */
     public void forEachLiveStateValue(ValueProcedure proc) {
-        NewFrameState state = this;
+        FrameState state = this;
         for (int i = 0; i != state.stackSize(); ++i) {
             Value value = state.stackAt(i);
             if (value != null && value.isLive()) {

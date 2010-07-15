@@ -37,7 +37,7 @@ public abstract class NewArray extends StateSplit {
      * @param length the instruction that produces the length for this allocation
      * @param stateBefore the state before the allocation
      */
-    NewArray(Value length, NewFrameState stateBefore) {
+    NewArray(Value length, FrameState stateBefore) {
         super(CiKind.Object, stateBefore);
         this.length = length;
         this.stateBefore = stateBefore;

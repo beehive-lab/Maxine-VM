@@ -46,7 +46,7 @@ public abstract class AccessField extends StateSplit {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public AccessField(CiKind kind, Value object, RiField field, boolean isStatic, NewFrameState stateBefore, boolean isLoaded) {
+    public AccessField(CiKind kind, Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded) {
         super(kind, stateBefore);
         this.object = object;
         this.field = field;

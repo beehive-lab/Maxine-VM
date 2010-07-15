@@ -41,7 +41,7 @@ public abstract class Switch extends BlockEnd {
      * @param stateBefore the state before the switch
      * @param isSafepoint {@code true} if this switch is a safepoint
      */
-    public Switch(Value value, List<BlockBegin> successors, NewFrameState stateBefore, boolean isSafepoint) {
+    public Switch(Value value, List<BlockBegin> successors, FrameState stateBefore, boolean isSafepoint) {
         super(CiKind.Illegal, stateBefore, isSafepoint, successors);
         this.value = value;
     }

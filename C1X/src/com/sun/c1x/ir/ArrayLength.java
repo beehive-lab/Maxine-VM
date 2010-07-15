@@ -37,7 +37,7 @@ public final class ArrayLength extends AccessArray {
      * @param array the instruction producing the array
      * @param newFrameState the state before executing this instruction
      */
-    public ArrayLength(Value array, NewFrameState newFrameState) {
+    public ArrayLength(Value array, FrameState newFrameState) {
         super(CiKind.Int, array, newFrameState);
         setFlag(Flag.NoBoundsCheck);
         if (array.isNonNull()) {

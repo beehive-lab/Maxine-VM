@@ -72,7 +72,7 @@ public final class BlockBegin extends Instruction {
     /**
      * The frame state before execution of the first instruction in this block.
      */
-    private NewFrameState stateBefore;
+    private FrameState stateBefore;
 
     /**
      * A link to the last node in the block (which contains the successors).
@@ -91,7 +91,7 @@ public final class BlockBegin extends Instruction {
 
     private BlockBegin dominator;
     private List<BlockBegin> exceptionHandlerBlocks;
-    private List<NewFrameState> exceptionHandlerStates;
+    private List<FrameState> exceptionHandlerStates;
 
     // LIR block
     public LIRBlock lirBlock;
@@ -180,7 +180,7 @@ public final class BlockBegin extends Instruction {
      * @return the state at the start of this block
      */
     @Override
-    public NewFrameState stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 
@@ -188,7 +188,7 @@ public final class BlockBegin extends Instruction {
      * Sets the initial state for this block.
      * @param stateBefore the state for this block
      */
-    public void setStateBefore(NewFrameState stateBefore) {
+    public void setStateBefore(FrameState stateBefore) {
         assert this.stateBefore == null;
         this.stateBefore = stateBefore;
     }
@@ -202,7 +202,7 @@ public final class BlockBegin extends Instruction {
         return exceptionHandlerBlocks == null ? NO_HANDLERS : exceptionHandlerBlocks;
     }
 
-    public List<NewFrameState> exceptionHandlerStates() {
+    public List<FrameState> exceptionHandlerStates() {
         return exceptionHandlerStates;
     }
 
@@ -359,10 +359,10 @@ public final class BlockBegin extends Instruction {
      * @return the index of {@code state} in the list of frame states merging at this block (i.e. the frames states for
      *         all instruction throwing an exception caught by this exception handler)
      */
-    public int addExceptionState(NewFrameState state) {
+    public int addExceptionState(FrameState state) {
         assert checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
         if (exceptionHandlerStates == null) {
-            exceptionHandlerStates = new ArrayList<NewFrameState>();
+            exceptionHandlerStates = new ArrayList<FrameState>();
         }
         exceptionHandlerStates.add(state);
         return exceptionHandlerStates.size() - 1;
@@ -396,8 +396,8 @@ public final class BlockBegin extends Instruction {
         v.visitBlockBegin(this);
     }
 
-    public void merge(NewFrameState newState) {
-        NewFrameState existingState = stateBefore;
+    public void merge(FrameState newState) {
+        FrameState existingState = stateBefore;
 
         if (existingState == null) {
             // this is the first state for the block
@@ -444,7 +444,7 @@ public final class BlockBegin extends Instruction {
         }
     }
 
-    private void invalidateDeadLocals(NewFrameState newState, BitMap liveness) {
+    private void invalidateDeadLocals(FrameState newState, BitMap liveness) {
         int max = newState.localsSize();
         assert liveness.size() == max;
         for (int i = 0; i < max; i++) {
@@ -456,7 +456,7 @@ public final class BlockBegin extends Instruction {
         }
     }
 
-    private void insertLoopPhis(NewFrameState newState) {
+    private void insertLoopPhis(FrameState newState) {
         int stackSize = newState.stackSize();
         for (int i = 0; i < stackSize; i++) {
             // always insert phis for the stack
@@ -707,8 +707,8 @@ public final class BlockBegin extends Instruction {
         return this.predecessors.contains(block);
     }
 
-    public void addExceptionStates(List<NewFrameState> exceptHandlerStates) {
-        for (NewFrameState state : exceptHandlerStates) {
+    public void addExceptionStates(List<FrameState> exceptHandlerStates) {
+        for (FrameState state : exceptHandlerStates) {
             addExceptionState(state.immutableCopy());
         }
     }

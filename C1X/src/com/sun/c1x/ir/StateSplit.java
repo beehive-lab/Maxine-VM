@@ -31,13 +31,13 @@ import com.sun.cri.ci.*;
  */
 public abstract class StateSplit extends Instruction {
 
-    protected NewFrameState stateBefore;
+    protected FrameState stateBefore;
 
     /**
      * Creates a new state split with the specified value type.
      * @param kind the type of the value that this instruction produces
      */
-    public StateSplit(CiKind kind, NewFrameState stateBefore2) {
+    public StateSplit(CiKind kind, FrameState stateBefore2) {
         super(kind);
         this.stateBefore = stateBefore2;
     }
@@ -46,7 +46,7 @@ public abstract class StateSplit extends Instruction {
      * Sets the state after this instruction has executed.
      * @param stateBefore the state
      */
-    public void setStateBefore(NewFrameState stateBefore) {
+    public void setStateBefore(FrameState stateBefore) {
         this.stateBefore = stateBefore;
     }
 
@@ -55,7 +55,7 @@ public abstract class StateSplit extends Instruction {
      * @return the state
      */
     @Override
-    public NewFrameState stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 }

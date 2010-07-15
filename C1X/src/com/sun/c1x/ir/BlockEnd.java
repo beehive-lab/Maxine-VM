@@ -36,7 +36,7 @@ public abstract class BlockEnd extends Instruction {
 
     BlockBegin begin;
     final List<BlockBegin> successors;
-    NewFrameState stateAfter;
+    FrameState stateAfter;
 
     /**
      * Constructs a new block end with the specified value type.
@@ -45,7 +45,7 @@ public abstract class BlockEnd extends Instruction {
      * @param isSafepoint {@code true} if this instruction is a safepoint instruction
      * @param successors the list of successor blocks. If {@code null}, a new one will be created.
      */
-    public BlockEnd(CiKind kind, NewFrameState stateAfter, boolean isSafepoint, List<BlockBegin> successors) {
+    public BlockEnd(CiKind kind, FrameState stateAfter, boolean isSafepoint, List<BlockBegin> successors) {
         super(kind);
         this.successors = successors == null ? new ArrayList<BlockBegin>(2) : successors;
         this.stateAfter = stateAfter;
@@ -54,7 +54,7 @@ public abstract class BlockEnd extends Instruction {
         }
     }
 
-    public BlockEnd(CiKind kind, NewFrameState stateAfter, boolean isSafepoint) {
+    public BlockEnd(CiKind kind, FrameState stateAfter, boolean isSafepoint) {
         this(kind, stateAfter, isSafepoint, null);
     }
 
@@ -63,11 +63,11 @@ public abstract class BlockEnd extends Instruction {
      * @return the value stack representing the state
      */
     @Override
-    public NewFrameState stateAfter() {
+    public FrameState stateAfter() {
         return stateAfter;
     }
 
-    public void setStateAfter(NewFrameState state) {
+    public void setStateAfter(FrameState state) {
         stateAfter = state;
     }
 

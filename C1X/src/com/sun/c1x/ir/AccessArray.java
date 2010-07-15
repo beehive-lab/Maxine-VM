@@ -38,7 +38,7 @@ public abstract class AccessArray extends StateSplit {
      * @param array the instruction that produces the array object value
      * @param newFrameState the lock stack
      */
-    public AccessArray(CiKind kind, Value array, NewFrameState newFrameState) {
+    public AccessArray(CiKind kind, Value array, FrameState newFrameState) {
         super(kind, newFrameState);
         this.array = array;
         if (array.isNonNull()) {

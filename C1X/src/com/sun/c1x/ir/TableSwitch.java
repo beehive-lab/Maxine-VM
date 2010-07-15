@@ -41,7 +41,7 @@ public final class TableSwitch extends Switch {
      * @param stateBefore the state before the switch
      * @param isSafepoint {@code true} if this instruction is a safepoint
      */
-    public TableSwitch(Value value, List<BlockBegin> successors, int lowKey, NewFrameState stateBefore, boolean isSafepoint) {
+    public TableSwitch(Value value, List<BlockBegin> successors, int lowKey, FrameState stateBefore, boolean isSafepoint) {
         super(value, successors, stateBefore, isSafepoint);
         this.lowKey = lowKey;
     }

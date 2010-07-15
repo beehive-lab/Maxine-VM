@@ -39,7 +39,7 @@ public class LIRDebugInfo {
         public abstract CiValue getLocation(Value value);
     }
 
-    public final NewFrameState state;
+    public final FrameState state;
     public final int bci;
     public final List<ExceptionHandler> exceptionHandlers;
 
@@ -48,7 +48,7 @@ public class LIRDebugInfo {
     private CiDebugInfo debugInfo;
     private CiDebugInfo.Frame debugFrame;
 
-    public LIRDebugInfo(NewFrameState state, int bci, List<ExceptionHandler> exceptionHandlers) {
+    public LIRDebugInfo(FrameState state, int bci, List<ExceptionHandler> exceptionHandlers) {
         this.bci = bci;
         this.scopeDebugInfo = null;
         this.state = state;
@@ -122,7 +122,7 @@ public class LIRDebugInfo {
         return debugInfo != null;
     }
 
-    private CiDebugInfo.Frame makeFrame(NewFrameState state, int bci, ValueLocator locator) {
+    private CiDebugInfo.Frame makeFrame(FrameState state, int bci, ValueLocator locator) {
         // XXX: cache the debug information for each value stack if equivalent to previous
         return createFrame(state, bci, locator);
     }
@@ -138,7 +138,7 @@ public class LIRDebugInfo {
         array[index] = (byte) (array[index] | (1 << offset));
     }
 
-    private CiDebugInfo.Frame createFrame(NewFrameState state, int bci, ValueLocator locator) {
+    private CiDebugInfo.Frame createFrame(FrameState state, int bci, ValueLocator locator) {
         int stackBegin = state.callerStackSize();
         int numStack = 0;
         int numLocals = 0;
@@ -175,7 +175,7 @@ public class LIRDebugInfo {
             values[pos] = locator.getLocation(v);
         }
 
-        NewFrameState caller = state.scope().callerState();
+        FrameState caller = state.scope().callerState();
         CiDebugInfo.Frame parent = null;
         if (caller != null) {
              parent = makeFrame(caller, state.scope().callerBCI(), locator);
