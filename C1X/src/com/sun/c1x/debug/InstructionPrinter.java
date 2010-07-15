@@ -293,7 +293,7 @@ public class InstructionPrinter extends ValueVisitor {
         boolean hasPhisOnStack = false;
 
         if (end != null && end.stateAfter() != null) {
-            FrameState state = block.stateBefore();
+            NewFrameState state = block.stateBefore();
 
             int i = 0;
             while (!hasPhisOnStack && i < state.stackSize()) {
@@ -322,7 +322,7 @@ public class InstructionPrinter extends ValueVisitor {
             out.println();
             out.println("Locals:");
 
-            FrameState state = block.stateBefore();
+            NewFrameState state = block.stateBefore();
             do {
                 int i = 0;
                 while (i < state.localsSize()) {

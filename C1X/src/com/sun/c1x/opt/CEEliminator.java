@@ -24,7 +24,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.value.FrameState.*;
+import com.sun.c1x.value.NewFrameState.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -106,7 +106,7 @@ public class CEEliminator implements BlockClosure {
         }
 
         // check that at least one word was pushed on suxState
-        FrameState suxState = sux.stateBefore();
+        NewFrameState suxState = sux.stateBefore();
         if (suxState.stackSize() <= curIf.stateAfter().stackSize()) {
             return;
         }
@@ -182,13 +182,15 @@ public class CEEliminator implements BlockClosure {
         }
 
         // append Goto to successor
-        FrameState stateBefore = curIf.isSafepoint() ? curIf.stateAfter() : null;
+        NewFrameState stateBefore = curIf.isSafepoint() ? curIf.stateAfter() : null;
         Goto newGoto = new Goto(sux, stateBefore, curIf.isSafepoint() || tGoto.isSafepoint() || fGoto.isSafepoint());
 
         // prepare state for Goto
-        FrameState gotoState = curIf.stateAfter();
+        // XXX: temporary cast to get first refactoring round running
+        NewMutableFrameState gotoState = (NewMutableFrameState) curIf.stateAfter();
         while (suxState.scope() != gotoState.scope()) {
-            gotoState = gotoState.popScope();
+            // XXX: temporary cast to get first refactoring round running
+            gotoState = (NewMutableFrameState) gotoState.popScope();
             assert gotoState != null : "states do not match up";
         }
         gotoState = gotoState.copy();

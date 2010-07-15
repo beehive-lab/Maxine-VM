@@ -26,7 +26,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.FrameState.*;
+import com.sun.c1x.value.NewFrameState.*;
 import com.sun.cri.ci.*;
 
 /**

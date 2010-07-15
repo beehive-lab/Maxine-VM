@@ -205,7 +205,7 @@ public abstract class LIRAssembler {
         return true;
     }
 
-    static FrameState stateBefore(Value ins) {
+    static NewFrameState stateBefore(Value ins) {
         if (ins instanceof Instruction) {
             return ((Instruction) ins).stateBefore();
         }

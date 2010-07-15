@@ -51,7 +51,7 @@ public final class Intrinsic extends StateSplit {
      * @param canTrap {@code true} if this intrinsic can cause a trap
      */
     public Intrinsic(CiKind kind, C1XIntrinsic intrinsic, RiMethod target, Value[] args, boolean isStatic,
-                     FrameState stateBefore, boolean preservesState, boolean canTrap) {
+                     NewFrameState stateBefore, boolean preservesState, boolean canTrap) {
         super(kind, stateBefore);
         this.intrinsic = intrinsic;
         this.arguments = args;

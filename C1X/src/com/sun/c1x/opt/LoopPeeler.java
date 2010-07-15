@@ -26,7 +26,7 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.Loop.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.value.FrameState.*;
+import com.sun.c1x.value.NewFrameState.*;
 
 /**
  * The {@code LoopPeeler} performs the loop peeling optimization in
@@ -161,7 +161,7 @@ public class LoopPeeler extends DefaultValueVisitor {
                     BlockBegin newPhiBlock = (BlockBegin) lookup(phi.block());
                     boolean phiIsLocal = phi.isLocal();
                     int phiIndex = phiIsLocal ? phi.localIndex() : phi.stackIndex();
-                    FrameState stateBefore = newPhiBlock.stateBefore();
+                    NewFrameState stateBefore = newPhiBlock.stateBefore();
 
                     if (phiIsLocal) {
                         stateBefore.setupPhiForLocal(newPhiBlock, phiIndex);
@@ -259,7 +259,7 @@ public class LoopPeeler extends DefaultValueVisitor {
         addInstruction(other);
     }
 
-    private FrameState copyStateBefore(FrameState stateBefore) {
+    private NewFrameState copyStateBefore(NewFrameState stateBefore) {
         return stateBefore != null ? stateBefore.immutableCopy() : null;
     }
 
@@ -771,15 +771,15 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     private boolean insertPhi(Edge edge, Map <Value, Value> mapValueToPhi) {
         BlockBegin clonedExit = (BlockBegin) lookup(edge.source);
-        FrameState exit = edge.source.end().stateAfter();
-        FrameState other = clonedExit.end().stateAfter();
+        NewFrameState exit = edge.source.end().stateAfter();
+        NewFrameState other = clonedExit.end().stateAfter();
         boolean hasSubstitution = false;
 
         assert exit.stackSize() == other.stackSize();
         assert exit.localsSize() == other.localsSize();
         assert exit.locksSize() == other.locksSize();
 
-        FrameState stateAtDestination = edge.destination.stateBefore();
+        NewFrameState stateAtDestination = edge.destination.stateBefore();
         for (int i = 0; i < stateAtDestination.localsSize(); i++) {
             Value x = exit.localAt(i);
             Value y = other.localAt(i);

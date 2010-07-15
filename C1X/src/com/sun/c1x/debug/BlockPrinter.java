@@ -71,18 +71,18 @@ public class BlockPrinter implements BlockClosure {
 
     }
 
-    private static void printStack(FrameState state, LogStream out) {
+    private static void printStack(NewFrameState newFrameState, LogStream out) {
         int startPosition = out.position();
-        if (state.stackEmpty()) {
+        if (newFrameState.stackEmpty()) {
           out.print("empty stack");
         } else {
           out.print("stack [");
           int i = 0;
-          while (i < state.stackSize()) {
+          while (i < newFrameState.stackSize()) {
             if (i > 0) {
                 out.print(", ");
             }
-            Value value = state.stackAt(i);
+            Value value = newFrameState.stackAt(i);
             out.print(i + ":" + Util.valueString(value));
               i += value.kind.sizeInSlots();
             if (value instanceof Phi) {
@@ -95,14 +95,14 @@ public class BlockPrinter implements BlockClosure {
           }
           out.print(']');
         }
-        if (!state.noActiveLocks()) {
+        if (!newFrameState.noActiveLocks()) {
             // print out the lines on the line below this
             // one at the same indentation level.
             out.println();
             out.fillTo(startPosition, ' ');
             out.print("locks [");
-            for (int i = 0; i < state.locksSize(); i++) {
-                Value value = state.lockAt(i);
+            for (int i = 0; i < newFrameState.locksSize(); i++) {
+                Value value = newFrameState.lockAt(i);
                 if (i > 0) {
                     out.print(", ");
                 }

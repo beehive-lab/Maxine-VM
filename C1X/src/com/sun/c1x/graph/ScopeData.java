@@ -69,7 +69,7 @@ public class ScopeData {
     BlockBegin continuation;
 
     // Without return value of inlined method on stack
-    FrameState continuationState;
+    NewFrameState continuationState;
 
     /**
      * Field used to generate fewer blocks when inlining. If this value is {@code null},
@@ -233,7 +233,7 @@ public class ScopeData {
      * @return the size of the stack
      */
     public int callerStackSize() {
-        FrameState state = scope.callerState();
+        NewFrameState state = scope.callerState();
         return state == null ? 0 : state.stackSize();
     }
 
@@ -257,7 +257,7 @@ public class ScopeData {
      * Gets the state at the continuation point.
      * @return the state at the continuation point
      */
-    public FrameState continuationState() {
+    public NewFrameState continuationState() {
         return continuationState;
     }
 
@@ -265,7 +265,7 @@ public class ScopeData {
      * Sets the state at the continuation point.
      * @param state the state at the continuation
      */
-    public void setContinuationState(FrameState state) {
+    public void setContinuationState(NewFrameState state) {
         continuationState = state;
     }
 
@@ -334,9 +334,9 @@ public class ScopeData {
         /**
          * The frame state at the end of the block.
          */
-        final FrameState returnState;
+        final NewFrameState returnState;
 
-        ReturnBlock(BlockBegin block, Instruction returnPredecessor, FrameState returnState) {
+        ReturnBlock(BlockBegin block, Instruction returnPredecessor, NewFrameState returnState) {
             super();
             this.block = block;
             this.returnPredecessor = returnPredecessor;
@@ -353,7 +353,7 @@ public class ScopeData {
      * @param returnPredecessor the second last instruction in the block. That is, the one before the return instruction.
      * @param returnState the frame state after the return instruction
      */
-    public void updateSimpleInlineInfo(BlockBegin block, Instruction returnPredecessor, FrameState returnState) {
+    public void updateSimpleInlineInfo(BlockBegin block, Instruction returnPredecessor, NewFrameState returnState) {
         if (inlinedReturnBlock == null) {
             inlinedReturnBlock = new ReturnBlock(block, returnPredecessor, returnState);
         } else {

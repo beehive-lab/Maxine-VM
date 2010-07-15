@@ -222,8 +222,8 @@ public class IR {
         newSucc.setNext(e, bci);
         newSucc.setEnd(e);
         // setup states
-        FrameState s = source.end().stateAfter();
-        newSucc.setStateBefore(s.immutableCopy());
+        NewFrameState s = source.end().stateAfter();
+        newSucc.setStateBefore(s.immutableCopy());   // TODO: share copies
         e.setStateAfter(s.immutableCopy());
         assert newSucc.stateBefore().localsSize() == s.localsSize();
         assert newSucc.stateBefore().stackSize() == s.stackSize();

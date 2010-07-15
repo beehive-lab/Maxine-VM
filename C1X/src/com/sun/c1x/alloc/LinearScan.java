@@ -36,7 +36,7 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.LIRInstruction.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.value.FrameState.*;
+import com.sun.c1x.value.NewFrameState.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -2102,7 +2102,7 @@ public class LinearScan {
         }
     }
 
-    IRScopeDebugInfo computeDebugInfoForScope(int opId, IRScope curScope, FrameState curState, FrameState innermostState, int curBci, int stackEnd, int locksEnd) {
+    IRScopeDebugInfo computeDebugInfoForScope(int opId, IRScope curScope, NewFrameState curState, NewFrameState innermostState, int curBci, int stackEnd, int locksEnd) {
         if (true) {
             return null;
         }
@@ -2110,7 +2110,7 @@ public class LinearScan {
         int stackBegin;
         int locksBegin;
 
-        FrameState callerState = curScope.callerState();
+        NewFrameState callerState = curScope.callerState();
         if (callerState != null) {
             // process recursively to compute outermost scope first
             stackBegin = callerState.stackSize();
@@ -2201,7 +2201,7 @@ public class LinearScan {
             TTY.println("creating debug information at opId %d", opId);
         }
 
-        FrameState innermostState = info.state;
+        NewFrameState innermostState = info.state;
         assert innermostState != null : "why is it missing?";
 
         IRScope innermostScope = innermostState.scope();

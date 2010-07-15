@@ -95,7 +95,7 @@ public final class Phi extends Value {
      * @return the instruction that produced the value in the i'th predecessor
      */
     public Value inputAt(int i) {
-        FrameState state;
+        NewFrameState state;
         if (block.isExceptionEntry()) {
             state = block.exceptionHandlerStates().get(i);
         } else {
@@ -109,7 +109,7 @@ public final class Phi extends Value {
      * @param state the state to access
      * @return the instruction producing the value
      */
-    public Value inputIn(FrameState state) {
+    public Value inputIn(NewFrameState state) {
         if (isLocal()) {
             return state.localAt(localIndex());
         } else {

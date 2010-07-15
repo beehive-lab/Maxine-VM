@@ -42,7 +42,7 @@ public class IRScope {
     final int callerBCI;
     CiCodePos callerCodeSite;
 
-    FrameState callerState;
+    NewFrameState callerState;
     int numberOfLocks;
 
     int lockStackSize;
@@ -86,7 +86,7 @@ public class IRScope {
      * Gets the value stack at the caller of this scope.
      * @return the value stack at the point of this call
      */
-    public final FrameState callerState() {
+    public final NewFrameState callerState() {
         return callerState;
     }
 
@@ -111,7 +111,7 @@ public class IRScope {
      * Sets the caller state for this IRScope.
      * @param callerState the new caller state
      */
-    public final void setCallerState(FrameState callerState) {
+    public final void setCallerState(NewFrameState callerState) {
         this.callerState = callerState;
     }
 

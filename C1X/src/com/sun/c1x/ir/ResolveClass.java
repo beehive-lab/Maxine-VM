@@ -35,7 +35,7 @@ public final class ResolveClass extends StateSplit {
     public final RiType type;
     public final RiType.Representation portion;
 
-    public ResolveClass(RiType type, RiType.Representation r, FrameState stateBefore) {
+    public ResolveClass(RiType type, RiType.Representation r, NewFrameState stateBefore) {
         super(type.getRepresentationKind(r), stateBefore);
         this.portion = r;
         this.type = type;

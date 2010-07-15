@@ -43,7 +43,7 @@ public class InstructionSubstituter implements BlockClosure, ValueClosure {
     public void apply(BlockBegin block) {
         Instruction last = null;
         if (block.exceptionHandlerStates() != null) {
-            for (FrameState s : block.exceptionHandlerStates()) {
+            for (NewFrameState s : block.exceptionHandlerStates()) {
                 s.valuesDo(this);
             }
         }

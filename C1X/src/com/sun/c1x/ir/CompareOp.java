@@ -30,7 +30,7 @@ import com.sun.cri.ci.*;
  */
 public final class CompareOp extends Op2 {
 
-    FrameState stateBefore;
+    NewFrameState stateBefore;
 
     /**
      * Creates a new compare operation.
@@ -39,7 +39,7 @@ public final class CompareOp extends Op2 {
      * @param y the second input
      * @param stateBefore the state before the comparison is performed
      */
-    public CompareOp(int opcode, Value x, Value y, FrameState stateBefore) {
+    public CompareOp(int opcode, Value x, Value y, NewFrameState stateBefore) {
         super(CiKind.Int, opcode, x, y);
         this.stateBefore = stateBefore;
     }
@@ -49,7 +49,7 @@ public final class CompareOp extends Op2 {
      * @return the state before the comparison is performed
      */
     @Override
-    public FrameState stateBefore() {
+    public NewFrameState stateBefore() {
         return stateBefore;
     }
 

@@ -35,10 +35,10 @@ public final class ArrayLength extends AccessArray {
     /**
      * Constructs a new ArrayLength instruction.
      * @param array the instruction producing the array
-     * @param stateBefore the state before executing this instruction
+     * @param newFrameState the state before executing this instruction
      */
-    public ArrayLength(Value array, FrameState stateBefore) {
-        super(CiKind.Int, array, stateBefore);
+    public ArrayLength(Value array, NewFrameState newFrameState) {
+        super(CiKind.Int, array, newFrameState);
         setFlag(Flag.NoBoundsCheck);
         if (array.isNonNull()) {
             redundantNullCheck();

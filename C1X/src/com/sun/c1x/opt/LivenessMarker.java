@@ -156,7 +156,7 @@ public class LivenessMarker {
     }
 
     private void markRootInstr(Instruction i) {
-        FrameState stateBefore = i.stateBefore();
+        NewFrameState stateBefore = i.stateBefore();
         if (stateBefore != null) {
             // stateBefore != null implies that this instruction may have side effects
             stateBefore.valuesDo(deoptMarker);

@@ -204,7 +204,7 @@ public class CFGPrinter {
     private void printState(BlockBegin block) {
         begin("states");
 
-        FrameState state = block.stateBefore();
+        NewFrameState state = block.stateBefore();
 
         if (state.stackSize() > 0) {
             begin("stack");
@@ -267,7 +267,7 @@ public class CFGPrinter {
     /**
      * Formats a given {@linkplain FrameState JVM frame state} as a multi line string.
      */
-    private String stateToString(FrameState state, CFGOperandFormatter operandFmt) {
+    private String stateToString(NewFrameState state, CFGOperandFormatter operandFmt) {
         if (state == null) {
             return null;
         }

@@ -39,7 +39,7 @@ public final class CheckCast extends TypeCheck {
      * @param object the instruction producing the object
      * @param stateBefore the state before the cast
      */
-    public CheckCast(RiType targetClass, Value targetClassInstruction, Value object, FrameState stateBefore) {
+    public CheckCast(RiType targetClass, Value targetClassInstruction, Value object, NewFrameState stateBefore) {
         super(targetClass, targetClassInstruction, object, CiKind.Object, stateBefore);
         initFlag(Flag.NonNull, object.isNonNull());
     }
