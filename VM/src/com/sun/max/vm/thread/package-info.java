@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Threads
- * 
+ * Threads.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.thread;

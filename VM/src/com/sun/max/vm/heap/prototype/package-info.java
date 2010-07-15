@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * A mockup heap only used for testing before bootstrapping
- * 
+ * A mockup heap only used for testing before bootstrapping.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.heap.prototype;

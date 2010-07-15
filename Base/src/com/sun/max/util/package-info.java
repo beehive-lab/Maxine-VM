@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * This package contains anything that has not been properly categorized yet
- * 
+ * This package contains anything that has not been properly categorized yet.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.util;

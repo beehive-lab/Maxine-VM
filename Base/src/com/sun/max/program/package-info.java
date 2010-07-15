@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Utilities for any kind of Java program
- * 
+ * Utilities for any kind of Java program.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.program;

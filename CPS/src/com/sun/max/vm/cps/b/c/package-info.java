@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Translation from CIR to CIR and static/dynamic optimizations on CIR
- * 
+ * Translation from CIR to CIR and static/dynamic optimizations on CIR.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.cps.b.c;

@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * A PowerPC instruction set disassembler
- * 
+ * A PowerPC instruction set disassembler.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.asm.dis.ppc;

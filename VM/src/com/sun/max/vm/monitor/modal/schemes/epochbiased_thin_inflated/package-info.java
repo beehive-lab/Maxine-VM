@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * A modal monitor scheme that transitions between epoch-based bulk-rebiasable locks, thin locks and inflated monitors
+ * A modal monitor scheme that transitions between epoch-based bulk-rebiasable locks, thin locks and inflated monitors.
  */
 package com.sun.max.vm.monitor.modal.schemes.epochbiased_thin_inflated;

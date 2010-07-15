@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * Thin locking mode handler for ModalMonitorScheme
+ * Thin locking mode handler for ModalMonitorScheme.
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;

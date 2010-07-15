@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * Tests for the MaxineVM JIT compiler
+ * Tests for the MaxineVM JIT compiler.
  */
 package test.com.sun.max.vm.jit.sparc;
