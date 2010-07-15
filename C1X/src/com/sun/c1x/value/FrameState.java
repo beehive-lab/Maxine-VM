@@ -96,13 +96,6 @@ public abstract class FrameState {
         return copy(true, true, true);
     }
 
-    /**
-     * Gets an immutable copy of this state.
-     */
-    public FrameState immutableCopy() {
-        return copy(true, true, true);
-    }
-
     public boolean isSameAcrossScopes(FrameState other) {
         assert stackSize() == other.stackSize();
         assert localsSize() == other.localsSize();
