@@ -476,11 +476,6 @@ public final class VmThreadMap {
         return threads.toArray(new Thread[threads.size()]);
     }
 
-    public static StackTraceElement[][] dumpThreads(Thread[] threads) {
-        FatalError.unimplemented();
-        return null;
-    }
-
     public static int getTotalStartedThreadCount() {
         synchronized (ACTIVE) {
             return ACTIVE.totalStarted;

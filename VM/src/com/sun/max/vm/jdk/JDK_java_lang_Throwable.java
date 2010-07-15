@@ -117,7 +117,7 @@ public final class JDK_java_lang_Throwable {
         return thisThrowable;
     }
 
-    private static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame, boolean atImplicitExceptionThrow) {
+    public static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame, boolean atImplicitExceptionThrow) {
         BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(stackFrame.ip, atImplicitExceptionThrow);
         if (bytecodeLocation == null) {
             addStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.ip.minus(targetMethod.codeStart()).toInt());
