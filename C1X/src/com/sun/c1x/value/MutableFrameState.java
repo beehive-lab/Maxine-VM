@@ -364,6 +364,13 @@ public class MutableFrameState extends FrameState {
         locks.remove(locks.size() - 1);
     }
 
+    /**
+     * Gets an immutable copy of this state.
+     */
+    public FrameState immutableCopy() {
+        return copy(true, true, true);
+    }
+
     private static void assertHigh(Value x) {
         assert x == null;
     }

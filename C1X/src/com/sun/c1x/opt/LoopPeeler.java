@@ -206,7 +206,7 @@ public class LoopPeeler extends DefaultValueVisitor {
             clonedBlock.setExceptionHandlers(block.exceptionHandlers());
             clonedBlock.addExceptionStates(block.exceptionHandlerStates());
         }
-        clonedBlock.setStateBefore(block.stateBefore().immutableCopy());
+        clonedBlock.setStateBefore(block.stateBefore());
         bind(block, clonedBlock);
         return clonedBlock;
     }
@@ -239,7 +239,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitResolveClass(ResolveClass i) {
-        ResolveClass other = new ResolveClass(i.type, i.portion, i.stateBefore().immutableCopy());
+        ResolveClass other = new ResolveClass(i.type, i.portion, i.stateBefore());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -249,7 +249,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitLoadField(LoadField i) {
-        LoadField other = new LoadField(i.object(), i.field(), i.isStatic(), copyStateBefore(i.stateBefore()), i.isLoaded());
+        LoadField other = new LoadField(i.object(), i.field(), i.isStatic(), i.stateBefore(), i.isLoaded());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -259,14 +259,10 @@ public class LoopPeeler extends DefaultValueVisitor {
         addInstruction(other);
     }
 
-    private FrameState copyStateBefore(FrameState stateBefore) {
-        return stateBefore != null ? stateBefore.immutableCopy() : null;
-    }
-
     @Override
     public void visitStoreField(StoreField i) {
         StoreField other = new StoreField(lookup(i.object()), i.field(), lookup(i.value()), i.isStatic(),
-                        copyStateBefore(i.stateBefore()), i.isLoaded());
+                        i.stateBefore(), i.isLoaded());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -278,7 +274,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitArrayLength(ArrayLength i) {
-        ArrayLength other = new ArrayLength(lookup(i.array()), copyStateBefore(i.stateBefore()));
+        ArrayLength other = new ArrayLength(lookup(i.array()), i.stateBefore());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -290,7 +286,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitLoadIndexed(LoadIndexed i) {
-        LoadIndexed other = new LoadIndexed(lookup(i.array()), lookup(i.index()), lookup(i.length()), i.elementKind(), copyStateBefore(i.stateBefore()));
+        LoadIndexed other = new LoadIndexed(lookup(i.array()), lookup(i.index()), lookup(i.length()), i.elementKind(), i.stateBefore());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -302,7 +298,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitStoreIndexed(StoreIndexed i) {
-        StoreIndexed other = new StoreIndexed(lookup(i.array()), lookup(i.index()), lookup(i.length()), i.elementKind(), lookup(i.value()), i.stateBefore().immutableCopy());
+        StoreIndexed other = new StoreIndexed(lookup(i.array()), lookup(i.index()), lookup(i.length()), i.elementKind(), lookup(i.value()), i.stateBefore());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -321,7 +317,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitArithmeticOp(ArithmeticOp i) {
-        ArithmeticOp other = new ArithmeticOp(i.opcode, i.kind, lookup(i.x()), lookup(i.y()), i.isStrictFP(), i.stateBefore() != null ? i.stateBefore().immutableCopy() : null);
+        ArithmeticOp other = new ArithmeticOp(i.opcode, i.kind, lookup(i.x()), lookup(i.y()), i.isStrictFP(), i.stateBefore());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -358,7 +354,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitCompareOp(CompareOp i) {
-        CompareOp other = new CompareOp(i.opcode, lookup(i.x()), lookup(i.y()), i.stateBefore().immutableCopy());
+        CompareOp other = new CompareOp(i.opcode, lookup(i.x()), lookup(i.y()), i.stateBefore());
         other.setBCI(i.bci());
         bind(i, other);
         updateState(other);
@@ -383,7 +379,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitNullCheck(NullCheck i) {
-        NullCheck other = new NullCheck(lookup(i.object()), i.stateBefore().immutableCopy());
+        NullCheck other = new NullCheck(lookup(i.object()), i.stateBefore());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -395,7 +391,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitInvoke(Invoke i) {
-        Invoke other = new Invoke(i.opcode(), i.kind, cloneArguments(i.arguments()), i.isStatic(), i.target(), i.stateBefore().immutableCopy());
+        Invoke other = new Invoke(i.opcode(), i.kind, cloneArguments(i.arguments()), i.isStatic(), i.target(), i.stateBefore());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -414,7 +410,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitNewInstance(NewInstance i) {
-        NewInstance other = new NewInstance(i.instanceClass(), i.cpi, i.constantPool, i.stateBefore().immutableCopy());
+        NewInstance other = new NewInstance(i.instanceClass(), i.cpi, i.constantPool, i.stateBefore());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -424,7 +420,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitNewTypeArray(NewTypeArray i) {
-        NewTypeArray other = new NewTypeArray(lookup(i.length()), i.elementKind(), i.stateBefore().immutableCopy());
+        NewTypeArray other = new NewTypeArray(lookup(i.length()), i.elementKind(), i.stateBefore());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -434,7 +430,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitNewObjectArray(NewObjectArray i) {
-        NewObjectArray other = new NewObjectArray(i.elementClass(), lookup(i.length()), i.stateBefore().immutableCopy(), i.cpi, i.constantPool);
+        NewObjectArray other = new NewObjectArray(i.elementClass(), lookup(i.length()), i.stateBefore(), i.cpi, i.constantPool);
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -444,7 +440,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitNewMultiArray(NewMultiArray i) {
-        NewMultiArray other = new NewMultiArray(i.elementType(), cloneDimmensions(i.dimensions()), i.stateBefore().immutableCopy(), i.cpi, i.constantPool);
+        NewMultiArray other = new NewMultiArray(i.elementType(), cloneDimmensions(i.dimensions()), i.stateBefore(), i.cpi, i.constantPool);
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -463,7 +459,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitCheckCast(CheckCast i) {
-        CheckCast other = new CheckCast(i.targetClass(), lookup(i.targetClassInstruction), lookup(i.object()), i.stateBefore().immutableCopy());
+        CheckCast other = new CheckCast(i.targetClass(), lookup(i.targetClassInstruction), lookup(i.object()), i.stateBefore());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -473,7 +469,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitInstanceOf(InstanceOf i) {
-        CheckCast other = new CheckCast(i.targetClass(), lookup(i.targetClassInstruction), lookup(i.object()), i.stateAfter().immutableCopy());
+        CheckCast other = new CheckCast(i.targetClass(), lookup(i.targetClassInstruction), lookup(i.object()), i.stateAfter());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -483,7 +479,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitMonitorEnter(MonitorEnter i) {
-        MonitorEnter other = new MonitorEnter(lookup(i.object()), i.lockNumber, i.stateBefore().immutableCopy());
+        MonitorEnter other = new MonitorEnter(lookup(i.object()), i.lockNumber, i.stateBefore());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -493,7 +489,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitMonitorExit(MonitorExit i) {
-        MonitorExit other = new MonitorExit(lookup(i.object()), i.lockNumber, i.stateBefore().immutableCopy());
+        MonitorExit other = new MonitorExit(lookup(i.object()), i.lockNumber, i.stateBefore());
         other.setBCI(i.bci());
         bind(i, other);
         updateState(other);
@@ -502,7 +498,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitIntrinsic(Intrinsic i) {
-        Intrinsic other = new Intrinsic(i.kind, i.intrinsic(), i.target(), cloneArguments(i.arguments()), i.isStatic(), i.stateBefore().immutableCopy(), i.preservesState(), i.canTrap());
+        Intrinsic other = new Intrinsic(i.kind, i.intrinsic(), i.target(), cloneArguments(i.arguments()), i.isStatic(), i.stateBefore(), i.preservesState(), i.canTrap());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -526,7 +522,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitGoto(Goto i) {
-        Goto other = new Goto((BlockBegin) lookup(i.suxAt(0)), i.stateAfter().immutableCopy(), i.isSafepoint());
+        Goto other = new Goto((BlockBegin) lookup(i.suxAt(0)), i.stateAfter(), i.isSafepoint());
         other.setBCI(i.bci());
         bind(i, other);
         updateState(other);
@@ -536,7 +532,7 @@ public class LoopPeeler extends DefaultValueVisitor {
     @Override
     public void visitIf(If i) {
         If other = new If(lookup(i.x()), i.condition(), i.unorderedIsTrue(), lookup(i.y()), (BlockBegin) lookup(i.trueSuccessor()),
-                          (BlockBegin) lookup(i.falseSuccessor()), i.stateAfter().immutableCopy(), i.isSafepoint());
+                          (BlockBegin) lookup(i.falseSuccessor()), i.stateAfter(), i.isSafepoint());
         other.setBCI(i.bci());
         bind(i, other);
         updateState(other);
@@ -555,7 +551,7 @@ public class LoopPeeler extends DefaultValueVisitor {
     @Override
     public void
     visitTableSwitch(TableSwitch i) {
-        TableSwitch other = new TableSwitch(lookup(i.value()), cloneSuccessors(i.successors()), i.lowKey(), i.stateAfter().immutableCopy(), i.isSafepoint());
+        TableSwitch other = new TableSwitch(lookup(i.value()), cloneSuccessors(i.successors()), i.lowKey(), i.stateAfter(), i.isSafepoint());
         other.setBCI(i.bci());
         bind(i, other);
         updateState(other);
@@ -572,7 +568,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitLookupSwitch(LookupSwitch i) {
-        LookupSwitch other = new LookupSwitch(lookup(i.value()), cloneSuccessors(i.successors()), getKeys(i), i.stateAfter().immutableCopy(), i.isSafepoint());
+        LookupSwitch other = new LookupSwitch(lookup(i.value()), cloneSuccessors(i.successors()), getKeys(i), i.stateAfter(), i.isSafepoint());
         other.setBCI(i.bci());
         bind(i, other);
         updateState(other);
@@ -597,7 +593,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitThrow(Throw i) {
-        Throw other = new Throw(lookup(i.exception()), i.stateAfter().immutableCopy());
+        Throw other = new Throw(lookup(i.exception()), i.stateAfter());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
