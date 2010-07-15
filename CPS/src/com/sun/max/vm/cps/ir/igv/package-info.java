@@ -19,7 +19,8 @@
  * Company, Ltd.
  */
 /**
- * IR graphs are visualized by transmitting them to the Ideal Graph Visualizer
+ * IR graphs are visualized by transmitting them to the Ideal Graph Visualizer.
+ *
  * @see GraphIrObserver
  *
  * @author Thomas Wuerthinger

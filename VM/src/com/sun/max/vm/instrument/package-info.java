@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * Support classes for java.lang.instrument.*
+ * Support classes for java.lang.instrument.
  *
  * @author Mick Jordan
  */

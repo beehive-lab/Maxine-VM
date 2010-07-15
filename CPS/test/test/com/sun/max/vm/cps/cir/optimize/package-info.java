@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * Tests for the CIR optimizer
+ * Tests for the CIR optimizer.
  *
  * @author Bernd Mathiske
  */

@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * Tests for the AMD64 compiler
+ * Tests for the AMD64 compiler.
  *
  * @author Bernd Mathiske
  */

@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * Effective Intermediate Representations for various ISAs
+ * Effective Intermediate Representations for various ISAs.
  *
  * @author Bernd Mathiske
  */

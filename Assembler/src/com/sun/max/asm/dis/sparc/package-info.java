@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * An IA32 disassembler
- * 
+ * An IA32 disassembler.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.asm.dis.sparc;

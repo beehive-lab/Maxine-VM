@@ -20,8 +20,8 @@
  */
 /**
  * String representations of Java types and
- * differentiation of relevant "kinds" of types
- * 
+ * differentiation of relevant "kinds" of types.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.type;

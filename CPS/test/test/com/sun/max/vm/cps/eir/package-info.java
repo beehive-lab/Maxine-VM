@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * Tests for the Maxwell compiler
+ * Tests for the Maxwell compiler.
  *
  * @author Greg Wright
  */

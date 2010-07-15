@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * Base mode handlers for ModalMonitorScheme
+ * Base mode handlers for ModalMonitorScheme.
  */
 package com.sun.max.vm.monitor.modal.modehandlers;

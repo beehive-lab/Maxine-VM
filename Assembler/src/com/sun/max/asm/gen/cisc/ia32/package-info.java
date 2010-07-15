@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * IA32 instruction assembly template instruction format specifications and construction
- * 
+ * IA32 instruction assembly template instruction format specifications and construction.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.asm.gen.cisc.ia32;
