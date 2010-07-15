@@ -96,17 +96,17 @@ public class Info {
     public final CiCodePos pos;
     public final int id;
     private int stopFlags;
-    private NewFrameState state;
+    private FrameState state;
     private List<ExceptionHandler> exceptionHandlers;
 
-    public Info(CiCodePos pos, int id, NewFrameState javaFrameState) {
+    public Info(CiCodePos pos, int id, FrameState javaFrameState) {
         this.pos = pos;
         this.id = id;
         this.state = javaFrameState;
         assert javaFrameState == null || pos.matches(javaFrameState.scope().callerCodeSite()) : "position mismatch";
     }
 
-    public NewFrameState frameState() {
+    public FrameState frameState() {
         return state;
     }
 

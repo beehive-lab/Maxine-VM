@@ -33,7 +33,7 @@ import com.sun.cri.ci.*;
  */
 public final class UnsignedCompareOp extends Op2 {
 
-    NewFrameState stateBefore;
+    FrameState stateBefore;
 
     /**
      * One of the constants defined in {@link UnsignedComparisons} denoting the type of this comparison.
@@ -49,7 +49,7 @@ public final class UnsignedCompareOp extends Op2 {
      * @param y the second input
      * @param stateBefore the state before the comparison is performed
      */
-    public UnsignedCompareOp(int opcode, int op, Value x, Value y, NewFrameState stateBefore) {
+    public UnsignedCompareOp(int opcode, int op, Value x, Value y, FrameState stateBefore) {
         super(CiKind.Int, opcode, x, y);
         assert opcode == Bytecodes.UWCMP || opcode == Bytecodes.UCMP;
         this.op = op;
@@ -61,7 +61,7 @@ public final class UnsignedCompareOp extends Op2 {
      * @return the state before the comparison is performed
      */
     @Override
-    public NewFrameState stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 

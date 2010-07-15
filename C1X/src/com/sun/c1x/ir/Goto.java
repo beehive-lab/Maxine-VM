@@ -36,7 +36,7 @@ public final class Goto extends BlockEnd {
      * @param stateBefore the state before the goto
      * @param isSafepoint {@code true} if the goto should be considered a safepoint (e.g. backward branch)
      */
-    public Goto(BlockBegin succ, NewFrameState stateBefore, boolean isSafepoint) {
+    public Goto(BlockBegin succ, FrameState stateBefore, boolean isSafepoint) {
         super(CiKind.Illegal, stateBefore, isSafepoint);
         successors.add(succ);
     }

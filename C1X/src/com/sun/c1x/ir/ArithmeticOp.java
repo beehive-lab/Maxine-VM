@@ -32,7 +32,7 @@ import com.sun.cri.ci.*;
  */
 public final class ArithmeticOp extends Op2 {
 
-    NewFrameState stateBefore;
+    FrameState stateBefore;
 
     /**
      * Creates a new arithmetic operation.
@@ -43,7 +43,7 @@ public final class ArithmeticOp extends Op2 {
      * @param isStrictFP indicates this operation has strict rounding semantics
      * @param stateBefore the value stack for instructions that may trap
      */
-    public ArithmeticOp(int opcode, CiKind kind, Value x, Value y, boolean isStrictFP, NewFrameState stateBefore) {
+    public ArithmeticOp(int opcode, CiKind kind, Value x, Value y, boolean isStrictFP, FrameState stateBefore) {
         super(kind, opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
         if (stateBefore != null) {
@@ -72,7 +72,7 @@ public final class ArithmeticOp extends Op2 {
      * @return the lock stack
      */
     @Override
-    public NewFrameState stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 

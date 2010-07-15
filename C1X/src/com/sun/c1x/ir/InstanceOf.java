@@ -39,7 +39,7 @@ public final class InstanceOf extends TypeCheck {
      * @param object the instruction producing the object input to this instruction
      * @param stateBefore the state before this instruction
      */
-    public InstanceOf(RiType targetClass, Value targetClassInstruction, Value object, NewFrameState stateBefore) {
+    public InstanceOf(RiType targetClass, Value targetClassInstruction, Value object, FrameState stateBefore) {
         super(targetClass, targetClassInstruction, object, CiKind.Int, stateBefore);
         if (object.isNonNull()) {
             redundantNullCheck();

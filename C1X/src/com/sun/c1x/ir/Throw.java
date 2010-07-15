@@ -32,14 +32,14 @@ public final class Throw extends BlockEnd {
 
     Value exception;
 
-    NewFrameState stateBefore;
+    FrameState stateBefore;
 
     /**
      * Creates a new Throw instruction.
      * @param exception the instruction that generates the exception to throw
      * @param stateBefore the state before the exception is thrown
      */
-    public Throw(Value exception, NewFrameState stateBefore) {
+    public Throw(Value exception, FrameState stateBefore) {
         super(CiKind.Illegal, null, true);
         this.stateBefore = stateBefore;
         this.exception = exception;
@@ -58,7 +58,7 @@ public final class Throw extends BlockEnd {
      * @return the state before the throw
      */
     @Override
-    public NewFrameState stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 

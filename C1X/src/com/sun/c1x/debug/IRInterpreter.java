@@ -33,7 +33,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.value.NewFrameState.*;
+import com.sun.c1x.value.FrameState.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -105,7 +105,7 @@ public class IRInterpreter {
         private class ValueMapInitializer implements BlockClosure {
 
             public void apply(final BlockBegin block) {
-                NewFrameState state = block.stateBefore();
+                FrameState state = block.stateBefore();
                 state.forEachPhi(block, new PhiProcedure() {
                     public boolean doPhi(Phi phi) {
                         for (int j = 0; j < phi.inputCount(); j++) {
@@ -184,7 +184,7 @@ public class IRInterpreter {
             instructionValueMap.put(i, new Val(iCounter, value));
         }
 
-        public Environment(NewFrameState newFrameState, CiConstant[] values, IR ir) {
+        public Environment(FrameState newFrameState, CiConstant[] values, IR ir) {
             assert values.length <= newFrameState.localsSize() : "Incorrect number of initialization arguments";
             ir.startBlock.iteratePreOrder(new ValueMapInitializer());
             int index = 0;
@@ -1739,7 +1739,7 @@ public class IRInterpreter {
             }
         }
 
-        public void valuesDo(NewFrameState state, ValueClosure closure) {
+        public void valuesDo(FrameState state, ValueClosure closure) {
             final int maxLocals = state.localsSize();
             if (maxLocals > 0) {
                 System.out.println("** Locals **");
@@ -1764,7 +1764,7 @@ public class IRInterpreter {
                     closure.apply(state.lockAt(i));
                 }
             }
-            NewFrameState callerState = state.scope().callerState();
+            FrameState callerState = state.scope().callerState();
             if (callerState != null) {
                 System.out.println("\n** Caller state **");
                 valuesDo(callerState, closure);
@@ -1785,7 +1785,7 @@ public class IRInterpreter {
             System.out.println();
         }
 
-        private void printState(NewFrameState newFrameState) {
+        private void printState(FrameState newFrameState) {
             valuesDo(newFrameState, new ValueClosure() {
 
                     public Value apply(Value i) {

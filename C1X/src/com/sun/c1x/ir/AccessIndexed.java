@@ -44,7 +44,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @param elementType the type of the elements of the array
      * @param stateBefore the state before executing this instruction
      */
-    AccessIndexed(CiKind kind, Value array, Value index, Value length, CiKind elementType, NewFrameState stateBefore) {
+    AccessIndexed(CiKind kind, Value array, Value index, Value length, CiKind elementType, FrameState stateBefore) {
         super(kind, array, stateBefore);
         this.index = index;
         this.length = length;

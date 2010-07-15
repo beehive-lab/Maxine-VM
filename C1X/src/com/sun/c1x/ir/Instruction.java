@@ -219,11 +219,11 @@ public abstract class Instruction extends Value {
      */
     public final void allValuesDo(ValueClosure closure) {
         inputValuesDo(closure);
-        NewFrameState stateBefore = stateBefore();
+        FrameState stateBefore = stateBefore();
         if (stateBefore != null) {
             stateBefore.valuesDo(closure);
         }
-        NewFrameState stateAfter = stateAfter();
+        FrameState stateAfter = stateAfter();
         if (stateAfter != null) {
             stateAfter.valuesDo(closure);
         }
@@ -233,7 +233,7 @@ public abstract class Instruction extends Value {
      * Gets the state before the instruction, if it is recorded.
      * @return the state before the instruction
      */
-    public NewFrameState stateBefore() {
+    public FrameState stateBefore() {
         return null;
     }
 
@@ -242,7 +242,7 @@ public abstract class Instruction extends Value {
      * instances of {@link BlockEnd} have a non-null state after.
      * @return the state after the instruction
      */
-    public NewFrameState stateAfter() {
+    public FrameState stateAfter() {
         return null;
     }
 }
