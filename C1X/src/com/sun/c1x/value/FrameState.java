@@ -363,7 +363,7 @@ public abstract class FrameState {
         }
     }
 
-    public void mergeAndInvalidate(BlockBegin block, FrameState other) {
+    public void merge(BlockBegin block, FrameState other) {
         checkSize(other);
         for (int i = 0; i < valuesSize(); i++) {
             Value x = values[i];
