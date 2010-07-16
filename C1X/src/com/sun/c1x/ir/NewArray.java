@@ -40,7 +40,6 @@ public abstract class NewArray extends StateSplit {
     NewArray(Value length, FrameState stateBefore) {
         super(CiKind.Object, stateBefore);
         this.length = length;
-        this.stateBefore = stateBefore;
         setFlag(Flag.NonNull);
     }
 

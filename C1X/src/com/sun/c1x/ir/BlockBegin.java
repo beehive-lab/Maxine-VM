@@ -396,7 +396,7 @@ public final class BlockBegin extends Instruction {
         v.visitBlockBegin(this);
     }
 
-    public void merge(FrameState newState) {
+    public void mergeOrClone(FrameState newState) {
         FrameState existingState = stateBefore;
 
         if (existingState == null) {
@@ -410,6 +410,9 @@ public final class BlockBegin extends Instruction {
             newState = newState.copy();
 
             // if a liveness map is available, use it to invalidate dead locals
+            // TODO: as of classfile version 50+ new attribute stackmap table
+            // is a snapshot of stackmap at every block entry point
+            // rename CiBitMap, move to com.sun.cri.ci
             BitMap liveness = (BitMap) newState.scope().method.liveness(bci());
             if (liveness != null) {
                 invalidateDeadLocals(newState, liveness);
@@ -427,11 +430,13 @@ public final class BlockBegin extends Instruction {
                 throw new CiBailout("stack or locks do not match");
             }
 
-            while (existingState.scope() != newState.scope()) {
-                // XXX: original code is not sure if this is necessary
-                newState = newState.scope().callerState();
-                assert newState != null : "could not match scopes";
-            }
+            // while (existingState.scope() != newState.scope()) {
+            //     // XXX: original code is not sure if this is necessary
+            //     newState = newState.scope().callerState();
+            //     assert newState != null : "could not match scopes";
+            // }
+            // above code replaced with assert for the moment
+            assert existingState.scope() == newState.scope();
 
             assert existingState.localsSize() == newState.localsSize();
             assert existingState.stackSize() == newState.stackSize();
@@ -440,7 +445,7 @@ public final class BlockBegin extends Instruction {
                 throw new CiBailout("jsr/ret too complicated");
             }
 
-            existingState.mergeAndInvalidate(this, newState);
+            existingState.merge(this, newState);
         }
     }
 

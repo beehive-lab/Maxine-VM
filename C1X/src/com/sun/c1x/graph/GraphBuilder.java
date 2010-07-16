@@ -122,7 +122,7 @@ public final class GraphBuilder {
         BlockBegin osrEntry = compilation.osrBCI < 0 ? null : blockMap.get(compilation.osrBCI);
         pushRootScope(scope, blockMap, startBlock);
         MutableFrameState initialState = stateAtEntry(rootMethod);
-        startBlock.merge(initialState);
+        startBlock.mergeOrClone(initialState);
         BlockBegin syncHandler = null;
 
         // 3. setup internal state for appending instructions
@@ -215,7 +215,7 @@ public final class GraphBuilder {
         base.setStateAfter(stateAfter);
         startBlock.setEnd(base);
         assert stdEntry.stateBefore() == null;
-        stdEntry.merge(stateAfter);
+        stdEntry.mergeOrClone(stateAfter);
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
@@ -454,7 +454,7 @@ public final class GraphBuilder {
         // exception handler starts with an empty expression stack
         curState.truncateStack(curScopeData.callerStackSize());
 
-        entry.merge(curState);
+        entry.mergeOrClone(curState);
 
         // add current state for correct handling of phi functions
         int phiOperand = entry.addExceptionState(curState);
@@ -1583,7 +1583,7 @@ public final class GraphBuilder {
             gotoCallee.setStateAfter(curState.immutableCopy());
             appendWithoutOptimization(gotoCallee, 0);
             curBlock.setEnd(gotoCallee);
-            calleeStartBlock.merge(calleeState);
+            calleeStartBlock.mergeOrClone(calleeState);
             lastInstr = curBlock = calleeStartBlock;
             scopeData.addToWorkList(calleeStartBlock);
             // now iterate over all the blocks
@@ -1792,7 +1792,7 @@ public final class GraphBuilder {
         Goto g = new Goto(target, state.copy(), false);
         append(g);
         ir.osrEntryBlock.setEnd(g);
-        target.merge(ir.osrEntryBlock.end().stateAfter());
+        target.mergeOrClone(ir.osrEntryBlock.end().stateAfter());
     }
 
     BlockEnd iterateBytecodesForBlock(int bci, boolean inliningIntoCurrentBlock) {
@@ -2135,7 +2135,7 @@ public final class GraphBuilder {
         // propagate the state
         for (BlockBegin succ : end.successors()) {
             assert succ.predecessors().contains(curBlock);
-            succ.merge(end.stateAfter());
+            succ.mergeOrClone(end.stateAfter());
             scopeData.addToWorkList(succ);
         }
         return end;
