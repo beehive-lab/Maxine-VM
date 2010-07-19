@@ -34,8 +34,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
-import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -48,6 +46,7 @@ import com.sun.max.vm.thread.*;
  * @author Doug Simon
  * @author Hannes Payer
  * @author Paul Caprioli
+ * @author Mick Jordan
  */
 public abstract class Safepoint {
 
