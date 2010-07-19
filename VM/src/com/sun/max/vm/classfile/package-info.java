@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Loading classes from files in the Java class file format
- * 
+ * Loading classes from files in the Java class file format.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.classfile;

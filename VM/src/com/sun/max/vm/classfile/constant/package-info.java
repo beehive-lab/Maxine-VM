@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Representations of entries in the constant pool in a class file
- * 
+ * Representations of entries in the constant pool in a class file.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.classfile.constant;

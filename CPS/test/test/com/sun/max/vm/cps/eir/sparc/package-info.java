@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * Tests for the SPARC Eir compiler
+ * Tests for the SPARC Eir compiler.
  *
  * @author Laurent Daynes
  */

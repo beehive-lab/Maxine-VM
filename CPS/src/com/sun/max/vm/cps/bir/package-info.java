@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * BIR - todo: disentangle from CIR
- * 
+ * BIR - todo: disentangle from CIR.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.cps.bir;

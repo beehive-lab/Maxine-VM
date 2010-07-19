@@ -20,8 +20,8 @@
  */
 /**
  * Flavors of CirVariable, differentiated for the purpose
- * of facilitating human consumption of CIR listings
- * 
+ * of facilitating human consumption of CIR listings.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.cps.cir.variable;

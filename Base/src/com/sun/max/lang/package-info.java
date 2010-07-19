@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Supplementing java.lang
- * 
+ * Supplementing java.lang.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.lang;

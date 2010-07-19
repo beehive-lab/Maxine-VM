@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * PowerPC instruction set assembler template descriptions
- * 
+ * PowerPC instruction set assembler template descriptions.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.asm.gen.risc.ppc;

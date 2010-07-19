@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Common functionality of disassemblers
- * 
+ * Common functionality of disassemblers.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.asm.dis;

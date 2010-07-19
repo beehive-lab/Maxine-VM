@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * SPARC assembler template descriptions
- * 
+ * SPARC assembler template descriptions.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.asm.gen.risc.sparc;
