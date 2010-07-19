@@ -20,13 +20,9 @@
  */
 package com.sun.max.vm.management;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
 import java.lang.management.*;
 import java.lang.reflect.Constructor;
 import java.util.*;
-
-import com.sun.cri.bytecode.Bytecodes.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -116,7 +112,7 @@ public class ThreadManagement {
     }
 
     /**
-     * Support method for {@link Thread.getAllStackTraces}.
+     * Support method for {@link Thread#getAllStackTraces}.
      * @param threads
      * @return
      */
@@ -195,7 +191,7 @@ public class ThreadManagement {
         return tp.result;
     }
 
-    private static final class StackTraceThreadsProcessor extends StopThreads {
+    private static final class StackTraceThreadsProcessor extends StopThreads.FromArray {
         private int maxDepth;
         StackTraceElement[][] result;
 
@@ -206,9 +202,9 @@ public class ThreadManagement {
         }
 
         @Override
-        public void processThread(int index, Pointer threadLocals, TrapStateAccess.MethodState methodState) {
+        public void processThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
             final List<StackFrame> frameList = new ArrayList<StackFrame>();
-            new VmStackFrameWalker(threadLocals).frames(frameList, methodState.instructionPointer, methodState.stackPointer, methodState.framePointer);
+            new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
 
             int depth = maxDepth < frameList.size() ? maxDepth : frameList.size();
             final List<StackTraceElement> listResult = new ArrayList<StackTraceElement>(depth);
@@ -231,7 +227,7 @@ public class ThreadManagement {
             }
             StackTraceElement[] trace = new StackTraceElement[listResult.size()];
             listResult.toArray(trace);
-            result[index] = trace;
+            result[indexOf(threadLocals)] = trace;
         }
     }
 

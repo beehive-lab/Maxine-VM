@@ -21,224 +21,166 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.max.vm.thread.VmThreadLocal.*;
-import static com.sun.max.vm.runtime.Safepoint.*;
 
 import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A common mechanism for stopping a set of threads using the safepoint mechanism, and running some subclass-specific operation, specified via
- * {@link #processThread}.
- * Two variants of the stopping mechanism are provided (at present). The first stops one thread at a time runs {@link #processThread} and then
- * releases the thread. The second variant stops all threads "simultaneously", then runs {@link #processThread} on each thread serially.
- * The generic method {@link #process} chooses one of these based on the system property {@value STOP_MECHANISM_PROPERTY}.
- * If the current thread is in set, it is not stopped, but the {@link #currentIndex} variable is set to indicate its presence.
+ * A common mechanism for stopping a set of threads using the safepoint mechanism, and running some subclass-specific
+ * operation, specified via {@link #processThread}.
  *
- * The mechanism is very similar to that used by {@link StopTheWorldGCDaemon}, and sets the {@link VmThreadLocal#GC_STATE}
- * value. I.e., it is treated like a GC. TODO: Resolve interactions with GC during processing.
+ * The threads are stopped "simultaneously", then {@link #processThread} is run on each thread serially.
+ *
+ * The basic stop/resume mechanism is reflected in the nested classes {@link Safepoint.ForceSafepoint},
+ * {@link Safepoint.WaitUntilStopped}, {@link Safepoint.BlockOnACTIVE} and {@link Safepoint.ResetMutator}. N.B. this
+ * code was re-factored from {@link StopTheWorldGCDaemon}, and uses the {@link VmThreadLocal#GC_STATE} field in
+ * {@link VmThreadLocal} and related values. I.e., stopping threads is treated as if it were a GC request. Note,
+ * however, that unlike a GC request, the {@link #process} method and, typically, the subclass-specific
+ * {@link #processThread} method, allocate memory. It is TODO how this meta-circularity is resolved if, say, a GC is
+ * requested during processing.
+ *
+ * There are two ways to specify the set of threads to be stopped. One is via an array of {@link Thread threads}, since
+ * this is the API used by the {@link java.lang.management} framework. The other is based on a {@link Pointer.Predicate}
+ * as, for example, used in {@link StopTheWorldGCDaemon}.
  *
  * @author Mick Jordan
  */
-public abstract class StopThreads {
-    private static final String STOP_MECHANISM_PROPERTY = "max.vm.stopthread.par";
-    protected Thread[] threads;
-    /**
-     * This value will be non-negative iff the current thread was in {@link threads}.
-     */
-    protected int currentIndex = -1;
+public class StopThreads {
+    private static final Safepoint.BlockOnACTIVE afterSafepoint = new Safepoint.BlockOnACTIVE();
+    private static final Safepoint.ForceSafepoint forceSafepoint = new Safepoint.ForceSafepoint(StopThreads.afterSafepoint);
+    private static final Safepoint.WaitUntilStopped waitUntilStopped = new Safepoint.WaitUntilStopped();
+    private static final Safepoint.ResetMutator resetMutator = new Safepoint.ResetMutator();
 
-    protected StopThreads(Thread[] threads) {
-        this.threads = threads;
-        for (int i = 0; i < threads.length; i++) {
-            if (Thread.currentThread() == threads[i]) {
-                currentIndex = i;
-                break;
-            }
+    public abstract static class ByPredicate {
+
+        Pointer.Predicate predicate;
+
+        ByPredicate(Pointer.Predicate predicate) {
+            this.predicate = predicate;
         }
-    }
 
-    /**
-     * Gets the index of the current thread (at the time the instance was created) in the request set.
-     * @return index of the current thread of -1 if it was not in the request set.
-     */
-    public int currentIndex() {
-        return currentIndex;
-    }
-
-    /**
-     * Stops the threads in the request set and invoke the {@link ProcessThread} method in each thread.
-     */
-    public void process() {
-        if (System.getProperty(STOP_MECHANISM_PROPERTY) != null) {
-            parallelProcess();
-        } else {
-            serialProcess();
-        }
-    }
-
-    /*
-     * Serially, for each thread in the request set, stop thread, run the given {@link #processThread} method, and then release.
-     */
-    private void serialProcess() {
-        for (int i = 0; i < threads.length; i++) {
-            Thread thread = threads[i];
-            // do not stop the current thread!
-            if (i == currentIndex) {
-                continue;
-            }
-            final Pointer theThreadLocals = VmThread.fromJava(thread).vmThreadLocals();
-
-            Pointer.Predicate matchThread = new Pointer.Predicate() {
-
-                public boolean evaluate(Pointer threadLocals) {
-                    return threadLocals == theThreadLocals;
-                }
-            };
-
+        /**
+         * Stops the threads that match the {@link #predicate} and invoke the {@link ProcessThread} method on each thread.
+         * N.B. It is the responsibility of the caller to ensure that the thread invoking this method does not match the predicate!
+         */
+        public void process() {
             synchronized (VmThreadMap.ACTIVE) {
-                VmThreadMap.ACTIVE.forAllThreadLocals(matchThread, stopThread);
+                VmThreadMap.ACTIVE.forAllThreadLocals(predicate, forceSafepoint);
                 MemoryBarriers.storeLoad();
-                // wait for thread to reach safepoint
-                VmThreadMap.ACTIVE.forAllThreadLocals(matchThread, waitUntilStopped);
-                final TrapStateAccess.MethodState methodState = new TrapStateAccess.MethodState();
-                // We detect that the thread was stopped in native code by the SAFEPOINT_SCRATCH
-                // field being zero since the safepoint procedure will not have run
-                final Word safePointTrapState = SAFEPOINT_SCRATCH.getConstantWord(theThreadLocals);
-                if (safePointTrapState.isZero()) {
-                    Pointer frameAnchor = JavaFrameAnchor.from(theThreadLocals);
-                    assert !frameAnchor.isZero();
-                    methodState.instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
-                    methodState.stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
-                    methodState.framePointer = JavaFrameAnchor.FP.get(frameAnchor);
-                } else {
-                    TrapStateAccess.getMethodState(safePointTrapState.asPointer(), methodState);
-                }
-                processThread(i, theThreadLocals, methodState);
-                VmThreadMap.ACTIVE.forAllThreadLocals(matchThread, resetMutator);
+                // wait for threads to reach safepoint
+                VmThreadMap.ACTIVE.forAllThreadLocals(predicate, waitUntilStopped);
+
+                Pointer.Procedure processProcedure = new Pointer.Procedure() {
+                    public void run(Pointer vmThreadLocals) {
+                        Pointer instructionPointer;
+                        Pointer stackPointer;
+                        Pointer framePointer;
+                        // We detect that the thread was stopped in native code by the SAFEPOINT_SCRATCH
+                        // field being zero since the safepoint procedure will not have run
+                        final Pointer safePointTrapState = SAFEPOINT_SCRATCH.getConstantWord(vmThreadLocals).asPointer();
+                        if (safePointTrapState.isZero()) {
+                            Pointer frameAnchor = JavaFrameAnchor.from(vmThreadLocals);
+                            assert !frameAnchor.isZero();
+                            instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
+                            stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
+                            framePointer = JavaFrameAnchor.FP.get(frameAnchor);
+                        } else {
+                            final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+                            instructionPointer = trapStateAccess.getInstructionPointer(safePointTrapState);
+                            final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
+                            stackPointer = trapStateAccess.getStackPointer(safePointTrapState, targetMethod);
+                            framePointer = trapStateAccess.getFramePointer(safePointTrapState, targetMethod);
+
+                        }
+                        processThread(vmThreadLocals, instructionPointer, stackPointer, framePointer);
+
+                    }
+                };
+                VmThreadMap.ACTIVE.forAllThreadLocals(predicate, processProcedure);
+
+                VmThreadMap.ACTIVE.forAllThreadLocals(predicate, resetMutator);
             }
         }
+
+        /**
+         * Subclass-specific behavior after a thread has stopped.
+         *
+         * @param threadLocals equivalent to {@code VmThread.fromJava(threads[i]).vmThreadLocals()}
+         * @param instructionPointer at the point the thread was stopped
+         * @param stackPointer at the point the thread was stopped
+         * @param framePointer at the point the thread was stopped
+         */
+        public abstract void processThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer);
+
     }
 
-    /**
-     * Stop the threads in parallel, then process them serially.
-     */
-    private void parallelProcess() {
-        Pointer.Predicate matchThreads = new Pointer.Predicate() {
+    public abstract static class FromArray extends ByPredicate {
+
+        /**
+         * This value will be non-negative iff the current thread at the time that
+         * {@link StopThreads#StopThreads(Thread[])} called was in {@link threads}.
+         */
+        protected int currentIndex = -1;
+
+        private Thread[] threads;
+
+        private static class ArrayPredicate implements Pointer.Predicate {
+            private Thread[] threads;
+
+            ArrayPredicate(Thread[] threads) {
+                this.threads = threads;
+
+            }
 
             public boolean evaluate(Pointer threadLocals) {
                 for (int i = 0; i < threads.length; i++) {
-                    if (i != currentIndex && VmThread.fromJava(threads[i]).vmThreadLocals() == threadLocals) {
+                    if (threadLocals != VmThread.current().vmThreadLocals() && threadLocals == VmThread.fromJava(threads[i]).vmThreadLocals()) {
                         return true;
                     }
                 }
                 return false;
             }
-        };
 
-        synchronized (VmThreadMap.ACTIVE) {
-            VmThreadMap.ACTIVE.forAllThreadLocals(matchThreads, stopThread);
-            MemoryBarriers.storeLoad();
-            // wait for threads to reach safepoint
-            VmThreadMap.ACTIVE.forAllThreadLocals(matchThreads, waitUntilStopped);
+        }
+
+        protected FromArray(Thread[] threads) {
+            super(new ArrayPredicate(threads));
+            this.threads = threads;
             for (int i = 0; i < threads.length; i++) {
-                if (i == currentIndex) {
-                    continue;
-                }
-                final TrapStateAccess.MethodState methodState = new TrapStateAccess.MethodState();
-                Pointer theThreadLocals = VmThread.fromJava(threads[i]).vmThreadLocals();
-                // We detect that the thread was stopped in native code by the SAFEPOINT_SCRATCH
-                // field being zero since the safepoint procedure will not have run
-                final Word safePointTrapState = SAFEPOINT_SCRATCH.getConstantWord(theThreadLocals);
-                if (safePointTrapState.isZero()) {
-                    Pointer frameAnchor = JavaFrameAnchor.from(theThreadLocals);
-                    assert !frameAnchor.isZero();
-                    methodState.instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
-                    methodState.stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
-                    methodState.framePointer = JavaFrameAnchor.FP.get(frameAnchor);
-                } else {
-                    TrapStateAccess.getMethodState(safePointTrapState.asPointer(), methodState);
-                }
-                processThread(i, theThreadLocals, methodState);
-            }
-            VmThreadMap.ACTIVE.forAllThreadLocals(matchThreads, resetMutator);
-        }
-    }
-
-    /**
-     * Subclass-specific behavior after a thread has stopped.
-     *
-     * @param index index into {@link #threads} of thread being processed.
-     * @param threadLocals equivalent to {@code VmThread.fromJava(threads[i]).vmThreadLocals()}
-     * @param methodState the {@link TrapStateAccess.MethodState} at the point the thread was stopped
-     */
-    public abstract void processThread(int index, Pointer threadLocals, TrapStateAccess.MethodState methodState);
-
-    private static class StopProcedure implements Pointer.Procedure {
-
-        public void run(Pointer threadLocals) {
-            GC_STATE.setVariableWord(threadLocals, Address.fromInt(1));
-            SAFEPOINT_SCRATCH.setConstantWord(threadLocals, Address.zero());
-            Safepoint.runProcedure(threadLocals, afterSafepoint);
-        }
-
-    }
-
-    private static final StopProcedure stopThread = new StopProcedure();
-
-    private static class AfterSafepoint implements Safepoint.Procedure {
-
-        public void run(Pointer trapState) {
-            SAFEPOINT_SCRATCH.setConstantWord(VmThread.currentVmThreadLocals(), trapState);
-            synchronized (VmThreadMap.ACTIVE) {
-                // block until initiator has done its processing
-            }
-        }
-    }
-
-    private static final AfterSafepoint afterSafepoint = new AfterSafepoint();
-
-    private static class WaitUntilStopped implements Pointer.Procedure {
-        public void run(Pointer vmThreadLocals) {
-            if (Safepoint.UseCASBasedGCMutatorSynchronization) {
-                final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                while (true) {
-                    if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
-                        if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC).equals(THREAD_IN_NATIVE)) {
-                            // Transitioned thread into GC
-                            break;
-                        }
-                    }
-                    Thread.yield();
-                }
-            } else {
-                while (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(THREAD_IN_JAVA)) {
-                    // Wait for thread to be in native code, either as a result of a safepoint or because
-                    // that's where it was when its GC_STATE flag was set to true.
-                    Thread.yield();
+                if (Thread.currentThread() == threads[i]) {
+                    currentIndex = i;
+                    break;
                 }
             }
         }
-    }
 
-    private static final WaitUntilStopped waitUntilStopped = new WaitUntilStopped();
-
-    private static final class ResetMutator extends Safepoint.ResetSafepoints {
-        @Override
-        public void run(Pointer vmThreadLocals) {
-            super.run(vmThreadLocals);
-            if (UseCASBasedGCMutatorSynchronization) {
-                MUTATOR_STATE.setVariableWord(vmThreadLocals, THREAD_IN_NATIVE);
-            } else {
-                // This must be last so that a mutator thread trying to return out of native code stays in the spin
-                // loop until its GC & safepoint related state has been completely reset
-                GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
-            }
+        /**
+         * Gets the index of the current thread (at the time the instance was created) in the request set.
+         *
+         * @return index of the current thread of -1 if it was not in the request set.
+         */
+        public int currentIndex() {
+            return currentIndex;
         }
+
+        /**
+         * Get index in {@link #threads} array for thread identified by {@code threadLocals}.
+         * @param threadLocals
+         * @return index in array
+         */
+        public int indexOf(Pointer threadLocals) {
+            for (int i = 0; i < threads.length; i++) {
+                if (VmThread.fromJava(threads[i]).vmThreadLocals() == threadLocals) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
     }
-
-    private static final ResetMutator resetMutator = new ResetMutator();
-
 }
 
