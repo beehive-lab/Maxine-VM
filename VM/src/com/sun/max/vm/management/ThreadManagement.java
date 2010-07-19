@@ -20,13 +20,10 @@
  */
 package com.sun.max.vm.management;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
 import java.lang.management.*;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
 import java.util.*;
 
-import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jdk.*;
@@ -40,6 +37,7 @@ import com.sun.max.vm.thread.*;
  *
  * @author Mick Jordan
  */
+
 public class ThreadManagement {
     /**
      * Support for creating {@link ThreadInfo} objects by reflection.
@@ -113,16 +111,12 @@ public class ThreadManagement {
     }
 
     /**
-     * Support method for {@link Thread#getAllStackTraces()}.
+     * Support method for {@link Thread#getAllStackTraces}.
      * @param threads
      * @return
      */
     public static StackTraceElement[][] dumpThreads(Thread[] threads) {
-        StackTraceElement[][] result = new StackTraceElement[threads.length][];
-        for (int t = 0; t < threads.length; t++) {
-            result[t] = getStackTrace(threads[t], Integer.MAX_VALUE);
-        }
-        return result;
+        return getStackTrace(threads, Integer.MAX_VALUE);
     }
 
     /**
@@ -142,7 +136,7 @@ public class ThreadManagement {
             }
         }
         ThreadInfo[] threadInfoArray = new ThreadInfo[ids.length];
-        getThreadInfo(ids, 0, threadInfoArray);
+        getThreadInfo(ids, Integer.MAX_VALUE, threadInfoArray);
         return threadInfoArray;
     }
 
@@ -169,88 +163,51 @@ public class ThreadManagement {
     }
 
     private static StackTraceElement[] getStackTrace(Thread thread, int maxDepth) {
-        StackTraceElement[] result = null;
-        if (maxDepth == 0) {
-            result = new StackTraceElement[0];
-        } else if (Thread.currentThread() == thread) {
-            // special case
-            result = new Exception().getStackTrace();
-            if (maxDepth < result.length) {
+        assert maxDepth > 0;
+        Thread[] threads = new Thread[1];
+        threads[0] = thread;
+        return getStackTrace(threads, maxDepth)[0];
+    }
+
+    private static StackTraceElement[][] getStackTrace(Thread[] threads, int maxDepth) {
+        final StackTraceThreadsProcessor tp = new StackTraceThreadsProcessor(threads, maxDepth);
+        tp.process();
+        if (tp.currentIndex() >= 0) {
+            // special case of current thread
+            StackTraceElement[] currentTrace = new Exception().getStackTrace();
+            if (maxDepth < currentTrace.length) {
                 final StackTraceElement[] subResult = new StackTraceElement[maxDepth];
-                System.arraycopy(result, 0, subResult, 0, maxDepth);
-                result = subResult;
+                System.arraycopy(currentTrace, 0, subResult, 0, maxDepth);
+                currentTrace = subResult;
             }
-        } else {
-            /*
-             * May need to stop the thread with a safepoint. To deal properly with threads transitioning to/from native
-             * code, we treat this like a GC.
-             * TODO Refactor this into StopTheWorld(GC)Daemon
-             * TODO What if GC already underway or allocation here triggers a GC?
-             */
-            final Pointer theThreadLocals = VmThread.fromJava(thread).vmThreadLocals();
-            Pointer.Predicate matchOne = new Pointer.Predicate() {
-
-                public boolean evaluate(Pointer threadLocals) {
-                    return threadLocals == theThreadLocals;
-                }
-            };
-            final StackTraceSafepointProcedure afterSafepoint = new StackTraceSafepointProcedure();
-            Pointer.Procedure stopThread = new Pointer.Procedure() {
-
-                public void run(Pointer threadLocals) {
-                    GC_STATE.setVariableWord(threadLocals, Address.fromInt(1));
-                    Safepoint.runProcedure(threadLocals, afterSafepoint);
-                }
-            };
-
-            Pointer.Procedure waitUntilStopped = new Pointer.Procedure() {
-
-                public void run(Pointer threadLocals) {
-                    while (MUTATOR_STATE.getVariableWord(threadLocals).equals(Safepoint.THREAD_IN_JAVA)) {
-                        // Wait for thread to be in native code, either as a result of a safepoint or because
-                        // that's where it was when its GC_STATE flag was set to true.
-                        Thread.yield();
-                    }
-                }
-            };
-
-            synchronized (VmThreadMap.ACTIVE) {
-                VmThreadMap.ACTIVE.forAllThreadLocals(matchOne, stopThread);
-                MemoryBarriers.storeLoad();
-                // wait for target to reach safepoint
-                VmThreadMap.ACTIVE.forAllThreadLocals(matchOne, waitUntilStopped);
-                Pointer frameAnchor = JavaFrameAnchor.from(theThreadLocals);
-                assert !frameAnchor.isZero();
-                Pointer instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
-                Pointer stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
-                Pointer framePointer = JavaFrameAnchor.FP.get(frameAnchor);
-                final List<StackFrame> frameList = new ArrayList<StackFrame>();
-                new VmStackFrameWalker(theThreadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
-                VmThreadMap.ACTIVE.forAllThreadLocals(matchOne, resetMutator);
-                result = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
-            }
-
+            tp.result[tp.currentIndex()] = currentTrace;
         }
-        return result;
+        return tp.result;
     }
 
-    private static class StackTraceSafepointProcedure implements Safepoint.Procedure {
-        public void run(Pointer trapState) {
-            synchronized (VmThreadMap.ACTIVE) {
-                // block until initiator has got the stack trace
-            }
-        }
-    }
+    private static final class StackTraceThreadsProcessor extends StopThreads.FromArray {
+        private int maxDepth;
+        StackTraceElement[][] result;
 
-    public static final class ResetMutator extends Safepoint.ResetSafepoints {
+        StackTraceThreadsProcessor(Thread[] threads, int maxDepth) {
+            super(threads);
+            this.maxDepth = maxDepth;
+            this.result = new StackTraceElement[threads.length][];
+        }
+
         @Override
-        public void run(Pointer vmThreadLocals) {
-            super.run(vmThreadLocals);
-            GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
+        public void processThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+            final List<StackFrame> frameList = new ArrayList<StackFrame>();
+            new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
+
+            result[indexOf(threadLocals)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
         }
     }
 
-    private static final ResetMutator resetMutator = new ResetMutator();
+
+    public static Thread[] findMonitorDeadlockedThreads() {
+        return null;
+    }
 
     public static void checkThreadInfoConstructor() {
         if (threadInfoConstructor == null) {
@@ -271,6 +228,5 @@ public class ThreadManagement {
             }
         }
     }
-
-
 }
+

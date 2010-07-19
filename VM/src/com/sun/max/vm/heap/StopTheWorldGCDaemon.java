@@ -21,7 +21,6 @@
 package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.runtime.Safepoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.cri.bytecode.Bytecodes.*;
@@ -38,13 +37,14 @@ import com.sun.max.vm.thread.*;
  * A daemon thread that hangs around, waiting, then executes a given GC procedure when requested, then waits again.
  *
  * All other VM threads are forced into a non-mutating state while a request is being serviced. This can be used to
- * implement stop-the-world GC.
+ * implement stop-the-world GC. The daemon uses the generic thread stopping mechanisms in {@link StopThreads}.
  *
  * @author Bernd Mathiske
  * @author Ben L. Titzer
  * @author Doug Simon
  * @author Paul Caprioli
  * @author Hannes Payer
+ * @author Mick Jordan
  */
 public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
@@ -114,23 +114,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         }
     }
 
-    /**
-     * The procedure that is run on the GC thread to stop a mutator thread. This means triggering safepoints for a
-     * mutator thread as well as changing the {@linkplain VmThreadLocal#GC_STATE thread local} denoting that
-     * a GC is now in progress.
-     */
-    final class StopMutator implements Pointer.Procedure {
-
-        /**
-         * Triggers safepoints for the thread associated with the given thread locals.
-         */
-        public void run(Pointer vmThreadLocals) {
-            GC_STATE.setVariableWord(vmThreadLocals, Address.fromInt(1));
-            Safepoint.runProcedure(vmThreadLocals, afterSafepoint);
-        }
-    }
-
-    private final StopMutator stopMutator = new StopMutator();
+    private final Safepoint.ForceSafepoint stopMutator = new Safepoint.ForceSafepoint(afterSafepoint);
 
     /**
      * A VM option for triggering a GC at fixed intervals.
@@ -147,7 +131,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
      * The procedure that is run on the GC thread to reset the GC relevant state of a mutator thread
      * once GC is complete.
      */
-    public final class ResetMutator extends Safepoint.ResetSafepoints {
+    public final class ResetMutator extends Safepoint.ResetMutator {
         @Override
         public void run(Pointer vmThreadLocals) {
             if (Heap.traceGCPhases()) {
@@ -160,42 +144,18 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             // Indicates that the stack reference map for the thread is once-again unprepared.
             LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, Address.zero());
 
-            // Resets the safepoint latch and resets the safepoint procedure to null
+            // complete the reset procedure
             super.run(vmThreadLocals);
-
-            if (UseCASBasedGCMutatorSynchronization) {
-                MUTATOR_STATE.setVariableWord(vmThreadLocals, THREAD_IN_NATIVE);
-            } else {
-                // This must be last so that a mutator thread trying to return out of native code stays in the spin
-                // loop until its GC & safepoint related state has been completely reset
-                GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
-            }
         }
     }
 
     private final ResetMutator resetMutator = new ResetMutator();
 
-    public static class WaitUntilNonMutating implements Pointer.Procedure {
+    public static class WaitUntilNonMutating extends Safepoint.WaitUntilStopped {
         long stackReferenceMapPreparationTime;
+        @Override
         public void run(Pointer vmThreadLocals) {
-            if (Safepoint.UseCASBasedGCMutatorSynchronization) {
-                final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                while (true) {
-                    if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
-                        if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC).equals(THREAD_IN_NATIVE)) {
-                            // Transitioned thread into GC
-                            break;
-                        }
-                    }
-                    Thread.yield();
-                }
-            } else {
-                while (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(THREAD_IN_JAVA)) {
-                    // Wait for thread to be in native code, either as a result of a safepoint or because
-                    // that's where it was when its GC_STATE flag was set to true.
-                    Thread.yield();
-                }
-            }
+            super.run(vmThreadLocals);
 
             final boolean threadWasInNative = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero();
 
