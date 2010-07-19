@@ -268,11 +268,6 @@ public class VmThreadLocal {
      */
     public static final VmThreadLocal NATIVE_CALL_STACK_SIZE = new VmThreadLocal("NATIVE_CALL_STACK_SIZE", false, "Size of the native call stack");
 
-    /**
-     * Scratch area for saving per-thread state, e.g., the trap state address on a safepoint. This field is used in {@link StopThreads}.
-     */
-    public static final VmThreadLocal SAFEPOINT_SCRATCH = new VmThreadLocal("SAFEPOINT_SCRATCH", false, "Scratch value for use during a safepoint");
-
     private static VmThreadLocal[] valuesNeedingInitialization;
 
     /**

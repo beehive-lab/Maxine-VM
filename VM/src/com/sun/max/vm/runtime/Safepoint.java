@@ -353,7 +353,6 @@ public abstract class Safepoint {
     public static class BlockOnACTIVE implements Safepoint.Procedure {
 
         public void run(Pointer trapState) {
-            SAFEPOINT_SCRATCH.setConstantWord(VmThread.currentVmThreadLocals(), trapState);
             synchronized (VmThreadMap.ACTIVE) {
                 // block until initiator has done its processing
             }
@@ -376,7 +375,6 @@ public abstract class Safepoint {
 
         public void run(Pointer threadLocals) {
             GC_STATE.setVariableWord(threadLocals, Address.fromInt(1));
-            SAFEPOINT_SCRATCH.setConstantWord(threadLocals, Address.zero());
             runProcedure(threadLocals, safePointProcedure);
         }
 

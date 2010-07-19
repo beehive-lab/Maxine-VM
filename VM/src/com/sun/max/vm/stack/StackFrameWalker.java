@@ -473,7 +473,8 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Gets the next anchor in a VM exit frame. That is, get the frame in the next {@linkplain NativeStubGenerator native stub} on the stack.
+     * Gets the next anchor in a VM exit frame. That is, get the frame in the next {@linkplain NativeStubGenerator native stub} on the stack
+     * above the current stack pointer.
      *
      * @return {@link Pointer#zero()} if there are no more native stub frame anchors
      */
@@ -501,6 +502,16 @@ public abstract class StackFrameWalker {
         }
         Pointer anchor = this.currentAnchor;
         this.currentAnchor = readWord(anchor, JavaFrameAnchor.PREVIOUS.offset).asPointer();
+
+        if (!anchor.isZero()) {
+            // Recurse if the anchor is below the current frame in the stack walk.
+            // This can occur when a stack walk is initiated further up the stack
+            // than the currently executing frame.
+            if (readWord(anchor, JavaFrameAnchor.SP.offset).asPointer().lessThan(current.sp)) {
+                return nextNativeStubAnchor();
+            }
+        }
+
         return anchor;
     }
 
