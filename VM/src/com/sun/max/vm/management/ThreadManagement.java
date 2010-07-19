@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -98,7 +97,7 @@ public class ThreadManagement {
                         thread, thread.getState().ordinal(), null, null,
                         0, 0,
                         0, 0,
-                        getStackTrace(thread, maxDepth),
+                        maxDepth == 0 ? new StackTraceElement[0] : getStackTrace(thread, maxDepth),
                         null,
                         null,
                         null
@@ -164,15 +163,10 @@ public class ThreadManagement {
     }
 
     private static StackTraceElement[] getStackTrace(Thread thread, int maxDepth) {
-        StackTraceElement[] result = null;
-        if (maxDepth == 0) {
-            result = new StackTraceElement[0];
-        } else {
-            Thread[] threads = new Thread[1];
-            threads[0] = thread;
-            result = getStackTrace(threads, maxDepth)[0];
-        }
-        return result;
+        assert maxDepth > 0;
+        Thread[] threads = new Thread[1];
+        threads[0] = thread;
+        return getStackTrace(threads, maxDepth)[0];
     }
 
     private static StackTraceElement[][] getStackTrace(Thread[] threads, int maxDepth) {
@@ -206,28 +200,7 @@ public class ThreadManagement {
             final List<StackFrame> frameList = new ArrayList<StackFrame>();
             new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
 
-            int depth = maxDepth < frameList.size() ? maxDepth : frameList.size();
-            final List<StackTraceElement> listResult = new ArrayList<StackTraceElement>(depth);
-            // TODO this code is partially copied from JDK_java_lang_Throwable.fillInStackTrace and probably should
-            // be relocated to there and shared
-            for (StackFrame stackFrame : frameList) {
-                if (stackFrame instanceof AdapterStackFrame) {
-                    continue;
-                }
-                final TargetMethod targetMethod = stackFrame.targetMethod();
-                if (targetMethod == null || targetMethod.classMethodActor() == null) {
-                    // native frame or stub frame without a class method actor
-                    continue;
-                }
-                JDK_java_lang_Throwable.addStackTraceElements(listResult, targetMethod, stackFrame, false);
-                depth--;
-                if (depth == 0) {
-                    break;
-                }
-            }
-            StackTraceElement[] trace = new StackTraceElement[listResult.size()];
-            listResult.toArray(trace);
-            result[indexOf(threadLocals)] = trace;
+            result[indexOf(threadLocals)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
         }
     }
 

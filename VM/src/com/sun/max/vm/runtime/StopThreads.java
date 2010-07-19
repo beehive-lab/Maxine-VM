@@ -20,12 +20,8 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
 import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
@@ -64,8 +60,9 @@ public class StopThreads {
         }
 
         /**
-         * Stops the threads that match the {@link #predicate} and invoke the {@link ProcessThread} method on each thread.
-         * N.B. It is the responsibility of the caller to ensure that the thread invoking this method does not match the predicate!
+         * Stops the threads that match the {@link #predicate} and invoke the {@link ProcessThread} method on each
+         * thread. N.B. It is the responsibility of the caller to ensure that the thread invoking this method does not
+         * match the predicate!
          */
         public void process() {
             synchronized (VmThreadMap.ACTIVE) {
@@ -75,31 +72,21 @@ public class StopThreads {
                 VmThreadMap.ACTIVE.forAllThreadLocals(predicate, waitUntilStopped);
 
                 Pointer.Procedure processProcedure = new Pointer.Procedure() {
+
                     public void run(Pointer vmThreadLocals) {
                         Pointer instructionPointer;
                         Pointer stackPointer;
                         Pointer framePointer;
-                        // We detect that the thread was stopped in native code by the SAFEPOINT_SCRATCH
-                        // field being zero since the safepoint procedure will not have run
-                        final Pointer safePointTrapState = SAFEPOINT_SCRATCH.getConstantWord(vmThreadLocals).asPointer();
-                        if (safePointTrapState.isZero()) {
-                            Pointer frameAnchor = JavaFrameAnchor.from(vmThreadLocals);
-                            assert !frameAnchor.isZero();
-                            instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
-                            stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
-                            framePointer = JavaFrameAnchor.FP.get(frameAnchor);
-                        } else {
-                            final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-                            instructionPointer = trapStateAccess.getInstructionPointer(safePointTrapState);
-                            final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-                            stackPointer = trapStateAccess.getStackPointer(safePointTrapState, targetMethod);
-                            framePointer = trapStateAccess.getFramePointer(safePointTrapState, targetMethod);
-
-                        }
+                        Pointer frameAnchor = JavaFrameAnchor.from(vmThreadLocals);
+                        assert !frameAnchor.isZero();
+                        instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
+                        stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
+                        framePointer = JavaFrameAnchor.FP.get(frameAnchor);
                         processThread(vmThreadLocals, instructionPointer, stackPointer, framePointer);
 
                     }
                 };
+
                 VmThreadMap.ACTIVE.forAllThreadLocals(predicate, processProcedure);
 
                 VmThreadMap.ACTIVE.forAllThreadLocals(predicate, resetMutator);

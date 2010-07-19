@@ -132,5 +132,4 @@ public abstract class TrapStateAccess {
      * @param trapState the block of memory holding the trap state
      */
     public abstract void logTrapState(Pointer trapState);
-
 }
