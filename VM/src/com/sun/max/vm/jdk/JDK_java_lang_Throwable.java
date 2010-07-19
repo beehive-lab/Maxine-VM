@@ -92,15 +92,16 @@ public final class JDK_java_lang_Throwable {
      *
      * @param stackFrames a list of stack frames {@linkplain StackFrameWalker#frames(List, Pointer, Pointer, Pointer)
      *            gathered} during a walk of a thread's stack
-     * @param throwableActor the class of the implicit exception type for which the stack trace is being constructed.
-     *            This is used to elide the chain of constructors calls for such exceptions.
+     * @param exceptionClass the class of the exception for which the stack trace is being constructed.
+     *            This is used to elide the chain of constructors calls for this class and its super classes.
+     *            If this value is {@code null}, then the stack trace is not for an exception and no eliding is performed.
      * @param maxDepth the maximum number of elements in the returned array or {@link Integer#MAX_VALUE} if the complete
      *            sequence of stack trace elements for {@code stackFrames} is required
      * @return an array of stack trace elements derived from {@code stackFrames} of length
      */
-    public static StackTraceElement[] asStackTrace(List<StackFrame> stackFrames, ClassActor throwableActor, int maxDepth) {
+    public static StackTraceElement[] asStackTrace(List<StackFrame> stackFrames, ClassActor exceptionClass, int maxDepth) {
         boolean inTrappedFrame = false;
-        boolean inFiller = true;
+        boolean elidingConstructors = exceptionClass != null;
         List<StackTraceElement> elements = new ArrayList<StackTraceElement>();
         for (StackFrame stackFrame : stackFrames) {
             if (stackFrame instanceof AdapterStackFrame) {
@@ -114,20 +115,20 @@ public final class JDK_java_lang_Throwable {
                 // Reset the stack trace. We want the trace to start from the trapped frame
                 elements.clear();
                 inTrappedFrame = true;
-                inFiller = false;
+                elidingConstructors = false;
                 continue;
-            } else if (inFiller) {
+            } else if (elidingConstructors) {
                 final ClassMethodActor methodActor = targetMethod.classMethodActor();
-                if (methodActor.holder() == throwableActor && methodActor.isInstanceInitializer()) {
+                if (methodActor.holder() == exceptionClass && methodActor.isInstanceInitializer()) {
                     // This will initiate filling the stack trace.
-                    inFiller = false;
+                    elidingConstructors = false;
                 }
                 continue;
             }
             addStackTraceElements(elements, targetMethod, stackFrame, inTrappedFrame);
             if (inTrappedFrame) {
                 inTrappedFrame = false;
-                inFiller = false;
+                elidingConstructors = false;
             }
 
             if (elements.size() >= maxDepth) {
