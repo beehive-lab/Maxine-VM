@@ -79,11 +79,29 @@ public final class JDK_java_lang_Throwable {
         final Pointer cpuStackPointer = VMRegister.getCpuStackPointer();
         final Pointer cpuFramePointer = VMRegister.getCpuFramePointer();
 
-        boolean atImplicitExceptionThrow = false;
-        boolean inFiller = true;
-
         final List<StackFrame> stackFrames = stackFrameWalker.frames(null, instructionPointer, cpuStackPointer, cpuFramePointer);
-        final List<StackTraceElement> result = new ArrayList<StackTraceElement>();
+        StackTraceElement[] stackTrace = asStackTrace(stackFrames, throwableActor, Integer.MAX_VALUE);
+        TupleAccess.writeObject(thisThrowable, Throwable_stackTrace.offset(), stackTrace);
+        return thisThrowable;
+    }
+
+    /**
+     * Converts a list of real stack frames to an array of application-visible stack trace elements. The returned array
+     * of stack trace elements is suitable for an exception {@linkplain Throwable#getStackTrace() stack trace} or as
+     * part of the value returned by {@link Thread#getAllStackTraces()}.
+     *
+     * @param stackFrames a list of stack frames {@linkplain StackFrameWalker#frames(List, Pointer, Pointer, Pointer)
+     *            gathered} during a walk of a thread's stack
+     * @param throwableActor the class of the implicit exception type for which the stack trace is being constructed.
+     *            This is used to elide the chain of constructors calls for such exceptions.
+     * @param maxDepth the maximum number of elements in the returned array or {@link Integer#MAX_VALUE} if the complete
+     *            sequence of stack trace elements for {@code stackFrames} is required
+     * @return an array of stack trace elements derived from {@code stackFrames} of length
+     */
+    public static StackTraceElement[] asStackTrace(List<StackFrame> stackFrames, ClassActor throwableActor, int maxDepth) {
+        boolean inTrappedFrame = false;
+        boolean inFiller = true;
+        List<StackTraceElement> elements = new ArrayList<StackTraceElement>();
         for (StackFrame stackFrame : stackFrames) {
             if (stackFrame instanceof AdapterStackFrame) {
                 continue;
@@ -93,9 +111,9 @@ public final class JDK_java_lang_Throwable {
                 // native frame or stub frame without a class method actor
                 continue;
             } else if (targetMethod.classMethodActor().isTrapStub()) {
-                // Reset the stack trace. We want the trace to start from the actual exception throw.
-                result.clear();
-                atImplicitExceptionThrow = true;
+                // Reset the stack trace. We want the trace to start from the trapped frame
+                elements.clear();
+                inTrappedFrame = true;
                 inFiller = false;
                 continue;
             } else if (inFiller) {
@@ -106,26 +124,32 @@ public final class JDK_java_lang_Throwable {
                 }
                 continue;
             }
-            addStackTraceElements(result, targetMethod, stackFrame, atImplicitExceptionThrow);
-            if (atImplicitExceptionThrow) {
-                atImplicitExceptionThrow = false;
+            addStackTraceElements(elements, targetMethod, stackFrame, inTrappedFrame);
+            if (inTrappedFrame) {
+                inTrappedFrame = false;
                 inFiller = false;
             }
+
+            if (elements.size() >= maxDepth) {
+                break;
+            }
         }
-        final Object value = result.toArray(new StackTraceElement[result.size()]);
-        TupleAccess.writeObject(thisThrowable, Throwable_stackTrace.offset(), value);
-        return thisThrowable;
+
+        if (elements.size() > maxDepth) {
+            elements = elements.subList(0, maxDepth + 1);
+        }
+        return (StackTraceElement[]) elements.toArray(new StackTraceElement[elements.size()]);
     }
 
-    public static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame, boolean atImplicitExceptionThrow) {
-        BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(stackFrame.ip, atImplicitExceptionThrow);
+    private static void addStackTraceElements(List<StackTraceElement> elements, TargetMethod targetMethod, StackFrame stackFrame, boolean inTrappedFrame) {
+        BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(stackFrame.ip, inTrappedFrame);
         if (bytecodeLocation == null) {
-            addStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.ip.minus(targetMethod.codeStart()).toInt());
+            addStackTraceElement(elements, targetMethod.classMethodActor().original(), -1, stackFrame.ip.minus(targetMethod.codeStart()).toInt());
         } else {
             while (bytecodeLocation != null) {
-                final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor;
+                final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor.original();
                 if (classMethodActor.isApplicationVisible() || classMethodActor.isNative()) {
-                    addStackTraceElement(result, classMethodActor, bytecodeLocation.sourceLineNumber(), -1);
+                    addStackTraceElement(elements, classMethodActor, bytecodeLocation.sourceLineNumber(), -1);
                 }
                 bytecodeLocation = bytecodeLocation.parent();
             }

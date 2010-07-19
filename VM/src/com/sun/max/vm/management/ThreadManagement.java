@@ -23,15 +23,12 @@ package com.sun.max.vm.management;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.management.*;
-import java.lang.reflect.Constructor;
+import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.cri.bytecode.Bytecodes.*;
-
+import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -43,7 +40,6 @@ import com.sun.max.vm.thread.*;
  *
  * @author Mick Jordan
  */
-
 public class ThreadManagement {
     /**
      * Support for creating {@link ThreadInfo} objects by reflection.
@@ -103,7 +99,7 @@ public class ThreadManagement {
                         thread, thread.getState().ordinal(), null, null,
                         0, 0,
                         0, 0,
-                        getStackTrace(thread, maxDepth),
+                        maxDepth == 0 ? new StackTraceElement[0] : getStackTrace(thread, maxDepth),
                         null,
                         null,
                         null
@@ -117,7 +113,7 @@ public class ThreadManagement {
     }
 
     /**
-     * Support method for {@link Thread.getAllStackTraces}.
+     * Support method for {@link Thread#getAllStackTraces()}.
      * @param threads
      * @return
      */
@@ -198,8 +194,7 @@ public class ThreadManagement {
                     return threadLocals == theThreadLocals;
                 }
             };
-            final TrapStateAccess.MethodState methodState = new TrapStateAccess.MethodState();
-            final StackTraceSafepointProcedure afterSafepoint = new StackTraceSafepointProcedure(methodState);
+            final StackTraceSafepointProcedure afterSafepoint = new StackTraceSafepointProcedure();
             Pointer.Procedure stopThread = new Pointer.Procedure() {
 
                 public void run(Pointer threadLocals) {
@@ -224,39 +219,15 @@ public class ThreadManagement {
                 MemoryBarriers.storeLoad();
                 // wait for target to reach safepoint
                 VmThreadMap.ACTIVE.forAllThreadLocals(matchOne, waitUntilStopped);
-                // We detect that the thread was stopped in native code by the methodState being null since the safepoint procedure will not have run
-                if (methodState.instructionPointer.isZero()) {
-                    Pointer frameAnchor = JavaFrameAnchor.from(theThreadLocals);
-                    assert !frameAnchor.isZero();
-                    methodState.instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
-                    methodState.stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
-                    methodState.framePointer = JavaFrameAnchor.FP.get(frameAnchor);
-                }
+                Pointer frameAnchor = JavaFrameAnchor.from(theThreadLocals);
+                assert !frameAnchor.isZero();
+                Pointer instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
+                Pointer stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
+                Pointer framePointer = JavaFrameAnchor.FP.get(frameAnchor);
                 final List<StackFrame> frameList = new ArrayList<StackFrame>();
-                new VmStackFrameWalker(theThreadLocals).frames(frameList, methodState.instructionPointer, methodState.stackPointer, methodState.framePointer);
+                new VmStackFrameWalker(theThreadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
                 VmThreadMap.ACTIVE.forAllThreadLocals(matchOne, resetMutator);
-
-                int depth = maxDepth < frameList.size() ? maxDepth : frameList.size();
-                final List<StackTraceElement> listResult = new ArrayList<StackTraceElement>(depth);
-                // TODO this code is partially copied from JDK_java_lang_Throwable.fillInStackTrace and probably should
-                // be relocated to there and shared
-                for (StackFrame stackFrame : frameList) {
-                    if (stackFrame instanceof AdapterStackFrame) {
-                        continue;
-                    }
-                    final TargetMethod targetMethod = stackFrame.targetMethod();
-                    if (targetMethod == null || targetMethod.classMethodActor() == null) {
-                        // native frame or stub frame without a class method actor
-                        continue;
-                    }
-                    JDK_java_lang_Throwable.addStackTraceElements(listResult, targetMethod, stackFrame, false);
-                    depth--;
-                    if (depth == 0) {
-                        break;
-                    }
-                }
-                result = new StackTraceElement[listResult.size()];
-                listResult.toArray(result);
+                result = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
             }
 
         }
@@ -264,14 +235,7 @@ public class ThreadManagement {
     }
 
     private static class StackTraceSafepointProcedure implements Safepoint.Procedure {
-        private TrapStateAccess.MethodState methodState;
-
-        StackTraceSafepointProcedure(TrapStateAccess.MethodState methodState) {
-            this.methodState = methodState;
-        }
-
         public void run(Pointer trapState) {
-            TrapStateAccess.getMethodState(trapState, methodState);
             synchronized (VmThreadMap.ACTIVE) {
                 // block until initiator has got the stack trace
             }
