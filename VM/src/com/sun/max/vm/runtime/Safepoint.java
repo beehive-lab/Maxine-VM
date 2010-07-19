@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.max.vm.runtime.Safepoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
@@ -32,7 +31,6 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.unsafe.Pointer.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
