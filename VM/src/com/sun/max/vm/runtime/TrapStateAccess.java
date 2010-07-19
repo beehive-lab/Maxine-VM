@@ -27,7 +27,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -134,39 +133,4 @@ public abstract class TrapStateAccess {
      */
     public abstract void logTrapState(Pointer trapState);
 
-    /**
-     * A value class for returning the important method state from the trap state.
-     */
-    public static final class MethodState {
-        public Pointer instructionPointer;
-        public Pointer stackPointer;
-        public Pointer framePointer;
-        public TargetMethod targetMethod;
-
-        public MethodState() {
-        }
-
-        private void setMethodState(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, TargetMethod targetMethod) {
-            this.instructionPointer = instructionPointer;
-            this.stackPointer = stackPointer;
-            this.framePointer = framePointer;
-            this.targetMethod = targetMethod;
-        }
-    }
-
-    /**
-     * Get the important method state information from the trap state.
-     * @param trapState
-     * @param methodState instance to fill in with method state
-     * @return methodState parameter
-     */
-    public static MethodState getMethodState(Pointer trapState, MethodState methodState) {
-        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-        final Pointer instructionPointer = trapStateAccess.getInstructionPointer(trapState);
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        final Pointer stackPointer = trapStateAccess.getStackPointer(trapState, targetMethod);
-        final Pointer framePointer = trapStateAccess.getFramePointer(trapState, targetMethod);
-        methodState.setMethodState(instructionPointer, stackPointer, framePointer, targetMethod);
-        return methodState;
-    }
 }

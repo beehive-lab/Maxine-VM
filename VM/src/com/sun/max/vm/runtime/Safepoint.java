@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.runtime.Safepoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
@@ -31,6 +32,7 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.unsafe.Pointer.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -344,4 +346,86 @@ public abstract class Safepoint {
             reset(vmThreadLocals);
         }
     }
+
+    /**
+     * A {@link Safepoint.Procedure} that simply blocks on {@link VmThreadMap.ACTIVE}.
+     */
+    public static class BlockOnACTIVE implements Safepoint.Procedure {
+
+        public void run(Pointer trapState) {
+            SAFEPOINT_SCRATCH.setConstantWord(VmThread.currentVmThreadLocals(), trapState);
+            synchronized (VmThreadMap.ACTIVE) {
+                // block until initiator has done its processing
+            }
+        }
+    }
+
+    /**
+     * A {@link Pointer.Procedure} for use with {@link VmThreadMap#forAllThreadLocals} that initiates a safepoint.
+     */
+    public static class ForceSafepoint implements Pointer.Procedure {
+        private Safepoint.Procedure safePointProcedure;
+
+        /**
+         * Force a safepoint on all threads for which the {@link #run} method is invoked and run the given {@link Safepoint.Procedure}.
+         * @param safePointProcedure
+         */
+        public ForceSafepoint(Safepoint.Procedure safePointProcedure) {
+            this.safePointProcedure = safePointProcedure;
+        }
+
+        public void run(Pointer threadLocals) {
+            GC_STATE.setVariableWord(threadLocals, Address.fromInt(1));
+            SAFEPOINT_SCRATCH.setConstantWord(threadLocals, Address.zero());
+            runProcedure(threadLocals, safePointProcedure);
+        }
+
+    }
+
+    /**
+     * A {@link Pointer.Procedure} for use with {@link VmThreadMap#forAllThreadLocals} that waits until a thread is stopped,
+     * either by a safepoint or because it is blocked in native code.
+     * A subclass should invoke {@code super.run} first to stop the thread and then do its additional steps.
+     */
+    public static class WaitUntilStopped implements Pointer.Procedure {
+        public void run(Pointer vmThreadLocals) {
+            if (UseCASBasedGCMutatorSynchronization) {
+                final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+                while (true) {
+                    if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
+                        if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC).equals(THREAD_IN_NATIVE)) {
+                            // Transitioned thread into GC
+                            break;
+                        }
+                    }
+                    Thread.yield();
+                }
+            } else {
+                while (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(THREAD_IN_JAVA)) {
+                    // Wait for thread to be in native code, either as a result of a safepoint or because
+                    // that's where it was when its GC_STATE flag was set to true.
+                    Thread.yield();
+                }
+            }
+        }
+    }
+
+    /**
+     * A {@link Pointer.Procedure} for use with {@link VmThreadMap#forAllThreadLocals} that implements the reset protocol for returning from a safepoint.
+     * A subclass should do its additional steps first, then call {@code super.run} to cancel the safepoint procedure and reset the state.
+     */
+    public static class ResetMutator extends ResetSafepoints {
+        @Override
+        public void run(Pointer vmThreadLocals) {
+            super.run(vmThreadLocals);
+            if (UseCASBasedGCMutatorSynchronization) {
+                MUTATOR_STATE.setVariableWord(vmThreadLocals, THREAD_IN_NATIVE);
+            } else {
+                // This must be last so that a mutator thread trying to return out of native code stays in the spin
+                // loop until its GC & safepoint related state has been completely reset
+                GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
+            }
+        }
+    }
+
 }
