@@ -91,7 +91,8 @@ public class RunBench {
         void postrun() throws Exception;
     }
 
-    /**Provides empty implementations of pre and post run for classes that don't need it.
+    /**
+     * Provides empty implementations of pre and post run for classes that don't need it.
      *
      * @author Puneeet Lakhina
      */
@@ -156,14 +157,14 @@ public class RunBench {
         fileNameBase = System.getProperty(FILE_PROPERTY);
     }
 
-    /*
+    /**
      * Create an instance that will run {@code bench}.
      */
     protected RunBench(MicroBenchmark bench) {
         this(bench, null);
     }
 
-    /*
+    /**
      * Create an instance that will run {@code bench}. {@code encap} should be a variant that just contains any
      * encapsulating code that is necessary for the benchmark. For example, setting up a {@code synchronized} block to
      * test {@link Object#wait}. This is used to factor out timing of code that should not be measured.
@@ -204,24 +205,21 @@ public class RunBench {
         return runBench(defaultLoopCount, true);
     }
 
-    /*
+    /**
      * Run the benchmark for the default number of iterations.
      *
      * @param report report the results iff true
-     *
      * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
      */
     public boolean runBench(boolean report) {
         return runBench(defaultLoopCount, report);
     }
 
-    /*
+    /**
      * Run the benchmark for the given number of iterations.
      *
      * @param loopCount the number of iterations
-     *
      * @param report report the results iff true
-     *
      * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
      */
     public boolean runBench(int loopCount, boolean report) {
