@@ -209,7 +209,7 @@ public final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private static Thread[] getThreads() {
-        return VmThreadMap.getThreads();
+        return VmThreadMap.getThreads(false);
     }
 
     /**
