@@ -30,14 +30,14 @@ import test.bench.util.*;
 
 import com.sun.max.vm.runtime.*;
 
-public class StoppedThreadsOperation_01 extends RunBench {
+public class StopThreadsForOperation_01 extends RunBench {
 
-    protected StoppedThreadsOperation_01(int n) {
+    protected StopThreadsForOperation_01(int n) {
         super(new Bench(n));
     }
 
     public static boolean test(int i) {
-        return new StoppedThreadsOperation_01(i).runBench(true);
+        return new StopThreadsForOperation_01(i).runBench(true);
     }
 
     static class Bench extends AbstractMicroBenchmark implements Runnable {
@@ -45,7 +45,7 @@ public class StoppedThreadsOperation_01 extends RunBench {
         private Thread[] spinners;
         private volatile boolean done;
         private volatile boolean started;
-        private StoppedThreadsOperation stoppedThreadsOperation;
+        private StopThreadsForOperation stoppedThreadsOperation;
 
         Bench(int n) {
             numThreads = n;
@@ -59,7 +59,7 @@ public class StoppedThreadsOperation_01 extends RunBench {
                 spinners[s] = new Thread(this);
                 spinners[s].start();
             }
-            stoppedThreadsOperation = new StoppedThreadsOperation(Arrays.asList(spinners));
+            stoppedThreadsOperation = new StopThreadsForOperation(Arrays.asList(spinners));
         }
 
         @Override

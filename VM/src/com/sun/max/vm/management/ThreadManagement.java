@@ -170,9 +170,12 @@ public class ThreadManagement {
 
     private static StackTraceElement[][] getStackTrace(Thread[] threads, int maxDepth) {
         final StackTraceElement[][] traces = new StackTraceElement[threads.length][];
+        int currentThreadIndex = -1;
         for (int i = 0; i < threads.length; i++) {
             if (threads[i] == Thread.currentThread()) {
                 // special case of current thread
+                currentThreadIndex = i;
+                // null it out so StackTraceGatherer will not try to stop it
                 threads[i] = null;
                 StackTraceElement[] trace = new Exception().getStackTrace();
                 if (maxDepth < trace.length) {
@@ -182,10 +185,13 @@ public class ThreadManagement {
             }
         }
         new StackTraceGatherer(Arrays.asList(threads), traces, maxDepth).run();
+        if (currentThreadIndex >= 0) {
+            threads[currentThreadIndex] = Thread.currentThread();
+        }
         return traces;
     }
 
-    private static final class StackTraceGatherer extends StoppedThreadsOperation {
+    private static final class StackTraceGatherer extends StopThreadsForOperation {
         final int maxDepth;
         final StackTraceElement[][] traces;
         final List<Thread> threads;
