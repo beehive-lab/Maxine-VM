@@ -169,10 +169,21 @@ public class ThreadManagement {
         return getStackTrace(threads, maxDepth)[0];
     }
 
-    private static StackTraceElement[][] getStackTrace(Thread[] threads, int maxDepth) {
-        final StackTraceThreadsProcessor tp = new StackTraceThreadsProcessor(threads, maxDepth);
-        tp.process();
-        if (tp.currentIndex() >= 0) {
+    private static StackTraceElement[][] getStackTrace(final Thread[] threads, final int maxDepth) {
+        final StackTraceElement[][] result = new StackTraceElement[threads.length][];
+        final StopThreads.ThreadProcessor tp = new StopThreads.ThreadProcessor() {
+            @Override
+            public void processThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+                final List<StackFrame> frameList = new ArrayList<StackFrame>();
+                new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
+
+                result[StopThreads.FromArray.indexOf(threads, threadLocals)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
+            }
+
+        };
+        final StopThreads.FromArray stopThreads = new StopThreads.FromArray(threads, new StopThreads.ProcessProcedure(tp));
+        stopThreads.process();
+        if (stopThreads.currentIndex() >= 0) {
             // special case of current thread
             StackTraceElement[] currentTrace = new Exception().getStackTrace();
             if (maxDepth < currentTrace.length) {
@@ -180,30 +191,10 @@ public class ThreadManagement {
                 System.arraycopy(currentTrace, 0, subResult, 0, maxDepth);
                 currentTrace = subResult;
             }
-            tp.result[tp.currentIndex()] = currentTrace;
+            result[stopThreads.currentIndex()] = currentTrace;
         }
-        return tp.result;
+        return result;
     }
-
-    private static final class StackTraceThreadsProcessor extends StopThreads.FromArray {
-        private int maxDepth;
-        StackTraceElement[][] result;
-
-        StackTraceThreadsProcessor(Thread[] threads, int maxDepth) {
-            super(threads);
-            this.maxDepth = maxDepth;
-            this.result = new StackTraceElement[threads.length][];
-        }
-
-        @Override
-        public void processThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-            final List<StackFrame> frameList = new ArrayList<StackFrame>();
-            new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
-
-            result[indexOf(threadLocals)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
-        }
-    }
-
 
     public static Thread[] findMonitorDeadlockedThreads() {
         return null;
