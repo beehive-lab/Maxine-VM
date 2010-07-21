@@ -234,6 +234,7 @@ public class RunBench {
             // Now the real thing
             doRun(loopCount, bench, elapsed);
         } catch (Throwable t) {
+            t.printStackTrace();
             System.err.println("benchmark threw " + t);
             report = false;
         }
@@ -241,11 +242,12 @@ public class RunBench {
             final long avgEncapElapsed = average(encapElapsed);
             final long avgElapsed = average(elapsed);
             final long benchElapsed = avgElapsed - avgEncapElapsed;
-
+            final double avgElapsedStdDev = stddev(elapsed,avgElapsed);
+            final long[] minMaxArr = maxmin(elapsed);
             System.out.println("Benchmark results (nanoseconds)");
             System.out.println("  loopcount: " + loopCount);
-            System.out.println("  averge overhead per iteration: " + avgEncapElapsed + ", median overhead per iteration " + median(encapElapsed));
-            System.out.println("  average elapsed per iteration: " + avgElapsed + ", median elapsed per iteration " + median(elapsed));
+            System.out.println("  averge overhead per iteration: " + avgEncapElapsed + " , median overhead per iteration " + median(encapElapsed));
+            System.out.println("  average elapsed per iteration: " + avgElapsed + " , median elapsed per iteration " + median(elapsed) + " , Stddev : " + (long)avgElapsedStdDev + " , Maximum: " + minMaxArr[1] + " , Minimum: " + minMaxArr[0]);
             System.out.println("  average elapsed minus overhead: " + benchElapsed);
 
             if (getProperty(DISPLAY_INDIVIDUAL_PROPERTY, false) != null) {
@@ -261,6 +263,26 @@ public class RunBench {
         return true;
     }
 
+    private double stddev(long[] timings, long avg) {
+        double res = 0;
+        for (long l : timings) {
+            res += Math.pow(l - avg, 2);
+        }
+        return Math.sqrt(res / timings.length);
+    }
+
+    private long[] maxmin(long[] timings) {
+        long[] minMaxArr = new long[]{Long.MAX_VALUE,Long.MIN_VALUE};
+        for(long l:timings) {
+            if(l < minMaxArr[0]) {
+                minMaxArr[0] = l;
+            }
+            if(l > minMaxArr[1]) {
+                minMaxArr[1] = l;
+            }
+        }
+        return minMaxArr;
+    }
     private void fileOutput(String type, long[] timings) {
         PrintWriter bs = null;
         try {
