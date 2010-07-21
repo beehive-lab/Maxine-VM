@@ -37,7 +37,7 @@ import com.sun.max.vm.thread.*;
  * A daemon thread that hangs around, waiting, then executes a given GC procedure when requested, then waits again.
  *
  * All other VM threads are forced into a non-mutating state while a request is being serviced. This can be used to
- * implement stop-the-world GC. The daemon uses the generic thread stopping mechanisms in {@link StopThreads}.
+ * implement stop-the-world GC.
  *
  * @author Bernd Mathiske
  * @author Ben L. Titzer
@@ -93,8 +93,10 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             }
 
             if (Heap.traceGCPhases()) {
+                boolean lockDisabledSafepoints = Log.lock();
                 Log.printCurrentThread(false);
                 Log.println(": Restarting after GC");
+                Log.unlock(lockDisabledSafepoints);
             }
 
             Heap.enableAllocationForCurrentThread();
@@ -153,6 +155,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
     public static class WaitUntilNonMutating extends Safepoint.WaitUntilStopped {
         long stackReferenceMapPreparationTime;
+
         @Override
         public void run(Pointer vmThreadLocals) {
             super.run(vmThreadLocals);

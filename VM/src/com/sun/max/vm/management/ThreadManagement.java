@@ -45,7 +45,7 @@ public class ThreadManagement {
     private static Constructor<?> threadInfoConstructor;
 
     public static Thread[] getThreads() {
-        return VmThreadMap.getThreads();
+        return VmThreadMap.getThreads(false);
     }
 
     public static int getDaemonThreadCount() {
@@ -128,7 +128,7 @@ public class ThreadManagement {
      */
     public static ThreadInfo[] dumpThreads(long[] ids, boolean lockedMonitors, boolean lockedSynchronizers) {
         if (ids == null) {
-            final Thread[] threads = VmThreadMap.getThreads();
+            final Thread[] threads = VmThreadMap.getThreads(false);
             ids = new long[threads.length];
             for (int i = 0; i < threads.length; i++) {
                 Thread t = threads[i];
@@ -164,37 +164,47 @@ public class ThreadManagement {
 
     private static StackTraceElement[] getStackTrace(Thread thread, int maxDepth) {
         assert maxDepth > 0;
-        Thread[] threads = new Thread[1];
-        threads[0] = thread;
+        Thread[] threads = {thread};
         return getStackTrace(threads, maxDepth)[0];
     }
 
-    private static StackTraceElement[][] getStackTrace(final Thread[] threads, final int maxDepth) {
-        final StackTraceElement[][] result = new StackTraceElement[threads.length][];
-        final StopThreads.ThreadProcessor tp = new StopThreads.ThreadProcessor() {
-            @Override
-            public void processThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-                final List<StackFrame> frameList = new ArrayList<StackFrame>();
-                new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
-
-                result[StopThreads.FromArray.indexOf(threads, threadLocals)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
+    private static StackTraceElement[][] getStackTrace(Thread[] threads, int maxDepth) {
+        final StackTraceElement[][] traces = new StackTraceElement[threads.length][];
+        for (int i = 0; i < threads.length; i++) {
+            if (threads[i] == Thread.currentThread()) {
+                // special case of current thread
+                threads[i] = null;
+                StackTraceElement[] trace = new Exception().getStackTrace();
+                if (maxDepth < trace.length) {
+                    trace = Arrays.copyOf(trace, maxDepth);
+                }
+                traces[i] = trace;
             }
-
-        };
-        final StopThreads.FromArray stopThreads = new StopThreads.FromArray(threads, new StopThreads.ProcessProcedure(tp));
-        stopThreads.process();
-        if (stopThreads.currentIndex() >= 0) {
-            // special case of current thread
-            StackTraceElement[] currentTrace = new Exception().getStackTrace();
-            if (maxDepth < currentTrace.length) {
-                final StackTraceElement[] subResult = new StackTraceElement[maxDepth];
-                System.arraycopy(currentTrace, 0, subResult, 0, maxDepth);
-                currentTrace = subResult;
-            }
-            result[stopThreads.currentIndex()] = currentTrace;
         }
-        return result;
+        new StackTraceGatherer(Arrays.asList(threads), traces, maxDepth).run();
+        return traces;
     }
+
+    private static final class StackTraceGatherer extends StoppedThreadsOperation {
+        final int maxDepth;
+        final StackTraceElement[][] traces;
+        final List<Thread> threads;
+        StackTraceGatherer(List<Thread> threads, StackTraceElement[][] result, int maxDepth) {
+            super(threads);
+            this.threads = threads;
+            this.maxDepth = maxDepth;
+            this.traces = result;
+        }
+
+        @Override
+        public void perform(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+            final List<StackFrame> frameList = new ArrayList<StackFrame>();
+            new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
+            Thread thread = VmThread.fromVmThreadLocals(threadLocals).javaThread();
+            traces[threads.indexOf(thread)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
+        }
+    }
+
 
     public static Thread[] findMonitorDeadlockedThreads() {
         return null;

@@ -461,11 +461,18 @@ public final class VmThreadMap {
         return idMap.get(id);
     }
 
-    public static Thread[] getThreads() {
+    /**
+     * Gets a snapshot of the currently executing threads.
+     *
+     * @param includeGCThreads specifies whether {@linkplain VmThread#isGCThread() GC threads}
+     *        are to be included in the snapshot
+     * @return a snapshot of the currently executing threads
+     */
+    public static Thread[] getThreads(final boolean includeGCThreads) {
         final ArrayList<Thread> threads = new ArrayList<Thread>();
         Procedure<VmThread> proc = new Procedure<VmThread>() {
             public void run(VmThread vmThread) {
-                if (vmThread.javaThread() != null) {
+                if (vmThread.javaThread() != null && (includeGCThreads || !vmThread.isGCThread())) {
                     threads.add(vmThread.javaThread());
                 }
             }

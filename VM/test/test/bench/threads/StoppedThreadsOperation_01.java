@@ -24,18 +24,20 @@
  */
 package test.bench.threads;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
+import java.util.*;
+
 import test.bench.util.*;
 
-public class StopThreads_01 extends RunBench {
+import com.sun.max.vm.runtime.*;
 
-    protected StopThreads_01(int n) {
+public class StoppedThreadsOperation_01 extends RunBench {
+
+    protected StoppedThreadsOperation_01(int n) {
         super(new Bench(n));
     }
 
     public static boolean test(int i) {
-        return new StopThreads_01(i).runBench(true);
+        return new StoppedThreadsOperation_01(i).runBench(true);
     }
 
     static class Bench extends AbstractMicroBenchmark implements Runnable {
@@ -43,13 +45,7 @@ public class StopThreads_01 extends RunBench {
         private Thread[] spinners;
         private volatile boolean done;
         private volatile boolean started;
-        private StopThreads.ByPredicate stopThreads;
-        private static final StopThreads.ProcessProcedure processProcedure = new StopThreads.ProcessProcedure(new Processor());
-
-        private static class Processor implements StopThreads.ThreadProcessor {
-            public void processThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-            }
-        }
+        private StoppedThreadsOperation stoppedThreadsOperation;
 
         Bench(int n) {
             numThreads = n;
@@ -63,7 +59,7 @@ public class StopThreads_01 extends RunBench {
                 spinners[s] = new Thread(this);
                 spinners[s].start();
             }
-            stopThreads = new StopThreads.FromArray(spinners, processProcedure);
+            stoppedThreadsOperation = new StoppedThreadsOperation(Arrays.asList(spinners));
         }
 
         @Override
@@ -75,7 +71,7 @@ public class StopThreads_01 extends RunBench {
             while (!started) {
                 Thread.yield();
             }
-            stopThreads.process();
+            stoppedThreadsOperation.run();
         }
 
         public void run() {
