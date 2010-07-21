@@ -18,8 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.bench;
-
 /**
  * Sub packages of test.bench should contain micro-benchmarks that measure aspects of the VM and JDK platform.
  * Each micro-benchmark should be written to use the framework in {@link test.bench.util.RunBench}, following the
@@ -28,3 +26,4 @@ package test.bench;
  *
  * @author Mick Jordan
  */
+package test.bench;

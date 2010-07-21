@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Unit tests for the Maxine assembly system
- * 
+ * Unit tests for the Maxine assembly system.
+ *
  * @author Bernd Mathiske
  */
 package test.com.sun.max.asm;

@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * JUnit tests for Sun Labs' Maxine project software
- * 
+ * JUnit tests for Sun Labs' Maxine project software.
+ *
  * @author Bernd Mathiske
  */
 package test.com.sun.max;

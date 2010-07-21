@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * Tests for the SPARC compiler
+ * Tests for the SPARC compiler.
  */
 package test.com.sun.max.vm.cps.sparc;

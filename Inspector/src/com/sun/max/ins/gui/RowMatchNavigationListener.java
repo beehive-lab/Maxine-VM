@@ -18,9 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.ins.gui;
+
 /**
- * Unit tests for SPARC assembly.
+ * Callback interface for views that incorporate of row-based matching
+ * with user invokable navigation.
  *
- * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
-package test.com.sun.max.asm.sparc;
+public interface RowMatchNavigationListener extends RowMatchListener {
+
+    /**
+     * Notifies that the user has requested to see the next match, relative to the current selection, of the most recent search.
+     * This is not supposed to happen if the most recent search produced no matches.
+     */
+    void selectNextResult();
+
+    /**
+     * Notifies that the user has requested to see the previous match, relative to the current selection, of the most recent search.
+    * This is not supposed to happen if the most recent search produced no matches.
+     */
+    void selectPreviousResult();
+}

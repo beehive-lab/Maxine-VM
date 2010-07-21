@@ -91,7 +91,8 @@ public class RunBench {
         void postrun() throws Exception;
     }
 
-    /**Provides empty implementations of pre and post run for classes that don't need it.
+    /**
+     * Provides empty implementations of pre and post run for classes that don't need it.
      *
      * @author Puneeet Lakhina
      */
@@ -133,6 +134,8 @@ public class RunBench {
     private static final MicroBenchmark emptyEncap = new EmptyEncap();
     private static String fileNameBase;
     private static int fileNameIndex;
+    private int warmUpIndex;
+    private int runIndex;
 
     /**
      * Check if any control properties are set.
@@ -154,14 +157,14 @@ public class RunBench {
         fileNameBase = System.getProperty(FILE_PROPERTY);
     }
 
-    /*
+    /**
      * Create an instance that will run {@code bench}.
      */
     protected RunBench(MicroBenchmark bench) {
         this(bench, null);
     }
 
-    /*
+    /**
      * Create an instance that will run {@code bench}. {@code encap} should be a variant that just contains any
      * encapsulating code that is necessary for the benchmark. For example, setting up a {@code synchronized} block to
      * test {@link Object#wait}. This is used to factor out timing of code that should not be measured.
@@ -202,24 +205,21 @@ public class RunBench {
         return runBench(defaultLoopCount, true);
     }
 
-    /*
+    /**
      * Run the benchmark for the default number of iterations.
      *
      * @param report report the results iff true
-     *
      * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
      */
     public boolean runBench(boolean report) {
         return runBench(defaultLoopCount, report);
     }
 
-    /*
+    /**
      * Run the benchmark for the given number of iterations.
      *
      * @param loopCount the number of iterations
-     *
      * @param report report the results iff true
-     *
      * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
      */
     public boolean runBench(int loopCount, boolean report) {
@@ -234,20 +234,22 @@ public class RunBench {
             // Now the real thing
             doRun(loopCount, bench, elapsed);
         } catch (Throwable t) {
+            final String where = runIndex < 0 ? "warmup iteration " + warmUpIndex : "run iteration " + runIndex;
+            System.err.println("benchmark threw " + t + " on " + where);
             t.printStackTrace();
-            System.err.println("benchmark threw " + t);
             report = false;
         }
         if (report) {
             final long avgEncapElapsed = average(encapElapsed);
             final long avgElapsed = average(elapsed);
             final long benchElapsed = avgElapsed - avgEncapElapsed;
-            final double avgElapsedStdDev = stddev(elapsed,avgElapsed);
+            final double avgElapsedStdDev = stddev(elapsed, avgElapsed);
             final long[] minMaxArr = maxmin(elapsed);
             System.out.println("Benchmark results (nanoseconds)");
-            System.out.println("  loopcount: " + loopCount);
+            System.out.println("  loopcount: " + loopCount + ", warmupcount: " + warmupCount);
             System.out.println("  averge overhead per iteration: " + avgEncapElapsed + " , median overhead per iteration " + median(encapElapsed));
-            System.out.println("  average elapsed per iteration: " + avgElapsed + " , median elapsed per iteration " + median(elapsed) + " , Stddev : " + (long)avgElapsedStdDev + " , Maximum: " + minMaxArr[1] + " , Minimum: " + minMaxArr[0]);
+            System.out.println("  average elapsed per iteration: " + avgElapsed + " , median elapsed per iteration " + median(elapsed) +
+                            " , stddev : " + (long) avgElapsedStdDev + " , max: " + minMaxArr[1] + " , min: " + minMaxArr[0]);
             System.out.println("  average elapsed minus overhead: " + benchElapsed);
 
             if (getProperty(DISPLAY_INDIVIDUAL_PROPERTY, false) != null) {
@@ -272,17 +274,18 @@ public class RunBench {
     }
 
     private long[] maxmin(long[] timings) {
-        long[] minMaxArr = new long[]{Long.MAX_VALUE,Long.MIN_VALUE};
-        for(long l:timings) {
-            if(l < minMaxArr[0]) {
+        long[] minMaxArr = new long[]{Long.MAX_VALUE, Long.MIN_VALUE};
+        for (long l : timings) {
+            if (l < minMaxArr[0]) {
                 minMaxArr[0] = l;
             }
-            if(l > minMaxArr[1]) {
+            if (l > minMaxArr[1]) {
                 minMaxArr[1] = l;
             }
         }
         return minMaxArr;
     }
+
     private void fileOutput(String type, long[] timings) {
         PrintWriter bs = null;
         try {
@@ -302,22 +305,23 @@ public class RunBench {
 
     private void doRun(long loopCount, MicroBenchmark bench, long[] timings) throws Throwable {
         // do warmup and discard results
-        for (int i = 0; i < warmupCount; i++) {
+        runIndex = -1;
+        for (warmUpIndex = 0; warmUpIndex < warmupCount; warmUpIndex++) {
             bench.prerun();
             bench.run(true);
             bench.postrun();
             if (trace && bench != encapBench) {
-                System.out.println("warm up run " + i);
+                System.out.println("warm up run " + warmUpIndex);
             }
         }
-        for (int i = 0; i < loopCount; i++) {
+        for (runIndex = 0; runIndex < loopCount; runIndex++) {
             bench.prerun();
             final long start = System.nanoTime();
             bench.run(false);
-            timings[i] = System.nanoTime() - start;
+            timings[runIndex] = System.nanoTime() - start;
             bench.postrun();
             if (trace && bench != encapBench) {
-                System.out.println("run " + i + " elapsed " + timings[i]);
+                System.out.println("run " + runIndex + " elapsed " + timings[runIndex]);
             }
         }
     }

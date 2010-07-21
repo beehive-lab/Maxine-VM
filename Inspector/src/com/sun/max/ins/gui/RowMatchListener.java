@@ -20,23 +20,24 @@
  */
 package com.sun.max.ins.gui;
 
-import java.util.*;
-import java.util.regex.*;
 
 /**
- * Regular expression pattern matcher; identifies by number the rows that match a pattern.
+ * Callback interface for views that incorporate of row-based matching.
  *
  * @author Michael Van De Vanter
- * @see {@link java.util.regex.Pattern}
  */
-public interface RowTextSearcher {
+public interface RowMatchListener {
 
     /**
-     * Find rows matching a regexp pattern.
+     * Notifies the result of a new search.
      *
-     * @param pattern a regular expression pattern
-     * @return rows in the row-based object being searched that match the {@link Pattern}.
+     * @param searchMatchingRows the rows that match the supplied pattern, length=0 if no matches, null if pattern is empty (no search).
      */
-    List<Integer> search(Pattern pattern);
+    void setSearchResult(int[] searchMatchingRows);
+
+    /**
+     * Notifies that the user has requested that the search be closed.
+     */
+    void closeRequested();
 
 }

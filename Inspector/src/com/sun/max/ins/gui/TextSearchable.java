@@ -22,7 +22,7 @@ package com.sun.max.ins.gui;
 
 /**
  * Objects that are subject to textual search,
- * for example by a {@link TableRowTextSearcher}.
+ * for example by a {@link TableRowTextMatcher}.
  *
  * @author Michael Van De Vanter
  */

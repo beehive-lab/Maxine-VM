@@ -88,11 +88,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected CiValue safepointPollRegister() {
-        return ILLEGAL;
-    }
-
-    @Override
     protected CiAddress genAddress(CiValue base, CiValue index, int shift, int disp, CiKind kind) {
         assert base.isVariableOrRegister();
         if (index.isConstant()) {
@@ -665,7 +660,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             // increment backedge counter if needed
             incrementBackedgeCounter(stateFor(x, x.stateAfter()));
 
-            lir.safepoint(ILLEGAL, stateFor(x, x.stateAfter()));
+            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, x.stateAfter()), null, false);
         }
         setNoResult(x);
 

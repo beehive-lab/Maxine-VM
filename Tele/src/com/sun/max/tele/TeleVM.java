@@ -48,6 +48,7 @@ import com.sun.max.tele.field.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.jdwputil.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
@@ -607,6 +608,9 @@ public abstract class TeleVM implements MaxVM {
             }
         }
 
+        final TeleGripScheme teleGripScheme = (TeleGripScheme) vmConfiguration.gripScheme();
+        teleGripScheme.setTeleVM(this);
+
         if (!tryLock()) {
             ProgramError.unexpected("unable to lock during creation");
         }
@@ -621,8 +625,6 @@ public abstract class TeleVM implements MaxVM {
         this.javaThreadGroupProvider = new ThreadGroupProviderImpl(this, true);
         this.nativeThreadGroupProvider = new ThreadGroupProviderImpl(this, false);
 
-        final TeleGripScheme teleGripScheme = (TeleGripScheme) vmConfiguration.gripScheme();
-        teleGripScheme.setTeleVM(this);
         this.threadManager = new TeleThreadManager(this);
         this.codeManager = new CodeManager(this);
         this.bytecodeBreakpointManager = new TeleBytecodeBreakpoint.BytecodeBreakpointManager(this);
@@ -659,7 +661,7 @@ public abstract class TeleVM implements MaxVM {
                 teleClassRegistry = new TeleClassRegistry(this);
                 /*
                  *  Can only fully initialize the {@link TeleHeap} once
-                 *  the {@TeleClassRegistry} is fully initialized, otherwise there's a cycle.
+                 *  the {@TeleClassRegistry} is fully created, otherwise there's a cycle.
                  */
                 heap.initialize();
 
@@ -1329,6 +1331,51 @@ public abstract class TeleVM implements MaxVM {
         } catch (DataIOError dataIOError) {
             return null;
         }
+    }
+
+    /**
+     * Returns a local copy of the contents of the inspectable list of dynamic
+     * heap regions in the VM, using low level mechanisms and performing no checking that
+     * the location or objects are valid.
+     * <br>
+     * The intention is to provide a way to read this data without needing any of the
+     * usual type-based mechanisms for reading data, all of which rely on a populated
+     * {@link TeleClassRegistry}.  This is needed when attaching to a process or reading
+     * a dump, where a description of the dynamic heap must be determined before the
+     * {@link TeleClassRegistry} can be built.
+     *
+     * @return a list of objects, each of which describes a dynamically allocated heap region
+     * in the VM, empty array if no such heap regions
+     */
+    public final List<MaxMemoryRegion> getDynamicHeapRegionsUnsafe() {
+        // Work only with temporary grips that are unsafe across GC
+        // Do no testing to determine if the reference points to a valid object in live memory of the correct types.
+
+        final List<MaxMemoryRegion> regions = new ArrayList<MaxMemoryRegion>();
+
+        // Location of the inspectable field that might point to an array of dynamically allocated heap regions
+        final Pointer dynamicHeapRegionsArrayFieldPointer = bootImageStart.plus(bootImage.header.dynamicHeapRegionsArrayFieldOffset);
+
+        // Value of the field, possibly a pointer to an array of dynamically allocated heap regions
+        final Word fieldValue = readWord(dynamicHeapRegionsArrayFieldPointer.asAddress());
+
+        if (!fieldValue.isZero()) {
+            // Assert that this points to an array of references
+            final RemoteTeleGrip arrayGrip = createTemporaryRemoteTeleGrip(fieldValue);
+            final int length = vm().layoutScheme().arrayHeaderLayout.readLength(arrayGrip);
+
+            // Read the references as words to avoid using too much machinery
+            for (int index = 0; index < length; index++) {
+                // Read an entry from the array
+                final Word regionReferenceWord = vm().layoutScheme().wordArrayLayout.getWord(arrayGrip, index);
+                // Assert that this points to an object of type {@link MemoryRegion} in the VM
+                RemoteTeleGrip regionGrip = createTemporaryRemoteTeleGrip(regionReferenceWord);
+                final Address address = regionGrip.readWord(teleFields.MemoryRegion_start.fieldActor().offset()).asAddress();
+                final int size = regionGrip.readInt(teleFields.MemoryRegion_size.fieldActor().offset());
+                regions.add(new TeleFixedMemoryRegion(vm(), "Fake", address, Size.fromInt(size)));
+            }
+        }
+        return regions;
     }
 
     /**

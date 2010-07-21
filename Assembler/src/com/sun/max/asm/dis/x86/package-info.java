@@ -19,10 +19,10 @@
  * Company, Ltd.
  */
 /**
- * Common functionality of disassemblers for any of the x86 instruction sets
- * 
+ * Common functionality of disassemblers for any of the x86 instruction sets.
+ *
  * @see X86DisassembledInstruction for a disassembler output format description
- * 
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.asm.dis.x86;

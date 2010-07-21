@@ -183,8 +183,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     }
 
     @Override
-    protected RowTextSearcher getRowTextSearcher() {
-        return new TableRowTextSearcher(inspection, table);
+    protected RowTextMatcher getRowTextSearcher() {
+        return new TableRowTextMatcher(inspection, table);
     }
 
    /**
@@ -408,7 +408,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
      * @return Color to be used for the background of all row labels; may have special overrides in future, as for Target Code
      */
     private Color getRowBackgroundColor(int row) {
-        final List<Integer> searchMatchingRows = getSearchMatchingRows();
+        final int[] searchMatchingRows = getSearchMatchingRows();
         if (searchMatchingRows != null) {
             for (int matchingRow : searchMatchingRows) {
                 if (row == matchingRow) {

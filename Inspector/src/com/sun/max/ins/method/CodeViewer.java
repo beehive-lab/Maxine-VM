@@ -126,22 +126,22 @@ public abstract class CodeViewer extends InspectorPanel {
         add(toolBarPanel, BorderLayout.NORTH);
     }
 
-    private List<Integer> searchMatchingRows = null;
+    private int[] searchMatchingRows = null;
 
     /**
      * @return the rows that match a current search session; null if no search session active.
      */
-    protected final List<Integer> getSearchMatchingRows() {
+    protected final int[] getSearchMatchingRows() {
         return searchMatchingRows;
     }
 
-    private final RowSearchListener searchListener = new RowSearchListener() {
+    private final RowMatchNavigationListener rowMatchListener = new RowMatchNavigationListener() {
 
-        public void searchResult(List<Integer> result) {
+        public void setSearchResult(int[] result) {
             searchMatchingRows = result;
             // go to next matching row from current selection
             if (searchMatchingRows != null) {
-                Trace.line(TRACE_VALUE, "search: matches " + searchMatchingRows.size() + " = " + searchMatchingRows);
+                Trace.line(TRACE_VALUE, "search: matches " + searchMatchingRows.length + " = " + searchMatchingRows);
             }
             repaint();
         }
@@ -154,14 +154,14 @@ public abstract class CodeViewer extends InspectorPanel {
             setFocusAtPreviousSearchMatch();
         }
 
-        public void closeSearch() {
+        public void closeRequested() {
             CodeViewer.this.closeSearch();
         }
     };
 
     private void addSearchToolBar() {
         if (searchToolBar == null) {
-            searchToolBar = new RowTextSearchToolBar(inspection(), searchListener, getRowTextSearcher());
+            searchToolBar = new RowTextSearchToolBar(inspection(), rowMatchListener, getRowTextSearcher());
             toolBarPanel.add(searchToolBar);
             parent().pack();
             searchToolBar.getFocus();
@@ -178,7 +178,7 @@ public abstract class CodeViewer extends InspectorPanel {
 
     private void setFocusAtNextSearchMatch() {
         Trace.line(TRACE_VALUE, "search:  next match");
-        if (searchMatchingRows.size() > 0) {
+        if (searchMatchingRows.length > 0) {
             int currentRow = getSelectedRow();
             for (int row : searchMatchingRows) {
                 if (row > currentRow) {
@@ -201,10 +201,10 @@ public abstract class CodeViewer extends InspectorPanel {
 
     private void setFocusAtPreviousSearchMatch() {
         Trace.line(TRACE_VALUE, "search:  previous match");
-        if (searchMatchingRows.size() > 0) {
+        if (searchMatchingRows.length > 0) {
             int currentRow = getSelectedRow();
-            for (int index = searchMatchingRows.size() - 1; index >= 0; index--) {
-                final Integer matchingRow = searchMatchingRows.get(index);
+            for (int index = searchMatchingRows.length - 1; index >= 0; index--) {
+                final Integer matchingRow = searchMatchingRows[index];
                 if (matchingRow < currentRow) {
                     setFocusAtRow(matchingRow);
                     return;
@@ -212,8 +212,8 @@ public abstract class CodeViewer extends InspectorPanel {
             }
             // wrap, could be optional, or dialog choice
             currentRow = getRowCount();
-            for (int index = searchMatchingRows.size() - 1; index >= 0; index--) {
-                final Integer matchingRow = searchMatchingRows.get(index);
+            for (int index = searchMatchingRows.length - 1; index >= 0; index--) {
+                final Integer matchingRow = searchMatchingRows[index];
                 if (matchingRow < currentRow) {
                     setFocusAtRow(matchingRow);
                     return;
@@ -227,7 +227,7 @@ public abstract class CodeViewer extends InspectorPanel {
     /**
      * @return a searcher for locating rows with a textual regexp.
      */
-    protected abstract RowTextSearcher getRowTextSearcher();
+    protected abstract RowTextMatcher getRowTextSearcher();
 
     /**
      * @return how man rows are in the view.
@@ -375,7 +375,7 @@ public abstract class CodeViewer extends InspectorPanel {
      * Is there a currently active search that matches the specified row?
      */
     protected boolean isSearchMatchRow(int row) {
-        final List<Integer> searchMatchingRows = getSearchMatchingRows();
+        final int[] searchMatchingRows = getSearchMatchingRows();
         if (searchMatchingRows != null) {
             for (int matchingRow : searchMatchingRows) {
                 if (row == matchingRow) {
