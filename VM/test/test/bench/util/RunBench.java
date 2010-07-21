@@ -133,6 +133,8 @@ public class RunBench {
     private static final MicroBenchmark emptyEncap = new EmptyEncap();
     private static String fileNameBase;
     private static int fileNameIndex;
+    private int warmUpIndex;
+    private int runIndex;
 
     /**
      * Check if any control properties are set.
@@ -234,7 +236,9 @@ public class RunBench {
             // Now the real thing
             doRun(loopCount, bench, elapsed);
         } catch (Throwable t) {
-            System.err.println("benchmark threw " + t);
+            final String where = runIndex < 0 ? "warmup iteration " + warmUpIndex : "run iteration " + runIndex;
+            System.err.println("benchmark threw " + t + " on " + where);
+            t.printStackTrace();
             report = false;
         }
         if (report) {
@@ -280,22 +284,23 @@ public class RunBench {
 
     private void doRun(long loopCount, MicroBenchmark bench, long[] timings) throws Throwable {
         // do warmup and discard results
-        for (int i = 0; i < warmupCount; i++) {
+        runIndex = -1;
+        for (warmUpIndex = 0; warmUpIndex < warmupCount; warmUpIndex++) {
             bench.prerun();
             bench.run(true);
             bench.postrun();
             if (trace && bench != encapBench) {
-                System.out.println("warm up run " + i);
+                System.out.println("warm up run " + warmUpIndex);
             }
         }
-        for (int i = 0; i < loopCount; i++) {
+        for (runIndex = 0; runIndex < loopCount; runIndex++) {
             bench.prerun();
             final long start = System.nanoTime();
             bench.run(false);
-            timings[i] = System.nanoTime() - start;
+            timings[runIndex] = System.nanoTime() - start;
             bench.postrun();
             if (trace && bench != encapBench) {
-                System.out.println("run " + i + " elapsed " + timings[i]);
+                System.out.println("run " + runIndex + " elapsed " + timings[runIndex]);
             }
         }
     }
