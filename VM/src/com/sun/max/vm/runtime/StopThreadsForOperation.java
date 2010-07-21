@@ -39,17 +39,16 @@ import com.sun.max.vm.thread.*;
  * code was re-factored from {@link StopTheWorldGCDaemon}, and uses the {@link VmThreadLocal#GC_STATE} field in
  * {@link VmThreadLocal} and related values. I.e., stopping threads is treated as if it were a GC request.
  *
- * The set of threads to be stopped and operated upon is specified either as a {@linkplain #StopThreads(List) list of
- * threads} or as a {@linkplain #StopThreads(com.sun.max.unsafe.Pointer.Predicate) predicate} on a thread locals
- * pointer. The latter variant is allocation free, at some cost in the complexity of the interface, whereas the former
- * variant is not.
+ * The set of threads to be stopped and operated upon is specified either as a {@linkplain #StopThreadsForOperation(List) list of
+ * threads} or as a {@linkplain #StopThreadsForOperation(com.sun.max.unsafe.Pointer.Predicate) predicate} on a thread locals
+ * pointer. The latter variant is allocation free whereas the former variant is not.
  *
- * TODO Resolve the question of what should happen if a GC request is issue while performing an operation.
+ * TODO Resolve the question of what should happen if allocation causes a GC request is issued while performing the operation.
  *
  * @author Mick Jordan
  * @author Doug Simon
  */
-public class StoppedThreadsOperation {
+public class StopThreadsForOperation {
 
     /**
      * Adapts a {@link Thread} object based predicate to a thread-locals based predicate.
@@ -71,7 +70,7 @@ public class StoppedThreadsOperation {
     /**
      * Performs an operation on a stopped thread.
      *
-     * The definition of this method in {@link StoppedThreadsOperation} simply returns.
+     * The definition of this method in {@link StopThreadsForOperation} simply returns.
      *
      * @param threadLocals denotes the thread on which the operation is to be performed
      * @param ip instruction pointer at the point the thread was stopped
@@ -103,7 +102,7 @@ public class StoppedThreadsOperation {
      *
      * @param predicate specifies which threads are to be operated upon
      */
-    public StoppedThreadsOperation(Pointer.Predicate predicate) {
+    public StopThreadsForOperation(Pointer.Predicate predicate) {
         this.predicate = predicate;
         performAdapter = new Pointer.Procedure() {
             public void run(Pointer vmThreadLocals) {
@@ -127,7 +126,7 @@ public class StoppedThreadsOperation {
      *
      * @param threads an explicit list of the threads to be operated upon
      */
-    public StoppedThreadsOperation(final List<Thread> threads) {
+    public StopThreadsForOperation(final List<Thread> threads) {
         this(new ThreadPredicate() {
             @Override
             public boolean evaluate(Thread thread) {
