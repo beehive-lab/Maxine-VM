@@ -245,11 +245,11 @@ public class RunBench {
             final long benchElapsed = avgElapsed - avgEncapElapsed;
             final double avgElapsedStdDev = stddev(elapsed, avgElapsed);
             final long[] minMaxArr = maxmin(elapsed);
-            System.out.println("Benchmark results (nanoseconds)");
+            System.out.println("Benchmark results (nanoseconds) per iteration");
             System.out.println("  loopcount: " + loopCount + ", warmupcount: " + warmupCount);
-            System.out.println("  averge overhead per iteration: " + avgEncapElapsed + " , median overhead per iteration " + median(encapElapsed));
-            System.out.println("  average elapsed per iteration: " + avgElapsed + " , median elapsed per iteration " + median(elapsed) +
-                            " , stddev : " + (long) avgElapsedStdDev + " , max: " + minMaxArr[1] + " , min: " + minMaxArr[0]);
+            System.out.println("  averge overhead: " + avgEncapElapsed + ", median overhead " + median(encapElapsed));
+            System.out.println("  average elapsed: " + avgElapsed + ", median elapsed " + median(elapsed) +
+                            ", stddev : " + (long) avgElapsedStdDev + ", max: " + minMaxArr[1] + ", min: " + minMaxArr[0]);
             System.out.println("  average elapsed minus overhead: " + benchElapsed);
 
             if (getProperty(DISPLAY_INDIVIDUAL_PROPERTY, false) != null) {
