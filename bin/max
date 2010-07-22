@@ -191,7 +191,11 @@ test -n "${jvm}" || jvm="${JAVA_HOME}/bin/java"
 jvm_exe="$jvm $jvm_args"
 
 # Ensure that a JDK 6 is being used
-java_version="`$jvm -version 2>&1 | head -1 | cut -d '"' -f2`"
+# The definition f quote is for purely cosmetic reasons to avoid emacs thinking
+# the rest of the file is a string and messing up the syntax highlighting
+quote='"'
+quote='"'
+java_version="`$jvm -version 2>&1 | head -1 | cut -d $quote -f2`"
 if [[ "$java_version" != 1.6* ]]; then
     echo "JAVA_HOME does not denote a JDK 6 installation: $java_version"
     exit 255
@@ -1445,6 +1449,43 @@ gate_help="run the tests used to validate a push to the stable Maxine repository
 
 function run_gate() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
+}
+
+#=======================================
+# 'jrockitbm' command
+#=======================================
+jrockitbm_usage="[-all] [options]"
+jrockitbm_help="run the jrockit benchmark suite
+    Set -all to run all the benchmarks in succession
+    otherwise specify a benchmark on the command line"
+
+function run_jrockitbm() {
+    if [ -z $JROCKITBM_HOME ]; then
+        JROCKITBM_HOME=/import/maxwell/jrockit
+    fi
+    all=0
+    while [ "$1" != "" ]; do
+        case $1 in
+            -all )
+                all=1
+                shift
+                break
+                ;;
+            * )
+                break;
+                ;;
+        esac
+        shift
+    done
+    if [ $all -eq 1 ]; then
+        for i in `cat $JROCKITBM_HOME/tests.lst`
+        do
+            echo Running $i
+            run ${maxine_vm} $MAXVM_OPTIONS -jar $JROCKITBM_HOME/benchmarks.jar $i "$@"
+        done
+    else
+        run ${maxine_vm} $MAXVM_OPTIONS -jar $JROCKITBM_HOME/benchmarks.jar "$@"
+    fi
 }
 
 #=======================================
