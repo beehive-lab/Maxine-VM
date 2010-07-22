@@ -240,17 +240,18 @@ public class RunBench {
             report = false;
         }
         if (report) {
-            final long avgEncapElapsed = average(encapElapsed);
-            final long avgElapsed = average(elapsed);
-            final long benchElapsed = avgElapsed - avgEncapElapsed;
+            final double avgEncapElapsed = average(encapElapsed);
+            final double avgElapsed = average(elapsed);
+            final double benchElapsed = avgElapsed - avgEncapElapsed;
             final double avgElapsedStdDev = stddev(elapsed, avgElapsed);
             final long[] minMaxArr = maxmin(elapsed);
             System.out.println("Benchmark results (nanoseconds) per iteration");
             System.out.println("  loopcount: " + loopCount + ", warmupcount: " + warmupCount);
-            System.out.println("  averge overhead: " + avgEncapElapsed + ", median overhead " + median(encapElapsed));
-            System.out.println("  average elapsed: " + avgElapsed + ", median elapsed " + median(elapsed) +
-                            ", stddev : " + (long) avgElapsedStdDev + ", max: " + minMaxArr[1] + ", min: " + minMaxArr[0]);
-            System.out.println("  average elapsed minus overhead: " + benchElapsed);
+            System.out.format("  averge overhead: %.3f, median overhead: %d\n", avgEncapElapsed, median(encapElapsed));
+            System.out.format("  average elapsed: %.3f, median elapsed: %d, stddev: %.3f, max: %d, min: %d\n",
+                            avgElapsed, median(elapsed), avgElapsedStdDev, minMaxArr[1], minMaxArr[0]);
+            System.out.format("  average elapsed minus overhead: %.3f\n", benchElapsed);
+            System.out.format("  operations/ms: %.3f\n", (double) 1000000 / (double) benchElapsed);
 
             if (getProperty(DISPLAY_INDIVIDUAL_PROPERTY, false) != null) {
                 displayElapsed();
@@ -265,7 +266,7 @@ public class RunBench {
         return true;
     }
 
-    private double stddev(long[] timings, long avg) {
+    private double stddev(long[] timings, double avg) {
         double res = 0;
         for (long l : timings) {
             res += Math.pow(l - avg, 2);
@@ -347,12 +348,12 @@ public class RunBench {
         return (lendiv2 & 1) != 0 ? values[lendiv2] : (values[lendiv2] + values[lendiv2 - 1]) / 2;
     }
 
-    public long average(long[] values) {
+    public double average(long[] values) {
         long result = 0;
         for (int i = 0; i < loopCount; i++) {
             result += values[i];
         }
-        return result / loopCount;
+        return (double) result / (double) loopCount;
     }
 
     public static String getProperty(String name, boolean mustExist) {
