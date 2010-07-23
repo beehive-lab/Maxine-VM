@@ -483,7 +483,32 @@ public abstract class CiXirAssembler {
         /**
          * Record a safepoint.
          */
-        Safepoint
+        Safepoint,
+        /**
+         * Align the code following this instruction to a multiple of (int)extra.
+         */
+        Align,
+        /**
+         * Records the offset of the next instruction as an entrypoint (verified entry, unverified entry, ...). <code>extra</code> is
+         * used to identify it.
+         */
+        Entrypoint,
+        /**
+         * Creates the stack frame for the current method. (usually "push fp" and "add sp, X")
+         */
+        PushFrame,
+        /**
+         * Removes the stack frame of the current method. (usually "mov sp, fp" and "pop fp")
+         */
+        PopFrame,
+        /**
+         * Inserts an array of bytes directly into the code output.
+         */
+        RawBytes,
+        /**
+         * This instruction should never be reached, this is useful for debugging purposes.
+         */
+         ShouldNotReachHere
     }
 
     private void append(XirInstruction xirInstruction) {
@@ -627,6 +652,35 @@ public abstract class CiXirAssembler {
     
     public void safepoint() {
         append(new XirInstruction(CiKind.Void, null, Safepoint, null));
+    }
+
+    public void align(int multiple) {
+        assert multiple > 0;
+        append(new XirInstruction(CiKind.Void, multiple, Align, null));
+    }
+    
+    public void entrypoint(Object id) {
+        append(new XirInstruction(CiKind.Void, id, Entrypoint, null));
+    }
+
+    public void pushFrame() {
+        append(new XirInstruction(CiKind.Void, null, PushFrame, null));
+    }
+
+    public void popFrame() {
+        append(new XirInstruction(CiKind.Void, null, PopFrame, null));
+    }
+
+    public void rawBytes(byte[] bytes) {
+        append(new XirInstruction(CiKind.Void, bytes, RawBytes, null));
+    }
+
+    public void shouldNotReachHere() {
+        append(new XirInstruction(CiKind.Void, null, ShouldNotReachHere, null));
+    }
+
+    public void shouldNotReachHere(String message) {
+        append(new XirInstruction(CiKind.Void, message, ShouldNotReachHere, null));
     }
 
     public void callStub(XirTemplate stub, XirOperand result, XirOperand... args) {

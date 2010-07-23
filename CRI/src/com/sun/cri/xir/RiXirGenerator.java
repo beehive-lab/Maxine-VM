@@ -28,16 +28,18 @@ import com.sun.cri.ri.RiType.*;
 
 /**
  * Represents the interface through which the compiler requests the XIR for a given bytecode from the runtime system.
- *
+ * 
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
 public abstract class RiXirGenerator {
 
-    public abstract XirSnippet genEntrypoint(XirSite site);
+    public abstract XirSnippet genPrologue(XirSite site, RiMethod method);
+
+    public abstract XirSnippet genEpilogue(XirSite site, RiMethod method);
 
     public abstract XirSnippet genSafepoint(XirSite site);
-    
+
     public abstract XirSnippet genExceptionObject(XirSite site);
 
     public abstract XirSnippet genResolveClass(XirSite site, RiType type, Representation representation);
@@ -82,10 +84,12 @@ public abstract class RiXirGenerator {
 
     /**
      * Construct the list of XIR templates using the given XIR assembler.
+     * 
      * @param asm the XIR assembler
      * @return the list of templates
      */
     public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
         return null;
     }
+
 }

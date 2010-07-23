@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.c1x;
 
 import static java.lang.reflect.Modifier.*;
 
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -45,6 +46,7 @@ import com.sun.max.vm.classfile.constant.UnresolvedType.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
@@ -100,6 +102,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     private final CiTarget target;
     private final MaxRiRuntime runtime;
 
+    private XirTemplate epilogueTemplate;
     private XirPair[] putFieldTemplates;
     private XirPair[] getFieldTemplates;
     private XirPair[] putStaticFieldTemplates;
@@ -162,6 +165,8 @@ public class MaxXirGenerator extends RiXirGenerator {
         CiKind[] kinds = CiKind.values();
 
         this.asm = asm;
+
+        epilogueTemplate = buildEpilogue();
 
         putFieldTemplates = new XirPair[kinds.length];
         getFieldTemplates = new XirPair[kinds.length];
@@ -237,9 +242,31 @@ public class MaxXirGenerator extends RiXirGenerator {
         return stubs;
     }
 
+
     @Override
-    public XirSnippet genEntrypoint(XirSite site) {
-        return null;
+    public XirSnippet genPrologue(XirSite site, RiMethod method) {
+        asm.restart(CiKind.Void);
+
+        ClassMethodActor callee = MaxRiRuntime.asClassMethodActor(method, "genPrologue()");
+        AdapterGenerator generator = AdapterGenerator.forCallee(callee, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        if(generator != null) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream(8);
+            generator.adapt(callee, os);
+            asm.rawBytes(os.toByteArray());
+        }
+        return new XirSnippet(finishTemplate(asm, "prologue"));
+    }
+
+    private XirTemplate buildEpilogue() {
+        asm.restart(CiKind.Void);
+        asm.popFrame();
+        // TODO safepoint check
+        return asm.finishTemplate("epilogue");
+    }
+
+    @Override
+    public XirSnippet genEpilogue(XirSite site, RiMethod method) {
+        return new XirSnippet(epilogueTemplate);
     }
 
     @Override
