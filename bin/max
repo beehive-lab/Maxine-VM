@@ -1460,8 +1460,13 @@ jrockitbm_help="run the jrockit benchmark suite
     otherwise specify a benchmark on the command line"
 
 function run_jrockitbm() {
-    if [ -z $JROCKITBM_HOME ]; then
-        JROCKITBM_HOME=/import/maxwell/jrockit
+    if [ -z "$JROCKITBM_HOME" ]; then
+        if [ -f /import/maxwell/jrockitbm/benchmarks.jar ]; then
+            JROCKITBM_HOME=/import/maxwell/jrockitbm
+        else
+            echo "Need to set JROCKITBM_HOME environment variable to specify directory containing benchmarks.jar and tests.lst"
+            exit 1
+        fi
     fi
     all=0
     while [ "$1" != "" ]; do
@@ -1477,6 +1482,7 @@ function run_jrockitbm() {
         esac
         shift
     done
+
     if [ $all -eq 1 ]; then
         for i in `cat $JROCKITBM_HOME/tests.lst`
         do
