@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * Tests for the AMD64 Eir compiler
+ * Tests for the AMD64 Eir compiler.
  *
  * @author Bernd Mathiske
  */

@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Object layout management and specification interfaces
- * 
+ * Object layout management and specification interfaces.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.layout;

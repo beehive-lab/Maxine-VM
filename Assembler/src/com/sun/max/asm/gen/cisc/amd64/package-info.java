@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * AMD64 assembly system specifications and construction
- * 
+ * AMD64 assembly system specifications and construction.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.asm.gen.cisc.amd64;

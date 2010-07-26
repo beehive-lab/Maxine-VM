@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Compilation of class file structures to BIR
- * 
+ * Compilation of class file structures to BIR.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.cps.b;

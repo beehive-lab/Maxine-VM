@@ -185,7 +185,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         return asmBytes;
     }
 
-    private final long longStartAddress = 0x1234567812345678L;
+    private long longStartAddress = 0x1234567812345678L;
 
     public void test_inlinedData() throws IOException, AssemblyException {
         System.out.println("--- test_inlinedData: ---");

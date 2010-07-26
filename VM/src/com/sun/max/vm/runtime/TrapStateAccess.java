@@ -40,6 +40,7 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @author Ben L. Titzer
  * @author Doug Simon
+ * @author Mick Jordan
  */
 public abstract class TrapStateAccess {
 

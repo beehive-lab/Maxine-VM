@@ -307,10 +307,8 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         });
 
-        CiVariable result = newVariable(CiKind.Object);
-        CiRegisterValue threadReg = compilation.target.registerConfig.getThreadRegister().asValue(CiKind.Object);
-        lir.move(new CiAddress(CiKind.Object, threadReg, compilation.runtime.threadExceptionOffset()), result);
-        setResult(x, result);
+        XirSnippet snippet = xir.genExceptionObject(site(x));
+        emitXir(snippet, x, maybeStateFor(x), null, true);
     }
 
     @Override
@@ -327,8 +325,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // increment backedge counter if needed
             incrementBackedgeCounter(stateFor(x, state));
 
-            LIRDebugInfo safepointInfo = stateFor(x, state);
-            lir.safepoint(safepointPollRegister(), safepointInfo);
+            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, state), null, false);
         }
 
         // emit phi-instruction move after safepoint since this simplifies
@@ -665,7 +662,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         setNoResult(x);
 
         if (x.isSafepoint()) {
-            lir.safepoint(safepointPollRegister(), stateFor(x, x.stateAfter()));
+            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, x.stateAfter()), null, false);
         }
 
         // move values into phi locations
@@ -752,7 +749,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    CiValue emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult) {
+    protected CiValue emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult) {
         final CiValue[] operands = new CiValue[snippet.template.variableCount];
 
         XirOperand resultOperand = snippet.template.resultOperand;
@@ -929,7 +926,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         setNoResult(x);
 
         if (x.isSafepoint()) {
-            lir.safepoint(safepointPollRegister(), stateFor(x, x.stateAfter()));
+            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, x.stateAfter()), null, false);
         }
 
         // move values into phi locations
@@ -1853,7 +1850,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         return currentInstruction;
     }
 
-    XirSupport site(Value x) {
+    protected XirSupport site(Value x) {
         return xirSupport.site(x);
     }
 
@@ -1872,8 +1869,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected abstract CiValue exceptionPcOpr();
 
     protected abstract CiValue osrBufferPointer();
-
-    protected abstract CiValue safepointPollRegister();
 
     protected abstract boolean strengthReduceMultiply(CiValue left, int constant, CiValue result, CiValue tmp);
 

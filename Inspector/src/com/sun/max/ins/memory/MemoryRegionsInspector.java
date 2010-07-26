@@ -21,6 +21,10 @@
 package com.sun.max.ins.memory;
 
 import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
@@ -35,7 +39,9 @@ import com.sun.max.tele.debug.*;
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryRegionsInspector extends Inspector  implements TableColumnViewPreferenceListener {
+public final class MemoryRegionsInspector extends Inspector implements TableColumnViewPreferenceListener {
+
+    private static final int TRACE_VALUE = 2;
 
     // Set to null when inspector closed.
     private static MemoryRegionsInspector memoryRegionsInspector;
@@ -55,14 +61,30 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final MemoryRegionsViewPreferences viewPreferences;
+    private InspectorPanel contentPane;
 
     private MemoryRegionsTable table;
+
+    private TableRowFilterToolBar filterToolBar = null;
+    private JCheckBoxMenuItem showFilterCheckboxMenuItem;
+    private int[] filterMatchingRows = null;
 
     private MemoryRegionsInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(1, tracePrefix() + "initializing");
         viewPreferences = MemoryRegionsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
+        showFilterCheckboxMenuItem = new InspectorCheckBox(inspection, "Filter view", "Show Filter Field", false);
+        showFilterCheckboxMenuItem.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                final JCheckBoxMenuItem checkBoxMenuItem = (JCheckBoxMenuItem) e.getSource();
+                if (checkBoxMenuItem.isSelected()) {
+                    openFilter();
+                } else {
+                    closeFilter();
+                }
+            }
+        });
         final InspectorFrame frame = createFrame(true);
 
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
@@ -71,7 +93,11 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         memoryMenu.add(actions().inspectSelectedMemoryRegionWords());
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
 
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        final InspectorMenuItems defaultViewMenuItems = defaultMenuItems(MenuKind.VIEW_MENU);
+        final InspectorMenu viewMenu = frame.makeMenu(MenuKind.VIEW_MENU);
+        viewMenu.add(showFilterCheckboxMenuItem);
+        viewMenu.addSeparator();
+        viewMenu.add(defaultViewMenuItems);
 
         Trace.end(1, tracePrefix() + "initializing");
     }
@@ -84,7 +110,43 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     @Override
     protected void createView() {
         table = new MemoryRegionsTable(inspection(), viewPreferences);
-        setContentPane(new InspectorScrollPane(inspection(), table));
+        final InspectorScrollPane memoryRegionsScrollPane = new InspectorScrollPane(inspection(), table);
+        contentPane = new InspectorPanel(inspection(), new BorderLayout());
+        contentPane.add(memoryRegionsScrollPane, BorderLayout.CENTER);
+        setContentPane(contentPane);
+    }
+
+    private final RowMatchListener rowMatchListener = new RowMatchListener() {
+
+        public void setSearchResult(int[] result) {
+            filterMatchingRows = result;
+            table.setDisplayedRows(filterMatchingRows);
+            System.out.println("Match=" + Arrays.toString(filterMatchingRows));
+        }
+
+        public void closeRequested() {
+            closeFilter();
+            showFilterCheckboxMenuItem.setState(false);
+        }
+    };
+
+    private void openFilter() {
+        if (filterToolBar == null) {
+            filterToolBar = new TableRowFilterToolBar(inspection(), rowMatchListener, table);
+            contentPane.add(filterToolBar, BorderLayout.NORTH);
+            pack();
+            filterToolBar.getFocus();
+        }
+    }
+
+    private void closeFilter() {
+        if (filterToolBar != null) {
+            contentPane.remove(filterToolBar);
+            table.setDisplayedRows(null);
+            pack();
+            filterToolBar = null;
+            filterMatchingRows = null;
+        }
     }
 
     @Override
@@ -120,6 +182,9 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     @Override
     protected void refreshView(boolean force) {
         table.refresh(force);
+        if (filterToolBar != null) {
+            filterToolBar.refresh(force);
+        }
         super.refreshView(force);
     }
 
@@ -160,5 +225,6 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         viewPreferences.removeListener(this);
         dispose();
     }
+
 
 }

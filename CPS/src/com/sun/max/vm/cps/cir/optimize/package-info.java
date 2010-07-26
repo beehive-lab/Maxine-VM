@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Platform-independent optimizations of CIR constructs
- * 
+ * Platform-independent optimizations of CIR constructs.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.cps.cir.optimize;

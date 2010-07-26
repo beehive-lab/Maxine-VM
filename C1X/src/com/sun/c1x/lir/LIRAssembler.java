@@ -253,10 +253,6 @@ public abstract class LIRAssembler {
             case Return:
                 emitReturn(op.operand());
                 break;
-            case Safepoint:
-                // TODO: emit a nop to separate debug info?
-                emitSafepoint(op.operand(), op.info);
-                break;
             case Branch:
                 break;
             case Neg:
@@ -457,8 +453,6 @@ public abstract class LIRAssembler {
     protected abstract void emitPause();
 
     protected abstract void emitStackAllocate(StackBlock src, CiValue dst);
-
-    protected abstract void emitSafepoint(CiValue inOpr, LIRDebugInfo info);
 
     protected abstract void emitReturn(CiValue inOpr);
 

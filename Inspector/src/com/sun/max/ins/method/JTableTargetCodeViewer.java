@@ -187,8 +187,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     @Override
-    protected RowTextSearcher getRowTextSearcher() {
-        return new TableRowTextSearcher(inspection, table);
+    protected RowTextMatcher getRowTextSearcher() {
+        return new TableRowTextMatcher(inspection, table);
     }
 
     /**

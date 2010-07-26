@@ -173,6 +173,14 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
                         teleThreadLocalsArea.updateCache();
                     }
                 }
+                final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(Safepoint.State.ENABLED);
+                if (enabledThreadLocalsArea != null) {
+                    final Word threadLocalValue = enabledThreadLocalsArea.getWord(VmThreadLocal.VM_THREAD);
+                    if (!threadLocalValue.isZero()) {
+                        final Reference vmThreadReference = vm().wordToReference(threadLocalValue);
+                        teleVmThread = (TeleVmThread) heap().makeTeleObject(vmThreadReference);
+                    }
+                }
                 lastRefreshedEpoch = processEpoch;
                 updateTracer.end(null);
             }
@@ -226,21 +234,6 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
      * @return access to the VM thread corresponding to this thread, if any
      */
     TeleVmThread teleVmThread() {
-        if (threadLocalsBlockMemoryRegion != null && teleVmThread == null && vm().tryLock()) {
-            try {
-                updateCache();
-                final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(Safepoint.State.ENABLED);
-                if (enabledThreadLocalsArea != null) {
-                    final Word threadLocalValue = enabledThreadLocalsArea.getWord(VmThreadLocal.VM_THREAD);
-                    if (!threadLocalValue.isZero()) {
-                        final Reference vmThreadReference = vm().wordToReference(threadLocalValue);
-                        teleVmThread = (TeleVmThread) heap().makeTeleObject(vmThreadReference);
-                    }
-                }
-            } finally {
-                vm().unlock();
-            }
-        }
         return teleVmThread;
     }
 

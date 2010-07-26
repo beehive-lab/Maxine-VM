@@ -30,7 +30,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public class InspectorToolBar extends JToolBar implements InspectionHolder {
+public class InspectorToolBar extends JToolBar implements InspectionHolder, Prober {
 
     private final Inspection inspection;
     private final String tracePrefix;

@@ -18,23 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway.profile;
+package com.sun.max.ins.gui;
 
-import com.sun.max.*;
-import com.sun.max.vm.*;
+import java.util.regex.*;
 
 /**
- * @see MaxPackage
+ * Regular expression pattern matcher; identifies by number the rows that match a pattern.
  *
- * @author Bernd Mathiske
+ * @author Michael Van De Vanter
+ * @see {@link java.util.regex.Pattern}
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
+public interface RowTextMatcher {
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.heapPackage.name().startsWith("com.sun.max.vm.heap.beltway");
-    }
+    /**
+     * @return the number of rows being examined.
+     */
+    int rowCount();
+
+    /**
+     * Find rows matching a regexp pattern.
+     *
+     * @param pattern a regular expression pattern
+     * @return rows in the row-based object being searched that match the {@link Pattern}.
+     */
+    int[] findMatches(Pattern pattern);
+
 }
