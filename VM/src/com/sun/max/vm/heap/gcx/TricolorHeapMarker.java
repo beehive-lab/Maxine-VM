@@ -1350,7 +1350,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 // At least one mark is set.
                 int bitIndexInWord = 0;
                 final int bitmapWordFirstBitIndex = bitmapWordIndex << Word.widthValue().log2numberOfBits;
-                int nextCellBitmapWordIndex = bitmapWordIndex + 1;
+                Pointer nextBitmapWordLimit = addressOf(bitmapWordFirstBitIndex + Word.widthValue().numberOfBits).asPointer();
                 long w = bitmapWord;
                 do {
                     // First mark is the least set bit.
@@ -1362,9 +1362,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                         debugLiveObject = addressOf(bitIndexOfBlackMark).asPointer();
                     }
                     final Pointer endOfLastVisitedCell = sweeper.processLiveObject(addressOf(bitIndexOfBlackMark).asPointer());
-                    final int index =  bitmapWordIndex(endOfLastVisitedCell);
-                    if (index > bitmapWordIndex) {
-                        nextCellBitmapWordIndex = index;
+                    if (endOfLastVisitedCell.greaterEqual(nextBitmapWordLimit)) {
+                        nextBitmapWordLimit = endOfLastVisitedCell;
                         break;
                     }
                     // End of visited cell is within the same mark word. Just
@@ -1373,7 +1372,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     bitIndexInWord += 2;
                     w = bitmapWord >>> bitIndexInWord;
                 } while(w != 0L);
-                bitmapWordIndex = nextCellBitmapWordIndex;
+                bitmapWordIndex = bitmapWordIndex(nextBitmapWordLimit);
             } else {
                 bitmapWordIndex++;
             }
