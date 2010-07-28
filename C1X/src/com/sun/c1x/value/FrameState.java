@@ -96,6 +96,10 @@ public abstract class FrameState {
         return copy(true, true, true);
     }
 
+    public FrameState immutableCopyWithEmptyStack() {
+        return copy(true, false, true);
+    }
+
     public boolean isSameAcrossScopes(FrameState other) {
         assert stackSize() == other.stackSize();
         assert localsSize() == other.localsSize();

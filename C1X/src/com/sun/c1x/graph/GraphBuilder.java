@@ -75,7 +75,7 @@ public final class GraphBuilder {
     final Canonicalizer canonicalizer;     // canonicalizer which does strength reduction + constant folding
     ScopeData scopeData;                   // Per-scope data; used for inlining
     BlockBegin curBlock;                   // the current block
-    MutableFrameState curState;         // the current execution state
+    MutableFrameState curState;            // the current execution state
     Instruction lastInstr;                 // the last instruction added
     final LogStream log;
     final int traceLevel;
@@ -389,8 +389,7 @@ public final class GraphBuilder {
         int scopeCount = 0;
 
         assert stateBefore != null : "exception handler state must be available for " + x;
-        // TODO: should be an immutableCopyWithEmptyExpressionState()
-        MutableFrameState state = stateBefore.copy();
+        FrameState state = stateBefore.immutableCopyWithEmptyStack();
         do {
             assert curScopeData.scope == state.scope() : "scopes do not match";
             assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream.currentBCI() : "invalid bci";
@@ -419,8 +418,8 @@ public final class GraphBuilder {
                 break;
             }
             // there is another level, pop
-            // XXX: temp cast x2
-            state = (MutableFrameState) state.popScope();
+            // XXX: temp cast
+            state = ((MutableFrameState)state).popScope();
             bci = curScopeData.scope.callerBCI();
             curScopeData = curScopeData.parent;
             scopeCount++;
@@ -437,11 +436,11 @@ public final class GraphBuilder {
      * @param exceptionHandlers
      * @param handler
      * @param curScopeData
-     * @param curState
+     * @param curState the current state with empty stack
      * @param scopeCount
      * @return {@code true} if handler catches all exceptions (i.e. {@code handler.isCatchAll() == true})
      */
-    private boolean addExceptionHandler(ArrayList<ExceptionHandler> exceptionHandlers, ExceptionHandler handler, ScopeData curScopeData, MutableFrameState curState, int scopeCount) {
+    private boolean addExceptionHandler(ArrayList<ExceptionHandler> exceptionHandlers, ExceptionHandler handler, ScopeData curScopeData, FrameState curState, int scopeCount) {
         compilation.setHasExceptionHandlers();
 
         BlockBegin entry = handler.entryBlock();
@@ -450,9 +449,6 @@ public final class GraphBuilder {
         assert entry.bci() == handler.handler.handlerBCI();
         assert entry.bci() == -1 || entry == curScopeData.blockAt(entry.bci()) : "blocks must correspond";
         assert entryState == null || curState.locksSize() == entryState.locksSize() : "locks do not match";
-
-        // exception handler starts with an empty expression stack
-        curState.truncateStack(curScopeData.callerStackSize());
 
         entry.mergeOrClone(curState);
 
