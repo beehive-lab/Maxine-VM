@@ -324,8 +324,16 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize && !primordial) {
         if (faultAddress < ntl->stackYellowZone) {
             /* The faultAddress is in the red zone; we shouldn't be alive */
-            virtualMemory_unprotectPages(ntl->stackRedZone, STACK_RED_ZONE_PAGES);
-            trapNumber = STACK_FATAL;
+            if (ntl->stackRedZoneIsProtectedByVM) {
+                // Only unprotect the red guard zone if the VM (and not the thread library) protected it
+                virtualMemory_unprotectPages(ntl->stackRedZone, STACK_RED_ZONE_PAGES);
+                trapNumber = STACK_FATAL;
+            } else {
+                // If VM cannot unprotect the red guard zone page(s), it's not possible
+                // to call the Java trap stub (which calls other compiled methods that will
+                // bang the stack); just exit now without a stack trace
+                log_exit(1, "fatal stack fault in red zone");
+            }
         } else if (faultAddress < ntl->stackYellowZone + virtualMemory_getPageSize()) {
             /* the faultAddress is in the yellow zone; assume this is a stack fault. */
             virtualMemory_unprotectPages(ntl->stackYellowZone, STACK_YELLOW_ZONE_PAGES);
