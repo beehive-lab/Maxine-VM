@@ -616,11 +616,15 @@ public abstract class StackFrameWalker {
         reset();
     }
 
+    private final StackUnwindingContext defaultStackUnwindingContext = new StackUnwindingContext();
+
     /**
      * Walks a thread's stack for the purpose of raising an exception.
      */
     public final void unwind(Pointer ip, Pointer sp, Pointer fp, Throwable throwable) {
-        walk(ip, sp, fp, EXCEPTION_HANDLING, new StackUnwindingContext(sp, throwable));
+        defaultStackUnwindingContext.throwable = throwable;
+        defaultStackUnwindingContext.stackPointer = sp;
+        walk(ip, sp, fp, EXCEPTION_HANDLING, defaultStackUnwindingContext);
     }
 
     /**
@@ -654,6 +658,8 @@ public abstract class StackFrameWalker {
         callee.reset();
         trapState = Pointer.zero();
         purpose = null;
+        defaultStackUnwindingContext.stackPointer = Pointer.zero();
+        defaultStackUnwindingContext.throwable = null;
     }
 
     /**
