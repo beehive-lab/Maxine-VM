@@ -30,7 +30,10 @@
       <property name="format" value="^[A-Z][_a-zA-Z0-9]*$"/>
     </module>
     <module name="RedundantImport"/>
-    <module name="UnusedImports"/>
+    <module name="UnusedImports">
+      <property name="severity" value="ignore"/>
+      <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
+    </module>
     <module name="LineLength">
       <property name="max" value="250"/>
     </module>

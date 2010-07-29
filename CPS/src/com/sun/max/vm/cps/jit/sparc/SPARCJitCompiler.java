@@ -85,8 +85,8 @@ public class SPARCJitCompiler extends JitCompiler {
         // mandatory output register.  We also need to bias it.
         final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE));
 
-        final Word catcherFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(context.stackPointer(), GPR.I6);
-        final Word catcherCallAddress = SPARCStackFrameLayout.getRegisterInSavedWindow(context.stackPointer(), GPR.I7);
+        final Word catcherFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(context.stackPointer.asPointer(), GPR.I6);
+        final Word catcherCallAddress = SPARCStackFrameLayout.getRegisterInSavedWindow(context.stackPointer.asPointer(), GPR.I7);
 
         // Set the top of stack to null (will be replaced later with the throwable)
         catcherTopOfStackPointer.writeReference(0, null);

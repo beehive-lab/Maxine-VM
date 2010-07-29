@@ -26,10 +26,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.code.Code;
-import com.sun.max.vm.debug.DebugHeap;
-import com.sun.max.vm.grip.Grip;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.debug.*;
+import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -63,6 +63,22 @@ public final class Heap {
         public void printErrorMessage() {
             Log.print("initial heap size must not be greater than max heap size");
         }
+    }
+
+    /**
+     * A special exception thrown when a non-GC thread tries to perform a GC while holding
+     * the {@linkplain VmThreadMap#ACTIVE GC lock}. There is a single, pre-allocated
+     * {@linkplain #INSTANCE instance} of this object so that raising this exception
+     * does not require any allocation.
+     *
+     * @author Doug Simon
+     */
+    public static final class HoldsGCLockError extends OutOfMemoryError {
+
+        private HoldsGCLockError() {
+        }
+
+        public static final HoldsGCLockError INSTANCE = new HoldsGCLockError();
     }
 
     private static Size maxSize;
@@ -395,6 +411,11 @@ public final class Heap {
     }
 
     public static boolean collectGarbage(Size requestedFreeSpace) {
+        if (Thread.holdsLock(VmThreadMap.ACTIVE)) {
+            // The GC requires this lock to proceed
+            throw HoldsGCLockError.INSTANCE;
+        }
+
         if (Heap.gcDisabled()) {
             Throw.stackDump("Out of memory and GC is disabled");
             MaxineVM.native_exit(1);
