@@ -20,12 +20,12 @@
  */
 package com.sun.max.vm.compiler.snippet;
 
-import static com.sun.max.vm.runtime.Safepoint.*;
+import static com.sun.max.vm.runtime.FreezeThreads.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.stack.JavaFrameAnchor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.cri.bytecode.Bytecodes.*;
+import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -122,7 +122,7 @@ public abstract class NativeStubSnippet extends Snippet {
             // Update the last Java frame anchor for the current thread:
             enabledVmThreadLocals.setWord(LAST_JAVA_FRAME_ANCHOR.index, anchor);
 
-            if (Safepoint.UseCASBasedGCMutatorSynchronization) {
+            if (UseCASBasedThreadFreezing) {
                 enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
             } else {
                 MemoryBarriers.memopStore();
@@ -148,7 +148,7 @@ public abstract class NativeStubSnippet extends Snippet {
 
         /**
          * Makes the transition from the 'in native' state to the 'in Java' state, blocking on a
-         * spin lock if a GC is currently underway.
+         * spin lock if the current thread is {@linkplain FreezeThreads frozen}.
          *
          * @param enabledVmThreadLocals the safepoints-triggered VM thread locals for the current thread
          * @param anchor the value to which {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} will be set just after
@@ -156,17 +156,17 @@ public abstract class NativeStubSnippet extends Snippet {
          */
         @INLINE
         public static void nativeCallEpilogue0(Pointer enabledVmThreadLocals, Pointer anchor) {
-            spinUntilGCFinished(enabledVmThreadLocals);
+            spinWhileFrozen(enabledVmThreadLocals);
             enabledVmThreadLocals.setWord(LAST_JAVA_FRAME_ANCHOR.index, anchor);
         }
 
         /**
-         * This methods spins in a busy loop while a garbage collection is currently running.
+         * This methods spins in a busy loop while the current thread is {@linkplain FreezeThreads frozen}.
          */
         @INLINE
-        @NO_SAFEPOINTS("Cannot take a trap while GC is running")
-        private static void spinUntilGCFinished(Pointer enabledVmThreadLocals) {
-            if (UseCASBasedGCMutatorSynchronization) {
+        @NO_SAFEPOINTS("Cannot take a trap while frozen")
+        private static void spinWhileFrozen(Pointer enabledVmThreadLocals) {
+            if (UseCASBasedThreadFreezing) {
                 while (true) {
                     if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
                         if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
@@ -180,19 +180,19 @@ public abstract class NativeStubSnippet extends Snippet {
                     // Signal that we intend to go back into Java:
                     enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_JAVA);
 
-                    // Ensure that the GC sees the above state transition:
+                    // Ensure that the freezer thread sees the above state transition:
                     MemoryBarriers.storeLoad();
 
-                    // Ask if GC is in progress:
-                    if (enabledVmThreadLocals.getWord(GC_STATE.index).isZero()) {
-                        // If GC was not in progress then the state transition above was valid (common case)
+                    // Ask if current thread is frozen:
+                    if (enabledVmThreadLocals.getWord(FROZEN.index).isZero()) {
+                        // If current thread is not frozen then the state transition above was valid (common case)
                         return;
                     }
 
-                    // GC is in progress (same one or a subsequent one) so above state transition is invalid
-                    // so undo it and spin until GC is finished and then retry transition
+                    // Current thread is frozen so above state transition is invalid
+                    // so undo it and spin until freezer thread thaws the current thread then retry transition
                     enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
-                    while (!enabledVmThreadLocals.getWord(GC_STATE.index).isZero()) {
+                    while (!enabledVmThreadLocals.getWord(FROZEN.index).isZero()) {
                         // Spin without doing unnecessary stores
                         SpecialBuiltin.pause();
                     }

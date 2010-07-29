@@ -29,23 +29,30 @@ import java.util.*;
 import test.bench.util.*;
 
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.FreezeThreads.*;
 
-public class StopThreadsForOperation_01 extends RunBench {
+/**
+ * Benchmarks time taken to perform a {@linkplain FreezeThreads#run() thread freeze}.
+ *
+ * @author Mick Jordan
+ * @author Doug Simon
+ */
+public class FreezeThreads_01 extends RunBench {
 
-    protected StopThreadsForOperation_01(int n) {
+    protected FreezeThreads_01(int n) {
         super(new Bench(n));
     }
 
     public static boolean test(int i) {
-        return new StopThreadsForOperation_01(i).runBench(true);
+        return new FreezeThreads_01(i).runBench(true);
     }
 
     static class Bench extends AbstractMicroBenchmark implements Runnable {
         int numThreads;
         private Thread[] spinners;
         private volatile boolean done;
-        private volatile boolean started;
-        private StopThreadsForOperation stoppedThreadsOperation;
+        private volatile int started;
+        private FreezeThreads freezeThreads;
 
         Bench(int n) {
             numThreads = n;
@@ -54,28 +61,41 @@ public class StopThreadsForOperation_01 extends RunBench {
         @Override
         public void prerun() {
             done = false;
+            started = 0;
             spinners = new Thread[numThreads];
             for (int s = 0; s < spinners.length; s++) {
                 spinners[s] = new Thread(this);
                 spinners[s].start();
             }
-            stoppedThreadsOperation = new StopThreadsForOperation(Arrays.asList(spinners));
+            ThreadListPredicate predicate = new ThreadListPredicate(Arrays.asList(spinners));
+            freezeThreads = new FreezeThreads("Test", predicate);
+
+            // Wait for all threads to start so that we only benchmark the time taken to freeze threads
+            while (started != numThreads) {
+                Thread.yield();
+            }
         }
 
         @Override
         public void postrun() {
             done = true;
+
+            // Wait for all threads to stop so that they don't interfere with subsequent runs
+            for (int s = 0; s < spinners.length; s++) {
+                try {
+                    spinners[s].join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         public void run(boolean warmup) {
-            while (!started) {
-                Thread.yield();
-            }
-            stoppedThreadsOperation.run();
+            freezeThreads.run();
         }
 
         public void run() {
-            started = true;
+            started++;
             long count = 0;
             while (!done) {
                 count++;
@@ -91,5 +111,4 @@ public class StopThreadsForOperation_01 extends RunBench {
             test(Integer.parseInt(args[0]));
         }
     }
-
 }

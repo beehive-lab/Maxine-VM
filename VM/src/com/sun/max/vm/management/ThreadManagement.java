@@ -21,10 +21,9 @@
 package com.sun.max.vm.management;
 
 import java.lang.management.*;
-import java.lang.reflect.Constructor;
+import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
@@ -143,19 +142,19 @@ public class ThreadManagement {
     public static Thread findThread(long id) {
         FindProcedure proc = new FindProcedure(id);
         synchronized (VmThreadMap.ACTIVE) {
-            VmThreadMap.ACTIVE.forAllThreads(null, proc);
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, proc);
         }
         return proc.result;
     }
 
-    static class FindProcedure implements Procedure<VmThread> {
+    static class FindProcedure implements Pointer.Procedure {
         Thread result = null;
         private long id;
         FindProcedure(long id) {
             this.id = id;
         }
-        public void run(VmThread vmThread) {
-            final Thread t = vmThread.javaThread();
+        public void run(Pointer vmThreadLocals) {
+            final Thread t = VmThread.fromVmThreadLocals(vmThreadLocals).javaThread();
             if (t.getId() == id) {
                 result = t;
             }
@@ -191,22 +190,28 @@ public class ThreadManagement {
         return traces;
     }
 
-    private static final class StackTraceGatherer extends StopThreadsForOperation {
+    /**
+     * A thread-freezing operation to get a stack trace for a given set of threads.
+     *
+     * @author Doug Simon
+     */
+    static final class StackTraceGatherer extends FreezeThreads {
         final int maxDepth;
         final StackTraceElement[][] traces;
         final List<Thread> threads;
         StackTraceGatherer(List<Thread> threads, StackTraceElement[][] result, int maxDepth) {
-            super(threads);
+            super("StackTraceGatherer", new ThreadListPredicate(threads));
             this.threads = threads;
             this.maxDepth = maxDepth;
             this.traces = result;
         }
 
         @Override
-        public void perform(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+        public void doThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+            VmThread vmThread = VmThread.fromVmThreadLocals(threadLocals);
             final List<StackFrame> frameList = new ArrayList<StackFrame>();
             new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
-            Thread thread = VmThread.fromVmThreadLocals(threadLocals).javaThread();
+            Thread thread = vmThread.javaThread();
             traces[threads.indexOf(thread)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
         }
     }

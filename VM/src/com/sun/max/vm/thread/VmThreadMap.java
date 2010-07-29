@@ -23,14 +23,12 @@ package com.sun.max.vm.thread;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.prototype.BootImage.*;
+import com.sun.max.vm.prototype.BootImage.Header;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -90,7 +88,12 @@ public final class VmThreadMap {
 
     /**
      * The global thread map of active threads in the VM. This object also serves the role
-     * of a global GC and thread creation lock.
+     * of the global GC and thread creation lock. This object should be locked while
+     * performing an operation that {@linkplain VmThreadMap#forAllThreadLocals iterates}
+     * over or {@linkplain #getVmThreadForID accesses} the thread list.
+     *
+     * Since the GC may acquire this lock to stop the world, any critical section holding this
+     * lock must not perform any heap allocation that may fail and require a GC.
      */
     public static final VmThreadMap ACTIVE = new VmThreadMap();
     static {
@@ -410,24 +413,6 @@ public final class VmThreadMap {
     }
 
     /**
-     * Iterates over all the VM threads in this thread map and run the specified procedure.
-     * <b>NOTE: This method is not synchronized. It is recommended that the caller synchronizes on ACTIVE.</b>
-     *
-     * @param predicate a predicate to apply on each thread
-     * @param procedure the procedure to apply to each VM thread
-     */
-    public void forAllThreads(Predicate<VmThread> predicate, Procedure<VmThread> procedure) {
-        Pointer threadLocals = threadLocalsListHead;
-        while (!threadLocals.isZero()) {
-            final VmThread thread = UnsafeCast.asVmThread(VmThreadLocal.VM_THREAD.getConstantReference(threadLocals).toJava());
-            if (predicate == null || predicate.evaluate(thread)) {
-                procedure.run(thread);
-            }
-            threadLocals = getNext(threadLocals);
-        }
-    }
-
-    /**
      * Iterates over all the VM thread locals in this thread map and run the specified procedure.
      * <b>NOTE: This method is not synchronized. It is recommended that the caller synchronizes on ACTIVE.</b>
      *
@@ -444,9 +429,23 @@ public final class VmThreadMap {
         }
     }
 
-    public static final Pointer.Predicate isNotCurrent = new Pointer.Predicate() {
+    /**
+     * Shared predicate for {@link #forAllThreadLocals(com.sun.max.unsafe.Pointer.Predicate, com.sun.max.unsafe.Pointer.Procedure)}
+     * that excludes the current thread.
+     */
+    public static final Pointer.Predicate isNotCurrentThread = new Pointer.Predicate() {
         public boolean evaluate(Pointer threadLocals) {
             return threadLocals != VmThread.current().vmThreadLocals();
+        }
+    };
+
+    /**
+     * Shared predicate for {@link #forAllThreadLocals(com.sun.max.unsafe.Pointer.Predicate, com.sun.max.unsafe.Pointer.Procedure)}
+     * that excludes the current thread or any {@linkplain VmThread#isGCThread() GC thread}.
+     */
+    public static final Pointer.Predicate isNotGCOrCurrentThread = new Pointer.Predicate() {
+        public boolean evaluate(Pointer vmThreadLocals) {
+            return vmThreadLocals != VmThread.current().vmThreadLocals() && !VmThread.fromVmThreadLocals(vmThreadLocals).isGCThread();
         }
     };
 
@@ -470,15 +469,16 @@ public final class VmThreadMap {
      */
     public static Thread[] getThreads(final boolean includeGCThreads) {
         final ArrayList<Thread> threads = new ArrayList<Thread>();
-        Procedure<VmThread> proc = new Procedure<VmThread>() {
-            public void run(VmThread vmThread) {
+        Pointer.Procedure proc = new Pointer.Procedure() {
+            public void run(Pointer vmThreadLocals) {
+                VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
                 if (vmThread.javaThread() != null && (includeGCThreads || !vmThread.isGCThread())) {
                     threads.add(vmThread.javaThread());
                 }
             }
         };
         synchronized (VmThreadMap.ACTIVE) {
-            VmThreadMap.ACTIVE.forAllThreads(null, proc);
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, proc);
         }
         return threads.toArray(new Thread[threads.size()]);
     }

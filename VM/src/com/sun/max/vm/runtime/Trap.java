@@ -39,9 +39,9 @@ import com.sun.max.vm.thread.*;
 
 /**
  * This class handles operating systems traps that can arise from implicit null pointer checks, integer divide by zero,
- * GC safepoint triggering, etc. It contains a number of very low-level functions to directly handle operating system
+ * safepoint triggering, etc. It contains a number of very low-level functions to directly handle operating system
  * signals (e.g. SIGSEGV on POSIX) and dispatch to the correct handler (e.g. construct and throw a null pointer
- * exception object or stop the current thread for GC).
+ * exception object or {@linkplain FreezeThreads freeze} the current thread).
  *
  * A small amount of native code supports this class by connecting to the OS-specific signal handling mechanisms.
  *
@@ -314,29 +314,33 @@ public abstract class Trap {
         // check to see if a safepoint has been triggered for this thread
         if (safepointLatch.equals(triggeredVmThreadLocals) && safepoint.isAt(instructionPointer)) {
             // a safepoint has been triggered for this thread. run the specified procedure
-            final Reference reference = VmThreadLocal.SAFEPOINT_PROCEDURE.getVariableReference(triggeredVmThreadLocals);
-            final Safepoint.Procedure runnable = (Safepoint.Procedure) reference.toJava();
+            final Reference reference = VmThreadLocal.AT_SAFEPOINT_PROCEDURE.getVariableReference(triggeredVmThreadLocals);
+            final FreezeThreads.AtSafepoint runnable = (FreezeThreads.AtSafepoint) reference.toJava();
             trapStateAccess.setTrapNumber(trapState, Number.SAFEPOINT);
             if (runnable != null) {
-                // run the procedure and then set the vm thread local to null
+                // run the procedure
                 runnable.run(trapState);
-
-                // reset the procedure to be null
-                SAFEPOINT_PROCEDURE.setVariableReference(triggeredVmThreadLocals, null);
             } else {
                 /*
-                 * The interleaving of a mutator thread and a GC thread below demonstrates
+                 * The interleaving of a mutator thread and a freezer thread below demonstrates
                  * one case where this can occur:
                  *
-                 *    Mutator thread        |  GC thread
+                 *    Mutator thread        |  Freezer thread
                  *  ------------------------+-----------------------------------------------------------------
-                 *                          |  trigger safepoints and set safepoint procedure for all threads
+                 *                          |  set AtSafepoint procedure and trigger safepoints for mutator thread
                  *  loop: safepoint         |
-                 *        block on mutex    |
-                 *                          |  complete GC
-                 *                          |  reset safepoints and cancel safepoint procedure for all threads
-                 *        wake from mutex   |
+                 *        enter native      |
+                 *                          |  complete operation (e.g. GC)
+                 *                          |  reset safepoints and clear AtSafepoint procedure for mutator thread
+                 *        return from native|
                  *  loop: safepoint         |
+                 *
+                 * The first safepoint instruction above loads the address of triggered VM thread locals
+                 * into the latch register. The second safepoint instruction dereferences the latch
+                 * register causing the trap. That is, the freezer thread triggered safepoints in the
+                 * mutator to freeze but actually froze it as a result of the mutator making a
+                 * native call between 2 safepoint instructions (it takes 2 executions of a safepoint
+                 * instruction to cause the trap).
                  *
                  * The second safepoint instruction on the mutator thread will cause a trap when
                  * the safepoint procedure for the mutator is null.
