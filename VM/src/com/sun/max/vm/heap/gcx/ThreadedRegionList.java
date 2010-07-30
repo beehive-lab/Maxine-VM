@@ -29,8 +29,9 @@ import com.sun.max.vm.type.*;
 
 /**
  * Region list management.
- * Heaps organize their memory into spaces made of (possibly) discontinuous regions.
- * Spaces keep track of their regions in list of regions. A regions belong at any one time to a list.
+ * Heaps organize their memory into non-overlapping spaces made of (possibly) discontinuous regions.
+ * Spaces keep track of their regions in list of regions.
+ * Thus a region always belong at any one time to a region list.
  *
  * @author Laurent Daynes
  */
