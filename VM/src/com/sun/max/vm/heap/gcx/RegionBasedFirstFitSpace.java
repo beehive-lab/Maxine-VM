@@ -39,7 +39,6 @@ public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSp
     private Size minReclaimableSpace;
 
     ThreadedRegionList allocatingRegions;
-    ThreadedRegionList freeRegions;
     ThreadedRegionList fullRegions;
     ThreadedRegionList candidatesRegions;
 
