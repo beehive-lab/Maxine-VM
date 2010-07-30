@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * IR graphs visualized by transmitting them to the Ideal Graph Visualizer
+ * IR graphs visualized by transmitting them to the Ideal Graph Visualizer.
  *
  * @author Thomas Wuerthinger
  */

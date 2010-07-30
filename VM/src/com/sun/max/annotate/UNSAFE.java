@@ -22,10 +22,6 @@ package com.sun.max.annotate;
 
 import java.lang.annotation.*;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.bytecode.graft.*;
-import com.sun.max.vm.classfile.*;
-
 /**
  * Methods with this annotation must be compiled with the bootstrap compiler, not the JIT.
  * Neither can they be interpreted.

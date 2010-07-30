@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Unit tests for PPC assembly
- * 
+ * Unit tests for PPC assembly.
+ *
  * @author Bernd Mathiske
  */
 package test.com.sun.max.asm.ppc;

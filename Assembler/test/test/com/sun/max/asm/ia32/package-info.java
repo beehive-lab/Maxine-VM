@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Unit tests for IA32 assembly
- * 
+ * Unit tests for IA32 assembly.
+ *
  * @author Bernd Mathiske
  */
 package test.com.sun.max.asm.ia32;

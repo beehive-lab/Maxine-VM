@@ -9,12 +9,15 @@
 <!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.2//EN" "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 <module name="Checker">
     <property name="severity" value="warning"/>
+    <module name="RegexpHeader">
+        <property name="header" value="\*\n\* Copyright \(c\) 20[0-9][0-9] Sun Microsystems, Inc.  *All rights reserved.\n \*\n \* Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product\n \* that is described in this document. In particular, and without limitation, these intellectual property\n \* rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or\n \* more additional patents or pending patent applications in the U.S. and in other countries.\n *\n \* U.S. Government Rights - Commercial software. Government users are subject to the Sun\n \* Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its\n \* supplements.\n \*\n \* Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or\n \* registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks\n \* are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the\n \* U.S. and other countries.\n \*\n \* UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open\n \* Company, Ltd.\n \*/"/>
+    </module>
+    <module name="FileTabCharacter">
+        <property name="severity" value="error"/>
+    </module>
     <module name="TreeWalker">
         <property name="tabWidth" value="4"/>
         <module name="FileContentsHolder"/>
-        <module name="RegexpHeader">
-            <property name="header" value="\*\n\* Copyright \(c\) 20[0-9][0-9] Sun Microsystems, Inc.  *All rights reserved.\n \*\n \* Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product\n \* that is described in this document. In particular, and without limitation, these intellectual property\n \* rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or\n \* more additional patents or pending patent applications in the U.S. and in other countries.\n *\n \* U.S. Government Rights - Commercial software. Government users are subject to the Sun\n \* Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its\n \* supplements.\n \*\n \* Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or\n \* registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks\n \* are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the\n \* U.S. and other countries.\n \*\n \* UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open\n \* Company, Ltd.\n \*/"/>
-        </module>
         <module name="JavadocStyle">
             <property name="checkHtml" value="false"/>
         </module>
@@ -46,9 +49,6 @@
         <module name="ParenPad"/>
         <module name="TypecastParenPad">
             <property name="tokens" value="RPAREN,TYPECAST"/>
-        </module>
-        <module name="TabCharacter">
-            <property name="severity" value="error"/>
         </module>
         <module name="WhitespaceAfter"/>
         <module name="WhitespaceAround">
@@ -110,13 +110,13 @@
         <module name="ParameterAssignment">
             <property name="severity" value="ignore"/>
         </module>
-        <module name="GenericIllegalRegexp">
+        <module name="RegexpSinglelineJava">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Checks for trailing spaces at the end of a line"/>
             <property name="format" value="\s$"/>
+            <property name="message" value="Illegal trailing whitespace(s) at the end of the line."/>
             <property name="ignoreComments" value="true"/>
-            <property name="message" value="Illegal trailing space(s) at the end of the line."/>
         </module>
-        <module name="GenericIllegalRegexp">
+        <module name="RegexpSinglelineJava">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Checks for whitespace before a comma."/>
             <metadata name="com.atlassw.tools.eclipse.checkstyle.customMessage" value="Illegal whitespace before a comma."/>
             <property name="format" value=" ,"/>

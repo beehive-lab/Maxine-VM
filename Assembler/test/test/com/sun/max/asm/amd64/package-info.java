@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Unit tests for AMD64 assembly
- * 
+ * Unit tests for AMD64 assembly.
+ *
  * @author Bernd Mathiske
  */
 package test.com.sun.max.asm.amd64;

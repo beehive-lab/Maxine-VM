@@ -22,7 +22,6 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.regex.*;
 
 import javax.swing.*;
@@ -31,18 +30,20 @@ import javax.swing.table.*;
 import com.sun.max.ins.*;
 
 /**
- * A row-based textual search engine for locating rows in a {@link JTable} that match a regexp.
+ * A row-based engine for locating rows in a {@link JTable} that match a regexp.
  * Requires that cell renderers in the table implement {@link TextSearchable}.
  *
  * @author Michael Van De Vanter
  * @see {@link java.util.regexp.Pattern}
  */
-public class TableRowTextSearcher extends AbstractInspectionHolder implements RowTextSearcher {
+public class TableRowTextMatcher extends AbstractInspectionHolder implements RowTextMatcher {
+
+    private final JTable table;
 
     /**
      * The text rows being searched.
      */
-    private final String[] rowsOfText;
+    private String[] rowsOfText;
 
     /**
      * Create a search session for a table.
@@ -50,11 +51,22 @@ public class TableRowTextSearcher extends AbstractInspectionHolder implements Ro
      * @param inspection
      * @param jTable a table whose cell renderers implement {@link TextSearchable}.
      */
-    public TableRowTextSearcher(Inspection inspection, JTable jTable) {
+    public TableRowTextMatcher(Inspection inspection, JTable jTable) {
         super(inspection);
-        rowsOfText = rowsOfText(jTable);
+        this.table = jTable;
+        rowsOfText = rowsOfText(table);
     }
 
+    /**
+     * Builds a list of strings corresponding to the current contents
+     * of the specified table.
+     * <br>
+     * Note that this will only see the whole table if no filtering on the table
+     * model is in place.
+     *
+     * @param table
+     * @return the text being displayed by each row
+     */
     private static String[] rowsOfText(JTable table) {
         final TableModel tableModel = table.getModel();
         final int rowCount = tableModel.getRowCount();
@@ -77,14 +89,24 @@ public class TableRowTextSearcher extends AbstractInspectionHolder implements Ro
         return rowsOfText;
     }
 
-    public List<Integer> search(Pattern pattern) {
+    public void refresh() {
+        rowsOfText = rowsOfText(table);
+    }
+
+    public int rowCount() {
+        return rowsOfText.length;
+    }
+
+    public int[] findMatches(Pattern pattern) {
         String[] rowsOfText = this.rowsOfText;
-        List<Integer> matchingRows = new ArrayList<Integer>(rowsOfText.length);
-        for (int row = 0; row < rowsOfText.length; row++) {
+        final int textRowCount = rowsOfText.length;
+        int[] matchingRows = new int[textRowCount];
+        int matchingRowCount = 0;
+        for (int row = 0; row < textRowCount; row++) {
             if (pattern.matcher(rowsOfText[row]).find()) {
-                matchingRows.add(row);
+                matchingRows[matchingRowCount++] = row;
             }
         }
-        return matchingRows;
+        return Arrays.copyOf(matchingRows, matchingRowCount);
     }
 }

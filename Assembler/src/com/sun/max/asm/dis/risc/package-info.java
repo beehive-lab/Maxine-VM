@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Risc disassembler
- * 
+ * Risc disassembler.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.asm.dis.risc;

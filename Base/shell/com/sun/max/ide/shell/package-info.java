@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Building Java projects with shell commands
- * 
+ * Building Java projects with shell commands.
+ *
  * @author Greg Wright
  */
 package com.sun.max.ide.shell;

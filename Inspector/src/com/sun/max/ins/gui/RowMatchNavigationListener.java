@@ -18,23 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway;
-
-import com.sun.max.*;
-import com.sun.max.vm.*;
+package com.sun.max.ins.gui;
 
 /**
- * @see MaxPackage
+ * Callback interface for views that incorporate of row-based matching
+ * with user invokable navigation.
  *
- * @author Christos Kotselidis
+ * @author Michael Van De Vanter
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
+public interface RowMatchNavigationListener extends RowMatchListener {
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.heapPackage.isSubPackageOf(this);
-    }
+    /**
+     * Notifies that the user has requested to see the next match, relative to the current selection, of the most recent search.
+     * This is not supposed to happen if the most recent search produced no matches.
+     */
+    void selectNextResult();
+
+    /**
+     * Notifies that the user has requested to see the previous match, relative to the current selection, of the most recent search.
+    * This is not supposed to happen if the most recent search produced no matches.
+     */
+    void selectPreviousResult();
 }

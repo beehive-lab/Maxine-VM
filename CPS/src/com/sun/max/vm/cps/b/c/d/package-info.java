@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Translation from byte codes and class file structures to CIR and then to DIR
- * 
+ * Translation from byte codes and class file structures to CIR and then to DIR.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.cps.b.c.d;

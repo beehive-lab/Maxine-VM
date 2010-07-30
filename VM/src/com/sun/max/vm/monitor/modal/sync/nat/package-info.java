@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * Native support for com.sun.max.vm.monitor.modal.sync
+ * Native support for com.sun.max.vm.monitor.modal.sync.
  */
 package com.sun.max.vm.monitor.modal.sync.nat;

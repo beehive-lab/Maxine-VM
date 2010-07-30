@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Unit tests for SPARC assembly
- * 
+ * Unit tests for SPARC assembly.
+ *
  * @author Bernd Mathiske
  */
 package test.com.sun.max.asm.sparc;

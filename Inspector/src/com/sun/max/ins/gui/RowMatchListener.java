@@ -18,28 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.beltway.profile;
+package com.sun.max.ins.gui;
+
 
 /**
- * This class is the entrypoint of the GC profiler.
+ * Callback interface for views that incorporate of row-based matching.
  *
- * @author Christos Kotselidis
+ * @author Michael Van De Vanter
  */
-public class HeapProfiler {
+public interface RowMatchListener {
 
-    private static HeapStatistics heapStatistics = new HeapStatistics();
-    private static HeapTimer heapTimer = new HeapTimer();
+    /**
+     * Notifies the result of a new search.
+     *
+     * @param searchMatchingRows the rows that match the supplied pattern, length=0 if no matches, null if pattern is empty (no search).
+     */
+    void setSearchResult(int[] searchMatchingRows);
 
-    public HeapProfiler() {
-
-    }
-
-    public static HeapTimer getHeapTimer() {
-        return heapTimer;
-    }
-
-    public static HeapStatistics getHeapStatistics() {
-        return heapStatistics;
-    }
+    /**
+     * Notifies that the user has requested that the search be closed.
+     */
+    void closeRequested();
 
 }
