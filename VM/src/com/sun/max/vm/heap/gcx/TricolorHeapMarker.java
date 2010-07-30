@@ -1194,6 +1194,20 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     public void verifyHasNoGreyMarks(Address start, Address end) {
         final int bitIndex = scanForGreyMark(start, end);
+        if (MaxineVM.isDebug() && bitIndex >= 0) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("grey mark found for cell: ");
+            Log.print(coveredAreaStart.plus(bitIndex << log2BytesCoveredPerBit));
+            Log.print(" bit index: ");
+            Log.print(bitIndex);
+            Log.print(" in grey-free area [");
+            Log.print(start);
+            Log.print(" , ");
+            Log.print(end);
+            Log.println(" ]");
+            Log.unlock(lockDisabledSafepoints);
+            isGrey(bitIndex);
+        }
         FatalError.check(bitIndex < 0, "Must not have any grey marks");
     }
 
@@ -1334,9 +1348,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     private void recoverFromOverflowWithRescanMap() {
         final RescanMap rescanMap = markStackWithRescanMapCellVisitor.rescanMap;
         if (!isRecovering()) {
+            final Address forwardScanFinger = forwardScanState.finger;
             startTimer(recoveryScanTimer);
-            rescanMap.resetRescanBound();
             markingStack.flush();
+            verifyHasNoGreyMarks(coveredAreaStart, rescanMap.beginOfGreyArea());
             // Rescan Map is setup.
             if(MaxineVM.isDebug()) {
                 FatalError.check(!rescanMap.isEmpty(), "rescan map must not be empty after a mark stack overflow");
@@ -1344,9 +1359,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             currentScanState = overflowScanState;
             overflowScanState.initialize(forwardScanState);
             markStackWithRescanMapCellVisitor.setScanState(overflowScanState);
-
-            // Save for verification after rescan
-            final Address forwardScanFinger = forwardScanState.finger;
 
             overflowScanState.visitGreyObjects(rescanMap);
 
@@ -1358,6 +1370,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         } else {
             // Just update the rescan map.
             markingStack.flush();
+            verifyHasNoGreyMarks(coveredAreaStart, rescanMap.beginOfGreyArea());
         }
     }
 
@@ -1388,7 +1401,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
             final Address forwardScanFinger = forwardScanState.finger;
             do {
-                // TODO: remstartOfNextOverflowScanove / disable this invariant check
                 verifyHasNoGreyMarks(coveredAreaStart, startOfNextOverflowScan);
                 overflowScanState.finger = startOfNextOverflowScan;
                 startOfNextOverflowScan = forwardScanFinger;
