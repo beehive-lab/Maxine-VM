@@ -12,8 +12,8 @@ import com.sun.max.vm.runtime.*;
 /**
  * A rescan map keeps track of the areas that hold grey objects after a marking stack overflow.
  * It helps limiting rescan of the mark bitmaps.
- * The rescan map logically decomposes the heap in fixed sized region and for each region, tracks
- * the interval comprising grey marks on the mark bitmaps.
+ * The rescan map logically decomposes the mark bitmap associated to the heap in fixed sized region and for each region, tracks
+ * the interval comprising grey marks.
  * The rescan map is updated when the marking stack overflow, and used during overflow rescan.
  *
  * @author Laurent Daynes
@@ -37,13 +37,20 @@ public class RescanMap {
     private Address coveredAreaStart;
 
     /**
-     * Rescan region size, in number of mark bitmap words. Must be a power of 2.
+     * Rescan region size, in number of mark bitmap bytes. Must be a power of 2.
      */
     private int rescanRegionSize;
     /**
-     * The log2 to shift an heap address into a rescan map index.
+     * The log2 of the number of words per rescan map regions.
      */
-    private int log2RescanMapIndex;
+    private int log2NumWordsPerRescanRegion;
+
+    private int log2BitmapWord;
+
+    /**
+     * The log2 to shift a heap offset to obtain an index to the entry of the rescan map.
+     */
+    private int log2AddressToRescanMapIndex;
 
     /**
      * Mask to obtain the offset in the rescan region from a heap address.
@@ -80,10 +87,10 @@ public class RescanMap {
      */
     private int leftmostRightBound;
 
-    private static final int shortMask = (1 << WordWidth.BITS_16.log2numberOfBits) -1;
+    private static final int shortMask = (1 << WordWidth.BITS_16.numberOfBits) -1;
 
     private int rightBound(int rescanMapEntry) {
-        return rescanMapEntry >> WordWidth.BITS_16.log2numberOfBits;
+        return rescanMapEntry >> WordWidth.BITS_16.numberOfBits;
     }
 
     private int leftBound(int rescanMapEntry) {
@@ -91,23 +98,54 @@ public class RescanMap {
     }
 
     private int rescanMapEntry(int leftBound, int rightBound) {
-        return leftBound | (rightBound << WordWidth.BITS_16.log2numberOfBits);
+        return leftBound | (rightBound << WordWidth.BITS_16.numberOfBits);
     }
 
     /**
      * Cache the bounds of the leftmost entry in the rescan map.
+     * Used in with {@link #fetchNextEntry()} to iterate over a mark-bitmap covered by the rescan map.
+     * The bounds are indexes (in number of words) to the mark bitmap.
      */
     void cacheLeftmostEntryBound() {
-        final int baseOfLeftmostEntry = leftmostEntry << log2RescanMapIndex;
+        final int baseOfLeftmostEntry = leftmostEntry << log2NumWordsPerRescanRegion;
         final int rescanMapEntry = ArrayAccess.getInt(rescanMapTable, leftmostEntry);
         leftmostLeftBound = baseOfLeftmostEntry +  leftBound(rescanMapEntry);
-        leftmostRightBound = baseOfLeftmostEntry + rightBound(rescanMapEntry);
+        leftmostRightBound = baseOfLeftmostEntry + rightBound(rescanMapEntry) -1;
+        if (MaxineVM.isDebug()) {
+            FatalError.check(leftmostLeftBound <= leftmostRightBound, "Invalid rescan map entry");
+        }
     }
 
+    // DEBUG ONLY -- REMOVE
+    Address beginOfGreyArea() {
+        final int baseOfLeftmostEntry = leftmostEntry << log2NumWordsPerRescanRegion;
+        final int rescanMapEntry = ArrayAccess.getInt(rescanMapTable, leftmostEntry);
+        final int bitmapWordIndex = baseOfLeftmostEntry +  leftBound(rescanMapEntry);
+        return coveredAreaStart.plus(bitmapWordIndex << log2BitmapWord);
+    }
+
+    /**
+     * Returns the index to the word of the mark-bitmap corresponding to
+     * the leftmost mark-bitmap word of the leftmost rescan region recorded
+     * in the rescan map associated to the mark bitmap.
+     * @see #cacheLeftmostEntryBound()
+     *
+     * @return index to a word of the mark bitmap covered by the rescan map
+     *
+     */
     int leftmostLeftBound() {
         return leftmostLeftBound;
     }
 
+    /**
+     * Returns the index to the word of the mark-bitmap corresponding to
+     * the rightmost mark-bitmap word of the leftmost rescan region recorded in
+     * the rescan map associated to the mark bitmap.
+     * @see #cacheLeftmostEntryBound()
+     *
+     * @return index to a word of the mark bitmap covered by the rescan map
+     *
+     */
     int leftmostRightBound() {
         return leftmostRightBound;
     }
@@ -125,9 +163,14 @@ public class RescanMap {
             }
             leftmostEntry++;
         }
-        leftmostEntry = rescanMapTable.length;
+        // Rescan map empty, clear its bounds.
+        resetRescanBound();
     }
 
+    /**
+     * Return a boolean indicating whether the rescan map is empty, i.e., has no recorded words of the mark bitmap containing grey objects.
+     * @return true if the rescan map is empty, false otherwise.
+     */
     boolean isEmpty() {
         return leftmostEntry == rescanMapTable.length;
     }
@@ -140,10 +183,29 @@ public class RescanMap {
         rightmostEntry = 0;
     }
 
+    // FOR DEBUGGING. REMOVE ME
+    TricolorHeapMarker tricolorHeapMarker;
+
     void recordCellForRescan(Pointer cell) {
-        Pointer offsetInHeap = cell.minus(coveredAreaStart);
-        final int rescanMapIndex = offsetInHeap.unsignedShiftedRight(log2RescanMapIndex).toInt();
-        final int markWordIndex = offsetInHeap.asOffset().and(rescanRegionOffsetMask).toInt();
+        final int bitmapWordIndex = cell.minus(coveredAreaStart).unsignedShiftedRight(log2BitmapWord).toInt();
+        final int rescanMapIndex = bitmapWordIndex >> log2NumWordsPerRescanRegion;
+        final int indexInRescanRegion = bitmapWordIndex & rescanRegionOffsetMask;
+        if (MaxineVM.isDebug()) {
+            final int index =  (rescanMapIndex << log2NumWordsPerRescanRegion) + indexInRescanRegion;
+            FatalError.check(index == tricolorHeapMarker.bitmapWordIndex(cell), "Bitmap Word Index from rescan map is incorrect");
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Recording cell ");
+            Log.print(cell);
+            Log.print(" bit index: ");
+            Log.print(cell.minus(coveredAreaStart).unsignedShiftedRight(tricolorHeapMarker.log2BytesCoveredPerBit).toInt());
+            Log.print(" bitmap word:");
+            Log.print(bitmapWordIndex);
+            Log.print(" rescan map index: ");
+            Log.print(rescanMapIndex);
+            Log.print(" index in rescan region: ");
+            Log.println(indexInRescanRegion);
+            Log.unlock(lockDisabledSafepoints);
+        }
 
         if (rightmostEntry < rescanMapIndex) {
             rightmostEntry = rescanMapIndex;
@@ -151,15 +213,15 @@ public class RescanMap {
 
         if (leftmostEntry > rescanMapIndex) {
             leftmostEntry = rescanMapIndex;
-            ArrayAccess.setInt(rescanMapTable, rescanMapIndex, rescanMapEntry(markWordIndex, markWordIndex + 1));
+            ArrayAccess.setInt(rescanMapTable, rescanMapIndex, rescanMapEntry(indexInRescanRegion, indexInRescanRegion + 1));
             return;
         }
         final int currentEntry = ArrayAccess.getInt(rescanMapTable, rescanMapIndex);
         final int leftBound = leftBound(currentEntry);
-        if (leftBound > markWordIndex) {
-            ArrayAccess.setInt(rescanMapTable, rescanMapIndex, rescanMapEntry(markWordIndex, rightBound(currentEntry)));
-        } else if (markWordIndex >= rightBound(currentEntry)) {
-            ArrayAccess.setInt(rescanMapTable, rescanMapIndex, rescanMapEntry(leftBound, markWordIndex + 1));
+        if (leftBound > indexInRescanRegion) {
+            ArrayAccess.setInt(rescanMapTable, rescanMapIndex, rescanMapEntry(indexInRescanRegion, rightBound(currentEntry)));
+        } else if (indexInRescanRegion >= rightBound(currentEntry)) {
+            ArrayAccess.setInt(rescanMapTable, rescanMapIndex, rescanMapEntry(leftBound, indexInRescanRegion + 1));
         }
     }
 
@@ -171,13 +233,17 @@ public class RescanMap {
         coveredAreaStart = tricolorHeapMarker.coveredAreaStart;
         rescanRegionSize = rescanRegionSizeOption.getValue().roundedUpBy(1 << tricolorHeapMarker.log2BytesCoveredPerBit).toInt();
         final int log2RescanRegionSize = Integer.numberOfTrailingZeros(rescanRegionSize);
-        log2RescanMapIndex = log2RescanRegionSize + tricolorHeapMarker.log2BytesCoveredPerBit;
+        log2NumWordsPerRescanRegion = log2RescanRegionSize - WordWidth.BITS_64.log2numberOfBytes;
+        log2BitmapWord = tricolorHeapMarker.log2BitmapWord;
         Size rescanMapSize = tricolorHeapMarker.colorMap.size().unsignedShiftedRight(log2RescanRegionSize);
-        rescanRegionOffsetMask = rescanRegionSize - 1;
+        rescanRegionOffsetMask = (1 << log2NumWordsPerRescanRegion) - 1;
         Heap.enableImmortalMemoryAllocation();
         rescanMapTable = new int[rescanMapSize.toInt()];
         Heap.disableImmortalMemoryAllocation();
-        leftmostEntry = rescanMapTable.length;
+        resetRescanBound();
         FatalError.check(rescanRegionSize == 1 << log2RescanRegionSize, "RescanMap region size must be a power of 2");
+        if (MaxineVM.isDebug()) {
+            this.tricolorHeapMarker = tricolorHeapMarker;
+        }
     }
 }
