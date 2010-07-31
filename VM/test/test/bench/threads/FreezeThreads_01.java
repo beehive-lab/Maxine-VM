@@ -28,11 +28,12 @@ import java.util.*;
 
 import test.bench.util.*;
 
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.FreezeThreads.*;
 
 /**
- * Benchmarks time taken to perform a {@linkplain FreezeThreads#run() thread freeze}.
+ * Benchmarks the time taken to perform a {@linkplain FreezeThreads#run() thread freeze}.
  *
  * @author Mick Jordan
  * @author Doug Simon
@@ -47,7 +48,7 @@ public class FreezeThreads_01 extends RunBench {
         return new FreezeThreads_01(i).runBench(true);
     }
 
-    static class Bench extends AbstractMicroBenchmark implements Runnable {
+    static class Bench extends MicroBenchmark {
         int numThreads;
         private Thread[] spinners;
         private volatile boolean done;
@@ -64,11 +65,17 @@ public class FreezeThreads_01 extends RunBench {
             started = 0;
             spinners = new Thread[numThreads];
             for (int s = 0; s < spinners.length; s++) {
-                spinners[s] = new Thread(this);
+                spinners[s] = new Spinner();
                 spinners[s].start();
             }
-            ThreadListPredicate predicate = new ThreadListPredicate(Arrays.asList(spinners));
-            freezeThreads = new FreezeThreads("Test", predicate);
+            final ThreadListPredicate predicate = new ThreadListPredicate(Arrays.asList(spinners));
+            freezeThreads = new FreezeThreads("Test", predicate) {
+                @Override
+                protected void doThread(Pointer threadLocals, Pointer ip, Pointer sp, Pointer fp) {
+                    // all threads are stopped at this point, so we can tell then all to quit when they resume
+                    done = true;
+                }
+            };
 
             // Wait for all threads to start so that we only benchmark the time taken to freeze threads
             while (started != numThreads) {
@@ -90,15 +97,21 @@ public class FreezeThreads_01 extends RunBench {
             }
         }
 
-        public void run(boolean warmup) {
+        @Override
+        public long run() {
             freezeThreads.run();
+            return defaultResult;
         }
 
-        public void run() {
-            started++;
-            long count = 0;
-            while (!done) {
-                count++;
+        class Spinner extends Thread {
+
+            @Override
+            public void run() {
+                started++;
+                long count = 0;
+                while (!done) {
+                    count++;
+                }
             }
         }
     }

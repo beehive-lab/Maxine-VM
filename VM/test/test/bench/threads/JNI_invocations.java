@@ -61,7 +61,7 @@ public class JNI_invocations extends RunBench {
      */
     private static native long nativework(long workload);
 
-    static class Bench extends AbstractMicroBenchmark {
+    static class Bench extends MicroBenchmark {
         private static Barrier barrier1;
         private static Barrier barrier2;
         private static final int DEFAULT_THREADS = 2;
@@ -88,13 +88,6 @@ public class JNI_invocations extends RunBench {
             if (gc) {
                 gcInterval = getIntProperty(GC_INTERVAL_PROPERTY, DEFAULT_GC_INTERVAL);
             }
-            if (gc) {
-                barrier1 = new Barrier(nrThreads + 2);
-                barrier2 = new Barrier(nrThreads + 2);
-            } else {
-                barrier1 = new Barrier(nrThreads + 1);
-                barrier2 = new Barrier(nrThreads + 1);
-            }
         }
 
         private static int getIntProperty(String propName, int defaultValue) {
@@ -111,6 +104,9 @@ public class JNI_invocations extends RunBench {
             for (int i = 0; i < nrThreads; i++) {
                 new Thread(new AllocationThread(nrJNICalls)).start();
             }
+            final int bc = nrThreads + 1 + (gc ? 1 : 0);
+            barrier1 = new Barrier(bc);
+            barrier2 = new Barrier(bc);
 
             if (gc) {
                 new Thread(new GCInvokeThread(nrThreads), "GCInvokeThread").start();
@@ -120,17 +116,12 @@ public class JNI_invocations extends RunBench {
         }
 
         @Override
-        public void run(boolean warmup) {
+        public long run() {
             // this will release all threads
             barrier1.waitForRelease();
             // wait for everyone to finish
             barrier2.waitForRelease();
-        }
-
-        @Override
-        public void postrun() {
-            barrier1.reset();
-            barrier2.reset();
+            return defaultResult;
         }
 
         public static class AllocationThread implements Runnable{
@@ -171,44 +162,6 @@ public class JNI_invocations extends RunBench {
             }
         }
 
-    }
-
-    /**
-     * All threads wait at barrier until last thread arrives.
-     */
-    static class Barrier {
-        private int threads;
-        private int threadCount = 0;
-
-        public Barrier(int threads) {
-            this.threads = threads;
-        }
-
-        public synchronized void reset() {
-            threadCount = 0;
-        }
-
-        /**
-         * Get number of threads that have reached the barrier.
-         * @return number of threads that have reached the barrier
-         */
-        public int getThreadCount() {
-            return threadCount;
-        }
-
-        public synchronized void waitForRelease() {
-            try {
-                threadCount++;
-                if (threadCount == threads) {
-                    notifyAll();
-                } else {
-                    while (threadCount < threads) {
-                        wait();
-                    }
-                }
-            } catch (InterruptedException ex) {
-            }
-        }
     }
 
     public static void main(String[] args) {
