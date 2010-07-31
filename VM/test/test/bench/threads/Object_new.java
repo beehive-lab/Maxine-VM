@@ -54,7 +54,7 @@ public class Object_new  extends RunBench {
         protected int nrAllocs;
         protected int nrThreads;
 
-        Bench (int nt, int na, int as) {
+        Bench(int nt, int na, int as) {
             nrThreads = nt;
             nrAllocs = na / nt;
             allocSize = as;
@@ -93,7 +93,7 @@ public class Object_new  extends RunBench {
     }
 
     static class EncapBench extends Bench {
-        EncapBench (int nt, int na, int as) {
+        EncapBench(int nt, int na, int as) {
             super(nt, na, as);
         }
 
