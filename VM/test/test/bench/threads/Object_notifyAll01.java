@@ -37,22 +37,26 @@ public class Object_notifyAll01 extends RunBench {
         return new Object_notifyAll01().runBench(true);
     }
 
-    static class Bench extends AbstractMicroBenchmark {
+    static class Bench extends MicroBenchmark {
 
-        public void run(boolean warmup) {
+        @Override
+        public long run() {
             synchronized (this) {
                 count++;
                 notifyAll();
             }
+            return defaultResult;
         }
     }
 
-    static class EncapBench extends AbstractMicroBenchmark {
+    static class EncapBench extends MicroBenchmark {
 
-        public void run(boolean warmup) {
+        @Override
+        public long run() {
             synchronized (this) {
                 count++;
             }
+            return defaultResult;
         }
     }
 

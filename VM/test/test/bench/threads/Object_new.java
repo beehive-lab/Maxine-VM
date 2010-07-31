@@ -18,113 +18,115 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+/*
+ * @Harness: java
+ * @Runs: (1, 10000, 16) = true;
+ */
 package test.bench.threads;
+
+import test.bench.util.*;
 
 /**
  * Test for the scalability of heap allocation. This test is designed to
  * show the performance benefits of thread local allocation buffers (TLABs).
  *
  * @author Hannes Payer
+ * @author Mick Jordan
  */
-public class Object_new {
+public class Object_new  extends RunBench {
 
-    static class Barrier {
-        private int threads;
-        private int threadCount = 0;
+    protected static final int DEFAULT_NT = 2;
+    protected static final int DEFAULT_NA = 10000;
+    protected static final int DEFAULT_AS = 16;
 
-        public Barrier(int threads) {
-            this.threads = threads;
+    protected Object_new(int nt, int na, int as) {
+        super(new Bench(nt, na, as), new EncapBench(nt, na, as));
+    }
+
+    public static boolean test(int nt, int na, int as) {
+        return new Object_new(nt, na, as).runBench(true);
+    }
+
+    static class Bench extends MicroBenchmark {
+        protected Barrier barrier1;
+        protected Barrier barrier2;
+        protected int allocSize;
+        protected int nrAllocs;
+        protected int nrThreads;
+
+        Bench (int nt, int na, int as) {
+            nrThreads = nt;
+            nrAllocs = na / nt;
+            allocSize = as;
         }
 
-        public synchronized void reset() {
-            threadCount = 0;
+        @Override
+        public void prerun() {
+            barrier1 = new Barrier(nrThreads + 1);
+            barrier2 = new Barrier(nrThreads + 1);
+            createThreads();
         }
 
-        public synchronized void waitForRelease() throws InterruptedException {
-            threadCount++;
-            if (threadCount == threads) {
-                notifyAll();
-            } else {
-                while (threadCount < threads) {
-                    wait();
+        protected void createThreads() {
+            for (int i = 0; i < nrThreads; i++) {
+                new Thread(new AllocationThread(), "Alloc-" + i).start();
+            }
+        }
+
+        @Override
+        public long run() {
+            barrier1.waitForRelease();
+            barrier2.waitForRelease();
+            return defaultResult;
+        }
+
+        class AllocationThread implements Runnable{
+            public void run() {
+                barrier1.waitForRelease();
+                for (int i = 0; i < nrAllocs; i++) {
+                    final byte[] tmp = new byte[allocSize];
+                    tmp[0] = 1;
                 }
+                barrier2.waitForRelease();
             }
         }
     }
 
-    protected static Barrier barrier1;
-    protected static Barrier barrier2;
-    protected static int nrThreads;
-    protected static int allocSize;
-    protected static int nrAllocs;
-    protected static boolean trace = System.getProperty("trace") != null;
+    static class EncapBench extends Bench {
+        EncapBench (int nt, int na, int as) {
+            super(nt, na, as);
+        }
+
+        @Override
+        public void createThreads() {
+            for (int i = 0; i < nrThreads; i++) {
+                new Thread(new EncapThread(), "Encap-" + i).start();
+            }
+        }
+
+        class EncapThread implements Runnable {
+            public void run() {
+                barrier1.waitForRelease();
+                barrier2.waitForRelease();
+            }
+        }
+
+    }
 
     public static void main(String[] args) {
-        if (args.length != 3) {
-            System.out.println("Usage: " + Object_new.class.getName() + " <nr threads> <bytes per allocation> <nr allocations>");
-            System.exit(1);
-        }
-
-        nrThreads = Integer.parseInt(args[0]);
-        allocSize = Integer.parseInt(args[1]);
-        nrAllocs = Integer.parseInt(args[2]);
-
-        barrier1 = new Barrier(nrThreads + 1);
-        barrier2 = new Barrier(nrThreads + 1);
-
-        for (int i = 0; i < nrThreads; i++) {
-            new Thread(new AllocationThread(allocSize, nrAllocs / nrThreads, i)).start();
-        }
-        long start = 0;
-        try {
-            barrier1.waitForRelease();
-            start = System.currentTimeMillis();
-            barrier2.waitForRelease();
-        } catch (InterruptedException e) { }
-
-        final long benchtime = System.currentTimeMillis() - start;
-        System.out.println(benchtime); // + " ms");
-
-        /*System.out.println("Simple Allocator Benchmark Result (nr threads: " + nrThreads +
-                            "; size: " + allocSize + "; nr allocs: " + nrAllocs +
-                            "; time: " + benchtime + " ns");*/
-    }
-
-    public static class AllocationThread implements Runnable{
-        private int size;
-        private int nrAllocations;
-        private int threadId;
-
-        public AllocationThread(int size, int nrAllocations, int threadId) {
-            this.size = size;
-            this.nrAllocations = nrAllocations;
-            this.threadId = threadId;
-        }
-
-        public void run() {
-            try {
-                barrier1.waitForRelease();
-            } catch (InterruptedException e) { }
-            // Only have one thread report progress. It should be fairly
-            // representative of over all progress.
-            if (trace && threadId == 0) {
-                for (int i = 0; i < nrAllocations; i++) {
-                    final byte[] tmp = new byte[size];
-                    tmp[0] = 1;
-                    if (i % 10000 == 0) {
-                        System.out.println(i);
-                    }
-                }
-            } else {
-                for (int i = 0; i < nrAllocations; i++) {
-                    final byte[] tmp = new byte[size];
-                    tmp[0] = 1;
+        int nt = DEFAULT_NT;
+        int na = DEFAULT_NA;
+        int as = DEFAULT_AS;
+        if (args.length > 0) {
+            nt = Integer.parseInt(args[0]);
+            if (args.length > 1) {
+                na = Integer.parseInt(args[1]);
+                if (args.length > 2) {
+                    as = Integer.parseInt(args[2]);
                 }
             }
-            //System.out.println("Thread " + threadId + " done");
-            try {
-                barrier2.waitForRelease();
-            } catch (InterruptedException e) { }
         }
+        test(nt, na, as);
     }
+
 }

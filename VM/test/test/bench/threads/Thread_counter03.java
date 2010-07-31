@@ -20,7 +20,7 @@
  */
 /*
  * @Harness: java
- * @Runs: (1, 1) = true;
+ * @Runs: (1, 10000) = true;
  */
 package test.bench.threads;
 
@@ -36,51 +36,47 @@ public class Thread_counter03  extends Thread_counter01 {
     private static Object lock = new Object();
     private static long sharedCount;
 
-    protected Thread_counter03(MicroBenchmark bench) {
-        super(bench);
+    protected Thread_counter03(MicroBenchmark bench, int t, long c)  {
+        super(bench, t, c);
     }
 
     static class SharedLockedRunnerFactory extends RunnerFactory {
         @Override
-        CountingRunner createRunner(int threadCount) {
-            sharedCount = 0;
-            return new SharedLockedRunner(threadCount);
+        CountingRunner createRunner(long count, int threadCount) {
+            sharedCount = count;
+            return new SharedLockedRunner();
         }
     }
 
     static class SharedLockedRunner extends CountingRunner {
-        private int theThreadCount;
-
-        SharedLockedRunner(int threadCount) {
-            this.theThreadCount = threadCount;
-        }
 
         @Override
         public void run() {
-            while (!done) {
+            startBarrier.waitForRelease();
+            while (true) {
                 synchronized (lock) {
-                    sharedCount++;
+                    if (sharedCount == 0) {
+                        return;
+                    }
+                    sharedCount--;
                 }
             }
         }
-
-        @Override
-        public long getCount() {
-            return sharedCount / theThreadCount;
-        }
     }
 
-    public static boolean test(int t, int r) {
-        threadCount = t;
-        runTime = r;
-        final boolean result = new Thread_counter03(new Bench(new SharedLockedRunnerFactory())).runBench(true);
-        displayCounts();
+
+    public static boolean test(int t, int c) {
+        final boolean result = new Thread_counter03(new Bench(new SharedLockedRunnerFactory()), t, c).runBench(true);
         return result;
     }
 
     // for running stand-alone
     public static void main(String[] args) {
-        test(2, 1000);
+        if (args.length == 0) {
+            test(1, DEFAULT_COUNT);
+        } else {
+            test(Integer.parseInt(args[0]), DEFAULT_COUNT);
+        }
     }
 
 }

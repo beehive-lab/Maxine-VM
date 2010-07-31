@@ -22,40 +22,40 @@
  * @Harness: java
  * @Runs: 0 = true
  */
-package test.bench.bytecode;
+package test.bench.java.lang;
 
 import test.bench.util.*;
 
-/**
- * Call a method with zero arguments.
- *
- * @author Mick Jordan
- */
+public class ArrayCopy_Loop extends RunBench {
 
-public class MethodCall1L extends RunBench {
-
-    protected MethodCall1L() {
+    protected ArrayCopy_Loop() {
         super(new Bench());
     }
 
-    public static boolean test(int x) {
-        return new MethodCall1L().runBench(true);
+    public static boolean test(int i) {
+        return new ArrayCopy_Loop().runBench(true);
     }
 
-    static class Bench extends MicroBenchmark {
+    public static class Bench extends MicroBenchmark {
+        private static final byte[] TEST_BYTES = "HTTP/1.0".getBytes();
+        public static int nonConstByteLength = TEST_BYTES.length;
+        private byte[] buf;
+
         @Override
-        public long run() {
-            longArg(Long.MAX_VALUE);
-            return defaultResult;
+        public void prerun() {
+            buf = new byte[TEST_BYTES.length];
         }
 
-        private void longArg(long arg) {
-
+        @Override
+        public long run() {
+            for (int i = 0; i < buf.length; i++) {
+                buf[i] = TEST_BYTES[i];
+            }
+            return defaultResult;
         }
     }
 
     public static void main(String[] args) {
         test(0);
     }
-
 }
