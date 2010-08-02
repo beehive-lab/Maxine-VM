@@ -141,6 +141,8 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case Entrypoint:
                 case PushFrame:
                 case PopFrame:
+                case Push:
+                case Pop:
                 case RawBytes:
                 case ShouldNotReachHere:
                     break;

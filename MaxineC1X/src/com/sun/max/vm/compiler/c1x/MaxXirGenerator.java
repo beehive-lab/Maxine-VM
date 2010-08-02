@@ -254,6 +254,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             generator.adapt(callee, os);
             asm.rawBytes(os.toByteArray());
         }
+        asm.pushFrame();
         return new XirSnippet(finishTemplate(asm, "prologue"));
     }
 
