@@ -506,6 +506,14 @@ public abstract class CiXirAssembler {
          */
         RawBytes,
         /**
+         * Pushes a value onto the stack.
+         */
+        Push,
+        /**
+         * Pops a value from the stack.
+         */
+        Pop,
+        /**
          * This instruction should never be reached, this is useful for debugging purposes.
          */
          ShouldNotReachHere
@@ -673,6 +681,14 @@ public abstract class CiXirAssembler {
 
     public void rawBytes(byte[] bytes) {
         append(new XirInstruction(CiKind.Void, bytes, RawBytes, null));
+    }
+    
+    public void push(XirOperand value) {
+        append(new XirInstruction(CiKind.Void, Push, VOID, value));
+    }
+    
+    public void pop(XirOperand result) {
+        append(new XirInstruction(result.kind, Pop, result));
     }
 
     public void shouldNotReachHere() {

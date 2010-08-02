@@ -85,7 +85,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitReturn(CiValue result) {
         // Reset the stack pointer
-        masm.incrementq(target.stackPointerRegister, initialFrameSizeInBytes());
+        // masm.incrementq(target.stackPointerRegister, initialFrameSizeInBytes());
         // TODO: Add Safepoint polling at return!
         masm.ret(0);
     }
@@ -729,6 +729,11 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
+        if (left.kind != right.kind) {
+            System.out.println("mismatch: " + left.kind + " <--> " + right.kind);
+            System.out.println("mismatch: " + left + " <--> " + right);
+            System.out.println(" at " + code);
+        }
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
         assert left.kind == right.kind;
         assert left.equals(dest) : "left and dest must be equal";
@@ -1641,7 +1646,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case PointerCAS:
                     break;
 
-                case CallStub:
+                case CallStub: {
                     XirTemplate stubId = (XirTemplate) inst.extra;
                     CiRegister result = CiRegister.None;
                     if (inst.result != null) {
@@ -1653,8 +1658,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     }
                     masm.callGlobalStub(stubId, info, result, args);
                     break;
-
-                case CallRuntime:
+                }
+                case CallRuntime: {
                     CiKind[] signature = new CiKind[inst.arguments.length];
                     for (int i = 0; i < signature.length; i++) {
                         signature[i] = inst.arguments[i].kind;
@@ -1677,7 +1682,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         moveOp(resultLocation, operands[inst.result.index], inst.result.kind.stackKind(), null, false);
                     }
                     break;
-
+                }
                 case Jmp: {
                     Label label = labels[((XirLabel) inst.extra).index];
                     masm.jmp(label);
@@ -1741,7 +1746,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case Align: {
-                    asm.align((Integer)inst.extra);
+                    asm.align((Integer) inst.extra);
                     break;
                 }
                 case Entrypoint: {
@@ -1750,12 +1755,27 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 }
                 case PushFrame: {
                     masm.push(AMD64.rbp);
-                    masm.decrementl(AMD64.rsp, initialFrameSizeInBytes());
+                    masm.decrementq(AMD64.rsp, initialFrameSizeInBytes());
                     break;
                 }
                 case PopFrame: {
-                    masm.incrementl(AMD64.rsp, initialFrameSizeInBytes());
+                    masm.incrementq(AMD64.rsp, initialFrameSizeInBytes());
                     masm.pop(AMD64.rbp);
+                    break;
+                }
+                case Push: {
+                    CiRegisterValue value = assureInRegister(operands[inst.x().index]);
+                    masm.push(value.asRegister());
+                    break;
+                }
+                case Pop: {
+                    CiValue result = operands[inst.result.index];
+                    if( result.isRegister()) {
+                        masm.pop(result.asRegister());
+                    } else {
+                        masm.pop(compilation.target.scratchRegister);
+                        moveOp(compilation.target.scratchRegister.asValue(), result, result.kind, null, true);
+                    }
                     break;
                 }
                 case RawBytes: {
