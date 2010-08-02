@@ -98,7 +98,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
                 int wordSize = arch.wordSize;
 
-                c1xTarget = new CiTarget(arch, config, true, wordSize, wordSize, wordSize, targetABI.stackFrameAlignment, configuration.platform.pageSize, wordSize, wordSize, 16);
+                c1xTarget = new CiTarget(arch, config, true, wordSize, wordSize, wordSize, targetABI.stackFrameAlignment, configuration.platform.pageSize, wordSize, wordSize, 16, false);
                 c1xXirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
                 c1xCompiler = new C1XCompiler(c1xRuntime, c1xTarget, c1xXirGenerator);
             } else if (phase == MaxineVM.Phase.COMPILING) {

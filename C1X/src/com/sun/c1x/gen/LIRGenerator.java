@@ -709,6 +709,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitReturn(Return x) {
+        emitXir(xir.genEpilogue(site(x), compilation.method), x, stateFor(x, x.stateAfter()), compilation.method, false);
         if (x.kind.isVoid()) {
             lir.returnOp(IllegalValue);
         } else {
@@ -1170,7 +1171,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         lir.branchDestination(block.label());
         if (block == ir.startBlock) {
-            lir.stdEntry(IllegalValue);
+            emitXir(xir.genPrologue(null, compilation.method), null, null, null, false);
             setOperandsForLocals(block.end().stateAfter());
         }
     }
