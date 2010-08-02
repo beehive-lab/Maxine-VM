@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * Support classes for java.lang.management.*
+ * Support classes for java.lang.management.
  *
  * @author Mick Jordan
  */

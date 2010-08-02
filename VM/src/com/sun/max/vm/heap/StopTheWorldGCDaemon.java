@@ -21,15 +21,12 @@
 package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.runtime.Safepoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -45,6 +42,7 @@ import com.sun.max.vm.thread.*;
  * @author Doug Simon
  * @author Paul Caprioli
  * @author Hannes Payer
+ * @author Mick Jordan
  */
 public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
@@ -52,49 +50,34 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
      * The procedure that is run on a mutator thread that has been stopped by a safepoint for the
      * purpose of performing a stop-the-world garbage collection.
      */
-    static final class AfterSafepoint implements Safepoint.Procedure {
+    static final class AfterSafepoint extends FreezeThreads.AtSafepoint {
 
         /**
          * Stops the current mutator thread for a garbage collection. Just before stopping, the
          * thread prepares its own stack reference map up to the trap frame. The remainder of the
          * stack reference map is prepared by a GC thread once this thread has stopped by blocking
-         * on the global GC lock ({@link VmThreadMap#ACTIVE}).
+         * on the global GC and thread lock ({@link VmThreadMap#ACTIVE}).
          */
-        public void run(Pointer trapState) {
+        @Override
+        public void beforeBlocking(Pointer trapState) {
             // note that this procedure always runs with safepoints disabled
             final Pointer vmThreadLocals = Safepoint.getLatchRegister();
             final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             Heap.disableAllocationForCurrentThread();
-            if (!VmThreadLocal.inJava(vmThreadLocals)) {
-                FatalError.unexpected("Mutator thread trapped while in native code");
-            }
 
             if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
                 FatalError.unexpected("Stack reference map preparer should be cleared before GC");
             }
 
-            // Stack reference map preparation must never include a call to a native method (e.g. blocking
-            // due to synchronization) as it such a transition will be interpreted by a GC thread to
-            // mean that the thread is now blocked on the GC lock as a result of synchronizing on
-            // VmThreadMap.ACTIVE (below). Given that stack reference map preparation involves an
-            // extensive amount of Java code, the easiest way to detect a violation this invariant
-            // is by disabling the ability to call native methods (as opposed to continually
-            // auditing any code that may be involved in stack reference map preparation).
-            NativeStubSnippet.disableNativeCallsForCurrentThread();
             VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
-            NativeStubSnippet.enableNativeCallsForCurrentThread();
+        }
 
-            synchronized (VmThreadMap.ACTIVE) {
-                // Stops this thread until GC is done.
-            }
-
+        @Override
+        public void afterBlocking(Pointer trapState) {
+            final Pointer vmThreadLocals = Safepoint.getLatchRegister();
+            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
                 FatalError.unexpected("Stack reference map preparer should be cleared after GC");
-            }
-
-            if (Heap.traceGCPhases()) {
-                Log.printCurrentThread(false);
-                Log.println(": Restarting after GC");
             }
 
             Heap.enableAllocationForCurrentThread();
@@ -104,33 +87,6 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             return "SuspendMutatorForGC";
         }
     }
-
-    private static AfterSafepoint afterSafepoint = new AfterSafepoint();
-
-    static final class IsNotGCOrCurrentThread implements Pointer.Predicate {
-
-        public boolean evaluate(Pointer vmThreadLocals) {
-            return vmThreadLocals != VmThread.current().vmThreadLocals() && !VmThread.fromVmThreadLocals(vmThreadLocals).isGCThread();
-        }
-    }
-
-    /**
-     * The procedure that is run on the GC thread to stop a mutator thread. This means triggering safepoints for a
-     * mutator thread as well as changing the {@linkplain VmThreadLocal#GC_STATE thread local} denoting that
-     * a GC is now in progress.
-     */
-    final class StopMutator implements Pointer.Procedure {
-
-        /**
-         * Triggers safepoints for the thread associated with the given thread locals.
-         */
-        public void run(Pointer vmThreadLocals) {
-            GC_STATE.setVariableWord(vmThreadLocals, Address.fromInt(1));
-            Safepoint.runProcedure(vmThreadLocals, afterSafepoint);
-        }
-    }
-
-    private final StopMutator stopMutator = new StopMutator();
 
     /**
      * A VM option for triggering a GC at fixed intervals.
@@ -147,70 +103,22 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
      * The procedure that is run on the GC thread to reset the GC relevant state of a mutator thread
      * once GC is complete.
      */
-    public final class ResetMutator extends Safepoint.ResetSafepoints {
+    public static final class ResetMutator extends FreezeThreads.ThawThread {
         @Override
-        public void run(Pointer vmThreadLocals) {
-            if (Heap.traceGCPhases()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("GCDaemon: Resetting mutator thread ");
-                Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
-                Log.unlock(lockDisabledSafepoints);
-            }
-
+        public void preRun(Pointer vmThreadLocals) {
             // Indicates that the stack reference map for the thread is once-again unprepared.
             LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, Address.zero());
-
-            // Resets the safepoint latch and resets the safepoint procedure to null
-            super.run(vmThreadLocals);
-
-            if (UseCASBasedGCMutatorSynchronization) {
-                MUTATOR_STATE.setVariableWord(vmThreadLocals, THREAD_IN_NATIVE);
-            } else {
-                // This must be last so that a mutator thread trying to return out of native code stays in the spin
-                // loop until its GC & safepoint related state has been completely reset
-                GC_STATE.setVariableWord(vmThreadLocals, Address.zero());
-            }
         }
     }
 
-    private final ResetMutator resetMutator = new ResetMutator();
+    public static class WaitUntilNonMutating extends FreezeThreads.WaitUntilFrozen {
 
-    public static class WaitUntilNonMutating implements Pointer.Procedure {
         long stackReferenceMapPreparationTime;
-        public void run(Pointer vmThreadLocals) {
-            if (Safepoint.UseCASBasedGCMutatorSynchronization) {
-                final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                while (true) {
-                    if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
-                        if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_GC).equals(THREAD_IN_NATIVE)) {
-                            // Transitioned thread into GC
-                            break;
-                        }
-                    }
-                    Thread.yield();
-                }
-            } else {
-                while (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(THREAD_IN_JAVA)) {
-                    // Wait for thread to be in native code, either as a result of a safepoint or because
-                    // that's where it was when its GC_STATE flag was set to true.
-                    Thread.yield();
-                }
-            }
+
+        @Override
+        public void postRun(Pointer vmThreadLocals) {
 
             final boolean threadWasInNative = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero();
-
-            if (Heap.traceGCPhases()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("GCDaemon: Stopped mutator thread ");
-                Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), false);
-                if (threadWasInNative) {
-                    Log.println(" which was in native");
-                } else {
-                    Log.println(" which was in Java");
-                }
-                Log.unlock(lockDisabledSafepoints);
-            }
-
             if (threadWasInNative) {
                 // Since this thread is in native code it did not get an opportunity to prepare any of its stack reference map,
                 // so we will take care of that for it now:
@@ -227,70 +135,50 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
         }
     }
 
-    private final WaitUntilNonMutating waitUntilNonMutating = new WaitUntilNonMutating();
-
-    private static final IsNotGCOrCurrentThread isNotGCOrCurrentThread = new IsNotGCOrCurrentThread();
-
     /**
      * The procedure that is run by the GC thread to perform a garbage collection.
      */
-    class GCRequest implements Runnable {
+    static class GCRequest extends FreezeThreads implements Runnable {
+
+        long gcThreadStackReferenceMapPreparationTime;
 
         /**
          * A procedure supplied by the {@link HeapScheme} that implements a GC algorithm the request will execute.
          * This may be set to a different routine at every GC request.
          */
-        private Collector collector;
+        Collector collector;
 
+        public GCRequest() {
+            super("GCDaemon", VmThreadMap.isNotGCOrCurrentThread, new AfterSafepoint(), new WaitUntilNonMutating(), new ResetMutator());
+        }
+
+        @Override
         public void run() {
             // The lock for the special reference manager must be held before starting GC
             synchronized (SpecialReferenceManager.LOCK) {
-                synchronized (VmThreadMap.ACTIVE) {
+
+                super.run();
+
+                if (Heap.traceGCTime()) {
+                    WaitUntilNonMutating waitUntilNonMutating = (WaitUntilNonMutating) waitUntilFrozen;
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("Stack reference map preparation time: ");
+                    Log.print(gcThreadStackReferenceMapPreparationTime + waitUntilNonMutating.stackReferenceMapPreparationTime);
+                    Log.println(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
+                    Log.unlock(lockDisabledSafepoints);
                     waitUntilNonMutating.stackReferenceMapPreparationTime = 0;
-
-                    if (Heap.traceGCPhases()) {
-                        Log.println("GCDaemon: Triggering safepoints for all mutators");
-                    }
-
-                    VmThreadMap.ACTIVE.forAllThreadLocals(isNotGCOrCurrentThread, stopMutator);
-
-                    // Ensures the GC_STATE variable is visible for each thread before the GC thread reads
-                    // the MUTATOR_STATE variable for each thread.
-                    MemoryBarriers.storeLoad();
-
-                    if (Heap.traceGCPhases()) {
-                        Log.println("GCDaemon: Waiting for all mutators to stop");
-                    }
-
-                    VmThreadMap.ACTIVE.forAllThreadLocals(isNotGCOrCurrentThread, waitUntilNonMutating);
-
-                    if (Heap.traceGCPhases()) {
-                        Log.println("GCDaemon: Running GC algorithm");
-                    }
-
-                    // The next 2 statements *must* be adjacent as the reference map for this frame must
-                    // be the same at both calls.
-                    final long time = VmThreadLocal.prepareCurrentStackReferenceMap();
-                    collector.run();
-
-                    if (Heap.traceGCPhases()) {
-                        Log.println("GCDaemon: Resetting mutators");
-                    }
-
-                    VmThreadMap.ACTIVE.forAllThreadLocals(isNotGCOrCurrentThread, resetMutator);
-                    if (Heap.traceGCTime()) {
-                        final boolean lockDisabledSafepoints = Log.lock();
-                        Log.print("Stack reference map preparation time: ");
-                        Log.print(time + waitUntilNonMutating.stackReferenceMapPreparationTime);
-                        Log.println(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
-                        Log.unlock(lockDisabledSafepoints);
-                    }
-
-                    if (Heap.traceGCPhases()) {
-                        Log.println("GCDaemon: Completed GC request");
-                    }
+                    gcThreadStackReferenceMapPreparationTime = 0;
                 }
+
             }
+        }
+
+        @Override
+        public void perform() {
+            // The next 2 statements *must* be adjacent as the reference map for this frame must
+            // be the same at both calls.
+            gcThreadStackReferenceMapPreparationTime = VmThreadLocal.prepareCurrentStackReferenceMap();
+            collector.run();
         }
     }
 
@@ -324,16 +212,9 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     }
 
     /**
-     * Execute GC request with previously configured GC logic.
-     */
-    public void execute() {
-        super.service(gcRequest);
-    }
-
-    /**
      * The garbage collection algorithm.
      */
-    public abstract static class Collector implements Runnable {
+    public abstract static class Collector {
         private int invocationCount;
 
         public final void run() {
@@ -360,6 +241,13 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
          * @param invocationCount the number of previous executions
          */
         protected abstract void collect(int invocationCount);
+    }
+
+    /**
+     * Execute GC request with previously configured GC logic.
+     */
+    public void execute() {
+        super.service(gcRequest);
     }
 
     /**

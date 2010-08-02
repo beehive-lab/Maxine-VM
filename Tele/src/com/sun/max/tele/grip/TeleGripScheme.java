@@ -110,17 +110,19 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
                     RemoteTeleGrip alreadyInstalledRemoteTeleGrip = remoteTeleGripRef.get();
                     Log.println("Drop Duplicate: " + remoteTeleGrip.toString() + " " + alreadyInstalledRemoteTeleGrip.makeOID() + " " + remoteTeleGrip.makeOID());
 
-                    if (alreadyInstalledRemoteTeleGrip.makeOID() > remoteTeleGrip.makeOID()) {
-                        MutableTeleGrip mutableRemoteTeleGrip = (MutableTeleGrip) remoteTeleGrip;
-                        int index = mutableRemoteTeleGrip.index();
-                        if (index >= 0) {
-                            teleRoots.unregister(index);
+                    if (alreadyInstalledRemoteTeleGrip instanceof MutableTeleGrip) {
+                        if (alreadyInstalledRemoteTeleGrip.makeOID() > remoteTeleGrip.makeOID()) {
+                            MutableTeleGrip mutableRemoteTeleGrip = (MutableTeleGrip) remoteTeleGrip;
+                            int index = mutableRemoteTeleGrip.index();
+                            if (index >= 0) {
+                                teleRoots.unregister(index);
+                            }
+                            mutableRemoteTeleGrip.setForwardedTeleGrip(alreadyInstalledRemoteTeleGrip);
+                        } else {
+                            teleRoots.unregister(((MutableTeleGrip) alreadyInstalledRemoteTeleGrip).index());
+                            ((MutableTeleGrip) alreadyInstalledRemoteTeleGrip).setForwardedTeleGrip(remoteTeleGrip);
+                            newMap.put(remoteTeleGrip.raw().toLong(), r);
                         }
-                        mutableRemoteTeleGrip.setForwardedTeleGrip(alreadyInstalledRemoteTeleGrip);
-                    } else {
-                        teleRoots.unregister(((MutableTeleGrip) alreadyInstalledRemoteTeleGrip).index());
-                        ((MutableTeleGrip) alreadyInstalledRemoteTeleGrip).setForwardedTeleGrip(remoteTeleGrip);
-                        newMap.put(remoteTeleGrip.raw().toLong(), r);
                     }
 
                 } else {
