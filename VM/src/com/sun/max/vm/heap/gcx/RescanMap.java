@@ -87,6 +87,8 @@ public class RescanMap {
      */
     private int leftmostRightBound;
 
+    private int cachedRescanMapEntry;
+
     private static final int shortMask = (1 << WordWidth.BITS_16.numberOfBits) -1;
 
     private int rightBound(int rescanMapEntry) {
@@ -108,9 +110,9 @@ public class RescanMap {
      */
     void cacheLeftmostEntryBound() {
         final int baseOfLeftmostEntry = leftmostEntry << log2NumWordsPerRescanRegion;
-        final int rescanMapEntry = ArrayAccess.getInt(rescanMapTable, leftmostEntry);
-        leftmostLeftBound = baseOfLeftmostEntry +  leftBound(rescanMapEntry);
-        leftmostRightBound = baseOfLeftmostEntry + rightBound(rescanMapEntry) -1;
+        cachedRescanMapEntry = ArrayAccess.getInt(rescanMapTable, leftmostEntry);
+        leftmostLeftBound = baseOfLeftmostEntry +  leftBound(cachedRescanMapEntry);
+        leftmostRightBound = baseOfLeftmostEntry + rightBound(cachedRescanMapEntry) -1;
         if (MaxineVM.isDebug()) {
             FatalError.check(leftmostLeftBound <= leftmostRightBound, "Invalid rescan map entry");
         }
@@ -155,6 +157,17 @@ public class RescanMap {
      * and set cursor to the next leftmost entry in the rescan map.
      */
     void fetchNextEntry() {
+        final int currentEntry = ArrayAccess.getInt(rescanMapTable, leftmostEntry);
+        if (currentEntry != cachedRescanMapEntry) {
+            if (MaxineVM.isDebug()) {
+                FatalError.check(leftmostLeftBound == leftBound(currentEntry), "Left bound of updated rescan map entry must not have changed");
+                FatalError.check(leftmostRightBound < rightBound(currentEntry), "Right bound of updated rescan map entry must be greater");
+            }
+            // Set left bound of the rescan map to the previous right bound to avoid rescanning whole entry. Just want to scan
+            // the added part.
+            ArrayAccess.setInt(rescanMapTable, leftmostEntry, rescanMapEntry(leftmostRightBound, rightBound(currentEntry)));
+            return;
+        }
         // Clear the leftmost entry:
         ArrayAccess.setInt(rescanMapTable, leftmostEntry++, 0);
         while (leftmostEntry  <= rightmostEntry) {
