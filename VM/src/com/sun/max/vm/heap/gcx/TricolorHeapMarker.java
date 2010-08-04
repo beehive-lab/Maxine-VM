@@ -23,6 +23,7 @@ package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
@@ -35,7 +36,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size marking stack, a rescan map, and a
+ * A marking algorithm that uses a tricolor mark-bitmap with a fixed-size marking stack, an (optional) rescan map, and a
  * finger. The tricolor mark-bitmap encodes three colors using two consecutive bits but consumes as much space overhead as
  * a single-bit mark bitmap, thanks to padding rare tiny objects to guarantee two color bits for every objects.
  * Tracing algorithm uses a single-bit mark bitmap and a fairly large marking stack (from several thousands of references, up
@@ -47,7 +48,7 @@ import com.sun.max.vm.runtime.*;
  *
  * Every bit maps to a fixed chunk of heap such that every object's first words coincide with one fixed chunk.
  *  Almost all objects have a size larger than the size of a single chunk covered by one bit. Those that don't
- *  (called tiny objects) are segregated or padded (i.e., the heap allocate them the required space cover 2 bits of the mark bitmap).
+ *  (called tiny objects) are segregated or padded (i.e., the heap allocate them the required space to cover 2 bits of the mark bitmap).
  *  Maxine currently aligns objects on a 8-byte word boundary, uses 8-bytes words, and uses a two-words header.
  *
  * The following choices are considered:
@@ -68,12 +69,12 @@ import com.sun.max.vm.runtime.*;
  *
  * Finally, note that in both cases, the first bit of a color may be either an odd or an even bit, and a color may span
  * two bitmaps words. This complicates color search/update operation. A heap allocator may arrange for guaranteeing that
- * an object marks never span a bitmap word by padding a dead object before (Dead objects are special instance of object
+ * an object marks never span a bitmap word by padding a dead object before (Dead objects are special instance of Object
  * whose size is strictly 2 words, regardless of other rules for dealing with tiny objects).
  *
  * An other alternative is to exploit location of an object with respect to the current cursor on the mark bitmap:
  * since object located after the cursor aren't visited yet, we can use the black mark for marking these grey
- * (i.e., an object with the black mark set is black only located before the finger). In this case, the grey mark is really only used
+ * (i.e., an object with the black mark set is black only if located before the finger). In this case, the grey mark is really only used
  * on overflow of the mark stack.
  *
  * This class enables both designs, and provides generic bitmap manipulation that understands color coding and
@@ -151,9 +152,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return 1L << bitIndexInWord(bitIndex);
     }
 
-    static final void printVisitedCell(Address cell) {
+    static final void printVisitedCell(Address cell, String message) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.print("Visiting cell ");
+        Log.print(message);
         Log.println(cell);
         Log.unlock(lockDisabledSafepoints);
     }
@@ -191,11 +192,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * Rightmost marked position.
      */
     private Pointer blackRightmost;
-
-    /**
-     * Start of the next scan of the color map to recover from secondary marking stack overflow.
-     */
-    Address startOfNextOverflowScan;
 
     @INLINE
     public final boolean isCovered(Address address) {
@@ -288,10 +284,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     Size bitmapSize(Size coveredAreaSize) {
         // The mark bitmap uses a single bit to cover wordsCoveredPerBit words.
-        // We compute first the number of words in the covered area (must be an integral number of words)
+        // num heap words =  coveredAreaSize >> log2numberOfBytes per word
+        // num bits in bitmaps = num heap words >> log2BytesCoveredPerBit
+        // bitmap size in bytes = num bits >> log2numberOfBits per byte
         FatalError.check(coveredAreaSize.isWordAligned(), "Area covered by a mark bitmap must be word aligned");
-        final Size numCoveredWords = coveredAreaSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes);
-        return numCoveredWords.dividedBy(wordsCoveredPerBit * Word.widthValue().numberOfBits);
+        return coveredAreaSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes + log2BytesCoveredPerBit + WordWidth.BITS_8.log2numberOfBits);
     }
 
 
@@ -343,9 +340,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         biasedBitmapBase = colorMap.start().minus(baseBias);
         useRescanMap = useRescanMapOption.getValue();
         if (useRescanMap) {
-            markStackWithRescanMapCellVisitor.rescanMap.initialize(this);
+            overflowScanState = overflowScanWithRescanMapState;
+            overflowScanWithRescanMapState.rescanMap.initialize(this);
+        } else {
+            overflowScanState = overflowLinearScanState;
         }
-        markingStack.initialize();
+        markingStack.initialize(overflowScanState.markingStackFlusher());
     }
 
     // Address to bitmap word / bit index operations.
@@ -680,7 +680,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         @Override
         public Pointer visitCell(Pointer cell) {
             if (Heap.traceRootScanning()) {
-                printVisitedCell(cell);
+                printVisitedCell(cell, "Visiting root cell");
             }
             final Pointer origin = Layout.cellToOrigin(cell);
             final Grip hubGrip = Layout.readHubGrip(origin);
@@ -711,14 +711,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     private final RootCellVisitor rootCellVisitor = new RootCellVisitor(this);
 
 
-    static abstract class MarkingStackCellVisitor extends MarkingStack.MarkingStackCellVisitor {
+    static abstract class MarkingStackFlusher extends MarkingStack.MarkingStackCellVisitor {
         ColorMapScanState scanState;
 
         void setScanState(ColorMapScanState scanState){
             this.scanState = scanState;
         }
 
-        abstract void resetRescanBound();
+        abstract Address flushMarkingStack();
 
         @Override
         void visitPoppedCell(Pointer cell) {
@@ -726,12 +726,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
-    static final class BaseMarkingStackCellVisitor extends MarkingStackCellVisitor {
+    static final class BaseMarkingStackFlusher extends MarkingStackFlusher {
         Address leftmostFlushed;
 
         @Override
-        void resetRescanBound() {
+        Address flushMarkingStack() {
             leftmostFlushed = scanState.rightmost;
+            scanState.heapMarker.markingStack.flush();
+            return leftmostFlushed;
         }
 
         @Override
@@ -746,18 +748,141 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     }
 
-    BaseMarkingStackCellVisitor markStackCellVisitor = new BaseMarkingStackCellVisitor();
+    static class FlushingIndexVisitor extends PointerIndexVisitor {
+        final TricolorHeapMarker heapMarker;
+        /**
+         * Rightmost cell marked in the covered area.
+         */
+        Address rightmost;
 
-    static final class MarkingStackWithRescanMapCellVisitor extends MarkingStackCellVisitor {
-        final RescanMap rescanMap;
+        Address finger;
 
-        MarkingStackWithRescanMapCellVisitor() {
-            rescanMap = new RescanMap();
+        Address leftmostFlushed;
+
+        FlushingIndexVisitor(TricolorHeapMarker heapMarker) {
+            this.heapMarker = heapMarker;
+        }
+
+        void reset(ColorMapScanState scanState) {
+            rightmost = scanState.rightmost;
+            finger = scanState.finger;
+            leftmostFlushed = rightmost;
+        }
+
+        /**
+         * Mark the object at the specified address grey.
+         *
+         * @param cell
+         */
+        @INLINE
+        private void markObjectGrey(Pointer cell) {
+            if (cell.greaterThan(finger)) {
+                // Object is after the finger. Mark grey and update rightmost if white.
+                if (heapMarker.markGreyIfWhite(cell) && cell.greaterThan(rightmost)) {
+                    rightmost = cell;
+                }
+            } else if (cell.greaterEqual(heapMarker.coveredAreaStart) && heapMarker.markGreyIfWhite(cell) && cell.lessThan(leftmostFlushed)) {
+                leftmostFlushed = cell;
+            }
+        }
+
+        @INLINE
+        private void markBlackFromGrey(Pointer cell) {
+            heapMarker.markBlackFromGrey(cell);
+        }
+        @INLINE
+        private void markGripGrey(Grip grip) {
+            markObjectGrey(Layout.originToCell(grip.toOrigin()));
         }
 
         @Override
-        void resetRescanBound() {
-            rescanMap.resetRescanBound();
+        public void visit(Pointer pointer, int wordIndex) {
+            markGripGrey(pointer.getGrip(wordIndex));
+        }
+
+        @INLINE
+        final void visitFlushedCell(Pointer cell) {
+            // Visit the flushed cell and mark all it's white references grey, then mark the object black.
+            // This helps avoiding going in tight loop of flushing/recovering when
+            // a large object of backward references is visited.
+            // Note: references on the marking stack were already
+            // marked grey to avoid storing multiple times the same reference.
+            if (Heap.traceGC()) {
+                printVisitedCell(cell, "Visiting flushed cell");
+            }
+
+            final Pointer origin = Layout.cellToOrigin(cell);
+            final Grip hubGrip = Layout.readHubGrip(origin);
+            markGripGrey(hubGrip);
+            final Hub hub = UnsafeCast.asHub(hubGrip.toJava());
+            if (MaxineVM.isDebug()) {
+                FatalError.check(hub != HeapFreeChunk.HEAP_FREE_CHUNK_HUB, "Must never mark a HeapFreeChunk");
+            }
+            // Update the other references in the object
+            final SpecificLayout specificLayout = hub.specificLayout;
+            if (specificLayout.isTupleLayout()) {
+                TupleReferenceMap.visitReferences(hub, origin, this);
+                if (hub.isSpecialReference) {
+                    SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
+                }
+            } else if (specificLayout.isHybridLayout()) {
+                TupleReferenceMap.visitReferences(hub, origin, this);
+            } else if (specificLayout.isReferenceArrayLayout()) {
+                final int length = Layout.readArrayLength(origin);
+                for (int index = 0; index < length; index++) {
+                    markGripGrey(Layout.getGrip(origin, index));
+                }
+            }
+            heapMarker.markBlackFromGrey(cell);
+        }
+
+        Address flushMarkingStack(ColorMapScanState scanState) {
+            rightmost = scanState.rightmost;
+            finger = scanState.finger;
+            leftmostFlushed = rightmost;
+            heapMarker.markingStack.flush();
+            scanState.rightmost = rightmost;
+            if (MaxineVM.isDebug() && Heap.traceGC()) {
+                Log.print(" leftmost flushed: ");
+                Log.println(leftmostFlushed);
+                Log.print(" rightmost after flush: ");
+                Log.println(rightmost);
+                Log.print(" finger after flush: ");
+                Log.println(finger);
+            }
+            return leftmostFlushed;
+        }
+
+    }
+
+    static final class DeepMarkingStackFlusher extends MarkingStackFlusher {
+        final FlushingIndexVisitor flushingCellVisitor;
+        DeepMarkingStackFlusher(TricolorHeapMarker heapMarker) {
+            flushingCellVisitor = new FlushingIndexVisitor(heapMarker);
+        }
+
+        @Override
+        void visitFlushedCell(Pointer cell) {
+            flushingCellVisitor.visitFlushedCell(cell);
+        }
+
+        @Override
+        Address flushMarkingStack() {
+            return flushingCellVisitor.flushMarkingStack(scanState);
+        }
+    }
+
+    static final class MarkingStackWithRescanMapCellVisitor extends MarkingStackFlusher {
+        final RescanMap rescanMap;
+
+        MarkingStackWithRescanMapCellVisitor() {
+            this.rescanMap = new RescanMap();
+        }
+
+        @Override
+        Address flushMarkingStack() {
+            scanState.heapMarker.markingStack.flush();
+            return Address.zero();
         }
 
         @Override
@@ -766,7 +891,6 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
-    MarkingStackWithRescanMapCellVisitor markStackWithRescanMapCellVisitor = new MarkingStackWithRescanMapCellVisitor();
 
     abstract static class ColorMapScanState extends PointerIndexVisitor {
         final TricolorHeapMarker heapMarker;
@@ -810,10 +934,21 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             markGripGrey(pointer.getGrip(wordIndex));
         }
 
+        public void visitArrayReferences(Pointer origin) {
+            final int length = Layout.readArrayLength(origin);
+            for (int index = 0; index < length; index++) {
+                markGripGrey(Layout.getGrip(origin, index));
+            }
+        }
+
+        public void visit(Grip grip) {
+            markGripGrey(grip);
+        }
+
         @INLINE
         private Pointer visitGreyCell(Pointer cell) {
             if (Heap.traceGC()) {
-                printVisitedCell(cell);
+                printVisitedCell(cell, "Visiting grey cell");
             }
             final Pointer origin = Layout.cellToOrigin(cell);
             final Grip hubGrip = Layout.readHubGrip(origin);
@@ -834,10 +969,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             if (specificLayout.isHybridLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
             } else if (specificLayout.isReferenceArrayLayout()) {
-                final int length = Layout.readArrayLength(origin);
-                for (int index = 0; index < length; index++) {
-                    markGripGrey(Layout.getGrip(origin, index));
-                }
+                visitArrayReferences(origin);
             }
             return cell.plus(Layout.size(origin));
         }
@@ -937,24 +1069,37 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
-    static final class OverflowScanState extends ColorMapScanState {
-        private Address endOfScan;
+    static abstract class OverflowScanState extends ColorMapScanState {
+        protected Address endOfScan;
+        protected final MarkingStackFlusher markingStackFlusher;
 
-        OverflowScanState(TricolorHeapMarker heapMarker) {
+        OverflowScanState(TricolorHeapMarker heapMarker, MarkingStackFlusher markingStackCellVisitor) {
             super(heapMarker);
+            this.markingStackFlusher = markingStackCellVisitor;
         }
 
-        void initialize(ColorMapScanState scanState) {
+        void initialize(ForwardScanState scanState) {
+            // set the upper bound for rescanning to the finger of the forward scan
             endOfScan = scanState.finger;
+            // cache rightmost locally.
             rightmost = scanState.rightmost;
         }
 
-        @INLINE
         @Override
         public int rightmostBitmapWordIndex() {
             return heapMarker.bitmapWordIndex(endOfScan);
         }
 
+        @INLINE
+        final boolean isRecovering() {
+            return heapMarker.currentScanState == this;
+        }
+
+        MarkingStackFlusher markingStackFlusher() {
+            return markingStackFlusher;
+        }
+
+        abstract void recoverFromOverflow();
 
         void visitGreyObjects(int bitmapWordIndex, int rightmostBitmapWordIndex) {
             // This is slightly different from the forward scan for several reasons:
@@ -1000,6 +1145,45 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             }
         }
 
+        protected void verifyHasNoGreyMarks(Address end) {
+            heapMarker.verifyHasNoGreyMarks(heapMarker.coveredAreaStart, end);
+        }
+
+        protected void beginRecovery() {
+            final ForwardScanState forwardScanState = heapMarker.forwardScanState;
+            heapMarker.startTimer(heapMarker.recoveryScanTimer);
+            heapMarker.currentScanState = this;
+            initialize(forwardScanState);
+            markingStackFlusher.setScanState(this);
+        }
+
+        protected void endRecovery() {
+            final ForwardScanState forwardScanState = heapMarker.forwardScanState;
+            verifyHasNoGreyMarks(forwardScanState.finger);
+            forwardScanState.rightmost = rightmost;
+            markingStackFlusher.setScanState(forwardScanState);
+            heapMarker.currentScanState = forwardScanState;
+            heapMarker.stopTimer(heapMarker.recoveryScanTimer);
+        }
+    }
+
+    /**
+     * Recovery from marking stack overflow using a straight linear scan of the mark bitmap.
+     * Flush the marking stack, marking all objects referenced from it grey, and iterate over
+     * the mark-bitmap from the mark of the leftmost flushed references up to the forward scan finger.
+     * As with a forward scan, a rescan finger is maintained: references before the rescan finger are pushed
+     * on the marking stack, those after aren't since they'll be iterated over and found.
+     */
+    static final class OverflowLinearScanState extends OverflowScanState {
+        /**
+         * Start of the next scan of the color map to recover from secondary marking stack overflow.
+         */
+        Address startOfNextOverflowScan;
+
+        OverflowLinearScanState(TricolorHeapMarker heapMarker) {
+            super(heapMarker, new DeepMarkingStackFlusher(heapMarker));
+        }
+
         @Override
         public void visitGreyObjects() {
             int rightmostBitmapWordIndex = rightmostBitmapWordIndex();
@@ -1013,11 +1197,127 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             heapMarker.markingStack.drain();
         }
 
+        @Override
+        void recoverFromOverflow() {
+            // First, flush the marking stack, greying all objects referenced from it,
+            // and tracking the left most grey from which the rescan will start.
+            Address leftmostFlushed = markingStackFlusher.flushMarkingStack();
+            // Next, initiate the scan to recover from overflow. This consists of
+            // visiting all grey objects between the leftmost flushed mark and the forward scan finger.
+            // The rescan iterate over the mark bitmap, as the forward scan, except that it uses its own finger.
+            //
+            // As for a normal scan, any reference pointing after the "rescan" finger are marked grey and not visited, they
+            // will be visited as the rescan finger pass over them.
+            // Any reference before the finger are marked grey and  pushed on the marking stack.
+            // The scan stops when reaching the forward scan finger (which act
+            // as the rightmost bound for this scan).
+            // If the marking stack overflow again, we flush the stack again, write down the leftmost mark
+            // for the next scan.
+
+            if (!isRecovering()) {
+                beginRecovery();
+                startOfNextOverflowScan = leftmostFlushed;
+                final Address forwardScanFinger = heapMarker.forwardScanState.finger;
+
+                do {
+                    verifyHasNoGreyMarks(startOfNextOverflowScan);
+                    finger = startOfNextOverflowScan;
+                    startOfNextOverflowScan = forwardScanFinger;
+                    visitGreyObjects();
+                } while (startOfNextOverflowScan.lessThan(forwardScanFinger));
+                endRecovery();
+            } else if (leftmostFlushed.lessThan(startOfNextOverflowScan)) {
+                // Schedule another rescan if the leftmost flushed cell is before the
+                // currently visited cell.
+                startOfNextOverflowScan = leftmostFlushed;
+            }
+        }
+
+  }
+
+    /**
+     * Recovery using a rescan map.
+     * On marking stack overflow, flush the marking stack, updating the rescan map doing so.
+     * Then iterate over the rescan map to find area of the mark bitmap to iterate over.
+     * An overflow rescan finger is maintained. References before the rescan finger
+     * are pushed on them marking stack.
+     * References beyond the rescan finger but before the forward finger requires updating the rescan map,
+     * otherwise grey objects might be missed.
+     */
+    static final class OverflowScanWithRescanMapState extends OverflowScanState {
+        final RescanMap rescanMap;
+        OverflowScanWithRescanMapState(TricolorHeapMarker heapMarker) {
+            super(heapMarker, new MarkingStackWithRescanMapCellVisitor());
+            rescanMap = ((MarkingStackWithRescanMapCellVisitor) markingStackFlusher).rescanMap;
+        }
+
+        @Override
+        void recoverFromOverflow() {
+            markingStackFlusher.flushMarkingStack();
+            if (!isRecovering()) {
+                if(MaxineVM.isDebug()) {
+                    verifyHasNoGreyMarks(rescanMap.beginOfGreyArea());
+                    FatalError.check(!rescanMap.isEmpty(), "rescan map must not be empty after a mark stack overflow");
+                }
+                beginRecovery();
+                visitGreyObjects();
+                endRecovery();
+            } else {
+                // rescan map already updated.
+                verifyHasNoGreyMarks(rescanMap.beginOfGreyArea());
+            }
+        }
+
+        /**
+         * Mark the object at the specified address grey.
+         *
+         * @param cell
+         */
+        @INLINE
+        private void markObjectGrey(Pointer cell) {
+            if (cell.greaterThan(finger)) {
+                // Object is after the finger. Mark grey and update rightmost if white.
+                if (heapMarker.markGreyIfWhite(cell)) {
+                    if (cell.greaterThan(rightmost)) {
+                        rightmost = cell;
+                    } else if (cell.lessThan(endOfScan)) {
+                        rescanMap.recordCellForRescan(cell);
+                    }
+                }
+            } else if (cell.greaterEqual(heapMarker.coveredAreaStart) && heapMarker.markGreyIfWhite(cell)) {
+                heapMarker.markingStack.push(cell);
+            }
+        }
+
+        @INLINE
+        private void markGripGrey(Grip grip) {
+            markObjectGrey(Layout.originToCell(grip.toOrigin()));
+        }
+
+        @Override
+        public void visit(Pointer pointer, int wordIndex) {
+            markGripGrey(pointer.getGrip(wordIndex));
+        }
+
+        @Override
+        public void visitArrayReferences(Pointer origin) {
+            final int length = Layout.readArrayLength(origin);
+            for (int index = 0; index < length; index++) {
+                markGripGrey(Layout.getGrip(origin, index));
+            }
+        }
+
+        @Override
+        public void visit(Grip grip) {
+            markGripGrey(grip);
+        }
+
 
         /**
          * Visit grey cells using the specified rescan map.
          */
-        public void visitGreyObjects(RescanMap rescanMap) {
+        @Override
+        public void visitGreyObjects() {
             // Iterate over the rescan map and iterate over the corresponding bounds in the mark bitmap for each
             // entry recording the presence of grey objects.
             while(!rescanMap.isEmpty()) {
@@ -1036,8 +1336,15 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
-    private final ForwardScanState forwardScanState = new ForwardScanState(this);
-    private final OverflowScanState overflowScanState = new OverflowScanState(this);
+    final ForwardScanState forwardScanState = new ForwardScanState(this);
+    /**
+     * Scanning state when recovering from a marking state overflow.
+     * Set to either {@link #overflowLinearScanState} or {@link #overflowScanWithRescanMapState}
+     * depending on whether a rescan map is used.
+     */
+    private OverflowScanState overflowScanState;
+    private final OverflowLinearScanState overflowLinearScanState = new OverflowLinearScanState(this);
+    private final OverflowScanWithRescanMapState overflowScanWithRescanMapState = new OverflowScanWithRescanMapState(this);
 
     /**
      * Indicates whether we're recovering from a marking stack overflow
@@ -1249,7 +1556,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     Pointer visitBlackCell(Pointer cell) {
         if (Heap.traceGC()) {
-            printVisitedCell(cell);
+            printVisitedCell(cell, "Visiting black cell");
         }
         final Pointer origin = Layout.cellToOrigin(cell);
         final Grip hubGrip = Layout.readHubGrip(origin);
@@ -1332,90 +1639,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         } while(true);
     }
 
-    @INLINE
-    final boolean isRecovering() {
-        return currentScanState == overflowScanState;
-    }
-
     public void recoverFromOverflow() {
-        if (useRescanMap) {
-            recoverFromOverflowWithRescanMap();
-        } else {
-            basicOverflowRecovery();
-        }
-    }
-
-    private void recoverFromOverflowWithRescanMap() {
-        final RescanMap rescanMap = markStackWithRescanMapCellVisitor.rescanMap;
-        if (!isRecovering()) {
-            final Address forwardScanFinger = forwardScanState.finger;
-            startTimer(recoveryScanTimer);
-            markingStack.flush();
-            verifyHasNoGreyMarks(coveredAreaStart, rescanMap.beginOfGreyArea());
-            // Rescan Map is setup.
-            if(MaxineVM.isDebug()) {
-                FatalError.check(!rescanMap.isEmpty(), "rescan map must not be empty after a mark stack overflow");
-            }
-            currentScanState = overflowScanState;
-            overflowScanState.initialize(forwardScanState);
-            markStackWithRescanMapCellVisitor.setScanState(overflowScanState);
-
-            overflowScanState.visitGreyObjects(rescanMap);
-
-            verifyHasNoGreyMarks(coveredAreaStart, forwardScanFinger);
-            forwardScanState.rightmost = overflowScanState.rightmost;
-            markStackWithRescanMapCellVisitor.setScanState(forwardScanState);
-            currentScanState = forwardScanState;
-            stopTimer(recoveryScanTimer);
-        } else {
-            // Just update the rescan map.
-            markingStack.flush();
-            verifyHasNoGreyMarks(coveredAreaStart, rescanMap.beginOfGreyArea());
-        }
-    }
-
-    private void basicOverflowRecovery() {
-        // First, flush the marking stack, greying all objects referenced from it,
-        // and tracking the left most grey from which the rescan will start.
-        markStackCellVisitor.resetRescanBound();
-        markingStack.flush();
-        Address leftmostFlushed = markStackCellVisitor.leftmostFlushed;
-        // Next, initiate the scan to recover from overflow. This consists of
-        // visiting all grey objects between the leftmost flushed mark and the forward scan finger.
-        // The rescan iterate over the mark bitmap, as the forward scan, except that it uses its own finger.
-        //
-        // As for a normal scan, any reference pointing after the "rescan" finger are marked grey and not visited, they
-        // will be visited as the rescan finger pass over them.
-        // Any reference before the finger are marked grey and  pushed on the marking stack.
-        // The scan stops when reaching the forward scan finger (which act
-        // as the rightmost bound for this scan).
-        // If the marking stack overflow again, we flush the stack again, write down the leftmost mark
-        // for the next scan.
-
-        if (!isRecovering()) {
-            startTimer(recoveryScanTimer);
-            currentScanState = overflowScanState;
-            startOfNextOverflowScan = leftmostFlushed;
-            overflowScanState.initialize(forwardScanState);
-            markStackCellVisitor.setScanState(overflowScanState);
-
-            final Address forwardScanFinger = forwardScanState.finger;
-            do {
-                verifyHasNoGreyMarks(coveredAreaStart, startOfNextOverflowScan);
-                overflowScanState.finger = startOfNextOverflowScan;
-                startOfNextOverflowScan = forwardScanFinger;
-                overflowScanState.visitGreyObjects();
-            } while (startOfNextOverflowScan.lessThan(forwardScanFinger));
-            verifyHasNoGreyMarks(coveredAreaStart, forwardScanFinger);
-            forwardScanState.rightmost = overflowScanState.rightmost;
-            markStackCellVisitor.setScanState(forwardScanState);
-            currentScanState = forwardScanState;
-            stopTimer(recoveryScanTimer);
-        } else if (leftmostFlushed.lessThan(startOfNextOverflowScan)) {
-            // Schedule another rescan if the leftmost flushed cell is before the
-            // currently visited cell.
-            startOfNextOverflowScan = leftmostFlushed;
-        }
+        overflowScanState.recoverFromOverflow();
     }
 
     /**
@@ -1425,18 +1650,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         forwardScanState.rightmost = rootCellVisitor.rightmost;
         forwardScanState.finger = rootCellVisitor.leftmost;
         currentScanState = forwardScanState;
-        final MarkingStackCellVisitor cellVisitor = useRescanMap ? markStackWithRescanMapCellVisitor : markStackCellVisitor;
-        cellVisitor.setScanState(currentScanState);
-        markingStack.setCellVisitor(cellVisitor);
+        overflowScanState.markingStackFlusher().setScanState(currentScanState);
         forwardScanState.visitGreyObjects();
-    }
-
-    public Pointer firstBlackObject(Address start, Address end) {
-        final int bitIndex = firstBlackMark(bitIndexOf(start), bitIndexOf(end));
-        if (bitIndex >= 0) {
-            return addressOf(bitIndex).asPointer();
-        }
-        return Pointer.zero();
     }
 
     int firstBlackMark(int firstBitIndex, int lastBitIndex) {
