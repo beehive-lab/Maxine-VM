@@ -186,16 +186,15 @@ public class CEEliminator implements BlockClosure {
         Goto newGoto = new Goto(sux, stateBefore, curIf.isSafepoint() || tGoto.isSafepoint() || fGoto.isSafepoint());
 
         // prepare state for Goto
-        // XXX: temporary cast to get first refactoring round running
-        MutableFrameState gotoState = (MutableFrameState) curIf.stateAfter();
-        while (suxState.scope() != gotoState.scope()) {
-            // XXX: temporary cast to get first refactoring round running
-            gotoState = (MutableFrameState) gotoState.popScope();
-            assert gotoState != null : "states do not match up";
+        FrameState tempGotoState = curIf.stateAfter();
+        while (suxState.scope() != tempGotoState.scope()) {
+            tempGotoState = tempGotoState.popScope();
+            assert tempGotoState != null : "states do not match up";
         }
-        gotoState = gotoState.copy();
+        MutableFrameState gotoState = tempGotoState.copy();
         gotoState.push(result.kind, result);
         assert gotoState.isSameAcrossScopes(suxState) : "states must match now";
+        // no need to copy state here as this is last use
         newGoto.setStateAfter(gotoState);
 
         // Steal the bci for the goto from the sux

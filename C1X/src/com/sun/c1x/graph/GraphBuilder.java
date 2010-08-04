@@ -389,7 +389,7 @@ public final class GraphBuilder {
         int scopeCount = 0;
 
         assert stateBefore != null : "exception handler state must be available for " + x;
-        FrameState state = stateBefore.immutableCopyWithEmptyStack();
+        FrameState state = stateBefore;
         do {
             assert curScopeData.scope == state.scope() : "scopes do not match";
             assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream.currentBCI() : "invalid bci";
@@ -418,8 +418,7 @@ public final class GraphBuilder {
                 break;
             }
             // there is another level, pop
-            // XXX: temp cast
-            state = ((MutableFrameState)state).popScope();
+            state = state.popScope();
             bci = curScopeData.scope.callerBCI();
             curScopeData = curScopeData.parent;
             scopeCount++;
@@ -449,6 +448,9 @@ public final class GraphBuilder {
         assert entry.bci() == handler.handler.handlerBCI();
         assert entry.bci() == -1 || entry == curScopeData.blockAt(entry.bci()) : "blocks must correspond";
         assert entryState == null || curState.locksSize() == entryState.locksSize() : "locks do not match";
+
+        // exception handler starts with an empty expression stack
+        curState = curState.immutableCopyWithEmptyStack();
 
         entry.mergeOrClone(curState);
 
@@ -1060,14 +1062,15 @@ public final class GraphBuilder {
                 genMonitorExit(object, Instruction.SYNCHRONIZATION_ENTRY_BCI);
             }
 
-            // trim back stack to the caller's stack size
-            curState.truncateStack(scopeData.callerStackSize());
+            // empty stack for return value
+            curState.truncateStack(0);
             if (x != null) {
                 curState.push(x.kind, x);
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
-            scopeData.updateSimpleInlineInfo(curBlock, lastInstr, curState);
+            // TODO newly introduced immutable copy necessary? (was: no copy at all) not used later on -> remove copy for optim. anyways?
+            scopeData.updateSimpleInlineInfo(curBlock, lastInstr, curState.immutableCopy());
 
             // State at end of inlined method is the state of the caller
             // without the method parameters on stack, including the
@@ -1328,12 +1331,13 @@ public final class GraphBuilder {
     }
 
     void pushScope(RiMethod target, BlockBegin continuation) {
+        // prepare callee scope
         IRScope calleeScope = new IRScope(scope(), bci(), target, -1);
         BlockMap blockMap = compilation.getBlockMap(calleeScope.method, -1);
-        calleeScope.setCallerState(curState);
+        calleeScope.setCallerState(curState.immutableCopy());
         calleeScope.setStoresInLoops(blockMap.getStoresInLoops());
-        // XXX: temp. cast
-        curState = (MutableFrameState) curState.pushScope(calleeScope);
+        // prepare callee state
+        curState = curState.pushScope(calleeScope);
         BytecodeStream stream = new BytecodeStream(target.code());
         RiConstantPool constantPool = compilation.runtime.getConstantPool(target);
         ScopeData data = new ScopeData(scopeData, calleeScope, blockMap, stream, constantPool);
@@ -1556,7 +1560,7 @@ public final class GraphBuilder {
         // setup state that is used at returns from the inlined method.
         // this is essentially the state of the continuation block,
         // but without the return value on the stack.
-        scopeData.setContinuationState(scope().callerState().copy());
+        scopeData.setContinuationState(scope().callerState());
 
         // compute the lock stack size for callee scope
         scope().computeLockStackSize();
@@ -1606,8 +1610,7 @@ public final class GraphBuilder {
             // is currently essential to making inlining profitable. It also reduces the
             // number of blocks in the CFG
             lastInstr = simpleInlineInfo.returnPredecessor;
-            // XXX: temp. cast x2
-            curState = (MutableFrameState) ((MutableFrameState) simpleInlineInfo.returnState).popScope();
+            curState = simpleInlineInfo.returnState.popScope();
             lastInstr.setNext(null, -1);
         } else if (continuationPredecessors == continuationBlock.predecessors().size()) {
             // Inlining caused the instructions after the invoke in the
@@ -1687,9 +1690,8 @@ public final class GraphBuilder {
         if (inlinedMethod) {
             popScope();
             bci = curState.scope().callerBCI();
-            // TODO: is the copy necessary with the immutable copies
-            // --> reevaluate for all .copy()
-            curState = curState.popScope().copy();
+            // TODO: copy removed here -> reevaluate for all .copy()
+            curState = curState.popScope();
         }
 
         apush(exception);
