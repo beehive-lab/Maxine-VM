@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 
 public class MutableFrameState extends FrameState {
@@ -309,38 +308,6 @@ public class MutableFrameState extends FrameState {
         }
         stackIndex = base;
         return r;
-    }
-
-    /**
-     * Creates a new {@code FrameState} corresponding to inlining the specified method into this point in this frame state.
-     * @param scope the IRScope representing the inlined method
-     * @return a new frame state representing the state at the beginning of inlining the specified method into this one
-     */
-    public FrameState pushScope(IRScope scope) {
-        assert scope.caller == this.scope;
-        RiMethod method = scope.method;
-        MutableFrameState res = new MutableFrameState(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
-        res.replaceStack(this);
-        res.replaceLocks(this);
-        res.unsafe = unsafe;
-        return res;
-    }
-
-    /**
-     * Creates a new {@code FrameState} corresponding to the state upon returning from this inlined method into the outer
-     * IRScope.
-     * @return a new frame state representing the state at exit from this frame state
-     */
-    public FrameState popScope() {
-        IRScope callingScope = scope.caller;
-        assert callingScope != null;
-        assert maxStackSize() >= scope.method.maxStackSize();
-        MutableFrameState res = new MutableFrameState(callingScope, callingScope.method.maxLocals(), maxStackSize());
-        res.replaceStack(this);
-        res.replaceLocks(scope.callerState()); // assumes locks are balanced for each frame
-        res.replaceLocals(scope.callerState());
-        res.unsafe = unsafe;
-        return res;
     }
 
     /**

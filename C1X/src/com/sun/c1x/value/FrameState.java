@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code FrameState} class encapsulates the frame state (i.e. local variables and
@@ -542,5 +543,66 @@ public abstract class FrameState {
     @Override
     public String toString() {
         return "state [locals=" + maxLocals + ", stack=" + stackSize() + ", locks=" + locksSize() + "] " + scope;
+    }
+
+    /**
+     * Creates a new {@code MutableFrameState} corresponding to inlining the specified method into this point in this frame state.
+     * @param scope the IRScope representing the inlined method
+     * @return a new frame state representing the state at the beginning of inlining the specified method into this one
+     */
+    public MutableFrameState pushScope(IRScope scope) {
+        assert scope.caller == this.scope;
+        RiMethod method = scope.method;
+        MutableFrameState res = new MutableFrameState(scope, method.maxLocals(), method.maxStackSize());
+        res.replaceLocks(this);
+        res.unsafe = unsafe;
+        return res;
+    }
+
+    /**
+     * Creates a new {@code MutableFrameState} corresponding to the state upon returning from this inlined method into the outer
+     * IRScope.
+     * @return a new frame state representing the state at exit from this frame state
+     */
+    public MutableFrameState popScope() {
+        IRScope callingScope = scope.caller;
+        assert callingScope != null;
+        // TODO what is this check good for?
+        assert maxStackSize() >= scope.method.maxStackSize();
+
+
+        //MutableFrameState res = scope.callerState().copy();
+        // copy remaining contents of callee stack to caller stack
+        //System.arraycopy(values, maxLocals, res.values, res.maxLocals + res.stackIndex, stackIndex);
+        //res.stackIndex = res.stackIndex + stackIndex;
+
+        FrameState callerState = scope.callerState();
+
+        MutableFrameState res = new MutableFrameState(callingScope, callerState.maxLocals, callerState.maxStackSize() + stackIndex);
+        //MutableFrameState res = new MutableFrameState(callingScope, callingScope.method.maxLocals(), callingScope.method.maxStackSize() + stackIndex);
+        //assert callerState.values.length <= res.values.length : "callerState.values.length: " + callerState.values.length +
+        //    ", res.values.length: " + res.values.length + ", callerState.maxLocals: " + callerState.maxLocals +
+        //    ", callerState.maxStackSize():" +  callerState.maxStackSize() +
+        //    ", callingScope.method.maxLocals(): " + callingScope.method.maxLocals() +
+        //    ", callingScope.method.maxStackSize(): " + callingScope.method.maxStackSize() + ", stackIndex: " + stackIndex;
+        for (int i = 0; i < callerState.values.length; i++) {
+            res.values[i] = callerState.values[i];
+        }
+        //System.arraycopy(callerState.values, 0, res.values, 0, callerState.values.length);
+        res.stackIndex = callerState.stackIndex;
+        System.arraycopy(values, maxLocals, res.values, res.maxLocals + res.stackIndex, stackIndex);
+        res.stackIndex = res.stackIndex + stackIndex;
+        res.replaceLocks(callerState);
+
+        // prepare frame state for caller's previous state + return value of callee on stack
+        //MutableFrameState res = new MutableFrameState(callingScope, callingScope.method.maxLocals(), scope.method.maxStackSize() + stackIndex);
+        //res.replaceLocals(scope.callerState());
+        //res.replaceStack(scope.callerState());
+        //System.arraycopy(values, maxLocals, res.values, res.maxLocals + res.stackIndex, stackIndex);
+        //res.stackIndex = res.stackIndex + stackIndex;
+        //res.replaceLocks(scope.callerState()); // assumes locks are balanced for each frame
+
+        res.unsafe = unsafe;
+        return res;
     }
 }
