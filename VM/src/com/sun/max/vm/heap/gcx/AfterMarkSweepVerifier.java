@@ -54,8 +54,13 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
             if (inDeadSpace) {
                 Log.print("\n\nCell @");
                 Log.print(visitedCellOrigin);
-                Log.print(" pointing to dead space @");
+                Log.print("[ bit index = ");
+                Log.print(heapMarker.bitIndexOf(visitedCellOrigin));
+                Log.print(" at bitmap word # ");
+                Log.print(heapMarker.bitmapWordIndex(visitedCellOrigin));
+                Log.print("] pointing to dead space @");
                 Log.println(origin);
+
                 FatalError.check(!HeapFreeChunk.isInDeadSpace(origin), "must not points to dead space");
             }
             // Check that the reference points to a valid object, and that if it is in the covered area, it is marked black.
