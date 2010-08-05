@@ -567,41 +567,12 @@ public abstract class FrameState {
     public MutableFrameState popScope() {
         IRScope callingScope = scope.caller;
         assert callingScope != null;
-        // TODO what is this check good for?
-        assert maxStackSize() >= scope.method.maxStackSize();
-
-
-        //MutableFrameState res = scope.callerState().copy();
-        // copy remaining contents of callee stack to caller stack
-        //System.arraycopy(values, maxLocals, res.values, res.maxLocals + res.stackIndex, stackIndex);
-        //res.stackIndex = res.stackIndex + stackIndex;
-
         FrameState callerState = scope.callerState();
-
         MutableFrameState res = new MutableFrameState(callingScope, callerState.maxLocals, callerState.maxStackSize() + stackIndex);
-        //MutableFrameState res = new MutableFrameState(callingScope, callingScope.method.maxLocals(), callingScope.method.maxStackSize() + stackIndex);
-        //assert callerState.values.length <= res.values.length : "callerState.values.length: " + callerState.values.length +
-        //    ", res.values.length: " + res.values.length + ", callerState.maxLocals: " + callerState.maxLocals +
-        //    ", callerState.maxStackSize():" +  callerState.maxStackSize() +
-        //    ", callingScope.method.maxLocals(): " + callingScope.method.maxLocals() +
-        //    ", callingScope.method.maxStackSize(): " + callingScope.method.maxStackSize() + ", stackIndex: " + stackIndex;
-        for (int i = 0; i < callerState.values.length; i++) {
-            res.values[i] = callerState.values[i];
-        }
-        //System.arraycopy(callerState.values, 0, res.values, 0, callerState.values.length);
-        res.stackIndex = callerState.stackIndex;
-        System.arraycopy(values, maxLocals, res.values, res.maxLocals + res.stackIndex, stackIndex);
-        res.stackIndex = res.stackIndex + stackIndex;
+        System.arraycopy(callerState.values, 0, res.values, 0, callerState.values.length);
+        System.arraycopy(values, maxLocals, res.values, res.maxLocals + callerState.stackIndex, stackIndex);
+        res.stackIndex = callerState.stackIndex + stackIndex;
         res.replaceLocks(callerState);
-
-        // prepare frame state for caller's previous state + return value of callee on stack
-        //MutableFrameState res = new MutableFrameState(callingScope, callingScope.method.maxLocals(), scope.method.maxStackSize() + stackIndex);
-        //res.replaceLocals(scope.callerState());
-        //res.replaceStack(scope.callerState());
-        //System.arraycopy(values, maxLocals, res.values, res.maxLocals + res.stackIndex, stackIndex);
-        //res.stackIndex = res.stackIndex + stackIndex;
-        //res.replaceLocks(scope.callerState()); // assumes locks are balanced for each frame
-
         res.unsafe = unsafe;
         return res;
     }
