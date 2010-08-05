@@ -153,9 +153,14 @@ public class MarkingStack {
         if (MaxineVM.isDebug() && Heap.traceGC()) {
             Log.println("MarkingStack begin draining");
         }
-        while (topIndex > 0) {
-            drainingCellVisitor.visitPoppedCell(base.asPointer().getWord(--topIndex).asPointer());
+        if (MaxineVM.isDebug()) {
+            FatalError.check(draining.isZero(), "Cannot drain an already draining marking stack");
         }
+        while (topIndex > 0) {
+            draining = base.asPointer().getWord(--topIndex).asPointer();
+            drainingCellVisitor.visitPoppedCell(draining);
+        }
+        draining = Pointer.zero();
         if (MaxineVM.isDebug() && Heap.traceGC()) {
             Log.println("MarkingStack ends draining");
         }
