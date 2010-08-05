@@ -286,11 +286,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     Size bitmapSize(Size coveredAreaSize) {
         // The mark bitmap uses a single bit to cover wordsCoveredPerBit words.
-        // num heap words =  coveredAreaSize >> log2numberOfBytes per word
-        // num bits in bitmaps = num heap words >> log2BytesCoveredPerBit
+        // num bits in bitmaps = coveredAreaSize >> log2BytesCoveredPerBit
         // bitmap size in bytes = num bits >> log2numberOfBits per byte
         FatalError.check(coveredAreaSize.isWordAligned(), "Area covered by a mark bitmap must be word aligned");
-        return coveredAreaSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes + log2BytesCoveredPerBit + WordWidth.BITS_8.log2numberOfBits);
+        return coveredAreaSize.unsignedShiftedRight(log2BytesCoveredPerBit + WordWidth.BITS_8.log2numberOfBits);
     }
 
 
@@ -795,6 +794,16 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         @INLINE
         final void visitFlushedCell(Pointer cell) {
+            final int bitIndex = heapMarker.bitIndexOf(cell);
+            // Due to how grey mark are being scanned, we may end up with black objects on the marking stack.
+            // We filter them out here. See comments in ForwardScan.visitGreyObjects
+            if (heapMarker.isBlackWhenNotWhite(bitIndex)) {
+                if (Heap.traceGC()) {
+                    printVisitedCell(cell, "Skip black flushed cell ");
+                }
+                return;
+            }
+
             // Visit the flushed cell and mark all it's white references grey, then mark the object black.
             // This helps avoiding going in tight loop of flushing/recovering when
             // a large object of backward references is visited.
@@ -826,7 +835,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     markGripGrey(Layout.getGrip(origin, index));
                 }
             }
-            heapMarker.markBlackFromGrey(cell);
+            heapMarker.markBlackFromGrey(bitIndex);
         }
 
         Address flushMarkingStack(ColorMapScanState scanState) {
