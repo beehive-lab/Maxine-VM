@@ -587,6 +587,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         return false;
     }
 
+    @INLINE
+    final boolean isBlackWhenNotWhite(Pointer cell) {
+        return isBlackWhenNotWhite(bitIndexOf(cell));
+    }
+
     /**
      * Only used when tracing is completed. There should be no grey objects left.
      * @param cell
@@ -959,12 +964,19 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             if (MaxineVM.isDebug()) {
                 FatalError.check(hub != HeapFreeChunk.HEAP_FREE_CHUNK_HUB, "Must never mark a HeapFreeChunk");
             }
-            // Update the other references in the object
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
                 if (hub.isSpecialReference) {
-                    SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
+                    // The marking stack might have overflow before reaching this point, and doing so, it
+                    // might have already register this reference to the SpecialReferenceManager
+                    // (e.g., if using deep mark stack flush).
+                    // Hence, we may end up calling discoverSpecialReference twice which would cause an error (SpecialReferenceManager
+                    // allows for a single call only). We need to protect against this, so we test here if
+                    // the object wasn't set black already.
+                    if (!heapMarker.isBlackWhenNotWhite(origin)) {
+                        SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
+                    }
                 }
                 return cell.plus(hub.tupleSize);
             }
@@ -993,8 +1005,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 return;
             }
             if (MaxineVM.isDebug() && Heap.traceGC()) {
-                Log.print("Visiting popped cell ");
-                Log.println(cell);
+                printVisitedCell(cell, "Visiting popped cell ");
             }
             visitGreyCell(cell);
             heapMarker.markBlackFromGrey(bitIndex);
