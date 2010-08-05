@@ -156,7 +156,6 @@ public final class GraphBuilder {
         C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(rootMethod);
         if (intrinsic != null) {
             // 6A.1 the root method is an intrinsic; load the parameters onto the stack and try to inline it
-            curState = initialState.copy();
             lastInstr = curBlock;
             if (C1XOptions.OptIntrinsify) {
                 // try to inline an Intrinsic node
@@ -1069,8 +1068,8 @@ public final class GraphBuilder {
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
-            // TODO newly introduced immutable copy necessary? (was: no copy at all) not used later on -> remove copy for optim. anyways?
-            scopeData.updateSimpleInlineInfo(curBlock, lastInstr, curState.immutableCopy());
+            // ATTN: assumption: curState is not used further down, else add .immutableCopy()
+            scopeData.updateSimpleInlineInfo(curBlock, lastInstr, curState);
 
             // State at end of inlined method is the state of the caller
             // without the method parameters on stack, including the
@@ -1690,7 +1689,6 @@ public final class GraphBuilder {
         if (inlinedMethod) {
             popScope();
             bci = curState.scope().callerBCI();
-            // TODO: copy removed here -> reevaluate for all .copy()
             curState = curState.popScope();
         }
 
@@ -1787,7 +1785,8 @@ public final class GraphBuilder {
 
         assert state.scope().callerState() == null;
         state.clearLocals();
-        Goto g = new Goto(target, state.copy(), false);
+        // ATTN: assumption: state is not used further below, else add .immutableCopy()
+        Goto g = new Goto(target, state, false);
         append(g);
         ir.osrEntryBlock.setEnd(g);
         target.mergeOrClone(ir.osrEntryBlock.end().stateAfter());
