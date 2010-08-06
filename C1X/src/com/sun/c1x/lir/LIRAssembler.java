@@ -282,8 +282,6 @@ public abstract class LIRAssembler {
             case Label:
                 throw Util.shouldNotReachHere();
             case StdEntry:
-                // init offsets
-                emitPrologue();
                 asm.verifiedEntry();
                 buildFrame();
                 break;
@@ -459,8 +457,6 @@ public abstract class LIRAssembler {
     protected abstract void emitReadPrefetch(CiValue inOpr);
 
     protected abstract void emitVolatileMove(CiValue inOpr, CiValue result, CiKind kind, LIRDebugInfo info);
-
-    protected abstract void emitPrologue();
 
     protected abstract void emitThrow(CiValue inOpr1, CiValue inOpr2, LIRDebugInfo info, boolean unwind);
 

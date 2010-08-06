@@ -137,6 +137,14 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     currentList = label.inline ? fastPath : slowPath;
                     break;
                 case Safepoint:
+                case Align:
+                case Entrypoint:
+                case PushFrame:
+                case PopFrame:
+                case Push:
+                case Pop:
+                case RawBytes:
+                case ShouldNotReachHere:
                     break;
                 default:
                     throw Util.unimplemented("XIR operation " + i.op);

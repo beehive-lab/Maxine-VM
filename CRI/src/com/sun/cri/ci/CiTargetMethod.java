@@ -183,6 +183,12 @@ public class CiTargetMethod {
      * List of exception handlers in the code.
      */
     public final List<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
+    
+    /**
+     * List of entry point code offsets.
+     */
+    public final Map<Object, Integer> entrypointCodeOffsets = new HashMap<Object, Integer>(); 
+    
 
     private final int referenceRegisterCount;
     private int frameSize = -1;

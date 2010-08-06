@@ -105,17 +105,17 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         if (obj.isNull()) {
             xorq(dst, dst);
         } else {
-            movq(dst, recordDataReferenceInCode(obj));
+            if (target.inlineObjects) {
+                recordDataReferenceInCode(obj);
+                mov64(dst, 0xDEADDEADDEADDEADl);
+            } else {
+                movq(dst, recordDataReferenceInCode(obj));
+            }
         }
     }
 
     void movoop(CiAddress dst, CiConstant obj) {
-        assert obj.kind == CiKind.Object;
-        if (obj.isNull()) {
-            xorq(rscratch1, rscratch1);
-        } else {
-            movq(rscratch1, recordDataReferenceInCode(obj));
-        }
+        movoop(rscratch1, obj);
         movq(dst, rscratch1);
     }
 
