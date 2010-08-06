@@ -407,6 +407,12 @@ public final class BlockBegin extends Instruction {
             }
 
             // copy state because it is modified
+            /* TODO the state is copied and mutated here even though the methods called on it below all
+             * belong to immutable FrameState class and have been considered not actually mutating the
+             * frame state. One needs to rethink the details of this and whether to move them to
+             * MutableFrameState, which might require additional copying of frame states in other places
+             * where currently the immutable is used directly.
+             */
             newState = newState.copy();
 
             // if a liveness map is available, use it to invalidate dead locals
