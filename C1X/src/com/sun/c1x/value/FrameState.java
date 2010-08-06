@@ -554,7 +554,6 @@ public abstract class FrameState {
         assert scope.caller == this.scope;
         RiMethod method = scope.method;
         MutableFrameState res = new MutableFrameState(scope, method.maxLocals(), method.maxStackSize());
-        res.replaceLocks(this);
         res.unsafe = unsafe;
         return res;
     }
