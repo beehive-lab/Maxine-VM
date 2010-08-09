@@ -22,7 +22,6 @@ package test.com.sun.max.vm;
 
 import java.io.*;
 import java.util.*;
-import java.util.Arrays;
 
 import junit.framework.*;
 
@@ -232,6 +231,16 @@ public class MaxineTesterConfiguration {
         imageConfig("opt-c1x1",  "-opt=c1x", "-vmargs=-C1X:OptLevel=1");
         imageConfig("opt-c1x2",  "-opt=c1x", "-vmargs=-C1X:OptLevel=2");
         imageConfig("opt-c1x3",  "-opt=c1x", "-vmargs=-C1X:OptLevel=3");
+
+        // Alternate GC configs
+        imageConfig("ms",         "-run=java", "-heap=gcx.ms");
+        imageConfig("msd",        "-run=java", "-heap=gcx.ms", "-build=DEBUG");
+
+        imageConfig("mscpscps", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
+        imageConfig("mscpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-jit");
+        imageConfig("msjitcps", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit");
+        imageConfig("msjitjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit", "-test-callee-jit");
+        imageConfig("mscpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
     }
 
     private static void output(Class javaClass, Expectation... results) {
@@ -463,4 +472,21 @@ public class MaxineTesterConfiguration {
         }
     }
 
+    /**
+     * Print the image configuration aliases in the format expected by the max script.
+     */
+    public static void main(String [] args) {
+        // Running this will cause all the static initializers to run, which is overkill for just printing
+        // out the image configurations, but trying to split this code out out of this class is not worth the effort
+
+        final PrintStream out = System.out;
+        for (String name : imageParams.keySet()) {
+            String [] params = imageParams.get(name);
+            out.print(name + "#" + params[0]);
+            for (int i = 1; i < params.length; i++) {
+                out.print("," + params[i]);
+            }
+            out.println();
+        }
+    }
 }
