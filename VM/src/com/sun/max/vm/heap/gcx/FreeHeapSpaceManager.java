@@ -57,7 +57,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
                         "Below this size, the space is ignored (dark matter)"),
                         MaxineVM.Phase.PRISTINE);
 
-    public static final VMBooleanXXOption traceTLABOption =  register(new VMBooleanXXOption("-XX:+",
+    public static final VMBooleanXXOption traceTLABOption =  register(new VMBooleanXXOption("-XX:-",
                     "TraceTLAB",
                     "Trace TLAB allocation Do nothing for PRODUCT images"),
                     MaxineVM.Phase.PRISTINE);
