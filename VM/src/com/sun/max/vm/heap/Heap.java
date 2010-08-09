@@ -48,13 +48,13 @@ public final class Heap {
 
     private static final Size MIN_HEAP_SIZE = Size.M.times(4); // To be adjusted
     /**
-     * If initial size not specified, the maxSize / DEFAULT_INIT_HEAP_SIZE_RATIO
+     * If initial size not specified, the maxSize / DEFAULT_INIT_HEAP_SIZE_RATIO.
      */
     private static final int DEFAULT_INIT_HEAP_SIZE_RATIO = 2;
 
-    private static final VMSizeOption maxHeapSizeOption = register(new VMSizeOption("-Xmx", Size.G, "The maximum heap size."), MaxineVM.Phase.PRISTINE);
+    public static final VMSizeOption maxHeapSizeOption = register(new VMSizeOption("-Xmx", Size.G, "The maximum heap size."), MaxineVM.Phase.PRISTINE);
 
-    private static final VMSizeOption initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
+    public static final VMSizeOption initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
 
     static class InitialHeapSizeOption extends VMSizeOption {
         String invalidHeapSizeReason;
@@ -113,12 +113,12 @@ public final class Heap {
                 return "Heap too small";
             }
             if (initialHeapSizeOption.isPresent()) {
-               if (max.lessThan(init)) {
-                   return "Incompatible minimum and maximum heap sizes specified";
-               }
-               if (init.lessThan(MIN_HEAP_SIZE)) {
-                   return "Too small initial heap";
-               }
+                if (max.lessThan(init)) {
+                    return "Incompatible minimum and maximum heap sizes specified";
+                }
+                if (init.lessThan(MIN_HEAP_SIZE)) {
+                    return "Too small initial heap";
+                }
             } else {
                 init = max;
             }
