@@ -39,7 +39,7 @@ public abstract class HeapSweeper {
 
     //  Debug tracing
     static final VMBooleanXXOption traceSweepingOption =
-        register(new VMBooleanXXOption("-XX:+", "TraceSweep", "Trace heap sweep operations. Do nothing for PRODUCT images"),
+        register(new VMBooleanXXOption("-XX:-", "TraceSweep", "Trace heap sweep operations. Do nothing for PRODUCT images"),
                         MaxineVM.Phase.PRISTINE);
 
     /**
