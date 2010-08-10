@@ -714,10 +714,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     private final RootCellVisitor rootCellVisitor = new RootCellVisitor(this);
 
 
-    static abstract class MarkingStackFlusher extends MarkingStack.MarkingStackCellVisitor {
+    abstract static class MarkingStackFlusher extends MarkingStack.MarkingStackCellVisitor {
         ColorMapScanState scanState;
 
-        void setScanState(ColorMapScanState scanState){
+        void setScanState(ColorMapScanState scanState) {
             this.scanState = scanState;
         }
 
@@ -1082,7 +1082,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
     }
 
-    static abstract class OverflowScanState extends ColorMapScanState {
+    abstract static class OverflowScanState extends ColorMapScanState {
         protected Address endOfScan;
         protected MarkingStackFlusher markingStackFlusher;
 
@@ -1259,8 +1259,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 startOfNextOverflowScan = leftmostFlushed;
             }
         }
-
-  }
+    }
 
     /**
      * Recovery using a rescan map.
@@ -1289,7 +1288,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         void recoverFromOverflow() {
             markingStackFlusher.flushMarkingStack();
             if (!isRecovering()) {
-                if(MaxineVM.isDebug()) {
+                if (MaxineVM.isDebug()) {
                     verifyHasNoGreyMarks(rescanMap.beginOfGreyArea());
                     FatalError.check(!rescanMap.isEmpty(), "rescan map must not be empty after a mark stack overflow");
                 }
@@ -1354,7 +1353,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         public void visitGreyObjects() {
             // Iterate over the rescan map and iterate over the corresponding bounds in the mark bitmap for each
             // entry recording the presence of grey objects.
-            while(!rescanMap.isEmpty()) {
+            while (!rescanMap.isEmpty()) {
                 rescanMap.cacheLeftmostEntryBound();
                 int bitmapWordIndex = rescanMap.leftmostLeftBound();
                 int rightmostBitmapWordIndex = rescanMap.leftmostRightBound();
@@ -1543,7 +1542,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             Log.print(bitIndex);
             Log.print(" in grey-free area [");
             Log.print(start);
-            Log.print(" , ");
+            Log.print(", ");
             Log.print(end);
             Log.println(" ]");
             Log.unlock(lockDisabledSafepoints);

@@ -84,9 +84,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitReturn(CiValue result) {
-        // Reset the stack pointer
-        // masm.incrementq(target.stackPointerRegister, initialFrameSizeInBytes());
-        // TODO: Add Safepoint polling at return!
+        // TODO: Consider adding safepoint polling at return!
         masm.ret(0);
     }
 
@@ -1754,13 +1752,17 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case PushFrame: {
-                    masm.push(AMD64.rbp);
-                    masm.decrementq(AMD64.rsp, initialFrameSizeInBytes());
+                    int frameSizeInBytes = initialFrameSizeInBytes();
+                    masm.decrementq(AMD64.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
+                    int framePages = frameSizeInBytes / target.pageSize;
+                    // emit multiple stack bangs for methods with frames larger than a page
+                    for (int i = 0; i <= framePages; i++) {
+                        bangStackWithOffset((i + C1XOptions.StackShadowPages) * target.pageSize);
+                    }
                     break;
                 }
                 case PopFrame: {
                     masm.incrementq(AMD64.rsp, initialFrameSizeInBytes());
-                    masm.pop(AMD64.rbp);
                     break;
                 }
                 case Push: {
@@ -1780,7 +1782,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 }
                 case RawBytes: {
                     for (byte b : (byte[]) inst.extra)
-                        masm.emitByte(b);
+                        masm.emitByte(b & 0xff);
                     break;
                 }
                 case ShouldNotReachHere: {
@@ -1795,6 +1797,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     throw Util.unimplemented("XIR operation " + inst.op);
             }
         }
+    }
+
+    private void bangStackWithOffset(int offset) {
+        // stack grows down, caller passes positive offset
+        assert offset > 0 :  "must bang with negative offset";
+        masm.movq(new CiAddress(CiKind.Word, AMD64.RSP, (-offset)), AMD64.rax);
     }
 
     private CiRegisterValue assureInRegister(CiValue pointer) {
