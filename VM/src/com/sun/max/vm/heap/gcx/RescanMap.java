@@ -1,3 +1,23 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
 package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.VMOptions.*;
@@ -29,7 +49,7 @@ public class RescanMap {
      *
      */
     static VMSizeOption rescanRegionSizeOption =
-    register(new VMSizeOption("-XX:RescanRegionSize=", Size.K.times(1), "Unit of rescan after marking stack overflow"), MaxineVM.Phase.PRISTINE);
+        register(new VMSizeOption("-XX:RescanRegionSize=", Size.K.times(1), "Unit of rescan after marking stack overflow"), MaxineVM.Phase.PRISTINE);
 
     /**
      * Address to the first byte of the heap covered by the mark bitmap.
@@ -68,7 +88,7 @@ public class RescanMap {
      * 0, we use the convention of recording an interval [a,b] as <a, b+1>, i.e., the range [0,0[ indicates
      * that the corresponding mark bitmap regions doesn't have any grey objects.
      */
-    private int rescanMapTable [];
+    private int[] rescanMapTable;
     /**
      * Index to the leftmost entry of the rescan map that contains grey objects.
      */
@@ -89,7 +109,7 @@ public class RescanMap {
 
     private int cachedRescanMapEntry;
 
-    private static final int shortMask = (1 << WordWidth.BITS_16.numberOfBits) -1;
+    private static final int shortMask = (1 << WordWidth.BITS_16.numberOfBits) - 1;
 
     private int rightBound(int rescanMapEntry) {
         return rescanMapEntry >> WordWidth.BITS_16.numberOfBits;
@@ -112,7 +132,7 @@ public class RescanMap {
         final int baseOfLeftmostEntry = leftmostEntry << log2NumWordsPerRescanRegion;
         cachedRescanMapEntry = ArrayAccess.getInt(rescanMapTable, leftmostEntry);
         leftmostLeftBound = baseOfLeftmostEntry +  leftBound(cachedRescanMapEntry);
-        leftmostRightBound = baseOfLeftmostEntry + rightBound(cachedRescanMapEntry) -1;
+        leftmostRightBound = baseOfLeftmostEntry + rightBound(cachedRescanMapEntry) - 1;
         if (MaxineVM.isDebug()) {
             FatalError.check(leftmostLeftBound <= leftmostRightBound, "Invalid rescan map entry");
         }

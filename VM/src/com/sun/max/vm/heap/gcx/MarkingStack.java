@@ -167,7 +167,7 @@ public class MarkingStack {
     }
 
     void flush() {
-       if (!draining.isZero()) {
+        if (!draining.isZero()) {
             drainingCellVisitor.visitFlushedCell(draining);
             draining = Pointer.zero();
         }
@@ -186,7 +186,7 @@ public class MarkingStack {
             Log.println("  [d]");
         }
         int index = topIndex;
-        while(index > 0) {
+        while (index > 0) {
             Log.print("        ");
             Log.println(base.asPointer().getWord(--index).asPointer());
         }

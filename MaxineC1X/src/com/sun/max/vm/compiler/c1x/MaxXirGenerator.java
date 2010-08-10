@@ -249,7 +249,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
         ClassMethodActor callee = MaxRiRuntime.asClassMethodActor(method, "genPrologue()");
         AdapterGenerator generator = AdapterGenerator.forCallee(callee, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if(generator != null) {
+        if (generator != null) {
             ByteArrayOutputStream os = new ByteArrayOutputStream(8);
             generator.adapt(callee, os);
             asm.rawBytes(os.toByteArray());
