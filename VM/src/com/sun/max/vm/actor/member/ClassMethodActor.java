@@ -408,8 +408,12 @@ public abstract class ClassMethodActor extends MethodActor {
         }
     }
 
-    public MethodActor original() {
-        final MethodActor original = METHOD_SUBSTITUTIONS.Static.findOriginal(this);
+    /**
+     * Gets the original if this is a {@linkplain SUBSTITUTE substitute} method actor otherwise
+     * just return this method actor.
+     */
+    public ClassMethodActor original() {
+        final ClassMethodActor original = METHOD_SUBSTITUTIONS.Static.findOriginal(this);
         if (original != null) {
             return original;
         }

@@ -20,14 +20,13 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
-import java.util.Arrays;
+import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.*;
+import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.BindingProtection;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -404,8 +403,9 @@ public class JavaMonitorManager {
         inGlobalSafePoint = false;
     }
 
-    private static class ProtectedMonitorGatherer implements Procedure<VmThread> {
-        public void run(VmThread thread) {
+    private static class ProtectedMonitorGatherer implements Pointer.Procedure {
+        public void run(Pointer vmThreadLocals) {
+            VmThread thread = VmThread.fromVmThreadLocals(vmThreadLocals);
             final JavaMonitor monitor = thread.protectedMonitor;
             if (monitor != null) {
                 final ManagedMonitor managedMonitor = (ManagedMonitor) monitor;
@@ -423,7 +423,7 @@ public class JavaMonitorManager {
      */
     private static void unbindUnownedMonitors() {
         // Mark all protected monitors
-        VmThreadMap.ACTIVE.forAllThreads(null, protectedMonitorGatherer);
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, protectedMonitorGatherer);
         // Deflate all non-protected and non-sticky monitors with no owner
         for (int i = 0; i < numberOfBindableMonitors; i++) {
             final ManagedMonitor monitor = bindableMonitors[i];

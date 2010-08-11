@@ -191,7 +191,11 @@ test -n "${jvm}" || jvm="${JAVA_HOME}/bin/java"
 jvm_exe="$jvm $jvm_args"
 
 # Ensure that a JDK 6 is being used
-java_version="`$jvm -version 2>&1 | head -1 | cut -d '"' -f2`"
+# The definition f quote is for purely cosmetic reasons to avoid emacs thinking
+# the rest of the file is a string and messing up the syntax highlighting
+quote='"'
+quote='"'
+java_version="`$jvm -version 2>&1 | head -1 | cut -d $quote -f2`"
 if [[ "$java_version" != 1.6* ]]; then
     echo "JAVA_HOME does not denote a JDK 6 installation: $java_version"
     exit 255
@@ -348,6 +352,12 @@ function check_gnu_make() {
     exit 1
     fi
 }
+
+#=======================================
+# Utility to get image configurations
+#=======================================
+
+
 
 #============================================================
 # When building extra projects, this function sets the
@@ -626,8 +636,8 @@ function run_check() {
     done
 
     if [ -z "$CHECKSTYLE_JAR" ]; then
-        if [ -f /import/maxwell/bin/checkstyle-4.jar ]; then
-            CHECKSTYLE_JAR=/import/maxwell/bin/checkstyle-4.jar
+        if [ -f /import/maxwell/bin/checkstyle.jar ]; then
+            CHECKSTYLE_JAR=/import/maxwell/bin/checkstyle.jar
         else
             echo "Need to use '-cs' option or CHECKSTYLE_JAR environment variable to specify location of Checkstyle jar file"
             exit 1
@@ -814,41 +824,40 @@ function run_javadoc() {
 }
 
 #=======================================
+# 'configs' command
+#=======================================
+
+# To add new configs, see class test.com.sun.max.vm.MaxineTesterConfiguration
+configs_usage=""
+configs_help="prints all the defined image configuration aliases"
+
+function run_configs() {
+    image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
+    configs_message=$(printf "    %-15s %s\n " "Configuration" "Expansion")
+
+    for image_config in ${image_configs[@]}; do
+        image_config_args="${image_config/*\#/}"
+        configs_message=$(printf "%s\n    @%-15s %s" "$configs_message" "${image_config/\#*/}" "${image_config_args//,/ }")
+    done
+
+    printf "The available preconfigured option sets are:\n\n%s\n" "$configs_message"
+}
+
+#=======================================
 # 'image' command
 #=======================================
 
-image_configs=( \
-    java#-run=java \
-    c1x-opt0#--C1X:OptLevel=0,-opt=com.sun.max.vm.compiler.c1x \
-    c1x-opt1#--C1X:OptLevel=1,-opt=com.sun.max.vm.compiler.c1x \
-    c1x-opt2#--C1X:OptLevel=2,-opt=com.sun.max.vm.compiler.c1x \
-    c1x-opt3#--C1X:OptLevel=3,-opt=com.sun.max.vm.compiler.c1x \
-    cpsc1x#-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.all \
-    cpscps#-run=test.com.sun.max.vm.jtrun.all,-native-tests \
-    cpsjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
-    jitcps#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit \
-    jitjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit,-test-callee-jit \
-    ms#-run=java,-heap=gcx.ms \
-    msd#-run=java,-build=DEBUG,-heap=gcx.ms \
-)
-
 image_usage="[options]"
-image_help="build a boot image
+function image_help() {
+    image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
+    image_help_message="build a boot image
 
     Run the BootImageGenerator to build a Maxine boot image.
 
     An option starting with '@' denotes a preconfigured set of
-    options. The available preconfigured option sets are:
+    options. `run_configs`
 "
-
-image_help=$(printf "%s\n    %-15s %s\n " "$image_help" "Configuration" "Expansion")
-
-for image_config in ${image_configs[@]}; do
-    image_config_args="${image_config/*\#/}"
-    image_help=$(printf "%s\n    @%-15s %s" "$image_help" "${image_config/\#*/}" "${image_config_args//,/ }")
-done
-
-image_help="$image_help
+    image_help_message="$image_help_message
 
     An option starting with '--' is interpreted as a VM option of the same name
     after the leading '-' is removed. For example, to use the '-verbose:class'
@@ -857,7 +866,11 @@ image_help="$image_help
 
     Use \"max image -help\" to see what other options this command accepts."
 
+    printf "%s" "$image_help_message"
+}
+
 function run_image() {
+    image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
 
     vm_args=""
     image_args=""
@@ -1209,7 +1222,6 @@ inspect_help="launch a given program under the Inspector
     Use \"max vm -help\" to see what the VM options are."
 
 function run_inspect() {
-
     save_class_dir="$MAXVM_DIR/inspected_classes"
     vm_args="-XX:SaveClassDir=$save_class_dir"
     inspector_args="-vmdir=$MAXVM_DIR"
@@ -1447,6 +1459,90 @@ function run_gate() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
 }
 
+
+
+#=======================================
+# 'msgate' command
+#=======================================
+
+msgate_usage="[options]"
+msgate_presets="-maxvm-config-alias=mscpscps -fail-fast"
+
+msgate_testlist="-tests=output:"
+sep=""
+i=0
+while [ ! $i == "8" ] ; do
+  msgate_testlist="${msgate_testlist}${sep}GCTest$i"
+  i=$[ $i + 1 ]
+  sep="+"
+done
+i=1
+while [ ! $i == "5" ] ; do
+  msgate_testlist="${msgate_testlist}${sep}WeakReferenceTestt$i"
+  i=$[ $i + 1 ]
+done
+
+msgate_presets="$msgate_presets $msgate_testlist"
+
+msgate_help="run the tests used to validate a push to the stable Maxine repository using MS heap scheme
+
+    If this commands exits with a 0 exit code, then the source code is in
+    a state that would be accepted for integration into the main repository.
+
+    This is simply a wrapper for invoking the \"max test\" command with the following
+    preset options:
+
+        ${msgate_presets}
+
+    Use \"max msgate -help\" to see what other options this command accepts."
+
+function run_msgate() {
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${msgate_presets} "$@"
+}
+
+#=======================================
+# 'jrockitbm' command
+#=======================================
+jrockitbm_usage="[-all] [options]"
+jrockitbm_help="run the jrockit benchmark suite
+    Set -all to run all the benchmarks in succession
+    otherwise specify a benchmark on the command line"
+
+function run_jrockitbm() {
+    if [ -z "$JROCKITBM_HOME" ]; then
+        if [ -f /import/maxwell/jrockitbm/benchmarks.jar ]; then
+            JROCKITBM_HOME=/import/maxwell/jrockitbm
+        else
+            echo "Need to set JROCKITBM_HOME environment variable to specify directory containing benchmarks.jar and tests.lst"
+            exit 1
+        fi
+    fi
+    all=0
+    while [ "$1" != "" ]; do
+        case $1 in
+            -all )
+                all=1
+                shift
+                break
+                ;;
+            * )
+                break;
+                ;;
+        esac
+        shift
+    done
+
+    if [ $all -eq 1 ]; then
+        for i in `cat $JROCKITBM_HOME/tests.lst`
+        do
+            echo Running $i
+            run ${maxine_vm} $MAXVM_OPTIONS -jar $JROCKITBM_HOME/benchmarks.jar $i "$@"
+        done
+    else
+        run ${maxine_vm} $MAXVM_OPTIONS -jar $JROCKITBM_HOME/benchmarks.jar "$@"
+    fi
+}
+
 #=======================================
 # 'help' command
 #=======================================
@@ -1475,10 +1571,16 @@ function run_help() {
         usage=${!usage_var}
 
         help_var="${command}_help"
-        help=${!help_var}
+        help_type=`type -t ${help_var}`
+        if [ "${help_type}" == "function" ]; then
+            help=`$help_var`
+        else
+            help=${!help_var}
+        fi
         if [ -z "$help" ]; then
             help="[no description available]"
         fi
+
         printf "max %s %s\n\n%s\n" "$command" "$usage" "$help"
     fi
 }

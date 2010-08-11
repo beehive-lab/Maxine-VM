@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * Modal monitor schemes and handlers
+ * Modal monitor schemes and handlers.
  */
 package com.sun.max.vm.monitor.modal;

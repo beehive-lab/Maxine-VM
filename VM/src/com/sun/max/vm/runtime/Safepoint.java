@@ -34,76 +34,20 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
-import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * The platform specific details of the mechanism by which a thread can be suspended via
- * polling at prudently chosen execution points. The polling has the effect of causing
- * a trap.
+ * The platform specific details of the mechanism by which a thread can be
+ * {@linkplain FreezeThreads frozen} via polling at prudently
+ * chosen execution points.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Hannes Payer
  * @author Paul Caprioli
+ * @author Mick Jordan
  */
 public abstract class Safepoint {
-
-    /**
-     * Flag indicating which mechanism is to be used for synchronizing mutator and GC threads. The mechanisms are
-     * described below.
-     * <dl>
-     * <dt>CAS</dt>
-     * <dd>Atomic compare-and-swap (CAS) instructions are used to enforce transitions through the following state
-     * machine:
-     *
-     * <pre>
-     *
-     *     +------+                            +--------+                             +---------+
-     *     |      |--- M:JNI-Prolog{STORE} --->|        |--- GC:WaitForNative{CAS} -->|         |
-     *     | JAVA |                            | NATIVE |                             |   GC    |
-     *     |      |<--- M:JNI-Epilog{CAS} -----|        |<----- GC:Reset{STORE} ------|         |
-     *     +------+                            +--------+                             +---------+
-     * </pre>
-     *
-     * The states pertain to the mutator thread.
-     * Each transition describes which thread makes the transition ({@code M} == mutator thread, {@code GC} == GC
-     * thread), the VM code implementing the transition ({@linkplain NativeCallPrologue#nativeCallPrologue() JNI-Prolog},
-     * {@linkplain NativeCallEpilogue#nativeCallEpilogue(Pointer) JNI-Epilog}, {@linkplain WaitUntilNonMutating
-     * WaitForNative} and {@linkplain ResetMutator Reset}) and the instruction used to update state ({@code CAS} ==
-     * atomic compare-and-swap, {@code STORE} == normal memory store). The state is stored in the
-     * {@link VmThreadLocal#MUTATOR_STATE} thread local variable of the mutator thread.</dd>
-     *
-     * <dt>FENCE</dt>
-     * <dd>Memory fences are used to implement Dekkers algorithm to ensure that a thread is never
-     * mutating during a GC. This mechanism uses both the {@link VmThreadLocal#MUTATOR_STATE} and
-     * {@link VmThreadLocal#GC_STATE} thread local variables of the mutator thread. The operations
-     * that access these variables are in {@link NativeCallPrologue#nativeCallPrologue()},
-     * {@link NativeCallEpilogue#nativeCallEpilogue(Pointer)}, {@link WaitUntilNonMutating} and
-     * {@link ResetMutator}.
-     * </dd>
-     * </dl>
-     *
-     * TODO: Make the choice for this value based on the mechanism proven to runs best on each platform.
-     */
-    public static final boolean UseCASBasedGCMutatorSynchronization = true;
-
-    /**
-     * Constant denoting a mutator thread is executing native code.
-     */
-    public static final Word THREAD_IN_NATIVE = Address.fromInt(0);
-
-    /**
-     * Constant denoting a mutator thread is executing Java code.
-     */
-    public static final Word THREAD_IN_JAVA = Address.fromInt(1);
-
-    /**
-     * Constant denoting a mutator thread is stopped for garbage collection.
-     */
-    public static final Word THREAD_IN_GC = Address.fromInt(2);
 
     /**
      * The three states a thread can be in with respect to safepoints.
@@ -167,30 +111,6 @@ public abstract class Safepoint {
     @INLINE
     public static void setLatchRegister(Pointer vmThreadLocals) {
         VMRegister.setSafepointLatchRegister(vmThreadLocals);
-    }
-
-    /**
-     * Sets the value of the {@linkplain VmThreadLocal#SAFEPOINT_LATCH safepoint latch} in the safepoints-enabled VM
-     * thread locals to point to the safepoints-triggered VM thread locals. This will cause a safepoint trap the next
-     * time a safepoint instruction is executed while safepoints are enabled.
-     *
-     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the safepoints-enabled
-     *            thread locals can be obtained
-     */
-    public static void trigger(Pointer vmThreadLocals) {
-        SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
-    }
-
-    /**
-     * Sets the value of the {@linkplain VmThreadLocal#SAFEPOINT_LATCH safepoint latch} in the safepoints-enabled VM
-     * thread locals to point to itself. This means that subsequent executions of a safepoint instruction will not cause a trap
-     * until safepoints are once again {@linkplain #trigger(Pointer) triggered}.
-     *
-     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the safepoints-enabled
-     *            thread locals can be obtained
-     */
-    public static void reset(Pointer vmThreadLocals) {
-        SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
     }
 
     /**
@@ -264,84 +184,5 @@ public abstract class Safepoint {
 
     public boolean isAt(Pointer instructionPointer) {
         return Memory.equals(instructionPointer, code);
-    }
-
-    /**
-     * An enum with constants denoting the type of code that a thread was executing when a safepoint occurred.
-     */
-    public static enum Venue {
-        /**
-         * Indicates that a safepoint has been reached on exit from native code
-         * after the safepoint has been triggered.
-         */
-        NATIVE,
-        /**
-         * Indicates that a safepoint has been reached from Java code
-         * without entering any native code since the safepoint was triggered.
-         */
-        JAVA
-    }
-
-    /**
-     * Runs a given procedure on the thread denoted by {@code vmThreadLocals},
-     * when that thread is at a safepoint and safepoints are disabled.
-     * This method allows the VM to stop a thread at a safepoint and then run the specified procedure (e.g. garbage collection
-     * or biased monitor revocation). Note that this method returns when the procedure is successfully
-     * queued to be run on that thread, but the procedure may not actually have run yet.
-     * Note also that this method will spin
-     * if that thread is already executing or is scheduled to execute another procedure.
-     *
-     * @param vmThreadLocals the thread locals on which to push the procedure
-     * @param procedure the procedure to run on this thread
-     */
-    public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
-        // spin until the SAFEPOINT_PROCEDURE field is null
-        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-        while (true) {
-            if (enabledVmThreadLocals.getReference(SAFEPOINT_PROCEDURE.index).isZero()) {
-                if (enabledVmThreadLocals.compareAndSwapReference(SAFEPOINT_PROCEDURE.offset, null, Reference.fromJava(procedure)).isZero()) {
-                    Safepoint.trigger(vmThreadLocals);
-                    return;
-                }
-            }
-            Thread.yield();
-        }
-    }
-
-    /**
-     * Cancel a procedure that may be outstanding for a thread. If the thread has not yet executed the procedure,
-     * then it will be canceled (i.e. {@link VmThreadLocal#SAFEPOINT_PROCEDURE} will be set to {@code null}).
-     *
-     * @param vmThreadLocals the thread for which to cancel the procedure
-     */
-    public static void cancelProcedure(Pointer vmThreadLocals) {
-        SAFEPOINT_PROCEDURE.setVariableReference(vmThreadLocals, null);
-    }
-
-    /**
-     * A procedure to run at a safepoint.
-     *
-     * @author Ben L. Titzer
-     */
-    public interface Procedure {
-        /**
-         * Runs this procedure.
-         *
-         * @param trapState the thread state recorded by the trap
-         */
-        void run(Pointer trapState);
-    }
-
-    /**
-     * A procedure that resets safepoints for a given thread and {@linkplain Safepoint#cancelProcedure(Pointer) cancels} the safepoint procedure.
-     */
-    public static class ResetSafepoints implements Pointer.Procedure {
-        /**
-         * Resets safepoints for the thread associated with the given thread locals.
-         */
-        public void run(Pointer vmThreadLocals) {
-            cancelProcedure(vmThreadLocals);
-            reset(vmThreadLocals);
-        }
     }
 }

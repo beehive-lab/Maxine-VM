@@ -20,6 +20,6 @@
  */
 
 /**
- * Access to Java methods
+ * Access to Java methods.
  */
 package com.sun.max.tele.method;

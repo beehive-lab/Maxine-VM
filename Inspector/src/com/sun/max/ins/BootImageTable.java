@@ -145,8 +145,9 @@ public final class BootImageTable extends InspectorTable {
 
             final Pointer classRegistryPointer = bootHeapStart.plus(header.classRegistryOffset);
             addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), classRegistryPointer));
-            final Pointer bootHeapPointer = bootHeapStart.plus(header.heapRegionsPointerOffset);
-            addRow("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapPointer));
+
+            final Pointer dynamicHeapRegionsFieldPointer = bootHeapStart.plus(header.dynamicHeapRegionsArrayFieldOffset);
+            addRow("dynamic heap regions array field:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, dynamicHeapRegionsFieldPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), dynamicHeapRegionsFieldPointer));
 
             final Pointer vmThreadLocalsListHead = bootImageStart.plus(header.threadLocalsListHeadOffset);
             addRow("VM thread locals list head:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, vmThreadLocalsListHead, BootImageTable.this), new MemoryRegionValueLabel(inspection(), vmThreadLocalsListHead));

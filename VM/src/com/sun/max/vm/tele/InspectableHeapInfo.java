@@ -44,11 +44,11 @@ public final class InspectableHeapInfo {
     }
 
     /**
-     * Inspectable array of memory regions allocated for heap memory management.
+     * Inspectable array of memory regions allocated dynamically for heap memory management.
      * @see com.sun.max.vm.heap.HeapScheme
      */
     @INSPECTED
-    private static MemoryRegion[] memoryRegions;
+    private static MemoryRegion[] dynamicHeapMemoryRegions;
 
     /**
      * Maximum number of roots that the Inspector can register for tracking relocations.
@@ -113,7 +113,7 @@ public final class InspectableHeapInfo {
      */
     public static void init(MemoryRegion... memoryRegions) {
         if (Inspectable.isVmInspected()) {
-            InspectableHeapInfo.memoryRegions = memoryRegions;
+            InspectableHeapInfo.dynamicHeapMemoryRegions = memoryRegions;
 
             // Create the roots region, but allocate the descriptor object
             // in non-collected memory so that we don't lose track of it

@@ -131,9 +131,9 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticReferenceFieldAccess InspectableCodeInfo_breakpointClassDescriptorCharArray = new TeleStaticReferenceFieldAccess(InspectableCodeInfo.class, "breakpointClassDescriptorCharArray", char[].class);
     public final TeleStaticIntFieldAccess InspectableCodeInfo_breakpointClassDescriptorsCharCount = new TeleStaticIntFieldAccess(InspectableCodeInfo.class, "breakpointClassDescriptorsCharCount");
     public final TeleStaticIntFieldAccess InspectableCodeInfo_breakpointClassDescriptorsEpoch = new TeleStaticIntFieldAccess(InspectableCodeInfo.class, "breakpointClassDescriptorsEpoch");
+    public final TeleStaticReferenceFieldAccess InspectableHeapInfo_dynamicHeapMemoryRegions = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "dynamicHeapMemoryRegions", MemoryRegion[].class);
     public final TeleStaticLongFieldAccess InspectableHeapInfo_gcCompletedCounter = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "gcCompletedCounter");
     public final TeleStaticLongFieldAccess InspectableHeapInfo_gcStartedCounter = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "gcStartedCounter");
-    public final TeleStaticReferenceFieldAccess InspectableHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "memoryRegions", MemoryRegion[].class);
     public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationNewCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationNewCell");
     public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationOldCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationOldCell");
     public final TeleStaticReferenceFieldAccess InspectableHeapInfo_rootTableMemoryRegion = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "rootTableMemoryRegion", RootTableMemoryRegion.class);

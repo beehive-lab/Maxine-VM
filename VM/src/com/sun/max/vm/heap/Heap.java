@@ -26,10 +26,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.code.Code;
-import com.sun.max.vm.debug.DebugHeap;
-import com.sun.max.vm.grip.Grip;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.debug.*;
+import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -46,27 +46,94 @@ public final class Heap {
     private Heap() {
     }
 
-    private static final VMSizeOption maxHeapSizeOption = register(new VMSizeOption("-Xmx", Size.G, "The maximum heap size."), MaxineVM.Phase.PRISTINE);
+    private static final Size MIN_HEAP_SIZE = Size.M.times(4); // To be adjusted
+    /**
+     * If initial size not specified, the maxSize / DEFAULT_INIT_HEAP_SIZE_RATIO.
+     */
+    private static final int DEFAULT_INIT_HEAP_SIZE_RATIO = 2;
 
-    private static final VMSizeOption initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
+    public static final VMSizeOption maxHeapSizeOption = register(new VMSizeOption("-Xmx", Size.G, "The maximum heap size."), MaxineVM.Phase.PRISTINE);
+
+    public static final VMSizeOption initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
 
     static class InitialHeapSizeOption extends VMSizeOption {
+        String invalidHeapSizeReason;
+
         @HOSTED_ONLY
         public InitialHeapSizeOption() {
-            super("-Xms", Size.M.times(512), "The initial heap size.");
+            super("-Xms", maxHeapSizeOption.getValue().dividedBy(DEFAULT_INIT_HEAP_SIZE_RATIO), "The initial heap size.");
         }
         @Override
         public boolean check() {
-            return !(isPresent() && maxHeapSizeOption.isPresent() && getValue().greaterThan(maxHeapSizeOption.getValue()));
+            invalidHeapSizeReason = validateHeapSizing();
+            return invalidHeapSizeReason == null;
         }
+
         @Override
         public void printErrorMessage() {
-            Log.print("initial heap size must not be greater than max heap size");
+            Log.print(invalidHeapSizeReason);
         }
     }
 
+    /**
+     * A special exception thrown when a non-GC thread tries to perform a GC while holding
+     * the {@linkplain VmThreadMap#ACTIVE GC lock}. There is a single, pre-allocated
+     * {@linkplain #INSTANCE instance} of this object so that raising this exception
+     * does not require any allocation.
+     *
+     * @author Doug Simon
+     */
+    public static final class HoldsGCLockError extends OutOfMemoryError {
+
+        private HoldsGCLockError() {
+        }
+
+        public static final HoldsGCLockError INSTANCE = new HoldsGCLockError();
+    }
+
+
     private static Size maxSize;
     private static Size initialSize;
+
+    private static boolean heapSizingInputValidated = false;
+
+    /**
+     * Validate heap sizing inputs. This is common to any GC and can be done early on.
+     *
+     * @return
+     */
+    private static String validateHeapSizing() {
+        if (heapSizingInputValidated) {
+            return null;
+        }
+        Size max = maxHeapSizeOption.getValue();
+        Size init = initialHeapSizeOption.getValue();
+        if (maxHeapSizeOption.isPresent()) {
+            if (max.lessThan(MIN_HEAP_SIZE)) {
+                return "Heap too small";
+            }
+            if (initialHeapSizeOption.isPresent()) {
+                if (max.lessThan(init)) {
+                    return "Incompatible minimum and maximum heap sizes specified";
+                }
+                if (init.lessThan(MIN_HEAP_SIZE)) {
+                    return "Too small initial heap";
+                }
+            } else {
+                init = max;
+            }
+        } else if (initialHeapSizeOption.isPresent()) {
+            if (init.lessThan(MIN_HEAP_SIZE)) {
+                return "Heap too small";
+            }
+            max = init;
+        }
+
+        maxSize = max;
+        initialSize = init;
+        heapSizingInputValidated = true;
+        return null;
+    }
 
     // Note: Called via reflection from jvm.c
     public static long maxSizeLong() {
@@ -75,7 +142,7 @@ public final class Heap {
 
     public static Size maxSize() {
         if (maxSize.isZero()) {
-            maxSize = maxSizeOption();
+            validateHeapSizing();
         }
         return maxSize;
     }
@@ -84,45 +151,15 @@ public final class Heap {
         maxSize = size;
     }
 
-    /**
-     * Return the maximum heap size specified by the "-Xmx" command line option.
-     * @return the size of the maximum heap specified on the command line
-     */
-    private static Size maxSizeOption() {
-        if (maxHeapSizeOption.isPresent() && maxHeapSizeOption.getValue().greaterThan(initialHeapSizeOption.getValue())) {
-            return maxHeapSizeOption.getValue();
-        }
-        return initialHeapSizeOption.getValue();
-    }
-
-    public static boolean maxSizeOptionIsPresent() {
-        return maxHeapSizeOption.isPresent();
-    }
-
     public static Size initialSize() {
         if (initialSize.isZero()) {
-            initialSize = initialSizeOption();
+            validateHeapSizing();
         }
         return initialSize;
     }
 
     public static void setInitialSize(Size size) {
         initialSize = size;
-    }
-
-    /**
-     * Return the initial heap size specified by the "-Xms" command line option.
-     * @return the size of the initial heap specified on the command line
-     */
-    private static Size initialSizeOption() {
-        if (initialHeapSizeOption.isPresent() || initialHeapSizeOption.getValue().lessThan(maxHeapSizeOption.getValue())) {
-            return initialHeapSizeOption.getValue();
-        }
-        return maxHeapSizeOption.getValue();
-    }
-
-    public static boolean initialSizeOptionIsPresent() {
-        return initialHeapSizeOption.isPresent();
     }
 
     /**
@@ -395,6 +432,11 @@ public final class Heap {
     }
 
     public static boolean collectGarbage(Size requestedFreeSpace) {
+        if (Thread.holdsLock(VmThreadMap.ACTIVE)) {
+            // The GC requires this lock to proceed
+            throw HoldsGCLockError.INSTANCE;
+        }
+
         if (Heap.gcDisabled()) {
             Throw.stackDump("Out of memory and GC is disabled");
             MaxineVM.native_exit(1);

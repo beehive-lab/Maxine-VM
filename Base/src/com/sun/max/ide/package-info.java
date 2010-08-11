@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * IDE-specific stuff, concerning building and testing
- * 
+ * IDE-specific stuff, concerning building and testing.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.ide;

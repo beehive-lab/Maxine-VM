@@ -33,7 +33,6 @@ import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.*;
 
@@ -86,7 +85,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitReturn(CiValue result) {
         // Reset the stack pointer
-        masm.incrementq(target.stackPointerRegister, initialFrameSizeInBytes());
+        // masm.incrementq(target.stackPointerRegister, initialFrameSizeInBytes());
         // TODO: Add Safepoint polling at return!
         masm.ret(0);
     }
@@ -138,7 +137,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
-        masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
+        if( target.inlineObjects) {
+            masm.recordDataReferenceInCode(CiConstant.forObject(constant));
+            masm.mov64(dst, 0xDEADDEADDEADDEADl);
+        } else {
+            masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
+        }
     }
 
     private void const2reg(CiRegister dst, float constant) {
@@ -725,6 +729,11 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
+        if (left.kind != right.kind) {
+            System.out.println("mismatch: " + left.kind + " <--> " + right.kind);
+            System.out.println("mismatch: " + left + " <--> " + right);
+            System.out.println(" at " + code);
+        }
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
         assert left.kind == right.kind;
         assert left.equals(dest) : "left and dest must be equal";
@@ -1464,11 +1473,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
         // Do nothing for now
     }
 
-    @Override
-    protected void emitPrologue() {
-        compilation.runtime.codePrologue(compilation.method, asm.codeBuffer);
-    }
-
     public static Object asRegisterOrConstant(CiValue operand) {
         if (operand.isRegister()) {
             return operand.asRegister();
@@ -1642,7 +1646,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case PointerCAS:
                     break;
 
-                case CallStub:
+                case CallStub: {
                     XirTemplate stubId = (XirTemplate) inst.extra;
                     CiRegister result = CiRegister.None;
                     if (inst.result != null) {
@@ -1654,8 +1658,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     }
                     masm.callGlobalStub(stubId, info, result, args);
                     break;
-
-                case CallRuntime:
+                }
+                case CallRuntime: {
                     CiKind[] signature = new CiKind[inst.arguments.length];
                     for (int i = 0; i < signature.length; i++) {
                         signature[i] = inst.arguments[i].kind;
@@ -1670,8 +1674,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         }
                     }
 
-                    RiMethod method = (RiMethod) inst.extra;
-                    masm.directCall(method, info);
+                    masm.directCall(inst.extra, info);
 
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = compilation.target.registerConfig.getReturnRegister(inst.result.kind);
@@ -1679,7 +1682,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         moveOp(resultLocation, operands[inst.result.index], inst.result.kind.stackKind(), null, false);
                     }
                     break;
-
+                }
                 case Jmp: {
                     Label label = labels[((XirLabel) inst.extra).index];
                     masm.jmp(label);
@@ -1742,7 +1745,52 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     asm.nullCheck(pointer.asRegister());
                     break;
                 }
-
+                case Align: {
+                    asm.align((Integer) inst.extra);
+                    break;
+                }
+                case Entrypoint: {
+                    asm.targetMethod.entrypointCodeOffsets.put(inst.extra, codePos());
+                    break;
+                }
+                case PushFrame: {
+                    masm.push(AMD64.rbp);
+                    masm.decrementq(AMD64.rsp, initialFrameSizeInBytes());
+                    break;
+                }
+                case PopFrame: {
+                    masm.incrementq(AMD64.rsp, initialFrameSizeInBytes());
+                    masm.pop(AMD64.rbp);
+                    break;
+                }
+                case Push: {
+                    CiRegisterValue value = assureInRegister(operands[inst.x().index]);
+                    masm.push(value.asRegister());
+                    break;
+                }
+                case Pop: {
+                    CiValue result = operands[inst.result.index];
+                    if( result.isRegister()) {
+                        masm.pop(result.asRegister());
+                    } else {
+                        masm.pop(compilation.target.scratchRegister);
+                        moveOp(compilation.target.scratchRegister.asValue(), result, result.kind, null, true);
+                    }
+                    break;
+                }
+                case RawBytes: {
+                    for (byte b : (byte[]) inst.extra)
+                        masm.emitByte(b);
+                    break;
+                }
+                case ShouldNotReachHere: {
+                    if (inst.extra == null) {
+                        masm.stop("should not reach here");
+                    } else {
+                        masm.stop("should not reach here: " + inst.extra);
+                    }
+                    break;
+                }
                 default:
                     throw Util.unimplemented("XIR operation " + inst.op);
             }

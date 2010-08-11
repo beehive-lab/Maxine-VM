@@ -20,15 +20,14 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
-import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.*;
-import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.*;
-import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.BiasedLockRevocationHeuristics.*;
+import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.DelegatedThreadHoldsMonitorResult;
+import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.MonitorSchemeEntry;
+import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.BiasedLockRevocationHeuristics.RevocationType;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.runtime.*;
@@ -88,14 +87,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
      * The procedure that is run on the bias owning thread that has been stopped by a safepoint for the
      * purpose of revoking the bias.
      */
-    private static final class SuspendBiasedThread implements Safepoint.Procedure {
-
-        public void run(Pointer trapState) {
-            // Suspended bias-owner threads wait here while a revoker thread performs the revocation.
-            synchronized (VmThreadMap.ACTIVE) {
-            }
-        }
-
+    private static final class SuspendBiasedThread extends FreezeThreads.AtSafepoint {
         @Override
         public String toString() {
             return "BiasedLockModeHandler-BlockForBiasRevocation";
@@ -120,7 +112,26 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
     }
 
-    protected ModalLockword64 revokeWithOwnerSafepointed(Object object, int vmThreadMapThreadID, BiasedLockword64 biasedLockword) {
+    class RevokeBiasOperation extends FreezeThreads {
+        Object object;
+        ModalLockword64 newLockword;
+        RevokeBiasOperation() {
+            super("RevokeBias", null);
+        }
+        @Override
+        protected void perform() {
+            newLockword = revokeBias(object);
+        }
+        public ModalLockword64 revoke(VmThread thread, Object object) {
+            this.object = object;
+            run(thread);
+            return newLockword;
+        }
+    }
+
+    private final RevokeBiasOperation revokeBiasOperation = new RevokeBiasOperation();
+
+    protected ModalLockword64 revokeWithOwnerSafepointed(final Object object, int vmThreadMapThreadID, BiasedLockword64 biasedLockword) {
         synchronized (VmThreadMap.ACTIVE) {
             final VmThread biasOwnerThread = VmThreadMap.ACTIVE.getVmThreadForID(vmThreadMapThreadID);
             if (biasOwnerThread == null) {
@@ -131,22 +142,10 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             final Pointer vmThreadLocals = biasOwnerThread.vmThreadLocals();
             if (vmThreadLocals.isZero()) {
                 // The bias holding thread is still starting up, so how can it own biases??
-                ProgramError.unexpected("Attempted to revoke bias for still initializing thread.");
+                FatalError.unexpected("Attempted to revoke bias for still initializing thread.");
             }
-            // Trigger safepoint for bias owner
-            Safepoint.runProcedure(vmThreadLocals, suspend);
-            // Wait until bias owner is not mutating
-            while (VmThreadLocal.inJava(vmThreadLocals)) {
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException interruptedException) {
-                }
-            }
-            // Revoke bias
-            final ModalLockword64 newLockword = revokeBias(object);
-            // Reset the bias owner's safepoint latch
-            Safepoint.reset(vmThreadLocals);
-            return newLockword;
+
+            return revokeBiasOperation.revoke(VmThread.fromVmThreadLocals(vmThreadLocals), object);
         }
     }
 
@@ -524,7 +523,8 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                         Log.println(object.getClass().getName());
                         Log.unlock(lockDisabledSafepoints);
                     }
-                    postRevokeLockword = revokeWithOwnerSafepointedAndBulkRebias(object);
+
+                    postRevokeLockword = bulkRebiasOperation.rebias(object);
                     revocationHeuristics.notifyBulkRebiasComplete();
                     break;
                 case BULK_REVOCATION:
@@ -534,67 +534,55 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                         Log.println(object.getClass().getName());
                         Log.unlock(lockDisabledSafepoints);
                     }
-                    postRevokeLockword = revokeWithOwnerSafepointedAndBulkRevoke(object);
+
+                    postRevokeLockword = bulkRevokeOperation.revoke(object);
                     break;
             }
             return postRevokeLockword;
         }
 
-        private ModalLockword64 revokeWithOwnerSafepointedAndBulkRevoke(Object object) {
-            ModalLockword64 postRevokeLockword;
-            synchronized (VmThreadMap.ACTIVE) {
-                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoints);
-                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, waitUntilNonMutating);
+        final BulkRevokeOperation bulkRevokeOperation = new BulkRevokeOperation();
+
+        class BulkRevokeOperation extends FreezeThreads {
+            private Object object;
+            private ModalLockword64 postRevokeLockword;
+            BulkRevokeOperation() {
+                super("BulkRevoke", VmThreadMap.isNotCurrentThread);
+            }
+            @Override
+            protected void perform() {
                 final Hub hub = ObjectAccess.readHub(object);
                 hub.biasedLockEpoch = BiasedLockEpoch64.bulkRevocation();
                 postRevokeLockword = revokeBias(object);
-                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, resetSafepoints);
             }
-            return postRevokeLockword;
+            public ModalLockword64 revoke(Object object) {
+                this.object = object;
+                run();
+                return postRevokeLockword;
+            }
         }
 
-        private ModalLockword64 revokeWithOwnerSafepointedAndBulkRebias(Object object) {
-            ModalLockword64 postRevokeLockword;
-            synchronized (VmThreadMap.ACTIVE) {
-                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoints);
-                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, waitUntilNonMutating);
+        final BulkRebiasOperation bulkRebiasOperation = new BulkRebiasOperation();
+
+        class BulkRebiasOperation extends FreezeThreads {
+            private Object object;
+            private ModalLockword64 postRebiasLockword;
+            BulkRebiasOperation() {
+                super("BulkRebias", VmThreadMap.isNotCurrentThread);
+            }
+            @Override
+            protected void perform() {
                 final Hub hub = ObjectAccess.readHub(object);
                 final BiasedLockEpoch64 epoch = hub.biasedLockEpoch;
                 hub.biasedLockEpoch = epoch.increment();
-                postRevokeLockword = revokeBias(object);
-                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, resetSafepoints);
+                postRebiasLockword = revokeBias(object);
             }
-            return postRevokeLockword;
-        }
 
-        /**
-         * The procedure that is run on the GC thread to trigger safepoints for a given thread.
-         */
-        final class TriggerSafepoints implements Pointer.Procedure {
-
-            public void run(Pointer vmThreadLocals) {
-                if (vmThreadLocals.isZero()) {
-                    // Thread is still starting up.
-                    // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
-                } else {
-                    Safepoint.runProcedure(vmThreadLocals, suspend);
-                }
+            public ModalLockword64 rebias(Object object) {
+                this.object = object;
+                run();
+                return postRebiasLockword;
             }
         }
-
-        private final TriggerSafepoints triggerSafepoints = new TriggerSafepoints();
-
-        private final Safepoint.ResetSafepoints resetSafepoints = new Safepoint.ResetSafepoints();
-
-        private final Pointer.Procedure waitUntilNonMutating = new Pointer.Procedure() {
-            public void run(Pointer vmThreadLocals) {
-                while (VmThreadLocal.inJava(vmThreadLocals)) {
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException interruptedException) {
-                    }
-                }
-            }
-        };
     }
 }

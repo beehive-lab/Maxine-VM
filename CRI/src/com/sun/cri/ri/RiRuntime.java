@@ -20,7 +20,6 @@
  */
 package com.sun.cri.ri;
 
-import java.io.*;
 import java.lang.reflect.*;
 
 import com.sun.cri.ci.*;
@@ -31,7 +30,7 @@ import com.sun.cri.ci.*;
  *
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
- */
+s */
 public interface RiRuntime {
     
     /**
@@ -96,19 +95,6 @@ public interface RiRuntime {
      * @return the code offset in bytes
      */
     int codeOffset();
-
-    /**
-     * If the VM is using multiple compilers with different calling conventions, then each calling convention will have
-     * a designated offset in the compiled code of a callee. If necessary, there will be code at these special
-     * offsets that moves the outgoing arguments of the caller to the locations expected by the callee.
-     * This method emits the adapter code if it is required.
-     *
-     * TODO: Parameterize this method with the calling convention in use by the code currently being compiled.
-     *
-     * @param method the callee method being compiled that may need an adapter code prologue
-     * @param out where the prologue code (if any) will be emitted
-     */
-    void codePrologue(RiMethod method, OutputStream out);
 
     /**
      * Returns the disassembly of the given code bytes. Used for debugging purposes only.

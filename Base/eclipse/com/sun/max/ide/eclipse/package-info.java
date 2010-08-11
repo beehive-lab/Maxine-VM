@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Building Java projects with Eclipse
- * 
+ * Building Java projects with Eclipse.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.ide.eclipse;

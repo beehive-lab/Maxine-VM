@@ -135,10 +135,10 @@ public class VmThreadLocal {
     public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", false, "points to previous thread locals in list of all active");
 
     /**
-     * The procedure to run when a safepoint has been triggered.
+     * The {@linkplain FreezeThreads.AtSafepoint procedure} to be run on a thread when it traps at a {@linkplain Safepoint safepoint}.
      */
-    public static final VmThreadLocal SAFEPOINT_PROCEDURE
-        = new VmThreadLocal("SAFEPOINT_PROCEDURE", true, "Procedure to run when a safepoint is triggered");
+    public static final VmThreadLocal AT_SAFEPOINT_PROCEDURE
+        = new VmThreadLocal("AT_SAFEPOINT_PROCEDURE", true, "Procedure to run when a safepoint is triggered");
 
     /**
      * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
@@ -183,14 +183,16 @@ public class VmThreadLocal {
     public static final VmThreadLocal LAST_JAVA_FRAME_ANCHOR = new VmThreadLocal("LAST_JAVA_FRAME_ANCHOR", false, "");
 
     /**
-     * The state of this thread with respect to GC. This will be one of the {@code THREAD_IN_...} constants defined in {@link Safepoint}.
+     * The state of this thread with respect to {@linkplain FreezeThreads freezing}.
+     * This will be one of the {@code THREAD_IN_...} constants defined in {@link Safepoint}.
      */
-    public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", false, "Thread state wrt GC");
+    public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", false, "Thread state wrt freezing");
 
     /**
-     * A boolean denoting whether a GC is in progress. A non-zero value means true, a zero value means false.
+     * A boolean denoting whether this thread has been {@linkplain FreezeThreads frozen}.
+     * A non-zero value means true, a zero value means false.
      */
-    public static final VmThreadLocal GC_STATE = new VmThreadLocal("GC_STATE", false, "Non-zero if GC in progress");
+    public static final VmThreadLocal FROZEN = new VmThreadLocal("FROZEN", false, "Non-zero if frozen");
 
     /**
      * The number of the trap (i.e. signal) that occurred.

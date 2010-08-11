@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Supplementing java.io
- * 
+ * Supplementing java.io.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.io;

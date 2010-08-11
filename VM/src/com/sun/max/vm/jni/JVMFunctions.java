@@ -119,7 +119,7 @@ public class JVMFunctions {
     }
 
     public static Thread[] GetAllThreads() {
-        return VmThreadMap.getThreads();
+        return VmThreadMap.getThreads(false);
     }
 
     public static int[] GetThreadStateValues(int javaThreadState) {

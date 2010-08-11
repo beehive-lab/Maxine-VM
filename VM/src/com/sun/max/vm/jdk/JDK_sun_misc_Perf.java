@@ -154,6 +154,7 @@ final class JDK_sun_misc_Perf {
         final PerfString perfString = new PerfString(name, variability, units, address);
         perfDataMap.put(name, perfString);
         try {
+            directByteBufferConstructor.setAccessible(true);
             return (ByteBuffer) directByteBufferConstructor.newInstance(new Object[] {address.toLong(), maxLength});
         } catch (IllegalAccessException ex) {
         } catch (InvocationTargetException ex) {

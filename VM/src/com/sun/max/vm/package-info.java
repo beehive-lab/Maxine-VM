@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * The MaxineVM Java virtual machine
- * 
+ * The MaxineVM Java virtual machine.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm;

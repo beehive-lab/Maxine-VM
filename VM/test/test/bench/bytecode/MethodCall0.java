@@ -38,13 +38,15 @@ public class MethodCall0 extends RunBench {
         super(new Bench());
     }
 
-    public static boolean test() {
+    public static boolean test(int x) {
         return new MethodCall0().runBench(true);
     }
 
-    static class Bench extends AbstractMicroBenchmark {
-        public void run(boolean warmup) {
+    static class Bench extends MicroBenchmark {
+        @Override
+        public long run() {
             zeroArg();
+            return defaultResult;
         }
 
         private void zeroArg() {
@@ -53,7 +55,7 @@ public class MethodCall0 extends RunBench {
     }
 
     public static void main(String[] args) {
-        RunBench.runTest(MethodCall0.class, args);
+        test(0);
     }
 
 }

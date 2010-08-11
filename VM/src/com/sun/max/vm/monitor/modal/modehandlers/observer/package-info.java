@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * Observer mode handler for ModalMonitorScheme
+ * Observer mode handler for ModalMonitorScheme.
  */
 package com.sun.max.vm.monitor.modal.modehandlers.observer;

@@ -30,7 +30,8 @@ import com.sun.c1x.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiTargetMethod.Call;
+import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -45,7 +46,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
@@ -148,7 +148,7 @@ public class MaxRiRuntime implements RiRuntime {
         return false;
     }
 
-    ClassMethodActor asClassMethodActor(RiMethod method, String operation) {
+    static ClassMethodActor asClassMethodActor(RiMethod method, String operation) {
         if (method instanceof ClassMethodActor) {
             return (ClassMethodActor) method;
         }
@@ -166,15 +166,6 @@ public class MaxRiRuntime implements RiRuntime {
 
     public int codeOffset() {
         return CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset();
-    }
-
-    @Override
-    public void codePrologue(RiMethod method, OutputStream out) {
-        ClassMethodActor callee = asClassMethodActor(method, "codePrologue()");
-        AdapterGenerator generator = AdapterGenerator.forCallee(callee, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if (generator != null) {
-            generator.adapt(callee, out);
-        }
     }
 
     @Override

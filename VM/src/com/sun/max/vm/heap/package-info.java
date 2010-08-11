@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Object heap management, including garbage collection
- * 
+ * Object heap management, including garbage collection.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.heap;

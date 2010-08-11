@@ -29,7 +29,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -63,6 +62,23 @@ public class HeapFreeChunk {
     static {
         NEXT_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("next")).offset() >> Word.widthValue().log2numberOfBytes;
         SIZE_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("size")).offset() >> Word.widthValue().log2numberOfBytes;
+    }
+
+    private static final long HEAP_FREE_CHUNK_MARKER = 0xdadadadadadadadaL;
+
+    @INLINE
+    public static boolean isInDeadSpace(Address chunkAddress) {
+        return chunkAddress.wordAligned().asPointer().getLong() == HEAP_FREE_CHUNK_MARKER;
+    }
+
+    @INLINE
+    public static boolean isDeadSpaceMark(Address a) {
+        return a.equals(deadSpaceMark());
+    }
+
+    @INLINE
+    public static Address deadSpaceMark() {
+        return Address.fromLong(HEAP_FREE_CHUNK_MARKER);
     }
 
     @INLINE
@@ -105,7 +121,7 @@ public class HeapFreeChunk {
             FatalError.check(hub.isSubClassHub(HEAP_FREE_CHUNK_HUB.classActor),
                             "Should format with a sub-class of HeapFreeChunk");
             FatalError.check(numBytes.greaterEqual(HEAP_FREE_CHUNK_HUB.tupleSize), "Size must be at least a heap free chunk size");
-            DebugHeap.writeCellPadding(cell, numBytes.toInt() >> Word.widthValue().log2numberOfBytes);
+            Memory.setWords(cell, numBytes.toInt() >> Word.widthValue().log2numberOfBytes, deadSpaceMark());
         }
         Cell.plantTuple(cell, hub);
         Layout.writeMisc(Layout.cellToOrigin(cell), Word.zero());
