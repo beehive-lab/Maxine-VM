@@ -53,9 +53,9 @@ public class IR {
     public BlockBegin osrEntryBlock;
 
     /**
-     * The top IRScope.
+     * The top scope, represented by the frame state object.
      */
-    public IRScope topScope;
+    public FrameState topScope;
 
     /**
      * The linear-scan ordered list of blocks.
