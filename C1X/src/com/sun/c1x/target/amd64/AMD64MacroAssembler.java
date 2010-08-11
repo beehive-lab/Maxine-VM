@@ -107,7 +107,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         } else {
             if (target.inlineObjects) {
                 recordDataReferenceInCode(obj);
-                mov64(dst, 0xDEADDEADDEADDEADl);
+                mov64(dst, 0xDEADDEADDEADDEADL);
             } else {
                 movq(dst, recordDataReferenceInCode(obj));
             }

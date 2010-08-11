@@ -137,9 +137,9 @@ public class AMD64LIRAssembler extends LIRAssembler {
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
-        if( target.inlineObjects) {
+        if (target.inlineObjects) {
             masm.recordDataReferenceInCode(CiConstant.forObject(constant));
-            masm.mov64(dst, 0xDEADDEADDEADDEADl);
+            masm.mov64(dst, 0xDEADDEADDEADDEADL);
         } else {
             masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
         }
@@ -1770,7 +1770,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 }
                 case Pop: {
                     CiValue result = operands[inst.result.index];
-                    if( result.isRegister()) {
+                    if (result.isRegister()) {
                         masm.pop(result.asRegister());
                     } else {
                         masm.pop(compilation.target.scratchRegister);
@@ -1779,8 +1779,9 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case RawBytes: {
-                    for (byte b : (byte[]) inst.extra)
+                    for (byte b : (byte[]) inst.extra) {
                         masm.emitByte(b);
+                    }
                     break;
                 }
                 case ShouldNotReachHere: {
