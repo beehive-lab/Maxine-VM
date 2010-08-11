@@ -184,8 +184,8 @@ public class IRInterpreter {
             instructionValueMap.put(i, new Val(iCounter, value));
         }
 
-        public Environment(FrameState state, CiConstant[] values, IR ir) {
-            assert values.length <= state.localsSize() : "Incorrect number of initialization arguments";
+        public Environment(FrameState newFrameState, CiConstant[] values, IR ir) {
+            assert values.length <= newFrameState.localsSize() : "Incorrect number of initialization arguments";
             ir.startBlock.iteratePreOrder(new ValueMapInitializer());
             int index = 0;
 
@@ -193,7 +193,7 @@ public class IRInterpreter {
                 CiConstant obj;
                 // These conversions are necessary since the input values are
                 // parsed as integers
-                Value local = state.localAt(index);
+                Value local = newFrameState.localAt(index);
                 if (local.kind == CiKind.Float && value.kind == CiKind.Int) {
                     obj = CiConstant.forFloat(value.asInt());
                 } else if ((local.kind == CiKind.Double && value.kind == CiKind.Int)) {
@@ -1785,8 +1785,8 @@ public class IRInterpreter {
             System.out.println();
         }
 
-        private void printState(FrameState state) {
-            valuesDo(state, new ValueClosure() {
+        private void printState(FrameState newFrameState) {
+            valuesDo(newFrameState, new ValueClosure() {
 
                     public Value apply(Value i) {
                         CiConstant lookupValue;
