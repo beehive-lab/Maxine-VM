@@ -75,7 +75,7 @@ public final class GraphBuilder {
     final Canonicalizer canonicalizer;     // canonicalizer which does strength reduction + constant folding
     ScopeData scopeData;                   // Per-scope data; used for inlining
     BlockBegin curBlock;                   // the current block
-    FrameState curState;                   // the current execution state
+    MutableFrameState curState;            // the current execution state
     Instruction lastInstr;                 // the last instruction added
     final LogStream log;
     final int traceLevel;
@@ -121,8 +121,8 @@ public final class GraphBuilder {
         BlockBegin stdEntry = blockMap.get(0);
         BlockBegin osrEntry = compilation.osrBCI < 0 ? null : blockMap.get(compilation.osrBCI);
         pushRootScope(scope, blockMap, startBlock);
-        FrameState initialState = stateAtEntry(rootMethod);
-        startBlock.merge(initialState);
+        MutableFrameState initialState = stateAtEntry(rootMethod);
+        startBlock.mergeOrClone(initialState);
         BlockBegin syncHandler = null;
 
         // 3. setup internal state for appending instructions
@@ -156,7 +156,6 @@ public final class GraphBuilder {
         C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(rootMethod);
         if (intrinsic != null) {
             // 6A.1 the root method is an intrinsic; load the parameters onto the stack and try to inline it
-            curState = initialState.copy();
             lastInstr = curBlock;
             if (C1XOptions.OptIntrinsify) {
                 // try to inline an Intrinsic node
@@ -215,7 +214,7 @@ public final class GraphBuilder {
         base.setStateAfter(stateAfter);
         startBlock.setEnd(base);
         assert stdEntry.stateBefore() == null;
-        stdEntry.merge(stateAfter);
+        stdEntry.mergeOrClone(stateAfter);
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
@@ -385,11 +384,11 @@ public final class GraphBuilder {
 
         ArrayList<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
         ScopeData curScopeData = scopeData;
-        FrameState state = x.stateBefore();
+        FrameState stateBefore = x.stateBefore();
         int scopeCount = 0;
 
-        assert state != null : "exception handler state must be available for " + x;
-        state = state.immutableCopy();
+        assert stateBefore != null : "exception handler state must be available for " + x;
+        FrameState state = stateBefore;
         do {
             assert curScopeData.scope == state.scope() : "scopes do not match";
             assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream.currentBCI() : "invalid bci";
@@ -435,7 +434,7 @@ public final class GraphBuilder {
      * @param exceptionHandlers
      * @param handler
      * @param curScopeData
-     * @param curState
+     * @param curState the current state with empty stack
      * @param scopeCount
      * @return {@code true} if handler catches all exceptions (i.e. {@code handler.isCatchAll() == true})
      */
@@ -450,9 +449,9 @@ public final class GraphBuilder {
         assert entryState == null || curState.locksSize() == entryState.locksSize() : "locks do not match";
 
         // exception handler starts with an empty expression stack
-        curState.truncateStack(curScopeData.callerStackSize());
+        curState = curState.immutableCopyWithEmptyStack();
 
-        entry.merge(curState);
+        entry.mergeOrClone(curState);
 
         // add current state for correct handling of phi functions
         int phiOperand = entry.addExceptionState(curState);
@@ -1062,13 +1061,14 @@ public final class GraphBuilder {
                 genMonitorExit(object, Instruction.SYNCHRONIZATION_ENTRY_BCI);
             }
 
-            // trim back stack to the caller's stack size
-            curState.truncateStack(scopeData.callerStackSize());
+            // empty stack for return value
+            curState.truncateStack(0);
             if (x != null) {
                 curState.push(x.kind, x);
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
+            // ATTN: assumption: curState is not used further down, else add .immutableCopy()
             scopeData.updateSimpleInlineInfo(curBlock, lastInstr, curState);
 
             // State at end of inlined method is the state of the caller
@@ -1330,10 +1330,12 @@ public final class GraphBuilder {
     }
 
     void pushScope(RiMethod target, BlockBegin continuation) {
+        // prepare callee scope
         IRScope calleeScope = new IRScope(scope(), bci(), target, -1);
         BlockMap blockMap = compilation.getBlockMap(calleeScope.method, -1);
-        calleeScope.setCallerState(curState);
+        calleeScope.setCallerState(curState.immutableCopy());
         calleeScope.setStoresInLoops(blockMap.getStoresInLoops());
+        // prepare callee state
         curState = curState.pushScope(calleeScope);
         BytecodeStream stream = new BytecodeStream(target.code());
         RiConstantPool constantPool = compilation.runtime.getConstantPool(target);
@@ -1342,8 +1344,8 @@ public final class GraphBuilder {
         scopeData = data;
     }
 
-    FrameState stateAtEntry(RiMethod method) {
-        FrameState state = new FrameState(scope(), method.maxLocals(), method.maxStackSize());
+    MutableFrameState stateAtEntry(RiMethod method) {
+        MutableFrameState state = new MutableFrameState(scope(), method.maxLocals(), method.maxStackSize());
         int index = 0;
         if (!isStatic(method.accessFlags())) {
             // add the receiver and assume it is non null
@@ -1557,7 +1559,7 @@ public final class GraphBuilder {
         // setup state that is used at returns from the inlined method.
         // this is essentially the state of the continuation block,
         // but without the return value on the stack.
-        scopeData.setContinuationState(scope().callerState().copy());
+        scopeData.setContinuationState(scope().callerState());
 
         // compute the lock stack size for callee scope
         scope().computeLockStackSize();
@@ -1580,7 +1582,7 @@ public final class GraphBuilder {
             gotoCallee.setStateAfter(curState.immutableCopy());
             appendWithoutOptimization(gotoCallee, 0);
             curBlock.setEnd(gotoCallee);
-            calleeStartBlock.merge(calleeState);
+            calleeStartBlock.mergeOrClone(calleeState);
             lastInstr = curBlock = calleeStartBlock;
             scopeData.addToWorkList(calleeStartBlock);
             // now iterate over all the blocks
@@ -1639,12 +1641,12 @@ public final class GraphBuilder {
         stats.inlineCount++;
     }
 
-    private Value synchronizedObject(FrameState state, RiMethod target) {
+    private Value synchronizedObject(FrameState curState2, RiMethod target) {
         if (isStatic(target.accessFlags())) {
             Constant classConstant = Constant.forObject(target.holder().javaClass());
             return appendWithoutOptimization(classConstant, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         } else {
-            return state.localAt(0);
+            return curState2.localAt(0);
         }
     }
 
@@ -1659,7 +1661,7 @@ public final class GraphBuilder {
 
     void fillSyncHandler(Value lock, BlockBegin syncHandler, boolean inlinedMethod) {
         BlockBegin origBlock = curBlock;
-        FrameState origState = curState;
+        MutableFrameState origState = curState;
         Instruction origLast = lastInstr;
 
         lastInstr = curBlock = syncHandler;
@@ -1687,7 +1689,7 @@ public final class GraphBuilder {
         if (inlinedMethod) {
             popScope();
             bci = curState.scope().callerBCI();
-            curState = curState.popScope().copy();
+            curState = curState.popScope();
         }
 
         apush(exception);
@@ -1750,7 +1752,7 @@ public final class GraphBuilder {
         BlockBegin target = scopeData.blockAt(osrBCI);
         assert target != null && target.isOsrEntry();
 
-        FrameState state = target.stateBefore().copy();
+        MutableFrameState state = target.stateBefore().copy();
         ir.osrEntryBlock.setStateBefore(state);
 
         killMemoryMap();
@@ -1783,10 +1785,11 @@ public final class GraphBuilder {
 
         assert state.scope().callerState() == null;
         state.clearLocals();
-        Goto g = new Goto(target, state.copy(), false);
+        // ATTN: assumption: state is not used further below, else add .immutableCopy()
+        Goto g = new Goto(target, state, false);
         append(g);
         ir.osrEntryBlock.setEnd(g);
-        target.merge(ir.osrEntryBlock.end().stateAfter());
+        target.mergeOrClone(ir.osrEntryBlock.end().stateAfter());
     }
 
     BlockEnd iterateBytecodesForBlock(int bci, boolean inliningIntoCurrentBlock) {
@@ -2129,7 +2132,7 @@ public final class GraphBuilder {
         // propagate the state
         for (BlockBegin succ : end.successors()) {
             assert succ.predecessors().contains(curBlock);
-            succ.merge(end.stateAfter());
+            succ.mergeOrClone(end.stateAfter());
             scopeData.addToWorkList(succ);
         }
         return end;
