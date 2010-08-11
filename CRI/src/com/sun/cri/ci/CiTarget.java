@@ -39,6 +39,7 @@ public class CiTarget {
     public final int pageSize;
     public final boolean isMP;
     private final int[] spillSlotsPerKindMap;
+    public final boolean inlineObjects;
 
     /**
      * The spill slot size for values that occupy 1 {@linkplain CiKind#sizeInSlots() Java slot}.
@@ -62,7 +63,8 @@ public class CiTarget {
              int pageSize,
              int cacheAlignment,
              int heapAlignment,
-             int codeAlignment) {
+             int codeAlignment,
+             boolean inlineObjects) {
         this.arch = arch;
         this.registerConfig = registerConfig;
         this.pageSize = pageSize;
@@ -74,6 +76,7 @@ public class CiTarget {
         this.cacheAlignment = cacheAlignment;
         this.codeAlignment = codeAlignment;
         this.heapAlignment = heapAlignment;
+        this.inlineObjects = inlineObjects;
         
         this.stackPointerRegister = registerConfig.getStackPointerRegister();
         this.scratchRegister = registerConfig.getScratchRegister();

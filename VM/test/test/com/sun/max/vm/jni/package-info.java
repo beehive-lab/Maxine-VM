@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * Tests for the MaxineVM compiler
+ * Tests for the MaxineVM compiler.
  *
  * @author Doug Simon
  */

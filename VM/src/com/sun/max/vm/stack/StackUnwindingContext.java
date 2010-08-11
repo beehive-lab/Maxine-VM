@@ -25,7 +25,7 @@ import com.sun.max.unsafe.*;
 /**
  * Carries context that may be necessary while unwinding a stack for exception handling.
  * The information that needs to be carried, beside the exception object, is platform-dependent.
- * Platforms that needs additional information must extend this class.
+ * Platforms that need additional information must extend this class.
  *
  * @author Laurent Daynes
  * @author Paul Caprioli
@@ -34,20 +34,14 @@ public class StackUnwindingContext {
     /**
      * The cause of the stack unwinding.
      */
-    public final Throwable throwable;
-    protected Word stackPointer;
+    public Throwable throwable;
+    public Word stackPointer;
+
+    public StackUnwindingContext() {
+    }
 
     public StackUnwindingContext(Word stackPointer, Throwable throwable) {
         this.throwable = throwable;
         this.stackPointer = stackPointer;
     }
-
-    public void setStackPointer(Pointer stackPointer) {
-        this.stackPointer = stackPointer;
-    }
-
-    public Pointer stackPointer() {
-        return stackPointer.asPointer();
-    }
-
 }

@@ -43,9 +43,10 @@ public class Object_wait01  extends RunBench {
 
     }
 
-    static class Bench extends AbstractMicroBenchmark {
+    static class Bench extends MicroBenchmark {
 
-        public void run(boolean warmup) {
+        @Override
+        public long run() {
             synchronized (object) {
                 try {
                     object.wait();
@@ -53,15 +54,18 @@ public class Object_wait01  extends RunBench {
                 }
                 count++;
             }
+            return defaultResult;
         }
     }
 
-    static class EncapBench extends AbstractMicroBenchmark {
+    static class EncapBench extends MicroBenchmark {
 
-        public void run(boolean warmup) {
+        @Override
+        public long run() {
             synchronized (object) {
                 count++;
             }
+            return defaultResult;
         }
     }
 

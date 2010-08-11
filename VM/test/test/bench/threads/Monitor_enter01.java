@@ -37,18 +37,22 @@ public class Monitor_enter01 extends RunBench {
         return new Monitor_enter01().runBench(true);
     }
 
-    static class Bench extends AbstractMicroBenchmark {
+    static class Bench extends MicroBenchmark {
 
-        public void run(boolean warmup) {
+        @Override
+        public long run() {
             synchronized (this) {
                 count++;
             }
+            return defaultResult;
         }
     }
 
-    static class EncapBench extends AbstractMicroBenchmark {
-        public void run(boolean warmup) {
+    static class EncapBench extends MicroBenchmark {
+        @Override
+        public long run() {
             count++;
+            return defaultResult;
         }
     }
 

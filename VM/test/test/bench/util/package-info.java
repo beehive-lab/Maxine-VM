@@ -18,8 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.bench.util;
-
 /**
  * Framework for running micro-benchmarks, see {@link test.bench.util.RunBench}.
  */
+package test.bench.util;

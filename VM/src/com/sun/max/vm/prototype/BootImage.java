@@ -208,7 +208,7 @@ public class BootImage {
         public final int heapSize;
         public final int codeSize;
 
-        public final int heapRegionsPointerOffset;
+        public final int dynamicHeapRegionsArrayFieldOffset;
 
         public final int auxiliarySpaceSize;
 
@@ -278,7 +278,7 @@ public class BootImage {
             heapSize = endian.readInt(dataInputStream);
             codeSize = endian.readInt(dataInputStream);
 
-            heapRegionsPointerOffset = endian.readInt(dataInputStream);
+            dynamicHeapRegionsArrayFieldOffset = endian.readInt(dataInputStream);
 
             auxiliarySpaceSize = endian.readInt(dataInputStream);
 
@@ -332,7 +332,7 @@ public class BootImage {
             heapSize = dataPrototype.heapData().length;
             codeSize = dataPrototype.codeData().length;
 
-            heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "memoryRegions");
+            dynamicHeapRegionsArrayFieldOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "dynamicHeapMemoryRegions");
 
             auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(heapSize + codeSize);
 

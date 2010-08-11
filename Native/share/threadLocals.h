@@ -207,6 +207,7 @@ typedef struct {
     Address tlBlockSize;
     Address stackYellowZone; // unmapped to cause a trap on access
     Address stackRedZone;    // unmapped always - fatal exit if accessed
+    Address stackRedZoneIsProtectedByVM; // non-zero if the VM explicitly mprotected the red zone
 
     /*
      * The blue zone is a page that is much closer to the base of the stack and is optionally protected.

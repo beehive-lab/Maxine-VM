@@ -62,7 +62,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         register(new VMBooleanXXOption("-XX:+", "UseLOS", "Use a large object space"),
                         MaxineVM.Phase.PRISTINE);
 
-    /**
+   /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
      * appended to a TLAB to fill unused space before a TLAB refill.
      * The headroom is used to compute a soft limit that'll be used as the tlab's top.

@@ -161,18 +161,34 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         this.teleObjectFactory = TeleObjectFactory.make(vm, vm.teleProcess().epoch());
         this.teleHeapScheme = teleHeapScheme;
         this.entityDescription = "Object creation and management for the " + vm().entityName();
+        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
-        // Before initialization we can't actually read regions, yet another example of
-        // potential circularity. Fake an entry for the boot heap region.
-        // The fake entry gets replaced with a real one when the call to initialize() comes.
+        final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>();
+
+        /*
+         * Before initialization we can't actually read the VM's descriptions of its heap regions,
+         * since those are represented as VM objects (circularity).  This is true for both the
+         * boot heap and any dynamically allocated heap regions (we might find these when attaching
+         * to a running VM or inspecting a dumped image).
+         * But we have to know the location of the heap regions in order to build up the
+         * {@link TeleClassRegistry}, so we start here by determining the locations with very
+         * low level (unsafe) machinery and using those to create fake representations.
+         * The fake representations are replaced with the real ones when this class is initialized.
+         */
+
+        // We know specifically about the boot heap region.
         final Pointer bootHeapStart = vm().bootImageStart();
         final Size bootHeapSize = Size.fromInt(vm().bootImage().header.heapSize);
-        final TeleFixedHeapRegion provisionalBootHeapRegion =
+        final TeleFixedHeapRegion fakeBootHeapRegion =
             new TeleFixedHeapRegion(vm, "Fake Heap-boot region", bootHeapStart, bootHeapSize, true);
-        final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>(1);
-        heapRegions.add(provisionalBootHeapRegion);
+        heapRegions.add(fakeBootHeapRegion);
+        // There might be dynamically allocated regions in a dumped image or when attaching to a running VM
+        for (MaxMemoryRegion dynamicHeapRegion : vm.getDynamicHeapRegionsUnsafe()) {
+            final TeleFixedHeapRegion fakeDynamicHeapRegion =
+                new TeleFixedHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.size(), false);
+            heapRegions.add(fakeDynamicHeapRegion);
+        }
         this.allHeapRegions = Collections.unmodifiableList(heapRegions);
-        this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(statsPrinter);
     }
@@ -180,9 +196,6 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
     /**
      * This class must function before being fully initialized in order to avoid an initialization
      * cycle with {@link TeleClassRegistry}; each depends on the other for full initialization.
-     * <br>
-     * When not yet initialized, this manager assumes that there is a boot heap region but no
-     * dynamically allocated regions.
      *
      * @return whether this manager has been fully initialized.
      */
@@ -249,7 +262,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
             updatingHeapMemoryRegions = true;
             final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>(allHeapRegions.size());
             heapRegions.add(bootHeapRegion);
-            final Reference runtimeHeapRegionsArrayReference = vm().teleFields().InspectableHeapInfo_memoryRegions.readReference(vm());
+            final Reference runtimeHeapRegionsArrayReference = vm().teleFields().InspectableHeapInfo_dynamicHeapMemoryRegions.readReference(vm());
             if (!runtimeHeapRegionsArrayReference.isZero()) {
                 final TeleArrayObject teleArrayObject = (TeleArrayObject) makeTeleObject(runtimeHeapRegionsArrayReference);
                 final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
@@ -321,15 +334,6 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
     }
 
     public boolean contains(Address address) {
-        if (!isInitialized()) {
-            // When this instance hasn't been initialized, the list of heap regions contains only
-            // the faked region descriptor for the boot heap region (since the VM hasn't had a chance
-            // do do any dynamic heap allocations yet).
-            // In this situation we need only consult the boot heap region.
-            // In particular, we must avoid any call to {@link TeleObject#make()}, which depends
-            // on {@link TeleClassRegistry}, which probably hasn't been set up yet.
-            return allHeapRegions.get(0).contains(address);
-        }
         if (updatingHeapMemoryRegions) {
             // The call is nested within a call to {@link #refresh}, assume all is well in order
             // avoid circularity problems while updating the heap region list.

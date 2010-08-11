@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Unit tests for ARM assembly
- * 
+ * Unit tests for ARM assembly.
+ *
  * @author Sumeet Panchal
  */
 package test.com.sun.max.asm.arm;

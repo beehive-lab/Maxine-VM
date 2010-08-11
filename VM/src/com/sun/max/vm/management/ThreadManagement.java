@@ -21,13 +21,14 @@
 package com.sun.max.vm.management;
 
 import java.lang.management.*;
-import java.lang.reflect.Constructor;
+import java.lang.reflect.*;
+import java.util.*;
 
-import com.sun.max.lang.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
-//import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
-
 
 /**
  * This class provides the entry point to all the thread management functions in Maxine.
@@ -43,7 +44,7 @@ public class ThreadManagement {
     private static Constructor<?> threadInfoConstructor;
 
     public static Thread[] getThreads() {
-        return VmThreadMap.getThreads();
+        return VmThreadMap.getThreads(false);
     }
 
     public static int getDaemonThreadCount() {
@@ -79,19 +80,23 @@ public class ThreadManagement {
     public static void getThreadInfo(long[] ids, int maxDepth, ThreadInfo[] result) {
         // The ids are java.lang.Thread ids from getId()
         // maxDepth is -1 when the entire stack is requested, not MAX_VALUE as in API call (see sun.management.ThreadImpl)
+        // we revert that rather odd decision here
         checkThreadInfoConstructor();
+        if (maxDepth < 0) {
+            maxDepth = Integer.MAX_VALUE;
+        }
         for (int i = 0; i < ids.length; i++) {
             final Thread thread = findThread(ids[i]);
             if (thread == null || thread.getState() == Thread.State.TERMINATED) {
                 result[i] = null;
             } else {
-                // we don't handle any of the lock information or stack trace yet
+                // we don't handle any of the lock information yet
                 try {
                     final Object obj = threadInfoConstructor.newInstance(new Object[] {
                         thread, thread.getState().ordinal(), null, null,
                         0, 0,
                         0, 0,
-                        getStackTrace(thread, maxDepth),
+                        maxDepth == 0 ? new StackTraceElement[0] : getStackTrace(thread, maxDepth),
                         null,
                         null,
                         null
@@ -105,6 +110,15 @@ public class ThreadManagement {
     }
 
     /**
+     * Support method for {@link Thread#getAllStackTraces}.
+     * @param threads
+     * @return
+     */
+    public static StackTraceElement[][] dumpThreads(Thread[] threads) {
+        return getStackTrace(threads, Integer.MAX_VALUE);
+    }
+
+    /**
      * Return info on all or a subset of threads, with optional info on locking.
      * @param ids thread ids or null if all threads
      * @param lockedMonitors
@@ -113,7 +127,7 @@ public class ThreadManagement {
      */
     public static ThreadInfo[] dumpThreads(long[] ids, boolean lockedMonitors, boolean lockedSynchronizers) {
         if (ids == null) {
-            final Thread[] threads = VmThreadMap.getThreads();
+            final Thread[] threads = VmThreadMap.getThreads(false);
             ids = new long[threads.length];
             for (int i = 0; i < threads.length; i++) {
                 Thread t = threads[i];
@@ -121,26 +135,26 @@ public class ThreadManagement {
             }
         }
         ThreadInfo[] threadInfoArray = new ThreadInfo[ids.length];
-        getThreadInfo(ids, 0, threadInfoArray);
+        getThreadInfo(ids, Integer.MAX_VALUE, threadInfoArray);
         return threadInfoArray;
     }
 
     public static Thread findThread(long id) {
         FindProcedure proc = new FindProcedure(id);
         synchronized (VmThreadMap.ACTIVE) {
-            VmThreadMap.ACTIVE.forAllThreads(null, proc);
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, proc);
         }
         return proc.result;
     }
 
-    static class FindProcedure implements Procedure<VmThread> {
+    static class FindProcedure implements Pointer.Procedure {
         Thread result = null;
         private long id;
         FindProcedure(long id) {
             this.id = id;
         }
-        public void run(VmThread vmThread) {
-            final Thread t = vmThread.javaThread();
+        public void run(Pointer vmThreadLocals) {
+            final Thread t = VmThread.fromVmThreadLocals(vmThreadLocals).javaThread();
             if (t.getId() == id) {
                 result = t;
             }
@@ -148,11 +162,63 @@ public class ThreadManagement {
     }
 
     private static StackTraceElement[] getStackTrace(Thread thread, int maxDepth) {
-        if (maxDepth == 0) {
-            return new StackTraceElement[0];
+        assert maxDepth > 0;
+        Thread[] threads = {thread};
+        return getStackTrace(threads, maxDepth)[0];
+    }
+
+    private static StackTraceElement[][] getStackTrace(Thread[] threads, int maxDepth) {
+        final StackTraceElement[][] traces = new StackTraceElement[threads.length][];
+        int currentThreadIndex = -1;
+        for (int i = 0; i < threads.length; i++) {
+            if (threads[i] == Thread.currentThread()) {
+                // special case of current thread
+                currentThreadIndex = i;
+                // null it out so StackTraceGatherer will not try to stop it
+                threads[i] = null;
+                StackTraceElement[] trace = new Exception().getStackTrace();
+                if (maxDepth < trace.length) {
+                    trace = Arrays.copyOf(trace, maxDepth);
+                }
+                traces[i] = trace;
+            }
         }
-        // TODO This needs all the safepoint machinery to stop the thread before we can collect its frames.
-        return new StackTraceElement[0];
+        new StackTraceGatherer(Arrays.asList(threads), traces, maxDepth).run();
+        if (currentThreadIndex >= 0) {
+            threads[currentThreadIndex] = Thread.currentThread();
+        }
+        return traces;
+    }
+
+    /**
+     * A thread-freezing operation to get a stack trace for a given set of threads.
+     *
+     * @author Doug Simon
+     */
+    static final class StackTraceGatherer extends FreezeThreads {
+        final int maxDepth;
+        final StackTraceElement[][] traces;
+        final List<Thread> threads;
+        StackTraceGatherer(List<Thread> threads, StackTraceElement[][] result, int maxDepth) {
+            super("StackTraceGatherer", new ThreadListPredicate(threads));
+            this.threads = threads;
+            this.maxDepth = maxDepth;
+            this.traces = result;
+        }
+
+        @Override
+        public void doThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+            VmThread vmThread = VmThread.fromVmThreadLocals(threadLocals);
+            final List<StackFrame> frameList = new ArrayList<StackFrame>();
+            new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
+            Thread thread = vmThread.javaThread();
+            traces[threads.indexOf(thread)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
+        }
+    }
+
+
+    public static Thread[] findMonitorDeadlockedThreads() {
+        return null;
     }
 
     public static void checkThreadInfoConstructor() {
@@ -174,6 +240,5 @@ public class ThreadManagement {
             }
         }
     }
-
-
 }
+

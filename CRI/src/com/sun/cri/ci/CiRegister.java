@@ -297,7 +297,7 @@ public final class CiRegister {
             allocatableFPRegisters = fpRegs.toArray(new CiRegister[fpRegs.size()]);
             allocatableCpuRegisters = cpuRegs.toArray(new CiRegister[cpuRegs.size()]);
             allocatableByteRegisters = byteRegs.toArray(new CiRegister[byteRegs.size()]);
-
+            
             nofRegs = maxRegNum + 1;
             this.refMapSize = referenceMapTemplate.length;
             this.registerMap = new CiRegister[nofRegs];

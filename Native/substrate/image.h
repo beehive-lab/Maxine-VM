@@ -50,7 +50,7 @@
     f(relocationDataSize) \
     f(heapSize) /* multiple of 'pageSize'  */ \
     f(codeSize) /* multiple of 'pageSize'  */ \
-    f(heapRegionsPointerOffset) \
+    f(dynamicHeapRegionsArrayOffset) \
     f(auxiliarySpaceSize) /* Some extra space that the substrate allocates by malloc(). Used e.g. for the primordial card table.  */ \
     f(threadLocalsListHeadOffset) /* See the comment for the 'threadLocalsListHead' field in the VmThreadMap class.  */ \
     f(primordialThreadLocalsOffset) \

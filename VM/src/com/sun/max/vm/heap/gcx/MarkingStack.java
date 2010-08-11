@@ -26,7 +26,11 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Fixed size marking stack for heap tracer.
@@ -65,10 +69,6 @@ public class MarkingStack {
     private OverflowHandler overflowHandler;
     private MarkingStackCellVisitor drainingCellVisitor;
 
-    void setCellVisitor(MarkingStackCellVisitor cellVisitor) {
-        drainingCellVisitor = cellVisitor;
-    }
-
     /**
      * Sets an overflow handler.
      * @param handler an marking stack overflow handler.
@@ -80,8 +80,9 @@ public class MarkingStack {
     MarkingStack() {
     }
 
-    void initialize() {
-        // FIXME: a better solution might be to allocate this in the heap, outside of the covered area, as a reference array,
+    void initialize(MarkingStackCellVisitor cellVisitor) {
+        drainingCellVisitor = cellVisitor;
+       // FIXME: a better solution might be to allocate this in the heap, outside of the covered area, as a reference array,
         // Root marking will skip it.
         // Same with the other GC data structures (i.e., rescan map and mark bitmap)
         final int length = markingStackSizeOption.getValue();
@@ -104,6 +105,11 @@ public class MarkingStack {
     }
 
     void push(Pointer cell) {
+        if (MaxineVM.isDebug()) {
+            final Pointer origin = Layout.cellToOrigin(cell);
+            Reference hubRef = Layout.readHubReference(origin);
+            FatalError.check(!hubRef.isZero() && hubRef.toJava() instanceof Hub, "Invalid pointer pushed on marking stack");
+        }
         if (topIndex < last) {
             base.asPointer().setWord(topIndex++, cell);
             if (MaxineVM.isDebug() && Heap.traceGC()) {
@@ -147,16 +153,21 @@ public class MarkingStack {
         if (MaxineVM.isDebug() && Heap.traceGC()) {
             Log.println("MarkingStack begin draining");
         }
-        while (topIndex > 0) {
-            drainingCellVisitor.visitPoppedCell(base.asPointer().getWord(--topIndex).asPointer());
+        if (MaxineVM.isDebug()) {
+            FatalError.check(draining.isZero(), "Cannot drain an already draining marking stack");
         }
+        while (topIndex > 0) {
+            draining = base.asPointer().getWord(--topIndex).asPointer();
+            drainingCellVisitor.visitPoppedCell(draining);
+        }
+        draining = Pointer.zero();
         if (MaxineVM.isDebug() && Heap.traceGC()) {
             Log.println("MarkingStack ends draining");
         }
     }
 
     void flush() {
-        if (!draining.isZero()) {
+       if (!draining.isZero()) {
             drainingCellVisitor.visitFlushedCell(draining);
             draining = Pointer.zero();
         }
@@ -165,6 +176,19 @@ public class MarkingStack {
         }
         if (MaxineVM.isDebug() && Heap.traceGC()) {
             Log.println("MarkingStack flushed");
+        }
+    }
+
+    void print() {
+        if (!draining.isZero()) {
+            Log.print("        ");
+            Log.print(draining);
+            Log.println("  [d]");
+        }
+        int index = topIndex;
+        while(index > 0) {
+            Log.print("        ");
+            Log.println(base.asPointer().getWord(--index).asPointer());
         }
     }
 }

@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * Biased locking mode handler for ModalMonitorScheme
+ * Biased locking mode handler for ModalMonitorScheme.
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;

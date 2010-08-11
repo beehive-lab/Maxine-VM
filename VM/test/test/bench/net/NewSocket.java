@@ -55,9 +55,10 @@ public class NewSocket extends NetSettings {
         return new NewSocket(new CloseBench()).runBench(true);
     }
 
-    static class OpenCloseBench extends AbstractMicroBenchmark {
+    static class OpenCloseBench extends MicroBenchmark {
 
-        public void run(boolean warmup) {
+        @Override
+        public long run() {
             Socket s = null;
             try {
                 s = new Socket(host(), port());
@@ -71,20 +72,22 @@ public class NewSocket extends NetSettings {
                     }
                 }
             }
+            return defaultResult;
         }
     }
 
-    static class OpenBench extends AbstractMicroBenchmark {
+    static class OpenBench extends MicroBenchmark {
 
         private Socket socket;
 
         @Override
-        public void run(boolean warmup) {
+        public long run() {
             try {
                 socket = new Socket(host(), port());
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+            return defaultResult;
         }
 
         @Override
@@ -99,7 +102,7 @@ public class NewSocket extends NetSettings {
         }
     }
 
-    static class CloseBench extends AbstractMicroBenchmark {
+    static class CloseBench extends MicroBenchmark {
 
         private Socket socket;
 
@@ -113,7 +116,7 @@ public class NewSocket extends NetSettings {
         }
 
         @Override
-        public void run(boolean warmup) {
+        public long run() {
             try {
                 if (socket != null) {
                     socket.close();
@@ -121,6 +124,7 @@ public class NewSocket extends NetSettings {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            return defaultResult;
         }
     }
 

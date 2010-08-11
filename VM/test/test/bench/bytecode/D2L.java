@@ -20,7 +20,7 @@
  */
 /*
  * @Harness: java
- * @Runs: 0 = true
+ * @Runs: 0.4 = true
  */
 package test.bench.bytecode;
 
@@ -34,39 +34,29 @@ import test.bench.util.*;
  */
 public class D2L extends RunBench {
 
-    protected D2L() {
-        super(new Bench(), new EncapBench());
+    protected D2L(double d) {
+        super(new Bench(d));
     }
 
-    public static boolean test() {
-        return new D2L().runBench(true);
+    public static boolean test(double d) {
+        return new D2L(d).runBench(true);
     }
 
-    static class Bench extends AbstractMicroBenchmark {
-        public void run(boolean warmup) {
-            d2l(0.4);
+    static class Bench extends MicroBenchmark {
+        double d;
+        Bench(double d) {
+            this.d = d;
         }
-
-        @SuppressWarnings("unused")
-        private static void d2l(double d) {
-            long i = (long) d;
-        }
-
-    }
-
-    static class EncapBench extends AbstractMicroBenchmark {
-
-        public void run(boolean warmup) {
-            d2l(0.4);
-        }
-
-        private static void d2l(double d) {
+        @Override
+        public long run() {
+            long l =  (long) d;
+            return l;
         }
 
     }
 
     public static void main(String[] args) {
-        RunBench.runTest(D2L.class, args);
+        test(0.4);
     }
 
 }

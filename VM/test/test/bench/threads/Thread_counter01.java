@@ -20,7 +20,7 @@
  */
 /*
  * @Harness: java
- * @Runs: (1, 1000) = true;
+ * @Runs: (1, 100000) = true;
  */
 package test.bench.threads;
 
@@ -28,128 +28,123 @@ import test.bench.util.*;
 
 /**
  * This benchmark runs a given number of threads, each of which
- * increments a private counter, for a given number of milliseconds
- * specified by the {@code runTime} value. It reports the sum of the counts.
- * It essentially provides a baseline for Thread_counter2.
+ * decrements a private counter until it reaches zero.
+ * It provides a baseline for {@link Thread_counter3}.
  *
- * The number of threads defaults the the value passed into the
+ * The number of threads defaults to the value passed into the
  * test method (default 1).
  *
- * The result count should scale linearly with the number of threads.
+ * On an SMP the time should scale (down) linearly with the number of threads.
+ *
  *
  * @author Mick Jordan
  */
 public class Thread_counter01  extends RunBench {
 
+    protected static final int DEFAULT_COUNT = 100000;
     protected static int threadCount;
-    protected static int runTime;
-    protected static volatile boolean done;
-    protected static long[] totalCounts;
+    protected static long countDown;
+    protected static Barrier startBarrier;
 
-    protected Thread_counter01(MicroBenchmark bench) {
-        super(bench, null);
-        totalCounts = new long[loopCount()];
+    protected Thread_counter01(MicroBenchmark bench, int t, long c) {
+        super(bench, new Bench(new EmptyRunnerFactory()));
+        threadCount = t;
+        countDown = c;
     }
 
-    public static boolean test(int t, int r) {
-        threadCount = t;
-        runTime = r;
-        final boolean result = new Thread_counter01(new Bench(new OpenRunnerFactory())).runBench(true);
-        displayCounts();
+    public static boolean test(int t, int c) {
+        final boolean result = new Thread_counter01(new Bench(new OpenRunnerFactory()), t, c).runBench(true);
         return result;
     }
 
-    protected static void displayCounts() {
-        for (int i = 0; i < totalCounts.length; i++) {
-            System.out.println("  total count for run " + i + ": " + totalCounts[i]);
-        }
-    }
+    static class Bench extends MicroBenchmark {
 
-    static class Bench extends AbstractMicroBenchmark {
-
-        private static Timer benchTimer;
         private RunnerFactory runnerFactory;
         private int runCount = 0;
+        private Thread[] threads;
+        private volatile int started;
 
         Bench(RunnerFactory runnerFactory) {
             this.runnerFactory = runnerFactory;
         }
 
-        public void run(boolean warmup) {
-            done = false;
-            final Thread[] threads = new Thread[threadCount];
-            final CountingRunner[] benches = new CountingRunner[threadCount];
+        @Override
+        public void prerun() {
+            threads = new Thread[threadCount];
+            final CountingRunner[] counter = new CountingRunner[threadCount];
             for (int i = 0; i < threadCount; i++) {
-                benches[i] = runnerFactory.createRunner(threadCount);
-                threads[i] = new Thread(benches[i]);
+                counter[i] = runnerFactory.createRunner(countDown, threadCount);
+                threads[i] = new Thread(counter[i]);
             }
-            benchTimer = new Timer(runTime);
-            new Thread(benchTimer).start();
+            startBarrier = new Barrier(threadCount + 1);
+            // start the threads which will wait at the barrier
             for (int i = 0; i < threadCount; i++) {
                 threads[i].start();
             }
+        }
+
+        @Override
+        public long run() {
+            startBarrier.waitForRelease();
             for (int i = 0; i < threadCount; i++) {
                 try {
                     threads[i].join();
                 } catch (InterruptedException ex) {
                 }
-                if (!warmup) {
-                    totalCounts[runCount] = benches[i].getCount();
-                }
             }
-            if (!warmup) {
-                runCount++;
-            }
+            return defaultResult;
         }
-
     }
 
     abstract static class RunnerFactory {
-        abstract CountingRunner createRunner(int threadCount);
+        abstract CountingRunner createRunner(long count, int threadCount);
     }
 
     abstract static class CountingRunner implements Runnable {
-        protected long count;
         public abstract void run();
-        public long getCount() {
-            return count;
-        }
     }
 
     static class OpenRunner extends CountingRunner {
+        private long count;
+        OpenRunner(long count) {
+            this.count = count;
+        }
         @Override
         public void run() {
-            while (!done) {
-                count++;
+            startBarrier.waitForRelease();
+            while (count > 0) {
+                count--;
             }
+        }
+    }
+
+    static class EmptyRunner extends CountingRunner {
+        @Override
+        public void run() {
+            startBarrier.waitForRelease();
         }
     }
 
     static class OpenRunnerFactory extends RunnerFactory {
         @Override
-        CountingRunner createRunner(int threadCount) {
-            return new OpenRunner();
+        CountingRunner createRunner(long count, int threadCount) {
+            return new OpenRunner(count / threadCount);
         }
     }
 
-    static class Timer implements Runnable {
-        private long runtime;
-        public Timer(long runtime) {
-            this.runtime = runtime;
-        }
-
-        public void run() {
-            try {
-                Thread.sleep(runtime);
-            } catch (InterruptedException ex) {
-
-            }
-            done = true;
+    static class EmptyRunnerFactory extends RunnerFactory {
+        @Override
+        CountingRunner createRunner(long count, int threadCount) {
+            return new EmptyRunner();
         }
     }
 
     // for running stand-alone
     public static void main(String[] args) {
-        test(2, 1000);
+        if (args.length == 0) {
+            test(1, DEFAULT_COUNT);
+        } else {
+            test(Integer.parseInt(args[0]), DEFAULT_COUNT);
+        }
     }
 }

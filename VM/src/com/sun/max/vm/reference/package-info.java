@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Object reference specifications and operations
- * 
+ * Object reference specifications and operations.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.reference;

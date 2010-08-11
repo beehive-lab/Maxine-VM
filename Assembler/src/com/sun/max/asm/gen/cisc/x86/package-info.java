@@ -20,8 +20,8 @@
  */
 /**
  * x86 assembly instruction tables and generated templates,
- * operand types
- * 
+ * operand types.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.asm.gen.cisc.x86;

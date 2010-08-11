@@ -159,6 +159,7 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
     } else if (!attaching) {
         /* Thread library creates a red-zone guard page just below the stack */
         ntl->stackRedZone = ntl->stackBase - (STACK_RED_ZONE_PAGES * pageSize);
+        ntl->stackRedZoneIsProtectedByVM = false;
 
         /* Yellow guard page is bottom page of stack */
         ntl->stackYellowZone = ntl->stackBase;
@@ -168,6 +169,7 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
     } else {
         /* Cannot determine if the thread library created a red-zone guard page */
         ntl->stackRedZone = ntl->stackBase;
+        ntl->stackRedZoneIsProtectedByVM = true;
 
         /* Yellow guard page is just above red-zone */
         ntl->stackYellowZone = ntl->stackBase + (STACK_RED_ZONE_PAGES * pageSize);

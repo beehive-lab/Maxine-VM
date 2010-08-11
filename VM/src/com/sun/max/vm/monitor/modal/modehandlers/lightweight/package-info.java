@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * Lightweight locking mode handlers for ModalMonitorScheme
+ * Lightweight locking mode handlers for ModalMonitorScheme.
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight;
