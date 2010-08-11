@@ -25,14 +25,12 @@ import java.util.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 
 public class MutableFrameState extends FrameState {
 
-
-    public MutableFrameState(FrameState caller, int callerBCI, RiMethod method, int osrBCI, int maxLocals, int maxStack) {
-        super(caller, callerBCI, method, osrBCI, maxLocals, maxStack);
+    public MutableFrameState(IRScope irScope, int maxLocals, int maxStack) {
+        super(irScope, maxLocals, maxStack);
     }
 
     /**

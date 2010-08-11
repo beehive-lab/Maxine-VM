@@ -39,11 +39,7 @@ public abstract class FrameState {
     protected int stackIndex;
     protected final int maxLocals;
 
-    protected final FrameState caller;
-    public final RiMethod method;
-    public final int level;
-    final int callerBCI;
-    final int osrBCI;
+    protected final IRScope scope;
     protected ArrayList<Value> locks;
 
     /**
@@ -59,12 +55,8 @@ public abstract class FrameState {
      */
     private static final int MINIMUM_STACK_SLOTS = 1;
 
-    public FrameState(FrameState caller, int callerBCI, RiMethod method, int osrBCI, int maxLocals, int maxStack) {
-        this.caller = caller;
-        this.callerBCI = callerBCI;
-        this.osrBCI = osrBCI;
-        this.method = method;
-        this.level = caller == null ? 0 : 1 + caller.level;
+    public FrameState(IRScope irScope, int maxLocals, int maxStack) {
+        this.scope = irScope;
         this.values = new Value[maxLocals + Math.max(maxStack, MINIMUM_STACK_SLOTS)];
         this.maxLocals = maxLocals;
     }
@@ -78,7 +70,7 @@ public abstract class FrameState {
      * @return a new frame state with the specified components
      */
     public MutableFrameState copy(boolean withLocals, boolean withStack, boolean withLocks) {
-        final MutableFrameState other = new MutableFrameState(caller, callerBCI, method, osrBCI, localsSize(), maxStackSize());
+        final MutableFrameState other = new MutableFrameState(scope, localsSize(), maxStackSize());
         if (withLocals && withStack) {
             // fast path: use array copy
             System.arraycopy(values, 0, other.values, 0, valuesSize());
