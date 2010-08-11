@@ -97,7 +97,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                     "In mixed mode, sets the recompilation threshold for methods."), MaxineVM.Phase.STARTING);
     private static final VMBooleanXXOption gcOnRecompileOption = register(new VMBooleanXXOption("-XX:-GCOnRecompilation",
                     "When specified, the compiler will request GC before every re-compilation operation."), MaxineVM.Phase.STARTING);
-    private static final VMBooleanXXOption failoverOption = register(new VMBooleanXXOption("-XX:+FailOverCompilation",
+    private static final VMBooleanXXOption failoverOption = register(new VMBooleanXXOption("-XX:-FailOverCompilation",
                     "When specified, the compiler will attempt to use a different compiler if compilation fails " +
                     "with the first compiler."), MaxineVM.Phase.STARTING);
 
@@ -199,11 +199,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 if (targetState == null) {
                     // this is the first compilation.
                     RuntimeCompilerScheme compiler = !retrying ? selectCompiler(classMethodActor, true, recommendedCompiler) : bootCompiler;
-
-                    if (classMethodActor.holder().name.string.contains("_builtin_") && compiler.name().startsWith("C1X")) {
-                        System.console();
-                        selectCompiler(classMethodActor, true, recommendedCompiler);
-                    }
                     compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                     classMethodActor.targetState = compilation;
                 } else if (targetState instanceof Compilation) {
