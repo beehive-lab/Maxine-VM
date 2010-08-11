@@ -34,7 +34,7 @@ import com.sun.cri.ri.*;
  *
  * @author Ben L. Titzer
  */
-public class IRScope {
+public class IRScopeOLD {
 
     public final IRScope caller;
     public final RiMethod method;
@@ -49,7 +49,7 @@ public class IRScope {
 
     BitMap storesInLoops;
 
-    public IRScope(IRScope caller, int callerBCI, RiMethod method, int osrBCI) {
+    public IRScopeOLD(IRScope caller, int callerBCI, RiMethod method, int osrBCI) {
         this.caller = caller;
         this.callerBCI = callerBCI;
         this.method = method;
