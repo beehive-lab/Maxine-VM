@@ -199,11 +199,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 if (targetState == null) {
                     // this is the first compilation.
                     RuntimeCompilerScheme compiler = !retrying ? selectCompiler(classMethodActor, true, recommendedCompiler) : bootCompiler;
-
-                    if (classMethodActor.holder().name.string.contains("_builtin_") && compiler.name().startsWith("C1X")) {
-                        System.console();
-                        selectCompiler(classMethodActor, true, recommendedCompiler);
-                    }
                     compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                     classMethodActor.targetState = compilation;
                 } else if (targetState instanceof Compilation) {
