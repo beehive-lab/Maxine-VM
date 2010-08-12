@@ -47,8 +47,9 @@ public final class Heap {
     }
 
     private static final Size MIN_HEAP_SIZE = Size.M.times(4); // To be adjusted
+
     /**
-     * If initial size not specified, the maxSize / DEFAULT_INIT_HEAP_SIZE_RATIO.
+     * If initial size not specified, then it is maxSize / DEFAULT_INIT_HEAP_SIZE_RATIO.
      */
     private static final int DEFAULT_INIT_HEAP_SIZE_RATIO = 2;
 
@@ -77,7 +78,7 @@ public final class Heap {
 
     /**
      * A special exception thrown when a non-GC thread tries to perform a GC while holding
-     * the {@linkplain VmThreadMap#ACTIVE GC lock}. There is a single, pre-allocated
+     * the {@linkplain VmThreadMap#THREAD_LOCK GC lock}. There is a single, pre-allocated
      * {@linkplain #INSTANCE instance} of this object so that raising this exception
      * does not require any allocation.
      *
@@ -199,7 +200,7 @@ public final class Heap {
 
     static {
         if (MaxineVM.isDebug()) {
-            VMOptions.addFieldOption("-XX:", "TraceAllocation", Classes.getDeclaredField(Heap.class, "TraceAllocation"), "Trace heap allocation.");
+            VMOptions.addFieldOption("-XX:", "TraceAllocation", Classes.getDeclaredField(Heap.class, "TraceAllocation"), "Trace heap allocation.", MaxineVM.Phase.STARTING);
         }
     }
 
@@ -264,7 +265,7 @@ public final class Heap {
                         "Disable " + traceGCOption + ", " + traceRootScanningOption + " and " +
                         traceGCPhasesOption + " until the n'th GC");
 
-        VMOptions.addFieldOption("-XX:", "DisableGC", Classes.getDeclaredField(Heap.class, "GCDisabled"), "Disable garbage collection.");
+        VMOptions.addFieldOption("-XX:", "DisableGC", Classes.getDeclaredField(Heap.class, "GCDisabled"), "Disable garbage collection.", MaxineVM.Phase.STARTING);
     }
 
     /**
@@ -431,8 +432,17 @@ public final class Heap {
         Log.unlock(lockDisabledSafepoints);
     }
 
+    /**
+     * A VM option for triggering a GC at fixed intervals.
+     */
+    public static int ExcessiveGCFrequency;
+    static {
+        VMOptions.addFieldOption("-XX:", "ExcessiveGCFrequency", Heap.class,
+            "Run a garbage collection every <n> milliseconds. A value of 0 disables this mechanism.");
+    }
+
     public static boolean collectGarbage(Size requestedFreeSpace) {
-        if (Thread.holdsLock(VmThreadMap.ACTIVE)) {
+        if (Thread.holdsLock(VmThreadMap.THREAD_LOCK)) {
             // The GC requires this lock to proceed
             throw HoldsGCLockError.INSTANCE;
         }
@@ -529,7 +539,7 @@ public final class Heap {
      * {@link #collectGarbage(Size)} can safely be called.
      */
     public static boolean isInitialized() {
-        return heapScheme().isInitialized();
+        return VmOperationThread.instance() != null;
     }
 
     public static void enableImmortalMemoryAllocation() {

@@ -33,7 +33,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.VMOption.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -165,6 +165,11 @@ public final class VMOptions {
      */
     private static VMOption[] startingPhaseOptions = {};
 
+    /**
+     * All the options sorted by {@linkplain VMOption#category() category} and then by {@linkplain VMOption#prefix prefix}.
+     */
+    private static VMOption[] sortedOptions;
+
     private static Pointer savedArgv;
     private static Pointer argv;
     private static int argc;
@@ -292,7 +297,7 @@ public final class VMOptions {
     }
 
     @HOSTED_ONLY
-    private static VMOption[] addOption(VMOption[] options, VMOption option, ArrayList<VMOption> allOptions) {
+    private static VMOption[] addOption(VMOption[] options, VMOption option, Set<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
             final int prefixLength = option instanceof VMBooleanXXOption ? "-XX:+".length() : "-XX:".length();
             final String name = option.prefix.substring(prefixLength);
@@ -315,7 +320,7 @@ public final class VMOptions {
     @HOSTED_ONLY
     public static <T extends VMOption> T register(VMOption option, MaxineVM.Phase phase) {
         assert phase != null;
-        final ArrayList<VMOption> allOptions = allOptions();
+        final SortedSet<VMOption> allOptions = allOptions();
         if (phase == MaxineVM.Phase.PRISTINE) {
             pristinePhaseOptions = addOption(pristinePhaseOptions, option, allOptions);
         } else if (phase == MaxineVM.Phase.STARTING) {
@@ -324,6 +329,10 @@ public final class VMOptions {
         } else {
             ProgramError.unexpected("VM options for the " + phase + " phase not (yet) supported");
         }
+
+        allOptions.add(option);
+        sortedOptions = allOptions.toArray(new VMOption[allOptions.size()]);
+
         option.findMatchingArgumentAndParse();
         final Class<T> type = null;
         return Utils.cast(type, option);
@@ -354,7 +363,7 @@ public final class VMOptions {
                     help = helpMap != null ? helpMap.get(name) : null;
                 }
                 try {
-                    addFieldOption(prefix, name, field, help);
+                    addFieldOption(prefix, name, field, help, MaxineVM.Phase.STARTING);
                 } catch (Exception e) {
                     throw ProgramError.unexpected("Error creating VM option for " + field, e);
                 }
@@ -381,7 +390,21 @@ public final class VMOptions {
      */
     @HOSTED_ONLY
     public static VMOption addFieldOption(String prefix, String name, Class declaringClass, String help) {
-        return addFieldOption(prefix, name, Classes.getDeclaredField(declaringClass, name), help);
+        return addFieldOption(prefix, name, Classes.getDeclaredField(declaringClass, name), help, MaxineVM.Phase.STARTING);
+    }
+
+    /**
+     * Creates and registers a VM option whose value is stored in a given non-final {@code static} field.
+     *
+     * @param prefix the prefix to use for the option (e.g. {@code "-XX:"} or {@code "-C1X:"})
+     * @param name the name of the option
+     * @param declaringClass the class in which a field named {@code name} backing the option
+     * @param help the help text for the option
+     * @param phase the VM phase during which the option should be parsed
+     */
+    @HOSTED_ONLY
+    public static VMOption addFieldOption(String prefix, String name, Class declaringClass, String help, MaxineVM.Phase phase) {
+        return addFieldOption(prefix, name, Classes.getDeclaredField(declaringClass, name), help, phase);
     }
 
     /**
@@ -391,11 +414,11 @@ public final class VMOptions {
      * @param name the name of the option
      * @param field the field backing the option
      * @param help the help text for the option
+     * @param phase the VM phase during which the option should be parsed
      */
     @HOSTED_ONLY
-    public static VMOption addFieldOption(String prefix, String name, Field field, String help) {
+    public static VMOption addFieldOption(String prefix, String name, Field field, String help, Phase phase) {
         try {
-            MaxineVM.Phase phase = MaxineVM.Phase.STARTING;
             assert Modifier.isStatic(field.getModifiers());
             assert !Modifier.isFinal(field.getModifiers());
             final Class<?> fieldType = field.getType();
@@ -463,8 +486,8 @@ public final class VMOptions {
         Log.println();
     }
 
-    private static void printOptions(VMOption[] options, Category category) {
-        for (VMOption option : options) {
+    private static void printOptions(Category category) {
+        for (VMOption option : sortedOptions) {
             if (option.category() == category) {
                 option.printHelp();
             }
@@ -480,23 +503,19 @@ public final class VMOptions {
         if (category == Category.STANDARD) {
             Log.println("Usage: maxvm [-options] [class | -jar jarfile]  [args...]");
             Log.println("where options include:");
-            printOptions(pristinePhaseOptions, category);
-            printOptions(startingPhaseOptions, category);
+            printOptions(category);
         }
         if (category == Category.NON_STANDARD) {
             Log.println("Non-standard options:");
-            printOptions(pristinePhaseOptions, category);
-            printOptions(startingPhaseOptions, category);
+            printOptions(category);
         }
         if (category == Category.C1X_SPECIFIC) {
             Log.println("C1X options:");
-            printOptions(pristinePhaseOptions, category);
-            printOptions(startingPhaseOptions, category);
+            printOptions(category);
         }
         if (category == Category.IMPLEMENTATION_SPECIFIC) {
             Log.println("Maxine options:");
-            printOptions(pristinePhaseOptions, category);
-            printOptions(startingPhaseOptions, category);
+            printOptions(category);
         }
     }
 
@@ -606,10 +625,20 @@ public final class VMOptions {
     }
 
     /**
-     * Gets all the registered VM options as an {@code ArrayList} object.
+     * Gets all the registered VM options as a set sorted by {@linkplain VMOption#category() category} and then by {@linkplain VMOption#prefix prefix}.
      */
-    public static ArrayList<VMOption> allOptions() {
-        ArrayList<VMOption> result = new ArrayList<VMOption>(Arrays.asList(pristinePhaseOptions));
+    public static SortedSet<VMOption> allOptions() {
+        TreeSet<VMOption> result = new TreeSet<VMOption>(new Comparator<VMOption>() {
+            @Override
+            public int compare(VMOption o1, VMOption o2) {
+                int categoryOrder = o1.category().ordinal() - o2.category().ordinal();
+                if (categoryOrder != 0) {
+                    return categoryOrder;
+                }
+                return o1.name.compareTo(o2.name);
+            }
+        });
+        result.addAll(Arrays.asList(pristinePhaseOptions));
         result.addAll(Arrays.asList(startingPhaseOptions));
         return result;
     }

@@ -32,7 +32,7 @@ typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
 #if os_DARWIN
 #include <unistd.h>
 #include <libgen.h>
-#define LIBRARY_NAME "libjvm.dylib"
+#define LIBRARY_NAME "libjvmlinkage.dylib"
 
 /*
  * On Darwin, there is a fourth argument passed to main whose first element contains the path where the executing
@@ -79,13 +79,13 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
 
 #if os_DARWIN
     /*
-     * The JDK libraries on Mac OS X either have hard-coded (<= JDK 6_17) or file-system relative (>= JDK 6_20) paths to each other.
-     * The work-around for the former is to make copies of the relevant libraries and modify them to link to the correct Maxine directory.
+     * The JDK libraries on Mac OS X either have hard-coded (<= JDK 6_17) or file-system relative (>= JDK 6_20) paths to the HotSpot VM library.
+     * The work-around for the former is to make copies of the JDK libraries and patch them to link to the correct Maxine VM library.
      * This is done with the bin/mod-maxosx-javalib.sh script. For the latter, the workaround is to set
-     * the DYLD_LIBRARY_PATH environment variable to the directory containing the Maxine version of libjvm.dylib and re-exec the VM.
-     * The re-exec is necessary as the DYLD_LIBRARY_PATH is only read at exec.
+     * the DYLD_LIBRARY_PATH environment variable to the directory containing the Maxine version of libjvmlinkage.dylib
+     * and re-exec the VM. The re-exec is necessary as the DYLD_LIBRARY_PATH is only read at exec.
      * Note that a similiar work-around is necessary for Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild()
-     * in Native/tele/darwin/darwinTeleProcess
+     * in Native/tele/darwin/darwinTeleProcess.c.
      */
     if (getenv("DYLD_LIBRARY_PATH") == NULL) {
         char *dyldLibraryPathDef;

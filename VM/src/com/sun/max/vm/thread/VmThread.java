@@ -151,6 +151,12 @@ public class VmThread {
     private Throwable pendingException;
 
     /**
+     * The number of currently incomplete {@linkplain VmOperation VM operations} submitted for
+     * {@linkplain VmOperationThread#execute(VmOperation) execution} by this thread.
+     */
+    private int vmOperationCount;
+
+    /**
      * The pool of JNI local references allocated for this thread.
      */
     private final JniHandles jniHandles = new JniHandles();
@@ -304,7 +310,8 @@ public class VmThread {
      * @param stackEnd the highest address (exclusive) of the stack (i.e. the stack memory range is {@code [stackBase ..
      *            stackEnd)})
      * @param stackYellowZone the stack page(s) that have been protected to detect stack overflow
-     * @return {@code 0} if the thread was successfully added, {@code -1} if this attaching thread needs to try again
+     * @return {@code 1} if the thread was successfully added and it is the {@link VmOperationThread},
+     *         {@code 0} if the thread was successfully added, {@code -1} if this attaching thread needs to try again
      *         and {@code -2} if this attaching thread cannot be added because the main thread has exited
      */
     @VM_ENTRY_POINT
@@ -412,6 +419,7 @@ public class VmThread {
             VmThreadMap.ACTIVE.joinAllNonDaemons();
             invokeShutdownHooks();
             VmThreadMap.ACTIVE.setMainThreadExited();
+            VmOperationThread.terminate();
         }
 
         JniFunctions.epilogue(anchor, null);
@@ -448,7 +456,7 @@ public class VmThread {
         FatalError.check(threadForAttach.get() == null, "thread-for-attach should be null");
         try {
             VmThread newThread = VmThreadFactory.create(null);
-            synchronized (VmThreadMap.ACTIVE) {
+            synchronized (VmThreadMap.THREAD_LOCK) {
                 VmThreadMap.addPreallocatedThread(newThread);
             }
             threadForAttach.set(newThread);
@@ -515,7 +523,7 @@ public class VmThread {
 
         thread.traceThreadAfterTermination();
 
-        synchronized (VmThreadMap.ACTIVE) {
+        synchronized (VmThreadMap.THREAD_LOCK) {
             // It is the monitor scheme's responsibility to ensure that this thread isn't
             // reset to RUNNABLE if it blocks here.
             VmThreadMap.ACTIVE.removeThreadLocals(thread);
@@ -794,6 +802,13 @@ public class VmThread {
     }
 
     /**
+     * Determines if this is the single {@link VmOperationThread}.
+     */
+    public final boolean isVmOperationThread() {
+        return javaThread == VmOperationThread.instance();
+    }
+
+    /**
      * Determines if this thread is owned by the garbage collector.
      */
     public final boolean isGCThread() {
@@ -917,6 +932,18 @@ public class VmThread {
             this.pendingException = null;
             throw pendingException;
         }
+    }
+
+    public int vmOperationCount() {
+        return vmOperationCount;
+    }
+
+    public void incrementVmOperationCount() {
+        ++vmOperationCount;
+    }
+
+    public void decrementVmOperationCount() {
+        --vmOperationCount;
     }
 
     /**

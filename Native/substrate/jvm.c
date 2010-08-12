@@ -36,6 +36,7 @@
 
 #include "jni.h"
 #include "log.h"
+#include "trap.h"
 #include "mutex.h"
 #include "threads.h"
 #include "maxine.h"
@@ -1000,28 +1001,105 @@ JVM_GetStackAccessControlContext(JNIEnv *env, jclass cls) {
 }
 
 /*
- * Signal support, used to implement the shutdown sequence.  Every VM must
- * support JVM_SIGINT and JVM_SIGTERM, raising the former for user interrupts
- * (^C) and the latter for external termination (kill, system shutdown, etc.).
- * Other platform-dependent signal values may also be supported.
+ * This function is included primarily as a debugging aid. If Java is
+ * running in a console window, then pressing <CTRL-\\> will cause
+ * the current state of all active threads and monitors to be written
+ * to the console window.
  */
 
-void *
-JVM_RegisterSignal(jint sig, void *handler) {
-    UNIMPLEMENTED();
-    return 0;
+void*
+JVM_RegisterSignal(jint sig, void* handler) {
+    void *newHandler = handler == (void *) 2 ? (void *) vmSignalHandler : handler;
+    switch (sig) {
+        /* The following are already used by the VM. */
+        case SIGFPE:
+        case SIGILL:
+        case SIGSEGV:
+            return (void *)-1;
+    }
+
+    void* oldHandler = setSignalHandler(sig, (SignalHandlerFunction) newHandler);
+
+    if (oldHandler == (void *) vmSignalHandler) {
+        return (void *)2;
+    } else {
+        return oldHandler;
+    }
 }
+
 
 jboolean
 JVM_RaiseSignal(jint sig) {
+#if os_SOLARIS || os_LINUX || os_DARWIN
+    raise(sig);
+#else
     UNIMPLEMENTED();
-    return 0;
+#endif
+    return JNI_TRUE;
 }
+
+#if os_DARWIN || os_LINUX
+typedef struct {
+  const char *name;
+  int   number;
+} Signal;
+
+Signal signals[] = {
+   {"HUP",     SIGHUP},
+   {"INT",     SIGINT},
+   {"QUIT",    SIGQUIT},
+   {"ILL",     SIGILL},
+   {"TRAP",    SIGTRAP},
+   {"ABRT",    SIGABRT},
+   {"EMT",     SIGEMT},
+   {"FPE",     SIGFPE},
+   {"KILL",    SIGKILL},
+   {"BUS",     SIGBUS},
+   {"SEGV",    SIGSEGV},
+   {"SYS",     SIGSYS},
+   {"PIPE",    SIGPIPE},
+   {"ALRM",    SIGALRM},
+   {"TERM",    SIGTERM},
+   {"URG",     SIGURG},
+   {"STOP",    SIGSTOP},
+   {"TSTP",    SIGTSTP},
+   {"CONT",    SIGCONT},
+   {"CHLD",    SIGCHLD},
+   {"TTIN",    SIGTTIN},
+   {"TTOU",    SIGTTOU},
+   {"IO",      SIGIO},
+   {"XCPU",    SIGXCPU},
+   {"XFSZ",    SIGXFSZ},
+   {"VTALRM",  SIGVTALRM},
+   {"PROF",    SIGPROF},
+   {"WINCH",   SIGWINCH},
+   {"INFO",    SIGINFO},
+   {"USR1",    SIGUSR1},
+   {"USR2",    SIGUSR2},
+  };
+#endif
 
 jint
 JVM_FindSignal(const char *name) {
+#if os_DARWIN || os_LINUX
+    unsigned int i;
+    for (i = 0; i < ARRAY_LENGTH(signals); i++) {
+        if(!strcmp(name, signals[i].name)) {
+            return signals[i].number;
+        }
+    }
+    return -1;
+#elif os_SOLARIS
+    int sig;
+    if (str2sig(name, &sig) == 0) {
+        return sig;
+    } else {
+        return -1;
+    }
+#else
     UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 /*

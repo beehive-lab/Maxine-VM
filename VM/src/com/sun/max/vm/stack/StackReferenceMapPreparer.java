@@ -364,7 +364,7 @@ public final class StackReferenceMapPreparer {
     /**
      * Completes the stack reference map for a thread that was suspended by a safepoint while executing Java code. The
      * reference map covering the stack between the frame in which the safepoint trap occurred and the JNI stub that
-     * enters into the native code for blocking on the global {@linkplain VmThreadMap#ACTIVE thread lock} is not yet
+     * enters into the native code for blocking on the global {@linkplain VmThreadMap#THREAD_LOCK thread lock} is not yet
      * prepared. This method completes this part of the threads stack reference map.
      *
      * @param vmThreadLocals the VM thread locals for the thread whose stack reference map is to be completed
