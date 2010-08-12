@@ -24,6 +24,8 @@
  */
 package test.bench.threads;
 
+import test.bench.util.*;
+
 /**
  *
  * This code is a variant of Thread_counter01 where the counter is shared,
@@ -31,28 +33,28 @@ package test.bench.threads;
  *
  * @author Mick Jordan
  */
-public class Thread_counter03  extends Thread_counter01 {
+public class Thread_counter02  extends Thread_counter01 {
 
     private static Object lock = new Object();
     private static long sharedCount;
 
-    protected Thread_counter03(MicroBenchmark bench, int t, long c)  {
+    protected Thread_counter02(MicroBenchmark bench, int t, long c)  {
         super(bench, t, c);
     }
 
-    static class SharedLockedRunnerFactory extends RunnerFactory {
+    static class SharedLockedRunnerFactory extends ThreadCounter.RunnerFactory {
         @Override
-        CountingRunner createRunner(long count, int threadCount) {
+        public Runnable createRunner(int threadCount, long count) {
             sharedCount = count;
             return new SharedLockedRunner();
         }
     }
 
-    static class SharedLockedRunner extends CountingRunner {
+    static class SharedLockedRunner implements Runnable {
 
         @Override
         public void run() {
-            startBarrier.waitForRelease();
+            ThreadCounter.startBarrier.waitForRelease();
             while (true) {
                 synchronized (lock) {
                     if (sharedCount == 0) {
@@ -66,17 +68,13 @@ public class Thread_counter03  extends Thread_counter01 {
 
 
     public static boolean test(int t, int c) {
-        final boolean result = new Thread_counter03(new Bench(new SharedLockedRunnerFactory()), t, c).runBench(true);
+        final boolean result = new Thread_counter02(new Bench(new SharedLockedRunnerFactory(), t, c), t, c).runBench(true);
         return result;
     }
 
     // for running stand-alone
     public static void main(String[] args) {
-        if (args.length == 0) {
-            test(1, DEFAULT_COUNT);
-        } else {
-            test(Integer.parseInt(args[0]), DEFAULT_COUNT);
-        }
+        RunBench.runTest(Thread_counter02.class, args);
     }
 
 }
