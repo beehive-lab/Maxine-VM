@@ -30,7 +30,7 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Demonstrates usage of the {@link FreezeThreads} mechanism.
+ * Demonstrates usage of the {@link VmOperation} mechanism.
  * This demo starts a number of threads that spin in a loop
  * that allocates object arrays of length 1024, thus creating
  * garbage quickly. The main thread also spins in a loop for
@@ -42,15 +42,23 @@ import com.sun.max.vm.thread.*;
  *
  * @author Doug Simon
  */
-public class FreezeThreadsDemo extends FreezeThreads {
+public class FreezeThreadsDemo extends VmOperation {
 
-    public FreezeThreadsDemo(Thread[] threads) {
-        super("FreezeThreadsDemo", new ThreadListPredicate(Arrays.asList(threads)));
+    private final HashSet<Thread> threads;
+
+    public FreezeThreadsDemo(HashSet<Thread> threads) {
+        super("FreezeThreadsDemo", null, Mode.Safepoint);
+        this.threads = threads;
     }
 
     @Override
-    protected void perform() {
-        super.perform();
+    protected void doIt() {
+        super.doIt();
+    }
+
+    @Override
+    protected boolean operateOnThread(VmThread thread) {
+        return threads.contains(thread.javaThread());
     }
 
     @Override
@@ -92,7 +100,7 @@ public class FreezeThreadsDemo extends FreezeThreads {
             Thread.yield();
         }
 
-        FreezeThreadsDemo stackTraceDumper = new FreezeThreadsDemo(spinners);
+        FreezeThreadsDemo stackTraceDumper = new FreezeThreadsDemo(new HashSet<Thread>(Arrays.asList(spinners)));
         long start = System.currentTimeMillis();
         int time;
         try {
@@ -100,7 +108,7 @@ public class FreezeThreadsDemo extends FreezeThreads {
                 time = (int) (System.currentTimeMillis() - start) / 1000;
                 try {
                     System.out.println("---- Dumping stacks of spinning threads ----");
-                    stackTraceDumper.run();
+                    VmOperationThread.execute(stackTraceDumper);
                 } catch (Heap.HoldsGCLockError e) {
                     System.out.println("GC triggered while dumping stack traces");
                     break;

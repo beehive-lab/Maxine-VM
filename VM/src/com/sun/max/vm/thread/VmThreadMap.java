@@ -32,13 +32,7 @@ import com.sun.max.vm.prototype.BootImage.Header;
 import com.sun.max.vm.runtime.*;
 
 /**
- * The VmThreadMap class contains all the active threads in the MaxineVM.
- *
- * N.B. The {@link #ACTIVE} object is bound with a
- * special JavaMonitor that prevents a terminated thread's state from
- * changing from TERMINATED during removeThreadLocals.
- * It is therefore imperative that all synchronization in this class use the
- * ACTIVE object.
+ * The {@code VmThreadMap} class contains all the active threads in the VM.
  *
  * @author Ben L. Titzer
  * @author Bernd Mathiske
@@ -48,14 +42,13 @@ import com.sun.max.vm.runtime.*;
 public final class VmThreadMap {
 
     /**
-     * Specialized JavaMonitor intended to be bound to {@link VmThreadMap#ACTIVE} at image build time.
+     * Specialized JavaMonitor intended to be bound to {@link VmThreadMap#THREAD_LOCK} at image build time.
      *
      * MonitorEnter semantics are slightly modified to
      * halt a meta-circular regression arising from thread termination clean-up.
-     * See VmThread.beTerminated().
      *
-     * In addition, this object serves as the global GC lock and it is
-     * {@linkplain VmThreadMap#nativeSetGlobalThreadAndGCLock(Pointer) exposed}
+     * In addition, it is
+     * {@linkplain VmThreadMap#nativeSetGlobalThreadLock(Pointer) exposed}
      * to the native code so that it can be locked when attaching a thread to the VM.
      *
      * @author Simon Wilkinson
@@ -66,7 +59,7 @@ public final class VmThreadMap {
         public void allocate() {
             super.allocate();
             NativeMutex nativeMutex = (NativeMutex) mutex;
-            nativeSetGlobalThreadAndGCLock(nativeMutex.asPointer());
+            nativeSetGlobalThreadLock(nativeMutex.asPointer());
         }
 
         @Override
@@ -87,17 +80,17 @@ public final class VmThreadMap {
     }
 
     /**
-     * The global thread map of active threads in the VM. This object also serves the role
-     * of the global GC and thread creation lock. This object should be locked while
-     * performing an operation that {@linkplain VmThreadMap#forAllThreadLocals iterates}
-     * over or {@linkplain #getVmThreadForID accesses} the thread list.
-     *
-     * Since the GC may acquire this lock to stop the world, any critical section holding this
-     * lock must not perform any heap allocation that may fail and require a GC.
+     * The global thread map of active threads in the VM.
      */
     public static final VmThreadMap ACTIVE = new VmThreadMap();
+
+    /**
+     * The global lock used to synchronize access to the {@link #ACTIVE global thread list}.
+     * This lock is also help by the {@link VmOperationThread} when executing a {@link VmOperation}.
+     */
+    public static final Object THREAD_LOCK = new Object();
     static {
-        JavaMonitorManager.bindStickyMonitor(ACTIVE, new VMThreadMapJavaMonitor());
+        JavaMonitorManager.bindStickyMonitor(THREAD_LOCK, new VMThreadMapJavaMonitor());
     }
 
     /**
@@ -105,7 +98,7 @@ public final class VmThreadMap {
      * the corresponding {@code VmThread} instance.
      * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockword64}).
      *
-     * Note that callers of acquire or release must synchronize explicitly on ACTIVE to ensure that
+     * Note that callers of {@link #acquire(VmThread)} or {@link #release(int)} must synchronize explicitly on {@link VmThreadMap#THREAD_LOCK} to ensure that
      * the TERMINATED state is not disturbed during thread tear down.
      */
     private static final class IDMap {
@@ -124,7 +117,7 @@ public final class VmThreadMap {
         /**
          * Acquires an ID for a VmThread.
          *
-         * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
+         * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on {@link #THREAD_LOCK}.</b>
          *
          * @param thread the VmThread for which an ID should be assigned
          * @return the ID assigned to {@code thread}
@@ -155,7 +148,7 @@ public final class VmThreadMap {
         }
 
         /**
-         * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
+         * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on {@link #THREAD_LOCK}.</b>
          *
          * @param id
          */
@@ -173,13 +166,13 @@ public final class VmThreadMap {
     }
 
     /**
-     * Informs the native code of the mutex used to synchronize on {@link #ACTIVE}
+     * Informs the native code of the mutex used to synchronize on {@link #THREAD_LOCK}
      * which serves as a global thread creation and GC lock.
      *
      * @param mutex the address of a platform specific mutex
      */
     @C_FUNCTION
-    private static native void nativeSetGlobalThreadAndGCLock(Pointer mutex);
+    private static native void nativeSetGlobalThreadLock(Pointer mutex);
 
     private final IDMap idMap = new IDMap(64);
 
@@ -263,7 +256,7 @@ public final class VmThreadMap {
      * Adds the specified thread locals to the ACTIVE thread map and initializes several of its
      * important values (such as its ID and VM thread reference).
      *
-     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on {@link #THREAD_LOCK}.</b>
      *
      * @param thread the VmThread to add
      * @param threadLocals a pointer to the VM thread locals for the thread
@@ -278,7 +271,7 @@ public final class VmThreadMap {
     /**
      * Increments the number of active non-daemon threads by 1.
      *
-     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on {@link #THREAD_LOCK}.</b>
      *
      * @return {@code true} if the non-daemon thread can continue running; {@code false} if the main thread has already exited
      */
@@ -300,7 +293,7 @@ public final class VmThreadMap {
     /**
      * Decrements the number of active non-daemon threads by 1.
      *
-     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on {@link #THREAD_LOCK}.</b>
      */
     static void decrementNonDaemonThreads() {
         if (VmThread.TRACE_THREADS_OPTION.getValue()) {
@@ -317,7 +310,7 @@ public final class VmThreadMap {
     /**
      * Remove the specified VM thread locals from this thread map.
      *
-     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on {@link #THREAD_LOCK}.</b>
      *
      * @param threadLocals the thread locals to remove from this map
      * @param daemon specifies if the thread is a daemon
@@ -356,7 +349,7 @@ public final class VmThreadMap {
      * @param priority the initial priority of the thread
      */
     public void startThread(VmThread thread, Size stackSize, int priority) {
-        synchronized (ACTIVE) {
+        synchronized (THREAD_LOCK) {
             final int id = idMap.acquire(thread);
             thread.daemon = thread.javaThread().isDaemon();
             if (!thread.daemon) {
@@ -391,7 +384,7 @@ public final class VmThreadMap {
      */
     public void joinAllNonDaemons() {
         FatalError.check(VmThread.current() == VmThread.MAIN_VM_THREAD, "Only the main thread should join non-daemon threads");
-        synchronized (ACTIVE) {
+        synchronized (THREAD_LOCK) {
             while (nonDaemonThreads > 0) {
                 if (VmThread.TRACE_THREADS_OPTION.getValue()) {
                     boolean lockDisabledSafepoints = Log.lock();
@@ -401,7 +394,7 @@ public final class VmThreadMap {
                     Log.unlock(lockDisabledSafepoints);
                 }
                 try {
-                    ACTIVE.wait();
+                    THREAD_LOCK.wait();
                 } catch (Exception exception) {
                     FatalError.unexpected("Error waiting for all non-daemon threads", exception);
                 }
@@ -414,7 +407,7 @@ public final class VmThreadMap {
 
     /**
      * Iterates over all the VM thread locals in this thread map and run the specified procedure.
-     * <b>NOTE: This method is not synchronized. It is recommended that the caller synchronizes on ACTIVE.</b>
+     * <b>NOTE: It is recommended that the caller synchronizes on {@link #THREAD_LOCK}.</b>
      *
      * @param predicate a predicate to check on the VM thread locals
      * @param procedure the procedure to apply to each VM thread locals
@@ -430,26 +423,6 @@ public final class VmThreadMap {
     }
 
     /**
-     * Shared predicate for {@link #forAllThreadLocals(com.sun.max.unsafe.Pointer.Predicate, com.sun.max.unsafe.Pointer.Procedure)}
-     * that excludes the current thread.
-     */
-    public static final Pointer.Predicate isNotCurrentThread = new Pointer.Predicate() {
-        public boolean evaluate(Pointer threadLocals) {
-            return threadLocals != VmThread.current().vmThreadLocals();
-        }
-    };
-
-    /**
-     * Shared predicate for {@link #forAllThreadLocals(com.sun.max.unsafe.Pointer.Predicate, com.sun.max.unsafe.Pointer.Procedure)}
-     * that excludes the current thread or any {@linkplain VmThread#isGCThread() GC thread}.
-     */
-    public static final Pointer.Predicate isNotGCOrCurrentThread = new Pointer.Predicate() {
-        public boolean evaluate(Pointer vmThreadLocals) {
-            return vmThreadLocals != VmThread.current().vmThreadLocals() && !VmThread.fromVmThreadLocals(vmThreadLocals).isGCThread();
-        }
-    };
-
-    /**
      * Gets the {@code VmThread} object associated with the specified thread id.
      *
      * @param id the thread id
@@ -463,7 +436,7 @@ public final class VmThreadMap {
     /**
      * Gets a snapshot of the currently executing threads.
      *
-     * @param includeGCThreads specifies whether {@linkplain VmThread#isGCThread() GC threads}
+     * @param includeGCThreads specifies whether {@linkplain VmThread#isVmOperationThread() GC threads}
      *        are to be included in the snapshot
      * @return a snapshot of the currently executing threads
      */
@@ -472,43 +445,43 @@ public final class VmThreadMap {
         Pointer.Procedure proc = new Pointer.Procedure() {
             public void run(Pointer vmThreadLocals) {
                 VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
-                if (vmThread.javaThread() != null && (includeGCThreads || !vmThread.isGCThread())) {
+                if (vmThread.javaThread() != null && (includeGCThreads || !vmThread.isVmOperationThread())) {
                     threads.add(vmThread.javaThread());
                 }
             }
         };
-        synchronized (VmThreadMap.ACTIVE) {
+        synchronized (THREAD_LOCK) {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, proc);
         }
         return threads.toArray(new Thread[threads.size()]);
     }
 
     public static int getTotalStartedThreadCount() {
-        synchronized (ACTIVE) {
+        synchronized (THREAD_LOCK) {
             return ACTIVE.totalStarted;
         }
     }
 
     public static int getPeakThreadCount() {
-        synchronized (ACTIVE) {
+        synchronized (THREAD_LOCK) {
             return ACTIVE.peakThreadCount;
         }
     }
 
     public static void resetPeakThreadCount() {
-        synchronized (ACTIVE) {
+        synchronized (THREAD_LOCK) {
             ACTIVE.peakThreadCount = ACTIVE.liveThreads;
         }
     }
 
     public static int getLiveTheadCount() {
-        synchronized (ACTIVE) {
+        synchronized (THREAD_LOCK) {
             return ACTIVE.liveThreads;
         }
     }
 
     public static int getDaemonThreadCount() {
-        synchronized (ACTIVE) {
+        synchronized (THREAD_LOCK) {
             // nonDaemonThreads does not include main but liveThreads does
             return ACTIVE.liveThreads - (ACTIVE.nonDaemonThreads + 1);
         }

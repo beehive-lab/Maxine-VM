@@ -29,6 +29,8 @@ import java.lang.reflect.*;
 import java.security.*;
 import java.util.*;
 
+import sun.misc.*;
+
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -123,6 +125,7 @@ public final class ClassRegistry {
     public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
     public static final MethodActor AccessControlContext_init = findMethod(AccessControlContext.class, "<init>", ProtectionDomain[].class, boolean.class);
     public static final MethodActor DirectByteBuffer_init = findMethod(Classes.forName("java.nio.DirectByteBuffer"), "<init>", long.class, int.class);
+    public static final MethodActor Signal_dispatch = findMethod(Signal.class, "dispatch", int.class);
 
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded

@@ -38,7 +38,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.monitor.modal.sync.*;
@@ -119,9 +118,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      */
     private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(gripVerifier);
 
-    private final Collect collect = new Collect();
-
-    private StopTheWorldGCDaemon collectorThread;
+    private Collect collect;
 
     private LinearAllocationMemoryRegion fromSpace = null;
     private LinearAllocationMemoryRegion toSpace = null;
@@ -190,8 +187,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         super.initialize(phase);
 
         if (MaxineVM.isHosted()) {
-            // The monitor for the collector must be allocate in the image
+            // The monitor for the collector must be allocated in the image
             JavaMonitorManager.bindStickyMonitor(this);
+
+            collect = new Collect();
         }
 
         if (phase == MaxineVM.Phase.PRISTINE) {
@@ -234,14 +233,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 this.growPolicy = new DoubleGrowPolicy();
             }
             increaseGrowPolicy = new LinearGrowPolicy();
-            collectorThread = new StopTheWorldGCDaemon("GC", collect);
-            collectorThread.start();
         }
-    }
-
-    @Override
-    public boolean isInitialized() {
-        return collectorThread != null;
     }
 
     private void allocateHeap() {
@@ -336,7 +328,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     /**
      * Routine that performs the actual garbage collection.
      */
-    final class Collect extends Collector {
+    final class Collect extends GCOperation {
         @Override
         public void collect(int invocationCount) {
             try {
@@ -503,7 +495,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     }
 
     public boolean isGcThread(Thread thread) {
-        return thread instanceof StopTheWorldGCDaemon;
+        return thread instanceof VmOperationThread;
     }
 
     public int adjustedCardTableShift() {
@@ -717,9 +709,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         return true;
     }
 
-    private void executeCollectorThread() {
+    private void executeGC() {
         if (!Heap.gcDisabled()) {
-            collectorThread.execute();
+            VmOperationThread.execute(collect);
         }
     }
 
@@ -731,7 +723,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         if (!growSpaces(true, growPolicy)) {
             result = false;
         } else {
-            executeCollectorThread();
+            executeGC();
             result = growSpaces(false, growPolicy);
         }
         if (Heap.verbose()) {
@@ -742,7 +734,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
-            executeCollectorThread();
+            executeGC();
         }
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             // check to see if we can reset safety zone
@@ -1054,7 +1046,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     private synchronized boolean shrink(Size amount) {
         final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
         logSpaces();
-        executeCollectorThread();
+        executeGC();
         if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
             // give back part of the existing spaces
             if (Heap.verbose()) {

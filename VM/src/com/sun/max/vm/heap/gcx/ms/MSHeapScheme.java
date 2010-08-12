@@ -31,7 +31,6 @@ import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.reference.*;
@@ -101,8 +100,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     private final Collect collect = new Collect();
 
-    private StopTheWorldGCDaemon collectorThread;
-
     private boolean doImpreciseSweep;
 
     final AfterMarkSweepVerifier afterGCVerifier;
@@ -126,9 +123,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
-        } else if (phase == MaxineVM.Phase.STARTING) {
-            collectorThread = new StopTheWorldGCDaemon("GC", collect);
-            collectorThread.start();
         }
     }
 
@@ -169,14 +163,14 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         collect.requestedSize = requestedFreeSpace;
         boolean forcedGC = requestedFreeSpace.toInt() == 0;
         if (forcedGC) {
-            collectorThread.execute();
+            VmOperationThread.execute(collect);
             return true;
         }
         // We may reach here after a race. Don't run GC if request can be satisfied.
         if (objectSpace.canSatisfyAllocation(requestedFreeSpace)) {
             return true;
         }
-        collectorThread.execute();
+        VmOperationThread.execute(collect);
         return objectSpace.canSatisfyAllocation(requestedFreeSpace);
     }
 
@@ -188,7 +182,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean isGcThread(Thread thread) {
-        return thread instanceof StopTheWorldGCDaemon;
+        return thread instanceof VmOperationThread;
     }
 
     @INLINE(override = true)
@@ -241,9 +235,9 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     /**
      * Class implementing the garbage collection routine.
-     * This is the {@link StopTheWorldGCDaemon}'s entry point to garbage collection.
+     * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
-    final class Collect extends Collector {
+    final class Collect extends GCOperation {
         private long collectionCount = 0;
         private TLABFiller tlabFiller = new TLABFiller();
 

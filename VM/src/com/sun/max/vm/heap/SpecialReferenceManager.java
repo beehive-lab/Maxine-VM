@@ -82,12 +82,12 @@ public class SpecialReferenceManager {
      * The lock object associated with managing special references. This lock must
      * be held by the GC when it is updating the list of pending special references.
      * This value is a reference to the static {@code lock} field in {@link java.lang.ref.Reference}.
-     * Like {@link com.sun.max.vm.thread.VmThreadMap#ACTIVE}, this lock is special and
+     * Like {@link com.sun.max.vm.thread.VmThreadMap#THREAD_LOCK}, this lock is special and
      * requires a sticky monitor.
      */
-    public static final Object LOCK = WithoutAccessCheck.getStaticField(JDK.java_lang_ref_Reference.javaClass(), "lock");
+    public static final Object REFERENCE_LOCK = WithoutAccessCheck.getStaticField(JDK.java_lang_ref_Reference.javaClass(), "lock");
     static {
-        JavaMonitorManager.bindStickyMonitor(LOCK);
+        JavaMonitorManager.bindStickyMonitor(REFERENCE_LOCK);
     }
 
     private static Grip discoveredList;
@@ -156,7 +156,7 @@ public class SpecialReferenceManager {
         if (last != null) {
             // if there are pending special references, notify the reference handler thread.
             // (note that the GC must already hold the lock object)
-            LOCK.notifyAll();
+            REFERENCE_LOCK.notifyAll();
         }
 
         // Special reference map of Inspector

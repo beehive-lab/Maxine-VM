@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,7 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+
+#ifndef __trap_h__
+#define __trap_h__ 1
+
+#if os_GUESTVMXEN
+#   include <guestvmXen.h>
+#else
+#   include <signal.h>
+#   include <stdlib.h>
+#   include <string.h>
+#   include <sys/ucontext.h>
+#   include <unistd.h>
+#endif
+
+#include "os.h"
+
+#if os_GUESTVMXEN
+#define SignalHandlerFunction fault_handler_t
+#else
+typedef ucontext_t UContext;
+typedef siginfo_t SigInfo;
+typedef void (*SignalHandlerFunction)(int signal, SigInfo *signalInfo, void *ucontext);
+#endif
+
 /**
- * A collection of debugging aids for C1X development.
+ * Installs a handler for a signal and returns the previously installed handler.
  */
-package com.sun.c1x.debug;
+void* setSignalHandler(int signal, SignalHandlerFunction handler);
+
+/**
+ * The handler for the signals handled directly by the VM.
+ */
+extern SignalHandlerFunction vmSignalHandler;
+
+/**
+ * Sets the signal mask for the current thread. The signals in the mask are those
+ * that are blocked for the thread.
+ */
+extern void setCurrentThreadSignalMask(boolean isVmOperationThread);
+
+#endif

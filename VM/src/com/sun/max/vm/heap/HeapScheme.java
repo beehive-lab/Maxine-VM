@@ -46,7 +46,7 @@ public interface HeapScheme extends VMScheme {
      * including {@code instanceof}.
      *
      * This method is only called from a {@link VmThread} constructor. Subsequent tests for whether a given {@code VmThread}
-     * instance is a GC thread should use the {@link VmThread#isGCThread()} method directly.
+     * instance is a GC thread should use the {@link VmThread#isVmOperationThread()} method directly.
      *
      * @return whether a thread belongs to the GC (or otherwise it belongs to the mutator)
      */
@@ -137,12 +137,6 @@ public interface HeapScheme extends VMScheme {
      * @return whether the object is currently pinned
      */
     boolean isPinned(Object object);
-
-    /**
-     * Determines if this heap scheme is initialized to the point where {@link #collectGarbage(Size)} can
-     * safely be called.
-     */
-    boolean isInitialized();
 
     /**
      * Returns whether an address is anywhere in the heap.

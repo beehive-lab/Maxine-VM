@@ -49,6 +49,7 @@ public class JDK {
     public static final ClassRef java_lang_System                    = new ClassRef(System.class);
     public static final ClassRef java_lang_Thread                    = new ClassRef(Thread.class);
     public static final ClassRef java_lang_Throwable                 = new ClassRef(Throwable.class);
+    public static final ClassRef java_lang_Terminator                = new ClassRef("java.lang.Terminator");
 
     public static final ClassRef java_lang_ref_Finalizer                   = new ClassRef("java.lang.ref.Finalizer");
     public static final ClassRef java_lang_ref_Finalizer$FinalizerThread   = new ClassRef("java.lang.ref.Finalizer$FinalizerThread");
@@ -76,6 +77,9 @@ public class JDK {
     public static final ClassRef java_util_concurrent_atomic_AtomicInteger = new ClassRef(java.util.concurrent.atomic.AtomicInteger.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicLong = new ClassRef(java.util.concurrent.atomic.AtomicLong.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicReference = new ClassRef(java.util.concurrent.atomic.AtomicReference.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicIntegerArray = new ClassRef(java.util.concurrent.atomic.AtomicIntegerArray.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicLongArray = new ClassRef(java.util.concurrent.atomic.AtomicLongArray.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicReferenceArray = new ClassRef(java.util.concurrent.atomic.AtomicReferenceArray.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl = new ClassRef(java.util.concurrent.atomic.AtomicReferenceFieldUpdater.class, "AtomicReferenceFieldUpdaterImpl");
     public static final ClassRef java_util_concurrent_atomic_AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl = new ClassRef(java.util.concurrent.atomic.AtomicIntegerFieldUpdater.class, "AtomicIntegerFieldUpdaterImpl");
     public static final ClassRef java_util_concurrent_atomic_AtomicLongFieldUpdater$CASUpdater = new ClassRef(java.util.concurrent.atomic.AtomicLongFieldUpdater.class, "CASUpdater");

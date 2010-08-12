@@ -1353,7 +1353,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         public void visitGreyObjects() {
             // Iterate over the rescan map and iterate over the corresponding bounds in the mark bitmap for each
             // entry recording the presence of grey objects.
-            while (!rescanMap.isEmpty())  {
+            while (!rescanMap.isEmpty()) {
                 rescanMap.cacheLeftmostEntryBound();
                 int bitmapWordIndex = rescanMap.leftmostLeftBound();
                 int rightmostBitmapWordIndex = rescanMap.leftmostRightBound();
