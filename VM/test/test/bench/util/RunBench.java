@@ -53,6 +53,10 @@ import com.sun.max.program.*;
  * loopcount. This can be changed by setting the property {@value #WARMUP_COUNT_PROPERTY} to the number of warm-up
  * iterations. No timings are collected for the warm-up phase.
  * <p>
+ * Some benchmarks, especially multi-threaded ones or those with a lot of setup (i.e., on the fringe of being a micro benchmark)
+ * may prefer to perform multiple iterations within the {@link Bench#run} method itself. The only support for this via is the property
+ * {@value RUN_ITER_PROPERTY}, which is read and stored in the {@link #runIterCount} variable.
+ * <p>
  * The non-encapsulating, non-warm-up runs can be traced by setting the property {@value #TRACE_PROPERTY}.
  *
  * The non-encapsulating, non-warm-up runs can be saved to a file by setting the property {@value #FILE_PROPERTY}
@@ -76,7 +80,7 @@ public class RunBench {
      * The actual benchmark must be a subclass of this class.
      *
      */
-    protected abstract static class MicroBenchmark {
+    public abstract static class MicroBenchmark {
         protected long defaultResult;
 
         /**
@@ -121,6 +125,7 @@ public class RunBench {
     private static final int DEFAULT_LOOP_COUNT = 100;
     private static int defaultLoopCount = DEFAULT_LOOP_COUNT;
     private static final String LOOP_COUNT_PROPERTY = "test.bench.loopcount";
+    private static final String RUN_ITER_COUNT_PROPERTY = "test.bench.runitercount";
     private static final String WARMUP_COUNT_PROPERTY = "test.bench.warmupcount";
     private static final String DISPLAY_INDIVIDUAL_PROPERTY = "test.bench.displayall";
     private static final String FILE_PROPERTY = "test.bench.file";
@@ -130,6 +135,10 @@ public class RunBench {
     private static int fileNameIndex;
     private int warmUpIndex;
     private int runIndex;
+    /**
+     * This is used in benchmarks that want to iterate in the {@link Bench#run} method.
+     */
+    public static int runIterCount = 1;
 
     /**
      * Check if any control properties are set.
@@ -137,12 +146,16 @@ public class RunBench {
     private static void getBenchProperties() {
         final String lps = System.getProperty(LOOP_COUNT_PROPERTY);
         final String wps = System.getProperty(WARMUP_COUNT_PROPERTY);
+        final String rps = System.getProperty(RUN_ITER_COUNT_PROPERTY);
         try {
             if (lps != null) {
                 defaultLoopCount = Integer.parseInt(lps);
             }
             if (wps != null) {
                 warmupCount = Integer.parseInt(wps);
+            }
+            if (rps != null) {
+                runIterCount = Integer.parseInt(rps);
             }
         } catch (NumberFormatException ex) {
             ProgramError.unexpected("test.bench.loopcount " + lps + " did not parse");
@@ -257,7 +270,7 @@ public class RunBench {
             final double benchElapsed = avgElapsed - avgEncapElapsed;
             final double avgElapsedStdDev = stddev(elapsed, avgElapsed);
             final long[] minMaxArr = maxmin(elapsed);
-            System.out.println("Benchmark results (nanoseconds) per iteration");
+            System.out.println("Benchmark results (nanoseconds per iteration)");
             System.out.println("  loopcount: " + loopCount + ", warmupcount: " + warmupCount);
             System.out.format("  averge overhead: %.3f, median overhead: %.3f\n", avgEncapElapsed, median(encapElapsed));
             System.out.format("  average elapsed: %.3f, median elapsed: %.3f, \n", avgElapsed, median(elapsed));
@@ -276,6 +289,29 @@ public class RunBench {
         }
         this.loopCount = 0;
         return true;
+    }
+
+    private void doRun(long loopCount, MicroBenchmark bench, long[] timings) throws Throwable {
+        // do warmup and discard results
+        runIndex = -1;
+        for (warmUpIndex = 0; warmUpIndex < warmupCount; warmUpIndex++) {
+            bench.prerun();
+            bench.run();
+            bench.postrun();
+            if (trace && bench != encapBench) {
+                System.out.println("warm up run " + warmUpIndex);
+            }
+        }
+        for (runIndex = 0; runIndex < loopCount; runIndex++) {
+            bench.prerun();
+            final long start = System.nanoTime();
+            bench.run();
+            timings[runIndex] = System.nanoTime() - start;
+            bench.postrun();
+            if (trace && bench != encapBench) {
+                System.out.println("run " + runIndex + " elapsed " + timings[runIndex]);
+            }
+        }
     }
 
     /**
@@ -328,29 +364,6 @@ public class RunBench {
             }
         }
 
-    }
-
-    private void doRun(long loopCount, MicroBenchmark bench, long[] timings) throws Throwable {
-        // do warmup and discard results
-        runIndex = -1;
-        for (warmUpIndex = 0; warmUpIndex < warmupCount; warmUpIndex++) {
-            bench.prerun();
-            bench.run();
-            bench.postrun();
-            if (trace && bench != encapBench) {
-                System.out.println("warm up run " + warmUpIndex);
-            }
-        }
-        for (runIndex = 0; runIndex < loopCount; runIndex++) {
-            bench.prerun();
-            final long start = System.nanoTime();
-            bench.run();
-            timings[runIndex] = System.nanoTime() - start;
-            bench.postrun();
-            if (trace && bench != encapBench) {
-                System.out.println("run " + runIndex + " elapsed " + timings[runIndex]);
-            }
-        }
     }
 
     public void displayElapsed() {
@@ -425,24 +438,101 @@ public class RunBench {
         return getProperty(name, true);
     }
 
+    /**
+     * Support for running a benchmark as main program.
+     * Accepts command line options in lieu of properties and some additional arguments to control the run:
+     * <pre>
+     * -runs n                run the entire benchmark (test method) "n" times. This results in "n" reported measurements.
+     * -loopcount n        equivalent to -Dtest.bench.loopcount=n
+     * -warmupcount n  equivalent to -Dtest.bench.warmupcount=n
+     * -runitercount n     equivalent to -Dtest.bench.runitercount=n
+     *
+     * Other args are passed to the test method (based on its signature). The signature {@code test(int i)}
+     * is given a default value of zero if the argument is omitted.
+     * </pre>
+     *
+     * @param testClass
+     * @param args
+     */
     public static void runTest(Class<? extends RunBench> testClass, String[] args) {
         try {
-            Method testMethod = testClass.getDeclaredMethod("test", new Class<?>[]{});
+            final Method[] methods = testClass.getDeclaredMethods();
+            Method testMethod = null;
+            for (Method method : methods) {
+                if (method.getName().equals("test")) {
+                    testMethod = method;
+                }
+            }
+            if (testMethod == null) {
+                throw new IllegalArgumentException("no test method found in class: " + testClass.getSimpleName());
+            }
+
             int runs = 1;
+            // index of first argument that could be an argument to the test method
+            int testArgIndex = args.length;
             // Checkstyle: stop modified control variable check
             for (int i = 0; i < args.length; i++) {
-                if (args[i].equals("r")) {
-                    runs = Integer.parseInt(args[++i]);
+                String arg = args[i];
+                if (arg.startsWith("-")) {
+                    arg = arg.substring(1);
+                }
+                int matchValue;
+                if ((matchValue = argMatch(arg, "runs")) >= 0) {
+                    runs = Integer.parseInt(matchValue == 0 ? args[++i] : arg.substring(matchValue));
+                } else if ((matchValue = argMatch(arg, "loopcount")) >= 0) {
+                    System.setProperty(LOOP_COUNT_PROPERTY, matchValue == 0 ? args[++i] : arg.substring(matchValue));
+                } else if ((matchValue = argMatch(arg, "warmcount")) >= 0) {
+                    System.setProperty(WARMUP_COUNT_PROPERTY, matchValue == 0 ? args[++i] : arg.substring(matchValue));
+                } else if ((matchValue = argMatch(arg, "runitercount")) >= 0) {
+                    System.setProperty(RUN_ITER_COUNT_PROPERTY, matchValue == 0 ? args[++i] : arg.substring(matchValue));
+                } else {
+                    testArgIndex = i;
+                    break;
                 }
             }
             // Checkstyle: resume modified control variable check
-            Object[] noArgs = new Object[0];
+            Class<?>[] params = testMethod.getParameterTypes();
+            if (args.length - testArgIndex < params.length) {
+                if (!(params.length == 1 && params[0] == int.class)) {
+                    throw new IllegalArgumentException("insufficient arguments for test method");
+                }
+            }
+            Object[] testArgs = new Object[params.length];
+            for (int i = 0; i < params.length; i++) {
+                final Class<?> param = params[i];
+                if (param == String.class) {
+                    testArgs[i] = args[testArgIndex + i];
+                } else if (param == int.class) {
+                    testArgs[i] = testArgIndex + i < args.length ? Integer.parseInt(args[testArgIndex + i]) : 0;
+                } else if (param == long.class) {
+                    testArgs[i] = Long.parseLong(args[testArgIndex + i]);
+                } else {
+                    throw new IllegalArgumentException("unsupported test argument type: " + param.getSimpleName());
+                }
+            }
             for (int i = 0; i < runs; i++) {
-                testMethod.invoke(null, noArgs);
+                testMethod.invoke(null, testArgs);
             }
         } catch (Exception ex) {
             System.err.println(ex);
         }
+    }
+
+    /**
+     * Argument match, either "key" or "key=value".
+     * @param arg argument to match
+     * @param key key we are looking for
+     * @return < 0 if not matched, 0 if matched exactly, otherwise index of start of value
+     */
+    private static int argMatch(final String arg, final String key) {
+        if (arg.startsWith(key)) {
+            final int index = arg.indexOf("=");
+            if (index > 0) {
+                return index + 1;
+            }
+            return 0;
+        }
+        return -1;
     }
 
 }
