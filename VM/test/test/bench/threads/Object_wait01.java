@@ -37,7 +37,7 @@ public class Object_wait01  extends RunBench {
 
     public static boolean test(int i) {
         new Thread(new Notifier()).start();
-        final boolean result = new Object_wait01().runBench(true);
+        final boolean result = new Object_wait01().runBench();
         done = true;
         return result;
 
