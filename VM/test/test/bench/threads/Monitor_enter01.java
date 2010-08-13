@@ -34,7 +34,7 @@ public class Monitor_enter01 extends RunBench {
     }
 
     public static boolean test(int i) {
-        return new Monitor_enter01().runBench(true);
+        return new Monitor_enter01().runBench();
     }
 
     static class Bench extends MicroBenchmark {

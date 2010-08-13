@@ -42,28 +42,25 @@ public class HashMap_get01 extends RunBench {
     }
 
     public static boolean test(int i) {
-        return new HashMap_get01().runBench(true);
+        return new HashMap_get01().runBench();
     }
 
-    public static class Bench extends MicroBenchmark {
-        protected HashMapSetup mapSetup;
+    public static class Bench extends HashMapBase {
         protected Bench() {
-            mapSetup = new HashMapSetup();
             init();
         }
 
         protected Bench(Map<Integer, Integer> map) {
-            mapSetup = new HashMapSetup(map);
             init();
         }
 
         protected void init() {
-            mapSetup.map.put(mapSetup.key, mapSetup.value);
+            map.put(key, value);
         }
 
         @Override
         public long run() {
-            return mapSetup.map.get(mapSetup.key);
+            return map.get(key);
         }
 
     }
