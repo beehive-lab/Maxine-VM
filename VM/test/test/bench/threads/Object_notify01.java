@@ -34,7 +34,7 @@ public class Object_notify01 extends RunBench {
     }
 
     public static boolean test(int i) {
-        return new Object_notify01().runBench(true);
+        return new Object_notify01().runBench();
     }
 
     static class Bench extends MicroBenchmark {

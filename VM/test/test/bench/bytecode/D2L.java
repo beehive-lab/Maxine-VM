@@ -39,7 +39,7 @@ public class D2L extends RunBench {
     }
 
     public static boolean test(double d) {
-        return new D2L(d).runBench(true);
+        return new D2L(d).runBench();
     }
 
     static class Bench extends MicroBenchmark {

@@ -41,7 +41,7 @@ public class ConcHashMap_get01  extends RunBench {
     }
 
     public static boolean test(int i) {
-        return new ConcHashMap_get01().runBench(true);
+        return new ConcHashMap_get01().runBench();
     }
 
     static class Bench extends HashMap_get01.Bench {

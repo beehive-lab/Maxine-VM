@@ -53,7 +53,7 @@ public class JNI_invocations extends RunBench {
     }
 
     public static boolean test() {
-        return new JNI_invocations().runBench(true);
+        return new JNI_invocations().runBench();
     }
 
     /**
