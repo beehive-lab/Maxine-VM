@@ -709,14 +709,15 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitReturn(Return x) {
-        emitXir(xir.genEpilogue(site(x), compilation.method), x, stateFor(x, x.stateAfter()), compilation.method, false);
         if (x.kind.isVoid()) {
+            emitXir(xir.genEpilogue(site(x), compilation.method), x, stateFor(x, x.stateAfter()), compilation.method, false);
             lir.returnOp(IllegalValue);
         } else {
             CiValue operand = resultOperandFor(x.kind);
             LIRItem result = new LIRItem(x.result(), this);
 
             result.loadItemForce(operand);
+            emitXir(xir.genEpilogue(site(x), compilation.method), x, stateFor(x, x.stateAfter()), compilation.method, false);
             lir.returnOp(result.result());
         }
         setNoResult(x);
