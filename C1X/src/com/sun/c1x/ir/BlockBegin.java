@@ -396,7 +396,7 @@ public final class BlockBegin extends Instruction {
         v.visitBlockBegin(this);
     }
 
-    public void merge(FrameState newState) {
+    public void mergeOrClone(FrameState newState) {
         FrameState existingState = stateBefore;
 
         if (existingState == null) {
@@ -407,9 +407,18 @@ public final class BlockBegin extends Instruction {
             }
 
             // copy state because it is modified
+            /* TODO the state is copied and mutated here even though the methods called on it below all
+             * belong to immutable FrameState class and have been considered not actually mutating the
+             * frame state. One needs to rethink the details of this and whether to move them to
+             * MutableFrameState, which might require additional copying of frame states in other places
+             * where currently the immutable is used directly.
+             */
             newState = newState.copy();
 
             // if a liveness map is available, use it to invalidate dead locals
+            // TODO: as of classfile version 50+ new attribute stackmap table
+            // is a snapshot of stackmap at every block entry point
+            // rename CiBitMap, move to com.sun.cri.ci
             BitMap liveness = (BitMap) newState.scope().method.liveness(bci());
             if (liveness != null) {
                 invalidateDeadLocals(newState, liveness);
@@ -427,11 +436,13 @@ public final class BlockBegin extends Instruction {
                 throw new CiBailout("stack or locks do not match");
             }
 
-            while (existingState.scope() != newState.scope()) {
-                // XXX: original code is not sure if this is necessary
-                newState = newState.scope().callerState();
-                assert newState != null : "could not match scopes";
-            }
+            // while (existingState.scope() != newState.scope()) {
+            //     // XXX: original code is not sure if this is necessary
+            //     newState = newState.scope().callerState();
+            //     assert newState != null : "could not match scopes";
+            // }
+            // above code replaced with assert for the moment
+            assert existingState.scope() == newState.scope();
 
             assert existingState.localsSize() == newState.localsSize();
             assert existingState.stackSize() == newState.stackSize();
@@ -440,7 +451,7 @@ public final class BlockBegin extends Instruction {
                 throw new CiBailout("jsr/ret too complicated");
             }
 
-            existingState.mergeAndInvalidate(this, newState);
+            existingState.merge(this, newState);
         }
     }
 
@@ -709,7 +720,7 @@ public final class BlockBegin extends Instruction {
 
     public void addExceptionStates(List<FrameState> exceptHandlerStates) {
         for (FrameState state : exceptHandlerStates) {
-            addExceptionState(state.immutableCopy());
+            addExceptionState(state);
         }
     }
 }

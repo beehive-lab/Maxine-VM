@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,44 +18,41 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.java.util.concurrent;
 
-import com.sun.c1x.value.*;
-import com.sun.cri.ci.*;
+import java.util.concurrent.*;
+import test.bench.util.*;
+import test.bench.java.util.*;
 
 /**
- * The {@code StateSplit} class is the abstract base class of all instructions
- * that store a copy of the value stack state.
+ * Variant of {@link HashMap_get01} that uses a {@link ConcurrentHashMap}.
  *
- * @author Ben L. Titzer
+ * @author Mick Jordan
  */
-public abstract class StateSplit extends Instruction {
 
-    protected FrameState stateBefore;
+public class ConcHashMap_get01  extends RunBench {
 
-    /**
-     * Creates a new state split with the specified value type.
-     * @param kind the type of the value that this instruction produces
-     */
-    public StateSplit(CiKind kind, FrameState stateBefore2) {
-        super(kind);
-        this.stateBefore = stateBefore2;
+    ConcHashMap_get01() {
+        super(new Bench());
     }
 
-    /**
-     * Sets the state after this instruction has executed.
-     * @param stateBefore the state
-     */
-    public void setStateBefore(FrameState stateBefore) {
-        this.stateBefore = stateBefore;
+    public static boolean test(int i) {
+        return new ConcHashMap_get01().runBench(true);
     }
 
-    /**
-     * Gets the state for this instruction.
-     * @return the state
-     */
-    @Override
-    public FrameState stateBefore() {
-        return stateBefore;
+    static class Bench extends HashMap_get01.Bench {
+
+        Bench() {
+            super(new ConcurrentHashMap<Integer, Integer>());
+        }
     }
+
+    public static void main(String[] args) {
+        RunBench.runTest(ConcHashMap_get01.class, args);
+    }
+
 }

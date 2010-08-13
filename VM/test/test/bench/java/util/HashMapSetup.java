@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,44 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+package test.bench.java.util;
 
-import com.sun.c1x.value.*;
-import com.sun.cri.ci.*;
+import java.util.*;
 
 /**
- * The {@code StateSplit} class is the abstract base class of all instructions
- * that store a copy of the value stack state.
+ * Utility class for HashMap benchmarks.
  *
- * @author Ben L. Titzer
+ * @author Mick Jordan
  */
-public abstract class StateSplit extends Instruction {
 
-    protected FrameState stateBefore;
+public class HashMapSetup {
 
-    /**
-     * Creates a new state split with the specified value type.
-     * @param kind the type of the value that this instruction produces
-     */
-    public StateSplit(CiKind kind, FrameState stateBefore2) {
-        super(kind);
-        this.stateBefore = stateBefore2;
+    public final Map<Integer, Integer> map;
+    public final Random random = new Random(46763);
+    public final Integer value = new Integer(0);
+    public final Integer key = random.nextInt();
+
+    public HashMapSetup() {
+        this(new HashMap<Integer, Integer>());
     }
 
-    /**
-     * Sets the state after this instruction has executed.
-     * @param stateBefore the state
-     */
-    public void setStateBefore(FrameState stateBefore) {
-        this.stateBefore = stateBefore;
-    }
-
-    /**
-     * Gets the state for this instruction.
-     * @return the state
-     */
-    @Override
-    public FrameState stateBefore() {
-        return stateBefore;
+    public HashMapSetup(Map<Integer, Integer> map) {
+        this.map = map;
+        for (int i = 0; i < 1000; i++) {
+            map.put(random.nextInt(), value);
+        }
     }
 }

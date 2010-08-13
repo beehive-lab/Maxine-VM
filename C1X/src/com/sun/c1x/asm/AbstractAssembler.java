@@ -197,8 +197,6 @@ public abstract class AbstractAssembler {
 
     public abstract void nullCheck(CiRegister r);
 
-    public abstract void buildFrame(int initialFrameSizeInBytes);
-
     public abstract void align(int codeEntryAlignment);
 
     public abstract void patchJumpTarget(int branch, int target);

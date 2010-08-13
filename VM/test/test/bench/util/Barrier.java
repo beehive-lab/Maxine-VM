@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,44 +18,41 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
-
-import com.sun.c1x.value.*;
-import com.sun.cri.ci.*;
+package test.bench.util;
 
 /**
- * The {@code StateSplit} class is the abstract base class of all instructions
- * that store a copy of the value stack state.
- *
- * @author Ben L. Titzer
+ * All threads wait at barrier until last thread arrives.
  */
-public abstract class StateSplit extends Instruction {
+public final class Barrier {
 
-    protected FrameState stateBefore;
+    private int threads;
+    private int threadCount = 0;
 
-    /**
-     * Creates a new state split with the specified value type.
-     * @param kind the type of the value that this instruction produces
-     */
-    public StateSplit(CiKind kind, FrameState stateBefore2) {
-        super(kind);
-        this.stateBefore = stateBefore2;
+    public Barrier(int threads) {
+        this.threads = threads;
     }
 
     /**
-     * Sets the state after this instruction has executed.
-     * @param stateBefore the state
+     * Get number of threads that have reached the barrier.
+     *
+     * @return number of threads that have reached the barrier
      */
-    public void setStateBefore(FrameState stateBefore) {
-        this.stateBefore = stateBefore;
+    public synchronized int getThreadCount() {
+        return threadCount;
     }
 
-    /**
-     * Gets the state for this instruction.
-     * @return the state
-     */
-    @Override
-    public FrameState stateBefore() {
-        return stateBefore;
+    public synchronized void waitForRelease() {
+        try {
+            threadCount++;
+            if (threadCount == threads) {
+                notifyAll();
+            } else {
+                while (threadCount < threads) {
+                    wait();
+                }
+            }
+        } catch (InterruptedException ex) {
+        }
     }
 }
+
