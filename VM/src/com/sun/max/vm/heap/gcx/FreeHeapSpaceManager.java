@@ -261,8 +261,10 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
 
         boolean canFit(Size size) {
             HeapFreeChunk chunk = HeapFreeChunk.toHeapFreeChunk(head);
+            Size spaceWithHeadRoom = size.plus(HeapSchemeAdaptor.MIN_OBJECT_SIZE);
+
             while (chunk != null) {
-                if (size.lessThan(chunk.size)) {
+                if (spaceWithHeadRoom.lessThan(chunk.size) || size.equals(chunk.size)) {
                     return true;
                 }
                 chunk = chunk.next;

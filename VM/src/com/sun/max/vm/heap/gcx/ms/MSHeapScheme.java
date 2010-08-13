@@ -174,6 +174,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             return true;
         }
         // We may reach here after a race. Don't run GC if request can be satisfied.
+
+        // FIXME: might be better to try allocate the requested space and save the result for the caller.
+        // This may avoid starvation case where in concurrent threads allocate the requested space
+        // in after this method returns but before the caller allocated the space..
         if (objectSpace.canSatisfyAllocation(requestedFreeSpace)) {
             return true;
         }
