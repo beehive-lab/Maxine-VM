@@ -18,50 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * @Harness: java
- * @Runs: (1, 100000) = true;
- */
-package test.bench.java.util.concurrent;
+package test.bench.java.util;
 
-import java.util.concurrent.*;
+import java.util.*;
 import test.bench.util.*;
-import test.bench.java.util.*;
 
 /**
- * Variant of {@link Hashmap_mt_get01} that uses a {@link ConcurrentHashMap concurrent map}.
+ * Utility class for HashMap benchmarks.
  *
  * @author Mick Jordan
  */
 
-public class ConcHashMap_mt_get01 extends RunBench {
+public abstract class HashMapBase  extends RunBench.MicroBenchmark {
 
-    protected ConcHashMap_mt_get01(MicroBenchmark bench, int t, long c) {
-        super(bench, new ThreadCounter.Bench(t, c));
+    public final Map<Integer, Integer> map;
+    public final Random random = new Random(46763);
+    public final Integer value = new Integer(0);
+    public final Integer key = random.nextInt();
+
+    public HashMapBase() {
+        this(new HashMap<Integer, Integer>());
     }
 
-    public static boolean test(int t, int c) {
-        final boolean result = new ConcHashMap_mt_get01(new Bench(t, c), t, c).runBench(true);
-        return result;
-    }
-
-    static class Bench extends HashMap_mt_get01.Bench {
-        Bench(int threadCount, long countDown) {
-            super(new ConcHashGetRunnerFactory(), threadCount, countDown);
+    public HashMapBase(Map<Integer, Integer> map) {
+        this.map = map;
+        for (int i = 0; i < 1000; i++) {
+            map.put(random.nextInt(), value);
         }
-
-    }
-
-    static class ConcHashGetRunnerFactory extends  HashMap_mt_get01.HashGetRunnerFactory {
-
-        @Override
-        public Runnable createRunner(int threadCount, long count) {
-            return new HashMap_mt_get01.HashGetRunner(threadCount, count, new ConcurrentHashMap<Integer, Integer>());
-        }
-    }
-
-    // for running stand-alone
-    public static void main(String[] args) {
-        RunBench.runTest(ConcHashMap_mt_get01.class, args);
     }
 }

@@ -40,7 +40,7 @@ public class SyncHashMap_put01  extends RunBench {
     }
 
     public static boolean test(int i) {
-        return new SyncHashMap_put01().runBench(true);
+        return new SyncHashMap_put01().runBench();
     }
 
     static class Bench extends HashMap_put01.Bench {
