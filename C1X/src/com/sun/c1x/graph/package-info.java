@@ -65,7 +65,7 @@
  * {@link com.sun.c1x.ir.BlockBegin#insertLoopPhis} will always get null for this value. Is this a bug?).
  * {@link com.sun.c1x.graph.GraphBuilder#pushRootScope} initializes the {@link com.sun.c1x.graph.GraphBuilder#scopeData} field with a
  * {@link com.sun.c1x.graph.ScopeData} instance, with null parent. The
- * {@link com.sun.c1x.graph.GraphBuilder#compilation} instance is called to get an {@link com.sun.c1x.ri.RiConstantPool}
+ * {@link com.sun.c1x.graph.GraphBuilder#compilation} instance is called to get an {@link com.sun.cri.ri.RiConstantPool}
  * , which is C1X's interface to constant pool information. The {@link com.sun.c1x.graph.GraphBuilder#curBlock} field is
  * set to the {@code startBlock}.
  * <p>

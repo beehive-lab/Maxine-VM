@@ -20,7 +20,7 @@
  */
 /*
  * @Harness: java
- * @Runs: (1, 10000) = true;
+ * @Runs: 0 = true;
  */
 package test.bench.threads;
 
