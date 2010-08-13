@@ -60,7 +60,7 @@ public abstract class LIRGenerator extends ValueVisitor {
      * inserting move instructions if necessary.
      *
      * @param instruction an instruction that produces a {@linkplain Value#operand() result}
-     * @param operand the operand in which the result of {@code instruction} must be available
+     * @param register the {@linkplain CiRegister} in which the result of {@code instruction} must be available
      * @return {@code register} as an operand
      */
     protected CiValue force(Value instruction, CiRegister register) {
