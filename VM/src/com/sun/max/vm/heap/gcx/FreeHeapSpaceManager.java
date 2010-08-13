@@ -23,7 +23,6 @@ package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -65,7 +64,55 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
     private static boolean TraceSweep = false;
     private static boolean TraceTLAB = false;
 
-    private static final int REFILL_RATIO =  6;
+    class LinearSpaceRefillManager extends LinearSpaceAllocator.RefillManager {
+        /**
+         * Size linear space allocated managed by this refill manager are refilled with.
+         */
+        Size refillSize;
+        Size refillThreshold;
+
+        LinearSpaceRefillManager() {
+        }
+
+        void setRefillPolicy(Size refillSize, Size refillThreshold) {
+            this.refillSize = refillSize;
+            this.refillThreshold =  refillThreshold;
+        }
+
+        @Override
+        @INLINE(override = true)
+        Address allocate(Size size) {
+            return binAllocate(size);
+        }
+
+        @Override
+        @INLINE(override = true)
+        Address allocateTLAB(Size size) {
+            return binAllocateTLAB(size);
+        }
+
+        @Override
+        @INLINE(override = true)
+        boolean shouldRefill(Size spaceLeft) {
+            return spaceLeft.lessThan(refillThreshold);
+        }
+
+        @Override
+        @INLINE(override = true)
+        Address refill(Pointer startOfSpaceLeft, Size spaceLeft) {
+            return binRefill(refillSize, startOfSpaceLeft, spaceLeft);
+        }
+    }
+
+    /**
+     * The currently committed heap space.
+     */
+    private final ContiguousHeapSpace committedHeapSpace;
+
+    private boolean useTLABBin;
+
+    private final LinearSpaceAllocator smallObjectAllocator;
+
 
     /**
      * Minimum size to be treated as a large object.
@@ -78,261 +125,6 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
      */
     int log2FirstBinSize;
 
-    /**
-     * A linear space allocator.
-     * Allocate space linearly from a region of the heap.
-     */
-    class HeapSpaceAllocator extends LinearAllocationMemoryRegion {
-        /**
-         * End of space allocator.
-         */
-        private Address end;
-
-        /**
-         * Maximum size one can allocate with this allocator. Request for size larger than this
-         * gets delegated to the allocation failure handler.
-         */
-        @CONSTANT_WHEN_NOT_ZERO
-        private Size sizeLimit;
-
-        /**
-         * Size to reserve at the end of the allocator to guarantee that a dead object can always be
-         * appended to a TLAB to fill unused space before a TLAB refill.
-         * The headroom is used to compute a soft limit that'll be used as the tlab's top.
-         */
-        @CONSTANT_WHEN_NOT_ZERO
-        private Size headroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
-
-        private Size refillSize;
-
-        HeapSpaceAllocator(String description) {
-            super(description);
-        }
-
-        void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit, Size refillSize) {
-            this.sizeLimit = sizeLimit;
-            this.refillSize = refillSize;
-            this.headroom = HeapSchemeAdaptor.MIN_OBJECT_SIZE;
-            if (initialChunk.isZero()) {
-                clear();
-            } else {
-                refill(initialChunk, initialChunkSize);
-            }
-        }
-
-        // FIXME: concurrency
-        void clear() {
-            start = Address.zero();
-            end = Address.zero();
-            mark.set(Address.zero());
-        }
-
-        // FIXME: concurrency
-        void refill(Address chunk, Size chunkSize) {
-            // Make sure we can cause any attempt to allocate to fail, regardless of the
-            // value of the mark.
-            end = Address.zero();
-            // Now refill.
-            start = chunk;
-            size = chunkSize;
-            mark.set(start);
-            end = chunk.plus(chunkSize).minus(headroom);
-        }
-
-        private Size refillLimit() {
-            return size().dividedBy(REFILL_RATIO);
-        }
-
-        @INLINE
-        private Address hardLimit() {
-            return end.plus(headroom);
-        }
-
-        @INLINE
-        private Pointer setTopToLimit() {
-            Pointer cell;
-            Address hardLimit = hardLimit();
-            do {
-                cell = top();
-                if (cell.equals(hardLimit)) {
-                    // Already at end
-                    return cell;
-                }
-            } while(mark.compareAndSwap(cell, hardLimit) != cell);
-            return cell;
-        }
-
-        Size freeSpaceLeft() {
-            return size.minus(used());
-        }
-
-        @INLINE
-        private Pointer top() {
-            return mark.get().asPointer();
-        }
-
-        @INLINE
-        private boolean isLarge(Size size) {
-            return size.greaterThan(sizeLimit);
-        }
-
-        synchronized Pointer refillOrAllocate(Size size, boolean forTLAB) {
-            if (isLarge(size)) {
-                if (MaxineVM.isDebug()) {
-                    FatalError.check(!forTLAB, "must not be for TLAB");
-                }
-                return binAllocate(size).asPointer();
-            }
-            // We may have raced with another concurrent thread which may have
-            // refilled the allocator.
-            Pointer cell = top();
-
-            if (cell.plus(size).greaterThan(end)) {
-                Address hardLimit = hardLimit();
-                if (cell.plus(size).equals(hardLimit)) {
-                    // We need to atomically change top
-                    Pointer start = setTopToLimit();
-                    if (cell.equals(start)) {
-                        return cell;
-                    }
-                    // Lost the race
-                    cell = start;
-                }
-                // Fill up the allocator to bring all mutators to the refill point.
-                Size spaceLeft = hardLimit.minus(cell).asSize();
-                if (spaceLeft.greaterThan(refillLimit())) {
-                      // Don't refill, waste would be too high. Allocate from the bin table.
-                    Address result = forTLAB ? binAllocateTLAB(size) : binAllocate(size);
-                    return result.asPointer();
-                }
-                // Refill. First, fill up the allocator to bring everyone to refill synchronization.
-                Pointer start = setTopToLimit();
-
-                Address chunk = binRefill(refillSize, start, hardLimit.minus(start).asSize());
-                refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
-                // Fall-off to return zero.
-            }
-            // There was a race for refilling the allocator. Just return to
-            // the non-blocking allocation loop.
-            return Pointer.zero();
-        }
-
-       /**
-         * Allocate a zeroed-out space of the specified size.
-         *
-         * @param size size requested in bytes.
-         * @return
-         */
-        final Pointer allocateCleared(Size size) {
-            if (MaxineVM.isDebug()) {
-                FatalError.check(size.isWordAligned(), "Size must be word aligned");
-            }
-            // Try first a non-blocking allocation out of the current chunk.
-            // This may fail for a variety of reasons, all captured by the test
-            // against the current chunk limit.
-            Pointer cell;
-            Pointer nextMark;
-            do {
-                cell = top();
-                nextMark = cell.plus(size);
-                while (nextMark.greaterThan(end)) {
-                    cell = refillOrAllocate(size, false);
-                    if (!cell.isZero()) {
-                        Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
-                        return cell;
-                    }
-                    // loop back to retry.
-                    cell = top();
-                    nextMark = cell.plus(size);
-                }
-            } while (mark.compareAndSwap(cell, nextMark) != cell);
-            Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
-            return cell;
-        }
-
-        final Pointer allocateTLAB(Size tlabSize) {
-            if (MaxineVM.isDebug()) {
-                FatalError.check(tlabSize.isWordAligned(), "Size must be word aligned");
-            }
-            // Try first a non-blocking allocation out of the current chunk.
-            // This may fail for a variety of reasons, all captured by the test
-            // against the current chunk limit.
-            Pointer cell;
-            Pointer nextMark;
-            Size chunkSize;
-            do {
-                chunkSize = tlabSize;
-                cell = top();
-                nextMark = cell.plus(chunkSize);
-                while (nextMark.greaterThan(end)) {
-                    // FIXME: should use some ratio of TLAB size instead here.
-                    if (nextMark.minus(end).lessThan(minReclaimableSpace)) {
-                        // Can use what's left in the allocator for the TLAB.
-                        nextMark = hardLimit().asPointer();
-                        chunkSize = nextMark.minus(cell).asSize();
-                        break;
-                    }
-                    cell = refillOrAllocate(chunkSize, true);
-                    if (!cell.isZero()) {
-                        if (MaxineVM.isDebug()) {
-                            // Check cell is formated as chunk
-                            FatalError.check(HeapFreeChunk.isValidChunk(cell, committedHeapSpace), "must be a valid heap chunk format");
-                        }
-                        return cell;
-                    }
-                    // loop back to retry.
-                    cell = top();
-                    nextMark = cell.plus(chunkSize);
-                }
-            } while (mark.compareAndSwap(cell, nextMark) != cell);
-
-            // Format as a chunk.
-            HeapFreeChunk.setFreeChunkSize(cell, chunkSize);
-            HeapFreeChunk.setFreeChunkNext(cell, null);
-            return cell;
-        }
-
-        /**
-         * Fill up the allocator and return address of its allocation mark
-         * before filling.
-         * This is used to ease concurrent refill: a thread requesting a refill first
-         * grab a refill monitor, then fill up the allocator to force every racer to
-         * to grab the refill monitor.
-         * Refill can then be performed by changing first the bounds of the allocator, then
-         * the allocation mark.
-         *
-         * @return
-         */
-        Pointer fillUp() {
-            Pointer cell = setTopToLimit();
-            Pointer hardLimit = hardLimit().asPointer();
-            if (cell.lessThan(hardLimit)) {
-                HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
-            }
-            return cell;
-        }
-
-        void makeParsable() {
-            fillUp();
-        }
-
-        void printSpaceLeft() {
-            Log.print("Small object allocator: space left = ");
-            Log.println(hardLimit().minus(top()).toLong());
-
-        }
-    }
-
-    /**
-     * The currently committed heap space.
-     * As a temporary hack to please the inspector, we use a LinearAllocationMemoryRegion to
-     * record the committed heap space. We only grow and shrink the heap space linearly.
-     * So we can use the LinearallocationMemoryRegion.mark to represent the top of the
-     * committed space, whereas the end is the end of the reserved memory.
-     */
-    private final ContiguousHeapSpace committedHeapSpace;
-    private final HeapSpaceAllocator smallObjectAllocator;
-    private boolean useTLABBin;
 
     /**
      * Head of a linked list of free space recovered by the Sweeper.
@@ -699,7 +491,8 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
                 Log.print(",  fit: ");
                 Log.println(exactFit ? "exact" : "not exact");
                 printTlabFreeSpace();
-                smallObjectAllocator.printSpaceLeft();
+                Log.print("Small object allocator: space left = ");
+                Log.println(smallObjectAllocator.freeSpace());
                 Log.unlock(lockDisabledSafepoints);
                 if (gcCount > 5) {
                     FatalError.unexpected("Suspiscious repeating GC calls detected");
@@ -839,10 +632,13 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
             freeChunkBins[i] = new FreeSpaceList(i);
         }
         tlabFreeSpaceList = freeChunkBins[0];
-        smallObjectAllocator = new HeapSpaceAllocator("Small Objects Allocator");
+        smallObjectAllocator = new LinearSpaceAllocator(new LinearSpaceRefillManager());
     }
 
-
+    @HOSTED_ONLY
+    public void hostInitialize() {
+        smallObjectAllocator.hostInitialize();
+    }
 
     public void initialize(Address start, Size initSize, Size maxSize) {
         if (!committedHeapSpace.reserve(start, maxSize)) {
@@ -857,13 +653,17 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
         TraceSweep = MaxineVM.isDebug() ? traceSweepingOption.getValue() : false;
         TraceTLAB = MaxineVM.isDebug() ? traceTLABOption.getValue() : false;
-        smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, minLargeObjectSize);
+
+        // Dumb refill policy. Doesn't matter in the long term as we'll switch to a first fit linear allocator with overflow allocator on the side.
+        LinearSpaceRefillManager refillManager = (LinearSpaceRefillManager) smallObjectAllocator.refillManager();
+        refillManager.setRefillPolicy(minLargeObjectSize, Size.fromInt(Word.widthValue().numberOfBytes * 64));
+        smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE, minReclaimableSpace);
         useTLABBin = false;
         InspectableHeapInfo.init(committedHeapSpace);
     }
 
     private Size lockedFreeSpaceLeft() {
-        return Size.fromLong(totalFreeChunkSpace).plus(smallObjectAllocator.freeSpaceLeft());
+        return Size.fromLong(totalFreeChunkSpace).plus(smallObjectAllocator.freeSpace());
     }
 
     /**

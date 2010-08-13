@@ -121,6 +121,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         if (MaxineVM.isHosted()) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
+            objectSpace.hostInitialize();
             // The monitor for the collector must be allocated in the image
             JavaMonitorManager.bindStickyMonitor(this);
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
