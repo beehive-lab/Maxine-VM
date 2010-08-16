@@ -31,6 +31,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -77,21 +78,9 @@ public final class Heap {
     }
 
     /**
-     * A special exception thrown when a non-GC thread tries to perform a GC while holding
-     * the {@linkplain VmThreadMap#THREAD_LOCK GC lock}. There is a single, pre-allocated
-     * {@linkplain #INSTANCE instance} of this object so that raising this exception
-     * does not require any allocation.
-     *
-     * @author Doug Simon
+     * Lock for synchronizing access to the heap.
      */
-    public static final class HoldsGCLockError extends OutOfMemoryError {
-
-        private HoldsGCLockError() {
-        }
-
-        public static final HoldsGCLockError INSTANCE = new HoldsGCLockError();
-    }
-
+    public static final Object HEAP_LOCK = JavaMonitorManager.newStickyLock();
 
     private static Size maxSize;
     private static Size initialSize;
@@ -442,11 +431,6 @@ public final class Heap {
     }
 
     public static boolean collectGarbage(Size requestedFreeSpace) {
-        if (Thread.holdsLock(VmThreadMap.THREAD_LOCK)) {
-            // The GC requires this lock to proceed
-            throw HoldsGCLockError.INSTANCE;
-        }
-
         if (Heap.gcDisabled()) {
             Throw.stackDump("Out of memory and GC is disabled");
             MaxineVM.native_exit(1);
@@ -474,7 +458,14 @@ public final class Heap {
             Log.println(" Kb --");
             Log.unlock(lockDisabledSafepoints);
         }
-        final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
+        final boolean freedEnough;
+        if (VmThread.current().isVmOperationThread()) {
+            freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
+        } else {
+            synchronized (HEAP_LOCK) {
+                freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
+            }
+        }
         if (verbose()) {
             final long afterUsed = reportUsedSpace();
             final long afterFree = reportFreeSpace();

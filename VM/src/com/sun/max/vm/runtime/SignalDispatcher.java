@@ -27,7 +27,6 @@ import sun.misc.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 

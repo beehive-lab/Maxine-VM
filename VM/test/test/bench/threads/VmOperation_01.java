@@ -103,7 +103,7 @@ public class VmOperation_01 extends RunBench {
 
         @Override
         public long run() {
-            VmOperationThread.execute(operation);
+            VmOperationThread.submit(operation);
             return defaultResult;
         }
 

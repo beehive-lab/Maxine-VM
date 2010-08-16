@@ -151,10 +151,10 @@ public class VmThread {
     private Throwable pendingException;
 
     /**
-     * The number of currently incomplete {@linkplain VmOperation VM operations} submitted for
-     * {@linkplain VmOperationThread#execute(VmOperation) execution} by this thread.
+     * The number of VM operations {@linkplain VmOperationThread#submit(VmOperation) submitted}
+     * by this thread for execution that have not yet completed.
      */
-    private int vmOperationCount;
+    private volatile int pendingOperations;
 
     /**
      * The pool of JNI local references allocated for this thread.
@@ -934,16 +934,37 @@ public class VmThread {
         }
     }
 
-    public int vmOperationCount() {
-        return vmOperationCount;
+    /**
+     * Gets the number of VM operations {@linkplain VmOperationThread#submit(VmOperation) submitted}
+     * by this thread for execution that have not yet completed.
+     */
+    public int pendingOperations() {
+        return pendingOperations;
     }
 
-    public void incrementVmOperationCount() {
-        ++vmOperationCount;
+    /**
+     * Increments the {@linkplain #pendingOperations() pending operations} count.
+     */
+    public void incrementPendingOperations() {
+        ++pendingOperations;
+        boolean lockDisabledSafepoints = Log.lock();
+        Log.printThread(this, false);
+        Log.print(": incremented pendingOperations -> ");
+        Log.println(pendingOperations);
+        Log.unlock(lockDisabledSafepoints);
     }
 
-    public void decrementVmOperationCount() {
-        --vmOperationCount;
+    /**
+     * Decrements the {@linkplain #pendingOperations() pending operations} count.
+     */
+    public void decrementPendingOperations() {
+        --pendingOperations;
+        boolean lockDisabledSafepoints = Log.lock();
+        Log.printThread(this, false);
+        Log.print(": decremented pendingOperations -> ");
+        Log.println(pendingOperations);
+        Log.unlock(lockDisabledSafepoints);
+        FatalError.check(pendingOperations >= 0, "pendingOperations should never be negative");
     }
 
     /**

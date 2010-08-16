@@ -304,7 +304,7 @@ public final class VmThreadMap {
             Log.unlock(lockDisabledSafepoints);
         }
         ACTIVE.nonDaemonThreads--;
-        ACTIVE.notify();
+        THREAD_LOCK.notify();
     }
 
     /**

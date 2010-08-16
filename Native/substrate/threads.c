@@ -382,6 +382,8 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
 
         if (result == 0) {
             id = getThreadLocal(jint, tl, ID);
+
+            /* TODO: Save current thread signal mask so that it can be restored when this thread is detached. */
             setCurrentThreadSignalMask(false);
             break;
         } else if (result == -1) {

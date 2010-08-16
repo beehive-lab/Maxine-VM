@@ -199,6 +199,12 @@ public abstract class Trap {
      */
     @VM_ENTRY_POINT
     private static void trapStub(int trapNumber, Pointer trapState, Address faultAddress) {
+        // From this point on until we return from the trap stub,
+        // this variable is used to communicate to the VM operation thread
+        // whether a thread was stopped at a safepoint or
+        // in native code
+        TRAP_INSTRUCTION_POINTER.setVariableWord(Pointer.zero());
+
         if (trapNumber == ASYNC_INTERRUPT) {
             VmThread.current().setInterrupted();
             return;
@@ -338,7 +344,7 @@ public abstract class Trap {
 
         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-        final Pointer triggeredVmThreadLocals = VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
+        final Pointer triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
         final Pointer safepointLatch = trapStateAccess.getSafepointLatch(trapState);
 
         if (VmThread.current().isVmOperationThread()) {
@@ -348,11 +354,13 @@ public abstract class Trap {
         // check to see if a safepoint has been triggered for this thread
         if (safepointLatch.equals(triggeredVmThreadLocals) && safepoint.isAt(instructionPointer)) {
             // a safepoint has been triggered for this thread
-            final Reference reference = VmThreadLocal.VM_OPERATION.getVariableReference(triggeredVmThreadLocals);
+            final Reference reference = VM_OPERATION.getVariableReference(triggeredVmThreadLocals);
             final VmOperation vmOperation = (VmOperation) reference.toJava();
             trapStateAccess.setTrapNumber(trapState, Number.SAFEPOINT);
             if (vmOperation != null) {
+                TRAP_INSTRUCTION_POINTER.setVariableWord(instructionPointer);
                 vmOperation.doAtSafepoint(trapState);
+                TRAP_INSTRUCTION_POINTER.setVariableWord(Pointer.zero());
             } else {
                 /*
                  * The interleaving of a mutator thread and a freezer thread below demonstrates
@@ -382,7 +390,7 @@ public abstract class Trap {
             // The state of the safepoint latch was TRIGGERED when the trap happened. It must be reset back to ENABLED
             // here otherwise another trap will occur as soon as the trap stub returns and re-executes the
             // safepoint instruction.
-            final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
+            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
             trapStateAccess.setSafepointLatch(trapState, enabledVmThreadLocals);
 
         } else if (inJava(disabledVmThreadLocals)) {
@@ -422,7 +430,7 @@ public abstract class Trap {
             if (!catchAddress.isZero()) {
                 final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                 trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
-                VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
+                EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
 
                 if (throwable instanceof StackOverflowError) {
                     // This complete call-chain must be inlined down to the native call

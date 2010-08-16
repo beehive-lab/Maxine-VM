@@ -99,6 +99,8 @@ public class SpecialReferenceManager {
      * their "referent" objects have been collected. If so, they must be enqueued as "pending"
      * so that the {@link Reference.ReferenceHandler} thread can pick them up
      * and add them to their respective queues later.
+     * The reference handler lock is notified by the thread that {@linkplain VmOperationThread#submit(VmOperation) submitted}
+     * the GC operation as it holds the lock. See {@link GCOperation#doItEpilogue()}.
      *
      * @param gripForwarder an object from the GC algorithm that can detect whether a grip
      * is live and can also return a forwarded version of the grip
@@ -153,11 +155,6 @@ public class SpecialReferenceManager {
         }
         TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
         discoveredList = Grip.fromOrigin(Pointer.zero());
-        if (last != null) {
-            // if there are pending special references, notify the reference handler thread.
-            // (note that the GC must already hold the lock object)
-            REFERENCE_LOCK.notifyAll();
-        }
 
         // Special reference map of Inspector
         if (Inspectable.isVmInspected()) {

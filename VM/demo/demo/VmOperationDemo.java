@@ -23,7 +23,6 @@ package demo;
 import java.util.*;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -37,17 +36,17 @@ import com.sun.max.vm.thread.*;
  * a specified number of seconds, printing a stack trace of
  * all the other spinning threads.
  *
- * This demo also shows what happens if a FreezeThreads operation
+ * This demo also shows what happens if a VM operation
  * triggers a GC.
  *
  * @author Doug Simon
  */
-public class FreezeThreadsDemo extends VmOperation {
+public class VmOperationDemo extends VmOperation {
 
     private final HashSet<Thread> threads;
 
-    public FreezeThreadsDemo(HashSet<Thread> threads) {
-        super("FreezeThreadsDemo", null, Mode.Safepoint);
+    public VmOperationDemo(HashSet<Thread> threads) {
+        super("Demo", null, Mode.Safepoint);
         this.threads = threads;
     }
 
@@ -69,9 +68,14 @@ public class FreezeThreadsDemo extends VmOperation {
         Thread thread = vmThread.javaThread();
         StackTraceElement[] trace = JDK_java_lang_Throwable.asStackTrace(frameList, null, Integer.MAX_VALUE);
         System.out.println(thread + " [stack depth: " + trace.length + "]");
-        for (StackTraceElement e : trace) {
-            System.out.println("\tat " + e);
-        }
+//        for (StackTraceElement e : trace) {
+//            System.out.println("\tat " + e);
+//        }
+    }
+
+    @Override
+    protected boolean allowsNestedOperations(VmOperation operation) {
+        return true;
     }
 
     static boolean done;
@@ -84,7 +88,7 @@ public class FreezeThreadsDemo extends VmOperation {
             Thread spinner = new Thread() {
                 @Override
                 public void run() {
-                    synchronized (FreezeThreadsDemo.class) {
+                    synchronized (VmOperationDemo.class) {
                         started++;
                     }
                     while (!done) {
@@ -100,7 +104,7 @@ public class FreezeThreadsDemo extends VmOperation {
             Thread.yield();
         }
 
-        FreezeThreadsDemo stackTraceDumper = new FreezeThreadsDemo(new HashSet<Thread>(Arrays.asList(spinners)));
+        VmOperationDemo stackTraceDumper = new VmOperationDemo(new HashSet<Thread>(Arrays.asList(spinners)));
         long start = System.currentTimeMillis();
         int time;
         try {
@@ -108,9 +112,9 @@ public class FreezeThreadsDemo extends VmOperation {
                 time = (int) (System.currentTimeMillis() - start) / 1000;
                 try {
                     System.out.println("---- Dumping stacks of spinning threads ----");
-                    VmOperationThread.execute(stackTraceDumper);
-                } catch (Heap.HoldsGCLockError e) {
-                    System.out.println("GC triggered while dumping stack traces");
+                    VmOperationThread.submit(stackTraceDumper);
+                } catch (VmOperationThread.HoldsThreadLockError e) {
+                    System.out.println("VM operation triggered while dumping stack traces");
                     break;
                 }
                 try {

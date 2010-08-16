@@ -36,7 +36,7 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A VM operation that can be {@linkplain VmOperationThread#execute(VmOperation) executed}
+ * A VM operation that can be {@linkplain VmOperationThread#submit(VmOperation) executed}
  * on the {@linkplain VmOperationThread VM operation thread}. VM operations typically operate
  * one or more mutator threads frozen at a safepoint.
  * A thread is frozen at a safepoint when it is blocked in native
@@ -150,10 +150,15 @@ public class VmOperation {
      */
     VmOperation previous;
 
+    /**
+     * The operation (if any) in which this operation is nested.
+     */
+    VmOperation enclosing;
+
     public final Mode mode;
 
     /**
-     * The thread that requested this operation.
+     * The thread that {@linkplain VmOperationThread#submit(VmOperation) submitted} this operation for execution.
      */
     private VmThread callingThread;
 
@@ -165,12 +170,40 @@ public class VmOperation {
         NoSafepoint
     }
 
+    /**
+     * Gets the thread that {@linkplain VmOperationThread#submit(VmOperation) submitted} this
+     * operation for execution.
+     *
+     * @return the thread that submitted this operation for execution
+     */
     public VmThread callingThread() {
         return callingThread;
     }
 
+    /**
+     * Sets the thread that {@linkplain VmOperationThread#submit(VmOperation) submitted} this
+     * operation for execution.
+     *
+     * @param thread the thread that submitted this operation for execution
+     */
     public void setCallingThread(VmThread thread) {
         callingThread = thread;
+    }
+
+    /**
+     * Determines if this operation disables heap allocation.
+     */
+    protected boolean disablesHeapAllocation() {
+        return false;
+    }
+
+    /**
+     * Determines if this operation allows a nested operation to be performed.
+     *
+     * @param operation the nested operation in question (which may be {@code null})
+     */
+    protected boolean allowsNestedOperations(VmOperation operation) {
+        return false;
     }
 
     /**
@@ -180,21 +213,15 @@ public class VmOperation {
      *
      * @param trapState the register and other thread state at the safepoint
      */
-    public final void doAtSafepoint(Pointer trapState) {
+    final void doAtSafepoint(Pointer trapState) {
         // note that this procedure always runs with safepoints disabled
         final Pointer vmThreadLocals = Safepoint.getLatchRegister();
         if (!VmThreadLocal.inJava(vmThreadLocals)) {
             FatalError.unexpected("Freezing thread trapped while in native code");
         }
 
-        if (TraceVmOperations) {
-            boolean lockDisabledSafepoints = Log.lock();
-            Log.printCurrentThread(false);
-            Log.println(": Froze at safepoint");
-            Log.unlock(lockDisabledSafepoints);
-        }
-
-        // This thread must only transition to native code as a result of calling block().
+        // This thread must only transition to native code as a result of
+        // the synchronization below.
         // Such a transition will be interpreted by the VM operation thread to
         // mean that this thread is now stopped at a safepoint.
         // This invariant is enforced by disabling the ability to call native methods
@@ -282,7 +309,12 @@ public class VmOperation {
     }
 
     /**
-     * Called by {@link VmOperationThread#execute(VmOperation)} prior to scheduling this operation.
+     * Called by {@link VmOperationThread#submit(VmOperation)} prior to scheduling this operation.
+     * This is called on the thread trying to schedule a VM operation. It enables the operation
+     * scheduling to be canceled. It also enables the operation to perform any action on the
+     * scheduling thread (such as taking locks) before the operation is run on the VM operation
+     * thread. Unless this method returns {@code false}, then {@link #doItEpilogue()} will
+     * be called on the current thread once the operation has completed.
      *
      * @return {@code true} if this operation should be scheduled. The {@link #doItEpilogue()} method will only be
      *         called if the operation is executed.
@@ -292,7 +324,7 @@ public class VmOperation {
     }
 
     /**
-     * Called by {@link VmOperationThread#execute(VmOperation)} once this operation has completed execution.
+     * Called by {@link VmOperationThread#submit(VmOperation)} once this operation has completed execution.
      */
     protected void doItEpilogue() {
     }
@@ -397,12 +429,12 @@ public class VmOperation {
             Throwable error = null;
             synchronized (VmThreadMap.THREAD_LOCK) {
 
-                tracePhase("Freeze operation begin");
+                tracePhase("-- Begin --");
 
                 freeze();
 
-                // Ensures any safepoint-related control variables are visible for each thread
-                // before the current thread reads such variables updated by a thread
+                // Ensures updates to safepoint-related control variables are visible to all threads
+                // before the VM operation thread reads them
                 MemoryBarriers.storeLoad();
 
                 waitUntilFrozen();
@@ -426,7 +458,7 @@ public class VmOperation {
 
                 thaw();
 
-                tracePhase("Freeze operation end");
+                tracePhase("-- End --");
             }
 
             if (error != null) {
@@ -463,6 +495,10 @@ public class VmOperation {
 
     final void freezeThread(VmThread thread) {
 
+        if (frozenByEnclosing(thread)) {
+            return;
+        }
+
         Pointer vmThreadLocals = thread.vmThreadLocals();
 
         // Freeze a thread already in native code
@@ -470,7 +506,7 @@ public class VmOperation {
             FROZEN.setVariableWord(vmThreadLocals, Address.fromInt(1));
         }
 
-        // spin until the SAFEPOINT_PROCEDURE field is null
+        // spin until the VM_OPERATION variable is null
         final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         while (true) {
             if (enabledVmThreadLocals.getReference(VM_OPERATION.index).isZero()) {
@@ -526,35 +562,65 @@ public class VmOperation {
     }
 
     /**
+     * Determines if this is a nested operation whose enclosing operation already froze a given thread.
+     *
+     * @param thread a thread to test
+     */
+    private boolean frozenByEnclosing(VmThread thread) {
+        if (enclosing != null && enclosing.operateOnThread(thread)) {
+            // This is a nested operation that operates on 'thread' -> the enclosing operation must have 'thread'
+            if (UseCASBasedThreadFreezing) {
+                FatalError.check(MUTATOR_STATE.getVariableWord(thread.vmThreadLocals()).equals(THREAD_IS_FROZEN), "Parent operation did not freeze thread");
+            } else {
+                FatalError.check(!MUTATOR_STATE.getVariableWord(thread.vmThreadLocals()).equals(THREAD_IN_JAVA), "Parent operation did not freeze thread");
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Blocks the current thread (i.e. the VM operation thread) until a given mutator thread is frozen.
      *
      * @param thread thread to wait for
      */
-    public final void waitForThreadFreeze(VmThread thread) {
+    final void waitForThreadFreeze(VmThread thread) {
         Pointer vmThreadLocals = thread.vmThreadLocals();
-        if (UseCASBasedThreadFreezing) {
-            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-            while (true) {
-                if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IS_FROZEN)) {
-                    FatalError.unexpected("Freezer thread found a thread frozen by another freezer thread");
-                }
-                if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
-                    if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IS_FROZEN).equals(THREAD_IN_NATIVE)) {
-                        // Transitioned thread into frozen state
-                        break;
+
+        if (!frozenByEnclosing(thread)) {
+
+            if (UseCASBasedThreadFreezing) {
+                final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+                while (true) {
+                    if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
+                        if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IS_FROZEN).equals(THREAD_IN_NATIVE)) {
+                            // Transitioned thread into frozen state
+                            break;
+                        }
+                    } else if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IS_FROZEN)) {
+                        FatalError.unexpected("VM operation thread found an already frozen thread");
                     }
+                    Thread.yield();
                 }
-                Thread.yield();
-            }
-        } else {
-            while (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(THREAD_IN_JAVA)) {
-                // Wait for thread to be in native code, either as a result of a safepoint or because
-                // that's where it was when its FROZEN flag was set to true.
-                Thread.yield();
+            } else {
+                while (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(THREAD_IN_JAVA)) {
+                    // Wait for thread to be in native code, either as a result of a safepoint or because
+                    // that's where it was when its FROZEN variable was set to true.
+                    Thread.yield();
+                }
             }
         }
-
         doAfterFrozen(thread);
+
+        if (TraceVmOperations) {
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.print("VmOperation[");
+            Log.print(name);
+            Log.print("]: Froze ");
+            Log.printThread(thread, false);
+            Log.println(TRAP_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).isZero() ? " in native code" : " at safepoint");
+            Log.unlock(lockDisabledSafepoints);
+        }
     }
 
     /**
@@ -581,7 +647,12 @@ public class VmOperation {
     public final void thawThread(VmThread thread) {
 
         Pointer vmThreadLocals = thread.vmThreadLocals();
+
         doBeforeThawingThread(thread);
+
+        if (frozenByEnclosing(thread)) {
+            return;
+        }
 
         /*
          * Set the value of the safepoint latch in the safepoints-enabled VM
@@ -620,8 +691,9 @@ public class VmOperation {
     private void tracePhase(String phaseMsg) {
         if (TraceVmOperations) {
             boolean lockDisabledSafepoints = Log.lock();
+            Log.print("VmOperation[");
             Log.print(name);
-            Log.print(": ");
+            Log.print("]: ");
             Log.println(phaseMsg);
             Log.unlock(lockDisabledSafepoints);
         }

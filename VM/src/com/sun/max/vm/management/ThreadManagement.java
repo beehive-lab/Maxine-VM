@@ -183,7 +183,7 @@ public class ThreadManagement {
                 traces[i] = trace;
             }
         }
-        VmOperationThread.execute(new StackTraceGatherer(Arrays.asList(threads), traces, maxDepth));
+        VmOperationThread.submit(new StackTraceGatherer(Arrays.asList(threads), traces, maxDepth));
         if (currentThreadIndex >= 0) {
             threads[currentThreadIndex] = Thread.currentThread();
         }

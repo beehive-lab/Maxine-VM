@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.heap.SpecialReferenceManager.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -44,6 +45,11 @@ public abstract class GCOperation extends VmOperation {
      * @param invocationCount the number of previous executions
      */
     protected abstract void collect(int invocationCount);
+
+    @Override
+    protected boolean disablesHeapAllocation() {
+        return true;
+    }
 
     /**
      * Stops the current mutator thread for a garbage collection. Just before stopping, the
@@ -83,6 +89,10 @@ public abstract class GCOperation extends VmOperation {
 
         final boolean threadWasInNative = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero();
         if (threadWasInNative) {
+            if (VmOperationThread.TraceVmOperations) {
+                Log.print("Building full stack reference map for ");
+                Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+            }
             // Since this thread is in native code it did not get an opportunity to prepare any of its stack reference map,
             // so we will take care of that for it now:
             stackReferenceMapPreparationTime += VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
@@ -90,6 +100,10 @@ public abstract class GCOperation extends VmOperation {
             // Threads that hit a safepoint in Java code have prepared *most* of their stack reference map themselves.
             // The part of the stack between the trap stub frame and the frame of the JNI stub that enters into the
             // native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. Do it now:
+            if (VmOperationThread.TraceVmOperations) {
+                Log.print("Building partial stack reference map for ");
+                Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+            }
             final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
             stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals);
             stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
@@ -105,7 +119,7 @@ public abstract class GCOperation extends VmOperation {
     long stackReferenceMapPreparationTime;
 
     public GCOperation() {
-        super("GCDaemon", null, Mode.Safepoint);
+        super("GC", null, Mode.Safepoint);
     }
 
     /**
@@ -115,7 +129,7 @@ public abstract class GCOperation extends VmOperation {
     @Override
     protected boolean doItPrologue() {
         // The lock for the special reference manager must be held before starting GC
-        Monitor.enter(SpecialReferenceManager.REFERENCE_LOCK);
+        Monitor.enter(REFERENCE_LOCK);
         return true;
     }
 
@@ -129,7 +143,11 @@ public abstract class GCOperation extends VmOperation {
             Log.unlock(lockDisabledSafepoints);
             stackReferenceMapPreparationTime = 0;
         }
-        Monitor.exit(SpecialReferenceManager.REFERENCE_LOCK);
+
+        // Notify the reference handler thread so it can process any pending references.
+        REFERENCE_LOCK.notifyAll();
+
+        Monitor.exit(REFERENCE_LOCK);
     }
 
     @Override

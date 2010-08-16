@@ -101,6 +101,7 @@ void dump() {
 #endif
 
 #if os_SOLARIS
+#include <thread.h>
 #define thread_setSignalMask thr_sigsetmask
 #elif os_DARWIN || os_LINUX
 #define thread_setSignalMask pthread_sigmask
