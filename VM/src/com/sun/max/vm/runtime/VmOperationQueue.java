@@ -87,6 +87,7 @@ public class VmOperationQueue {
         }
         VmOperation node = head.next;
         unlink(node);
+        length--;
         return node;
     }
 }

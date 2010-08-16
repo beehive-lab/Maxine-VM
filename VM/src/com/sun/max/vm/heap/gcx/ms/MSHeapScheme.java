@@ -32,7 +32,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -119,8 +118,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
             objectSpace.hostInitialize();
-            // The monitor for the collector must be allocated in the image
-            JavaMonitorManager.bindStickyMonitor(this);
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
@@ -160,11 +157,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         return 0;
     }
 
-    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
+    public boolean collectGarbage(Size requestedFreeSpace) {
+        FatalError.check(Thread.holdsLock(Heap.HEAP_LOCK), "should own HEAP_LOCK");
         collect.requestedSize = requestedFreeSpace;
         boolean forcedGC = requestedFreeSpace.toInt() == 0;
         if (forcedGC) {
-            VmOperationThread.execute(collect);
+            VmOperationThread.submit(collect);
             return true;
         }
         // We may reach here after a race. Don't run GC if request can be satisfied.
@@ -175,7 +173,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         if (objectSpace.canSatisfyAllocation(requestedFreeSpace)) {
             return true;
         }
-        VmOperationThread.execute(collect);
+        VmOperationThread.submit(collect);
         return objectSpace.canSatisfyAllocation(requestedFreeSpace);
     }
 

@@ -21,6 +21,7 @@
 package com.sun.max.vm.heap.sequential.semiSpace;
 
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.heap.Heap.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.management.*;
@@ -711,7 +712,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
     private void executeGC() {
         if (!Heap.gcDisabled()) {
-            VmOperationThread.execute(collect);
+            VmOperationThread.submit(collect);
         }
     }
 
@@ -732,7 +733,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         return result;
     }
 
-    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
+    public boolean collectGarbage(Size requestedFreeSpace) {
+        FatalError.check(Thread.holdsLock(Heap.HEAP_LOCK), "should own HEAP_LOCK");
         if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
             executeGC();
         }
@@ -1043,25 +1045,27 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         Log.println("");
     }
 
-    private synchronized boolean shrink(Size amount) {
-        final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
-        logSpaces();
-        executeGC();
-        if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
-            // give back part of the existing spaces
-            if (Heap.verbose()) {
-                logSpaces();
-            }
-            final int amountAsInt = pageAlignedAmount.toInt();
-            fromSpace.setSize(fromSpace.size().minus(amountAsInt));
-            toSpace.setSize(toSpace.size().minus(amountAsInt));
-            top = top.minus(amountAsInt);
-            VirtualMemory.deallocate(fromSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
-            VirtualMemory.deallocate(toSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+    private boolean shrink(Size amount) {
+        synchronized (HEAP_LOCK) {
+            final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
             logSpaces();
-            return true;
+            executeGC();
+            if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
+                // give back part of the existing spaces
+                if (Heap.verbose()) {
+                    logSpaces();
+                }
+                final int amountAsInt = pageAlignedAmount.toInt();
+                fromSpace.setSize(fromSpace.size().minus(amountAsInt));
+                toSpace.setSize(toSpace.size().minus(amountAsInt));
+                top = top.minus(amountAsInt);
+                VirtualMemory.deallocate(fromSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+                VirtualMemory.deallocate(toSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+                logSpaces();
+                return true;
+            }
+            return false;
         }
-        return false;
     }
 
     @Override
@@ -1071,21 +1075,23 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     }
 
     @Override
-    public synchronized boolean increaseMemory(Size amount) {
-        HeapScheme.Inspect.notifyIncreaseMemoryRequested(amount);
-        /* The conservative assumption is that "amount" is the total amount that we could
-         * allocate. Since we can't deallocate our existing spaces until we know we can allocate
-         * the new ones, our new spaces cannot be greater than amount/2 in size.
-         * This could be smaller than the existing spaces so we need to check.
-         * It's unfortunate but that's the nature of the semispace scheme.
-         */
-        final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
-        if (pageAlignedAmount.greaterThan(fromSpace.size())) {
-            // grow adds the current space size to the amount in the grow policy
-            increaseGrowPolicy.setAmount(pageAlignedAmount.minus(fromSpace.size()));
-            return grow(increaseGrowPolicy);
+    public boolean increaseMemory(Size amount) {
+        synchronized (HEAP_LOCK) {
+            HeapScheme.Inspect.notifyIncreaseMemoryRequested(amount);
+            /* The conservative assumption is that "amount" is the total amount that we could
+             * allocate. Since we can't deallocate our existing spaces until we know we can allocate
+             * the new ones, our new spaces cannot be greater than amount/2 in size.
+             * This could be smaller than the existing spaces so we need to check.
+             * It's unfortunate but that's the nature of the semispace scheme.
+             */
+            final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
+            if (pageAlignedAmount.greaterThan(fromSpace.size())) {
+                // grow adds the current space size to the amount in the grow policy
+                increaseGrowPolicy.setAmount(pageAlignedAmount.minus(fromSpace.size()));
+                return grow(increaseGrowPolicy);
+            }
+            return false;
         }
-        return false;
     }
 
     @Override

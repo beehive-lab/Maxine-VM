@@ -189,6 +189,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
         final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
         if (value.isZero()) {
+            //Log.println("disabling heap allocation");
             // Saves TLAB's top and set it to null to force TLAB allocation to route to slow path and check if allocation is enabled.
             final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(vmThreadLocals);
             final Address tlabTop = TLAB_TOP.getVariableWord(vmThreadLocals).asAddress();
@@ -211,6 +212,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             FatalError.unexpected("Unbalanced calls to disable/enable allocation for current thread");
         }
         if (value.minus(1).isZero()) {
+            //Log.println("enabling heap allocation");
             // Restore TLAB's top if needed.
             final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(vmThreadLocals);
             if (refillPolicy != null) {

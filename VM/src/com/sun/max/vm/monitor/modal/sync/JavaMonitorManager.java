@@ -203,7 +203,7 @@ public class JavaMonitorManager {
      * @param monitor the monitor to bind
      */
     @HOSTED_ONLY
-    public static <Object_Type> Object_Type bindStickyMonitor(Object_Type object, ManagedMonitor monitor) {
+    public static Object bindStickyMonitor(Object object, ManagedMonitor monitor) {
         monitor.setBoundObject(object);
         addToStickyMonitors(monitor);
         return object;
@@ -217,9 +217,22 @@ public class JavaMonitorManager {
      * @param object the object to bind
      */
     @HOSTED_ONLY
-    public static <Object_Type> Object_Type bindStickyMonitor(Object_Type object) {
+    public static Object bindStickyMonitor(Object object) {
         return bindStickyMonitor(object, new StandardJavaMonitor());
     }
+
+    /**
+     * Creates an object and binds a {@link StandardJavaMonitor StandardJavaMonitor} to it at VM image build time.
+     * The binding will never be unbound. This is useful for VM locks that are known to be
+     * contended at runtime and/or are used in situations where allocation is disabled.
+     *
+     * @return object a new object to which an allocated monitor is permanently bound
+     */
+    @HOSTED_ONLY
+    public static Object newStickyLock() {
+        return bindStickyMonitor(new Object(), new StandardJavaMonitor());
+    }
+
 
     @HOSTED_ONLY
     private static void addToStickyMonitors(ManagedMonitor monitor) {

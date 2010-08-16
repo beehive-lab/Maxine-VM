@@ -213,14 +213,20 @@ public final class StackReferenceMapPreparer {
     private static void checkValidReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot) {
         Pointer lowestStackSlot = VmThreadLocal.LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         Pointer highestStackSlot = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+        String error = null;
         if (highestSlot.lessThan(lowestSlot)) {
-            FatalError.unexpected("invalid reference map range: highest slot is less than lowest slot");
+            error = "invalid reference map range: highest slot is less than lowest slot";
+        } else if (highestSlot.greaterThan(highestStackSlot)) {
+            error = "invalid reference map range: highest slot is greater than highest stack slot";
+        } else if (lowestSlot.lessThan(lowestStackSlot)) {
+            error = "invalid reference map range: lowest slot is less than lowest stack slot";
         }
-        if (highestSlot.greaterThan(highestStackSlot)) {
-            FatalError.unexpected("invalid reference map range: highest slot is greater than highest stack slot");
-        }
-        if (lowestSlot.lessThan(lowestStackSlot)) {
-            FatalError.unexpected("invalid reference map range: lowest slot is less than lowest stack slot");
+        if (error != null) {
+            Log.print("Error building reference map for stack of thread ");
+            Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), false);
+            Log.print(": ");
+            Log.println(error);
+            FatalError.unexpected(error);
         }
     }
 

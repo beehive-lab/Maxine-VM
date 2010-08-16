@@ -76,7 +76,7 @@ extern void log_flush(void);
 #define log_LOADER (log_ALL || 0)
 #define log_TRAP (log_ALL || 0)
 #define log_MONITORS (log_ALL || 0)
-#define log_LINKER (log_ALL || 1)
+#define log_LINKER (log_ALL || 0)
 #define log_JVMNI (log_ALL || 0)
 #define log_THREADS (log_ALL || 0)
 #define log_TELE (log_ALL || 0)
