@@ -18,45 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * @Harness: java
- * @Runs: 0.4 = true
- */
-package test.bench.bytecode;
+package test.bench.java.util;
 
+import java.util.*;
 import test.bench.util.*;
 
 /**
- * A microbenchmark for floating point; {@code double} to {@code int} conversions.
+ * Utility class for HashMap benchmarks.
  *
- * @author Ben L. Titzer
  * @author Mick Jordan
  */
-public class D2I extends RunBench {
 
-    protected D2I(double d) {
-        super(new Bench(d));
+public abstract class HashMapBase  extends RunBench.MicroBenchmark {
+
+    public final Map<Integer, Integer> map;
+    public final Random random = new Random(46763);
+    public final Integer value = new Integer(0);
+    public final Integer key = random.nextInt();
+
+    public HashMapBase() {
+        this(new HashMap<Integer, Integer>());
     }
 
-    public static boolean test(double d) {
-        return new D2I(d).runBench();
-    }
-
-    static class Bench extends MicroBenchmark {
-        double d;
-        Bench(double d) {
-            this.d = d;
+    public HashMapBase(Map<Integer, Integer> map) {
+        this.map = map;
+        for (int i = 0; i < 1000; i++) {
+            map.put(random.nextInt(), value);
         }
-        @Override
-        public long run() {
-            int i = (int) d;
-            return i;
-        }
-
     }
-
-    public static void main(String[] args) {
-        test(0.4);
-    }
-
 }

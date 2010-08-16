@@ -20,43 +20,62 @@
  */
 /*
  * @Harness: java
- * @Runs: 0.4 = true
+ * @Runs: 0 = true
  */
-package test.bench.bytecode;
+package test.bench.java.util;
+
+import java.util.*;
 
 import test.bench.util.*;
 
 /**
- * A microbenchmark for floating point; {@code double} to {@code int} conversions.
  *
- * @author Ben L. Titzer
+ * Simple test of {@link HashMap#put}. This class is used as a base for {@link SyncHashMap_put01} and {@link ConcHashMap_put01}.
+ * It actually inherits from {@link HashMap_get01.Bench} and just overrides the {@link MicroBenchmark#run} method.
+ *
  * @author Mick Jordan
  */
-public class D2I extends RunBench {
 
-    protected D2I(double d) {
-        super(new Bench(d));
+public class HashMap_put01  extends RunBench {
+
+    HashMap_put01() {
+        super(new Bench());
     }
 
-    public static boolean test(double d) {
-        return new D2I(d).runBench();
+    public static boolean test(int i) {
+        return new HashMap_put01().runBench();
     }
 
-    static class Bench extends MicroBenchmark {
-        double d;
-        Bench(double d) {
-            this.d = d;
+    public static class Bench extends HashMap_get01.Bench {
+
+        protected Bench() {
+            super();
         }
+
+        protected Bench(Map<Integer, Integer> map) {
+            super(map);
+        }
+
+        @Override
+        protected void init() {
+            // Hashmap_get01 puts the key into the map in this method
+            // we do it in the run method and remove it in the postrun method.
+        }
+
         @Override
         public long run() {
-            int i = (int) d;
-            return i;
+            map.put(key, value);
+            return defaultResult;
         }
 
+        @Override
+        public void postrun() {
+            map.remove(key);
+        }
     }
 
     public static void main(String[] args) {
-        test(0.4);
+        RunBench.runTest(HashMap_put01.class, args);
     }
 
 }

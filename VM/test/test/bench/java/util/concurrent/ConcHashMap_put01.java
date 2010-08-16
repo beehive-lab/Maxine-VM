@@ -20,43 +20,39 @@
  */
 /*
  * @Harness: java
- * @Runs: 0.4 = true
+ * @Runs: 0 = true
  */
-package test.bench.bytecode;
+package test.bench.java.util.concurrent;
 
+import java.util.concurrent.*;
 import test.bench.util.*;
+import test.bench.java.util.*;
 
 /**
- * A microbenchmark for floating point; {@code double} to {@code int} conversions.
+ * Variant of {@link HashMap_put01} that uses a {@link ConcurrentHashMap map}.
  *
- * @author Ben L. Titzer
  * @author Mick Jordan
  */
-public class D2I extends RunBench {
 
-    protected D2I(double d) {
-        super(new Bench(d));
+public class ConcHashMap_put01  extends RunBench {
+
+    ConcHashMap_put01() {
+        super(new Bench());
     }
 
-    public static boolean test(double d) {
-        return new D2I(d).runBench();
+    public static boolean test(int i) {
+        return new ConcHashMap_put01().runBench();
     }
 
-    static class Bench extends MicroBenchmark {
-        double d;
-        Bench(double d) {
-            this.d = d;
-        }
-        @Override
-        public long run() {
-            int i = (int) d;
-            return i;
-        }
+    static class Bench extends HashMap_put01.Bench {
 
+        Bench() {
+            super(new ConcurrentHashMap<Integer, Integer>());
+        }
     }
 
     public static void main(String[] args) {
-        test(0.4);
+        RunBench.runTest(ConcHashMap_put01.class, args);
     }
 
 }

@@ -60,7 +60,7 @@ public abstract class LIRGenerator extends ValueVisitor {
      * inserting move instructions if necessary.
      *
      * @param instruction an instruction that produces a {@linkplain Value#operand() result}
-     * @param operand the operand in which the result of {@code instruction} must be available
+     * @param register the {@linkplain CiRegister} in which the result of {@code instruction} must be available
      * @return {@code register} as an operand
      */
     protected CiValue force(Value instruction, CiRegister register) {
@@ -709,14 +709,15 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitReturn(Return x) {
-        emitXir(xir.genEpilogue(site(x), compilation.method), x, stateFor(x, x.stateAfter()), compilation.method, false);
         if (x.kind.isVoid()) {
+            emitXir(xir.genEpilogue(site(x), compilation.method), x, stateFor(x, x.stateAfter()), compilation.method, false);
             lir.returnOp(IllegalValue);
         } else {
             CiValue operand = resultOperandFor(x.kind);
             LIRItem result = new LIRItem(x.result(), this);
 
             result.loadItemForce(operand);
+            emitXir(xir.genEpilogue(site(x), compilation.method), x, stateFor(x, x.stateAfter()), compilation.method, false);
             lir.returnOp(result.result());
         }
         setNoResult(x);

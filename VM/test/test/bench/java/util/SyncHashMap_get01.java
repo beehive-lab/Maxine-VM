@@ -20,43 +20,39 @@
  */
 /*
  * @Harness: java
- * @Runs: 0.4 = true
+ * @Runs: 0 = true
  */
-package test.bench.bytecode;
+package test.bench.java.util;
 
+import java.util.*;
 import test.bench.util.*;
 
 /**
- * A microbenchmark for floating point; {@code double} to {@code int} conversions.
+ * Variant of {@link HashMap_get01} that uses a {@link Collections#synchronized synchronized map}.
  *
- * @author Ben L. Titzer
  * @author Mick Jordan
  */
-public class D2I extends RunBench {
 
-    protected D2I(double d) {
-        super(new Bench(d));
+public class SyncHashMap_get01  extends RunBench {
+
+    SyncHashMap_get01() {
+        super(new Bench());
     }
 
-    public static boolean test(double d) {
-        return new D2I(d).runBench();
+    public static boolean test(int i) {
+        return new SyncHashMap_get01().runBench();
     }
 
-    static class Bench extends MicroBenchmark {
-        double d;
-        Bench(double d) {
-            this.d = d;
-        }
-        @Override
-        public long run() {
-            int i = (int) d;
-            return i;
+    static class Bench extends HashMap_get01.Bench {
+
+        Bench() {
+            super(Collections.synchronizedMap(new HashMap<Integer, Integer>()));
         }
 
     }
 
     public static void main(String[] args) {
-        test(0.4);
+        RunBench.runTest(SyncHashMap_get01.class, args);
     }
 
 }

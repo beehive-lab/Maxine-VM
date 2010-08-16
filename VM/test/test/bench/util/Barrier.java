@@ -18,45 +18,41 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * @Harness: java
- * @Runs: 0.4 = true
- */
-package test.bench.bytecode;
-
-import test.bench.util.*;
+package test.bench.util;
 
 /**
- * A microbenchmark for floating point; {@code double} to {@code int} conversions.
- *
- * @author Ben L. Titzer
- * @author Mick Jordan
+ * All threads wait at barrier until last thread arrives.
  */
-public class D2I extends RunBench {
+public final class Barrier {
 
-    protected D2I(double d) {
-        super(new Bench(d));
+    private int threads;
+    private int threadCount = 0;
+
+    public Barrier(int threads) {
+        this.threads = threads;
     }
 
-    public static boolean test(double d) {
-        return new D2I(d).runBench();
+    /**
+     * Get number of threads that have reached the barrier.
+     *
+     * @return number of threads that have reached the barrier
+     */
+    public synchronized int getThreadCount() {
+        return threadCount;
     }
 
-    static class Bench extends MicroBenchmark {
-        double d;
-        Bench(double d) {
-            this.d = d;
+    public synchronized void waitForRelease() {
+        try {
+            threadCount++;
+            if (threadCount == threads) {
+                notifyAll();
+            } else {
+                while (threadCount < threads) {
+                    wait();
+                }
+            }
+        } catch (InterruptedException ex) {
         }
-        @Override
-        public long run() {
-            int i = (int) d;
-            return i;
-        }
-
     }
-
-    public static void main(String[] args) {
-        test(0.4);
-    }
-
 }
+

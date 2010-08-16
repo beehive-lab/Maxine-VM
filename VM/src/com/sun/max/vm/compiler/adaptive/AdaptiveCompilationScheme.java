@@ -100,6 +100,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     private static final VMBooleanXXOption failoverOption = register(new VMBooleanXXOption("-XX:+FailOverCompilation",
                     "When specified, the compiler will attempt to use a different compiler if compilation fails " +
                     "with the first compiler."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption failoverC1XOption = register(new VMBooleanXXOption("-XX:-FailOverC1X",
+                    "When specified, the compiler will attempt to use a different compiler if compilation fails " +
+                    "with the C1X compiler."), MaxineVM.Phase.STARTING);
 
     /**
      * The (dynamically selected) compilation mode.
@@ -199,11 +202,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 if (targetState == null) {
                     // this is the first compilation.
                     RuntimeCompilerScheme compiler = !retrying ? selectCompiler(classMethodActor, true, recommendedCompiler) : bootCompiler;
-
-                    if (classMethodActor.holder().name.string.contains("_builtin_") && compiler.name().startsWith("C1X")) {
-                        System.console();
-                        selectCompiler(classMethodActor, true, recommendedCompiler);
-                    }
                     compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                     classMethodActor.targetState = compilation;
                 } else if (targetState instanceof Compilation) {
@@ -231,7 +229,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 classMethodActor.targetState = null;
                 String errorMessage = "Compilation of " + classMethodActor + " by " + compilation.compiler + " failed";
                 Log.println(errorMessage);
-                if (compilation.compiler != bootCompiler && (failoverOption.getValue())) {
+                boolean allowFailover = !compilation.compiler.name().startsWith("C1X") || failoverC1XOption.getValue();
+                if (allowFailover && compilation.compiler != bootCompiler && (failoverOption.getValue())) {
                     t.printStackTrace(Log.out);
                     Log.println("Retrying with " + bootCompiler + "...");
                     retrying = true;

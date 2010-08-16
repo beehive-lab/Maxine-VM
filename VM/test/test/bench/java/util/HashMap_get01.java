@@ -20,43 +20,53 @@
  */
 /*
  * @Harness: java
- * @Runs: 0.4 = true
+ * @Runs: 0 = true
  */
-package test.bench.bytecode;
+package test.bench.java.util;
+
+import java.util.*;
+
+/**
+ * Simple test of {@link HashMap#get}. This class is used as a base for {@link SyncHashMap_get01} and {@link ConcHashMap_get01}.
+ * To simplify support for the multi-threaded variants we delegate rather than inherit the shared hashmap setup code. This does
+ * result in one extra object indirection, but it is consistent across all versions.
+ *
+ * @author Mick Jordan
+ */
 
 import test.bench.util.*;
 
-/**
- * A microbenchmark for floating point; {@code double} to {@code int} conversions.
- *
- * @author Ben L. Titzer
- * @author Mick Jordan
- */
-public class D2I extends RunBench {
-
-    protected D2I(double d) {
-        super(new Bench(d));
+public class HashMap_get01 extends RunBench {
+    HashMap_get01() {
+        super(new Bench());
     }
 
-    public static boolean test(double d) {
-        return new D2I(d).runBench();
+    public static boolean test(int i) {
+        return new HashMap_get01().runBench();
     }
 
-    static class Bench extends MicroBenchmark {
-        double d;
-        Bench(double d) {
-            this.d = d;
+    public static class Bench extends HashMapBase {
+        protected Bench() {
+            init();
         }
+
+        protected Bench(Map<Integer, Integer> map) {
+            init();
+        }
+
+        protected void init() {
+            map.put(key, value);
+        }
+
         @Override
         public long run() {
-            int i = (int) d;
-            return i;
+            return map.get(key);
         }
 
     }
 
     public static void main(String[] args) {
-        test(0.4);
+        RunBench.runTest(HashMap_get01.class, args);
     }
 
 }

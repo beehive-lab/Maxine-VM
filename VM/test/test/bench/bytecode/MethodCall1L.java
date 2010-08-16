@@ -39,7 +39,7 @@ public class MethodCall1L extends RunBench {
     }
 
     public static boolean test(int x) {
-        return new MethodCall1L().runBench(true);
+        return new MethodCall1L().runBench();
     }
 
     static class Bench extends MicroBenchmark {
