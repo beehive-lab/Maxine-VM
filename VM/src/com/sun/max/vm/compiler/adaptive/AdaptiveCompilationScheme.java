@@ -72,7 +72,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     protected final RuntimeCompilerScheme jitCompiler;
 
     /**
-     * The baseline (JIT) compiler.
+     * The optimizing compiler.
      */
     protected final RuntimeCompilerScheme optCompiler;
 
