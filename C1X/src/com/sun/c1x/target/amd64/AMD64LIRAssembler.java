@@ -139,12 +139,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
-        if( target.inlineObjects) {
+        if (target.inlineObjects) {
             if (constant == null) {
-                masm.mov64(dst, 0x0l);
+                masm.mov64(dst, 0x0L);
             } else {
                 masm.recordDataReferenceInCode(CiConstant.forObject(constant));
-                masm.mov64(dst, 0xDEADDEADDEADDEADl);
+                masm.mov64(dst, 0xDEADDEADDEADDEADL);
             }
         } else {
             masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
@@ -1787,7 +1787,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case Mark: {
                     XirMark xmark = (XirMark) inst.extra;
                     Mark[] references = new Mark[xmark.references.length];
-                    for (int i=0; i<references.length; i++) {
+                    for (int i = 0; i < references.length; i++) {
                         references[i] = marks.get(xmark.references[i]);
                         assert references[i] != null;
                     }
