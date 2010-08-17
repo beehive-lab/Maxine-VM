@@ -91,7 +91,7 @@ public final class BootImageGenerator {
         "Selects JIT as the default for building the boot image.");
 
     private final Option<String> vmArguments = options.newStringOption("vmargs", null,
-            "A set of one or VM arguments. This is useful for exercising VM functionality or " +
+            "A set of one or more VM arguments. This is useful for exercising VM functionality or " +
             "enabling VM tracing while bootstrapping.");
 
     /**

@@ -256,7 +256,6 @@ public class CiTargetMethod implements Serializable {
      */
     public void recordDataReference(int codePos, CiConstant data) {
         assert codePos >= 0 && data != null;
-        assert data.kind != CiKind.Object || data.asObject() != null;
         dataReferences.add(new DataPatch(codePos, data));
     }
 

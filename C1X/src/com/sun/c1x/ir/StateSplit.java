@@ -37,9 +37,9 @@ public abstract class StateSplit extends Instruction {
      * Creates a new state split with the specified value type.
      * @param kind the type of the value that this instruction produces
      */
-    public StateSplit(CiKind kind, FrameState stateBefore) {
+    public StateSplit(CiKind kind, FrameState stateBefore2) {
         super(kind);
-        this.stateBefore = stateBefore;
+        this.stateBefore = stateBefore2;
     }
 
     /**

@@ -28,7 +28,7 @@ import com.sun.cri.ci.*;
 /**
  * This class collects a number of debugging and exception-related information about
  * an HIR node. Instances of this class can be attached to HIR nodes and contain
- * the {@link com.sun.cri.ci.CiCodePos code position}, the {@link com.sun.c1x.value.FrameStateInfo frame state}
+ * the {@link com.sun.cri.ci.CiCodePos code position}, the {@link com.sun.c1x.value.FrameState frame state}
  * potential exceptions, and exception handlers.
  *
  * @author Ben L. Titzer
@@ -96,18 +96,18 @@ public class Info {
     public final CiCodePos pos;
     public final int id;
     private int stopFlags;
-    private FrameStateInfo frameStateInfo;
+    private FrameState state;
     private List<ExceptionHandler> exceptionHandlers;
 
-    public Info(CiCodePos pos, int id, FrameStateInfo javaFrameState) {
+    public Info(CiCodePos pos, int id, FrameState javaFrameState) {
         this.pos = pos;
         this.id = id;
-        this.frameStateInfo = javaFrameState;
-        assert javaFrameState == null || pos.matches(javaFrameState.pos) : "position mismatch";
+        this.state = javaFrameState;
+        assert javaFrameState == null || pos.matches(javaFrameState.scope().callerCodeSite()) : "position mismatch";
     }
 
-    public FrameStateInfo frameState() {
-        return frameStateInfo;
+    public FrameState frameState() {
+        return state;
     }
 
     public boolean mayStop() {

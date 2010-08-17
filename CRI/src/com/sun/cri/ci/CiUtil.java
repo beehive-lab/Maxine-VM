@@ -43,7 +43,7 @@ public class CiUtil {
      * @param withEnclosingClass specifies if the returned name should be qualified with the name(s) of the enclosing
      *            class/classes of {@code clazz} (if any). This option is ignored if {@code clazz} denotes an anonymous
      *            or local class.
-     * @return
+     * @return the simple name
      */
     public static String getSimpleName(Class<?> clazz, boolean withEnclosingClass) {
         final String simpleName = clazz.getSimpleName();

@@ -33,7 +33,7 @@ public class ArrayCopy_Loop extends RunBench {
     }
 
     public static boolean test(int i) {
-        return new ArrayCopy_Loop().runBench(true);
+        return new ArrayCopy_Loop().runBench();
     }
 
     public static class Bench extends MicroBenchmark {

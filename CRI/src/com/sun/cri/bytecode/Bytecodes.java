@@ -327,13 +327,13 @@ public class Bytecodes {
      *         
      * Operand Stack:
      *     ... pointer, offset, expectedValue, newValue => ..., result
-     * </pre>
      *
-     * @param pointer base of denoted memory location
-     * @param offset offset from {@code pointer} of the memory location
-     * @param expectedValue if this value is currently in the memory location, perform the swap
-     * @param newValue the new value to store into the memory location
-     * @return either {@code expectedValue} or the actual value
+     * param pointer base of denoted memory location
+     * param offset offset from pointer to the memory location
+     * param expectedValue if this value is currently in the memory location, perform the swap
+     * param newValue the new value to store into the memory location
+     * return either expectedValue or the actual value
+     * </pre>
      */
     public static final int PCMPSWP               = 227;
 

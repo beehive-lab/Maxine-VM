@@ -508,11 +508,11 @@ public abstract class CiXirAssembler {
          */
         Align,
         /**
-         * Creates the stack frame for the current method. (usually "push fp" and "add sp, X")
+         * Creates the stack frame for the method. This is also where stack banging is implemented.
          */
         PushFrame,
         /**
-         * Removes the stack frame of the current method. (usually "mov sp, fp" and "pop fp")
+         * Removes the stack frame of the method.
          */
         PopFrame,
         /**
