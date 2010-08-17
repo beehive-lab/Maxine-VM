@@ -20,63 +20,59 @@
  */
 /*
  * @Harness: java
- * @Runs: (1, 10000) = true;
+ * @Runs: 0 = true;
  */
 package test.bench.threads;
 
+import test.bench.util.*;
+import static test.bench.threads.Thread_counter01.*;
+
 /**
  *
- * This code is a variant of Thread_counter01 where the counter is shared,
- * therefore we expect contention and not linear scaling.
+ * This code is a variant of Thread_counter02 where the counter is shared.
+ * Each thread has its own thread local, but the associated value is the
+ * same for all threads.
+ *
+ * So all threads are contending on the same counter and we do not expect linear scaling.
  *
  * @author Mick Jordan
  */
-public class Thread_counter03  extends Thread_counter01 {
+public class Thread_counter02  extends RunBench {
 
-    private static Object lock = new Object();
-    private static long sharedCount;
-
-    protected Thread_counter03(MicroBenchmark bench, int t, long c)  {
-        super(bench, t, c);
+    protected Thread_counter02() {
+        super(new Bench());
     }
 
-    static class SharedLockedRunnerFactory extends RunnerFactory {
+    public static boolean test(int i) {
+        return new Thread_counter02().runBench();
+    }
+
+    static class Bench extends Thread_counter01.Bench {
+        private Counter sharedCounter = new Counter(RunBench.runIterCount());
+
         @Override
-        CountingRunner createRunner(long count, int threadCount) {
-            sharedCount = count;
-            return new SharedLockedRunner();
+        public void prerun() {
+            setCounter(sharedCounter);
         }
-    }
-
-    static class SharedLockedRunner extends CountingRunner {
 
         @Override
-        public void run() {
-            startBarrier.waitForRelease();
+        public long run() {
+            Counter counter = threadCounter.get();
             while (true) {
-                synchronized (lock) {
-                    if (sharedCount == 0) {
-                        return;
+                synchronized (counter) {
+                    if (counter.count == 0) {
+                        break;
                     }
-                    sharedCount--;
+                    counter.count--;
                 }
             }
+            return defaultResult;
         }
-    }
-
-
-    public static boolean test(int t, int c) {
-        final boolean result = new Thread_counter03(new Bench(new SharedLockedRunnerFactory()), t, c).runBench(true);
-        return result;
     }
 
     // for running stand-alone
     public static void main(String[] args) {
-        if (args.length == 0) {
-            test(1, DEFAULT_COUNT);
-        } else {
-            test(Integer.parseInt(args[0]), DEFAULT_COUNT);
-        }
+        RunBench.runTest(Thread_counter02.class, args);
     }
-
 }
+

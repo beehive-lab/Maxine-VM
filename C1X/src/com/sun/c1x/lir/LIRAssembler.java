@@ -291,7 +291,6 @@ public abstract class LIRAssembler {
                 throw Util.shouldNotReachHere();
             case StdEntry:
                 asm.verifiedEntry();
-                buildFrame();
                 break;
             case OsrEntry:
                 emitOsrEntry();
@@ -380,10 +379,6 @@ public abstract class LIRAssembler {
             default:
                 throw Util.shouldNotReachHere();
         }
-    }
-
-    void buildFrame() {
-        asm.buildFrame(initialFrameSizeInBytes());
     }
 
     public void moveOp(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
