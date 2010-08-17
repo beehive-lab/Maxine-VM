@@ -22,6 +22,7 @@ package com.sun.cri.xir;
 
 import java.io.*;
 
+import com.sun.cri.xir.CiXirAssembler.XirMark;
 import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
@@ -108,12 +109,16 @@ public class XirTemplate {
      */
     public final XirTemplate[] calleeTemplates;
 
+    
+    public final XirMark[] marks;
+    
+    
     /**
      * The {@link GlobalFlags} associated with the template.
      */
     public final int flags;
 
-    public XirTemplate(String name, int variableCount, boolean allocateResultOperand, XirOperand resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constantValues, int flags, XirTemplate[] calleeTemplates) {
+    public XirTemplate(String name, int variableCount, boolean allocateResultOperand, XirOperand resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constantValues, int flags, XirTemplate[] calleeTemplates, XirMark[] marks) {
     	this.name = name;
     	this.variableCount = variableCount;
     	this.resultOperand = resultOperand;
@@ -126,6 +131,7 @@ public class XirTemplate {
         this.allocateResultOperand = allocateResultOperand;
         this.constants = constantValues;
         this.calleeTemplates = calleeTemplates;
+        this.marks = marks;
 
         assert fastPath != null;
         assert labels != null;

@@ -28,6 +28,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
 
 /**
@@ -176,6 +177,10 @@ public abstract class AbstractAssembler {
 
         targetMethod.recordDataReference(pos, data);
         return CiAddress.Placeholder;
+    }
+
+    public Mark recordMark(Object id, Mark[] references) {
+        return targetMethod.recordMark(codeBuffer.position(), id, references);
     }
 
     protected int target(Label l) {

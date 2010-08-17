@@ -138,11 +138,11 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     break;
                 case Safepoint:
                 case Align:
-                case Entrypoint:
                 case PushFrame:
                 case PopFrame:
                 case Push:
                 case Pop:
+                case Mark:
                 case RawBytes:
                 case ShouldNotReachHere:
                     break;
@@ -160,7 +160,8 @@ public class AMD64XirAssembler extends CiXirAssembler {
         XirTemp[] temporaryOperands = temps.toArray(new XirTemp[temps.size()]);
         XirConstant[] constantOperands = constants.toArray(new XirConstant[constants.size()]);
         XirTemplate[] calleeTemplateArray = calleeTemplates.toArray(new XirTemplate[calleeTemplates.size()]);
-        return new XirTemplate(name, this.variableCount, this.allocateResultOperand, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags, calleeTemplateArray);
+        XirMark[] marksArray = marks.toArray(new XirMark[marks.size()]);
+        return new XirTemplate(name, this.variableCount, this.allocateResultOperand, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags, calleeTemplateArray, marksArray);
     }
 
     @Override

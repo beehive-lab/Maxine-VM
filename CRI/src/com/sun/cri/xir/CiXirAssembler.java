@@ -41,10 +41,11 @@ public abstract class CiXirAssembler {
     protected boolean allocateResultOperand;
 
     protected final List<XirInstruction> instructions = new ArrayList<XirInstruction>();
-    protected final List<XirLabel> labels = new ArrayList<XirLabel>();
-    protected final List<XirParameter> parameters = new ArrayList<XirParameter>();
-    protected final List<XirTemp> temps = new ArrayList<XirTemp>();
-    protected final List<XirConstant> constants = new ArrayList<XirConstant>();
+    protected final List<XirLabel> labels = new ArrayList<XirLabel>(5);
+    protected final List<XirParameter> parameters = new ArrayList<XirParameter>(5);
+    protected final List<XirTemp> temps = new ArrayList<XirTemp>(5);
+    protected final List<XirConstant> constants = new ArrayList<XirConstant>(5);
+    protected final List<XirMark> marks = new ArrayList<XirMark>(5);
 
     /**
      * Increases by one for every {@link XirOperand operand} created.
@@ -261,6 +262,7 @@ public abstract class CiXirAssembler {
         parameters.clear();
         temps.clear();
         constants.clear();
+        marks.clear();
     }
 
     /**
@@ -269,7 +271,7 @@ public abstract class CiXirAssembler {
      * arguments, respectively. Only the {@link XirOp#CallStub} and {@link XirOp#CallRuntime} instructions can have more than three arguments.
      *
      */
-    public class XirInstruction {
+    public static class XirInstruction {
         /**
          * The {@link CiKind kind} of values the instruction operates on.
          */
@@ -353,6 +355,23 @@ public abstract class CiXirAssembler {
             }
 
             return sb.toString();
+        }
+    }
+
+    /**
+     * These marks let the RiXirGenerator mark positions in the generated native code and bring them in relationship with on another.
+     * This is necessary for code patching, etc.
+     */
+    public static class XirMark {
+        public final XirMark[] references;
+        public final Object id;
+        
+        // special mark used to refer to the actual call site of an invoke
+        public static final XirMark CALLSITE = new XirMark(null);
+
+        public XirMark(Object id, XirMark... references) {
+            this.id = id;
+            this.references = references;
         }
     }
 
@@ -489,11 +508,6 @@ public abstract class CiXirAssembler {
          */
         Align,
         /**
-         * Records the offset of the next instruction as an entrypoint (verified entry, unverified entry, ...). <code>extra</code> is
-         * used to identify it.
-         */
-        Entrypoint,
-        /**
          * Creates the stack frame for the current method. (usually "push fp" and "add sp, X")
          */
         PushFrame,
@@ -513,6 +527,10 @@ public abstract class CiXirAssembler {
          * Pops a value from the stack.
          */
         Pop,
+        /**
+         * Marks a position in the generated native code.
+         */
+        Mark,
         /**
          * This instruction should never be reached, this is useful for debugging purposes.
          */
@@ -667,10 +685,6 @@ public abstract class CiXirAssembler {
         append(new XirInstruction(CiKind.Void, multiple, Align, null));
     }
     
-    public void entrypoint(Object id) {
-        append(new XirInstruction(CiKind.Void, id, Entrypoint, null));
-    }
-
     public void pushFrame() {
         append(new XirInstruction(CiKind.Void, null, PushFrame, null));
     }
@@ -690,7 +704,14 @@ public abstract class CiXirAssembler {
     public void pop(XirOperand result) {
         append(new XirInstruction(result.kind, Pop, result));
     }
-
+    
+    public XirMark mark(Object id, XirMark... references) {
+        XirMark mark = new XirMark(id, references);
+        marks.add(mark);
+        append(new XirInstruction(CiKind.Void, mark, Mark, null));
+        return mark;
+    }
+    
     public void shouldNotReachHere() {
         append(new XirInstruction(CiKind.Void, null, ShouldNotReachHere, null));
     }

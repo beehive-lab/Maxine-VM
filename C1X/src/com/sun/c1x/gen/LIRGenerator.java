@@ -479,11 +479,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (destinationAddress instanceof CiConstant) {
             // Direct call
             assert ((CiConstant) destinationAddress).isDefaultValue() : "destination address should be zero";
-            lir.callDirect(target, resultOperand, argList, info);
+            lir.callDirect(target, resultOperand, argList, info, snippet.marks);
         } else {
             // Indirect call
             argList.add(destinationAddress);
-            lir.callIndirect(target, resultOperand, argList, info);
+            lir.callIndirect(target, resultOperand, argList, info, snippet.marks);
         }
 
         if (resultOperand.isLegal()) {
@@ -501,7 +501,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiCallingConvention cc = compilation.frameMap().nativeCallingConvention(signature, true);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments);
         argList.add(callAddress);
-        lir.callNative(callAddress, x.nativeMethod.jniSymbol(), resultOperand, argList, info);
+        lir.callNative(callAddress, x.nativeMethod.jniSymbol(), resultOperand, argList, info, null);
         if (resultOperand.isLegal()) {
             CiValue result = createResultVariable(x);
             lir.move(resultOperand, result);
@@ -849,7 +849,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        if (!operands[resultOperand.index].isConstant() || snippet.template.fastPath.length != 0) {
+        if (!operands[resultOperand.index].isConstant() || snippet.template.fastPath.length != 0 || snippet.template.slowPath.length != 0) {
             // XIR instruction is only needed when the operand is not a constant!
             lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
                     operandArray, operandIndicesArray,

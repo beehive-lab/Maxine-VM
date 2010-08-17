@@ -25,6 +25,8 @@ import static com.sun.cri.ci.CiValue.*;
 import static java.lang.Double.*;
 import static java.lang.Float.*;
 
+import java.util.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ir.*;
@@ -33,7 +35,9 @@ import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.XirMark;
 import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
@@ -138,8 +142,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
         if( target.inlineObjects) {
-            masm.recordDataReferenceInCode(CiConstant.forObject(constant));
-            masm.mov64(dst, 0xDEADDEADDEADDEADl);
+            if (constant == null) {
+                masm.mov64(dst, 0x0l);
+            } else {
+                masm.recordDataReferenceInCode(CiConstant.forObject(constant));
+                masm.mov64(dst, 0xDEADDEADDEADDEADl);
+            }
         } else {
             masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
         }
@@ -304,9 +312,9 @@ public class AMD64LIRAssembler extends LIRAssembler {
     }
 
     private static CiRegister asXmmFloatReg(CiValue src) {
-        assert src.kind.isFloat() : "must be float";
+        assert src.kind.isFloat() : "must be float, actual kind: " + src.kind;
         CiRegister result = src.asRegister();
-        assert result.isFpu() : "must be xmm";
+        assert result.isFpu() : "must be xmm, actual type: " + result;
         return result;
     }
 
@@ -1490,19 +1498,19 @@ public class AMD64LIRAssembler extends LIRAssembler {
         for (int i = 0; i < labels.length; i++) {
             labels[i] = new Label();
         }
-        emitXirInstructions(instruction, snippet.template.fastPath, labels, instruction.getOperands());
+        emitXirInstructions(instruction, snippet.template.fastPath, labels, instruction.getOperands(), snippet.marks);
         if (snippet.template.slowPath != null) {
-            addSlowPath(new SlowPath(instruction, labels));
+            addSlowPath(new SlowPath(instruction, labels, snippet.marks));
         }
     }
 
     @Override
     protected void emitSlowPath(SlowPath sp) {
-        emitXirInstructions(sp.instruction, sp.instruction.snippet.template.slowPath, sp.labels, sp.instruction.getOperands());
+        emitXirInstructions(sp.instruction, sp.instruction.snippet.template.slowPath, sp.labels, sp.instruction.getOperands(), sp.marks);
         masm.nop();
     }
 
-    public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, CiValue[] operands) {
+    public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, CiValue[] operands, Map<XirMark, Mark> marks) {
         LIRDebugInfo info = xir == null ? null : xir.info;
 
         for (XirInstruction inst : instructions) {
@@ -1749,10 +1757,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     asm.align((Integer) inst.extra);
                     break;
                 }
-                case Entrypoint: {
-                    asm.targetMethod.entrypointCodeOffsets.put(inst.extra, codePos());
-                    break;
-                }
                 case PushFrame: {
                     masm.push(AMD64.rbp);
                     masm.decrementq(AMD64.rsp, initialFrameSizeInBytes());
@@ -1770,12 +1774,23 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 }
                 case Pop: {
                     CiValue result = operands[inst.result.index];
-                    if( result.isRegister()) {
+                    if (result.isRegister()) {
                         masm.pop(result.asRegister());
                     } else {
                         masm.pop(compilation.target.scratchRegister);
                         moveOp(compilation.target.scratchRegister.asValue(), result, result.kind, null, true);
                     }
+                    break;
+                }
+                case Mark: {
+                    XirMark xmark = (XirMark) inst.extra;
+                    Mark[] references = new Mark[xmark.references.length];
+                    for (int i=0; i<references.length; i++) {
+                        references[i] = marks.get(xmark.references[i]);
+                        assert references[i] != null;
+                    }
+                    Mark mark = asm.recordMark(xmark.id, references);
+                    marks.put(xmark, mark);
                     break;
                 }
                 case RawBytes: {
