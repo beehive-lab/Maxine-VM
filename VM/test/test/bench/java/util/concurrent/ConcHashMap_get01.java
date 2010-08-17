@@ -18,41 +18,41 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.bench.threads;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.bench.java.util.concurrent;
+
+import java.util.concurrent.*;
+import test.bench.util.*;
+import test.bench.java.util.*;
 
 /**
- * All threads wait at barrier until last thread arrives.
+ * Variant of {@link HashMap_get01} that uses a {@link ConcurrentHashMap}.
+ *
+ * @author Mick Jordan
  */
-class Barrier {
 
-    private int threads;
-    private int threadCount = 0;
+public class ConcHashMap_get01  extends RunBench {
 
-    public Barrier(int threads) {
-        this.threads = threads;
+    ConcHashMap_get01() {
+        super(new Bench());
     }
 
-    /**
-     * Get number of threads that have reached the barrier.
-     *
-     * @return number of threads that have reached the barrier
-     */
-    public synchronized int getThreadCount() {
-        return threadCount;
+    public static boolean test(int i) {
+        return new ConcHashMap_get01().runBench();
     }
 
-    public synchronized void waitForRelease() {
-        try {
-            threadCount++;
-            if (threadCount == threads) {
-                notifyAll();
-            } else {
-                while (threadCount < threads) {
-                    wait();
-                }
-            }
-        } catch (InterruptedException ex) {
+    static class Bench extends HashMap_get01.Bench {
+
+        Bench() {
+            super(new ConcurrentHashMap<Integer, Integer>());
         }
     }
-}
 
+    public static void main(String[] args) {
+        RunBench.runTest(ConcHashMap_get01.class, args);
+    }
+
+}

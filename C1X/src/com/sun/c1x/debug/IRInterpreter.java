@@ -184,8 +184,8 @@ public class IRInterpreter {
             instructionValueMap.put(i, new Val(iCounter, value));
         }
 
-        public Environment(FrameState state, CiConstant[] values, IR ir) {
-            assert values.length <= state.localsSize() : "Incorrect number of initialization arguments";
+        public Environment(FrameState newFrameState, CiConstant[] values, IR ir) {
+            assert values.length <= newFrameState.localsSize() : "Incorrect number of initialization arguments";
             ir.startBlock.iteratePreOrder(new ValueMapInitializer());
             int index = 0;
 
@@ -193,7 +193,7 @@ public class IRInterpreter {
                 CiConstant obj;
                 // These conversions are necessary since the input values are
                 // parsed as integers
-                Value local = state.localAt(index);
+                Value local = newFrameState.localAt(index);
                 if (local.kind == CiKind.Float && value.kind == CiKind.Int) {
                     obj = CiConstant.forFloat(value.asInt());
                 } else if ((local.kind == CiKind.Double && value.kind == CiKind.Int)) {
@@ -852,9 +852,9 @@ public class IRInterpreter {
             // native methods are invoked using reflection.
             // some special methods/classes are also always called using reflection
             if (isNative(targetMethod.accessFlags()) || "newInstance".equals(methodName) || "newInstance0".equals(methodName) ||
-                targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Unsafe")                     ||
-                targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Reflection")                 ||
-                targetMethod.holder().javaClass().getName().startsWith("sun.reflect.FieldAccessor")) {
+                targetMethod.holder().name().startsWith("sun/reflect/Unsafe")                     ||
+                targetMethod.holder().name().startsWith("sun/reflect/Reflection")                 ||
+                targetMethod.holder().name().startsWith("sun/reflect/FieldAccessor")) {
                 invokeUsingReflection(i);
                 return;
             }
@@ -895,11 +895,11 @@ public class IRInterpreter {
 
             CiConstant result;
             try {
-                IR methodHir = compiledMethods.get(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signature().toString());
+                IR methodHir = compiledMethods.get(targetMethod.holder().name() + methodName + targetMethod.signature().toString());
                 if (methodHir == null) {
                     C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, runtime, targetMethod);
                     methodHir = compilation.emitHIR();
-                    compiledMethods.put(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signature().toString(), methodHir);
+                    compiledMethods.put(targetMethod.holder().name() + methodName + targetMethod.signature().toString(), methodHir);
                 }
                 result = interpreter.execute(methodHir, arguments(i));
                 environment.bind(i, fromBoxedJavaValue(result.boxedValue()), instructionCounter);
@@ -1141,7 +1141,7 @@ public class IRInterpreter {
 
         private Class<?> resolveClass(RiType type) {
             if (type.isResolved()) {
-                return type.javaClass();
+                return (Class<?>) type.javaClass();
             } else {
                 return resolveClass(type.name());
             }
@@ -1785,8 +1785,8 @@ public class IRInterpreter {
             System.out.println();
         }
 
-        private void printState(FrameState state) {
-            valuesDo(state, new ValueClosure() {
+        private void printState(FrameState newFrameState) {
+            valuesDo(newFrameState, new ValueClosure() {
 
                     public Value apply(Value i) {
                         CiConstant lookupValue;

@@ -38,21 +38,21 @@ public class NewSocket extends NetSettings {
     }
 
     public static boolean test() {
-        return new NewSocket(new OpenCloseBench()).runBench(true);
+        return new NewSocket(new OpenCloseBench()).runBench();
     }
 
     public static boolean testall() {
-        boolean result = new NewSocket(new OpenCloseBench()).runBench(true);
-        result = result && new NewSocket(new OpenBench()).runBench(true);
-        return result && new NewSocket(new CloseBench()).runBench(true);
+        boolean result = new NewSocket(new OpenCloseBench()).runBench();
+        result = result && new NewSocket(new OpenBench()).runBench();
+        return result && new NewSocket(new CloseBench()).runBench();
     }
 
     public static boolean testOpen() {
-        return new NewSocket(new OpenBench()).runBench(true);
+        return new NewSocket(new OpenBench()).runBench();
     }
 
     public static boolean testClose() {
-        return new NewSocket(new CloseBench()).runBench(true);
+        return new NewSocket(new CloseBench()).runBench();
     }
 
     static class OpenCloseBench extends MicroBenchmark {

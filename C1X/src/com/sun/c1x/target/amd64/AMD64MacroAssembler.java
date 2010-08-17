@@ -107,7 +107,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         } else {
             if (target.inlineObjects) {
                 recordDataReferenceInCode(obj);
-                mov64(dst, 0xDEADDEADDEADDEADl);
+                mov64(dst, 0xDEADDEADDEADDEADL);
             } else {
                 movq(dst, recordDataReferenceInCode(obj));
             }
@@ -545,22 +545,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     void xchgptr(CiRegister src1, CiRegister src2) {
         xchgq(src1, src2);
-    }
-
-    private void bangStackWithOffset(int offset) {
-        // stack grows down, caller passes positive offset
-        assert offset > 0 :  "must bang with negative offset";
-        movq(new CiAddress(CiKind.Word, AMD64.RSP, (-offset)), AMD64.rax);
-    }
-
-    @Override
-    public void buildFrame(int frameSizeInBytes) {
-        decrementq(AMD64.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
-        int framePages = frameSizeInBytes / target.pageSize;
-        // emit multiple stack bangs for methods with frames larger than a page
-        for (int i = 0; i <= framePages; i++) {
-            bangStackWithOffset((i + C1XOptions.StackShadowPages) * target.pageSize);
-        }
     }
 
     public void shouldNotReachHere() {

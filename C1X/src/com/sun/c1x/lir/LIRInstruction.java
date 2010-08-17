@@ -103,8 +103,7 @@ public abstract class LIRInstruction {
      * @param opcode the opcode of the new instruction
      * @param result the operand that holds the operation result of this instruction. This will be
      *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
-     * @param info the debug info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
-     * @param info the object holding information needed to perform deoptimization
+     * @param info the {@link LIRDebugInfo} info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
      * @param hasCall
      */
     public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall) {
@@ -117,8 +116,7 @@ public abstract class LIRInstruction {
      * @param opcode the opcode of the new instruction
      * @param result the operand that holds the operation result of this instruction. This will be
      *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
-     * @param info the debug info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
-     * @param info the object holding information needed to perform deoptimization
+     * @param info the {@link LIRDebugInfo} that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
      * @param hasCall
      */
     public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall, int tempInput, int temp, CiValue... operands) {

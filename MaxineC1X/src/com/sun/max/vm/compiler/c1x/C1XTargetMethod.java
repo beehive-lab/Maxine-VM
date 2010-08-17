@@ -235,7 +235,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         int z = 0;
         int currentPos = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
-            final CiConstant data = site.data;
+            final CiConstant data = site.constant;
             relativeDataPos[z] = currentPos;
 
             try {
@@ -306,7 +306,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         int z = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
 
-            switch (site.data.kind) {
+            switch (site.constant.kind) {
 
                 case Double: // fall through
                 case Float: // fall through

@@ -20,19 +20,18 @@
  */
 /*
  * @Harness: java
- * @Runs: (1, 100000) = true;
+ * @Runs: 0 = true;
  */
 package test.bench.threads;
 
 import test.bench.util.*;
 
 /**
- * This benchmark runs a given number of threads, each of which
- * decrements a private counter until it reaches zero.
- * It provides a baseline for {@link Thread_counter3}.
+ * This benchmark is intended to be run in multi-threaded mode. It measures
+ * how long it takes to decrement the {@link RunBench#runIterCount iteration counter}.
+ * Each thread is given a share of the count to work on.
  *
- * The number of threads defaults to the value passed into the
- * test method (default 1).
+ * It provides a baseline for {@link Thread_counter02} which decrements a shared counter.
  *
  * On an SMP the time should scale (down) linearly with the number of threads.
  *
@@ -41,110 +40,59 @@ import test.bench.util.*;
  */
 public class Thread_counter01  extends RunBench {
 
-    protected static final int DEFAULT_COUNT = 100000;
-    protected static int threadCount;
-    protected static long countDown;
-    protected static Barrier startBarrier;
-
-    protected Thread_counter01(MicroBenchmark bench, int t, long c) {
-        super(bench, new Bench(new EmptyRunnerFactory()));
-        threadCount = t;
-        countDown = c;
+    protected Thread_counter01() {
+        super(new Bench());
     }
 
-    public static boolean test(int t, int c) {
-        final boolean result = new Thread_counter01(new Bench(new OpenRunnerFactory()), t, c).runBench(true);
-        return result;
+    public static boolean test(int i) {
+        return new Thread_counter01().runBench();
+    }
+
+    static class Counter {
+        long count;
+        Counter(long count) {
+            this.count = count;
+        }
     }
 
     static class Bench extends MicroBenchmark {
-
-        private RunnerFactory runnerFactory;
-        private int runCount = 0;
-        private Thread[] threads;
-        private volatile int started;
-
-        Bench(RunnerFactory runnerFactory) {
-            this.runnerFactory = runnerFactory;
-        }
+        protected ThreadLocal<Counter> threadCounter;
 
         @Override
         public void prerun() {
-            threads = new Thread[threadCount];
-            final CountingRunner[] counter = new CountingRunner[threadCount];
-            for (int i = 0; i < threadCount; i++) {
-                counter[i] = runnerFactory.createRunner(countDown, threadCount);
-                threads[i] = new Thread(counter[i]);
-            }
-            startBarrier = new Barrier(threadCount + 1);
-            // start the threads which will wait at the barrier
-            for (int i = 0; i < threadCount; i++) {
-                threads[i].start();
-            }
+            setCounter(new Counter(RunBench.runIterCount() / RunBench.threadCount()));
+        }
+
+        protected void setCounter(final Counter counter) {
+            threadCounter = new ThreadLocal<Counter>() {
+                @Override
+                public Counter initialValue() {
+                    return counter;
+                }
+            };
         }
 
         @Override
         public long run() {
-            startBarrier.waitForRelease();
-            for (int i = 0; i < threadCount; i++) {
-                try {
-                    threads[i].join();
-                } catch (InterruptedException ex) {
-                }
+            Counter counter = threadCounter.get();
+            while (counter.count > 0) {
+                counter.count--;
             }
             return defaultResult;
         }
     }
 
-    abstract static class RunnerFactory {
-        abstract CountingRunner createRunner(long count, int threadCount);
-    }
-
-    abstract static class CountingRunner implements Runnable {
-        public abstract void run();
-    }
-
-    static class OpenRunner extends CountingRunner {
-        private long count;
-        OpenRunner(long count) {
-            this.count = count;
-        }
+    static class EncapBench extends Bench {
         @Override
-        public void run() {
-            startBarrier.waitForRelease();
-            while (count > 0) {
-                count--;
-            }
+        public long run() {
+            Counter counter = threadCounter.get();
+            return counter.count;
         }
-    }
 
-    static class EmptyRunner extends CountingRunner {
-        @Override
-        public void run() {
-            startBarrier.waitForRelease();
-        }
-    }
-
-    static class OpenRunnerFactory extends RunnerFactory {
-        @Override
-        CountingRunner createRunner(long count, int threadCount) {
-            return new OpenRunner(count / threadCount);
-        }
-    }
-
-    static class EmptyRunnerFactory extends RunnerFactory {
-        @Override
-        CountingRunner createRunner(long count, int threadCount) {
-            return new EmptyRunner();
-        }
     }
 
     // for running stand-alone
     public static void main(String[] args) {
-        if (args.length == 0) {
-            test(1, DEFAULT_COUNT);
-        } else {
-            test(Integer.parseInt(args[0]), DEFAULT_COUNT);
-        }
+        RunBench.runTest(Thread_counter01.class, args);
     }
 }
