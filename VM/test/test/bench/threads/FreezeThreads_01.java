@@ -45,7 +45,7 @@ public class FreezeThreads_01 extends RunBench {
     }
 
     public static boolean test(int i) {
-        return new FreezeThreads_01(i).runBench(true);
+        return new FreezeThreads_01(i).runBench();
     }
 
     static class Bench extends MicroBenchmark {

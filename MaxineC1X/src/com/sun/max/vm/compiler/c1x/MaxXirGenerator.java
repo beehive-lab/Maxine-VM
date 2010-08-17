@@ -61,7 +61,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public class MaxXirGenerator extends RiXirGenerator {
+public class MaxXirGenerator implements RiXirGenerator {
 
     private static final int SMALL_MULTIANEWARRAY_RANK = 2;
 
@@ -245,11 +245,15 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     @Override
     public XirSnippet genPrologue(XirSite site, RiMethod method) {
+        assert method.isResolved() : "Cannot generate prologue for unresolved method: " + method;
+        ClassMethodActor callee = (ClassMethodActor) method;
+
+        // Cannot share 'asm' across con-current compilations.
+        CiXirAssembler asm = this.asm.copy();
         asm.restart(CiKind.Void);
 
-        ClassMethodActor callee = MaxRiRuntime.asClassMethodActor(method, "genPrologue()");
         AdapterGenerator generator = AdapterGenerator.forCallee(callee, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        if(generator != null) {
+        if (generator != null) {
             ByteArrayOutputStream os = new ByteArrayOutputStream(8);
             generator.adapt(callee, os);
             asm.rawBytes(os.toByteArray());

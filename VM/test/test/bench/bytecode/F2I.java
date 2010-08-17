@@ -39,7 +39,7 @@ public class  F2I extends RunBench {
     }
 
     public static boolean test(float f) {
-        return new F2I(f).runBench(true);
+        return new F2I(f).runBench();
     }
 
     static class Bench extends MicroBenchmark {

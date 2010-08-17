@@ -31,7 +31,9 @@ import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
+import com.sun.cri.xir.CiXirAssembler.XirMark;
 
 /**
  * The {@code LIRAssembler} class definition.
@@ -54,10 +56,12 @@ public abstract class LIRAssembler {
     protected static class SlowPath {
         public final LIRXirInstruction instruction;
         public final Label[] labels;
+        public final Map<XirMark, Mark> marks;
 
-        public SlowPath(LIRXirInstruction instruction, Label[] labels) {
+        public SlowPath(LIRXirInstruction instruction, Label[] labels, Map<XirMark, Mark> marks) {
             this.instruction = instruction;
             this.labels = labels;
+            this.marks = marks;
         }
     }
 
@@ -217,6 +221,10 @@ public abstract class LIRAssembler {
 
         switch (op.code) {
             case DirectCall:
+                emitCallAlignment(op.code);
+                if (op.marks != null) {
+                    op.marks.put(XirMark.CALLSITE, asm.recordMark(null, new Mark[0]));
+                }
                 emitDirectCall(op.target, op.info);
                 break;
             case IndirectCall:
@@ -283,7 +291,6 @@ public abstract class LIRAssembler {
                 throw Util.shouldNotReachHere();
             case StdEntry:
                 asm.verifiedEntry();
-                buildFrame();
                 break;
             case OsrEntry:
                 emitOsrEntry();
@@ -372,10 +379,6 @@ public abstract class LIRAssembler {
             default:
                 throw Util.shouldNotReachHere();
         }
-    }
-
-    void buildFrame() {
-        asm.buildFrame(initialFrameSizeInBytes());
     }
 
     public void moveOp(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {

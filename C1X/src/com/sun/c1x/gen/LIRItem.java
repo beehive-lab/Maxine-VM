@@ -104,9 +104,7 @@ public class LIRItem {
      * Forces the result of this item's {@linkplain #instruction} to be available in a given operand,
      * inserting move instructions if necessary.
      *
-     * @param instruction an instruction that produces a {@linkplain Value#operand() result}
      * @param operand the operand in which the result of {@code instruction} must be available
-     * @return {@code operand}
      */
     public void loadItemForce(CiValue operand) {
         CiValue result = result();

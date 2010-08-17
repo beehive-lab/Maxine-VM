@@ -54,6 +54,7 @@ public enum CiKind {
     Illegal('-', "illegal", null,       -1,       0);
 
     public static final CiKind[] VALUES = values();
+    public static final CiKind[] JAVA_VALUES = new CiKind[] { CiKind.Boolean, CiKind.Byte, CiKind.Short, CiKind.Char, CiKind.Int, CiKind.Float, CiKind.Long, CiKind.Double, CiKind.Object};
 
     CiKind(char ch, String name, String jniName, int jvmSlots, int flags) {
         this.typeChar = ch;

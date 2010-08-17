@@ -62,7 +62,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         register(new VMBooleanXXOption("-XX:+", "UseLOS", "Use a large object space"),
                         MaxineVM.Phase.PRISTINE);
 
-    /**
+   /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
      * appended to a TLAB to fill unused space before a TLAB refill.
      * The headroom is used to compute a soft limit that'll be used as the tlab's top.
@@ -121,6 +121,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         if (MaxineVM.isHosted()) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
+            objectSpace.hostInitialize();
             // The monitor for the collector must be allocated in the image
             JavaMonitorManager.bindStickyMonitor(this);
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
@@ -173,6 +174,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             return true;
         }
         // We may reach here after a race. Don't run GC if request can be satisfied.
+
+        // FIXME: might be better to try allocate the requested space and save the result for the caller.
+        // This may avoid starvation case where in concurrent threads allocate the requested space
+        // in after this method returns but before the caller allocated the space..
         if (objectSpace.canSatisfyAllocation(requestedFreeSpace)) {
             return true;
         }
