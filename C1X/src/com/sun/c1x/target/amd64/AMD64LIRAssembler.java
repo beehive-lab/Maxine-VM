@@ -1609,7 +1609,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     assert pointer.isVariableOrRegister();
 
                     CiValue src = null;
-                    if (index.isConstant() && index.kind == CiKind.Int) {
+                    if (index.isConstant()) {
+                        assert index.kind == CiKind.Int;
                         CiConstant constantIndex = (CiConstant) index;
                         src = new CiAddress(inst.kind, pointer, constantIndex.asInt() * scale.value + displacement);
                     } else {
@@ -1638,7 +1639,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     assert pointer.isVariableOrRegister();
 
                     CiValue dst;
-                    if (index.isConstant() && index.kind == CiKind.Int) {
+                    if (index.isConstant()) {
+                        assert index.kind == CiKind.Int;
                         CiConstant constantIndex = (CiConstant) index;
                         dst = new CiAddress(inst.kind, pointer, IllegalValue, scale, constantIndex.asInt() * scale.value + displacement);
                     } else {
