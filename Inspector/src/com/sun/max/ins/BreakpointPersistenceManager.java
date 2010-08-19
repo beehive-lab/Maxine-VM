@@ -95,7 +95,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         inspection.settings().save();
     }
 
-    public void saveSettings(SaveSettingsEvent settings) {
+    public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
         final List<MaxBreakpoint> targetBreakpoints = new LinkedList<MaxBreakpoint>();
         final List<MaxBreakpoint> bytecodeBreakpoints = new LinkedList<MaxBreakpoint>();
         for (MaxBreakpoint breakpoint : inspection.vm().breakpointManager().breakpoints()) {
@@ -105,24 +105,24 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                 targetBreakpoints.add(breakpoint);
             }
         }
-        saveTargetCodeBreakpoints(settings, targetBreakpoints);
-        saveBytecodeBreakpoints(settings, bytecodeBreakpoints);
+        saveTargetCodeBreakpoints(saveSettingsEvent, targetBreakpoints);
+        saveBytecodeBreakpoints(saveSettingsEvent, bytecodeBreakpoints);
     }
 
-    private void saveTargetCodeBreakpoints(SaveSettingsEvent settings, List<MaxBreakpoint> targetBreakpoints) {
-        settings.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, targetBreakpoints.size());
+    private void saveTargetCodeBreakpoints(SaveSettingsEvent saveSettingsEvent, List<MaxBreakpoint> targetBreakpoints) {
+        saveSettingsEvent.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, targetBreakpoints.size());
         int index = 0;
         for (MaxBreakpoint breakpoint : targetBreakpoints) {
             final String prefix = TARGET_BREAKPOINT_KEY + index++;
             final Address bootImageOffset = breakpoint.codeLocation().address().minus(inspection.vm().bootImageStart());
-            settings.save(prefix + "." + ADDRESS_KEY, bootImageOffset.toLong());
-            settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
+            saveSettingsEvent.save(prefix + "." + ADDRESS_KEY, bootImageOffset.toLong());
+            saveSettingsEvent.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
             final BreakpointCondition condition = breakpoint.getCondition();
             if (condition != null) {
-                settings.save(prefix + "." + CONDITION_KEY, condition.toString());
+                saveSettingsEvent.save(prefix + "." + CONDITION_KEY, condition.toString());
             }
             // Always save, even if empty, so old values get overwritten if description is removed.
-            settings.save(prefix + "." + DESCRIPTION_KEY, breakpoint.getDescription() == null ? "" : breakpoint.getDescription());
+            saveSettingsEvent.save(prefix + "." + DESCRIPTION_KEY, breakpoint.getDescription() == null ? "" : breakpoint.getDescription());
         }
     }
 
