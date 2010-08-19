@@ -21,34 +21,35 @@
 package com.sun.max.ins;
 
 /**
- * An abstract adapter class for receiving inspection events.
- * The methods in this class are empty.  This class exists
- * as a convenience for creating listener objects.
- *
- * Extend this class, override the methods of interest, and
- * register with the inspection via
- * {@link Inspection#addInspectionListener(InspectionListener)} and
- * {@link Inspection#removeInspectionListener(InspectionListener)}.
+ * A holder of text for unstructured use by users; persists
+ * across sessions.
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectionListenerAdapter implements InspectionListener {
+interface InspectorNotepad {
 
-    public void vmStateChanged(boolean force) {
-    }
+    /**
+     * @return the name of the notepad, even if it has been disposed.
+     */
+    String getName();
 
-    public void breakpointStateChanged() {
-    }
+    /**
+     * @return the current contents of the notepad, possibly an empty
+     * string; null if it has been disposed.
+     */
+    String getContents();
 
-    public void watchpointSetChanged() {
-    }
+    /**
+     * Sets the contents of this notepad to new text.
+     *
+     * @param contents the new text for the notepad
+     * @throws IllegalArgumentException if {@code contents == null}
+     */
+    void setContents(String contents) throws IllegalArgumentException;
 
-    public void viewConfigurationChanged() {
-    }
+    /**
+     * Removes this notepad from persistent storage and render it unusable.
+     */
+    void dispose();
 
-    public void vmProcessTerminated() {
-    }
-
-    public void inspectionEnding() {
-    }
 }

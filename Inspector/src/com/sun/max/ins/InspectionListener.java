@@ -22,7 +22,7 @@ package com.sun.max.ins;
 
 
 /**
- * Notification service for changes to state in the VM.
+ * Notification service for changes to state in the VM and inspection session.
  *
  *
  * @author Michael Van De Vanter
@@ -57,4 +57,12 @@ public interface InspectionListener {
      * stopped running.
      */
     void vmProcessTerminated();
+
+    /**
+     * Notifies that the inspection session is shutting down.  This notification
+     * will arrive before the final saving of inspection settings.
+     * @see InspectionSettings
+     */
+    void inspectionEnding();
+
 }

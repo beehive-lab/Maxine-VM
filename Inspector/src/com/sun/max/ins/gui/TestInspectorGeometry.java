@@ -84,6 +84,10 @@ public class TestInspectorGeometry implements InspectorGeometry {
         return testFrameDefaultBounds;
     }
 
+    public Rectangle notepadFrameDefaultBounds() {
+        return testFrameDefaultBounds;
+    }
+
     // Java Source Inspector frame
     public Point javaSourceFrameDefaultLocation() {
         return testFrameDefaultLocation;
