@@ -63,7 +63,7 @@ public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
         return 0;
     }
 
-   @Override
+    @Override
     public int readBytes(long src, byte[] dst, int dstOffset, int length) {
         unexpected();
         return 0;
@@ -148,7 +148,7 @@ public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
         return false;
     }
 
-   @Override
+    @Override
     public boolean deactivateWatchpoint(long start, long size) {
         unexpected();
         return false;
