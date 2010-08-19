@@ -18,50 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.solaris;
+package com.sun.max.tele.debug.darwin;
 
-import java.io.*;
-
-import com.sun.max.platform.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.Params;
 import com.sun.max.tele.debug.unix.*;
-import com.sun.max.vm.prototype.*;
+
 
 /**
- * @author Bernd Mathiske
- * @author Aritra Bandyopadhyay
- * @author Doug Simon
- * @author Hannes Payer
+ * An implementation of {@link TeleChannelProtocol} for Darwin that uses direct native method calls.
+ *
  * @author Mick Jordan
+ *
  */
-public final class SolarisTeleProcess extends UnixTeleProcessAdaptor {
+public class DarwinNativeTeleChannelProtocol extends UnixNativeTeleChannelProtocolAdaptor implements DarwinTeleChannelProtocol {
 
-    /**
-     * Creates a handle to a native Solaris process by launching a new process with a given set of command line arguments.
-     *
-     * @param teleVM
-     * @param platform
-     * @param programFile
-     * @param commandLineArguments
-     * @param agent TODO
-     * @throws BootImageException
-     */
-    SolarisTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        super(teleVM, platform, programFile, commandLineArguments, agent);
+    public DarwinNativeTeleChannelProtocol() {
+        super(new DarwinTeleChannelNatives());
     }
-
-    @Override
-    protected TeleNativeThread createTeleNativeThread(Params params) {
-        return new SolarisTeleNativeThread(this, params);
-    }
-
-    @Override
-    public int platformWatchpointCount() {
-        // not sure, try max
-        return Integer.MAX_VALUE;
-    }
-
-
 }

@@ -30,37 +30,33 @@ import com.sun.max.unsafe.*;
  */
 public class SolarisTeleNativeThread extends TeleNativeThread {
 
-    @Override
-    public SolarisTeleProcess teleProcess() {
-        return (SolarisTeleProcess) super.teleProcess();
-    }
+    private SolarisTeleChannelProtocol protocol;
 
     public SolarisTeleNativeThread(SolarisTeleProcess teleProcess, Params params) {
         super(teleProcess, params);
+        protocol = (SolarisTeleChannelProtocol) teleProcess().vm().teleChannelProtocol();
     }
-
-    private static native boolean nativeSetInstructionPointer(long processHandle, long lwpId, long address);
 
     private long lwpId() {
         return localHandle();
     }
 
     @Override
-    public boolean updateInstructionPointer(Address address) {
-        return nativeSetInstructionPointer(teleProcess().processHandle(), lwpId(), address.toLong());
+    public SolarisTeleProcess teleProcess() {
+        return (SolarisTeleProcess) super.teleProcess();
     }
 
-    private static native boolean nativeReadRegisters(long processHandle, long lwpId,
-                    byte[] integerRegisters, int integerRegistersSize,
-                    byte[] floatingPointRegisters, int floatingPointRegistersSize,
-                    byte[] stateRegisters, int stateRegistersSize);
+    @Override
+    public boolean updateInstructionPointer(Address address) {
+        return protocol.setInstructionPointer(lwpId(), address.toLong());
+    }
 
     @Override
     protected boolean readRegisters(
                     byte[] integerRegisters,
                     byte[] floatingPointRegisters,
                     byte[] stateRegisters) {
-        return nativeReadRegisters(teleProcess().processHandle(), lwpId(),
+        return protocol.readRegisters(lwpId(),
                         integerRegisters, integerRegisters.length,
                         floatingPointRegisters, floatingPointRegisters.length,
                         stateRegisters, stateRegisters.length);
@@ -68,33 +64,18 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
 
     @Override
     protected boolean singleStep() {
-        return nativeSingleStep(teleProcess().processHandle(), lwpId());
+        return protocol.singleStep(lwpId());
     }
-
-    /**
-     * Initiates a single step on this thread.
-     *
-     * @return false if there was a problem initiating the single step, true otherwise
-     */
-    private static native boolean nativeSingleStep(long processHandle, long lwpId);
-
-    /**
-     * Resumes running this thread.
-     *
-     * @return false if there was a problem resuming this thread, true otherwise
-     */
-    private static native boolean nativeResume(long processHandle, long lwpId);
 
     @Override
     protected boolean threadResume() {
-        return nativeResume(teleProcess().processHandle(), lwpId());
+        return protocol.resume(lwpId());
     }
 
-    private static native boolean nativeSuspend(long processHandle, long lwpId);
 
     @Override
     public boolean threadSuspend() {
-        return nativeSuspend(teleProcess().processHandle(), lwpId());
+        return protocol.suspend(lwpId());
     }
 
 }

@@ -37,7 +37,7 @@ public final class SolarisTeleVM extends TeleVM {
     }
 
     public SolarisTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
+        super(new SolarisNativeTeleChannelProtocol(), bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
     }
 
 }

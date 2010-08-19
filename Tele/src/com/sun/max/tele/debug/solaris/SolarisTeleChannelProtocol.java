@@ -20,48 +20,17 @@
  */
 package com.sun.max.tele.debug.solaris;
 
-import java.io.*;
-
-import com.sun.max.platform.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.Params;
+import com.sun.max.tele.channel.*;
 import com.sun.max.tele.debug.unix.*;
-import com.sun.max.vm.prototype.*;
+
 
 /**
- * @author Bernd Mathiske
- * @author Aritra Bandyopadhyay
- * @author Doug Simon
- * @author Hannes Payer
+ * Solaris-specific extension of the standard {@link TeleChannelProtocol}.
+ * Any Solaris-specific methods would be added here.
+ *
  * @author Mick Jordan
+ *
  */
-public final class SolarisTeleProcess extends UnixTeleProcessAdaptor {
-
-    /**
-     * Creates a handle to a native Solaris process by launching a new process with a given set of command line arguments.
-     *
-     * @param teleVM
-     * @param platform
-     * @param programFile
-     * @param commandLineArguments
-     * @param agent TODO
-     * @throws BootImageException
-     */
-    SolarisTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        super(teleVM, platform, programFile, commandLineArguments, agent);
-    }
-
-    @Override
-    protected TeleNativeThread createTeleNativeThread(Params params) {
-        return new SolarisTeleNativeThread(this, params);
-    }
-
-    @Override
-    public int platformWatchpointCount() {
-        // not sure, try max
-        return Integer.MAX_VALUE;
-    }
-
+public interface SolarisTeleChannelProtocol extends UnixAgentTeleChannelProtocol {
 
 }

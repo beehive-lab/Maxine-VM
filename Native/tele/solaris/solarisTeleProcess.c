@@ -46,19 +46,19 @@ void teleProcess_initialize(void) {
 
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadBytes(JNIEnv *env, jclass c, jlong handle, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readBytes(JNIEnv *env, jobject  this, jlong handle, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
     struct ps_prochandle *ph = (struct ps_prochandle *) handle;
-    return teleProcess_read(ph, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
+    return teleProcess_read(ph, env, this, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWriteBytes(JNIEnv *env, jclass c, jlong handle, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_writeBytes(JNIEnv *env, jobject  this, jlong handle, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
     struct ps_prochandle *ph = (struct ps_prochandle *) handle;
-    return teleProcess_write(ph, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
+    return teleProcess_write(ph, env, this, dst, src, isDirectByteBuffer, srcOffset, length);
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeCreateChild(JNIEnv *env, jclass c, long commandLineArgumentArray, jint vmAgentPort) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_createChild(JNIEnv *env, jobject  this, jlong commandLineArgumentArray, jint vmAgentPort) {
     int error;
     char path[MAX_PATH_LENGTH];
     char **argv = (char**) commandLineArgumentArray;
@@ -77,7 +77,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeCreateChild(JNIEnv 
     struct ps_prochandle *ph = Pcreate(argv[0], argv, &error, path, sizeof(path));
     if (error != 0) {
         log_println("Could not create child process: %s", Pcreate_error(error));
-        return NULL;
+        return -1;
     } else {
         _libproc_debug = log_TELE;
 
@@ -94,7 +94,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeCreateChild(JNIEnv 
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeKill(JNIEnv *env, jclass c, jlong processHandle) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_kill(JNIEnv *env, jobject  this, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     int state = Pstate(ph);
     if (state != PS_LOST && state != PS_DEAD && state != PS_UNDEAD) {
@@ -103,7 +103,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeKill(JNIEnv *env, j
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeSuspend(JNIEnv *env, jclass c, jlong processHandle) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_suspend(JNIEnv *env, jobject  this, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     if (Pdstop(ph) != 0) {
         log_println("Cannot stop the process");
@@ -155,7 +155,7 @@ static int cancelFault(void *data, const lwpstatus_t *ls) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong processHandle) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_resume(JNIEnv *env, jobject  this, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 
     int error = Plwp_iter(ph, cancelFault, ph);
@@ -173,7 +173,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env,
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWait(JNIEnv *env, jclass c, jlong processHandle) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_waitUntilStopped(JNIEnv *env, jobject  this, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     if (Pwait(ph, 0) != 0) {
         int error = errno;
@@ -232,7 +232,7 @@ static int gatherThread(void *data, const lwpstatus_t *ls) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEnv *env, jobject teleProcess, jlong processHandle, jobject threadList, long threadLocalsList, long primordialThreadLocals) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject  this, jlong processHandle, jobject teleProcess, jobject threadList, long threadLocalsList, long primordialThreadLocals) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 
     struct GatherThreadArgument a;
@@ -250,7 +250,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEn
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(JNIEnv *env, jclass c, jlong processHandle, jlong address, jlong size, jboolean after, jboolean read, jboolean write, jboolean exec) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_activateWatchpoint(JNIEnv *env, jobject  this, jlong processHandle, jlong address, jlong size, jboolean after, jboolean read, jboolean write, jboolean exec) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     prwatch_t w;
     w.pr_vaddr = address;
@@ -282,7 +282,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeDeactivateWatchpoint(JNIEnv *env, jclass c, jlong processHandle, jlong address, jlong size) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_deactivateWatchpoint(JNIEnv *env, jobject  this, jlong processHandle, jlong address, jlong size) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     prwatch_t w;
     w.pr_vaddr = address;
@@ -299,13 +299,13 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeDeactivateWatchpoin
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadWatchpointAddress(JNIEnv *env, jclass c, jlong processHandle) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readWatchpointAddress(JNIEnv *env, jobject  this, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     return (long) Pstatus(ph)->pr_lwp.pr_info.si_addr;
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadWatchpointAccessCode(JNIEnv *env, jclass c, jlong processHandle){
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readWatchpointAccessCode(JNIEnv *env, jobject  this, jlong processHandle){
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     return Pstatus(ph)->pr_lwp.pr_info.si_code;
 }

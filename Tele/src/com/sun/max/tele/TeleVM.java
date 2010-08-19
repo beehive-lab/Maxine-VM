@@ -39,6 +39,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.*;
 import com.sun.max.program.option.*;
+import com.sun.max.tele.channel.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.darwin.*;
 import com.sun.max.tele.debug.linux.*;
@@ -490,6 +491,10 @@ public abstract class TeleVM implements MaxVM {
 
     private final TeleProcess teleProcess;
 
+    public final TeleChannelProtocol teleChannelProtocol() {
+        return teleChannelProtocol;
+    }
+
     public final TeleProcess teleProcess() {
         return teleProcess;
     }
@@ -548,6 +553,11 @@ public abstract class TeleVM implements MaxVM {
     private ReentrantLock lock = new ReentrantLock();
 
     /**
+     * The protocol that is being used to communicate with the target VM.
+     */
+    private TeleChannelProtocol teleChannelProtocol;
+
+    /**
      * Creates a tele VM instance by creating or attaching to a Maxine VM process.
      *
      * @param bootImageFile path to the boot image file loaded by the VM
@@ -562,12 +572,13 @@ public abstract class TeleVM implements MaxVM {
      *            overridden by this object to use a different mechanism for discovering the boot image address.
      * @throws BootImageException
      */
-    protected TeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID, TeleVMAgent agent) throws BootImageException {
+    protected TeleVM(TeleChannelProtocol teleChannelProtocol, File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID, TeleVMAgent agent) throws BootImageException {
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
+        this.teleChannelProtocol = teleChannelProtocol;
         if (needTeleLibrary()) {
             nativeInitialize(bootImage.header.threadLocalsAreaSize);
         }

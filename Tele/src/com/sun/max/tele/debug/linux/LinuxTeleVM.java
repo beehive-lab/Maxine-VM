@@ -37,6 +37,6 @@ public final class LinuxTeleVM extends TeleVM {
     }
 
     public LinuxTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
+        super(new LinuxNativeTeleChannelProtocol(), bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
     }
 }

@@ -164,7 +164,7 @@ jint waitForSignal(jlong task, int signalnum) {
 extern char **environ;
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *env, jclass c, jlong commandLineArgumentArray, jint vmAgentPort) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_createChild(JNIEnv *env, jobject this, jlong commandLineArgumentArray, jint vmAgentPort) {
     char **argv = (char**) commandLineArgumentArray;
 
     int childPid = fork();
@@ -221,7 +221,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeKill(JNIEnv *env, jclass c, jint task) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_kill(JNIEnv *env, jobject this, jint task) {
     int pid;
     kern_return_t kr =  pid_for_task((task_t) task, &pid);
     REPORT_MACH_ERROR("pid_for_task", kr);
@@ -256,13 +256,13 @@ static boolean gatherThread(thread_t thread, void* args) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong task, jobject result, jlong threadLocalsList, jlong primordialThreadLocals) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject process, jlong task, jobject result, jlong threadLocalsList, jlong primordialThreadLocals) {
     GatherThreadArgs args = {env, process, task, result, threadLocalsList, primordialThreadLocals};
     forall_threads(task, gatherThread, (void *) &args);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeSuspend(JNIEnv *env, jclass c, jlong task) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_suspend(JNIEnv *env, jobject this, jlong task) {
     int pid;
     kern_return_t kr = pid_for_task((task_t) task, &pid);
     REPORT_MACH_ERROR("pid_for_task", kr);
@@ -275,7 +275,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeSuspend(JNIEnv *env, 
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWait(JNIEnv *env, jclass c, jlong pid, jlong task) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_waitUntilStopped(JNIEnv *env, jobject this, jlong task) {
     return waitForSignal(task, SIGTRAP);
 }
 
@@ -311,7 +311,7 @@ void resume_task(task_t task) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong task) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_resume(JNIEnv *env, jobject this, jlong task) {
     int pid;
     kern_return_t kr = pid_for_task((task_t) task, &pid);
     REPORT_MACH_ERROR("pid_for_task", kr);
@@ -325,11 +325,11 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeResume(JNIEnv *env, j
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeReadBytes(JNIEnv *env, jclass c, jlong task, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readBytes(JNIEnv *env, jobject this, jlong task, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
     return teleProcess_read(task, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWriteBytes(JNIEnv *env, jclass c, jlong task, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_writeBytes(JNIEnv *env, jobject this, jlong task, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
     return teleProcess_write(task, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }

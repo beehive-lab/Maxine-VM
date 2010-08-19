@@ -20,23 +20,16 @@
  */
 package com.sun.max.tele.debug.darwin;
 
-import java.io.*;
+import com.sun.max.tele.debug.unix.*;
 
-import com.sun.max.program.*;
-import com.sun.max.tele.*;
-import com.sun.max.vm.prototype.*;
 
 /**
- * @author Bernd Mathiske
+ * Darwin-specific extension of the standard {@link TeleChannelProtocol}.
+ * Any Darwin-specific methods would be added here.
+ *
+  * @author Mick Jordan
+ *
  */
-public final class DarwinTeleVM extends TeleVM {
+public interface DarwinTeleChannelProtocol extends UnixAgentTeleChannelProtocol {
 
-    @Override
-    protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new DarwinTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments, agent);
-    }
-
-    public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
-        super(new DarwinNativeTeleChannelProtocol(), bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
-    }
 }

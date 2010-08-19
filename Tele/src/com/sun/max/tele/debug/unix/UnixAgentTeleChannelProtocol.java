@@ -18,25 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.darwin;
+package com.sun.max.tele.debug.unix;
 
-import java.io.*;
-
-import com.sun.max.program.*;
+import com.sun.max.tele.channel.*;
 import com.sun.max.tele.*;
-import com.sun.max.vm.prototype.*;
+
 
 /**
- * @author Bernd Mathiske
+ * Creates a target VM using the {@link TeleVMAgent}, only appropriate for local communication
+ * between the Inspector and target VM on Unix systems.
+ *
+ * @author Mick Jordan
+ *
  */
-public final class DarwinTeleVM extends TeleVM {
-
-    @Override
-    protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new DarwinTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments, agent);
-    }
-
-    public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
-        super(new DarwinNativeTeleChannelProtocol(), bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
-    }
+public interface UnixAgentTeleChannelProtocol extends TeleChannelProtocol {
+    long create(String pathName, String[] commandLineArguments, TeleVMAgent agent);
 }
