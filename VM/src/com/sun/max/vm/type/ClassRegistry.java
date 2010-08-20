@@ -117,6 +117,7 @@ public final class ClassRegistry {
     public static final MethodActor NativeLibrary_init = findMethod(java_lang_ClassLoader$NativeLibrary, "<init>", Class.class, String.class);
     public static final MethodActor Finalizer_register_Object = findMethod(java_lang_ref_Finalizer, "register", Object.class);
     public static final MethodActor ReferenceHandler_init = findMethod(java_lang_ref_Reference$ReferenceHandler, "<init>", ThreadGroup.class, String.class);
+    public static final MethodActor FinalizerThread_init = findMethod(java_lang_ref_Finalizer$FinalizerThread, "<init>", ThreadGroup.class);
     public static final MethodActor Method_invoke = findMethod(Method.class, "invoke", Object.class, Object[].class);
     public static final MethodActor MaxineVM_run = findMethod("run", MaxineVM.class);
     public static final MethodActor VmThread_add = findMethod("add", VmThread.class);

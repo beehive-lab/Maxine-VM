@@ -460,8 +460,17 @@ public final class Heap {
         }
         final boolean freedEnough;
         if (VmThread.current().isVmOperationThread()) {
+            // Even if another thread holds the heap lock for the purpose of executing a GC,
+            // the GC is not actually executing as this is the VM operation thread which is
+            // executing another VM operation that triggers a GC. So, the GC is now executed
+            // as a nested VM operation without acquiring the heap lock.
             freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
         } else {
+            // Calls to collect garbage need to synchronize on the heap lock. This ensures that
+            // GC operations are submitted serially to the VM operation thread. It also means
+            // that a collection only actually occurs if needed (i.e. concurrent call to this
+            // method by another thread did not trigger a GC that freed up enough memory for
+            // this request).
             synchronized (HEAP_LOCK) {
                 freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
             }

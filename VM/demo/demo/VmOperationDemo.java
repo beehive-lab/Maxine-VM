@@ -23,6 +23,7 @@ package demo;
 import java.util.*;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -51,11 +52,6 @@ public class VmOperationDemo extends VmOperation {
     }
 
     @Override
-    protected void doIt() {
-        super.doIt();
-    }
-
-    @Override
     protected boolean operateOnThread(VmThread thread) {
         return threads.contains(thread.javaThread());
     }
@@ -68,9 +64,9 @@ public class VmOperationDemo extends VmOperation {
         Thread thread = vmThread.javaThread();
         StackTraceElement[] trace = JDK_java_lang_Throwable.asStackTrace(frameList, null, Integer.MAX_VALUE);
         System.out.println(thread + " [stack depth: " + trace.length + "]");
-//        for (StackTraceElement e : trace) {
-//            System.out.println("\tat " + e);
-//        }
+        for (StackTraceElement e : trace) {
+            System.out.println("\tat " + e);
+        }
     }
 
     @Override
@@ -78,10 +74,15 @@ public class VmOperationDemo extends VmOperation {
         return true;
     }
 
-    static boolean done;
-    static int started;
+    static volatile boolean done;
+    static volatile int started;
 
     public static void main(String[] args) {
+
+        // HACK: all the virtual methods in a VM operation should be compiled before the operation is submitted.
+        // This is usually ensured by VM operation classes being in the image.
+        ClassActor.fromJava(VmOperationDemo.class).dynamicHub().compileVTable();
+
         int seconds = args.length == 0 ? 5 : Integer.parseInt(args[0]);
         Thread[] spinners = new Thread[10];
         for (int i = 0; i < spinners.length; i++) {
@@ -112,7 +113,7 @@ public class VmOperationDemo extends VmOperation {
                 time = (int) (System.currentTimeMillis() - start) / 1000;
                 try {
                     System.out.println("---- Dumping stacks of spinning threads ----");
-                    VmOperationThread.submit(stackTraceDumper);
+                    stackTraceDumper.submit();
                 } catch (VmOperationThread.HoldsThreadLockError e) {
                     System.out.println("VM operation triggered while dumping stack traces");
                     break;

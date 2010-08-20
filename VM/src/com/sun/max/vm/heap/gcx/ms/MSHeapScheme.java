@@ -158,11 +158,10 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {
-        FatalError.check(Thread.holdsLock(Heap.HEAP_LOCK), "should own HEAP_LOCK");
         collect.requestedSize = requestedFreeSpace;
         boolean forcedGC = requestedFreeSpace.toInt() == 0;
         if (forcedGC) {
-            VmOperationThread.submit(collect);
+            collect.submit();
             return true;
         }
         // We may reach here after a race. Don't run GC if request can be satisfied.
@@ -243,6 +242,11 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     final class Collect extends GCOperation {
         private long collectionCount = 0;
         private TLABFiller tlabFiller = new TLABFiller();
+
+
+        public Collect() {
+            super("Collect");
+        }
 
         private Size requestedSize;
         private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));

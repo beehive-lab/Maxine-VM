@@ -94,7 +94,7 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
         @Override
         public ReferenceValue readInjectedValue(Reference reference) {
             assert reference.toJava() instanceof Thread;
-            return ReferenceValue.from(VmThread.MAIN_VM_THREAD);
+            return ReferenceValue.from(VmThread.mainThread);
         }
     };
 

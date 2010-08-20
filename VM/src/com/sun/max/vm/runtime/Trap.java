@@ -125,8 +125,9 @@ public abstract class Trap {
      */
     public static final boolean STACK_BANGING = true;
 
-    /** The number of bytes reserved in the stack as a guard area.
-     *  Note that SPARC code is more efficient if this is set below 6K.  Specifically, set to (6K - 1 - typical_frame_size).
+    /**
+     * The number of bytes reserved in the stack as a guard area.
+     * Note that SPARC code is more efficient if this is set below 6K.  Specifically, set to (6K - 1 - typical_frame_size).
      */
     public static final int stackGuardSize = 12 * Ints.K;
 
@@ -227,8 +228,8 @@ public abstract class Trap {
             }
 
             // The VM operation thread may be either in Java code (executing a VM operation) or in
-            // native code (waiting on the VM operation queue). In both cases, it's imperative that
-            // the MUTATOR_STATE variable is preserved across this trap handling.
+            // native code (waiting on the VM operation queue lock). In both cases, it's imperative that
+            // the MUTATOR_STATE variable is preserved across this trap.
             Word savedState = MUTATOR_STATE.getVariableWord();
             MUTATOR_STATE.setVariableWord(THREAD_IN_JAVA);
             SignalDispatcher.postSignal(signal);

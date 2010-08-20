@@ -118,8 +118,8 @@ public abstract class GCOperation extends VmOperation {
 
     long stackReferenceMapPreparationTime;
 
-    public GCOperation() {
-        super("GC", null, Mode.Safepoint);
+    public GCOperation(String name) {
+        super(name == null ? "GC" : name, null, Mode.Safepoint);
     }
 
     /**
@@ -127,14 +127,19 @@ public abstract class GCOperation extends VmOperation {
      * @return
      */
     @Override
-    protected boolean doItPrologue() {
-        // The lock for the special reference manager must be held before starting GC
-        Monitor.enter(REFERENCE_LOCK);
+    protected boolean doItPrologue(boolean nested) {
+        if (!nested) {
+            // The lock for the special reference manager must be held before starting GC
+            Monitor.enter(REFERENCE_LOCK);
+        } else {
+            // The VM operation thread must not attempt to lock REFERENCE_LOCK as doing
+            // so may deadlock the system.
+        }
         return true;
     }
 
     @Override
-    protected void doItEpilogue() {
+    protected void doItEpilogue(boolean nested) {
         if (Heap.traceGCTime()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Stack reference map preparation time: ");
@@ -144,10 +149,15 @@ public abstract class GCOperation extends VmOperation {
             stackReferenceMapPreparationTime = 0;
         }
 
-        // Notify the reference handler thread so it can process any pending references.
-        REFERENCE_LOCK.notifyAll();
+        if (!nested) {
+            // Notify the reference handler thread so it can process any pending references.
+            REFERENCE_LOCK.notifyAll();
 
-        Monitor.exit(REFERENCE_LOCK);
+            Monitor.exit(REFERENCE_LOCK);
+        } else {
+            // The VM operation thread cannot notify the REFERENCE_LOCK as it doesn't hold.
+            // This notification will occur during the next non-nested GC operation.
+        }
     }
 
     @Override

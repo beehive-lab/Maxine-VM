@@ -69,6 +69,6 @@ public class PrintThreads extends VmOperation implements SignalHandler {
     }
 
     public void handle(Signal sig) {
-        VmOperationThread.submit(this);
+        submit();
     }
 }

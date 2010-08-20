@@ -25,7 +25,11 @@ import sun.misc.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- *
+ * Demonstrates use of the {@link PrintThreads} VM operation
+ * combined with signal handling. It slightly modifies the
+ * default behavior of the VM with respect to the SIGHUP signal.
+ * Each successive SIGHUP sent to the Maxine VM running this
+ * program toggles the format of the thread dump performed.
  *
  * @author Doug Simon
  */
@@ -64,7 +68,7 @@ public class PrintThreadsDemo {
             long counter = 0;
             while (true) {
                 counter++;
-                //new Object().toString();
+                new Object().toString();
             }
         }
     }
