@@ -272,31 +272,28 @@ public final class LinuxTask {
      */
     private static native int nativeReadBytes(int tgid, int tid, long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
 
-    public synchronized int readBytes(final Address src, final ByteBuffer dst, final int offset, final int length) {
+    public synchronized int readBytes(final long src, final Object dst, final boolean isDirectByteBuffer, final int offset, final int length) {
         if (!isLeader()) {
-            return leader().readBytes(src, dst, offset, length);
+            return leader().readBytes(src, dst, isDirectByteBuffer, offset, length);
         }
-        assert !src.isZero();
+        assert src != 0;
         return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                final long addr = src.toLong();
+                final long addr = src;
                 if (addr < 0) {
                     // RandomAccessFile.see() can't handle unsigned long offsets: have to resort to a JNI call
-                    if (dst.isDirect()) {
-                        return nativeReadBytes(tgid, tid, addr, dst, true, offset, length);
-                    }
-                    assert dst.array() != null;
-                    return nativeReadBytes(tgid, tid, addr, dst.array(), false, offset, length);
+                    return nativeReadBytes(tgid, tid, addr, dst, isDirectByteBuffer, offset, length);
                 } else {
                     if (memory == null) {
                         memory = new RandomAccessFile("/proc/" + tgid() + "/mem", "r");
                     }
                     try {
-                        final ByteBuffer dstView = (ByteBuffer) dst.duplicate().position(offset).limit(offset + length);
+                        final ByteBuffer dstDup = dst instanceof ByteBuffer ? ((ByteBuffer) dst).duplicate() : ByteBuffer.wrap((byte[]) dst);
+                        final ByteBuffer dstView = (ByteBuffer) dstDup.position(offset).limit(offset + length);
                         dstView.position(offset);
                         return memory.getChannel().read(dstView, addr);
                     } catch (IOException ioException) {
-                        throw new DataIOError(src, ioException.toString());
+                        throw new DataIOError(Address.fromLong(src), ioException.toString());
                     }
                 }
             }
@@ -316,25 +313,20 @@ public final class LinuxTask {
      */
     private static native int nativeWriteBytes(int tgid, int tid, long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
 
-    public synchronized int writeBytes(final Address dst, final ByteBuffer src, final int offset, final int length) {
+    public synchronized int writeBytes(final long dst, final Object src, final boolean isDirectByteBuffer, final int offset, final int length) {
         return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                assert src.limit() - offset >= length;
-                if (src.isDirect()) {
-                    return nativeWriteBytes(tgid, tid, dst.toLong(), src, true, offset, length);
-                }
-                assert src.array() != null;
-                return nativeWriteBytes(tgid, tid, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
+                return nativeWriteBytes(tgid, tid, dst, src, isDirectByteBuffer, offset, length);
             }
         });
     }
 
     private static native boolean nativeSetInstructionPointer(int tid, long instructionPointer);
 
-    public synchronized boolean setInstructionPointer(final Address instructionPointer) {
+    public synchronized boolean setInstructionPointer(final long instructionPointer) {
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
-                return nativeSetInstructionPointer(tid, instructionPointer.toLong());
+                return nativeSetInstructionPointer(tid, instructionPointer);
             }
         });
     }

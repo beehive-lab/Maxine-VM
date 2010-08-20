@@ -40,7 +40,7 @@ struct ps_lwphandle {
 };
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeReadRegisters(JNIEnv *env, jclass c, jlong processHandle, jlong lwpId,
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readRegisters(JNIEnv *env, jobject  this, jlong processHandle, jlong lwpId,
 		jbyteArray integerRegisters, jint integerRegistersLength,
 		jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
 		jbyteArray stateRegisters, jint stateRegistersLength) {
@@ -114,12 +114,12 @@ static jboolean setRegister(jlong processHandle, jlong lwpId, int registerIndex,
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeSetInstructionPointer(JNIEnv *env, jclass c, jlong processHandle, jlong lwpId, jlong address) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_setInstructionPointer(JNIEnv *env, jobject  this, jlong processHandle, jlong lwpId, jlong address) {
 	return setRegister(processHandle, lwpId, R_PC, address);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeSingleStep(JNIEnv *env, jclass c, jlong processHandle, jlong lwpId) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_singleStep(JNIEnv *env, jobject  this, jlong processHandle, jlong lwpId) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     INIT_LWP_HANDLE(lh, processHandle, lwpId, false);
 

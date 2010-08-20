@@ -73,7 +73,7 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *env, jobject linuxTeleProcess, jlong pid, jobject threads, long threadLocalsList, long primordialThreadLocals) {
+Java_com_sun_max_tele_debug_linux_LinuxNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jlong pid, jobject linuxTeleProcess, jobject threads, long threadLocalsList, long primordialThreadLocals) {
 
     pid_t *tasks;
     const int nTasks = scan_process_tasks(pid, &tasks);
