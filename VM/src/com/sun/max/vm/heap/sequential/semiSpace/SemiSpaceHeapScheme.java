@@ -41,7 +41,6 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
-import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -191,9 +190,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         super.initialize(phase);
 
         if (MaxineVM.isHosted()) {
-            // The monitor for the collector must be allocated in the image
-            JavaMonitorManager.bindStickyMonitor(this);
-
             collectHeap = new CollectHeap();
         }
 
