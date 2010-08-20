@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.debug.darwin;
 
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -33,7 +34,7 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
 
     public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, Params params) {
         super(teleProcess, params);
-        protocol = (DarwinTeleChannelProtocol) teleProcess().vm().teleChannelProtocol();
+        protocol = (DarwinTeleChannelProtocol) TeleVM.teleChannelProtocol();
     }
 
     @Override

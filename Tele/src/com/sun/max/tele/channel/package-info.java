@@ -20,12 +20,11 @@
  */
 
 /**
- * The Inspector communicates with the target VM through a {@link com.sun.max.tele.TeleChannel} using the
- * method-based protocol defined by {@link com.sun.max.tele.TeleChannelProtocol}. To simplify
- * an architecture where the Inspector runs on one (client) machine and the VM runs on a separate
- * (target) machine a minimal variant of the protocol, {@link com.sun.max.tele.TeleChannelDataIOProtocol},
- * that is capable of being implemented using {@link java.io.DataInputStream} and {@link java.io.DataOutputStream}
- * is also defined.
+ * The Inspector communicates with the target VM using the method-based protocol defined by
+ * {@link com.sun.max.tele.TeleChannelProtocol}. To simplify an architecture where the Inspector runs on one (client)
+ * machine and the VM runs on a separate (target) machine a minimal variant of the protocol,
+ * {@link com.sun.max.tele.TeleChannelDataIOProtocol}, that is capable of being implemented using
+ * {@link java.io.DataInputStream} and {@link java.io.DataOutputStream} is also defined.
  *
  * @author Mick Jordan
  */

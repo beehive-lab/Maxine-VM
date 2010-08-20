@@ -102,7 +102,7 @@ static struct guestvm_memory_handler xg_memory_handler = {
 
 /* Only used on the agent side of the split communication layer; a replacement for TeleVM.nativeInitialize. */
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_guestvm_dbchannel_agent_AgentXGProtocol_teleThreadLocalsInitialize(JNIEnv *env, jclass c, jint threadLocalsSize) {
+Java_com_sun_max_tele_channel_agent_guestvm_xg_AgentGuestVMXGTeleChannelProtocol_teleThreadLocalsInitialize(JNIEnv *env, jclass c, jint threadLocalsSize) {
     threadLocals_initialize(threadLocalsSize);
     tele_xg_thread_list = NULL;
     xg_init();

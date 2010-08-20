@@ -256,8 +256,8 @@ static boolean gatherThread(thread_t thread, void* args) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject process, jlong task, jobject result, jlong threadLocalsList, jlong primordialThreadLocals) {
-    GatherThreadArgs args = {env, process, task, result, threadLocalsList, primordialThreadLocals};
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject this, jlong task, jobject teleProcess, jobject result, jlong threadLocalsList, jlong primordialThreadLocals) {
+    GatherThreadArgs args = {env, teleProcess, task, result, threadLocalsList, primordialThreadLocals};
     forall_threads(task, gatherThread, (void *) &args);
 }
 
@@ -326,10 +326,10 @@ Java_com_sun_max_tele_channel_natives_TeleChannelNatives_resume(JNIEnv *env, job
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readBytes(JNIEnv *env, jobject this, jlong task, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
-    return teleProcess_read(task, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
+    return teleProcess_read(task, env, this, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_channel_natives_TeleChannelNatives_writeBytes(JNIEnv *env, jobject this, jlong task, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
-    return teleProcess_write(task, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
+    return teleProcess_write(task, env, this, dst, src, isDirectByteBuffer, srcOffset, length);
 }

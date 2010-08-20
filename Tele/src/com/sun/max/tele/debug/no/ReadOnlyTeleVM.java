@@ -44,7 +44,7 @@ public final class ReadOnlyTeleVM extends TeleVM {
      * @param sourcepath the source code path to search for class or interface definitions
      */
     public ReadOnlyTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath) throws BootImageException {
-        super(new ReadOnlyTeleChannelProtocol(), bootImageFile, bootImage, sourcepath, TeleProcess.EMPTY_COMMAND_LINE_ARGUMENTS, -1, null);
+        super(bootImageFile, bootImage, sourcepath, TeleProcess.EMPTY_COMMAND_LINE_ARGUMENTS, null);
     }
 
     @Override
