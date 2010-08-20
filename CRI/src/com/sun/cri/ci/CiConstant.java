@@ -284,7 +284,7 @@ public final class CiConstant extends CiValue {
 
     /**
      * Checks whether this constant is identical to another constant or has the same value as it.
-     * @param o the constant to compare for equality against this constant
+     * @param other the constant to compare for equality against this constant
      * @return {@code true} if this constant is equivalent to {@code other}
      */
     public boolean equivalent(CiConstant other) {
@@ -411,7 +411,7 @@ public final class CiConstant extends CiValue {
 
     /**
      * Creates a boxed word constant.
-     * @param i the number representing the word's value, either an {@link Integer} or a {@link Long}
+     * @param w the value to box
      * @return a boxed copy of {@code value}
      */
     public static CiConstant forWord(long w) {

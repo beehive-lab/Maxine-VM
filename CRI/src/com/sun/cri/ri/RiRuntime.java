@@ -129,7 +129,7 @@ public interface RiRuntime {
      * @param name the name of the stub, used for debugging purposes only
      * @return the identification object
      */
-    Object registerTargetMethod(CiTargetMethod targetMethod, String name);
+    Object registerGlobalStub(CiTargetMethod targetMethod, String name);
 
     /**
      * Returns the runtime interface representation of the given Java class object.
@@ -176,7 +176,7 @@ public interface RiRuntime {
      * The {@link CiUtil#invoke(Method, CiMethodInvokeArguments)} utility can be used to implement this method.
      * 
      * @param method the compiler interface method for which folding is being requested
-     * @param the arguments to the call
+     * @param args the arguments to the call
      * @return the result of the folding or {@code null} if no folding occurred
      */
     CiConstant invoke(RiMethod method, CiMethodInvokeArguments args);
@@ -185,7 +185,7 @@ public interface RiRuntime {
      * Attempts to compile-time evaluate or "fold" a bytecode operation that involves {@linkplain CiKind#Word word} types.
      *
      * @param opcode the bytecode operation to perform
-     * @param the inputs to the operation
+     * @param args the inputs to the operation
      * @return the result of folding the operation if it is foldable, {@code null} otherwise
      */
     CiConstant foldWordOperation(int opcode, CiMethodInvokeArguments args);

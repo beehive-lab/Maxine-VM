@@ -40,7 +40,7 @@ public final class UnsafeCast extends Instruction {
     /**
      * Creates a new UnsafeCast instruction.
      *
-     * @param toKind the the being cast to
+     * @param toType the the being cast to
      * @param value the value being cast
      */
     public UnsafeCast(RiType toType, Value value) {

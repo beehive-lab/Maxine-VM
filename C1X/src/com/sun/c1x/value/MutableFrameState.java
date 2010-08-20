@@ -27,6 +27,18 @@ import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 
+/**
+ * The {@code MutableFrameState} class extends abstract {@link FrameState} with methods modifying the frame state.
+ * Only {@code MutableFrameState} can be instantiated and thus the object references in which it is stored decide
+ * whether it is used as immutable or not. Thus and because they can be shared at different places in the compiler,
+ * {@link FrameState}s must not be cast to {@code MutableFrameState}s. Instead, a new copy must be created using
+ * {@link FrameState#copy()}.
+ * Contrariwise and as an optimization, an instance referenced as {@code MutableFrameState} can be assigned to
+ * a variable, field, or method parameter of type {@link FrameState} without creating an immutable copy before
+ * (using {@link #immutableCopy()}) if the state is not mutated after the assignment.
+ *
+ * @author Michael Duller
+ */
 public class MutableFrameState extends FrameState {
 
     public MutableFrameState(IRScope irScope, int maxLocals, int maxStack) {
