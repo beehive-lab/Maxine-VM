@@ -26,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.sync.*;
+import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.VmLock;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.BootImage.Header;
@@ -88,7 +89,7 @@ public final class VmThreadMap {
      * The global lock used to synchronize access to the {@link #ACTIVE global thread list}.
      * This lock is also help by the {@link VmOperationThread} when executing a {@link VmOperation}.
      */
-    public static final Object THREAD_LOCK = new Object();
+    public static final Object THREAD_LOCK = new VmLock("THREAD_LOCK");
     static {
         JavaMonitorManager.bindStickyMonitor(THREAD_LOCK, new VMThreadMapJavaMonitor());
     }

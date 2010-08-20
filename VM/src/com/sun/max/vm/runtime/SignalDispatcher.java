@@ -61,7 +61,7 @@ public final class SignalDispatcher extends Thread {
      * The lock used by the VM operation thread to notify the signal dispatcher thread when it
      * has posted a new {@linkplain #PendingSignals pending signal}.
      */
-    private static final Object LOCK = JavaMonitorManager.newStickyLock();
+    private static final Object LOCK = JavaMonitorManager.newVmLock("PENDING_SIGNALS_LOCK");
 
     /**
      * Gets the number of signals supported by the platform that may be delivered to the VM.

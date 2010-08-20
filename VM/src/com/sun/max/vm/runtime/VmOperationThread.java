@@ -78,9 +78,9 @@ public class VmOperationThread extends Thread {
         setDaemon(true);
     }
 
-    private static final Object REQUEST_LOCK = JavaMonitorManager.newStickyLock();
-    private static final Object QUEUE_LOCK = JavaMonitorManager.newStickyLock();
-    private static final Object TERMINATE_LOCK = JavaMonitorManager.newStickyLock();
+    private static final Object REQUEST_LOCK = JavaMonitorManager.newVmLock("VM_OPERATION_REQUEST_LOCK");
+    private static final Object QUEUE_LOCK = JavaMonitorManager.newVmLock("VM_OPERATION_QUEUE_LOCK");
+    private static final Object TERMINATE_LOCK = JavaMonitorManager.newVmLock("VM_OPERATION_THREAD_TERMINATION_LOCK");
 
     @Override
     public final void start() {
@@ -150,6 +150,8 @@ public class VmOperationThread extends Thread {
                     Heap.enableAllocationForCurrentThread();
                 }
 
+                currentOperation.callingThread().decrementPendingOperations();
+
                 synchronized (REQUEST_LOCK) {
                     if (TraceVmOperations) {
                         boolean lockDisabledSafepoints = Log.lock();
@@ -161,7 +163,6 @@ public class VmOperationThread extends Thread {
                     REQUEST_LOCK.notifyAll();
                 }
 
-                currentOperation.callingThread().decrementPendingOperations();
                 currentOperation = null;
             }
         }

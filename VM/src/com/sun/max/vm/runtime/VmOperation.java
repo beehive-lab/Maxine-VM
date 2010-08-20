@@ -583,7 +583,7 @@ public class VmOperation {
     private final CountThreadProcedure countThreadProcedure = new CountThreadProcedure();
 
     /**
-     * Gets the number of threads in the domain of this operation.
+     * Gets the number of threads targeted by this operation.
      */
     public int countThreads() {
         return countThreadProcedure.count();

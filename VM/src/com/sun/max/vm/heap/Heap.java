@@ -80,7 +80,7 @@ public final class Heap {
     /**
      * Lock for synchronizing access to the heap.
      */
-    public static final Object HEAP_LOCK = JavaMonitorManager.newStickyLock();
+    public static final Object HEAP_LOCK = JavaMonitorManager.newVmLock("HEAP_LOCK");
 
     private static Size maxSize;
     private static Size initialSize;
