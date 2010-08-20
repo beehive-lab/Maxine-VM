@@ -78,7 +78,7 @@ boolean thread_read_registers(thread_t thread,
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JNIEnv *env, jclass c, jlong thread,
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readRegisters(JNIEnv *env, jobject this, jlong task, jlong thread,
                 jbyteArray integerRegisters, jint integerRegistersLength,
                 jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
                 jbyteArray stateRegisters, jint stateRegistersLength) {
@@ -112,7 +112,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JN
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSetInstructionPointer(JNIEnv *env, jclass c, jlong task, jlong thread, jlong instructionPointer) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_setInstructionPointer(JNIEnv *env, jobject this, jlong task, jlong thread, jlong instructionPointer) {
     OsStateRegistersStruct osStateRegisters;
     mach_msg_type_number_t count = STATE_REGISTER_COUNT;
     if (thread_get_state((thread_act_t) thread, STATE_REGISTER_FLAVOR, (thread_state_t) &osStateRegisters, &count) != KERN_SUCCESS) {
@@ -237,7 +237,7 @@ static boolean task_resume_thread(jlong task, thread_t thread) {
  * After the TRAP signal is received the single stepping flag is cleared for all threads using the disableSingleStepping() method.
  */
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSingleStep(JNIEnv *env, jclass c, jlong task, jlong thread) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_singleStep(JNIEnv *env, jobject this, jlong task, jlong thread) {
 #if log_TELE
     log_println("Before single-stepping thread %d", thread);
     log_task_info((task_t) task);

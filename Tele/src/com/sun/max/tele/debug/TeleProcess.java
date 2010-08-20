@@ -81,7 +81,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
      * @return a native buffer than can be cast to the C type {@code char**} and used as the first argument to a C
      *         {@code main} function
      */
-    protected static Pointer createCommandLineArgumentsBuffer(File programFile, String[] commandLineArguments) {
+    public static Pointer createCommandLineArgumentsBuffer(File programFile, String[] commandLineArguments) {
         final String[] strings = new String[commandLineArguments.length + 1];
         strings[0] = programFile.getAbsolutePath();
         System.arraycopy(commandLineArguments, 0, strings, 1, commandLineArguments.length);

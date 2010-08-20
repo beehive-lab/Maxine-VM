@@ -32,12 +32,12 @@ import com.sun.max.vm.prototype.*;
 public final class SolarisTeleVM extends TeleVM {
 
     @Override
-    protected SolarisTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new SolarisTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments, agent);
+    protected SolarisTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
+        return new SolarisTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments);
     }
 
-    public SolarisTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
+    public SolarisTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
+        super(bootImageFile, bootImage, sourcepath, commandLineArguments);
     }
 
 }

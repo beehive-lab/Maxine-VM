@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.debug.darwin;
 
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -29,35 +30,33 @@ import com.sun.max.vm.runtime.*;
  */
 public class DarwinTeleNativeThread extends TeleNativeThread {
 
+    private DarwinTeleChannelProtocol protocol;
+
+    public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, Params params) {
+        super(teleProcess, params);
+        protocol = (DarwinTeleChannelProtocol) TeleVM.teleChannelProtocol();
+    }
+
     @Override
     public DarwinTeleProcess teleProcess() {
         return (DarwinTeleProcess) super.teleProcess();
     }
 
-    public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, Params params) {
-        super(teleProcess, params);
-    }
-
     @Override
     public boolean updateInstructionPointer(Address address) {
-        return nativeSetInstructionPointer(teleProcess().task(), machThread(), address.toLong());
+        return protocol.setInstructionPointer(machThread(), address.toLong());
     }
 
     private long machThread() {
         return localHandle();
     }
 
-    private static native boolean nativeReadRegisters(long machThread,
-                    byte[] integerRegisters, int integerRegistersSize,
-                    byte[] floatingPointRegisters, int floatingPointRegistersSize,
-                    byte[] stateRegisters, int stateRegistersSize);
-
     @Override
     protected boolean readRegisters(
                     byte[] integerRegisters,
                     byte[] floatingPointRegisters,
                     byte[] stateRegisters) {
-        return nativeReadRegisters(machThread(),
+        return protocol.readRegisters(machThread(),
                         integerRegisters, integerRegisters.length,
                         floatingPointRegisters, floatingPointRegisters.length,
                         stateRegisters, stateRegisters.length);
@@ -65,7 +64,7 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
 
     @Override
     protected boolean singleStep() {
-        return nativeSingleStep(teleProcess().task(), machThread());
+        return protocol.singleStep(machThread());
     }
 
     @Override
@@ -78,6 +77,4 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
         throw FatalError.unimplemented();
     }
 
-    private static native boolean nativeSingleStep(long task, long threadID);
-    private static native boolean nativeSetInstructionPointer(long task, long threadID, long address);
 }
