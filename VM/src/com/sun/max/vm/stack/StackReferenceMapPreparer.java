@@ -69,11 +69,12 @@ import com.sun.max.vm.thread.*;
  */
 public final class StackReferenceMapPreparer {
 
-    public static final VMBooleanXXOption verifyRefMaps = VMOptions.register(new VMBooleanXXOption("-XX:-",
-            "VerifyRefMaps",
+    public static boolean VerifyRefMaps;
+    static {
+        VMOptions.addFieldOption("-XX:", "VerifyRefMaps", StackReferenceMapPreparer.class,
             "Verify reference maps by performing a stack walk and checking plausibility of reference roots in " +
-            "the stack--as often as possible."),
-            MaxineVM.Phase.PRISTINE);
+            "the stack--as often as possible.", MaxineVM.Phase.PRISTINE);
+    }
 
     private final Timer timer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
     private Pointer triggeredVmThreadLocals;
@@ -213,14 +214,20 @@ public final class StackReferenceMapPreparer {
     private static void checkValidReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot) {
         Pointer lowestStackSlot = VmThreadLocal.LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         Pointer highestStackSlot = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+        String error = null;
         if (highestSlot.lessThan(lowestSlot)) {
-            FatalError.unexpected("invalid reference map range: highest slot is less than lowest slot");
+            error = "invalid reference map range: highest slot is less than lowest slot";
+        } else if (highestSlot.greaterThan(highestStackSlot)) {
+            error = "invalid reference map range: highest slot is greater than highest stack slot";
+        } else if (lowestSlot.lessThan(lowestStackSlot)) {
+            error = "invalid reference map range: lowest slot is less than lowest stack slot";
         }
-        if (highestSlot.greaterThan(highestStackSlot)) {
-            FatalError.unexpected("invalid reference map range: highest slot is greater than highest stack slot");
-        }
-        if (lowestSlot.lessThan(lowestStackSlot)) {
-            FatalError.unexpected("invalid reference map range: lowest slot is less than lowest stack slot");
+        if (error != null) {
+            Log.print("Error building reference map for stack of thread ");
+            Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), false);
+            Log.print(": ");
+            Log.println(error);
+            FatalError.unexpected(error);
         }
     }
 
@@ -364,7 +371,7 @@ public final class StackReferenceMapPreparer {
     /**
      * Completes the stack reference map for a thread that was suspended by a safepoint while executing Java code. The
      * reference map covering the stack between the frame in which the safepoint trap occurred and the JNI stub that
-     * enters into the native code for blocking on the global {@linkplain VmThreadMap#ACTIVE thread lock} is not yet
+     * enters into the native code for blocking on the global {@linkplain VmThreadMap#THREAD_LOCK thread lock} is not yet
      * prepared. This method completes this part of the threads stack reference map.
      *
      * @param vmThreadLocals the VM thread locals for the thread whose stack reference map is to be completed
@@ -686,7 +693,7 @@ public final class StackReferenceMapPreparer {
      * heuristic.
      */
     public static void verifyReferenceMapsForThisThread() {
-        if (verifyRefMaps.getValue()) {
+        if (VerifyRefMaps) {
             VmThread current = VmThread.current();
             current.stackReferenceMapVerifier().verifyReferenceMaps(current);
         }

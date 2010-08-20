@@ -30,22 +30,22 @@ import test.bench.util.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.FreezeThreads.*;
+import com.sun.max.vm.runtime.VmOperation.*;
 
 /**
- * Benchmarks the time taken to perform a {@linkplain FreezeThreads#run() thread freeze}.
+ * Benchmarks the time taken to perform a {@linkplain VmOperation VM operation}.
  *
  * @author Mick Jordan
  * @author Doug Simon
  */
-public class FreezeThreads_01 extends RunBench {
+public class VmOperation_01 extends RunBench {
 
-    protected FreezeThreads_01(int n) {
+    protected VmOperation_01(int n) {
         super(new Bench(n));
     }
 
     public static boolean test(int i) {
-        return new FreezeThreads_01(i).runBench();
+        return new VmOperation_01(i).runBench();
     }
 
     static class Bench extends MicroBenchmark {
@@ -53,7 +53,7 @@ public class FreezeThreads_01 extends RunBench {
         private Thread[] spinners;
         private volatile boolean done;
         private volatile int started;
-        private FreezeThreads freezeThreads;
+        private VmOperation operation;
 
         Bench(int n) {
             numThreads = n;
@@ -68,12 +68,16 @@ public class FreezeThreads_01 extends RunBench {
                 spinners[s] = new Spinner();
                 spinners[s].start();
             }
-            final ThreadListPredicate predicate = new ThreadListPredicate(Arrays.asList(spinners));
-            freezeThreads = new FreezeThreads("Test", predicate) {
+            final HashSet<Thread> threads = new HashSet<Thread>(Arrays.asList(spinners));
+            operation = new VmOperation("Test", null, Mode.Safepoint) {
                 @Override
                 protected void doThread(Pointer threadLocals, Pointer ip, Pointer sp, Pointer fp) {
                     // all threads are stopped at this point, so we can tell then all to quit when they resume
                     done = true;
+                }
+                @Override
+                protected boolean operateOnThread(com.sun.max.vm.thread.VmThread thread) {
+                    return threads.contains(thread.javaThread());
                 }
             };
 
@@ -99,7 +103,7 @@ public class FreezeThreads_01 extends RunBench {
 
         @Override
         public long run() {
-            freezeThreads.run();
+            operation.submit();
             return defaultResult;
         }
 

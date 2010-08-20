@@ -314,7 +314,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static BooleanArrayLayout booleanArrayLayout() {
+    public static BooleanArrayLayout booleanArrayLayout() {
         return layoutScheme().booleanArrayLayout;
     }
 
@@ -332,7 +332,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static ShortArrayLayout shortArrayLayout() {
+    public static ShortArrayLayout shortArrayLayout() {
         return layoutScheme().shortArrayLayout;
     }
 
@@ -350,7 +350,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static CharArrayLayout charArrayLayout() {
+    public static CharArrayLayout charArrayLayout() {
         return layoutScheme().charArrayLayout;
     }
 
@@ -368,7 +368,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static IntArrayLayout intArrayLayout() {
+    public static IntArrayLayout intArrayLayout() {
         return layoutScheme().intArrayLayout;
     }
 
@@ -386,7 +386,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static FloatArrayLayout floatArrayLayout() {
+    public static FloatArrayLayout floatArrayLayout() {
         return layoutScheme().floatArrayLayout;
     }
 
@@ -404,7 +404,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static LongArrayLayout longArrayLayout() {
+    public static LongArrayLayout longArrayLayout() {
         return layoutScheme().longArrayLayout;
     }
 
@@ -422,7 +422,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static DoubleArrayLayout doubleArrayLayout() {
+    public static DoubleArrayLayout doubleArrayLayout() {
         return layoutScheme().doubleArrayLayout;
     }
 

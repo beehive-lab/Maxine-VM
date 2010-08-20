@@ -141,7 +141,7 @@ public class ThreadManagement {
 
     public static Thread findThread(long id) {
         FindProcedure proc = new FindProcedure(id);
-        synchronized (VmThreadMap.ACTIVE) {
+        synchronized (VmThreadMap.THREAD_LOCK) {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, proc);
         }
         return proc.result;
@@ -183,7 +183,7 @@ public class ThreadManagement {
                 traces[i] = trace;
             }
         }
-        new StackTraceGatherer(Arrays.asList(threads), traces, maxDepth).run();
+        VmOperationThread.submit(new StackTraceGatherer(Arrays.asList(threads), traces, maxDepth));
         if (currentThreadIndex >= 0) {
             threads[currentThreadIndex] = Thread.currentThread();
         }
@@ -195,15 +195,20 @@ public class ThreadManagement {
      *
      * @author Doug Simon
      */
-    static final class StackTraceGatherer extends FreezeThreads {
+    static final class StackTraceGatherer extends VmOperation {
         final int maxDepth;
         final StackTraceElement[][] traces;
         final List<Thread> threads;
         StackTraceGatherer(List<Thread> threads, StackTraceElement[][] result, int maxDepth) {
-            super("StackTraceGatherer", new ThreadListPredicate(threads));
+            super("StackTraceGatherer", null, Mode.Safepoint);
             this.threads = threads;
             this.maxDepth = maxDepth;
             this.traces = result;
+        }
+
+        @Override
+        protected boolean operateOnThread(VmThread thread) {
+            return threads.contains(thread.javaThread());
         }
 
         @Override

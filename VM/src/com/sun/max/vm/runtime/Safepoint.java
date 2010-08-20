@@ -38,8 +38,7 @@ import com.sun.max.vm.thread.*;
 
 /**
  * The platform specific details of the mechanism by which a thread can be
- * {@linkplain FreezeThreads frozen} via polling at prudently
- * chosen execution points.
+ * frozen via polling at prudently chosen execution points.
  *
  * @author Bernd Mathiske
  * @author Doug Simon

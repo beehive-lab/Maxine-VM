@@ -27,6 +27,7 @@
  */
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -264,6 +265,7 @@ void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...) {
 char task_state(pid_t tgid, pid_t tid) {
     char state = 'Z';
     task_stat(tgid, tid, "%*d %*s %c", &state);
+    state = toupper(state);
     return state;
 }
 
