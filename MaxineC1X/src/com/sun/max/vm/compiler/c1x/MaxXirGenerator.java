@@ -61,7 +61,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public class MaxXirGenerator extends RiXirGenerator {
+public class MaxXirGenerator implements RiXirGenerator {
 
     private static final int SMALL_MULTIANEWARRAY_RANK = 2;
 

@@ -43,7 +43,7 @@ public class HashMap_put01  extends RunBench {
     }
 
     public static boolean test(int i) {
-        return new HashMap_put01().runBench(true);
+        return new HashMap_put01().runBench();
     }
 
     public static class Bench extends HashMap_get01.Bench {
@@ -64,13 +64,13 @@ public class HashMap_put01  extends RunBench {
 
         @Override
         public long run() {
-            mapSetup.map.put(mapSetup.key, mapSetup.value);
+            map.put(key, value);
             return defaultResult;
         }
 
         @Override
         public void postrun() {
-            mapSetup.map.remove(mapSetup.key);
+            map.remove(key);
         }
     }
 

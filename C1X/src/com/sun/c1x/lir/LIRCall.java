@@ -23,7 +23,9 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
+import com.sun.cri.xir.CiXirAssembler.XirMark;
 
 /**
  * This class represents a call instruction; either to a {@linkplain CiRuntimeCall runtime method},
@@ -38,15 +40,21 @@ public class LIRCall extends LIRInstruction {
      * object denoting a call to the runtime, a Java method or a native function respectively.
      */
     public final Object target;
+    /**
+     * The call site needs to be marked if this is non-null.
+     */
+    public final Map<XirMark, Mark> marks;
 
     private final int targetAddressIndex;
+
 
     private static CiValue[] toArray(List<CiValue> arguments) {
         return arguments.toArray(new CiValue[arguments.size()]);
     }
 
-    public LIRCall(LIROpcode opcode, Object target, CiValue result, List<CiValue> arguments, LIRDebugInfo info, boolean calleeSaved) {
+    public LIRCall(LIROpcode opcode, Object target, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, boolean calleeSaved) {
         super(opcode, result, info, !calleeSaved, 0, 0, toArray(arguments));
+        this.marks = marks;
         if (opcode == LIROpcode.DirectCall) {
             this.targetAddressIndex = -1;
         } else {

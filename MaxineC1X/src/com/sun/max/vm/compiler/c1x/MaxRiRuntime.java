@@ -228,7 +228,7 @@ public class MaxRiRuntime implements RiRuntime {
                     }
                     for (DataPatch site : targetMethod.dataReferences) {
                         if (site.pcOffset == pcOffset) {
-                            return "{" + site.data + "}";
+                            return "{" + site.constant + "}";
                         }
                     }
                     return null;
@@ -358,7 +358,7 @@ public class MaxRiRuntime implements RiRuntime {
         return null;
     }
 
-    public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
+    public Object registerGlobalStub(CiTargetMethod ciTargetMethod, String name) {
         return new C1XTargetMethod(name, ciTargetMethod);
     }
 

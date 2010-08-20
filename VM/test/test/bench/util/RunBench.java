@@ -30,7 +30,8 @@ import com.sun.max.program.*;
  * A framework for running (micro) benchmarks that factors out timing and startup issues, leaving the benchmark writer
  * to concentrate on the essentials. The framework is designed to run under the Maxine testing framework, thus allowing
  * several benchmarks to be executed in succession. However, it is equally easy to run a benchmarks as a stand-alone
- * program by providing a {@code main} method and invoking the {@code test} method expected by the test harness.
+ * program by providing a {@code main} method and invoking the {@link #runTest} method. This allows controlling
+ * properties to be set on the command line and then invokes the test method expected by the test harness.
  * <p>
  * The framework assumes that the benchmark will be compiled by the optimising compiler at VM image build time and
  * included in the test image, along with this class. A simple way to ensure that is for the benchmark to subclass this
@@ -48,8 +49,7 @@ import com.sun.max.program.*;
  * measured. Unexpectedly fast runs should, therefore, be investigated carefully.
  *
  * The benchmark is executed a given number of times, with a default of {@value #DEFAULT_LOOP_COUNT}. This can be
- * changed at run-time by setting the property {@value #LOOP_COUNT_PROPERTY}. It is also possible to explicitly pass in
- * the loop count at benchmark execution time if required. A warm-up phase is also included, by default 10% of the
+ * changed at run-time by setting the property {@value #LOOP_COUNT_PROPERTY}.  A warm-up phase is also included, by default 10% of the
  * loopcount. This can be changed by setting the property {@value #WARMUP_COUNT_PROPERTY} to the number of warm-up
  * iterations. No timings are collected for the warm-up phase.
  * <p>
@@ -60,16 +60,33 @@ import com.sun.max.program.*;
  * The non-encapsulating, non-warm-up runs can be traced by setting the property {@value #TRACE_PROPERTY}.
  *
  * The non-encapsulating, non-warm-up runs can be saved to a file by setting the property {@value #FILE_PROPERTY}
+ * to a pathname that will be used as the base name for the results. E.g., setting the property to /tmp/results would
+ * produce a series of files, /tmp/results-Tn-Em and /tmp/results-Tn-Rm, where n is the thread id and m is the run id.
+ * The E suffix is used to identify the encapsulating benchmark data and the R suffix for the actual run data.
  * <p>
  * Once an instance of the subclass of {@code RunBench} has been created, the benchmark may be run by invoking
- * {@link #runBench}. There are three variants of {@link #runBench}; the first two use the {@value #DEFAULT_LOOP_COUNT
- * default loop count}, and differ in whether result reporting defaults to {@code true} or is specified as an argument.
- * The third variant allows the default loop count to be overridden. If result reporting is enabled, a synopsis of the results are
- * reported to the standard output on completion. If it is disabled the caller can later invoke methods, such as
- * {@link #elapsedTime} to get the relevant information, and report it in a custom manner.
+ * {@link #runBench}.
+ *
+ * Results are reported to the standard output by default at the end of the run. This can be disabled by setting the
+ * property {@value #NO_REPORT_PROPERTY}. If disabled, the caller can later invoke methods, such as
+ * {@link #elapsedTime} to get the relevant information, and report it in a custom manner, or analyze the data
+ * offfline having also set {@value #FILE_PROPERTY}.
  * <p>
  * {@link #runBench} returns {@code true} if the benchmark completed successfully and {@code false} if an exception was
  * thrown.
+ * <p>
+ * Note that the standard reporting mechanism first averages the results of the encapsulating benchmark, then averages
+ * the results of the benchmark proper, and then subtracts the two. It is therefore possible for nano-benchmarks to report negative
+ * values if some out of band value causes the encapsulating benchmark average to be high.
+ * <p>
+ * Removing outliers. By default the top and bottom X% of the results are removed before the average, median and stddev are computed.
+ * The outlier percentage can be changed by setting the property {@value RunBench#OUTLIER_PROPERTY} to the percentage required.
+ * N.B. The data output to the files or returned by {@link #elapsedTimes(int)} is raw, i,e., does not have the outliers removed.
+ * <p>
+ * Multi-thread support is built into the framework by way of the {@value #DEFAULT_THREAD_COUNT} property. By default the
+ * number of threads is set to one but can be changed via this property. Each thread follows the same sequence and shares the
+ * same {@link Microbenchmark} instance. Results are reported separately for each thread. There is no explicit support for per thread
+ * state; if that is required, use {@link ThreadLocal}.
  *
  * @author Mick Jordan
  * @author Puneet Lakhina
@@ -115,30 +132,39 @@ public class RunBench {
         }
     }
 
-    private final MicroBenchmark bench;
-    private final MicroBenchmark encapBench;
-    private long[] elapsed;
-    private long[] encapElapsed;
-    private int loopCount;
     private static int warmupCount = -1;
+    private static boolean report = true;
     private static boolean trace;
     private static final int DEFAULT_LOOP_COUNT = 100;
-    private static int defaultLoopCount = DEFAULT_LOOP_COUNT;
+    private static final int DEFAULT_THREAD_COUNT = 1;
+    private static final int DEFAULT_RUN_ITER_COUNT = 100000;
+    private static final int DEFAULT_OUTLIER_PERCENT = 1;
+
     private static final String LOOP_COUNT_PROPERTY = "test.bench.loopcount";
     private static final String RUN_ITER_COUNT_PROPERTY = "test.bench.runitercount";
     private static final String WARMUP_COUNT_PROPERTY = "test.bench.warmupcount";
-    private static final String DISPLAY_INDIVIDUAL_PROPERTY = "test.bench.displayall";
+    private static final String THREAD_COUNT_PROPERTY = "test.bench.threadcount";
     private static final String FILE_PROPERTY = "test.bench.file";
     private static final String TRACE_PROPERTY = "test.bench.trace";
+    private static final String NO_REPORT_PROPERTY = "test.bench.noreport";
+    private static final String OUTLIER_PROPERTY = "test.bench.outlier";
     private static final MicroBenchmark emptyEncap = new EmptyEncap();
     private static String fileNameBase;
     private static int fileNameIndex;
-    private int warmUpIndex;
-    private int runIndex;
+
+    private static int loopCount = DEFAULT_LOOP_COUNT;
+    private static int threadCount = DEFAULT_THREAD_COUNT;
+    private static int outlierPercent = DEFAULT_OUTLIER_PERCENT;
     /**
      * This is used in benchmarks that want to iterate in the {@link Bench#run} method.
      */
-    public static int runIterCount = 1;
+    private static long runIterCount = DEFAULT_RUN_ITER_COUNT;
+
+    private final MicroBenchmark bench;
+    private final MicroBenchmark encapBench;
+    private ThreadRunner[] runners;
+    private Barrier startGate;
+    private Barrier encapGate;
 
     /**
      * Check if any control properties are set.
@@ -146,16 +172,28 @@ public class RunBench {
     private static void getBenchProperties() {
         final String lps = System.getProperty(LOOP_COUNT_PROPERTY);
         final String wps = System.getProperty(WARMUP_COUNT_PROPERTY);
-        final String rps = System.getProperty(RUN_ITER_COUNT_PROPERTY);
+        final String ips = System.getProperty(RUN_ITER_COUNT_PROPERTY);
+        final String tps = System.getProperty(THREAD_COUNT_PROPERTY);
+        final String rps = System.getProperty(NO_REPORT_PROPERTY);
+        final String ops = System.getProperty(OUTLIER_PROPERTY);
         try {
             if (lps != null) {
-                defaultLoopCount = Integer.parseInt(lps);
+                loopCount = Integer.parseInt(lps);
             }
             if (wps != null) {
                 warmupCount = Integer.parseInt(wps);
             }
+            if (ips != null) {
+                runIterCount = Long.parseLong(rps);
+            }
+            if (tps != null) {
+                threadCount = Integer.parseInt(tps);
+            }
+            if (ops != null) {
+                outlierPercent = Integer.parseInt(ops);
+            }
             if (rps != null) {
-                runIterCount = Integer.parseInt(rps);
+                report = false;
             }
         } catch (NumberFormatException ex) {
             ProgramError.unexpected("test.bench.loopcount " + lps + " did not parse");
@@ -181,8 +219,8 @@ public class RunBench {
         this.bench = bench;
         encapBench = encap == null ? emptyEncap : encap;
         final long now = System.nanoTime();
-        ((MicroBenchmark) bench).defaultResult = now;
-        ((MicroBenchmark) encapBench).defaultResult = now;
+        bench.defaultResult = now;
+        encapBench.defaultResult = now;
     }
 
     private void zeroArray(long[] values) {
@@ -192,126 +230,197 @@ public class RunBench {
     }
 
     /**
-     * Gets the number of iterations associated with this benchmark. Note that is this called before {@link #runBench}
-     * in invoked, it will return the {@link #defaultLoopCount default loop count}, otherwise it will return either the
-     * value passed to {@link #runBench} (if any), or {@link #defaultLoopCount default loop count}.
-     *
-     * @return the number of iterations
+     * Get the array of result times for the encapsulated variant of the benchmark for given thread.
+     * @param threadId value in range {@code 0 .. threadCount - 1}
+     * @return array of result times in nanoseconds for given thread
      */
-    public int loopCount() {
-        return loopCount == 0 ? defaultLoopCount : loopCount;
+    public long[] encapElapsedTimes(int threadId) {
+        return runners[threadId].encapElapsed;
     }
 
     /**
-     * Get the array of result times for the encapsulated variant of the benchmark.
+     * Get the array of result times for the the benchmark for given thread.
+     * @param threadId value in range {@code 0 .. threadCount - 1}
      * @return array of result times in nanoseconds
      */
-    public long[] encapElapsedTimes() {
-        return encapElapsed;
+    public long[] elapsedTimes(int threadId) {
+        return runners[threadId].elapsed;
+    }
+
+    public static long loopCount() {
+        return loopCount;
+    }
+
+    public static long threadCount() {
+        return threadCount;
+    }
+
+    public static long runIterCount() {
+        return runIterCount;
     }
 
     /**
-     * Get the array of result times for the the benchmark.
-     * @return array of result times in nanoseconds
-     */
-    public long[] elapsedTimes() {
-        return elapsed;
-    }
-
-    /**
-     * Run the benchmark for the default number of iterations and report the results to the standard output.
-     *
-     * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
-     */
-    public boolean runBench() {
-        return runBench(defaultLoopCount, true);
-    }
-
-    /**
-     * Run the benchmark for the default number of iterations.
-     *
-     * @param report report the results iff true
-     * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
-     */
-    public boolean runBench(boolean report) {
-        return runBench(defaultLoopCount, report);
-    }
-
-    /**
-     * Run the benchmark for the given number of iterations.
+     * Run the benchmark for the given number of iterations. in the given number of threads, optionally reporting
+     * results.
      *
      * @param loopCount the number of iterations
      * @param report report the results iff true
      * @return {@code false} if benchmark threw an exception, {@code true} otherwise.
      */
-    public boolean runBench(int loopCount, boolean report) {
-        this.loopCount = loopCount;
+    public boolean runBench() {
         if (warmupCount < 0) {
             warmupCount = loopCount < 10 ? 1 : loopCount / 10;
         }
-        elapsed = new long[loopCount];
-        zeroArray(elapsed);
-        encapElapsed = new long[loopCount];
-        zeroArray(encapElapsed);
-        try {
-            // Do an encapsulating run to factor out overheads
-            doRun(loopCount, encapBench, encapElapsed);
-            // Now the real thing
-            doRun(loopCount, bench, elapsed);
-        } catch (Throwable t) {
-            final String where = runIndex < 0 ? "warmup iteration " + warmUpIndex : "run iteration " + runIndex;
-            System.err.println("benchmark threw " + t + " on " + where);
-            t.printStackTrace();
-            report = false;
-        }
-        if (report) {
-            final double avgEncapElapsed = average(encapElapsed);
-            final double avgElapsed = average(elapsed);
-            final double benchElapsed = avgElapsed - avgEncapElapsed;
-            final double avgElapsedStdDev = stddev(elapsed, avgElapsed);
-            final long[] minMaxArr = maxmin(elapsed);
-            System.out.println("Benchmark results (nanoseconds per iteration)");
-            System.out.println("  loopcount: " + loopCount + ", warmupcount: " + warmupCount);
-            System.out.format("  averge overhead: %.3f, median overhead: %.3f\n", avgEncapElapsed, median(encapElapsed));
-            System.out.format("  average elapsed: %.3f, median elapsed: %.3f, \n", avgElapsed, median(elapsed));
-            System.out.format("  average elapsed minus overhead: %.3f\n", benchElapsed);
-            System.out.format("  stddev: %.3f, max: %d, min: %d\n", avgElapsedStdDev, minMaxArr[1], minMaxArr[0]);
-            System.out.format("  operations/ms: %.3f\n", (double) 1000000 / (double) benchElapsed);
+        startGate = new Barrier(threadCount);
+        encapGate = new Barrier(threadCount);
 
-            if (getProperty(DISPLAY_INDIVIDUAL_PROPERTY, false) != null) {
-                displayElapsed();
+        runners = new ThreadRunner[threadCount];
+        for (int i = 0; i < threadCount; i++) {
+            runners[i] = new ThreadRunner(i);
+            runners[i].start();
+        }
+        for (ThreadRunner runner : runners) {
+            try {
+                runner.join();
+            } catch (InterruptedException ex) {
             }
         }
-        if (fileNameBase != null) {
-            fileOutput("E", encapElapsed);
-            fileOutput("R", elapsed);
-            fileNameIndex++;
+        for (ThreadRunner runner : runners) {
+            runner.doReport();
         }
-        this.loopCount = 0;
+        if (fileNameBase != null) {
+            for (ThreadRunner runner : runners) {
+                runner.doFileOutput();
+            }
+        }
         return true;
     }
 
-    private void doRun(long loopCount, MicroBenchmark bench, long[] timings) throws Throwable {
-        // do warmup and discard results
-        runIndex = -1;
-        for (warmUpIndex = 0; warmUpIndex < warmupCount; warmUpIndex++) {
-            bench.prerun();
-            bench.run();
-            bench.postrun();
-            if (trace && bench != encapBench) {
-                System.out.println("warm up run " + warmUpIndex);
+    /**
+     * Runs the benchmark in one thread.
+     *
+     * @author Mick Jordan
+     */
+    private class ThreadRunner extends Thread {
+
+        private long[] elapsed;
+        private long[] encapElapsed;
+        private boolean reporting;
+        private int warmUpIndex;
+        private int runIndex;
+        private int myId;
+
+        ThreadRunner(int i) {
+            setName("BenchmarkRunner-" + i);
+            this.reporting = report;
+            this.myId = i;
+        }
+
+        @Override
+        public void run() {
+            elapsed = new long[loopCount];
+            zeroArray(elapsed);
+            encapElapsed = new long[loopCount];
+            zeroArray(encapElapsed);
+            try {
+                startGate.waitForRelease();
+                // Do an encapsulating run to factor out overheads
+                doRun(loopCount, encapBench, encapElapsed);
+                // Now the real thing
+                encapGate.waitForRelease();
+                doRun(loopCount, bench, elapsed);
+            } catch (Throwable t) {
+                final String where = runIndex < 0 ? "warmup iteration " + warmUpIndex : "run iteration " + runIndex;
+                println("benchmark threw " + t + " on " + where);
+                t.printStackTrace();
+                reporting = false;
             }
         }
-        for (runIndex = 0; runIndex < loopCount; runIndex++) {
-            bench.prerun();
-            final long start = System.nanoTime();
-            bench.run();
-            timings[runIndex] = System.nanoTime() - start;
-            bench.postrun();
-            if (trace && bench != encapBench) {
-                System.out.println("run " + runIndex + " elapsed " + timings[runIndex]);
+
+        private void doRun(long loopCount, MicroBenchmark bench, long[] timings) throws Throwable {
+            // do warmup and discard results
+            runIndex = -1;
+            for (warmUpIndex = 0; warmUpIndex < warmupCount; warmUpIndex++) {
+                bench.prerun();
+                bench.run();
+                bench.postrun();
+                if (trace && bench != encapBench) {
+                    println("warm up run " + warmUpIndex);
+                }
+            }
+            for (runIndex = 0; runIndex < loopCount; runIndex++) {
+                bench.prerun();
+                final long start = System.nanoTime();
+                bench.run();
+                timings[runIndex] = System.nanoTime() - start;
+                bench.postrun();
+                if (trace && bench != encapBench) {
+                    println("run " + runIndex + " elapsed " + timings[runIndex]);
+                }
             }
         }
+
+        void doReport() {
+            if (reporting) {
+                final long[] sortEncapElapsed = Arrays.copyOf(encapElapsed, encapElapsed.length);
+                Arrays.sort(sortEncapElapsed);
+                final long[] sortElapsed = Arrays.copyOf(elapsed, elapsed.length);
+                Arrays.sort(sortElapsed);
+                final SubArray encapSubArray = removeOutliers(sortEncapElapsed);
+                final SubArray elapsedSubArray = removeOutliers(sortElapsed);
+
+                final double avgEncapElapsed = average(encapSubArray);
+                final double avgElapsed = average(elapsedSubArray);
+                final double benchElapsed = avgElapsed - avgEncapElapsed;
+                final double avgElapsedStdDev = stddev(elapsedSubArray, avgElapsed);
+                final long[] minMaxArr = maxmin(elapsedSubArray);
+                System.out.println("Benchmark results (nanoseconds per iteration) for thread " + this.getName());
+                System.out.println("  loopcount: " + loopCount + ", warmupcount: " + warmupCount);
+                System.out.format("  averge overhead: %.3f, median overhead: %.3f\n", avgEncapElapsed, median(encapSubArray, true));
+                System.out.format("  average elapsed: %.3f, median elapsed: %.3f, \n", avgElapsed, median(elapsedSubArray, true));
+                System.out.format("  average elapsed minus overhead: %.3f\n", benchElapsed);
+                System.out.format("  stddev: %.3f, max: %d, min: %d\n", avgElapsedStdDev, minMaxArr[1], minMaxArr[0]);
+                System.out.format("  operations/ms: %.3f\n", (double) 1000000 / (double) benchElapsed);
+            }
+
+        }
+
+        void doFileOutput() {
+            fileOutput("E", myId, encapElapsed);
+            fileOutput("R", myId, elapsed);
+            fileNameIndex++;
+        }
+
+        void println(String m) {
+            System.out.println(this.getName() + ": " + m);
+        }
+
+    }
+
+    static class SubArray {
+        long[] values;
+        int lwb;
+        int upb;
+        SubArray(long[] values, int lwb, int upb) {
+            this.values = values;
+            this.lwb = lwb;
+            this.upb = upb;
+        }
+
+        int length() {
+            return upb - lwb;
+        }
+    }
+
+    /**
+     * Remove outliers.
+     * @param timings
+     * @return
+     */
+    private SubArray removeOutliers(long[] timings) {
+        final int length = timings.length;
+        final int n = (length * outlierPercent) / 100;
+        return new SubArray(timings, n, length - n);
     }
 
     /**
@@ -320,15 +429,16 @@ public class RunBench {
      * @return the standard deviation
      */
     public double stddev(long[] timings) {
-        return stddev(timings, average(timings));
+        final SubArray array = new SubArray(timings, 0, timings.length);
+        return stddev(array, average(array));
     }
 
-    private double stddev(long[] timings, double avg) {
+    private double stddev(SubArray array, double avg) {
         double res = 0;
-        for (long l : timings) {
-            res += Math.pow(l - avg, 2);
+        for (int i = array.lwb; i < array.upb; i++) {
+            res += Math.pow(array.values[i] - avg, 2);
         }
-        return Math.sqrt(res / timings.length);
+        return Math.sqrt(res / array.values.length);
     }
 
     /**
@@ -336,23 +446,24 @@ public class RunBench {
      * @param timings array of timing values
      * @return array {@code m} of length 2; {@code m[0] == min; m[1] == max}
      */
-    public long[] maxmin(long[] timings) {
+    public long[] maxmin(SubArray array) {
         long[] minMaxArr = new long[]{Long.MAX_VALUE, Long.MIN_VALUE};
-        for (long l : timings) {
-            if (l < minMaxArr[0]) {
-                minMaxArr[0] = l;
+        for (int i = array.lwb; i < array.upb; i++) {
+            final long val = array.values[i];
+            if (val < minMaxArr[0]) {
+                minMaxArr[0] = val;
             }
-            if (l > minMaxArr[1]) {
-                minMaxArr[1] = l;
+            if (val > minMaxArr[1]) {
+                minMaxArr[1] = val;
             }
         }
         return minMaxArr;
     }
 
-    private void fileOutput(String type, long[] timings) {
+    private void fileOutput(String type, int threadId, long[] timings) {
         PrintWriter bs = null;
         try {
-            bs = new PrintWriter(new BufferedWriter(new FileWriter(fileNameBase + "-" + type + fileNameIndex)));
+            bs = new PrintWriter(new BufferedWriter(new FileWriter(fileNameBase + "-" + "T" + threadId + "-" + type + fileNameIndex)));
             for (int i = 0; i < timings.length; i++) {
                 bs.println(timings[i]);
             }
@@ -366,35 +477,39 @@ public class RunBench {
 
     }
 
-    public void displayElapsed() {
-        System.out.print("  elapsed values: ");
-        for (int i = 0; i < loopCount; i++) {
-            if (i % 8 == 0) {
-                System.out.println();
-            }
-            System.out.print("  ");
-            System.out.print(elapsed[i]);
-        }
-        System.out.println();
-    }
-
     /**
      * Return the median value the values in the given array.
      * @param array
      * @return the median value
      */
     public double median(long[] array) {
-        if (array.length == 1) {
-            return array[0];
-        } else if (array.length == 2) {
-            return ((double) (array[0] + array[1])) / 2.0;
-        }
-        final long[] values = new long[array.length];
-        System.arraycopy(array, 0, values, 0, array.length);
-        Arrays.sort(values);
+        return median(new SubArray(array, 0, array.length), false);
+    }
 
-        final int lendiv2 = values.length / 2;
-        if ((array.length & 1) != 0) {
+    /**
+     * Return the median value the values in the given {@link SubArray}.
+     * @param array
+     * @return the median value
+     */
+    public double median(SubArray array, boolean isSorted) {
+        long[] values = array.values;
+        final int length = array.length();
+        if (length == 1) {
+            return values[array.lwb];
+        } else if (length == 2) {
+            return ((double) (values[array.lwb] + values[array.lwb + 1])) / 2.0;
+        }
+        SubArray sortedArray = array;
+        if (!isSorted) {
+            final long[] sortedValues = new long[length];
+            sortedArray = new SubArray(sortedValues, 0, length);
+            System.arraycopy(values, array.lwb, sortedValues, 0, values.length);
+            Arrays.sort(sortedValues);
+        }
+        values = sortedArray.values;
+
+        final int lendiv2 = sortedArray.lwb + values.length / 2;
+        if ((length & 1) != 0) {
             return values[lendiv2];
         }
         return ((double) (values[lendiv2] + values[lendiv2 - 1])) / 2.0;
@@ -405,10 +520,19 @@ public class RunBench {
      * @param values
      * @return the average value
      */
-    public double average(long[] values) {
+    public double average(long[] array) {
+        return average(new SubArray(array, 0, array.length));
+    }
+
+    /**
+     * Return the average of the values in the given array.
+     * @param values
+     * @return the average value
+     */
+    public double average(SubArray array) {
         long result = 0;
-        for (int i = 0; i < loopCount; i++) {
-            result += values[i];
+        for (int i = array.lwb; i < array.upb; i++) {
+            result += array.values[i];
         }
         return (double) result / (double) loopCount;
     }
@@ -445,6 +569,7 @@ public class RunBench {
      * -runs n                run the entire benchmark (test method) "n" times. This results in "n" reported measurements.
      * -loopcount n        equivalent to -Dtest.bench.loopcount=n
      * -warmupcount n  equivalent to -Dtest.bench.warmupcount=n
+     * -threadcount n     equivalent to -Dtest.bench.threadcount=n
      * -runitercount n     equivalent to -Dtest.bench.runitercount=n
      *
      * Other args are passed to the test method (based on its signature). The signature {@code test(int i)}
@@ -481,10 +606,14 @@ public class RunBench {
                     runs = Integer.parseInt(matchValue == 0 ? args[++i] : arg.substring(matchValue));
                 } else if ((matchValue = argMatch(arg, "loopcount")) >= 0) {
                     System.setProperty(LOOP_COUNT_PROPERTY, matchValue == 0 ? args[++i] : arg.substring(matchValue));
-                } else if ((matchValue = argMatch(arg, "warmcount")) >= 0) {
+                } else if ((matchValue = argMatch(arg, "warmupcount")) >= 0) {
                     System.setProperty(WARMUP_COUNT_PROPERTY, matchValue == 0 ? args[++i] : arg.substring(matchValue));
+                } else if ((matchValue = argMatch(arg, "threadcount")) >= 0) {
+                    System.setProperty(THREAD_COUNT_PROPERTY, matchValue == 0 ? args[++i] : arg.substring(matchValue));
                 } else if ((matchValue = argMatch(arg, "runitercount")) >= 0) {
                     System.setProperty(RUN_ITER_COUNT_PROPERTY, matchValue == 0 ? args[++i] : arg.substring(matchValue));
+                } else if (arg.equals("noreport")) {
+                    System.setProperty(NO_REPORT_PROPERTY, "");
                 } else {
                     testArgIndex = i;
                     break;
@@ -515,6 +644,7 @@ public class RunBench {
             }
         } catch (Exception ex) {
             System.err.println(ex);
+            ex.printStackTrace();
         }
     }
 

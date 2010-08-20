@@ -54,7 +54,9 @@ public final class NativeCall extends StateSplit {
     /**
      * Constructs a new NativeCall instruction.
      *
-     * @param result the result type
+     * @param nativeMethod TODO
+     * @param signature TODO
+     * @param address TODO
      * @param args the list of instructions producing arguments to the invocation
      * @param stateBefore the state before executing the invocation
      */
@@ -80,7 +82,7 @@ public final class NativeCall extends StateSplit {
 
     /**
      * Gets the instruction that produces the native function address for this native call.
-     * @return
+     * @return the instruction
      */
     public Value address() {
         return address;

@@ -55,6 +55,13 @@ public abstract class FrameState {
      */
     private static final int MINIMUM_STACK_SLOTS = 1;
 
+    /**
+     * Creates a {@code FrameState} for the given scope and maximum number of stack and local variables.
+     *
+     * @param irScope the inlining context of the method
+     * @param maxLocals maximum number of locals
+     * @param maxStack maximum size of the stack
+     */
     public FrameState(IRScope irScope, int maxLocals, int maxStack) {
         this.scope = irScope;
         this.values = new Value[maxLocals + Math.max(maxStack, MINIMUM_STACK_SLOTS)];
@@ -91,12 +98,15 @@ public abstract class FrameState {
     }
 
     /**
-     * Gets a mutable copy of this frame state.
+     * Gets a mutable copy ({@link MutableFrameState}) of this frame state.
      */
     public MutableFrameState copy() {
         return copy(true, true, true);
     }
 
+    /**
+     * Gets an immutable copy of this frame state but without the stack.
+     */
     public FrameState immutableCopyWithEmptyStack() {
         return copy(true, false, true);
     }

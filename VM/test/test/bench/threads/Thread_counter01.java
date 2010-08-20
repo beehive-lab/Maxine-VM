@@ -20,19 +20,18 @@
  */
 /*
  * @Harness: java
- * @Runs: (1, 100000) = true;
+ * @Runs: 0 = true;
  */
 package test.bench.threads;
 
 import test.bench.util.*;
 
 /**
- * This benchmark runs a given number of threads, each of which
- * decrements a private counter until it reaches zero.
- * It provides a baseline for {@link Thread_counter02}.
+ * This benchmark is intended to be run in multi-threaded mode. It measures
+ * how long it takes to decrement the {@link RunBench#runIterCount iteration counter}.
+ * Each thread is given a share of the count to work on.
  *
- * The number of threads defaults to the value passed into the
- * test method (default 1).
+ * It provides a baseline for {@link Thread_counter02} which decrements a shared counter.
  *
  * On an SMP the time should scale (down) linearly with the number of threads.
  *
@@ -41,42 +40,55 @@ import test.bench.util.*;
  */
 public class Thread_counter01  extends RunBench {
 
-    protected Thread_counter01(MicroBenchmark bench, int t, long c) {
-        super(bench, new Bench(new ThreadCounter.EmptyRunnerFactory(), t, c));
+    protected Thread_counter01() {
+        super(new Bench());
     }
 
-    public static boolean test(int t, int c) {
-        final boolean result = new Thread_counter01(new Bench(new OpenRunnerFactory(), t, c), t, c).runBench(true);
-        return result;
+    public static boolean test(int i) {
+        return new Thread_counter01().runBench();
     }
 
-    static class Bench extends ThreadCounter.Bench {
+    static class Counter {
+        long count;
+        Counter(long count) {
+            this.count = count;
+        }
+    }
 
-        Bench(ThreadCounter.RunnerFactory runnerFactory, int threadCount, long countDown) {
-            super(runnerFactory, threadCount, countDown);
+    static class Bench extends MicroBenchmark {
+        protected ThreadLocal<Counter> threadCounter;
+
+        @Override
+        public void prerun() {
+            setCounter(new Counter(RunBench.runIterCount() / RunBench.threadCount()));
         }
 
-    }
-
-    static class OpenRunner extends ThreadCounter.BaseRunner implements Runnable {
-        OpenRunner(int threadCount, long count) {
-            super(threadCount, count);
+        protected void setCounter(final Counter counter) {
+            threadCounter = new ThreadLocal<Counter>() {
+                @Override
+                public Counter initialValue() {
+                    return counter;
+                }
+            };
         }
 
         @Override
-        public void run() {
-            ThreadCounter.startBarrier.waitForRelease();
-            while (count > 0) {
-                count--;
+        public long run() {
+            Counter counter = threadCounter.get();
+            while (counter.count > 0) {
+                counter.count--;
             }
+            return defaultResult;
         }
     }
 
-    static class OpenRunnerFactory extends ThreadCounter.RunnerFactory {
+    static class EncapBench extends Bench {
         @Override
-        public Runnable createRunner(int threadCount, long count) {
-            return new OpenRunner(threadCount, count);
+        public long run() {
+            Counter counter = threadCounter.get();
+            return counter.count;
         }
+
     }
 
     // for running stand-alone
