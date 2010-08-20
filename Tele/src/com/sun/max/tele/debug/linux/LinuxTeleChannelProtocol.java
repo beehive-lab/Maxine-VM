@@ -21,7 +21,6 @@
 package com.sun.max.tele.debug.linux;
 
 import com.sun.max.tele.channel.*;
-import com.sun.max.tele.debug.unix.*;
 
 /**
  * Linux-specific extension of the standard {@link TeleChannelProtocol}.
@@ -30,5 +29,5 @@ import com.sun.max.tele.debug.unix.*;
  * @author Mick Jordan
  *
  */
-public interface LinuxTeleChannelProtocol extends UnixAgentTeleChannelProtocol {
+public interface LinuxTeleChannelProtocol extends TeleChannelProtocol {
 }

@@ -18,19 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.unix;
+package com.sun.max.tele.channel.iostream;
 
-import com.sun.max.tele.channel.*;
-import com.sun.max.tele.*;
-
+import com.sun.max.*;
 
 /**
- * Creates a target VM using the {@link TeleVMAgent}, only appropriate for local communication
- * between the Inspector and target VM on Unix systems.
- *
  * @author Mick Jordan
- *
  */
-public interface UnixAgentTeleChannelProtocol extends TeleChannelProtocol {
-    long create(String pathName, String[] commandLineArguments, TeleVMAgent agent);
+public class Package extends MaxPackage {
+    public Package() {
+        super();
+    }
+
 }

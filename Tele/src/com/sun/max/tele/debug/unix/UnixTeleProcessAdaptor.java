@@ -43,14 +43,14 @@ import com.sun.max.vm.prototype.*;
  */
 public abstract class UnixTeleProcessAdaptor extends TeleProcess {
 
-    protected final UnixAgentTeleChannelProtocol protocol;
+    protected final TeleChannelProtocol protocol;
     protected final DataAccess dataAccess;
 
-    protected UnixTeleProcessAdaptor(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
+    protected UnixTeleProcessAdaptor(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
         super(teleVM, platform, ProcessState.STOPPED);
-        protocol = (UnixAgentTeleChannelProtocol) teleVM.teleChannelProtocol();
+        protocol = TeleVM.teleChannelProtocol();
         dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
-        final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments, agent);
+        final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments, 0);
         if (processHandle == 0) {
             String exe = programFile.getName();
             Log.println("This may be due to resources being consumed by zombie maxvm processes. Try running:");

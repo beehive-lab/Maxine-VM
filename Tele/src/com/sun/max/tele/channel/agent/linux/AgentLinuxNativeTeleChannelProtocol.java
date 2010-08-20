@@ -18,38 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.darwin;
+package com.sun.max.tele.channel.agent.linux;
 
-import java.io.*;
-
-import com.sun.max.platform.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.Params;
-import com.sun.max.tele.debug.unix.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.tele.channel.*;
+import com.sun.max.tele.channel.agent.*;
+import com.sun.max.tele.debug.linux.*;
 
 /**
- * @author Bernd Mathiske
+ *
+ * Agent-side implementation of {@link TeleChannelProtocol} for Linux.
+ *
+ * @author Mick Jordan
+ *
  */
-public final class DarwinTeleProcess extends UnixTeleProcessAdaptor {
-
-    /**
-     * Creates a handle to a native Darwin process (Maxine VM) by launching a new process with a given set of command line arguments.
-     *
-     * @param teleVM
-     * @param platform
-     * @param programFile
-     * @param commandLineArguments
-     * @throws BootImageException
-     */
-    DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
-        super(teleVM, platform, programFile, commandLineArguments);
+public class AgentLinuxNativeTeleChannelProtocol extends AgentProtocolAdaptor {
+    public AgentLinuxNativeTeleChannelProtocol() {
+        super(new LinuxTeleProcess(), new LinuxNativeTeleChannelProtocol());
     }
-
-    @Override
-    protected TeleNativeThread createTeleNativeThread(Params params) {
-        return new DarwinTeleNativeThread(this, params);
-    }
-
 }

@@ -21,8 +21,6 @@
 package com.sun.max.tele.debug.solaris;
 
 import com.sun.max.tele.channel.*;
-import com.sun.max.tele.debug.unix.*;
-
 
 /**
  * Solaris-specific extension of the standard {@link TeleChannelProtocol}.
@@ -31,6 +29,6 @@ import com.sun.max.tele.debug.unix.*;
  * @author Mick Jordan
  *
  */
-public interface SolarisTeleChannelProtocol extends UnixAgentTeleChannelProtocol {
+public interface SolarisTeleChannelProtocol extends TeleChannelProtocol {
 
 }
