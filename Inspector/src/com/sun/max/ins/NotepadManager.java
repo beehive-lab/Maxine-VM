@@ -120,7 +120,7 @@ public final class NotepadManager extends AbstractInspectionHolder {
      */
     private void dispose(InspectorNotepad notepad) {
         ProgramError.unexpected("notepad disposal not yet supported");
-        // Remove from settings
+        // Remove the associated entry from the current inspection settings
     }
 
 }
