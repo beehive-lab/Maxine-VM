@@ -28,9 +28,9 @@ import com.sun.max.tele.channel.iostream.*;
 /**
  * An implementation of {@link TeleChannelDataIOProtocol} that communicates via TCP to an agent on the machine running
  * the target VM. It uses the reflective, remote, invocation mechanism of {@link TeleChannelDataIOProtocolImpl}
- * 
+ *
  * @author Mick Jordan
- * 
+ *
  */
 
 public class TCPTeleChannelProtocol extends TeleChannelDataIOProtocolAdaptor {
@@ -39,15 +39,9 @@ public class TCPTeleChannelProtocol extends TeleChannelDataIOProtocolAdaptor {
     private final String host;
     private Socket socket;
 
-    public TCPTeleChannelProtocol(String hostAndPort) {
-        final int sep = hostAndPort.indexOf(':');
-        if (sep > 0) {
-            port = Integer.parseInt(hostAndPort.substring(sep + 1));
-            host = hostAndPort.substring(0, sep);
-        } else {
-            port = DEFAULT_PORT;
-            host = hostAndPort;
-        }
+    public TCPTeleChannelProtocol(String host, int port) {
+        this.host = host;
+        this.port = port;
     }
 
     @Override

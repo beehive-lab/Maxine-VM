@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.debug.linux;
 
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -42,7 +43,7 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
 
     LinuxTeleNativeThread(LinuxTeleProcess teleProcess, Params params) {
         super(teleProcess, params);
-        protocol = (LinuxTeleChannelProtocol) teleProcess().vm().teleChannelProtocol();
+        protocol = (LinuxTeleChannelProtocol) TeleVM.teleChannelProtocol();
     }
 
     @Override

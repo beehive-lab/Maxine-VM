@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.debug.solaris;
 
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 
@@ -34,7 +35,7 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
 
     public SolarisTeleNativeThread(SolarisTeleProcess teleProcess, Params params) {
         super(teleProcess, params);
-        protocol = (SolarisTeleChannelProtocol) teleProcess().vm().teleChannelProtocol();
+        protocol = (SolarisTeleChannelProtocol) TeleVM.teleChannelProtocol();
     }
 
     private long lwpId() {

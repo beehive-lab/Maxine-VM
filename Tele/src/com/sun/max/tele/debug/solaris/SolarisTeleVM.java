@@ -36,8 +36,8 @@ public final class SolarisTeleVM extends TeleVM {
         return new SolarisTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments, agent);
     }
 
-    public SolarisTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
-        super(new SolarisNativeTeleChannelProtocol(), bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
+    public SolarisTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
+        super(bootImageFile, bootImage, sourcepath, commandLineArguments, new TeleVMAgent());
     }
 
 }

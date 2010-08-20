@@ -34,7 +34,7 @@ import com.sun.max.tele.channel.TeleChannelDataIOProtocol;
  * The contents of the array are "returned" as an auxiliary result if the mode is {@link ArrayMode#OUT} or {@link ArrayMode#INOUT}; the bytes
  * precede the method result value.
  *
- * For this to work, the {@link ArrayMode} of a parameter must be registered with {@link RIProtocolAdaptor} by the target end of the communication..
+ * For this to work, the {@link ArrayMode} of a parameter must be registered with {@link RemoteInvocationProtocolAdaptor} by the target end of the communication..
  *
 * @author Mick Jordan
  *

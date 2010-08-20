@@ -78,7 +78,7 @@ boolean thread_read_registers(thread_t thread,
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readRegisters(JNIEnv *env, jobject this, jlong thread,
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readRegisters(JNIEnv *env, jobject this, jlong task, jlong thread,
                 jbyteArray integerRegisters, jint integerRegistersLength,
                 jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
                 jbyteArray stateRegisters, jint stateRegistersLength) {
