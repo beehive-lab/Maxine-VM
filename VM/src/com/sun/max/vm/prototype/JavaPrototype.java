@@ -239,6 +239,7 @@ public class JavaPrototype extends Prototype {
 
         loadPackage("java.lang", false);
         loadPackage("java.lang.reflect", false); // needed to compile and to invoke the main method
+        loadPackage("java.lang.ref", false);
         loadPackage("java.io", false);
         loadPackage("java.nio", false);
         loadPackage("java.nio.charset", false);
@@ -276,6 +277,8 @@ public class JavaPrototype extends Prototype {
         if (System.getProperty("max.allow.all.core.packages") == null) {
             HostedBootClassLoader.omitPackage("java.security", false);
         }
+
+//loadPackage("demo", false);
     }
 
     private static List<Class> mainPackageClasses = new ArrayList<Class>();

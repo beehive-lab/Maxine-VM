@@ -47,67 +47,53 @@ public class Verifier implements VerificationRegistry {
     /**
      * The level of bytecode verification tracing.
      */
-    static int traceLevel;
+    static int TraceVerifierLevel;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceVerifierLevel", "Trace bytecode verification level: 0 = none, 1 = class, 2 = methods.");
+    }
 
     /**
      * If non-null, then the verification of any methods whose fully qualified name contains this field value as
      * a substring is traced in detail.
      */
-    static String methodToTrace;
+    static String TraceVerification;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceVerification",
+            "Trace bytecode verification in detail of method(s) whose qualified name contains <value>.");
+    }
 
     /**
      * Determines if verification is performed for classes loaded locally.
      */
     @RESET
-    private static boolean verifyLocal;
+    private static boolean BytecodeVerificationLocal;
+    static {
+        VMOptions.addFieldOption("-XX:", "BytecodeVerificationLocal", "Enable verification of local classes.");
+    }
 
     /**
      * Determines if verification is performed for classes loaded over network.
      */
-    private static boolean verifyRemote = true;
+    private static boolean BytecodeVerificationRemote = true;
+    static {
+        VMOptions.addFieldOption("-XX:", "BytecodeVerificationRemote", "Enable verification of remote classes.");
+    }
 
     static {
-        // -XX:-BytecodeVerificationLocal option
-        VMOptions.register(new VMBooleanXXOption("-XX:-BytecodeVerificationLocal",
-            "Enable verification of local classes.") {
-            @Override
-            public boolean parseValue(Pointer optionValue) {
-                if (super.parseValue(optionValue)) {
-                    verifyLocal = getValue();
-                    return true;
-                }
-                return false;
-            }
-        }, MaxineVM.Phase.STARTING);
-
-        // -XX:+BytecodeVerificationRemote option
-        VMOptions.register(new VMBooleanXXOption("-XX:+BytecodeVerificationRemote",
-            "Enable verification of remote classes.") {
-            @Override
-            public boolean parseValue(Pointer optionValue) {
-                if (super.parseValue(optionValue)) {
-                    verifyRemote = getValue();
-                    return true;
-                }
-                return false;
-            }
-
-        }, MaxineVM.Phase.STARTING);
-
         // -Xverify option
         VMOptions.register(new VMOption("-Xverify",
             "Enable verification process on classes loaded over network (default), all classes, or no classes respectively.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 if (CString.equals(optionValue, ":all") || CString.length(optionValue).isZero()) {
-                    verifyLocal = true;
-                    verifyRemote = true;
+                    BytecodeVerificationLocal = true;
+                    BytecodeVerificationRemote = true;
                 } else if (CString.equals(optionValue, ":none")) {
-                    verifyLocal = false;
-                    verifyRemote = false;
+                    BytecodeVerificationLocal = false;
+                    BytecodeVerificationRemote = false;
                 } else if (CString.equals(optionValue, ":remote")) {
-                    verifyLocal = false;
-                    verifyRemote = true;
+                    BytecodeVerificationLocal = false;
+                    BytecodeVerificationRemote = true;
                 } else {
                     return false;
                 }
@@ -120,37 +106,12 @@ public class Verifier implements VerificationRegistry {
 
         }, MaxineVM.Phase.STARTING);
 
-        // -XX:TraceVerification=<value> option
-        VMOptions.register(new VMStringOption("-XX:TraceVerification=", false, null,
-            "Trace bytecode verification in detail of method(s) whose qualified name contains <value>.") {
-            @Override
-            public boolean parseValue(Pointer optionValue) {
-                if (super.parseValue(optionValue)) {
-                    methodToTrace = getValue();
-                    return true;
-                }
-                return false;
-            }
-        }, MaxineVM.Phase.STARTING);
-
-        // -XX:TraceVerifierLevel=<value> option
-        VMOptions.register(new VMIntOption("-XX:TraceVerifierLevel=", 0,
-            "Trace bytecode verification level: 0 = none, 1 = class, 2 = methods.") {
-            @Override
-            public boolean parseValue(Pointer optionValue) {
-                boolean result = super.parseValue(optionValue);
-                if (result) {
-                    traceLevel = getValue();
-                }
-                return result;
-            }
-        }, MaxineVM.Phase.STARTING);
     }
 
     /**
      * Determines if a class loaded by a given class loader needs bytecode verification.
      * The answer depends upon {@code classLoader} <i>and</i> the values of
-     * {@link #verifyLocal} and {@link #verifyRemote}.
+     * {@link #BytecodeVerificationLocal} and {@link #BytecodeVerificationRemote}.
      *
      * @param classLoader the class loader to test
      * @param isRemote specifies if the stream is from a remote/untrusted (e.g. network) source. This is mainly used to
@@ -159,18 +120,18 @@ public class Verifier implements VerificationRegistry {
      */
     public static boolean shouldBeVerified(ClassLoader classLoader, boolean isRemote) {
         if (classLoader == BootClassLoader.BOOT_CLASS_LOADER || classLoader == null || !isRemote) {
-            return verifyLocal;
+            return BytecodeVerificationLocal;
         }
-        return verifyRemote;
+        return BytecodeVerificationRemote;
     }
 
     public static boolean relaxVerificationFor(ClassLoader classLoader) {
         boolean trusted = isTrustedLoader(classLoader);
         boolean needVerify =
             // -Xverify:all
-            (verifyLocal && verifyRemote) ||
+            (BytecodeVerificationLocal && BytecodeVerificationRemote) ||
             // -Xverify:remote
-            (!verifyLocal && verifyRemote && !trusted);
+            (!BytecodeVerificationLocal && BytecodeVerificationRemote && !trusted);
         return !needVerify;
     }
 

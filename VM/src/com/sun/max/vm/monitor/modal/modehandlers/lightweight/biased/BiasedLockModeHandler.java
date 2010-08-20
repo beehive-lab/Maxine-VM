@@ -127,7 +127,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             }
 
             RevokeBiasOperation operation = new RevokeBiasOperation(VmThread.fromVmThreadLocals(vmThreadLocals), object);
-            VmOperationThread.submit(operation);
+            operation.submit();
             return operation.newLockword;
         }
     }
@@ -509,7 +509,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                     }
 
                     BulkRebiasOperation operation = new BulkRebiasOperation(object);
-                    VmOperationThread.submit(operation);
+                    operation.submit();
                     postRevokeLockword = operation.postRebiasLockword;
                     revocationHeuristics.notifyBulkRebiasComplete();
                     break;
@@ -523,7 +523,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                     }
 
                     BulkRevokeOperation operation = new BulkRevokeOperation(object);
-                    VmOperationThread.submit(operation);
+                    operation.submit();
                     postRevokeLockword = operation.postRevokeLockword;
                     break;
                 }

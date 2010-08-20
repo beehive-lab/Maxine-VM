@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -62,25 +63,17 @@ public class VmOperationThread extends Thread {
 
     static boolean TraceVmOperations;
 
-    private static VmOperationThread instance;
-
     public static VmOperationThread instance() {
-        return instance;
-    }
-
-    /**
-     * Creates and starts the single thread used to execute VM operations.
-     */
-    public static void initialize() {
-        new VmOperationThread().start();
+        return (VmOperationThread) VmThread.vmOperationThread.javaThread();
     }
 
     static {
         VMOptions.addFieldOption("-XX:", "TraceVmOperations", VmOperationThread.class, "Trace VM operations.");
     }
 
-    public VmOperationThread() {
-        super("VmOperationThread");
+    @HOSTED_ONLY
+    public VmOperationThread(ThreadGroup group) {
+        super(group, "VmOperationThread");
         queue = new VmOperationQueue();
         setDaemon(true);
     }
@@ -106,9 +99,6 @@ public class VmOperationThread extends Thread {
 
     @Override
     public void run() {
-        FatalError.check(instance == null, "Multiple VM operation threads detected");
-        instance = this;
-
         if (TraceVmOperations) {
             Log.println("Started VM operation thread");
         }
@@ -190,17 +180,17 @@ public class VmOperationThread extends Thread {
     /**
      * Schedules an operation for execution on the VM operation thread. The caller is
      * blocked until the operation is completed or the scheduling is canceled by
-     * {@link VmOperation#doItPrologue()}.
+     * {@link VmOperation#doItPrologue(boolean)}.
      *
      * @param operation a VM operation to be executed on the VM operation thread
      */
     public static void submit(VmOperation operation) {
         VmThread vmThread = VmThread.current();
-        VmOperationThread vmOperationThread = instance;
+        VmOperationThread vmOperationThread = instance();
 
         if (!vmThread.isVmOperationThread()) {
 
-            if (!operation.doItPrologue()) {
+            if (!operation.doItPrologue(false)) {
                 // Operation was canceled
                 return;
             }
@@ -212,7 +202,9 @@ public class VmOperationThread extends Thread {
 
             operation.setCallingThread(vmThread);
 
-            vmThread.incrementPendingOperations();
+            if (operation.mode.isBlocking()) {
+                vmThread.incrementPendingOperations();
+            }
 
             // Add operation to queue
             synchronized (QUEUE_LOCK) {
@@ -229,18 +221,20 @@ public class VmOperationThread extends Thread {
                 QUEUE_LOCK.notify();
             }
 
-            // Wait until operation completes
-            synchronized (REQUEST_LOCK) {
-                while (vmThread.pendingOperations() > 0) {
-                    try {
-                        REQUEST_LOCK.wait();
-                    } catch (InterruptedException e) {
-                        Log.println("Caught InterruptedException while waiting for VM operation to complete");
+            if (operation.mode.isBlocking()) {
+                // Wait until operation completes
+                synchronized (REQUEST_LOCK) {
+                    while (vmThread.pendingOperations() > 0) {
+                        try {
+                            REQUEST_LOCK.wait();
+                        } catch (InterruptedException e) {
+                            Log.println("Caught InterruptedException while waiting for VM operation to complete");
+                        }
                     }
                 }
             }
 
-            operation.doItEpilogue();
+            operation.doItEpilogue(false);
 
             if (TraceVmOperations) {
                 boolean lockDisabledSafepoints = Log.lock();
@@ -254,39 +248,40 @@ public class VmOperationThread extends Thread {
 
 
         } else {
-            if (!operation.doItPrologue()) {
-                // Operation was canceled
-                return;
-            }
-            // Invoked by VM operation thread: usually nested VM operation
-            VmOperation parentOperation = vmOperationThread.currentOperation;
-            if (parentOperation != null) {
-                boolean fatal = !parentOperation.allowsNestedOperations(operation);
+            // Invoked by VM operation thread
+            VmOperation enclosingOperation = vmOperationThread.currentOperation;
+            boolean nested = enclosingOperation != null;
+            if (nested) {
+                // Nested operation: check that it's allowed for the enclosing operation
+                boolean fatal = !enclosingOperation.allowsNestedOperations(operation);
                 if (TraceVmOperations || fatal) {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Nested VM operation ");
                     Log.print(operation.name);
                     Log.print(" requested by operation ");
-                    Log.println(parentOperation.name);
+                    Log.println(enclosingOperation.name);
                     Log.unlock(lockDisabledSafepoints);
                 }
                 if (fatal) {
                     FatalError.unexpected("Nested VM operation requested when current operation doesn't allow it");
                 }
 
-                operation.setCallingThread(parentOperation.callingThread());
-                operation.enclosing = parentOperation;
-
+                operation.enclosing = enclosingOperation;
             }
+            if (!operation.doItPrologue(nested)) {
+                // Operation was canceled
+                return;
+            }
+
 
             vmOperationThread.currentOperation = operation;
             try {
                 operation.run();
             } finally {
-                vmOperationThread.currentOperation = parentOperation;
+                operation.doItEpilogue(nested);
+                vmOperationThread.currentOperation = enclosingOperation;
                 operation.enclosing = null;
             }
-            operation.doItEpilogue();
         }
     }
 
@@ -295,7 +290,7 @@ public class VmOperationThread extends Thread {
      * is blocked until the VM thread stops.
      */
     public static void terminate() {
-        VmOperationThread vmOperationThread = instance;
+        VmOperationThread vmOperationThread = instance();
         vmOperationThread.shouldTerminate = true;
 
         if (TraceVmOperations) {

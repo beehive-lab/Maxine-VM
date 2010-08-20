@@ -230,9 +230,11 @@ public class JavaMonitorManager {
      */
     @HOSTED_ONLY
     public static Object newStickyLock() {
-        return bindStickyMonitor(new Object(), new StandardJavaMonitor());
+        return bindStickyMonitor(new StickyLock(), new StandardJavaMonitor());
     }
 
+    static class StickyLock {
+    }
 
     @HOSTED_ONLY
     private static void addToStickyMonitors(ManagedMonitor monitor) {

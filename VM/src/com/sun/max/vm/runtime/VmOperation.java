@@ -27,6 +27,7 @@ import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.Pointer.Predicate;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallEpilogue;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue;
@@ -167,7 +168,17 @@ public class VmOperation {
      */
     public enum Mode {
         Safepoint,
-        NoSafepoint
+        NoSafepoint,
+        Concurrent,
+        AsyncSafepoint;
+
+        public boolean requiresSafepoint() {
+            return this == Safepoint || this == AsyncSafepoint;
+        }
+
+        public boolean isBlocking() {
+            return this == Safepoint || this == NoSafepoint;
+        }
     }
 
     /**
@@ -177,6 +188,9 @@ public class VmOperation {
      * @return the thread that submitted this operation for execution
      */
     public VmThread callingThread() {
+        if (enclosing != null) {
+            return enclosing.callingThread();
+        }
         return callingThread;
     }
 
@@ -187,6 +201,7 @@ public class VmOperation {
      * @param thread the thread that submitted this operation for execution
      */
     public void setCallingThread(VmThread thread) {
+        FatalError.check(next == null && previous == null, "Cannot change calling thread of operation already in the queue");
         callingThread = thread;
     }
 
@@ -309,24 +324,30 @@ public class VmOperation {
     }
 
     /**
-     * Called by {@link VmOperationThread#submit(VmOperation)} prior to scheduling this operation.
-     * This is called on the thread trying to schedule a VM operation. It enables the operation
-     * scheduling to be canceled. It also enables the operation to perform any action on the
-     * scheduling thread (such as taking locks) before the operation is run on the VM operation
-     * thread. Unless this method returns {@code false}, then {@link #doItEpilogue()} will
-     * be called on the current thread once the operation has completed.
+     * Called by {@link VmOperationThread#submit(VmOperation)} prior to scheduling this operation. This is called on the
+     * thread trying to schedule a VM operation. It enables the operation scheduling to be canceled. It also enables the
+     * operation to perform any action on the scheduling thread (such as taking locks) before the operation is run on
+     * the VM operation thread. Unless this method returns {@code false}, then {@link #doItEpilogue(boolean)} will be
+     * called on the current thread once the operation has completed.
      *
-     * @return {@code true} if this operation should be scheduled. The {@link #doItEpilogue()} method will only be
-     *         called if the operation is executed.
+     * @param nested denotes if this is being called for a nested operation (which implies the current thread is the VM
+     *            operation thread)
+     * @return {@code true} if this operation should be scheduled. The {@link #doItEpilogue(boolean)} method will only
+     *         be called if the operation is executed.
      */
-    protected boolean doItPrologue() {
+    protected boolean doItPrologue(boolean nested) {
         return true;
     }
 
     /**
-     * Called by {@link VmOperationThread#submit(VmOperation)} once this operation has completed execution.
+     * Called by {@link VmOperationThread#submit(VmOperation)} once this operation has completed execution or if this
+     * operation's {@link #mode} denotes a {@linkplain Mode#isBlocking() non-blocking} operation, once this operation
+     * has been {@linkplain #submit() submitted}.
+     *
+     * @param nested denotes if this is being called for a nested operation (which implies the current thread is the VM
+     *            operation thread)
      */
-    protected void doItEpilogue() {
+    protected void doItEpilogue(boolean nested) {
     }
 
     /**
@@ -418,6 +439,13 @@ public class VmOperation {
     }
 
     /**
+     * Convenience method equivalent to calling {@link VmOperationThread#submit(VmOperation)} with this operation.
+     */
+    public void submit() {
+        VmOperationThread.submit(this);
+    }
+
+    /**
      * Called on the VM operation thread to perform this operation. This method does all the necessary
      * thread freezing and thawing around a call to {@link #doIt()}.
      */
@@ -425,7 +453,7 @@ public class VmOperation {
         assert VmThread.current().isVmOperationThread();
         assert singleThread == null || !singleThread.isVmOperationThread();
 
-        if (mode == Mode.Safepoint) {
+        if (mode.requiresSafepoint()) {
             Throwable error = null;
             synchronized (VmThreadMap.THREAD_LOCK) {
 
@@ -440,8 +468,7 @@ public class VmOperation {
                 waitUntilFrozen();
 
                 try {
-                    tracePhase("Running operation");
-                    doIt();
+                    run0();
                 } catch (Throwable t) {
                     if (TraceVmOperations) {
                         boolean lockDisabledSafepoints = Log.lock();
@@ -471,9 +498,13 @@ public class VmOperation {
                 }
             }
         } else {
-            tracePhase("Running operation");
-            doIt();
+            run0();
         }
+    }
+
+    private void run0() {
+        tracePhase("Running operation");
+        doIt();
     }
 
     private final Pointer.Procedure freezeThreadProcedure = new Pointer.Procedure() {
@@ -536,8 +567,31 @@ public class VmOperation {
         return true;
     }
 
+    final class CountThreadProcedure implements Pointer.Procedure {
+        private int count;
+        @Override
+        public void run(Pointer vmThreadLocals) {
+            count++;
+        }
+        public int count() {
+            count = 0;
+            VmThreadMap.ACTIVE.forAllThreadLocals(threadPredicate, this);
+            return count;
+        }
+    }
+
+    private final CountThreadProcedure countThreadProcedure = new CountThreadProcedure();
+
+    /**
+     * Gets the number of threads in the domain of this operation.
+     */
+    public int countThreads() {
+        return countThreadProcedure.count();
+    }
+
     private void waitUntilFrozen() {
         tracePhase("Waiting for thread(s) to freeze");
+
         if (singleThread == null) {
             VmThreadMap.ACTIVE.forAllThreadLocals(threadPredicate, waitUntilFrozenProcedure);
         } else {
@@ -579,6 +633,31 @@ public class VmOperation {
         return false;
     }
 
+    static int SafepointSpinBeforeYield = 2000;
+    static {
+        VMOptions.addFieldOption("-XX:", "SafepointSpinBeforeYield",
+            "Number of iterations in VM operation thread while waiting for a thread to freeze before falling back to yield or sleep");
+    }
+
+    /**
+     * Pauses/yields/sleeps the VM operation thread while waiting for another thread to freeze.
+     *
+     * @param thread the thread we are waiting for
+     * @param steps the number of times this has been called while waiting for {@code thread} to freeze
+     */
+    private static void waitForThreadFreezePause(VmThread thread, int steps) {
+        if (steps < SafepointSpinBeforeYield) {
+            SpecialBuiltin.pause();
+        } else {
+            int attempts = steps - SafepointSpinBeforeYield;
+            if (attempts < 25) {
+                VmThread.nonJniSleep(1);
+            } else {
+                VmThread.nonJniSleep(10);
+            }
+        }
+    }
+
     /**
      * Blocks the current thread (i.e. the VM operation thread) until a given mutator thread is frozen.
      *
@@ -587,6 +666,7 @@ public class VmOperation {
     final void waitForThreadFreeze(VmThread thread) {
         Pointer vmThreadLocals = thread.vmThreadLocals();
 
+        int steps = 0;
         if (!frozenByEnclosing(thread)) {
 
             if (UseCASBasedThreadFreezing) {
@@ -600,13 +680,15 @@ public class VmOperation {
                     } else if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IS_FROZEN)) {
                         FatalError.unexpected("VM operation thread found an already frozen thread");
                     }
-                    Thread.yield();
+                    waitForThreadFreezePause(thread, steps);
+                    steps++;
                 }
             } else {
                 while (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(THREAD_IN_JAVA)) {
                     // Wait for thread to be in native code, either as a result of a safepoint or because
                     // that's where it was when its FROZEN variable was set to true.
-                    Thread.yield();
+                    waitForThreadFreezePause(thread, steps);
+                    steps++;
                 }
             }
         }

@@ -72,34 +72,6 @@ int getTrapNumber(int signal) {
     return -signal;
 }
 
-#if 0
-void dump() {
-    int signal;
-    sigset_t sigs;
-    sigprocmask(0, NULL, &sigs);
-    log_print("procmask:");
-    for (signal = 1; signal < 32; signal++) {
-        if (sigismember(&sigs, signal)) {
-            char name[SIG2STR_MAX];
-            sig2str(signal, name);
-            log_print(" %s", name);
-        }
-    }
-    log_println("");
-
-    thr_sigsetmask(0, NULL, &sigs);
-    log_print("thr_sigmask:");
-    for (signal = 1; signal < 32; signal++) {
-        if (sigismember(&sigs, signal)) {
-            char name[SIG2STR_MAX];
-            sig2str(signal, name);
-            log_print(" %s", name);
-        }
-    }
-    log_println("");
-}
-#endif
-
 #if os_SOLARIS
 #include <thread.h>
 #define thread_setSignalMask thr_sigsetmask
@@ -136,8 +108,22 @@ void* setSignalHandler(int signal, SignalHandlerFunction handler) {
     if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
         log_exit(1, "sigaction failed");
     }
+
+    if (traceTraps || log_TRAP) {
+        log_lock();
+        log_print("Registered handler ");
+        log_print_symbol((Address) handler);
+        log_print(" for signal %d", signal);
+        if (oldSigaction.sa_handler != NULL) {
+            log_print(" replacing handler ");
+            log_print_symbol((Address) oldSigaction.sa_handler);
+        }
+        log_print_newline();
+        log_unlock();
+    }
     return (void *) oldSigaction.sa_handler;
 #endif
+
 }
 
 static Address getInstructionPointer(UContext *ucontext) {
@@ -418,8 +404,6 @@ Address nativeInitialize(Address javaTrapStub) {
     /* This function must be called on the primordial thread. */
     c_ASSERT(getThreadLocal(int, threadLocals_current(), ID) == 0);
 
-//    dump();
-
     theJavaTrapStub = javaTrapStub;
     setSignalHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
     setSignalHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
@@ -430,15 +414,19 @@ Address nativeInitialize(Address javaTrapStub) {
     /* Save the current signal mask to apply it to the VM operation thread. */
     thread_setSignalMask(0, NULL, &vmOperationThreadSignalMask);
 
-    /* Block all asynchronous signals for the primordial thread. It cannot handle
-     * these signals as it does not have a VMThread object. */
+    /* Block all asynchronous signals for threads exception the VM operation thread. */
     sigfillset(&normalThreadSignalMask);
     sigdelset(&normalThreadSignalMask, SIGSEGV);
     sigdelset(&normalThreadSignalMask, SIGBUS);
     sigdelset(&normalThreadSignalMask, SIGILL);
     sigdelset(&normalThreadSignalMask, SIGFPE);
+    sigdelset(&normalThreadSignalMask, SIGUSR1);
+
+    /* Let all threads be stopped by a debugger. */
+    sigdelset(&normalThreadSignalMask, SIGTRAP);
+
+    /* Apply the normal thread mask to the primordial thread. */
     thread_setSignalMask(SIG_BLOCK, &normalThreadSignalMask, NULL);
-//    dump();
 
     return (Address) &traceTraps;
 }

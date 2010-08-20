@@ -123,7 +123,11 @@ public final class VmThreadMap {
          * @return the ID assigned to {@code thread}
          */
         int acquire(VmThread thread) {
-            FatalError.check(thread.id() == 0, "VmThread already has an ID");
+            int id = thread.id();
+            if (id != 0) {
+                FatalError.check(get(id) == thread, "Thread's ID identifies another thread");
+                return id;
+            }
             final int length = freeList.length;
             if (nextID >= length) {
                 // grow the free list and initialize the new part
@@ -140,7 +144,7 @@ public final class VmThreadMap {
                 }
                 threads = newVmThreads;
             }
-            final int id = nextID;
+            id = nextID;
             nextID = freeList[nextID];
             threads[id] = thread;
             thread.setID(id);
@@ -279,7 +283,7 @@ public final class VmThreadMap {
         if (ACTIVE.mainThreadExited) {
             return false;
         }
-        if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+        if (VmThread.TraceThreads) {
             boolean lockDisabledSafepoints = Log.lock();
             Log.print("Adding non-daemon thread - ");
             Log.print(ACTIVE.nonDaemonThreads + 1);
@@ -296,7 +300,7 @@ public final class VmThreadMap {
      * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on {@link #THREAD_LOCK}.</b>
      */
     static void decrementNonDaemonThreads() {
-        if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+        if (VmThread.TraceThreads) {
             boolean lockDisabledSafepoints = Log.lock();
             Log.print("Removed non-daemon thread - ");
             Log.print(ACTIVE.nonDaemonThreads - 1);
@@ -332,7 +336,7 @@ public final class VmThreadMap {
         setNext(threadLocals, Pointer.zero());
         // release the ID for a later thread's use
         idMap.release(thread.id());
-        if (!thread.daemon && thread != VmThread.MAIN_VM_THREAD) {
+        if (!thread.daemon && thread != VmThread.mainThread) {
             decrementNonDaemonThreads();
         }
         liveThreads--;
@@ -383,10 +387,10 @@ public final class VmThreadMap {
      * This must only be called by the {@linkplain VmThread#MAIN_VM_THREAD main} thread.
      */
     public void joinAllNonDaemons() {
-        FatalError.check(VmThread.current() == VmThread.MAIN_VM_THREAD, "Only the main thread should join non-daemon threads");
+        FatalError.check(VmThread.current() == VmThread.mainThread, "Only the main thread should join non-daemon threads");
         synchronized (THREAD_LOCK) {
             while (nonDaemonThreads > 0) {
-                if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+                if (VmThread.TraceThreads) {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Main thread waiting for ");
                     Log.print(nonDaemonThreads);
@@ -400,7 +404,7 @@ public final class VmThreadMap {
                 }
             }
         }
-        if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+        if (VmThread.TraceThreads) {
             Log.println("Main thread finished waiting for all non-daemon threads to terminate");
         }
     }

@@ -20,7 +20,11 @@
  */
 package com.sun.max.vm.runtime;
 
-
+/**
+ * Queue used by the {@link VmOperationThread} to process {@linkplain VmOperationThread#submit(VmOperation) submitted} operations.
+ *
+ * @author Doug Simon
+ */
 public class VmOperationQueue {
     private int length;
     private VmOperation head;
@@ -46,7 +50,8 @@ public class VmOperationQueue {
      * @param node
      */
     public static void insert(VmOperation queue, VmOperation node) {
-        assert queue.next.previous == queue && queue.previous.next == queue;
+        FatalError.check(node.next == null && node.previous == null, "Inserting VM operation into queue twice");
+        FatalError.check(queue.next.previous == queue && queue.previous.next == queue, "Malformed queue");
         node.previous = queue;
         node.next = queue.next;
         queue.next.previous = node;
@@ -54,9 +59,12 @@ public class VmOperationQueue {
     }
 
     public static void unlink(VmOperation node) {
-        assert node.next.previous == node && node.previous.next == node;
+        FatalError.check(node.next != null && node.previous != null, "Unlinking node not in queue");
+        FatalError.check(node.next.previous == node && node.previous.next == node, "Malformed queue");
         node.previous.next = node.next;
         node.next.previous = node.previous;
+        node.next = null;
+        node.previous = null;
     }
 
     public void addFirst(VmOperation node) {

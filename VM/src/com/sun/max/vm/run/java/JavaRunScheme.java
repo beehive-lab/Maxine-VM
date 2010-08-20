@@ -187,13 +187,13 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         // Now we can decode all the other VM arguments using the full language
         if (VMOptions.parseStarting()) {
             VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.STARTING);
-            VmOperationThread.initialize();
-            SpecialReferenceManager.initialize(MaxineVM.Phase.STARTING);
-            SignalDispatcher.initialize();
 
             if (Heap.ExcessiveGCFrequency != 0) {
                 new ExcessiveGCDaemon(Heap.ExcessiveGCFrequency).start();
             }
+
+            // Install the signal handler for dumping threads when SIGHUP is received
+            Signal.handle(new Signal("HUP"), new PrintThreads(true));
         }
     }
 
@@ -273,8 +273,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             if (error) {
                 MaxineVM.setExitCode(-1);
             }
-
-            SignalDispatcher.terminate();
 
             VMConfiguration.hostOrTarget().finalizeSchemes(MaxineVM.Phase.RUNNING);
         }

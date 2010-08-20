@@ -21,6 +21,7 @@
 package com.sun.max.vm.prototype;
 
 import java.io.*;
+import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -31,7 +32,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.jdk.JDK.*;
+import com.sun.max.vm.jdk.JDK.ClassRef;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -140,7 +141,7 @@ public final class JDKInterceptor {
             "pending",
         JDK.java_lang_ref_Finalizer,
             "unfinalized",
-            "queue",
+            new ValueField("queue", ReferenceValue.from(new ReferenceQueue())),
         JDK.java_lang_Throwable,
             "backtrace",
         JDK.java_lang_Thread,

@@ -27,11 +27,21 @@ import sun.misc.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.monitor.modal.sync.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
  * The thread used to post and dispatch signals to user supplied {@link SignalHandler}s.
+ * The {@linkplain VmThread#signalDispatcherThread single instance} of this thread is
+ * built into the boot image so that signal delivery during GC is safe.
+ *
+ * Apart from the signal to terminate the signal dispatcher thread, only
+ * the {@linkplain VmOperationThread VM operation thread} can post signals
+ * to this thread. That is, all threads exception for the VM operation thread
+ * have their signal mask set to block all signals except the synchronous
+ * signal employed by the VM for safepointing and detecting runtime exceptions
  *
  * @author Doug Simon
  */
@@ -48,22 +58,10 @@ public final class SignalDispatcher extends Thread {
     private static final int ExitSignal = PendingSignals.length() - 1;
 
     /**
-     * The singleton {@link SignalDispatcher} thread.
-     * This is initialized by {@link #initialize()}.
+     * The lock used by the VM operation thread to notify the signal dispatcher thread when it
+     * has posted a new {@linkplain #PendingSignals pending signal}.
      */
-    static SignalDispatcher INSTANCE;
-
-    /**
-     * Called early on in the Java startup sequence during the {@link MaxineVM.Phase#STARTING} phase.
-     * This creates the {@linkplain #INSTANCE singleton} dispatcher thread and starts it.
-     */
-    public static void initialize() {
-        assert INSTANCE == null;
-        INSTANCE = new SignalDispatcher();
-        INSTANCE.start();
-
-        Signal.handle(new Signal("HUP"), new PrintThreads(true));
-    }
+    private static final Object LOCK = JavaMonitorManager.newStickyLock();
 
     /**
      * Gets the number of signals supported by the platform that may be delivered to the VM.
@@ -73,8 +71,10 @@ public final class SignalDispatcher extends Thread {
     @HOSTED_ONLY
     private static native int nativeNumberOfSignals();
 
-    private SignalDispatcher() {
-        super("Signal Dispatcher");
+    @HOSTED_ONLY
+    public SignalDispatcher(ThreadGroup group) {
+        super(group, "Signal Dispatcher");
+        setDaemon(true);
     }
 
     /**
@@ -82,33 +82,67 @@ public final class SignalDispatcher extends Thread {
      *
      * @return the next available pending signal (which is removed from the set of pending signals)
      */
-    public int waitForSignal() {
+    private int waitForSignal() {
         while (true) {
             for (int signal = 0; signal < PendingSignals.length(); signal++) {
                 int n = PendingSignals.get(signal);
                 if (n > 0 && PendingSignals.compareAndSet(signal, n, n - 1)) {
+
+                    if (TraceSignals) {
+                        boolean lockDisabledSafepoints = Log.lock();
+                        Log.print("Handling signal ");
+                        Log.print(signal);
+                        Log.println(" on the SignalDispatcher thread");
+                        Log.unlock(lockDisabledSafepoints);
+                    }
                     return signal;
                 }
             }
 
-            synchronized (INSTANCE) {
+            // There must never be a safepoint between the acquisition of LOCK and blocking on it (LOCK.wait()).
+            // If this was to happen and a signal occurred during the VM operation for which safepoints were
+            // triggered, there would be a deadlock between the signal dispatcher thread (which is holding
+            // LOCK) and the VM operation thread (which wants to acquire LOCK to notify it).
+            boolean wasDisabled = Safepoint.disable();
+            FatalError.check(!wasDisabled, "Safepoints were disabled multiple times on SignalDispatcher thread");
+            synchronized (LOCK) {
                 try {
-                    this.wait();
+                    LOCK.wait();
                 } catch (InterruptedException e) {
                 }
             }
+            Safepoint.enable();
         }
+    }
+
+    private static boolean TraceSignals;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceSignals", "Trace signals.");
     }
 
     /**
      * Adds a signal to the set of pending signals and notifies the dispatcher thread.
      */
     public static void postSignal(int signal) {
+        FatalError.check(signal == ExitSignal || VmThread.current().isVmOperationThread(), "Asynchronous signal posted by non VM operation thread");
+        if (TraceSignals) {
+            boolean lockDisabledSafepoints = Log.lock();
+            if (signal == ExitSignal) {
+                Log.print("Posting ExitSignal");
+            } else {
+                Log.print("Posting signal ");
+                Log.print(signal);
+            }
+            Log.println(" to the SignalDispatcher thread");
+            Log.unlock(lockDisabledSafepoints);
+        }
         PendingSignals.incrementAndGet(signal);
-        synchronized (INSTANCE) {
-            INSTANCE.notify();
+        synchronized (LOCK) {
+            LOCK.notify();
         }
     }
+
+    private static volatile boolean started;
 
     /**
      * Terminates the signal dispatcher thread.
@@ -119,6 +153,7 @@ public final class SignalDispatcher extends Thread {
 
     @Override
     public void run() {
+        started = true;
         while (true) {
             int signal = waitForSignal();
 

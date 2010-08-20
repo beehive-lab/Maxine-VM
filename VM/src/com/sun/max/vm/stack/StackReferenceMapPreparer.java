@@ -69,11 +69,12 @@ import com.sun.max.vm.thread.*;
  */
 public final class StackReferenceMapPreparer {
 
-    public static final VMBooleanXXOption verifyRefMaps = VMOptions.register(new VMBooleanXXOption("-XX:-",
-            "VerifyRefMaps",
+    public static boolean VerifyRefMaps;
+    static {
+        VMOptions.addFieldOption("-XX:", "VerifyRefMaps", StackReferenceMapPreparer.class,
             "Verify reference maps by performing a stack walk and checking plausibility of reference roots in " +
-            "the stack--as often as possible."),
-            MaxineVM.Phase.PRISTINE);
+            "the stack--as often as possible.", MaxineVM.Phase.PRISTINE);
+    }
 
     private final Timer timer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
     private Pointer triggeredVmThreadLocals;
@@ -692,7 +693,7 @@ public final class StackReferenceMapPreparer {
      * heuristic.
      */
     public static void verifyReferenceMapsForThisThread() {
-        if (verifyRefMaps.getValue()) {
+        if (VerifyRefMaps) {
             VmThread current = VmThread.current();
             current.stackReferenceMapVerifier().verifyReferenceMaps(current);
         }

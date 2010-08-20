@@ -52,7 +52,7 @@ public abstract class MethodVerifier {
         if (classVerifier.verbose) {
             this.verbose = true;
         } else {
-            this.verbose = Verifier.methodToTrace != null && classMethodActor.format("%H.%n").contains(Verifier.methodToTrace);
+            this.verbose = Verifier.TraceVerification != null && classMethodActor.format("%H.%n").contains(Verifier.TraceVerification);
         }
     }
 

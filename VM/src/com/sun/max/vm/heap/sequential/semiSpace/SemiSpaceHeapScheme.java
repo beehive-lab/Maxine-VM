@@ -119,7 +119,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      */
     private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(gripVerifier);
 
-    private Collect collect;
+    private CollectHeap collectHeap;
 
     private LinearAllocationMemoryRegion fromSpace = null;
     private LinearAllocationMemoryRegion toSpace = null;
@@ -176,8 +176,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     /**
      * A VM option for triggering a GC before every allocation.
      */
-    private static final VMBooleanXXOption GCBeforeAllocationOption = register(new VMBooleanXXOption("-XX:-GCBeforeAllocation",
-        "Perform a garbage collection before every allocation. This is ignored if " + useTLABOption + " is specified."), MaxineVM.Phase.PRISTINE);
+    static boolean GCBeforeAllocation;
+    static {
+        VMOptions.addFieldOption("-XX:", "GCBeforeAllocation", SemiSpaceHeapScheme.class,
+            "Perform a garbage collection before every allocation from the global heap.", MaxineVM.Phase.PRISTINE);
+    }
 
     public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -191,7 +194,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             // The monitor for the collector must be allocated in the image
             JavaMonitorManager.bindStickyMonitor(this);
 
-            collect = new Collect();
+            collectHeap = new CollectHeap();
         }
 
         if (phase == MaxineVM.Phase.PRISTINE) {
@@ -329,7 +332,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     /**
      * Routine that performs the actual garbage collection.
      */
-    final class Collect extends GCOperation {
+    final class CollectHeap extends GCOperation {
+
+        public CollectHeap() {
+            super("CollectHeap");
+        }
+
         @Override
         public void collect(int invocationCount) {
             try {
@@ -712,7 +720,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
     private void executeGC() {
         if (!Heap.gcDisabled()) {
-            VmOperationThread.submit(collect);
+            collectHeap.submit();
         }
     }
 
@@ -734,7 +742,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {
-        FatalError.check(Thread.holdsLock(Heap.HEAP_LOCK), "should own HEAP_LOCK");
         if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
             executeGC();
         }
@@ -886,7 +893,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         Pointer cell;
         Address end;
         do {
-            if (GCBeforeAllocationOption.getValue() && !VmThread.isAttaching()) {
+            if (GCBeforeAllocation && !VmThread.isAttaching()) {
                 Heap.collectGarbage(size);
             }
             oldAllocationMark = allocationMark().asPointer();
@@ -1045,8 +1052,21 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         Log.println("");
     }
 
-    private boolean shrink(Size amount) {
-        synchronized (HEAP_LOCK) {
+    /**
+     * Operation to shrink the heap.
+     */
+    final class ShrinkHeap extends VmOperation {
+
+        boolean result;
+        final Size amount;
+
+        public ShrinkHeap(Size amount) {
+            super("ShrinkHeap", null, Mode.Safepoint);
+            this.amount = amount;
+        }
+
+        @Override
+        protected void doIt() {
             final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
             logSpaces();
             executeGC();
@@ -1062,22 +1082,33 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 VirtualMemory.deallocate(fromSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
                 VirtualMemory.deallocate(toSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
                 logSpaces();
-                return true;
+                result = true;
             }
-            return false;
         }
     }
 
     @Override
     public boolean decreaseMemory(Size amount) {
         HeapScheme.Inspect.notifyDecreaseMemoryRequested(amount);
-        return shrink(amount);
+        ShrinkHeap shrinkHeap = new ShrinkHeap(amount);
+        synchronized (HEAP_LOCK) {
+            shrinkHeap.submit();
+        }
+        return shrinkHeap.result;
     }
 
-    @Override
-    public boolean increaseMemory(Size amount) {
-        synchronized (HEAP_LOCK) {
-            HeapScheme.Inspect.notifyIncreaseMemoryRequested(amount);
+    final class GrowHeap extends VmOperation {
+
+        boolean result;
+        final Size amount;
+
+        public GrowHeap(Size amount) {
+            super("GrowHeap", null, Mode.Safepoint);
+            this.amount = amount;
+        }
+
+        @Override
+        protected void doIt() {
             /* The conservative assumption is that "amount" is the total amount that we could
              * allocate. Since we can't deallocate our existing spaces until we know we can allocate
              * the new ones, our new spaces cannot be greater than amount/2 in size.
@@ -1088,10 +1119,19 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             if (pageAlignedAmount.greaterThan(fromSpace.size())) {
                 // grow adds the current space size to the amount in the grow policy
                 increaseGrowPolicy.setAmount(pageAlignedAmount.minus(fromSpace.size()));
-                return grow(increaseGrowPolicy);
+                result = grow(increaseGrowPolicy);
             }
-            return false;
         }
+    }
+
+    @Override
+    public boolean increaseMemory(Size amount) {
+        HeapScheme.Inspect.notifyIncreaseMemoryRequested(amount);
+        GrowHeap growHeap = new GrowHeap(amount);
+        synchronized (HEAP_LOCK) {
+            growHeap.submit();
+        }
+        return growHeap.result;
     }
 
     @Override

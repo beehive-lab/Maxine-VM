@@ -139,7 +139,7 @@ final class JDK_java_security_AccessController {
     }
 
    /**
-     * This class implements a closure that analayses protection domains on the call stack. It is based on the HotSpot
+     * This class implements a closure that analyzes protection domains on the call stack. It is based on the HotSpot
      * implementation.
      */
     private static class Context implements RawStackFrameVisitor {
