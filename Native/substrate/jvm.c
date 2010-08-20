@@ -1051,7 +1051,9 @@ Signal signals[] = {
    {"ILL",     SIGILL},
    {"TRAP",    SIGTRAP},
    {"ABRT",    SIGABRT},
+#if os_DARWIN
    {"EMT",     SIGEMT},
+#endif
    {"FPE",     SIGFPE},
    {"KILL",    SIGKILL},
    {"BUS",     SIGBUS},
@@ -1073,7 +1075,9 @@ Signal signals[] = {
    {"VTALRM",  SIGVTALRM},
    {"PROF",    SIGPROF},
    {"WINCH",   SIGWINCH},
+#if os_DARWIN
    {"INFO",    SIGINFO},
+#endif
    {"USR1",    SIGUSR1},
    {"USR2",    SIGUSR2},
   };
