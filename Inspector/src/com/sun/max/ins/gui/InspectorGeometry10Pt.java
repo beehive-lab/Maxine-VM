@@ -80,6 +80,10 @@ public class InspectorGeometry10Pt implements InspectorGeometry {
         return new Rectangle(75, 0, 350, 725);
     }
 
+    public Rectangle notepadFrameDefaultBounds() {
+        return new Rectangle(150, 150, 200, 200);
+    }
+
     // Java Source Inspector frame
     private static final Point javaSourceFrameDefaultLocation = new Point(100, 100);
     private static final Dimension javaSourceFramePrefSize = new Dimension(500, 500);

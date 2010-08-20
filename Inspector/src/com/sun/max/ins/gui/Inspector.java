@@ -440,6 +440,9 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public void vmProcessTerminated() {
     }
 
+    public void inspectionEnding() {
+    }
+
     public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
     }
 
