@@ -45,7 +45,7 @@ public class VmOperation_01 extends RunBench {
     }
 
     public static boolean test(int i) {
-        return new VmOperation_01(i).runBench(true);
+        return new VmOperation_01(i).runBench();
     }
 
     static class Bench extends MicroBenchmark {
