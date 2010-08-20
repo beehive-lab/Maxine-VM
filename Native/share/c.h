@@ -73,6 +73,8 @@ extern int _c_unimplemented(const char* function, const char* file, int line);
 
 extern void _c_assert(boolean condition, char *conditionString, char *fileName, int lineNumber);
 
+#define ARRAY_LENGTH(array) (sizeof(array)/sizeof((array)[0]))
+
 #define c_FATAL() c_ASSERT(false)
 
 #endif /*__c_h__*/

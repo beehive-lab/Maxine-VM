@@ -51,29 +51,44 @@ public class VMOption {
         /**
          * Constant denoting options that do not start with "-X".
          */
-        STANDARD(18, 72),
+        STANDARD(18, 72, "-"),
 
         /**
          * Constant denoting options that start with "-X" but not "-XX".
          */
-        NON_STANDARD(22, 92),
+        NON_STANDARD(22, 92, "-X"),
 
         /**
          * Constant denoting options that start with "C1X".
          */
-        C1X_SPECIFIC(42, 122),
+        C1X_SPECIFIC(42, 122, "-C1X"),
 
         /**
          * Constant denoting options that start with "-XX".
          */
-        IMPLEMENTATION_SPECIFIC(42, 122);
+        IMPLEMENTATION_SPECIFIC(42, 122, "-XX");
 
         public final int helpIndent;
         public final int helpLineMaxWidth;
+        public final String prefix;
 
-        Category(int helpIndent, int helpLineMaxWidth) {
+        Category(int helpIndent, int helpLineMaxWidth, String prefix) {
             this.helpIndent = helpIndent;
             this.helpLineMaxWidth = helpLineMaxWidth;
+            this.prefix = prefix;
+        }
+
+        public String optionName(VMOption option) {
+            String name = option.prefix.substring(prefix.length());
+            while (!Character.isJavaIdentifierStart(name.charAt(0))) {
+                name = name.substring(1);
+            }
+            for (int i = 0; i < name.length(); i++) {
+                if (!Character.isJavaIdentifierPart(name.charAt(i))) {
+                    return name.substring(0, i);
+                }
+            }
+            return name;
         }
 
         public static Category from(String prefix) {
@@ -87,9 +102,13 @@ public class VMOption {
                 return Category.NON_STANDARD;
             }
             return Category.STANDARD;
-
         }
     }
+
+    /**
+     * The name of the option. This is only unique within this option's {@linkplain #category() category}.
+     */
+    protected final String name;
 
     protected final String prefix;
     protected final boolean exactPrefix;
@@ -135,6 +154,7 @@ public class VMOption {
             this.prefix = prefix;
         }
         this.help = help;
+        this.name = category().optionName(this);
     }
 
     /**
@@ -236,6 +256,20 @@ public class VMOption {
      */
     public Category category() {
         return Category.from(prefix);
+    }
+
+    @Override
+    public final boolean equals(Object obj) {
+        if (obj instanceof VMOption) {
+            VMOption option = (VMOption) obj;
+            return option.category() == category() && option.name.equals(name);
+        }
+        return false;
+    }
+
+    @Override
+    public final int hashCode() {
+        return name.hashCode();
     }
 
     /**

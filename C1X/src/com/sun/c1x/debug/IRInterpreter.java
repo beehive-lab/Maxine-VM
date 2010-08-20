@@ -1141,7 +1141,7 @@ public class IRInterpreter {
 
         private Class<?> resolveClass(RiType type) {
             if (type.isResolved()) {
-                return (Class<?>) type.javaClass();
+                return type.javaClass();
             } else {
                 return resolveClass(type.name());
             }

@@ -286,6 +286,7 @@ public abstract class StackFrameWalker {
             traceCursor(current);
 
             if (targetMethod != null && (!inNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
+
                 // found target method
                 inNative = false;
 
@@ -316,10 +317,11 @@ public abstract class StackFrameWalker {
 
                 if (inNative) {
                     inNative = false;
-                    advanceFrameInNative(purpose);
+                    Pointer anchor = nextNativeStubAnchor();
+                    advanceFrameInNative(anchor, purpose);
                 } else {
                     if (calleeMethod == null) {
-                        // This is a native function that called a VM entry point such as the VmThread.run(),
+                        // This is a native function that called a VM entry point such as VmThread.run(),
                         // MaxineVM.run() or a JNI function.
                         break;
                     }
@@ -327,13 +329,20 @@ public abstract class StackFrameWalker {
                     ClassMethodActor lastJavaCalleeMethodActor = calleeMethod.classMethodActor();
                     if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
                         if (lastJavaCalleeMethodActor.isTrapStub()) {
-                            // This can only occur in the inspector and implies that execution is in the platform specific
-                            // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
-                            // particular, the return instruction pointer slot has not been updated with the instruction
-                            // pointer at which the fault occurred.
-                            break;
-                        }
-                        if (!advanceVmEntryPointFrame(calleeMethod)) {
+                            Pointer anchor = nextNativeStubAnchor();
+                            if (!anchor.isZero()) {
+                                // This can only occur in the inspector and implies that execution is in
+                                // Trap.trapStub() as a result a trap or signal while execution was in
+                                // native code.
+                                advanceFrameInNative(anchor, purpose);
+                            } else {
+                                // This can only occur in the inspector and implies that execution is in the platform specific
+                                // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
+                                // particular, the return instruction pointer slot has not been updated with the instruction
+                                // pointer at which the fault occurred.
+                                break;
+                            }
+                        } else if (!advanceVmEntryPointFrame(calleeMethod)) {
                             break;
                         }
                     } else if (lastJavaCalleeMethodActor == null) {
@@ -460,8 +469,7 @@ public abstract class StackFrameWalker {
      * Advances this walker past the first frame encountered when walking the stack of a thread that is executing
      * in native code.
      */
-    private void advanceFrameInNative(Purpose purpose) {
-        Pointer anchor = nextNativeStubAnchor();
+    private void advanceFrameInNative(Pointer anchor, Purpose purpose) {
         FatalError.check(!anchor.isZero(), "No native stub frame anchor found when executing 'in native'");
         Pointer lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset).asPointer();
         if (lastJavaCallerInstructionPointer.isZero()) {

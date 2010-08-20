@@ -160,7 +160,7 @@ public class Compilation implements Future<TargetMethod> {
         Throwable error = null;
         String methodString = "";
         try {
-            if (StackReferenceMapPreparer.verifyRefMaps.getValue()) {
+            if (StackReferenceMapPreparer.VerifyRefMaps) {
                 StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
             }
             if (GC_ON_COMPILE_OPTION.getValue() && Heap.isInitialized()) {

@@ -18,8 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.gen;
-
 /**
  * This package contains the port of the LIRGenerator which translates
  * HIR instructions to LIR instructions for the backend.
@@ -27,3 +25,4 @@ package com.sun.c1x.gen;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
+package com.sun.c1x.gen;

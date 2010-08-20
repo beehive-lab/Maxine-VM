@@ -135,10 +135,10 @@ public class VmThreadLocal {
     public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", false, "points to previous thread locals in list of all active");
 
     /**
-     * The {@linkplain FreezeThreads.AtSafepoint procedure} to be run on a thread when it traps at a {@linkplain Safepoint safepoint}.
+     * The {@link VmOperation} whose {@link VmOperation#doAtSafepoint(Pointer)} is invoked on a thread when it traps at a {@linkplain Safepoint safepoint}.
      */
-    public static final VmThreadLocal AT_SAFEPOINT_PROCEDURE
-        = new VmThreadLocal("AT_SAFEPOINT_PROCEDURE", true, "Procedure to run when a safepoint is triggered");
+    public static final VmThreadLocal VM_OPERATION
+        = new VmThreadLocal("VM_OPERATION", true, "Procedure to run when a safepoint is triggered");
 
     /**
      * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
@@ -183,14 +183,15 @@ public class VmThreadLocal {
     public static final VmThreadLocal LAST_JAVA_FRAME_ANCHOR = new VmThreadLocal("LAST_JAVA_FRAME_ANCHOR", false, "");
 
     /**
-     * The state of this thread with respect to {@linkplain FreezeThreads freezing}.
+     * The state of this thread with respect to {@linkplain VmOperation freezing}.
      * This will be one of the {@code THREAD_IN_...} constants defined in {@link Safepoint}.
      */
     public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", false, "Thread state wrt freezing");
 
     /**
-     * A boolean denoting whether this thread has been {@linkplain FreezeThreads frozen}.
+     * A boolean denoting whether this thread has been {@linkplain VmOperation frozen}.
      * A non-zero value means true, a zero value means false.
+     * This variable is only used when {@link VmOperation#UseCASBasedThreadFreezing} is {@code false}.
      */
     public static final VmThreadLocal FROZEN = new VmThreadLocal("FROZEN", false, "Non-zero if frozen");
 
@@ -480,7 +481,7 @@ public class VmThreadLocal {
      */
     public static void scanReferences(Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor) {
         final VmThread thread = VmThread.fromVmThreadLocals(vmThreadLocals);
-        boolean isGCThread = thread.isGCThread();
+        boolean isVmOperationThread = thread.isVmOperationThread();
 
         // Note: as a side effect, this lock serializes stack reference map scanning
         boolean lockDisabledSafepoints = Heap.traceRootScanning() && Log.lock();
@@ -502,7 +503,7 @@ public class VmThreadLocal {
             final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
             final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
 
-            if (!isGCThread && lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
+            if (!isVmOperationThread && lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
                 Log.print("The stack has slots between ");
                 Log.print(lastJavaCallerStackPointer);
                 Log.print(" and ");

@@ -37,7 +37,7 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.jdwp.vm.proxy.VMValue.Type;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.program.Classpath.*;
+import com.sun.max.program.Classpath.Entry;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.darwin.*;
@@ -50,7 +50,8 @@ import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.jdwputil.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.*;
+import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
+import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
@@ -64,7 +65,6 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.prototype.*;
@@ -216,7 +216,7 @@ public abstract class TeleVM implements MaxVM {
      * @return a new VM instance
      */
     public static TeleVM create(Options options) throws BootImageException {
-        HostObjectAccess.setMainThread(Thread.currentThread());
+        //HostObjectAccess.setMainThread(Thread.currentThread());
 
         mode = Mode.valueOf(options.modeOption.getValue().toUpperCase());
 

@@ -27,6 +27,7 @@ import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.sun.max.*;
 import com.sun.max.gui.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -302,6 +303,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     Trace.end(TRACE_VALUE + 1, tracePrefix() + "handling execution request: " + request);
                 } catch (InterruptedException interruptedException) {
                     ProgramWarning.message(tracePrefix() + "Could not take request from sceduling queue: " + interruptedException);
+                } catch (Throwable throwable) {
+                    ProgramWarning.message(tracePrefix() + "Error on RequestHandlingThread: " + Utils.stackTraceAsString(throwable));
                 } finally {
                     vm().unlock();
                 }
