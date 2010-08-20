@@ -24,6 +24,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;
 import java.util.*;
+import java.util.regex.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -47,6 +48,11 @@ import com.sun.max.unsafe.*;
  * @see NotepadManager
  */
 public final class NotepadInspector extends Inspector {
+
+    // A compiled regular expression pattern that matches hex numbers (with or without prefix) and ordinary
+    // integers as well.
+    // TODO (mlvdv) fix pattern failure at end of contents (if no newline)
+    private static final Pattern hexNumberPattern = Pattern.compile("[0-9a-fA-F]+[^a-zA-Z0-9]");
 
     // Set to null when inspector closed.
     private static NotepadInspector notepadInspector;
@@ -83,7 +89,6 @@ public final class NotepadInspector extends Inspector {
         this.notepad = notepad;
 
         textArea = new JTextArea(notepad.getContents());
-        setDisplayStyle(textArea);
 
         // Get the standard editing actions for the text area and wrap
         // them in actions with different names
@@ -149,6 +154,21 @@ public final class NotepadInspector extends Inspector {
                 save();
             }
         });
+        textArea.getDocument().addDocumentListener(new DocumentListener() {
+
+            public void changedUpdate(DocumentEvent e) {
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                System.out.println("insert");
+                updateHighlighting();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                System.out.println("remove");
+                updateHighlighting();
+            }
+        });
 
         notepadPrintAction = new NotepadPrintAction(inspection);
         inspectSelectedAddressMemoryAction = new InspectSelectedAddressMemoryAction(inspection);
@@ -182,6 +202,8 @@ public final class NotepadInspector extends Inspector {
         viewMemoryRegionsMenuItem.setText("View Memory Regions");
         memoryMenu.add(viewMemoryRegionsMenuItem);
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
+
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -203,6 +225,8 @@ public final class NotepadInspector extends Inspector {
     @Override
     protected void createView() {
         setContentPane(new InspectorScrollPane(inspection(), textArea));
+        setDisplayStyle(textArea);
+        updateHighlighting();
     }
 
     @Override
@@ -245,6 +269,21 @@ public final class NotepadInspector extends Inspector {
     }
 
     /**
+     * Apply visual styles to parts of the editing area that are
+     * recognized, for example as VM memory addresses.
+     */
+    private void updateHighlighting() {
+        // TODO (mlvdv) use address matcher to drive some display features;
+        // will require using a JEditorPane/JTextPane instead of the JTextArea.
+//        final String text = textArea.getText();
+//        final Matcher matcher = hexNumberPattern.matcher(text);
+//        while (matcher.find()) {
+//            System.out.println("match=(" + matcher.start() + "," + matcher.end() + ")");
+//        }
+
+    }
+
+    /**
      * Writes the current contents of the editor back to the persistent notepad.
      */
     private void save() {
@@ -284,7 +323,7 @@ public final class NotepadInspector extends Inspector {
             try {
                 selectedAddress = Address.parse(selectedText, 16);
             } catch (NumberFormatException e) {
-                // TODO: handle exception
+                // Can't interpret as an address; allow null to be returned.
             }
         }
         return selectedAddress;
