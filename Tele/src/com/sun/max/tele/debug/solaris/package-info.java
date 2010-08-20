@@ -18,7 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/** 
+/**
  * @author Bernd Mathiske
+ * @author Mick Jordan
+ *
+ * Solaris-specific implementation of process/thread machinery of the Inspector.
+ *
+ * Makes extensive use of the common support code on {@link com.sun.max.tele.debug.unix}.
  */
 package com.sun.max.tele.debug.solaris;

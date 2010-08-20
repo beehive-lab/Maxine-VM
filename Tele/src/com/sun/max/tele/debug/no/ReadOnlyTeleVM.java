@@ -44,16 +44,16 @@ public final class ReadOnlyTeleVM extends TeleVM {
      * @param sourcepath the source code path to search for class or interface definitions
      */
     public ReadOnlyTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, TeleProcess.EMPTY_COMMAND_LINE_ARGUMENTS, -1, null);
+        super(bootImageFile, bootImage, sourcepath, TeleProcess.EMPTY_COMMAND_LINE_ARGUMENTS);
     }
 
     @Override
-    protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
+    protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
         return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration.platform(), programFile());
     }
 
     @Override
-    protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
+    protected Pointer loadBootImage() throws BootImageException {
         final ReadOnlyTeleProcess teleProcess = (ReadOnlyTeleProcess) teleProcess();
         return teleProcess.heapPointer();
     }
