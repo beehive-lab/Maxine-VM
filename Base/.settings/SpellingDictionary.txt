@@ -125,6 +125,8 @@ mutex
 namespace
 nop
 nops
+notepad
+notepads
 op
 outbound
 payload
