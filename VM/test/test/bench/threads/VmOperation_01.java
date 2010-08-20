@@ -54,9 +54,13 @@ public class VmOperation_01 extends RunBench {
         private volatile boolean done;
         private volatile int started;
         private VmOperation operation;
+        private Barrier startGate;
+        private Barrier endGate;
 
         Bench(int n) {
             numThreads = n;
+            startGate = new Barrier(n + 1);
+            endGate = new Barrier(n + 1);
         }
 
         @Override
@@ -82,27 +86,17 @@ public class VmOperation_01 extends RunBench {
             };
 
             // Wait for all threads to start so that we only benchmark the time taken to freeze threads
-            while (started != numThreads) {
-                Thread.yield();
-            }
+            startGate.waitForRelease();
         }
 
         @Override
         public void postrun() {
-            done = true;
-
-            // Wait for all threads to stop so that they don't interfere with subsequent runs
-            for (int s = 0; s < spinners.length; s++) {
-                try {
-                    spinners[s].join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+            endGate.waitForRelease();
         }
 
         @Override
         public long run() {
+            startGate.waitForRelease();
             operation.submit();
             return defaultResult;
         }
@@ -111,11 +105,12 @@ public class VmOperation_01 extends RunBench {
 
             @Override
             public void run() {
-                started++;
+                startGate.waitForRelease();
                 long count = 0;
                 while (!done) {
                     count++;
                 }
+                endGate.waitForRelease();
             }
         }
     }
