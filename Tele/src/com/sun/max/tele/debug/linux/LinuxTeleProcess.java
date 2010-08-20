@@ -34,8 +34,8 @@ import com.sun.max.vm.prototype.*;
  */
 public final class LinuxTeleProcess extends UnixTeleProcessAdaptor {
 
-    LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        super(teleVM, platform, programFile, commandLineArguments, agent);
+    LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
+        super(teleVM, platform, programFile, commandLineArguments);
     }
 
     @Override

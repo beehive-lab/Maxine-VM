@@ -21,13 +21,18 @@
 package com.sun.max.tele.debug.unix;
 
 import java.io.*;
+import java.net.*;
 import java.nio.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.natives.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Provides default implementations of the methods in {@link UnixAgentTeleChannelProtocol}.
@@ -37,18 +42,31 @@ import com.sun.max.unsafe.*;
  * @author Mick Jordan
  *
  */
-public class UnixNativeTeleChannelProtocolAdaptor implements UnixAgentTeleChannelProtocol {
+public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol {
 
     private long processHandle;
     private TeleChannelNatives natives;
+    protected TeleVMAgent agent;
 
     public UnixNativeTeleChannelProtocolAdaptor(TeleChannelNatives natives) {
         this.natives = natives;
     }
 
-    @Override
-    public long create(String programFile, String[] commandLineArguments, TeleVMAgent agent) {
+    protected Pointer createBufferAndAgent(String programFile, String[] commandLineArguments) throws BootImageException {
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(new File(programFile), commandLineArguments);
+        this.agent = new TeleVMAgent();
+        agent.start();
+        return commandLineArgumentsBuffer;
+    }
+
+    @Override
+    public long create(String programFile, String[] commandLineArguments, long extra) {
+        final Pointer commandLineArgumentsBuffer;
+        try {
+            commandLineArgumentsBuffer = createBufferAndAgent(programFile, commandLineArguments);
+        } catch (BootImageException ex) {
+            return -1;
+        }
         processHandle = natives.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
         return processHandle;
     }
@@ -65,7 +83,19 @@ public class UnixNativeTeleChannelProtocolAdaptor implements UnixAgentTeleChanne
 
     @Override
     public long getBootHeapStart() {
-        return 0;
+        try {
+            final Socket socket = agent.waitForVM();
+            final InputStream stream = socket.getInputStream();
+            final Endianness endianness = TeleVM.vmConfigurationStatic().platform().processorKind.dataModel.endianness;
+            final Pointer heap = Word.read(stream, endianness).asPointer();
+            Trace.line(1, "Received boot image address from VM: 0x" + heap.toHexString());
+            socket.close();
+            agent.close();
+            return heap.toLong();
+        } catch (Exception ioException) {
+            FatalError.unexpected("Error while reading boot image address from VM process", ioException);
+            return 0;
+        }
     }
 
     @Override
@@ -200,10 +230,5 @@ public class UnixNativeTeleChannelProtocolAdaptor implements UnixAgentTeleChanne
         return 0;
     }
 
-    @Override
-    public long create(String programFile, String[] commandLineArguments, long extra1) {
-        ProgramError.unexpected("TeleChannelProtocol.create(String, String[], long) should not be called in this configuration");
-        return 0;
-    }
 
 }

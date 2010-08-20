@@ -18,38 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.darwin;
-
-import java.io.*;
-
-import com.sun.max.platform.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.Params;
-import com.sun.max.tele.debug.unix.*;
-import com.sun.max.vm.prototype.*;
-
 /**
- * @author Bernd Mathiske
+ * @author Mick Jordan
+ *
+ * Common code for the Unix-specific implementations of process/thread machinery of the Inspector.
+ *
+ * Information needed by the Inspector, critically the location of the boot heap, is garnered from
+ * a {@link com.sun.max.tele.TeleVMAgent} that communicates back to the Inspector on a socket.
+ *
+ * {@link com.sun.max.tele.debug.unix.UnixAgentTeleChannelProtocol} reflects this by
+ * extending {@link com.sun.max.tele.TeleChannelProtocol} with a new {@code create} method
+ * that takes the {@code TeleVMAgent} as an extra parameter.
+ *
+ * Much of the implementation of {@link com.sun.max.tele.debug.TeleProcess} is common to
+ * all the Unix implementations and is captured in {@link com.sun.max.tele.debug.unix.UnixTeleProcessAdaptor}.
+ * Similarly, the access to the native methods that implement the process control is common and
+ * captured in {@link com.sun.max.tele.debug.unix.UnixNativeTeleChannelProtocolAdaptor}.
+ *
  */
-public final class DarwinTeleProcess extends UnixTeleProcessAdaptor {
-
-    /**
-     * Creates a handle to a native Darwin process (Maxine VM) by launching a new process with a given set of command line arguments.
-     *
-     * @param teleVM
-     * @param platform
-     * @param programFile
-     * @param commandLineArguments
-     * @throws BootImageException
-     */
-    DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
-        super(teleVM, platform, programFile, commandLineArguments);
-    }
-
-    @Override
-    protected TeleNativeThread createTeleNativeThread(Params params) {
-        return new DarwinTeleNativeThread(this, params);
-    }
-
-}
+package com.sun.max.tele.debug.unix;

@@ -25,12 +25,12 @@ import java.nio.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.unix.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.prototype.*;
 
 
 /**
@@ -64,11 +64,16 @@ public class LinuxNativeTeleChannelProtocol extends UnixNativeTeleChannelProtoco
     }
 
     @Override
-    public long create(String programFile, String[] commandLineArguments, TeleVMAgent agent) {
-        final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(new File(programFile), commandLineArguments);
+    public long create(String programFile, String[] commandLineArguments, long extra) {
+        final Pointer commandLineArgumentsBuffer;
+        try {
+            commandLineArgumentsBuffer = createBufferAndAgent(programFile, commandLineArguments);
+        } catch (BootImageException ex) {
+            return -1;
+        }
         leaderTask = LinuxTask.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
         if (leaderTask == null) {
-            return 0;
+            return -1;
         }
         return 1;
     }

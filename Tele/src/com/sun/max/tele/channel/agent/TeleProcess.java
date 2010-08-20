@@ -18,38 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.darwin;
+package com.sun.max.tele.channel.agent;
 
-import java.io.*;
+import java.util.*;
 
-import com.sun.max.platform.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.Params;
-import com.sun.max.tele.debug.unix.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.tele.channel.TeleChannelDataIOProtocol;
 
 /**
- * @author Bernd Mathiske
+ * This is a stub implementation that exists only on the agent side of the split communication protocol.
+ *
+ * @author Mick Jordan
+ *
  */
-public final class DarwinTeleProcess extends UnixTeleProcessAdaptor {
 
-    /**
-     * Creates a handle to a native Darwin process (Maxine VM) by launching a new process with a given set of command line arguments.
-     *
-     * @param teleVM
-     * @param platform
-     * @param programFile
-     * @param commandLineArguments
-     * @throws BootImageException
-     */
-    DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
-        super(teleVM, platform, programFile, commandLineArguments);
-    }
-
-    @Override
-    protected TeleNativeThread createTeleNativeThread(Params params) {
-        return new DarwinTeleNativeThread(this, params);
+public class TeleProcess {
+    public final void jniGatherThread(List<TeleNativeThread> threads,
+                    int id,
+                    long localHandle,
+                    long handle,
+                    int state,
+                    long instructionPointer,
+                    long stackBase,
+                    long stackSize,
+                    long tlb,
+                    long tlbSize,
+                    int tlaSize) {
+        threads.add(new TeleNativeThread(new TeleChannelDataIOProtocol.GatherThreadData(id, localHandle, handle, state, instructionPointer, stackBase, stackSize, tlb, tlbSize, tlaSize)));
     }
 
 }

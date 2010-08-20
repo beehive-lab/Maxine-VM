@@ -45,11 +45,10 @@ public final class SolarisTeleProcess extends UnixTeleProcessAdaptor {
      * @param platform
      * @param programFile
      * @param commandLineArguments
-     * @param agent TODO
      * @throws BootImageException
      */
-    SolarisTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        super(teleVM, platform, programFile, commandLineArguments, agent);
+    SolarisTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
+        super(teleVM, platform, programFile, commandLineArguments);
     }
 
     @Override

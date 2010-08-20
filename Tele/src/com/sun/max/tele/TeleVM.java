@@ -24,7 +24,6 @@ import static com.sun.max.tele.debug.ProcessState.*;
 
 import java.io.*;
 import java.lang.reflect.*;
-import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
@@ -37,7 +36,6 @@ import com.sun.max.ide.*;
 import com.sun.max.jdwp.vm.core.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.jdwp.vm.proxy.VMValue.Type;
-import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.*;
@@ -323,6 +321,15 @@ public abstract class TeleVM implements MaxVM {
                 FatalError.unexpected("vm file: " + vmFile + " does not exist or is not accessible");
             }
             switch (operatingSystem) {
+                case SOLARIS:
+                    teleChannelProtocol = new SolarisDumpTeleChannelProtocol(vmFile, dumpFile);
+                    break;
+                case LINUX:
+                    teleChannelProtocol = new LinuxDumpTeleChannelProtocol(vmFile, dumpFile);
+                    break;
+                case DARWIN:
+                    teleChannelProtocol = new DarwinDumpTeleChannelProtocol(vmFile, dumpFile);
+                    break;
                 case GUESTVM:
                     final String className = "com.sun.max.tele.debug.guestvm.dump.GuestVMDumpTeleChannelProtocol";
                     try {
@@ -333,8 +340,6 @@ public abstract class TeleVM implements MaxVM {
                         FatalError.unexpected("failed to create instance of " + className);
                     }
                     break;
-                default:
-                    FatalError.unexpected("core dump access not supported for " + operatingSystem);
             }
         } else {
             // local
@@ -592,7 +597,7 @@ public abstract class TeleVM implements MaxVM {
         return "[TeleVM: " + Thread.currentThread().getName() + "] ";
     }
 
-    private final VMConfiguration vmConfiguration;
+    private static VMConfiguration vmConfiguration;
 
     private final Size wordSize;
 
@@ -726,7 +731,7 @@ public abstract class TeleVM implements MaxVM {
      *            overridden by this object to use a different mechanism for discovering the boot image address.
      * @throws BootImageException
      */
-    protected TeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
+    protected TeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
         this.bootImageFile = bootImageFile;
@@ -736,7 +741,7 @@ public abstract class TeleVM implements MaxVM {
             nativeInitialize(bootImage.header.threadLocalsAreaSize);
         }
         final MaxineVM vm = createVM(this.bootImage);
-        this.vmConfiguration = vm.configuration;
+        vmConfiguration = vm.configuration;
 
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating all");
 
@@ -747,30 +752,12 @@ public abstract class TeleVM implements MaxVM {
         this.pageSize = Size.fromInt(vmConfiguration.platform.pageSize);
         this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
-        if (commandLineArguments == null) {
+        if (mode == Mode.ATTACH || mode == Mode.ATTACHWAITING) {
             this.teleProcess = attachToTeleProcess();
-            switch (bootImage.vmConfiguration.platform().operatingSystem) {
-                case GUESTVM:
-                    this.bootImageStart = loadBootImage(agent);
-                    break;
-                default:
-                    FatalError.unexpected("need to get the boot image address from attached process somehow");
-                    this.bootImageStart = Pointer.zero();
-            }
         } else {
-            if (agent != null) {
-                agent.start();
-            }
-            try {
-                this.teleProcess = createTeleProcess(commandLineArguments, agent);
-                this.bootImageStart = loadBootImage(agent);
-            } catch (BootImageException e) {
-                if (agent != null) {
-                    agent.close();
-                }
-                throw e;
-            }
+            this.teleProcess = createTeleProcess(commandLineArguments);
         }
+        this.bootImageStart = loadBootImage();
 
         final TeleGripScheme teleGripScheme = (TeleGripScheme) vmConfiguration.gripScheme();
         teleGripScheme.setTeleVM(this);
@@ -877,7 +864,11 @@ public abstract class TeleVM implements MaxVM {
         return MaxineVM.description();
     }
 
-    public final VMConfiguration vmConfiguration() {
+    public VMConfiguration vmConfiguration() {
+        return vmConfiguration;
+    }
+
+    public static VMConfiguration vmConfigurationStatic() {
         return vmConfiguration;
     }
 
@@ -1123,7 +1114,7 @@ public abstract class TeleVM implements MaxVM {
      * @return a handle to the created VM process
      * @throws BootImageException if there was an error launching the VM process
      */
-    protected abstract TeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException;
+    protected abstract TeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException;
 
     /**
      * Gets any memory regions of potential interest that are specific to a particular VM platform.
@@ -1139,24 +1130,16 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * Gets a pointer to the boot image in the remote VM. The implementation of this method in the VM uses a
-     * provided agent to receive the address from the VM via a socket.
+     * Gets a pointer to the boot image in the remote VM.
      *
      * @throws BootImageException if the address of the boot image could not be obtained
      */
-    protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
-        try {
-            final Socket socket = agent.waitForVM();
-            final InputStream stream = socket.getInputStream();
-            final Endianness endianness = vmConfiguration.platform().processorKind.dataModel.endianness;
-            final Pointer heap = Word.read(stream, endianness).asPointer();
-            Trace.line(1, "Received boot image address from VM: 0x" + heap.toHexString());
-            socket.close();
-            agent.close();
-            return heap;
-        } catch (IOException ioException) {
-            throw new BootImageException("Error while reading boot image address from VM process", ioException);
+    protected Pointer loadBootImage() throws BootImageException {
+        final long value = teleChannelProtocol.getBootHeapStart();
+        if (value == 0) {
+            throw new BootImageException("failed to get boot image start from target VM");
         }
+        return Pointer.fromLong(value);
     }
 
     private static void addNonNull(ArrayList<MaxMemoryRegion> regions, MaxMemoryRegion region) {

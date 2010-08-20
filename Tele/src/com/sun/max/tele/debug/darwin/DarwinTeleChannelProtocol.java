@@ -20,8 +20,7 @@
  */
 package com.sun.max.tele.debug.darwin;
 
-import com.sun.max.tele.debug.unix.*;
-
+import com.sun.max.tele.channel.*;
 
 /**
  * Darwin-specific extension of the standard {@link TeleChannelProtocol}.
@@ -30,6 +29,6 @@ import com.sun.max.tele.debug.unix.*;
   * @author Mick Jordan
  *
  */
-public interface DarwinTeleChannelProtocol extends UnixAgentTeleChannelProtocol {
+public interface DarwinTeleChannelProtocol extends TeleChannelProtocol {
 
 }

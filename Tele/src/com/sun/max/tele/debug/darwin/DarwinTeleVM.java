@@ -32,11 +32,11 @@ import com.sun.max.vm.prototype.*;
 public final class DarwinTeleVM extends TeleVM {
 
     @Override
-    protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new DarwinTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments, agent);
+    protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
+        return new DarwinTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments);
     }
 
     public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments, new TeleVMAgent());
+        super(bootImageFile, bootImage, sourcepath, commandLineArguments);
     }
 }
