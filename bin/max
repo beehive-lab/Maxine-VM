@@ -315,6 +315,43 @@ fi
 test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/Native/generated/${MAXINE_OS}"
 maxine_vm=$MAXVM_DIR/maxvm
 
+method_finder_pattern_help='A pattern is a class name pattern followed by an optional method name
+    pattern separated by a ':' further followed by an optional signature:
+    
+      <class name>[:<method name>[:<signature>]]
+    
+    For example, the list of patterns:
+    
+         "Object:wait", "String", "Util:add:(int,float)"
+         
+    will match all methods in a class whose name contains "Object" where the
+    method name contains "wait", all methods in a class whose name
+    contains "String" and all methods in any class whose name
+    contains "Util", the method name contains "add" and the
+    megnature is (int, float).
+    
+    The type of matching performed for a given class/method name is determined
+    by the position of '^' in the pattern name as follows:
+    
+    Position of '^'   | Match algorithm
+     ------------------+------------------
+     start AND end     | Equality
+     start             | Prefix
+     end               | Suffix
+     absent            | Substring
+    
+    For example, "^java.util:^toString^" matches all methods named "toString" in
+    any class whose name starts with "java.util".
+
+    The matching performed on a signature is always a substring test. Signatures can
+    specified either in Java source syntax (e.g. "int,String") or JVM internal syntax
+    (e.g. "IFLjava/lang/String;"). The latter must always use fully qualified type
+    names where as the former must not.
+
+    Any pattern starting with "!" is an exclusion specification. Any class or method
+    whose name contains an exclusion string (the exclusion specification minus the
+    leading "!") is excluded.'
+
 #=======================================
 # Utility for verbose execution
 #=======================================
@@ -945,53 +982,46 @@ function run_compile() {
 }
 
 #=======================================
+# 'verify' command
+#=======================================
+
+verify_usage="[options] patterns..."
+verify_help="verifies a set methods using the Maxine bytecode verifier
+
+    Run the Maxine verifier over a set of specified methods available
+    on the class path. To extend the class path, use one of the global
+    \"-cp/p:<arg>\" or \"-cp/a:<arg>\" options.
+
+    See Patterns below for a description of the format expected for \"patterns...\"
+
+    Use \"max verify -help\" to see what other options this command accepts.
+    
+    --- Patterns ---
+    
+    $method_finder_pattern_help"
+
+function run_verify() {
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.verifier.CommandLineVerifier $@
+}
+
+#=======================================
 # 'c1x' command
 #=======================================
 
-c1x_usage="[options] compilation_specs|exclusion_specs..."
-c1x_help="process a list of classes and/or methods with the C1X compiler
+c1x_usage="[options] patterns..."
+c1x_help="process a list of methods with the C1X compiler
 
-    An exclusion spec is a string starting with '!'. Any class or method
-    whose name contains an exclusion string (the exclusion spec minus the
-    leading '!') is excuded from further processing.
-
-    A compilation spec is a class name pattern followed by an optional method name
-    pattern separated by a ':' further followed by an optional signature:
-
-    <class name>[:<method name>[:<signature>]]
-
-    For example:
-
-        Object:wait String HashMap:<init>:(int,float)
-
-    will compile all methods in a class whose name matches "Object" where the
-    method name matches 'wait', all methods in a class whose name
-    contains 'String' and the single constructor in HashMap that takes an int
-    and float parameter. The classes searched are those on the class path.
-
-    The type of matching performed for a given class/method name is determined
-    by the position of '^' in the pattern name as follows:
-
-    Position of '^'   | Match algorithm
-    ------------------+------------------
-    start AND end     | Equality
-    start             | Prefix
-    end               | Suffix
-    absent            | Substring
-
-    For example, '^java.util:^toString^' matches all methods named 'toString' in
-    any class whose name start with 'java.util'.
-
-    The matching performed on a signature is always a substring test. Signatures can
-    specified either in Java source syntax (e.g. 'int,String') or JVM internal syntax
-    (e.g. 'IFLjava/lang/String;'). The latter must always use fully qualified type
-    names where as the former must not.
-
+    See Patterns below for a description of the format expected for \"patterns...\"
+    
     The output traced by this command is not guaranteed to be the same as the output
-    for a compilation done at runtime. The code produced by a compiler is sensitive
+    for a compilation performed at runtime. The code produced by a compiler is sensitive
     to the compilation context such as what classes have been resolved etc.
 
-    Use \"max c1x -help\" to see what other options this command accepts."
+    Use \"max c1x -help\" to see what other options this command accepts.
+    
+    --- Patterns ---
+    
+    $method_finder_pattern_help"
 
 function run_c1x() {
     c1x_cp=${maxine_cp}:`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`

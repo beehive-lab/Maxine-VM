@@ -68,7 +68,7 @@ public class BytecodePreprocessorTest extends VmTestCase {
 
     private void assertProcessedCodeIsDifferent(String methodName) {
         final ClassMethodActor classMethodActor = ClassMethodActor.fromJava(Classes.getDeclaredMethod(getClass(), methodName, int.class));
-        final CodeAttribute originalCodeAttribute = classMethodActor.originalCodeAttribute();
+        final CodeAttribute originalCodeAttribute = classMethodActor.originalCodeAttribute(true);
         assertFalse(Arrays.equals(originalCodeAttribute.code(), classMethodActor.compilee().codeAttribute().code()));
     }
 

@@ -57,15 +57,18 @@ public class VmOperationDemo extends VmOperation {
     }
 
     @Override
-    public void doThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-        VmThread vmThread = VmThread.fromVmThreadLocals(threadLocals);
-        final List<StackFrame> frameList = new ArrayList<StackFrame>();
-        new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
+    public void doThread(VmThread vmThread, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         Thread thread = vmThread.javaThread();
-        StackTraceElement[] trace = JDK_java_lang_Throwable.asStackTrace(frameList, null, Integer.MAX_VALUE);
-        System.out.println(thread + " [stack depth: " + trace.length + "]");
-        for (StackTraceElement e : trace) {
-            System.out.println("\tat " + e);
+        if (instructionPointer.isZero()) {
+            System.out.println(thread + " [not yet executing Java]");
+        } else {
+            final List<StackFrame> frameList = new ArrayList<StackFrame>();
+            new VmStackFrameWalker(vmThread.vmThreadLocals()).frames(frameList, instructionPointer, stackPointer, framePointer);
+            StackTraceElement[] trace = JDK_java_lang_Throwable.asStackTrace(frameList, null, Integer.MAX_VALUE);
+            System.out.println(thread + " [stack depth: " + trace.length + "]");
+            for (StackTraceElement e : trace) {
+                System.out.println("\tat " + e);
+            }
         }
     }
 

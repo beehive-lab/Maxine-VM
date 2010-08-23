@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.runtime;
 
+import java.lang.Thread.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -37,7 +39,7 @@ import com.sun.max.vm.thread.*;
  * @author Hannes Payer
  * @author Mick Jordan
  */
-public class VmOperationThread extends Thread {
+public class VmOperationThread extends Thread implements UncaughtExceptionHandler {
 
     /**
      * A special exception thrown when a non-VM operation thread {@linkplain VmOperationThread#submit(VmOperation)
@@ -76,6 +78,7 @@ public class VmOperationThread extends Thread {
         super(group, "VmOperationThread");
         queue = new VmOperationQueue();
         setDaemon(true);
+        setUncaughtExceptionHandler(this);
     }
 
     private static final Object REQUEST_LOCK = JavaMonitorManager.newVmLock("VM_OPERATION_REQUEST_LOCK");
@@ -311,5 +314,10 @@ public class VmOperationThread extends Thread {
                 }
             }
         }
+    }
+
+    @Override
+    public void uncaughtException(Thread thread, Throwable e) {
+        FatalError.unexpected("Uncaught exception on VM operation thread", e);
     }
 }

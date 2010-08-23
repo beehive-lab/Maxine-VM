@@ -31,6 +31,7 @@ import test.bench.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VmOperation.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Benchmarks the time taken to perform a {@linkplain VmOperation VM operation}.
@@ -75,7 +76,7 @@ public class VmOperation_01 extends RunBench {
             final HashSet<Thread> threads = new HashSet<Thread>(Arrays.asList(spinners));
             operation = new VmOperation("Test", null, Mode.Safepoint) {
                 @Override
-                protected void doThread(Pointer threadLocals, Pointer ip, Pointer sp, Pointer fp) {
+                protected void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
                     // all threads are stopped at this point, so we can tell then all to quit when they resume
                     done = true;
                 }

@@ -394,7 +394,7 @@ public class VmThread {
      * This method must perform no synchronization or heap allocation and must disable safepoints. In addition, the
      * native caller must hold the global GC and thread list lock for the duration of this call.
      *
-     * After returning a value of {@code 0} this thread is now in a state where it can safely participate in a GC cycle.
+     * After returning a value of {@code 0} or {@code 1} this thread is now in a state where it can safely participate in a GC cycle.
      * A {@code -1} return value can only occur when this is a native thread being attached to the VM and it loses the
      * race to acquire the pre-allocated {@linkplain #threadForAttach thread-for-attach} object.
      *
