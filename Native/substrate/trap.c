@@ -54,20 +54,27 @@
 
 static Address theJavaTrapStub;
 static boolean traceTraps = false;
+
+#if !os_GUESTVMXEN
 static sigset_t normalThreadSignalMask;
 static sigset_t vmOperationThreadSignalMask;
+#endif
 
 int getTrapNumber(int signal) {
     switch (signal) {
     case SIGSEGV:
+#if !os_GUESTVMXEN
     case SIGBUS:
+#endif
         return MEMORY_FAULT;
     case SIGILL:
         return ILLEGAL_INSTRUCTION;
     case SIGFPE:
         return ARITHMETIC_EXCEPTION;
+#if !os_GUESTVMXEN
     case SIGUSR1:
         return ASYNC_INTERRUPT;
+#endif
     }
     return -signal;
 }
@@ -80,16 +87,19 @@ int getTrapNumber(int signal) {
 #endif
 
 void setCurrentThreadSignalMask(boolean isVmOperationThread) {
+#if !os_GUESTVMXEN
     if (isVmOperationThread) {
         thread_setSignalMask(SIG_SETMASK, &vmOperationThreadSignalMask, NULL);
     } else {
         thread_setSignalMask(SIG_SETMASK, &normalThreadSignalMask, NULL);
     }
+#endif
 }
 
 void* setSignalHandler(int signal, SignalHandlerFunction handler) {
 #if os_GUESTVMXEN
 	guestvmXen_register_fault_handler(signal, handler);
+	return NULL;
 #else
 
     struct sigaction newSigaction;
@@ -178,8 +188,10 @@ char *signalName(int signal) {
     case SIGSEGV: return "SIGSEGV";
     case SIGFPE: return "SIGFPE";
     case SIGILL: return "SIGILL";
+#if !os_GUESTVMXEN
     case SIGUSR1: return "SIGUSR1";
     case SIGBUS: return "SIGBUS";
+#endif
     }
     return NULL;
 }
@@ -406,9 +418,11 @@ Address nativeInitialize(Address javaTrapStub) {
 
     theJavaTrapStub = javaTrapStub;
     setSignalHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
-    setSignalHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
     setSignalHandler(SIGILL, (SignalHandlerFunction) globalSignalHandler);
     setSignalHandler(SIGFPE, (SignalHandlerFunction) globalSignalHandler);
+
+#if !os_GUESTVMXEN
+    setSignalHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
     setSignalHandler(SIGUSR1, (SignalHandlerFunction) globalSignalHandler);
 
     /* Save the current signal mask to apply it to the VM operation thread. */
@@ -427,6 +441,7 @@ Address nativeInitialize(Address javaTrapStub) {
 
     /* Apply the normal thread mask to the primordial thread. */
     thread_setSignalMask(SIG_BLOCK, &normalThreadSignalMask, NULL);
+#endif
 
     return (Address) &traceTraps;
 }
