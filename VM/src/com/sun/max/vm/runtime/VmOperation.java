@@ -167,17 +167,40 @@ public class VmOperation {
      * Constants denoting the conditions under which a VM operation must be run.
      */
     public enum Mode {
+        /**
+         * Denotes that an operation requires the targeted threads to be synchronized at a safepoint
+         * and that the thread {@linkplain VmOperation#submit() submitting} the operation is
+         * blocked until the operation completes.
+         */
         Safepoint,
-        NoSafepoint,
+
+        /**
+         * Denotes that an operation does target any threads
+         * and that the thread {@linkplain VmOperation#submit() submitting} the operation is
+         * not blocked until the operation completes.
+         */
         Concurrent,
+
+        /**
+         * Denotes that an operation requires the targeted threads to be synchronized at a safepoint
+         * and that the thread {@linkplain VmOperation#submit() submitting} the operation is
+         * not blocked until the operation completes.
+         */
         AsyncSafepoint;
 
+        /**
+         * Determines if this mode denotes that an operation requires its targeted threads to be synchronized at a safepoint.
+         */
         public boolean requiresSafepoint() {
             return this == Safepoint || this == AsyncSafepoint;
         }
 
+        /**
+         * Determines if a thread {@linkplain VmOperation#submit() submitting} an operation is
+         * blocked until the operation completes.
+         */
         public boolean isBlocking() {
-            return this == Safepoint || this == NoSafepoint;
+            return this == Safepoint;
         }
     }
 
