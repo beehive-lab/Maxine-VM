@@ -146,7 +146,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     public void verify() {
         if (verbose) {
             Log.println();
-            Log.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
+            Log.println(classMethodActor().format("Verifying %H.%n(%p) via type-inferencing"));
             Log.println();
             Log.println("Input bytecode:");
             CodeAttributePrinter.print(Log.out, codeAttribute());
