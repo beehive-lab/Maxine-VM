@@ -43,8 +43,8 @@ public class CommandLineVerifier extends MethodFinder {
     static Option<Policy> policy = options.newEnumOption("policy", Policy.DEFAULT, Policy.class,
         "Which verification policy to use: 'DEFAULT' to derive the policy from the class file version, " +
         "'OLD' to use the type inferencing verifier, 'NEW' to use the type checking verifier.");
-    static Option<Integer> verbose = options.newIntegerOption("verbose", 1,
-        "Verbosity level.");
+    static Option<Boolean> verbose = options.newBooleanOption("verbose", false,
+        "Enable verbose execution.");
 
     static enum Policy {
         DEFAULT, OLD, NEW;
@@ -53,25 +53,19 @@ public class CommandLineVerifier extends MethodFinder {
     public static void main(String[] args) {
         PrintStream log = System.out;
 
+        TypeCheckingVerifier.FailOverToOldVerifier = false;
+
         options.parseArguments(args);
         String[] patterns = options.getArguments();
 
-        if (verbose.getValue() > 0) {
-            log.println("Initializing verifier system... ");
-        }
+        log.println("Initializing verifier system... ");
         new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
-        if (verbose.getValue() > 0) {
-            log.println("Initialized verifier system");
-        }
+        log.println("Initialized verifier system");
 
-        if (verbose.getValue() > 0) {
-            log.println("Finding specified methods...");
-        }
+        log.println("Finding specified methods...");
         CommandLineVerifier clv = new CommandLineVerifier();
         List<MethodActor> methods = clv.find(patterns, Classpath.fromSystem(), CommandLineVerifier.class.getClassLoader());
-        if (verbose.getValue() > 0) {
-            log.println("Found " + methods.size() + " methods");
-        }
+        log.println("Found " + methods.size() + " methods");
         for (MethodActor method : methods) {
             if (method instanceof ClassMethodActor) {
                 ClassMethodActor classMethodActor = (ClassMethodActor) method;
@@ -87,7 +81,7 @@ public class CommandLineVerifier extends MethodFinder {
                     case NEW:
                         if (holder.majorVersion < 50) {
                             // Cannot use new verifier on old class files
-                            if (verbose.getValue() > 0) {
+                            if (verbose.getValue()) {
                                 log.println("Class file " + holder.name() + " version " + holder.majorVersion + " incompatible with new verifier; falling back to old verifier");
                             }
                             verifier = new TypeInferencingVerifier(holder);
@@ -96,9 +90,9 @@ public class CommandLineVerifier extends MethodFinder {
                         }
                         break;
                 }
-                if (verbose.getValue() == 2) {
-                    log.println("Verifying " + method.format("%H.%n(%p)"));
-                } else if (verbose.getValue() > 2) {
+                if (!verbose.getValue()) {
+                    log.println("Verifying " + method.format("%H.%n(%p)") + " via " + (verifier instanceof TypeCheckingVerifier ? "type-checking" : "type-inferecing"));
+                } else {
                     verifier.verbose = true;
                 }
                 verifier.verify(classMethodActor, classMethodActor.originalCodeAttribute(false));
