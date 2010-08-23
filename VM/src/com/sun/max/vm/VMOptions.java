@@ -126,6 +126,31 @@ public final class VMOptions {
         }
     }
 
+    static final class SizeFieldOption extends VMSizeOption {
+
+        private final Field field;
+
+        SizeFieldOption(String prefix, Size defaultValue, String help, Field field) {
+            super(prefix, defaultValue, help);
+            this.field = field;
+        }
+
+        @Override
+        public boolean parseValue(Pointer optionValue) {
+            boolean result = super.parseValue(optionValue);
+            if (result) {
+                if (MaxineVM.isHosted()) {
+                    setFieldValue(field, getValue());
+                } else {
+                    FieldActor fieldActor = FieldActor.fromJava(field);
+                    Reference.fromJava(fieldActor.holder().staticTuple()).writeWord(fieldActor.offset(), getValue());
+                }
+                return true;
+            }
+            return result;
+        }
+    }
+
     static final class BooleanFieldOption extends VMBooleanXXOption {
 
         private final Field field;
@@ -447,6 +472,10 @@ public final class VMOptions {
             } else if (fieldType == float.class) {
                 float defaultValue = field.getFloat(null);
                 option = new FloatFieldOption(prefix + name + "=", defaultValue, help, field);
+                register(option, phase);
+            } else if (fieldType == Size.class) {
+                Size defaultValue = (Size) field.get(null);
+                option = new SizeFieldOption(prefix + name + "=", defaultValue, help, field);
                 register(option, phase);
             } else if (fieldType == String.class) {
                 String defaultValue = (String) field.get(null);
