@@ -148,23 +148,26 @@ public abstract class ClassMethodActor extends MethodActor {
      *
      * This is basically a hack to ensure that C1X can obtain code that hasn't been subject to
      * the {@linkplain Preprocessor preprocessing} required by the CPS and template JIT compilers.
+     * @param intrinsify specifies if intrinsifaction should be performed
      */
-    public final CodeAttribute originalCodeAttribute() {
+    public final CodeAttribute originalCodeAttribute(boolean intrinsify) {
         if (isNative()) {
             // C1X must compile the generated JNI stub
             return codeAttribute();
         }
 
-        // This call ensures that intrinsification is performed on the bytecode array in
-        // 'originalCodeAttribute' before it is returned.
-        compilee();
+        if (intrinsify) {
+            // This call ensures that intrinsification is performed on the bytecode array in
+            // 'originalCodeAttribute' before it is returned.
+            compilee();
+        }
 
         return originalCodeAttribute;
     }
 
     @Override
     public final byte[] code() {
-        CodeAttribute codeAttribute = originalCodeAttribute();
+        CodeAttribute codeAttribute = originalCodeAttribute(true);
         if (codeAttribute != null) {
             return codeAttribute.code();
         }
@@ -179,7 +182,7 @@ public abstract class ClassMethodActor extends MethodActor {
         }
 
         ExceptionHandlerEntry[] exceptionHandlerTable = ExceptionHandlerEntry.NONE;
-        CodeAttribute codeAttribute = originalCodeAttribute();
+        CodeAttribute codeAttribute = originalCodeAttribute(true);
         if (codeAttribute != null) {
             exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
         }
@@ -217,7 +220,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     @Override
     public int maxLocals() {
-        CodeAttribute codeAttribute = originalCodeAttribute();
+        CodeAttribute codeAttribute = originalCodeAttribute(true);
         if (codeAttribute != null) {
             return codeAttribute.maxLocals;
         }
@@ -226,7 +229,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     @Override
     public int maxStackSize() {
-        CodeAttribute codeAttribute = originalCodeAttribute();
+        CodeAttribute codeAttribute = originalCodeAttribute(true);
         if (codeAttribute != null) {
             return codeAttribute.maxStack;
         }

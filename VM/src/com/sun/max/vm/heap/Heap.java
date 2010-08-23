@@ -544,7 +544,7 @@ public final class Heap {
 
     public static void enableImmortalMemoryAllocation() {
         heapScheme().enableImmortalMemoryAllocation();
-        if (ImmortalHeap.traceAllocation()) {
+        if (ImmortalHeap.TraceImmortal) {
             Log.printCurrentThread(false);
             Log.println(": immortal heap allocation enabled");
         }
@@ -552,7 +552,7 @@ public final class Heap {
 
     public static void disableImmortalMemoryAllocation() {
         heapScheme().disableImmortalMemoryAllocation();
-        if (ImmortalHeap.traceAllocation()) {
+        if (ImmortalHeap.TraceImmortal) {
             Log.printCurrentThread(false);
             Log.println(": immortal heap allocation disabled");
         }

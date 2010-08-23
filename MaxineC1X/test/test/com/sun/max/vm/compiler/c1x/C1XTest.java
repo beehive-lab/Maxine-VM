@@ -20,11 +20,11 @@
  */
 package test.com.sun.max.vm.compiler.c1x;
 
-import static test.com.sun.max.vm.compiler.c1x.C1XTest.PatternType.*;
-
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+
+import test.com.sun.max.vm.*;
 
 import com.sun.c1x.*;
 import com.sun.cri.ci.*;
@@ -38,10 +38,10 @@ import com.sun.max.test.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.prototype.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A simple harness to run the C1X compiler and test it in various modes, without
@@ -201,7 +201,9 @@ public class C1XTest {
             throw ProgramError.unexpected("Unknown compiler: " + compilerName);
         }
 
-        final List<MethodActor> methods = findMethodsToCompile(arguments);
+        String searchCp = searchCpOption.getValue();
+        final Classpath classpath = searchCp == null || searchCp.length() == 0 ? Classpath.fromSystem() : new Classpath(searchCp);
+        final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, C1XTest.class.getClassLoader());
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
         MaxineVM.usingTarget(new Runnable() {
@@ -366,248 +368,66 @@ public class C1XTest {
         return result.bailout() == null;
     }
 
-    private static boolean isCompilable(MethodActor method) {
-        if (method.isNative()) {
-            if (((ClassMethodActor) method).compilee() == method) {
-                // Non-substituted native method
-                if (!MaxRiRuntime.CAN_COMPILE_NATIVE_METHODS) {
-                    return false;
-                }
-            }
-        }
-        if (method.accessor() != null && !MaxRiRuntime.CAN_COMPILE_ACCESSOR_METHODS) {
-            return false;
-        }
-        if (method.isInline()) {
-            return false;
-        }
-        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isBuiltin() && !method.isIntrinsic();
-    }
-
-    enum PatternType {
-        EXACT("matching") {
-            @Override
-            public boolean matches(String input, String pattern) {
-                return input.equals(pattern);
-            }
-        },
-        PREFIX("starting with") {
-            @Override
-            public boolean matches(String input, String pattern) {
-                return input.startsWith(pattern);
-            }
-        },
-        SUFFIX("ending with") {
-            @Override
-            public boolean matches(String input, String pattern) {
-                return input.endsWith(pattern);
-            }
-        },
-        CONTAINS("containing") {
-            @Override
-            public boolean matches(String input, String pattern) {
-                return input.contains(pattern);
-            }
-        };
-
-        final String relationship;
-
-        private PatternType(String relationship) {
-            this.relationship = relationship;
-        }
-
-        abstract boolean matches(String input, String pattern);
-
+    static class MyMethodFinder extends MethodFinder {
+        HashSet<PatternMatcher> patterns;
         @Override
-        public String toString() {
-            return relationship;
-        }
-    }
-
-    static class PatternMatcher {
-        final String pattern;
-        // 1: exact, 2: prefix, 3: suffix, 4: substring
-        final PatternType type;
-
-        public PatternMatcher(String pattern) {
-            if (pattern.startsWith("^") && pattern.endsWith("^") && pattern.length() != 1) {
-                this.type = EXACT;
-                this.pattern = pattern.substring(1, pattern.length() - 1);
-            } else if (pattern.startsWith("^")) {
-                this.type = PREFIX;
-                this.pattern = pattern.length() == 1 ? "" : pattern.substring(1);
-            } else if (pattern.endsWith("^")) {
-                this.type = SUFFIX;
-                this.pattern = pattern.substring(0, pattern.length() - 1);
-            } else {
-                this.type = CONTAINS;
-                this.pattern = pattern;
-            }
-        }
-
-        boolean matches(String input) {
-            return type.matches(input, pattern);
-        }
-    }
-
-    private static List<MethodActor> findMethodsToCompile(String[] arguments) {
-        String searchCp = searchCpOption.getValue();
-        final Classpath classpath = searchCp == null || searchCp.length() == 0 ? Classpath.fromSystem() : new Classpath(searchCp);
-
-        final List<MethodActor> methods = new ArrayList<MethodActor>();
-        final Set<String> exclusions = new HashSet<String>();
-
-        for (int i = 0; i != arguments.length; ++i) {
-            final String argument = arguments[i];
-            if (argument.startsWith("!")) {
-                exclusions.add(argument.substring(1));
-                arguments[i] = null;
-            }
-        }
-
-        for (int i = 0; i != arguments.length; ++i) {
-            final String argument = arguments[i];
-            if (argument == null) {
-                continue;
-            }
-            final int colonIndex = argument.indexOf(':');
-            final PatternMatcher classNamePattern = new PatternMatcher(colonIndex == -1 ? argument : argument.substring(0, colonIndex));
-
-            // search for matching classes on the class path
-            final List<String> matchingClasses = new ArrayList<String>();
-            if (verboseOption.getValue() > 0) {
+        protected void addClassToProcess(PatternMatcher classNamePattern, String className, List<String> matchingClasses) {
+            boolean added = patterns.add(classNamePattern);
+            if (added && verboseOption.getValue() > 0) {
                 out.print("Classes " + classNamePattern.type + " '" + classNamePattern.pattern + "'... ");
             }
+            super.addClassToProcess(classNamePattern, className, matchingClasses);
+        }
 
-            if (classNamePattern.type == EXACT) {
-                matchingClasses.add(classNamePattern.pattern);
-            } else {
-                new ClassSearch() {
-                    @Override
-                    protected boolean visitClass(String className) {
-                        if (!className.endsWith("package-info")) {
-                            if (classNamePattern.matches(className)) {
-                                for (String exclusion : exclusions) {
-                                    if (className.contains(exclusion)) {
-                                        return true;
-                                    }
-                                }
-                                matchingClasses.add(className);
-                            }
-                        }
-                        return true;
-                    }
-                }.run(classpath);
-            }
+        @Override
+        public List<MethodActor> find(String[] patterns, Classpath classpath, ClassLoader classLoader) {
+            this.patterns = new HashSet<PatternMatcher>();
+            return super.find(patterns, classpath, classLoader);
+        }
 
-            if (verboseOption.getValue() > 0) {
-                out.println(matchingClasses.size());
-            }
-
-            final int startMethods = methods.size();
-            if (verboseOption.getValue() > 0) {
-                out.print("Gathering methods");
-            }
-            // for all found classes, search for matching methods
-            for (String className : matchingClasses) {
-                try {
-                    Class<?> javaClass = null;
-                    try {
-                        javaClass = Class.forName(className, false, C1XTest.class.getClassLoader());
-                    } catch (NoClassDefFoundError noClassDefFoundError) {
-                        throw new ClassNotFoundException(className, noClassDefFoundError);
-                    }
-                    final ClassActor classActor = getClassActorNonfatal(javaClass);
-                    if (classActor == null) {
-                        continue;
-                    }
-
-                    if (colonIndex == -1) {
-                        // Class only: compile all methods in class
-                        for (MethodActor actor : classActor.localStaticMethodActors()) {
-                            if (clinitOption.getValue() || actor != classActor.clinit) {
-                                addMethod(methods, actor, exclusions);
-                            }
-                        }
-                        for (MethodActor methodActor : classActor.localVirtualMethodActors()) {
-                            addMethod(methods, methodActor, exclusions);
-                        }
-                    } else {
-                        // a method pattern was specified, find matching methods
-                        final int secondColonIndex = argument.indexOf(':', colonIndex + 1);
-                        final PatternMatcher methodNamePattern;
-                        String signature;
-                        if (secondColonIndex == -1) {
-                            methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1));
-                            signature = null;
-                        } else {
-                            methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1, secondColonIndex));
-                            signature = argument.substring(secondColonIndex + 1);
-                            // Normalize specified signature to have only a single space after any commas
-                            signature = signature.replaceAll(", *", ", ");
-                        }
-                        addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localStaticMethodActors(), exclusions);
-                        addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localVirtualMethodActors(), exclusions);
-                    }
-                } catch (ClassNotFoundException classNotFoundException) {
-                    if (!nowarnOption.getValue()) {
-                        ProgramWarning.message(classNotFoundException.toString() + (classNotFoundException.getCause() == null ? "" : " (cause: " + classNotFoundException.getCause() + ")"));
+        private static boolean isCompilable(MethodActor method) {
+            if (method.isNative()) {
+                if (((ClassMethodActor) method).compilee() == method) {
+                    // Non-substituted native method
+                    if (!MaxRiRuntime.CAN_COMPILE_NATIVE_METHODS) {
+                        return false;
                     }
                 }
             }
-            if (verboseOption.getValue() > 0) {
-                out.println(" " + (methods.size() - startMethods));
+            if (method.accessor() != null && !MaxRiRuntime.CAN_COMPILE_ACCESSOR_METHODS) {
+                return false;
             }
-        }
-        return methods;
-    }
-
-    private static void addMethod(List<MethodActor> methods, MethodActor methodActor, Set<String> exclusions) {
-        for (String exclusion : exclusions) {
-            if (methodActor.name.string.contains(exclusion)) {
-                return;
+            if (method.isInline()) {
+                return false;
             }
+            return method instanceof ClassMethodActor && !method.isAbstract() && !method.isBuiltin() && !method.isIntrinsic();
         }
-        if (isCompilable(methodActor)) {
-            methods.add(methodActor);
-            if ((methods.size() % 1000) == 0 && verboseOption.getValue() >= 1) {
-                out.print('.');
-            }
-        }
-    }
 
-    private static ClassActor getClassActorNonfatal(Class<?> javaClass) {
-        ClassActor classActor = null;
-        try {
-            classActor = ClassActor.fromJava(javaClass);
+        @Override
+        protected void addMethod(MethodActor method, List<MethodActor> methods) {
 
-            MaxPackage maxPackage = MaxPackage.fromClass(javaClass);
-            if (maxPackage != null && maxPackage.name().contains(".prototype")) {
-                return null;
-            }
-        } catch (Throwable t) {
-            // do nothing.
-        }
-        return classActor;
-    }
-
-    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final String signature, MethodActor[] methodActors, Set<String> exclusions) {
-        for (final MethodActor method : methodActors) {
-            if (methodNamePattern.matches(method.name.toString())) {
-                if (signature != null) {
-                    final SignatureDescriptor methodSignature = method.descriptor();
-                    if (methodSignature.string.contains(signature)) {
-                        addMethod(methods, method, exclusions);
-                    } else {
-                        String javaSignature = methodSignature.toJavaString(false, true);
-                        if (javaSignature.contains(signature)) {
-                            addMethod(methods, method, exclusions);
-                        }
-                    }
-                } else {
-                    addMethod(methods, method, exclusions);
+            if (isCompilable(method) && clinitOption.getValue() || method.name != SymbolTable.CLINIT) {
+                super.addMethod(method, methods);
+                if ((methods.size() % 1000) == 0 && verboseOption.getValue() >= 1) {
+                    out.print('.');
                 }
             }
+        }
+
+        @Override
+        protected ClassActor getClassActor(Class< ? > javaClass) {
+            ClassActor classActor = null;
+            try {
+                classActor = ClassActor.fromJava(javaClass);
+
+                MaxPackage maxPackage = MaxPackage.fromClass(javaClass);
+                if (maxPackage != null && maxPackage.name().contains(".prototype")) {
+                    return null;
+                }
+            } catch (Throwable t) {
+                // do nothing.
+            }
+            return classActor;
         }
     }
 
@@ -615,7 +435,7 @@ public class C1XTest {
         if (!averageOption.getValue()) {
             timings.add(new Timing((ClassMethodActor) method, instructions, ns));
         }
-        totalBytes += ((ClassMethodActor) method).originalCodeAttribute().code().length;
+        totalBytes += ((ClassMethodActor) method).originalCodeAttribute(true).code().length;
         totalInlinedBytes += inlinedBytes;
         totalInstrs += instructions;
         totalNs += ns;
@@ -804,7 +624,7 @@ public class C1XTest {
         }
 
         public int bytecodes() {
-            return classMethodActor.originalCodeAttribute().code().length;
+            return classMethodActor.originalCodeAttribute(true).code().length;
         }
 
         public double instructionsPerSecond() {
