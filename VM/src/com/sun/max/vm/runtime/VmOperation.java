@@ -386,37 +386,61 @@ public class VmOperation {
         }
     };
 
+    final void callDoThread(Pointer vmThreadLocals) {
+        Pointer instructionPointer;
+        Pointer stackPointer;
+        Pointer framePointer;
+        Pointer frameAnchor = JavaFrameAnchor.from(vmThreadLocals);
+        VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+        if (frameAnchor.isZero()) {
+            // The thread was stopped in native code before it called
+            // VmThread.run(). That is, it has not yet executed any Java code.
+            if (vmThread == null) {
+                // If execution of the thread is not even yet at the point where
+                // the VmThread object has been assigned into thread locals,
+                // then it probably cannot be usefully (or safely!) inspected
+                // by this operation.
+                return;
+            }
+            instructionPointer = Pointer.zero();
+            stackPointer = Pointer.zero();
+            framePointer = Pointer.zero();
+        } else {
+            instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
+            stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
+            framePointer = JavaFrameAnchor.FP.get(frameAnchor);
+        }
+        doThread(vmThread, instructionPointer, stackPointer, framePointer);
+    }
+
     /**
-     * Traverses over all frozen threads, applying {@link #doThread(Pointer, Pointer, Pointer, Pointer)} to each one.
+     * Traverses over all frozen threads, applying {@link #doThread(VmThread, Pointer, Pointer, Pointer)} to each one.
      */
     protected final void doAllThreads() {
         if (singleThread == null) {
             VmThreadMap.ACTIVE.forAllThreadLocals(threadPredicate, doThreadAdapter);
         } else {
             Pointer vmThreadLocals = singleThread.vmThreadLocals();
-            Pointer instructionPointer;
-            Pointer stackPointer;
-            Pointer framePointer;
-            Pointer frameAnchor = JavaFrameAnchor.from(vmThreadLocals);
-            assert !frameAnchor.isZero();
-            instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
-            stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
-            framePointer = JavaFrameAnchor.FP.get(frameAnchor);
-            doThread(vmThreadLocals, instructionPointer, stackPointer, framePointer);
+            callDoThread(vmThreadLocals);
         }
     }
 
     /**
-     * Performs an operation on a frozen thread.
+     * Performs an operation on a frozen thread. If the thread was stopped in native code
+     * before the call to {@link VmThread#run()} then the {@code ip}, {@code sp} and
+     * {@code fp} arguments will be {@link Pointer#zero()}. Otherwise,
+     * these arguments denote the last Java method on the thread's stack at the
+     * time it was frozen. If the thread was frozen in native code, the Java method
+     * indicated will be the JNI stub for the native call.
      *
      * The definition of this method in {@link VmOperation} simply returns.
      *
-     * @param threadLocals denotes the thread on which the operation is to be performed
+     * @param vmThread the thread on which the operation is to be performed
      * @param ip instruction pointer at which the thread was frozen
      * @param sp stack pointer at which the thread was frozen
      * @param fp frame pointer at which the thread was frozen
      */
-    protected void doThread(Pointer threadLocals, Pointer ip, Pointer sp, Pointer fp) {
+    protected void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
     }
 
     /**
@@ -430,7 +454,7 @@ public class VmOperation {
     private final VmThread singleThread;
 
     /**
-     * Adapter from {@link Pointer.Procedure#run(Pointer)} to {@linkplain #doThread(Pointer, Pointer, Pointer, Pointer)}.
+     * Adapter from {@link Pointer.Procedure#run(Pointer)} to {@linkplain #doThread(VmThread, Pointer, Pointer, Pointer)}.
      */
     private final Pointer.Procedure doThreadAdapter;
 
@@ -448,15 +472,7 @@ public class VmOperation {
         assert singleThread == null || !singleThread.isVmOperationThread();
         doThreadAdapter = new Pointer.Procedure() {
             public void run(Pointer vmThreadLocals) {
-                Pointer instructionPointer;
-                Pointer stackPointer;
-                Pointer framePointer;
-                Pointer frameAnchor = JavaFrameAnchor.from(vmThreadLocals);
-                assert !frameAnchor.isZero();
-                instructionPointer = JavaFrameAnchor.PC.get(frameAnchor);
-                stackPointer = JavaFrameAnchor.SP.get(frameAnchor);
-                framePointer = JavaFrameAnchor.FP.get(frameAnchor);
-                doThread(vmThreadLocals, instructionPointer, stackPointer, framePointer);
+                callDoThread(vmThreadLocals);
             }
         };
     }
