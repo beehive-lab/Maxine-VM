@@ -51,7 +51,7 @@ public final class SignalDispatcher extends Thread {
     /**
      * A set of counters, one per supported signal, used to post and consume signals.
      */
-    private static final AtomicIntegerArray PendingSignals = new AtomicIntegerArray(nativeNumberOfSignals() + 1);
+    private static final AtomicIntegerArray PendingSignals = new AtomicIntegerArray(numberOfSignals() + 1);
 
     /**
      * The special signal used to terminate the signal dispatcher thread.
