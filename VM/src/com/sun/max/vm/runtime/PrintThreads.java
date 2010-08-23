@@ -52,18 +52,23 @@ public class PrintThreads extends VmOperation implements SignalHandler {
     }
 
     @Override
-    protected void doThread(Pointer threadLocals, Pointer ip, Pointer sp, Pointer fp) {
-        VmThread vmThread = VmThread.fromVmThreadLocals(threadLocals);
+    protected void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
         if (internalFormat) {
-            Throw.stackDump(vmThread.toString(), ip, sp, fp);
+            if (ip.isZero()) {
+                Log.println(vmThread.toString());
+            } else {
+                Throw.stackDump(vmThread.toString(), ip, sp, fp);
+            }
         } else {
-            final List<StackFrame> frameList = new ArrayList<StackFrame>();
-            new VmStackFrameWalker(threadLocals).frames(frameList, ip, sp, fp);
             Thread thread = vmThread.javaThread();
-            StackTraceElement[] trace = JDK_java_lang_Throwable.asStackTrace(frameList, null, Integer.MAX_VALUE);
             Log.println(thread);
-            for (StackTraceElement e : trace) {
-                Log.println("\tat " + e);
+            if (!ip.isZero()) {
+                final List<StackFrame> frameList = new ArrayList<StackFrame>();
+                new VmStackFrameWalker(vmThread.vmThreadLocals()).frames(frameList, ip, sp, fp);
+                StackTraceElement[] trace = JDK_java_lang_Throwable.asStackTrace(frameList, null, Integer.MAX_VALUE);
+                for (StackTraceElement e : trace) {
+                    Log.println("\tat " + e);
+                }
             }
         }
     }
