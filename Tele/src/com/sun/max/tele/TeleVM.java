@@ -737,9 +737,6 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        if (needTeleLibrary()) {
-            nativeInitialize(bootImage.header.threadLocalsAreaSize);
-        }
         final MaxineVM vm = createVM(this.bootImage);
         vmConfiguration = vm.configuration;
 
@@ -1080,13 +1077,6 @@ public abstract class TeleVM implements MaxVM {
         assert lockHeldByCurrentThread();
         unlock();
     }
-
-    /**
-     * Initializes native tele code.
-     *
-     * @param threadLocalsSize the size of thread local storage as read from the image
-     */
-    private static native void nativeInitialize(int threadLocalsSize);
 
     /**
      * Sets or clears some bits of the {@link Inspectable#flags} field in the VM process.

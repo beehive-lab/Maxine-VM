@@ -59,7 +59,7 @@ public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdapt
      * @param domId
      * @param threadLocalsAreaSize
      */
-    protected void implAttach(int domId, int threadLocalsAreaSize, long extra1) {
+    protected void implAttach(int domId, int threadLocalsAreaSize) {
 
     }
 
@@ -69,14 +69,14 @@ public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdapt
     }
 
     @Override
-    public long create(String programFile, String[] commandLineArguments, long extra1) {
-        return impl.create(programFile, commandLineArguments, extra1);
+    public long create(String programFile, String[] commandLineArguments, int threadLocalsAreaSize) {
+        return impl.create(programFile, commandLineArguments, threadLocalsAreaSize);
     }
 
     @Override
-    public boolean attach(int id, int threadLocalsAreaSize, long extra1) {
-        implAttach(id, threadLocalsAreaSize, extra1);
-        return impl.attach(id, threadLocalsAreaSize, extra1);
+    public boolean attach(int id, int threadLocalsAreaSize) {
+        implAttach(id, threadLocalsAreaSize);
+        return impl.attach(id, threadLocalsAreaSize);
     }
 
     @Override

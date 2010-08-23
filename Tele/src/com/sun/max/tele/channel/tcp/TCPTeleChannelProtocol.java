@@ -45,13 +45,13 @@ public class TCPTeleChannelProtocol extends TeleChannelDataIOProtocolAdaptor {
     }
 
     @Override
-    public boolean attach(int id, int threadLocalsAreaSize, long extra1) {
+    public boolean attach(int id, int threadLocalsAreaSize) {
         Trace.line(1, "connecting to agent on " + host + ":" + port);
         try {
             socket = new Socket(host, port);
             Trace.line(1, "connected");
             setStreams(new BufferedInputStream(socket.getInputStream()), new BufferedOutputStream(socket.getOutputStream()));
-            return super.attach(id, threadLocalsAreaSize, extra1);
+            return super.attach(id, threadLocalsAreaSize);
         } catch (Exception ex) {
             Trace.line(1, ex);
             return false;

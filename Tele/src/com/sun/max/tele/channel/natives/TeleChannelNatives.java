@@ -35,8 +35,9 @@ package com.sun.max.tele.channel.natives;
  * @author Mick Jordan
  *
  */
-public abstract class TeleChannelNatives {
+public class TeleChannelNatives {
     // from TeleProcess
+    public native void teleInitialize(int threadLocalsAreaSize);
     public native long createChild(long argv, int vmAgentPort);
     private native boolean attach(long processHandle);
     private native boolean detach(long processHandle);
