@@ -59,7 +59,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
     }
 
     @Override
-    public long create(String pathName, String[] commandLineArguments, long extra1) {
+    public long create(String pathName, String[] commandLineArguments, int threadLocalsAreaSize) {
         unimplemented("create");
         /*
         try {
@@ -92,12 +92,11 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
     }
 
     @Override
-    public boolean attach(int id, int threadLocalsAreaSize, long extra1) {
+    public boolean attach(int id, int threadLocalsAreaSize) {
         try {
             out.writeUTF("attach");
             out.writeInt(id);
             out.writeInt(threadLocalsAreaSize);
-            out.writeLong(extra1);
             out.flush();
             boolean result = in.readBoolean();
             return result;

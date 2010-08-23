@@ -37,18 +37,17 @@ public interface TeleChannelDataIOProtocol {
      * Create a new target VM.
      * @param pathName file system pathname of target VM image
      * @param commandLineArguments arguments to VM
-     * @param extra1 additional, implementation-specific argument
+     * @param threadLocalsAreaSize size of thread locals area from boot image header
      * @return handle for target VM or < zero if creation failed
      */
-    long create(String pathName, String[] commandLineArguments, long extra1);
+    long create(String pathName, String[] commandLineArguments, int threadLocalsAreaSize);
     /**
      * Establish a connection to an existing given target VM.
      * @param id the OS-specific id of the target VM; only meaningful for an active target VM
      * @param threadLocalsAreaSize size of thread locals area from boot image header
-     * @param extra1 additional, implementation-specific, argument
      * @return {@code true} if the attach succeeded, {@code false} otherwise
      */
-    boolean attach(int id, int threadLocalsAreaSize, long extra1);
+    boolean attach(int id, int threadLocalsAreaSize);
     /**
      * Break connection with target VM.
      * @return {@code true} if the detach succeeded, {@code false} otherwise

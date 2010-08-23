@@ -64,10 +64,10 @@ public class LinuxNativeTeleChannelProtocol extends UnixNativeTeleChannelProtoco
     }
 
     @Override
-    public long create(String programFile, String[] commandLineArguments, long extra) {
+    public long create(String programFile, String[] commandLineArguments, int threadLocalsAreaSize) {
         final Pointer commandLineArgumentsBuffer;
         try {
-            commandLineArgumentsBuffer = createBufferAndAgent(programFile, commandLineArguments);
+            commandLineArgumentsBuffer = createBufferAndAgent(programFile, commandLineArguments, threadLocalsAreaSize);
         } catch (BootImageException ex) {
             return -1;
         }

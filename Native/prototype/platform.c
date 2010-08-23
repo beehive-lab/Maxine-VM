@@ -101,6 +101,8 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeNumberOfSignals(JNIEnv *env, 
     return NSIG;
 #elif os_SOLARIS
     return SIGRTMAX;
+#elif os_GUESTVMXEN
+    return 0;
 #else
 #   error
 #endif
