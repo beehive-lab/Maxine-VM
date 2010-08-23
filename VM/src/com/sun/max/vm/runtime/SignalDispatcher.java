@@ -47,6 +47,7 @@ import com.sun.max.vm.value.*;
  */
 public final class SignalDispatcher extends Thread {
 
+    private static final String NUMBER_OF_SIGNALS_PROPERTY = "max.os.signalcount";
     /**
      * A set of counters, one per supported signal, used to post and consume signals.
      */
@@ -63,10 +64,27 @@ public final class SignalDispatcher extends Thread {
      */
     private static final Object LOCK = JavaMonitorManager.newVmLock("PENDING_SIGNALS_LOCK");
 
+    @HOSTED_ONLY
     /**
      * Gets the number of signals supported by the platform that may be delivered to the VM.
      * The range of signal numbers that the VM expects to see is between 0 (inclusive) and
      * {@code nativeNumberOfSignals()} (exclusive).
+     * This checks the property {@value NUMBER_OF_SIGNALS_PROPERTY}
+     * in case the host and target platforms are different.
+     */
+    private static int numberOfSignals() {
+        final String prop = System.getProperty(NUMBER_OF_SIGNALS_PROPERTY);
+        if (prop != null) {
+            return Integer.parseInt(prop);
+        }
+        return nativeNumberOfSignals();
+    }
+
+
+    /**
+     * Get the number of signals supported by the host platform, the assumption being that the generated VM
+     * will be running on the same platform.
+     * @return
      */
     @HOSTED_ONLY
     private static native int nativeNumberOfSignals();
