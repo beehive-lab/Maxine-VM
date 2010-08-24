@@ -251,6 +251,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopMenu.add(actions.memoryWordsInspectorsMenu());
         desktopMenu.add(actions.viewMemoryRegions());
         desktopMenu.add(actions.viewMethodCode());
+        desktopMenu.add(actions.viewNotepad());
         desktopMenu.add(actions.objectInspectorsMenu());
         desktopMenu.add(actions.viewRegisters());
         desktopMenu.add(actions.viewStack());

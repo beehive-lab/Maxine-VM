@@ -29,19 +29,19 @@
 JNIEXPORT jobject JNICALL
 Java_com_sun_max_vm_prototype_Prototype_nativeGetOperatingSystem(JNIEnv *env, jclass c)
 {
-#   if os_DARWIN
-        return (*env)->NewStringUTF(env, "DARWIN");
-#   elif os_LINUX
-        return (*env)->NewStringUTF(env, "LINUX");
-#   elif os_SOLARIS
-        return (*env)->NewStringUTF(env, "SOLARIS");
-#   elif os_WINDOWS
-        return (*env)->NewStringUTF(env, "WINDOWS");
-#   elif os_GUESTVMXEN
-        return (*env)->NewStringUTF(env, "GUESTVM");
-#   else
-#       error
-#   endif
+#if os_DARWIN
+    return (*env)->NewStringUTF(env, "DARWIN");
+#elif os_LINUX
+    return (*env)->NewStringUTF(env, "LINUX");
+#elif os_SOLARIS
+    return (*env)->NewStringUTF(env, "SOLARIS");
+#elif os_WINDOWS
+    return (*env)->NewStringUTF(env, "WINDOWS");
+#elif os_GUESTVMXEN
+    return (*env)->NewStringUTF(env, "GUESTVM");
+#else
+#   error
+#endif
 }
 
 JNIEXPORT jint JNICALL
@@ -65,17 +65,17 @@ Java_com_sun_max_vm_prototype_Prototype_nativeGetProcessorModel(JNIEnv *env, jcl
 JNIEXPORT jobject JNICALL
 Java_com_sun_max_vm_prototype_Prototype_nativeGetInstructionSet(JNIEnv *env, jclass c)
 {
-#   if isa_AMD64
-	    return (*env)->NewStringUTF(env, "AMD64");
-#   elif isa_IA32
-	    return (*env)->NewStringUTF(env, "IA32");
-#   elif isa_POWER
-	    return (*env)->NewStringUTF(env, "PPC");
-#   elif isa_SPARC
-	    return (*env)->NewStringUTF(env, "SPARC");
-#   else
-#       error
-#   endif
+#if isa_AMD64
+    return (*env)->NewStringUTF(env, "AMD64");
+#elif isa_IA32
+    return (*env)->NewStringUTF(env, "IA32");
+#elif isa_POWER
+    return (*env)->NewStringUTF(env, "PPC");
+#elif isa_SPARC
+    return (*env)->NewStringUTF(env, "SPARC");
+#else
+#   error
+#endif
 }
 
 JNIEXPORT jboolean JNICALL
@@ -88,4 +88,22 @@ JNIEXPORT jint JNICALL
 Java_com_sun_max_vm_prototype_Prototype_nativeGetWordWidth(JNIEnv *env, jclass c)
 {
     return word_64_BITS ? 64 : 32;
+}
+
+#if os_DARWIN || os_LINUX || os_WINDOWS
+#include <signal.h>
+#endif
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_vm_runtime_SignalDispatcher_nativeNumberOfSignals(JNIEnv *env, jclass c)
+{
+#if os_DARWIN || os_LINUX || os_WINDOWS
+    return NSIG;
+#elif os_SOLARIS
+    return SIGRTMAX;
+#elif os_GUESTVMXEN
+    return 0;
+#else
+#   error
+#endif
 }

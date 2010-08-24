@@ -239,6 +239,7 @@ public class JavaPrototype extends Prototype {
 
         loadPackage("java.lang", false);
         loadPackage("java.lang.reflect", false); // needed to compile and to invoke the main method
+        loadPackage("java.lang.ref", false);
         loadPackage("java.io", false);
         loadPackage("java.nio", false);
         loadPackage("java.nio.charset", false);
@@ -246,6 +247,10 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.util.zip", false); // needed to load classes from jar/zip files
         loadPackage("java.util.jar", false); // needed to load classes from jar files
         loadClass(sun.misc.VM.class);
+
+        // Some of these classes contain field offsets cached in static fields.
+        // These offsets need to be patched with Maxine values.
+        loadPackage("java.util.concurrent.atomic", false);
 
         // These classes need to be compiled and in the boot image in order to be able to
         // run the optimizing compiler at run time (amongst other reasons)
@@ -272,6 +277,8 @@ public class JavaPrototype extends Prototype {
         if (System.getProperty("max.allow.all.core.packages") == null) {
             HostedBootClassLoader.omitPackage("java.security", false);
         }
+
+//loadPackage("demo", false);
     }
 
     private static List<Class> mainPackageClasses = new ArrayList<Class>();

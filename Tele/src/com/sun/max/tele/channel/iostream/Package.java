@@ -18,28 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.thread;
+package com.sun.max.tele.channel.iostream;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.*;
 
 /**
- * The {@code VmThreadStack} class implements an object that encapsulates all the information about
- * a VM thread's stack, including the stack segments such as a reference map area, guard pages, user area,
- * native area, etc.
- *
- * @author Ben L. Titzer
+ * @author Mick Jordan
  */
-public abstract class VmThreadStack {
+public class Package extends MaxPackage {
+    public Package() {
+        super();
+    }
 
-    public abstract VmThreadLocal triggeredVmThreadLocals();
-    public abstract VmThreadLocal enabledVmThreadLocals();
-    public abstract VmThreadLocal disabledVmThreadLocals();
-
-    public abstract Address lowestStackSlot();
-    public abstract Address highestStackSlot();
-
-    public abstract Pointer referenceMap();
-
-    public abstract boolean isInRedZone(Address address);
-    public abstract boolean isInYellowZone(Address address);
 }

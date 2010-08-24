@@ -18,20 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+
 /**
  * @author Bernd Mathiske
  * @author Laurent Daynes
- * @author Paul Caprioli
+ * @author Doug Simon
  */
 
-#if !os_GUESTVMXEN
-#   include <signal.h>
-#   include <stdlib.h>
-#   include <string.h>
-#   include <sys/ucontext.h>
-#   include <unistd.h>
-#endif
-
+#include "c.h"
 #include "threads.h"
 #include "virtualMemory.h"
 #include "log.h"
@@ -39,18 +33,12 @@
 #include "os.h"
 #include "isa.h"
 #include "image.h"
+#include "trap.h"
 
 #if os_SOLARIS && isa_SPARC
     /* Get STACK_BIAS definition for Solaris / SPARC */
 #      include <sys/stack.h>
        typedef struct rwindow * RegisterWindow;
-#endif
-
-#if os_GUESTVMXEN
-#   include <guestvmXen.h>
-#else
-    typedef ucontext_t UContext;
-    typedef siginfo_t SigInfo;
 #endif
 
 /*
@@ -64,33 +52,54 @@
 #define ARITHMETIC_EXCEPTION 4
 #define ASYNC_INTERRUPT 5
 
+static Address theJavaTrapStub;
+static boolean traceTraps = false;
+
+#if !os_GUESTVMXEN
+static sigset_t normalThreadSignalMask;
+static sigset_t vmOperationThreadSignalMask;
+#endif
+
 int getTrapNumber(int signal) {
     switch (signal) {
     case SIGSEGV:
+#if !os_GUESTVMXEN
     case SIGBUS:
+#endif
         return MEMORY_FAULT;
     case SIGILL:
         return ILLEGAL_INSTRUCTION;
     case SIGFPE:
         return ARITHMETIC_EXCEPTION;
+#if !os_GUESTVMXEN
     case SIGUSR1:
         return ASYNC_INTERRUPT;
+#endif
     }
-    return signal;
+    return -signal;
 }
 
-static Address theJavaTrapStub;
-static boolean traceTraps = false;
-
-#if os_GUESTVMXEN
-#define SignalHandlerFunction fault_handler_t
-#else
-typedef void (*SignalHandlerFunction)(int signal, SigInfo *signalInfo, void *ucontext);
+#if os_SOLARIS
+#include <thread.h>
+#define thread_setSignalMask thr_sigsetmask
+#elif os_DARWIN || os_LINUX
+#define thread_setSignalMask pthread_sigmask
 #endif
 
-void setHandler(int signal, SignalHandlerFunction handler) {
+void setCurrentThreadSignalMask(boolean isVmOperationThread) {
+#if !os_GUESTVMXEN
+    if (isVmOperationThread) {
+        thread_setSignalMask(SIG_SETMASK, &vmOperationThreadSignalMask, NULL);
+    } else {
+        thread_setSignalMask(SIG_SETMASK, &normalThreadSignalMask, NULL);
+    }
+#endif
+}
+
+void* setSignalHandler(int signal, SignalHandlerFunction handler) {
 #if os_GUESTVMXEN
 	guestvmXen_register_fault_handler(signal, handler);
+	return NULL;
 #else
 
     struct sigaction newSigaction;
@@ -109,7 +118,22 @@ void setHandler(int signal, SignalHandlerFunction handler) {
     if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
         log_exit(1, "sigaction failed");
     }
+
+    if (traceTraps || log_TRAP) {
+        log_lock();
+        log_print("Registered handler ");
+        log_print_symbol((Address) handler);
+        log_print(" for signal %d", signal);
+        if (oldSigaction.sa_handler != NULL) {
+            log_print(" replacing handler ");
+            log_print_symbol((Address) oldSigaction.sa_handler);
+        }
+        log_print_newline();
+        log_unlock();
+    }
+    return (void *) oldSigaction.sa_handler;
 #endif
+
 }
 
 static Address getInstructionPointer(UContext *ucontext) {
@@ -164,8 +188,10 @@ char *signalName(int signal) {
     case SIGSEGV: return "SIGSEGV";
     case SIGFPE: return "SIGFPE";
     case SIGILL: return "SIGILL";
+#if !os_GUESTVMXEN
     case SIGUSR1: return "SIGUSR1";
     case SIGBUS: return "SIGBUS";
+#endif
     }
     return NULL;
 }
@@ -370,7 +396,11 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     if (traceTraps || log_TRAP) {
         if (sigName != NULL) {
             log_println("thread handle=%p, id=%d: %s", thread_self(), getThreadLocal(int, disabled_tl, ID), sigName);
-            log_println("trapInfo[0] (trap number)         = %p", getThreadLocal(Address, disabled_tl, TRAP_NUMBER));
+            if (trapNumber < 0) {
+                log_println("trapInfo[0] (trap number)         = %p [signal %d]", getThreadLocal(Address, disabled_tl, TRAP_NUMBER), -trapNumber);
+            } else {
+                log_println("trapInfo[0] (trap number)         = %p", getThreadLocal(Address, disabled_tl, TRAP_NUMBER));
+            }
             log_println("trapInfo[1] (instruction pointer) = %p", getThreadLocal(Address, disabled_tl, TRAP_INSTRUCTION_POINTER));
             log_println("trapInfo[2] (fault address)       = %p", getThreadLocal(Address, disabled_tl, TRAP_FAULT_ADDRESS));
             log_println("trapInfo[3] (safepoint latch)     = %p", getThreadLocal(Address, disabled_tl, TRAP_LATCH_REGISTER));
@@ -380,14 +410,38 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     setInstructionPointer(ucontext, theJavaTrapStub);
 }
 
+SignalHandlerFunction vmSignalHandler = (SignalHandlerFunction) globalSignalHandler;
+
 Address nativeInitialize(Address javaTrapStub) {
+    /* This function must be called on the primordial thread. */
+    c_ASSERT(getThreadLocal(int, threadLocals_current(), ID) == 0);
+
     theJavaTrapStub = javaTrapStub;
-    setHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
-    setHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
-    setHandler(SIGILL, (SignalHandlerFunction) globalSignalHandler);
-    setHandler(SIGFPE, (SignalHandlerFunction) globalSignalHandler);
-    setHandler(SIGUSR1, (SignalHandlerFunction) globalSignalHandler);
+    setSignalHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
+    setSignalHandler(SIGILL, (SignalHandlerFunction) globalSignalHandler);
+    setSignalHandler(SIGFPE, (SignalHandlerFunction) globalSignalHandler);
+
+#if !os_GUESTVMXEN
+    setSignalHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
+    setSignalHandler(SIGUSR1, (SignalHandlerFunction) globalSignalHandler);
+
+    /* Save the current signal mask to apply it to the VM operation thread. */
+    thread_setSignalMask(0, NULL, &vmOperationThreadSignalMask);
+
+    /* Block all asynchronous signals for threads exception the VM operation thread. */
+    sigfillset(&normalThreadSignalMask);
+    sigdelset(&normalThreadSignalMask, SIGSEGV);
+    sigdelset(&normalThreadSignalMask, SIGBUS);
+    sigdelset(&normalThreadSignalMask, SIGILL);
+    sigdelset(&normalThreadSignalMask, SIGFPE);
+    sigdelset(&normalThreadSignalMask, SIGUSR1);
+
+    /* Let all threads be stopped by a debugger. */
+    sigdelset(&normalThreadSignalMask, SIGTRAP);
+
+    /* Apply the normal thread mask to the primordial thread. */
+    thread_setSignalMask(SIG_BLOCK, &normalThreadSignalMask, NULL);
+#endif
+
     return (Address) &traceTraps;
 }
-
-

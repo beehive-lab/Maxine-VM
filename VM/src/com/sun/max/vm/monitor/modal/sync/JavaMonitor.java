@@ -55,8 +55,8 @@ public interface JavaMonitor {
     /**
      * Tests if this {@code JavaMonitor} is owned by the given thread.
      *
-     * @param thread the thread to test for ownership
-     * @return true if {@code thread} owns this monitor; false otherwise
+     * @param thread the thread to test for ownership or {@code null} to test if this monitor is not currently locked by any thread
+     * @return true if {@code thread} owns this monitor or {@code thread == null} and this monitor has no owner, false otherwise
      */
     boolean isOwnedBy(VmThread thread);
 

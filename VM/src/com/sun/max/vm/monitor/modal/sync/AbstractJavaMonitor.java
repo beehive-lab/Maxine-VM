@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.*;
@@ -152,7 +153,16 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     public void log() {
         Log.print(ObjectAccess.readClassActor(this).name.string);
         Log.print(" boundTo=");
-        Log.print(boundObject() == null ? "null" : ObjectAccess.readClassActor(boundObject()).name.string);
+        if (boundObject() == null) {
+            Log.print("null");
+        } else {
+            ClassActor classActor = ObjectAccess.readClassActor(boundObject());
+            Log.print(classActor.name.string);
+            if (classActor == VmLock.ACTOR) {
+                Log.print(" name=");
+                Log.print(VmLock.asVmLock(boundObject()).name);
+            }
+        }
         Log.print(" owner=");
         Log.print(ownerThread == null ? "null" : ownerThread.getName());
         Log.print(" recursion=");
@@ -162,7 +172,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     protected void traceStartMonitorEnter(final VmThread currentThread) {
-        if (Monitor.traceMonitors()) {
+        if (Monitor.TraceMonitors) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Acquiring monitor for ");
             Log.print(currentThread.getName());
@@ -174,7 +184,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     protected void traceEndMonitorEnter(final VmThread currentThread) {
-        if (Monitor.traceMonitors()) {
+        if (Monitor.TraceMonitors) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Acquired monitor for ");
             Log.print(currentThread.getName());
@@ -186,7 +196,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     protected void traceStartMonitorExit(final VmThread currentThread) {
-        if (Monitor.traceMonitors()) {
+        if (Monitor.TraceMonitors) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Releasing monitor for ");
             Log.print(currentThread.getName());
@@ -198,7 +208,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     protected void traceEndMonitorExit(final VmThread currentThread) {
-        if (Monitor.traceMonitors()) {
+        if (Monitor.TraceMonitors) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Released monitor for ");
             Log.print(currentThread.getName());
@@ -210,7 +220,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     protected void traceStartMonitorWait(final VmThread currentThread) {
-        if (Monitor.traceMonitors()) {
+        if (Monitor.TraceMonitors) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Start wait on monitor for ");
             Log.print(currentThread.getName());
@@ -222,7 +232,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     protected void traceEndMonitorWait(final VmThread currentThread, final boolean interrupted, boolean timedOut) {
-        if (Monitor.traceMonitors()) {
+        if (Monitor.TraceMonitors) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("End wait on monitor for ");
             Log.print(currentThread.getName());
@@ -239,7 +249,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     protected void traceEndMonitorNotify(final VmThread currentThread) {
-        if (Monitor.traceMonitors()) {
+        if (Monitor.TraceMonitors) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("End notify monitor for ");
             Log.print(currentThread.getName());
@@ -251,7 +261,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     protected void traceStartMonitorNotify(final VmThread currentThread) {
-        if (Monitor.traceMonitors()) {
+        if (Monitor.TraceMonitors) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Start notify monitor for ");
             Log.print(currentThread.getName());

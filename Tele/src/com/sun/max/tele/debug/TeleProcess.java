@@ -27,6 +27,7 @@ import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.sun.max.*;
 import com.sun.max.gui.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -80,7 +81,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
      * @return a native buffer than can be cast to the C type {@code char**} and used as the first argument to a C
      *         {@code main} function
      */
-    protected static Pointer createCommandLineArgumentsBuffer(File programFile, String[] commandLineArguments) {
+    public static Pointer createCommandLineArgumentsBuffer(File programFile, String[] commandLineArguments) {
         final String[] strings = new String[commandLineArguments.length + 1];
         strings[0] = programFile.getAbsolutePath();
         System.arraycopy(commandLineArguments, 0, strings, 1, commandLineArguments.length);
@@ -302,6 +303,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     Trace.end(TRACE_VALUE + 1, tracePrefix() + "handling execution request: " + request);
                 } catch (InterruptedException interruptedException) {
                     ProgramWarning.message(tracePrefix() + "Could not take request from sceduling queue: " + interruptedException);
+                } catch (Throwable throwable) {
+                    ProgramWarning.message(tracePrefix() + "Error on RequestHandlingThread: " + Utils.stackTraceAsString(throwable));
                 } finally {
                     vm().unlock();
                 }

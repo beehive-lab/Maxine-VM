@@ -87,7 +87,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     public void verify() {
         if (verbose) {
             Log.println();
-            Log.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
+            Log.println(classMethodActor().format("Verifying %H.%n(%p) via type-checking"));
 
             Log.println("Input bytecode:");
             CodeAttributePrinter.print(Log.out, codeAttribute());

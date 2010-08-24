@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.debug.linux;
 
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -34,48 +35,33 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
         return (LinuxTeleProcess) super.teleProcess();
     }
 
-    private int type;
+    private LinuxTeleChannelProtocol protocol;
 
-    public int type() {
-        return type;
-    }
-
-    private short flags;
-
-    public int flags() {
-        return flags;
-    }
-
-    private int priority;
-
-    public int priority() {
-        return priority;
-    }
-
-    private final LinuxTask task;
-
-    LinuxTask task() {
-        return task;
+    private int tid() {
+        return (int) localHandle();
     }
 
     LinuxTeleNativeThread(LinuxTeleProcess teleProcess, Params params) {
         super(teleProcess, params);
-        task = new LinuxTask(teleProcess.task(), (int) params.localHandle);
+        protocol = (LinuxTeleChannelProtocol) TeleVM.teleChannelProtocol();
     }
 
     @Override
     public boolean updateInstructionPointer(Address address) {
-        return task().setInstructionPointer(address);
+        return protocol.setInstructionPointer(tid(), address.toLong());
     }
 
     @Override
     protected boolean readRegisters(byte[] integerRegisters, byte[] floatingPointRegisters, byte[] stateRegisters) {
-        return task().readRegisters(integerRegisters, floatingPointRegisters, stateRegisters);
+        return protocol.readRegisters(tid(),
+                        integerRegisters, integerRegisters.length,
+                        floatingPointRegisters, floatingPointRegisters.length,
+                        stateRegisters, stateRegisters.length);
     }
 
     @Override
     protected boolean singleStep() {
-        return task().singleStep();
+        return protocol.singleStep(tid());
     }
 
     @Override

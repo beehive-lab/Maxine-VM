@@ -197,10 +197,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         return 0;
     }
 
-    public boolean isInitialized() {
-        return MaxineVM.isRunning();
-    }
-
     public GarbageCollectorMXBean getGarbageCollectorMXBean() {
         return new GarbageCollectorMXBeanAdaptor("Invalid") {
             @Override

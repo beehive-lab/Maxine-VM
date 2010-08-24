@@ -23,20 +23,22 @@ package com.sun.max.tele.page;
 import java.nio.*;
 
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
+import com.sun.max.tele.TeleVM.TargetLocation.Kind;
 import com.sun.max.unsafe.*;
 
 /**
  * A cached page of remote memory contents.
  *
  * To avoid double buffering of {@code byte} arrays in the native code that copies bytes from the VM address space, NIO
- * {@linkplain ByteBuffer#isDirect() direct} {@link ByteBuffer}s can be used. This option is controlled by the {@code
- * "max.tele.page.noDirectBuffers"} system property. If this property is {@code null} then the buffer for each page is
- * allocated from a global buffer until the global buffer is exhausted. If the property is non-{@code null} or the
+ * {@linkplain ByteBuffer#isDirect() direct} {@link ByteBuffer}s are used, unless the target VM is remote. The buffer for each page is
+ * allocated from a global buffer until the global buffer is exhausted. If the taret VM is remote or the
  * global buffer has been exhausted, then the buffer for each page is a heap allocated byte array.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  * @author Doug Simon
+ * @author Mick Jordan
  */
 public class Page {
 
@@ -56,15 +58,6 @@ public class Page {
      * The buffer for this page.
      */
     private final ByteBuffer buffer;
-
-    /**
-     * A global option set according to the {@code "max.tele.page.noDirectBuffers"} system property.
-     * If this property is {@code null} then the {@link #buffer} for each page is allocated from
-     * {@link #globalBuffer this} global buffer until the global buffer is exhausted. If the property
-     * is non-{@code null} or the global buffer has been exhausted, then the buffer for each page is
-     * a heap allocated byte array.
-     */
-    private static final boolean noDirectBuffers = System.getProperty("max.tele.page.noDirectBuffers") != null;
 
     private static final long DEFAULT_GLOBAL_DIRECTBUFFER_POOL_SIZE = 100 * 1024 * 1024;
 
@@ -90,7 +83,7 @@ public class Page {
      */
     private static synchronized ByteBuffer allocate(TeleIO teleIO, ByteOrder byteOrder, long index) {
         final int pageSize = teleIO.pageSize();
-        if (!noDirectBuffers) {
+        if (useDirectBuffers()) {
             if (globalBuffer == null) {
                 globalBuffer = ByteBuffer.allocateDirect(1024 * 1024 * 100).order(byteOrder);
             }
@@ -103,6 +96,15 @@ public class Page {
         }
         // Not using direct buffers or global buffer is exhausted
         return ByteBuffer.allocate(pageSize).order(byteOrder);
+    }
+
+    /**
+     * Decide whether to use direct buffers.
+     * It is counter-productive to use them if the target VM is remote.
+     * @return
+     */
+    private static boolean useDirectBuffers() {
+        return TeleVM.targetLocation().kind != Kind.REMOTE;
     }
 
     public Page(TeleIO teleIO, long index, ByteOrder byteOrder) {

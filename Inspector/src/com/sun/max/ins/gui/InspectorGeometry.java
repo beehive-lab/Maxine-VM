@@ -79,6 +79,11 @@ public interface InspectorGeometry {
      */
     Rectangle bootImageFrameDefaultBounds();
 
+    /**
+     * @return default geometry for the {@link NotepadInspector}.
+     */
+    Rectangle notepadFrameDefaultBounds();
+
     // Java Source Inspector frame
     Point javaSourceFrameDefaultLocation();
     Dimension javaSourceFramePrefSize();
