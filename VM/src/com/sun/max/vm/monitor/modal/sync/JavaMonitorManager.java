@@ -20,11 +20,15 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.BindingProtection;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
@@ -135,8 +139,7 @@ public class JavaMonitorManager {
      */
     public static void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
-            bindStickyMonitor(JavaMonitorManager.class, new StandardJavaMonitor());
-
+            LOCK = newVmLock("MONITOR_MANAGER_LOCK");
             int unboundListImageQty = UNBOUNDLIST_IMAGE_QTY;
             final String  unBoundListImageQtyProperty = System.getProperty(UNBOUNDLIST_IMAGE_QTY_PROPERTY);
             if (unBoundListImageQtyProperty != null) {
@@ -165,7 +168,7 @@ public class JavaMonitorManager {
                 monitor.refreshBoundObject();
             }
         } else if (phase == MaxineVM.Phase.STARTING) {
-            if (Monitor.traceMonitors() && stickyMonitors.length > 0) {
+            if (Monitor.TraceMonitors && stickyMonitors.length > 0) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.println("Sticky monitors:");
                 for (int i = 0; i < stickyMonitors.length; i++) {
@@ -203,7 +206,7 @@ public class JavaMonitorManager {
      * @param monitor the monitor to bind
      */
     @HOSTED_ONLY
-    public static <Object_Type> Object_Type bindStickyMonitor(Object_Type object, ManagedMonitor monitor) {
+    public static Object bindStickyMonitor(Object object, ManagedMonitor monitor) {
         monitor.setBoundObject(object);
         addToStickyMonitors(monitor);
         return object;
@@ -217,8 +220,42 @@ public class JavaMonitorManager {
      * @param object the object to bind
      */
     @HOSTED_ONLY
-    public static <Object_Type> Object_Type bindStickyMonitor(Object_Type object) {
+    public static Object bindStickyMonitor(Object object) {
         return bindStickyMonitor(object, new StandardJavaMonitor());
+    }
+
+    /**
+     * Creates an object and binds a {@link StandardJavaMonitor StandardJavaMonitor} to it at VM image build time.
+     * The binding will never be unbound. This is useful for VM locks that are known to be
+     * contended at runtime and/or are used in situations where allocation is disabled.
+     *
+     * @return object a new object to which an allocated monitor is permanently bound
+     */
+    @HOSTED_ONLY
+    public static VmLock newVmLock(String name) {
+        VmLock lock = new VmLock(name);
+        bindStickyMonitor(lock, new StandardJavaMonitor());
+        return lock;
+    }
+
+    /**
+     * Class that can be used to instantiate a named lock that is used by the VM.
+     * The name is useful in combination with the {@link Monitor#TraceMonitors}
+     * VM option.
+     *
+     * @author Doug Simon
+     */
+    public static class VmLock {
+
+        public static final ClassActor ACTOR = ClassActor.fromJava(VmLock.class);
+
+        @INTRINSIC(UNSAFE_CAST)
+        public static native VmLock asVmLock(Object object);
+
+        public VmLock(String name) {
+            this.name = name;
+        }
+        public final String name;
     }
 
     @HOSTED_ONLY
@@ -271,6 +308,12 @@ public class JavaMonitorManager {
     }
 
     /**
+     * Lock used to synchronize access to the unbound monitor list.
+     */
+    @CONSTANT_WHEN_NOT_ZERO
+    private static Object LOCK;
+
+    /**
      * Binds a monitor to the given object.
      * <p>
      * Important: the binding is not two-way at this stage; the monitor
@@ -286,7 +329,7 @@ public class JavaMonitorManager {
         if (inGlobalSafePoint) {
             monitor = takeFromUnboundList();
         } else {
-            synchronized (JavaMonitorManager.class) {
+            synchronized (LOCK) {
                 if (numberOfUnboundMonitors < UNBOUNDLIST_MIN_QTY) {
                     System.gc();
                 }
@@ -298,7 +341,7 @@ public class JavaMonitorManager {
             }
         }
         monitor.setBoundObject(object);
-        if (Monitor.traceMonitors()) {
+        if (Monitor.TraceMonitors) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Bound monitor: ");
             monitor.log();
@@ -323,7 +366,7 @@ public class JavaMonitorManager {
         if (inGlobalSafePoint) {
             addToUnboundList(bindableMonitor);
         } else {
-            synchronized (JavaMonitorManager.class) {
+            synchronized (LOCK) {
                 addToUnboundList(bindableMonitor);
             }
         }
@@ -431,7 +474,7 @@ public class JavaMonitorManager {
                 monitor.setBindingProtection(BindingProtection.UNPROTECTED);
             }
             if (monitor.bindingProtection() == BindingProtection.UNPROTECTED) {
-                if (Monitor.traceMonitors()) {
+                if (Monitor.TraceMonitors) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Unbinding monitor: ");
                     monitor.log();

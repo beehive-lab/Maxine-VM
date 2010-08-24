@@ -118,6 +118,8 @@ public final class Inspection implements InspectionHolder {
 
     private InspectorMainFrame inspectorMainFrame;
 
+    private NotepadManager notepadManager;
+
     public Inspection(MaxVM vm) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
@@ -132,6 +134,7 @@ public final class Inspection implements InspectionHolder {
         ClassMethodActor.hostedVerificationDisabled = true;
 
         BreakpointPersistenceManager.initialize(this);
+        notepadManager = new NotepadManager(this);
         inspectionActions.refresh(true);
 
         vm.addVMStateListener(new VMStateListener());
@@ -283,6 +286,13 @@ public final class Inspection implements InspectionHolder {
      */
     public void registerAction(InspectorAction inspectorAction) {
         preferences.registerAction(inspectorAction);
+    }
+
+    /**
+     * Gets access to persistent notepad(s).
+     */
+    public InspectorNotepad getNotepad() {
+        return notepadManager.getNotepad();
     }
 
     /**
@@ -575,6 +585,10 @@ public final class Inspection implements InspectionHolder {
      * Saves any persistent state, then shuts down VM process if needed and inspection.
      */
     public void quit() {
+        for (InspectionListener listener : inspectionListeners) {
+            Trace.line(TRACE_VALUE, tracePrefix() + "inspection quitting: " + listener);
+            listener.inspectionEnding();
+        }
         settings().quit();
         try {
             if (vm().state().processState() != TERMINATED) {

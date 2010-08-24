@@ -54,7 +54,7 @@ public class AsynchronousProfiler implements Runnable {
         profilerThread = new Thread(new AsynchronousProfiler());
         profilerThread.setPriority(Thread.NORM_PRIORITY);
         profilerThread.setDaemon(true);
-        profilerThread.start();
+        //profilerThread.start();
     }
 
     public void run() {

@@ -23,6 +23,7 @@ package com.sun.max.vm.thread;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.security.*;
 
@@ -41,10 +42,10 @@ import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.value.*;
 
 /**
  * The MaxineVM VM specific implementation of threads.
@@ -83,7 +84,10 @@ import com.sun.max.vm.stack.*;
  */
 public class VmThread {
 
-    static final VMBooleanXXOption TRACE_THREADS_OPTION = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
+    static boolean TraceThreads;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceThreads",  VmThread.class, "Trace thread management activity for debugging purposes.", MaxineVM.Phase.PRISTINE);
+    }
 
     private static final Size DEFAULT_STACK_SIZE = Size.K.times(256);
 
@@ -97,7 +101,115 @@ public class VmThread {
         }
     };
 
-    public static final VmThread MAIN_VM_THREAD = createMain();
+    public static final ThreadGroup systemThreadGroup;
+    public static final ThreadGroup mainThreadGroup;
+    public static final VmThread referenceHandlerThread;
+    public static final VmThread finalizerThread;
+
+    /**
+     * Single instance of {@link VmOperationThread}.
+     */
+    public static final VmThread vmOperationThread;
+
+    /**
+     * Single instance of {@link SignalDispatcher}.
+     */
+    public static final VmThread signalDispatcherThread;
+
+    /**
+     * The main thread created by the primordial thread at runtime.
+     */
+    public static final VmThread mainThread;
+
+    @HOSTED_ONLY public static ThreadGroup hostSystemThreadGroup;
+    @HOSTED_ONLY public static ThreadGroup hostMainThreadGroup;
+    @HOSTED_ONLY public static Thread hostReferenceHandlerThread;
+    @HOSTED_ONLY public static Thread hostFinalizerThread;
+    @HOSTED_ONLY public static Thread hostMainThread;
+
+    static {
+        hostSystemThreadGroup = null;
+        hostMainThreadGroup = null;
+        hostReferenceHandlerThread = null;
+        hostFinalizerThread = null;
+        hostMainThread = null;
+
+        hostSystemThreadGroup = Thread.currentThread().getThreadGroup();
+        for (ThreadGroup parent = hostSystemThreadGroup.getParent(); parent != null; parent = hostSystemThreadGroup.getParent()) {
+            hostSystemThreadGroup = parent;
+        }
+        for (Thread thread : getThreads(hostSystemThreadGroup)) {
+            if (thread.getClass().equals(JDK.java_lang_ref_Reference$ReferenceHandler.javaClass())) {
+                hostReferenceHandlerThread = thread;
+            } else if (thread.getClass().equals(JDK.java_lang_ref_Finalizer$FinalizerThread.javaClass())) {
+                hostFinalizerThread = thread;
+            }
+        }
+
+        for (ThreadGroup group : getThreadGroups(hostSystemThreadGroup)) {
+            if (group.getName().equals("main")) {
+                hostMainThreadGroup = group;
+                for (Thread thread : getThreads(group)) {
+                    if (thread.getName().equals("main")) {
+                        hostMainThread = thread;
+                    }
+                }
+            }
+        }
+
+        assert hostSystemThreadGroup != null;
+        assert hostMainThreadGroup != null;
+        assert hostReferenceHandlerThread != null;
+        assert hostFinalizerThread != null;
+        assert hostMainThread != null;
+
+
+        systemThreadGroup = new ThreadGroup(hostSystemThreadGroup.getName());
+        systemThreadGroup.setMaxPriority(hostSystemThreadGroup.getMaxPriority());
+        WithoutAccessCheck.setInstanceField(systemThreadGroup, "parent", null);
+        ReferenceValue systemThreadGroupRef = ReferenceValue.from(systemThreadGroup);
+        mainThreadGroup = new ThreadGroup(systemThreadGroup, hostMainThreadGroup.getName());
+
+        try {
+            referenceHandlerThread = initVmThread(copyProps(hostReferenceHandlerThread, (Thread) ReferenceHandler_init.invokeConstructor(systemThreadGroupRef, ReferenceValue.from(hostReferenceHandlerThread.getName())).asObject()));
+            finalizerThread = initVmThread(copyProps(hostFinalizerThread, (Thread) FinalizerThread_init.invokeConstructor(systemThreadGroupRef).asObject()));
+        } catch (Exception e) {
+            throw FatalError.unexpected("Error initializing VM threads", e);
+        }
+
+        mainThread = initVmThread(copyProps(hostMainThread, new Thread(mainThreadGroup, hostMainThread.getName())));
+        vmOperationThread = initVmThread(new VmOperationThread(systemThreadGroup));
+        signalDispatcherThread = initVmThread(new SignalDispatcher(systemThreadGroup));
+    }
+
+    @HOSTED_ONLY
+    static Thread[] getThreads(ThreadGroup group) {
+        Thread[] list = new Thread[group.activeCount()];
+        group.enumerate(list);
+        return list;
+    }
+
+    @HOSTED_ONLY
+    static ThreadGroup[] getThreadGroups(ThreadGroup group) {
+        ThreadGroup[] list = new ThreadGroup[group.activeGroupCount()];
+        group.enumerate(list);
+        return list;
+    }
+
+    @HOSTED_ONLY
+    static VmThread initVmThread(Thread javaThread) {
+        VmThread vmThread = VmThreadFactory.create(javaThread);
+        VmThreadMap.addPreallocatedThread(vmThread);
+        return vmThread;
+    }
+
+    @HOSTED_ONLY
+    static Thread copyProps(Thread src, Thread dst) {
+        dst.setDaemon(src.isDaemon());
+        dst.setPriority(src.getPriority());
+        return dst;
+    }
+
 
     @CONSTANT_WHEN_NOT_ZERO
     private Thread javaThread;
@@ -151,6 +263,12 @@ public class VmThread {
     private Throwable pendingException;
 
     /**
+     * The number of VM operations {@linkplain VmOperationThread#submit(VmOperation) submitted}
+     * by this thread for execution that have not yet completed.
+     */
+    private volatile int pendingOperations;
+
+    /**
      * The pool of JNI local references allocated for this thread.
      */
     private final JniHandles jniHandles = new JniHandles();
@@ -171,19 +289,6 @@ public class VmThread {
      */
     private PrivilegedElement privilegedStackTop;
 
-    /**
-     * This happens during bootstrapping. Then, 'Thread.currentThread()' refers to the "main" thread of the host VM. Since
-     * there is no 'Thread' constructor that we could call without a valid parent thread, we hereby clone the host VM's
-     * main thread.
-     */
-    @HOSTED_ONLY
-    private static VmThread createMain() {
-        final Thread thread = HostObjectAccess.mainThread();
-        final VmThread vmThread = VmThreadFactory.create(thread);
-        VmThreadMap.addPreallocatedThread(vmThread);
-        return vmThread;
-    }
-
     @HOSTED_ONLY
     public static Size stackSize() {
         return DEFAULT_STACK_SIZE;
@@ -202,7 +307,7 @@ public class VmThread {
     public static void createAndRunMainThread() {
         final Size requestedStackSize = STACK_SIZE_OPTION.getValue().aligned(Platform.host().pageSize).asSize();
 
-        final Word nativeThread = nativeThreadCreate(MAIN_VM_THREAD.id, requestedStackSize, Thread.NORM_PRIORITY);
+        final Word nativeThread = nativeThreadCreate(mainThread.id, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
             FatalError.unexpected("Could not start main native thread.");
         } else {
@@ -237,7 +342,7 @@ public class VmThread {
     @INLINE
     public static VmThread current() {
         if (MaxineVM.isHosted()) {
-            return MAIN_VM_THREAD;
+            return mainThread;
         }
         return UnsafeCast.asVmThread(VM_THREAD.getConstantReference().toJava());
     }
@@ -252,7 +357,7 @@ public class VmThread {
 
     private static void executeRunnable(VmThread vmThread) throws Throwable {
         try {
-            if (vmThread == MAIN_VM_THREAD) {
+            if (vmThread == mainThread) {
                 VMConfiguration.hostOrTarget().runScheme().run();
             } else {
                 vmThread.javaThread.run();
@@ -289,7 +394,7 @@ public class VmThread {
      * This method must perform no synchronization or heap allocation and must disable safepoints. In addition, the
      * native caller must hold the global GC and thread list lock for the duration of this call.
      *
-     * After returning a value of {@code 0} this thread is now in a state where it can safely participate in a GC cycle.
+     * After returning a value of {@code 0} or {@code 1} this thread is now in a state where it can safely participate in a GC cycle.
      * A {@code -1} return value can only occur when this is a native thread being attached to the VM and it loses the
      * race to acquire the pre-allocated {@linkplain #threadForAttach thread-for-attach} object.
      *
@@ -304,7 +409,8 @@ public class VmThread {
      * @param stackEnd the highest address (exclusive) of the stack (i.e. the stack memory range is {@code [stackBase ..
      *            stackEnd)})
      * @param stackYellowZone the stack page(s) that have been protected to detect stack overflow
-     * @return {@code 0} if the thread was successfully added, {@code -1} if this attaching thread needs to try again
+     * @return {@code 1} if the thread was successfully added and it is the {@link VmOperationThread},
+     *         {@code 0} if the thread was successfully added, {@code -1} if this attaching thread needs to try again
      *         and {@code -2} if this attaching thread cannot be added because the main thread has exited
      */
     @VM_ENTRY_POINT
@@ -359,7 +465,7 @@ public class VmThread {
         VM_THREAD.setConstantReference(threadLocals, Reference.fromJava(thread));
         VmThreadMap.addThreadLocals(thread, threadLocals, daemon);
 
-        return 0;
+        return thread.isVmOperationThread() ? 1 : 0;
     }
 
     /**
@@ -393,6 +499,14 @@ public class VmThread {
 
         thread.traceThreadAfterInitialization(stackBase, stackEnd);
 
+        // If this is the main thread, then start up the VM operation thread and other special VM threads
+        if (thread == mainThread) {
+            // Start the VM operation thread
+            VmThread.vmOperationThread.start0();
+            SpecialReferenceManager.initialize(MaxineVM.Phase.STARTING);
+            VmThread.signalDispatcherThread.start0();
+        }
+
         try {
             executeRunnable(thread);
         } catch (Throwable throwable) {
@@ -408,10 +522,12 @@ public class VmThread {
             thread.terminationCause = throwable;
         }
         // If this is the main thread terminating, initiate shutdown hooks after waiting for other non-daemons to terminate
-        if (thread == MAIN_VM_THREAD) {
+        if (thread == mainThread) {
             VmThreadMap.ACTIVE.joinAllNonDaemons();
             invokeShutdownHooks();
             VmThreadMap.ACTIVE.setMainThreadExited();
+            SignalDispatcher.terminate();
+            VmOperationThread.terminate();
         }
 
         JniFunctions.epilogue(anchor, null);
@@ -448,7 +564,7 @@ public class VmThread {
         FatalError.check(threadForAttach.get() == null, "thread-for-attach should be null");
         try {
             VmThread newThread = VmThreadFactory.create(null);
-            synchronized (VmThreadMap.ACTIVE) {
+            synchronized (VmThreadMap.THREAD_LOCK) {
                 VmThreadMap.addPreallocatedThread(newThread);
             }
             threadForAttach.set(newThread);
@@ -461,7 +577,7 @@ public class VmThread {
             String name = nameCString.isZero() ? null : CString.utf8ToJava(nameCString);
             ThreadGroup group = (ThreadGroup) groupHandle.unhand();
             if (group == null) {
-                group = VmThread.MAIN_VM_THREAD.javaThread.getThreadGroup();
+                group = mainThread.javaThread.getThreadGroup();
             }
             JDK_java_lang_Thread.createThreadForAttach(thread, name, group, daemon);
 
@@ -515,7 +631,7 @@ public class VmThread {
 
         thread.traceThreadAfterTermination();
 
-        synchronized (VmThreadMap.ACTIVE) {
+        synchronized (VmThreadMap.THREAD_LOCK) {
             // It is the monitor scheme's responsibility to ensure that this thread isn't
             // reset to RUNNABLE if it blocks here.
             VmThreadMap.ACTIVE.removeThreadLocals(thread);
@@ -532,7 +648,7 @@ public class VmThread {
 
     private static void invokeShutdownHooks() {
         VMOptions.beforeExit();
-        if (traceThreads()) {
+        if (TraceThreads) {
             Log.println("invoking Shutdown hooks");
         }
         try {
@@ -563,14 +679,9 @@ public class VmThread {
     @INLINE
     public static VmThread fromVmThreadLocals(Pointer vmThreadLocals) {
         if (MaxineVM.isHosted()) {
-            return MAIN_VM_THREAD;
+            return mainThread;
         }
         return UnsafeCast.asVmThread(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
-    }
-
-    @INLINE
-    public static boolean traceThreads() {
-        return TRACE_THREADS_OPTION.getValue();
     }
 
     public static void yield() {
@@ -589,7 +700,7 @@ public class VmThread {
      *
      * @param numberOfMilliSeconds
      */
-    static void nonJniSleep(long numberOfMilliSeconds) {
+    public static void nonJniSleep(long numberOfMilliSeconds) {
         nonJniNativeSleep(numberOfMilliSeconds);
     }
 
@@ -794,6 +905,13 @@ public class VmThread {
     }
 
     /**
+     * Determines if this is the single {@link VmOperationThread}.
+     */
+    public final boolean isVmOperationThread() {
+        return vmOperationThread == this;
+    }
+
+    /**
      * Determines if this thread is owned by the garbage collector.
      */
     public final boolean isGCThread() {
@@ -813,7 +931,7 @@ public class VmThread {
     }
 
     private void traceThreadAfterInitialization(Pointer stackBase, Pointer stackEnd) {
-        if (traceThreads()) {
+        if (TraceThreads) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Initialization completed for thread[id=");
             Log.print(id);
@@ -836,7 +954,7 @@ public class VmThread {
     }
 
     private void traceThreadForUncaughtException(Throwable throwable) {
-        if (traceThreads()) {
+        if (TraceThreads) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("VmThread[id=");
             Log.print(id);
@@ -849,7 +967,7 @@ public class VmThread {
     }
 
     private void traceThreadAfterTermination() {
-        if (traceThreads()) {
+        if (TraceThreads) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Thread terminated [id=");
             Log.print(id);
@@ -917,6 +1035,29 @@ public class VmThread {
             this.pendingException = null;
             throw pendingException;
         }
+    }
+
+    /**
+     * Gets the number of VM operations {@linkplain VmOperationThread#submit(VmOperation) submitted}
+     * by this thread for execution that have not yet completed.
+     */
+    public int pendingOperations() {
+        return pendingOperations;
+    }
+
+    /**
+     * Increments the {@linkplain #pendingOperations() pending operations} count.
+     */
+    public void incrementPendingOperations() {
+        ++pendingOperations;
+    }
+
+    /**
+     * Decrements the {@linkplain #pendingOperations() pending operations} count.
+     */
+    public void decrementPendingOperations() {
+        --pendingOperations;
+        FatalError.check(pendingOperations >= 0, "pendingOperations should never be negative");
     }
 
     /**

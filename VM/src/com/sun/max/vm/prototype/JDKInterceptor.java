@@ -21,6 +21,7 @@
 package com.sun.max.vm.prototype;
 
 import java.io.*;
+import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -28,9 +29,11 @@ import sun.misc.*;
 
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.jdk.JDK.*;
+import com.sun.max.vm.jdk.JDK.ClassRef;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -138,7 +141,7 @@ public final class JDKInterceptor {
             "pending",
         JDK.java_lang_ref_Finalizer,
             "unfinalized",
-            "queue",
+            new ValueField("queue", ReferenceValue.from(new ReferenceQueue())),
         JDK.java_lang_Throwable,
             "backtrace",
         JDK.java_lang_Thread,
@@ -149,6 +152,8 @@ public final class JDKInterceptor {
         JDK.java_lang_ProcessEnvironment,
             new ZeroField("theEnvironment", true),
             new ZeroField("theUnmodifiableEnvironment", true),
+        JDK.java_lang_Terminator,
+            "handler",
         JDK.sun_misc_VM,
             "booted",
             "finalRefCount",
@@ -172,6 +177,18 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("valueOffset", JDK.java_util_concurrent_atomic_AtomicLong, "value"),
         JDK.java_util_concurrent_atomic_AtomicReference,
             new FieldOffsetRecomputation("valueOffset", JDK.java_util_concurrent_atomic_AtomicReference, "value"),
+        JDK.java_util_concurrent_atomic_AtomicIntegerArray,
+            new ArrayBaseOffsetRecomputation("base", JDK.java_util_concurrent_atomic_AtomicIntegerArray, int[].class),
+        JDK.java_util_concurrent_atomic_AtomicIntegerArray,
+            new ArrayIndexScaleRecomputation("scale", JDK.java_util_concurrent_atomic_AtomicIntegerArray, int[].class),
+        JDK.java_util_concurrent_atomic_AtomicLongArray,
+            new ArrayBaseOffsetRecomputation("base", JDK.java_util_concurrent_atomic_AtomicLongArray, long[].class),
+        JDK.java_util_concurrent_atomic_AtomicLongArray,
+            new ArrayIndexScaleRecomputation("scale", JDK.java_util_concurrent_atomic_AtomicLongArray, long[].class),
+        JDK.java_util_concurrent_atomic_AtomicReferenceArray,
+            new ArrayBaseOffsetRecomputation("base", JDK.java_util_concurrent_atomic_AtomicReferenceArray, Object[].class),
+        JDK.java_util_concurrent_atomic_AtomicReferenceArray,
+            new ArrayIndexScaleRecomputation("scale", JDK.java_util_concurrent_atomic_AtomicReferenceArray, Object[].class),
         JDK.java_util_concurrent_atomic_AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl,
             new AtomicFieldUpdaterOffsetRecomputation("offset"),
         JDK.java_util_concurrent_atomic_AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl,
@@ -447,6 +464,44 @@ public final class JDKInterceptor {
             } catch (NoSuchFieldException e) {
                 throw ProgramError.unexpected(e);
             }
+        }
+    }
+
+    /**
+     * An intercepted field whose boot image value is the offset of
+     * the first element in an array from the array's origin.
+     * This facility is required to fix up field values obtained via {@link Unsafe#arrayBaseOffset(Class)}.
+     */
+    private static class ArrayBaseOffsetRecomputation extends InterceptedField {
+        private final ClassRef classRef;
+        private final Class arrayClass;
+        ArrayBaseOffsetRecomputation(String arrayBaseOffsetFieldName, ClassRef classRef, Class arrayClass) {
+            super(arrayBaseOffsetFieldName, false);
+            this.arrayClass = arrayClass;
+            this.classRef = classRef;
+        }
+        @Override
+        public Value getValue(Object object, FieldActor fieldActor) {
+            ArrayLayout arrayLayout = (ArrayLayout) ClassActor.fromJava(arrayClass).dynamicHub().specificLayout;
+            return IntValue.from(arrayLayout.getElementOffsetFromOrigin(0).toInt());
+        }
+    }
+
+    /**
+     * An intercepted field whose boot image value is the scale factor for addressing elements in an array.
+     * This facility is required to fix up field values obtained via {@link Unsafe#arrayIndexScale(Class)}.
+     */
+    private static class ArrayIndexScaleRecomputation extends InterceptedField {
+        private final ClassRef classRef;
+        private final Class arrayClass;
+        ArrayIndexScaleRecomputation(String arrayIndexScaleFieldName, ClassRef classRef, Class arrayClass) {
+            super(arrayIndexScaleFieldName, false);
+            this.arrayClass = arrayClass;
+            this.classRef = classRef;
+        }
+        @Override
+        public Value getValue(Object object, FieldActor fieldActor) {
+            return IntValue.from(ClassActor.fromJava(arrayClass).componentClassActor().kind.width.numberOfBytes);
         }
     }
 

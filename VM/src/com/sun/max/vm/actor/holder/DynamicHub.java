@@ -27,6 +27,7 @@ import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
@@ -98,6 +99,20 @@ public final class DynamicHub extends Hub {
             } else {
                 vTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
             }
+            setWord(vTableIndex, vTableEntry);
+        }
+    }
+
+    /**
+     * Ensures all the vtable entries in this hub are resolved to compiled methods, not trampolines.
+     */
+    public void compileVTable() {
+        VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
+        for (int i = 0; i < allVirtualMethodActors.length; i++) {
+            final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
+            final int vTableIndex = firstWordIndex() + i;
+            assert virtualMethodActor.vTableIndex() == vTableIndex;
+            Address vTableEntry = CallEntryPoint.VTABLE_ENTRY_POINT.in(VMConfiguration.target().compilationScheme().synchronousCompile(virtualMethodActor));
             setWord(vTableIndex, vTableEntry);
         }
     }

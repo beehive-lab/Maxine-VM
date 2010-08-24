@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.verifier;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -52,7 +51,7 @@ public abstract class MethodVerifier {
         if (classVerifier.verbose) {
             this.verbose = true;
         } else {
-            this.verbose = Verifier.methodToTrace != null && classMethodActor.format("%H.%n").contains(Verifier.methodToTrace);
+            this.verbose = Verifier.TraceVerification != null && classMethodActor.format("%H.%n").contains(Verifier.TraceVerification);
         }
     }
 
@@ -120,12 +119,7 @@ public abstract class MethodVerifier {
         try {
             ErrorContext.enterContext("verifying " + classMethodActor.format("%H.%n(%p)") + (currentOpcodePosition == -1 ? "" : " at bytecode position " + currentOpcodePosition));
             if (verbose) {
-                try {
-                    throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
-                } catch (VerifyError ve) {
-                    ve.printStackTrace(Log.out);
-                    throw ve;
-                }
+                throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
             }
             throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
         } finally {

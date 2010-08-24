@@ -135,7 +135,7 @@ public class MaxRiRuntime implements RiRuntime {
             return true;
         }
 
-        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
+        return classMethodActor.originalCodeAttribute(true) == null || classMethodActor.isNeverInline();
     }
 
     /**

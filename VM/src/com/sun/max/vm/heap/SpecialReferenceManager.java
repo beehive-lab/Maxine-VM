@@ -20,16 +20,13 @@
  */
 package com.sun.max.vm.heap;
 
-import static com.sun.max.vm.VMOptions.*;
-
 import java.lang.ref.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
@@ -39,6 +36,7 @@ import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -53,10 +51,10 @@ import com.sun.max.vm.value.*;
  */
 public class SpecialReferenceManager {
 
-    private static final VMBooleanXXOption traceReferenceOption = register(new VMBooleanXXOption("-XX:-TraceReferenceGC",
-        "Trace Handling of soft/weak/final/phantom references."), MaxineVM.Phase.STARTING);
-
-    private static boolean traceReferenceGC = false;
+    private static boolean TraceReferenceGC;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceReferenceGC", "Trace Handling of soft/weak/final/phantom references.");
+    }
 
     private static final boolean FINALIZERS_SUPPORTED = true;
 
@@ -82,12 +80,12 @@ public class SpecialReferenceManager {
      * The lock object associated with managing special references. This lock must
      * be held by the GC when it is updating the list of pending special references.
      * This value is a reference to the static {@code lock} field in {@link java.lang.ref.Reference}.
-     * Like {@link com.sun.max.vm.thread.VmThreadMap#ACTIVE}, this lock is special and
+     * Like {@link com.sun.max.vm.thread.VmThreadMap#THREAD_LOCK}, this lock is special and
      * requires a sticky monitor.
      */
-    public static final Object LOCK = WithoutAccessCheck.getStaticField(JDK.java_lang_ref_Reference.javaClass(), "lock");
+    public static final Object REFERENCE_LOCK = WithoutAccessCheck.getStaticField(JDK.java_lang_ref_Reference.javaClass(), "lock");
     static {
-        JavaMonitorManager.bindStickyMonitor(LOCK);
+        JavaMonitorManager.bindStickyMonitor(REFERENCE_LOCK);
     }
 
     private static Grip discoveredList;
@@ -99,6 +97,8 @@ public class SpecialReferenceManager {
      * their "referent" objects have been collected. If so, they must be enqueued as "pending"
      * so that the {@link Reference.ReferenceHandler} thread can pick them up
      * and add them to their respective queues later.
+     * The reference handler lock is notified by the thread that {@linkplain VmOperationThread#submit(VmOperation) submitted}
+     * the GC operation as it holds the lock. See {@link GCOperation#doItEpilogue(boolean)}.
      *
      * @param gripForwarder an object from the GC algorithm that can detect whether a grip
      * is live and can also return a forwarded version of the grip
@@ -128,7 +128,7 @@ public class SpecialReferenceManager {
             ref = UnsafeCast.asJDKReference(TupleAccess.readObject(ref, discoveredField.offset()));
             TupleAccess.writeObject(r, discoveredField.offset(), null);
 
-            if (traceReferenceGC) {
+            if (TraceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Processed ");
                 Log.print(ObjectAccess.readClassActor(r).name.string);
@@ -153,11 +153,6 @@ public class SpecialReferenceManager {
         }
         TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
         discoveredList = Grip.fromOrigin(Pointer.zero());
-        if (last != null) {
-            // if there are pending special references, notify the reference handler thread.
-            // (note that the GC must already hold the lock object)
-            LOCK.notifyAll();
-        }
 
         // Special reference map of Inspector
         if (Inspectable.isVmInspected()) {
@@ -181,7 +176,7 @@ public class SpecialReferenceManager {
                 } else {
                     rootsPointer.setWord(i, Pointer.zero());
                 }
-                if (traceReferenceGC) {
+                if (TraceReferenceGC) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Processed root table entry ");
                     Log.print(i);
@@ -220,7 +215,7 @@ public class SpecialReferenceManager {
             }
             grip.writeGrip(discoveredField.offset(), discoveredList);
             discoveredList = grip;
-            if (traceReferenceGC) {
+            if (TraceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
                 Log.print(grip.toOrigin());
@@ -259,7 +254,6 @@ public class SpecialReferenceManager {
      */
     public static void initialize(Phase phase) {
         if (phase == Phase.STARTING) {
-            traceReferenceGC = traceReferenceOption.getValue();
             startReferenceHandlerThread();
             startFinalizerThread();
         }
@@ -276,25 +270,27 @@ public class SpecialReferenceManager {
     }
 
     /**
-     * Allocate and start a new thread to handle enqueuing weak references.
+     * Start the thread to handle enqueuing weak references.
      */
     private static void startReferenceHandlerThread() {
-        // Note: this code is stolen from java.lang.Reference <clinit>
-        // we cannot simply rerun static initialization because it would allocate a new lock object
-        ThreadGroup tg = Thread.currentThread().getThreadGroup();
-        for (ThreadGroup tgn = tg; tgn != null; tg = tgn, tgn = tg.getParent()) {
-            // do nothing; get the root thread group
-        }
-        try {
-            final Thread handler = (Thread) ClassRegistry.ReferenceHandler_init.invokeConstructor(ReferenceValue.from(tg), ReferenceValue.from("Reference Handler")).asObject();
-            /* If there were a special system-only priority greater than
-             * MAX_PRIORITY, it would be used here
-             */
-            handler.setPriority(Thread.MAX_PRIORITY);
-            handler.setDaemon(true);
-            handler.start();
-        } catch (Exception e) {
-            throw ProgramError.unexpected(e);
+        if (VmThread.referenceHandlerThread != null) {
+            // The thread was built into the boot image. We simply need to start it:
+            VmThread.referenceHandlerThread.start0();
+        } else {
+            // Note: this code is partially copied from java.lang.Reference <clinit>
+            // We cannot simply rerun static initialization because it would allocate a new lock object.
+            ThreadGroup tg = VmThread.systemThreadGroup;
+            try {
+                final Thread handler = (Thread) ClassRegistry.ReferenceHandler_init.invokeConstructor(ReferenceValue.from(tg), ReferenceValue.from("Reference Handler")).asObject();
+                /* If there were a special system-only priority greater than
+                 * MAX_PRIORITY, it would be used here
+                 */
+                handler.setPriority(Thread.MAX_PRIORITY);
+                handler.setDaemon(true);
+                handler.start();
+            } catch (Exception e) {
+                throw FatalError.unexpected("Could not start ReferenceHandler thread", e);
+            }
         }
     }
 
@@ -303,8 +299,13 @@ public class SpecialReferenceManager {
      */
     private static void startFinalizerThread() {
         if (FINALIZERS_SUPPORTED) {
-            // it is sufficient just to reinitialize the finalizer class
-            JDK.callInitializer(JDK.java_lang_ref_Finalizer.classActor());
+            if (VmThread.finalizerThread != null) {
+                // The thread was built into the boot image. We simply need to start it:
+                VmThread.finalizerThread.start0();
+            } else {
+                // it is sufficient just to reinitialize the finalizer class
+                JDK.callInitializer(JDK.java_lang_ref_Finalizer.classActor());
+            }
         }
     }
 }

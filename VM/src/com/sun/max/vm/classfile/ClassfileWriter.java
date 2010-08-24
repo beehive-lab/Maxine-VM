@@ -775,15 +775,18 @@ public class ClassfileWriter {
         Class<?> javaClass;
         try {
             javaClass = Class.forName(className);
+            if (MaxineVM.isHostedOnly(javaClass)) {
+                ProgramWarning.message("Cannot create a class actor for prototype only class: " + className);
+                return;
+            }
+        } catch (VerifyError e) {
         } catch (ClassNotFoundException e) {
             ProgramWarning.message("Could not find class: " + className);
             return;
         }
-        if (MaxineVM.isHostedOnly(javaClass)) {
-            ProgramWarning.message("Cannot create a class actor for prototype only class: " + className);
-            return;
-        }
-        final ClassActor classActor = ClassActor.fromJava(javaClass);
+
+        TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(className);
+        final ClassActor classActor = typeDescriptor.resolve(null);
         final byte[] classfileBytes = toByteArray(new ClassInfo(classActor));
 
         final File classfileFile = new File(outputDirectory, classActor.name.string.replace(".", File.separator) + ".class").getAbsoluteFile();

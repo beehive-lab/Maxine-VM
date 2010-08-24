@@ -4615,6 +4615,32 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Action:  makes visible and highlight the {@link NotepadInspector}.
+     */
+    final class ViewNotepadAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Notepad";
+
+        ViewNotepadAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            NotepadInspector.make(inspection(), inspection().getNotepad()).highlight();
+        }
+    }
+
+    private InspectorAction viewNotepad = new ViewNotepadAction(null);
+
+    /**
+     * @return an Action that will make visible the {@link NotepadInspector}.
+     */
+    public final InspectorAction viewNotepad() {
+        return viewNotepad;
+    }
+
+    /**
      * Action:  lists to the console this history of the VM state.
      */
     final class ListVMStateHistoryAction extends InspectorAction {
@@ -4966,6 +4992,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(actions().memoryWordsInspectorsMenu());
                 menu.add(actions().viewMemoryRegions());
                 menu.add(actions().viewMethodCode());
+                menu.add(actions().viewNotepad());
                 menu.add(actions().objectInspectorsMenu());
                 menu.add(actions().viewRegisters());
                 menu.add(actions().viewStack());

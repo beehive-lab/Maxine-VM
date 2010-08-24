@@ -125,6 +125,8 @@ mutex
 namespace
 nop
 nops
+notepad
+notepads
 op
 outbound
 payload
@@ -143,6 +145,7 @@ proactively
 probers
 programmatic
 proxy
+quibble
 recompilation
 redock
 refactor

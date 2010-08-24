@@ -31,8 +31,11 @@ import com.sun.max.vm.classfile.*;
  */
 public class TypeCheckingVerifier extends ClassVerifier {
 
-    private static final VMBooleanXXOption failOverToTypeInferencing = VMOptions.register(new VMBooleanXXOption("-XX:+FailOverToOldVerifier",
-        "Fail over to old verifier when the new type checker fails."), MaxineVM.Phase.STARTING);
+    public static boolean FailOverToOldVerifier = true;
+    static {
+        VMOptions.addFieldOption("-XX:", "FailOverToOldVerifier",
+            "Fail over to old verifier when the new type checker fails.");
+    }
 
     public TypeCheckingVerifier(ClassActor classActor) {
         super(classActor);
@@ -46,7 +49,7 @@ public class TypeCheckingVerifier extends ClassVerifier {
         try {
             super.verify();
         } catch (VerifyError verifyError) {
-            if (classActor.majorVersion == 50 && failOverToTypeInferencing.getValue()) {
+            if (classActor.majorVersion == 50 && FailOverToOldVerifier) {
                 failoverVerifier().verify();
             }
             throw verifyError;
@@ -68,7 +71,7 @@ public class TypeCheckingVerifier extends ClassVerifier {
             new TypeCheckingMethodVerifier(this, classMethodActor, codeAttribute).verify();
             return codeAttribute;
         } catch (VerifyError verifyError) {
-            if (classActor.majorVersion == 50 && failOverToTypeInferencing.getValue()) {
+            if (classActor.majorVersion == 50 && FailOverToOldVerifier) {
                 return failoverVerifier().verify(classMethodActor, codeAttribute);
             }
             throw verifyError;

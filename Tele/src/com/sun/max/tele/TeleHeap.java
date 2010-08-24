@@ -76,7 +76,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
      * specialized for the particular implementation of {@link HeapScheme} in the VM.
      * <br>
      * Not usable until after a call to {@link #initialize()}, which must be called
-     * after the {@link TeleClassRegistray} is fully initialized; otherwise, a circular
+     * after the {@link TeleClassRegistry} is fully initialized; otherwise, a circular
      * dependency will cause breakage.
      */
     public static TeleHeap make(TeleVM teleVM) {

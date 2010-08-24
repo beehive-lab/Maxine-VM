@@ -22,6 +22,7 @@ package com.sun.max.vm.runtime;
 
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.runtime.Trap.Number.*;
+import static com.sun.max.vm.runtime.VmOperation.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -29,23 +30,24 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.stack.StackReferenceMapPreparer;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
  * This class handles operating systems traps that can arise from implicit null pointer checks, integer divide by zero,
  * safepoint triggering, etc. It contains a number of very low-level functions to directly handle operating system
  * signals (e.g. SIGSEGV on POSIX) and dispatch to the correct handler (e.g. construct and throw a null pointer
- * exception object or {@linkplain FreezeThreads freeze} the current thread).
+ * exception object or {@linkplain VmOperation freeze} the current thread).
  *
  * A small amount of native code supports this class by connecting to the OS-specific signal handling mechanisms.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public abstract class Trap {
 
@@ -113,16 +115,19 @@ public abstract class Trap {
         }
     }
 
-    private static VMBooleanXXOption dumpStackOnTrap =
-        register(new VMBooleanXXOption("-XX:-DumpStackOnTrap", "Reports a stack trace for every trap, regardless of the cause."), MaxineVM.Phase.PRISTINE);
+    private static boolean DumpStackOnTrap;
+    static {
+        VMOptions.addFieldOption("-XX:", "DumpStackOnTrap", Trap.class, "Reports a stack trace for every trap, regardless of the cause.", MaxineVM.Phase.PRISTINE);
+    }
 
     /**
      * Whether to bang on the stack in the method prologue.
      */
     public static final boolean STACK_BANGING = true;
 
-    /** The number of bytes reserved in the stack as a guard area.
-     *  Note that SPARC code is more efficient if this is set below 6K.  Specifically, set to (6K - 1 - typical_frame_size).
+    /**
+     * The number of bytes reserved in the stack as a guard area.
+     * Note that SPARC code is more efficient if this is set below 6K.  Specifically, set to (6K - 1 - typical_frame_size).
      */
     public static final int stackGuardSize = 12 * Ints.K;
 
@@ -189,22 +194,55 @@ public abstract class Trap {
      * This trap stub saves all of the registers onto the stack which are available in the {@code trapState}
      * pointer.
      *
-     * @param trapNumber the trap number that occurred
+     * @param trapNumber the trap (>= 0) or signal (< 0) number that occurred
      * @param trapState a pointer to the stack location where trap state is stored
      * @param faultAddress the faulting address that caused this trap (memory faults only)
      */
     @VM_ENTRY_POINT
     private static void trapStub(int trapNumber, Pointer trapState, Address faultAddress) {
+        // From this point on until we return from the trap stub,
+        // this variable is used to communicate to the VM operation thread
+        // whether a thread was stopped at a safepoint or
+        // in native code
+        TRAP_INSTRUCTION_POINTER.setVariableWord(Pointer.zero());
+
         if (trapNumber == ASYNC_INTERRUPT) {
             VmThread.current().setInterrupted();
             return;
         }
+
+        if (trapNumber < 0) {
+            int signal = -trapNumber;
+            if (!VmThread.current().isVmOperationThread()) {
+                boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Asyncronous signal ");
+                Log.print(signal);
+                Log.print(" should be masked for non-VM operation thread ");
+                Log.printThread(VmThread.current(), true);
+                Log.unlock(lockDisabledSafepoints);
+                FatalError.unexpected("Asynchronous signal delivered to non VM operation thread");
+            }
+
+            if (!UseCASBasedThreadFreezing && !FROZEN.getVariableWord().isZero()) {
+                FatalError.unexpected("VM operation thread should never have non-zero value for FROZEN");
+            }
+
+            // The VM operation thread may be either in Java code (executing a VM operation) or in
+            // native code (waiting on the VM operation queue lock). In both cases, it's imperative that
+            // the MUTATOR_STATE variable is preserved across this trap.
+            Word savedState = MUTATOR_STATE.getVariableWord();
+            MUTATOR_STATE.setVariableWord(THREAD_IN_JAVA);
+            SignalDispatcher.postSignal(signal);
+            MUTATOR_STATE.setVariableWord(savedState);
+            return;
+        }
+
         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
         final Pointer instructionPointer = trapStateAccess.getInstructionPointer(trapState);
         final Object origin = checkTrapOrigin(trapNumber, trapState, faultAddress);
         if (origin instanceof TargetMethod) {
-            final TargetMethod targetMethod = (TargetMethod) origin;
             // the trap occurred in Java
+            final TargetMethod targetMethod = (TargetMethod) origin;
             final Pointer stackPointer = trapStateAccess.getStackPointer(trapState, targetMethod);
             final Pointer framePointer = trapStateAccess.getFramePointer(trapState, targetMethod);
 
@@ -229,6 +267,9 @@ public abstract class Trap {
                     // fatal stack overflow
                     FatalError.unexpected("fatal stack fault in red zone", false, null, trapState);
                     break; // unreachable
+                default:
+                    FatalError.unexpected("unknown trap number", false, null, trapState);
+
             }
         } else {
             // the fault occurred in native code
@@ -258,7 +299,7 @@ public abstract class Trap {
         // check to see if this fault originated in a target method
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
 
-        if (traceTrap.getValue() || dumpStackOnTrap.getValue()) {
+        if (traceTrap.getValue() || DumpStackOnTrap) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             if (targetMethod != null) {
@@ -274,7 +315,7 @@ public abstract class Trap {
             Log.print("  Fault address=");
             Log.println(faultAddress);
             trapStateAccess.logTrapState(trapState);
-            if (dumpStackOnTrap.getValue()) {
+            if (DumpStackOnTrap) {
                 Throw.stackDump("Stack trace:", instructionPointer, trapStateAccess.getStackPointer(trapState, null), trapStateAccess.getFramePointer(trapState, null));
             }
             Log.unlock(lockDisabledSafepoints);
@@ -304,52 +345,53 @@ public abstract class Trap {
 
         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-        final Pointer triggeredVmThreadLocals = VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
+        final Pointer triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
         final Pointer safepointLatch = trapStateAccess.getSafepointLatch(trapState);
 
-        if (VmThread.current().isGCThread()) {
+        if (VmThread.current().isVmOperationThread()) {
             FatalError.unexpected("Memory fault on a GC thread", false, null, trapState);
         }
 
         // check to see if a safepoint has been triggered for this thread
         if (safepointLatch.equals(triggeredVmThreadLocals) && safepoint.isAt(instructionPointer)) {
-            // a safepoint has been triggered for this thread. run the specified procedure
-            final Reference reference = VmThreadLocal.AT_SAFEPOINT_PROCEDURE.getVariableReference(triggeredVmThreadLocals);
-            final FreezeThreads.AtSafepoint runnable = (FreezeThreads.AtSafepoint) reference.toJava();
+            // a safepoint has been triggered for this thread
+            final Reference reference = VM_OPERATION.getVariableReference(triggeredVmThreadLocals);
+            final VmOperation vmOperation = (VmOperation) reference.toJava();
             trapStateAccess.setTrapNumber(trapState, Number.SAFEPOINT);
-            if (runnable != null) {
-                // run the procedure
-                runnable.run(trapState);
+            if (vmOperation != null) {
+                TRAP_INSTRUCTION_POINTER.setVariableWord(instructionPointer);
+                vmOperation.doAtSafepoint(trapState);
+                TRAP_INSTRUCTION_POINTER.setVariableWord(Pointer.zero());
             } else {
                 /*
                  * The interleaving of a mutator thread and a freezer thread below demonstrates
                  * one case where this can occur:
                  *
-                 *    Mutator thread        |  Freezer thread
+                 *    Mutator thread        |  VmOperationThread
                  *  ------------------------+-----------------------------------------------------------------
-                 *                          |  set AtSafepoint procedure and trigger safepoints for mutator thread
+                 *                          |  set VM_OPERATION and trigger safepoints for mutator thread
                  *  loop: safepoint         |
                  *        enter native      |
                  *                          |  complete operation (e.g. GC)
-                 *                          |  reset safepoints and clear AtSafepoint procedure for mutator thread
+                 *                          |  reset safepoints and clear VM_OPERATION for mutator thread
                  *        return from native|
                  *  loop: safepoint         |
                  *
                  * The first safepoint instruction above loads the address of triggered VM thread locals
                  * into the latch register. The second safepoint instruction dereferences the latch
-                 * register causing the trap. That is, the freezer thread triggered safepoints in the
+                 * register causing the trap. That is, the VM operation thread triggered safepoints in the
                  * mutator to freeze but actually froze it as a result of the mutator making a
                  * native call between 2 safepoint instructions (it takes 2 executions of a safepoint
                  * instruction to cause the trap).
                  *
                  * The second safepoint instruction on the mutator thread will cause a trap when
-                 * the safepoint procedure for the mutator is null.
+                 * VM_OPERATION for the mutator is null.
                  */
             }
             // The state of the safepoint latch was TRIGGERED when the trap happened. It must be reset back to ENABLED
             // here otherwise another trap will occur as soon as the trap stub returns and re-executes the
             // safepoint instruction.
-            final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
+            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
             trapStateAccess.setSafepointLatch(trapState, enabledVmThreadLocals);
 
         } else if (inJava(disabledVmThreadLocals)) {
@@ -389,7 +431,7 @@ public abstract class Trap {
             if (!catchAddress.isZero()) {
                 final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                 trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
-                VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
+                EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
 
                 if (throwable instanceof StackOverflowError) {
                     // This complete call-chain must be inlined down to the native call

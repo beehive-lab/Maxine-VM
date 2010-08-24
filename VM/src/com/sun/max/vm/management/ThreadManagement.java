@@ -141,7 +141,7 @@ public class ThreadManagement {
 
     public static Thread findThread(long id) {
         FindProcedure proc = new FindProcedure(id);
-        synchronized (VmThreadMap.ACTIVE) {
+        synchronized (VmThreadMap.THREAD_LOCK) {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, proc);
         }
         return proc.result;
@@ -183,7 +183,7 @@ public class ThreadManagement {
                 traces[i] = trace;
             }
         }
-        new StackTraceGatherer(Arrays.asList(threads), traces, maxDepth).run();
+        VmOperationThread.submit(new StackTraceGatherer(Arrays.asList(threads), traces, maxDepth));
         if (currentThreadIndex >= 0) {
             threads[currentThreadIndex] = Thread.currentThread();
         }
@@ -195,24 +195,32 @@ public class ThreadManagement {
      *
      * @author Doug Simon
      */
-    static final class StackTraceGatherer extends FreezeThreads {
+    static final class StackTraceGatherer extends VmOperation {
         final int maxDepth;
         final StackTraceElement[][] traces;
         final List<Thread> threads;
         StackTraceGatherer(List<Thread> threads, StackTraceElement[][] result, int maxDepth) {
-            super("StackTraceGatherer", new ThreadListPredicate(threads));
+            super("StackTraceGatherer", null, Mode.Safepoint);
             this.threads = threads;
             this.maxDepth = maxDepth;
             this.traces = result;
         }
 
         @Override
-        public void doThread(Pointer threadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-            VmThread vmThread = VmThread.fromVmThreadLocals(threadLocals);
-            final List<StackFrame> frameList = new ArrayList<StackFrame>();
-            new VmStackFrameWalker(threadLocals).frames(frameList, instructionPointer, stackPointer, framePointer);
+        protected boolean operateOnThread(VmThread thread) {
+            return threads.contains(thread.javaThread());
+        }
+
+        @Override
+        public void doThread(VmThread vmThread, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
             Thread thread = vmThread.javaThread();
-            traces[threads.indexOf(thread)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
+            if (instructionPointer.isZero()) {
+                traces[threads.indexOf(thread)] = new StackTraceElement[0];
+            } else {
+                final List<StackFrame> frameList = new ArrayList<StackFrame>();
+                new VmStackFrameWalker(vmThread.vmThreadLocals()).frames(frameList, instructionPointer, stackPointer, framePointer);
+                traces[threads.indexOf(thread)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
+            }
         }
     }
 

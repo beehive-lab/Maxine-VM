@@ -23,8 +23,6 @@
  */
 package com.sun.max.vm.heap;
 
-import static com.sun.max.vm.VMOptions.*;
-
 import java.lang.management.*;
 
 import com.sun.max.annotate.*;
@@ -51,29 +49,28 @@ public final class ImmortalHeap {
     /**
      * VM option to trace immortal heap allocations.
      */
-    public static final VMBooleanXXOption traceAllocation
-        = register(new VMBooleanXXOption("-XX:-TraceImmortal", "Trace allocation from the immortal heap."), MaxineVM.Phase.PRISTINE);
+    public static boolean TraceImmortal;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceImmortal", ImmortalHeap.class,
+            "Trace allocation from the immortal heap.", MaxineVM.Phase.PRISTINE);
+    }
 
     /**
      * VM option to set the size of the immortal heap. Maxine currently only supports a non-growable
-     * immortal heap and so the greater of this option and the {@link #maxPermSize} option is allocated.
+     * immortal heap and so the greater of this option and the {@link #MaxPermSize} option is allocated.
      */
-    public static final VMSizeOption permSize =
-        register(new VMSizeOption("-XX:PermSize=", Size.M.times(1), "Size of immortal heap."), MaxineVM.Phase.PRISTINE);
+    private static Size PermSize = Size.M.times(1);
+    static {
+        VMOptions.addFieldOption("-XX:", "PermSize", ImmortalHeap.class, "Size of immortal heap.", MaxineVM.Phase.PRISTINE);
+    }
 
     /**
      * VM option to set the size of the immortal heap. Maxine currently only supports a non-growable
-     * immortal heap and so the greater of this option and the {@link #permSize} option is allocated.
+     * immortal heap and so the greater of this option and the {@link #PermSize} option is allocated.
      */
-    public static final VMSizeOption maxPermSize =
-        register(new VMSizeOption("-XX:MaxPermSize=", Size.M.times(1), "Size of immortal heap."), MaxineVM.Phase.PRISTINE);
-
-    /**
-     * Is immortal heap tracing turned on?
-     * @return
-     */
-    public static boolean traceAllocation() {
-        return traceAllocation.getValue();
+    private static Size MaxPermSize = Size.M.times(1);
+    static {
+        VMOptions.addFieldOption("-XX:", "MaxPermSize", ImmortalHeap.class, "Size of immortal heap.", MaxineVM.Phase.PRISTINE);
     }
 
     /**
@@ -113,7 +110,7 @@ public final class ImmortalHeap {
         // Zero the allocated chunk
         Memory.clearWords(cell, size.dividedBy(Word.size()).toInt());
 
-        if (traceAllocation()) {
+        if (TraceImmortal) {
             traceAllocation(size, cell);
         }
 
@@ -139,7 +136,7 @@ public final class ImmortalHeap {
      * Initialize the immortal heap memory.
      */
     public static void initialize() {
-        immortalHeap.initialize(Size.fromLong(Math.max(maxPermSize.getValue().toLong(), permSize.getValue().toLong())));
+        immortalHeap.initialize(Size.fromLong(Math.max(MaxPermSize.toLong(), PermSize.toLong())));
     }
 
     public static void initialize(MemoryRegion memoryRegion) {
@@ -176,7 +173,5 @@ public final class ImmortalHeap {
         ImmortalMemoryPoolMXBean(MemoryRegion region, MemoryManagerMXBean manager) {
             super(MemoryType.HEAP, region, manager);
         }
-
     }
-
 }
