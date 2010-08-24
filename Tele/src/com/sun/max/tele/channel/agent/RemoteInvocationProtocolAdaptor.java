@@ -105,6 +105,8 @@ public abstract class RemoteInvocationProtocolAdaptor {
                 result[index] = in.readBoolean();
             } else if (klass == byte.class) {
                 result[index] = in.readByte();
+            } else if (klass == String.class) {
+                result[index] = in.readUTF();
             } else if (klass == byte[].class) {
                 final int mv = in.readInt();
                 final int length = in.readInt();
@@ -118,6 +120,23 @@ public abstract class RemoteInvocationProtocolAdaptor {
                     // allocate and read (input or input/output array)
                     data = new byte[length];
                     in.read(data);
+                }
+                result[index] = data;
+            } else if (klass == String[].class) {
+                final int mv = in.readInt();
+                final int length = in.readInt();
+                //Trace.line(2, "    array mode: " + mv + ", length: " + length);
+                ArrayMode am = ArrayMode.values()[mv];
+                String[] data;
+                if (am == ArrayMode.OUT) {
+                    // allocate but don't read (output array)
+                    data = new String[length];
+                } else {
+                    // allocate and read (input or input/output array)
+                    data = new String[length];
+                    for (int i = 0; i < length; i++) {
+                        data[i] = in.readUTF();
+                    }
                 }
                 result[index] = data;
             } else {

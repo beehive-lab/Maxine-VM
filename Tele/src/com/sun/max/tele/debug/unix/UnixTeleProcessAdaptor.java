@@ -50,8 +50,9 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
         super(teleVM, platform, ProcessState.STOPPED);
         protocol = TeleVM.teleChannelProtocol();
         dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
-        final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments, teleVM.bootImage().header.threadLocalsAreaSize);
-        if (processHandle == 0) {
+        protocol.initialize(teleVM.bootImage().header.threadLocalsAreaSize);
+        final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments);
+        if (processHandle < 0) {
             String exe = programFile.getName();
             Log.println("This may be due to resources being consumed by zombie maxvm processes. Try running:");
             Log.println();
