@@ -37,7 +37,6 @@ import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.XirMark;
 import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
@@ -1247,12 +1246,13 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCallAlignment(LIROpcode code) {
-        // make sure that the displacement word of the call ends up word aligned
-        int offset = masm.codeBuffer.position();
-        assert code == LIROpcode.DirectCall;
-        offset += compilation.target.arch.machineCodeCallDisplacementOffset;
-        while (offset++ % wordSize != 0) {
-            masm.nop();
+        if (C1XOptions.AlignCallsForPatching) {
+            // make sure that the displacement word of the call ends up word aligned
+            int offset = masm.codeBuffer.position();
+            offset += compilation.target.arch.machineCodeCallDisplacementOffset;
+            while (offset++ % wordSize != 0) {
+                masm.nop();
+            }
         }
     }
 
