@@ -782,16 +782,20 @@ public abstract class CiXirAssembler {
         return fixed;
     }
 
-    public XirConstant i(int b) {
-        return createConstant(CiConstant.forInt(b));
+    public XirConstant i(int v) {
+        return createConstant(CiConstant.forInt(v));
     }
 
-    public XirConstant b(boolean t) {
-        return createConstant(CiConstant.forBoolean(t));
+    public XirConstant l(int v) {
+        return createConstant(CiConstant.forLong(v));
     }
 
-    public XirConstant w(long b) {
-        return createConstant(CiConstant.forWord(b));
+    public XirConstant b(boolean v) {
+        return createConstant(CiConstant.forBoolean(v));
+    }
+
+    public XirConstant w(long v) {
+        return createConstant(CiConstant.forWord(v));
     }
 
     public XirConstant o(Object obj) {

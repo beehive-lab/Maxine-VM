@@ -174,8 +174,11 @@ public class CiTargetMethod implements Serializable {
         public String toString() {
             if (id == null)
                 return String.format("Mark at pos %d with %d references", pcOffset, references.length);
-            else
+            else if(id instanceof Integer) {
+                return String.format("Mark at pos %d with %d references and id %s", pcOffset, references.length, Integer.toHexString((Integer)id));
+            } else {
                 return String.format("Mark at pos %d with %d references and id %s", pcOffset, references.length, id.toString());
+            }
         }
     }
 
