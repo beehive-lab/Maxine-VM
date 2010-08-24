@@ -33,23 +33,27 @@ import java.io.Serializable;
  */
 
 public interface TeleChannelDataIOProtocol {
+    /** Initialize the tele layer, informing it of the size of the thread locals area.
+    * @param threadLocalsAreaSize size of thread locals area from boot image header
+    * @return {@code true} is the set succeeded, {@code false} otherwise.
+    */
+    boolean initialize(int threadLocalsAreaSize);
     /**
      * Create a new target VM.
      * @param pathName file system pathname of target VM image
      * @param commandLineArguments arguments to VM
-     * @param threadLocalsAreaSize size of thread locals area from boot image header
      * @return handle for target VM or < zero if creation failed
      */
-    long create(String pathName, String[] commandLineArguments, int threadLocalsAreaSize);
+    long create(String pathName, String[] commandLineArguments);
     /**
      * Establish a connection to an existing given target VM.
      * @param id the OS-specific id of the target VM; only meaningful for an active target VM
-     * @param threadLocalsAreaSize size of thread locals area from boot image header
      * @return {@code true} if the attach succeeded, {@code false} otherwise
      */
-    boolean attach(int id, int threadLocalsAreaSize);
+    boolean attach(int id);
     /**
      * Break connection with target VM.
+     * The should be called whether the connection was initiated by {@link #create} or {@link #attach}.
      * @return {@code true} if the detach succeeded, {@code false} otherwise
      */
     boolean detach();

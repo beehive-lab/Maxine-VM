@@ -34,13 +34,18 @@ import com.sun.max.tele.debug.*;
 public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
 
     @Override
-    public long create(String pathName, String[] commandLineArguments, int threadLocalsAreaSize) {
+    public boolean initialize(int threadLocalsAreaSize) {
+        return true;
+    }
+
+    @Override
+    public long create(String pathName, String[] commandLineArguments) {
         unexpected();
         return 0;
     }
 
     @Override
-    public boolean attach(int id, int threadLocalsAreaSize) {
+    public boolean attach(int id) {
         unexpected();
         return false;
     }

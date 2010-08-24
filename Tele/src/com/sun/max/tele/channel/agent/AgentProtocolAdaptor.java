@@ -46,6 +46,7 @@ public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdapt
     protected AgentProtocolAdaptor(TeleProcess teleProcess, TeleChannelProtocol impl) {
         this.impl = impl;
         this.teleProcess = teleProcess;
+        setArrayMode("create", 1, ArrayMode.IN);
         setArrayMode("readBytes", 1, ArrayMode.OUT);
         setArrayMode("writeBytes", 1, ArrayMode.IN);
         setArrayMode("readRegisters", 1, ArrayMode.OUT);
@@ -54,29 +55,23 @@ public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdapt
         setArrayMode("readThreads", 1, ArrayMode.OUT);
     }
 
-    /**
-     * Invoked prior to {@link #attach} for custom code that needs to be executed by this particular agent implementation.
-     * @param domId
-     * @param threadLocalsAreaSize
-     */
-    protected void implAttach(int domId, int threadLocalsAreaSize) {
-
+    @Override
+    public boolean initialize(int threadLocalsAreaSize) {
+        return impl.initialize(threadLocalsAreaSize);
     }
-
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {
         return impl.activateWatchpoint(start, size, after, read, write, exec);
     }
 
     @Override
-    public long create(String programFile, String[] commandLineArguments, int threadLocalsAreaSize) {
-        return impl.create(programFile, commandLineArguments, threadLocalsAreaSize);
+    public long create(String programFile, String[] commandLineArguments) {
+        return impl.create(programFile, commandLineArguments);
     }
 
     @Override
-    public boolean attach(int id, int threadLocalsAreaSize) {
-        implAttach(id, threadLocalsAreaSize);
-        return impl.attach(id, threadLocalsAreaSize);
+    public boolean attach(int id) {
+        return impl.attach(id);
     }
 
     @Override
