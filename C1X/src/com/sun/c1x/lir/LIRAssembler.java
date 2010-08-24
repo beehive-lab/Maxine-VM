@@ -228,6 +228,10 @@ public abstract class LIRAssembler {
                 emitDirectCall(op.target, op.info);
                 break;
             case IndirectCall:
+                emitCallAlignment(op.code);
+                if (op.marks != null) {
+                    op.marks.put(XirMark.CALLSITE, asm.recordMark(null, new Mark[0]));
+                }
                 emitIndirectCall(op.target, op.info, op.targetAddress());
                 break;
             case NativeCall: {
