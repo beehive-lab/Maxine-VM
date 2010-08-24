@@ -168,12 +168,12 @@ public class InspectorAgent {
                         }
                     }
                 } catch (EOFException ex) {
-                	System.out.println("client closed connection, terminating");
+                	Trace.line(1, "client closed connection, terminating");
                 	terminated = true;
                 } catch (Exception ex) {
                     System.err.println(ex);
                     ex.printStackTrace();
-                    System.err.println("terminating connection");
+                    Trace.line(1, "terminating connection");
                     terminated = true;
                 }
             }

@@ -26,13 +26,14 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 public enum OperatingSystem implements PoolObject {
-    DARWIN(4),
-    LINUX(4),
-    SOLARIS(8),
-    WINDOWS(4),
-    GUESTVM(4);
+    DARWIN("Darwin", 4),
+    LINUX("Linux", 4),
+    SOLARIS("Solaris", 8),
+    WINDOWS("Windows", 4),
+    GUESTVM("GuestVM", 4);
 
     private final int defaultPageSize;
+    private String classNameComponent;
 
     public int serial() {
         return ordinal();
@@ -42,7 +43,24 @@ public enum OperatingSystem implements PoolObject {
         return defaultPageSize;
     }
 
-    private OperatingSystem(int pageKBytes) {
+    /**
+     * Returns a string that can be used in a class name.
+     * @return
+     */
+    public String classNameComponent() {
+        return classNameComponent;
+    }
+
+    /**
+     * Returns a string that can be used in a package name.
+     * @return
+     */
+    public String packageNameComponent() {
+        return name().toLowerCase();
+    }
+
+    private OperatingSystem(String name, int pageKBytes) {
+        classNameComponent = name;
         defaultPageSize = pageKBytes * Ints.K;
     }
 
