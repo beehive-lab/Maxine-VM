@@ -55,8 +55,13 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
         this.natives = natives;
     }
 
-    protected Pointer createBufferAndAgent(String programFile, String[] commandLineArguments, int threadLocalsAreaSize) throws BootImageException {
+    @Override
+    public boolean initialize(int threadLocalsAreaSize) {
         natives.teleInitialize(threadLocalsAreaSize);
+        return true;
+    }
+
+    protected Pointer createBufferAndAgent(String programFile, String[] commandLineArguments) throws BootImageException {
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(new File(programFile), commandLineArguments);
         this.agent = new TeleVMAgent();
         agent.start();
@@ -64,10 +69,10 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
     }
 
     @Override
-    public long create(String programFile, String[] commandLineArguments, int threadLocalsAreaSize) {
+    public long create(String programFile, String[] commandLineArguments) {
         final Pointer commandLineArgumentsBuffer;
         try {
-            commandLineArgumentsBuffer = createBufferAndAgent(programFile, commandLineArguments, threadLocalsAreaSize);
+            commandLineArgumentsBuffer = createBufferAndAgent(programFile, commandLineArguments);
         } catch (BootImageException ex) {
             return -1;
         }
@@ -76,7 +81,7 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
     }
 
     @Override
-    public boolean attach(int id, int threadLocalsAreaSize) {
+    public boolean attach(int id) {
         return false;
     }
 

@@ -35,13 +35,18 @@ public class UnixDumpTeleChannelProtocolAdaptor implements TeleChannelProtocol {
     }
 
     @Override
-    public long create(String pathName, String[] commandLineArguments, int threadLocalsAreaSize) {
+    public boolean initialize(int threadLocalsAreaSize) {
+        return true;
+    }
+
+    @Override
+    public long create(String pathName, String[] commandLineArguments) {
         // TODO Auto-generated method stub
         return 0;
     }
 
     @Override
-    public boolean attach(int id, int threadLocalsAreaSize) {
+    public boolean attach(int id) {
         // TODO Auto-generated method stub
         return false;
     }

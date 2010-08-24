@@ -1319,6 +1319,22 @@ Please enter your 'sudo' password:" \
 }
 
 #=======================================
+# 'inspectoragent' command
+#=======================================
+
+inspectoragent_usage="[-impl target] [-port port]"
+inspectoragent_help="launch the Inspector agent
+
+Launch the Inspector agent.
+
+The agent listens on a given port for an incoming connection from
+a remote Inspector process."
+
+function run_inspectoragent() {
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent -trace 1 $@
+}
+
+#=======================================
 # 'view' command
 #=======================================
 
