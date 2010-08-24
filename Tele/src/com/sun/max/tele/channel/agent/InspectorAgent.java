@@ -27,6 +27,8 @@ import com.sun.max.program.*;
 import com.sun.max.tele.channel.TeleChannelProtocol;
 import com.sun.max.tele.channel.tcp.TCPTeleChannelProtocol;
 import com.sun.max.tele.debug.ProcessState;
+import com.sun.max.vm.prototype.*;
+
 import static com.sun.max.tele.channel.agent.RemoteInvocationProtocolAdaptor.*;
 
 /**
@@ -44,7 +46,9 @@ public class InspectorAgent {
     private static boolean oneShot = false;
 
     enum Protocol {
+        DARWIN("darwin", "com.sun.max.tele.channel.agent.darwin", "DarwinNative"),
         LINUX("linux", "com.sun.max.tele.channel.agent.linux", "LinuxNative"),
+        SOLARIS("solaris", "com.sun.max.tele.channel.agent.solaris", "SolarisNative"),
         VE_DB("ve_db", "com.sun.max.tele.channel.agent.guestvm.db", "GuestVMDB"),
         VE_XG("ve_xg", "com.sun.max.tele.channel.agent.guestvm.xg", "GuestVMXG");
 
@@ -84,7 +88,7 @@ public class InspectorAgent {
         if (traceLevel > 0) {
             Trace.on(traceLevel);
         }
-        System.loadLibrary("tele");
+        Prototype.loadLibrary("tele");
         if (impl == Protocol.VE_DB) {
             System.loadLibrary("guk_db");
         }

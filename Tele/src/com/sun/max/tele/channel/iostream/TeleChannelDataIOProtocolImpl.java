@@ -59,18 +59,30 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
     }
 
     @Override
-    public long create(String pathName, String[] commandLineArguments, int threadLocalsAreaSize) {
-        unimplemented("create");
-        /*
+    public boolean initialize(int threadLocalsAreaSize) {
+        try {
+            out.writeUTF("initialize");
+            out.writeInt(threadLocalsAreaSize);
+            out.flush();
+            return in.readBoolean();
+        } catch (Exception ex) {
+            Trace.line(1, ex);
+            return false;
+        }
+    }
+
+    @Override
+    public long create(String pathName, String[] commandLineArguments) {
         try {
             out.writeUTF("create");
             out.writeUTF(pathName);
+            outStringArray(ArrayMode.IN, commandLineArguments);
+            out.flush();
+            return in.readLong();
         } catch (Exception ex) {
             Trace.line(1, ex);
             return -1;
         }
-        */
-        return -1;
     }
 
     @Override
@@ -92,11 +104,10 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
     }
 
     @Override
-    public boolean attach(int id, int threadLocalsAreaSize) {
+    public boolean attach(int id) {
         try {
             out.writeUTF("attach");
             out.writeInt(id);
-            out.writeInt(threadLocalsAreaSize);
             out.flush();
             boolean result = in.readBoolean();
             return result;
@@ -159,11 +170,11 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
         try {
             out.writeUTF("readBytes");
             out.writeLong(src);
-            outArray(ArrayMode.OUT, dst);
+            outByteArray(ArrayMode.OUT, dst);
             out.writeInt(dstOffset);
             out.writeInt(length);
             out.flush();
-            inArray(dst, dstOffset, length);
+            inByteArray(dst, dstOffset, length);
             final int result = in.readInt();
             return result;
         } catch (IOException ex) {
@@ -178,16 +189,16 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
         try {
             out.writeUTF("readRegisters");
             out.writeLong(threadId);
-            outArray(ArrayMode.OUT, integerRegisters);
+            outByteArray(ArrayMode.OUT, integerRegisters);
             out.writeInt(integerRegistersSize);
-            outArray(ArrayMode.OUT, floatingPointRegisters);
+            outByteArray(ArrayMode.OUT, floatingPointRegisters);
             out.writeInt(floatingPointRegistersSize);
-            outArray(ArrayMode.OUT, stateRegisters);
+            outByteArray(ArrayMode.OUT, stateRegisters);
             out.writeInt(stateRegistersSize);
             out.flush();
-            inArray(integerRegisters, 0, integerRegistersSize);
-            inArray(floatingPointRegisters, 0, floatingPointRegistersSize);
-            inArray(stateRegisters, 0, stateRegistersSize);
+            inByteArray(integerRegisters, 0, integerRegistersSize);
+            inByteArray(floatingPointRegisters, 0, floatingPointRegistersSize);
+            inByteArray(stateRegisters, 0, stateRegistersSize);
             return in.readBoolean();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -327,7 +338,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
         try {
             out.writeUTF("writeBytes");
             out.writeLong(dst);
-            outArray(ArrayMode.IN, src);
+            outByteArray(ArrayMode.IN, src);
             out.writeInt(srcOffset);
             out.writeInt(length);
             out.flush();
@@ -357,9 +368,9 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
         try {
             out.writeUTF("readThreads");
             out.writeInt(size);
-            outArray(ArrayMode.OUT, gatherThreadData);
+            outByteArray(ArrayMode.OUT, gatherThreadData);
             out.flush();
-            inArray(gatherThreadData, 0, size);
+            inByteArray(gatherThreadData, 0, size);
             return in.readInt();
         } catch (IOException ex) {
             ProgramError.unexpected(ex);
@@ -367,21 +378,32 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
         }
     }
 
-    private void outArray(ArrayMode mode, byte[] b) throws IOException {
+    private void outByteArray(ArrayMode mode, byte[] array) throws IOException {
         out.writeInt(mode.ordinal());
         // write b.length first so callee can allocate
-        out.writeInt(b.length);
+        out.writeInt(array.length);
         if (mode != ArrayMode.OUT) {
-            out.write(b);
+            out.write(array);
         }
     }
 
-    private void inArray(byte[] dst, int dstOffset, int length) throws IOException {
+    private void inByteArray(byte[] dst, int dstOffset, int length) throws IOException {
         byte[] result = new byte[dst.length];
         in.readFully(result);
         System.arraycopy(result, dstOffset, dst, dstOffset, length);
     }
 
+
+    private void outStringArray(ArrayMode mode, String[] array) throws IOException {
+        out.writeInt(mode.ordinal());
+        // write b.length first so callee can allocate
+        out.writeInt(array.length);
+        if (mode != ArrayMode.OUT) {
+            for (String s : array) {
+                out.writeUTF(s);
+            }
+        }
+    }
 
     private void unimplemented(String name) {
         ProgramError.unexpected(getClass().getName() + "." + name + " unimplemented");
