@@ -23,6 +23,6 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.ins.MaxineInspector"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -vmdir=${workspace_loc:Native}/generated/guestvm -mode=attach -target=file"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Inspector"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xbootclasspath/a:${workspace_loc:GuestVMJDK}/bin -Dos.name=GuestVM -Dmax.extended.codebase=com.sun.guestvm"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xbootclasspath/a:${workspace_loc:GuestVMJDK}/bin -Dos.name=GuestVM -Dmax.extended.codebase=com.sun.guestvm -Dmax.os.signalcount=0"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:VM}"/>
 </launchConfiguration>

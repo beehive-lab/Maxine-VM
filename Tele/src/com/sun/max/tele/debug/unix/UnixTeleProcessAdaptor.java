@@ -24,6 +24,7 @@ import java.io.*;
 import java.nio.*;
 import java.util.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.MaxWatchpoint.WatchpointSettings;
 import com.sun.max.tele.*;
@@ -50,7 +51,7 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
         super(teleVM, platform, ProcessState.STOPPED);
         protocol = TeleVM.teleChannelProtocol();
         dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
-        protocol.initialize(teleVM.bootImage().header.threadLocalsAreaSize);
+        protocol.initialize(teleVM.bootImage().header.threadLocalsAreaSize, teleVM.vmConfiguration().platform().processorKind.dataModel.endianness == Endianness.BIG ? true : false);
         final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments);
         if (processHandle < 0) {
             String exe = programFile.getName();

@@ -22,6 +22,7 @@ package com.sun.max.tele.debug.no;
 
 import java.nio.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.debug.*;
@@ -34,7 +35,7 @@ import com.sun.max.tele.debug.*;
 public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize) {
+    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
         return true;
     }
 

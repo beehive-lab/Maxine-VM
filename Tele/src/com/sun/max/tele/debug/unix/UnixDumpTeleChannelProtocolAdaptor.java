@@ -35,7 +35,7 @@ public class UnixDumpTeleChannelProtocolAdaptor implements TeleChannelProtocol {
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize) {
+    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
         return true;
     }
 
