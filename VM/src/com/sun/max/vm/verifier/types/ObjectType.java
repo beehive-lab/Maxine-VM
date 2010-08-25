@@ -133,6 +133,11 @@ public class ObjectType extends ReferenceType {
             return OBJECT;
         }
 
+        if (fromClassActor.kind != classActor.kind) {
+            // Only happens when exactly one of the type is a Word type
+            return TOP;
+        }
+
         ClassActor fromSuperClassActor;
 
         // Find out whether the classes are deeper in the class tree by moving both
