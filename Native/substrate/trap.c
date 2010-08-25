@@ -183,7 +183,11 @@ static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #endif
 }
 
-char *signalName(int signal) {
+/**
+ * Gets the name of a given signal if it is a signal handled
+ * directly by the VM otherwise return NULL.
+ */
+char *vmSignalName(int signal) {
     switch (signal) {
     case SIGSEGV: return "SIGSEGV";
     case SIGFPE: return "SIGFPE";
@@ -298,16 +302,29 @@ static boolean handleDivideOverflow(UContext *ucontext) {
 }
 #endif
 
+static void logTrap(int signal, Address ip, Address fault, ThreadLocals disabled_tl) {
+    char *sigName = vmSignalName(signal);
+    if (sigName == NULL) {
+        sigName = "<unknown>";
+    }
+    log_lock();
+    log_println("SIGNAL: %0d [%s]", signal, sigName);
+    log_println("  Instruction Pointer = %p", ip);
+    log_println("  Fault address       = %p", fault);
+    log_println("  Trap number         = %d", getTrapNumber(signal));
+    log_println("  Thread handle       = %p", thread_self());
+    if (disabled_tl != 0) {
+        log_println("  Thread ID           = %d", getThreadLocal(int, disabled_tl, ID));
+        log_println("  Safepoint latch     = %p", getThreadLocal(Address, disabled_tl, TRAP_LATCH_REGISTER));
+    }
+    log_unlock();
+}
+
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
     int primordial = 0;
-    char *sigName;
-    if (traceTraps || log_TRAP) {
-        sigName = signalName(signal);
-        if (sigName == NULL) {
-            sigName = "<unknown>";
-        }
-        log_println("SIGNAL: %0d [%s]", signal, sigName);
-    }
+    int trapNumber = getTrapNumber(signal);
+    Address ip = getInstructionPointer(ucontext);
+    Address faultAddress = getFaultAddress(signalInfo, ucontext);
 
 #if isa_AMD64
     if (signal == SIGFPE && handleDivideOverflow(ucontext)) {
@@ -322,24 +339,23 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     ThreadLocals tl = threadLocals_current();
     NativeThreadLocals ntl = nativeThreadLocals_current();
     if (ntl == 0) {
+        logTrap(signal, ip, faultAddress, 0);
         log_exit(-22, "could not find native thread locals in trap handler");
     }
-    int trapNumber = getTrapNumber(signal);
-    Address faultAddress = getFaultAddress(signalInfo, ucontext);
     ThreadLocals disabled_tl = getThreadLocal(ThreadLocals, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS);
 
+    boolean trapLogged = false;
+    if (traceTraps || log_TRAP) {
+        logTrap(signal, ip, faultAddress, disabled_tl);
+        trapLogged = true;
+    }
+
     if (getThreadLocal(int, tl, ID) == 0) {
-        sigName = signalName(signal);
-        if (sigName == NULL) {
-            sigName = "<unknown>";
-        }
         log_println("Trap taken on primordial thread (this is usually bad)!");
-        log_println("thread handle=%p, id=%d: %s", thread_self(), getThreadLocal(int, disabled_tl, ID), sigName);
-        log_println("trapInfo[0] (trap number)         = %p", trapNumber);
-        log_println("trapInfo[1] (instruction pointer) = %p", getInstructionPointer(ucontext));
-        log_println("trapInfo[2] (fault address)       = %p", faultAddress);
-        log_println("trapInfo[3] (safepoint latch)     = %p", getThreadLocal(Address, disabled_tl, TRAP_LATCH_REGISTER));
-        log_println("Java trap stub 0x%0lx", theJavaTrapStub);
+        if (!trapLogged) {
+	        logTrap(signal, ip, faultAddress, disabled_tl);
+	        trapLogged = true;
+	    }
         primordial = 1;
     }
 
@@ -358,6 +374,10 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
                 // If VM cannot unprotect the red guard zone page(s), it's not possible
                 // to call the Java trap stub (which calls other compiled methods that will
                 // bang the stack); just exit now without a stack trace
+                if (!trapLogged) {
+                    logTrap(signal, ip, faultAddress, disabled_tl);
+                    trapLogged = true;
+                }
                 log_exit(1, "fatal stack fault in red zone");
             }
         } else if (faultAddress < ntl->stackYellowZone + virtualMemory_getPageSize()) {
@@ -393,20 +413,6 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     c_UNIMPLEMENTED();
 #endif
 
-    if (traceTraps || log_TRAP) {
-        if (sigName != NULL) {
-            log_println("thread handle=%p, id=%d: %s", thread_self(), getThreadLocal(int, disabled_tl, ID), sigName);
-            if (trapNumber < 0) {
-                log_println("trapInfo[0] (trap number)         = %p [signal %d]", getThreadLocal(Address, disabled_tl, TRAP_NUMBER), -trapNumber);
-            } else {
-                log_println("trapInfo[0] (trap number)         = %p", getThreadLocal(Address, disabled_tl, TRAP_NUMBER));
-            }
-            log_println("trapInfo[1] (instruction pointer) = %p", getThreadLocal(Address, disabled_tl, TRAP_INSTRUCTION_POINTER));
-            log_println("trapInfo[2] (fault address)       = %p", getThreadLocal(Address, disabled_tl, TRAP_FAULT_ADDRESS));
-            log_println("trapInfo[3] (safepoint latch)     = %p", getThreadLocal(Address, disabled_tl, TRAP_LATCH_REGISTER));
-        }
-        log_println("SIGNAL: returning to Java trap stub 0x%0lx", theJavaTrapStub);
-    }
     setInstructionPointer(ucontext, theJavaTrapStub);
 }
 
