@@ -21,7 +21,6 @@
 package com.sun.max.vm.actor.member;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.max.vm.VMOptions.*;
 
 import java.lang.reflect.*;
 
@@ -29,7 +28,6 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.bytecode.*;
@@ -52,16 +50,10 @@ import com.sun.org.apache.bcel.internal.generic.*;
  */
 public abstract class ClassMethodActor extends MethodActor {
 
-    private static boolean traceJNI;
-
+    @RESET
+    public static boolean TraceJNI;
     static {
-        register(new VMBooleanXXOption("-XX:-TraceJNI", "Trace JNI calls.") {
-            @Override
-            public boolean parseValue(Pointer optionValue) {
-                traceJNI = getValue();
-                return true;
-            }
-        }, MaxineVM.Phase.STARTING);
+        VMOptions.addFieldOption("-XX:", "TraceJNI", "Trace JNI calls.");
     }
 
     @INSPECTED
@@ -106,15 +98,6 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     public int numberOfParameterSlots() {
         return descriptor().computeNumberOfSlots() + ((isStatic()) ? 0 : 1);
-    }
-
-    /**
-     * Determines if JNI activity should be traced at a level useful for debugging.
-     * @return {@code true} if JNI should be traced
-     */
-    @INLINE
-    public static boolean traceJNI() {
-        return traceJNI;
     }
 
     public boolean isDeclaredNeverInline() {
