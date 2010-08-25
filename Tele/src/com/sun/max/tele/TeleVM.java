@@ -246,7 +246,7 @@ public abstract class TeleVM implements MaxVM {
     private static TargetLocation targetLocation;
 
     /**
-     * Where the meta-data associated with the targte VM is located {@see #vmDirectoryOption}.
+     * Where the meta-data associated with the target VM is located {@see #vmDirectoryOption}.
      */
     private static File vmDirectory;
 
@@ -309,8 +309,8 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * Create the correctr instance of {@link TeleChannelProtocol} based on {@link #targetLocation} and
-     * {@link PperatingSystem}.
+     * Create the correct instance of {@link TeleChannelProtocol} based on {@link #targetLocation} and
+     * {@link OperatingSystem}.
      *
      * @param operatingSystem
      */
