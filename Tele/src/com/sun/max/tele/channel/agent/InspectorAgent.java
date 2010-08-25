@@ -22,7 +22,8 @@ package com.sun.max.tele.channel.agent;
 
 import java.io.*;
 import java.net.*;
-import java.util.*;
+
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.channel.TeleChannelProtocol;
 import com.sun.max.tele.channel.tcp.TCPTeleChannelProtocol;
@@ -32,7 +33,7 @@ import com.sun.max.vm.prototype.*;
 import static com.sun.max.tele.channel.agent.RemoteInvocationProtocolAdaptor.*;
 
 /**
- * An agent that handles the dom0 side of the Maxine Inspector debug communication channel.
+ * An agent that handles the target side of the Maxine Inspector debug communication channel.
  *
  * @author Mick Jordan
  *
@@ -40,28 +41,11 @@ import static com.sun.max.tele.channel.agent.RemoteInvocationProtocolAdaptor.*;
 public class InspectorAgent {
 
     private static int port = TCPTeleChannelProtocol.DEFAULT_PORT;
-    private static Protocol impl = Protocol.VE_DB;
-    private static Map<String, Protocol> protocolMap = new HashMap<String, Protocol>();
     private static int dbtLevel = 0;
     private static boolean oneShot = false;
+    private static OperatingSystem target;
+    private static String targetSpecific = "";
 
-    enum Protocol {
-        DARWIN("darwin", "com.sun.max.tele.channel.agent.darwin", "DarwinNative"),
-        LINUX("linux", "com.sun.max.tele.channel.agent.linux", "LinuxNative"),
-        SOLARIS("solaris", "com.sun.max.tele.channel.agent.solaris", "SolarisNative"),
-        VE_DB("ve_db", "com.sun.max.tele.channel.agent.guestvm.db", "GuestVMDB"),
-        VE_XG("ve_xg", "com.sun.max.tele.channel.agent.guestvm.xg", "GuestVMXG");
-
-        String key;
-        String packageName;
-        String classPrefix;
-
-        Protocol(String key, String packageName, String classPrefix) {
-            this.key = key;
-            this.packageName = packageName;
-            this.classPrefix = classPrefix;
-        }
-    }
     /**
      * @param args
      */
@@ -72,15 +56,15 @@ public class InspectorAgent {
             final String arg = args[i];
             if (arg.equals("-port")) {
                 port = Integer.parseInt(args[++i]);
-            } else if (arg.equals("-impl")) {
-                impl = getProtocol(args[++i]);
+            } else if (arg.equals("-host.os")) {
+                System.setProperty(Prototype.OPERATING_SYSTEM_PROPERTY, args[++i]);
             } else if (arg.equals("-trace")) {
                 traceLevel = Integer.parseInt(args[++i]);
             } else if (arg.equals("-dbtlevel")) {
                 dbtLevel = Integer.parseInt(args[++i]);
-            } else  if (arg.equals("-xg")) {
-                impl = Protocol.VE_XG;
-            } else if (arg.equals("-qc")) {
+            } else  if (arg.equals("-host.os.sub")) {
+                targetSpecific = args[++i].toUpperCase();
+            } else if (arg.equals("-qd")) {
             	oneShot = true;
             }
         }
@@ -88,22 +72,11 @@ public class InspectorAgent {
         if (traceLevel > 0) {
             Trace.on(traceLevel);
         }
-        Prototype.loadLibrary("tele");
-        if (impl == Protocol.VE_DB) {
-            System.loadLibrary("guk_db");
-        }
-        listen();
-    }
 
-    private static Protocol getProtocol(String key) {
-        for (Protocol protocol : Protocol.values()) {
-            if (protocol.key.equals(key)) {
-                return protocol;
-            }
-        }
-        System.err.println("unknown TeleChannelProtocol key: " + key);
-        System.exit(1);
-        return null;
+        target = OperatingSystem.fromName(System.getProperty(Prototype.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name()));
+
+        Prototype.loadLibrary("tele");
+        listen();
     }
 
     public static void listen() {
@@ -143,7 +116,7 @@ public class InspectorAgent {
                 close();
                 throw ex;
             }
-            final String protocolClassName = impl.packageName + ".Agent" + impl.classPrefix + "TeleChannelProtocol";
+            final String protocolClassName = "com.sun.max.tele.channel.agent." + target.asPackageName() + ".Agent" + target.asClassName() + targetSpecific + "NativeTeleChannelProtocol";
             protocol = (RemoteInvocationProtocolAdaptor) Class.forName(protocolClassName).newInstance();
             if (dbtLevel > 0) {
                 ((TeleChannelProtocol) protocol).setTransportDebugLevel(dbtLevel);

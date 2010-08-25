@@ -38,9 +38,6 @@
 #include "teleNativeThread.h"
 #include "linuxTask.h"
 
-void teleProcess_initialize(void) {
-}
-
 static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadList, jlong threadLocalsList, long primordialThreadLocals) {
 
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
