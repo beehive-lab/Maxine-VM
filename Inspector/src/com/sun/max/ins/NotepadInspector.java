@@ -75,7 +75,9 @@ public final class NotepadInspector extends Inspector {
     private final Action copyAction;
     private final Action cutAction;
     private final Action pasteAction;
-    private final NotepadPrintAction notepadPrintAction;
+    private final InspectorAction selectAllAction;
+    private final InspectorAction clearAction;
+    private final InspectorAction notepadPrintAction;
     private final InspectSelectedAddressMemoryAction inspectSelectedAddressMemoryAction;
     private final InspectSelectedAddressRegionAction inspectSelectedAddressRegionAction;
     private final InspectSelectedAddressObjectAction inspectSelectedAddressObjectAction;
@@ -122,6 +124,8 @@ public final class NotepadInspector extends Inspector {
                 action.actionPerformed(e);
             }
         };
+        selectAllAction = new NotepadSelectAllAction(inspection);
+        clearAction = new NotepadClearAction(inspection);
 
         // Add handlers for various user events
         textArea.addMouseListener(new MouseAdapter() {
@@ -160,12 +164,10 @@ public final class NotepadInspector extends Inspector {
             }
 
             public void insertUpdate(DocumentEvent e) {
-                System.out.println("insert");
                 updateHighlighting();
             }
 
             public void removeUpdate(DocumentEvent e) {
-                System.out.println("remove");
                 updateHighlighting();
             }
         });
@@ -183,6 +185,8 @@ public final class NotepadInspector extends Inspector {
         popupMenu.add(copyAction);
         popupMenu.add(cutAction);
         popupMenu.add(pasteAction);
+        popupMenu.add(selectAllAction);
+        popupMenu.add(clearAction);
 
         final InspectorFrame frame = createFrame(true);
 
@@ -191,6 +195,8 @@ public final class NotepadInspector extends Inspector {
         editMenu.add(copyAction);
         editMenu.add(cutAction);
         editMenu.add(pasteAction);
+        editMenu.add(selectAllAction);
+        editMenu.add(clearAction);
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(inspectSelectedAddressMemoryAction);
         memoryMenu.add(inspectSelectedAddressRegionAction);
@@ -405,6 +411,37 @@ public final class NotepadInspector extends Inspector {
             this.address = address;
             this.object = vm().heap().findObjectAt(address);
             setEnabled(object != null);
+        }
+    }
+
+    /**
+     * Action that removes the current contents of the notepad.
+     */
+    private final class NotepadSelectAllAction extends InspectorAction {
+
+        public NotepadSelectAllAction(Inspection inspection) {
+            super(inspection, "Select all");
+        }
+
+        @Override
+        protected void procedure() {
+            textArea.selectAll();
+        }
+    }
+
+
+    /**
+     * Action that removes the current contents of the notepad.
+     */
+    private final class NotepadClearAction extends InspectorAction {
+
+        public NotepadClearAction(Inspection inspection) {
+            super(inspection, "Clear all");
+        }
+
+        @Override
+        protected void procedure() {
+            textArea.setText("");
         }
     }
 
