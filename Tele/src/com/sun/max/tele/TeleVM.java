@@ -43,10 +43,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.tcp.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.darwin.*;
-import com.sun.max.tele.debug.linux.*;
 import com.sun.max.tele.debug.no.*;
-import com.sun.max.tele.debug.solaris.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.interpreter.*;
@@ -249,7 +246,7 @@ public abstract class TeleVM implements MaxVM {
     private static TargetLocation targetLocation;
 
     /**
-     * Where the meta-data associated with the targte VM is located {@see #vmDirectoryOption}.
+     * Where the meta-data associated with the target VM is located {@see #vmDirectoryOption}.
      */
     private static File vmDirectory;
 

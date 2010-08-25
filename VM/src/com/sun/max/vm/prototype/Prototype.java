@@ -117,7 +117,7 @@ public abstract class Prototype {
     /**
      * The default place where native libraries are placed by the make system for the "host of the host" system.
      */
-    private static final String LIBRARY_BUILD_PATH = "Native/generated/" + OperatingSystem.current().name().toLowerCase() + "/";
+    private static final String LIBRARY_BUILD_PATH = "Native/generated/" + OperatingSystem.current().asPackageName() + "/";
 
     /**
      * The name of the default prototype library.
@@ -270,7 +270,7 @@ public abstract class Prototype {
         final DataModel dataModel = new DataModel(wordWidth, endianness, cacheAlignment);
         final ProcessorKind processorKind = new ProcessorKind(processorModel, instructionSet, dataModel);
 
-        final OperatingSystem operatingSystem = OperatingSystem.valueOf(System.getProperty(OPERATING_SYSTEM_PROPERTY, getOperatingSystem()));
+        final OperatingSystem operatingSystem = OperatingSystem.fromName(System.getProperty(OPERATING_SYSTEM_PROPERTY, getOperatingSystem()));
         final int pageSize = Integer.getInteger(PAGE_SIZE_PROPERTY, getPageSize());
 
         return new Platform(processorKind, operatingSystem, pageSize);
