@@ -48,9 +48,6 @@
 #include "teleProcess.h"
 #include "teleNativeThread.h"
 
-void teleProcess_initialize(void) {
-}
-
 const char *threadRunStateAsString(int state) {
     switch (state) {
         case TH_STATE_RUNNING: return "RUNNING";

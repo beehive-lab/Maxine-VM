@@ -64,6 +64,10 @@ public enum OperatingSystem implements PoolObject {
         defaultPageSize = pageKBytes * Ints.K;
     }
 
+    public static OperatingSystem fromName(String name) {
+        return OperatingSystem.valueOf(name.toUpperCase());
+    }
+
     private static OperatingSystem getCurrent() {
         final String name = System.getProperty("os.name");
         if (name.equals("Linux")) {
