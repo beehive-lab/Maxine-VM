@@ -22,7 +22,6 @@ package com.sun.max.tele.debug.no;
 
 import java.nio.*;
 
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.debug.*;
