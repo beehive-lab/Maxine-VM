@@ -33,7 +33,7 @@ public enum OperatingSystem implements PoolObject {
     GUESTVM("GuestVM", 4);
 
     private final int defaultPageSize;
-    private String classNameComponent;
+    private String hName;
 
     public int serial() {
         return ordinal();
@@ -47,20 +47,20 @@ public enum OperatingSystem implements PoolObject {
      * Returns a string that can be used in a class name.
      * @return
      */
-    public String classNameComponent() {
-        return classNameComponent;
+    public String asClassName() {
+        return hName;
     }
 
     /**
      * Returns a string that can be used in a package name.
      * @return
      */
-    public String packageNameComponent() {
+    public String asPackageName() {
         return name().toLowerCase();
     }
 
     private OperatingSystem(String name, int pageKBytes) {
-        classNameComponent = name;
+        hName = name;
         defaultPageSize = pageKBytes * Ints.K;
     }
 

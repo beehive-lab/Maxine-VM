@@ -327,7 +327,7 @@ public abstract class TeleVM implements MaxVM {
          * com.sun.max.tele.debug.<ospackage>.<os><kind>TeleChannelProtocol, where Kind == Native for LOCAL, TCP for
          * REMOTE and Dump for FILE. os is sanitized to conform to standard class naming rules. E.g. SOLARIS -> Solaris
          */
-        final String className = "com.sun.max.tele.debug." + operatingSystem.packageNameComponent() + "." + operatingSystem.classNameComponent() +
+        final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() +
                         targetLocation.kind.classNameComponent + "TeleChannelProtocol";
         try {
             final Class< ? > klass = Class.forName(className);
@@ -490,27 +490,13 @@ public abstract class TeleVM implements MaxVM {
         TeleVM teleVM = null;
         final OperatingSystem operatingSystem = bootImage.vmConfiguration.platform().operatingSystem;
         setTeleChannelProtocol(operatingSystem);
-        switch (operatingSystem) {
-            case DARWIN:
-                teleVM = new DarwinTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments);
-                break;
-            case LINUX:
-                teleVM = new LinuxTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments);
-                break;
-            case SOLARIS:
-                teleVM = new SolarisTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments);
-                break;
-            case GUESTVM:
-                try {
-                    final Class< ? > klass = Class.forName("com.sun.max.tele.debug.guestvm.GuestVMTeleVM");
-                    final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {File.class, BootImage.class, Classpath.class, String[].class});
-                    teleVM = (TeleVM) cons.newInstance(new Object[] {bootImageFile, bootImage, sourcepath, commandlineArguments});
-                } catch (Exception ex) {
-                    FatalError.unexpected("failed to instantiate TeleVM class for GuestVM", ex);
-                }
-                break;
-            default:
-                FatalError.unimplemented();
+        final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() + "TeleVM";
+        try {
+            final Class< ? > klass = Class.forName(className);
+            final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {File.class, BootImage.class, Classpath.class, String[].class});
+            teleVM = (TeleVM) cons.newInstance(new Object[] {bootImageFile, bootImage, sourcepath, commandlineArguments});
+        } catch (Exception ex) {
+            FatalError.unexpected("failed to instantiate " + className, ex);
         }
         return teleVM;
     }
