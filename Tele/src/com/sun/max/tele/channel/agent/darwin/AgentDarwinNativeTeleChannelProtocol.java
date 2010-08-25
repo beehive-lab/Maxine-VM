@@ -18,26 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#include <stdlib.h>
+package com.sun.max.tele.channel.agent.darwin;
 
-#include "c.h"
-#include "jni.h"
-#include "log.h"
-#include "threadLocals.h"
-#include "teleProcess.h"
+import com.sun.max.tele.channel.*;
+import com.sun.max.tele.channel.agent.*;
+import com.sun.max.tele.debug.darwin.*;
 
-JNIEXPORT jint JNICALL
-JNI_OnLoad(JavaVM *vm, void *reserved)
-{
-    c_initialize();
-#if !os_GUESTVMXEN
-    log_initialize(getenv("TELE_LOG_FILE"));
-#endif
-    return JNI_VERSION_1_2;
-}
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_tele_channel_natives_TeleChannelNatives_teleInitialize(JNIEnv *env, jclass c, jint threadLocalsSize) {
-    threadLocals_initialize(threadLocalsSize);
+/**
+*
+* Agent-side implementation of {@link TeleChannelProtocol} for Darwin.
+*
+* @author Mick Jordan
+*
+*/
+public class AgentDarwinNativeTeleChannelProtocol extends AgentProtocolAdaptor {
+    public AgentDarwinNativeTeleChannelProtocol() {
+        super(new DarwinTeleProcess(), new DarwinNativeTeleChannelProtocol());
+    }
 }
 
