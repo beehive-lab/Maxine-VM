@@ -196,9 +196,15 @@ ifeq ($(OS),linux)
         CFLAGS = -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET) -D$(TARGET_WORD_SIZE)
     endif
     C_DEPENDENCIES_FLAGS = -M -DLINUX -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
-    # The -rpath option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
-    # find Maxine's version of the libjvm.so library. 
-    LINK_MAIN = $(CC) -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
+    # The '-rpath' linker option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
+    # find Maxine's version of the libjvm.so library.
+    # The '-z execstack' is a workaround that stops the runtime dynamic linker from
+    # changing the protection of the main thread's stack (via mprotect) *after* the
+    # yellow guard page (for detecting stack overflow) has been mprotected. Without
+    # this flag, the main thread's complete stack (including the guard page) is
+    # mprotected with PROT_READ, PROT_WRITE, PROT_EXEC when dlopen() is called to
+    # open libjava.so. 
+    LINK_MAIN = $(CC) -z execstack -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
     LINK_LIB = $(CC) -g -shared -lc -lm
     LIB_PREFIX = lib
     LIB_SUFFIX = .so
