@@ -41,10 +41,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-void teleProcess_initialize(void) {
-}
-
-
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readBytes(JNIEnv *env, jobject  this, jlong handle, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
     struct ps_prochandle *ph = (struct ps_prochandle *) handle;
