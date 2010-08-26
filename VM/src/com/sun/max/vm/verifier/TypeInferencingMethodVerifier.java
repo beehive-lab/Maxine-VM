@@ -144,10 +144,10 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     @Override
     public void verify() {
+        if (verbose || Verifier.TraceVerifierLevel >= Verifier.TRACE_METHOD) {
+            Log.println(classMethodActor().format("[Verifying %H.%n(%p) via type-inferencing]"));
+        }
         if (verbose) {
-            Log.println();
-            Log.println(classMethodActor().format("Verifying %H.%n(%p) via type-inferencing"));
-            Log.println();
             Log.println("Input bytecode:");
             CodeAttributePrinter.print(Log.out, codeAttribute());
             Log.println();
