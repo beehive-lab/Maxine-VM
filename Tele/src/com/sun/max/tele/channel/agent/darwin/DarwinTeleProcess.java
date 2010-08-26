@@ -18,26 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#include <stdlib.h>
+package com.sun.max.tele.channel.agent.darwin;
 
-#include "c.h"
-#include "jni.h"
-#include "log.h"
-#include "threadLocals.h"
-#include "teleProcess.h"
+import com.sun.max.tele.channel.agent.*;
 
-JNIEXPORT jint JNICALL
-JNI_OnLoad(JavaVM *vm, void *reserved)
-{
-    c_initialize();
-#if !os_GUESTVMXEN
-    log_initialize(getenv("TELE_LOG_FILE"));
-#endif
-    return JNI_VERSION_1_2;
+
+/**
+ * This is a stub implementation that exists only on the agent side of the split communication protocol.
+ *
+ * @author Mick Jordan
+ *
+ */
+public class DarwinTeleProcess  extends TeleProcess {
+
 }
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_tele_channel_natives_TeleChannelNatives_teleInitialize(JNIEnv *env, jclass c, jint threadLocalsSize) {
-    threadLocals_initialize(threadLocalsSize);
-}
-

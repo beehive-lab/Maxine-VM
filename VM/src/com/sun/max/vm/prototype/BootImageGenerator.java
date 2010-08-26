@@ -55,7 +55,7 @@ public final class BootImageGenerator {
     public static final String STATS_FILE_NAME = "maxine.stats";
 
     public static final String DEFAULT_VM_DIRECTORY = "Native" + File.separator + "generated" + File.separator +
-        System.getProperty(Prototype.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name()).toLowerCase();
+        OperatingSystem.fromName(System.getProperty(Prototype.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name())).name().toLowerCase();
 
     private final OptionSet options = new OptionSet();
 
