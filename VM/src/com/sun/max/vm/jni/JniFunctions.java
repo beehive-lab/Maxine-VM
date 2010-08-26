@@ -137,7 +137,7 @@ public final class JniFunctions {
      *            that called out to native code or the native anchor of a thread that attached to the VM.
      */
     private static void traceEntry(String name, Pointer anchor) {
-        if (name != null && ClassMethodActor.traceJNI()) {
+        if (name != null && ClassMethodActor.TraceJNI) {
             boolean lockDisabledSafepoints = Log.lock();
             Log.print("[Thread \"");
             Log.print(VmThread.current().getName());
@@ -164,7 +164,7 @@ public final class JniFunctions {
      * @param name the name of the JNI function being exited
      */
     private static void traceExit(String name) {
-        if (name != null && ClassMethodActor.traceJNI()) {
+        if (name != null && ClassMethodActor.TraceJNI) {
             boolean lockDisabledSafepoints = Log.lock();
             Log.print("[Thread \"");
             Log.print(VmThread.current().getName());
@@ -211,7 +211,7 @@ public final class JniFunctions {
     }
 
     private static void traceReflectiveInvocation(MethodActor methodActor) {
-        if (ClassMethodActor.traceJNI()) {
+        if (ClassMethodActor.TraceJNI) {
             Log.print("[Thread \"");
             Log.print(VmThread.current().getName());
             Log.print("\" --> JNI invoke: ");

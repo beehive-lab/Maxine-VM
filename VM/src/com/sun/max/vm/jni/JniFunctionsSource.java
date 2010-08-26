@@ -90,7 +90,7 @@ public final class JniFunctionsSource {
     }
 
     private static void traceReflectiveInvocation(MethodActor methodActor) {
-        if (ClassMethodActor.traceJNI()) {
+        if (ClassMethodActor.TraceJNI) {
             Log.print("[Thread \"");
             Log.print(VmThread.current().getName());
             Log.print("\" --> JNI invoke: ");

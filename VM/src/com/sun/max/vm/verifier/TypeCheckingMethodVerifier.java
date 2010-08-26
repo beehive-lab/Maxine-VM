@@ -85,10 +85,10 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
     @Override
     public void verify() {
+        if (verbose || Verifier.TraceVerifierLevel >= Verifier.TRACE_METHOD) {
+            Log.println(classMethodActor().format("[Verifying %H.%n(%p) via type-checking]"));
+        }
         if (verbose) {
-            Log.println();
-            Log.println(classMethodActor().format("Verifying %H.%n(%p) via type-checking"));
-
             Log.println("Input bytecode:");
             CodeAttributePrinter.print(Log.out, codeAttribute());
             Log.println();

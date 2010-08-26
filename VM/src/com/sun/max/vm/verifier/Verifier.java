@@ -166,6 +166,9 @@ public class Verifier implements VerificationRegistry {
         if (JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
             return null;
         }
+        if (typeDescriptor.toKind().isWord) {
+            return VerificationType.WORD;
+        }
         ObjectType objectType = objectTypes.get(typeDescriptor);
         if (objectType == null) {
             objectType = JavaTypeDescriptor.isArray(typeDescriptor) ? new ArrayType(typeDescriptor, this) : new ObjectType(typeDescriptor, this);
