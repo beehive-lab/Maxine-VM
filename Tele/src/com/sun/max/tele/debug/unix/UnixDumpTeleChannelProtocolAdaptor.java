@@ -26,9 +26,10 @@ import com.sun.max.program.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.iostream.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.vm.runtime.*;
 
 
-public abstract class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocolAdaptor implements TeleChannelProtocol {
+public class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocolAdaptor implements TeleChannelProtocol {
 
     protected int threadLocalsAreaSize;
     public boolean bigEndian;
@@ -60,7 +61,10 @@ public abstract class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelData
     }
 
     @Override
-    public abstract long getBootHeapStart();
+    public long getBootHeapStart() {
+        unimplemented("getBootHeapStart");
+        return 0;
+    }
 
     @Override
     public int maxByteBufferSize() {
@@ -68,14 +72,23 @@ public abstract class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelData
     }
 
     @Override
-    public abstract int readBytes(long src, byte[] dst, int dstOffset, int length);
+    public int readBytes(long src, byte[] dst, int dstOffset, int length) {
+        unimplemented("readBytes");
+        return 0;
+    }
 
     @Override
-    public abstract int writeBytes(long dst, byte[] src, int srcOffset, int length);
+    public int writeBytes(long dst, byte[] src, int srcOffset, int length) {
+        unimplemented("writeBytes");
+        return 0;
+    }
 
     @Override
-    public abstract boolean readRegisters(long threadId, byte[] integerRegisters, int integerRegistersSize, byte[] floatingPointRegisters, int floatingPointRegistersSize, byte[] stateRegisters,
-                    int stateRegistersSize);
+    public boolean readRegisters(long threadId, byte[] integerRegisters, int integerRegistersSize, byte[] floatingPointRegisters, int floatingPointRegistersSize, byte[] stateRegisters,
+                    int stateRegistersSize) {
+        unimplemented("readRegisters");
+        return false;
+    }
 
     @Override
     public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
@@ -173,7 +186,11 @@ public abstract class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelData
     }
 
     private static void inappropriate(String methodName) {
-        ProgramError.unexpected("method: " + methodName + " should not be called in dump mode");
+        FatalError.unexpected("method: " + methodName + " should not be called in dump mode");
+    }
+
+    private static void unimplemented(String methodName) {
+        FatalError.unexpected("method: " + methodName + " is unimplemented");
     }
 
 }
