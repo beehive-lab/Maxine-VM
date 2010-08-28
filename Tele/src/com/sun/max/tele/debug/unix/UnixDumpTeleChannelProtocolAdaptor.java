@@ -21,154 +21,142 @@
 package com.sun.max.tele.debug.unix;
 
 import java.io.File;
-import java.nio.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.channel.*;
+import com.sun.max.tele.channel.iostream.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.vm.runtime.*;
 
 
-public class UnixDumpTeleChannelProtocolAdaptor implements TeleChannelProtocol {
+public abstract class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocolAdaptor implements TeleChannelProtocol {
+
+    protected int threadLocalsAreaSize;
+    public boolean bigEndian;
 
     protected UnixDumpTeleChannelProtocolAdaptor(File vm, File dump) {
-        FatalError.unexpected("core dump access not supported");
     }
 
     @Override
     public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
+        this.threadLocalsAreaSize = threadLocalsAreaSize;
+        this.bigEndian = bigEndian;
         return true;
     }
 
     @Override
     public long create(String pathName, String[] commandLineArguments) {
-        // TODO Auto-generated method stub
-        return 0;
+        inappropriate("create");
+        return -1;
     }
 
     @Override
     public boolean attach(int id) {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     @Override
     public boolean detach() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     @Override
-    public long getBootHeapStart() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+    public abstract long getBootHeapStart();
 
     @Override
     public int maxByteBufferSize() {
-        // TODO Auto-generated method stub
-        return 0;
+        return Integer.MAX_VALUE;
     }
 
     @Override
-    public int readBytes(long src, byte[] dst, int dstOffset, int length) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+    public abstract int readBytes(long src, byte[] dst, int dstOffset, int length);
 
     @Override
-    public int writeBytes(long dst, byte[] src, int srcOffset, int length) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+    public abstract int writeBytes(long dst, byte[] src, int srcOffset, int length);
 
     @Override
-    public boolean readRegisters(long threadId, byte[] integerRegisters, int integerRegistersSize, byte[] floatingPointRegisters, int floatingPointRegistersSize, byte[] stateRegisters,
-                    int stateRegistersSize) {
-        // TODO Auto-generated method stub
-        return false;
-    }
+    public abstract boolean readRegisters(long threadId, byte[] integerRegisters, int integerRegistersSize, byte[] floatingPointRegisters, int floatingPointRegistersSize, byte[] stateRegisters,
+                    int stateRegistersSize);
 
     @Override
     public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
-        // TODO Auto-generated method stub
+        inappropriate("gatherThreads");
         return 0;
     }
 
     @Override
     public int readThreads(int size, byte[] gatherThreadsData) {
-        // TODO Auto-generated method stub
+        inappropriate("readThreads");
         return 0;
     }
 
     @Override
     public boolean setInstructionPointer(long threadId, long ip) {
-        // TODO Auto-generated method stub
+        inappropriate("setInstructionPointer");
         return false;
     }
 
     @Override
     public boolean singleStep(long threadId) {
-        // TODO Auto-generated method stub
+        inappropriate("setInstructionPointer");
         return false;
     }
 
     @Override
     public boolean resumeAll() {
-        // TODO Auto-generated method stub
+        inappropriate("resumeAll");
         return false;
     }
 
     @Override
     public boolean suspendAll() {
-        // TODO Auto-generated method stub
+        inappropriate("suspendAll");
         return false;
     }
 
     @Override
     public boolean resume(long threadId) {
-        // TODO Auto-generated method stub
+        inappropriate("resume");
         return false;
     }
 
     @Override
     public boolean suspend(long threadId) {
-        // TODO Auto-generated method stub
+        inappropriate("suspend");
         return false;
     }
 
     @Override
     public int waitUntilStoppedAsInt() {
-        // TODO Auto-generated method stub
+        inappropriate("waitUntilStoppedAsInt");
         return 0;
     }
 
     @Override
     public boolean kill() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {
-        // TODO Auto-generated method stub
+        inappropriate("activateWatchpoint");
         return false;
     }
 
     @Override
     public boolean deactivateWatchpoint(long start, long size) {
-        // TODO Auto-generated method stub
+        inappropriate("deactivateWatchpoint");
         return false;
     }
 
     @Override
     public long readWatchpointAddress() {
-        // TODO Auto-generated method stub
+        inappropriate("readWatchpointAddress");
         return 0;
     }
 
     @Override
     public int readWatchpointAccessCode() {
-        // TODO Auto-generated method stub
+        inappropriate("readWatchpointAccessCode");
         return 0;
     }
 
@@ -179,27 +167,13 @@ public class UnixDumpTeleChannelProtocolAdaptor implements TeleChannelProtocol {
     }
 
     @Override
-    public int readBytes(long src, ByteBuffer dst, int dstOffset, int length) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public int writeBytes(long dst, ByteBuffer src, int srcOffset, int length) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public boolean gatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
     public ProcessState waitUntilStopped() {
-        // TODO Auto-generated method stub
+        inappropriate("waitUntilStoppedAsInt");
         return null;
+    }
+
+    private static void inappropriate(String methodName) {
+        ProgramError.unexpected("method: " + methodName + " should not be called in dump mode");
     }
 
 }

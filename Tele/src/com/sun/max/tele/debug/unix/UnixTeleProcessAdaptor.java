@@ -47,25 +47,37 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
     protected final TeleChannelProtocol protocol;
     protected final DataAccess dataAccess;
 
-    protected UnixTeleProcessAdaptor(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
+    private UnixTeleProcessAdaptor(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, int id) throws BootImageException {
         super(teleVM, platform, ProcessState.STOPPED);
         protocol = TeleVM.teleChannelProtocol();
         dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
         protocol.initialize(teleVM.bootImage().header.threadLocalsAreaSize, teleVM.vmConfiguration().platform().processorKind.dataModel.endianness == Endianness.BIG ? true : false);
-        final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments);
-        if (processHandle < 0) {
-            String exe = programFile.getName();
-            Log.println("This may be due to resources being consumed by zombie maxvm processes. Try running:");
-            Log.println();
-            Log.println("    pgrep " + exe + "; pkill -9 " + exe);
-            Log.println();
-            throw new BootImageException("Could not start VM process");
+        if (commandLineArguments != null) {
+            final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments);
+            if (processHandle < 0) {
+                String exe = programFile.getName();
+                Log.println("This may be due to resources being consumed by zombie maxvm processes. Try running:");
+                Log.println();
+                Log.println("    pgrep " + exe + "; pkill -9 " + exe);
+                Log.println();
+                throw new BootImageException("Could not start VM process");
+            }
+            try {
+                resume();
+            } catch (OSExecutionRequestException e) {
+                throw new BootImageException("Error resuming VM after starting it", e);
+            }
+        } else {
+            protocol.attach(id);
         }
-        try {
-            resume();
-        } catch (OSExecutionRequestException e) {
-            throw new BootImageException("Error resuming VM after starting it", e);
-        }
+    }
+
+    protected UnixTeleProcessAdaptor(TeleVM teleVM, Platform platform, File programFile, int id) throws BootImageException {
+        this(teleVM, platform, programFile, null, id);
+    }
+
+    protected UnixTeleProcessAdaptor(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
+        this(teleVM, platform, programFile, commandLineArguments, -1);
     }
 
     @Override
