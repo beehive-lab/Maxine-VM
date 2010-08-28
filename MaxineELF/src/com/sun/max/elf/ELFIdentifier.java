@@ -66,7 +66,7 @@ public final class ELFIdentifier {
 
     private ELFIdentifier() {
     }
-    
+
     public static final int EM_NUM = 111;
     public static final String[] EM_names = new String[EM_NUM];
     public static final String[] EM_help = new String[EM_NUM];

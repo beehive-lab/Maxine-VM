@@ -96,7 +96,7 @@ public class ELFHeader {
 
     // constants for the e_ident[] member
     protected static final int EI_ELFMAG0 = 0;
-    protected static final int EI_ELFMAG1 = 1 ;
+    protected static final int EI_ELFMAG1 = 1;
     protected static final int EI_ELFMAG2 = 2;
     protected static final int EI_ELFMAG3 = 3;
     protected static final int EI_OSABI = 7;
@@ -149,7 +149,7 @@ public class ELFHeader {
         // read the indentification string
         if (fs.length() < EI_NIDENT) {
             throw new FormatError();
-       }
+        }
         int index = 0;
         //String abc = fs.readLine();
         //System.out.println(abc);
@@ -275,14 +275,12 @@ public class ELFHeader {
     }
    // The following code is to write a 64 bit ELF header for creating a ELF file
 
-    public void WriteHeader64(long size) throws IOException {
-
-
+    public void writeHeader64(long size) throws IOException {
         // To fill the e_ident[] data member.
         // The following are the magic numbers that tell that the file is a ELF file.
         e_ident[EI_ELFMAG0] = 0x7f;
-        e_ident[EI_ELFMAG1] = 'E' ;
-        e_ident[EI_ELFMAG2] = 'L' ;
+        e_ident[EI_ELFMAG1] = 'E';
+        e_ident[EI_ELFMAG2] = 'L';
 
         e_ident[EI_ELFMAG3] = 'F';
         e_ident[EI_CLASS] = ELFCLASS64;
@@ -296,21 +294,21 @@ public class ELFHeader {
         // The below field is for EI_PAD, and is not used.
         e_ident[9] = 0;
 
-        e_type =ET_REL  ;
-        e_machine = 62  ;   //EM_AMD64 or EM_X86_64
-        e_version  = EV_CURRENT;
-        e_entry     = 0;
-        e_phoff   = 0;        // No program table, hence the offset to the program header table is 0.
-        e_shoff    = 0; // section header offset, this will be filled later.
-        e_flags     = 0;    // No Processor specific flag.
-        e_ehsize  = 64; // The size of the header is 64 bytes for 64 bit architecture.
+        e_type = ET_REL;
+        e_machine = 62;   //EM_AMD64 or EM_X86_64
+        e_version = EV_CURRENT;
+        e_entry = 0;
+        e_phoff = 0;        // No program table, hence the offset to the program header table is 0.
+        e_shoff = 0; // section header offset, this will be filled later.
+        e_flags = 0;    // No Processor specific flag.
+        e_ehsize = 64; // The size of the header is 64 bytes for 64 bit architecture.
         e_phentsize = 0;  // The size of the file's program header table, here it is 0 since there is no program header table.
 
 
-        e_phnum   = 0 ;
-        e_shentsize = 64 ;  // size of the entry64 members in ELFSecti0n HearderTable - These are the total bytes in each header.
-        e_shnum   = 5 ; // The total number of sections in the file. (intial null section, Maxvm_image, section string table, symbol table, string table )
-        e_shstrndx  = 2; // This is the index in the section header table of the section that contains the section string table, 0 if there is no section string table.
+        e_phnum = 0;
+        e_shentsize = 64;  // size of the entry64 members in ELFSecti0n HearderTable - These are the total bytes in each header.
+        e_shnum = 5; // The total number of sections in the file. (intial null section, Maxvm_image, section string table, symbol table, string table )
+        e_shstrndx = 2; // This is the index in the section header table of the section that contains the section string table, 0 if there is no section string table.
 
 
     }

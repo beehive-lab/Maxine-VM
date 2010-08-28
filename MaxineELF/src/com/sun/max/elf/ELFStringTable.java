@@ -67,12 +67,12 @@ import java.util.*;
  */
 public class ELFStringTable {
 
-    protected final Map<Integer, String> _stringMap;
-    protected byte[] _data;
+    protected final Map<Integer, String> stringMap;
+    protected byte[] data;
     protected char [] stringTable;
     protected int position;
 
-    protected ELFSectionHeaderTable.Entry _sectionEntry;
+    protected ELFSectionHeaderTable.Entry sectionEntry;
 
     /**
      * The constructor for the <code>ELFStringTable</code> class creates a new
@@ -83,41 +83,41 @@ public class ELFStringTable {
      * table
      */
     public ELFStringTable(ELFHeader header, ELFSectionHeaderTable.Entry sectionEntry) {
-        _data = new byte[(int)sectionEntry.getSize()];
-        _stringMap = new HashMap<Integer, String>();
-        this._sectionEntry = sectionEntry;
+        data = new byte[(int) sectionEntry.getSize()];
+        stringMap = new HashMap<Integer, String>();
+        this.sectionEntry = sectionEntry;
         stringTable = new char[50];
         stringTable[0] = '\0';
         position = 1;
     }
 
     public ELFStringTable(ELFHeader header) {
-        _stringMap = new HashMap<Integer, String>();
+        stringMap = new HashMap<Integer, String>();
         stringTable = new char[50];
         stringTable[0] = '\0';
         position = 1;
     }
 
     public void setSection(ELFSectionHeaderTable.Entry sectionEntry) {
-        _data = new byte[(int)sectionEntry.getSize()];
-        this._sectionEntry = sectionEntry;
+        data = new byte[(int) sectionEntry.getSize()];
+        this.sectionEntry = sectionEntry;
     }
 
     /**
      * The <code>read()</code> method reads this string table from the specified
-     * file, beginning at the specified offset and continuining for the length
+     * file, beginning at the specified offset and continuing for the length
      * of the section.
      * @param f the random access file to read the data from
      * @throws IOException if there is a problem reading the file
      */
     public void read(RandomAccessFile f) throws IOException {
-        if (_data.length == 0) {
+        if (data.length == 0) {
             return;
         }
-        f.seek(_sectionEntry.getOffset());
+        f.seek(sectionEntry.getOffset());
         int read = 0;
-        while (read < _data.length) {
-            read += f.read(_data, read, _data.length - read);
+        while (read < data.length) {
+            read += f.read(data, read, data.length - read);
         }
     }
 
@@ -131,21 +131,21 @@ public class ELFStringTable {
      * and not including the next null character
      */
     public String getString(int ind) {
-        if (ind >= _data.length) {
+        if (ind >= data.length) {
             return "";
         }
-        String str = _stringMap.get(ind);
+        String str = stringMap.get(ind);
         if (str == null) {
             final StringBuffer buf = new StringBuffer();
-            for (int pos = ind; pos < _data.length; pos++) {
-                final byte b = _data[pos];
+            for (int pos = ind; pos < data.length; pos++) {
+                final byte b = data[pos];
                 if (b == 0) {
                     break;
                 }
                 buf.append((char) b);
             }
             str = buf.toString();
-            _stringMap.put(ind, str);
+            stringMap.put(ind, str);
         }
         return str;
     }
@@ -153,14 +153,14 @@ public class ELFStringTable {
         int addSize = str.length();
         int index = 0;
         char [] addString = str.toCharArray();
-        while (index < addSize){
+        while (index < addSize) {
             stringTable[position++] = addString[index++];
         }
         stringTable[position++] = '\0';
 
     }
 
-    public int getIndex (String str) {
+    public int getIndex(String str) {
         int index = -1;
         int strSize = str.length();
         int strCount = 0;
@@ -168,17 +168,16 @@ public class ELFStringTable {
         if (str.equalsIgnoreCase("\0")) {
             return 0;
         }
-        while(count < position && index == -1 ) {
+        while (count < position && index == -1) {
             if (str.charAt(strCount) == stringTable[count]) {
-                while(count <= position && strCount < strSize &&
+                while (count <= position && strCount < strSize &&
                                 str.charAt(strCount) == stringTable[count]) {
 
-                    if ( index == -1 ) {
-                        if (stringTable[count-1] != '\0') {
-                          count++;
-                          break;
-                        }
-                        else {
+                    if (index == -1) {
+                        if (stringTable[count - 1] != '\0') {
+                            count++;
+                            break;
+                        } else {
                             index = count;
                         }
                     }
@@ -186,12 +185,11 @@ public class ELFStringTable {
                     strCount++;
 
                 }
-                if (strCount < strSize -1 || stringTable[count] != '\0') {
+                if (strCount < strSize - 1 || stringTable[count] != '\0') {
                     index = -1;
                     strCount = 0;
                 }
-            }
-            else {
+            } else {
                 count++;
             }
         }
@@ -202,11 +200,8 @@ public class ELFStringTable {
         return position;
     }
 
-    public void write64ToFile(ELFDataOutputStream os, RandomAccessFile fis) throws IOException{
-
-
-        for (int count =0; count<position; count++)
-        {
+    public void write64ToFile(ELFDataOutputStream os, RandomAccessFile fis) throws IOException {
+        for (int count = 0; count < position; count++) {
             fis.write(stringTable[count]);
         }
 

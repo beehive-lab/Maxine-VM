@@ -75,9 +75,9 @@ public final class StringUtil {
     public static final char BACKSLASH = '\\';
     public static final char QUOTE_CHAR = '"';
 
-    private StringUtil() {        
+    private StringUtil() {
     }
-    
+
     /**
      * The <code>addToString()</code> method converts a numerical address (represented as a signed 32-bit
      * integer) and converts it to a string in the format 0xXXXX where 'X' represents a hexadecimal character.
@@ -201,7 +201,7 @@ public final class StringUtil {
                 return readOctalValue(i, 11);
             }
         }
-        return readDecimalValue(i, 10);        
+        return readDecimalValue(i, 10);
     }
 
     public static void skipWhiteSpace(CharacterIterator i) {
@@ -501,7 +501,6 @@ public final class StringUtil {
         for (int cntr = 0; cntr < width; cntr++) {
             result[width - cntr - 1] = (value & (0x1 << cntr)) == 0 ? '0' : '1';
         }
-        
         return new String(result);
     }
 

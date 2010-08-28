@@ -1,33 +1,22 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc., 4150 Network Circle, Santa
- * Clara, California 95054, U.S.A. All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
- * U.S. Government Rights - Commercial software. Government users are
- * subject to the Sun Microsystems, Inc. standard license agreement and
- * applicable provisions of the FAR and its supplements.
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
  *
- * Use is subject to license terms.
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
  *
- * This distribution may include materials developed by third parties.
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
  *
- * Parts of the product may be derived from Berkeley BSD systems,
- * licensed from the University of California. UNIX is a registered
- * trademark in the U.S.  and in other countries, exclusively licensed
- * through X/Open Company, Ltd.
- *
- * Sun, Sun Microsystems, the Sun logo and Java are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other
- * countries.
- *
- * This product is covered and controlled by U.S. Export Control laws and
- * may be subject to the export or import laws in other
- * countries. Nuclear, missile, chemical biological weapons or nuclear
- * maritime end uses or end users, whether direct or indirect, are
- * strictly prohibited. Export or reexport to countries subject to
- * U.S. embargo or to entities identified on U.S. export exclusion lists,
- * including, but not limited to, the denied persons and specially
- * designated nationals lists is strictly prohibited.
- *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
  */
 /**
  * Copyright (c) 2005, Regents of the University of California
@@ -223,7 +212,7 @@ public class ELFSymbolTable {
     public ELFSymbolTable(ELFHeader elfHeader, ELFSectionHeaderTable.Entry sectionEntry) {
         this.header = elfHeader;
         this.entry = sectionEntry;
-        entries = new Entry[(int)(sectionEntry.getSize() / (long)sectionEntry.getEntrySize())];
+        entries = new Entry[(int) (sectionEntry.getSize() / (long) sectionEntry.getEntrySize())];
     }
 
     /**
@@ -247,21 +236,20 @@ public class ELFSymbolTable {
     private String getSymbolTableName(int cntr) {
         switch(cntr) {
             case 0:
-                return("");
+                return "";
             case 1:
-                return("maxvm_image");
+                return "maxvm_image";
             case 2:
-                return("maxvm_image_start");
+                return "maxvm_image_start";
             case 3:
-                return ("maxvm_image_end");
-                default:
-                    return("Error");
+                return "maxvm_image_end";
+            default:
+                return "Error";
         }
     }
 
     public void setSymbolTableEntries(int index, long size) {
         for (int cntr = 0; cntr < entries.length; cntr++) {
-
             entries[cntr] = setEntries(getSymbolTableName(cntr), index, size);
         }
     }
@@ -269,8 +257,7 @@ public class ELFSymbolTable {
     /*
      * This Function sets the entries for the symbol table.
      */
-    public Entry64 setEntries(String sectionName, int index, long size){
-
+    public Entry64 setEntries(String sectionName, int index, long size) {
         Entry64 e = new Entry64();
         e.st_other = 0;
         e.st_size = 0;
@@ -281,15 +268,13 @@ public class ELFSymbolTable {
             e.st_shndx = 0;
             e.st_info = 0;
             return e;
-        }
-        else if(sectionName.equalsIgnoreCase("maxvm_image")) {
+        } else if (sectionName.equalsIgnoreCase("maxvm_image")) {
             // The below value of 3 will equate to STB_LOCAL for the bind value.
             // and section for the type section as per the bind and type value extraction
             // from the value field.
             e.st_info = 3;
 
-        }
-        else {
+        } else {
             // This is for the globals in the maxvm image that is stored in the maxvm_image section.
             e.st_name = strtab.getIndex(sectionName);
             // the value of 16 will equate to STB_GLOBAL for the bind value.
@@ -300,7 +285,7 @@ public class ELFSymbolTable {
             }
         }
 
-        e.st_shndx = (short) (index);
+        e.st_shndx = (short) index;
         return e;
     }
 
@@ -349,19 +334,19 @@ public class ELFSymbolTable {
     public ELFStringTable getStringTable() {
         return strtab;
     }
-    public void write64ToFile(ELFDataOutputStream os, RandomAccessFile fis) throws IOException{
+
+    public void write64ToFile(ELFDataOutputStream os, RandomAccessFile fis) throws IOException {
         for (int cntr = 0; cntr < entries.length; cntr++) {
             final Entry e = entries[cntr];
             final Entry64 e64 = (Entry64) e;
             os.write_Elf64_Word(e64.getNameIndex());   // 4 bytes;
             byte info = (byte) e64.getInfo();
             os.write_1(info);              // Only one byte
-            byte other = (byte)e64.st_other;
+            byte other = (byte) e64.st_other;
             os.write_1(other);   // Only one byte
             os.write_Elf64_Half(e64.st_shndx);              // 2 bytes;
             os.write_Elf64_Addr(e64.st_value);            // 8 bytes;
             os.write_Elf64_XWord(e64.st_size);              // 8 bytes;
-            }
-
+        }
     }
 }

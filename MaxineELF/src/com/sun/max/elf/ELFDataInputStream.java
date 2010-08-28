@@ -57,9 +57,9 @@ import java.nio.ByteBuffer;
  */
 public class ELFDataInputStream {
 
-    private boolean _bigEndian;
-    private RandomAccessFile _file;
-    private ByteBuffer _buffer;
+    private boolean bigEndian;
+    private RandomAccessFile file;
+    private ByteBuffer buffer;
 
     /**
      * Setup to read from an ELF file, that is assumed to be positioned at the point reading should start.
@@ -67,8 +67,8 @@ public class ELFDataInputStream {
      * @param f
      */
     public ELFDataInputStream(ELFHeader elfHeader, RandomAccessFile f) {
-        _bigEndian = elfHeader.isBigEndian();
-        _file = f;
+        bigEndian = elfHeader.isBigEndian();
+        file = f;
     }
 
     /**
@@ -77,8 +77,8 @@ public class ELFDataInputStream {
      * @param buffer
      */
     public ELFDataInputStream(ELFHeader elfHeader, ByteBuffer buffer) {
-        _bigEndian = elfHeader.isBigEndian();
-        _buffer = buffer;
+        bigEndian = elfHeader.isBigEndian();
+        this.buffer = buffer;
     }
 
     public byte read_Elf32_byte() throws IOException {
@@ -142,17 +142,17 @@ public class ELFDataInputStream {
     }
 
     private int read_1() throws IOException {
-        if (_file == null) {
-            return _buffer.get() & 0xff;
+        if (file == null) {
+            return buffer.get() & 0xff;
         } else {
-            return _file.read() & 0xff;
+            return file.read() & 0xff;
         }
     }
 
     private int read_2() throws IOException {
         final int b1 = read_1();
         final int b2 = read_1();
-        if (_bigEndian) {
+        if (bigEndian) {
             return asShort(b2, b1);
         }
         return asShort(b1, b2);
@@ -163,7 +163,7 @@ public class ELFDataInputStream {
         final int b2 = read_1();
         final int b3 = read_1();
         final int b4 = read_1();
-        if (_bigEndian) {
+        if (bigEndian) {
             return asInt(b4, b3, b2, b1);
         }
         return asInt(b1, b2, b3, b4);
@@ -178,7 +178,7 @@ public class ELFDataInputStream {
         final int b6 = read_1();
         final int b7 = read_1();
         final int b8 = read_1();
-        if (_bigEndian) {
+        if (bigEndian) {
             return asLong(b8, b7, b6, b5, b4, b3, b2, b1);
         }
         return asLong(b1, b2, b3, b4, b5, b6, b7, b8);

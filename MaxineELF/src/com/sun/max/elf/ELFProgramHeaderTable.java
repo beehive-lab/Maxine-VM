@@ -75,7 +75,6 @@ import java.io.RandomAccessFile;
  * @author Ben L. Titzer
  */
 
-// Checkstyle: off
 public class ELFProgramHeaderTable {
 
     public static final int PT_NULL = 0;
@@ -105,7 +104,7 @@ public class ELFProgramHeaderTable {
         public int getType() {
             return p_type;
         }
-        
+
         public String getTypeString() {
             switch (p_type) {
                 case PT_NULL:
@@ -118,8 +117,8 @@ public class ELFProgramHeaderTable {
                     return "INTERP";
                 case PT_NOTE:
                     return "NOTE";
-                    default:
-                        return "UNKNOWN TYPE";
+                default:
+                    return "UNKNOWN TYPE";
             }
         }
 
