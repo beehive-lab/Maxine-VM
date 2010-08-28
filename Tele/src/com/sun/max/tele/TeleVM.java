@@ -118,7 +118,7 @@ public abstract class TeleVM implements MaxVM {
 
     private static final String PROGRAM_NAME = "maxvm";
 
-    private static final String TELE_LIBRARY_NAME = "tele";
+    public static final String TELE_LIBRARY_NAME = "tele";
 
     private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
 
@@ -1090,7 +1090,13 @@ public abstract class TeleVM implements MaxVM {
         return EMPTY_MAXMEMORYREGION_LIST;
     }
 
-    protected TeleProcess attachToTeleProcess() {
+
+    /**
+     * Attach to an existing VM process or code dump file.
+     * @return TeleProcess instance
+     * @throws BootImageException
+     */
+    protected TeleProcess attachToTeleProcess() throws BootImageException {
         throw FatalError.unimplemented();
     }
 

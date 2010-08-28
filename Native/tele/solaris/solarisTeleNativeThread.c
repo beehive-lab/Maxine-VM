@@ -39,11 +39,10 @@ struct ps_lwphandle {
     int		lwp_statfd;	/* /proc/<pid>/lwp/<lwpid>/lwpstatus */
 };
 
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readRegisters(JNIEnv *env, jobject  this, jlong processHandle, jlong lwpId,
-		jbyteArray integerRegisters, jint integerRegistersLength,
-		jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
-		jbyteArray stateRegisters, jint stateRegistersLength) {
+static jboolean readRegisters(JNIEnv *env, jobject  this, prgregset_t osRegisters, prfpregset_t *osFloatingPointRegisters,
+        jbyteArray integerRegisters, jint integerRegistersLength,
+        jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
+        jbyteArray stateRegisters, jint stateRegistersLength) {
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
     isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
@@ -63,6 +62,21 @@ Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readRegisters(JNIEnv *e
         return false;
     }
 
+    isa_canonicalizeTeleIntegerRegisters(&osRegisters[0], &canonicalIntegerRegisters);
+    isa_canonicalizeTeleStateRegisters(&osRegisters[0], &canonicalStateRegisters);
+    isa_canonicalizeTeleFloatingPointRegisters(osFloatingPointRegisters, &canonicalFloatingPointRegisters);
+
+    (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);
+    (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
+    (*env)->SetByteArrayRegion(env, floatingPointRegisters, 0, floatingPointRegistersLength, (void *) &canonicalFloatingPointRegisters);
+    return true;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readRegisters(JNIEnv *env, jobject  this, jlong processHandle, jlong lwpId,
+		jbyteArray integerRegisters, jint integerRegistersLength,
+		jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
+		jbyteArray stateRegisters, jint stateRegistersLength) {
     prgregset_t osRegisters;
     prfpregset_t osFloatingPointRegisters;
 
@@ -76,15 +90,22 @@ Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readRegisters(JNIEnv *e
 		return false;
 	}
 
-	isa_canonicalizeTeleIntegerRegisters(&osRegisters[0], &canonicalIntegerRegisters);
-	isa_canonicalizeTeleStateRegisters(&osRegisters[0], &canonicalStateRegisters);
-	isa_canonicalizeTeleFloatingPointRegisters(&osFloatingPointRegisters, &canonicalFloatingPointRegisters);
+	return readRegisters(env, this, &osRegisters[0], &osFloatingPointRegisters,
+	                integerRegisters, integerRegistersLength,
+	                floatingPointRegisters, floatingPointRegistersLength,
+	                stateRegisters, stateRegistersLength);
+}
 
-    (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);
-    (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
-    (*env)->SetByteArrayRegion(env, floatingPointRegisters, 0, floatingPointRegistersLength, (void *) &canonicalFloatingPointRegisters);
-
-    return true;
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_solaris_SolarisDumpThreadAccess_lwpRegisters(JNIEnv *env, jclass  class,  jobject bytebuffer,
+                jbyteArray integerRegisters, jint integerRegistersLength,
+                jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
+                jbyteArray stateRegisters, jint stateRegistersLength) {
+    lwpstatus_t * lwpstatus = (lwpstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer));
+    return readRegisters(env, class, &lwpstatus->pr_reg[0], &lwpstatus->pr_fpreg,
+                    integerRegisters, integerRegistersLength,
+                    floatingPointRegisters, floatingPointRegistersLength,
+                    stateRegisters, stateRegistersLength);
 }
 
 static jboolean setRegister(jlong processHandle, jlong lwpId, int registerIndex, jlong value) {

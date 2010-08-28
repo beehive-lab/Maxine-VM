@@ -188,9 +188,6 @@ ThreadState_t lwpStatusToThreadState(const lwpstatus_t *ls) {
     short what = ls->pr_what;
     int flags = ls->pr_flags;
 
-    /* This is only called after a Pwait so all threads should be stopped. */
-    c_ASSERT((ls->pr_flags & PR_STOPPED) != 0);
-
     ThreadState_t result = TS_SUSPENDED;
     if (why == PR_FAULTED) {
         if (what == FLTWATCH) {
@@ -301,7 +298,22 @@ Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readWatchpointAddress(J
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readWatchpointAccessCode(JNIEnv *env, jobject  this, jlong processHandle){
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readWatchpointAccessCode(JNIEnv *env, jobject  this, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     return Pstatus(ph)->pr_lwp.pr_info.si_code;
 }
+
+// The following methods support core-dump access for Solaris
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_solaris_SolarisDumpThreadAccess_lwpStatusToThreadState(JNIEnv *env, jclass  class, jobject bytebuffer) {
+    lwpstatus_t * lwpstatus = (lwpstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer));
+    return lwpStatusToThreadState(lwpstatus);
+}
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_solaris_SolarisDumpThreadAccess_lwpId(JNIEnv *env, jclass  class,  jobject bytebuffer) {
+    lwpstatus_t * lwpstatus = (lwpstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer));
+    return lwpstatus->pr_lwpid;
+}
+
