@@ -387,19 +387,26 @@ public class ELFSectionHeaderTable {
         return entries[ind].getName();
     }
 
-    public String setSectionName(int cntr)  throws Exception {
-        switch(cntr) {
-            case 0: return "";
-            case 1:return "maxvm_image";
-            case 2: return ".shstrtab";
-            case 3: return ".symtab";
-            case 4: return".strtab";
-            default : break;
+    public String setSectionName(int cntr) throws Exception {
+        switch (cntr) {
+            case 0:
+                return "";
+            case 1:
+                return "maxvm_image";
+            case 2:
+                return ".shstrtab";
+            case 3:
+                return ".symtab";
+            case 4:
+                return ".strtab";
+            default:
+                break;
         }
         throw ProgramError.unexpected("unknown section number");
     }
     Entry64  setSectionHeaderForNull(Entry64 e) throws IOException {
-        if ((e.sh_name = strtab.getIndex("\0")) == -1) {
+        e.sh_name = strtab.getIndex("\0");
+        if (e.sh_name == -1) {
             throw ProgramError.unexpected("Unknown Section Name");
         }
         e.sh_type = SHT_NULL;
@@ -414,8 +421,9 @@ public class ELFSectionHeaderTable {
         return e;
     }
 
-    Entry64 setSectionHeaderForMaxvm(Entry64 e, long size) throws IOException{
-        if ((e.sh_name = strtab.getIndex("maxvm_image")) == -1) {
+    Entry64 setSectionHeaderForMaxvm(Entry64 e, long size) throws IOException {
+        e.sh_name = strtab.getIndex("maxvm_image");
+        if (e.sh_name == -1) {
             throw ProgramError.unexpected("Unknown Section Name");
         }
         e.sh_type = SHT_PROGBITS;
@@ -434,8 +442,9 @@ public class ELFSectionHeaderTable {
         return e;
     }
 
-    Entry64 setSectionHeaderForShStrTab(Entry64 e, long size) throws IOException{
-        if ((e.sh_name = strtab.getIndex(".shstrtab")) == -1) {
+    Entry64 setSectionHeaderForShStrTab(Entry64 e, long size) throws IOException {
+        e.sh_name = strtab.getIndex(".shstrtab");
+        if (e.sh_name == -1) {
             throw ProgramError.unexpected("Unknown Section Name");
         }
         e.sh_type = SHT_STRTAB;
@@ -453,8 +462,9 @@ public class ELFSectionHeaderTable {
         return e;
     }
 
-    Entry64  setSectionHeaderForSymTab(Entry64 e) throws IOException{
-        if ((e.sh_name = strtab.getIndex(".symtab")) == -1) {
+    Entry64  setSectionHeaderForSymTab(Entry64 e) throws IOException {
+        e.sh_name = strtab.getIndex(".symtab");
+        if (e.sh_name == -1) {
             throw ProgramError.unexpected("Unknown Section Name");
         }
 
@@ -467,9 +477,9 @@ public class ELFSectionHeaderTable {
         e.sh_flags = 0;
         e.sh_info = 2; //One greater than the symbol table index of the last local symbol (binding STB_LOCAL)
 
-        e.sh_size = e.sh_entsize*4; // Totally 4 symbols.
-        if (offsetCount%8 != 0) {
-            offsetCount += 8 - (offsetCount%8);
+        e.sh_size = e.sh_entsize * 4; // Totally 4 symbols.
+        if (offsetCount % 8 != 0) {
+            offsetCount += 8 - (offsetCount % 8);
         }
         e.sh_offset = offsetCount;
         offsetCount += e.sh_size;
@@ -485,12 +495,13 @@ public class ELFSectionHeaderTable {
         e.sh_info = 0;
         e.sh_link = SHN_UNDEF;
 
-        if ((e.sh_name = strtab.getIndex(".strtab")) == -1) {
+        e.sh_name = strtab.getIndex(".strtab");
+        if (e.sh_name == -1) {
             System.out.println("ERROR");
         }
 
         e.sh_size = 0x00; // The size of the this section is to be filled up later.
-        e.sh_offset = offsetCount;// The offset count to the end of the section will be filled up later
+        e.sh_offset = offsetCount; // The offset count to the end of the section will be filled up later
         return e;
     }
 
@@ -498,7 +509,7 @@ public class ELFSectionHeaderTable {
         return offsetCount;
     }
 
-    public void setOffsetCount( long offset) {
+    public void setOffsetCount(long offset) {
         offsetCount = offset;
     }
 
@@ -516,13 +527,12 @@ public class ELFSectionHeaderTable {
 
         // load each of the section header entries
         for (int cntr = 0; cntr < NO_OF_SECTIONS; cntr++) {
-           try {
-               sectionName = setSectionName(cntr);
-               entries[cntr] = writeEntry(sectionName, size);
-           } catch (Exception ex) {
-               System.out.println(ex);
-           }
-
+            try {
+                sectionName = setSectionName(cntr);
+                entries[cntr] = writeEntry(sectionName, size);
+            } catch (Exception ex) {
+                System.out.println(ex);
+            }
         }
     }
 
@@ -537,25 +547,22 @@ public class ELFSectionHeaderTable {
 
     private Entry writeEntry32() {
         Entry32 e = new Entry32();
-      return e;
+        return e;
     }
 
-    private Entry writeEntry64(String sectionName, long size) throws IOException{
+    private Entry writeEntry64(String sectionName, long size) throws IOException {
         Entry64 e = new Entry64();
-        if(sectionName.equalsIgnoreCase("")) {
+        if (sectionName.equalsIgnoreCase("")) {
             e = setSectionHeaderForNull(e);
         }
         if (sectionName.equalsIgnoreCase("maxvm_image")) {
-          e = setSectionHeaderForMaxvm(e, size);
-        }
-        else if (sectionName.equalsIgnoreCase(".shstrtab")) {
-            e = setSectionHeaderForShStrTab(e,size);
-        }
-        else if (sectionName.equalsIgnoreCase(".symtab")) {
+            e = setSectionHeaderForMaxvm(e, size);
+        } else if (sectionName.equalsIgnoreCase(".shstrtab")) {
+            e = setSectionHeaderForShStrTab(e, size);
+        } else if (sectionName.equalsIgnoreCase(".symtab")) {
             e = setSectionHeaderForSymTab(e);
-        }
-        else if (sectionName.equalsIgnoreCase(".strtab")) {
-            e=setSectionHeaderForStrTab(e);
+        } else if (sectionName.equalsIgnoreCase(".strtab")) {
+            e = setSectionHeaderForStrTab(e);
         }
         return e;
     }

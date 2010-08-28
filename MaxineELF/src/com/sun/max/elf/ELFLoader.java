@@ -69,7 +69,7 @@ public final class ELFLoader {
 
     private ELFLoader() {
     }
-    
+
     /**
      * The <code>readELFHeader()</code> method loads an ELF header data structure
      * from the specified random access file. This method checks for consistency; i.e.

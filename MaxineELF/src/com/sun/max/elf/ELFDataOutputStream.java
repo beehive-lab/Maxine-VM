@@ -61,19 +61,19 @@ import java.io.RandomAccessFile;
  */
 public class ELFDataOutputStream {
 
-    final boolean _bigEndian;
-    final ELFHeader _header;
-    final RandomAccessFile _file;
+    final boolean bigEndian;
+    final ELFHeader header;
+    final RandomAccessFile file;
 
     public ELFDataOutputStream(ELFHeader elfHeader, RandomAccessFile f) {
-        this._header = elfHeader;
-        _bigEndian = elfHeader.isBigEndian();
-        _file = f;
+        this.header = elfHeader;
+        bigEndian = elfHeader.isBigEndian();
+        file = f;
     }
 
     public byte[] write_section(int off, int length) throws IOException {
         final byte[] buffer = new byte[length];
-        _file.seek(off);
+        file.seek(off);
         int cntr = 0;
         while (cntr < length) {
  //           cntr += _file.write(buffer, cntr, length - cntr);
@@ -147,93 +147,88 @@ public class ELFDataOutputStream {
 
 
     public void write_1(int i) throws IOException {
-        _file.write(i);
+        file.write(i);
     }
 
     private short [] shortToByte(short s) {
-        short srtArray[] = new short[2];
+        short[] srtArray = new short[2];
         int  s2 = s & 0xff;
         int s1 = (s >> 8) & 0xff;
-        if (_bigEndian) {
+        if (bigEndian) {
             srtArray[0] = (short) s1;
-            srtArray[1] = (short)s2;
-        }
-        else {
+            srtArray[1] = (short) s2;
+        } else {
             srtArray[0] = (short) s2;
-            srtArray[1] = (short)s1;
+            srtArray[1] = (short) s1;
         }
         return srtArray;
     }
 
-    private short[] longToByte(long l, short srtArray[]) {
-        short srtArray1[] = new short[2];
+    private short[] longToByte(long l, short[] srtArray) {
+        short[] srtArray1 = new short[2];
 
-        int longToInt[] = new int[4];
+        int[] longToInt = new int[4];
         int i = 0;
-        longToInt[0] = (int)l & 0x0000ffff;
+        longToInt[0] = (int) l & 0x0000ffff;
         longToInt[1] = (int) (l >> 16) & 0x0000ffff;
-        longToInt[2] =(int) (l >> 32) & 0x0000ffff;
-        longToInt[3]= (int) (l >> 48) & 0x0000ffff;
-        for(i = 0; i<4; i++) {
+        longToInt[2] = (int) (l >> 32) & 0x0000ffff;
+        longToInt[3] = (int) (l >> 48) & 0x0000ffff;
+        for (i = 0; i < 4; i++) {
             srtArray1 = shortToByte((short) longToInt[i]);
-            srtArray[(i*2)] = srtArray1[0];
-            srtArray[(i*2)+ 1] = srtArray1[1];
+            srtArray[i * 2] = srtArray1[0];
+            srtArray[(i * 2) + 1] = srtArray1[1];
         }
         return srtArray;
     }
 
-    private short[] intToByte(int i, short srtArray[]) {
-        short srtArray1[] = new short[2];
-        int splitInt[]=new int[2];
+    private short[] intToByte(int i, short[] srtArray) {
+        short[] srtArray1 = new short[2];
+        int[] splitInt = new int[2];
         int j = 0;
-        splitInt[0] =(short) i & 0xff;
+        splitInt[0] = (short) i & 0xff;
         splitInt[1] = (short) (i >> 16) & 0xff;
-        for(j = 0; j<2; j++) {
+        for (j = 0; j < 2; j++) {
             srtArray1 = shortToByte((short) splitInt[j]);
-            srtArray[(j*2)] = srtArray1[0];
-            srtArray[(j*2)+ 1] = srtArray1[1];
+            srtArray[j * 2] = srtArray1[0];
+            srtArray[(j * 2) + 1] = srtArray1[1];
         }
         return srtArray;
     }
 
     private void write_2(short s) throws IOException {
-        short srtArray[] = new short[2];
-        srtArray =shortToByte(s);
+        short[] srtArray = new short[2];
+        srtArray = shortToByte(s);
         write_1(srtArray[0]);
         write_1(srtArray[1]);
     }
 
 
     private void write_4(int i) throws IOException {
-        short srtArray[] = new short[4];
+        short[] srtArray = new short[4];
         srtArray = intToByte(i, srtArray);
-        if (_bigEndian) {
-            for( i = 3; i >= 0; i--) {
+        if (bigEndian) {
+            for (i = 3; i >= 0; i--) {
                 write_1(srtArray[i]);
             }
-        }
-        else {
-            for(i = 0; i<4; i++) {
+        } else {
+            for (i = 0; i < 4; i++) {
                 write_1(srtArray[i]);
             }
         }
 
     }
 
-
-
     private void write_8(long l) throws IOException {
 
         int i = 0;
-        short srtArray[] = new short[8];
-        srtArray = longToByte(l,srtArray);
-        if (_bigEndian) {
-            for( i = 7; i >= 0; i--) {
+        short[] srtArray = new short[8];
+        srtArray = longToByte(l, srtArray);
+        if (bigEndian) {
+            for (i = 7; i >= 0; i--) {
                 write_1(srtArray[i]);
             }
-        }
-        else {
-            for(i = 0; i<8; i++) {
+        } else {
+            for (i = 0; i < 8; i++) {
                 write_1(srtArray[i]);
             }
         }
