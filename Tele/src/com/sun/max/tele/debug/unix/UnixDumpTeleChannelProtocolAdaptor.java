@@ -20,21 +20,46 @@
  */
 package com.sun.max.tele.debug.unix;
 
-import java.io.File;
+import java.io.*;
 
+import com.sun.max.elf.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.iostream.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 
+import static com.sun.max.elf.ELFProgramHeaderTable.*;
 
 public class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocolAdaptor implements TeleChannelProtocol {
 
     protected int threadLocalsAreaSize;
     public boolean bigEndian;
+    protected RandomAccessFile dumpRaf;
+    protected ELFHeader header;
+    protected ELFProgramHeaderTable programHeaderTable;
+    protected ELFSymbolLookup symbolLookup;
+    protected TeleVM teleVM;
+    protected static final String HEAP_SYMBOL_NAME = "theHeap";  // defined in image.c, holds the base address of the boot heap
 
-    protected UnixDumpTeleChannelProtocolAdaptor(File vm, File dump) {
+
+    protected UnixDumpTeleChannelProtocolAdaptor(TeleVM teleVM, File vm, File dump) {
+        this.teleVM = teleVM;
+        try {
+            // We actually do need the tele library because we use it to access the OS-specific structs
+            // that are embedded in the NOTE sections of the dump file.
+            Prototype.loadLibrary(TeleVM.TELE_LIBRARY_NAME);
+            dumpRaf = new RandomAccessFile(dump, "r");
+            this.header = ELFLoader.readELFHeader(dumpRaf);
+            this.programHeaderTable = ELFLoader.readPHT(dumpRaf, header);
+            // This is not needed currently as we cannot look up symbols from shared libraries.
+            //symbolLookup = new ELFSymbolLookup(new File(vm.getParent(), "libjvm.so"));
+        } catch (Exception ex) {
+            FatalError.unexpected("failed to open dump file: " + dump, ex);
+        }
     }
 
     @Override
@@ -42,6 +67,151 @@ public class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtoco
         this.threadLocalsAreaSize = threadLocalsAreaSize;
         this.bigEndian = bigEndian;
         return true;
+    }
+
+    protected static class NoteEntryHandler {
+        /**
+         * OS-specific processing a NOTE entry.
+         * @param type type of NOTE entry
+         * @param name name of NOTE entry
+         * @param desc byte array of NOTE contents
+         */
+        protected void processNoteEntry(int type, String name, byte[] desc) {
+
+        }
+    }
+
+    protected void processNoteSection(NoteEntryHandler entryHandler) {
+        ELFProgramHeaderTable.Entry64 noteSectionEntry = null;
+        // if there are 2 NOTE entries we want the second
+        for (ELFProgramHeaderTable.Entry entry : programHeaderTable.entries) {
+            if (entry.p_type == PT_NOTE) {
+                if (noteSectionEntry != null) {
+                    noteSectionEntry = (ELFProgramHeaderTable.Entry64) entry;
+                    break;
+                }
+                noteSectionEntry = (ELFProgramHeaderTable.Entry64) entry;
+            }
+        }
+        try {
+            dumpRaf.seek(noteSectionEntry.p_offset);
+            final ELFDataInputStream dis = new ELFDataInputStream(header, dumpRaf);
+            final long size = noteSectionEntry.p_filesz;
+            long readLength = 0;
+            while (readLength < size) {
+                int namesz = dis.read_Elf64_Word();
+                final int descsz = dis.read_Elf64_Word();
+                final int type = dis.read_Elf64_Word();
+                final String name = readNoteString(dis, (int) namesz);
+                readLength += 12 + namesz;
+                while (namesz % 8 != 0) {
+                    dis.read_Elf32_byte();
+                    readLength++;
+                    namesz++;
+                }
+                final byte[] desc = readNoteDesc(dis, (int) descsz);
+                readLength += descsz;
+
+                entryHandler.processNoteEntry(type, name, desc);
+            }
+        } catch (IOException ex) {
+            FatalError.unexpected("error reading dump file note section", ex);
+        }
+
+    }
+
+    /**
+     * Read a string from a NOTE entry with length length. The returned string is of size length - 1 as java strings are
+     * not null terminated
+     *
+     * @param length
+     * @return
+     */
+    private String readNoteString(ELFDataInputStream dis, int length) throws IOException {
+        byte[] arr = new byte[length - 1];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = dis.read_Elf64_byte();
+        }
+        dis.read_Elf64_byte();
+        return new String(arr);
+    }
+
+    private byte[] readNoteDesc(ELFDataInputStream dis, int length) throws IOException {
+        byte[] arr = new byte[length];
+        for (int i = 0; i < length; i++) {
+            arr[i] = dis.read_Elf64_byte();
+        }
+        return arr;
+    }
+
+    protected ELFProgramHeaderTable.Entry64 findAddress(long addr) {
+        final Address address = Address.fromLong(addr);
+        for (ELFProgramHeaderTable.Entry entry : programHeaderTable.entries) {
+            ELFProgramHeaderTable.Entry64 entry64 = (ELFProgramHeaderTable.Entry64) entry;
+            if (entry64.p_type == PT_LOAD && entry64.p_filesz != 0) {
+                final Address end = Address.fromLong(entry64.p_vaddr).plus(entry64.p_memsz);
+                if (address.greaterEqual(Address.fromLong(entry64.p_vaddr)) && address.lessThan(end)) {
+                    return entry64;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * A workaround until this can be done properly by reading it from memory.
+     * We basically look for a segment that is the same size as the sum of the code and heap size
+     * from the {@link BootImage#header}.
+     * @return the base of the boot heap
+     */
+    private long getBootHeapStartHack() {
+        final BootImage.Header header = teleVM.bootImage().header;
+        final int bootHeapSize = header.codeSize + header.heapSize;
+        for (ELFProgramHeaderTable.Entry entry : programHeaderTable.entries) {
+            if (entry.p_type == PT_LOAD) {
+                ELFProgramHeaderTable.Entry64 entry64 = (ELFProgramHeaderTable.Entry64) entry;
+                if (entry64.p_filesz > 0 && entry64.p_filesz == bootHeapSize) {
+                    return entry64.p_vaddr;
+                }
+            }
+        }
+        FatalError.unexpected("failed to find the start of the boot heap");
+        return 0;
+    }
+
+    @Override
+    public long getBootHeapStart() {
+        if (true) {
+            return getBootHeapStartHack();
+        } else {
+            // This is the clean way to do it if you know how to get the absolute address of symbols loaded from shared libraries,
+            // which is not trivial or documented.
+            final long theHeapAddress = getBootHeapStartSymbolAddress();
+            ELFProgramHeaderTable.Entry64 entry64 = findAddress(theHeapAddress);
+            try {
+                dumpRaf.seek(entry64.p_offset + (theHeapAddress - entry64.p_vaddr));
+                ELFDataInputStream ds = new ELFDataInputStream(header, dumpRaf);
+                return ds.read_Elf64_Addr();
+            } catch (Throwable ex) {
+                FatalError.unexpected("failed to get boot heap address", ex);
+                return 0;
+            }
+        }
+    }
+
+    /**
+     * Return the absolute address of the symbol in image.c whose vcalue is the base address of the boot heap.
+     * Since this is a static, the name may be mangled (e.g. Solaris).
+     * @return
+     */
+    protected long getBootHeapStartSymbolAddress() {
+        return symbolLookup.lookupSymbolValue(HEAP_SYMBOL_NAME).longValue();
+    }
+
+    @Override
+    public int writeBytes(long dst, byte[] src, int srcOffset, int length) {
+        Trace.line(2, "WARNING: Inspector trying to write to " + Long.toHexString(dst));
+        return length;
     }
 
     @Override
@@ -61,26 +231,23 @@ public class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtoco
     }
 
     @Override
-    public long getBootHeapStart() {
-        unimplemented("getBootHeapStart");
-        return 0;
-    }
-
-    @Override
     public int maxByteBufferSize() {
         return Integer.MAX_VALUE;
     }
 
     @Override
     public int readBytes(long src, byte[] dst, int dstOffset, int length) {
-        unimplemented("readBytes");
-        return 0;
-    }
+        final ELFProgramHeaderTable.Entry64 entry64 = findAddress(src);
+        if (entry64 == null) {
+            return 0;
+        }
+        try {
+            dumpRaf.seek(entry64.p_offset + (src - entry64.p_vaddr));
+            return dumpRaf.read(dst, dstOffset, length);
+        } catch (IOException ex) {
+            return 0;
+        }
 
-    @Override
-    public int writeBytes(long dst, byte[] src, int srcOffset, int length) {
-        unimplemented("writeBytes");
-        return 0;
     }
 
     @Override
@@ -175,7 +342,6 @@ public class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtoco
 
     @Override
     public int setTransportDebugLevel(int level) {
-        // TODO Auto-generated method stub
         return 0;
     }
 
@@ -185,11 +351,11 @@ public class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtoco
         return null;
     }
 
-    private static void inappropriate(String methodName) {
+    protected static void inappropriate(String methodName) {
         FatalError.unexpected("method: " + methodName + " should not be called in dump mode");
     }
 
-    private static void unimplemented(String methodName) {
+    protected static void unimplemented(String methodName) {
         FatalError.unexpected("method: " + methodName + " is unimplemented");
     }
 

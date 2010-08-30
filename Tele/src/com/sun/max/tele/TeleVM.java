@@ -309,12 +309,12 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * Create the correctr instance of {@link TeleChannelProtocol} based on {@link #targetLocation} and
-     * {@link PperatingSystem}.
+     * Create the correct instance of {@link TeleChannelProtocol} based on {@link #targetLocation} and
+     * {@link OperatingSystem}.
      *
      * @param operatingSystem
      */
-    private static void setTeleChannelProtocol(OperatingSystem operatingSystem) {
+    private void setTeleChannelProtocol(OperatingSystem operatingSystem) {
         if (mode == Mode.IMAGE) {
             teleChannelProtocol = new ReadOnlyTeleChannelProtocol();
             return;
@@ -344,8 +344,8 @@ public abstract class TeleVM implements MaxVM {
                 if (!vmFile.exists()) {
                     FatalError.unexpected("vm file: " + vmFile + " does not exist or is not accessible");
                 }
-                cons = klass.getDeclaredConstructor(new Class[] {File.class, File.class});
-                args = new Object[] {vmFile, dumpFile};
+                cons = klass.getDeclaredConstructor(new Class[] {TeleVM.class, File.class, File.class});
+                args = new Object[] {this, vmFile, dumpFile};
             } else {
                 cons = klass.getDeclaredConstructor(new Class[] {});
                 args = new Object[0];
@@ -486,7 +486,6 @@ public abstract class TeleVM implements MaxVM {
         final BootImage bootImage = new BootImage(bootImageFile);
         TeleVM teleVM = null;
         final OperatingSystem operatingSystem = bootImage.vmConfiguration.platform().operatingSystem;
-        setTeleChannelProtocol(operatingSystem);
         final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
@@ -716,6 +715,7 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
+        setTeleChannelProtocol(bootImage.vmConfiguration.platform().operatingSystem);
         final MaxineVM vm = createVM(this.bootImage);
         vmConfiguration = vm.configuration;
 

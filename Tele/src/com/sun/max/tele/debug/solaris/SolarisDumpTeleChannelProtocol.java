@@ -20,17 +20,12 @@
  */
 package com.sun.max.tele.debug.solaris;
 
-import static com.sun.max.elf.ELFProgramHeaderTable.*;
-
 import java.io.*;
 import java.nio.*;
 import java.util.*;
 
-import com.sun.max.elf.*;
-import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.unix.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Solaris implementation of the channel protocol for accessing core dump files.
@@ -40,12 +35,6 @@ import com.sun.max.vm.runtime.*;
  */
 public class SolarisDumpTeleChannelProtocol extends UnixDumpTeleChannelProtocolAdaptor implements SolarisTeleChannelProtocol {
 
-    private RandomAccessFile dumpRaf;
-    private ELFHeader header;
-    private ELFProgramHeaderTable programHeaderTable;
-    private ELFProgramHeaderTable.Entry64 noteSectionEntry;
-    private ELFSymbolLookup symbolLookup;
-    private static final String HEAP_SYMBOL_NAME = "theHeap";  // image.c
     private List<LwpData> lwpDataList;
     private SolarisDumpThreadAccess solarisDumpThreadAccess;
 
@@ -59,103 +48,50 @@ public class SolarisDumpTeleChannelProtocol extends UnixDumpTeleChannelProtocolA
         }
     }
 
-    public SolarisDumpTeleChannelProtocol(File vm, File dumpFile) {
-        super(vm, dumpFile);
-        try {
-            dumpRaf = new RandomAccessFile(dumpFile, "r");
-            this.header = ELFLoader.readELFHeader(dumpRaf);
-            this.programHeaderTable = ELFLoader.readPHT(dumpRaf, header);
-            symbolLookup = new ELFSymbolLookup(new File(vm.getParent(), "libjvm.so"));
-        } catch (Exception ex) {
-            FatalError.unexpected("failed to open dump file: " + dumpFile, ex);
-        }
-        processNoteSection();
-        assert noteSectionEntry != null;
+    public SolarisDumpTeleChannelProtocol(TeleVM teleVM, File vm, File dumpFile) {
+        super(teleVM, vm, dumpFile);
+        SolarisNoteEntryHandler noteEntryHandler = new SolarisNoteEntryHandler();
+        processNoteSection(noteEntryHandler);
+        lwpDataList = Arrays.asList(noteEntryHandler.lwpDataArray);
     }
 
-    /**
-     * A workaround until this can be done properly.
-     * The boot heap is a large segment, in fact it is the second largest segment, the largest
-     * being the terabyte allocated for the dynamic heap.
-     * @return the base of the largest loaded segment which we trust is the boot heap!
-     */
-    static final long TERA_BYTE = 0x10000000L;
-    private long getBootHeapStartHack() {
-        long result = 0;
-        long maxSize = 0;
-        for (ELFProgramHeaderTable.Entry entry : programHeaderTable.entries) {
-            if (entry.p_type == PT_LOAD) {
-                ELFProgramHeaderTable.Entry64 entry64 = (ELFProgramHeaderTable.Entry64) entry;
-                if (entry64.p_filesz > 0) {
-                    if (entry64.p_filesz > maxSize && entry64.p_filesz != TERA_BYTE) {
-                        maxSize = entry64.p_filesz;
-                        result = entry64.p_vaddr;
-                    }
-                }
-            }
-        }
-        return result;
+    @Override
+    protected long getBootHeapStartSymbolAddress() {
+        // On Solaris a randomly generated prefix is added to static symbols so,
+        // if this code were invoked, it would need to do a search that coped with that.
+        unimplemented("getBootHeapStartSymbolAddress");
+        return 0;
     }
 
-    private void processNoteSection() {
-        // if there are 2 NOTE entries we want the second
-        for (ELFProgramHeaderTable.Entry entry : programHeaderTable.entries) {
-            if (entry.p_type == PT_NOTE) {
-                if (noteSectionEntry != null) {
-                    noteSectionEntry = (ELFProgramHeaderTable.Entry64) entry;
+    class SolarisNoteEntryHandler extends NoteEntryHandler {
+        LwpData[] lwpDataArray = null;
+        int lwpDataArrayIndex = 0;
+
+        @Override
+        protected void processNoteEntry(int type, String name, byte[] desc) {
+            final NoteType noteType = NoteType.get(type);
+            switch (noteType) {
+                case NT_PSTATUS:
+                    final int numLwps = readInt(desc, 4);
+                    lwpDataArray = new LwpData[numLwps];
+                    break;
+
+                case NT_LWPSINFO: {
+                    // this comes before NT_LWPSTATUS
+                    ByteBuffer lwpInfo = ByteBuffer.allocateDirect(desc.length);
+                    lwpInfo.put(desc);
+                    lwpDataArray[lwpDataArrayIndex] = new LwpData(lwpInfo);
                     break;
                 }
-                noteSectionEntry = (ELFProgramHeaderTable.Entry64) entry;
-            }
-        }
-        try {
-            dumpRaf.seek(noteSectionEntry.p_offset);
-            final ELFDataInputStream dis = new ELFDataInputStream(header, dumpRaf);
-            final long size = noteSectionEntry.p_filesz;
-            long readLength = 0;
-            LwpData[] lwpDataArray = null;
-            int lwpDataArrayIndex = 0;
-            while (readLength < size) {
-                int namesz = dis.read_Elf64_Word();
-                final int descsz = dis.read_Elf64_Word();
-                final int type = dis.read_Elf64_Word();
-                readNoteString(dis, (int) namesz);
-                readLength += 12 + namesz;
-                while (namesz % 8 != 0) {
-                    dis.read_Elf32_byte();
-                    readLength++;
-                    namesz++;
-                }
-                final byte[] desc = readNoteDesc(dis, (int) descsz);
-                readLength += descsz;
 
-                final NoteType noteType = NoteType.get(type);
-                switch (noteType) {
-                    case NT_PSTATUS:
-                        final int numLwps = readInt(desc, 4);
-                        lwpDataArray = new LwpData[numLwps];
-                        break;
-
-                    case NT_LWPSINFO: {
-                        // this comes before NT_LWPSTATUS
-                        ByteBuffer lwpInfo = ByteBuffer.allocateDirect(descsz);
-                        lwpInfo.put(desc);
-                        lwpDataArray[lwpDataArrayIndex] = new LwpData(lwpInfo);
-                        break;
-                    }
-
-                    case NT_LWPSTATUS: {
-                        ByteBuffer lwpStatus = ByteBuffer.allocateDirect(descsz);
-                        lwpStatus.put(desc);
-                        lwpDataArray[lwpDataArrayIndex].lwpStatus = lwpStatus;
-                        lwpDataArrayIndex++;
-                        break;
-                    }
+                case NT_LWPSTATUS: {
+                    ByteBuffer lwpStatus = ByteBuffer.allocateDirect(desc.length);
+                    lwpStatus.put(desc);
+                    lwpDataArray[lwpDataArrayIndex].lwpStatus = lwpStatus;
+                    lwpDataArrayIndex++;
+                    break;
                 }
             }
-            lwpDataList = Arrays.asList(lwpDataArray);
-        } catch (IOException ex) {
-            FatalError.unexpected("error reading dump file note section", ex);
         }
     }
 
@@ -201,91 +137,11 @@ public class SolarisDumpTeleChannelProtocol extends UnixDumpTeleChannelProtocolA
         }
     }
 
-    /**
-     * Read a string from a NOTE entry with length length. The returned string is of size length - 1 as java strings are
-     * not null terminated
-     *
-     * @param length
-     * @return
-     */
-    private String readNoteString(ELFDataInputStream dis, int length) throws IOException {
-        byte[] arr = new byte[length - 1];
-        for (int i = 0; i < arr.length; i++) {
-            arr[i] = dis.read_Elf64_byte();
-        }
-        dis.read_Elf64_byte();
-        return new String(arr);
-    }
-
-    private byte[] readNoteDesc(ELFDataInputStream dis, int length) throws IOException {
-        byte[] arr = new byte[length];
-        for (int i = 0; i < length; i++) {
-            arr[i] = dis.read_Elf64_byte();
-        }
-        return arr;
-    }
-
-    private ELFProgramHeaderTable.Entry64 findAddress(long addr) {
-        final Address address = Address.fromLong(addr);
-        for (ELFProgramHeaderTable.Entry entry : programHeaderTable.entries) {
-            ELFProgramHeaderTable.Entry64 entry64 = (ELFProgramHeaderTable.Entry64) entry;
-            if (entry64.p_type == PT_LOAD && entry64.p_filesz != 0) {
-                final Address end = Address.fromLong(entry64.p_vaddr).plus(entry64.p_memsz);
-                if (address.greaterEqual(Address.fromLong(entry64.p_vaddr)) && address.lessThan(end)) {
-                    return entry64;
-                }
-            }
-        }
-        return null;
-    }
-
     @Override
     public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
         super.initialize(threadLocalsAreaSize, bigEndian);
         solarisDumpThreadAccess = new SolarisDumpThreadAccess(this, threadLocalsAreaSize, lwpDataList);
         return true;
-    }
-
-    @Override
-    public int readBytes(long src, byte[] dst, int dstOffset, int length) {
-        final ELFProgramHeaderTable.Entry64 entry64 = findAddress(src);
-        if (entry64 == null) {
-            return 0;
-        }
-        try {
-            dumpRaf.seek(entry64.p_offset + (src - entry64.p_vaddr));
-            return dumpRaf.read(dst, dstOffset, length);
-        } catch (IOException ex) {
-            return 0;
-        }
-
-    }
-
-    @Override
-    public long getBootHeapStart() {
-        if (true) {
-            return getBootHeapStartHack();
-        } else {
-            // Either theHeap needs to be declared as global or we have to do a lookup that avoids
-            // the .X... text, as this varies with every link.
-            final long theHeapAddress = symbolLookup.lookupSymbolValue(".XAYaEDyz0vbMGnt." + HEAP_SYMBOL_NAME).longValue();
-            ELFProgramHeaderTable.Entry64 entry64 = findAddress(theHeapAddress);
-            try {
-                dumpRaf.seek(entry64.p_offset + (theHeapAddress - entry64.p_vaddr));
-                ELFDataInputStream ds = new ELFDataInputStream(header, dumpRaf);
-                return ds.read_Elf64_Addr();
-            } catch (Throwable ex) {
-                FatalError.unexpected("failed to get boot heap address", ex);
-                return 0;
-            }
-        }
-        // return 0xfffffc7ffee00000L;
-    }
-
-    @Override
-    public int writeBytes(long dst, byte[] src, int srcOffset, int length) {
-        Trace.line(2, "WARNING: Inspector trying to write to " + Long.toHexString(dst));
-        return length;
     }
 
     @Override

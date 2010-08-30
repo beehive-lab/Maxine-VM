@@ -39,7 +39,13 @@ struct ps_lwphandle {
     int		lwp_statfd;	/* /proc/<pid>/lwp/<lwpid>/lwpstatus */
 };
 
-static jboolean readRegisters(JNIEnv *env, jobject  this, prgregset_t osRegisters, prfpregset_t *osFloatingPointRegisters,
+/*
+ * Function copies from native register data structures to Java byte arrays. Does 3 things:
+ * 1. Checks size of provided array lengths
+ * 2. Canonicalizes the native register data structures
+ * 3. Copies the canonicalized structures into the byte arrays
+ */
+static jboolean copyRegisters(JNIEnv *env, jobject  this, prgregset_t osRegisters, prfpregset_t *osFloatingPointRegisters,
         jbyteArray integerRegisters, jint integerRegistersLength,
         jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
         jbyteArray stateRegisters, jint stateRegistersLength) {
@@ -90,7 +96,7 @@ Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readRegisters(JNIEnv *e
 		return false;
 	}
 
-	return readRegisters(env, this, &osRegisters[0], &osFloatingPointRegisters,
+	return copyRegisters(env, this, &osRegisters[0], &osFloatingPointRegisters,
 	                integerRegisters, integerRegistersLength,
 	                floatingPointRegisters, floatingPointRegistersLength,
 	                stateRegisters, stateRegistersLength);
@@ -102,7 +108,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisDumpThreadAccess_lwpRegisters(JNIEnv 
                 jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
                 jbyteArray stateRegisters, jint stateRegistersLength) {
     lwpstatus_t * lwpstatus = (lwpstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer));
-    return readRegisters(env, class, &lwpstatus->pr_reg[0], &lwpstatus->pr_fpreg,
+    return copyRegisters(env, class, &lwpstatus->pr_reg[0], &lwpstatus->pr_fpreg,
                     integerRegisters, integerRegistersLength,
                     floatingPointRegisters, floatingPointRegistersLength,
                     stateRegisters, stateRegistersLength);
