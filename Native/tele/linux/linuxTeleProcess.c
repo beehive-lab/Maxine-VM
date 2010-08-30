@@ -38,6 +38,34 @@
 #include "teleNativeThread.h"
 #include "linuxTask.h"
 
+boolean task_read_registers(pid_t tid,
+    isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
+    isa_CanonicalStateRegistersStruct *canonicalStateRegisters,
+    isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters) {
+
+    if (canonicalIntegerRegisters != NULL || canonicalStateRegisters != NULL) {
+        struct user_regs_struct osIntegerRegisters;
+        if (ptrace(PT_GETREGS, tid, 0, &osIntegerRegisters) != 0) {
+            return false;
+        }
+        if (canonicalIntegerRegisters != NULL) {
+            isa_canonicalizeTeleIntegerRegisters(&osIntegerRegisters, canonicalIntegerRegisters);
+        }
+        if (canonicalStateRegisters != NULL) {
+            isa_canonicalizeTeleStateRegisters(&osIntegerRegisters, canonicalStateRegisters);
+        }
+    }
+
+    if (canonicalFloatingPointRegisters != NULL) {
+        struct user_fpregs_struct osFloatRegisters;
+        if (ptrace(PT_GETFPREGS, tid, 0, &osFloatRegisters) != 0) {
+            return false;
+        }
+        isa_canonicalizeTeleFloatingPointRegisters(&osFloatRegisters, canonicalFloatingPointRegisters);
+    }
+
+    return true;
+}
 static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadList, jlong threadLocalsList, long primordialThreadLocals) {
 
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;

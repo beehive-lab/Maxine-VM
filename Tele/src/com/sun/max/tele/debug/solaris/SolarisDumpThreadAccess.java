@@ -23,10 +23,8 @@ package com.sun.max.tele.debug.solaris;
 import java.nio.*;
 import java.util.*;
 
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.dump.*;
 import com.sun.max.tele.debug.solaris.SolarisDumpTeleChannelProtocol.LwpData;
-import com.sun.max.vm.prototype.*;
 
 /**
  * Solaris-specific implementation of {@link ThreadAccess}.
@@ -39,28 +37,13 @@ import com.sun.max.vm.prototype.*;
  */
 public class SolarisDumpThreadAccess extends ThreadAccess {
 
-    private boolean bigEndian;
-
-    class SolarisThreadInfo implements ThreadAccess.ThreadInfo {
+    class SolarisThreadInfo extends ThreadAccess.ThreadInfoRegisterAdaptor {
 
         private LwpData lwpData;
-        public byte[] integerRegisters = new byte[128];
-        public byte[] floatingPointRegisters = new byte[128];
-        public byte[] stateRegisters = new byte[16];
 
         SolarisThreadInfo(LwpData lwpData) {
             this.lwpData = lwpData;
             lwpRegisters(lwpData.lwpStatus, integerRegisters, integerRegisters.length, floatingPointRegisters, floatingPointRegisters.length, stateRegisters, stateRegisters.length);
-        }
-
-        @Override
-        public long getStackPointer() {
-            return ByteBuffer.wrap(integerRegisters).order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN).getLong(32);
-        }
-
-        @Override
-        public long getInstructionPointer() {
-            return ByteBuffer.wrap(stateRegisters).order(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN).getLong(0);
         }
 
         @Override
@@ -79,8 +62,6 @@ public class SolarisDumpThreadAccess extends ThreadAccess {
 
     SolarisDumpThreadAccess(SolarisDumpTeleChannelProtocol protocol, int threadLocalsAreaSize, List<LwpData> lwpDataList) {
         super(protocol, threadLocalsAreaSize);
-        Prototype.loadLibrary(TeleVM.TELE_LIBRARY_NAME);
-        this.bigEndian = protocol.bigEndian;
         this.lwpDataList = lwpDataList;
     }
 

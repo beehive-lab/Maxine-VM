@@ -40,7 +40,6 @@ public final class SolarisTeleVM extends TeleVM {
         return new SolarisTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments);
     }
 
-
     @Override
     protected SolarisTeleProcess attachToTeleProcess() throws BootImageException {
         return new SolarisTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), targetLocation().id);

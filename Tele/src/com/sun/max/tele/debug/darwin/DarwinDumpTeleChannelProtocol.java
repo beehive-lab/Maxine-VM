@@ -22,6 +22,7 @@ package com.sun.max.tele.debug.darwin;
 
 import java.io.*;
 
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.unix.*;
 
 /**
@@ -29,8 +30,8 @@ import com.sun.max.tele.debug.unix.*;
  *
  */
 public class DarwinDumpTeleChannelProtocol  extends UnixDumpTeleChannelProtocolAdaptor implements DarwinTeleChannelProtocol {
-    public DarwinDumpTeleChannelProtocol(File vm, File dump) {
-        super(vm, dump);
+    public DarwinDumpTeleChannelProtocol(TeleVM teleVM, File vm, File dump) {
+        super(teleVM, vm, dump);
     }
 
 }

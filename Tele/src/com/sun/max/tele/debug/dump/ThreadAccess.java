@@ -59,6 +59,24 @@ public abstract class ThreadAccess {
     }
 
     /**
+     * An adaptor that provides register storage assuming canonical form (for the x64 architecture).
+     * TODO Remove the explicit dependency on x64 architecture regarding register data size and location of IP/SP.
+     */
+    public abstract class ThreadInfoRegisterAdaptor implements ThreadInfo {
+        public byte[] integerRegisters = new byte[128];
+        public byte[] floatingPointRegisters = new byte[128];
+        public byte[] stateRegisters = new byte[16];
+
+        public long getStackPointer() {
+            return ByteBuffer.wrap(integerRegisters).order(ByteOrder.LITTLE_ENDIAN).getLong(32);
+        }
+
+        public long getInstructionPointer() {
+            return ByteBuffer.wrap(stateRegisters).order(ByteOrder.LITTLE_ENDIAN).getLong(0);
+        }
+    }
+
+    /**
      * OS-specific gathering of all the candidate threads in {@link #currentThreadList}.
      */
     protected abstract void gatherOSThreads(List<ThreadInfo> threadList);
