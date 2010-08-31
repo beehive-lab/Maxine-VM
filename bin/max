@@ -560,18 +560,19 @@ function run_clean() {
     pushd $maxine_dir/Native >/dev/null
     check_gnu_make
     run $make clean
-
+    rm -rf generated	
+    popd >/dev/null
+    
     for project in ${projects[@]}; do
-	project_dir=${project/:*/}
+        project_dir=${project/:*/}
         set_project_dir_parent ${project}
-	project_cp=$(get_project_dest ${project_dir})
-	if [ "x$project_cp" != "x" ]; then
-	    echo Removing $project_cp...
-	    rm -rf $project_cp
-	fi
+        project_cp=$(get_project_dest ${project_dir})
+        if [ "x$project_cp" != "x" ]; then
+            echo Removing $project_cp...
+            rm -rf $project_cp
+        fi
     done
 
-    popd >/dev/null
     exit $result
 }
 
