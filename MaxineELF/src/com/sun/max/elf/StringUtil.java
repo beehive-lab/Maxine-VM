@@ -125,6 +125,7 @@ public final class StringUtil {
         return accumul;
     }
 
+    @SuppressWarnings("unused")
     public static int readBinaryValue(CharacterIterator i, int maxchars) {
         int accumul = 0;
 
