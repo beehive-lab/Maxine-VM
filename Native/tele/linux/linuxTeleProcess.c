@@ -66,14 +66,10 @@ boolean task_read_registers(pid_t tid,
 
     return true;
 }
-static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadList, jlong threadLocalsList, long primordialThreadLocals) {
 
-    isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
-    isa_CanonicalStateRegistersStruct canonicalStateRegisters;
-
+ThreadState_t toThreadState(char taskState, pid_t tid) {
     ThreadState_t threadState;
-    char taskState;
-    switch ((taskState = task_state(tgid, tid))) {
+    switch (taskState) {
         case 'W':
         case 'D':
         case 'S': threadState = TS_SLEEPING; break;
@@ -85,6 +81,15 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
             threadState = TS_DEAD;
             break;
     }
+    return threadState;
+}
+
+static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadList, jlong threadLocalsList, long primordialThreadLocals) {
+
+    isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
+    isa_CanonicalStateRegistersStruct canonicalStateRegisters;
+
+    char taskState = task_state(tgid, tid);
 
     ThreadLocals tl = 0;
     if (taskState == 'T' && task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, NULL)) {
@@ -94,7 +99,7 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
         ProcessHandleStruct ph = {tgid, tid};
         tl = teleProcess_findThreadLocals(&ph, threadLocalsList, primordialThreadLocals, stackPointer, threadLocals, &nativeThreadLocalsStruct);
     }
-    teleProcess_jniGatherThread(env, linuxTeleProcess, threadList, tid, threadState, (jlong) canonicalStateRegisters.rip, tl);
+    teleProcess_jniGatherThread(env, linuxTeleProcess, threadList, tid, toThreadState(taskState, tid), (jlong) canonicalStateRegisters.rip, tl);
 }
 
 JNIEXPORT void JNICALL
