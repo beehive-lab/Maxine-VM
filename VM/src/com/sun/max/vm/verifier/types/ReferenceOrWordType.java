@@ -22,23 +22,25 @@
 package com.sun.max.vm.verifier.types;
 
 /**
- * @author David Liu
+ * Models a type that is either a reference or a word. This is necessary as the two
+ * types are equivalent at the Java source level.
+ *
  * @author Doug Simon
  */
-public class ReferenceType extends ReferenceOrWordType {
+public class ReferenceOrWordType extends Category1Type {
 
-    ReferenceType() {
+    ReferenceOrWordType() {
         // Ensures that only the one singleton instance of this class is created.
-        assert REFERENCE == null || getClass() != ReferenceType.class;
+        assert REFERENCE_OR_WORD == null || getClass() != ReferenceOrWordType.class;
     }
 
     @Override
     public boolean isAssignableFromDifferentType(VerificationType from) {
-        return from instanceof ReferenceType;
+        return from instanceof ReferenceOrWordType;
     }
 
     @Override
     public String toString() {
-        return "reference";
+        return "reference|word";
     }
 }
