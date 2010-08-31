@@ -38,7 +38,7 @@ public enum TargetCodeColumnKind implements ColumnKind {
     },
     NUMBER("No.", "Index of instruction in the method", false, 15),
     ADDRESS("Addr.", "Memory address of target instruction start", false, -1),
-    POSITION("Pos.", "Position in bytes of target instruction start", false, 20),
+    POSITION("Pos.", "Position in bytes of target instruction start", true, 20),
     LABEL("Label", "Labels synthesized during disassembly", true, -1),
     INSTRUCTION("Instr.", "Instruction mnemonic", true, -1),
     OPERANDS("Operands", "Instruction operands", true, -1),
