@@ -277,8 +277,6 @@ public class JavaPrototype extends Prototype {
         if (System.getProperty("max.allow.all.core.packages") == null) {
             HostedBootClassLoader.omitPackage("java.security", false);
         }
-
-//loadPackage("demo", false);
     }
 
     private static List<Class> mainPackageClasses = new ArrayList<Class>();

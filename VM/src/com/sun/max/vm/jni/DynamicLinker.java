@@ -198,7 +198,7 @@ public final class DynamicLinker {
      * @throws UnsatisfiedLinkError if the symbol cannot be found in any of the dynamic libraries bound to the VM
      */
     public static Word lookup(MethodActor classMethodActor, String symbol) throws UnsatisfiedLinkError {
-        Word symbolAddress = null;
+        Word symbolAddress = Word.zero();
         if (MaxineVM.isHosted()) {
             symbolAddress = MethodID.fromMethodActor(classMethodActor);
         } else {
