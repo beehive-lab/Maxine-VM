@@ -49,6 +49,7 @@ public class VmOperationDemo extends VmOperation {
     public VmOperationDemo(HashSet<Thread> threads) {
         super("Demo", null, Mode.Safepoint);
         this.threads = threads;
+        this.allowsNestedOperations = true;
     }
 
     @Override
@@ -70,11 +71,6 @@ public class VmOperationDemo extends VmOperation {
                 System.out.println("\tat " + e);
             }
         }
-    }
-
-    @Override
-    protected boolean allowsNestedOperations(VmOperation operation) {
-        return true;
     }
 
     static volatile boolean done;
