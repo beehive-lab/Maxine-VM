@@ -46,6 +46,7 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
 
     private long processHandle;
     private TeleChannelNatives natives;
+    private boolean bigEndian;
     protected TeleVMAgent agent;
 
     public UnixNativeTeleChannelProtocolAdaptor(TeleChannelNatives natives) {
@@ -56,7 +57,8 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize) {
+    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
+        this.bigEndian = bigEndian;
         natives.teleInitialize(threadLocalsAreaSize);
         return true;
     }
@@ -95,7 +97,7 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
         try {
             final Socket socket = agent.waitForVM();
             final InputStream stream = socket.getInputStream();
-            final Endianness endianness = TeleVM.vmConfigurationStatic().platform().processorKind.dataModel.endianness;
+            final Endianness endianness = bigEndian ? Endianness.BIG : Endianness.LITTLE;
             final Pointer heap = Word.read(stream, endianness).asPointer();
             Trace.line(1, "Received boot image address from VM: 0x" + heap.toHexString());
             socket.close();

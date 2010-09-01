@@ -61,10 +61,6 @@ import com.sun.max.vm.type.*;
  *   <li>Return the result to the caller.</li>
  * </ol>
  * <p>
- * TODO: The generated stubs need placeholders for platform specific functionality. For example,
- * on Intel systems, a JNI stub needs to (re)set the value of the %mxcsr register if the
- * compiler uses SSE instructions (see the reports for bugs <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=5003738">5003738</a>
- * and <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=5105765">5105765</a>).
  *
  * @author Doug Simon
  * @author Bernd Mathiske
@@ -123,7 +119,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant resetHandlesTop = createClassMethodConstant(JniHandles.class, makeSymbol("resetTop"), int.class);
     private static final ClassMethodRefConstant logPrintln_String = createClassMethodConstant(Log.class, makeSymbol("println"), String.class);
     private static final ClassMethodRefConstant logPrint_String = createClassMethodConstant(Log.class, makeSymbol("print"), String.class);
-    private static final ClassMethodRefConstant traceJNI = createClassMethodConstant(ClassMethodActor.class, makeSymbol("traceJNI"));
+    private static final FieldRefConstant traceJNI = createFieldConstant(ClassMethodActor.class, makeSymbol("TraceJNI"));
     private static final ClassMethodRefConstant link = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("link"));
     private static final ClassMethodRefConstant nativeToJava = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("nativeToJava"));
     private static final ClassMethodRefConstant javaToNative = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("javaToNative"));
@@ -288,15 +284,15 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a call to a native function from a native stub.
      */
     private void verboseJniEntry() {
-        if (MaxineVM.isHosted() && MaxineVM.isDebug()) {
-            // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
-            invokestatic(traceJNI, 0, 1);
-            final Label noTracing = newLabel();
-            ifeq(noTracing);
-            traceJniEntry();
-            noTracing.bind();
-        } else {
-            if (ClassMethodActor.traceJNI()) {
+        if (ClassMethodActor.TraceJNI) {
+            if (MaxineVM.isHosted()) {
+                // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
+                getstatic(traceJNI);
+                final Label noTracing = newLabel();
+                ifeq(noTracing);
+                traceJniEntry();
+                noTracing.bind();
+            } else {
                 traceJniEntry();
             }
         }
@@ -312,15 +308,15 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a return to a native stub from a native function.
      */
     private void verboseJniExit() {
-        if (MaxineVM.isHosted() && MaxineVM.isDebug()) {
-            // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
-            invokestatic(traceJNI, 0, 1);
-            final Label notVerbose = newLabel();
-            ifeq(notVerbose);
-            traceJniExit();
-            notVerbose.bind();
-        } else {
-            if (ClassMethodActor.traceJNI()) {
+        if (ClassMethodActor.TraceJNI) {
+            if (MaxineVM.isHosted()) {
+                // Stubs generated while bootstrapping need to test the "-XX:+TraceJNI" VM option
+                getstatic(traceJNI);
+                final Label notVerbose = newLabel();
+                ifeq(notVerbose);
+                traceJniExit();
+                notVerbose.bind();
+            } else {
                 traceJniExit();
             }
         }

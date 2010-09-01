@@ -43,10 +43,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.tcp.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.darwin.*;
-import com.sun.max.tele.debug.linux.*;
 import com.sun.max.tele.debug.no.*;
-import com.sun.max.tele.debug.solaris.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.interpreter.*;
@@ -121,7 +118,7 @@ public abstract class TeleVM implements MaxVM {
 
     private static final String PROGRAM_NAME = "maxvm";
 
-    private static final String TELE_LIBRARY_NAME = "tele";
+    public static final String TELE_LIBRARY_NAME = "tele";
 
     private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
 
@@ -154,9 +151,15 @@ public abstract class TeleVM implements MaxVM {
      */
     public static final class TargetLocation {
         public enum Kind {
-            LOCAL,      // target VM is on the same machine as Inspector
-            REMOTE,  // target VM is on a remote machine
-            FILE          // target VM is a core dump
+            LOCAL("Native"),      // target VM is on the same machine as Inspector
+            REMOTE("TCP"),     // target VM is on a remote machine
+            FILE("Dump");          // target VM is a core dump
+
+            String classNameComponent;
+
+            Kind(String name) {
+                classNameComponent = name;
+            }
         }
 
         public final Kind kind;
@@ -243,7 +246,7 @@ public abstract class TeleVM implements MaxVM {
     private static TargetLocation targetLocation;
 
     /**
-     * Where the meta-data associated with the targte VM is located {@see #vmDirectoryOption}.
+     * Where the meta-data associated with the target VM is located {@see #vmDirectoryOption}.
      */
     private static File vmDirectory;
 
@@ -305,63 +308,53 @@ public abstract class TeleVM implements MaxVM {
         return mode == Mode.ATTACH && targetLocation.kind == TargetLocation.Kind.FILE;
     }
 
-    private static void setTeleChannelProtocol(OperatingSystem operatingSystem) {
+    /**
+     * Create the correct instance of {@link TeleChannelProtocol} based on {@link #targetLocation} and
+     * {@link OperatingSystem}.
+     *
+     * @param operatingSystem
+     */
+    private void setTeleChannelProtocol(OperatingSystem operatingSystem) {
         if (mode == Mode.IMAGE) {
             teleChannelProtocol = new ReadOnlyTeleChannelProtocol();
-        } else if (targetLocation.kind == TargetLocation.Kind.REMOTE) {
-            teleChannelProtocol = new TCPTeleChannelProtocol(targetLocation.target, targetLocation.port);
-        } else if (targetLocation.kind == TargetLocation.Kind.FILE) {
-            // dump
-            final File dumpFile = new File(targetLocation.target);
-            if (!dumpFile.exists()) {
-                FatalError.unexpected("core dump file: " + targetLocation.target + " does not exist or is not accessible");
-            }
-            final File vmFile = new File(vmDirectory, "maxvm");
-            if (!vmFile.exists()) {
-                FatalError.unexpected("vm file: " + vmFile + " does not exist or is not accessible");
-            }
-            switch (operatingSystem) {
-                case SOLARIS:
-                    teleChannelProtocol = new SolarisDumpTeleChannelProtocol(vmFile, dumpFile);
-                    break;
-                case LINUX:
-                    teleChannelProtocol = new LinuxDumpTeleChannelProtocol(vmFile, dumpFile);
-                    break;
-                case DARWIN:
-                    teleChannelProtocol = new DarwinDumpTeleChannelProtocol(vmFile, dumpFile);
-                    break;
-                case GUESTVM:
-                    final String className = "com.sun.max.tele.debug.guestvm.dump.GuestVMDumpTeleChannelProtocol";
-                    try {
-                        final Class<?> klass = Class.forName(className);
-                        final Constructor<?> cons = klass.getDeclaredConstructor(new Class[] {File.class, File.class});
-                        teleChannelProtocol = (TeleChannelProtocol) cons.newInstance(new Object[] {vmFile, dumpFile});
-                    } catch (Exception ex) {
-                        FatalError.unexpected("failed to create instance of " + className);
-                    }
-                    break;
-            }
-        } else {
-            // local
-            switch (operatingSystem) {
-                case SOLARIS:
-                    teleChannelProtocol = new SolarisNativeTeleChannelProtocol();
-                    break;
-                case LINUX:
-                    teleChannelProtocol = new LinuxNativeTeleChannelProtocol();
-                    break;
-                case DARWIN:
-                    teleChannelProtocol = new DarwinNativeTeleChannelProtocol();
-                    break;
-                case GUESTVM:
-                    final String className = "com.sun.max.tele.debug.guestvm.GuestVMNativeDBTeleChannelProtocol";
-                    try {
-                        teleChannelProtocol = (TeleChannelProtocol) Class.forName(className).newInstance();
-                    } catch (Exception ex) {
-                        FatalError.unexpected("failed to create instance of " + className);
-                    }
-            }
+            return;
         }
+        /*
+         * To avoid boilerplate switch statements, the format of the class is required to be:
+         * com.sun.max.tele.debug.<ospackage>.<os><kind>TeleChannelProtocol, where Kind == Native for LOCAL, TCP for
+         * REMOTE and Dump for FILE. os is sanitized to conform to standard class naming rules. E.g. SOLARIS -> Solaris
+         */
+        final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() +
+                        targetLocation.kind.classNameComponent + "TeleChannelProtocol";
+        try {
+            final Class< ? > klass = Class.forName(className);
+            Constructor< ? > cons;
+            Object[] args;
+
+            if (targetLocation.kind == TargetLocation.Kind.REMOTE) {
+                cons = klass.getDeclaredConstructor(new Class[] {String.class, int.class});
+                args = new Object[] {targetLocation.target, targetLocation.port};
+            } else if (targetLocation.kind == TargetLocation.Kind.FILE) {
+                // dump
+                final File dumpFile = new File(targetLocation.target);
+                if (!dumpFile.exists()) {
+                    FatalError.unexpected("core dump file: " + targetLocation.target + " does not exist or is not accessible");
+                }
+                final File vmFile = new File(vmDirectory, "maxvm");
+                if (!vmFile.exists()) {
+                    FatalError.unexpected("vm file: " + vmFile + " does not exist or is not accessible");
+                }
+                cons = klass.getDeclaredConstructor(new Class[] {TeleVM.class, File.class, File.class});
+                args = new Object[] {this, vmFile, dumpFile};
+            } else {
+                cons = klass.getDeclaredConstructor(new Class[] {});
+                args = new Object[0];
+            }
+            teleChannelProtocol = (TeleChannelProtocol) cons.newInstance(args);
+        } catch (Exception ex) {
+            FatalError.unexpected("failed to create instance of " + className, ex);
+        }
+
     }
 
     /**
@@ -493,28 +486,13 @@ public abstract class TeleVM implements MaxVM {
         final BootImage bootImage = new BootImage(bootImageFile);
         TeleVM teleVM = null;
         final OperatingSystem operatingSystem = bootImage.vmConfiguration.platform().operatingSystem;
-        setTeleChannelProtocol(operatingSystem);
-        switch (operatingSystem) {
-            case DARWIN:
-                teleVM = new DarwinTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments);
-                break;
-            case LINUX:
-                teleVM = new LinuxTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments);
-                break;
-            case SOLARIS:
-                teleVM = new SolarisTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments);
-                break;
-            case GUESTVM:
-                try {
-                    final Class< ? > klass = Class.forName("com.sun.max.tele.debug.guestvm.GuestVMTeleVM");
-                    final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {File.class, BootImage.class, Classpath.class, String[].class});
-                    teleVM = (TeleVM) cons.newInstance(new Object[] {bootImageFile, bootImage, sourcepath, commandlineArguments});
-                } catch (Exception ex) {
-                    FatalError.unexpected("failed to instantiate TeleVM class for GuestVM", ex);
-                }
-                break;
-            default:
-                FatalError.unimplemented();
+        final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() + "TeleVM";
+        try {
+            final Class< ? > klass = Class.forName(className);
+            final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {File.class, BootImage.class, Classpath.class, String[].class});
+            teleVM = (TeleVM) cons.newInstance(new Object[] {bootImageFile, bootImage, sourcepath, commandlineArguments});
+        } catch (Exception ex) {
+            FatalError.unexpected("failed to instantiate " + className, ex);
         }
         return teleVM;
     }
@@ -597,7 +575,7 @@ public abstract class TeleVM implements MaxVM {
         return "[TeleVM: " + Thread.currentThread().getName() + "] ";
     }
 
-    private static VMConfiguration vmConfiguration;
+    private final VMConfiguration vmConfiguration;
 
     private final Size wordSize;
 
@@ -737,6 +715,7 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
+        setTeleChannelProtocol(bootImage.vmConfiguration.platform().operatingSystem);
         final MaxineVM vm = createVM(this.bootImage);
         vmConfiguration = vm.configuration;
 
@@ -862,10 +841,6 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public VMConfiguration vmConfiguration() {
-        return vmConfiguration;
-    }
-
-    public static VMConfiguration vmConfigurationStatic() {
         return vmConfiguration;
     }
 
@@ -1115,7 +1090,13 @@ public abstract class TeleVM implements MaxVM {
         return EMPTY_MAXMEMORYREGION_LIST;
     }
 
-    protected TeleProcess attachToTeleProcess() {
+
+    /**
+     * Attach to an existing VM process or code dump file.
+     * @return TeleProcess instance
+     * @throws BootImageException
+     */
+    protected TeleProcess attachToTeleProcess() throws BootImageException {
         throw FatalError.unimplemented();
     }
 

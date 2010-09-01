@@ -61,7 +61,7 @@ public class ObjectType extends ReferenceType {
 
     @Override
     public boolean isAssignableFromDifferentType(VerificationType from) {
-     // Any object class is assignable from null
+        // Any object class is assignable from null
         if (from == NULL) {
             return true;
         }
@@ -131,6 +131,11 @@ public class ObjectType extends ReferenceType {
         }
         if (fromClassActor.isInterface()) {
             return OBJECT;
+        }
+
+        if (fromClassActor.kind != classActor.kind) {
+            // Only happens when exactly one of the type is a Word type
+            return TOP;
         }
 
         ClassActor fromSuperClassActor;

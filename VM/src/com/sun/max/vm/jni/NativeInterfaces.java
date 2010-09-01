@@ -282,7 +282,7 @@ public final class NativeInterfaces {
      * Determines if information should be displayed about use of native methods and other Java Native Interface activity.
      */
     public static boolean verbose() {
-        return verboseOption.verboseJNI || ClassMethodActor.traceJNI();
+        return verboseOption.verboseJNI || ClassMethodActor.TraceJNI;
     }
 
     @HOSTED_ONLY

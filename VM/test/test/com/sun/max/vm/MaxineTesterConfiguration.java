@@ -113,10 +113,6 @@ public class MaxineTesterConfiguration {
         jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitcps, @cpscps
         jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:  @jitcps, @cpscps
 
-        jtt(jtt.except.Catch_StackOverflowError_01.class, FAIL_LINUX);  // For some reason, the mprotect of the yellow
-        jtt(jtt.except.Catch_StackOverflowError_02.class, FAIL_LINUX);  // stack guard page is not working (at least
-        jtt(jtt.except.Catch_StackOverflowError_03.class, FAIL_LINUX);  // on the linux gate machine - diy-3-18)
-
         dacapo("antlr");
         dacapo("bloat");
         dacapo("xalan",    FAIL_ALL);

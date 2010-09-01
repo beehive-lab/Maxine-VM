@@ -277,7 +277,7 @@ public class TypeState extends Frame {
         if (!visited) {
             reset(fromTypeState);
             if (catchTypeIndex != -1) {
-                final ObjectType catchType;
+                final VerificationType catchType;
                 if (catchTypeIndex == 0) {
                     catchType = VerificationType.THROWABLE;
                 } else {

@@ -47,7 +47,7 @@ public class Verifier implements VerificationRegistry {
     /**
      * The level of bytecode verification tracing.
      */
-    static int TraceVerifierLevel;
+    public static int TraceVerifierLevel;
     static {
         VMOptions.addFieldOption("-XX:", "TraceVerifierLevel", "Trace bytecode verification level: 0 = none, 1 = class, 2 = methods.");
     }
@@ -56,7 +56,7 @@ public class Verifier implements VerificationRegistry {
      * If non-null, then the verification of any methods whose fully qualified name contains this field value as
      * a substring is traced in detail.
      */
-    static String TraceVerification;
+    public static String TraceVerification;
     static {
         VMOptions.addFieldOption("-XX:", "TraceVerification",
             "Trace bytecode verification in detail of method(s) whose qualified name contains <value>.");
@@ -162,9 +162,12 @@ public class Verifier implements VerificationRegistry {
         }
     }
 
-    public ObjectType getObjectType(TypeDescriptor typeDescriptor) {
+    public VerificationType getObjectType(TypeDescriptor typeDescriptor) {
         if (JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
             return null;
+        }
+        if (typeDescriptor.toKind().isWord) {
+            return VerificationType.WORD;
         }
         ObjectType objectType = objectTypes.get(typeDescriptor);
         if (objectType == null) {

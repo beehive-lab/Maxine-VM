@@ -39,7 +39,7 @@ import com.sun.max.vm.prototype.*;
 public final class SolarisTeleProcess extends UnixTeleProcessAdaptor {
 
     /**
-     * Creates a handle to a native Solaris process by launching a new process with a given set of command line arguments.
+     * Creates a handle to a native Solaris Maxine VM process by launching a new process with a given set of command line arguments.
      *
      * @param teleVM
      * @param platform
@@ -49,6 +49,18 @@ public final class SolarisTeleProcess extends UnixTeleProcessAdaptor {
      */
     SolarisTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
         super(teleVM, platform, programFile, commandLineArguments);
+    }
+
+    /**
+     * Attach to an existing native Solaris Maxine VM process, or a core dump.
+     * @param teleVM
+     * @param platform
+     * @param programFile
+     * @param id
+     * @throws BootImageException
+     */
+    SolarisTeleProcess(TeleVM teleVM, Platform platform, File programFile, int id) throws BootImageException {
+        super(teleVM, platform, programFile, id);
     }
 
     @Override

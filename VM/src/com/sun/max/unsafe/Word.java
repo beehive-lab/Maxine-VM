@@ -106,6 +106,7 @@ public abstract class Word {
                                             map.put(unboxedClass, boxedClass);
                                         } catch (ClassNotFoundException e) {
                                             // There is no boxed version for this unboxed type
+                                            map.put(unboxedClass, unboxedClass);
                                         }
                                     }
                                 }
