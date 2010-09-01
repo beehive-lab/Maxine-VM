@@ -501,6 +501,13 @@ public class VmOperation {
             Throwable error = null;
             synchronized (VmThreadMap.THREAD_LOCK) {
 
+                if (singleThread != null && singleThread.vmThreadLocals().isZero()) {
+                    // The thread is not yet on the global thread list or has terminated.
+                    // Either way, we cannot freeze it if it has no thread locals.
+                    tracePhase("Aborting operation on single, non-running thread");
+                    return;
+                }
+
                 tracePhase("-- Begin --");
 
                 freeze();
