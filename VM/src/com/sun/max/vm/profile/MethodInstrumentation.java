@@ -20,14 +20,14 @@
  */
 package com.sun.max.vm.profile;
 
-import com.sun.max.vm.actor.holder.Hub;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.compiler.CompilationScheme;
-import com.sun.max.vm.object.ArrayAccess;
-import com.sun.max.unsafe.Word;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.annotate.NEVER_INLINE;
-import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.object.*;
 
 /**
  * This class contains several utility methods for dealing with method instrumentation
@@ -94,6 +94,13 @@ public class MethodInstrumentation {
     }
 
     private static void triggerRecompilation(MethodProfile mpo) {
+        if (Heap.isAllocationDisabledForCurrentThread()) {
+            Log.print("Stopped recompilation of ");
+            Log.printMethod(mpo.method, false);
+            Log.println(" because allocation is currently disabled");
+            return;
+        }
+
         synchronized (mpo) {
             if (!mpo.triggered) {
                 // location count overflowed; call into instrumentation system
