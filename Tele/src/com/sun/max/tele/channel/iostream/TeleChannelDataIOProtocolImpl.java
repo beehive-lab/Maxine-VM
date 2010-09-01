@@ -59,10 +59,11 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize) {
+    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
         try {
             out.writeUTF("initialize");
             out.writeInt(threadLocalsAreaSize);
+            out.writeBoolean(bigEndian);
             out.flush();
             return in.readBoolean();
         } catch (Exception ex) {

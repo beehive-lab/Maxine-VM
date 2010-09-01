@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
-import java.lang.Thread.*;
+import java.lang.Thread.UncaughtExceptionHandler;
 
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -81,8 +81,19 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
         setUncaughtExceptionHandler(this);
     }
 
+    /**
+     * Lock used to block a VM operation submitting thread until the operation is completed.
+     */
     private static final Object REQUEST_LOCK = JavaMonitorManager.newVmLock("VM_OPERATION_REQUEST_LOCK");
+
+    /**
+     * Lock used to synchronize access to the VM operation queue.
+     */
     private static final Object QUEUE_LOCK = JavaMonitorManager.newVmLock("VM_OPERATION_QUEUE_LOCK");
+
+    /**
+     * Lock used to block the thread trying to terminate the VM operation thread.
+     */
     private static final Object TERMINATE_LOCK = JavaMonitorManager.newVmLock("VM_OPERATION_THREAD_TERMINATION_LOCK");
 
     @Override

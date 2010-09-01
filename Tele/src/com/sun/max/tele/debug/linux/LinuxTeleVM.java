@@ -31,12 +31,18 @@ import com.sun.max.vm.prototype.*;
  */
 public final class LinuxTeleVM extends TeleVM {
 
+
+    public LinuxTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
+        super(bootImageFile, bootImage, sourcepath, commandLineArguments);
+    }
+
     @Override
     protected LinuxTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
         return new LinuxTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments);
     }
 
-    public LinuxTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments);
+    @Override
+    protected LinuxTeleProcess attachToTeleProcess() throws BootImageException {
+        return new LinuxTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), targetLocation().id);
     }
 }

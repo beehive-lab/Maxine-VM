@@ -59,13 +59,7 @@ public abstract class ClassVerifier extends Verifier {
         for (MethodActor methodActor : methodActors) {
             if (methodActor instanceof ClassMethodActor) {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                if (TraceVerifierLevel >= TRACE_METHOD) {
-                    Log.println(classMethodActor.format("[Verifying method %n(%P)]"));
-                }
                 classMethodActor.verify(this);
-                if (TraceVerifierLevel >= TRACE_METHOD) {
-                    Log.println(classMethodActor.format("[Verified method %n(%P)]"));
-                }
             }
         }
     }

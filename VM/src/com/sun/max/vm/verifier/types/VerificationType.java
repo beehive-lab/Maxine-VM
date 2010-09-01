@@ -38,9 +38,9 @@ import com.sun.max.vm.type.*;
  * The base class used to describe a hierarchy of types upon which a verifier enforces a type system. This hierarchy is
  * depicted in the following diagram (extracted from the <a href="http://jcp.org/en/jsr/detail?id=202">JSR 202 Class
  * File Specification Update</a>):
- * 
+ *
  * <img src="doc-files/VerificationType-1.png" alt="The Java verification type hierarchy.">
- * 
+ *
  * @author Doug Simon
  */
 public abstract class VerificationType {
@@ -70,7 +70,9 @@ public abstract class VerificationType {
     public static final Long2Type LONG2 = new Long2Type();
     public static final DoubleType DOUBLE = new DoubleType();
     public static final Double2Type DOUBLE2 = new Double2Type();
+    public static final ReferenceOrWordType REFERENCE_OR_WORD = new ReferenceOrWordType();
     public static final ReferenceType REFERENCE = new ReferenceType();
+    public static final WordType WORD = new WordType();
     public static final NullType NULL = new NullType();
     public static final UninitializedType UNINITIALIZED = new UninitializedType();
     public static final UninitializedThisType UNINITIALIZED_THIS = new UninitializedThisType();
@@ -92,7 +94,6 @@ public abstract class VerificationType {
 
     public static final ObjectType OBJECT = new ResolvedObjectType(ClassActor.fromJava(Object.class));
     public static final ObjectType STRING = new ResolvedObjectType(ClassActor.fromJava(String.class));
-    public static final ObjectType WORD = new ResolvedObjectType(ClassActor.fromJava(Word.class));
     public static final ObjectType CLASS = new ResolvedObjectType(ClassActor.fromJava(Class.class));
     public static final ObjectType THROWABLE = new ResolvedObjectType(ClassActor.fromJava(Throwable.class));
     public static final ObjectType CLONEABLE = new ResolvedObjectType(ClassActor.fromJava(Cloneable.class));
@@ -148,6 +149,19 @@ public abstract class VerificationType {
 
     public final boolean isAssignableFrom(VerificationType from) {
         return from == this || isAssignableFromDifferentType(from);
+    }
+
+    /**
+     * A temporary hack to accommodate the fact that {@link Pointer} implements {@link Accessor}.
+     * This will be removed once {@link Accessor} is removed.
+     */
+    public static boolean isTypeIncompatibilityBetweenPointerAndAccessor(VerificationType from, VerificationType to) {
+        if (from == VerificationType.WORD) {
+            if (to.toString().equals(Accessor.class.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public abstract boolean isAssignableFromDifferentType(VerificationType from);
@@ -212,7 +226,7 @@ public abstract class VerificationType {
      * the runtime will do the full checking.
      * <p>
      * The default implementation of this method returns {@link #TOP}, indicating that the two types are not mergeable.
-     * 
+     *
      * @return
      */
     public final VerificationType mergeWith(VerificationType from) {
@@ -247,8 +261,9 @@ public abstract class VerificationType {
             case DOUBLE:
                 return VerificationType.DOUBLE;
             case REFERENCE:
-            case WORD:
                 return registry.getObjectType(typeDescriptor);
+            case WORD:
+                return VerificationType.WORD;
         }
         throw ProgramError.unexpected("unexpected");
     }
@@ -317,7 +332,7 @@ public abstract class VerificationType {
 
     /**
      * Gets the tag denoting this type in a class file (in a {@link StackMapTable}.
-     * 
+     *
      * @return {@link #ITEM_Double}, {@link #ITEM_Float}, {@link #ITEM_Integer}, {@link #ITEM_Long},
      *         {@link #ITEM_Null}, {@link #ITEM_Object}, {@link #ITEM_Top}, {@link #ITEM_UninitializedThis},
      *         {@link #ITEM_Uninitialized} or -1 if this type is not valid in a classfile
@@ -326,7 +341,7 @@ public abstract class VerificationType {
 
     /**
      * Writes this verification type to a stream in class file format.
-     * 
+     *
      * @param stream
      * @param constantPoolEditor
      * @throws IllegalArgumentException if {@code classfileTag() == -1}
@@ -343,7 +358,7 @@ public abstract class VerificationType {
     /**
      * Writes the info after the {@linkplain #classfileTag() tag} for this verification type to a stream in class file format.
      * This method writes no output to {@code stream} if {@code classfileTag() == -1} or there is no info apart from the tag.
-     * 
+     *
      * @param stream
      * @param constantPoolEditor
      */

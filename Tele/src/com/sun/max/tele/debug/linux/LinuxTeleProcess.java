@@ -38,6 +38,17 @@ public final class LinuxTeleProcess extends UnixTeleProcessAdaptor {
         super(teleVM, platform, programFile, commandLineArguments);
     }
 
+    /**
+     * Attach to an existing native Linux Maxine VM process, or a core dump.
+     * @param teleVM
+     * @param platform
+     * @param programFile
+     * @param id
+     * @throws BootImageException
+     */
+    LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, int id) throws BootImageException {
+        super(teleVM, platform, programFile, id);
+    }
     @Override
     protected TeleNativeThread createTeleNativeThread(Params params) {
         return new LinuxTeleNativeThread(this, params);

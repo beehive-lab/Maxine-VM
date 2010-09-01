@@ -56,8 +56,8 @@ public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdapt
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize) {
-        return impl.initialize(threadLocalsAreaSize);
+    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
+        return impl.initialize(threadLocalsAreaSize, bigEndian);
     }
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {

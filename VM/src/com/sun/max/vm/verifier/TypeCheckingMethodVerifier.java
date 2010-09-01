@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.verifier;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.JniOp.*;
+import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 import static com.sun.max.vm.verifier.types.VerificationType.*;
 
 import com.sun.cri.bytecode.*;
@@ -60,7 +63,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
     protected final Interpreter interpreter;
 
-    protected final ObjectType thisObjectType;
+    protected final VerificationType thisObjectType;
 
     protected boolean fallsThrough;
 
@@ -85,10 +88,10 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
     @Override
     public void verify() {
+        if (verbose || Verifier.TraceVerifierLevel >= Verifier.TRACE_METHOD) {
+            Log.println(classMethodActor().format("[Verifying %H.%n(%p) via type-checking]"));
+        }
         if (verbose) {
-            Log.println();
-            Log.println(classMethodActor().format("Verifying %H.%n(%p) via type-checking"));
-
             Log.println("Input bytecode:");
             CodeAttributePrinter.print(Log.out, codeAttribute());
             Log.println();
@@ -157,7 +160,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     protected void verifyExceptionHandler(ExceptionHandlerEntry info) throws VerifyError {
         final int catchTypeIndex = info.catchTypeIndex();
         if (catchTypeIndex != 0) {
-            final ObjectType catchType = classVerifier().getObjectType(constantPool().classAt(catchTypeIndex).typeDescriptor());
+            final VerificationType catchType = classVerifier().getObjectType(constantPool().classAt(catchTypeIndex).typeDescriptor());
             verifyIsAssignable(catchType, THROWABLE, "Invalid catch type in exception handler");
         }
         verifyIsValidInstructionPosition(info.handlerPosition(), "handler_pc in exception handler");
@@ -280,6 +283,15 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     }
 
     /**
+     * Interprets a binary arithmetic instruction.
+     */
+    void performArithmetic(VerificationType left, VerificationType right, VerificationType result) {
+        frame.pop(right);
+        frame.pop(left);
+        frame.push(result);
+    }
+
+    /**
      * Interprets a binary comparison instruction.
      *
      * @param type the expected type of the two input values on top of the stack to be compared before the operation
@@ -384,7 +396,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void aload(int index) {
-            performLoad(REFERENCE, index);
+            performLoad(REFERENCE_OR_WORD, index);
         }
 
         @Override
@@ -412,7 +424,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             frame.pop(INTEGER);
             final TypeDescriptor elementDescriptor = constantPool().classAt(index).typeDescriptor();
             try {
-                final ObjectType element = (ObjectType) getVerificationType(elementDescriptor);
+                final ReferenceOrWordType element = (ReferenceOrWordType) getVerificationType(elementDescriptor);
                 frame.push(getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(element.typeDescriptor(), 1)));
             } catch (ClassCastException classCastException) {
                 throw verifyError("Invalid use of primitive type in ANEWARRAY: " + elementDescriptor);
@@ -421,7 +433,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void areturn() {
-            performReturn(REFERENCE);
+            performReturn(REFERENCE_OR_WORD);
         }
 
         @Override
@@ -435,7 +447,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void astore(int index) {
-            performStore(REFERENCE, index);
+            performStore(REFERENCE_OR_WORD, index);
         }
 
         @Override
@@ -509,7 +521,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void checkcast(int index) {
-            frame.pop(REFERENCE);
+            frame.pop(REFERENCE_OR_WORD);
 
             final ClassConstant classConstant = constantPool().classAt(index);
             final TypeDescriptor toType = classConstant.typeDescriptor();
@@ -1066,12 +1078,12 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void if_acmpeq(int offset) {
-            performIfCompareBranch(offset, REFERENCE);
+            performIfCompareBranch(offset, REFERENCE_OR_WORD);
         }
 
         @Override
         public void if_acmpne(int offset) {
-            performIfCompareBranch(offset, REFERENCE);
+            performIfCompareBranch(offset, REFERENCE_OR_WORD);
         }
 
         @Override
@@ -1187,7 +1199,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         @Override
         public void instanceof_(int index) {
             constantPool().classAt(index);
-            frame.pop(REFERENCE);
+            frame.pop(REFERENCE_OR_WORD);
             frame.push(INTEGER);
         }
 
@@ -1302,7 +1314,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 }
 
                 final UninitializedType uninitializedObject = (UninitializedType) frame.pop(UNINITIALIZED);
-                final ObjectType initializedObject;
+                final VerificationType initializedObject;
 
                 if (uninitializedObject instanceof UninitializedNewType) {
                     final UninitializedNewType object = (UninitializedNewType) uninitializedObject;
@@ -1357,7 +1369,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
             final SignatureDescriptor methodSignature = methodConstant.signature(constantPool());
             popMethodParameters(methodSignature);
-            final ObjectType receiverObject = (ObjectType) frame.pop(getObjectType(methodConstant.holder(constantPool())));
+            final VerificationType receiverObject = frame.pop(getObjectType(methodConstant.holder(constantPool())));
             protectedMethodAccessCheck(receiverObject, methodConstant, index);
             pushMethodResult(methodSignature);
         }
@@ -1806,6 +1818,228 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void wide() {
+        }
+
+        @Override
+        protected boolean extension(int opcode, boolean isWide) {
+            int length = Bytecodes.lengthOf(opcode);
+            int operand = 0;
+            if (length == 2) {
+                operand = isWide ? bytecodeScanner().readUnsigned2() : bytecodeScanner().readUnsigned1();
+            } else if (length == 3) {
+                assert !isWide;
+                operand = bytecodeScanner().readUnsigned2();
+            } else {
+                assert !isWide;
+                assert length == 1;
+            }
+            switch (opcode) {
+                // Checkstyle: stop
+                case UNSAFE_CAST: {
+                    if (!frame.top().isCategory2()) {
+                        frame.pop(CATEGORY1);
+                        frame.pop(CATEGORY1);
+                    } else {
+                        frame.pop(CATEGORY2);
+                    }
+
+                    final ClassConstant classConstant = constantPool().classAt(operand);
+                    final TypeDescriptor toType = classConstant.typeDescriptor();
+                    frame.push(getVerificationType(toType));
+                    break;
+                }
+                case WLOAD: performLoad(WORD, operand); break;
+                case WLOAD_0:                performLoad(WORD, 0); break;
+                case WLOAD_1:                performLoad(WORD, 1); break;
+                case WLOAD_2:                performLoad(WORD, 2); break;
+                case WLOAD_3:                performLoad(WORD, 3); break;
+                case WSTORE:                 performStore(WORD, operand); break;
+                case WSTORE_0:               performStore(WORD, 0); break;
+                case WSTORE_1:               performStore(WORD, 1); break;
+                case WSTORE_2:               performStore(WORD, 2); break;
+                case WSTORE_3:               performStore(WORD, 3); break;
+                case WCONST_0:               frame.push(WORD); break;
+                case WDIV:                   performArithmetic(WORD); break;
+                case WDIVI:                  performArithmetic(WORD, INTEGER, WORD); break;
+                case WREM:                   performArithmetic(WORD); break;
+                case WREMI:                  performArithmetic(WORD, INTEGER, INTEGER); break;
+                case ICMP:                   frame.pop(INTEGER); frame.pop(INTEGER); break;
+                case WCMP:                   frame.pop(WORD); frame.pop(WORD); break;
+
+                case PCMPSWP:
+                case MEMBAR:
+                case PGET:
+                case PSET:
+                case PREAD:
+                case PWRITE: {
+                    opcode = opcode | (operand << 8);
+                    switch (opcode) {
+                        case PREAD_BYTE:             pointerRead(BYTE, false); break;
+                        case PREAD_CHAR:             pointerRead(CHAR, false); break;
+                        case PREAD_SHORT:            pointerRead(SHORT, false); break;
+                        case PREAD_INT:              pointerRead(INTEGER, false); break;
+                        case PREAD_FLOAT:            pointerRead(FLOAT, false); break;
+                        case PREAD_LONG:             pointerRead(LONG, false); break;
+                        case PREAD_DOUBLE:           pointerRead(DOUBLE, false); break;
+                        case PREAD_WORD:             pointerRead(WORD, false); break;
+                        case PREAD_REFERENCE:        pointerRead(REFERENCE, false); break;
+                        case PREAD_BYTE_I:           pointerRead(BYTE, true); break;
+                        case PREAD_CHAR_I:           pointerRead(CHAR, true); break;
+                        case PREAD_SHORT_I:          pointerRead(SHORT, true); break;
+                        case PREAD_INT_I:            pointerRead(INTEGER, true); break;
+                        case PREAD_FLOAT_I:          pointerRead(FLOAT, true); break;
+                        case PREAD_LONG_I:           pointerRead(LONG, true); break;
+                        case PREAD_DOUBLE_I:         pointerRead(DOUBLE, true); break;
+                        case PREAD_WORD_I:           pointerRead(WORD, true); break;
+                        case PREAD_REFERENCE_I:      pointerRead(REFERENCE, true); break;
+                        case PWRITE_BYTE:            pointerWrite(BYTE, false); break;
+                        case PWRITE_SHORT:           pointerWrite(SHORT, false); break;
+                        case PWRITE_INT:             pointerWrite(INTEGER, false); break;
+                        case PWRITE_FLOAT:           pointerWrite(FLOAT, false); break;
+                        case PWRITE_LONG:            pointerWrite(LONG, false); break;
+                        case PWRITE_DOUBLE:          pointerWrite(DOUBLE, false); break;
+                        case PWRITE_WORD:            pointerWrite(WORD, false); break;
+                        case PWRITE_REFERENCE:       pointerWrite(REFERENCE, false); break;
+                        case PWRITE_BYTE_I:          pointerWrite(BYTE, true); break;
+                        case PWRITE_SHORT_I:         pointerWrite(SHORT, true); break;
+                        case PWRITE_INT_I:           pointerWrite(INTEGER, true); break;
+                        case PWRITE_FLOAT_I:         pointerWrite(FLOAT, true); break;
+                        case PWRITE_LONG_I:          pointerWrite(LONG, true); break;
+                        case PWRITE_DOUBLE_I:        pointerWrite(DOUBLE, true); break;
+                        case PWRITE_WORD_I:          pointerWrite(WORD, true); break;
+                        case PWRITE_REFERENCE_I:     pointerRead(REFERENCE, true); break;
+                        case PGET_BYTE:              pointerGet(BYTE); break;
+                        case PGET_CHAR:              pointerGet(CHAR); break;
+                        case PGET_SHORT:             pointerGet(SHORT); break;
+                        case PGET_INT:               pointerGet(INTEGER); break;
+                        case PGET_FLOAT:             pointerGet(FLOAT); break;
+                        case PGET_LONG:              pointerGet(LONG); break;
+                        case PGET_DOUBLE:            pointerGet(DOUBLE); break;
+                        case PGET_WORD:              pointerGet(WORD); break;
+                        case PGET_REFERENCE:         pointerGet(REFERENCE); break;
+                        case PSET_BYTE:              pointerSet(BYTE); break;
+                        case PSET_SHORT:             pointerSet(BYTE); break;
+                        case PSET_INT:               pointerSet(SHORT); break;
+                        case PSET_FLOAT:             pointerSet(INTEGER); break;
+                        case PSET_LONG:              pointerSet(FLOAT); break;
+                        case PSET_DOUBLE:            pointerSet(LONG); break;
+                        case PSET_WORD:              pointerSet(DOUBLE); break;
+                        case PSET_REFERENCE:         pointerSet(WORD); break;
+                        case PCMPSWP_INT:            pointerCompareAndSwap(INTEGER, false); break;
+                        case PCMPSWP_WORD:           pointerCompareAndSwap(WORD, false); break;
+                        case PCMPSWP_REFERENCE:      pointerCompareAndSwap(REFERENCE, false); break;
+                        case PCMPSWP_INT_I:          pointerCompareAndSwap(INTEGER, true); break;
+                        case PCMPSWP_WORD_I:         pointerCompareAndSwap(WORD, true); break;
+                        case PCMPSWP_REFERENCE_I:    pointerCompareAndSwap(REFERENCE, true); break;
+                        case MEMBAR_LOAD_LOAD:
+                        case MEMBAR_LOAD_STORE:
+                        case MEMBAR_STORE_LOAD:
+                        case MEMBAR_STORE_STORE:
+                        case MEMBAR_MEMOP_STORE:
+                        case MEMBAR_FENCE:           break;
+                        default:                     throw verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
+                    }
+                    break;
+                }
+
+                case MOV_I2F:                performConversion(INTEGER, FLOAT); break;
+                case MOV_F2I:                performConversion(FLOAT, INTEGER); break;
+                case MOV_L2D:                performConversion(LONG, DOUBLE); break;
+                case MOV_D2L:                performConversion(DOUBLE, LONG); break;
+
+                case UWCMP: {
+                    switch (operand) {
+                        case ABOVE_EQUAL: performCompare(WORD); break;
+                        case ABOVE_THAN:  performCompare(WORD); break;
+                        case BELOW_EQUAL: performCompare(WORD); break;
+                        case BELOW_THAN:  performCompare(WORD); break;
+                        default:          throw verifyError("Unsupported UWCMP operand: " + operand);
+                    }
+                    break;
+                }
+                case UCMP: {
+                    switch (operand) {
+                        case ABOVE_EQUAL: performCompare(INTEGER); break;
+                        case ABOVE_THAN : performCompare(INTEGER); break;
+                        case BELOW_EQUAL: performCompare(INTEGER); break;
+                        case BELOW_THAN : performCompare(INTEGER); break;
+                        default:          throw verifyError("Unsupported UCMP operand: " + operand);
+                    }
+                    break;
+                }
+                case JNICALL: {
+                    jnicall(operand);
+                    break;
+                }
+                case JNIOP: {
+                    if (!classMethodActor().isNative()) {
+                        throw verifyError("Cannot use " + Bytecodes.nameOf(JNIOP) + " instruction in non-native method " + classMethodActor());
+                    }
+                    switch (operand) {
+                        case LINK: {
+                            frame.push(WORD);
+                            break;
+                        }
+                        case J2N:
+                        case N2J:
+                            break;
+                        default:
+                            throw verifyError("Unsupported JNIOP operand: " + operand);
+                    }
+                    break;
+                }
+                case WRETURN            : performReturn(WORD); break;
+                case SAFEPOINT          : break;
+                case PAUSE              : break;
+                case LSB                : performConversion(WORD, INTEGER); break;
+                case MSB                : performConversion(WORD, INTEGER); break;
+
+                case READREG            : frame.push(WORD); break;
+                case WRITEREG           : frame.pop(WORD); break;
+
+                default: {
+                    throw verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
+                }
+                // Checkstyle: resume
+            }
+            return true;
+        }
+
+        private void performCompare(VerificationType type) {
+            frame.pop(type);
+            frame.pop(type);
+        }
+
+        void pointerRead(VerificationType type, boolean intOffset) {
+            frame.pop(intOffset ? INTEGER : WORD); // offset
+            frame.pop(WORD); // pointer
+            frame.push(type); // value
+        }
+
+        void pointerWrite(VerificationType type, boolean intOffset) {
+            frame.pop(type); // value
+            frame.pop(intOffset ? INTEGER : WORD); // offset
+            frame.pop(WORD); // pointer
+        }
+
+        void pointerGet(VerificationType type) {
+            frame.pop(INTEGER); // index
+            frame.pop(INTEGER); // displacement
+            frame.push(type); // value
+        }
+
+        void pointerSet(VerificationType type) {
+            frame.pop(type); // value
+            frame.pop(INTEGER); // index
+            frame.pop(INTEGER); // displacement
+        }
+
+        private void pointerCompareAndSwap(VerificationType type, boolean intOffset) {
+            frame.pop(type); // newValue
+            frame.pop(type); // expectedValue
+            frame.pop(intOffset ? INTEGER : WORD); // offset
+            frame.pop(WORD); // pointer
+            frame.push(WORD); // result
         }
     }
 }

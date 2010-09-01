@@ -33,11 +33,12 @@ import java.io.Serializable;
  */
 
 public interface TeleChannelDataIOProtocol {
-    /** Initialize the tele layer, informing it of the size of the thread locals area.
+    /** Initialize the tele layer, informing it of the size of the thread locals area and the endianness of the target.
     * @param threadLocalsAreaSize size of thread locals area from boot image header
+    * @param bigEndian {@code true} if the target VM is big-endian, {@code false} otherwise.
     * @return {@code true} is the set succeeded, {@code false} otherwise.
     */
-    boolean initialize(int threadLocalsAreaSize);
+    boolean initialize(int threadLocalsAreaSize, boolean bigEndian);
     /**
      * Create a new target VM.
      * @param pathName file system pathname of target VM image

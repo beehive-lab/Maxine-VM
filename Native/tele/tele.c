@@ -30,7 +30,6 @@ JNIEXPORT jint JNICALL
 JNI_OnLoad(JavaVM *vm, void *reserved)
 {
     c_initialize();
-    teleProcess_initialize();
 #if !os_GUESTVMXEN
     log_initialize(getenv("TELE_LOG_FILE"));
 #endif

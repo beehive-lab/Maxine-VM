@@ -34,7 +34,7 @@ import com.sun.max.tele.debug.*;
 public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize) {
+    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
         return true;
     }
 

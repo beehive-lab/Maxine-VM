@@ -167,6 +167,7 @@ public abstract class ClassActor extends Actor implements RiType {
                          TypeDescriptor outerClass,
                          EnclosingMethodInfo enclosingMethodInfo) {
         super(name, flags);
+        assert kind == typeDescriptor.toKind();
         if (MaxineVM.isHosted()) {
             checkProhibited(name);
             if (MaxineVM.isMaxineClass(typeDescriptor)) {
