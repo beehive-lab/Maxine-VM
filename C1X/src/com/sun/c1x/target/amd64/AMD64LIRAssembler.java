@@ -225,6 +225,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Int     : masm.movl(addr, constant.asInt()); break;
             case Float   : masm.movl(addr, floatToRawIntBits(constant.asFloat())); break;
             case Object  : masm.movoop(addr, CiConstant.forObject(constant.asObject())); break;
+            case Word:
             case Long    : masm.mov64(rscratch1, constant.asLong());
                            nullCheckHere = codePos();
                            masm.movq(addr, rscratch1); break;
