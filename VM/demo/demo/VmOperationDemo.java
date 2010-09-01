@@ -23,7 +23,6 @@ package demo;
 import java.util.*;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -39,6 +38,10 @@ import com.sun.max.vm.thread.*;
  *
  * This demo also shows what happens if a VM operation
  * triggers a GC.
+ *
+ * Like all VmOperations, this class must be in the boot image.
+ * This is achieved by adding 'demo.VmOperationDemo' to the end
+ * of a 'max image' command.
  *
  * @author Doug Simon
  */
@@ -77,10 +80,6 @@ public class VmOperationDemo extends VmOperation {
     static volatile int started;
 
     public static void main(String[] args) {
-
-        // HACK: all the virtual methods in a VM operation should be compiled before the operation is submitted.
-        // This is usually ensured by VM operation classes being in the image.
-        ClassActor.fromJava(VmOperationDemo.class).dynamicHub().compileVTable();
 
         int seconds = args.length == 0 ? 5 : Integer.parseInt(args[0]);
         Thread[] spinners = new Thread[10];
