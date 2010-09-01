@@ -1797,6 +1797,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     marks.put(xmark, mark);
                     break;
                 }
+                case Nop: {
+                    for (int i = 0; i < (Integer) inst.extra; i++) {
+                        masm.nop();
+                    }
+                    break;
+                }
                 case RawBytes: {
                     for (byte b : (byte[]) inst.extra) {
                         masm.emitByte(b & 0xff);
