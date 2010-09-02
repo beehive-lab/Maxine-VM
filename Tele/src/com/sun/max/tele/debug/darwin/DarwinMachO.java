@@ -107,7 +107,7 @@ public class DarwinMachO {
 
     }
 
-    public static class Segment64LoadCommand extends LoadCommand {
+    public static final class Segment64LoadCommand extends LoadCommand {
         String segName;
         long vmaddr;
         long vmsize;
@@ -149,14 +149,14 @@ public class DarwinMachO {
             result.fpregstate = ThreadFPRegState.read(in);
             result.exstate = ThreadExceptionState.read(in);
             return result;
-       }
+        }
     }
 
     public static class ThreadState {
         int flavor;
         int count;
 
-        private ThreadState(RandomAccessFile in) throws IOException {
+        protected ThreadState(RandomAccessFile in) throws IOException {
             flavor = readInt(in);
             count = readInt(in);
         }
