@@ -114,7 +114,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted()) {
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
             objectSpace.hostInitialize();
