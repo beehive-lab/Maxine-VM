@@ -532,6 +532,10 @@ public abstract class CiXirAssembler {
          */
         Mark,
         /**
+         * Inserts nop instructions, with the given size in bytes. 
+         */
+        Nop,
+        /**
          * This instruction should never be reached, this is useful for debugging purposes.
          */
          ShouldNotReachHere
@@ -710,6 +714,10 @@ public abstract class CiXirAssembler {
         marks.add(mark);
         append(new XirInstruction(CiKind.Void, mark, Mark, null));
         return mark;
+    }
+    
+    public void nop(int size) {
+        append(new XirInstruction(CiKind.Void, size, Nop, null));
     }
     
     public void shouldNotReachHere() {

@@ -110,8 +110,8 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
      * @param dlinkedChunkAddress
      * @return
      */
-    public static Address unlink(Address dlinkedChunkAddress) {
-        DLinkedHeapFreeChunk chunk = asDLinkedHeapFreeChunk(dlinkedChunkAddress);
+    public static Address unlink(Pointer dlinkedChunkAddress) {
+        DLinkedHeapFreeChunk chunk = asDLinkedHeapFreeChunk(Reference.fromOrigin(dlinkedChunkAddress));
         DLinkedHeapFreeChunk nextChunk = asDLinkedHeapFreeChunk(chunk.next);
         chunk.prev.next = nextChunk;
         nextChunk.prev = chunk.prev;
@@ -121,7 +121,7 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
     public static Pointer removeHead(Pointer listHead) {
         Pointer head = listHead.getWord().asPointer();
         if (!head.isZero()) {
-            DLinkedHeapFreeChunk newHead = asDLinkedHeapFreeChunk(head).next();
+            DLinkedHeapFreeChunk newHead = asDLinkedHeapFreeChunk(Reference.fromOrigin(head)).next();
             newHead.prev = null;
             listHead.setWord(from(newHead));
         }
@@ -133,8 +133,8 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
      * @param dlinkedChunkAddress
      * @return
      */
-    public static Address unlink(Pointer listHead, Address dlinkedChunkAddress) {
-        DLinkedHeapFreeChunk chunk = asDLinkedHeapFreeChunk(dlinkedChunkAddress);
+    public static Address unlink(Pointer listHead, Pointer dlinkedChunkAddress) {
+        DLinkedHeapFreeChunk chunk = asDLinkedHeapFreeChunk(Reference.fromOrigin(dlinkedChunkAddress));
         if (chunk.next == null) {
             listHead.setWord(Address.zero());
             return Address.zero();
@@ -158,7 +158,7 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
      * @return chunk.plus(size)
      */
     public static Pointer truncateLeft(Pointer chunk, Size size) {
-        DLinkedHeapFreeChunk before = asDLinkedHeapFreeChunk(chunk);
+        DLinkedHeapFreeChunk before = asDLinkedHeapFreeChunk(Reference.fromOrigin(chunk));
         DLinkedHeapFreeChunk after = format(chunk.plus(size),
                         before.size.minus(size));
         DLinkedHeapFreeChunk next = before.next();
@@ -183,12 +183,12 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
 
 
     public static void insertUnformattedBefore(Pointer listHead, Address address, Size size) {
-        Address first = listHead.getWord().asAddress();
+        Pointer first = listHead.getWord().asPointer();
         if (first.isZero()) {
             format(address, size, address, address);
             listHead.setWord(address);
         } else {
-            DLinkedHeapFreeChunk headOfList = asDLinkedHeapFreeChunk(first);
+            DLinkedHeapFreeChunk headOfList = asDLinkedHeapFreeChunk(Reference.fromOrigin(first));
             headOfList.insertBefore(format(address, size));
         }
     }

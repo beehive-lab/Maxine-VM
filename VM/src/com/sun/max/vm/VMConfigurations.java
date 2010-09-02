@@ -182,14 +182,14 @@ public final class VMConfigurations {
         return new VMConfiguration(buildLevel, platform,
             new com.sun.max.vm.grip.prototype.Package(),
             new com.sun.max.vm.reference.prototype.Package(),
-            defaultLayoutScheme(platform),
-            defaultHeapScheme(),
+            new com.sun.max.vm.layout.prototype.Package(),
+            new com.sun.max.vm.heap.prototype.Package(),
             new com.sun.max.vm.monitor.prototype.Package(),
             new com.sun.max.vm.compiler.prototype.Package(),
             null,
             null,
-            defaultTrampolineScheme(),
-            defaultTargetABIsScheme(platform),
-            defaultRunScheme());
+            null,
+            null,
+            null);
     }
 }

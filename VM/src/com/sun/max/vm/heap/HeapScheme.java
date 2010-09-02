@@ -222,6 +222,11 @@ public interface HeapScheme extends VMScheme {
      */
     void enableAllocationForCurrentThread();
 
+    /**
+     * Determines if heap allocation is disabled on the current thread.
+     */
+    boolean isAllocationDisabledForCurrentThread();
+
     @INLINE
     void writeBarrier(Reference from, Reference to);
 
@@ -440,5 +445,4 @@ public interface HeapScheme extends VMScheme {
 
 
     }
-
 }

@@ -131,8 +131,13 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         checkProtection();
     }
 
-    private void checkProtection() {
+    /**
+     * Ensures that this monitor is {@linkplain BindingProtection#PROTECTED protected}
+     * if it is bound to a thread.
+     */
+    protected void checkProtection() {
         if (bindingProtection != BindingProtection.PROTECTED && ownerThread != null) {
+            Log.lock();
             Log.print("Unprotected monitor with non-null owner thread: ");
             log();
             Log.println();

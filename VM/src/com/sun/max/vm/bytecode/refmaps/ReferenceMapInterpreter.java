@@ -258,7 +258,7 @@ public abstract class ReferenceMapInterpreter {
             return constantPool;
         }
 
-        public ObjectType getObjectType(TypeDescriptor typeDescriptor) {
+        public VerificationType getObjectType(TypeDescriptor typeDescriptor) {
             if (typeDescriptor.toKind().isWord) {
                 return VerificationType.WORD;
             }

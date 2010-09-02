@@ -60,16 +60,21 @@ public class XirSnippet {
 
     private boolean assertArgumentCorrect(XirParameter param, XirArgument arg) {
         if (param.kind == CiKind.Illegal || param.kind == CiKind.Void) {
-            assert arg == null;
+            if (arg != null) {
+                return false;
+            }
         } else {
-            assert arg != null;
+            if (arg == null) {
+                return false;
+            }
             if (arg.constant != null) {
-                assert arg.constant.kind == param.kind;
+                if (arg.constant != null && arg.constant.kind != param.kind) {                    
+                    return false;
+                }
             }
         }
         return true;
     }
-
 
     @Override
     public String toString() {
