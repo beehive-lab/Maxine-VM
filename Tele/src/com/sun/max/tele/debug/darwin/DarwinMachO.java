@@ -284,7 +284,7 @@ public class DarwinMachO {
     public static long readLong(RandomAccessFile in) throws IOException {
         final long lw = readInt(in);
         final long hw = readInt(in);
-        return hw << 32 | (lw &0xFFFFFFFFL);
+        return hw << 32 | (lw & 0xFFFFFFFFL);
     }
 
 }
