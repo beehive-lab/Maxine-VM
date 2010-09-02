@@ -47,6 +47,10 @@ public final class DarwinTeleProcess extends UnixTeleProcessAdaptor {
         super(teleVM, platform, programFile, commandLineArguments);
     }
 
+    DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, int id) throws BootImageException {
+        super(teleVM, platform, programFile, id);
+    }
+
     @Override
     protected TeleNativeThread createTeleNativeThread(Params params) {
         return new DarwinTeleNativeThread(this, params);
