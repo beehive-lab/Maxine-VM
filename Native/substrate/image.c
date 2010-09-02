@@ -299,13 +299,11 @@ static void mapHeapAndCode(int fd) {
         log_exit(4, "could not map boot image");
     }
 #elif os_SOLARIS || os_DARWIN
-    // Reserve more than -Xmx should ever demand.
-    // Most of this will be released again once in Java code by the heap scheme
-    theHeap = virtualMemory_allocatePrivateAnon((Address) 0, TERA_BYTE, JNI_FALSE, JNI_FALSE, HEAP_VM);
+    theHeap = virtualMemory_allocatePrivateAnon((Address) 0, heapAndCodeSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
     if (theHeap == ALLOC_FAILED) {
         log_exit(4, "could not reserve boot image");
     }
-//   log_println("boot heap at %p", theHeap);
+    log_println("boot heap at %p", theHeap);
 #if log_LOADER
     log_println("reserved 1 TB at %p", theHeap);
     log_println("reserved address space ends at %p", theHeap + TERA_BYTE);
