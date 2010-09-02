@@ -135,12 +135,14 @@ public final class VMOptions {
             this.field = field;
         }
 
+
+
         @Override
         public boolean parseValue(Pointer optionValue) {
             boolean result = super.parseValue(optionValue);
             if (result) {
                 if (MaxineVM.isHosted()) {
-                    setFieldValue(field, getValue());
+                    hostedSetFieldValue();
                 } else {
                     FieldActor fieldActor = FieldActor.fromJava(field);
                     Reference.fromJava(fieldActor.holder().staticTuple()).writeWord(fieldActor.offset(), getValue());
@@ -148,6 +150,15 @@ public final class VMOptions {
                 return true;
             }
             return result;
+        }
+
+        /**
+         * Factored out as a {@link HOSTED_ONLY} method because it won't verify - it
+         * mixes word and reference types.
+         */
+        @HOSTED_ONLY
+        void hostedSetFieldValue() {
+            setFieldValue(field, getValue());
         }
     }
 

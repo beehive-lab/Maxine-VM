@@ -624,7 +624,7 @@ public class Bytecodes {
      *         }
      *
      * Operand Stack:
-     *     ... => ...
+     *     ... => address
      * </pre>
      */
     public static final int JNIOP_J2N          = JNIOP | J2N << 8;

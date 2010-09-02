@@ -217,14 +217,6 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         makeTypeState(info.handlerPosition());
     }
 
-    @Override
-    public void verifyIsAssignable(VerificationType fromType, VerificationType toType, String errorMessage) {
-        if (!toType.isAssignableFrom(fromType)) {
-            toType.isAssignableFrom(fromType);
-            throw verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
-        }
-    }
-
     /**
      * Gets the current interpreter frame type state.
      * @return the type state
@@ -250,7 +242,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     @Override
     protected void performStore(VerificationType type, int index) {
-        if (type == REFERENCE && SUBROUTINE.isAssignableFrom(typeState().top())) {
+        if ((type == REFERENCE || type == REFERENCE_OR_WORD) && SUBROUTINE.isAssignableFrom(typeState().top())) {
             final Subroutine subroutine = (Subroutine) typeState().pop(SUBROUTINE);
             typeState().store(subroutine, index);
 

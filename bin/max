@@ -274,6 +274,7 @@ projects=( \
     VM:src,test                   \
     CPS:src,test                  \
     MaxineC1X:src,test            \
+    MaxineELF:src                 \
     VMDI:src                      \
     Tele:src                      \
     JDWP:src                      \
@@ -559,18 +560,19 @@ function run_clean() {
     pushd $maxine_dir/Native >/dev/null
     check_gnu_make
     run $make clean
-
+    rm -rf generated	
+    popd >/dev/null
+    
     for project in ${projects[@]}; do
-	project_dir=${project/:*/}
+        project_dir=${project/:*/}
         set_project_dir_parent ${project}
-	project_cp=$(get_project_dest ${project_dir})
-	if [ "x$project_cp" != "x" ]; then
-	    echo Removing $project_cp...
-	    rm -rf $project_cp
-	fi
+        project_cp=$(get_project_dest ${project_dir})
+        if [ "x$project_cp" != "x" ]; then
+            echo Removing $project_cp...
+            rm -rf $project_cp
+        fi
     done
 
-    popd >/dev/null
     exit $result
 }
 
@@ -891,12 +893,16 @@ function run_configs() {
 # 'image' command
 #=======================================
 
-image_usage="[options]"
+image_usage="[options] classes|packages..."
 function image_help() {
     image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
     image_help_message="build a boot image
 
-    Run the BootImageGenerator to build a Maxine boot image.
+    Run the BootImageGenerator to build a Maxine boot image. The classes
+    and packages specified on the command line will be included in the
+    boot image in addition to those found by the Package.java mechanism.
+    Package names are differentiated from class names by being prefixed
+    with '^'.
 
     An option starting with '@' denotes a preconfigured set of
     options. `run_configs`

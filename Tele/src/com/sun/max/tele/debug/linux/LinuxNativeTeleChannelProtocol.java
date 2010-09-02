@@ -37,7 +37,7 @@ import com.sun.max.vm.prototype.*;
  * An implementation of {@link TeleChannelProtocol} for Linux that uses direct native method calls.
  *
  * Currently the Linux implementation does not use the {@link TeleChannelNatives} class owing to
- * the requirement to invoke the underlying native methods in the same thread, which is handed in
+ * the requirement to invoke the underlying native methods in the same thread, which is handled in
  * {@link LinuxTask}.
  *
  *

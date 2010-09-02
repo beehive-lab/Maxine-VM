@@ -34,7 +34,7 @@ import com.sun.cri.ci.*;
  */
 public class IRScopeDebugInfo {
 
-    private final IRScope scope;
+    public final IRScope scope;
     private final int bci;
     private final List<CiValue> locals;
     private final List<CiValue> expressions;
