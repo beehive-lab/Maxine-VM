@@ -296,7 +296,7 @@ public class LinearSpaceAllocator {
 
         // Format as a chunk.
         HeapFreeChunk.setFreeChunkSize(cell, chunkSize);
-        HeapFreeChunk.setFreeChunkNext(cell, null);
+        HeapFreeChunk.setFreeChunkNext(cell, Address.zero());
         return cell;
     }
     void makeParsable() {

@@ -32,9 +32,13 @@ public class ExceptionInfo {
 
     public final int codeOffset;
     public final List<ExceptionHandler> exceptionHandlers;
+    public final int bci;
+    public final int scopeLevel;
 
-    public ExceptionInfo(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
+    public ExceptionInfo(int pcOffset, List<ExceptionHandler> exceptionHandlers, int bci, int scopeLevel) {
         this.codeOffset = pcOffset;
         this.exceptionHandlers = exceptionHandlers;
+        this.bci = bci;
+        this.scopeLevel = scopeLevel;
     }
 }

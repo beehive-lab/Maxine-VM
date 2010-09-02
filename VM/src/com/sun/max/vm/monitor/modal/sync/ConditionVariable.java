@@ -21,7 +21,7 @@
 package com.sun.max.vm.monitor.modal.sync;
 
 /**
- * Abstract class defining the interface to a condiion variable as used by JavaMonitors.
+ * Abstract class defining the interface to a condition variable as used by JavaMonitors.
  *
  * @author Simon Wilkinson
  * @author Mick Jordan

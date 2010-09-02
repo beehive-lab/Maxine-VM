@@ -18,51 +18,51 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+
 package com.sun.max.vm.verifier.types;
 
-import com.sun.cri.bytecode.*;
-import com.sun.max.vm.actor.holder.*;
+import java.io.*;
+
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A registry of canonical instances for objects used by a verifier such as verification types and subroutines.
+ * Models the Java types that are really unboxed words. These types are incompatible
+ * with {@link ReferenceType}s. Furthermore, all different word types at the source
+ * level are equivalent at the verifier and VM level as they can be freely cast
+ * between each other.
  *
  * @author Doug Simon
  */
-public interface VerificationRegistry {
+public final class WordType extends ReferenceOrWordType {
 
-    /**
-     * Gets the canonical object type for a TypeDescriptor.
-     *
-     * @return null if {@code typeDescriptor} denotes a {@linkplain TypeDescriptor#isPrimitive() primitive type}
-     */
-    VerificationType getObjectType(TypeDescriptor typeDescriptor);
+    WordType() {
+        // Ensures that only the one singleton instance of this class is created.
+        assert WORD == null || getClass() != WordType.class;
+    }
 
-    /**
-     * Gets the canonical type of an uninitialized object created by a {@link Bytecodes#NEW} instruction at a given
-     * bytecode position.
-     */
-    UninitializedNewType getUninitializedNewType(int position);
+    @Override
+    public boolean isAssignableFromDifferentType(VerificationType from) {
+        return from instanceof WordType;
+    }
 
-    /**
-     * Gets the canonical type for a TypeDescriptor.
-     */
-    VerificationType getVerificationType(TypeDescriptor typeDescriptor);
+    @Override
+    public TypeDescriptor typeDescriptor() {
+        return JavaTypeDescriptor.WORD;
+    }
 
-    /**
-     * Gets the canonical representation of a subroutine entered at a given position.
-     */
-    Subroutine getSubroutine(int entryPosition, int maxLocals);
+    @Override
+    public int classfileTag() {
+        return ITEM_Object;
+    }
 
-    /**
-     * Clears all recorded subroutines.
-     *
-     * @return the number of recorded subroutines cleared
-     */
-    int clearSubroutines();
+    @Override
+    public void writeInfo(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
+        stream.writeShort(constantPoolEditor.indexOf(PoolConstantFactory.createClassConstant(typeDescriptor()), true));
+    }
 
-    ConstantPool constantPool();
-
-    ClassActor resolve(TypeDescriptor type);
+    @Override
+    public String toString() {
+        return "word";
+    }
 }

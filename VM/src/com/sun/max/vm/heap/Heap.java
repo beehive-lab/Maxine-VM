@@ -291,6 +291,11 @@ public final class Heap {
         heapScheme().enableAllocationForCurrentThread();
     }
 
+    @INLINE
+    public static boolean isAllocationDisabledForCurrentThread() {
+        return heapScheme().isAllocationDisabledForCurrentThread();
+    }
+
     /**
      * @see HeapScheme#isGcThread(Thread)
      */
@@ -590,5 +595,4 @@ public final class Heap {
             MaxineVM.native_exit(1);
         }
     }
-
 }

@@ -66,7 +66,7 @@ public abstract class MethodVerifier {
     /**
      * @see ClassVerifier#getObjectType(TypeDescriptor)
      */
-    public ObjectType getObjectType(TypeDescriptor typeDescriptor) {
+    public VerificationType getObjectType(TypeDescriptor typeDescriptor) {
         if (JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
             throw verifyError("Expected a non-primitive type");
         }
@@ -117,10 +117,10 @@ public abstract class MethodVerifier {
     public VerifyError verifyError(String message) {
         final int currentOpcodePosition = currentOpcodePositionOrMinusOne();
         try {
-            ErrorContext.enterContext("verifying " + classMethodActor.format("%H.%n(%p)") + (currentOpcodePosition == -1 ? "" : " at bytecode position " + currentOpcodePosition));
-            if (verbose) {
-                throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
-            }
+            int sourceLine = currentOpcodePosition == -1 ? -1 : classMethodActor.sourceLineNumber(currentOpcodePosition);
+            String sourceFile = classMethodActor.holder().sourceFileName;
+            Object source = sourceLine == -1 || sourceFile == null ? "" : " (" + sourceFile + ":" + sourceLine + ")";
+            ErrorContext.enterContext("verifying " + classMethodActor.format("%H.%n(%p)") + (currentOpcodePosition == -1 ? "" : " at bytecode position " + currentOpcodePosition) + source);
             throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
         } finally {
             ErrorContext.exitContext();
@@ -137,8 +137,9 @@ public abstract class MethodVerifier {
      */
     public void verifyIsAssignable(VerificationType fromType, VerificationType toType, String errorMessage) {
         if (!toType.isAssignableFrom(fromType)) {
-            toType.isAssignableFrom(fromType);
-            throw verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
+            if (!VerificationType.isTypeIncompatibilityBetweenPointerAndAccessor(fromType, toType)) {
+                throw verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
+            }
         }
     }
 

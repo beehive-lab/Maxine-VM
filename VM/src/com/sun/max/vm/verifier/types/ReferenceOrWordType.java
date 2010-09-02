@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,35 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
 
-import java.util.*;
-
-import com.sun.c1x.ir.*;
-import com.sun.cri.ci.*;
+package com.sun.max.vm.verifier.types;
 
 /**
- * The {@code IRScopeDebugInfo} class definition.
+ * Models a type that is either a reference or a word. This is necessary as the two
+ * types are equivalent at the Java source level.
  *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
+ * @author Doug Simon
  */
-public class IRScopeDebugInfo {
+public class ReferenceOrWordType extends Category1Type {
 
-    public final IRScope scope;
-    private final int bci;
-    private final List<CiValue> locals;
-    private final List<CiValue> expressions;
-    private final List<CiValue> monitors;
-    private final IRScopeDebugInfo caller;
+    ReferenceOrWordType() {
+        // Ensures that only the one singleton instance of this class is created.
+        assert REFERENCE_OR_WORD == null || getClass() != ReferenceOrWordType.class;
+    }
 
-    public IRScopeDebugInfo(IRScope scope, int bci, List<CiValue> locals, List<CiValue> expressions, List<CiValue> monitors, IRScopeDebugInfo caller) {
-        this.scope = scope;
-        this.locals = locals;
-        this.bci = bci;
-        this.expressions = expressions;
-        this.monitors = monitors;
-        this.caller = caller;
+    @Override
+    public boolean isAssignableFromDifferentType(VerificationType from) {
+        return from instanceof ReferenceOrWordType;
+    }
+
+    @Override
+    public String toString() {
+        return "reference|word";
     }
 }

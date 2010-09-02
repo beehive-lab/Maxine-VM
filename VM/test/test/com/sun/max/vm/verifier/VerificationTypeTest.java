@@ -70,7 +70,7 @@ public class VerificationTypeTest extends VmTestCase {
     private ObjectType interfaceCType;
 
     private ObjectType getObjectType(TypeDescriptor typeDescriptor) {
-        return verifier.getObjectType(typeDescriptor);
+        return (ObjectType) verifier.getObjectType(typeDescriptor);
     }
 
     @Override
@@ -135,7 +135,7 @@ public class VerificationTypeTest extends VmTestCase {
                 final VerificationType retrievedType = verifier.getVerificationType(typeDescriptor);
                 assertTrue(type + " != " + retrievedType, type == retrievedType);
                 if (type instanceof ObjectType) {
-                    final ObjectType retrievedObjectType = verifier.getObjectType(typeDescriptor);
+                    final ObjectType retrievedObjectType = (ObjectType) verifier.getObjectType(typeDescriptor);
                     assertTrue(type + " != " + retrievedObjectType, type == retrievedObjectType);
                 }
             }
