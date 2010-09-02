@@ -376,10 +376,10 @@ public class JavaPrototype extends Prototype {
 
         packageLoader = new PrototypePackageLoader(HOSTED_BOOT_CLASS_LOADER, HOSTED_BOOT_CLASS_LOADER.classpath());
         theJavaPrototype = this;
-
         MaxineVM.setTarget(new MaxineVM(vmConfiguration));
         vmConfiguration.loadAndInstantiateSchemes(true);
 
+        assert MaxineVM.target().configuration == vmConfiguration;
         Trace.line(1, "Host VM configuration:");
         Trace.line(1, MaxineVM.host().configuration);
         Trace.line(1, "Target VM configuration:");
