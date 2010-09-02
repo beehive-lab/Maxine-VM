@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm.profile;
 
-import com.sun.max.program.ProgramError;
-import com.sun.max.annotate.INLINE;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.max.annotate.*;
+import com.sun.max.program.*;
+import com.sun.max.vm.actor.member.*;
 
 /**
  * This class collects profiling information of various kinds into a single place.
@@ -62,7 +62,7 @@ public class MethodProfile {
     private int[] data; // records actual counts
     private int[] info; // records bci and type for each count entry
 
-    public Object method;
+    public ClassMethodActor method;
 
     MethodProfile() {
     }

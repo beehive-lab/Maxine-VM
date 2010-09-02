@@ -22,6 +22,7 @@ package com.sun.max.vm.prototype;
 
 import java.io.*;
 
+import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -193,6 +194,12 @@ public final class BootImageGenerator {
                 options.printHelp(System.out, 80);
                 return;
             }
+
+            String[] extraClassesAndPackages = options.getArguments();
+            if (extraClassesAndPackages.length != 0) {
+                System.setProperty(JavaPrototype.EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME, Utils.toString(extraClassesAndPackages, " "));
+            }
+
 
             if (vmArguments.getValue() != null) {
                 VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));

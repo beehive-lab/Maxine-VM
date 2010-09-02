@@ -31,6 +31,10 @@ import com.sun.max.vm.runtime.*;
  * Each successive SIGHUP sent to the Maxine VM running this
  * program toggles the format of the thread dump performed.
  *
+ * Like all VmOperations, this class must be in the boot image.
+ * This is achieved by adding 'demo.PrintThreadsDemo' to the end
+ * of a 'max image' command.
+ *
  * @author Doug Simon
  */
 public class PrintThreadsDemo {
@@ -56,10 +60,8 @@ public class PrintThreadsDemo {
             threadArray[i] = thread;
             thread.start();
         }
-        for (int i = 0; i < threads; i++) {
-            threadArray[i].join();
-        }
-        System.out.println("I mean it.");
+
+        // This program has to be stopped with CTRL-C (i.e. SIGINT)
     }
 
     private static class AllocatingSpinner extends Thread {
