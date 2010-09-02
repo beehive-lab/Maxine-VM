@@ -25,7 +25,7 @@ package com.sun.max.vm.verifier.types;
  * @author David Liu
  * @author Doug Simon
  */
-public class ReferenceType extends Category1Type {
+public class ReferenceType extends ReferenceOrWordType {
 
     ReferenceType() {
         // Ensures that only the one singleton instance of this class is created.

@@ -25,6 +25,7 @@ import java.util.*;
 
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.prototype.*;
@@ -45,6 +46,8 @@ public class CommandLineVerifier extends MethodFinder {
         "'OLD' to use the type inferencing verifier, 'NEW' to use the type checking verifier.");
     static Option<Boolean> verbose = options.newBooleanOption("verbose", false,
         "Enable verbose execution.");
+    static Option<Boolean> failFast = options.newBooleanOption("fail-fast", false,
+        "Exit after first verification error.");
 
     static enum Policy {
         DEFAULT, OLD, NEW;
@@ -66,6 +69,9 @@ public class CommandLineVerifier extends MethodFinder {
         CommandLineVerifier clv = new CommandLineVerifier();
         List<MethodActor> methods = clv.find(patterns, Classpath.fromSystem(), CommandLineVerifier.class.getClassLoader());
         log.println("Found " + methods.size() + " methods");
+        if (verbose.getValue()) {
+            Verifier.TraceVerification = "";
+        }
         for (MethodActor method : methods) {
             if (method instanceof ClassMethodActor) {
                 ClassMethodActor classMethodActor = (ClassMethodActor) method;
@@ -92,11 +98,25 @@ public class CommandLineVerifier extends MethodFinder {
                 }
                 if (!verbose.getValue()) {
                     log.println("Verifying " + method.format("%H.%n(%p)") + " via " + (verifier instanceof TypeCheckingVerifier ? "type-checking" : "type-inferecing"));
-                } else {
-                    verifier.verbose = true;
                 }
-                verifier.verify(classMethodActor, classMethodActor.originalCodeAttribute(false));
+                try {
+                    verifier.verify(classMethodActor, classMethodActor.originalCodeAttribute(false));
+                } catch (LinkageError e) {
+                    e.printStackTrace();
+                    if (failFast.getValue()) {
+                        break;
+                    }
+                }
             }
+        }
+    }
+
+    @Override
+    protected ClassActor getClassActor(Class< ? > javaClass) {
+        try {
+            return super.getClassActor(javaClass);
+        } catch (HostOnlyClassError e) {
+            return null;
         }
     }
 

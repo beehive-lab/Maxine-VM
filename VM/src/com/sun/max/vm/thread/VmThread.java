@@ -276,13 +276,26 @@ public class VmThread {
     private boolean isGCThread;
 
     /**
-     * A link in a list of threads waiting on a monitor. If this field points to this thread, then the thread is not on
-     * a list. If it is {@code null}, then this thread is at the end of a list. A thread can be on at most one list.
+     * Next thread waiting on the same monitor this thread is {@linkplain Object#wait() waiting} on.
+     * Any thread can only be waiting on at most one monitor.
+     * This thread is {@linkplain #isOnWaitersList() not} on a monitor's waiting thread list if
+     * the value of this field is the thread itself.
      *
      * @see StandardJavaMonitor#monitorWait(long)
      * @see StandardJavaMonitor#monitorNotify(boolean)
      */
     public VmThread nextWaitingThread = this;
+
+    /**
+     * Determines if this thread is on a monitor's list of waiting threads.
+     */
+    public boolean isOnWaitersList() {
+        return nextWaitingThread != this;
+    }
+
+    public void unlinkFromWaitersList() {
+        nextWaitingThread = this;
+    }
 
     /**
      * A stack of elements that support  {@link AccessController#doPrivileged(PrivilegedAction)} calls.

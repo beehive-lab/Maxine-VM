@@ -960,11 +960,12 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeReadRegisters(JNIEnv *env, jcl
 // The following methods support core-dump access for Linux
 #include <sys/procfs.h>
 
+extern ThreadState_t toThreadState(char state, pid_t tid);
+
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxDumpThreadAccess_taskStatusToThreadState(JNIEnv *env, jclass  class, jobject bytebuffer) {
     prpsinfo_t * prpsinfo = (prpsinfo_t *)  ((*env)->GetDirectBufferAddress(env, bytebuffer));
-    log_println("psinfo.pr_state %d, psinfo.ps_sname %c", prpsinfo->pr_state, prpsinfo->pr_sname);
-    return TS_SUSPENDED;
+    return toThreadState(prpsinfo->pr_sname, prpsinfo->pr_pid);
 }
 
 JNIEXPORT jint JNICALL

@@ -334,8 +334,10 @@ public class Frame implements FrameModel {
 
         for (int i = 0; i < stackSize; i++) {
             if (!stack[i].isAssignableFrom(fromFrame.stack[i])) {
-                throw verifyError("Stack slot " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
-                    inconsistentFramesMessageSuffix(this, fromFrame));
+                if (!VerificationType.isTypeIncompatibilityBetweenPointerAndAccessor(fromFrame.stack[i], stack[i])) {
+                    throw verifyError("Stack slot " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
+                        inconsistentFramesMessageSuffix(this, fromFrame));
+                }
             }
         }
     }
@@ -355,8 +357,10 @@ public class Frame implements FrameModel {
 
         for (int i = 0; i < fromFrame.activeLocals; i++) {
             if (!locals[i].isAssignableFrom(fromFrame.locals[i])) {
-                throw verifyError("Local variable " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
-                    inconsistentFramesMessageSuffix(this, fromFrame));
+                if (!VerificationType.isTypeIncompatibilityBetweenPointerAndAccessor(fromFrame.locals[i], locals[i])) {
+                    throw verifyError("Local variable " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
+                        inconsistentFramesMessageSuffix(this, fromFrame));
+                }
             }
         }
     }

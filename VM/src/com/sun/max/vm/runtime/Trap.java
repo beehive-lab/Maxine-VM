@@ -409,10 +409,10 @@ public abstract class Trap {
      *
      * If there is a local handler for the exception (i.e. a handler in the same frame in which the exception occurred)
      * and the method in which the exception occurred was compiled by the opto compiler, then the trap state is altered
-     * so that the exception object is placed into the register typically used for an integer return value (e.g. RAX on
-     * AMD64) and the return address for the trap frame is set to be the exception handler entry address. This means
-     * that the register allocator in the opto compiler can assume that registers are not modified in the control flow
-     * from an implicit exception to the exception handler (apart from the register now holding the exception object).
+     * so that the return address for the trap frame is set to be the exception handler entry address.
+     * The exception object is placed into the {@link VmThreadLocal#EXCEPTION_OBJECT} variable thread local. This means
+     * that the register allocator can assume that registers are not modified in the control flow
+     * from an implicit exception to the exception handler.
      *
      * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, Pointer) standard mechanism} for throwing an
      * exception is used.

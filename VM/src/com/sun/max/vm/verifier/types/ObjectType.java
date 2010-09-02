@@ -61,7 +61,7 @@ public class ObjectType extends ReferenceType {
 
     @Override
     public boolean isAssignableFromDifferentType(VerificationType from) {
-     // Any object class is assignable from null
+        // Any object class is assignable from null
         if (from == NULL) {
             return true;
         }

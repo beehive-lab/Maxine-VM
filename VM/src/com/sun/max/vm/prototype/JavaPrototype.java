@@ -50,6 +50,14 @@ import com.sun.max.vm.type.*;
  */
 public class JavaPrototype extends Prototype {
 
+    /**
+     * The name of the system that can be used to specify extra classes and packages to be loaded
+     * into a Java prototype by {@link #loadCoreJavaPackages()}. The value of the property is
+     * parsed as a space separated list of class and package names. Package names are those
+     * prefixed by '^'.
+     */
+    public static final String EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME = "max.image.extraClassesAndPackages";
+
     private static JavaPrototype theJavaPrototype;
     private List<MaxPackage> basePackages;
     private final Map<MaxPackage, MaxPackage> excludedMaxPackages = new HashMap<MaxPackage, MaxPackage>();
@@ -274,11 +282,20 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.util.regex", false);
         loadClass(sun.security.action.GetPropertyAction.class);
 
+        String value = System.getProperty(EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME);
+        if (value != null) {
+            for (String s : value.split("\\s+")) {
+                if (s.charAt(0) == '^') {
+                    loadPackage(s.substring(1), false);
+                } else {
+                    loadClass(s);
+                }
+            }
+        }
+
         if (System.getProperty("max.allow.all.core.packages") == null) {
             HostedBootClassLoader.omitPackage("java.security", false);
         }
-
-//loadPackage("demo", false);
     }
 
     private static List<Class> mainPackageClasses = new ArrayList<Class>();

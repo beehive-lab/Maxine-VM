@@ -223,7 +223,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.minus(1));
     }
 
-    public final boolean allocationDisabledForCurrentThread() {
+    @Override
+    public final boolean isAllocationDisabledForCurrentThread() {
         return !ALLOCATION_DISABLED.getConstantWord().isZero();
     }
 

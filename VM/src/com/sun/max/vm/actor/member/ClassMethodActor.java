@@ -271,7 +271,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
                 final ClassActor holder = compilee.holder();
                 if (MaxineVM.isHosted()) {
-                    if (!hostedVerificationDisabled && holder.kind != Kind.WORD) {
+                    if (!hostedVerificationDisabled) {
                         // We simply verify all methods during boot image build time as the overhead should be acceptable.
                         verifier = modified ? new TypeInferencingVerifier(holder) : Verifier.verifierFor(holder);
                     }
@@ -356,7 +356,14 @@ public abstract class ClassMethodActor extends MethodActor {
      * @return -1 if a source line number is not available
      */
     public int sourceLineNumber(int bytecodePosition) {
-        return codeAttribute().lineNumberTable().findLineNumber(bytecodePosition);
+        CodeAttribute codeAttribute = this.codeAttribute;
+        if (codeAttribute == null) {
+            codeAttribute = this.originalCodeAttribute;
+        }
+        if (codeAttribute == null) {
+            return -1;
+        }
+        return codeAttribute.lineNumberTable().findLineNumber(bytecodePosition);
     }
 
     /**

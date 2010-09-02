@@ -145,12 +145,18 @@ public class CiTargetMethod implements Serializable {
      * well as the caught exception type.
      */
     public static final class ExceptionHandler extends Site {
+        public final int bci;
+        public final int scopeLevel;
         public final int handlerPos;
+        public final int handlerBci;
         public final RiType exceptionType;
 
-        ExceptionHandler(int pcOffset, int handlerPos, RiType exceptionType) {
+        ExceptionHandler(int pcOffset, int bci, int scopeLevel, int handlerPos, int handlerBci, RiType exceptionType) {
             super(pcOffset);
+            this.bci = bci;
+            this.scopeLevel = scopeLevel;
             this.handlerPos = handlerPos;
+            this.handlerBci = handlerBci;
             this.exceptionType = exceptionType;
         }
 
@@ -293,8 +299,8 @@ public class CiTargetMethod implements Serializable {
      * @param handlerPos    the position of the handler
      * @param throwableType the type of exceptions handled by the handler
      */
-    public void recordExceptionHandler(int codePos, int handlerPos, RiType throwableType) {
-        exceptionHandlers.add(new ExceptionHandler(codePos, handlerPos, throwableType));
+    public void recordExceptionHandler(int codePos, int bci, int scopeLevel, int handlerPos, int handlerBci, RiType throwableType) {
+        exceptionHandlers.add(new ExceptionHandler(codePos, bci, scopeLevel, handlerPos, handlerBci, throwableType));
     }
 
     /**

@@ -172,6 +172,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         FatalError.unimplemented();
     }
 
+    public boolean isAllocationDisabledForCurrentThread() {
+        throw FatalError.unimplemented();
+    }
+
     @INLINE(override = true)
     public boolean usesTLAB() {
         return false;
