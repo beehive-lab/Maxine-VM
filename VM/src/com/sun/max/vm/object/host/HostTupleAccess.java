@@ -27,8 +27,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.prototype.*;
-import com.sun.max.vm.prototype.JDKInterceptor.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.vm.prototype.JDKInterceptor.InterceptedField;
 import com.sun.max.vm.value.*;
 
 /**
@@ -59,7 +58,7 @@ public final class HostTupleAccess {
     public static Value readValue(Object tuple, FieldActor fieldActor) {
         if (fieldActor.isInjected()) {
             final InjectedFieldActor injectedFieldActor = (InjectedFieldActor) fieldActor;
-            return injectedFieldActor.readInjectedValue(Reference.fromJava(tuple));
+            return injectedFieldActor.readInjectedValue(tuple);
         }
         // is this an intercepted field?
         final InterceptedField interceptedField = JDKInterceptor.getInterceptedField(fieldActor);

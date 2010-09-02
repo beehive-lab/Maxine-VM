@@ -180,16 +180,16 @@ public final class VMConfigurations {
 
     public static VMConfiguration createPrototype(BuildLevel buildLevel, Platform platform) {
         return new VMConfiguration(buildLevel, platform,
-            new com.sun.max.vm.grip.prototype.Package(),
-            new com.sun.max.vm.reference.prototype.Package(),
-            defaultLayoutScheme(platform),
-            defaultHeapScheme(),
-            new com.sun.max.vm.monitor.prototype.Package(),
-            new com.sun.max.vm.compiler.prototype.Package(),
             null,
             null,
-            defaultTrampolineScheme(),
-            defaultTargetABIsScheme(platform),
-            defaultRunScheme());
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     }
 }

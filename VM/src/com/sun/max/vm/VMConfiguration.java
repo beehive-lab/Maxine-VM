@@ -215,7 +215,9 @@ public final class VMConfiguration {
 
     public synchronized <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(MaxPackage p, Class<VMScheme_Type> vmSchemeType, Object... arguments) {
         if (p == null) {
-            throw ProgramError.unexpected("Package not found for scheme: " + vmSchemeType.getSimpleName());
+            ProgramWarning.message("Package not found for scheme: " + vmSchemeType.getSimpleName());
+            return null;
+            //throw ProgramError.unexpected("Package not found for scheme: " + vmSchemeType.getSimpleName());
         }
         final VMScheme_Type vmScheme = p.loadAndInstantiateScheme(vmSchemeType, arguments);
         vmSchemes.add(vmScheme);
@@ -232,9 +234,13 @@ public final class VMConfiguration {
         layoutScheme = loadAndInstantiateScheme(layoutPackage, LayoutScheme.class, this, gripScheme);
         monitorScheme = loadAndInstantiateScheme(monitorPackage, MonitorScheme.class, this);
         heapScheme = loadAndInstantiateScheme(heapPackage, HeapScheme.class, this);
-        targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage, TargetABIsScheme.class, this);
+        if (targetABIsPackage != null) {
+            targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage, TargetABIsScheme.class, this);
+        }
         bootCompilerScheme = loadAndInstantiateScheme(bootCompilerPackage, BootstrapCompilerScheme.class, this);
-        trampolineScheme = loadAndInstantiateScheme(trampolinePackage, DynamicTrampolineScheme.class, this);
+        if (trampolinePackage != null) {
+            trampolineScheme = loadAndInstantiateScheme(trampolinePackage, DynamicTrampolineScheme.class, this);
+        }
 
         if (jitCompilerPackage != null) {
             jitCompilerScheme = loadAndInstantiateScheme(jitCompilerPackage, RuntimeCompilerScheme.class, this);
@@ -268,7 +274,9 @@ public final class VMConfiguration {
         compilationScheme = new AdaptiveCompilationScheme(this);
         vmSchemes.add(compilationScheme);
 
-        runScheme = loadAndInstantiateScheme(runPackage, RunScheme.class, this);
+        if (runPackage != null) {
+            runScheme = loadAndInstantiateScheme(runPackage, RunScheme.class, this);
+        }
         areSchemesLoadedAndInstantiated = true;
     }
 
