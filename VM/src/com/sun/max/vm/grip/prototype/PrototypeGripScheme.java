@@ -46,7 +46,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
 
     public PrototypeGripScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        dataModel = vmConfiguration.platform().processorKind.dataModel;
+        dataModel = vmConfiguration.platform.dataModel();
         gripWidth = dataModel.wordWidth;
     }
 

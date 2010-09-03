@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -67,7 +69,7 @@ public class ContiguousHeapSpace extends MemoryRegion {
     }
 
     public Size adjustGrowth(Size delta) {
-        int pageSize = VMConfiguration.target().platform.pageSize;
+        int pageSize = platform().pageSize;
         Size pageAlignedGrowth = delta.roundedUpBy(pageSize).asSize();
         Address end = end();
         if (committedEnd.plus(pageAlignedGrowth).greaterThan(end)) {
@@ -80,7 +82,7 @@ public class ContiguousHeapSpace extends MemoryRegion {
         Address newCommittedEnd = committedEnd.plus(growth);
         if (MaxineVM.isDebug()) {
             FatalError.check(newCommittedEnd.lessEqual(end()), "Cannot grow beyond reserved space");
-            FatalError.check(growth.isAligned(VMConfiguration.target().platform.pageSize), "Heap Growth must be page-aligned");
+            FatalError.check(growth.isAligned(platform().pageSize), "Heap Growth must be page-aligned");
         }
         if (VirtualMemory.commitMemory(committedEnd, growth, VirtualMemory.Type.HEAP)) {
             committedEnd = newCommittedEnd;

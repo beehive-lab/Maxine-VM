@@ -41,7 +41,7 @@ public class CirOptimizerTestSetup extends CirCompilerTestSetup {
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform(),
                                      new com.sun.max.vm.cps.b.c.Package());
     }
 }

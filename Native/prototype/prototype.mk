@@ -23,8 +23,8 @@ PROJECT = ../../..
 
 LIB = prototype
 
-SOURCES = address.c boxedMemory.c boxedPointer.c c.c log.c \
-          platform.c prototype.c relocation.c dataio.c tests.c mutex.c
+SOURCES = boxedMemory.c boxedPointer.c c.c log.c \
+          platform.c relocation.c dataio.c mutex.c
 
 SOURCE_DIRS = platform prototype share substrate
 

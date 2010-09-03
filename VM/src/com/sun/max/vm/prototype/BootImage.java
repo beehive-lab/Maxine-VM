@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.prototype;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.nio.*;
@@ -312,15 +314,15 @@ public class BootImage {
         }
 
         private Header(DataPrototype dataPrototype, int stringInfoSize) {
-            super(dataPrototype.vmConfiguration().platform().processorKind.dataModel.endianness, 0);
-            final VMConfiguration vmConfiguration = dataPrototype.vmConfiguration();
+            super(vmConfig().platform.endianness(), 0);
+            final VMConfiguration vmConfiguration = vmConfig();
             isBigEndian = endianness() == Endianness.LITTLE ? 0 : 0xffffffff;
             identification = IDENTIFICATION;
             version = VERSION;
             randomID = UUID.randomUUID().hashCode();
-            wordSize = vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes;
-            cacheAlignment = vmConfiguration.platform().processorKind.dataModel.cacheAlignment;
-            pageSize = vmConfiguration.platform().pageSize;
+            wordSize = vmConfiguration.platform.wordWidth().numberOfBytes;
+            cacheAlignment = vmConfiguration.platform.dataModel().cacheAlignment;
+            pageSize = vmConfiguration.platform.pageSize;
             vmRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.MaxineVM_run, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadAddMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_add, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_run, CallEntryPoint.C_ENTRY_POINT).toInt();
@@ -487,9 +489,9 @@ public class BootImage {
         private StringInfo(VMConfiguration vmConfiguration, int offset) {
             super(offset);
             buildLevelName = vmConfiguration.buildLevel().name();
-            processorModelName = vmConfiguration.platform().processorKind.processorModel.name();
-            instructionSetName = vmConfiguration.platform().processorKind.instructionSet.name();
-            operatingSystemName = vmConfiguration.platform().operatingSystem.name();
+            processorModelName = vmConfiguration.platform.processorModel().name();
+            instructionSetName = vmConfiguration.platform.instructionSet().name();
+            operatingSystemName = vmConfiguration.platform.operatingSystem.name();
 
             gripPackageName = vmConfiguration.gripPackage.name();
             referencePackageName = vmConfiguration.referencePackage.name();
@@ -650,7 +652,7 @@ public class BootImage {
                 final DataModel dataModel = new DataModel(header.wordWidth(), header.endianness(), header.cacheAlignment);
                 final ProcessorKind processorKind = new ProcessorKind(stringInfo.processorModel(), stringInfo.instructionSet(), dataModel);
                 final Platform platform = new Platform(processorKind, stringInfo.operatingSystem(), header.pageSize);
-                vmConfiguration = new VMConfiguration(stringInfo.buildLevel(), platform,
+                vmConfiguration = createVMConfiguration(stringInfo.buildLevel(), platform,
                                 stringInfo.gripPackage(),
                                 stringInfo.referencePackage(),
                                 stringInfo.layoutPackage(),
@@ -658,10 +660,10 @@ public class BootImage {
                                 stringInfo.monitorPackage(),
                                 stringInfo.compilerPackage(),
                                 stringInfo.jitPackage(),
-                        null, stringInfo.trampolinePackage(),
+                                null,
+                                stringInfo.trampolinePackage(),
                                 stringInfo.targetABIsPackage(),
                                 stringInfo.runPackage());
-                vmConfiguration.loadAndInstantiateSchemes(true);
 
                 fileInputStream.skip(header.heapSize + header.codeSize);
                 int trailerOffset = codeOffset() + header.codeSize;
@@ -678,10 +680,43 @@ public class BootImage {
     }
 
     /**
+     * Creates the VM configuration from the header info in a boot image file.
+     *
+     * Subclasses can override this method to interpose upon the schemes.
+     */
+    protected VMConfiguration createVMConfiguration(BuildLevel buildLevel,
+                    Platform platform,
+                    VMPackage gripPackage,
+                    VMPackage referencePackage,
+                    VMPackage layoutPackage,
+                    VMPackage heapPackage,
+                    VMPackage monitorPackage,
+                    VMPackage bootCompilerPackage,
+                    VMPackage jitCompilerPackage,
+                    VMPackage optCompilerPackage,
+                    VMPackage trampolinePackage,
+                    VMPackage targetABIsPackage,
+                    VMPackage runPackage) {
+        return new VMConfiguration(buildLevel,
+                        platform,
+                        gripPackage,
+                        referencePackage,
+                        layoutPackage,
+                        heapPackage,
+                        monitorPackage,
+                        bootCompilerPackage,
+                        jitCompilerPackage,
+                        optCompilerPackage,
+                        trampolinePackage,
+                        targetABIsPackage,
+                        runPackage);
+    }
+
+    /**
      * Used when constructing a boot image to be written to a file.
      */
     public BootImage(DataPrototype dataPrototype) throws BootImageException {
-        this.vmConfiguration = dataPrototype.vmConfiguration();
+        this.vmConfiguration = vmConfig();
         this.stringInfo = new StringInfo(vmConfiguration, new Header(dataPrototype, 0).size());
         this.stringInfo.check();
         this.header = new Header(dataPrototype, stringInfo.size());
@@ -793,7 +828,7 @@ public class BootImage {
             final RandomAccessFile raf = new RandomAccessFile(imageFile, "r");
             final MappedByteBuffer buffer = raf.getChannel().map(MapMode.READ_ONLY, offset, size);
             raf.close();
-            ByteOrder byteOrder = vmConfiguration.platform().processorKind.dataModel.endianness.asByteOrder();
+            ByteOrder byteOrder = vmConfiguration.platform.endianness().asByteOrder();
             buffer.order(byteOrder);
             raf.close();
             return buffer;

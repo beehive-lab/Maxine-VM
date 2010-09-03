@@ -20,6 +20,8 @@
  */
 package com.sun.max.unsafe;
 
+import java.math.*;
+
 import com.sun.max.annotate.*;
 
 /**
@@ -81,7 +83,22 @@ public final class BoxedAddress extends Address implements Boxed {
         return nativeWord;
     }
 
-    private static native long nativeDivide(long dividend, long divisor);
+    private static BigInteger bi(long unsigned) {
+        if (unsigned < 0) {
+            long signBit = 0x8000000000000000L;
+            long low63Bits = unsigned & ~signBit;
+            return BigInteger.valueOf(low63Bits).setBit(63);
+        }
+        return BigInteger.valueOf(unsigned);
+    }
+
+
+    private static long unsignedDivide(long dividend, long divisor) {
+        if (dividend >= 0 && divisor >= 0) {
+            return dividend / divisor;
+        }
+        return bi(dividend).divide(bi(divisor)).longValue();
+    }
 
     @Override
     public Address dividedByAddress(Address divisor) {
@@ -89,7 +106,7 @@ public final class BoxedAddress extends Address implements Boxed {
         if (box.nativeWord == 0L) {
             throw new ArithmeticException();
         }
-        return new BoxedAddress(nativeDivide(nativeWord, box.nativeWord));
+        return new BoxedAddress(unsignedDivide(nativeWord, box.nativeWord));
     }
 
     @Override
@@ -97,10 +114,15 @@ public final class BoxedAddress extends Address implements Boxed {
         if (divisor == 0) {
             throw new ArithmeticException();
         }
-        return new BoxedAddress(nativeDivide(nativeWord, divisor & BoxedWord.INT_MASK));
+        return new BoxedAddress(unsignedDivide(nativeWord, divisor & BoxedWord.INT_MASK));
     }
 
-    private static native long nativeRemainder(long dividend, long divisor);
+    private static long unsignedRemainder(long dividend, long divisor) {
+        if (dividend >= 0 && divisor >= 0) {
+            return dividend % divisor;
+        }
+        return bi(dividend).remainder(bi(divisor)).longValue();
+    }
 
     @Override
     public Address remainderByAddress(Address divisor) {
@@ -108,7 +130,7 @@ public final class BoxedAddress extends Address implements Boxed {
         if (box.nativeWord == 0L) {
             throw new ArithmeticException();
         }
-        return new BoxedAddress(nativeRemainder(nativeWord, box.nativeWord));
+        return new BoxedAddress(unsignedRemainder(nativeWord, box.nativeWord));
     }
 
     @Override
@@ -116,6 +138,6 @@ public final class BoxedAddress extends Address implements Boxed {
         if (divisor == 0) {
             throw new ArithmeticException();
         }
-        return (int) nativeRemainder(nativeWord, divisor & BoxedWord.INT_MASK);
+        return (int) unsignedRemainder(nativeWord, divisor & BoxedWord.INT_MASK);
     }
 }

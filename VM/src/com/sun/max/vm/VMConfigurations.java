@@ -20,16 +20,25 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.InstructionSet.*;
+import com.sun.max.asm.InstructionSet.Category;
 import com.sun.max.platform.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.grip.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.monitor.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.trampoline.template.Package;
+import com.sun.max.vm.trampoline.*;
 
 /**
- * A class to capture standard arguments to the {@link VMConfiguration} constructor
- * to avoid repetition.
+ * A class to list default scheme implementation and to capture standard {@link VMConfiguration}s.
  *
  * @author Mick Jordan
  */
@@ -39,8 +48,11 @@ public final class VMConfigurations {
     private VMConfigurations() {
     }
 
-    public static VMPackage defaultCompilerScheme(Platform platform) {
-        switch (platform.processorKind.instructionSet) {
+    /**
+     * Gets the package providing the default {@link BootstrapCompilerScheme}.
+     */
+    public static VMPackage defaultCompilerScheme() {
+        switch (platform().instructionSet()) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
             case SPARC:
@@ -50,8 +62,11 @@ public final class VMConfigurations {
         }
     }
 
-    public static VMPackage defaultJitCompilerScheme(Platform platform) {
-        switch (platform.processorKind.instructionSet) {
+    /**
+     * Gets the package providing the default {@link RuntimeCompilerScheme}.
+     */
+    public static VMPackage defaultJitCompilerScheme() {
+        switch (platform().instructionSet()) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.amd64");
             case SPARC:
@@ -61,8 +76,11 @@ public final class VMConfigurations {
         }
     }
 
-    public static VMPackage defaultTargetABIsScheme(Platform platform) {
-        switch (platform.processorKind.instructionSet) {
+    /**
+     * Gets the package providing the default {@link TargetABIsScheme}.
+     */
+    public static VMPackage defaultTargetABIsScheme() {
+        switch (platform().instructionSet()) {
             case AMD64:
                 return new com.sun.max.vm.compiler.target.amd64.Package();
             case SPARC:
@@ -72,16 +90,25 @@ public final class VMConfigurations {
         }
     }
 
+    /**
+     * Gets the package providing the default {@link HeapScheme}.
+     */
     public static VMPackage defaultHeapScheme() {
         return new com.sun.max.vm.heap.sequential.semiSpace.Package();
     }
 
+    /**
+     * Gets the package providing the default {@link ReferenceScheme}.
+     */
     public static VMPackage defaultReferenceScheme() {
         return new com.sun.max.vm.reference.heap.Package();
     }
 
-    public static VMPackage defaultLayoutScheme(Platform platform) {
-        if (platform.instructionSet().category == Category.RISC) {
+    /**
+     * Gets the package providing the default {@link LayoutScheme}.
+     */
+    public static VMPackage defaultLayoutScheme() {
+        if (platform().instructionSet().category == Category.RISC) {
             // On SPARC, the HOM layout enables more optimized code for accessing array elements
             // smaller than a word as there is no need to perform address arithmetic to skip
             // over the header; the origin is pointing at array element 0.
@@ -93,19 +120,31 @@ public final class VMConfigurations {
         return new com.sun.max.vm.layout.ohm.Package();
     }
 
-    public static com.sun.max.vm.run.java.Package defaultRunScheme() {
+    /**
+     * Gets the package providing the default {@link RunScheme}.
+     */
+    public static VMPackage defaultRunScheme() {
         return new com.sun.max.vm.run.java.Package();
     }
 
-    public static com.sun.max.vm.grip.direct.Package defaultGripScheme() {
+    /**
+     * Gets the package providing the default {@link GripScheme}.
+     */
+    public static VMPackage defaultGripScheme() {
         return new com.sun.max.vm.grip.direct.Package();
     }
 
-    public static com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package defaultMonitorScheme() {
+    /**
+     * Gets the package providing the default {@link MonitorScheme}.
+     */
+    public static VMPackage defaultMonitorScheme() {
         return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
     }
 
-    public static Package defaultTrampolineScheme() {
+    /**
+     * Gets the package providing the default {@link DynamicTrampolineScheme}.
+     */
+    public static VMPackage defaultTrampolineScheme() {
         return new com.sun.max.vm.trampoline.template.Package();
     }
 
@@ -113,83 +152,34 @@ public final class VMConfigurations {
         return new VMConfiguration(buildLevel, platform,
             defaultGripScheme(),
             defaultReferenceScheme(),
-            defaultLayoutScheme(platform),
+            defaultLayoutScheme(),
             defaultHeapScheme(),
             defaultMonitorScheme(),
-            defaultCompilerScheme(platform),
-            defaultJitCompilerScheme(platform),
+            defaultCompilerScheme(),
+            defaultJitCompilerScheme(),
             null,
             defaultTrampolineScheme(),
-            defaultTargetABIsScheme(platform),
-            defaultRunScheme());
-    }
-
-    public static VMConfiguration createStandardJit(BuildLevel buildLevel, Platform platform, VMPackage jitPackage) {
-        return new VMConfiguration(buildLevel, platform,
-            defaultGripScheme(),
-            defaultReferenceScheme(),
-            defaultLayoutScheme(platform),
-            defaultHeapScheme(),
-            defaultMonitorScheme(),
-            defaultCompilerScheme(platform),
-            jitPackage,
-            null,
-            defaultTrampolineScheme(),
-            defaultTargetABIsScheme(platform),
-            defaultRunScheme());
-    }
-
-    public static VMPackage defaultMonitorPackage() {
-        return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
-    }
-
-    public static VMConfiguration createStandardInterpreter(BuildLevel buildLevel, Platform platform) {
-        return new VMConfiguration(buildLevel, platform,
-            defaultGripScheme(),
-            defaultReferenceScheme(),
-            defaultLayoutScheme(platform),
-            defaultHeapScheme(),
-            defaultMonitorScheme(),
-            defaultCompilerScheme(platform),
-            defaultJitCompilerScheme(platform),
-            null,
-            defaultTrampolineScheme(),
-            defaultTargetABIsScheme(platform),
+            defaultTargetABIsScheme(),
             defaultRunScheme());
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform) {
         return createStandard(buildLevel, platform,
-            defaultCompilerScheme(platform));
+            defaultCompilerScheme());
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform, VMPackage compilerPackage) {
         return new VMConfiguration(buildLevel, platform,
             defaultGripScheme(),
             defaultReferenceScheme(),
-            defaultLayoutScheme(platform),
+            defaultLayoutScheme(),
             defaultHeapScheme(),
             defaultMonitorScheme(),
             compilerPackage,
             null,
             null,
             defaultTrampolineScheme(),
-            defaultTargetABIsScheme(platform),
+            defaultTargetABIsScheme(),
             defaultRunScheme());
-    }
-
-    public static VMConfiguration createPrototype(BuildLevel buildLevel, Platform platform) {
-        return new VMConfiguration(buildLevel, platform,
-            new com.sun.max.vm.grip.prototype.Package(),
-            new com.sun.max.vm.reference.prototype.Package(),
-            new com.sun.max.vm.layout.prototype.Package(),
-            new com.sun.max.vm.heap.prototype.Package(),
-            new com.sun.max.vm.monitor.prototype.Package(),
-            new com.sun.max.vm.compiler.prototype.Package(),
-            null,
-            null,
-            null,
-            null,
-            null);
     }
 }

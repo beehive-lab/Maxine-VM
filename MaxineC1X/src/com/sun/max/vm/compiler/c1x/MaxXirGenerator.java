@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static java.lang.reflect.Modifier.*;
 
 import java.io.*;
@@ -1332,7 +1333,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static int resolveVirtualMethod(ResolutionGuard.InPool guard) {
-            return ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard).vTableIndex() * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
+            return ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard).vTableIndex() * Word.size() + vmConfig().layoutScheme().hybridLayout.headerSize();
         }
 
         public static Word resolveSpecialMethod(ResolutionGuard.InPool guard) {
@@ -1491,11 +1492,11 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static void monitorEnter(Object o) {
-            VMConfiguration.target().monitorScheme().monitorEnter(o);
+            vmConfig().monitorScheme().monitorEnter(o);
         }
 
         public static void monitorExit(Object o) {
-            VMConfiguration.target().monitorScheme().monitorExit(o);
+            vmConfig().monitorScheme().monitorExit(o);
         }
     }
 

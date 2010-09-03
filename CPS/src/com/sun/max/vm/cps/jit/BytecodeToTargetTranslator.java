@@ -30,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.Bytes;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -567,7 +568,7 @@ public abstract class BytecodeToTargetTranslator {
         referenceLiterals.addFirst(literal);
         if (DebugHeap.isTagging()) {
             // Account for the DebugHeap tag in front of the code object:
-            literalOffset += VMConfiguration.target().wordWidth().numberOfBytes;
+            literalOffset += Word.size();
         }
         return -literalOffset;
     }

@@ -81,7 +81,7 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
 
     @HOSTED_ONLY
     private static int stackFrameAlignment(VMConfiguration vmConfiguration) {
-        if (vmConfiguration.platform().operatingSystem == OperatingSystem.DARWIN) {
+        if (vmConfiguration.platform.operatingSystem == OperatingSystem.DARWIN) {
             // Darwin requires 16-byte stack frame alignment.
             return 16;
         }

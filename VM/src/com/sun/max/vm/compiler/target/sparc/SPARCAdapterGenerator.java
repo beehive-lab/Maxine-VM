@@ -20,20 +20,21 @@
  */
 package com.sun.max.vm.compiler.target.sparc;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.Adapter.*;
+import com.sun.max.vm.compiler.target.Adapter.Type;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.type.*;
 
 /**
@@ -44,7 +45,7 @@ import com.sun.max.vm.type.*;
 public abstract class SPARCAdapterGenerator extends AdapterGenerator {
 
     static {
-        if (VMConfiguration.target().needsAdapters()) {
+        if (vmConfig().needsAdapters()) {
             // Create and register the adapter generators
             new Jit2Opt();
             new Opt2Jit();

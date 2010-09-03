@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.cps.sparc;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
@@ -37,7 +38,7 @@ public class SPARCTranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod>
     }
 
     public static TargetGeneratorScheme targetGeneratorScheme() {
-        return (TargetGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
+        return (TargetGeneratorScheme) vmConfig().bootCompilerScheme();
     }
 
     public static TargetGenerator targetGenerator() {
@@ -51,7 +52,7 @@ public class SPARCTranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod>
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.SPARC),
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform().constrainedByInstructionSet(InstructionSet.SPARC),
                                     new com.sun.max.vm.cps.b.c.d.e.sparc.target.Package());
     }
 

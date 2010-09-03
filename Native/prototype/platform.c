@@ -23,11 +23,17 @@
 #include "isa.h"
 #include "jni.h"
 
+JNIEXPORT void JNICALL
+JVM_OnLoad(JavaVM *vm, char *options, void *arg)
+{
+    c_initialize();
+}
+
 /*
  *  ATTENTION: return value must correspond to an OperatingSystem enum value.
  */
 JNIEXPORT jobject JNICALL
-Java_com_sun_max_vm_prototype_Prototype_nativeGetOperatingSystem(JNIEnv *env, jclass c)
+Java_com_sun_max_platform_Platform_nativeGetOperatingSystem(JNIEnv *env, jclass c)
 {
 #if os_DARWIN
     return (*env)->NewStringUTF(env, "DARWIN");
@@ -45,25 +51,15 @@ Java_com_sun_max_vm_prototype_Prototype_nativeGetOperatingSystem(JNIEnv *env, jc
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_vm_prototype_Prototype_nativeGetPageSize(JNIEnv *env, jclass c) {
+Java_com_sun_max_platform_Platform_nativeGetPageSize(JNIEnv *env, jclass c) {
     return (jint) sysconf(_SC_PAGESIZE);
-}
-
-/*
- *  ATTENTION: return value must correspond to a ProcessorModel enum value or null.
- *  See 'Prototype.createHostPlatform()' for the meaning of a null return value.
- */
-JNIEXPORT jobject JNICALL
-Java_com_sun_max_vm_prototype_Prototype_nativeGetProcessorModel(JNIEnv *env, jclass c)
-{
-    return NULL;
 }
 
 /*
  *  ATTENTION: return value must correspond to an InstructionSet enum value.
  */
 JNIEXPORT jobject JNICALL
-Java_com_sun_max_vm_prototype_Prototype_nativeGetInstructionSet(JNIEnv *env, jclass c)
+Java_com_sun_max_platform_Platform_nativeGetInstructionSet(JNIEnv *env, jclass c)
 {
 #if isa_AMD64
     return (*env)->NewStringUTF(env, "AMD64");
@@ -79,13 +75,13 @@ Java_com_sun_max_vm_prototype_Prototype_nativeGetInstructionSet(JNIEnv *env, jcl
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_vm_prototype_Prototype_nativeIsBigEndian(JNIEnv *env, jclass c)
+Java_com_sun_max_platform_Platform_nativeIsBigEndian(JNIEnv *env, jclass c)
 {
     return word_BIG_ENDIAN;
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_vm_prototype_Prototype_nativeGetWordWidth(JNIEnv *env, jclass c)
+Java_com_sun_max_platform_Platform_nativeGetWordWidth(JNIEnv *env, jclass c)
 {
     return word_64_BITS ? 64 : 32;
 }
@@ -95,7 +91,7 @@ Java_com_sun_max_vm_prototype_Prototype_nativeGetWordWidth(JNIEnv *env, jclass c
 #endif
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_vm_runtime_SignalDispatcher_nativeNumberOfSignals(JNIEnv *env, jclass c)
+Java_com_sun_max_platform_Platform_nativeNumberOfSignals(JNIEnv *env, jclass c)
 {
 #if os_DARWIN || os_LINUX || os_WINDOWS
     return NSIG;

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap.gcx.ms;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
@@ -131,7 +132,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         final Size initSize = Heap.initialSize();
         final Size maxSize = Heap.maxSize();
 
-        Address endOfCodeRegion = Code.bootCodeRegion.end().roundedUpBy(Platform.target().pageSize);
+        Address endOfCodeRegion = Code.bootCodeRegion.end().roundedUpBy(Platform.platform().pageSize);
         CodeManager codeManager = Code.getCodeManager();
         if (codeManager instanceof FixedAddressCodeManager && codeManager.getRuntimeCodeRegion().start().equals(endOfCodeRegion)) {
             endOfCodeRegion = codeManager.getRuntimeCodeRegion().end();
@@ -317,7 +318,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
             HeapScheme.Inspect.notifyGCStarted();
 
-            VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+            vmConfig().monitorScheme().beforeGarbageCollection();
 
             collectionCount++;
             if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
@@ -335,7 +336,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             if (MaxineVM.isDebug()) {
                 afterGCVerifier.run();
             }
-            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+            vmConfig().monitorScheme().afterGarbageCollection();
 
             if (heapResizingPolicy.resizeAfterCollection(objectSpace.totalSpace(), freeSpaceAfterGC, objectSpace)) {
                 // Heap was resized.

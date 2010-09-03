@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.prototype;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 
 import com.sun.max.*;
@@ -56,7 +58,7 @@ public final class BootImageGenerator {
     public static final String STATS_FILE_NAME = "maxine.stats";
 
     public static final String DEFAULT_VM_DIRECTORY = "Native" + File.separator + "generated" + File.separator +
-        OperatingSystem.fromName(System.getProperty(Prototype.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name())).name().toLowerCase();
+        OperatingSystem.fromName(System.getProperty(Platform.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name())).name().toLowerCase();
 
     private final OptionSet options = new OptionSet();
 
@@ -184,16 +186,19 @@ public final class BootImageGenerator {
     public BootImageGenerator(String[] programArguments) {
         final long start = System.currentTimeMillis();
         try {
-            final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
+            VMConfigurator configurator = new VMConfigurator(options);
+            PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
             options.parseArguments(programArguments);
 
             if (help.getValue()) {
-                prototypeGenerator.createVMConfiguration(prototypeGenerator.createDefaultVMConfiguration());
                 options.printHelp(System.out, 80);
                 return;
             }
+
+            // Create and installs the VM
+            configurator.create(true);
 
             String[] extraClassesAndPackages = options.getArguments();
             if (extraClassesAndPackages.length != 0) {
@@ -214,7 +219,7 @@ public final class BootImageGenerator {
             vmDirectory.mkdirs();
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue(), prototypeJit.getValue());
-            VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
+            vmConfig().finalizeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
 

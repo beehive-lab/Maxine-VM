@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.snippet;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -83,7 +85,7 @@ public abstract class MethodSelectionSnippet extends Snippet {
         public static VirtualMethodActor quasiFold(Object receiver, InterfaceMethodActor interfaceMethod) {
             final Class receiverClass = receiver.getClass();
             final ClassActor classActor = ClassActor.fromJava(receiverClass);
-            if (MaxineVM.isHosted() && !VMConfiguration.target().bootCompilerScheme().areSnippetsCompiled()) {
+            if (MaxineVM.isHosted() && !vmConfig().bootCompilerScheme().areSnippetsCompiled()) {
                 return classActor.findVirtualMethodActor(interfaceMethod);
             }
             final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());

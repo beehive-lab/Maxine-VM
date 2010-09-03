@@ -49,7 +49,7 @@ public final class ReadOnlyTeleVM extends TeleVM {
 
     @Override
     protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration.platform(), programFile());
+        return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration.platform, programFile());
     }
 
     @Override

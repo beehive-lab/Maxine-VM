@@ -904,6 +904,21 @@ function image_help() {
     Package names are differentiated from class names by being prefixed
     with '^'.
 
+    The platform configuration for the generated image is auto-detected
+    by native methods. However, the following system properties can be
+    used to override the defaults:
+    
+    Name            | Description                   | Example values
+    ================+===============================+================
+    max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64 
+    max.cpu         | processor model               | AMD64 IA32 SPARCV9   
+    max.isa         | instruction set architecture  | AMD64 ARM PPC SPARC
+    max.os          | operating system              | Darwin Linux Solaris 
+    max.endianness  | endianness                    | BIG LITTLE
+    max.bits        | machine word size             | 64 32
+    max.page        | page size                     | 4096 8192 
+    max.nsig        | number of signals             | 32
+
     An option starting with '@' denotes a preconfigured set of
     options. `run_configs`
 "
@@ -922,6 +937,7 @@ function image_help() {
 function run_image() {
     image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
 
+    system_props=""
     vm_args=""
     image_args=""
     while [ "$1" != "" ]; do
@@ -952,6 +968,10 @@ function run_image() {
                     vm_args="$vm_args ${1/-/}"
                 fi
                 ;;
+            -platform )
+                shift
+                system_props="$system_props -Dmax.platform=$1"
+                ;;
             *)
                 image_args="$image_args $1"
                 ;;
@@ -960,9 +980,9 @@ function run_image() {
     done
 
     if [ -z "$vm_args" ]; then
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args
+        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args
     else
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
+        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
     fi
 }
 

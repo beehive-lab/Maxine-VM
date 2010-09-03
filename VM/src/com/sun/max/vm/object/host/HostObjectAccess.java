@@ -206,7 +206,6 @@ public final class HostObjectAccess {
         objectMap.put(VmThread.signalDispatcherThread.javaThread(), VmThread.signalDispatcherThread.javaThread());
 
         objectMap.put(Trace.stream(), Log.out);
-        objectMap.put(MaxineVM.host(), MaxineVM.target());
         objectMap.put(TTY.out(), new LogStream(Log.os));
         objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor.initialSystemProperties);
     }

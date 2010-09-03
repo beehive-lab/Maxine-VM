@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.cps.amd64;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
@@ -39,7 +40,7 @@ public class AMD64TranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod>
     }
 
     public static TargetGeneratorScheme targetGeneratorScheme() {
-        return (TargetGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
+        return (TargetGeneratorScheme) vmConfig().bootCompilerScheme();
     }
 
     public static TargetGenerator targetGenerator() {
@@ -53,7 +54,7 @@ public class AMD64TranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod>
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64),
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform().constrainedByInstructionSet(InstructionSet.AMD64),
                                     new com.sun.max.vm.cps.b.c.d.e.amd64.target.Package());
     }
 }

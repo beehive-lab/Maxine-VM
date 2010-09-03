@@ -20,18 +20,19 @@
  */
 package com.sun.max.vm.cps.ir.interpreter;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.amd64.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.cps.tir.target.*;
 import com.sun.max.vm.hotpath.compiler.*;
-import com.sun.max.vm.hotpath.compiler.Console.*;
+import com.sun.max.vm.hotpath.compiler.Console.Color;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.value.*;
@@ -112,7 +113,7 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
     }
 
     private static AMD64EirGeneratorScheme eirGeneratorScheme() {
-        return (AMD64EirGeneratorScheme) VMConfiguration.target().bootCompilerScheme();
+        return (AMD64EirGeneratorScheme) vmConfig().bootCompilerScheme();
     }
 
     /**
