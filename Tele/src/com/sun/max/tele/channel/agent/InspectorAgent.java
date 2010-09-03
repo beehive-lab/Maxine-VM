@@ -25,6 +25,7 @@ import java.net.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.program.option.*;
 import com.sun.max.tele.channel.TeleChannelProtocol;
 import com.sun.max.tele.channel.tcp.TCPTeleChannelProtocol;
 import com.sun.max.tele.debug.ProcessState;
@@ -33,7 +34,7 @@ import com.sun.max.vm.prototype.*;
 import static com.sun.max.tele.channel.agent.RemoteInvocationProtocolAdaptor.*;
 
 /**
- * An agent that handles the target side of the Maxine Inspector debug communication channel.
+ * An agent that handles the target side of the Maxine Inspector {@link TeleChannelProtocol} communication channel.
  *
  * @author Mick Jordan
  *
@@ -41,36 +42,35 @@ import static com.sun.max.tele.channel.agent.RemoteInvocationProtocolAdaptor.*;
 public class InspectorAgent {
 
     private static int port = TCPTeleChannelProtocol.DEFAULT_PORT;
-    private static int dbtLevel = 0;
-    private static boolean oneShot = false;
+    private static int pdbLevel = 0;
+    private static boolean quitOnClose = false;
     private static OperatingSystem target;
-    private static String targetSpecific = "";
+    private static String targetSub = "";
+    private static final OptionSet options = new OptionSet(true);
+    private static final Option<Integer> portOption = options.newIntegerOption("port", TCPTeleChannelProtocol.DEFAULT_PORT,
+                    "Port used for communication beetween Inspector and Agent");
+    private static final Option<String> osOption = options.newStringOption("os", null,
+                    "Duh?");
+    private static final Option<String> targetSubOption = options.newStringOption("os.sub", "",
+                    "OS-specific channel protocol string");
+    private static final Option<Boolean> quitOnCloseOption = options.newBooleanOption("xc", false,
+                    "Exit when connection closed by remote Inspector");
+    private static final Option<Integer> pdbLevelOption = options.newIntegerOption("tdblevel", 0,
+                    "set protocol debug level");
 
     /**
      * @param args
      */
     public static void main(String[] args) {
-        int traceLevel = 0;
-        // Checkstyle: stop modified control variable check
-        for (int i = 0; i < args.length; i++) {
-            final String arg = args[i];
-            if (arg.equals("-port")) {
-                port = Integer.parseInt(args[++i]);
-            } else if (arg.equals("-host.os")) {
-                System.setProperty(Platform.OPERATING_SYSTEM_PROPERTY, args[++i]);
-            } else if (arg.equals("-trace")) {
-                traceLevel = Integer.parseInt(args[++i]);
-            } else if (arg.equals("-dbtlevel")) {
-                dbtLevel = Integer.parseInt(args[++i]);
-            } else  if (arg.equals("-host.os.sub")) {
-                targetSpecific = args[++i].toUpperCase();
-            } else if (arg.equals("-qd")) {
-            	oneShot = true;
-            }
-        }
-        // Checkstyle: resume modified control variable check
-        if (traceLevel > 0) {
-            Trace.on(traceLevel);
+        Trace.addTo(options);
+        // parse the arguments
+        options.parseArguments(args).getArguments();
+        port = portOption.getValue();
+        quitOnClose = quitOnCloseOption.getValue();
+        targetSub = targetSubOption.getValue();
+        pdbLevel = pdbLevelOption.getValue();
+        if (osOption.getValue() != null) {
+            System.setProperty(Platform.OPERATING_SYSTEM_PROPERTY, osOption.getValue());
         }
 
         target = OperatingSystem.fromName(System.getProperty(Platform.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name()));
@@ -91,7 +91,7 @@ public class InspectorAgent {
                     handler.start();
                     // no concurrent connections, underlying native support cannot handle that at the moment
                     handler.join();
-                    if (oneShot) {
+                    if (quitOnClose) {
                         break;
                     }
                 } catch (Exception e) {
@@ -116,10 +116,10 @@ public class InspectorAgent {
                 close();
                 throw ex;
             }
-            final String protocolClassName = "com.sun.max.tele.channel.agent." + target.asPackageName() + ".Agent" + target.asClassName() + targetSpecific + "NativeTeleChannelProtocol";
+            final String protocolClassName = "com.sun.max.tele.channel.agent." + target.asPackageName() + ".Agent" + target.asClassName() + targetSub + "NativeTeleChannelProtocol";
             protocol = (RemoteInvocationProtocolAdaptor) Class.forName(protocolClassName).newInstance();
-            if (dbtLevel > 0) {
-                ((TeleChannelProtocol) protocol).setTransportDebugLevel(dbtLevel);
+            if (pdbLevel > 0) {
+                ((TeleChannelProtocol) protocol).setTransportDebugLevel(pdbLevel);
             }
         }
 
@@ -141,8 +141,8 @@ public class InspectorAgent {
                         }
                     }
                 } catch (EOFException ex) {
-                	Trace.line(1, "client closed connection, terminating");
-                	terminated = true;
+                    Trace.line(1, "client closed connection, terminating");
+                    terminated = true;
                 } catch (Exception ex) {
                     System.err.println(ex);
                     ex.printStackTrace();
