@@ -71,6 +71,8 @@ public final class Code {
             }
 
             case GUESTVM:
+                return new FixedAddressCodeManager();
+
             case DARWIN:
             case SOLARIS: {
                 return new VariableAddressCodeManager();
