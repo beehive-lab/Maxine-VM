@@ -71,9 +71,11 @@ public final class Code {
             }
 
             case GUESTVM:
+                return new FixedAddressCodeManager();
+
             case DARWIN:
             case SOLARIS: {
-                return new FixedAddressCodeManager();
+                return new VariableAddressCodeManager();
             }
             default: {
                 FatalError.unimplemented();

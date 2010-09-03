@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.unix;
+package com.sun.max.tele.debug.dump;
 
 import java.io.*;
 
@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
 
 import static com.sun.max.elf.ELFProgramHeaderTable.*;
 
-public class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocolAdaptor implements TeleChannelProtocol {
+public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocolAdaptor implements TeleChannelProtocol {
 
     protected int threadLocalsAreaSize;
     public boolean bigEndian;
@@ -46,7 +46,7 @@ public class UnixDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtoco
     protected static final String HEAP_SYMBOL_NAME = "theHeap";  // defined in image.c, holds the base address of the boot heap
 
 
-    protected UnixDumpTeleChannelProtocolAdaptor(TeleVM teleVM, File vm, File dump) {
+    protected ELFDumpTeleChannelProtocolAdaptor(TeleVM teleVM, File vm, File dump) {
         this.teleVM = teleVM;
         try {
             // We actually do need the tele library because we use it to access the OS-specific structs

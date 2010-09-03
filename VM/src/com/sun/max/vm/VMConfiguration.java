@@ -262,10 +262,7 @@ public final class VMConfiguration {
 
         compilationScheme = new AdaptiveCompilationScheme(this);
         vmSchemes.add(compilationScheme);
-
-        if (runPackage != null) {
-            runScheme = loadAndInstantiateScheme(runPackage, RunScheme.class, this);
-        }
+        runScheme = loadAndInstantiateScheme(runPackage, RunScheme.class, this);
         areSchemesLoadedAndInstantiated = true;
     }
 
