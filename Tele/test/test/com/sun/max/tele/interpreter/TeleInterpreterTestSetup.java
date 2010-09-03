@@ -51,7 +51,7 @@ public class TeleInterpreterTestSetup extends CompilerTestSetup<ActorIrMethod> {
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createPrototype(BuildLevel.DEBUG, Platform.host());
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform());
     }
 
     @Override

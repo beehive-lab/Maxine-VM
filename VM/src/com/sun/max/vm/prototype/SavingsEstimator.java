@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.prototype;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.lang.WordWidth;
 
 import java.io.PrintStream;
@@ -39,7 +41,7 @@ public class SavingsEstimator {
     }
 
     public void report(PrintStream printStream) {
-        if (graphStats.graphPrototype.vmConfiguration().wordWidth() == WordWidth.BITS_64) {
+        if (vmConfig().wordWidth() == WordWidth.BITS_64) {
             reportCompressRefsSavings(printStream);
         }
     }

@@ -20,16 +20,16 @@
  */
 package com.sun.max.vm.grip.prototype;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 
 import com.sun.max.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.layout.SpecificLayout.*;
+import com.sun.max.vm.layout.SpecificLayout.ObjectMirror;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
@@ -45,11 +45,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
 
     public PrototypeObjectMirror(final Object object) {
         this.object = object;
-        classActor = MaxineVM.usingTarget(new Function<ClassActor>() {
-            public ClassActor call() {
-                return ClassActor.fromJava(object.getClass());
-            }
-        });
+        classActor = ClassActor.fromJava(object.getClass());
     }
 
     public boolean isArray() {
@@ -95,7 +91,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
     }
 
     public Value readMisc() {
-        return new WordValue(VMConfiguration.target().monitorScheme().createMisc(object));
+        return new WordValue(vmConfig().monitorScheme().createMisc(object));
     }
 
     public int readArrayLength() {
@@ -162,7 +158,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
     }
 
     public void writeMisc(Value value) {
-        assert value.asWord().equals(VMConfiguration.target().monitorScheme().createMisc(object));
+        assert value.asWord().equals(vmConfig().monitorScheme().createMisc(object));
     }
 
     public int firstWordIndex() {

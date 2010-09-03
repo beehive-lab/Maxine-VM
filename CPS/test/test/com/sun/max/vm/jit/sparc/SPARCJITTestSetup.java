@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.jit.sparc;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.sparc.*;
 import test.com.sun.max.vm.jit.*;
@@ -43,11 +44,11 @@ public class SPARCJITTestSetup extends SPARCTranslatorTestSetup  implements JITT
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandardJit(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.SPARC));
+        return VMConfigurations.createStandardJit(BuildLevel.DEBUG, Platform.platform().constrainedByInstructionSet(InstructionSet.SPARC));
     }
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
-        return new SPARCJitCompiler(VMConfiguration.target(), templateTable);
+        return new SPARCJitCompiler(vmConfig(), templateTable);
     }
 
     public boolean disassembleCompiledMethods() {

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.prototype;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
@@ -154,7 +155,7 @@ public class CompiledPrototype extends Prototype {
     }
 
     public RuntimeCompilerScheme jitScheme() {
-        return vmConfiguration().jitCompilerScheme();
+        return vmConfig().jitCompilerScheme();
     }
 
     private ClassInfo lookupInfo(ClassActor classActor) {
@@ -298,9 +299,8 @@ public class CompiledPrototype extends Prototype {
 
     private final int numberOfCompilerThreads;
 
-    CompiledPrototype(JavaPrototype javaPrototype, int numberCompilerThreads) {
-        super(javaPrototype.vmConfiguration());
-        this.vmConfiguration().initializeSchemes(Phase.COMPILING);
+    CompiledPrototype(int numberCompilerThreads) {
+        vmConfig().initializeSchemes(Phase.COMPILING);
         numberOfCompilerThreads = numberCompilerThreads;
         Trace.line(1, "# compiler threads:" + numberOfCompilerThreads);
     }
@@ -375,7 +375,7 @@ public class CompiledPrototype extends Prototype {
     public static void registerJitClass(Class javaClass) {
         ClassActor classActor = ClassActor.fromJava(javaClass);
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
-            recommendedCompiler.put(methodActor, VMConfiguration.target().jitCompilerScheme());
+            recommendedCompiler.put(methodActor, vmConfig().jitCompilerScheme());
         }
     }
 
@@ -393,7 +393,7 @@ public class CompiledPrototype extends Prototype {
     }
 
     public static void registerJitMethod(MethodActor methodActor) {
-        recommendedCompiler.put(methodActor, VMConfiguration.target().jitCompilerScheme());
+        recommendedCompiler.put(methodActor, vmConfig().jitCompilerScheme());
     }
 
     public static void registerC1XMethod(MethodActor methodActor) {
@@ -402,17 +402,17 @@ public class CompiledPrototype extends Prototype {
 
     private static synchronized RuntimeCompilerScheme c1xCompilerScheme() {
         if (c1xCompiler == null) {
-            RuntimeCompilerScheme compiler = VMConfiguration.target().optCompilerScheme();
+            RuntimeCompilerScheme compiler = vmConfig().optCompilerScheme();
             if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
-                compiler = VMConfiguration.target().jitCompilerScheme();
+                compiler = vmConfig().jitCompilerScheme();
                 if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
-                    compiler = VMConfiguration.target().bootCompilerScheme();
+                    compiler = vmConfig().bootCompilerScheme();
                     if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
                         try {
                             // TODO: remove reflective dependency here!
                             Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
                             Constructor constructor = type.getConstructor(VMConfiguration.class);
-                            compiler = (RuntimeCompilerScheme) constructor.newInstance(VMConfiguration.hostOrTarget());
+                            compiler = (RuntimeCompilerScheme) constructor.newInstance(vmConfig());
                             compiler.initialize(Phase.BOOTSTRAPPING);
                         } catch (Exception e) {
                             throw ProgramError.unexpected(e);
@@ -446,7 +446,7 @@ public class CompiledPrototype extends Prototype {
     private void addVMEntryPoints() {
         final Relationship vmEntryPoint = null;
 
-        final RunScheme runScheme = vmConfiguration().runScheme();
+        final RunScheme runScheme = vmConfig().runScheme();
         add(ClassRegistry.MaxineVM_run, null, vmEntryPoint);
         add(ClassRegistry.VmThread_run, null, vmEntryPoint);
         add(ClassRegistry.VmThread_attach, null, vmEntryPoint);
@@ -498,7 +498,7 @@ public class CompiledPrototype extends Prototype {
         final CodeRegion region = Code.bootCodeRegion;
         final Address oldMark = region.getAllocationMark();
         final int initialNumberOfCompilations = totalCompilations;
-        final CompilationScheme compilationScheme = vmConfiguration().compilationScheme();
+        final CompilationScheme compilationScheme = vmConfig().compilationScheme();
 
         if (numberOfCompilerThreads == 1) {
             while (!worklist.isEmpty()) {

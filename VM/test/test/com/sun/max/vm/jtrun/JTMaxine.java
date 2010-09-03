@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.jtrun;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.program.option.OptionSet;
 import com.sun.max.program.option.Option;
 import com.sun.max.vm.compiler.RuntimeCompilerScheme;
@@ -117,7 +119,7 @@ public class JTMaxine {
             System.out.println("Compiling caller methods with " + callerCompiler.getClass() + "...");
             for (ClassMethodActor method : methods) {
                 printer.begin(method.toString());
-                VMConfiguration.target().compilationScheme().synchronousCompile(method, callerCompiler);
+                vmConfig().compilationScheme().synchronousCompile(method, callerCompiler);
                 printer.pass();
             }
         }
@@ -133,7 +135,7 @@ public class JTMaxine {
             System.out.println("Compiling callee methods with " + calleeCompiler.getClass() + "...");
             for (ClassMethodActor method : methods) {
                 printer.begin(method.toString());
-                VMConfiguration.target().compilationScheme().synchronousCompile(method, calleeCompiler);
+                vmConfig().compilationScheme().synchronousCompile(method, calleeCompiler);
                 printer.pass();
             }
         }
@@ -163,7 +165,7 @@ public class JTMaxine {
     }
 
     static RuntimeCompilerScheme getCompiler(String name) {
-        VMConfiguration vmConfiguration = VMConfiguration.target();
+        VMConfiguration vmConfiguration = vmConfig();
         if ("".equals(name)) {
             return null;
         } else if ("cps".equals(name)) {

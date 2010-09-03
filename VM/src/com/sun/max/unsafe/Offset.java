@@ -20,6 +20,8 @@
  */
 package com.sun.max.unsafe;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -37,7 +39,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public static Offset zero() {
-        return Word.isBoxed() ? BoxedOffset.ZERO : fromInt(0);
+        return isHosted() ? BoxedOffset.ZERO : fromInt(0);
     }
 
     @INLINE
@@ -47,7 +49,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public static Offset fromInt(int value) {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             return BoxedOffset.from(value);
         }
         if (Word.width() == 64) {
@@ -59,7 +61,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public static Offset fromLong(long value) {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             return BoxedOffset.from(value);
         }
         if (Word.width() == 64) {
@@ -76,7 +78,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final int toInt() {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             final BoxedOffset box = (BoxedOffset) this;
             return (int) box.value();
         }
@@ -89,7 +91,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final long toLong() {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             final BoxedOffset box = (BoxedOffset) this;
             return box.value();
         }
@@ -111,7 +113,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public final boolean equals(int other) {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             return toLong() == other;
         }
         return fromInt(other) == this;

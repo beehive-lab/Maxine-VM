@@ -82,7 +82,7 @@ public final class JDK_java_lang_Thread {
         ReferenceValue targetValue = ReferenceValue.NULL;
         ReferenceValue nameValue = ReferenceValue.from(name == null ? (String) ClassRegistry.Thread_nextThreadNum.invoke().asObject() : name);
         LongValue stackSizeValue = LongValue.ZERO;
-        if (Platform.target().operatingSystem == OperatingSystem.DARWIN) {
+        if (Platform.platform().operatingSystem == OperatingSystem.DARWIN) {
             // The Thread.init() method on Apple takes an extra boolean parameter named 'set_priority'
             // which indicates if the priority should be explicitly set. For all calls to init() this
             // argument is true *except* for a call for the purpose of attaching a thread when it is false.

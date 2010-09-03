@@ -474,6 +474,53 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Extended boot image to interpose on some of the schemes.
+     */
+    static class TeleBootImage extends BootImage {
+
+        TeleBootImage(File bootImageFile) throws BootImageException {
+            super(bootImageFile);
+        }
+
+        @Override
+        protected VMConfiguration createVMConfiguration(
+                        BuildLevel buildLevel,
+                        Platform platform,
+                        VMPackage gripPackage,
+                        VMPackage referencePackage,
+                        VMPackage layoutPackage,
+                        VMPackage heapPackage,
+                        VMPackage monitorPackage,
+                        VMPackage bootCompilerPackage,
+                        VMPackage jitCompilerPackage,
+                        VMPackage optCompilerPackage,
+                        VMPackage trampolinePackage,
+                        VMPackage targetABIsPackage,
+                        VMPackage runPackage) {
+
+            final VMConfiguration config = new VMConfiguration(
+                    buildLevel,
+                    platform,
+                    getInspectorGripPackage(gripPackage),
+                    new com.sun.max.tele.reference.plain.Package(),
+                    layoutPackage,
+                    heapPackage,
+                    monitorPackage,
+                    bootCompilerPackage,
+                    jitCompilerPackage,
+                    null,
+                    trampolinePackage,
+                    targetABIsPackage,
+                    runPackage);
+
+            final MaxineVM vm = new MaxineVM(config);
+            MaxineVM.set(vm);
+            new JavaPrototype(false);
+            return config;
+        }
+    }
+
+    /**
      * Create the appropriate subclass of {@link TeleVM} based on VM configuration.
      *
      * @param bootImageFile
@@ -483,9 +530,9 @@ public abstract class TeleVM implements MaxVM {
      * @throws BootImageException
      */
     private static TeleVM create(File bootImageFile, Classpath sourcepath, String[] commandlineArguments) throws BootImageException {
-        final BootImage bootImage = new BootImage(bootImageFile);
+        final BootImage bootImage = new TeleBootImage(bootImageFile);
         TeleVM teleVM = null;
-        final OperatingSystem operatingSystem = bootImage.vmConfiguration.platform().operatingSystem;
+        final OperatingSystem operatingSystem = bootImage.vmConfiguration.platform.operatingSystem;
         final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
@@ -550,25 +597,6 @@ public abstract class TeleVM implements MaxVM {
         final String suffix = gripPackage.name().substring(vmGripRootPackage.name().length());
         final MaxPackage inspectorGripRootPackage = new com.sun.max.tele.grip.Package();
         return (VMPackage) MaxPackage.fromName(inspectorGripRootPackage.name() + suffix);
-    }
-
-    private static MaxineVM createVM(BootImage bootImage) {
-        final VMConfiguration b = bootImage.vmConfiguration;
-        final VMConfiguration vmConfiguration = new VMConfiguration(
-                b.buildLevel(),
-                b.platform(),
-                getInspectorGripPackage(b.gripPackage),
-                new com.sun.max.tele.reference.plain.Package(),
-                b.layoutPackage, b.heapPackage, b.monitorPackage,
-                b.bootCompilerPackage, b.jitCompilerPackage, null, b.trampolinePackage, b.targetABIsPackage,
-                b.runPackage);
-        vmConfiguration.loadAndInstantiateSchemes(true);
-
-        final MaxineVM vm = new MaxineVM(vmConfiguration);
-        MaxineVM.setTarget(vm);
-        MaxineVM.setGlobalHostOrTarget(vm);
-        new JavaPrototype(vm.configuration, false);
-        return vm;
     }
 
     private String  tracePrefix() {
@@ -715,16 +743,15 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        setTeleChannelProtocol(bootImage.vmConfiguration.platform().operatingSystem);
-        final MaxineVM vm = createVM(this.bootImage);
-        vmConfiguration = vm.configuration;
+        setTeleChannelProtocol(bootImage.vmConfiguration.platform.operatingSystem);
+        vmConfiguration = bootImage.vmConfiguration;
 
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating all");
 
-        // Pre-initialize an appropriate disassembler to save time.
-        TeleDisassembler.initialize(vmConfiguration.platform().processorKind);
+        // Pre-initialize the disassembler to save time.
+        TeleDisassembler.initialize(vmConfiguration.platform);
 
-        this.wordSize = Size.fromInt(vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes);
+        this.wordSize = Size.fromInt(vmConfiguration.platform.wordWidth().numberOfBytes);
         this.pageSize = Size.fromInt(vmConfiguration.platform.pageSize);
         this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 

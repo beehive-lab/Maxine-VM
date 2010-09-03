@@ -121,7 +121,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
 
     @Override
     public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
-        if (!implicitExceptionPoint && Platform.target().instructionSet().offsetToReturnPC == 0) {
+        if (!implicitExceptionPoint && Platform.platform().instructionSet().offsetToReturnPC == 0) {
             instructionPointer = instructionPointer.minus(1);
         }
         return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));

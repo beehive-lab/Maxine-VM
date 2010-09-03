@@ -25,10 +25,9 @@ import test.com.sun.max.vm.cps.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
@@ -131,14 +130,10 @@ public class JITTest_stackManipulations extends CompilerTestCase<CPSTargetMethod
     }
 
     private Class initializeClassInTarget(final Class javaClass) {
-        return MaxineVM.usingTarget(new Function<Class>() {
-            public Class call() {
-                final Class targetClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, javaClass.getName());
-                final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(targetClass);
-                MakeClassInitialized.makeClassInitialized(tupleClassActor);
-                return targetClass;
-            }
-        });
+        final Class targetClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, javaClass.getName());
+        final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(targetClass);
+        MakeClassInitialized.makeClassInitialized(tupleClassActor);
+        return targetClass;
     }
 
     private static final int JIT_SLOT_SIZE = 8;

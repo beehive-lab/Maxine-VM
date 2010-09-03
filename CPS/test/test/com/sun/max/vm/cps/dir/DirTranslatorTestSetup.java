@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.cps.dir;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
@@ -39,7 +40,7 @@ public class DirTranslatorTestSetup extends CompilerTestSetup<DirMethod> {
     }
 
     public static DirGeneratorScheme dirGeneratorScheme() {
-        return (DirGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
+        return (DirGeneratorScheme) vmConfig().bootCompilerScheme();
     }
 
     public static DirGenerator dirGenerator() {
@@ -58,7 +59,7 @@ public class DirTranslatorTestSetup extends CompilerTestSetup<DirMethod> {
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform(),
                                      new com.sun.max.vm.cps.b.c.d.Package());
     }
 }

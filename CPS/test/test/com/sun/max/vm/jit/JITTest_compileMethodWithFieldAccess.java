@@ -24,7 +24,6 @@ import test.com.sun.max.vm.cps.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
@@ -140,11 +139,7 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     ///////////////////////////////
 
     void preload(final String className) {
-        MaxineVM.usingTarget(new Runnable() {
-            public void run() {
-                Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className);
-            }
-        });
+        Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className);
     }
 
     void compileMethod(String methodName, String fieldHolderClassName) {

@@ -43,7 +43,7 @@ public final class TeleIntegerRegisters extends TeleRegisters {
 
     public TeleIntegerRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
         super(teleVM, teleRegisterSet, symbolizer(teleVM.vmConfiguration()));
-        switch (teleVM.vmConfiguration().platform().processorKind.instructionSet) {
+        switch (teleVM.vmConfiguration().platform.instructionSet()) {
             case AMD64: {
                 indirectCallRegister = AMD64GeneralRegister64.RAX;
                 break;
@@ -63,7 +63,7 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * configuration.
      */
     public static Symbolizer<? extends Symbol> symbolizer(VMConfiguration vmConfiguration) {
-        switch (vmConfiguration.platform().processorKind.instructionSet) {
+        switch (vmConfiguration.platform.instructionSet()) {
             case AMD64:
                 return AMD64GeneralRegister64.ENUMERATOR;
             case SPARC:

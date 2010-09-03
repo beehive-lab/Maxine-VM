@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -304,7 +306,7 @@ public final class VMOptions {
         register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exit") {
             @Override
             public boolean parseValue(Pointer optionValue) {
-                VMConfiguration.target().print(Log.out, "  ");
+                vmConfig().print(Log.out, "  ");
                 return true;
             }
             @Override
@@ -316,7 +318,7 @@ public final class VMOptions {
         register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continue") {
             @Override
             public boolean parseValue(Pointer optionValue) {
-                VMConfiguration.target().print(Log.out, "  ");
+                vmConfig().print(Log.out, "  ");
                 return true;
             }
         }, MaxineVM.Phase.STARTING);

@@ -93,8 +93,8 @@ public final class SPARCEirTargetEmitter extends EirTargetEmitter<SPARCAssembler
     private final boolean is32Bit;
 
     public SPARCEirTargetEmitter(SPARCEirABI abi, int frameSize, Safepoint safepoint, AdapterGenerator adapterGenerator) {
-        super(SPARCAssembler.createAssembler(Word.widthValue()), abi, frameSize, safepoint, abi.vmConfiguration().platform().processorKind.dataModel.wordWidth, adapterGenerator);
-        is32Bit = abi.vmConfiguration().platform().processorKind.dataModel.wordWidth == WordWidth.BITS_32;
+        super(SPARCAssembler.createAssembler(Word.widthValue()), abi, frameSize, safepoint, abi.vmConfiguration().platform.wordWidth(), adapterGenerator);
+        is32Bit = abi.vmConfiguration().platform.wordWidth() == WordWidth.BITS_32;
         stackPointer = abi.targetABI().stackPointer();
         framePointer = abi.targetABI().framePointer();
         literalBaseLabel = new Label();

@@ -36,6 +36,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.platform().processorKind.instructionSet == InstructionSet.AMD64;
+        return vmConfiguration.platform.instructionSet() == InstructionSet.AMD64;
     }
 }

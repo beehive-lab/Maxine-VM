@@ -312,8 +312,8 @@ public class MaxineTesterConfiguration {
     }
 
     public static String defaultJavaTesterConfigs() {
-        final Platform platform = Platform.host();
-        if (platform.processorKind.processorModel == ProcessorModel.SPARCV9) {
+        final Platform platform = Platform.platform();
+        if (platform.processorModel() == ProcessorModel.SPARCV9) {
             return "cpscps,cpsjit,jitcps,jitjit";
         }
         return "cpsc1x,cpscps,jitcps,cpsjit,jitjit";
@@ -322,7 +322,7 @@ public class MaxineTesterConfiguration {
     public static boolean isSupported(String config) {
         Expectation[] expect = configResultMap.get(config);
         if (expect != null) {
-            final Platform platform = Platform.host();
+            final Platform platform = Platform.platform();
             for (Expectation e : expect) {
                 if (e.matches(platform)) {
                     if (e.expectedResult == ExpectedResult.PASS) {
@@ -385,7 +385,7 @@ public class MaxineTesterConfiguration {
     public static ExpectedResult expectedResult(String testName, String config) {
         final Expectation[] expect = resultMap.get(testName);
         if (expect != null) {
-            final Platform platform = Platform.host();
+            final Platform platform = Platform.platform();
             for (Expectation e : expect) {
                 if (e.matches(platform)) {
                     return e.expectedResult;
@@ -449,7 +449,7 @@ public class MaxineTesterConfiguration {
 
         public boolean matches(Platform platform) {
             if (os == null || os == platform.operatingSystem) {
-                if (processor == null || processor == platform.processorKind.processorModel) {
+                if (processor == null || processor == platform.processorModel()) {
                     return true;
                 }
             }

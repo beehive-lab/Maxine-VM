@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.monitor.modal.sync.nat;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.lang.ref.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -77,7 +79,7 @@ public final class NativeMutex extends Mutex {
     private static native boolean nativeMutexLock(Pointer mutex);
 
     static void initialize() {
-        assert MaxineVM.hostOrTarget().phase == MaxineVM.Phase.PRIMORDIAL;
+        assert vm().phase == MaxineVM.Phase.PRIMORDIAL;
         size = nativeMutexSize();
     }
 

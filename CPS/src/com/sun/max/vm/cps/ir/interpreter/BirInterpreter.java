@@ -20,13 +20,14 @@
  */
 package com.sun.max.vm.cps.ir.interpreter;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -34,14 +35,16 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.CreateArraySnippet.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateMultiReferenceArray;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreatePrimitiveArray;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateReferenceArray;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeHolderInitialized;
 import com.sun.max.vm.cps.bir.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.hotpath.AsynchronousProfiler.*;
+import com.sun.max.vm.hotpath.AsynchronousProfiler.CounterMetric;
 import com.sun.max.vm.hotpath.compiler.*;
-import com.sun.max.vm.hotpath.compiler.Console.*;
+import com.sun.max.vm.hotpath.compiler.Console.Color;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -63,7 +66,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         }
 
         public static BirMethod generateBirMethod(ClassMethodActor classMethodActor) {
-            final BirGeneratorScheme birCompilerScheme = (BirGeneratorScheme) VMConfiguration.target().bootCompilerScheme();
+            final BirGeneratorScheme birCompilerScheme = (BirGeneratorScheme) vmConfig().bootCompilerScheme();
             final BirMethod birMethod = birCompilerScheme.birGenerator().makeIrMethod(classMethodActor);
             return birMethod;
         }

@@ -20,12 +20,13 @@
  */
 package com.sun.max.vm.prototype;
 
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.io.*;
 import java.lang.ref.*;
 import java.util.*;
-import java.util.Arrays;
 import java.util.concurrent.*;
 
 import com.sun.max.atomic.*;
@@ -1128,15 +1129,14 @@ public final class DataPrototype extends Prototype {
      * @param mapFile a file to which to write map information; if {@code null}, no map information will be written
      */
     public DataPrototype(GraphPrototype graphPrototype, File mapFile) {
-        super(graphPrototype.vmConfiguration());
         this.graphPrototype = graphPrototype;
-        final Platform platform = graphPrototype.vmConfiguration().platform();
+        final Platform platform = vmConfig().platform;
         pageSize = platform.pageSize;
-        dataModel = platform.processorKind.dataModel;
+        dataModel = platform.dataModel();
         alignment = Word.size();
-        layoutScheme = graphPrototype.vmConfiguration().layoutScheme();
-        gripScheme = graphPrototype.vmConfiguration().gripScheme();
-        tagging = graphPrototype.vmConfiguration().debugging() && graphPrototype.vmConfiguration().heapScheme().supportsTagging();
+        layoutScheme = vmConfig().layoutScheme();
+        gripScheme = vmConfig().gripScheme();
+        tagging = vmConfig().debugging() && vmConfig().heapScheme().supportsTagging();
         Trace.begin(1, DataPrototype.class.getSimpleName());
 
         assignCodeCells();
@@ -1144,8 +1144,8 @@ public final class DataPrototype extends Prototype {
 
         adjustMemoryRegions();
 
-        MaxineVM target = MaxineVM.target();
-        target.phase = MaxineVM.Phase.PRIMORDIAL;
+        MaxineVM vm = vm();
+        vm.phase = MaxineVM.Phase.PRIMORDIAL;
         heapDataWriter = new ByteArrayMemoryRegionWriter(Heap.bootHeapRegion, "heap");
         codeDataWriter = new ByteArrayMemoryRegionWriter(Code.bootCodeRegion, "code");
 

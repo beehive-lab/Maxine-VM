@@ -20,10 +20,10 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField.*;
 
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -54,7 +54,7 @@ public final class TargetBundleLayout {
         public final ArrayLayout arrayLayout;
 
         ArrayField(boolean allocateEmptyArray) {
-            final LayoutScheme layoutScheme = VMConfiguration.hostOrTarget().layoutScheme();
+            final LayoutScheme layoutScheme = vmConfig().layoutScheme();
             final String fieldName = name();
             final TypeDescriptor fieldType = JavaTypeDescriptor.forJavaClass(Classes.getDeclaredField(TargetMethod.class, fieldName).getType());
             assert JavaTypeDescriptor.isArray(fieldType);

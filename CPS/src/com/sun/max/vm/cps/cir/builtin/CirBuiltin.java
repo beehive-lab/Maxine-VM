@@ -158,7 +158,7 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         @Override
         public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
             if (MaxineVM.isHosted() && original.isHostFoldable(arguments)) {
-                final MethodActor methodActor = cirOptimizer.cirGenerator().isCrossCompiling() ? builtin.hostedExecutable : builtin.executable;
+                final MethodActor methodActor =  MaxineVM.isHosted() ? builtin.hostedExecutable : builtin.executable;
                 try {
                     final Value result = CirFoldable.Static.evaluate(methodActor, arguments);
                     return !result.isZero();

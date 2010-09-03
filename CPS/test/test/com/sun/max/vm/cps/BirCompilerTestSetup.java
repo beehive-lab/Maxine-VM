@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.cps;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 
 import com.sun.max.platform.*;
@@ -34,7 +35,7 @@ public class BirCompilerTestSetup extends CompilerTestSetup<BirMethod> {
     }
 
     public static BirGeneratorScheme birGeneratorScheme() {
-        return (BirGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
+        return (BirGeneratorScheme) vmConfig().bootCompilerScheme();
     }
 
     public static BirGenerator birGenerator() {
@@ -48,7 +49,7 @@ public class BirCompilerTestSetup extends CompilerTestSetup<BirMethod> {
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform(),
                         new com.sun.max.vm.cps.b.Package());
     }
 }

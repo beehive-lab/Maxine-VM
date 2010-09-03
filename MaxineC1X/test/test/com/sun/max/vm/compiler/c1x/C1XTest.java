@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -182,7 +184,7 @@ public class C1XTest {
         }
 
         // create MaxineRuntime
-        VMConfiguration configuration = VMConfiguration.target();
+        VMConfiguration configuration = vmConfig();
         final RuntimeCompilerScheme compilerScheme;
 
         String compilerName = compilerOption.getValue();
@@ -206,12 +208,8 @@ public class C1XTest {
         final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, C1XTest.class.getClassLoader());
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
-        MaxineVM.usingTarget(new Runnable() {
-            public void run() {
-                doWarmup(compilerScheme, methods);
-                doCompile(compilerScheme, methods, progress);
-            }
-        });
+        doWarmup(compilerScheme, methods);
+        doCompile(compilerScheme, methods, progress);
 
         if (verboseOption.getValue() > 0) {
             progress.report();

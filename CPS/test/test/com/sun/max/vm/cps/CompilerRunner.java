@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.cps;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -210,12 +212,12 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
 
     @Override
     public IrMethod translate(ClassMethodActor classMethodActor) {
-        CPSAbstractCompiler cpsCompilerScheme = (CPSAbstractCompiler) javaPrototype().vmConfiguration().bootCompilerScheme();
+        CPSAbstractCompiler cpsCompilerScheme = (CPSAbstractCompiler) vmConfig().bootCompilerScheme();
         return cpsCompilerScheme.compileIR(classMethodActor);
     }
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
-        final JitCompiler jitScheme = (JitCompiler) VMConfiguration.target().jitCompilerScheme();
+        final JitCompiler jitScheme = (JitCompiler) vmConfig().jitCompilerScheme();
         return jitScheme;
     }
 

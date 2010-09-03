@@ -26,7 +26,7 @@ LIB = tele
 include $(PROJECT)/platform/platform.mk
 include $(PROJECT)/tele/$(OS)/$(OS).mk
 
-SOURCES = $(OS_SOURCES) address.c boxedMemory.c boxedPointer.c c.c log.c tele.c mutex.c threadLocals.c threads.c $(ISA).c platform.c relocation.c dataio.c virtualMemory.c
+SOURCES = $(OS_SOURCES) boxedMemory.c boxedPointer.c c.c log.c tele.c mutex.c threadLocals.c threads.c $(ISA).c platform.c relocation.c dataio.c virtualMemory.c
 
 SOURCE_DIRS = tele tele/$(OS) platform prototype share substrate
 

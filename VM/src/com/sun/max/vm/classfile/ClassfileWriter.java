@@ -32,7 +32,6 @@ import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -749,7 +748,7 @@ public class ClassfileWriter {
             options.printHelp(System.out, 80);
             return;
         }
-        prototypeGenerator.createJavaPrototype(VMConfigurations.createStandard(BuildLevel.PRODUCT, Platform.host()), false);
+        prototypeGenerator.createJavaPrototype(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes
 
         final Map<String, byte[]> classNameToClassfileMap = new LinkedHashMap<String, byte[]>();

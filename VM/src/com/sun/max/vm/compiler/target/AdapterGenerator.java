@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import java.io.*;
@@ -126,8 +127,8 @@ public abstract class AdapterGenerator {
      * @param adapterType the type of adapter produced by this generator
      */
     protected AdapterGenerator(Adapter.Type adapterType) {
-        this.optABI = VMConfiguration.target().targetABIsScheme().optimizedJavaABI;
-        this.jitABI = VMConfiguration.target().targetABIsScheme().jitABI;
+        this.optABI = vmConfig().targetABIsScheme().optimizedJavaABI;
+        this.jitABI = vmConfig().targetABIsScheme().jitABI;
         this.adapterType = adapterType;
         AdapterGenerator old = generatorsByCallee.put(adapterType.callee, this);
         assert old == null;
@@ -206,7 +207,7 @@ public abstract class AdapterGenerator {
      *         compiler configured for the VM.
      */
     public static AdapterGenerator forCallee(ClassMethodActor callee, CallEntryPoint callingConvention) {
-        if (!VMConfiguration.target().needsAdapters()) {
+        if (!vmConfig().needsAdapters()) {
             // Only one calling convention; no adapters in use
             return null;
         }

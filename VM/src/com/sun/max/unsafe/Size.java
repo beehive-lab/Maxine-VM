@@ -20,6 +20,8 @@
  */
 package com.sun.max.unsafe;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 
@@ -41,7 +43,7 @@ public abstract class Size extends Address {
 
     @INLINE
     public static Size zero() {
-        return Word.isBoxed() ? BoxedSize.ZERO : fromInt(0);
+        return isHosted() ? BoxedSize.ZERO : fromInt(0);
     }
 
     public static final Size K = Size.fromInt(Ints.K);
