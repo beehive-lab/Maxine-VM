@@ -104,6 +104,10 @@ public abstract class ClassActor extends Actor implements RiType {
 
     public final ClassActor superClassActor;
 
+    public ClassActor firstSubclassActor;
+
+    public ClassActor nextSibling;
+
     public final char majorVersion;
 
     public final char minorVersion;
@@ -1697,8 +1701,20 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     public final boolean hasSubclass() {
-        // TODO: leaf type assumptions
-        return !isFinal();
+        return firstSubclassActor != null;
+    }
+
+    /**
+     * Adds this {@linkplain ClassActor} to the beginning of the list of subclasses of its superclass.
+     */
+    public final void prependToSiblingList() {
+        if (superClassActor == null) {
+            // special case: class "Object"
+            return;
+        }
+        assert !superClassActor.isInterface() : "Superclass cannot be interface.";
+        nextSibling = superClassActor.firstSubclassActor;
+        superClassActor.firstSubclassActor = this;
     }
 
     public final boolean isInstanceClass() {
