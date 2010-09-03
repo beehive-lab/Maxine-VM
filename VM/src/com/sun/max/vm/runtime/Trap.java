@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.runtime.Trap.Number.*;
 import static com.sun.max.vm.runtime.VmOperation.*;
@@ -343,7 +344,7 @@ public abstract class Trap {
     private static void handleMemoryFault(Pointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapState, Address faultAddress) {
         final Pointer disabledVmThreadLocals = VmThread.currentVmThreadLocals();
 
-        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
+        final Safepoint safepoint = vmConfig().safepoint;
         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
         final Pointer triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
         final Pointer safepointLatch = trapStateAccess.getSafepointLatch(trapState);

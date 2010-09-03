@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.sparc;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.util.*;
 
 import com.sun.max.asm.*;
@@ -27,7 +29,6 @@ import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.runtime.*;
@@ -191,7 +192,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         offset += wordSize;
         // offset now points to the location where the trap number will be stored in the trap state.
 
-        final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI;
+        final TargetABI targetABI = vmConfig().targetABIsScheme().optimizedJavaABI;
 
         // Setup return address -- to enable stack walker
         asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset, GPR.I7);

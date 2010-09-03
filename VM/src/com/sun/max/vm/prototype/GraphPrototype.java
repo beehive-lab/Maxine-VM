@@ -35,8 +35,8 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.prototype.GraphStats.*;
-import com.sun.max.vm.prototype.JDKInterceptor.*;
+import com.sun.max.vm.prototype.GraphStats.ClassStats;
+import com.sun.max.vm.prototype.JDKInterceptor.InterceptedField;
 import com.sun.max.vm.type.*;
 
 /**
@@ -65,7 +65,6 @@ public class GraphPrototype extends Prototype {
      * about the graph that is useful for debugging
      */
     public GraphPrototype(CompiledPrototype compiledPrototype, boolean tree) {
-        super(compiledPrototype.vmConfiguration());
         this.compiledPrototype = compiledPrototype;
         debuggingPaths = true;
         add(null, ClassRegistry.BOOT_CLASS_REGISTRY, "[root]");

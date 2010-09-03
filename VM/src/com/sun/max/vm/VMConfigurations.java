@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.InstructionSet.*;
@@ -39,8 +41,8 @@ public final class VMConfigurations {
     private VMConfigurations() {
     }
 
-    public static VMPackage defaultCompilerScheme(Platform platform) {
-        switch (platform.processorKind.instructionSet) {
+    public static VMPackage defaultCompilerScheme() {
+        switch (platform().instructionSet()) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
             case SPARC:
@@ -50,8 +52,8 @@ public final class VMConfigurations {
         }
     }
 
-    public static VMPackage defaultJitCompilerScheme(Platform platform) {
-        switch (platform.processorKind.instructionSet) {
+    public static VMPackage defaultJitCompilerScheme() {
+        switch (platform().instructionSet()) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.amd64");
             case SPARC:
@@ -61,8 +63,8 @@ public final class VMConfigurations {
         }
     }
 
-    public static VMPackage defaultTargetABIsScheme(Platform platform) {
-        switch (platform.processorKind.instructionSet) {
+    public static VMPackage defaultTargetABIsScheme() {
+        switch (platform().instructionSet()) {
             case AMD64:
                 return new com.sun.max.vm.compiler.target.amd64.Package();
             case SPARC:
@@ -80,8 +82,8 @@ public final class VMConfigurations {
         return new com.sun.max.vm.reference.heap.Package();
     }
 
-    public static VMPackage defaultLayoutScheme(Platform platform) {
-        if (platform.instructionSet().category == Category.RISC) {
+    public static VMPackage defaultLayoutScheme() {
+        if (platform().instructionSet().category == Category.RISC) {
             // On SPARC, the HOM layout enables more optimized code for accessing array elements
             // smaller than a word as there is no need to perform address arithmetic to skip
             // over the header; the origin is pointing at array element 0.
@@ -113,83 +115,34 @@ public final class VMConfigurations {
         return new VMConfiguration(buildLevel, platform,
             defaultGripScheme(),
             defaultReferenceScheme(),
-            defaultLayoutScheme(platform),
+            defaultLayoutScheme(),
             defaultHeapScheme(),
             defaultMonitorScheme(),
-            defaultCompilerScheme(platform),
-            defaultJitCompilerScheme(platform),
+            defaultCompilerScheme(),
+            defaultJitCompilerScheme(),
             null,
             defaultTrampolineScheme(),
-            defaultTargetABIsScheme(platform),
-            defaultRunScheme());
-    }
-
-    public static VMConfiguration createStandardJit(BuildLevel buildLevel, Platform platform, VMPackage jitPackage) {
-        return new VMConfiguration(buildLevel, platform,
-            defaultGripScheme(),
-            defaultReferenceScheme(),
-            defaultLayoutScheme(platform),
-            defaultHeapScheme(),
-            defaultMonitorScheme(),
-            defaultCompilerScheme(platform),
-            jitPackage,
-            null,
-            defaultTrampolineScheme(),
-            defaultTargetABIsScheme(platform),
-            defaultRunScheme());
-    }
-
-    public static VMPackage defaultMonitorPackage() {
-        return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
-    }
-
-    public static VMConfiguration createStandardInterpreter(BuildLevel buildLevel, Platform platform) {
-        return new VMConfiguration(buildLevel, platform,
-            defaultGripScheme(),
-            defaultReferenceScheme(),
-            defaultLayoutScheme(platform),
-            defaultHeapScheme(),
-            defaultMonitorScheme(),
-            defaultCompilerScheme(platform),
-            defaultJitCompilerScheme(platform),
-            null,
-            defaultTrampolineScheme(),
-            defaultTargetABIsScheme(platform),
+            defaultTargetABIsScheme(),
             defaultRunScheme());
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform) {
         return createStandard(buildLevel, platform,
-            defaultCompilerScheme(platform));
+            defaultCompilerScheme());
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform, VMPackage compilerPackage) {
         return new VMConfiguration(buildLevel, platform,
             defaultGripScheme(),
             defaultReferenceScheme(),
-            defaultLayoutScheme(platform),
+            defaultLayoutScheme(),
             defaultHeapScheme(),
             defaultMonitorScheme(),
             compilerPackage,
             null,
             null,
             defaultTrampolineScheme(),
-            defaultTargetABIsScheme(platform),
+            defaultTargetABIsScheme(),
             defaultRunScheme());
-    }
-
-    public static VMConfiguration createPrototype(BuildLevel buildLevel, Platform platform) {
-        return new VMConfiguration(buildLevel, platform,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null);
     }
 }

@@ -250,7 +250,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
                 vm().unlock();
             }
             if (code != null) {
-                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform().processorKind, getCodeStart(), code, null);
+                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform, getCodeStart(), code, null);
             }
         }
         return instructions;

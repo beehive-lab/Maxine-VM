@@ -493,7 +493,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
         // Since this is not a safepoint, it must be a call.
         final int adjustedTargetCodePosition;
-        if (Platform.target().processorKind.instructionSet.offsetToReturnPC == 0) {
+        if (Platform.platform().instructionSet().offsetToReturnPC == 0) {
             // targetCodePostion is the instruction after the call (which might be another call).
             // We need the find the call at which we actually stopped.
             adjustedTargetCodePosition = targetCodePosition - 1;
@@ -578,7 +578,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param targetMethod the target method whose code is to be disassembled
      */
     public void disassemble(OutputStream out) {
-        final ProcessorKind processorKind = Platform.target().processorKind;
+        final Platform platform = Platform.platform();
         final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(encodedInlineDataDescriptors());
         final Pointer startAddress = codeStart();
         final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
@@ -603,7 +603,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 return string;
             }
         };
-        Disassembler.disassemble(out, code(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+        Disassembler.disassemble(out, code(), platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
     }
 
     /**

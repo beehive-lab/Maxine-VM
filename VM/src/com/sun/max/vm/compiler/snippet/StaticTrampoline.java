@@ -20,9 +20,10 @@
  */
 package com.sun.max.vm.compiler.snippet;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
 
@@ -47,7 +48,7 @@ public final class StaticTrampoline extends Snippet {
     @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.STATIC)
     @NEVER_INLINE
     public static void staticTrampoline() throws Throwable {
-        VMConfiguration.target().bootCompilerScheme().staticTrampoline();
+        vmConfig().bootCompilerScheme().staticTrampoline();
     }
 
     private static final StaticTrampoline snippet = new StaticTrampoline();

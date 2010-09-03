@@ -41,7 +41,6 @@ import com.sun.max.ide.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -55,6 +54,7 @@ import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reflection.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -181,33 +181,29 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
 
     protected Method_Type compileMethod(final ClassMethodActor classMethodActor) {
         compiledMethods.add(classMethodActor);
-        return MaxineVM.usingTarget(new Function<Method_Type>() {
-            public Method_Type call() {
-                try {
-                    final Method_Type method = compilerTestSetup().translate(classMethodActor);
+        try {
+            final Method_Type method = compilerTestSetup().translate(classMethodActor);
 
-                    assertNotNull(method);
+            assertNotNull(method);
 
-                    if (Trace.hasLevel(3) && method instanceof CPSTargetMethod) {
-                        final CPSTargetMethod targetMethod = (CPSTargetMethod) method;
-                        Trace.line(3, "Bundle and code for " + targetMethod);
-                        traceBundleAndDisassemble(targetMethod);
-                    }
-
-                    if (System.getProperty("testDeterministicCompilation") != null) {
-                        CompilationScheme.Static.resetMethodState(classMethodActor);
-                        compareCompilerOutput(method, compilerTestSetup().translate(classMethodActor));
-                    }
-                    return method;
-                } catch (NoSuchMethodError noSuchMethodError) {
-                    if (classMethodActor.isClassInitializer()) {
-                        ProgramWarning.message("NoSuchMethodError - probably caused by <clinit> referring to method with @HOSTED_ONLY: " + noSuchMethodError);
-                        return null;
-                    }
-                    throw noSuchMethodError;
-                }
+            if (Trace.hasLevel(3) && method instanceof CPSTargetMethod) {
+                final CPSTargetMethod targetMethod = (CPSTargetMethod) method;
+                Trace.line(3, "Bundle and code for " + targetMethod);
+                traceBundleAndDisassemble(targetMethod);
             }
-        });
+
+            if (System.getProperty("testDeterministicCompilation") != null) {
+                CompilationScheme.Static.resetMethodState(classMethodActor);
+                compareCompilerOutput(method, compilerTestSetup().translate(classMethodActor));
+            }
+            return method;
+        } catch (NoSuchMethodError noSuchMethodError) {
+            if (classMethodActor.isClassInitializer()) {
+                ProgramWarning.message("NoSuchMethodError - probably caused by <clinit> referring to method with @HOSTED_ONLY: " + noSuchMethodError);
+                return null;
+            }
+            throw noSuchMethodError;
+        }
     }
 
     protected Method_Type compileMethod(Class type, String methodName, SignatureDescriptor signature) {
@@ -231,20 +227,16 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
     }
 
     protected Method_Type compileMethod(final String className, final byte[] classfileBytes, final String methodName, final SignatureDescriptor signature) {
-        return MaxineVM.usingTarget(new Function<Method_Type>() {
-            public Method_Type call() {
-                final Class testClass = MillClassLoader.makeClass(className, classfileBytes);
+        final Class testClass = MillClassLoader.makeClass(className, classfileBytes);
 
-                // Save the generated class file to the filesystem so that a generated stub for a method in the
-                // generated class can find the corresponding Class instance
-                ClassfileReader.saveClassfile(className, classfileBytes);
+        // Save the generated class file to the filesystem so that a generated stub for a method in the
+        // generated class can find the corresponding Class instance
+        ClassfileReader.saveClassfile(className, classfileBytes);
 
-                final ClassMethodActor classMethodActor = ClassActor.fromJava(testClass).findLocalStaticMethodActor(makeSymbol(methodName), signature);
-                assertNotNull(classMethodActor);
+        final ClassMethodActor classMethodActor = ClassActor.fromJava(testClass).findLocalStaticMethodActor(makeSymbol(methodName), signature);
+        assertNotNull(classMethodActor);
 
-                return compileMethod(classMethodActor);
-            }
-        });
+        return compileMethod(classMethodActor);
     }
 
     protected void compileClass(ClassActor classActor) {
@@ -478,8 +470,12 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
         return false;
     }
 
-    protected ReferenceValue newInstance(ClassActor classActor) throws InstantiationException {
-        return ReferenceValue.from(Objects.allocateInstance(classActor.toJava()));
+    protected ReferenceValue newInstance(ClassActor classActor) {
+        try {
+            return ReferenceValue.from(Objects.allocateInstance(classActor.toJava()));
+        } catch (InstantiationException e) {
+            throw FatalError.unexpected("Error instantiating instance of " + classActor, e);
+        }
     }
 
     /**
@@ -493,40 +489,32 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
      *         if {@code method} is a constructor
      */
     protected final Value executeWithException(final Method_Type method, final Value... arguments) throws InvocationTargetException {
+        Trace.begin(3, "interpreting " + method);
         try {
-            return MaxineVM.usingTargetWithException(new Function<Value>() {
-                public Value call() throws Exception {
-                    Trace.begin(3, "interpreting " + method);
-                    try {
-                        final ClassMethodActor classMethodActor = method.classMethodActor();
-                        final boolean isConstructor = classMethodActor.isInstanceInitializer();
-                        final Value[] executeArguments = isConstructor ? Utils.prepend(arguments, newInstance(classMethodActor.holder())) : arguments;
-                        final SignatureDescriptor signature = classMethodActor.descriptor();
-                        int argumentIndex = arguments.length - 1;
-                        int parameterIndex = signature.numberOfParameters() - 1;
-                        while (parameterIndex >= 0) {
-                            final Kind argumentKind = arguments[argumentIndex].kind();
-                            final Kind parameterKind = signature.parameterDescriptorAt(parameterIndex).toKind();
-                            ProgramError.check(argumentKind == parameterKind, "Argument " + argumentIndex + " has kind " + argumentKind + " where as kind " + parameterKind + " is expected");
-                            parameterIndex--;
-                            argumentIndex--;
-                        }
+            final ClassMethodActor classMethodActor = method.classMethodActor();
+            final boolean isConstructor = classMethodActor.isInstanceInitializer();
+            final Value[] executeArguments = isConstructor ? Utils.prepend(arguments, newInstance(classMethodActor.holder())) : arguments;
+            final SignatureDescriptor signature = classMethodActor.descriptor();
+            int argumentIndex = arguments.length - 1;
+            int parameterIndex = signature.numberOfParameters() - 1;
+            while (parameterIndex >= 0) {
+                final Kind argumentKind = arguments[argumentIndex].kind();
+                final Kind parameterKind = signature.parameterDescriptorAt(parameterIndex).toKind();
+                ProgramError.check(argumentKind == parameterKind, "Argument " + argumentIndex + " has kind " + argumentKind + " where as kind " + parameterKind + " is expected");
+                parameterIndex--;
+                argumentIndex--;
+            }
 
-                        final Value value = createInterpreter().execute(method, executeArguments);
-                        final Value returnValue = isConstructor ? executeArguments[0] : value;
+            final Value value = createInterpreter().execute(method, executeArguments);
+            final Value returnValue = isConstructor ? executeArguments[0] : value;
 
-                        if (shouldTestStubs()) {
-                            testStubs(method, arguments, returnValue);
-                        }
+            if (shouldTestStubs()) {
+                testStubs(method, arguments, returnValue);
+            }
 
-                        return returnValue;
-                    } finally {
-                        Trace.end(3, "interpreting " + method);
-                    }
-                }
-            });
-        } catch (Exception exception) {
-            throw Utils.cast(InvocationTargetException.class, exception);
+            return returnValue;
+        } finally {
+            Trace.end(3, "interpreting " + method);
         }
     }
 

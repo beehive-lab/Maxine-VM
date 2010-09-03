@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 
@@ -87,7 +88,7 @@ final class JDK_java_lang_Object {
      */
     @SUBSTITUTE("notify")
     public void notify_SUBSTITUTE() {
-        MaxineVM.target().configuration.monitorScheme().monitorNotify(this);
+        vm().config.monitorScheme().monitorNotify(this);
     }
 
     /**
@@ -96,7 +97,7 @@ final class JDK_java_lang_Object {
      */
     @SUBSTITUTE("notifyAll")
     public void notifyAll_SUBSTITUTE() {
-        MaxineVM.target().configuration.monitorScheme().monitorNotifyAll(this);
+        vm().config.monitorScheme().monitorNotifyAll(this);
     }
 
     /**
@@ -108,7 +109,7 @@ final class JDK_java_lang_Object {
      */
     @SUBSTITUTE("wait")
     public void wait_SUBSTITUTE(long timeout) throws InterruptedException {
-        MaxineVM.target().configuration.monitorScheme().monitorWait(this, timeout);
+        vm().config.monitorScheme().monitorWait(this, timeout);
     }
 
 }

@@ -20,21 +20,22 @@
  */
 package com.sun.max.tele.debug;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.BreakpointCondition.*;
+import com.sun.max.tele.debug.BreakpointCondition.ExpressionException;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.*;
+import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.actor.member.MethodKey.*;
+import com.sun.max.vm.actor.member.MethodKey.DefaultMethodKey;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -341,10 +342,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             final long startTimeMillis = System.currentTimeMillis();
             this.teleTargetBreakpointManager = vm.teleProcess().targetBreakpointManager();
             // Predefine parameter accessors for reading compilation details
-            parameter0 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(0);
-            parameter1 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(1);
-            parameter2 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(2);
-            parameter3 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(3);
+            parameter0 = (Symbol) vmConfig().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(0);
+            parameter1 = (Symbol) vmConfig().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(1);
+            parameter2 = (Symbol) vmConfig().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(2);
+            parameter3 = (Symbol) vmConfig().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(3);
 
             Trace.end(TRACE_VALUE, tracePrefix() + "initializing", startTimeMillis);
         }

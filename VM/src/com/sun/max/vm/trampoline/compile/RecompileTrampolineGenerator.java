@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.trampoline.compile;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.trampoline.*;
@@ -36,7 +37,7 @@ import com.sun.max.vm.trampoline.*;
  */
 public abstract class RecompileTrampolineGenerator extends TrampolineGenerator {
 
-    private static final BootstrapCompilerScheme compilerScheme = VMConfiguration.target().bootCompilerScheme();
+    private static final BootstrapCompilerScheme compilerScheme = vmConfig().bootCompilerScheme();
 
     protected RecompileTrampolineGenerator() {
     }

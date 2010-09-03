@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.cps.tir;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 
 import com.sun.max.asm.*;
@@ -135,21 +137,15 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
         Console.out().println(Color.LIGHTGREEN, "Initializing ...");
         final PrototypeGenerator generator = new PrototypeGenerator(optionSet);
         Trace.addTo(optionSet);
-        final JavaPrototype javaPrototype = generator.createJavaPrototype(createVMConfiguration(), false);
-        javaPrototype.vmConfiguration().initializeSchemes(Phase.RUNNING);
-        javaPrototype.vmConfiguration().bootCompilerScheme().compileSnippets();
+        generator.createJavaPrototype(false);
+        vmConfig().initializeSchemes(Phase.RUNNING);
+        vmConfig().bootCompilerScheme().compileSnippets();
 
-        Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + VMConfiguration.target().bootCompilerScheme().toString());
+        Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + vmConfig().bootCompilerScheme().toString());
     }
 
     protected static VMConfiguration createVMConfiguration() {
-        //return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
-        //                    new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package());
-
-        //return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64),
-        //          new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package());
-
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64),
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform().constrainedByInstructionSet(InstructionSet.AMD64),
                         new com.sun.max.vm.cps.b.c.d.Package());
     }
 }

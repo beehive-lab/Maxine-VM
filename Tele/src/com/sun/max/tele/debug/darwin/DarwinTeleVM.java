@@ -33,7 +33,7 @@ public final class DarwinTeleVM extends TeleVM {
 
     @Override
     protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new DarwinTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments);
+        return new DarwinTeleProcess(this, bootImage().vmConfiguration.platform, programFile(), commandLineArguments);
     }
 
     public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {

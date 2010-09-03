@@ -129,7 +129,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
         this.entityName = regionName;
         this.threadLocalsBlockMemoryRegion = new ThreadLocalsBlockMemoryRegion(teleNativeThread.vm(), this, regionName, start, size);
         this.areas = new EnumMap<Safepoint.State, TeleThreadLocalsArea>(Safepoint.State.class);
-        this.offsetToTriggeredThreadLocals = Platform.target().pageSize - Word.size();
+        this.offsetToTriggeredThreadLocals = Platform.platform().pageSize - Word.size();
         this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " in the " + teleNativeThread.vm().entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
@@ -154,7 +154,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
         this.entityName = name;
         this.threadLocalsBlockMemoryRegion = null;
         this.areas = null;
-        this.offsetToTriggeredThreadLocals = Platform.target().pageSize - Word.size();
+        this.offsetToTriggeredThreadLocals = Platform.platform().pageSize - Word.size();
         this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " in the " + teleNativeThread.vm().entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 

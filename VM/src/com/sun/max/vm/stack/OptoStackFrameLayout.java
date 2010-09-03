@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.stack;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.lang.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.collect.*;
 
 /**
@@ -35,7 +36,7 @@ public class OptoStackFrameLayout extends CompiledStackFrameLayout {
     private final boolean isReturnAddressPushedByCall;
 
     public OptoStackFrameLayout(int frameSize) {
-        this(frameSize, MaxineVM.target().configuration.platform().processorKind.instructionSet.callsPushReturnAddressOnStack());
+        this(frameSize, platform().instructionSet().callsPushReturnAddressOnStack());
     }
 
     public OptoStackFrameLayout(int frameSize, boolean isReturnAddressPushedByCall) {

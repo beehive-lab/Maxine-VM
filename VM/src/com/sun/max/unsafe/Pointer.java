@@ -21,6 +21,7 @@
 package com.sun.max.unsafe;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.MaxineVM.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -60,7 +61,7 @@ public abstract class Pointer extends Address implements Accessor {
     @INLINE
     @INTRINSIC(WCONST_0)
     public static Pointer zero() {
-        return Word.isBoxed() ? BoxedPointer.ZERO : fromInt(0);
+        return isHosted() ? BoxedPointer.ZERO : fromInt(0);
     }
 
     @INLINE
@@ -273,7 +274,7 @@ public abstract class Pointer extends Address implements Accessor {
     @UNSAFE
     @FOLD
     private static boolean risc() {
-        return Platform.hostOrTarget().processorKind.instructionSet.category == InstructionSet.Category.RISC;
+        return Platform.platform().instructionSet().category == InstructionSet.Category.RISC;
     }
 
     @BUILTIN(ReadByteAtIntOffset.class)
@@ -292,7 +293,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final byte getByte(int displacement, int index) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             return readByte(Offset.fromInt(index).plus(displacement));
         }
         return builtinGetByte(displacement, index);
@@ -349,7 +350,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final short getShort(int displacement, int index) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             return readShort(Offset.fromInt(index).times(Shorts.SIZE).plus(displacement));
         }
         return builtinGetShort(displacement, index);
@@ -381,7 +382,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final char getChar(int displacement, int index) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             return readChar(Offset.fromInt(index).times(Chars.SIZE).plus(displacement));
         }
         return builtinGetChar(displacement, index);
@@ -413,7 +414,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final int getInt(int displacement, int index) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             return readInt(Offset.fromInt(index).times(Ints.SIZE).plus(displacement));
         }
         return builtinGetInt(displacement, index);
@@ -445,7 +446,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final float getFloat(int displacement, int index) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             return readFloat(Offset.fromInt(index).times(FLOAT_SIZE).plus(displacement));
         }
         return builtinGetFloat(displacement, index);
@@ -477,7 +478,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final long getLong(int displacement, int index) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             return readLong(Offset.fromInt(index).times(Longs.SIZE).plus(displacement));
         }
         return builtinGetLong(displacement, index);
@@ -509,7 +510,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final double getDouble(int displacement, int index) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             return readDouble(Offset.fromInt(index).times(DOUBLE_SIZE).plus(displacement));
         }
         return builtinGetDouble(displacement, index);
@@ -541,7 +542,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final Word getWord(int displacement, int index) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             return readWord(Offset.fromInt(index).times(Word.size()).plus(displacement));
         }
         return builtinGetWord(displacement, index);
@@ -598,7 +599,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final Reference getReference(int displacement, int index) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             return readReference(Offset.fromInt(index).times(Word.size()).plus(displacement));
         }
         return builtinGetReference(displacement, index);
@@ -630,7 +631,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void setByte(int displacement, int index, byte value) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             writeByte(Offset.fromInt(index).plus(displacement), value);
         } else {
             builtinSetByte(displacement, index, value);
@@ -688,7 +689,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void setShort(int displacement, int index, short value) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             writeShort(Offset.fromInt(index).times(Shorts.SIZE).plus(displacement), value);
         } else {
             builtinSetShort(displacement, index, value);
@@ -746,7 +747,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void setInt(int displacement, int index, int value) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             writeInt(Offset.fromInt(index).times(Ints.SIZE).plus(displacement), value);
         } else {
             builtinSetInt(displacement, index, value);
@@ -779,7 +780,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void setFloat(int displacement, int index, float value) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             writeFloat(Offset.fromInt(index).times(FLOAT_SIZE).plus(displacement), value);
         } else {
             builtinSetFloat(displacement, index, value);
@@ -812,7 +813,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void setLong(int displacement, int index, long value) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             writeLong(Offset.fromInt(index).times(Longs.SIZE).plus(displacement), value);
         } else {
             builtinSetLong(displacement, index, value);
@@ -845,7 +846,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void setDouble(int displacement, int index, double value) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             writeDouble(Offset.fromInt(index).times(DOUBLE_SIZE).plus(displacement), value);
         } else {
             builtinSetDouble(displacement, index, value);
@@ -878,7 +879,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void setWord(int displacement, int index, Word value) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             writeWord(Offset.fromInt(index).times(Word.size()).plus(displacement), value);
         } else {
             builtinSetWord(displacement, index, value);
@@ -936,7 +937,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void setReference(int displacement, int index, Reference value) {
-        if (risc() || Word.isBoxed()) {
+        if (risc() || isHosted()) {
             writeReference(Offset.fromInt(index).times(Word.size()).plus(displacement), value);
         } else {
             builtinSetReference(displacement, index, value);

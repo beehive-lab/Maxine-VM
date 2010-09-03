@@ -57,7 +57,7 @@ public class InspectorAgent {
             if (arg.equals("-port")) {
                 port = Integer.parseInt(args[++i]);
             } else if (arg.equals("-host.os")) {
-                System.setProperty(Prototype.OPERATING_SYSTEM_PROPERTY, args[++i]);
+                System.setProperty(Platform.OPERATING_SYSTEM_PROPERTY, args[++i]);
             } else if (arg.equals("-trace")) {
                 traceLevel = Integer.parseInt(args[++i]);
             } else if (arg.equals("-dbtlevel")) {
@@ -73,7 +73,7 @@ public class InspectorAgent {
             Trace.on(traceLevel);
         }
 
-        target = OperatingSystem.fromName(System.getProperty(Prototype.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name()));
+        target = OperatingSystem.fromName(System.getProperty(Platform.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name()));
 
         Prototype.loadLibrary("tele");
         listen();

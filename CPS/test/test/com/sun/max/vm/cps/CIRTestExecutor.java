@@ -20,12 +20,12 @@
  */
 package test.com.sun.max.vm.cps;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 
-import com.sun.max.platform.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -48,11 +48,8 @@ public class CIRTestExecutor implements JavaExecHarness.Executor {
     private static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
 
     private static void initialize(boolean loadingPackages) {
-        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(new OptionSet());
-        final VMConfiguration cfg = VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
-                        new com.sun.max.vm.cps.b.c.Package());
-        final Prototype jpt = prototypeGenerator.createJavaPrototype(cfg, loadingPackages);
-        final CirGeneratorScheme compilerScheme = (CirGeneratorScheme) jpt.vmConfiguration().bootCompilerScheme();
+        new PrototypeGenerator(new OptionSet()).createJavaPrototype(loadingPackages);
+        final CirGeneratorScheme compilerScheme = (CirGeneratorScheme) vmConfig().bootCompilerScheme();
         compilerScheme.compileSnippets();
         generator = compilerScheme.cirGenerator();
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping

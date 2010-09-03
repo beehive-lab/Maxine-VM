@@ -21,14 +21,14 @@
 package test.com.sun.max.vm.cps;
 
 import static com.sun.max.asm.dis.Disassembler.*;
+import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.platform.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -51,7 +51,7 @@ public abstract class CompilerTestSetup<Method_Type> extends VmTestSetup {
     @Override
     protected void chainedSetUp() {
         super.chainedSetUp();
-        javaPrototype().vmConfiguration().initializeSchemes(Phase.RUNNING);
+        vmConfig().initializeSchemes(Phase.RUNNING);
         compilerScheme().compileSnippets();
     }
 
@@ -62,13 +62,13 @@ public abstract class CompilerTestSetup<Method_Type> extends VmTestSetup {
      * @return a disassembler for the ISA specific code in {@code targetMethod} or null if no such disassembler is available
      */
     public final Disassembler disassemblerFor(TargetMethod targetMethod) {
-        Platform platform = VMConfiguration.target().platform();
+        Platform platform = Platform.platform();
         InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
         return createDisassembler(platform.instructionSet(), platform.wordWidth(), targetMethod.codeStart().toLong(), inlineDataDecoder);
     }
 
     public static BootstrapCompilerScheme compilerScheme() {
-        return javaPrototype().vmConfiguration().bootCompilerScheme();
+        return vmConfig().bootCompilerScheme();
     }
 
     public abstract Method_Type translate(ClassMethodActor classMethodActor);

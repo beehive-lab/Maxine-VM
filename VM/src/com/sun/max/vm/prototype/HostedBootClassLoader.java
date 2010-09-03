@@ -174,21 +174,17 @@ public final class HostedBootClassLoader extends ClassLoader {
      */
     public synchronized ClassActor makeClassActor(final TypeDescriptor typeDescriptor) throws ClassNotFoundException {
         try {
-            return MaxineVM.usingTargetWithException(new Function<ClassActor>() {
-                public ClassActor call() throws Exception {
-                    final ClassActor classActor = ClassRegistry.get(HostedBootClassLoader.this, typeDescriptor, false);
-                    if (classActor != null) {
-                        return classActor;
-                    }
-                    if (JavaTypeDescriptor.isArray(typeDescriptor)) {
-                        final ClassActor componentClassActor = makeClassActor(typeDescriptor.componentTypeDescriptor());
-                        return ClassActorFactory.createArrayClassActor(componentClassActor);
-                    }
-                    final String name = typeDescriptor.toJavaString();
-                    final ClasspathFile classpathFile = readClassFile(classpath(), name);
-                    return ClassfileReader.defineClassActor(name, HostedBootClassLoader.this, classpathFile.contents, null, classpathFile.classpathEntry, false);
-                }
-            });
+            final ClassActor classActor = ClassRegistry.get(HostedBootClassLoader.this, typeDescriptor, false);
+            if (classActor != null) {
+                return classActor;
+            }
+            if (JavaTypeDescriptor.isArray(typeDescriptor)) {
+                final ClassActor componentClassActor = makeClassActor(typeDescriptor.componentTypeDescriptor());
+                return ClassActorFactory.createArrayClassActor(componentClassActor);
+            }
+            final String name = typeDescriptor.toJavaString();
+            final ClasspathFile classpathFile = readClassFile(classpath(), name);
+            return ClassfileReader.defineClassActor(name, HostedBootClassLoader.this, classpathFile.contents, null, classpathFile.classpathEntry, false);
         } catch (Exception exception) {
             throw Utils.cast(ClassNotFoundException.class, exception);
         }
@@ -261,25 +257,21 @@ public final class HostedBootClassLoader extends ClassLoader {
     @Override
     public synchronized Class<?> findClass(final String name) throws ClassNotFoundException {
         try {
-            return MaxineVM.usingTargetWithException(new Function<Class>() {
-                public Class call() throws ClassNotFoundException {
-                    // FIXME: The class loader interface (as specified by the JDK) does not allow one to pass a name of an array class!
-                    // Specifically, the JDK says: "Class objects for array classes are not created by class loaders, but are created automatically
-                    // as required by the Java runtime. The class loader for an array class, as returned by Class.getClassLoader() is the same as
-                    // the class loader for its element type; if the element type is a primitive type, then the array class has no class loader."
-                    // So the following is not exactly legal.
-                    if (name.endsWith("[]")) {
-                        return findArrayClass(JavaTypeDescriptor.getDescriptorForJavaString(name).elementTypeDescriptor());
-                    } else if (name.charAt(0) == '[') {
-                        // make sure the name is slashified first
-                        final String elementTypeName = name.substring(1).replace('.', '/');
-                        return findArrayClass(JavaTypeDescriptor.parseTypeDescriptor(elementTypeName));
-                    }
-                    final Class<?> javaType = findClass(classpath(), name);
-                    makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
-                    return javaType;
-                }
-            });
+            // FIXME: The class loader interface (as specified by the JDK) does not allow one to pass a name of an array class!
+            // Specifically, the JDK says: "Class objects for array classes are not created by class loaders, but are created automatically
+            // as required by the Java runtime. The class loader for an array class, as returned by Class.getClassLoader() is the same as
+            // the class loader for its element type; if the element type is a primitive type, then the array class has no class loader."
+            // So the following is not exactly legal.
+            if (name.endsWith("[]")) {
+                return findArrayClass(JavaTypeDescriptor.getDescriptorForJavaString(name).elementTypeDescriptor());
+            } else if (name.charAt(0) == '[') {
+                // make sure the name is slashified first
+                final String elementTypeName = name.substring(1).replace('.', '/');
+                return findArrayClass(JavaTypeDescriptor.parseTypeDescriptor(elementTypeName));
+            }
+            final Class<?> javaType = findClass(classpath(), name);
+            makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
+            return javaType;
         } catch (ClassNotFoundException e) {
             throw e;
         } catch (Exception e) {
@@ -294,19 +286,15 @@ public final class HostedBootClassLoader extends ClassLoader {
     @Override
     protected synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
         try {
-            return MaxineVM.usingTargetWithException(new Function<Class>() {
-                public Class call() throws ClassNotFoundException {
-                    final Class<?> javaType = HostedBootClassLoader.super.loadClass(name, resolve);
-                    if (MaxineVM.isHostedOnly(javaType)) {
-                        throw new HostOnlyClassError(javaType.getName());
-                    }
-                    if (isOmittedType(JavaTypeDescriptor.forJavaClass(javaType))) {
-                        throw new OmittedClassError(javaType.getName());
-                    }
-                    makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
-                    return javaType;
-                }
-            });
+            final Class<?> javaType = HostedBootClassLoader.super.loadClass(name, resolve);
+            if (MaxineVM.isHostedOnly(javaType)) {
+                throw new HostOnlyClassError(javaType.getName());
+            }
+            if (isOmittedType(JavaTypeDescriptor.forJavaClass(javaType))) {
+                throw new OmittedClassError(javaType.getName());
+            }
+            makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
+            return javaType;
         } catch (Exception exception) {
             throw Utils.cast(ClassNotFoundException.class, exception);
         }

@@ -28,7 +28,6 @@ import com.sun.cri.xir.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -84,7 +83,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                 VMConfiguration configuration = vmConfiguration();
                 // create the CiTarget object passed to C1X
                 MaxRiRegisterConfig config = new MaxRiRegisterConfig(configuration);
-                InstructionSet isa = configuration.platform().processorKind.instructionSet;
+                InstructionSet isa = configuration.platform.instructionSet();
                 CiArchitecture arch;
                 switch (isa) {
                     case AMD64:
@@ -109,18 +108,14 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     public final TargetMethod compile(final ClassMethodActor classMethodActor) {
-        return MaxineVM.usingTarget(new Function<TargetMethod>() {
-            public TargetMethod call() {
-                RiMethod method = classMethodActor;
-                CiTargetMethod compiledMethod = c1xCompiler.compileMethod(method, c1xXirGenerator).targetMethod();
-                if (compiledMethod != null) {
-                    C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);
-                    CompilationScheme.Inspect.notifyCompilationComplete(c1xTargetMethod);
-                    return c1xTargetMethod;
-                }
-                throw FatalError.unexpected("bailout"); // compilation failed
-            }
-        });
+        RiMethod method = classMethodActor;
+        CiTargetMethod compiledMethod = c1xCompiler.compileMethod(method, c1xXirGenerator).targetMethod();
+        if (compiledMethod != null) {
+            C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);
+            CompilationScheme.Inspect.notifyCompilationComplete(c1xTargetMethod);
+            return c1xTargetMethod;
+        }
+        throw FatalError.unexpected("bailout"); // compilation failed
     }
 
     @HOSTED_ONLY

@@ -21,6 +21,7 @@
 package com.sun.max.vm.prototype;
 
 import static com.sun.max.annotate.LOCAL_SUBSTITUTION.Static.*;
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.prototype.HostedBootClassLoader.*;
 
 import java.io.*;
@@ -88,7 +89,7 @@ public class JavaPrototype extends Prototype {
     private List<MaxPackage> getPackages(final Class<? extends MaxPackage> maxPackageClass, MaxPackage rootPackage) {
         final List<MaxPackage> packages = new LinkedList<MaxPackage>();
         for (MaxPackage maxPackage : rootPackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath())) {
-            if (maxPackageClass.isInstance(maxPackage) && vmConfiguration().isMaxineVMPackage(maxPackage)) {
+            if (maxPackageClass.isInstance(maxPackage) && vmConfig().isMaxineVMPackage(maxPackage)) {
                 packages.add(maxPackage);
             }
         }
@@ -210,7 +211,7 @@ public class JavaPrototype extends Prototype {
      * Load packages corresponding to VM configurations.
      */
     private void loadVMConfigurationPackages() {
-        for (MaxPackage p : vmConfiguration().packages()) {
+        for (MaxPackage p : vmConfig().packages()) {
             loadPackage(p);
         }
     }
@@ -386,70 +387,63 @@ public class JavaPrototype extends Prototype {
 
     /**
      * Create a new Java prototype with the specified VM configuration.
-     *
-     * @param vmConfiguration the VM configuration
      * @param complete specifies whether to load more than just the VM scheme packages
+     * @param vmConfiguration the VM configuration
      */
-    public JavaPrototype(final VMConfiguration vmConfiguration, final boolean complete) {
-        super(vmConfiguration);
-
+    public JavaPrototype(final boolean complete) {
+        VMConfiguration config = vmConfig();
         packageLoader = new PrototypePackageLoader(HOSTED_BOOT_CLASS_LOADER, HOSTED_BOOT_CLASS_LOADER.classpath());
         theJavaPrototype = this;
 
-        MaxineVM.setTarget(new MaxineVM(vmConfiguration));
-        vmConfiguration.loadAndInstantiateSchemes(true);
+        MaxineVM.set(new MaxineVM(config));
 
-        Trace.line(1, "Host VM configuration:");
-        Trace.line(1, MaxineVM.host().configuration);
-        Trace.line(1, "Target VM configuration:");
-        Trace.line(1, MaxineVM.target().configuration);
-        Trace.line(1, "JDK: " + System.getProperty("java.version"));
-        Trace.line(1);
+        if (Trace.hasLevel(1)) {
+            PrintStream out = Trace.stream();
+            out.println("======================== VM Configuration ========================");
+            out.print(vmConfig());
+            out.println("JDK: " + System.getProperty("java.version"));
+            out.println("==================================================================");
+        }
 
-        MaxineVM.usingTarget(new Runnable() {
+        loadVMConfigurationPackages();
 
-            public void run() {
-                loadVMConfigurationPackages();
+        ClassActor.DEFERRABLE_QUEUE_1.runAll();
 
-                ClassActor.DEFERRABLE_QUEUE_1.runAll();
+        initializeMaxClasses();
 
-                initializeMaxClasses();
+        config.bootCompilerScheme().createBuiltins(packageLoader);
+        Builtin.register(config.bootCompilerScheme());
+        config.bootCompilerScheme().createSnippets(packageLoader);
+        Snippet.register();
 
-                vmConfiguration.bootCompilerScheme().createBuiltins(packageLoader);
-                Builtin.register(vmConfiguration.bootCompilerScheme());
-                vmConfiguration.bootCompilerScheme().createSnippets(packageLoader);
-                Snippet.register();
+        loadMethodSubstitutions(config, packageLoader);
 
-                loadMethodSubstitutions(vmConfiguration, packageLoader);
+        // Need all of C1X
+        loadPackage("com.sun.cri", true);
+        loadPackage("com.sun.c1x", true);
 
-                // Need all of C1X
-                loadPackage("com.sun.cri", true);
-                loadPackage("com.sun.c1x", true);
+        if (complete) {
 
-                if (complete) {
+            // TODO: Load the following package groups in parallel
+            loadPackages(basePackages());
+            loadPackages(vmPackages());
+            loadPackages(asmPackages());
 
-                    // TODO: Load the following package groups in parallel
-                    loadPackages(basePackages());
-                    loadPackages(vmPackages());
-                    loadPackages(asmPackages());
+            initializeMaxClasses();
 
-                    initializeMaxClasses();
+            config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
-                    vmConfiguration.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
+            // VM implementation classes ending up in the bootstrap image
+            // are supposed to be limited to those loaded up to here.
+            //
+            // This enables detection of violations of said requirement:
+            ClassActor.prohibitPackagePrefix(new com.sun.max.Package());
 
-                    // VM implementation classes ending up in the bootstrap image
-                    // are supposed to be limited to those loaded up to here.
-                    //
-                    // This enables detection of violations of said requirement:
-                    ClassActor.prohibitPackagePrefix(new com.sun.max.Package());
+            VmThreadLocal.completeInitialization();
 
-                    VmThreadLocal.completeInitialization();
-
-                } else {
-                    vmConfiguration.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
-                }
-            }
-        });
+        } else {
+            config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
+        }
     }
 
     /**

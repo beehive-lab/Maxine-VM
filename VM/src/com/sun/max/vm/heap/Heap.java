@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
@@ -278,7 +279,7 @@ public final class Heap {
     @UNSAFE
     @FOLD
     private static HeapScheme heapScheme() {
-        return VMConfiguration.hostOrTarget().heapScheme();
+        return vmConfig().heapScheme();
     }
 
     @INLINE

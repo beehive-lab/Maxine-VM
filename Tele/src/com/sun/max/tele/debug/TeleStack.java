@@ -129,7 +129,7 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         this.teleNativeThread = teleNativeThread;
         this.entityDescription = "The stack in " + vm().entityName() + " for " + teleNativeThread.entityName();
         this.stackMemoryRegion = new StackMemoryRegion(teleVM, this, name, start, size);
-        this.offsetToReturnPC = teleVM.vmConfiguration().platform.processorKind.instructionSet.offsetToReturnPC;
+        this.offsetToReturnPC = teleVM.vmConfiguration().platform.instructionSet().offsetToReturnPC;
     }
 
     public String entityName() {

@@ -313,7 +313,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
         TargetBreakpointManager(TeleVM teleVM) {
             super(teleVM);
-            this.code = TargetBreakpoint.createBreakpointCode(teleVM.vmConfiguration().platform().processorKind.instructionSet);
+            this.code = TargetBreakpoint.createBreakpointCode(teleVM.vmConfiguration().platform.instructionSet());
         }
 
         /**

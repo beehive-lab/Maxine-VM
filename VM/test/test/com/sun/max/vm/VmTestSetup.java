@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 
 import junit.extensions.*;
@@ -52,7 +54,7 @@ public class VmTestSetup extends TestSetup {
     }
 
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host());
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform());
     }
 
     public static JavaPrototype javaPrototype() {
@@ -68,7 +70,7 @@ public class VmTestSetup extends TestSetup {
     protected JavaPrototype createJavaPrototype() {
         final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(new OptionSet());
         Trace.on(1);
-        return prototypeGenerator.createJavaPrototype(createVMConfiguration(), false);
+        return prototypeGenerator.createJavaPrototype(false);
     }
 
     public static PackageLoader packageLoader() {
@@ -100,7 +102,7 @@ public class VmTestSetup extends TestSetup {
     @After
     @Override
     protected final void tearDown() {
-        javaPrototype.vmConfiguration().finalizeSchemes(Phase.RUNNING);
+        vmConfig().finalizeSchemes(Phase.RUNNING);
         ClassfileReader.writeClassfilesToJar(new File(JavaProject.findVcsProjectDirectory(), "loaded-classes.jar"));
     }
 }
