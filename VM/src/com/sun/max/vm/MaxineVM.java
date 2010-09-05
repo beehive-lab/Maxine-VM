@@ -46,7 +46,23 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Maxine.
+ * The global VM context. There is a {@linkplain #vm() single VM context} in existence at any time.
+ * The {@linkplain VMConfiguration configuration} for a VM context can be accessed via the
+ * {@link #config} field although the preferred mechanism for accessing the configuration for the
+ * global VM context is {@linkplain VMConfiguration#vmConfig()}.
+ * <p>
+ * Other functionality encapsulated in this class includes:
+ * <li>The {@link #isHosted()} method that can be used to guard blocks of code that will be omitted from a boot image.</li>
+ * <li>The current execution {@linkplain #phase phase} of the VM, denoting what language and VM capabilities
+ * have been initialized and are available.</li>
+ * <li>Some global native methods used at runtime that don't particularly
+ * belong to other classes (e.g. {@link #native_currentTimeMillis()}, {@link #native_exit(int)}, etc).</li>
+ * <li>Methods for {@linkplain #registerCriticalMethod(CriticalMethod) registering} methods to be
+ * loaded & compiled into the boot image.</li>
+ *
+ * @author Bernd Mathiske
+ * @author Ben L. Titzer
+ * @author Doug Simon
  * @author Paul Caprioli
  */
 public final class MaxineVM {
@@ -54,7 +70,12 @@ public final class MaxineVM {
     public static final String VERSION = "0.2";
     public static final int HARD_EXIT_CODE = -2;
 
+    /**
+     * The list of package prefixes denoting classes for which {@link #isMaxineClass(ClassActor)}
+     * and {@link #isMaxineClass(TypeDescriptor)} will return true.
+     */
     private static final List<String> MAXINE_CODE_BASE_LIST = new ArrayList<String>();
+
     private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
     private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = "test." + MAXINE_CLASS_PACKAGE_PREFIX;
     private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
@@ -175,11 +196,9 @@ public final class MaxineVM {
 
     /**
      * Gets the current VM context.
-     * This must not be called before the context has been {@linkplain #set(MaxineVM) initialized}.
      */
     @INLINE
     public static MaxineVM vm() {
-        assert vm != null : "VM context not yet set";
         return vm;
     }
 

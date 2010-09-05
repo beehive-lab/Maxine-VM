@@ -27,7 +27,6 @@ import static com.sun.max.vm.VMConfiguration.*;
 
 import java.lang.reflect.*;
 
-import com.sun.max.program.option.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -53,7 +52,7 @@ public class EIRTestExecutor implements JavaExecHarness.Executor {
     public static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
 
     private static void initialize(boolean loadingPackages) {
-        new PrototypeGenerator(new OptionSet()).createJavaPrototype(loadingPackages);
+        JavaPrototype.initialize(loadingPackages);
         final EirGeneratorScheme compilerScheme = (EirGeneratorScheme) vmConfig().bootCompilerScheme();
         compilerScheme.compileSnippets();
         generator = compilerScheme.eirGenerator();

@@ -29,13 +29,11 @@ import junit.framework.Test;
 
 import org.junit.*;
 
-import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.prototype.*;
 
@@ -47,8 +45,6 @@ import com.sun.max.vm.prototype.*;
  */
 public class VmTestSetup extends TestSetup {
 
-    private static JavaPrototype javaPrototype = null;
-
     public VmTestSetup(Test test) {
         super(test);
     }
@@ -57,24 +53,11 @@ public class VmTestSetup extends TestSetup {
         return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform());
     }
 
-    public static JavaPrototype javaPrototype() {
-        return javaPrototype;
-    }
-
     private boolean setupGuard;
 
     protected void chainedSetUp() {
-        javaPrototype = createJavaPrototype();
-    }
-
-    protected JavaPrototype createJavaPrototype() {
-        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(new OptionSet());
         Trace.on(1);
-        return prototypeGenerator.createJavaPrototype(false);
-    }
-
-    public static PackageLoader packageLoader() {
-        return javaPrototype.packageLoader();
+        JavaPrototype.initialize(false);
     }
 
     /**

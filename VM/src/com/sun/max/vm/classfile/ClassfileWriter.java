@@ -735,7 +735,7 @@ public class ClassfileWriter {
         final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exits.");
 
         Trace.addTo(options);
-        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
+        VMConfigurator vmConfigurator = new VMConfigurator(options);
         options.parseArguments(args);
 
         if (helpOption.getValue()) {
@@ -748,7 +748,9 @@ public class ClassfileWriter {
             options.printHelp(System.out, 80);
             return;
         }
-        prototypeGenerator.createJavaPrototype(false);
+
+        vmConfigurator.create(true);
+        JavaPrototype.initialize(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes
 
         final Map<String, byte[]> classNameToClassfileMap = new LinkedHashMap<String, byte[]>();

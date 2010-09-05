@@ -199,6 +199,8 @@ public final class BootImageGenerator {
 
             // Create and installs the VM
             configurator.create(true);
+            // Initialize the Java prototype
+            JavaPrototype.initialize(true);
 
             String[] extraClassesAndPackages = options.getArguments();
             if (extraClassesAndPackages.length != 0) {

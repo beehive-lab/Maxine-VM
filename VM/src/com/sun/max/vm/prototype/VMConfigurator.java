@@ -37,7 +37,8 @@ import com.sun.max.vm.run.*;
 import com.sun.max.vm.trampoline.*;
 
 /**
- * This class constructs a {@linkplain MaxineVM VM} from a number of command line options.
+ * This class constructs a {@linkplain MaxineVM VM} whose configuration is specified
+ * by a number of command line options.
  *
  * @author Doug Simon
  */
@@ -75,12 +76,15 @@ public final class VMConfigurator {
     }
 
     /**
-     * Creates a new prototype generator.
+     * Creates a VMConfiurator.
      *
-     * @param optionSet the set of options to which the prototype generator specific options will be added
+     * @param externalOptions if non-{@code null}, then the command line options encapsulated by the new VMConfigurator
+     *            are added to this set of options
      */
-    public VMConfigurator(OptionSet optionSet) {
-        optionSet.addOptions(options);
+    public VMConfigurator(OptionSet externalOptions) {
+        if (externalOptions != null) {
+            externalOptions.addOptions(options);
+        }
     }
 
     /**
@@ -127,7 +131,7 @@ public final class VMConfigurator {
      * otherwise they are used to configure a VM whose configuration will be printed to {@link System#out}
      */
     public static void main(String[] args) {
-        VMConfigurator configurator = new VMConfigurator(new OptionSet());
+        VMConfigurator configurator = new VMConfigurator(null);
         if (args.length == 0) {
             configurator.options.printHelp(System.out, 80);
         } else {

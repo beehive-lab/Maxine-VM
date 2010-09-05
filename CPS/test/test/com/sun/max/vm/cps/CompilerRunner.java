@@ -84,12 +84,8 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
 
     private static final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
 
-    @Override
-    protected JavaPrototype createJavaPrototype() {
-        return prototypeGenerator.createJavaPrototype(false);
-    }
-
     public static void main(String[] args) {
+        VMConfigurator vmConfigurator = new VMConfigurator(options);
         Trace.addTo(options);
         options.parseArguments(args);
 
@@ -98,6 +94,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
             return;
         }
 
+        vmConfigurator.create(true);
         if (vmArguments.getValue() != null) {
             VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));
         }

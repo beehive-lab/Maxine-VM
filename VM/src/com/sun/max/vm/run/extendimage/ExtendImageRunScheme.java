@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.run.extendimage;
 
+import static com.sun.max.vm.prototype.JavaPrototype.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -307,7 +309,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     protected void forceClass(String className, boolean isMain) {
         Trace.line(1, "extending image with class " + className);
         try {
-            JavaPrototype.javaPrototype().loadClass(className);
+            javaPrototype().loadClass(className);
         } catch (NoClassDefFoundError ex) {
             Trace.line(1, "WARNING: class " + className + " not found");
         }

@@ -176,9 +176,12 @@ public class C1XTest {
 
         // create the prototype
         if (verboseOption.getValue() > 0) {
-            out.print("Creating Java prototype... ");
+            out.print("Initializing Java prototype... ");
         }
-        new PrototypeGenerator(options).createJavaPrototype(false);
+
+        VMConfigurator vmConfigurator = new VMConfigurator(options);
+        vmConfigurator.create(true);
+        JavaPrototype.initialize(false);
         if (verboseOption.getValue() > 0) {
             out.println("done");
         }

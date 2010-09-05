@@ -21,6 +21,7 @@
 package com.sun.max.vm.prototype;
 
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.prototype.JavaPrototype.*;
 
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
@@ -52,16 +53,6 @@ public final class PrototypeGenerator {
     }
 
     /**
-     * Create the Java prototype, which includes the basic JDK and Maxine classes.
-     *
-     * @param complete specifies whether to load more than just the VM scheme packages
-     * @return a new Java prototype object
-     */
-    public JavaPrototype createJavaPrototype(boolean complete) {
-        return new JavaPrototype(complete);
-    }
-
-    /**
      * Create the graph prototype and explore objects, compiling methods as necessary.
      * This method computes the reachable objects and code of the prototype (i.e. it builds
      * both the {@code CompiledPrototype} and the {@code GraphPrototype} iteratively
@@ -71,11 +62,10 @@ public final class PrototypeGenerator {
      * @return the final graph prototype of the VM
      */
     public GraphPrototype createGraphPrototype(final boolean tree, boolean prototypeJit) {
-        final JavaPrototype javaPrototype = createJavaPrototype(true);
         if (prototypeJit) {
             vmConfig().compilationScheme().setMode(Mode.PROTOTYPE_JIT);
         }
-        javaPrototype.loadCoreJavaPackages();
+        javaPrototype().loadCoreJavaPackages();
 
         GraphPrototype graphPrototype;
         int numberOfClassActors = 0;
