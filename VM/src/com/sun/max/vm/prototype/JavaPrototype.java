@@ -45,11 +45,14 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
+ * The {@link ClassActor} context when {@linkplain BootImageGenerator generating} the
+ * boot image or otherwise executing code that loads and uses {@link ClassActor}s.
+ *
  * This class loads and initializes important JDK packages needed during bootstrapping.
  *
  * @author Bernd Mathiske
  */
-public class JavaPrototype extends Prototype {
+public final class JavaPrototype extends Prototype {
 
     /**
      * The name of the system that can be used to specify extra classes and packages to be loaded
@@ -386,16 +389,29 @@ public class JavaPrototype extends Prototype {
     }
 
     /**
-     * Create a new Java prototype with the specified VM configuration.
+     * Initializes the global Java prototype. This also initializes the global {@linkplain MaxineVM#vm() VM}
+     * context if it hasn't been set.
+     *
      * @param complete specifies whether to load more than just the VM scheme packages
-     * @param vmConfiguration the VM configuration
      */
-    public JavaPrototype(final boolean complete) {
+    public static void initialize(final boolean complete) {
+        assert theJavaPrototype == null : "Cannot initialize the JavaPrototype more than once";
+        if (MaxineVM.vm() == null) {
+            new VMConfigurator(null).create(true);
+        }
+        theJavaPrototype = new JavaPrototype(complete);
+
+    }
+
+    /**
+     * Create a new Java prototype with the specified VM configuration.
+     *
+     * @param complete specifies whether to load more than just the VM scheme packages
+     */
+    private JavaPrototype(final boolean complete) {
         VMConfiguration config = vmConfig();
         packageLoader = new PrototypePackageLoader(HOSTED_BOOT_CLASS_LOADER, HOSTED_BOOT_CLASS_LOADER.classpath());
         theJavaPrototype = this;
-
-        MaxineVM.set(new MaxineVM(config));
 
         if (Trace.hasLevel(1)) {
             PrintStream out = Trace.stream();

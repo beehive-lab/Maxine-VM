@@ -27,7 +27,6 @@ import static com.sun.max.vm.VMConfiguration.*;
 
 import java.lang.reflect.*;
 
-import com.sun.max.program.option.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -51,7 +50,7 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
     private static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
 
     private static void initialize(boolean loadingPackages) {
-        new PrototypeGenerator(new OptionSet()).createJavaPrototype(loadingPackages);
+        JavaPrototype.initialize(loadingPackages);
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) vmConfig().bootCompilerScheme();
         dirGeneratorScheme.compileSnippets();
         generator = dirGeneratorScheme.dirGenerator();

@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
-import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.prototype.*;
@@ -334,7 +333,7 @@ public class MethodFinder {
 
     public static void main(String[] args) {
         System.out.print("Creating Java prototype... ");
-        new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
+        JavaPrototype.initialize(false);
         System.out.println("done");
 
         MethodFinder matcher = new MethodFinder();

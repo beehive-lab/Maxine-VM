@@ -21,6 +21,7 @@
 package test.com.sun.max.vm.cps;
 
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
+import static com.sun.max.vm.prototype.JavaPrototype.*;
 import static com.sun.max.vm.reflection.InvocationStub.*;
 
 import java.io.*;
@@ -288,7 +289,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
 
     protected void compilePackage(MaxPackage p) {
         Trace.begin(1, "compiling package: " + p.name());
-        for (Class javaType : CompilerTestSetup.packageLoader().load(p, false)) {
+        for (Class javaType : javaPrototype().packageLoader().load(p, false)) {
             compileClass(javaType);
         }
         Trace.end(1, "compiling package: " + p.name());
