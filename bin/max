@@ -72,6 +72,7 @@ make_arg=
 cp_suffix=
 cp_prefix=
 base_ide_dir=shell
+remote=0
 if [ x${MAXINE_IDE} = xINTELLIJ ]; then
     base_ide_dir=intellij
 fi
@@ -95,6 +96,12 @@ while [ "${1:0:1}" = "-" ]; do
         -vmdir )
             shift
             MAXVM_DIR=$1
+            ;;
+        -remote.os )
+            shift
+            MAXINE_OS=$1
+            jvm_args="$jvm_args -Dmax.os=$1"
+            remote=1
             ;;
         -make )
             shift
@@ -1352,7 +1359,7 @@ function run_inspect() {
 	    inspector_args="$inspector_args -cp=${inspector_cp/#:/}"
 	fi
 
-    if [[ "$MAXINE_OS" = "darwin" ]]; then
+    if [[ "$remote" -eq 0 && "$MAXINE_OS" = "darwin" ]]; then
         run sudo -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
