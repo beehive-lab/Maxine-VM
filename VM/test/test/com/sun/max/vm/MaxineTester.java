@@ -649,14 +649,15 @@ public class MaxineTester {
         if (exitValue == 0) {
             // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
             copyBinary(imageDir, "maxvm");
-            copyBinary(imageDir, mapLibraryName("jvm"));
+            if (OperatingSystem.current() == OperatingSystem.DARWIN) {
+                copyBinary(imageDir, mapLibraryName("jvmlinkage"));
+            } else {
+                copyBinary(imageDir, mapLibraryName("jvm"));
+            }
             copyBinary(imageDir, mapLibraryName("javatest"));
             copyBinary(imageDir, mapLibraryName("prototype"));
             copyBinary(imageDir, mapLibraryName("tele"));
 
-            if (OperatingSystem.current() == OperatingSystem.DARWIN) {
-                copyBinary(imageDir, mapLibraryName("jvmlinkage"));
-            }
 
             generatedImages.put(imageConfig, imageDir);
             return true;
