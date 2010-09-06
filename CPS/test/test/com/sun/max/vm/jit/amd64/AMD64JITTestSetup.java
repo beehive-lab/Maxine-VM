@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.jit.amd64;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.amd64.*;
@@ -30,6 +31,7 @@ import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.jit.amd64.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.template.*;
 
 /**
@@ -43,8 +45,9 @@ public class AMD64JITTestSetup extends AMD64TranslatorTestSetup implements JITTe
     }
 
     @Override
-    protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandardJit(BuildLevel.DEBUG, Platform.platform().constrainedByInstructionSet(InstructionSet.AMD64));
+    protected void initializeVM() {
+        Platform.set(platform().constrainedByInstructionSet(InstructionSet.SPARC));
+        VMConfigurator.installStandardJit(BuildLevel.DEBUG);
     }
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {

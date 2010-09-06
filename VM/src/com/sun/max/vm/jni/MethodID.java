@@ -42,10 +42,22 @@ public abstract class MethodID extends MemberID {
     }
 
     public static MethodID fromMethodActor(MethodActor methodActor) {
-        return fromWord(MemberID.create(methodActor));
+        MethodID w = fromWord(MemberID.create(methodActor));
+
+        System.err.println(w.toHexString() + ": " + methodActor);
+        try {
+            toMethodActor(w);
+        } catch (NullPointerException e) {
+            fromMethodActor(methodActor);
+        }
+        return w;
     }
 
     public static MethodActor toMethodActor(MethodID methodID) {
-        return methodID.getHolder().getLocalMethodActor(methodID.getMemberIndex());
+        try {
+            return methodID.getHolder().getLocalMethodActor(methodID.getMemberIndex());
+        } catch (NullPointerException e) {
+            return methodID.getHolder().getLocalMethodActor(methodID.getMemberIndex());
+        }
     }
 }

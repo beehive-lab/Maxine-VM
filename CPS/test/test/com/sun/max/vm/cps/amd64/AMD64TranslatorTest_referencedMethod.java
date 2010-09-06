@@ -38,7 +38,7 @@ import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 /**

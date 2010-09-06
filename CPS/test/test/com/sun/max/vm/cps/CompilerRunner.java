@@ -38,7 +38,7 @@ import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
@@ -200,11 +200,6 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
                 }
             }
         });
-    }
-
-    @Override
-    protected VMConfiguration createVMConfiguration() {
-        return null;
     }
 
     @Override

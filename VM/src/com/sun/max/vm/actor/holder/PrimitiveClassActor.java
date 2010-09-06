@@ -24,7 +24,7 @@ import java.lang.annotation.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 /**

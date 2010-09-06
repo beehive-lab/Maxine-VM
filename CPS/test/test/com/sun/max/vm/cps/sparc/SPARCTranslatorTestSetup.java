@@ -30,6 +30,7 @@ import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.target.*;
+import com.sun.max.vm.hosted.*;
 
 public class SPARCTranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod> {
 
@@ -51,9 +52,9 @@ public class SPARCTranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod>
     }
 
     @Override
-    protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform().constrainedByInstructionSet(InstructionSet.SPARC),
-                                    new com.sun.max.vm.cps.b.c.d.e.sparc.target.Package());
+    protected void initializeVM() {
+        Platform.set(platform().constrainedByInstructionSet(InstructionSet.SPARC));
+        VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 
     private static Platform platform() {

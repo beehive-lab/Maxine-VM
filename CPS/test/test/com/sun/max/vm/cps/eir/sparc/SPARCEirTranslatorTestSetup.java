@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.cps.eir.sparc;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
@@ -33,6 +34,7 @@ import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.sparc.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.sparc.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * @author Laurent Daynes
@@ -60,8 +62,9 @@ public class SPARCEirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     }
 
     @Override
-    protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform().constrainedByInstructionSet(InstructionSet.SPARC), new com.sun.max.vm.cps.b.c.d.e.sparc.Package());
+    protected void initializeVM() {
+        Platform.set(platform().constrainedByInstructionSet(InstructionSet.SPARC));
+        VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.d.e.sparc.Package());
     }
 
     @Override

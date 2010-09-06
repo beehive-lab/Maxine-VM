@@ -22,7 +22,7 @@ package com.sun.max.memory;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * Memory access using wrapped Word types.
@@ -34,7 +34,7 @@ public final class BoxedMemory {
 
     static {
         // Ensure the native code is loaded
-        Prototype.loadPrototypeLibrary();
+        Prototype.loadHostedLibrary();
     }
 
     private BoxedMemory() {

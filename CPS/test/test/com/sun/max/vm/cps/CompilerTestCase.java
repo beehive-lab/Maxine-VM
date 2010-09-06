@@ -21,7 +21,7 @@
 package test.com.sun.max.vm.cps;
 
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
-import static com.sun.max.vm.prototype.JavaPrototype.*;
+import static com.sun.max.vm.hosted.JavaPrototype.*;
 import static com.sun.max.vm.reflection.InvocationStub.*;
 
 import java.io.*;
@@ -53,7 +53,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;

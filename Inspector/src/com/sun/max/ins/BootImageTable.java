@@ -35,7 +35,7 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * A table specialized for displaying {@link VMConfiguration}  information in the VM boot image.

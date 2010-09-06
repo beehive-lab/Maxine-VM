@@ -31,7 +31,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.stack.sparc.*;
 
 /**
@@ -276,7 +276,7 @@ public final class Platform {
      * @return a string representing the name of the instruction set on which this VM is running
      */
     public static String getInstructionSet() {
-        Prototype.loadPrototypeLibrary();
+        Prototype.loadHostedLibrary();
         return nativeGetInstructionSet();
     }
 
@@ -288,7 +288,7 @@ public final class Platform {
      * @return {@code true} if this memory model is big-endian; {@code false} otherwise
      */
     private static boolean isBigEndian() {
-        Prototype.loadPrototypeLibrary();
+        Prototype.loadHostedLibrary();
         return nativeIsBigEndian();
     }
 
@@ -300,7 +300,7 @@ public final class Platform {
      * @return the width of the native word in bits
      */
     public static int getWordWidth() {
-        Prototype.loadPrototypeLibrary();
+        Prototype.loadHostedLibrary();
         return nativeGetWordWidth();
     }
 
@@ -312,7 +312,7 @@ public final class Platform {
      * @return a string representing the name of the OS on which this VM is running
      */
     public static String getOperatingSystem() {
-        Prototype.loadPrototypeLibrary();
+        Prototype.loadHostedLibrary();
         return nativeGetOperatingSystem();
     }
 
@@ -324,7 +324,7 @@ public final class Platform {
      * @return the page size in bytes
      */
     public static int getPageSize() {
-        Prototype.loadPrototypeLibrary();
+        Prototype.loadHostedLibrary();
         return nativeGetPageSize();
     }
 
@@ -342,7 +342,7 @@ public final class Platform {
         if (prop != null) {
             return Integer.parseInt(prop);
         }
-        Prototype.loadPrototypeLibrary();
+        Prototype.loadHostedLibrary();
         return nativeNumberOfSignals();
     }
 
