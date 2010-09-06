@@ -655,7 +655,7 @@ public class MaxineTester {
                 copyBinary(imageDir, mapLibraryName("jvm"));
             }
             copyBinary(imageDir, mapLibraryName("javatest"));
-            copyBinary(imageDir, mapLibraryName("prototype"));
+            copyBinary(imageDir, mapLibraryName("hosted"));
             copyBinary(imageDir, mapLibraryName("tele"));
 
 
