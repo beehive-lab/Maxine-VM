@@ -30,7 +30,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.value.*;
 
 /**

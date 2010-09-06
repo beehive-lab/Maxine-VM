@@ -76,7 +76,7 @@
 
 /**
  *  ATTENTION: this struct and the below items must match
- *             'com.sun.max.vm.prototype.BootImage.Header'.
+ *             'com.sun.max.vm.hosted.BootImage.Header'.
  */
 typedef struct image_Header {
    IMAGE_HEADER_FIELDS(DEFINE_IMAGE_HEADER_FIELD)
@@ -90,7 +90,7 @@ typedef struct image_Header {
 extern image_Header image_header(void);
 
 /*
- *  ATTENTION: this must match 'com.sun.max.vm.prototype.BootImage.StringInfo'.
+ *  ATTENTION: this must match 'com.sun.max.vm.hosted.BootImage.StringInfo'.
  */
 typedef struct image_StringInfo {
     char *buildLevel;
@@ -118,7 +118,7 @@ typedef struct image_StringInfo {
 extern image_StringInfo image_stringInfo(void);
 
 /**
- * ATTENTION: this struct must match 'com.sun.max.vm.prototype.BootImage.Trailer'.
+ * ATTENTION: this struct must match 'com.sun.max.vm.hosted.BootImage.Trailer'.
  */
 typedef struct image_Trailer {
     jint randomID;

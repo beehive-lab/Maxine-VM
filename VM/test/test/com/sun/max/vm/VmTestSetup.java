@@ -30,12 +30,11 @@ import junit.framework.Test;
 import org.junit.*;
 
 import com.sun.max.ide.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * This test closure takes care of initializing a VM environment correctly. In particular, it ensures
@@ -49,14 +48,15 @@ public class VmTestSetup extends TestSetup {
         super(test);
     }
 
-    protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform());
+    protected void initializeVM() {
+        VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 
     private boolean setupGuard;
 
     protected void chainedSetUp() {
         Trace.on(1);
+        initializeVM();
         JavaPrototype.initialize(false);
     }
 

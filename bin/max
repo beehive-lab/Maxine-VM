@@ -988,9 +988,9 @@ function run_image() {
     done
 
     if [ -z "$vm_args" ]; then
-        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args
+        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args
     else
-        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
+        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
     fi
 }
 
@@ -1470,7 +1470,7 @@ nm_help="print the contents of a boot image
     Use \"max nm -help\" to see what other options this command accepts."
 
 function run_nm() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImagePrinter "$@" ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImagePrinter "$@" ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
 }
 
 #=======================================
@@ -1490,7 +1490,7 @@ objecttree_help="print the causality spanning-tree of the object graph in the bo
     Use \"max objecttree -help\" to see what other options this command accepts."
 
 function run_objecttree() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
 
 #=======================================
@@ -1510,7 +1510,7 @@ methodtree_help="print the causality spanning-tree of the method graph in the bo
     Use \"max methodtree -help\" to see what other options this command accepts."
 
 function run_methodtree() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
 }
 
 #=======================================

@@ -64,10 +64,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.reference.prototype.*;
+import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
@@ -1809,7 +1809,7 @@ public abstract class TeleVM implements MaxVM {
     public final ReferenceValue createReferenceValue(Reference reference) {
         if (reference instanceof TeleReference) {
             return TeleReferenceValue.from(this, reference);
-        } else if (reference instanceof PrototypeReference) {
+        } else if (reference instanceof HostedReference) {
             return TeleReferenceValue.from(this, Reference.fromJava(reference.toJava()));
         }
         throw ProgramError.unexpected("Got a non-Prototype, non-Tele reference in createReferenceValue");

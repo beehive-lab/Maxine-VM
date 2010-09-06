@@ -35,8 +35,8 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
 
 /**

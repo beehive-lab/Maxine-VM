@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.cps.tir;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.lang.reflect.*;
@@ -36,10 +37,10 @@ import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
 
 public class HotpathExecutor implements JavaExecHarness.Executor {
@@ -145,8 +146,8 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
         Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + vmConfig().bootCompilerScheme().toString());
     }
 
-    protected static VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.platform().constrainedByInstructionSet(InstructionSet.AMD64),
-                        new com.sun.max.vm.cps.b.c.d.Package());
+    protected static void createVMConfiguration() {
+        Platform.set(platform().constrainedByInstructionSet(InstructionSet.SPARC));
+        VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.d.Package());
     }
 }

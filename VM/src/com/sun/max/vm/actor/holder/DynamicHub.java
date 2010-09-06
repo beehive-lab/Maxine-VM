@@ -96,6 +96,7 @@ public final class DynamicHub extends Hub {
             assert virtualMethodActor.vTableIndex() == vTableIndex;
             assert getWord(vTableIndex).isZero();
             Address vTableEntry;
+
             if (compilerCreatesTargetMethods) {
                 vTableEntry = vmConfig().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
             } else {

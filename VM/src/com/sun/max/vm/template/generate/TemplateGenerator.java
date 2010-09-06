@@ -34,7 +34,7 @@ import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetLocation.FloatingPointRegister;
 import com.sun.max.vm.compiler.target.TargetLocation.IntegerRegister;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.template.source.*;
 
 @HOSTED_ONLY

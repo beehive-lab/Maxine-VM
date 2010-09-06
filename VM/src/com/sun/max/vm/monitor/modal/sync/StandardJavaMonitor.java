@@ -94,7 +94,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
                 setBindingProtection(BindingProtection.UNPROTECTED);
             } else {
                 // If there are waiting threads that have not yet been woken
-                // then this monitor must staty protected.
+                // then this monitor must stay protected.
             }
             traceEndMonitorExit(currentThread);
             mutex.unlock();

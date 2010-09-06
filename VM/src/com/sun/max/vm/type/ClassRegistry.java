@@ -21,8 +21,8 @@
 package com.sun.max.vm.type;
 
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
+import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
 import static com.sun.max.vm.jdk.JDK.*;
-import static com.sun.max.vm.prototype.HostedBootClassLoader.*;
 
 import java.io.*;
 import java.lang.reflect.*;

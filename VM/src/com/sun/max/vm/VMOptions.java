@@ -39,8 +39,8 @@ import com.sun.max.util.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.VMOption.Category;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 
 /**

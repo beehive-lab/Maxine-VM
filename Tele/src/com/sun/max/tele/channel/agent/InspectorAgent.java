@@ -25,10 +25,11 @@ import java.net.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.channel.TeleChannelProtocol;
 import com.sun.max.tele.channel.tcp.TCPTeleChannelProtocol;
 import com.sun.max.tele.debug.ProcessState;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 import static com.sun.max.tele.channel.agent.RemoteInvocationProtocolAdaptor.*;
 
@@ -75,7 +76,7 @@ public class InspectorAgent {
 
         target = OperatingSystem.fromName(System.getProperty(Platform.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name()));
 
-        Prototype.loadLibrary("tele");
+        Prototype.loadLibrary(TeleVM.TELE_LIBRARY_NAME);
         listen();
     }
 

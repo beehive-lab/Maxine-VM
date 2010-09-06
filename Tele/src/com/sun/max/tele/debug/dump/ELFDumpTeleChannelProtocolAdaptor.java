@@ -29,7 +29,7 @@ import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.iostream.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 
 import static com.sun.max.elf.ELFProgramHeaderTable.*;
