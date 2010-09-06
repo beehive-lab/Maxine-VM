@@ -197,11 +197,6 @@ public final class BootImageGenerator {
                 return;
             }
 
-            // Create and installs the VM
-            configurator.create(true);
-            // Initialize the Java prototype
-            JavaPrototype.initialize(true);
-
             String[] extraClassesAndPackages = options.getArguments();
             if (extraClassesAndPackages.length != 0) {
                 System.setProperty(JavaPrototype.EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME, Utils.toString(extraClassesAndPackages, " "));
@@ -219,6 +214,11 @@ public final class BootImageGenerator {
 
             final File vmDirectory = vmDirectoryOption.getValue();
             vmDirectory.mkdirs();
+
+            // Create and installs the VM
+            configurator.create(true);
+            // Initialize the Java prototype
+            JavaPrototype.initialize(true);
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue(), prototypeJit.getValue());
             vmConfig().finalizeSchemes(MaxineVM.Phase.BOOTSTRAPPING);

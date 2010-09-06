@@ -100,16 +100,21 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         CompiledPrototype.registerImageMethod(method);
     }
 
+    private boolean classesRegistered;
+
     @HOSTED_ONLY
     private void registerClasses() {
-        if (BootImageGenerator.callerJit) {
-            CompiledPrototype.registerJitClass(JTRuns.class);
+        if (!classesRegistered) {
+            classesRegistered = true;
+            if (BootImageGenerator.callerJit) {
+                CompiledPrototype.registerJitClass(JTRuns.class);
+            }
+            Class[] list = getClassList();
+            for (Class<?> testClass : list) {
+                addClassToImage(testClass);
+            }
+            testCount = list.length;
         }
-        Class[] list = getClassList();
-        for (Class<?> testClass : list) {
-            addClassToImage(testClass);
-        }
-        testCount = list.length;
     }
 
     @Override

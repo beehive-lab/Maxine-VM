@@ -48,9 +48,10 @@ import com.sun.max.vm.type.*;
  * The {@link ClassActor} context when {@linkplain BootImageGenerator generating} the
  * boot image or otherwise executing code that loads and uses {@link ClassActor}s.
  *
- * This class loads and initializes important JDK packages needed during bootstrapping.
+ * There is a single global {@code JavaPrototype} object which is {@linkplain #initialize(boolean) initialized} once.
  *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public final class JavaPrototype extends Prototype {
 
@@ -63,7 +64,6 @@ public final class JavaPrototype extends Prototype {
     public static final String EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME = "max.image.extraClassesAndPackages";
 
     private static JavaPrototype theJavaPrototype;
-    private List<MaxPackage> basePackages;
     private final Map<MaxPackage, MaxPackage> excludedMaxPackages = new HashMap<MaxPackage, MaxPackage>();
     private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
@@ -99,46 +99,6 @@ public final class JavaPrototype extends Prototype {
         MaxPackage[] result = packages.toArray(new MaxPackage[packages.size()]);
         java.util.Arrays.sort(result);
         return java.util.Arrays.asList(result);
-    }
-
-    /**
-     * Returns a sequence of all the basic Maxine packages.
-     *
-     * @return a sequence of all basic packages
-     */
-    public List<MaxPackage> basePackages() {
-        if (basePackages == null) {
-            basePackages = getPackages(BasePackage.class, new com.sun.max.Package());
-        }
-        return basePackages;
-    }
-
-    private List<MaxPackage> asmPackages;
-
-    /**
-     * Returns a sequence of all the assembler packages.
-     *
-     * @return a sequence of all the assembler packages
-     */
-    public List<MaxPackage> asmPackages() {
-        if (asmPackages == null) {
-            asmPackages = getPackages(AsmPackage.class, new com.sun.max.asm.Package());
-        }
-        return asmPackages;
-    }
-
-    private List<MaxPackage> vmPackages;
-
-    /**
-     * Returns a sequence of all the VM packages.
-     *
-     * @return a sequence of VM packages
-     */
-    public List<MaxPackage> vmPackages() {
-        if (vmPackages == null) {
-            vmPackages = getPackages(VMPackage.class, new com.sun.max.vm.Package());
-        }
-        return vmPackages;
     }
 
     /**
@@ -231,7 +191,7 @@ public final class JavaPrototype extends Prototype {
     }
 
     /**
-     * Loads java packages that are necessary to build the prototype.
+     * Loads extra packages and classes that are necessary to build a self-sufficient VM image.
      */
     public void loadCoreJavaPackages() {
         if (System.getProperty("max.allow.all.core.packages") == null) {
@@ -329,7 +289,7 @@ public final class JavaPrototype extends Prototype {
     /**
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
      */
-    void loadMethodSubstitutions(final VMConfiguration vmConfiguration, final PackageLoader pl) {
+    private void loadMethodSubstitutions(final VMConfiguration vmConfiguration, final PackageLoader pl) {
         new ClassSearch(true) {
             @Override
             protected boolean visitClass(String className) {
@@ -441,9 +401,9 @@ public final class JavaPrototype extends Prototype {
         if (complete) {
 
             // TODO: Load the following package groups in parallel
-            loadPackages(basePackages());
-            loadPackages(vmPackages());
-            loadPackages(asmPackages());
+            loadPackages(getPackages(BasePackage.class, new com.sun.max.Package()));
+            loadPackages(getPackages(VMPackage.class, new com.sun.max.vm.Package()));
+            loadPackages(getPackages(AsmPackage.class, new com.sun.max.asm.Package()));
 
             initializeMaxClasses();
 
