@@ -407,7 +407,7 @@ public class C1XTest {
         @Override
         protected void addMethod(MethodActor method, List<MethodActor> methods) {
 
-            if (isCompilable(method) && clinitOption.getValue() || method.name != SymbolTable.CLINIT) {
+            if (isCompilable(method) && (clinitOption.getValue() || method.name != SymbolTable.CLINIT)) {
                 super.addMethod(method, methods);
                 if ((methods.size() % 1000) == 0 && verboseOption.getValue() >= 1) {
                     out.print('.');
