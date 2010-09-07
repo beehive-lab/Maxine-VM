@@ -109,7 +109,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
         objectSpace = new FreeHeapSpaceManager();
         largeObjectSpace = new LargeObjectSpace();
-        afterGCVerifier = MaxineVM.isDebug() ? new AfterMarkSweepVerifier(heapMarker, objectSpace) : null;
+        afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, objectSpace);
     }
 
     @Override
