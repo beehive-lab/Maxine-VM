@@ -938,6 +938,9 @@ public final class GraphBuilder {
         if (!tryInline(target, args, stateBefore)) {
             // could not optimize or inline the method call
             appendInvoke(INVOKESPECIAL, target, args, false, cpi, constantPool, stateBefore);
+        } else {
+            // FIXME remove this debug code again
+            System.out.println("INLINED " + target.name() + " of class " + target.holder().name());
         }
     }
 
@@ -2425,7 +2428,9 @@ public final class GraphBuilder {
                 return true;
             }
             if (C1XOptions.UseDeopt && C1XOptions.OptLeafMethods) {
+                System.err.println("assumeLeafMethod for " + method.holder().name() + method.name() + ": isOverridden: " + method.isOverridden() + ", holder().isInterface: " + method.holder().isInterface());
                 if (!method.isOverridden() && !method.holder().isInterface()) {
+                    System.err.println("WE ARE HERE");
                     return compilation.recordLeafMethodAssumption(method);
                 }
             }

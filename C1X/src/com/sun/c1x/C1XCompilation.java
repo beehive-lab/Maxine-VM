@@ -155,7 +155,7 @@ public class C1XCompilation {
      * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
      */
     public boolean recordLeafMethodAssumption(RiMethod method) {
-        return false;
+        return runtime.recordLeafMethodAssumption(method);
     }
 
     /**
