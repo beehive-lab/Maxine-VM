@@ -1717,6 +1717,10 @@ public abstract class ClassActor extends Actor implements RiType {
         superClassActor.firstSubclassActor = this;
     }
 
+    public final void removeFromSiblingList() {
+        // TODO implement and call when unloading classes
+    }
+
     public final boolean isInstanceClass() {
         return isTupleClass() || isHybridClass();
     }

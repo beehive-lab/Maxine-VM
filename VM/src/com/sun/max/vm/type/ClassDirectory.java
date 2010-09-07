@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.type;
 
+import java.util.*;
+
+import com.sun.cri.ri.*;
 import com.sun.max.vm.actor.holder.*;
 
 /**
@@ -30,6 +33,8 @@ import com.sun.max.vm.actor.holder.*;
  */
 public class ClassDirectory {
 
+    private static final Map<RiType, Set<RiMethod>> leafMethodAssumptionByHolder = new HashMap<RiType, Set<RiMethod>>();
+
     /**
      * Adds the class to the class hierarchy. This will also trigger invalidating dependencies and deoptimizing code based thereon.
      *
@@ -39,7 +44,20 @@ public class ClassDirectory {
         classActor.prependToSiblingList();
         // TODO track interface implementors as well for additional dep. types (...._concrete_subtypes_2 and ...._concrete_methods_2)
 
-        // TODO flush dependents on what is invalidated by the supplied classActor
+        // TODO flush those dependencies that are invalidated by the supplied classActor
+    }
+
+    public static boolean recordLeafMethodAssumption(RiMethod method) {
+        Set<RiMethod> holderMethods = leafMethodAssumptionByHolder.get(method.holder());
+        if (holderMethods == null) {
+            holderMethods = new HashSet<RiMethod>();
+            leafMethodAssumptionByHolder.put(method.holder(), holderMethods);
+        }
+        if (!holderMethods.add(method)) {
+            System.out.println("method " + method.name() + " of class " + method.holder().name()
+                            + " is already registered as leaf method assumption.");
+        }
+        return true;
     }
 
 }
