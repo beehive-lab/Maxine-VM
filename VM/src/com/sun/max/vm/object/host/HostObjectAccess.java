@@ -30,9 +30,10 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -129,52 +130,6 @@ public final class HostObjectAccess {
     }
 
     /**
-     * The system thread group singleton.
-     */
-    private static final ThreadGroup systemThreadGroup = getSystemThreadGroup();
-
-    /**
-     * The main thread running this virtual machine.
-     */
-    private static Thread mainThread;
-
-    static {
-        final ThreadGroup[] subGroups = new ThreadGroup[systemThreadGroup.activeGroupCount()];
-        final int count = systemThreadGroup.enumerate(subGroups);
-        for (int i = 0; i < count; ++i) {
-            final ThreadGroup threadGroup = subGroups[i];
-            if (threadGroup.getName().equals("main")) {
-                final Thread[] threads = new Thread[threadGroup.activeCount()];
-                final int threadCount = threadGroup.enumerate(threads);
-                for (int j = 0; j < threadCount; ++j) {
-                    final Thread thread = threads[j];
-                    if (thread.getName().equals("main")) {
-                        mainThread = thread;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Sets the main thread to the new thread specified.
-     * @param thread the main thread
-     */
-    public static void setMainThread(Thread thread) {
-        assert mainThread == null || mainThread == thread;
-        assert thread.getName().equals("main");
-        mainThread = thread;
-    }
-
-    /**
-     * Accessor for the main thread.
-     * @return the main thread
-     */
-    public static Thread mainThread() {
-        return mainThread;
-    }
-
-    /**
      * A object to signal that all references to a particular object should be set to null.
      */
     private static final Object NULL = new Object();
@@ -235,14 +190,22 @@ public final class HostObjectAccess {
 
         objectMap.put(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, BootClassLoader.BOOT_CLASS_LOADER);
         objectMap.put(BootClassLoader.BOOT_CLASS_LOADER.getParent(), NULL);
-        objectMap.put(systemThreadGroup, NULL);
-        objectMap.put(mainThread, mainThread);
+
+        objectMap.put(VmThread.hostSystemThreadGroup, VmThread.systemThreadGroup);
+        objectMap.put(VmThread.hostMainThreadGroup, VmThread.mainThreadGroup);
+        objectMap.put(VmThread.hostReferenceHandlerThread, VmThread.referenceHandlerThread.javaThread());
+        objectMap.put(VmThread.hostFinalizerThread, VmThread.finalizerThread.javaThread());
+        objectMap.put(VmThread.hostMainThread, VmThread.mainThread.javaThread());
+
+        objectMap.put(VmThread.systemThreadGroup, VmThread.systemThreadGroup);
+        objectMap.put(VmThread.mainThreadGroup, VmThread.mainThreadGroup);
+        objectMap.put(VmThread.referenceHandlerThread.javaThread(), VmThread.referenceHandlerThread.javaThread());
+        objectMap.put(VmThread.finalizerThread.javaThread(), VmThread.finalizerThread.javaThread());
+        objectMap.put(VmThread.mainThread.javaThread(), VmThread.mainThread.javaThread());
+        objectMap.put(VmThread.vmOperationThread.javaThread(), VmThread.vmOperationThread.javaThread());
+        objectMap.put(VmThread.signalDispatcherThread.javaThread(), VmThread.signalDispatcherThread.javaThread());
+
         objectMap.put(Trace.stream(), Log.out);
-        final ThreadGroup threadGroup = new ThreadGroup("main");
-        WithoutAccessCheck.setInstanceField(threadGroup, "parent", null);
-        objectMap.put(mainThread.getThreadGroup(), threadGroup);
-        objectMap.put(threadGroup, threadGroup);
-        objectMap.put(MaxineVM.host(), MaxineVM.target());
         objectMap.put(TTY.out(), new LogStream(Log.os));
         objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor.initialSystemProperties);
     }

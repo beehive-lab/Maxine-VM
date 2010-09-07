@@ -20,6 +20,8 @@
  */
 package com.sun.max.memory;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -54,7 +56,7 @@ public final class Memory {
         if (size.toLong() < 0) {
             throw new IllegalArgumentException();
         }
-        return Word.isBoxed() ? BoxedMemory.allocate(size) : memory_allocate(size);
+        return isHosted() ? BoxedMemory.allocate(size) : memory_allocate(size);
     }
 
     /**
@@ -63,7 +65,7 @@ public final class Memory {
      * @throws OutOfMemoryError if allocation failed
      */
     public static Pointer mustAllocate(Size size) throws OutOfMemoryError, IllegalArgumentException {
-        final Pointer result = Word.isBoxed() ? BoxedMemory.allocate(size) : memory_allocate(size);
+        final Pointer result = isHosted() ? BoxedMemory.allocate(size) : memory_allocate(size);
         if (result.isZero()) {
             throw new OutOfMemoryError();
         }
@@ -84,7 +86,7 @@ public final class Memory {
     private static native Pointer memory_reallocate(Pointer block, Size size);
 
     public static Pointer reallocate(Pointer block, Size size) throws OutOfMemoryError, IllegalArgumentException {
-        return Word.isBoxed() ? BoxedMemory.reallocate(block, size) : memory_reallocate(block, size);
+        return isHosted() ? BoxedMemory.reallocate(block, size) : memory_reallocate(block, size);
     }
 
     public static Pointer reallocate(Pointer block, int size) throws OutOfMemoryError, IllegalArgumentException {
@@ -98,7 +100,7 @@ public final class Memory {
         if (block.isZero()) {
             throw new IllegalArgumentException();
         }
-        final int errorCode = Word.isBoxed() ? BoxedMemory.deallocate(block) : memory_deallocate(block);
+        final int errorCode = isHosted() ? BoxedMemory.deallocate(block) : memory_deallocate(block);
         if (errorCode != 0) {
             ProgramError.unexpected("Memory.deallocate() failed with OS error code: " + errorCode);
         }
@@ -201,12 +203,8 @@ public final class Memory {
 
     @NO_SAFEPOINTS("speed")
     public static void writeBytes(byte[] fromArray, int startIndex, int numberOfBytes, Pointer toPointer) {
-        if (Word.isBoxed()) {
-            BoxedMemory.writeBytes(fromArray, startIndex, numberOfBytes, toPointer);
-        } else {
-            for (int i = 0; i < numberOfBytes; i++) {
-                toPointer.writeByte(i, fromArray[startIndex + i]);
-            }
+        for (int i = 0; i < numberOfBytes; i++) {
+            toPointer.writeByte(i, fromArray[startIndex + i]);
         }
     }
 

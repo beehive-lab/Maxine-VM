@@ -24,20 +24,24 @@ import java.io.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * @author Bernd Mathiske
  */
 public final class SolarisTeleVM extends TeleVM {
 
+    public SolarisTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
+        super(bootImageFile, bootImage, sourcepath, commandLineArguments);
+    }
+
     @Override
-    protected SolarisTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new SolarisTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments, agent);
+    protected SolarisTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
+        return new SolarisTeleProcess(this, bootImage().vmConfiguration.platform, programFile(), commandLineArguments);
     }
 
-    public SolarisTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
+    @Override
+    protected SolarisTeleProcess attachToTeleProcess() throws BootImageException {
+        return new SolarisTeleProcess(this, bootImage().vmConfiguration.platform, programFile(), targetLocation().id);
     }
-
 }

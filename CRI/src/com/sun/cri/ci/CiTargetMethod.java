@@ -20,6 +20,7 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ri.*;
@@ -32,12 +33,12 @@ import com.sun.cri.ri.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public class CiTargetMethod {
+public class CiTargetMethod implements Serializable {
 
     /**
      * Represents a code position with associated additional information.
      */
-    public abstract static class Site {
+    public abstract static class Site implements Serializable {
         public final int pcOffset;
 
         public Site(int pcOffset) {
@@ -126,16 +127,16 @@ public class CiTargetMethod {
      * Represents a reference to data from the code. The associated data can be any constant.
      */
     public static final class DataPatch extends Site {
-        public final CiConstant data;
+        public final CiConstant constant;
 
         DataPatch(int pcOffset, CiConstant data) {
             super(pcOffset);
-            this.data = data;
+            this.constant = data;
         }
 
         @Override
         public String toString() {
-            return String.format("Data patch site at pos %d referring to data %s", pcOffset, data);
+            return String.format("Data patch site at pos %d referring to data %s", pcOffset, constant);
         }
     }
 
@@ -144,18 +145,46 @@ public class CiTargetMethod {
      * well as the caught exception type.
      */
     public static final class ExceptionHandler extends Site {
+        public final int bci;
+        public final int scopeLevel;
         public final int handlerPos;
+        public final int handlerBci;
         public final RiType exceptionType;
 
-        ExceptionHandler(int pcOffset, int handlerPos, RiType exceptionType) {
+        ExceptionHandler(int pcOffset, int bci, int scopeLevel, int handlerPos, int handlerBci, RiType exceptionType) {
             super(pcOffset);
+            this.bci = bci;
+            this.scopeLevel = scopeLevel;
             this.handlerPos = handlerPos;
+            this.handlerBci = handlerBci;
             this.exceptionType = exceptionType;
         }
 
         @Override
         public String toString() {
-            return String.format("Exception edge from pos %d to %d with type %s", pcOffset, handlerPos, (exceptionType == null) ? "null" : exceptionType.javaClass().getName());
+            return String.format("Exception edge from pos %d to %d with type %s", pcOffset, handlerPos, (exceptionType == null) ? "null" : exceptionType);
+        }
+    }
+    
+    public static final class Mark extends Site {
+        public final Object id;
+        public final Mark[] references;
+
+        Mark(int pcOffset, Object id, Mark[] references) {
+            super(pcOffset);
+            this.id = id;
+            this.references = references;
+        }
+
+        @Override
+        public String toString() {
+            if (id == null)
+                return String.format("Mark at pos %d with %d references", pcOffset, references.length);
+            else if(id instanceof Integer) {
+                return String.format("Mark at pos %d with %d references and id %s", pcOffset, references.length, Integer.toHexString((Integer)id));
+            } else {
+                return String.format("Mark at pos %d with %d references and id %s", pcOffset, references.length, id.toString());
+            }
         }
     }
 
@@ -188,6 +217,8 @@ public class CiTargetMethod {
      * List of entry point code offsets.
      */
     public final Map<Object, Integer> entrypointCodeOffsets = new HashMap<Object, Integer>(); 
+    
+    public final List<Mark> marks = new ArrayList<Mark>();
     
 
     private final int referenceRegisterCount;
@@ -250,7 +281,10 @@ public class CiTargetMethod {
         CiRuntimeCall rt = target instanceof CiRuntimeCall ? (CiRuntimeCall) target : null;
         RiMethod meth = target instanceof RiMethod ? (RiMethod) target : null;
         String symbol = target instanceof String ? (String) target : null;
-        final Call callSite = new Call(codePos, rt, meth, symbol, target, null, stackMap, debugInfo);
+        // make sure that only one is non-null
+        Object globalStubID = (rt == null && meth == null && symbol == null) ? target : null;
+        
+        final Call callSite = new Call(codePos, rt, meth, symbol, globalStubID, null, stackMap, debugInfo);
         if (direct) {
             directCalls.add(callSite);
         } else {
@@ -265,8 +299,8 @@ public class CiTargetMethod {
      * @param handlerPos    the position of the handler
      * @param throwableType the type of exceptions handled by the handler
      */
-    public void recordExceptionHandler(int codePos, int handlerPos, RiType throwableType) {
-        exceptionHandlers.add(new ExceptionHandler(codePos, handlerPos, throwableType));
+    public void recordExceptionHandler(int codePos, int bci, int scopeLevel, int handlerPos, int handlerBci, RiType throwableType) {
+        exceptionHandlers.add(new ExceptionHandler(codePos, bci, scopeLevel, handlerPos, handlerBci, throwableType));
     }
 
     /**
@@ -282,6 +316,19 @@ public class CiTargetMethod {
         assert referenceRegisterCount <= registerMap.length * 8 : "compiler produced register maps of different sizes";
     }
 
+    /**
+     * Records an instruction mark within this method.
+     *
+     * @param codePos the position in the code that is covered by the handler
+     * @param id the identifier for this mark
+     * @param references an array of other marks that this mark references
+     */
+    public Mark recordMark(int codePos, Object id, Mark[] references) {
+        Mark mark = new Mark(codePos, id, references);
+        marks.add(mark);
+        return mark;
+    }
+    
     /**
      * Allows a method to specify the offset of the epilogue that restores the callee saved registers. Must be called
      * iff the method is a callee saved method and stores callee registers on the stack.

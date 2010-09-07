@@ -36,6 +36,7 @@ import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiType.Representation;
 
 /**
  * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
@@ -495,7 +496,7 @@ public final class GraphBuilder {
             if (!riType.isResolved() || C1XOptions.TestPatching) {
                 push(CiKind.Object, append(new ResolveClass(riType, RiType.Representation.JavaClass, stateBefore)));
             } else {
-                push(CiKind.Object, append(Constant.forObject(riType.javaClass())));
+                push(CiKind.Object, append(new Constant(riType.getEncoding(Representation.JavaClass))));
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;

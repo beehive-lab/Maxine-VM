@@ -65,15 +65,17 @@ public final class Code {
      */
     @HOSTED_ONLY
     private static CodeManager createCodeManager() {
-        switch (Platform.hostOrTarget().operatingSystem) {
+        switch (Platform.platform().operatingSystem) {
             case LINUX: {
                 return new LowAddressCodeManager();
             }
 
             case GUESTVM:
+                return new FixedAddressCodeManager();
+
             case DARWIN:
             case SOLARIS: {
-                return new FixedAddressCodeManager();
+                return new VariableAddressCodeManager();
             }
             default: {
                 FatalError.unimplemented();

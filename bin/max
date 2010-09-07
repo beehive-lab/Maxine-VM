@@ -56,6 +56,8 @@
 #
 # Author: Doug Simon, Mick Jordan
 
+#set -x
+
 verbose=false
 unknown_option=""
 show_help=false
@@ -70,6 +72,7 @@ make_arg=
 cp_suffix=
 cp_prefix=
 base_ide_dir=shell
+remote=0
 if [ x${MAXINE_IDE} = xINTELLIJ ]; then
     base_ide_dir=intellij
 fi
@@ -93,6 +96,12 @@ while [ "${1:0:1}" = "-" ]; do
         -vmdir )
             shift
             MAXVM_DIR=$1
+            ;;
+        -remote.os )
+            shift
+            MAXINE_OS=$1
+            jvm_args="$jvm_args -Dmax.os=$1"
+            remote=1
             ;;
         -make )
             shift
@@ -267,6 +276,7 @@ projects=( \
     VM:src,test                   \
     CPS:src,test                  \
     MaxineC1X:src,test            \
+    MaxineELF:src                 \
     VMDI:src                      \
     Tele:src                      \
     JDWP:src                      \
@@ -296,8 +306,8 @@ projects=( ${projects[@]} ${extra_projects[@]} )
 
 test -n "${JUNIT4_CP}" || { echo "Need to use '-junit4' option or JUNIT4_CP environment variable to specify a class path for Junit4 classes"; exit 1; }
 junit_version="`$jvm -cp ${JUNIT4_CP} junit.runner.Version 2>&1`"
-if [[ "$junit_version" != 4.* ]]; then
-    echo "The value of JUNIT4_CP ($JUNIT4_CP) does not denote a JUnit4 installation."
+if [[ "$junit_version" != 4.8.1 ]]; then
+    echo "The value of JUNIT4_CP ($JUNIT4_CP) does not denote a JUnit4.8.1 installation."
     echo "Running \"$jvm -cp ${JUNIT4_CP} junit.runner.Version\" produced:"
     echo "$junit_version"
     exit 255
@@ -314,6 +324,43 @@ fi
 
 test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/Native/generated/${MAXINE_OS}"
 maxine_vm=$MAXVM_DIR/maxvm
+
+method_finder_pattern_help='A pattern is a class name pattern followed by an optional method name
+    pattern separated by a ':' further followed by an optional signature:
+    
+      <class name>[:<method name>[:<signature>]]
+    
+    For example, the list of patterns:
+    
+         "Object:wait", "String", "Util:add:(int,float)"
+         
+    will match all methods in a class whose name contains "Object" where the
+    method name contains "wait", all methods in a class whose name
+    contains "String" and all methods in any class whose name
+    contains "Util", the method name contains "add" and the
+    megnature is (int, float).
+    
+    The type of matching performed for a given class/method name is determined
+    by the position of '^' in the pattern name as follows:
+    
+    Position of '^'   | Match algorithm
+     ------------------+------------------
+     start AND end     | Equality
+     start             | Prefix
+     end               | Suffix
+     absent            | Substring
+    
+    For example, "^java.util:^toString^" matches all methods named "toString" in
+    any class whose name starts with "java.util".
+
+    The matching performed on a signature is always a substring test. Signatures can
+    specified either in Java source syntax (e.g. "int,String") or JVM internal syntax
+    (e.g. "IFLjava/lang/String;"). The latter must always use fully qualified type
+    names where as the former must not.
+
+    Any pattern starting with "!" is an exclusion specification. Any class or method
+    whose name contains an exclusion string (the exclusion specification minus the
+    leading "!") is excluded.'
 
 #=======================================
 # Utility for verbose execution
@@ -515,18 +562,19 @@ function run_clean() {
     pushd $maxine_dir/Native >/dev/null
     check_gnu_make
     run $make clean
-
+    rm -rf generated	
+    popd >/dev/null
+    
     for project in ${projects[@]}; do
-	project_dir=${project/:*/}
+        project_dir=${project/:*/}
         set_project_dir_parent ${project}
-	project_cp=$(get_project_dest ${project_dir})
-	if [ "x$project_cp" != "x" ]; then
-	    echo Removing $project_cp...
-	    rm -rf $project_cp
-	fi
+        project_cp=$(get_project_dest ${project_dir})
+        if [ "x$project_cp" != "x" ]; then
+            echo Removing $project_cp...
+            rm -rf $project_cp
+        fi
     done
 
-    popd >/dev/null
     exit $result
 }
 
@@ -829,7 +877,7 @@ function run_javadoc() {
 
 # To add new configs, see class test.com.sun.max.vm.MaxineTesterConfiguration
 configs_usage=""
-configs_help="prints all the defined image configuration aliases"
+configs_help="prints the predefined image configurations"
 
 function run_configs() {
     image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
@@ -847,15 +895,37 @@ function run_configs() {
 # 'image' command
 #=======================================
 
-image_usage="[options]"
+image_usage="[options] classes|packages..."
 function image_help() {
     image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
     image_help_message="build a boot image
 
-    Run the BootImageGenerator to build a Maxine boot image.
+    Run the BootImageGenerator to build a Maxine boot image. The classes
+    and packages specified on the command line will be included in the
+    boot image in addition to those found by the Package.java mechanism.
+    Package names are differentiated from class names by being prefixed
+    with '^'.
+
+    The platform configuration for the generated image is auto-detected
+    by native methods. However, the following system properties can be
+    used to override the defaults:
+    
+    Name            | Description                   | Example values
+    ================+===============================+================
+    max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64 
+    max.cpu         | processor model               | AMD64 IA32 SPARCV9   
+    max.isa         | instruction set architecture  | AMD64 ARM PPC SPARC
+    max.os          | operating system              | Darwin Linux Solaris 
+    max.endianness  | endianness                    | BIG LITTLE
+    max.bits        | machine word size             | 64 32
+    max.page        | page size                     | 4096 8192 
+    max.nsig        | number of signals             | 32
+    
+    These system properties can be specified as options to the image
+    command (e.g. '-os Darwin -bits 32').
 
     An option starting with '@' denotes a preconfigured set of
-    options. `run_configs`
+    options. $(run_configs)
 "
     image_help_message="$image_help_message
 
@@ -870,13 +940,16 @@ function image_help() {
 }
 
 function run_image() {
-    image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
-
+    system_props=""
     vm_args=""
     image_args=""
     while [ "$1" != "" ]; do
         case $1 in
             @*)
+                if [ -z "$image_configs" ]; then
+                    # Lazily construct this variable as it requires running a Java program
+                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort)
+                fi
                 image_config_arg=${1/@/}
                 for image_config in ${image_configs[@]}; do
                     image_config_name=${image_config/\#*/}
@@ -902,6 +975,11 @@ function run_image() {
                     vm_args="$vm_args ${1/-/}"
                 fi
                 ;;
+            -platform | -cpu | -isa | -os | -endianness | -bits | -page | -nsig )
+                prop_name="max.${1/-/}"
+                shift
+                system_props="$system_props -D${prop_name}=$1"
+                ;;
             *)
                 image_args="$image_args $1"
                 ;;
@@ -910,9 +988,9 @@ function run_image() {
     done
 
     if [ -z "$vm_args" ]; then
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args
+        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args
     else
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
+        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
     fi
 }
 
@@ -945,53 +1023,46 @@ function run_compile() {
 }
 
 #=======================================
+# 'verify' command
+#=======================================
+
+verify_usage="[options] patterns..."
+verify_help="verifies a set methods using the Maxine bytecode verifier
+
+    Run the Maxine verifier over a set of specified methods available
+    on the class path. To extend the class path, use one of the global
+    \"-cp/p:<arg>\" or \"-cp/a:<arg>\" options.
+
+    See Patterns below for a description of the format expected for \"patterns...\"
+
+    Use \"max verify -help\" to see what other options this command accepts.
+    
+    --- Patterns ---
+    
+    $method_finder_pattern_help"
+
+function run_verify() {
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.verifier.CommandLineVerifier $@
+}
+
+#=======================================
 # 'c1x' command
 #=======================================
 
-c1x_usage="[options] compilation_specs|exclusion_specs..."
-c1x_help="process a list of classes and/or methods with the C1X compiler
+c1x_usage="[options] patterns..."
+c1x_help="process a list of methods with the C1X compiler
 
-    An exclusion spec is a string starting with '!'. Any class or method
-    whose name contains an exclusion string (the exclusion spec minus the
-    leading '!') is excuded from further processing.
-
-    A compilation spec is a class name pattern followed by an optional method name
-    pattern separated by a ':' further followed by an optional signature:
-
-    <class name>[:<method name>[:<signature>]]
-
-    For example:
-
-        Object:wait String HashMap:<init>:(int,float)
-
-    will compile all methods in a class whose name matches "Object" where the
-    method name matches 'wait', all methods in a class whose name
-    contains 'String' and the single constructor in HashMap that takes an int
-    and float parameter. The classes searched are those on the class path.
-
-    The type of matching performed for a given class/method name is determined
-    by the position of '^' in the pattern name as follows:
-
-    Position of '^'   | Match algorithm
-    ------------------+------------------
-    start AND end     | Equality
-    start             | Prefix
-    end               | Suffix
-    absent            | Substring
-
-    For example, '^java.util:^toString^' matches all methods named 'toString' in
-    any class whose name start with 'java.util'.
-
-    The matching performed on a signature is always a substring test. Signatures can
-    specified either in Java source syntax (e.g. 'int,String') or JVM internal syntax
-    (e.g. 'IFLjava/lang/String;'). The latter must always use fully qualified type
-    names where as the former must not.
-
+    See Patterns below for a description of the format expected for \"patterns...\"
+    
     The output traced by this command is not guaranteed to be the same as the output
-    for a compilation done at runtime. The code produced by a compiler is sensitive
+    for a compilation performed at runtime. The code produced by a compiler is sensitive
     to the compilation context such as what classes have been resolved etc.
 
-    Use \"max c1x -help\" to see what other options this command accepts."
+    Use \"max c1x -help\" to see what other options this command accepts.
+    
+    --- Patterns ---
+    
+    $method_finder_pattern_help"
 
 function run_c1x() {
     c1x_cp=${maxine_cp}:`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
@@ -1214,11 +1285,15 @@ inspect_help="launch a given program under the Inspector
     are those accepted by the 'max vm' command plus the Inspector specific
     options. To debug a program in the Inspector, simply replace 'vm' on the
     command line that launches the program with 'inspect'.
-
+    
     Use \"max inspect --help\" to see what the Inspector options are. These options
     must be specified with a '--' prefix so that they can be distinguished from
     the VM options.
 
+    The inspect command also accepts the same system property related options
+    as the 'image' command except that a '--' prefix must be used (e.g.
+    '--os Darwin --bits 32'). Use \"max help image\" for more detail.
+    
     Use \"max vm -help\" to see what the VM options are."
 
 function run_inspect() {
@@ -1227,6 +1302,7 @@ function run_inspect() {
     inspector_args="-vmdir=$MAXVM_DIR"
     inspector_cp="$MAXVM_DIR/inspected_classes"
     mkdir -p $save_class_dir || { echo "Failed to created directory $save_class_dir"; exit 1; }
+    system_props=""
 
     while [ "$1" != "" ]; do
         case $1 in
@@ -1248,6 +1324,11 @@ function run_inspect() {
                 shift
                 vm_args="$vm_args -jar $1"
                 inspector_cp="$inspector_cp:$1"
+                ;;
+            --platform | --cpu | --isa | --os | --endianness | --bits | --page | --nsig )
+                prop_name="max.${1/--/}"
+                shift
+                system_props="$system_props -D${prop_name}=$1"
                 ;;
             --cp=* )
                 inspector_cp="$inspector_cp:${1/--cp=/}"
@@ -1278,13 +1359,36 @@ function run_inspect() {
 	    inspector_args="$inspector_args -cp=${inspector_cp/#:/}"
 	fi
 
+    if [[ "$remote" -eq 0 && "$MAXINE_OS" = "darwin" ]]; then
+        run sudo -p \
+"Debugging is a privileged operation on Mac OS X.
+Please enter your 'sudo' password:" \
+        ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+    else
+        run ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+    fi
+}
+
+#=======================================
+# 'inspectoragent' command
+#=======================================
+
+inspectoragent_usage="[-impl target] [-port port]"
+inspectoragent_help="launch the Inspector agent
+
+    Launch the Inspector agent.
+
+    The agent listens on a given port for an incoming connection from
+    a remote Inspector process."
+
+function run_inspectoragent() {
     if [ "$MAXINE_OS" = "darwin" ]; then
         run sudo -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+        ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent -trace 1 $@
     else
-        run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent -trace 1 $@
     fi
 }
 
@@ -1366,7 +1470,7 @@ nm_help="print the contents of a boot image
     Use \"max nm -help\" to see what other options this command accepts."
 
 function run_nm() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImagePrinter "$@" ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImagePrinter "$@" ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
 }
 
 #=======================================
@@ -1386,7 +1490,7 @@ objecttree_help="print the causality spanning-tree of the object graph in the bo
     Use \"max objecttree -help\" to see what other options this command accepts."
 
 function run_objecttree() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
 
 #=======================================
@@ -1406,7 +1510,7 @@ methodtree_help="print the causality spanning-tree of the method graph in the bo
     Use \"max methodtree -help\" to see what other options this command accepts."
 
 function run_methodtree() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
 }
 
 #=======================================

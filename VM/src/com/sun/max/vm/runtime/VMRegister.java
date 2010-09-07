@@ -21,14 +21,13 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.VMConfiguration.*;
 
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.type.*;
 
@@ -178,27 +177,19 @@ public final class VMRegister {
 
     @INLINE
     @INTRINSIC(READREG | (CPU_SP << 8))
-    public static Pointer getCpuStackPointer() {
-        return SpecialBuiltin.getIntegerRegister(Role.CPU_STACK_POINTER);
-    }
+    public static native Pointer getCpuStackPointer();
 
     @INLINE
     @INTRINSIC(WRITEREG | (CPU_SP << 8))
-    public static void setCpuStackPointer(Word value) {
-        SpecialBuiltin.setIntegerRegister(Role.CPU_STACK_POINTER, value);
-    }
+    public static native void setCpuStackPointer(Word value);
 
     @INLINE
     @INTRINSIC(READREG | (CPU_FP << 8))
-    public static Pointer getCpuFramePointer() {
-        return SpecialBuiltin.getIntegerRegister(Role.CPU_FRAME_POINTER);
-    }
+    public static native Pointer getCpuFramePointer();
 
     @INLINE
     @INTRINSIC(WRITEREG | (CPU_FP << 8))
-    public static void setCpuFramePointer(Word value) {
-        SpecialBuiltin.setIntegerRegister(Role.CPU_FRAME_POINTER, value);
-    }
+    public static native void setCpuFramePointer(Word value);
 
     @INLINE
     public static void addWordsToAbiStackPointer(int numberOfWords) {
@@ -207,39 +198,27 @@ public final class VMRegister {
 
     @INLINE
     @INTRINSIC(READREG | (ABI_SP << 8))
-    public static Pointer getAbiStackPointer() {
-        return SpecialBuiltin.getIntegerRegister(Role.ABI_STACK_POINTER);
-    }
+    public static native Pointer getAbiStackPointer();
 
     @INLINE
     @INTRINSIC(WRITEREG | (ABI_SP << 8))
-    public static void setAbiStackPointer(Word value) {
-        SpecialBuiltin.setIntegerRegister(Role.ABI_STACK_POINTER, value);
-    }
+    public static native void setAbiStackPointer(Word value);
 
     @INLINE
     @INTRINSIC(READREG | (ABI_FP << 8))
-    public static Pointer getAbiFramePointer() {
-        return SpecialBuiltin.getIntegerRegister(Role.ABI_FRAME_POINTER);
-    }
+    public static native Pointer getAbiFramePointer();
 
     @INLINE
     @INTRINSIC(WRITEREG | (ABI_FP << 8))
-    public static void setAbiFramePointer(Word value) {
-        SpecialBuiltin.setIntegerRegister(Role.ABI_FRAME_POINTER, value);
-    }
+    public static native void setAbiFramePointer(Word value);
 
     @INLINE
     @INTRINSIC(READREG | (LATCH << 8))
-    public static Pointer getSafepointLatchRegister() {
-        return SpecialBuiltin.getIntegerRegister(Role.SAFEPOINT_LATCH);
-    }
+    public static native Pointer getSafepointLatchRegister();
 
     @INLINE
     @INTRINSIC(WRITEREG | (LATCH << 8))
-    public static void setSafepointLatchRegister(Word value) {
-        SpecialBuiltin.setIntegerRegister(Role.SAFEPOINT_LATCH, value);
-    }
+    public static native void setSafepointLatchRegister(Word value);
 
     @INLINE
     @INTRINSIC(READ_PC)
@@ -249,16 +228,10 @@ public final class VMRegister {
 
     @FOLD
     private static boolean callAddressRegisterExists() {
-        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.LINK_ADDRESS) != null;
+        return vmConfig().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.LINK_ADDRESS) != null;
     }
 
     @INLINE
     @INTRINSIC(WRITEREG | (LINK << 8))
-    public static void setCallAddressRegister(Word value) {
-        if (callAddressRegisterExists()) {
-            SpecialBuiltin.setIntegerRegister(Role.LINK_ADDRESS, value);
-            return;
-        }
-        throw ProgramError.unexpected("There is no call address register in this target ABI");
-    }
+    public static native void setCallAddressRegister(Word value);
 }

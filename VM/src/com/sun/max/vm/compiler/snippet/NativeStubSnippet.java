@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.snippet;
 
-import static com.sun.max.vm.runtime.FreezeThreads.*;
+import static com.sun.max.vm.runtime.VmOperation.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.stack.JavaFrameAnchor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -148,7 +148,7 @@ public abstract class NativeStubSnippet extends Snippet {
 
         /**
          * Makes the transition from the 'in native' state to the 'in Java' state, blocking on a
-         * spin lock if the current thread is {@linkplain FreezeThreads frozen}.
+         * spin lock if the current thread is {@linkplain VmOperation frozen}.
          *
          * @param enabledVmThreadLocals the safepoints-triggered VM thread locals for the current thread
          * @param anchor the value to which {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} will be set just after
@@ -161,7 +161,7 @@ public abstract class NativeStubSnippet extends Snippet {
         }
 
         /**
-         * This methods spins in a busy loop while the current thread is {@linkplain FreezeThreads frozen}.
+         * This methods spins in a busy loop while the current thread is {@linkplain VmOperation frozen}.
          */
         @INLINE
         @NO_SAFEPOINTS("Cannot take a trap while frozen")
@@ -171,6 +171,10 @@ public abstract class NativeStubSnippet extends Snippet {
                     if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
                         if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
                             break;
+                        }
+                    } else {
+                        if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_JAVA)) {
+                            FatalError.unexpected("Thread transitioned itself from THREAD_IS_FROZEN to THREAD_IN_JAVA -- only the VM operation thread should do that");
                         }
                     }
                     SpecialBuiltin.pause();

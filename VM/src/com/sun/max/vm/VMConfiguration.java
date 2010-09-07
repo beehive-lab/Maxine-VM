@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -124,16 +124,13 @@ public final class VMConfiguration {
         this.runPackage = runPackage;
         this.safepoint = Safepoint.create(this);
         this.trapStateAccess = TrapStateAccess.create(this);
+
+        loadAndInstantiateSchemes();
     }
 
     @INLINE
     public BuildLevel buildLevel() {
         return buildLevel;
-    }
-
-    @INLINE
-    public Platform platform() {
-        return platform;
     }
 
     @INLINE
@@ -223,7 +220,7 @@ public final class VMConfiguration {
     }
 
     @HOSTED_ONLY
-    public void loadAndInstantiateSchemes(boolean isTarget) {
+    private void loadAndInstantiateSchemes() {
         if (areSchemesLoadedAndInstantiated) {
             return;
         }
@@ -252,22 +249,19 @@ public final class VMConfiguration {
             optCompilerScheme = loadAndInstantiateScheme(optCompilerPackage, RuntimeCompilerScheme.class, this);
         }
 
-        if (isTarget) {
-            // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
-            if (needsAdapters()) {
-                OPTIMIZED_ENTRY_POINT.init(8, 8);
-                JIT_ENTRY_POINT.init(0, 0);
-                VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
-                // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
-                C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
-            } else {
-                CallEntryPoint.initAllToZero();
-            }
+        // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
+        if (needsAdapters()) {
+            OPTIMIZED_ENTRY_POINT.init(8, 8);
+            JIT_ENTRY_POINT.init(0, 0);
+            VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
+            // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
+            C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
+        } else {
+            CallEntryPoint.initAllToZero();
         }
 
         compilationScheme = new AdaptiveCompilationScheme(this);
         vmSchemes.add(compilationScheme);
-
         runScheme = loadAndInstantiateScheme(runPackage, RunScheme.class, this);
         areSchemesLoadedAndInstantiated = true;
     }
@@ -295,19 +289,14 @@ public final class VMConfiguration {
         }
     }
 
-    public static VMConfiguration host() {
-        return MaxineVM.host().configuration;
-    }
-
+    /**
+     * Convenience method for accessing the configuration associated with the
+     * current {@linkplain MaxineVM#vm() VM} context.
+     * @return
+     */
     @FOLD
-    public static VMConfiguration target() {
-        return MaxineVM.target().configuration;
-    }
-
-    @UNSAFE
-    @FOLD
-    public static VMConfiguration hostOrTarget() {
-        return MaxineVM.hostOrTarget().configuration;
+    public static VMConfiguration vmConfig() {
+        return vm().config;
     }
 
     @Override
@@ -319,7 +308,7 @@ public final class VMConfiguration {
 
     public void print(PrintStream out, String indent) {
         out.println(indent + "Build level: " + buildLevel());
-        out.println(indent + "Platform: " + platform());
+        out.println(indent + "Platform: " + platform);
         for (VMScheme vmScheme : vmSchemes()) {
             final String specification = vmScheme.specification().getSimpleName();
             out.println(indent + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
@@ -336,7 +325,7 @@ public final class VMConfiguration {
 
     @INLINE
     public WordWidth wordWidth() {
-        return platform.processorKind.dataModel.wordWidth;
+        return platform.wordWidth();
     }
 
     /**
@@ -349,7 +338,7 @@ public final class VMConfiguration {
         }
         if (maxPackage instanceof AsmPackage) {
             final AsmPackage asmPackage = (AsmPackage) maxPackage;
-            return asmPackage.isPartOfAssembler(platform().processorKind.instructionSet);
+            return asmPackage.isPartOfAssembler(platform.instructionSet());
         }
         if (maxPackage instanceof VMPackage) {
             final VMPackage vmPackage = (VMPackage) maxPackage;

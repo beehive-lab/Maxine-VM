@@ -49,4 +49,6 @@ public abstract class InspectionListenerAdapter implements InspectionListener {
     public void vmProcessTerminated() {
     }
 
+    public void inspectionEnding() {
+    }
 }

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.run.java;
 
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
@@ -36,7 +38,7 @@ import sun.misc.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
@@ -180,14 +182,20 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      * It also parses some program arguments that were not parsed earlier.
      */
     protected final void initializeBasicFeatures() {
-        VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.PRISTINE);
-        MaxineVM vm = MaxineVM.hostOrTarget();
+        vmConfig().initializeSchemes(MaxineVM.Phase.PRISTINE);
+        MaxineVM vm = vm();
         vm.phase = MaxineVM.Phase.STARTING;
 
         // Now we can decode all the other VM arguments using the full language
         if (VMOptions.parseStarting()) {
-            VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.STARTING);
-            SpecialReferenceManager.initialize(MaxineVM.Phase.STARTING);
+            vmConfig().initializeSchemes(MaxineVM.Phase.STARTING);
+
+            if (Heap.ExcessiveGCFrequency != 0) {
+                new ExcessiveGCDaemon(Heap.ExcessiveGCFrequency).start();
+            }
+
+            // Install the signal handler for dumping threads when SIGHUP is received
+            Signal.handle(new Signal("HUP"), new PrintThreads(true));
         }
     }
 
@@ -226,9 +234,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
             error = true;
 
-            MaxineVM vm = MaxineVM.host();
+            MaxineVM vm = vm();
             vm.phase = Phase.RUNNING;
-            VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.RUNNING);
+            vmConfig().initializeSchemes(MaxineVM.Phase.RUNNING);
 
             loadAgents();
 
@@ -268,7 +276,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 MaxineVM.setExitCode(-1);
             }
 
-            VMConfiguration.hostOrTarget().finalizeSchemes(MaxineVM.Phase.RUNNING);
+            vmConfig().finalizeSchemes(MaxineVM.Phase.RUNNING);
         }
     }
 

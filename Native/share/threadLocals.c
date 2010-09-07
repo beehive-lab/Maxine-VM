@@ -250,7 +250,7 @@ Address threadLocalsBlock_createForExistingThread(jint id) {
 /**
  * Declared in threads.c
  */
-extern Mutex globalThreadAndGCLock;
+extern Mutex globalThreadLock;
 
 /**
  * See the documentation in threadLocals.h for this function.

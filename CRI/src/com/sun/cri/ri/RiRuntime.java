@@ -129,7 +129,7 @@ public interface RiRuntime {
      * @param name the name of the stub, used for debugging purposes only
      * @return the identification object
      */
-    Object registerTargetMethod(CiTargetMethod targetMethod, String name);
+    Object registerGlobalStub(CiTargetMethod targetMethod, String name);
 
     /**
      * Returns the runtime interface representation of the given Java class object.

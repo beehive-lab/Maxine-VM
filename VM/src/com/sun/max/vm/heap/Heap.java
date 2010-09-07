@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
@@ -31,6 +32,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -47,8 +49,9 @@ public final class Heap {
     }
 
     private static final Size MIN_HEAP_SIZE = Size.M.times(4); // To be adjusted
+
     /**
-     * If initial size not specified, the maxSize / DEFAULT_INIT_HEAP_SIZE_RATIO.
+     * If initial size not specified, then it is maxSize / DEFAULT_INIT_HEAP_SIZE_RATIO.
      */
     private static final int DEFAULT_INIT_HEAP_SIZE_RATIO = 2;
 
@@ -76,21 +79,9 @@ public final class Heap {
     }
 
     /**
-     * A special exception thrown when a non-GC thread tries to perform a GC while holding
-     * the {@linkplain VmThreadMap#ACTIVE GC lock}. There is a single, pre-allocated
-     * {@linkplain #INSTANCE instance} of this object so that raising this exception
-     * does not require any allocation.
-     *
-     * @author Doug Simon
+     * Lock for synchronizing access to the heap.
      */
-    public static final class HoldsGCLockError extends OutOfMemoryError {
-
-        private HoldsGCLockError() {
-        }
-
-        public static final HoldsGCLockError INSTANCE = new HoldsGCLockError();
-    }
-
+    public static final Object HEAP_LOCK = JavaMonitorManager.newVmLock("HEAP_LOCK");
 
     private static Size maxSize;
     private static Size initialSize;
@@ -199,7 +190,7 @@ public final class Heap {
 
     static {
         if (MaxineVM.isDebug()) {
-            VMOptions.addFieldOption("-XX:", "TraceAllocation", Classes.getDeclaredField(Heap.class, "TraceAllocation"), "Trace heap allocation.");
+            VMOptions.addFieldOption("-XX:", "TraceAllocation", Classes.getDeclaredField(Heap.class, "TraceAllocation"), "Trace heap allocation.", MaxineVM.Phase.STARTING);
         }
     }
 
@@ -264,7 +255,7 @@ public final class Heap {
                         "Disable " + traceGCOption + ", " + traceRootScanningOption + " and " +
                         traceGCPhasesOption + " until the n'th GC");
 
-        VMOptions.addFieldOption("-XX:", "DisableGC", Classes.getDeclaredField(Heap.class, "GCDisabled"), "Disable garbage collection.");
+        VMOptions.addFieldOption("-XX:", "DisableGC", Classes.getDeclaredField(Heap.class, "GCDisabled"), "Disable garbage collection.", MaxineVM.Phase.STARTING);
     }
 
     /**
@@ -288,7 +279,7 @@ public final class Heap {
     @UNSAFE
     @FOLD
     private static HeapScheme heapScheme() {
-        return VMConfiguration.hostOrTarget().heapScheme();
+        return vmConfig().heapScheme();
     }
 
     @INLINE
@@ -299,6 +290,11 @@ public final class Heap {
     @INLINE
     public static void enableAllocationForCurrentThread() {
         heapScheme().enableAllocationForCurrentThread();
+    }
+
+    @INLINE
+    public static boolean isAllocationDisabledForCurrentThread() {
+        return heapScheme().isAllocationDisabledForCurrentThread();
     }
 
     /**
@@ -431,12 +427,16 @@ public final class Heap {
         Log.unlock(lockDisabledSafepoints);
     }
 
-    public static boolean collectGarbage(Size requestedFreeSpace) {
-        if (Thread.holdsLock(VmThreadMap.ACTIVE)) {
-            // The GC requires this lock to proceed
-            throw HoldsGCLockError.INSTANCE;
-        }
+    /**
+     * A VM option for triggering a GC at fixed intervals.
+     */
+    public static int ExcessiveGCFrequency;
+    static {
+        VMOptions.addFieldOption("-XX:", "ExcessiveGCFrequency", Heap.class,
+            "Run a garbage collection every <n> milliseconds. A value of 0 disables this mechanism.");
+    }
 
+    public static boolean collectGarbage(Size requestedFreeSpace) {
         if (Heap.gcDisabled()) {
             Throw.stackDump("Out of memory and GC is disabled");
             MaxineVM.native_exit(1);
@@ -464,7 +464,23 @@ public final class Heap {
             Log.println(" Kb --");
             Log.unlock(lockDisabledSafepoints);
         }
-        final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
+        final boolean freedEnough;
+        if (VmThread.current().isVmOperationThread()) {
+            // Even if another thread holds the heap lock for the purpose of executing a GC,
+            // the GC is not actually executing as this is the VM operation thread which is
+            // executing another VM operation that triggers a GC. So, the GC is now executed
+            // as a nested VM operation without acquiring the heap lock.
+            freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
+        } else {
+            // Calls to collect garbage need to synchronize on the heap lock. This ensures that
+            // GC operations are submitted serially to the VM operation thread. It also means
+            // that a collection only actually occurs if needed (i.e. concurrent call to this
+            // method by another thread did not trigger a GC that freed up enough memory for
+            // this request).
+            synchronized (HEAP_LOCK) {
+                freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
+            }
+        }
         if (verbose()) {
             final long afterUsed = reportUsedSpace();
             final long afterFree = reportFreeSpace();
@@ -529,12 +545,12 @@ public final class Heap {
      * {@link #collectGarbage(Size)} can safely be called.
      */
     public static boolean isInitialized() {
-        return heapScheme().isInitialized();
+        return VmOperationThread.instance() != null;
     }
 
     public static void enableImmortalMemoryAllocation() {
         heapScheme().enableImmortalMemoryAllocation();
-        if (ImmortalHeap.traceAllocation()) {
+        if (ImmortalHeap.TraceImmortal) {
             Log.printCurrentThread(false);
             Log.println(": immortal heap allocation enabled");
         }
@@ -542,7 +558,7 @@ public final class Heap {
 
     public static void disableImmortalMemoryAllocation() {
         heapScheme().disableImmortalMemoryAllocation();
-        if (ImmortalHeap.traceAllocation()) {
+        if (ImmortalHeap.TraceImmortal) {
             Log.printCurrentThread(false);
             Log.println(": immortal heap allocation disabled");
         }
@@ -580,5 +596,4 @@ public final class Heap {
             MaxineVM.native_exit(1);
         }
     }
-
 }

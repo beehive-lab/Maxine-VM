@@ -50,8 +50,8 @@ public class ProcessorKind {
         if (!(other instanceof ProcessorKind)) {
             return false;
         }
-        final ProcessorKind processorKind = (ProcessorKind) other;
-        return processorModel.equals(processorKind.processorModel) && instructionSet.equals(processorKind.instructionSet) && dataModel.equals(processorKind.dataModel);
+        final ProcessorKind pk = (ProcessorKind) other;
+        return processorModel.equals(pk.processorModel) && instructionSet.equals(pk.instructionSet) && dataModel.equals(pk.dataModel);
     }
 
     @Override

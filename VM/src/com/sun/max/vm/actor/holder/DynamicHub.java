@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.actor.holder;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -27,6 +29,7 @@ import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
@@ -93,11 +96,26 @@ public final class DynamicHub extends Hub {
             assert virtualMethodActor.vTableIndex() == vTableIndex;
             assert getWord(vTableIndex).isZero();
             Address vTableEntry;
+
             if (compilerCreatesTargetMethods) {
-                vTableEntry = VMConfiguration.target().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
+                vTableEntry = vmConfig().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
             } else {
                 vTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
             }
+            setWord(vTableIndex, vTableEntry);
+        }
+    }
+
+    /**
+     * Ensures all the vtable entries in this hub are resolved to compiled methods, not trampolines.
+     */
+    public void compileVTable() {
+        VirtualMethodActor[] allVirtualMethodActors = classActor.allVirtualMethodActors();
+        for (int i = 0; i < allVirtualMethodActors.length; i++) {
+            final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
+            final int vTableIndex = firstWordIndex() + i;
+            assert virtualMethodActor.vTableIndex() == vTableIndex;
+            Address vTableEntry = CallEntryPoint.VTABLE_ENTRY_POINT.in(vmConfig().compilationScheme().synchronousCompile(virtualMethodActor));
             setWord(vTableIndex, vTableEntry);
         }
     }
@@ -114,7 +132,7 @@ public final class DynamicHub extends Hub {
                     assert getWord(iTableIndex).isZero();
                     Address iTableEntry;
                     if (compilerCreatesTargetMethods) {
-                        iTableEntry = VMConfiguration.target().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
+                        iTableEntry = vmConfig().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
                     } else {
                         iTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
                     }
@@ -131,7 +149,7 @@ public final class DynamicHub extends Hub {
      */
     @FOLD
     private static boolean compilerCreatesTargetMethods() {
-        return !MaxineVM.isHosted() || VMConfiguration.target().bootCompilerScheme().compiledType() != null;
+        return !MaxineVM.isHosted() || vmConfig().bootCompilerScheme().compiledType() != null;
     }
 
     @Override

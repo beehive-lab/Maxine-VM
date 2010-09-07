@@ -144,10 +144,10 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     @Override
     public void verify() {
+        if (verbose || Verifier.TraceVerifierLevel >= Verifier.TRACE_METHOD) {
+            Log.println(classMethodActor().format("[Verifying %H.%n(%p) via type-inferencing]"));
+        }
         if (verbose) {
-            Log.println();
-            Log.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
-            Log.println();
             Log.println("Input bytecode:");
             CodeAttributePrinter.print(Log.out, codeAttribute());
             Log.println();
@@ -217,14 +217,6 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         makeTypeState(info.handlerPosition());
     }
 
-    @Override
-    public void verifyIsAssignable(VerificationType fromType, VerificationType toType, String errorMessage) {
-        if (!toType.isAssignableFrom(fromType)) {
-            toType.isAssignableFrom(fromType);
-            throw verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
-        }
-    }
-
     /**
      * Gets the current interpreter frame type state.
      * @return the type state
@@ -250,7 +242,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     @Override
     protected void performStore(VerificationType type, int index) {
-        if (type == REFERENCE && SUBROUTINE.isAssignableFrom(typeState().top())) {
+        if ((type == REFERENCE || type == REFERENCE_OR_WORD) && SUBROUTINE.isAssignableFrom(typeState().top())) {
             final Subroutine subroutine = (Subroutine) typeState().pop(SUBROUTINE);
             typeState().store(subroutine, index);
 

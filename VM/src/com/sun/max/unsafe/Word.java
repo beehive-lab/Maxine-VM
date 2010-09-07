@@ -21,6 +21,8 @@
 package com.sun.max.unsafe;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -30,12 +32,11 @@ import com.sun.cri.bytecode.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -106,6 +107,7 @@ public abstract class Word {
                                             map.put(unboxedClass, boxedClass);
                                         } catch (ClassNotFoundException e) {
                                             // There is no boxed version for this unboxed type
+                                            map.put(unboxedClass, unboxedClass);
                                         }
                                     }
                                 }
@@ -131,19 +133,6 @@ public abstract class Word {
     protected Word() {
     }
 
-    // Substituted by isBoxed_()
-    @UNSAFE
-    public static boolean isBoxed() {
-        return true;
-    }
-
-    @LOCAL_SUBSTITUTION
-    @UNSAFE
-    @FOLD
-    public static boolean isBoxed_() {
-        return false;
-    }
-
     @INLINE
     @INTRINSIC(WCONST_0)
     public static Word zero() {
@@ -157,12 +146,12 @@ public abstract class Word {
 
     @FOLD
     public static Endianness endianness() {
-        return Platform.hostOrTarget().processorKind.dataModel.endianness;
+        return platform().endianness();
     }
 
     @FOLD
     public static WordWidth widthValue() {
-        return Platform.hostOrTarget().processorKind.dataModel.wordWidth;
+        return platform().wordWidth();
     }
 
     @FOLD
@@ -297,7 +286,7 @@ public abstract class Word {
 
     @INLINE
     public final boolean isZero() {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             final Boxed box = (Boxed) this;
             return box.value() == 0;
         }
@@ -306,7 +295,7 @@ public abstract class Word {
 
     @INLINE
     public final boolean isAllOnes() {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             final Boxed box = (Boxed) this;
             return box.value() == -1;
         }
@@ -315,7 +304,7 @@ public abstract class Word {
 
     @INLINE
     public final boolean equals(Word other) {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             final Boxed thisBox = (Boxed) this;
             final Boxed otherBox = (Boxed) other;
             return thisBox.value() == otherBox.value();

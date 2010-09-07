@@ -35,7 +35,7 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * A table specialized for displaying {@link VMConfiguration}  information in the VM boot image.
@@ -82,9 +82,8 @@ public final class BootImageTable extends InspectorTable {
             final BootImage bootImage = vm().bootImage();
             final BootImage.Header header = bootImage.header;
             final VMConfiguration vmConfiguration = bootImage.vmConfiguration;
-            final Platform platform = vmConfiguration.platform();
-            final ProcessorKind processorKind = platform.processorKind;
-            final DataModel processorDataModel = processorKind.dataModel;
+            final Platform platform = vmConfiguration.platform;
+            final DataModel processorDataModel = platform.dataModel();
             dummyLabel = new PlainLabel(inspection, "");
 
             addRow("identification:", new DataLabel.IntAsHex(inspection(), header.identification), null);
@@ -93,8 +92,8 @@ public final class BootImageTable extends InspectorTable {
 
             addRow("build level:", new DataLabel.EnumAsText(inspection(), vmConfiguration.buildLevel()), null);
 
-            addRow("processor model:", new DataLabel.EnumAsText(inspection(), processorKind.processorModel), null);
-            addRow("instruction set:", new DataLabel.EnumAsText(inspection(), processorKind.instructionSet), null);
+            addRow("processor model:", new DataLabel.EnumAsText(inspection(), platform.processorModel()), null);
+            addRow("instruction set:", new DataLabel.EnumAsText(inspection(), platform.instructionSet()), null);
 
             addRow("bits/word:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.wordWidth.numberOfBits), null);
             addRow("endianness:", new DataLabel.EnumAsText(inspection(), processorDataModel.endianness), null);

@@ -20,7 +20,9 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.heap.Heap.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.management.*;
@@ -38,10 +40,8 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
-import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -119,9 +119,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      */
     private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(gripVerifier);
 
-    private final Collect collect = new Collect();
-
-    private StopTheWorldGCDaemon collectorThread;
+    private CollectHeap collectHeap;
 
     private LinearAllocationMemoryRegion fromSpace = null;
     private LinearAllocationMemoryRegion toSpace = null;
@@ -178,8 +176,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     /**
      * A VM option for triggering a GC before every allocation.
      */
-    private static final VMBooleanXXOption GCBeforeAllocationOption = register(new VMBooleanXXOption("-XX:-GCBeforeAllocation",
-        "Perform a garbage collection before every allocation. This is ignored if " + useTLABOption + " is specified."), MaxineVM.Phase.PRISTINE);
+    static boolean GCBeforeAllocation;
+    static {
+        VMOptions.addFieldOption("-XX:", "GCBeforeAllocation", SemiSpaceHeapScheme.class,
+            "Perform a garbage collection before every allocation from the global heap.", MaxineVM.Phase.PRISTINE);
+    }
 
     public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -190,8 +191,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         super.initialize(phase);
 
         if (MaxineVM.isHosted()) {
-            // The monitor for the collector must be allocate in the image
-            JavaMonitorManager.bindStickyMonitor(this);
+            collectHeap = new CollectHeap();
         }
 
         if (phase == MaxineVM.Phase.PRISTINE) {
@@ -234,14 +234,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 this.growPolicy = new DoubleGrowPolicy();
             }
             increaseGrowPolicy = new LinearGrowPolicy();
-            collectorThread = new StopTheWorldGCDaemon("GC", collect);
-            collectorThread.start();
         }
-    }
-
-    @Override
-    public boolean isInitialized() {
-        return collectorThread != null;
     }
 
     private void allocateHeap() {
@@ -336,7 +329,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     /**
      * Routine that performs the actual garbage collection.
      */
-    final class Collect extends Collector {
+    final class CollectHeap extends GCOperation {
+
+        public CollectHeap() {
+            super("CollectHeap");
+        }
+
         @Override
         public void collect(int invocationCount) {
             try {
@@ -347,7 +345,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
                 HeapScheme.Inspect.notifyGCStarted();
 
-                VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+                vmConfig().monitorScheme().beforeGarbageCollection();
 
                 final long startGCTime = System.currentTimeMillis();
                 collectionCount++;
@@ -408,7 +406,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 lastGCTime = System.currentTimeMillis();
                 accumulatedGCTime += lastGCTime - startGCTime;
 
-                VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+                vmConfig().monitorScheme().afterGarbageCollection();
 
                 // Post-verification of the heap.
                 verifyObjectSpaces("after GC");
@@ -503,7 +501,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     }
 
     public boolean isGcThread(Thread thread) {
-        return thread instanceof StopTheWorldGCDaemon;
+        return thread instanceof VmOperationThread;
     }
 
     public int adjustedCardTableShift() {
@@ -717,9 +715,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         return true;
     }
 
-    private void executeCollectorThread() {
+    private void executeGC() {
         if (!Heap.gcDisabled()) {
-            collectorThread.execute();
+            collectHeap.submit();
         }
     }
 
@@ -731,7 +729,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         if (!growSpaces(true, growPolicy)) {
             result = false;
         } else {
-            executeCollectorThread();
+            executeGC();
             result = growSpaces(false, growPolicy);
         }
         if (Heap.verbose()) {
@@ -740,9 +738,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         return result;
     }
 
-    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
+    public boolean collectGarbage(Size requestedFreeSpace) {
         if (requestedFreeSpace.toInt() == 0 || immediateFreeSpace().lessThan(requestedFreeSpace)) {
-            executeCollectorThread();
+            executeGC();
         }
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             // check to see if we can reset safety zone
@@ -892,7 +890,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         Pointer cell;
         Address end;
         do {
-            if (GCBeforeAllocationOption.getValue() && !VmThread.isAttaching()) {
+            if (GCBeforeAllocation && !VmThread.isAttaching()) {
                 Heap.collectGarbage(size);
             }
             oldAllocationMark = allocationMark().asPointer();
@@ -1051,49 +1049,86 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         Log.println("");
     }
 
-    private synchronized boolean shrink(Size amount) {
-        final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
-        logSpaces();
-        executeCollectorThread();
-        if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
-            // give back part of the existing spaces
-            if (Heap.verbose()) {
-                logSpaces();
-            }
-            final int amountAsInt = pageAlignedAmount.toInt();
-            fromSpace.setSize(fromSpace.size().minus(amountAsInt));
-            toSpace.setSize(toSpace.size().minus(amountAsInt));
-            top = top.minus(amountAsInt);
-            VirtualMemory.deallocate(fromSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
-            VirtualMemory.deallocate(toSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
-            logSpaces();
-            return true;
+    /**
+     * Operation to shrink the heap.
+     */
+    final class ShrinkHeap extends VmOperation {
+
+        boolean result;
+        final Size amount;
+
+        public ShrinkHeap(Size amount) {
+            super("ShrinkHeap", null, Mode.Safepoint);
+            this.amount = amount;
         }
-        return false;
+
+        @Override
+        protected void doIt() {
+            final Size pageAlignedAmount = amount.asAddress().aligned(Platform.platform().pageSize).asSize().dividedBy(2);
+            logSpaces();
+            executeGC();
+            if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
+                // give back part of the existing spaces
+                if (Heap.verbose()) {
+                    logSpaces();
+                }
+                final int amountAsInt = pageAlignedAmount.toInt();
+                fromSpace.setSize(fromSpace.size().minus(amountAsInt));
+                toSpace.setSize(toSpace.size().minus(amountAsInt));
+                top = top.minus(amountAsInt);
+                VirtualMemory.deallocate(fromSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+                VirtualMemory.deallocate(toSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+                logSpaces();
+                result = true;
+            }
+        }
     }
 
     @Override
     public boolean decreaseMemory(Size amount) {
         HeapScheme.Inspect.notifyDecreaseMemoryRequested(amount);
-        return shrink(amount);
+        ShrinkHeap shrinkHeap = new ShrinkHeap(amount);
+        synchronized (HEAP_LOCK) {
+            shrinkHeap.submit();
+        }
+        return shrinkHeap.result;
+    }
+
+    final class GrowHeap extends VmOperation {
+
+        boolean result;
+        final Size amount;
+
+        public GrowHeap(Size amount) {
+            super("GrowHeap", null, Mode.Safepoint);
+            this.amount = amount;
+        }
+
+        @Override
+        protected void doIt() {
+            /* The conservative assumption is that "amount" is the total amount that we could
+             * allocate. Since we can't deallocate our existing spaces until we know we can allocate
+             * the new ones, our new spaces cannot be greater than amount/2 in size.
+             * This could be smaller than the existing spaces so we need to check.
+             * It's unfortunate but that's the nature of the semispace scheme.
+             */
+            final Size pageAlignedAmount = amount.asAddress().aligned(Platform.platform().pageSize).asSize().dividedBy(2);
+            if (pageAlignedAmount.greaterThan(fromSpace.size())) {
+                // grow adds the current space size to the amount in the grow policy
+                increaseGrowPolicy.setAmount(pageAlignedAmount.minus(fromSpace.size()));
+                result = grow(increaseGrowPolicy);
+            }
+        }
     }
 
     @Override
-    public synchronized boolean increaseMemory(Size amount) {
+    public boolean increaseMemory(Size amount) {
         HeapScheme.Inspect.notifyIncreaseMemoryRequested(amount);
-        /* The conservative assumption is that "amount" is the total amount that we could
-         * allocate. Since we can't deallocate our existing spaces until we know we can allocate
-         * the new ones, our new spaces cannot be greater than amount/2 in size.
-         * This could be smaller than the existing spaces so we need to check.
-         * It's unfortunate but that's the nature of the semispace scheme.
-         */
-        final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
-        if (pageAlignedAmount.greaterThan(fromSpace.size())) {
-            // grow adds the current space size to the amount in the grow policy
-            increaseGrowPolicy.setAmount(pageAlignedAmount.minus(fromSpace.size()));
-            return grow(increaseGrowPolicy);
+        GrowHeap growHeap = new GrowHeap(amount);
+        synchronized (HEAP_LOCK) {
+            growHeap.submit();
         }
-        return false;
+        return growHeap.result;
     }
 
     @Override

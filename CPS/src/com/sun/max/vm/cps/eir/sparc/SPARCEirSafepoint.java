@@ -20,9 +20,10 @@
  */
 package com.sun.max.vm.cps.eir.sparc;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.asm.sparc.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.cps.eir.*;
 
@@ -39,7 +40,7 @@ public final class SPARCEirSafepoint extends EirSafepoint<EirInstructionVisitor,
     @Override
     public void emit(SPARCEirTargetEmitter emitter) {
         emitter.addSafepoint(this);
-        final GPR register =  (GPR) VMConfiguration.hostOrTarget().safepoint.latchRegister();
+        final GPR register =  (GPR) vmConfig().safepoint.latchRegister();
         emitter.assembler().ldx(register, GPR.G0, register);
     }
 

@@ -45,7 +45,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * This class combines all the testing modes of the Maxine virtual machine into a central
@@ -649,14 +649,15 @@ public class MaxineTester {
         if (exitValue == 0) {
             // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
             copyBinary(imageDir, "maxvm");
-            copyBinary(imageDir, mapLibraryName("jvm"));
-            copyBinary(imageDir, mapLibraryName("javatest"));
-            copyBinary(imageDir, mapLibraryName("prototype"));
-            copyBinary(imageDir, mapLibraryName("tele"));
-
             if (OperatingSystem.current() == OperatingSystem.DARWIN) {
                 copyBinary(imageDir, mapLibraryName("jvmlinkage"));
+            } else {
+                copyBinary(imageDir, mapLibraryName("jvm"));
             }
+            copyBinary(imageDir, mapLibraryName("javatest"));
+            copyBinary(imageDir, mapLibraryName("hosted"));
+            copyBinary(imageDir, mapLibraryName("tele"));
+
 
             generatedImages.put(imageConfig, imageDir);
             return true;

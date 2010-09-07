@@ -53,10 +53,7 @@ import com.sun.max.program.option.Option;
 import com.sun.max.program.option.OptionSet;
 import com.sun.max.tele.TeleVM;
 import com.sun.max.tele.TeleVM.Options;
-import com.sun.max.vm.prototype.BootImageException;
-import com.sun.max.vm.prototype.BootImageGenerator;
-import com.sun.max.vm.prototype.Prototype;
-import com.sun.max.vm.prototype.HostedBootClassLoader;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.tele.Inspectable;
 
 /**
@@ -97,7 +94,7 @@ public class Main {
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
         HostedBootClassLoader.setClasspath(classpath);
 
-        Prototype.loadLibrary("tele");
+        Prototype.loadLibrary(TeleVM.TELE_LIBRARY_NAME);
 
         final Classpath sourcepath = JavaProject.getSourcePath(true);
         checkClasspath(sourcepath);

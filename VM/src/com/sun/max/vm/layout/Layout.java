@@ -20,9 +20,10 @@
  */
 package com.sun.max.vm.layout;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -35,7 +36,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     public static LayoutScheme layoutScheme() {
-        return VMConfiguration.hostOrTarget().layoutScheme();
+        return vmConfig().layoutScheme();
     }
 
     @UNSAFE
@@ -157,7 +158,7 @@ public final class Layout {
     @UNSAFE
     @FOLD
     private static ReferenceScheme referenceScheme() {
-        return VMConfiguration.hostOrTarget().referenceScheme();
+        return vmConfig().referenceScheme();
     }
 
     @ACCESSOR(Reference.class)
@@ -314,7 +315,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static BooleanArrayLayout booleanArrayLayout() {
+    public static BooleanArrayLayout booleanArrayLayout() {
         return layoutScheme().booleanArrayLayout;
     }
 
@@ -332,7 +333,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static ShortArrayLayout shortArrayLayout() {
+    public static ShortArrayLayout shortArrayLayout() {
         return layoutScheme().shortArrayLayout;
     }
 
@@ -350,7 +351,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static CharArrayLayout charArrayLayout() {
+    public static CharArrayLayout charArrayLayout() {
         return layoutScheme().charArrayLayout;
     }
 
@@ -368,7 +369,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static IntArrayLayout intArrayLayout() {
+    public static IntArrayLayout intArrayLayout() {
         return layoutScheme().intArrayLayout;
     }
 
@@ -386,7 +387,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static FloatArrayLayout floatArrayLayout() {
+    public static FloatArrayLayout floatArrayLayout() {
         return layoutScheme().floatArrayLayout;
     }
 
@@ -404,7 +405,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static LongArrayLayout longArrayLayout() {
+    public static LongArrayLayout longArrayLayout() {
         return layoutScheme().longArrayLayout;
     }
 
@@ -422,7 +423,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static DoubleArrayLayout doubleArrayLayout() {
+    public static DoubleArrayLayout doubleArrayLayout() {
         return layoutScheme().doubleArrayLayout;
     }
 

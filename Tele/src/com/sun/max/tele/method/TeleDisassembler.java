@@ -20,6 +20,9 @@
  */
 package com.sun.max.tele.method;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -35,7 +38,6 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -59,15 +61,15 @@ public final class TeleDisassembler {
      * Causes the disassembler to load and initialize static state
      * on a separate thread, since it can be time consuming.
      *
-     * @param processorKind the kind of disassembler to initialize.
+     * @param platform the kind of disassembler to initialize.
      */
-    public static void initialize(final ProcessorKind processorKind) {
+    public static void initialize(final Platform platform) {
         final Thread thread = new Thread("TeleDisassembler initializer") {
             @Override
             public void run() {
                 Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
                 final long startTimeMillis = System.currentTimeMillis();
-                createDisassembler(processorKind, Address.zero(), null);
+                createDisassembler(platform, Address.zero(), null);
                 Trace.end(TRACE_VALUE, tracePrefix() + "initializing", startTimeMillis);
             }
         };
@@ -84,16 +86,16 @@ public final class TeleDisassembler {
      *
      * @return the code disassembled into instructions.
      */
-    public static List<TargetCodeInstruction> decode(ProcessorKind processorKind, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors) {
-        final Disassembler disassembler = createDisassembler(processorKind, codeStart, InlineDataDecoder.createFrom(encodedInlineDataDescriptors));
-        final LoadLiteralParser literalParser = createLiteralParser(processorKind, disassembler, codeStart, code);
+    public static List<TargetCodeInstruction> decode(Platform platform, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors) {
+        final Disassembler disassembler = createDisassembler(platform, codeStart, InlineDataDecoder.createFrom(encodedInlineDataDescriptors));
+        final LoadLiteralParser literalParser = createLiteralParser(platform, disassembler, codeStart, code);
         return create(codeStart, code, disassembler, literalParser);
     }
 
     // Synchronize on class to avoid use of the disassembler before the initial call made during initialization.
     // This might be tidier if not all static.
-    private static synchronized Disassembler createDisassembler(final ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
-        return Disassembler.createDisassembler(processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder);
+    private static synchronized Disassembler createDisassembler(final Platform platform, Address startAddress, InlineDataDecoder inlineDataDecoder) {
+        return Disassembler.createDisassembler(platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder);
     }
 
     private abstract static class LoadLiteralParser {
@@ -187,11 +189,11 @@ public final class TeleDisassembler {
 
         private static final int DISP19_MASK = 0x7ffff;
 
-        private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind.dataModel.endianness;
+        private static final Endianness ENDIANNESS =  Platform.platform().endianness();
         static {
-            final Endianness endianness = VMConfiguration.target().platform().processorKind.dataModel.endianness;
-            final SPARCAssembler asm =  SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind.dataModel.wordWidth);
-            final GPR literalBaseRegister = (GPR) VMConfiguration.target().targetABIsScheme().optimizedJavaABI.literalBaseRegister();
+            final Endianness endianness = platform().endianness();
+            final SPARCAssembler asm =  SPARCAssembler.createAssembler(platform().wordWidth());
+            final GPR literalBaseRegister = (GPR) vmConfig().targetABIsScheme().optimizedJavaABI.literalBaseRegister();
 
             asm.rd(StateRegister.PC, literalBaseRegister);
             int setLiteralBaseInstruction = 0;
@@ -304,9 +306,9 @@ public final class TeleDisassembler {
         }
     }
 
-    private static LoadLiteralParser createLiteralParser(final ProcessorKind processorKind, Disassembler disassembler, Address codeStart, byte [] code) {
+    private static LoadLiteralParser createLiteralParser(final Platform platform, Disassembler disassembler, Address codeStart, byte [] code) {
         //final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
-        switch (processorKind.instructionSet) {
+        switch (platform.instructionSet()) {
             case ARM:
                 FatalError.unimplemented();
                 return null;

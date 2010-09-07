@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import java.util.*;
@@ -27,14 +28,13 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
 
 /**
  * An adapter is a code stub interposing a call between two methods that have different calling conventions. The adapter
@@ -109,7 +109,7 @@ public abstract class Adapter extends TargetMethod {
      * @param callPosition TODO
      */
     public Adapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
-        super(description, VMConfiguration.target().targetABIsScheme().optimizedJavaABI);
+        super(description, vmConfig().targetABIsScheme().optimizedJavaABI);
         this.setFrameSize(frameSize);
         this.generator = generator;
 

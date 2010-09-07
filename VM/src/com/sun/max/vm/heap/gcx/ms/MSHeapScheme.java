@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap.gcx.ms;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
@@ -31,9 +32,7 @@ import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -101,8 +100,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     private final Collect collect = new Collect();
 
-    private StopTheWorldGCDaemon collectorThread;
-
     private boolean doImpreciseSweep;
 
     final AfterMarkSweepVerifier afterGCVerifier;
@@ -118,18 +115,13 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted()) {
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
             objectSpace.hostInitialize();
-            // The monitor for the collector must be allocated in the image
-            JavaMonitorManager.bindStickyMonitor(this);
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
-        } else if (phase == MaxineVM.Phase.STARTING) {
-            collectorThread = new StopTheWorldGCDaemon("GC", collect);
-            collectorThread.start();
         }
     }
 
@@ -140,7 +132,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         final Size initSize = Heap.initialSize();
         final Size maxSize = Heap.maxSize();
 
-        Address endOfCodeRegion = Code.bootCodeRegion.end().roundedUpBy(Platform.target().pageSize);
+        Address endOfCodeRegion = Code.bootCodeRegion.end().roundedUpBy(Platform.platform().pageSize);
         CodeManager codeManager = Code.getCodeManager();
         if (codeManager instanceof FixedAddressCodeManager && codeManager.getRuntimeCodeRegion().start().equals(endOfCodeRegion)) {
             endOfCodeRegion = codeManager.getRuntimeCodeRegion().end();
@@ -166,11 +158,11 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         return 0;
     }
 
-    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
+    public boolean collectGarbage(Size requestedFreeSpace) {
         collect.requestedSize = requestedFreeSpace;
         boolean forcedGC = requestedFreeSpace.toInt() == 0;
         if (forcedGC) {
-            collectorThread.execute();
+            collect.submit();
             return true;
         }
         // We may reach here after a race. Don't run GC if request can be satisfied.
@@ -181,7 +173,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         if (objectSpace.canSatisfyAllocation(requestedFreeSpace)) {
             return true;
         }
-        collectorThread.execute();
+        VmOperationThread.submit(collect);
         return objectSpace.canSatisfyAllocation(requestedFreeSpace);
     }
 
@@ -193,7 +185,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     public boolean isGcThread(Thread thread) {
-        return thread instanceof StopTheWorldGCDaemon;
+        return thread instanceof VmOperationThread;
     }
 
     @INLINE(override = true)
@@ -246,11 +238,16 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     /**
      * Class implementing the garbage collection routine.
-     * This is the {@link StopTheWorldGCDaemon}'s entry point to garbage collection.
+     * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
-    final class Collect extends Collector {
+    final class Collect extends GCOperation {
         private long collectionCount = 0;
         private TLABFiller tlabFiller = new TLABFiller();
+
+
+        public Collect() {
+            super("Collect");
+        }
 
         private Size requestedSize;
         private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
@@ -321,7 +318,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
             HeapScheme.Inspect.notifyGCStarted();
 
-            VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+            vmConfig().monitorScheme().beforeGarbageCollection();
 
             collectionCount++;
             if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
@@ -339,7 +336,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             if (MaxineVM.isDebug()) {
                 afterGCVerifier.run();
             }
-            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+            vmConfig().monitorScheme().afterGarbageCollection();
 
             if (heapResizingPolicy.resizeAfterCollection(objectSpace.totalSpace(), freeSpaceAfterGC, objectSpace)) {
                 // Heap was resized.

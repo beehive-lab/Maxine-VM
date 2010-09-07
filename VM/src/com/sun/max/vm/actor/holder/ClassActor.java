@@ -44,9 +44,9 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
@@ -171,6 +171,7 @@ public abstract class ClassActor extends Actor implements RiType {
                          TypeDescriptor outerClass,
                          EnclosingMethodInfo enclosingMethodInfo) {
         super(name, flags);
+        assert kind == typeDescriptor.toKind();
         if (MaxineVM.isHosted()) {
             checkProhibited(name);
             if (MaxineVM.isMaxineClass(typeDescriptor)) {

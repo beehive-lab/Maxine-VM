@@ -20,7 +20,10 @@
  */
 package com.sun.cri.xir;
 
+import java.util.*;
+
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
@@ -33,37 +36,45 @@ import com.sun.cri.xir.CiXirAssembler.*;
  */
 public class XirSnippet {
 
+    public final XirArgument[] arguments;
+    public final XirTemplate template;
+    public final Map<XirMark, Mark> marks;
+    
     public XirSnippet(XirTemplate template, XirArgument... inputs) {
         this.template = template;
         this.arguments = inputs;
+        this.marks = template.marks.length > 0 ? new HashMap<XirMark, Mark>() : null;
+        assert template != null;
         assert assertArgumentsCorrect();
     }
 
     private boolean assertArgumentsCorrect() {
-        assert arguments.length == template.parameters.length;
+        int argLength = arguments == null ? 0 : arguments.length;
+        int paramLength = template.parameters == null ? 0 : template.parameters.length;
+        assert argLength == paramLength : "expected param count: " + paramLength + ", actual: " + argLength;
         for (int i = 0; i < arguments.length; i++) {
-            assert assertArgumentCorrect(template.parameters[i], arguments[i]);
-
+            assert assertArgumentCorrect(template.parameters[i], arguments[i]) : "mismatch in parameter " + i + ": " + arguments[i] + " instead of " + template.parameters[i];
         }
         return true;
     }
 
     private boolean assertArgumentCorrect(XirParameter param, XirArgument arg) {
-
         if (param.kind == CiKind.Illegal || param.kind == CiKind.Void) {
-            assert arg == null;
+            if (arg != null) {
+                return false;
+            }
         } else {
-            assert arg != null;
+            if (arg == null) {
+                return false;
+            }
             if (arg.constant != null) {
-                assert arg.constant.kind == param.kind;
+                if (arg.constant != null && arg.constant.kind != param.kind) {                    
+                    return false;
+                }
             }
         }
-
         return true;
     }
-
-    public final XirArgument[] arguments;
-    public final XirTemplate template;
 
     @Override
     public String toString() {

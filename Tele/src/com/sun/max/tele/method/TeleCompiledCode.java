@@ -274,7 +274,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         writer.println("compilation: " + compilationIndex());
         teleTargetMethod.disassemble(writer);
         writer.flush();
-        final ProcessorKind processorKind = vm().vmConfiguration().platform().processorKind;
+        final Platform platform = vm().vmConfiguration().platform;
         final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod().encodedInlineDataDescriptors());
         final Address startAddress = getCodeStart();
         final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
@@ -294,7 +294,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
                 return string;
             }
         };
-        disassemble(printStream, getCode(), processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+        disassemble(printStream, getCode(), platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
     }
 
 }

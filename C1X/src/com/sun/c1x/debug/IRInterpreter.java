@@ -852,9 +852,9 @@ public class IRInterpreter {
             // native methods are invoked using reflection.
             // some special methods/classes are also always called using reflection
             if (isNative(targetMethod.accessFlags()) || "newInstance".equals(methodName) || "newInstance0".equals(methodName) ||
-                targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Unsafe")                     ||
-                targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Reflection")                 ||
-                targetMethod.holder().javaClass().getName().startsWith("sun.reflect.FieldAccessor")) {
+                targetMethod.holder().name().startsWith("sun/reflect/Unsafe")                     ||
+                targetMethod.holder().name().startsWith("sun/reflect/Reflection")                 ||
+                targetMethod.holder().name().startsWith("sun/reflect/FieldAccessor")) {
                 invokeUsingReflection(i);
                 return;
             }
@@ -895,11 +895,11 @@ public class IRInterpreter {
 
             CiConstant result;
             try {
-                IR methodHir = compiledMethods.get(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signature().toString());
+                IR methodHir = compiledMethods.get(targetMethod.holder().name() + methodName + targetMethod.signature().toString());
                 if (methodHir == null) {
                     C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, runtime, targetMethod);
                     methodHir = compilation.emitHIR();
-                    compiledMethods.put(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signature().toString(), methodHir);
+                    compiledMethods.put(targetMethod.holder().name() + methodName + targetMethod.signature().toString(), methodHir);
                 }
                 result = interpreter.execute(methodHir, arguments(i));
                 environment.bind(i, fromBoxedJavaValue(result.boxedValue()), instructionCounter);

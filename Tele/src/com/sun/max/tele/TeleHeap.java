@@ -31,7 +31,7 @@ import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
@@ -76,7 +76,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
      * specialized for the particular implementation of {@link HeapScheme} in the VM.
      * <br>
      * Not usable until after a call to {@link #initialize()}, which must be called
-     * after the {@link TeleClassRegistray} is fully initialized; otherwise, a circular
+     * after the {@link TeleClassRegistry} is fully initialized; otherwise, a circular
      * dependency will cause breakage.
      */
     public static TeleHeap make(TeleVM teleVM) {

@@ -274,8 +274,8 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         for (Label label : directCallLabels) {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
                 if (MaxineVM.isHosted()) {
-                    ProcessorKind kind = VMConfiguration.hostOrTarget().platform().processorKind;
-                    disassemble(System.out, code, kind.instructionSet, kind.dataModel.wordWidth, startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
+                    Platform platform = Platform.platform();
+                    disassemble(System.out, code, platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }
@@ -283,8 +283,8 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         for (Label label : safepointLabels) {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
                 if (MaxineVM.isHosted()) {
-                    ProcessorKind kind = VMConfiguration.hostOrTarget().platform().processorKind;
-                    disassemble(System.out, code, kind.instructionSet, kind.dataModel.wordWidth, startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
+                    Platform platform = Platform.platform();
+                    disassemble(System.out, code, platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }

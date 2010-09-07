@@ -77,11 +77,17 @@ boolean thread_read_registers(thread_t thread,
     return TRUE;
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JNIEnv *env, jclass c, jlong thread,
-                jbyteArray integerRegisters, jint integerRegistersLength,
-                jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
-                jbyteArray stateRegisters, jint stateRegistersLength) {
+/*
+ * Function copies from native register data structures to Java byte arrays. Does 3 things:
+ * 1. Checks size of provided array lengths
+ * 2. Canonicalizes the native register data structures
+ * 3. Copies the canonicalized structures into the byte arrays
+ */
+static jboolean copyRegisters(JNIEnv *env, jobject  this,
+                OsIntegerRegistersStruct *osIntegerRegisters, OsStateRegistersStruct *osStateRegisters, OsFloatingPointRegistersStruct *osFloatRegisters,
+        jbyteArray integerRegisters, jint integerRegistersLength,
+        jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
+        jbyteArray stateRegisters, jint stateRegistersLength) {
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
     isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
@@ -101,18 +107,49 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JN
         return false;
     }
 
-    if (!thread_read_registers(thread, &canonicalIntegerRegisters, &canonicalFloatingPointRegisters, &canonicalStateRegisters)) {
-        return false;
-    }
+    isa_canonicalizeTeleIntegerRegisters(osIntegerRegisters, &canonicalIntegerRegisters);
+    isa_canonicalizeTeleStateRegisters(osStateRegisters, &canonicalStateRegisters);
+    isa_canonicalizeTeleFloatingPointRegisters(osFloatRegisters, &canonicalFloatingPointRegisters);
 
     (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);
     (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
     (*env)->SetByteArrayRegion(env, floatingPointRegisters, 0, floatingPointRegistersLength, (void *) &canonicalFloatingPointRegisters);
-    return TRUE;
+    return true;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSetInstructionPointer(JNIEnv *env, jclass c, jlong task, jlong thread, jlong instructionPointer) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_readRegisters(JNIEnv *env, jobject c, jlong task, jlong thread,
+                jbyteArray integerRegisters, jint integerRegistersLength,
+                jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
+                jbyteArray stateRegisters, jint stateRegistersLength) {
+    OsIntegerRegistersStruct osIntegerRegisters;
+    OsFloatingPointRegistersStruct osFloatRegisters;
+    OsStateRegistersStruct osStateRegisters;
+
+    mach_msg_type_number_t count;
+    count = INTEGER_REGISTER_COUNT;
+    if (thread_get_state((thread_act_t) thread, INTEGER_REGISTER_FLAVOR, (thread_state_t) &osIntegerRegisters, &count) != KERN_SUCCESS) {
+        return false;
+    }
+
+    count = STATE_REGISTER_COUNT;
+    if (thread_get_state((thread_act_t) thread, STATE_REGISTER_FLAVOR, (thread_state_t) &osStateRegisters, &count) != KERN_SUCCESS) {
+        return false;
+    }
+
+    count = FLOATING_POINT_REGISTER_COUNT;
+    if (thread_get_state((thread_act_t) thread, FLOAT_REGISTER_FLAVOR, (thread_state_t) &osFloatRegisters, &count) != KERN_SUCCESS) {
+        return false;
+    }
+
+    return copyRegisters(env, c, &osIntegerRegisters, &osStateRegisters, &osFloatRegisters,
+                    integerRegisters, integerRegistersLength,
+                    floatingPointRegisters, floatingPointRegistersLength,
+                    stateRegisters, stateRegistersLength);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_setInstructionPointer(JNIEnv *env, jobject this, jlong task, jlong thread, jlong instructionPointer) {
     OsStateRegistersStruct osStateRegisters;
     mach_msg_type_number_t count = STATE_REGISTER_COUNT;
     if (thread_get_state((thread_act_t) thread, STATE_REGISTER_FLAVOR, (thread_state_t) &osStateRegisters, &count) != KERN_SUCCESS) {
@@ -237,7 +274,7 @@ static boolean task_resume_thread(jlong task, thread_t thread) {
  * After the TRAP signal is received the single stepping flag is cleared for all threads using the disableSingleStepping() method.
  */
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSingleStep(JNIEnv *env, jclass c, jlong task, jlong thread) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_singleStep(JNIEnv *env, jobject this, jlong task, jlong thread) {
 #if log_TELE
     log_println("Before single-stepping thread %d", thread);
     log_task_info((task_t) task);
@@ -249,3 +286,19 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSingleStep(JNIEn
         && forall_threads(task, resume_noncurrent_thread, (void *) thread);
     return result;
 }
+
+// The following methods support core-dump access for Darwin
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_darwin_DarwinDumpThreadAccess_threadRegisters(JNIEnv *env, jclass class, jobject bytebuffer_gregs, jobject bytebuffer_fpregs,
+                jbyteArray integerRegisters, jint integerRegistersLength,
+                jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
+                jbyteArray stateRegisters, jint stateRegistersLength) {
+    OsIntegerRegistersStruct *osIntegerRegisters = (OsIntegerRegistersStruct *) ((*env)->GetDirectBufferAddress(env, bytebuffer_gregs));
+    OsFloatingPointRegistersStruct *osFloatRegisters = (OsFloatingPointRegistersStruct *) ((*env)->GetDirectBufferAddress(env, bytebuffer_fpregs));
+    return copyRegisters(env, class, osIntegerRegisters, osIntegerRegisters, osFloatRegisters,
+                    integerRegisters, integerRegistersLength,
+                    floatingPointRegisters, floatingPointRegistersLength,
+                    stateRegisters, stateRegistersLength);
+}
+
+

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.verifier;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -52,7 +51,7 @@ public abstract class MethodVerifier {
         if (classVerifier.verbose) {
             this.verbose = true;
         } else {
-            this.verbose = Verifier.methodToTrace != null && classMethodActor.format("%H.%n").contains(Verifier.methodToTrace);
+            this.verbose = Verifier.TraceVerification != null && classMethodActor.format("%H.%n").contains(Verifier.TraceVerification);
         }
     }
 
@@ -67,7 +66,7 @@ public abstract class MethodVerifier {
     /**
      * @see ClassVerifier#getObjectType(TypeDescriptor)
      */
-    public ObjectType getObjectType(TypeDescriptor typeDescriptor) {
+    public VerificationType getObjectType(TypeDescriptor typeDescriptor) {
         if (JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
             throw verifyError("Expected a non-primitive type");
         }
@@ -118,15 +117,10 @@ public abstract class MethodVerifier {
     public VerifyError verifyError(String message) {
         final int currentOpcodePosition = currentOpcodePositionOrMinusOne();
         try {
-            ErrorContext.enterContext("verifying " + classMethodActor.format("%H.%n(%p)") + (currentOpcodePosition == -1 ? "" : " at bytecode position " + currentOpcodePosition));
-            if (verbose) {
-                try {
-                    throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
-                } catch (VerifyError ve) {
-                    ve.printStackTrace(Log.out);
-                    throw ve;
-                }
-            }
+            int sourceLine = currentOpcodePosition == -1 ? -1 : classMethodActor.sourceLineNumber(currentOpcodePosition);
+            String sourceFile = classMethodActor.holder().sourceFileName;
+            Object source = sourceLine == -1 || sourceFile == null ? "" : " (" + sourceFile + ":" + sourceLine + ")";
+            ErrorContext.enterContext("verifying " + classMethodActor.format("%H.%n(%p)") + (currentOpcodePosition == -1 ? "" : " at bytecode position " + currentOpcodePosition) + source);
             throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
         } finally {
             ErrorContext.exitContext();
@@ -143,8 +137,9 @@ public abstract class MethodVerifier {
      */
     public void verifyIsAssignable(VerificationType fromType, VerificationType toType, String errorMessage) {
         if (!toType.isAssignableFrom(fromType)) {
-            toType.isAssignableFrom(fromType);
-            throw verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
+            if (!VerificationType.isTypeIncompatibilityBetweenPointerAndAccessor(fromType, toType)) {
+                throw verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
+            }
         }
     }
 

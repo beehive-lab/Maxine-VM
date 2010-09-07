@@ -27,6 +27,7 @@
  */
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -44,35 +45,6 @@
 /* The set of signals intercepted by the debugger to implement breakpoints,
  * task stopping/suspension. */
 static sigset_t _caughtSignals;
-
-boolean task_read_registers(pid_t tid,
-    isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
-    isa_CanonicalStateRegistersStruct *canonicalStateRegisters,
-    isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters) {
-
-    if (canonicalIntegerRegisters != NULL || canonicalStateRegisters != NULL) {
-        struct user_regs_struct osIntegerRegisters;
-        if (ptrace(PT_GETREGS, tid, 0, &osIntegerRegisters) != 0) {
-            return false;
-        }
-        if (canonicalIntegerRegisters != NULL) {
-            isa_canonicalizeTeleIntegerRegisters(&osIntegerRegisters, canonicalIntegerRegisters);
-        }
-        if (canonicalStateRegisters != NULL) {
-            isa_canonicalizeTeleStateRegisters(&osIntegerRegisters, canonicalStateRegisters);
-        }
-    }
-
-    if (canonicalFloatingPointRegisters != NULL) {
-        struct user_fpregs_struct osFloatRegisters;
-        if (ptrace(PT_GETFPREGS, tid, 0, &osFloatRegisters) != 0) {
-            return false;
-        }
-        isa_canonicalizeTeleFloatingPointRegisters(&osFloatRegisters, canonicalFloatingPointRegisters);
-    }
-
-    return true;
-}
 
 /**
  * Waits for a newly started thread to stop (via a SIGSTOP), configures it for ptracing
@@ -264,6 +236,7 @@ void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...) {
 char task_state(pid_t tgid, pid_t tid) {
     char state = 'Z';
     task_stat(tgid, tid, "%*d %*s %c", &state);
+    state = toupper(state);
     return state;
 }
 
@@ -923,11 +896,16 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSetInstructionPointer(JNIEnv *
     return ptrace(PT_SETREGS, tid, 0, &registers) == 0;
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTask_nativeReadRegisters(JNIEnv *env, jclass c, jint tid,
-                jbyteArray integerRegisters, jint integerRegistersLength,
-                jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
-                jbyteArray stateRegisters, jint stateRegistersLength) {
+/*
+ * Function copies from native register data structures to Java byte arrays. Does 3 things:
+ * 1. Checks size of provided array lengths
+ * 2. Canonicalizes the native register data structures
+ * 3. Copies the canonicalized structures into the byte arrays
+ */
+static jboolean copyRegisters(JNIEnv *env, jobject  this, struct user_regs_struct *osRegisters, struct user_fpregs_struct  *osFloatingPointRegisters,
+        jbyteArray integerRegisters, jint integerRegistersLength,
+        jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
+        jbyteArray stateRegisters, jint stateRegistersLength) {
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
     isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
@@ -947,11 +925,65 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeReadRegisters(JNIEnv *env, jcl
         return false;
     }
 
-    if (!task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, &canonicalFloatingPointRegisters) != 0) {
-        return false;
-    }
+    isa_canonicalizeTeleIntegerRegisters(&osRegisters[0], &canonicalIntegerRegisters);
+    isa_canonicalizeTeleStateRegisters(&osRegisters[0], &canonicalStateRegisters);
+    isa_canonicalizeTeleFloatingPointRegisters(osFloatingPointRegisters, &canonicalFloatingPointRegisters);
+
     (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);
     (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
     (*env)->SetByteArrayRegion(env, floatingPointRegisters, 0, floatingPointRegistersLength, (void *) &canonicalFloatingPointRegisters);
     return true;
 }
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_linux_LinuxTask_nativeReadRegisters(JNIEnv *env, jclass c, jint tid,
+                jbyteArray integerRegisters, jint integerRegistersLength,
+                jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
+                jbyteArray stateRegisters, jint stateRegistersLength) {
+
+    struct user_regs_struct osRegisters;
+    if (ptrace(PT_GETREGS, tid, 0, &osRegisters) != 0) {
+        return false;
+    }
+
+    struct user_fpregs_struct osFloatRegisters;
+    if (ptrace(PT_GETFPREGS, tid, 0, &osFloatRegisters) != 0) {
+        return false;
+    }
+
+    return copyRegisters(env, c, &osRegisters, &osFloatRegisters,
+                    integerRegisters, integerRegistersLength,
+                    floatingPointRegisters, floatingPointRegistersLength,
+                    stateRegisters, stateRegistersLength);
+}
+
+// The following methods support core-dump access for Linux
+#include <sys/procfs.h>
+
+extern ThreadState_t toThreadState(char state, pid_t tid);
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_linux_LinuxDumpThreadAccess_taskStatusToThreadState(JNIEnv *env, jclass  class, jobject bytebuffer) {
+    prpsinfo_t * prpsinfo = (prpsinfo_t *)  ((*env)->GetDirectBufferAddress(env, bytebuffer));
+    return toThreadState(prpsinfo->pr_sname, prpsinfo->pr_pid);
+}
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_linux_LinuxDumpThreadAccess_taskId(JNIEnv *env, jclass  class,  jobject bytebuffer) {
+    prstatus_t * prstatus = (prstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer));
+    return prstatus->pr_pid;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_linux_LinuxDumpThreadAccess_taskRegisters(JNIEnv *env, jclass  class,  jobject bytebuffer_status, jobject bytebuffer_fpreg,
+                jbyteArray integerRegisters, jint integerRegistersLength,
+                jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
+                jbyteArray stateRegisters, jint stateRegistersLength) {
+    prstatus_t * prstatus = (prstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer_status));
+    elf_fpregset_t *fpregset = (elf_fpregset_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer_fpreg));
+    return copyRegisters(env, class, (struct user_regs_struct *) &prstatus->pr_reg[0], fpregset,
+                    integerRegisters, integerRegistersLength,
+                    floatingPointRegisters, floatingPointRegistersLength,
+                    stateRegisters, stateRegistersLength);
+}
+

@@ -37,7 +37,7 @@ public interface VerificationRegistry {
      *
      * @return null if {@code typeDescriptor} denotes a {@linkplain TypeDescriptor#isPrimitive() primitive type}
      */
-    ObjectType getObjectType(TypeDescriptor typeDescriptor);
+    VerificationType getObjectType(TypeDescriptor typeDescriptor);
 
     /**
      * Gets the canonical type of an uninitialized object created by a {@link Bytecodes#NEW} instruction at a given

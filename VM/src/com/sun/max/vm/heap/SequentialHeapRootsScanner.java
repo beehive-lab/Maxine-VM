@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
@@ -61,7 +63,7 @@ public class SequentialHeapRootsScanner {
 
     public void run() {
         VmThreadMap.ACTIVE.forAllThreadLocals(null, vmThreadLocalsScanner);
-        VMConfiguration.hostOrTarget().monitorScheme().scanReferences(pointerIndexVisitor);
+        vmConfig().monitorScheme().scanReferences(pointerIndexVisitor);
     }
 
 }

@@ -26,7 +26,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * A null VM instance, with the boot image but no process.
@@ -44,16 +44,16 @@ public final class ReadOnlyTeleVM extends TeleVM {
      * @param sourcepath the source code path to search for class or interface definitions
      */
     public ReadOnlyTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, TeleProcess.EMPTY_COMMAND_LINE_ARGUMENTS, -1, null);
+        super(bootImageFile, bootImage, sourcepath, TeleProcess.EMPTY_COMMAND_LINE_ARGUMENTS);
     }
 
     @Override
-    protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration.platform(), programFile());
+    protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
+        return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration.platform, programFile());
     }
 
     @Override
-    protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
+    protected Pointer loadBootImage() throws BootImageException {
         final ReadOnlyTeleProcess teleProcess = (ReadOnlyTeleProcess) teleProcess();
         return teleProcess.heapPointer();
     }

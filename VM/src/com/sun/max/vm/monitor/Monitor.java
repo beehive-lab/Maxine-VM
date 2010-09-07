@@ -20,12 +20,10 @@
  */
 package com.sun.max.vm.monitor;
 
-import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -38,25 +36,16 @@ public final class Monitor {
     /**
      * Determines if monitor activity should be traced at a level useful for debugging.
      */
-    @INLINE
-    public static boolean traceMonitors() {
-        return traceMonitors;
+    public static boolean TraceMonitors;
+
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceMonitors", "Trace (slow-path) monitor operations.");
     }
-
-    private static boolean traceMonitors;
-
-    private static final VMBooleanXXOption traceMonitorsOption = register(new VMBooleanXXOption("-XX:-TraceMonitors", "") {
-        @Override
-        public boolean parseValue(Pointer optionValue) {
-            traceMonitors = getValue();
-            return true;
-        }
-    }, Phase.STARTING);
 
     @UNSAFE
     @FOLD
     private static MonitorScheme monitorScheme() {
-        return VMConfiguration.hostOrTarget().monitorScheme();
+        return vmConfig().monitorScheme();
     }
 
     @INLINE

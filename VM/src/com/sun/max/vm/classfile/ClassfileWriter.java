@@ -32,7 +32,6 @@ import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -41,7 +40,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -736,7 +735,7 @@ public class ClassfileWriter {
         final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exits.");
 
         Trace.addTo(options);
-        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
+        VMConfigurator vmConfigurator = new VMConfigurator(options);
         options.parseArguments(args);
 
         if (helpOption.getValue()) {
@@ -749,7 +748,9 @@ public class ClassfileWriter {
             options.printHelp(System.out, 80);
             return;
         }
-        prototypeGenerator.createJavaPrototype(VMConfigurations.createStandard(BuildLevel.PRODUCT, Platform.host()), false);
+
+        vmConfigurator.create(true);
+        JavaPrototype.initialize(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes
 
         final Map<String, byte[]> classNameToClassfileMap = new LinkedHashMap<String, byte[]>();
@@ -775,15 +776,18 @@ public class ClassfileWriter {
         Class<?> javaClass;
         try {
             javaClass = Class.forName(className);
+            if (MaxineVM.isHostedOnly(javaClass)) {
+                ProgramWarning.message("Cannot create a class actor for prototype only class: " + className);
+                return;
+            }
+        } catch (VerifyError e) {
         } catch (ClassNotFoundException e) {
             ProgramWarning.message("Could not find class: " + className);
             return;
         }
-        if (MaxineVM.isHostedOnly(javaClass)) {
-            ProgramWarning.message("Cannot create a class actor for prototype only class: " + className);
-            return;
-        }
-        final ClassActor classActor = ClassActor.fromJava(javaClass);
+
+        TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(className);
+        final ClassActor classActor = typeDescriptor.resolve(null);
         final byte[] classfileBytes = toByteArray(new ClassInfo(classActor));
 
         final File classfileFile = new File(outputDirectory, classActor.name.string.replace(".", File.separator) + ".class").getAbsoluteFile();

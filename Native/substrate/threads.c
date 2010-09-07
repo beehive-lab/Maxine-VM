@@ -42,6 +42,7 @@
 #include "jni.h"
 #include "word.h"
 #include "mutex.h"
+#include "trap.h"
 #include "threads.h"
 #include "threadLocals.h"
 #include <sys/mman.h>
@@ -62,10 +63,9 @@
 #endif
 
 /**
- * The native mutex associated with VmThreadMap.ACTIVE which serves the role
- * of being a global lock for thread creation and GC.
+ * The native mutex associated with VmThreadMap.THREAD_LOCK.
  */
-Mutex globalThreadAndGCLock;
+Mutex globalThreadLock;
 
 /**
  * Gets the address and size of the calling thread's stack. The returned values denote
@@ -249,25 +249,24 @@ void *thread_run(void *arg) {
     log_println("thread_run: BEGIN t=%p", nativeThread);
 #endif
 
-
     threadLocalsBlock_setCurrent(tlBlock);
     // initialize the threadLocalsBlock
     threadLocalsBlock_create(id, JNI_TRUE, 0);
     ThreadLocals tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
-    /* Grab the global thread and GC lock so that:
+    /* Grab the global thread lock so that:
      *   1. This thread can atomically be added to the thread list
      *   2. This thread is blocked if a GC is currently underway. Once we have the lock,
      *      GC is blocked and cannot occur until we completed the upcall to
      *      VmThread.add().
      */
 #if log_THREADS
-    log_println("thread_run: t=%p acquiring global GC and thread list lock", nativeThread);
+    log_println("thread_run: t=%p acquiring global thread lock", nativeThread);
 #endif
-    mutex_enter(globalThreadAndGCLock);
+    mutex_enter(globalThreadLock);
 #if log_THREADS
-    log_println("thread_run: t=%p acquired  global GC and thread list lock", nativeThread);
+    log_println("thread_run: t=%p acquired  global thread lock", nativeThread);
 #endif
 
     VmThreadAddMethod addMethod = image_offset_as_address(VmThreadAddMethod, vmThreadAddMethodOffset);
@@ -290,13 +289,14 @@ void *thread_run(void *arg) {
 #if log_THREADS
     log_println("thread_run: t=%p releasing global GC and thread list lock", nativeThread);
 #endif
-    mutex_exit(globalThreadAndGCLock);
+    mutex_exit(globalThreadLock);
 #if log_THREADS
     log_println("thread_run: t=%p released  global GC and thread list lock", nativeThread);
 #endif
 
     /* Adding a VM created thread to the thread list should never fail. */
-    c_ASSERT(result == 0);
+    c_ASSERT(result == 0 || result == 1);
+    setCurrentThreadSignalMask(result == 1);
 
     VmThreadRunMethod runMethod = image_offset_as_address(VmThreadRunMethod, vmThreadRunMethodOffset);
 
@@ -348,7 +348,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
 
     while (true) {
 
-        /* Grab the global thread and GC lock so that:
+        /* Grab the global thread lock so that:
          *   1. This thread can atomically be added to the thread list
          *   2. This thread is blocked if a GC is currently underway. Once we have the lock,
          *      GC is blocked and cannot occur until we completed the upcall to
@@ -357,7 +357,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
 #if log_THREADS
     log_println("thread_attach: t=%p acquiring global GC and thread list lock", nativeThread);
 #endif
-        mutex_enter(globalThreadAndGCLock);
+        mutex_enter(globalThreadLock);
 
         VmThreadAddMethod addMethod = image_offset_as_address(VmThreadAddMethod, vmThreadAddMethodOffset);
 
@@ -375,13 +375,16 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
                         ntl->stackBase,
                         stackEnd,
                         ntl->stackYellowZone);
-        mutex_exit(globalThreadAndGCLock);
+        mutex_exit(globalThreadLock);
 #if log_THREADS
     log_println("thread_attach: t=%p released global GC and thread list lock", nativeThread);
 #endif
 
         if (result == 0) {
             id = getThreadLocal(jint, tl, ID);
+
+            /* TODO: Save current thread signal mask so that it can be restored when this thread is detached. */
+            setCurrentThreadSignalMask(false);
             break;
         } else if (result == -1) {
 #if log_THREADS
@@ -448,11 +451,11 @@ int thread_detachCurrent() {
 /**
  * Declared in VmThreadMap.java.
  */
-void nativeSetGlobalThreadAndGCLock(Mutex mutex) {
+void nativeSetGlobalThreadLock(Mutex mutex) {
 #if log_THREADS
     log_println("Global thread lock mutex: %p", mutex);
 #endif
-    globalThreadAndGCLock = mutex;
+    globalThreadLock = mutex;
 }
 
 /*

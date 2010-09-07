@@ -30,7 +30,6 @@ JNIEXPORT jint JNICALL
 JNI_OnLoad(JavaVM *vm, void *reserved)
 {
     c_initialize();
-    teleProcess_initialize();
 #if !os_GUESTVMXEN
     log_initialize(getenv("TELE_LOG_FILE"));
 #endif
@@ -38,7 +37,7 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_TeleVM_nativeInitialize(JNIEnv *env, jclass c, jint threadLocalsSize) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_teleInitialize(JNIEnv *env, jclass c, jint threadLocalsSize) {
     threadLocals_initialize(threadLocalsSize);
 }
 

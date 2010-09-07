@@ -22,6 +22,7 @@ package com.sun.max.unsafe;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
+import static com.sun.max.vm.MaxineVM.*;
 
 import java.math.*;
 
@@ -45,12 +46,12 @@ public abstract class Address extends Word {
 
     @INLINE
     public static Address zero() {
-        return Word.isBoxed() ? BoxedAddress.ZERO : fromInt(0);
+        return isHosted() ? BoxedAddress.ZERO : fromInt(0);
     }
 
     @INLINE
     public static Address max() {
-        return Word.isBoxed() ? BoxedAddress.MAX : fromLong(-1L);
+        return isHosted() ? BoxedAddress.MAX : fromLong(-1L);
     }
 
     /**
@@ -62,7 +63,7 @@ public abstract class Address extends Word {
      */
     @INLINE
     public static Address fromUnsignedInt(int value) {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             final long longValue = value;
             final long n = longValue & 0xffffffffL;
             return BoxedAddress.from(n);
@@ -84,7 +85,7 @@ public abstract class Address extends Word {
      */
     @INLINE
     public static Address fromInt(int value) {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             final long n = value;
             return BoxedAddress.from(n);
         }
@@ -97,7 +98,7 @@ public abstract class Address extends Word {
 
     @INLINE
     public static Address fromLong(long value) {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             return BoxedAddress.from(value);
         }
         if (Word.width() == 64) {
@@ -160,7 +161,7 @@ public abstract class Address extends Word {
 
     @INLINE
     public final int toInt() {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             final Boxed box = (Boxed) this;
             return (int) box.value();
         }
@@ -173,7 +174,7 @@ public abstract class Address extends Word {
 
     @INLINE
     public final long toLong() {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             final Boxed box = (Boxed) this;
             return box.value();
         }
@@ -195,7 +196,7 @@ public abstract class Address extends Word {
 
     @INLINE
     public final boolean equals(int other) {
-        if (Word.isBoxed()) {
+        if (isHosted()) {
             return toLong() == other;
         }
         return fromInt(other) == this;
@@ -204,7 +205,7 @@ public abstract class Address extends Word {
     @BUILTIN(value = AddressBuiltin.GreaterThan.class)
     @INTRINSIC(UWCMP | (ABOVE_THAN << 8))
     public final boolean greaterThan(Address other) {
-        assert Word.isBoxed();
+        assert isHosted();
         final long a = toLong();
         final long b = other.toLong();
         if (a < 0 == b < 0) {
@@ -221,7 +222,7 @@ public abstract class Address extends Word {
     @BUILTIN(value = AddressBuiltin.GreaterEqual.class)
     @INTRINSIC(UWCMP | (ABOVE_EQUAL << 8))
     public final boolean greaterEqual(Address other) {
-        assert Word.isBoxed();
+        assert isHosted();
         return !other.greaterThan(this);
     }
 
@@ -233,7 +234,7 @@ public abstract class Address extends Word {
     @BUILTIN(value = AddressBuiltin.LessThan.class)
     @INTRINSIC(UWCMP | (BELOW_THAN << 8))
     public final boolean lessThan(Address other) {
-        assert Word.isBoxed();
+        assert isHosted();
         return other.greaterThan(this);
     }
 
@@ -245,7 +246,7 @@ public abstract class Address extends Word {
     @BUILTIN(value = AddressBuiltin.LessEqual.class)
     @INTRINSIC(UWCMP | (BELOW_EQUAL << 8))
     public final boolean lessEqual(Address other) {
-        assert Word.isBoxed();
+        assert isHosted();
         return !greaterThan(other);
     }
 

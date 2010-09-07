@@ -38,10 +38,10 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -147,7 +147,7 @@ public class FieldActor extends MemberActor implements RiField {
     public Value readValue(Reference reference) {
         if (MaxineVM.isHosted() && this instanceof InjectedFieldActor) {
             final InjectedFieldActor injectedFieldActor = Utils.cast(this);
-            return injectedFieldActor.readInjectedValue(reference);
+            return injectedFieldActor.readInjectedValue(reference.toJava());
         }
 
         return kind.readValue(reference, offset);

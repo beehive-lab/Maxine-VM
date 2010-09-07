@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -109,7 +111,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     private CiTargetMethod bootstrappingCiTargetMethod;
 
     public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
-        super(classMethodActor, VMConfiguration.target().targetABIsScheme().optimizedJavaABI);
+        super(classMethodActor, vmConfig().targetABIsScheme().optimizedJavaABI);
         init(ciTargetMethod);
 
         if (printTargetMethods.getValue() != null) {
@@ -120,7 +122,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     public C1XTargetMethod(String stubName, CiTargetMethod ciTargetMethod) {
-        super(stubName, VMConfiguration.target().targetABIsScheme().optimizedJavaABI);
+        super(stubName, vmConfig().targetABIsScheme().optimizedJavaABI);
         init(ciTargetMethod);
 
         if (printTargetMethods.getValue() != null) {
@@ -230,12 +232,12 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     private int[] serializeLiterals(CiTargetMethod ciTargetMethod, ByteArrayOutputStream output, List<Object> objectReferences) {
-        Endianness endianness = Platform.hostOrTarget().endianess();
+        Endianness endianness = Platform.platform().endianness();
         int[] relativeDataPos = new int[ciTargetMethod.dataReferences.size()];
         int z = 0;
         int currentPos = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
-            final CiConstant data = site.data;
+            final CiConstant data = site.constant;
             relativeDataPos[z] = currentPos;
 
             try {
@@ -273,7 +275,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             }
 
             // Align on double word boundary
-            while (currentPos % (Platform.hostOrTarget().wordWidth().numberOfBytes * 2) != 0) {
+            while (currentPos % (Platform.platform().wordWidth().numberOfBytes * 2) != 0) {
                 output.write(0);
                 currentPos++;
             }
@@ -301,12 +303,12 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
 
         int objectReferenceIndex = 0;
-        int refSize = Platform.hostOrTarget().wordWidth().numberOfBytes;
+        int refSize = Platform.platform().wordWidth().numberOfBytes;
 
         int z = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
 
-            switch (site.data.kind) {
+            switch (site.constant.kind) {
 
                 case Double: // fall through
                 case Float: // fall through
@@ -841,7 +843,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     @Override
     public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean implicitExceptionPoint) {
-        if (!implicitExceptionPoint && Platform.target().instructionSet().offsetToReturnPC == 0) {
+        if (!implicitExceptionPoint && Platform.platform().instructionSet().offsetToReturnPC == 0) {
             ip = ip.minus(1);
         }
 

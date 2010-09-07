@@ -46,7 +46,7 @@ public interface HeapScheme extends VMScheme {
      * including {@code instanceof}.
      *
      * This method is only called from a {@link VmThread} constructor. Subsequent tests for whether a given {@code VmThread}
-     * instance is a GC thread should use the {@link VmThread#isGCThread()} method directly.
+     * instance is a GC thread should use the {@link VmThread#isVmOperationThread()} method directly.
      *
      * @return whether a thread belongs to the GC (or otherwise it belongs to the mutator)
      */
@@ -139,12 +139,6 @@ public interface HeapScheme extends VMScheme {
     boolean isPinned(Object object);
 
     /**
-     * Determines if this heap scheme is initialized to the point where {@link #collectGarbage(Size)} can
-     * safely be called.
-     */
-    boolean isInitialized();
-
-    /**
      * Returns whether an address is anywhere in the heap.
      */
     boolean contains(Address address);
@@ -195,7 +189,7 @@ public interface HeapScheme extends VMScheme {
     void runFinalization();
 
     /**
-     * A request for the heap scheme to attempt to reduce its memory usage..
+     * A request for the heap scheme to attempt to reduce its memory usage.
      * @param amount suggested amount to reduce
      * @return true if can/will reduce, false otherwise
      */
@@ -227,6 +221,11 @@ public interface HeapScheme extends VMScheme {
      * are unbalanced.
      */
     void enableAllocationForCurrentThread();
+
+    /**
+     * Determines if heap allocation is disabled on the current thread.
+     */
+    boolean isAllocationDisabledForCurrentThread();
 
     @INLINE
     void writeBarrier(Reference from, Reference to);
@@ -446,5 +445,4 @@ public interface HeapScheme extends VMScheme {
 
 
     }
-
 }

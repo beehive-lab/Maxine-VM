@@ -299,35 +299,22 @@ static void mapHeapAndCode(int fd) {
         log_exit(4, "could not map boot image");
     }
 #elif os_SOLARIS || os_DARWIN
-    // Reserve more than -Xmx should ever demand.
-    // Most of this will be released again once in Java code by the heap scheme
-    theHeap = virtualMemory_allocatePrivateAnon((Address) 0, TERA_BYTE, JNI_FALSE, JNI_FALSE, HEAP_VM);
+    theHeap = virtualMemory_allocatePrivateAnon((Address) 0, heapAndCodeSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
     if (theHeap == ALLOC_FAILED) {
         log_exit(4, "could not reserve boot image");
     }
-#if log_LOADER
-    log_println("reserved 1 TB at %p", theHeap);
-    log_println("reserved address space ends at %p", theHeap + TERA_BYTE);
-#endif
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
-#ifdef DEBUG_DARWIN_IMAGE_MAPPING_PROBLEM
-    int page;
-    Byte *heapAndCode = (Byte *) theHeap;
-    for (page = (heapAndCodeSize - virtualMemory_getPageSize()) / virtualMemory_getPageSize(); page >= 0; --page) {
-        int offset = page * virtualMemory_getPageSize();
-        log_println("image page %d [heap+%d]", page, offset);
-        heapAndCode[offset] = heapAndCode[offset];
-    }
-#endif
-
 #else
     c_UNIMPLEMENTED();
 #endif
 #if os_GUESTVMXEN
-    // heap and code must be mapped together (the method offsets in boot image are relative to heap base)
+    // boot heap and code must be mapped together (the method offsets in boot image are relative to heap base)
     theHeap = guestvmXen_remap_boot_code_region(theHeap, heapAndCodeSize);
+#endif
+#if log_LOADER
+    log_println("boot heap mapped at %p", theHeap);
 #endif
     theCode = theHeap + theHeader->heapSize;
     theCodeEnd = theCode + theHeader->codeSize;

@@ -27,9 +27,8 @@ import java.util.logging.*;
 import com.sun.max.ide.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.TeleVM.*;
-import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.tele.TeleVM.Options;
+import com.sun.max.vm.hosted.*;
 
 /**
  * Creates a running {@link TeleVM}, suitable for testing.
@@ -72,7 +71,7 @@ public class TestTeleVM {
     }
 
     public static void main(String[] argv) {
-        HostObjectAccess.setMainThread(Thread.currentThread());
+        //HostObjectAccess.setMainThread(Thread.currentThread());
         LogManager.getLogManager().getLogger("").setLevel(Level.ALL);
         System.out.println("creating VM");
         final TeleVM teleVM = create();

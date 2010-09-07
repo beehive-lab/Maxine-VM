@@ -28,6 +28,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
 
 /**
@@ -77,7 +78,7 @@ public abstract class AbstractAssembler {
                 for (ExceptionHandler handler : ei.exceptionHandlers) {
                     int entryOffset = handler.entryCodeOffset();
                     RiType caughtType = handler.handler.catchKlass();
-                    targetMethod.recordExceptionHandler(codeOffset, entryOffset, caughtType);
+                    targetMethod.recordExceptionHandler(codeOffset, ei.bci, ei.scopeLevel, entryOffset, handler.handlerBCI(), caughtType);
                 }
             }
         }
@@ -136,7 +137,7 @@ public abstract class AbstractAssembler {
     public void recordExceptionHandlers(int pcOffset, LIRDebugInfo info) {
         if (info != null) {
             if (info.exceptionHandlers != null) {
-                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers));
+                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers, info.bci, info.scopeDebugInfo == null ? 0 : info.scopeDebugInfo.scope.level));
             }
         }
     }
@@ -176,6 +177,10 @@ public abstract class AbstractAssembler {
 
         targetMethod.recordDataReference(pos, data);
         return CiAddress.Placeholder;
+    }
+
+    public Mark recordMark(Object id, Mark[] references) {
+        return targetMethod.recordMark(codeBuffer.position(), id, references);
     }
 
     protected int target(Label l) {

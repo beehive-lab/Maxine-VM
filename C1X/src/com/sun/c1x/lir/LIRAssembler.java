@@ -31,7 +31,9 @@ import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
+import com.sun.cri.xir.CiXirAssembler.XirMark;
 
 /**
  * The {@code LIRAssembler} class definition.
@@ -54,10 +56,12 @@ public abstract class LIRAssembler {
     protected static class SlowPath {
         public final LIRXirInstruction instruction;
         public final Label[] labels;
+        public final Map<XirMark, Mark> marks;
 
-        public SlowPath(LIRXirInstruction instruction, Label[] labels) {
+        public SlowPath(LIRXirInstruction instruction, Label[] labels, Map<XirMark, Mark> marks) {
             this.instruction = instruction;
             this.labels = labels;
+            this.marks = marks;
         }
     }
 
@@ -217,9 +221,17 @@ public abstract class LIRAssembler {
 
         switch (op.code) {
             case DirectCall:
+                emitCallAlignment(op.code);
+                if (op.marks != null) {
+                    op.marks.put(XirMark.CALLSITE, asm.recordMark(null, new Mark[0]));
+                }
                 emitDirectCall(op.target, op.info);
                 break;
             case IndirectCall:
+                emitCallAlignment(op.code);
+                if (op.marks != null) {
+                    op.marks.put(XirMark.CALLSITE, asm.recordMark(null, new Mark[0]));
+                }
                 emitIndirectCall(op.target, op.info, op.targetAddress());
                 break;
             case NativeCall: {

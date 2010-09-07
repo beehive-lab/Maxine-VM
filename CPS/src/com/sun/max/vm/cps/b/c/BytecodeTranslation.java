@@ -27,6 +27,7 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
 import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -34,28 +35,106 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.DividedByAddress;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.DividedByInt;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.GreaterEqual;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.GreaterThan;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.LessEqual;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.LessThan;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.RemainderByAddress;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.RemainderByInt;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
-import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.*;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.*;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.*;
-import com.sun.max.vm.compiler.builtin.SpecialBuiltin.*;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapInt;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapIntAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapReference;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapReferenceAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapWord;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapWordAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetByte;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetChar;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetDouble;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetFloat;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetInt;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetLong;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetReference;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetShort;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetWord;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadByte;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadByteAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadChar;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadCharAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadDouble;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadDoubleAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadFloat;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadFloatAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadInt;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadIntAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadLong;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadLongAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadReference;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadReferenceAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadShort;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadShortAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadWord;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadWordAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetByte;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetDouble;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetFloat;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetInt;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetLong;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetReference;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetShort;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetWord;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteByte;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteByteAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteDouble;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteDoubleAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteFloat;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteFloatAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteInt;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteIntAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteLong;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteLongAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteReference;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteReferenceAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteShort;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteShortAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWord;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWordAtIntOffset;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AboveEqual;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AboveThan;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AdjustJitStack;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BarMemory;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BelowEqual;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BelowThan;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.CompareInts;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.CompareWords;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.DoubleToLong;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.FloatToInt;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.FlushRegisterWindows;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.GetInstructionPointer;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.GetIntegerRegister;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.IntToFloat;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.LeastSignificantBit;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.LongToDouble;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.MostSignificantBit;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.Pause;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.SetIntegerRegister;
+import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.ReadHub;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.operator.*;
-import com.sun.max.vm.cps.cir.operator.Call;
+import com.sun.max.vm.cps.cir.operator.JavaOperator.JavaBuiltinOperator;
 import com.sun.max.vm.cps.cir.operator.Throw;
-import com.sun.max.vm.cps.cir.operator.JavaOperator.*;
 import com.sun.max.vm.cps.cir.snippet.*;
 import com.sun.max.vm.cps.cir.variable.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.VMRegister.*;
+import com.sun.max.vm.runtime.VMRegister.Role;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -1252,15 +1331,27 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void checkcast(int index) {
         final CirVariable object = getReferenceOrWordTop();
-        final JavaOperator checkcast = new CheckCast(constantPool, index);
-        callAndPush(checkcast, object);
+        final CheckCast checkcast = new CheckCast(constantPool, index);
+        if (object.kind().isWord) {
+            if (checkcast.actor() == null || !checkcast.actor().kind.isWord) {
+                raiseException(CirConstant.fromObject(new ClassCastException("Cannot cast word type to non-word type")));
+            } else {
+                // A cast from one word type to another word type is a nop.
+            }
+        } else {
+            callAndPush(checkcast, object);
+        }
     }
 
     @Override
     protected void instanceof_(int index) {
-        final CirVariable object = pop(Kind.REFERENCE);
-        final JavaOperator instanceofOp = new InstanceOf(constantPool, index);
-        callAndPush(instanceofOp, object);
+        final CirVariable object = popReferenceOrWord();
+        final InstanceOf instanceofOp = new InstanceOf(constantPool, index);
+        if (object.kind().isWord) {
+            push(BooleanValue.from(instanceofOp.actor() != null && instanceofOp.actor().kind.isWord));
+        } else {
+            callAndPush(instanceofOp, object);
+        }
     }
 
     protected void arrayLoad(Kind kind) {
@@ -1726,8 +1817,12 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void athrow() {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
-        final Throw athrow = new Throw();
         final CirVariable throwable = pop(Kind.REFERENCE);
+        raiseException(throwable);
+    }
+
+    private void raiseException(CirValue throwable) {
+        final Throw athrow = new Throw();
         call(athrow, new CirValue[] {throwable}, CirValue.UNDEFINED);
     }
 

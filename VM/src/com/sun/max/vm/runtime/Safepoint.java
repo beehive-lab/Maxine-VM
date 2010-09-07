@@ -38,8 +38,7 @@ import com.sun.max.vm.thread.*;
 
 /**
  * The platform specific details of the mechanism by which a thread can be
- * {@linkplain FreezeThreads frozen} via polling at prudently
- * chosen execution points.
+ * frozen via polling at prudently chosen execution points.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -79,7 +78,7 @@ public abstract class Safepoint {
     @HOSTED_ONLY
     public static Safepoint create(VMConfiguration vmConfiguration) {
         try {
-            final String isa = vmConfiguration.platform().processorKind.instructionSet.name();
+            final String isa = vmConfiguration.platform.instructionSet().name();
             final Class<?> safepointClass = Class.forName(MaxPackage.fromClass(Safepoint.class).subPackage(isa.toLowerCase()).name() + "." + isa + Safepoint.class.getSimpleName());
             final Constructor<?> constructor = safepointClass.getConstructor(VMConfiguration.class);
             return (Safepoint) constructor.newInstance(vmConfiguration);

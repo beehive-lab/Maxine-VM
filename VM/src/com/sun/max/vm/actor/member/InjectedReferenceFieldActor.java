@@ -26,7 +26,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -43,7 +42,8 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
         return holder;
     }
 
-    public ReferenceValue readInjectedValue(Reference reference) {
+    @HOSTED_ONLY
+    public ReferenceValue readInjectedValue(Object object) {
         throw ProgramError.unexpected(this + " cannot be read while bootstrapping");
     }
 
@@ -69,9 +69,10 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
      * A field of type {@link ClassActor} injected into {@link Class}.
      */
     public static final InjectedReferenceFieldActor<ClassActor> Class_classActor = new InjectedReferenceFieldActor<ClassActor>(Class.class, ClassActor.class) {
+        @HOSTED_ONLY
         @Override
-        public ReferenceValue readInjectedValue(Reference reference) {
-            final Class javaClass = (Class) reference.toJava();
+        public ReferenceValue readInjectedValue(Object object) {
+            final Class javaClass = (Class) object;
             return ReferenceValue.from(ClassActor.fromJava(javaClass));
         }
     };
@@ -80,9 +81,10 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
      * A field of type {@link ClassRegistry} injected into {@link ClassLoader}.
      */
     public static final InjectedReferenceFieldActor<ClassRegistry> ClassLoader_classRegistry = new InjectedReferenceFieldActor<ClassRegistry>(ClassLoader.class, ClassRegistry.class) {
+        @HOSTED_ONLY
         @Override
-        public ReferenceValue readInjectedValue(Reference reference) {
-            assert reference.toJava() instanceof ClassLoader;
+        public ReferenceValue readInjectedValue(Object object) {
+            assert object instanceof ClassLoader;
             return ReferenceValue.from(ClassRegistry.BOOT_CLASS_REGISTRY);
         }
     };
@@ -91,10 +93,11 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
      * A field of type {@link VmThread} injected into {@link Thread}.
      */
     public static final InjectedReferenceFieldActor<VmThread> Thread_vmThread = new InjectedReferenceFieldActor<VmThread>(Thread.class, VmThread.class) {
+        @HOSTED_ONLY
         @Override
-        public ReferenceValue readInjectedValue(Reference reference) {
-            assert reference.toJava() instanceof Thread;
-            return ReferenceValue.from(VmThread.MAIN_VM_THREAD);
+        public ReferenceValue readInjectedValue(Object object) {
+            assert object instanceof Thread;
+            return ReferenceValue.from(VmThread.mainThread);
         }
     };
 
@@ -102,9 +105,9 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
      * A field of type {@link FieldActor} injected into {@link Field}.
      */
     public static final InjectedReferenceFieldActor<FieldActor> Field_fieldActor = new InjectedReferenceFieldActor<FieldActor>(Field.class, FieldActor.class) {
+        @HOSTED_ONLY
         @Override
-        public ReferenceValue readInjectedValue(Reference reference) {
-            final Object object = reference.toJava();
+        public ReferenceValue readInjectedValue(Object object) {
             assert object instanceof Field;
             return ReferenceValue.from(FieldActor.fromJava((Field) object));
         }
@@ -114,9 +117,9 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
      * A field of type {@link MethodActor} injected into {@link Method}.
      */
     public static final InjectedReferenceFieldActor<MethodActor> Method_methodActor = new InjectedReferenceFieldActor<MethodActor>(Method.class, MethodActor.class) {
+        @HOSTED_ONLY
         @Override
-        public ReferenceValue readInjectedValue(Reference reference) {
-            final Object object = reference.toJava();
+        public ReferenceValue readInjectedValue(Object object) {
             assert object instanceof Method;
             return ReferenceValue.from(MethodActor.fromJava((Method) object));
         }
@@ -126,9 +129,9 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
      * A field of type {@link MethodActor} injected into {@link Constructor}.
      */
     public static final InjectedReferenceFieldActor<MethodActor> Constructor_methodActor = new InjectedReferenceFieldActor<MethodActor>(Constructor.class, MethodActor.class) {
+        @HOSTED_ONLY
         @Override
-        public ReferenceValue readInjectedValue(Reference reference) {
-            final Object object = reference.toJava();
+        public ReferenceValue readInjectedValue(Object object) {
             assert object instanceof Constructor;
             return ReferenceValue.from(MethodActor.fromJavaConstructor((Constructor) object));
         }

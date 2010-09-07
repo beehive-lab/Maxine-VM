@@ -35,6 +35,7 @@ public final class ExceptionObject extends Instruction {
     public ExceptionObject() {
         super(CiKind.Object);
         setFlag(Flag.NonNull);
+        setFlag(Flag.LiveSideEffect);
     }
 
     /**

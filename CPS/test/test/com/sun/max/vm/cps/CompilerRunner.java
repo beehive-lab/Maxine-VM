@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.cps;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -36,7 +38,7 @@ import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
@@ -82,12 +84,8 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
 
     private static final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
 
-    @Override
-    protected JavaPrototype createJavaPrototype() {
-        return prototypeGenerator.createJavaPrototype(false);
-    }
-
     public static void main(String[] args) {
+        VMConfigurator vmConfigurator = new VMConfigurator(options);
         Trace.addTo(options);
         options.parseArguments(args);
 
@@ -96,6 +94,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
             return;
         }
 
+        vmConfigurator.create(true);
         if (vmArguments.getValue() != null) {
             VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));
         }
@@ -204,18 +203,13 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
     }
 
     @Override
-    protected VMConfiguration createVMConfiguration() {
-        return null;
-    }
-
-    @Override
     public IrMethod translate(ClassMethodActor classMethodActor) {
-        CPSAbstractCompiler cpsCompilerScheme = (CPSAbstractCompiler) javaPrototype().vmConfiguration().bootCompilerScheme();
+        CPSAbstractCompiler cpsCompilerScheme = (CPSAbstractCompiler) vmConfig().bootCompilerScheme();
         return cpsCompilerScheme.compileIR(classMethodActor);
     }
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
-        final JitCompiler jitScheme = (JitCompiler) VMConfiguration.target().jitCompilerScheme();
+        final JitCompiler jitScheme = (JitCompiler) vmConfig().jitCompilerScheme();
         return jitScheme;
     }
 

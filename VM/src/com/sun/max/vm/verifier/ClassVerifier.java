@@ -44,13 +44,13 @@ public abstract class ClassVerifier extends Verifier {
      * {@link ClassMethodActor#codeAttribute() code attribute}.
      */
     public synchronized void verify() {
-        if (traceLevel >= TRACE_CLASS) {
+        if (TraceVerifierLevel >= TRACE_CLASS) {
             Log.println("[Verifying class " + classActor.name + "]");
         }
         verifyMethods(classActor.localVirtualMethodActors());
         verifyMethods(classActor.localStaticMethodActors());
         verifyMethods(classActor.localInterfaceMethodActors());
-        if (traceLevel >= TRACE_CLASS) {
+        if (TraceVerifierLevel >= TRACE_CLASS) {
             Log.println("[Verified class " + classActor.name + "]");
         }
     }
@@ -59,13 +59,7 @@ public abstract class ClassVerifier extends Verifier {
         for (MethodActor methodActor : methodActors) {
             if (methodActor instanceof ClassMethodActor) {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                if (traceLevel >= TRACE_METHOD) {
-                    Log.println(classMethodActor.format("[Verifying method %n(%P)]"));
-                }
                 classMethodActor.verify(this);
-                if (traceLevel >= TRACE_METHOD) {
-                    Log.println(classMethodActor.format("[Verified method %n(%P)]"));
-                }
             }
         }
     }
