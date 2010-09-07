@@ -20,12 +20,12 @@
  */
 package com.sun.max.vm.hosted;
 
-import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.lang.WordWidth;
+import java.io.*;
+import java.util.*;
 
-import java.io.PrintStream;
-import java.util.Collection;
+import com.sun.max.lang.*;
 
 /**
  * This class is useful for prototyping refactorings aimed at reducing the size of the image.
@@ -41,7 +41,7 @@ public class SavingsEstimator {
     }
 
     public void report(PrintStream printStream) {
-        if (vmConfig().wordWidth() == WordWidth.BITS_64) {
+        if (platform().wordWidth() == WordWidth.BITS_64) {
             reportCompressRefsSavings(printStream);
         }
     }

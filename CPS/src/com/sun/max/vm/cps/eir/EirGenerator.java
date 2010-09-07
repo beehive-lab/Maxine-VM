@@ -56,7 +56,7 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
         final MaxPackage eirPackage = new com.sun.max.vm.cps.eir.Package();
         final MaxPackage p = eirPackage.subPackage(platform.instructionSet().name().toLowerCase(),
                                                    platform.operatingSystem.name().toLowerCase());
-        eirABIsScheme = vmConfiguration.loadAndInstantiateScheme(p, EirABIsScheme.class, vmConfiguration);
+        eirABIsScheme = p.loadAndInstantiateScheme(EirABIsScheme.class, vmConfiguration);
     }
 
     @Override
