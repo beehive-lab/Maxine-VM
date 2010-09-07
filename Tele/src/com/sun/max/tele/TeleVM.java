@@ -562,7 +562,7 @@ public abstract class TeleVM implements MaxVM {
      * @throws IOException
      */
     private static TeleVM createReadOnly(File bootImageFile, Classpath sourcepath) throws BootImageException {
-        final BootImage bootImage = new BootImage(bootImageFile);
+        final BootImage bootImage = new TeleBootImage(bootImageFile);
         return new ReadOnlyTeleVM(bootImageFile, bootImage, sourcepath);
     }
 
