@@ -97,7 +97,7 @@ while [ "${1:0:1}" = "-" ]; do
             shift
             MAXVM_DIR=$1
             ;;
-        -remote.os )
+        -os )
             shift
             MAXINE_OS=$1
             jvm_args="$jvm_args -Dmax.os=$1"
@@ -1395,9 +1395,9 @@ function run_inspectoragent() {
         run sudo -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent -trace 1 $@
+        ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent $@
     else
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent -trace 1 $@
+        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent  $@
     fi
 }
 
@@ -1742,6 +1742,7 @@ function usage() {
     echo "                    (default: ${maxine_dir})"
     echo " -junit4 <cp>     class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
     echo " -make <path>     path to GNU make executable (default: $make)"
+    echo " -os osname       operating system hosting the VM (all lower case) for remote inspecting"
 }
 
 if [ -n "${unknown_option}" ]; then

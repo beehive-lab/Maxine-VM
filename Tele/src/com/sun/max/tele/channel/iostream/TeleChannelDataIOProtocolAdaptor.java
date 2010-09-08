@@ -86,7 +86,7 @@ public abstract class TeleChannelDataIOProtocolAdaptor extends TeleChannelDataIO
             // now we call the real jniGatherThread on this side
             TeleProcess teleProcess = (TeleProcess) teleDomainObject;
             for (TeleChannelDataIOProtocol.GatherThreadData t : threadDataArray) {
-                Trace.line(1, "calling jniGatherThread id=" + t.id + ", lh=" + t.localHandle + ", h=" + Long.toHexString(t.handle) + ", st=" + t.state +
+                Trace.line(2, "calling jniGatherThread id=" + t.id + ", lh=" + t.localHandle + ", h=" + Long.toHexString(t.handle) + ", st=" + t.state +
                         ", ip=" + Long.toHexString(t.instructionPointer) + ", sb=" + Long.toHexString(t.stackBase) + ", ss=" + Long.toHexString(t.stackSize) +
                         ", tlb=" + Long.toHexString(t.tlb) + ", tlbs=" + t.tlbSize + ", tlas=" + t.tlaSize);
                 teleProcess.jniGatherThread((List<TeleNativeThread>) threadSequence, t.id, t.localHandle, t.handle, t.state, t.instructionPointer, t.stackBase, t.stackSize, t.tlb, t.tlbSize, t.tlaSize);
