@@ -25,8 +25,8 @@ import java.io.Serializable;
 /**
  * Subset of the interface used by the Maxine Inspector to access information from a target Maxine VM, that is defined
  * in terms of simple data types that allows an implementation using {@link DataInputStream} and
- * {@link DataOutputStream}. Specifically, arguments/results must be types that can be transmitted using the methods of
- * those classes, notably no object types.
+ * {@link DataOutputStream}. Specifically, method argument and results types must be capable of being transmitted using
+ * the methods of those classes; in particular no object types other than {@link String}, are allowed.
  *
  * @author Mick Jordan
  *
@@ -149,7 +149,7 @@ public interface TeleChannelDataIOProtocol {
     int gatherThreads(long threadLocalsList, long primordialThreadLocals);
 
     /**
-     * Read the gathered thgeads data into byte array.
+     * Read the gathered threads data into byte array.
      * @param size size needed for byte array (result of {@link #gatherThreads}
      * @param gatherThreadsData byte array for serialized data, {@link ArrayMode#OUT} parameter
      * @return number of gathered threads (length of serialized array)

@@ -410,6 +410,7 @@ public final class Platform {
         map.put("solaris-sparcv9", new Platform(ProcessorModel.SPARCV9, OperatingSystem.SOLARIS, Ints.K * 8));
         map.put("linux-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.LINUX, Ints.K * 8));
         map.put("darwin-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.DARWIN, Ints.K * 8));
+        map.put("guestvm-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.GUESTVM, Ints.K * 8));
         Supported = Collections.unmodifiableMap(map);
     }
 
