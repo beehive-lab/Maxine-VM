@@ -52,6 +52,7 @@
     f(codeSize) /* multiple of 'pageSize'  */ \
     f(dynamicHeapRegionsArrayOffset) \
     f(auxiliarySpaceSize) /* Some extra space that the substrate allocates by malloc(). Used e.g. for the primordial card table.  */ \
+    f(bootImageReservedSpace) /* Amount of virtual space to reserve for the boot region. Hack to easily get a dynamic heap contiguous to the boot region.  */ \
     f(threadLocalsListHeadOffset) /* See the comment for the 'threadLocalsListHead' field in the VmThreadMap class.  */ \
     f(primordialThreadLocalsOffset) \
     f(threadLocalsAreaSize) /* The size of a thread locals area.  */ \

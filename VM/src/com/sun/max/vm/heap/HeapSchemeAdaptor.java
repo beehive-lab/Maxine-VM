@@ -210,4 +210,8 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         };
     }
 
+    public int bootImageReservedSpace() {
+        return 0;
+    }
+
 }

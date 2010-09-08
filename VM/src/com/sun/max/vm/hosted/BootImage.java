@@ -213,6 +213,7 @@ public class BootImage {
         public final int dynamicHeapRegionsArrayFieldOffset;
 
         public final int auxiliarySpaceSize;
+        public final int bootImageReservedSpace;
 
         /**
          * @see VmThreadMap#ACTIVE
@@ -283,6 +284,7 @@ public class BootImage {
             dynamicHeapRegionsArrayFieldOffset = endian.readInt(dataInputStream);
 
             auxiliarySpaceSize = endian.readInt(dataInputStream);
+            bootImageReservedSpace = endian.readInt(dataInputStream);
 
             threadLocalsListHeadOffset = endian.readInt(dataInputStream);
             primordialThreadLocalsOffset = endian.readInt(dataInputStream);
@@ -337,7 +339,7 @@ public class BootImage {
             dynamicHeapRegionsArrayFieldOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "dynamicHeapMemoryRegions");
 
             auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(heapSize + codeSize);
-
+            bootImageReservedSpace = vmConfiguration.heapScheme().bootImageReservedSpace();
             threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
             primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
 
