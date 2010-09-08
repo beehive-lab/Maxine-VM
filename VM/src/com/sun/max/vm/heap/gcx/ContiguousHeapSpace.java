@@ -45,14 +45,18 @@ public class ContiguousHeapSpace extends MemoryRegion {
         committedEnd = start;
     }
 
+    public void setReserved(Address reservedStart, Size reservedSize) {
+        start = reservedStart;
+        committedEnd = start;
+        size = reservedSize;
+    }
+
     public boolean reserve(Address atAddress, Size maxSize) {
         Pointer reservedHeapSpace = VirtualMemory.reserveMemory(atAddress, maxSize, VirtualMemory.Type.HEAP);
         if (reservedHeapSpace.isZero()) {
             return false;
         }
-        start = reservedHeapSpace;
-        committedEnd = start;
-        size = maxSize;
+        setReserved(reservedHeapSpace, maxSize);
         return true;
     }
 

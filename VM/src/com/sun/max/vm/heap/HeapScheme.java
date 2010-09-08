@@ -60,6 +60,18 @@ public interface HeapScheme extends VMScheme {
     int auxiliarySpaceSize(int bootImageSize);
 
     /**
+     * Return the amount of virtual space (in KB) that must be reserved by the boot image loader to map
+     * the boot image. The boot image is mapped at the beginning of this reserved space.
+     *
+     * Help with heap scheme that requires the heap to be contiguous with, or at a specific location (above or below) with respect to the boot region.
+     * By default, assume the heap scheme doesn't require any space contiguous to the boot image and returns 0, which indicates to the boot image
+     * loader that it only needs to reserve what's needed for the boot image only.
+     *
+     * @return a size in KB
+     */
+    int bootImageReservedSpace();
+
+    /**
      * Initialize the auxiliary space, which is provided by the substrate.
      * This space can e.g. be used to support write barriers in the primordial phase,
      * for instance by holding a primordial card table that covers the boot image.

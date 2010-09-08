@@ -75,7 +75,8 @@ public final class Code {
 
             case DARWIN:
             case SOLARIS: {
-                return new VariableAddressCodeManager();
+                return new FixedAddressCodeManager();
+                //  return new VariableAddressCodeManager();
             }
             default: {
                 FatalError.unimplemented();

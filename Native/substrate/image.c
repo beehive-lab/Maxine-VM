@@ -20,6 +20,7 @@
  */
 /**
  * @author Bernd Mathiske
+ *
  */
 #include "os.h"
 
@@ -45,7 +46,6 @@
 #define IMAGE_IDENTIFICATION             0xcafe4dad
 #define IMAGE_VERSION                    1
 #define DEFAULT_RELOCATION_SCHEME        0
-#define TERA_BYTE (1024*1024*1024*1024L)
 
 #if os_GUESTVMXEN
 #define MEMORY_IMAGE 1
@@ -287,7 +287,6 @@ static void mapHeapAndCode(int fd) {
     int heapOffsetInImage = virtualMemory_pageAlign(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize);
     int heapAndCodeSize = theHeader->heapSize + theHeader->codeSize;
     c_ASSERT(virtualMemory_pageAlign((Size) heapAndCodeSize) == (Size) heapAndCodeSize);
-
 #if log_LOADER
     log_println("image.mapHeapAndCode");
 #endif
@@ -299,10 +298,19 @@ static void mapHeapAndCode(int fd) {
         log_exit(4, "could not map boot image");
     }
 #elif os_SOLARIS || os_DARWIN
-    theHeap = virtualMemory_allocatePrivateAnon((Address) 0, heapAndCodeSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
-    if (theHeap == ALLOC_FAILED) {
-        log_exit(4, "could not reserve boot image");
+    size_t bootImageVirtualSpaceSize = 1024L * theHeader->bootImageReservedSpace;
+    c_ASSERT(virtualMemory_pageAlign((Size) bootImageVirtualSpaceSize) == (Size) bootImageVirtualSpaceSize);
+    theHeap = (Address) 0;
+    if (bootImageVirtualSpaceSize != 0) {
+        // VM configuration asks for reserving an address space of size bootImageVirtualSpaceSize that'll be headed with the boot heap region.
+        // The following will create a mapping in virtual space of the requested size.The address returned will subsequently be used to memory map the
+        // boot heap, automatically splitting this mapping in two. It's up to the VM to deal with this second part of the reserved space.
+        theHeap = virtualMemory_allocatePrivateAnon((Address) 0, bootImageVirtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
+        if (theHeap == ALLOC_FAILED) {
+            log_exit(4, "could not reserve boot image virtual space");
+        }
     }
+
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
