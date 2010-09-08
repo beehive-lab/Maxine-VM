@@ -405,6 +405,7 @@ public class BootImage {
         public final String heapPackageName;
         public final String monitorPackageName;
         public final String compilerPackageName;
+        public final String compilationPackageName;
         public final String jitPackageName;
         public final String trampolinePackageName;
         public final String targetABIsPackageName;
@@ -450,6 +451,10 @@ public class BootImage {
             return (VMPackage) MaxPackage.fromName(compilerPackageName);
         }
 
+        public VMPackage compilationPackage() {
+            return (VMPackage) MaxPackage.fromName(compilationPackageName);
+        }
+
         public VMPackage jitPackage() {
             if (jitPackageName == null) {
                 return null;
@@ -482,6 +487,7 @@ public class BootImage {
             heapPackageName = Utf8.readString(inputStream);
             monitorPackageName = Utf8.readString(inputStream);
             compilerPackageName = Utf8.readString(inputStream);
+            compilationPackageName = Utf8.readString(inputStream);
             jitPackageName =  Utf8.readString(inputStream);
             trampolinePackageName = Utf8.readString(inputStream);
             targetABIsPackageName = Utf8.readString(inputStream);
@@ -490,7 +496,7 @@ public class BootImage {
 
         private StringInfo(VMConfiguration vmConfiguration, int offset) {
             super(offset);
-            buildLevelName = vmConfiguration.buildLevel().name();
+            buildLevelName = vmConfiguration.buildLevel.name();
             processorModelName = vmConfiguration.platform.processorModel().name();
             instructionSetName = vmConfiguration.platform.instructionSet().name();
             operatingSystemName = vmConfiguration.platform.operatingSystem.name();
@@ -501,6 +507,7 @@ public class BootImage {
             heapPackageName = vmConfiguration.heapPackage.name();
             monitorPackageName = vmConfiguration.monitorPackage.name();
             compilerPackageName = vmConfiguration.bootCompilerPackage.name();
+            compilationPackageName = vmConfiguration.compilationPackage.name();
             // Jit Package is optional and may be null. In which case, fall back to the default compiler.
             if (vmConfiguration.jitCompilerPackage == null) {
                 jitPackageName = compilerPackageName;
@@ -655,18 +662,19 @@ public class BootImage {
                 final ProcessorKind processorKind = new ProcessorKind(stringInfo.processorModel(), stringInfo.instructionSet(), dataModel);
                 final Platform platform = new Platform(processorKind, stringInfo.operatingSystem(), header.pageSize);
                 Platform.set(platform);
-                vmConfiguration = createVMConfiguration(stringInfo.buildLevel(), platform,
-                                stringInfo.gripPackage(),
-                                stringInfo.referencePackage(),
-                                stringInfo.layoutPackage(),
-                                stringInfo.heapPackage(),
-                                stringInfo.monitorPackage(),
-                                stringInfo.compilerPackage(),
-                                stringInfo.jitPackage(),
-                                null,
-                                stringInfo.trampolinePackage(),
-                                stringInfo.targetABIsPackage(),
-                                stringInfo.runPackage());
+                vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
+                                                      platform,
+                                                      stringInfo.gripPackage(),
+                                                      stringInfo.referencePackage(),
+                                                      stringInfo.layoutPackage(),
+                                                      stringInfo.heapPackage(),
+                                                      stringInfo.monitorPackage(),
+                                                      stringInfo.compilerPackage(),
+                                                      stringInfo.jitPackage(),
+                                                      null,
+                                                      stringInfo.compilationPackage(),
+                                                      stringInfo.trampolinePackage(),
+                                                      stringInfo.targetABIsPackage(), stringInfo.runPackage());
 
                 fileInputStream.skip(header.heapSize + header.codeSize);
                 int trailerOffset = codeOffset() + header.codeSize;
@@ -680,39 +688,6 @@ public class BootImage {
         } catch (IOException ioException) {
             throw new BootImageException(ioException);
         }
-    }
-
-    /**
-     * Creates the VM configuration from the header info in a boot image file.
-     *
-     * Subclasses can override this method to interpose upon the schemes.
-     */
-    protected VMConfiguration createVMConfiguration(BuildLevel buildLevel,
-                    Platform platform,
-                    VMPackage gripPackage,
-                    VMPackage referencePackage,
-                    VMPackage layoutPackage,
-                    VMPackage heapPackage,
-                    VMPackage monitorPackage,
-                    VMPackage bootCompilerPackage,
-                    VMPackage jitCompilerPackage,
-                    VMPackage optCompilerPackage,
-                    VMPackage trampolinePackage,
-                    VMPackage targetABIsPackage,
-                    VMPackage runPackage) {
-        return new VMConfiguration(buildLevel,
-                        platform,
-                        gripPackage,
-                        referencePackage,
-                        layoutPackage,
-                        heapPackage,
-                        monitorPackage,
-                        bootCompilerPackage,
-                        jitCompilerPackage,
-                        optCompilerPackage,
-                        trampolinePackage,
-                        targetABIsPackage,
-                        runPackage);
     }
 
     /**

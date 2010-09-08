@@ -537,7 +537,9 @@ public final class JavaPrototype extends Prototype {
                 ProgramError.check(holder != null, "Could not find " + javaMethod.getDeclaringClass());
                 final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaMethod);
                 methodActor = holder.findLocalMethodActor(name, signature);
-                ProgramError.check(methodActor != null, "Could not find " + name + signature + " in " + holder);
+                if (methodActor == null) {
+                    throw new NoSuchMethodError("Could not find " + name + signature + " in " + holder);
+                }
                 javaMethodMap.put(javaMethod, methodActor);
             }
             return methodActor;
@@ -557,7 +559,9 @@ public final class JavaPrototype extends Prototype {
                 final ClassActor holder = toClassActor(javaConstructor.getDeclaringClass());
                 final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaConstructor);
                 methodActor = holder.findLocalMethodActor(SymbolTable.INIT, signature);
-                ProgramError.check(methodActor != null, "Could not find <init>" + signature + " in " + holder);
+                if (methodActor == null) {
+                    throw new NoSuchMethodError("Could not find <init>" + signature + " in " + holder);
+                }
                 javaConstructorMap.put(javaConstructor, methodActor);
             }
             return methodActor;
@@ -578,7 +582,9 @@ public final class JavaPrototype extends Prototype {
                 final TypeDescriptor signature = JavaTypeDescriptor.forJavaClass(javaField.getType());
                 final Utf8Constant name = SymbolTable.makeSymbol(javaField.getName());
                 fieldActor = holder.findFieldActor(name, signature);
-                ProgramError.check(fieldActor != null, "Could not find " + name + signature + " in " + holder);
+                if (fieldActor == null) {
+                    throw new NoSuchFieldError("Could not find " + name + signature + " in " + holder);
+                }
                 javaFieldMap.put(javaField, fieldActor);
             }
             return fieldActor;

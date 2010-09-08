@@ -105,6 +105,7 @@ typedef struct image_StringInfo {
     char *heapPackageName;
     char *monitorPackageName;
     char *compilerPackageName;
+    char *compilationPackageName;
     char *jitPackageName;
     char *trampolinePackageName;
     char *targetABIsPackageName;
