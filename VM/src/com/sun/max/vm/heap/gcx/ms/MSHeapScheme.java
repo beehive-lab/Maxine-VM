@@ -125,14 +125,37 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
     }
 
+    @Override
+    public CodeManager createCodeManager() {
+        switch (Platform.platform().operatingSystem) {
+            case LINUX: {
+                return new LowAddressCodeManager();
+            }
+            case GUESTVM:
+            case DARWIN:
+            case SOLARIS: {
+                return new FixedAddressCodeManager();
+            }
+            default: {
+                FatalError.unimplemented();
+                return null;
+            }
+        }
+    }
+
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
      */
     private void allocateHeapAndGCStorage() {
-        final Size reservedSpace = Size.K.times(bootImageReservedSpace());
+        final Size reservedSpace = Size.K.times(reservedVirtualSpaceSize());
         final Size initSize = Heap.initialSize();
         final Size maxSize = Heap.maxSize();
         final int pageSize = Platform.platform().pageSize;
+
+        // Verify that the constraint of the heap scheme are met:
+        FatalError.check(Heap.bootHeapRegion.start() == Heap.startOfReservedVirtualSpace(),
+                        "Boot heap region must be mapped at start of reserved virtual space");
+
         final Address endOfBootCodeRegion = Code.bootCodeRegion.end().roundedUpBy(pageSize);
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
@@ -175,10 +198,15 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     @Override
-    public int bootImageReservedSpace() {
+    public int reservedVirtualSpaceSize() {
         // 2^30 Kb = 1 TB of reserved space.
         // This will be truncated as soon as we taxed what we need at initialization time.
         return Size.G.toInt();
+    }
+
+    @Override
+    public BootRegionMappingConstraint bootRegionMappingConstraint() {
+        return BootRegionMappingConstraint.AT_START;
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {

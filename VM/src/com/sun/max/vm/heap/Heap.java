@@ -48,6 +48,8 @@ public final class Heap {
     private Heap() {
     }
 
+    private static Address reservedVirtualSpace = Address.zero();
+
     private static final Size MIN_HEAP_SIZE = Size.M.times(4); // To be adjusted
 
     /**
@@ -87,6 +89,15 @@ public final class Heap {
     private static Size initialSize;
 
     private static boolean heapSizingInputValidated = false;
+
+    /**
+     * Start of the virtual space requested by the heap scheme and reserved at boot-load time.
+     *
+     * @return Address of reserved virtual space (not yet backed by swap space).
+     */
+    public static Address startOfReservedVirtualSpace() {
+        return reservedVirtualSpace;
+    }
 
     /**
      * Validate heap sizing inputs. This is common to any GC and can be done early on.
