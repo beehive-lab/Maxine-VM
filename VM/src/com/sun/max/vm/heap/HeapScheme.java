@@ -21,11 +21,13 @@
 package com.sun.max.vm.heap;
 
 import java.lang.management.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -34,6 +36,19 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 public interface HeapScheme extends VMScheme {
+
+    /**
+     * Indicates the boot image loader where the boot region should be mapped in the virtual address space: anywhere (i.e., doesn't matter),
+     * at the beginning of the reserved virtual space, or at the end.
+     * @see HeapScheme#bootRegionMappingConstraint()
+     * @see HeapScheme#reservedVirtualSpaceSize()
+     *
+     */
+    public enum BootRegionMappingConstraint  {
+        ANYWHERE,
+        AT_START,
+        AT_END
+    }
 
     /**
      * The clock that specifies the timing resolution for GC related timing.
@@ -69,7 +84,9 @@ public interface HeapScheme extends VMScheme {
      *
      * @return a size in KB
      */
-    int bootImageReservedSpace();
+    int reservedVirtualSpaceSize();
+
+    BootRegionMappingConstraint bootRegionMappingConstraint();
 
     /**
      * Initialize the auxiliary space, which is provided by the substrate.
@@ -270,6 +287,13 @@ public interface HeapScheme extends VMScheme {
      * heap.
      */
     void disableImmortalMemoryAllocation();
+
+    /**
+     * Creates the singleton code manager for the VM.
+     * @return a new code manager
+     */
+    @HOSTED_ONLY
+    CodeManager createCodeManager();
 
     /**
      * Returns the garbage collection management bean for this heap scheme.
