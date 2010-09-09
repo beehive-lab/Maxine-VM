@@ -284,7 +284,6 @@ static void checkTrailer(int fd) {
 }
 
 static void mapHeapAndCode(int fd) {
-    Address reservedVirtualSpace = (Address) 0;
     int heapOffsetInImage = virtualMemory_pageAlign(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize);
     int heapAndCodeSize = theHeader->heapSize + theHeader->codeSize;
     c_ASSERT(virtualMemory_pageAlign((Size) heapAndCodeSize) == (Size) heapAndCodeSize);
@@ -299,6 +298,7 @@ static void mapHeapAndCode(int fd) {
         log_exit(4, "could not map boot image");
     }
 #elif os_SOLARIS || os_DARWIN
+    Address reservedVirtualSpace = (Address) 0;
     size_t virtualSpaceSize = 1024L * theHeader->reservedVirtualSpaceSize;
     c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
     if (virtualSpaceSize != 0) {
