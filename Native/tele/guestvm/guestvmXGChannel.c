@@ -69,7 +69,7 @@
 
 #define get_target_value(buf, type, offset) *((type *) &buf[offset])
 
-#define debug_println log_println
+#define debug_println tele_log_println
 
 #include <xg_public.h>
 
@@ -139,12 +139,10 @@ static ThreadState_t toThreadState(int state) {
         return TS_BREAKPOINT;
     }
     if (state & RUNNING_FLAG) {
+        // Can't return this state usefully because it prevents the Inspector from accessing thread data.
+        // In the Inspector sense the thread is actually suspended because the entire domain is suspended
+        // even if the thread was running at the time the domain was suspended.
         // return TS_RUNNING;
-        // We do not have enough information to get this right.
-        // If we are at a breakpoint we should set TS_BREAKPOINT but we don't have enough info to determine that.
-        // We cannot just set TS_RUNNING because if we are at a breakpoint, the Inspector
-        // will then think it can't read data safely and, in particular, will fail to detect the
-        // breakpoint and will think the process stopped unexpectedly.
     }
     // default
     return TS_SUSPENDED;
@@ -177,7 +175,7 @@ static void tele_xg_gather_threads() {
             tcb->flags = flags;
             tcb->cpu = cpu;
             if (flags & RUNNING_FLAG) {
-                if (resume_vcpu >= 0 && resume_vcpu == cpu) {
+                if (resume_vcpu != -1 && resume_vcpu == cpu) {
                     // this thread is in a BPT
                     tcb->flags |= DEBUG_SUSPEND_FLAG;
                 }
@@ -232,7 +230,8 @@ JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeResume(JNIEnv *env, jobject domain) {
     debug_println("Calling xg_resume_n_wait");
     resume_vcpu = xg_resume_n_wait(64);
-    return resume_vcpu < 0 ? 1 : 0;
+    debug_println("xg_resume_n_wait returned %d", resume_vcpu);
+    return resume_vcpu == -1 ? JNI_TRUE : JNI_FALSE;
 }
 
 
