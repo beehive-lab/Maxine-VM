@@ -47,6 +47,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -384,4 +385,9 @@ public class MaxRiRuntime implements RiRuntime {
         }
         return snippets;
     }
+
+    public boolean recordLeafMethodAssumption(RiMethod method) {
+        return ClassDirectory.recordLeafMethodAssumption(method);
+    }
+
 }
