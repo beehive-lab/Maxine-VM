@@ -67,6 +67,8 @@ public final class VMConfigurator {
             "Specifies the optimizing compiler scheme for the target.", VMConfigurator.defaultCompilerScheme());
     public final Option<MaxPackage> jitScheme = schemeOption("jit", MaxPackage.fromName("com.sun.max.vm.jit"), RuntimeCompilerScheme.class,
             "Specifies the JIT scheme for the target.", VMConfigurator.defaultJitCompilerScheme());
+    public final Option<MaxPackage> compScheme = schemeOption("comp", new com.sun.max.vm.compiler.Package(), CompilationScheme.class,
+            "Specifies the compilation scheme for the target.", VMConfigurator.defaultCompilationScheme());
     public final Option<MaxPackage> trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
             "Specifies the dynamic trampoline scheme for the target.", VMConfigurator.defaultTrampolineScheme());
     public final Option<MaxPackage> targetABIsScheme = schemeOption("abi", new com.sun.max.vm.compiler.target.Package(), TargetABIsScheme.class,
@@ -94,7 +96,8 @@ public final class VMConfigurator {
      * Creates a VM from the current option set.
      *
      * @param install specifies if the created VM should be {@linkplain MaxineVM#set(MaxineVM) set} as the global VM
-     *            context.
+     *            context. If {@code true}, then the schemes in the VM configuration are also
+     *            {@linkplain VMConfiguration#loadAndInstantiateSchemes(VMConfiguration) loaded and instantiated}.
      */
     public MaxineVM create(boolean install) {
         VMConfiguration config = new VMConfiguration(buildLevel.getValue(), platform(),
@@ -106,12 +109,13 @@ public final class VMConfigurator {
                                     vm(bootScheme),
                                     vm(jitScheme),
                                     vm(optScheme),
+                                    vm(compScheme),
                                     vm(trampolineScheme),
-                                    vm(targetABIsScheme),
-                                    vm(runScheme));
+                                    vm(targetABIsScheme), vm(runScheme));
         MaxineVM vm = new MaxineVM(config);
         if (install) {
             MaxineVM.set(vm);
+            config.loadAndInstantiateSchemes(null);
         }
         return vm;
     }
@@ -142,6 +146,13 @@ public final class VMConfigurator {
             default:
                 throw FatalError.unimplemented();
         }
+    }
+
+    /**
+     * Gets the package providing the default {@link CompilationScheme}.
+     */
+    public static VMPackage defaultCompilationScheme() {
+        return new com.sun.max.vm.compiler.adaptive.Package();
     }
 
     /**
@@ -268,7 +279,7 @@ public final class VMConfigurator {
             configurator.options.printHelp(System.out, 80);
         } else {
             configurator.options.parseArguments(args);
-            MaxineVM vm = configurator.create(false);
+            MaxineVM vm = configurator.create(true);
             System.out.println(vm.config);
         }
     }

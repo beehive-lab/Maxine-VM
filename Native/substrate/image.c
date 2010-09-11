@@ -20,6 +20,7 @@
  */
 /**
  * @author Bernd Mathiske
+ *
  */
 #include "os.h"
 
@@ -45,7 +46,6 @@
 #define IMAGE_IDENTIFICATION             0xcafe4dad
 #define IMAGE_VERSION                    1
 #define DEFAULT_RELOCATION_SCHEME        0
-#define TERA_BYTE (1024*1024*1024*1024L)
 
 #if os_GUESTVMXEN
 #define MEMORY_IMAGE 1
@@ -287,7 +287,6 @@ static void mapHeapAndCode(int fd) {
     int heapOffsetInImage = virtualMemory_pageAlign(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize);
     int heapAndCodeSize = theHeader->heapSize + theHeader->codeSize;
     c_ASSERT(virtualMemory_pageAlign((Size) heapAndCodeSize) == (Size) heapAndCodeSize);
-
 #if log_LOADER
     log_println("image.mapHeapAndCode");
 #endif
@@ -299,12 +298,38 @@ static void mapHeapAndCode(int fd) {
         log_exit(4, "could not map boot image");
     }
 #elif os_SOLARIS || os_DARWIN
-    theHeap = virtualMemory_allocatePrivateAnon((Address) 0, heapAndCodeSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
-    if (theHeap == ALLOC_FAILED) {
-        log_exit(4, "could not reserve boot image");
+    Address reservedVirtualSpace = (Address) 0;
+    size_t virtualSpaceSize = 1024L * theHeader->reservedVirtualSpaceSize;
+    c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
+    if (virtualSpaceSize != 0) {
+        // VM configuration asks for reserving an address space of size reservedVirtualSpaceSize.
+        // The following will create a mapping in virtual space of the requested size.The address returned might subsequently be used to memory map the
+        // boot heap region, automatically splitting this mapping in two.
+        // In any case,  the VM (mostly the heap scheme) is responsible for reserved space.
+        reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
+        if (reservedVirtualSpace == ALLOC_FAILED) {
+            log_exit(4, "could not reserve requested virtual space");
+        }
+    }
+    if (theHeader->bootRegionMappingConstraint == 1) {
+        // Map the boot heap region at the start of the reserved space
+        theHeap = reservedVirtualSpace;
+    } else if (theHeader->bootRegionMappingConstraint == 2) {
+        // Map the boot heap region at the end of the reserved space. The start of the boot heap region is page-aligned.
+        theHeap = reservedVirtualSpace + virtualSpaceSize - heapAndCodeSize;
+    } else {
+        // Map the boot heap region anywhere.
+        theHeap = virtualMemory_allocatePrivateAnon((Address) 0, heapAndCodeSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
+        if (theHeap == ALLOC_FAILED) {
+            log_exit(4, "could not reserve virtual space for boot image");
+        }
     }
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
+    }
+    if (reservedVirtualSpace) {
+        Address *addr = image_offset_as_address(Address *, reservedVirtualSpaceFieldOffset);
+        *addr = reservedVirtualSpace;
     }
 #else
     c_UNIMPLEMENTED();

@@ -43,6 +43,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.CompilationScheme.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -215,6 +216,22 @@ public class BootImage {
         public final int auxiliarySpaceSize;
 
         /**
+         * Instruct the boot image loader to reserve a range of contiguous virtual space of specified size.
+         */
+        public final int reservedVirtualSpaceSize;
+
+        /**
+         * Offset to the variable that will hold the address of the virtual space reserved by the boot image loader at boot-load time.
+         */
+        public final int reservedVirtualSpaceFieldOffset;
+
+        /**
+         * Instruct the boot image loader to memory map the boot heap region at a specific  location:
+         * if 0, just map it anywhere; if 1 (respectively, 2), map it at the beginning (respectively, end),of the reserved virtual space.
+         */
+        public final int bootRegionMappingConstraint;
+
+        /**
          * @see VmThreadMap#ACTIVE
          */
         public final int threadLocalsListHeadOffset;
@@ -281,9 +298,10 @@ public class BootImage {
             codeSize = endian.readInt(dataInputStream);
 
             dynamicHeapRegionsArrayFieldOffset = endian.readInt(dataInputStream);
-
             auxiliarySpaceSize = endian.readInt(dataInputStream);
-
+            reservedVirtualSpaceSize = endian.readInt(dataInputStream);
+            reservedVirtualSpaceFieldOffset = endian.readInt(dataInputStream);
+            bootRegionMappingConstraint = endian.readInt(dataInputStream);
             threadLocalsListHeadOffset = endian.readInt(dataInputStream);
             primordialThreadLocalsOffset = endian.readInt(dataInputStream);
 
@@ -337,7 +355,9 @@ public class BootImage {
             dynamicHeapRegionsArrayFieldOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "dynamicHeapMemoryRegions");
 
             auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(heapSize + codeSize);
-
+            reservedVirtualSpaceSize = vmConfiguration.heapScheme().reservedVirtualSpaceSize();
+            reservedVirtualSpaceFieldOffset =  staticFieldPointerOffset(dataPrototype, Heap.class, "reservedVirtualSpace");
+            bootRegionMappingConstraint = vmConfiguration.heapScheme().bootRegionMappingConstraint().ordinal();
             threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
             primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
 
@@ -367,6 +387,7 @@ public class BootImage {
             BootImageException.check(wordSize == 4 || wordSize == 8, "illegal word size: " + wordSize);
             BootImageException.check(cacheAlignment > 4 && Ints.isPowerOfTwoOrZero(cacheAlignment), "implausible alignment size: " + cacheAlignment);
             BootImageException.check(pageSize >= Longs.K && pageSize % Longs.K == 0, "implausible page size: " + pageSize);
+            BootImageException.check(!(bootRegionMappingConstraint > 0 && reservedVirtualSpaceSize == 0), "invalid boot region mapping constraint");
         }
 
         @Override
@@ -403,6 +424,7 @@ public class BootImage {
         public final String heapPackageName;
         public final String monitorPackageName;
         public final String compilerPackageName;
+        public final String compilationPackageName;
         public final String jitPackageName;
         public final String trampolinePackageName;
         public final String targetABIsPackageName;
@@ -448,6 +470,10 @@ public class BootImage {
             return (VMPackage) MaxPackage.fromName(compilerPackageName);
         }
 
+        public VMPackage compilationPackage() {
+            return (VMPackage) MaxPackage.fromName(compilationPackageName);
+        }
+
         public VMPackage jitPackage() {
             if (jitPackageName == null) {
                 return null;
@@ -480,6 +506,7 @@ public class BootImage {
             heapPackageName = Utf8.readString(inputStream);
             monitorPackageName = Utf8.readString(inputStream);
             compilerPackageName = Utf8.readString(inputStream);
+            compilationPackageName = Utf8.readString(inputStream);
             jitPackageName =  Utf8.readString(inputStream);
             trampolinePackageName = Utf8.readString(inputStream);
             targetABIsPackageName = Utf8.readString(inputStream);
@@ -488,7 +515,7 @@ public class BootImage {
 
         private StringInfo(VMConfiguration vmConfiguration, int offset) {
             super(offset);
-            buildLevelName = vmConfiguration.buildLevel().name();
+            buildLevelName = vmConfiguration.buildLevel.name();
             processorModelName = vmConfiguration.platform.processorModel().name();
             instructionSetName = vmConfiguration.platform.instructionSet().name();
             operatingSystemName = vmConfiguration.platform.operatingSystem.name();
@@ -499,6 +526,7 @@ public class BootImage {
             heapPackageName = vmConfiguration.heapPackage.name();
             monitorPackageName = vmConfiguration.monitorPackage.name();
             compilerPackageName = vmConfiguration.bootCompilerPackage.name();
+            compilationPackageName = vmConfiguration.compilationPackage.name();
             // Jit Package is optional and may be null. In which case, fall back to the default compiler.
             if (vmConfiguration.jitCompilerPackage == null) {
                 jitPackageName = compilerPackageName;
@@ -653,18 +681,19 @@ public class BootImage {
                 final ProcessorKind processorKind = new ProcessorKind(stringInfo.processorModel(), stringInfo.instructionSet(), dataModel);
                 final Platform platform = new Platform(processorKind, stringInfo.operatingSystem(), header.pageSize);
                 Platform.set(platform);
-                vmConfiguration = createVMConfiguration(stringInfo.buildLevel(), platform,
-                                stringInfo.gripPackage(),
-                                stringInfo.referencePackage(),
-                                stringInfo.layoutPackage(),
-                                stringInfo.heapPackage(),
-                                stringInfo.monitorPackage(),
-                                stringInfo.compilerPackage(),
-                                stringInfo.jitPackage(),
-                                null,
-                                stringInfo.trampolinePackage(),
-                                stringInfo.targetABIsPackage(),
-                                stringInfo.runPackage());
+                vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
+                                                      platform,
+                                                      stringInfo.gripPackage(),
+                                                      stringInfo.referencePackage(),
+                                                      stringInfo.layoutPackage(),
+                                                      stringInfo.heapPackage(),
+                                                      stringInfo.monitorPackage(),
+                                                      stringInfo.compilerPackage(),
+                                                      stringInfo.jitPackage(),
+                                                      null,
+                                                      stringInfo.compilationPackage(),
+                                                      stringInfo.trampolinePackage(),
+                                                      stringInfo.targetABIsPackage(), stringInfo.runPackage());
 
                 fileInputStream.skip(header.heapSize + header.codeSize);
                 int trailerOffset = codeOffset() + header.codeSize;
@@ -678,39 +707,6 @@ public class BootImage {
         } catch (IOException ioException) {
             throw new BootImageException(ioException);
         }
-    }
-
-    /**
-     * Creates the VM configuration from the header info in a boot image file.
-     *
-     * Subclasses can override this method to interpose upon the schemes.
-     */
-    protected VMConfiguration createVMConfiguration(BuildLevel buildLevel,
-                    Platform platform,
-                    VMPackage gripPackage,
-                    VMPackage referencePackage,
-                    VMPackage layoutPackage,
-                    VMPackage heapPackage,
-                    VMPackage monitorPackage,
-                    VMPackage bootCompilerPackage,
-                    VMPackage jitCompilerPackage,
-                    VMPackage optCompilerPackage,
-                    VMPackage trampolinePackage,
-                    VMPackage targetABIsPackage,
-                    VMPackage runPackage) {
-        return new VMConfiguration(buildLevel,
-                        platform,
-                        gripPackage,
-                        referencePackage,
-                        layoutPackage,
-                        heapPackage,
-                        monitorPackage,
-                        bootCompilerPackage,
-                        jitCompilerPackage,
-                        optCompilerPackage,
-                        trampolinePackage,
-                        targetABIsPackage,
-                        runPackage);
     }
 
     /**
