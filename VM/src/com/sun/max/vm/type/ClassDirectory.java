@@ -23,6 +23,7 @@ package com.sun.max.vm.type;
 import java.util.*;
 
 import com.sun.cri.ri.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 
 /**
@@ -42,22 +43,37 @@ public class ClassDirectory {
      */
     public static void addToHierarchy(ClassActor classActor) {
         classActor.prependToSiblingList();
-        // TODO track interface implementors as well for additional dep. types (...._concrete_subtypes_2 and ...._concrete_methods_2)
-
-        // TODO flush those dependencies that are invalidated by the supplied classActor
+        // TODO track interface implementors as well for future additional dependency types (...._concrete_subtypes_2 and ...._concrete_methods_2)?
+        flushDependentsOn(classActor);
     }
 
     public static boolean recordLeafMethodAssumption(RiMethod method) {
+        //Log.print("recordLeafMethodAssumption for ");
+        //Log.println(method);
         Set<RiMethod> holderMethods = leafMethodAssumptionByHolder.get(method.holder());
         if (holderMethods == null) {
             holderMethods = new HashSet<RiMethod>();
             leafMethodAssumptionByHolder.put(method.holder(), holderMethods);
         }
-        if (!holderMethods.add(method)) {
-            System.out.println("method " + method.name() + " of class " + method.holder().name()
-                            + " is already registered as leaf method assumption.");
+        holderMethods.add(method);
+        // FIXME return true to enable speculative optimizations
+        return false;
+    }
+
+    /**
+     * Flush assumptions and activations of code that has been compiled on the assumptions invalidated by {@code newClassActor}.
+     *
+     * @param newClassActor the newly loaded class that might invalidate assumptions
+     */
+    private static void flushDependentsOn(ClassActor newClassActor) {
+        Set<RiMethod> methodCandidates = leafMethodAssumptionByHolder.get(newClassActor.superClassActor);
+        if (methodCandidates != null) {
+            //Log.print("just now defined class ");
+            //Log.print(newClassActor);
+            //Log.print(" extends and thus invalidates leaf assumptions for ");
+            //Log.println(newClassActor.superClassActor);
+            // TODO further checks if actual method is overridden, if so, trigger deopt for activations of all affected methods
         }
-        return true;
     }
 
 }

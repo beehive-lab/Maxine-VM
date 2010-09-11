@@ -938,9 +938,6 @@ public final class GraphBuilder {
         if (!tryInline(target, args, stateBefore)) {
             // could not optimize or inline the method call
             appendInvoke(INVOKESPECIAL, target, args, false, cpi, constantPool, stateBefore);
-        } else {
-            // FIXME remove this debug code again
-            System.out.println("INLINED " + target.name() + " of class " + target.holder().name());
         }
     }
 
