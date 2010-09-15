@@ -90,13 +90,14 @@ public class MaxineTester {
                     "A list of configurations for which to run the Java tester tests.");
     private static final Option<List<String>> testsOption = options.newStringListOption("tests", "junit,output,javatester",
                     "The list of test harnesses to run, which may include JUnit tests (junit), output tests (output), " +
-                    "the JavaTester (javatester), DaCapo (dacapo), and SpecJVM98 (specjvm98).\n\nA subset of the JUnit/Output/Dacapo/SpecJVM98/Shootout tests " +
+                    "the JavaTester (javatester), DaCapo (dacapo), SpecJVM98 (specjvm98) and SPECjvm2008 (specjvm2008).\n\nA subset of the JUnit/Output/Dacapo/SpecJVM98/Shootout tests " +
                     "can be specified by appending a ':' followed by a '+' separated list of test name substrings. For example:\n\n" +
                     "-tests=specjvm98:jess+db,dacapo:pmd+fop\n\nwill " +
                     "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo benchmarks.\n\n" +
                     "Output tests: " + MaxineTesterConfiguration.zeeOutputTests.toString().replace("class ", "") + "\n\n" +
                     "Dacapo tests: " + MaxineTesterConfiguration.zeeDacapoTests + "\n\n" +
                     "SpecJVM98 tests: " + MaxineTesterConfiguration.zeeSpecjvm98Tests + "\n\n" +
+                    "SPECjvm2008 tests: " + MaxineTesterConfiguration.zeeSpecjvm2008Tests + "\n\n" +
                     "Shootout tests: " + MaxineTesterConfiguration.zeeShootoutTests);
     private static final Option<List<String>> maxvmConfigListOption = options.newStringListOption("maxvm-configs",
                     MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
@@ -112,6 +113,8 @@ public class MaxineTester {
                     "Stop execution as soon as a single test fails.");
     private static final Option<File> specjvm98ZipOption = options.newFileOption("specjvm98", (File) null,
                     "Location of zipped up SpecJVM98 directory. If not provided, then the SPECJVM98_ZIP environment variable is used.");
+    private static final Option<File> specjvm2008ZipOption = options.newFileOption("specjvm2008", (File) null,
+                    "Location of zipped up SPECjvm2008 directory. If not provided, then the SPECJVM2008_ZIP environment variable is used.");
     private static final Option<File> dacapoJarOption = options.newFileOption("dacapo", (File) null,
                     "Location of DaCapo JAR file. If not provided, then the DACAPO_JAR environment variable is used.");
     private static final Option<File> shootoutDirOption = options.newFileOption("shootout", (File) null,
@@ -178,8 +181,14 @@ public class MaxineTester {
                     // run the SpecJVM98 tests
                     new SpecJVM98Harness(MaxineTesterConfiguration.zeeSpecjvm98Tests).run();
                 } else if (test.startsWith("specjvm98:")) {
-                    // run the SpecJVM98 tests
+                    // run specific SpecJVM98 tests
                     new SpecJVM98Harness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeSpecjvm98Tests, test.substring("specjvm98:".length()).split("\\+"))).run();
+                } else if ("specjvm2008".equals(test)) {
+                    // run the SPECjvm2008 tests
+                    new SpecJVM2008Harness().run();
+                } else if (test.startsWith("specjvm2008:")) {
+                    // run specific SPECjvm2008 tests
+                    new SpecJVM2008Harness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeSpecjvm2008Tests, test.substring("specjvm2008:".length()).split("\\+"))).run();
                 } else if ("shootout".equals(test)) {
                     // run the shootout tests
                     new ShootoutHarness(MaxineTesterConfiguration.zeeShootoutTests).run();
@@ -892,7 +901,7 @@ public class MaxineTester {
      *            <i>name</i>=<i>value</i>, or <tt>null</tt> if the subprocess should inherit the environment of the
      *            current process
      * @param inputFile
-     * @param logs the files to which stdout and stderr should be redirected or {@code null} if these output
+     * @param logs the files to which stdout and stderr should be redirected. Use {@code new Logs()} if these output
      *            streams are to be discarded
      * @param name a descriptive name for the command or {@code null} if {@code command[0]} should be used instead
      * @param timeout the timeout in seconds    @return
@@ -1465,6 +1474,103 @@ public class MaxineTester {
         @Override
         long getInternalTiming(Logs logs) {
             // SpecJVM98 performs internal timing and reports it to stdout in seconds
+            String line = findLine(logs.get(STDOUT), "======", "Finished in ");
+            if (line != null) {
+                line = line.substring(line.indexOf("Finished in") + 11);
+                line = line.substring(0, line.indexOf(" secs"));
+                return (long) (1000 * Float.parseFloat(line));
+            }
+            return -1;
+        }
+    }
+
+    /**
+     * This class implements a test harness that is capable of running the SpecJVM98 suite of programs
+     * and comparing their outputs to that obtained by running each of them on a reference VM. Note that
+     * internal timings do not include the VM startup time because they are reported by the program
+     * itself. For that reason, external timings (i.e. by recording the total time to run the VM process)
+     * should be used as well.
+     *
+     * @author Ben L. Titzer
+     */
+    public static class SpecJVM2008Harness extends TimedHarness implements Harness {
+        final Iterable<String> testList;
+        SpecJVM2008Harness(Iterable<String> tests) {
+            this.testList = tests;
+        }
+
+        SpecJVM2008Harness() {
+            testList = null;
+        }
+
+        public boolean run() {
+            final File specjvm2008Zip = getFileFromOptionOrEnv(specjvm2008ZipOption, "SPECJVM2008_ZIP");
+            if (specjvm2008Zip == null) {
+                out().println("Need to specify the location of SpecJVM2008 ZIP file with -" + specjvm2008ZipOption + " or in the SPECJVM2008_ZIP environment variable");
+                return false;
+            }
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
+            final File imageDir = generateJavaRunSchemeImage();
+            if (imageDir != null) {
+                if (!specjvm2008Zip.exists()) {
+                    out().println("Couldn't find SpecJVM2008 ZIP file " + specjvm2008Zip);
+                    return false;
+                }
+                final File specjvm2008Dir = new File(outputDirOption.getValue(), "specjvm2008");
+                if (specjvm2008Dir.exists()) {
+                    // Some of the benchmarks (e.g. derby) complain if previous files exist.
+                    if (exec(null, new String[]{"rm", "-r", specjvm2008Dir.getAbsolutePath()}, null, null, new Logs(), "Delete specjvm2008 dir", 100) != 0) {
+                        out().println("Failed to delete existing specjvm2008 dir");
+                        return false;
+                    }
+                }
+                Files.unzip(specjvm2008Zip, specjvm2008Dir);
+                if (testList == null) {
+                    // run all tests from within the SPECjvm2008 harness
+                    runSpecJVM2008Test(outputDir, imageDir, specjvm2008Dir, null);
+                } else {
+                    for (String test : testList) {
+                        runSpecJVM2008Test(outputDir, imageDir, specjvm2008Dir, test);
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        void runSpecJVM2008Test(File outputDir, File imageDir, File workingDir, String test) {
+            final String testName = "SpecJVM2008 " + (test == null ? "all" : test);
+            final JavaCommand command = new JavaCommand(new File("SPECjvm2008.jar"));
+            // temp workarounds
+            command.addArgument("-ctf");
+            command.addArgument("false");
+            command.addArgument("-chf");
+            command.addArgument("false");
+
+            if (test != null) {
+                command.addArgument(test);
+            } else {
+                // The full set of tests run as one command can take quite a long time.
+                if (!options.hasOptionSpecified(javaRunTimeOutOption.getName())) {
+                    // Each benchmark takes approx 400s and there are 21 (discounting the startup marks, which are fast).
+                    javaRunTimeOutOption.setValue(10000);
+                }
+
+            }
+            OutputComparison comparison = new OutputComparison();
+            String[] ignored = {
+                "Iteration",
+                "Score on",
+                workingDir.getAbsolutePath()
+            };
+            comparison.stdoutIgnore = ignored;
+            testJavaProgram(testName, command, null, outputDir, workingDir, imageDir, comparison);
+            // reportTiming(testName, outputDir);
+        }
+
+        @Override
+        long getInternalTiming(Logs logs) {
+            // SpecJVM2008 performs internal timing and reports it to stdout in seconds
             String line = findLine(logs.get(STDOUT), "======", "Finished in ");
             if (line != null) {
                 line = line.substring(line.indexOf("Finished in") + 11);
