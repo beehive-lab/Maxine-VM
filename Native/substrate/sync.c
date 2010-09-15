@@ -90,12 +90,14 @@ static semaphore_t signal_sem;
 static sem_t signal_sem;
 #elif os_SOLARIS || os_LINUX
 static sem_t signal_sem;
+#elif os_GUESTVMXEN
+// no signals, so nothing necessary
 #endif
 
 /**
  * Implementation of com.sun.max.vm.runtime.SignalDispatcher.nativeSignalNotify().
  */
-void nativeSignalNotify() {
+void nativeSignalNotify(void) {
 #if os_DARWIN
     kern_return_t kr = semaphore_signal(signal_sem);
     if (kr != KERN_SUCCESS) {
@@ -105,6 +107,7 @@ void nativeSignalNotify() {
     if (sem_post(&signal_sem) != 0) {
         log_exit(11, "sem_post failed: %s", strerror(errno));
     }
+#elif os_GUESTVMXEN
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -114,7 +117,7 @@ void nativeSignalNotify() {
  * Implementation of com.sun.max.vm.runtime.SignalDispatcher.nativeSignalWait().
  */
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalWait() {
+Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalWait(void) {
 #if os_DARWIN
     kern_return_t kr = semaphore_wait(signal_sem);
     if (kr != KERN_SUCCESS) {
@@ -127,6 +130,7 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalWait() {
     if (ret != 0) {
         log_exit(11, "sem_wait failed: %s", strerror(errno));
     }
+#elif os_GUESTVMXEN
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -136,7 +140,7 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalWait() {
  * Implementation of com.sun.max.vm.runtime.SignalDispatcher.nativeSignalInit().
  */
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalInit() {
+Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalInit(void) {
 #if os_DARWIN
     kern_return_t kr = semaphore_create(mach_task_self(), &signal_sem, SYNC_POLICY_FIFO, 0);
     if (kr != KERN_SUCCESS) {
@@ -150,6 +154,8 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalInit() {
     if (sem_init(&signal_sem, 0, USYNC_THREAD, NULL) != 0) {
         log_exit(11, "sema_init failed: %s", strerror(errno));
     }
+#elif os_GUESTVMXEN
+    return;
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -165,7 +171,7 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalInit() {
  * Implementation of com.sun.max.vm.runtime.SignalDispatcher.nativeSignalFinalize().
  */
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalFinalize() {
+Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalFinalize(void) {
 #if os_DARWIN
     kern_return_t kr = semaphore_destroy(mach_task_self(), signal_sem);
     if (kr != KERN_SUCCESS) {
