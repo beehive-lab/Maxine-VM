@@ -163,6 +163,8 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             }
 
             case GUESTVM:
+                return new FixedAddressCodeManager();
+
             case DARWIN:
             case SOLARIS: {
                 return new VariableAddressCodeManager();
