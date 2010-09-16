@@ -27,7 +27,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.Params;
 import com.sun.max.tele.debug.unix.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * @author Bernd Mathiske
@@ -45,6 +45,10 @@ public final class DarwinTeleProcess extends UnixTeleProcessAdaptor {
      */
     DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
         super(teleVM, platform, programFile, commandLineArguments);
+    }
+
+    DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, int id) throws BootImageException {
+        super(teleVM, platform, programFile, id);
     }
 
     @Override

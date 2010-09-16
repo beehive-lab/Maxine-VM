@@ -474,7 +474,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             // CPS target methods don't have Java frame descriptors at implicit throw points. dumb.
             return null;
         }
-        if (Platform.target().instructionSet().offsetToReturnPC == 0) {
+        if (Platform.platform().instructionSet().offsetToReturnPC == 0) {
             instructionPointer = instructionPointer.minus(1);
         }
 

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.monitor.modal.sync.nat;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.lang.ref.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -82,7 +84,7 @@ public final class NativeConditionVariable extends ConditionVariable {
     private static native boolean nativeConditionWait(Pointer mutex, Pointer condition, long timeoutMilliSeconds);
 
     static void initialize() {
-        assert MaxineVM.hostOrTarget().phase == MaxineVM.Phase.PRIMORDIAL;
+        assert vm().phase == MaxineVM.Phase.PRIMORDIAL;
         size = nativeConditionSize();
     }
 

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.run.extendimage;
 
+import static com.sun.max.vm.hosted.JavaPrototype.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -29,10 +31,10 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.run.java.*;
 import com.sun.max.vm.runtime.*;
 
@@ -49,8 +51,8 @@ import com.sun.max.vm.runtime.*;
  * <dd>Loads all the classes in package packagename.</dd>
  * <dt> class classname</dt>
  * <dd>Loads the class classname.</dd>
- * <dd>omitclass classname
- * <dt> Do not include the class classname (typically used to suppress nested classes)
+ * <dt>omitclass classname</dt>
+ * <dd> Do not include the class classname (typically used to suppress nested classes)</dd>
  * <dt> classinit classname</dt>
  * <dd>Loads and eagerly initializes the class classname.</dd>
  * <dt> forcemethod methodname</dt>
@@ -307,7 +309,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     protected void forceClass(String className, boolean isMain) {
         Trace.line(1, "extending image with class " + className);
         try {
-            JavaPrototype.javaPrototype().loadClass(className);
+            javaPrototype().loadClass(className);
         } catch (NoClassDefFoundError ex) {
             Trace.line(1, "WARNING: class " + className + " not found");
         }

@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -47,7 +46,7 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
      * Support for reading an injected field while bootstrapping.
      */
     @HOSTED_ONLY
-    Value_Type readInjectedValue(Reference reference);
+    Value_Type readInjectedValue(Object object);
 
     public static final class Static {
 

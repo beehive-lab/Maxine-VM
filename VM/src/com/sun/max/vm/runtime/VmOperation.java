@@ -27,10 +27,12 @@ import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.Pointer.Predicate;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallEpilogue;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.stack.*;
@@ -237,12 +239,8 @@ public class VmOperation {
 
     /**
      * Determines if this operation allows a nested operation to be performed.
-     *
-     * @param operation the nested operation in question (which may be {@code null})
      */
-    protected boolean allowsNestedOperations(VmOperation operation) {
-        return false;
-    }
+    protected boolean allowsNestedOperations;
 
     /**
      * Called by the {@linkplain Trap trap} handler on a thread that hit a safepoint.
@@ -466,6 +464,13 @@ public class VmOperation {
      *            {@link #operateOnThread(VmThread)} is called to determine which threads are to be operated on.
      */
     public VmOperation(String name, VmThread singleThread, Mode mode) {
+        if (!MaxineVM.isHosted() && !Heap.bootHeapRegion.contains(Reference.fromJava(ClassActor.fromJava(getClass())).toOrigin())) {
+            // All VM operation classes must be in the image so that their vtables don't contain any pointers to
+            // trampolines as resolving these trampolines can involve allocation which may not be possible when
+            // executing VM operations. In addition all the methods of these classes should not be subject
+            // to re-compilation at runtime for similar reasons.
+            FatalError.unexpected(VmOperation.class.getName() + " subclass " + getClass().getName() + " is not in the boot image");
+        }
         this.name = name;
         this.mode = mode;
         this.singleThread = singleThread;
@@ -495,6 +500,13 @@ public class VmOperation {
         if (mode.requiresSafepoint()) {
             Throwable error = null;
             synchronized (VmThreadMap.THREAD_LOCK) {
+
+                if (singleThread != null && singleThread.vmThreadLocals().isZero()) {
+                    // The thread is not yet on the global thread list or has terminated.
+                    // Either way, we cannot freeze it if it has no thread locals.
+                    tracePhase("Aborting operation on single, non-running thread");
+                    return;
+                }
 
                 tracePhase("-- Begin --");
 

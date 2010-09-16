@@ -40,9 +40,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -562,7 +562,8 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     public final boolean isOverridden() {
-        return !canBeStaticallyBound(); // TODO: do leaf method checks
+        // TODO: do more sophisticated leaf method check than just if class has subclass
+        return !canBeStaticallyBound() && holder().hasSubclass();   // TODO what about interfaces?
     }
 
     public final boolean isResolved() {

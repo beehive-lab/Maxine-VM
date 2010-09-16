@@ -196,4 +196,13 @@ public interface RiRuntime {
      * @return true if the two parameters represent the same runtime object, false otherwise
      */
     boolean compareConstantObjects(Object x, Object y);
+
+    /**
+     * Records an assumption made by this compilation that the specified method is a leaf method.
+     *
+     * @param method the method that is assumed to be a leaf method
+     * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
+     */
+    boolean recordLeafMethodAssumption(RiMethod method);
+
 }

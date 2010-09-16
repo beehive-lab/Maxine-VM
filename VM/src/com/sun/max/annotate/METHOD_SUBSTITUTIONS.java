@@ -77,17 +77,26 @@ public @interface METHOD_SUBSTITUTIONS {
                     if (substituteName.length() == 0) {
                         substituteName = substituteMethod.getName();
                     }
+                    boolean conditional = substituteAnnotation.conditional();
 
                     final Method originalMethod = findMethod(substitutee, substituteName, SignatureDescriptor.fromJava(substituteMethod));
                     if (originalMethod == null) {
-                        if (substituteAnnotation.conditional()) {
+                        if (conditional) {
                             Trace.line(1, "Substitutee for " + substituteMethod + " not found - skipping");
                             continue;
                         }
                         ProgramError.unexpected("could not find unconditional substitutee method in " + substitutee + " substituted by " + substituteMethod);
                     }
 
-                    final ClassMethodActor originalMethodActor = ClassMethodActor.fromJava(originalMethod);
+                    final ClassMethodActor originalMethodActor;
+                    try {
+                        originalMethodActor = ClassMethodActor.fromJava(originalMethod);
+                    } catch (NoSuchMethodError e) {
+                        if (conditional) {
+                            continue;
+                        }
+                        throw e;
+                    }
                     ClassMethodActor substituteMethodActor = ClassMethodActor.fromJava(substituteMethod);
                     if (originalToSubstitute.put(originalMethodActor, substituteMethodActor) != null) {
                         ProgramError.unexpected("a substitute has already been registered for " + originalMethod);

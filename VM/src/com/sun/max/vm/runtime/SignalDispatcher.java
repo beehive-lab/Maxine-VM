@@ -26,8 +26,8 @@ import sun.misc.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -47,47 +47,15 @@ import com.sun.max.vm.value.*;
  */
 public final class SignalDispatcher extends Thread {
 
-    private static final String NUMBER_OF_SIGNALS_PROPERTY = "max.os.signalcount";
     /**
      * A set of counters, one per supported signal, used to post and consume signals.
      */
-    private static final AtomicIntegerArray PendingSignals = new AtomicIntegerArray(numberOfSignals() + 1);
+    private static final AtomicIntegerArray PendingSignals = new AtomicIntegerArray(Platform.numberOfSignals() + 1);
 
     /**
      * The special signal used to terminate the signal dispatcher thread.
      */
     private static final int ExitSignal = PendingSignals.length() - 1;
-
-    /**
-     * The lock used by the VM operation thread to notify the signal dispatcher thread when it
-     * has posted a new {@linkplain #PendingSignals pending signal}.
-     */
-    private static final Object LOCK = JavaMonitorManager.newVmLock("PENDING_SIGNALS_LOCK");
-
-    @HOSTED_ONLY
-    /**
-     * Gets the number of signals supported by the platform that may be delivered to the VM.
-     * The range of signal numbers that the VM expects to see is between 0 (inclusive) and
-     * {@code nativeNumberOfSignals()} (exclusive).
-     * This checks the property {@value NUMBER_OF_SIGNALS_PROPERTY}
-     * in case the host and target platforms are different.
-     */
-    private static int numberOfSignals() {
-        final String prop = System.getProperty(NUMBER_OF_SIGNALS_PROPERTY);
-        if (prop != null) {
-            return Integer.parseInt(prop);
-        }
-        return nativeNumberOfSignals();
-    }
-
-
-    /**
-     * Get the number of signals supported by the host platform, the assumption being that the generated VM
-     * will be running on the same platform.
-     * @return
-     */
-    @HOSTED_ONLY
-    private static native int nativeNumberOfSignals();
 
     @HOSTED_ONLY
     public SignalDispatcher(ThreadGroup group) {
@@ -117,25 +85,34 @@ public final class SignalDispatcher extends Thread {
                 }
             }
 
-            // There must never be a safepoint between the acquisition of LOCK and blocking on it (LOCK.wait()).
-            // If this was to happen and a signal occurred during the VM operation for which safepoints were
-            // triggered, there would be a deadlock between the signal dispatcher thread (which is holding
-            // LOCK) and the VM operation thread (which wants to acquire LOCK to notify it).
-            boolean wasDisabled = Safepoint.disable();
-            FatalError.check(!wasDisabled, "Safepoints were disabled multiple times on SignalDispatcher thread");
-            synchronized (LOCK) {
-                try {
-                    LOCK.wait();
-                } catch (InterruptedException e) {
-                }
-            }
-            Safepoint.enable();
+            nativeSignalWait();
         }
     }
 
     private static boolean TraceSignals;
     static {
         VMOptions.addFieldOption("-XX:", "TraceSignals", "Trace signals.");
+    }
+
+    /**
+     * An ordinary lock (mutex) cannot be used when notifying the signal
+     * dispatcher of a signal as the platform specific functions for
+     * notifying condition variables (e.g. pthread_cond_signal(3)) are
+     * typically not safe to call within an OS-level signal handler.
+     * Instead, a single OS-level semaphore (e.g. POSIX sem_init(3))
+     * is used.
+     */
+    private static native void nativeSignalInit();
+    private static native void nativeSignalFinalize();
+    @C_FUNCTION
+    private static native void nativeSignalNotify();
+    private static native void nativeSignalWait();
+
+    static {
+        new CriticalNativeMethod(SignalDispatcher.class, "nativeSignalInit");
+        new CriticalNativeMethod(SignalDispatcher.class, "nativeSignalFinalize");
+        new CriticalNativeMethod(SignalDispatcher.class, "nativeSignalNotify");
+        new CriticalNativeMethod(SignalDispatcher.class, "nativeSignalWait");
     }
 
     /**
@@ -155,9 +132,7 @@ public final class SignalDispatcher extends Thread {
             Log.unlock(lockDisabledSafepoints);
         }
         PendingSignals.incrementAndGet(signal);
-        synchronized (LOCK) {
-            LOCK.notify();
-        }
+        nativeSignalNotify();
     }
 
     private static volatile boolean started;
@@ -171,11 +146,13 @@ public final class SignalDispatcher extends Thread {
 
     @Override
     public void run() {
+        nativeSignalInit();
         started = true;
         while (true) {
             int signal = waitForSignal();
 
             if (signal == ExitSignal) {
+                nativeSignalFinalize();
                 return;
             }
 

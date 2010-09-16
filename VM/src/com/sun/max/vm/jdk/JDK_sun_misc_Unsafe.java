@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 import java.security.*;
 
@@ -29,11 +31,10 @@ import sun.reflect.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -560,6 +561,42 @@ final class JDK_sun_misc_Unsafe {
     }
 
     /**
+     * Sets all bytes in a given block of memory to a copy of another
+     * block.
+     *
+     * <p>This method determines each block's base address by means of two parameters,
+     * and so it provides (in effect) a <em>double-register</em> addressing mode,
+     * as discussed in {@link #getInt(Object,long)}.  When the object reference is null,
+     * the offset supplies an absolute base address.
+     *
+     * <p>The transfers are in coherent (atomic) units of a size determined
+     * by the address and length parameters.  If the effective addresses and
+     * length are all even modulo 8, the transfer takes place in 'long' units.
+     * If the effective addresses and length are (resp.) even modulo 4 or 2,
+     * the transfer takes place in units of 'int' or 'short'.
+     *
+     * @since 1.7
+     */
+    @SUBSTITUTE(conditional = true)
+    public void copyMemory(Object srcBase, long srcOffset,
+                                  Object destBase, long destOffset,
+                                  long bytes) {
+        Pointer src;
+        if (srcBase == null) {
+            src = Pointer.fromLong(srcOffset);
+        } else {
+            src = Reference.fromJava(srcBase).toOrigin().plus(srcOffset);
+        }
+        Pointer dest;
+        if (destBase == null) {
+            dest = Pointer.fromLong(destOffset);
+        } else {
+            dest = Reference.fromJava(destBase).toOrigin().plus(destOffset);
+        }
+        Memory.copyBytes(src, dest, Size.fromLong(bytes));
+    }
+
+    /**
      * Free a chunk of previously allocated memory.
      * @see Unsafe#freeMemory(long)
      * @param address the address of the beginning of a chunk of memory to delete
@@ -656,7 +693,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public int pageSize() {
-        return VMConfiguration.hostOrTarget().platform().pageSize;
+        return vmConfig().platform.pageSize;
     }
 
     /**
@@ -717,7 +754,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void monitorEnter(Object object) {
-        VMConfiguration.hostOrTarget().monitorScheme().monitorEnter(object);
+        vmConfig().monitorScheme().monitorEnter(object);
     }
 
     /**
@@ -727,7 +764,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void monitorExit(Object object) {
-        VMConfiguration.hostOrTarget().monitorScheme().monitorExit(object);
+        vmConfig().monitorScheme().monitorExit(object);
     }
 
     /**

@@ -28,7 +28,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.ir.*;
-import com.sun.max.vm.grip.prototype.*;
+import com.sun.max.vm.grip.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -102,7 +102,7 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
             }
         }
 
-        final PrototypeObjectMirror mirror = new PrototypeObjectMirror(object);
+        final HostedObjectMirror mirror = new HostedObjectMirror(object);
         final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
 
         if (arguments.length == 2) {
@@ -142,7 +142,7 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
             return;
         }
 
-        final PrototypeObjectMirror mirror = new PrototypeObjectMirror(object);
+        final HostedObjectMirror mirror = new HostedObjectMirror(object);
         final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
 
         if (arguments.length == 3) {

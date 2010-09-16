@@ -24,10 +24,10 @@
 
 include platform/platform.mk
 
-all : prototype substrate launch tele javatest
+all : hosted substrate launch tele javatest
 
-prototype : build/$(OS)/prototype/makefile
-	(cd build/$(OS)/prototype; $(MAKE) all)
+hosted : build/$(OS)/hosted/makefile
+	(cd build/$(OS)/hosted; $(MAKE) all)
 
 substrate : build/$(OS)/substrate/makefile
 	(cd build/$(OS)/substrate; $(MAKE) all)
@@ -41,9 +41,9 @@ tele : build/$(OS)/tele/makefile
 javatest : build/$(OS)/javatest/makefile
 	(cd build/$(OS)/javatest; $(MAKE) all)
 
-build/$(OS)/prototype/makefile : prototype/prototype.mk
-	mkdir -p build/$(OS)/prototype
-	cp -f prototype/prototype.mk build/$(OS)/prototype/makefile
+build/$(OS)/hosted/makefile : hosted/hosted.mk
+	mkdir -p build/$(OS)/hosted
+	cp -f hosted/hosted.mk build/$(OS)/hosted/makefile
  
 build/$(OS)/substrate/makefile : substrate/substrate.mk
 	mkdir -p build/$(OS)/substrate
@@ -66,5 +66,5 @@ clean :
 
 platform :
 	echo $(PLATFORM)
-.PHONY: clean prototype substrate launch tele javatest platform
+.PHONY: clean hosted substrate launch tele javatest platform
 

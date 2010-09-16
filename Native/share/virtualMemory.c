@@ -65,7 +65,6 @@ static Address check_mmap_result(void *result) {
     return ((Address) (result == (void *) MAP_FAILED ? ALLOC_FAILED : result));
 }
 
-
 /* Generic virtual space allocator.
  * If the address parameters is specified, allocate at the specified address and fail if it cannot be allocated.
  * Use MAP_NORESERVE if reserveSwap is true
@@ -80,7 +79,9 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
   if (address != 0) {
 	  flags |= MAP_FIXED;
   }
+
   void * result = mmap((void*) address, (size_t) size, prot, flags, -1, 0);
+
 #if log_LOADER
 	log_println("virtualMemory_allocatePrivateAnon(address=%p, size=%p, swap=%s, prot=%s) allocated at %p",
 					address, size,
@@ -139,7 +140,7 @@ Address virtualMemory_allocateIn31BitSpace(Size size, int type) {
 
 Address virtualMemory_deallocate(Address start, Size size, int type) {
 #if os_GUESTVMXEN
-	return (Address) guestvmXen_virtualMemory_deallocate((void *)start, size, type);
+    return (Address) guestvmXen_virtualMemory_deallocate((void *)start, size, type);
 #else
     int result = munmap((void *) start, (size_t) size);
     return result == -1 ? 0 : start;

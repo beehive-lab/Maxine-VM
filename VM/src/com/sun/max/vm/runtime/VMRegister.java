@@ -21,13 +21,13 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.VMConfiguration.*;
 
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.type.*;
 
@@ -228,7 +228,7 @@ public final class VMRegister {
 
     @FOLD
     private static boolean callAddressRegisterExists() {
-        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.LINK_ADDRESS) != null;
+        return vmConfig().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.LINK_ADDRESS) != null;
     }
 
     @INLINE

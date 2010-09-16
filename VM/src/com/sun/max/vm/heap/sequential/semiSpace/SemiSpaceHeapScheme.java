@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.Heap.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -66,11 +67,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     public static final String DOUBLE_GROW_POLICY_NAME = "Double";
     public static final String NO_GROW_POLICY_NAME = "None";
 
-    /**
-     * A VM option for specifying how heap memory is to be allocated.
-     */
-    private static final VMBooleanXXOption virtualAllocOption =
-        register(new VMBooleanXXOption("-XX:+UseVirtualMemory", "Allocate memory for GC using mmap instead of malloc."), MaxineVM.Phase.PRISTINE);
 
     /**
      * A VM option for specifying amount of memory to be reserved for allocating and raising an
@@ -344,7 +340,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
                 HeapScheme.Inspect.notifyGCStarted();
 
-                VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+                vmConfig().monitorScheme().beforeGarbageCollection();
 
                 final long startGCTime = System.currentTimeMillis();
                 collectionCount++;
@@ -405,7 +401,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 lastGCTime = System.currentTimeMillis();
                 accumulatedGCTime += lastGCTime - startGCTime;
 
-                VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+                vmConfig().monitorScheme().afterGarbageCollection();
 
                 // Post-verification of the heap.
                 verifyObjectSpaces("after GC");
@@ -445,7 +441,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      * If successful sets region start and size.
      */
     private static Address allocateSpace(LinearAllocationMemoryRegion space, Size size) {
-        final Address base = virtualAllocOption.getValue() ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
+        final Address base = VirtualMemory.allocate(size, VirtualMemory.Type.HEAP);
         if (!base.isZero()) {
             space.setStart(base);
             space.mark.set(base); // debugging
@@ -459,12 +455,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      * Sets the region start to zero but does not change the size.
      */
     private static void deallocateSpace(MemoryRegion space) {
-        final Address base = space.start();
-        if (virtualAllocOption.getValue()) {
-            VirtualMemory.deallocate(base, space.size(), VirtualMemory.Type.HEAP);
-        } else {
-            Memory.deallocate(base);
-        }
+        VirtualMemory.deallocate(space.start(), space.size(), VirtualMemory.Type.HEAP);
         space.setStart(Address.zero());
     }
 
@@ -1063,7 +1054,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
         @Override
         protected void doIt() {
-            final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
+            final Size pageAlignedAmount = amount.asAddress().aligned(Platform.platform().pageSize).asSize().dividedBy(2);
             logSpaces();
             executeGC();
             if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
@@ -1111,7 +1102,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
              * This could be smaller than the existing spaces so we need to check.
              * It's unfortunate but that's the nature of the semispace scheme.
              */
-            final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
+            final Size pageAlignedAmount = amount.asAddress().aligned(Platform.platform().pageSize).asSize().dividedBy(2);
             if (pageAlignedAmount.greaterThan(fromSpace.size())) {
                 // grow adds the current space size to the amount in the grow policy
                 increaseGrowPolicy.setAmount(pageAlignedAmount.minus(fromSpace.size()));

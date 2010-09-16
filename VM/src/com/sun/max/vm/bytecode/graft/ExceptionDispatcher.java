@@ -71,7 +71,7 @@ public class ExceptionDispatcher {
     @NEVER_INLINE
     public static Throwable safepointAndLoadExceptionObject() {
         if (MaxineVM.isHosted()) {
-            return prototypeSafepointAndLoadExceptionObject();
+            return hostedSafepointAndLoadExceptionObject();
         }
         Safepoint.safepoint();
         Throwable exception = UnsafeCast.asThrowable(VmThreadLocal.EXCEPTION_OBJECT.getVariableReference().toJava());
@@ -80,7 +80,7 @@ public class ExceptionDispatcher {
     }
 
     @HOSTED_ONLY
-    public static Throwable prototypeSafepointAndLoadExceptionObject() {
+    public static Throwable hostedSafepointAndLoadExceptionObject() {
         Throwable throwable = INTERPRETER_EXCEPTION.get();
         INTERPRETER_EXCEPTION.set(null);
         return throwable;

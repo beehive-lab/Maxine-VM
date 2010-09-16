@@ -58,12 +58,29 @@ public abstract class RemoteInvocationProtocolAdaptor {
     public final Map<String, MethodInfo> methodMap;
 
     protected RemoteInvocationProtocolAdaptor() {
-        final Method[] interfaceMethods = TeleChannelDataIOProtocol.class.getDeclaredMethods();
-        final Method[] implMethods = getClass().getMethods();
-        methodMap = new HashMap<String, MethodInfo>(interfaceMethods.length);
-        for (Method m : interfaceMethods) {
-            final MethodInfo methodInfo = new MethodInfo(findMethod(implMethods, m.getName()));
-            methodMap.put(m.getName(), methodInfo);
+        final List<Class< ? >> interfaces = new ArrayList<Class< ? >>();
+        getTeleChannelDataIOProtocolInterfaceMethods(interfaces, this.getClass());
+        methodMap = new HashMap<String, MethodInfo>();
+        for (Class< ? > intf : interfaces) {
+            final Method[] interfaceMethods = intf.getDeclaredMethods();
+            final Method[] implMethods = getClass().getMethods();
+            for (Method m : interfaceMethods) {
+                final MethodInfo methodInfo = new MethodInfo(findMethod(implMethods, m.getName()));
+                //Trace.line(2, "adding " + m.getName() + " from " + intf.getName() + " to method map");
+                methodMap.put(m.getName(), methodInfo);
+            }
+        }
+    }
+
+    private static void getTeleChannelDataIOProtocolInterfaceMethods(List<Class< ? >> result, Class< ? > klass) {
+        if (klass != null) {
+            final Class< ? >[] interfaces = klass.getInterfaces();
+            for (Class< ? > k : interfaces) {
+                if (k.getName().endsWith("TeleChannelDataIOProtocol")) {
+                    result.add(k);
+                }
+            }
+            getTeleChannelDataIOProtocolInterfaceMethods(result, klass.getSuperclass());
         }
     }
 

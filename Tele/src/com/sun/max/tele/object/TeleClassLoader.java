@@ -24,7 +24,7 @@ import java.util.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 
 /**

@@ -22,8 +22,6 @@ package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.lang.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.type.*;
 /**
@@ -109,13 +107,9 @@ public class JITTest_compileMethodWithClassConstant extends JitCompilerTestCase 
     }
 
     private boolean classIsUnresolved(final String classname) {
-        return MaxineVM.usingTarget(new Function<Boolean>() {
-            public Boolean call() {
-                final TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(classname);
-                final ClassActor classActor = ClassActor.fromJava(getClass());
-                return !typeDescriptor.isResolvableWithoutClassLoading(classActor.constantPool().classLoader());
-            }
-        });
+        final TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(classname);
+        final ClassActor classActor = ClassActor.fromJava(getClass());
+        return !typeDescriptor.isResolvableWithoutClassLoading(classActor.constantPool().classLoader());
     }
 
     public void test_ldc_unresolved_class() {

@@ -30,7 +30,6 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -47,7 +46,7 @@ public final class TargetBreakpoint {
                     return new byte[] {(byte) 0xCC};
                 }
                 case SPARC: {
-                    final WordWidth wordWidth = VMConfiguration.target().platform().processorKind.dataModel.wordWidth;
+                    final WordWidth wordWidth = Platform.platform().wordWidth();
                     final SPARCAssembler assembler = wordWidth == WordWidth.BITS_64 ? new SPARC64Assembler() : new SPARC32Assembler();
                     assembler.ta(ICCOperand.XCC, GPR.G0, SoftwareTrap.ST_BREAKPOINT.trapNumber());
                     return assembler.toByteArray();
@@ -63,7 +62,7 @@ public final class TargetBreakpoint {
         return null;
     }
 
-    public static final byte[] breakpointCode = createBreakpointCode(Platform.target().processorKind.instructionSet);
+    public static final byte[] breakpointCode = createBreakpointCode(Platform.platform().instructionSet());
 
     private final Pointer instructionPointer;
     private byte[] originalCode;

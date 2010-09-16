@@ -25,7 +25,7 @@ import java.nio.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.unix.*;
+import com.sun.max.tele.debug.dump.*;
 
 /**
  * Solaris implementation of the channel protocol for accessing core dump files.
@@ -33,7 +33,7 @@ import com.sun.max.tele.debug.unix.*;
  * @author Mick Jordan
  *
  */
-public class SolarisDumpTeleChannelProtocol extends UnixDumpTeleChannelProtocolAdaptor implements SolarisTeleChannelProtocol {
+public class SolarisDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAdaptor implements SolarisTeleChannelProtocol {
 
     private List<LwpData> lwpDataList;
     private SolarisDumpThreadAccess solarisDumpThreadAccess;

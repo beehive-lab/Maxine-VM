@@ -26,8 +26,8 @@
 
 TARGET_WORD_SIZE := w64
 
-ifeq ($(LIB), prototype)
-    TARGET := PROTOTYPE
+ifeq ($(LIB), hosted)
+    TARGET := HOSTED
 endif
 
 ifeq ($(LIB), tele)

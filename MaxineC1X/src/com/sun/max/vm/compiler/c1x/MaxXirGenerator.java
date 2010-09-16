@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static java.lang.reflect.Modifier.*;
 
 import java.io.*;
@@ -572,9 +573,9 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     private XirTemplate buildSafepoint() {
         asm.restart(CiKind.Void);
-        XirOperand param = asm.createRegister("latch", CiKind.Word, AMD64.r14);
+        XirOperand latch = asm.createRegister("latch", CiKind.Word, AMD64.r14);
         asm.safepoint();
-        asm.pload(CiKind.Word, param, param, false);
+        asm.pload(CiKind.Word, latch, latch, false);
         return finishTemplate(asm, "safepoint");
     }
 
@@ -1166,9 +1167,15 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     private XirTemplate buildExceptionObject() {
         XirOperand result = asm.restart(CiKind.Object);
-        XirOperand param = asm.createRegister("thread", CiKind.Word, AMD64.r14);
-        asm.pload(CiKind.Word, result, param, asm.i(VmThreadLocal.EXCEPTION_OBJECT.offset), false);
-        return finishTemplate(asm, "exceptionOffset");
+        XirOperand latch = asm.createRegister("latch", CiKind.Word, AMD64.r14);
+        XirOperand temp = asm.createTemp("temp", CiKind.Word);
+        // Load safepoints-enabled thread locals pointer
+        asm.pload(CiKind.Word, temp, latch, asm.i(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.offset), false);
+        // Load exception object from thread locals
+        asm.pload(CiKind.Object, result, temp, asm.i(VmThreadLocal.EXCEPTION_OBJECT.offset), false);
+        // Clear the exception object out of thread locals
+        asm.pstore(CiKind.Word, temp, asm.i(VmThreadLocal.EXCEPTION_OBJECT.offset), asm.createConstant(CiConstant.ZERO), false);
+        return finishTemplate(asm, "load-exception");
     }
 
     private XirTemplate finishTemplate(CiXirAssembler asm, XirOperand result, String name) {
@@ -1326,7 +1333,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static int resolveVirtualMethod(ResolutionGuard.InPool guard) {
-            return ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard).vTableIndex() * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
+            return ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard).vTableIndex() * Word.size() + vmConfig().layoutScheme().hybridLayout.headerSize();
         }
 
         public static Word resolveSpecialMethod(ResolutionGuard.InPool guard) {
@@ -1485,11 +1492,11 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static void monitorEnter(Object o) {
-            VMConfiguration.target().monitorScheme().monitorEnter(o);
+            vmConfig().monitorScheme().monitorEnter(o);
         }
 
         public static void monitorExit(Object o) {
-            VMConfiguration.target().monitorScheme().monitorExit(o);
+            vmConfig().monitorScheme().monitorExit(o);
         }
     }
 

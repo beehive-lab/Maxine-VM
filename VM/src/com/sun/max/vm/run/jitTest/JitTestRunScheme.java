@@ -21,7 +21,7 @@
 package com.sun.max.vm.run.jitTest;
 
 import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.run.java.*;
 
 /**

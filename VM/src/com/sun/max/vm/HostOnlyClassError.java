@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm;
 
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * Error thrown when an attempt is made to load a {@linkplain MaxineVM#isHostedOnly(Class) host-only}

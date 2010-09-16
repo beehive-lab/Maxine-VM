@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.monitor;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
@@ -43,7 +45,7 @@ public final class Monitor {
     @UNSAFE
     @FOLD
     private static MonitorScheme monitorScheme() {
-        return VMConfiguration.hostOrTarget().monitorScheme();
+        return vmConfig().monitorScheme();
     }
 
     @INLINE

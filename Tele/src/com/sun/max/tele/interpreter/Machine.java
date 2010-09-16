@@ -428,7 +428,7 @@ public final class Machine extends AbstractTeleVMHolder{
         }
 
         if (method == safepointAndLoadExceptionObject) {
-            push(widenIfNecessary(ReferenceValue.from(ExceptionDispatcher.prototypeSafepointAndLoadExceptionObject())));
+            push(widenIfNecessary(ReferenceValue.from(ExceptionDispatcher.hostedSafepointAndLoadExceptionObject())));
         } else if (method.isNative()) {
             final Value[] arguments = new Value[numberOfParameters];
             invertOperands(argumentStack, arguments);
