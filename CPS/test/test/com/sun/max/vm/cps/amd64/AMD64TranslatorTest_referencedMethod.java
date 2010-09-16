@@ -38,7 +38,7 @@ import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -54,15 +54,11 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
     }
 
     protected Class initializeClassInTarget(final Class classToInitialize) {
-        return MaxineVM.usingTarget(new Function<Class>() {
-            public Class call() {
-                assert !MaxineVM.isHostedOnly(classToInitialize);
-                final Class targetClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, classToInitialize.getName());
-                final ClassActor classActor = ClassActor.fromJava(targetClass);
-                MakeClassInitialized.makeClassInitialized(classActor);
-                return targetClass;
-            }
-        });
+        assert !MaxineVM.isHostedOnly(classToInitialize);
+        final Class targetClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, classToInitialize.getName());
+        final ClassActor classActor = ClassActor.fromJava(targetClass);
+        MakeClassInitialized.makeClassInitialized(classActor);
+        return targetClass;
     }
 
     private void listMethodActor(MethodActor methodActor,  IdentityHashSet<MethodActor> methodActors) {
@@ -154,14 +150,10 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
 
     public void test_checkReferencedMethods1() {
         initializeClassInTarget(HashMap.class);
-        MaxineVM.usingTarget(new Runnable() {
-            public void run() {
-                Trace.on(1);
-                final TargetMethod targetMethod = compileMethod(HashMap.class, "values", SignatureDescriptor.create(Collection.class));
-                Trace.off();
-                listMethodActorsDirectlyReferencedBy(targetMethod);
-            }
-        });
+        Trace.on(1);
+        final TargetMethod targetMethod = compileMethod(HashMap.class, "values", SignatureDescriptor.create(Collection.class));
+        Trace.off();
+        listMethodActorsDirectlyReferencedBy(targetMethod);
     }
 
     static int c;
@@ -176,14 +168,10 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
             }
         };
         initializeClassInTarget(MaxineVM.class);
-        MaxineVM.usingTarget(new Runnable() {
-            public void run() {
-                Trace.on(1);
-                final TargetMethod targetMethod = compileMethod(r.getClass(), "run", SignatureDescriptor.create(void.class));
-                Trace.off();
-                listMethodActorsDirectlyReferencedBy(targetMethod);
-            }
-        });
+        Trace.on(1);
+        final TargetMethod targetMethod = compileMethod(r.getClass(), "run", SignatureDescriptor.create(void.class));
+        Trace.off();
+        listMethodActorsDirectlyReferencedBy(targetMethod);
     }
     public static Test suite() {
         return new AMD64TranslatorTestSetup(new TestSuite(AMD64TranslatorTest_referencedMethod.class)); // This performs the test

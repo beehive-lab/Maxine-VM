@@ -24,7 +24,7 @@ import java.io.*;
 import java.net.*;
 
 import com.sun.max.program.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * An agent that opens a socket for receiving the boot image address from the VM.

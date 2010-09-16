@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 
 import junit.extensions.*;
@@ -27,15 +29,12 @@ import junit.framework.Test;
 
 import org.junit.*;
 
-import com.sun.max.*;
 import com.sun.max.ide.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * This test closure takes care of initializing a VM environment correctly. In particular, it ensures
@@ -45,34 +44,20 @@ import com.sun.max.vm.prototype.*;
  */
 public class VmTestSetup extends TestSetup {
 
-    private static JavaPrototype javaPrototype = null;
-
     public VmTestSetup(Test test) {
         super(test);
     }
 
-    protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host());
-    }
-
-    public static JavaPrototype javaPrototype() {
-        return javaPrototype;
+    protected void initializeVM() {
+        VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 
     private boolean setupGuard;
 
     protected void chainedSetUp() {
-        javaPrototype = createJavaPrototype();
-    }
-
-    protected JavaPrototype createJavaPrototype() {
-        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(new OptionSet());
         Trace.on(1);
-        return prototypeGenerator.createJavaPrototype(createVMConfiguration(), false);
-    }
-
-    public static PackageLoader packageLoader() {
-        return javaPrototype.packageLoader();
+        initializeVM();
+        JavaPrototype.initialize(false);
     }
 
     /**
@@ -100,7 +85,7 @@ public class VmTestSetup extends TestSetup {
     @After
     @Override
     protected final void tearDown() {
-        javaPrototype.vmConfiguration().finalizeSchemes(Phase.RUNNING);
+        vmConfig().finalizeSchemes(Phase.RUNNING);
         ClassfileReader.writeClassfilesToJar(new File(JavaProject.findVcsProjectDirectory(), "loaded-classes.jar"));
     }
 }

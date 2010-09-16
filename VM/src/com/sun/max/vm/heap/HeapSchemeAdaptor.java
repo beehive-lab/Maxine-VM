@@ -25,9 +25,11 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import com.sun.management.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
@@ -154,6 +156,26 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         }
     }
 
+    public CodeManager createCodeManager() {
+        switch (Platform.platform().operatingSystem) {
+            case LINUX: {
+                return new LowAddressCodeManager();
+            }
+
+            case GUESTVM:
+                return new FixedAddressCodeManager();
+
+            case DARWIN:
+            case SOLARIS: {
+                return new VariableAddressCodeManager();
+            }
+            default: {
+                FatalError.unimplemented();
+                return null;
+            }
+        }
+    }
+
     public boolean decreaseMemory(Size amount) {
         HeapScheme.Inspect.notifyDecreaseMemoryRequested(amount);
         return false;
@@ -170,6 +192,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     public void enableAllocationForCurrentThread() {
         FatalError.unimplemented();
+    }
+
+    public boolean isAllocationDisabledForCurrentThread() {
+        throw FatalError.unimplemented();
     }
 
     @INLINE(override = true)
@@ -206,4 +232,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         };
     }
 
+    public int reservedVirtualSpaceSize() {
+        return 0;
+    }
+
+    public BootRegionMappingConstraint bootRegionMappingConstraint() {
+        return BootRegionMappingConstraint.ANYWHERE;
+    }
 }

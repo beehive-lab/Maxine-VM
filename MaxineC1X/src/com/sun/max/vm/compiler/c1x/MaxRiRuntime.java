@@ -47,6 +47,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -179,11 +180,11 @@ public class MaxRiRuntime implements RiRuntime {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
             writer.flush();
-            final ProcessorKind processorKind = VMConfiguration.target().platform().processorKind;
+            Platform platform = Platform.platform();
             final InlineDataDecoder inlineDataDecoder = null;
             final Pointer startAddress = Pointer.fromInt(0);
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false);
-            Disassembler.disassemble(byteArrayOutputStream, code, processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+            Disassembler.disassemble(byteArrayOutputStream, code, platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }
         return "";
@@ -195,7 +196,7 @@ public class MaxRiRuntime implements RiRuntime {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
             writer.flush();
-            final ProcessorKind processorKind = VMConfiguration.target().platform().processorKind;
+            final Platform platform = Platform.platform();
             final InlineDataDecoder inlineDataDecoder = null;
             final Pointer startAddress = Pointer.fromInt(0);
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
@@ -246,7 +247,7 @@ public class MaxRiRuntime implements RiRuntime {
                 }
             };
             byte[] code = Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize());
-            Disassembler.disassemble(byteArrayOutputStream, code, processorKind.instructionSet, processorKind.dataModel.wordWidth, startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+            Disassembler.disassemble(byteArrayOutputStream, code, platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }
         return "";
@@ -389,4 +390,9 @@ public class MaxRiRuntime implements RiRuntime {
     public boolean compareConstantObjects(Object x, Object y) {
         return x == y;
     }
+
+    public boolean recordLeafMethodAssumption(RiMethod method) {
+        return ClassDirectory.recordLeafMethodAssumption(method);
+    }
+
 }

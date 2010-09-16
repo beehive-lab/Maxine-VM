@@ -258,7 +258,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         return packageName.compareTo(other.packageName);
     }
 
-    private synchronized <S extends Scheme> Class<? extends S> loadSchemeImplementation(Class<S> schemeType) {
+    public synchronized <S extends Scheme> Class<? extends S> loadSchemeImplementation(Class<S> schemeType) {
         final Class<? extends S> schemeImplementation = schemeTypeToImplementation(schemeType);
         if (schemeImplementation == null) {
             ProgramError.unexpected("could not find subclass of " + schemeType + " in " + this);

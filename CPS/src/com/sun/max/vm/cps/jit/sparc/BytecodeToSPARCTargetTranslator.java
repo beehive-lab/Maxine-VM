@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.jit.sparc;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.bytecode.BranchCondition.*;
 import static com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 import static com.sun.max.vm.stack.JitStackFrameLayout.*;
@@ -28,24 +30,23 @@ import java.io.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.asm.Assembler.Directives;
 import com.sun.max.asm.*;
-import com.sun.max.asm.Assembler.*;
-import com.sun.max.asm.InlineDataDescriptor.*;
+import com.sun.max.asm.InlineDataDescriptor.LookupTable32;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
+import com.sun.max.vm.jit.Stop.BackwardBranchBytecodeSafepoint;
 import com.sun.max.vm.jit.*;
-import com.sun.max.vm.jit.Stop.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.VMRegister.*;
+import com.sun.max.vm.runtime.VMRegister.Role;
 import com.sun.max.vm.runtime.sparc.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -150,14 +151,14 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
          * to better factor this out.
          */
         final Class<TargetABI<GPR, FPR>> type = null;
-        TARGET_ABI = Utils.cast(type, VMConfiguration.target().targetABIsScheme().jitABI);
+        TARGET_ABI = Utils.cast(type, vmConfig().targetABIsScheme().jitABI);
         CPU_FRAME_POINTER = TARGET_ABI.registerRoleAssignment.integerRegisterActingAs(Role.CPU_FRAME_POINTER);
         PROLOGUE_SCRATCH_REGISTER = TARGET_ABI.scratchRegister();
 
-        SAFEPOINT_TEMPLATE = VMConfiguration.target().safepoint.code;
+        SAFEPOINT_TEMPLATE = vmConfig().safepoint.code;
         assert SAFEPOINT_TEMPLATE.length == InstructionSet.SPARC.instructionWidth;
-        final Endianness endianness = VMConfiguration.target().platform().processorKind.dataModel.endianness;
-        final SPARCAssembler asm = SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind.dataModel.wordWidth);
+        final Endianness endianness = platform().endianness();
+        final SPARCAssembler asm = SPARCAssembler.createAssembler(platform().wordWidth());
         asm.nop();
         NOP_TEMPLATE = toByteArrayAndReset(asm);
 
@@ -364,7 +365,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         final int stackAmountInBytes = jitStackFrameLayout.sizeOfParameters() + CALL_SAVE_AREA_OFFSET_TO_STACK;
         assert SPARCAssembler.isSimm13(stackAmountInBytes) : "must be imm13";
 
-        final int offsetToCallSaveArea = VMConfiguration.target().targetABIsScheme().jitABI.alignFrameSize(SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE + jitStackFrameLayout.sizeOfTemplateSlots()) -
+        final int offsetToCallSaveArea = vmConfig().targetABIsScheme().jitABI.alignFrameSize(SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE + jitStackFrameLayout.sizeOfTemplateSlots()) -
                         SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE;
 
         asm.reset();

@@ -20,6 +20,9 @@
  */
 package test.com.sun.max.vm.cps.tir;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 
 import com.sun.max.asm.*;
@@ -34,10 +37,10 @@ import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
 
 public class HotpathExecutor implements JavaExecHarness.Executor {
@@ -133,23 +136,18 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
     // Checkstyle: stop
     public static void setUp() {
         Console.out().println(Color.LIGHTGREEN, "Initializing ...");
-        final PrototypeGenerator generator = new PrototypeGenerator(optionSet);
+        VMConfigurator vm = new VMConfigurator(optionSet);
         Trace.addTo(optionSet);
-        final JavaPrototype javaPrototype = generator.createJavaPrototype(createVMConfiguration(), false);
-        javaPrototype.vmConfiguration().initializeSchemes(Phase.RUNNING);
-        javaPrototype.vmConfiguration().bootCompilerScheme().compileSnippets();
+        vm.create(true);
+        JavaPrototype.initialize(false);
+        vmConfig().initializeSchemes(Phase.RUNNING);
+        vmConfig().bootCompilerScheme().compileSnippets();
 
-        Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + VMConfiguration.target().bootCompilerScheme().toString());
+        Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + vmConfig().bootCompilerScheme().toString());
     }
 
-    protected static VMConfiguration createVMConfiguration() {
-        //return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
-        //                    new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package());
-
-        //return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64),
-        //          new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package());
-
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64),
-                        new com.sun.max.vm.cps.b.c.d.Package());
+    protected static void createVMConfiguration() {
+        Platform.set(platform().constrainedByInstructionSet(InstructionSet.SPARC));
+        VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.d.Package());
     }
 }

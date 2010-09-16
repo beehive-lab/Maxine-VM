@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.cps.eir.sparc;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
@@ -32,7 +34,7 @@ import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.sparc.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.sparc.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * @author Laurent Daynes
@@ -41,14 +43,14 @@ public class SPARCEirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
 
     public SPARCEirTranslatorTestSetup(Test test) {
         super(test);
-        System.setProperty(Prototype.ENDIANNESS_PROPERTY, Endianness.BIG.name());
-        System.setProperty(Prototype.OPERATING_SYSTEM_PROPERTY, OperatingSystem.SOLARIS.name());
-        System.setProperty(Prototype.WORD_WIDTH_PROPERTY, String.valueOf(WordWidth.BITS_64.numberOfBits));
-        System.setProperty(Prototype.INSTRUCTION_SET_PROPERTY, InstructionSet.SPARC.name());
+        System.setProperty(Platform.ENDIANNESS_PROPERTY, Endianness.BIG.name());
+        System.setProperty(Platform.OPERATING_SYSTEM_PROPERTY, OperatingSystem.SOLARIS.name());
+        System.setProperty(Platform.WORD_WIDTH_PROPERTY, String.valueOf(WordWidth.BITS_64.numberOfBits));
+        System.setProperty(Platform.INSTRUCTION_SET_PROPERTY, InstructionSet.SPARC.name());
     }
 
     public static SPARCEirGeneratorScheme eirGeneratorScheme() {
-        return (SPARCEirGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
+        return (SPARCEirGeneratorScheme) vmConfig().bootCompilerScheme();
     }
 
     public static SPARCEirGenerator eirGenerator() {
@@ -60,8 +62,9 @@ public class SPARCEirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     }
 
     @Override
-    protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.SPARC), new com.sun.max.vm.cps.b.c.d.e.sparc.Package());
+    protected void initializeVM() {
+        Platform.set(platform().constrainedByInstructionSet(InstructionSet.SPARC));
+        VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.d.e.sparc.Package());
     }
 
     @Override

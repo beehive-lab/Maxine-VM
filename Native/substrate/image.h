@@ -52,6 +52,9 @@
     f(codeSize) /* multiple of 'pageSize'  */ \
     f(dynamicHeapRegionsArrayOffset) \
     f(auxiliarySpaceSize) /* Some extra space that the substrate allocates by malloc(). Used e.g. for the primordial card table.  */ \
+    f(reservedVirtualSpaceSize) /* Amount of contiguous virtual space to reserve at boot image load-time  */ \
+    f(reservedVirtualSpaceFieldOffset) /* offset where to store the address of the reserved contiguous virtual space, if any*/ \
+    f(bootRegionMappingConstraint) \
     f(threadLocalsListHeadOffset) /* See the comment for the 'threadLocalsListHead' field in the VmThreadMap class.  */ \
     f(primordialThreadLocalsOffset) \
     f(threadLocalsAreaSize) /* The size of a thread locals area.  */ \
@@ -76,7 +79,7 @@
 
 /**
  *  ATTENTION: this struct and the below items must match
- *             'com.sun.max.vm.prototype.BootImage.Header'.
+ *             'com.sun.max.vm.hosted.BootImage.Header'.
  */
 typedef struct image_Header {
    IMAGE_HEADER_FIELDS(DEFINE_IMAGE_HEADER_FIELD)
@@ -90,7 +93,7 @@ typedef struct image_Header {
 extern image_Header image_header(void);
 
 /*
- *  ATTENTION: this must match 'com.sun.max.vm.prototype.BootImage.StringInfo'.
+ *  ATTENTION: this must match 'com.sun.max.vm.hosted.BootImage.StringInfo'.
  */
 typedef struct image_StringInfo {
     char *buildLevel;
@@ -104,6 +107,7 @@ typedef struct image_StringInfo {
     char *heapPackageName;
     char *monitorPackageName;
     char *compilerPackageName;
+    char *compilationPackageName;
     char *jitPackageName;
     char *trampolinePackageName;
     char *targetABIsPackageName;
@@ -118,7 +122,7 @@ typedef struct image_StringInfo {
 extern image_StringInfo image_stringInfo(void);
 
 /**
- * ATTENTION: this struct must match 'com.sun.max.vm.prototype.BootImage.Trailer'.
+ * ATTENTION: this struct must match 'com.sun.max.vm.hosted.BootImage.Trailer'.
  */
 typedef struct image_Trailer {
     jint randomID;

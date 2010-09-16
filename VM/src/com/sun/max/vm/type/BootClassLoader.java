@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.type;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -117,7 +119,7 @@ public final class BootClassLoader extends ClassLoader {
     }
 
     public void loadJavaAndZipNativeLibraries(String javaLibraryPath, String zipLibraryPath) {
-        if (VMConfiguration.hostOrTarget().platform().operatingSystem == OperatingSystem.GUESTVM) {
+        if (vmConfig().platform.operatingSystem == OperatingSystem.GUESTVM) {
             // no native libraries in GuestVM
             return;
         }
@@ -125,7 +127,7 @@ public final class BootClassLoader extends ClassLoader {
         loadNativeLibrary(javaLibraryPath, "java");
         loadNativeLibrary(zipLibraryPath, "zip");
 
-        VMConfiguration.hostOrTarget().runScheme().runNativeInitializationMethods();
+        vmConfig().runScheme().runNativeInitializationMethods();
     }
 
     @HOSTED_ONLY

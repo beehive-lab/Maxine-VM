@@ -55,6 +55,7 @@ public class MaxineTesterConfiguration {
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapoTests = new LinkedList<String>();
     static final List<String> zeeSpecjvm98Tests = new LinkedList<String>();
+    static final List<String> zeeSpecjvm2008Tests = new LinkedList<String>();
     static final List<String> zeeShootoutTests = new LinkedList<String>();
     static final List<String> zeeMaxvmConfigs = new LinkedList<String>();
 
@@ -133,6 +134,45 @@ public class MaxineTesterConfiguration {
         specjvm98("_222_mpegaudio");
         specjvm98("_227_mtrt");
         specjvm98("_228_jack");
+
+        specjvm2008("startup.helloworld");
+        specjvm2008("startup.compiler.compiler");
+        specjvm2008("startup.compiler.sunflow");
+        specjvm2008("startup.compress");
+        specjvm2008("startup.crypto.aes");
+        specjvm2008("startup.crypto.rsa");
+        specjvm2008("startup.crypto.signverify");
+        specjvm2008("startup.mpegaudio");
+        specjvm2008("startup.scimark.fft");
+        specjvm2008("startup.scimark.lu");
+        specjvm2008("startup.scimark.monte_carlo");
+        specjvm2008("startup.scimark.sor");
+        specjvm2008("startup.scimark.sparse");
+        specjvm2008("startup.serial");
+        specjvm2008("startup.sunflow");
+        specjvm2008("startup.xml.transform");
+        specjvm2008("startup.xml.validation");
+        specjvm2008("compiler.compiler");
+        specjvm2008("compiler.sunflow");
+        specjvm2008("compress");
+        specjvm2008("crypto.aes");
+        specjvm2008("crypto.rsa");
+        specjvm2008("crypto.signverify");
+        specjvm2008("derby", FAIL_ALL);
+        specjvm2008("mpegaudio");
+        specjvm2008("scimark.fft.large");
+        specjvm2008("scimark.lu.large");
+        specjvm2008("scimark.sor.large");
+        specjvm2008("scimark.sparse.large");
+        specjvm2008("scimark.fft.small");
+        specjvm2008("scimark.lu.small");
+        specjvm2008("scimark.sor.small");
+        specjvm2008("scimark.sparse.small");
+        specjvm2008("scimark.monte_carlo");
+        specjvm2008("serial", FAIL_ALL);
+        specjvm2008("sunflow");
+        specjvm2008("xml.transform");
+        specjvm2008("xml.validation");
 
         shootout("ackermann",       "10");
         shootout("ary",             "10000", "300000");
@@ -262,6 +302,11 @@ public class MaxineTesterConfiguration {
         addExpectedResults("SpecJVM98 " + name, results);
     }
 
+    private static void specjvm2008(String name, Expectation... results) {
+        zeeSpecjvm2008Tests.add(name);
+        addExpectedResults("SPECjvm2008 " + name, results);
+    }
+
     private static void shootout(String name, Object... inputs) {
         zeeShootoutTests.add(name);
         addExpectedResults("Shootout " + name);
@@ -312,8 +357,8 @@ public class MaxineTesterConfiguration {
     }
 
     public static String defaultJavaTesterConfigs() {
-        final Platform platform = Platform.host();
-        if (platform.processorKind.processorModel == ProcessorModel.SPARCV9) {
+        final Platform platform = Platform.platform();
+        if (platform.processorModel() == ProcessorModel.SPARCV9) {
             return "cpscps,cpsjit,jitcps,jitjit";
         }
         return "cpsc1x,cpscps,jitcps,cpsjit,jitjit";
@@ -322,7 +367,7 @@ public class MaxineTesterConfiguration {
     public static boolean isSupported(String config) {
         Expectation[] expect = configResultMap.get(config);
         if (expect != null) {
-            final Platform platform = Platform.host();
+            final Platform platform = Platform.platform();
             for (Expectation e : expect) {
                 if (e.matches(platform)) {
                     if (e.expectedResult == ExpectedResult.PASS) {
@@ -385,7 +430,7 @@ public class MaxineTesterConfiguration {
     public static ExpectedResult expectedResult(String testName, String config) {
         final Expectation[] expect = resultMap.get(testName);
         if (expect != null) {
-            final Platform platform = Platform.host();
+            final Platform platform = Platform.platform();
             for (Expectation e : expect) {
                 if (e.matches(platform)) {
                     return e.expectedResult;
@@ -449,7 +494,7 @@ public class MaxineTesterConfiguration {
 
         public boolean matches(Platform platform) {
             if (os == null || os == platform.operatingSystem) {
-                if (processor == null || processor == platform.processorKind.processorModel) {
+                if (processor == null || processor == platform.processorModel()) {
                     return true;
                 }
             }

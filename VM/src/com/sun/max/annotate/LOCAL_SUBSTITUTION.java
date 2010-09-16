@@ -31,7 +31,7 @@ import com.sun.max.vm.classfile.*;
  * Indicates that the annotated method is a substitute for another method (the <i>substitutee</i>) in the same class.
  * The substitutee must have exactly the same signature as the local substitute and the name of the local substitute must be the name
  * of the substitutee concatenated with the suffix "_". Any execution (or compilation) of the substitutee will be
- * replaced with an execution (or compilation) of the local substitute in the {@linkplain MaxineVM#target() target}.
+ * replaced with an execution (or compilation) of the local substitute in the {@linkplain MaxineVM#vm() target}.
  * <p>
  * The {@link ClassfileReader} will make the substitution and assumes that the the substitutee precedes the local substitute in
  * the class file. This ordering requirement will have to be removed if the MaxineVM source code is compiled with a Java

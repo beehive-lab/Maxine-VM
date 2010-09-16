@@ -89,10 +89,11 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         final int xmmRegisterWords = 2 * xmmCount;
         final int flagRegisterWords = 1;
         final int trapNumberWords = 1;
-        TRAP_NUMBER_OFFSET = Word.size() * (generalPurposeRegisterWords + xmmRegisterWords);
-        FLAGS_OFFSET = TRAP_NUMBER_OFFSET + Word.size();
-        TRAP_STATE_SIZE_WITHOUT_RIP = TRAP_NUMBER_OFFSET + (Word.size() * (flagRegisterWords + trapNumberWords));
-        TRAP_STATE_SIZE_WITH_RIP = TRAP_STATE_SIZE_WITHOUT_RIP + Word.size();
+        final int wordSize = 8;
+        TRAP_NUMBER_OFFSET = wordSize * (generalPurposeRegisterWords + xmmRegisterWords);
+        FLAGS_OFFSET = TRAP_NUMBER_OFFSET + wordSize;
+        TRAP_STATE_SIZE_WITHOUT_RIP = TRAP_NUMBER_OFFSET + (wordSize * (flagRegisterWords + trapNumberWords));
+        TRAP_STATE_SIZE_WITH_RIP = TRAP_STATE_SIZE_WITHOUT_RIP + wordSize;
     }
 
     public AMD64TrapStateAccess(VMConfiguration vmConfiguration) {

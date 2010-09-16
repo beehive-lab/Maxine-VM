@@ -37,6 +37,6 @@ public class Package extends VMPackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return vmConfiguration.bootCompilerScheme() instanceof SPARCEirGeneratorScheme &&
-               vmConfiguration.platform().operatingSystem == OperatingSystem.SOLARIS;
+               vmConfiguration.platform.operatingSystem == OperatingSystem.SOLARIS;
     }
 }

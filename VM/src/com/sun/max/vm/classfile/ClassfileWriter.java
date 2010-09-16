@@ -32,7 +32,6 @@ import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -41,7 +40,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -736,7 +735,7 @@ public class ClassfileWriter {
         final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exits.");
 
         Trace.addTo(options);
-        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
+        VMConfigurator vmConfigurator = new VMConfigurator(options);
         options.parseArguments(args);
 
         if (helpOption.getValue()) {
@@ -749,7 +748,9 @@ public class ClassfileWriter {
             options.printHelp(System.out, 80);
             return;
         }
-        prototypeGenerator.createJavaPrototype(VMConfigurations.createStandard(BuildLevel.PRODUCT, Platform.host()), false);
+
+        vmConfigurator.create(true);
+        JavaPrototype.initialize(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes
 
         final Map<String, byte[]> classNameToClassfileMap = new LinkedHashMap<String, byte[]>();

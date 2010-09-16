@@ -329,7 +329,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             emitXir(xir.genSafepoint(site(x)), x, stateFor(x, state), null, false);
         }
 
-        // emit phi-instruction move after safepoint since this simplifies
+        // emit phi-instruction moves after safepoint since this simplifies
         // describing the state at the safepoint.
         moveToPhi(x.stateAfter());
 

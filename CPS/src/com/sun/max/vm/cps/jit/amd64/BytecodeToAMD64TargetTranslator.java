@@ -21,17 +21,18 @@
 package com.sun.max.vm.cps.jit.amd64;
 
 import static com.sun.max.asm.x86.Scale.*;
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.bytecode.BranchCondition.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.asm.Assembler.Directives;
 import com.sun.max.asm.*;
-import com.sun.max.asm.Assembler.*;
-import com.sun.max.asm.InlineDataDescriptor.*;
+import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
+import com.sun.max.asm.InlineDataDescriptor.LookupTable32;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.bytecode.*;
@@ -40,8 +41,8 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.amd64.*;
+import com.sun.max.vm.jit.Stop.BackwardBranchBytecodeSafepoint;
 import com.sun.max.vm.jit.*;
-import com.sun.max.vm.jit.Stop.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -235,7 +236,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 // Note that the safepoint takes place once the stack frame is in the same state as that of the target bytecode.
                 // The reference maps of the target should be used when at this safepoint.
                 final int stopPosition = codeBuffer.currentPosition();
-                codeBuffer.emit(VMConfiguration.hostOrTarget().safepoint.code);
+                codeBuffer.emit(vmConfig().safepoint.code);
                 emitSafepoint(new BackwardBranchBytecodeSafepoint(stopPosition, opcodeBci));
             }
             // Compute relative offset.
@@ -430,7 +431,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
          * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
          */
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        TARGET_ABI = Utils.cast(type, VMConfiguration.target().targetABIsScheme().jitABI);
+        TARGET_ABI = Utils.cast(type, vmConfig().targetABIsScheme().jitABI);
         // Initialization of the few hand-crafted templates
         final byte rel8 = 0;
         final int rel32 = 0;

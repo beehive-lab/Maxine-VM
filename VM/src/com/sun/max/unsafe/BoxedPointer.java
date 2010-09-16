@@ -22,6 +22,7 @@ package com.sun.max.unsafe;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -33,6 +34,11 @@ import com.sun.max.vm.reference.*;
  */
 @HOSTED_ONLY
 public final class BoxedPointer extends Pointer implements Boxed {
+
+    static {
+        // Ensure the native code is loaded
+        Prototype.loadHostedLibrary();
+    }
 
     // ATTENTION: this field name must match the corresponding declaration in "pointer.c"!
     private long nativeWord;

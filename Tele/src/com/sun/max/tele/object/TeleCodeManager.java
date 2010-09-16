@@ -23,7 +23,7 @@ package com.sun.max.tele.object;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 
 /**

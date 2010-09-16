@@ -28,7 +28,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.*;
 import com.sun.max.tele.interpreter.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.test.*;
 import com.sun.max.vm.value.*;
 
