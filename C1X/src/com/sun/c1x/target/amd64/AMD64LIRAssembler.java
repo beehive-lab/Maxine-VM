@@ -1692,8 +1692,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case Jmp: {
-                    Label label = labels[((XirLabel) inst.extra).index];
-                    masm.jmp(label);
+                    if (inst.extra instanceof XirLabel) {
+                        Label label = labels[((XirLabel) inst.extra).index];
+                        masm.jmp(label);
+                    } else {
+                        masm.directJmp(inst.extra);
+                    }
                     break;
                 }
                 case Jeq: {

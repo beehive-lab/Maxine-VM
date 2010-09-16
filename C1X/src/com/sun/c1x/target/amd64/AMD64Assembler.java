@@ -473,6 +473,15 @@ public abstract class AMD64Assembler extends AbstractAssembler {
         return before;
     }
 
+    public final int directJmp(Object target) {
+        int before = codeBuffer.position();
+        emitByte(0xE9);
+        emitInt(0);
+        int after = codeBuffer.position();
+        recordDirectCall(before, after, target, null);
+        return before;
+    }
+
     public final int indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
         int before = codeBuffer.position();
         int encode = prefixAndEncode(dst.encoding);

@@ -384,4 +384,9 @@ public class MaxRiRuntime implements RiRuntime {
         }
         return snippets;
     }
+
+    @Override
+    public boolean compareConstantObjects(Object x, Object y) {
+        return x == y;
+    }
 }

@@ -189,4 +189,11 @@ public interface RiRuntime {
      * @return the result of folding the operation if it is foldable, {@code null} otherwise
      */
     CiConstant foldWordOperation(int opcode, CiMethodInvokeArguments args);
+
+    /**
+     * Used by the canonicalizer to compare objects, since a given runtime might not want to expose the real objects to the compiler.
+     * 
+     * @return true if the two parameters represent the same runtime object, false otherwise
+     */
+    boolean compareConstantObjects(Object x, Object y);
 }

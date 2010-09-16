@@ -46,6 +46,8 @@ public abstract class CiXirAssembler {
     protected final List<XirTemp> temps = new ArrayList<XirTemp>(5);
     protected final List<XirConstant> constants = new ArrayList<XirConstant>(5);
     protected final List<XirMark> marks = new ArrayList<XirMark>(5);
+    
+    protected int outgoingStackSize = 0;
 
     /**
      * Increases by one for every {@link XirOperand operand} created.
@@ -263,6 +265,7 @@ public abstract class CiXirAssembler {
         temps.clear();
         constants.clear();
         marks.clear();
+        outgoingStackSize = 0;
     }
 
     /**
@@ -638,6 +641,10 @@ public abstract class CiXirAssembler {
         append(new XirInstruction(CiKind.Void, l, Jmp, null));
     }
 
+    public void jmpRuntime(Object rt) {
+        append(new XirInstruction(CiKind.Void, rt, Jmp, null));
+    }
+
     public void jeq(XirLabel l, XirOperand a, XirOperand b) {
         jcc(Jeq, l, a, b);
     }
@@ -808,6 +815,10 @@ public abstract class CiXirAssembler {
 
     public XirConstant o(Object obj) {
         return createConstant(CiConstant.forObject(obj));
+    }
+    
+    public void reserveOutgoingStack(int size) {
+        outgoingStackSize = Math.max(outgoingStackSize, size);
     }
 
     /**

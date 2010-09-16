@@ -41,9 +41,10 @@ public class XirSnippet {
     public final Map<XirMark, Mark> marks;
     
     public XirSnippet(XirTemplate template, XirArgument... inputs) {
+        assert template != null;
         this.template = template;
         this.arguments = inputs;
-        this.marks = template.marks.length > 0 ? new HashMap<XirMark, Mark>() : null;
+        this.marks = (template.marks != null && template.marks.length > 0) ? new HashMap<XirMark, Mark>() : null;
         assert template != null;
         assert assertArgumentsCorrect();
     }
@@ -85,7 +86,7 @@ public class XirSnippet {
     	sb.append("(");
     	for (XirArgument a : arguments) {
     	    sb.append(" ");
-    	    sb.append(a.toString());
+    	    sb.append(a);
     	}
 
     	sb.append(" )");
