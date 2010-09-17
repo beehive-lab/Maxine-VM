@@ -22,7 +22,7 @@ package jtt.micro;
 
 /*
  * @Harness: java
- * @Runs: null=7878D
+ * @Runs: 0=7878
  */
 public class ReferenceMap01 {
 
