@@ -57,8 +57,7 @@ public @interface SUBSTITUTE {
     boolean conditional() default false;
 
     /**
-     * Specifies the substitution of a constructor.
-     * @return
+     * Specifies the substitution of a constructor. The substitute method can have an arbitrary name but must have a void result.
      */
     boolean constructor() default false;
 }
