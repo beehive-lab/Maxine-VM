@@ -1051,7 +1051,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         Condition ifcond = i.condition();
         if (l.isConstant() && r.isConstant()) {
             // fold comparisons between constants and convert to Goto
-            Boolean result = ifcond.foldCondition(l.asConstant(), r.asConstant());
+            Boolean result = ifcond.foldCondition(l.asConstant(), r.asConstant(), runtime);
             if (result != null) {
                 setCanonical(new Goto(i.successor(result), i.stateAfter(), i.isSafepoint()));
                 return;
@@ -1087,9 +1087,9 @@ public class Canonicalizer extends DefaultValueVisitor {
         Value l = i.x();
         CompareOp cmp = (CompareOp) l;
         boolean unorderedIsLess = cmp.opcode == FCMPL || cmp.opcode == DCMPL;
-        BlockBegin lssSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(-1), rtc));
-        BlockBegin eqlSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(0), rtc));
-        BlockBegin gtrSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(1), rtc));
+        BlockBegin lssSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(-1), rtc, runtime));
+        BlockBegin eqlSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(0), rtc, runtime));
+        BlockBegin gtrSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(1), rtc, runtime));
         BlockBegin nanSucc = unorderedIsLess ? lssSucc : gtrSucc;
         // Note: At this point all successors (lssSucc, eqlSucc, gtrSucc, nanSucc) are
         //       equal to x->tsux() or x->fsux(). Furthermore, nanSucc equals either

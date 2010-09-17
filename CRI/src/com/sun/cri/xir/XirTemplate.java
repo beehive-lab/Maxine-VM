@@ -112,13 +112,15 @@ public class XirTemplate {
     
     public final XirMark[] marks;
     
+    public final int outgoingStackSize;
+    
     
     /**
      * The {@link GlobalFlags} associated with the template.
      */
     public final int flags;
 
-    public XirTemplate(String name, int variableCount, boolean allocateResultOperand, XirOperand resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constantValues, int flags, XirTemplate[] calleeTemplates, XirMark[] marks) {
+    public XirTemplate(String name, int variableCount, boolean allocateResultOperand, XirOperand resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constantValues, int flags, XirTemplate[] calleeTemplates, XirMark[] marks, int outgoingStackSize) {
     	this.name = name;
     	this.variableCount = variableCount;
     	this.resultOperand = resultOperand;
@@ -132,6 +134,7 @@ public class XirTemplate {
         this.constants = constantValues;
         this.calleeTemplates = calleeTemplates;
         this.marks = marks;
+        this.outgoingStackSize = outgoingStackSize;
 
         assert fastPath != null;
         assert labels != null;

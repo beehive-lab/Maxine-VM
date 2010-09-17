@@ -1644,7 +1644,7 @@ public final class GraphBuilder {
 
     private Value synchronizedObject(FrameState curState2, RiMethod target) {
         if (isStatic(target.accessFlags())) {
-            Constant classConstant = Constant.forObject(target.holder().javaClass());
+            Constant classConstant = new Constant(target.holder().getEncoding(Representation.JavaClass));
             return appendWithoutOptimization(classConstant, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         } else {
             return curState2.localAt(0);

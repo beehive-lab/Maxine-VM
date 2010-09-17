@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package jtt.micro;
 
-import java.util.*;
-
-import com.sun.c1x.ir.*;
-
-/**
- *
- * @author Thomas Wuerthinger
+/*
+ * @Harness: java
+ * @Runs: 0=7878
  */
-public class ExceptionInfo {
+public class ReferenceMap01 {
 
-    public final int codeOffset;
-    public final List<ExceptionHandler> exceptionHandlers;
-    public final int bci;
+    public static Integer val1 = new Integer(3);
+    public static Integer val2 = new Integer(4);
 
-    public ExceptionInfo(int pcOffset, List<ExceptionHandler> exceptionHandlers, int bci) {
-        this.codeOffset = pcOffset;
-        this.exceptionHandlers = exceptionHandlers;
-        this.bci = bci;
+    private static String test(String[] args) {
+        args = new String[] {"78"};
+        Integer i1 = new Integer(1);
+        Integer i2 = new Integer(2);
+        Integer i3 = val1;
+        Integer i4 = val2;
+        Integer i5 = new Integer(5);
+        Integer i6 = new Integer(6);
+        Integer i7 = new Integer(7);
+        Integer i8 = new Integer(8);
+        Integer i9 = new Integer(9);
+        Integer i10 = new Integer(10);
+        Integer i11 = new Integer(11);
+        Integer i12 = new Integer(12);
+
+        System.gc();
+        int sum = i1 + i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9 + i10 + i11 + i12;
+        return args[0] + sum;
     }
+
+    public static int test(int num) {
+        return Integer.valueOf(test(new String[] {"asdf"}));
+    }
+
 }

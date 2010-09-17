@@ -726,6 +726,8 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         {
             // unresolved invokeinterface
+            // TODO This uses seven registers, combined with lots of parameters this can lead to heavy spilling.
+            // Some of the temps could be reused if there was a way to use them as another CiKind.
             asm.restart();
             XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object); // receiver object
             XirParameter guard = asm.createInputParameter("guard", CiKind.Object); // guard

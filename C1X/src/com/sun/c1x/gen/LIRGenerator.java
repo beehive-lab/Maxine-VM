@@ -471,10 +471,20 @@ public abstract class LIRGenerator extends ValueVisitor {
                 break;
         }
 
-        CiValue destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
+        CiValue destinationAddress = null;
+        // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
+        // implicit calling convention between the XirSnippet and the call.
+        if (!C1XOptions.invokeinterfaceTemplatePos) {
+            destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
+        }
+
         CiValue resultOperand = resultOperandFor(x.kind);
         CiCallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments());
+
+        if (C1XOptions.invokeinterfaceTemplatePos) {
+            destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
+        }
 
         // emit direct or indirect call to the destination address
         if (destinationAddress instanceof CiConstant) {
@@ -754,6 +764,8 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected CiValue emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult) {
         final CiValue[] operands = new CiValue[snippet.template.variableCount];
+
+        compilation.frameMap().reserveOutgoing(snippet.template.outgoingStackSize);
 
         XirOperand resultOperand = snippet.template.resultOperand;
 
@@ -1945,6 +1957,12 @@ public abstract class LIRGenerator extends ValueVisitor {
             current = v;
             return this;
         }
+
+        @Override
+        public String toString() {
+            return "XirSupport<" + current + ">";
+        }
+
     }
 
 }

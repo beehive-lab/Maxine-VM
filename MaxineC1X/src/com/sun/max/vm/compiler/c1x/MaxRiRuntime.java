@@ -386,6 +386,11 @@ public class MaxRiRuntime implements RiRuntime {
         return snippets;
     }
 
+    @Override
+    public boolean compareConstantObjects(Object x, Object y) {
+        return x == y;
+    }
+
     public boolean recordLeafMethodAssumption(RiMethod method) {
         return ClassDirectory.recordLeafMethodAssumption(method);
     }

@@ -78,7 +78,7 @@ public abstract class AbstractAssembler {
                 for (ExceptionHandler handler : ei.exceptionHandlers) {
                     int entryOffset = handler.entryCodeOffset();
                     RiType caughtType = handler.handler.catchKlass();
-                    targetMethod.recordExceptionHandler(codeOffset, ei.bci, ei.scopeLevel, entryOffset, handler.handlerBCI(), caughtType);
+                    targetMethod.recordExceptionHandler(codeOffset, ei.bci, handler.scopeCount(), entryOffset, handler.handlerBCI(), caughtType);
                 }
             }
         }
@@ -137,7 +137,7 @@ public abstract class AbstractAssembler {
     public void recordExceptionHandlers(int pcOffset, LIRDebugInfo info) {
         if (info != null) {
             if (info.exceptionHandlers != null) {
-                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers, info.bci, info.scopeDebugInfo == null ? 0 : info.scopeDebugInfo.scope.level));
+                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers, info.bci));
             }
         }
     }
