@@ -279,7 +279,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
                 } else if (command.equals("imagefsprefix")) {
                     doImagefsPrefix(argument);
                 } else {
-                    throw new Exception("unknown command at line " + lineNumber + " in file " + fileList.getName());
+                    ProgramError.unexpected("unknown image extension command " + command + " at line " + lineNumber + " in file " + fileList.getName());
                 }
                 lineNumber++;
             }
