@@ -46,7 +46,7 @@ import java.lang.annotation.*;
 public @interface SUBSTITUTE {
 
     /**
-     * The name of the substitutee. If thie element is {@code ""}, then the name of the substitute method is used.
+     * The name of the substitutee. If the element is {@code ""}, then the name of the substitute method is used.
      */
     String value() default "";
 
@@ -55,4 +55,10 @@ public @interface SUBSTITUTE {
      * in JDK versions for private methods.
      */
     boolean conditional() default false;
+
+    /**
+     * Specifies the substitution of a constructor.
+     * @return
+     */
+    boolean constructor() default false;
 }
