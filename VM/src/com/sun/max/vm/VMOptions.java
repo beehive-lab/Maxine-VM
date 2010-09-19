@@ -53,9 +53,9 @@ import com.sun.max.vm.reference.*;
  */
 public final class VMOptions {
 
-    static final class StringFieldOption extends VMStringOption {
+    public static final class StringFieldOption extends VMStringOption {
 
-        private final Field field;
+        public final Field field;
 
         StringFieldOption(String prefix, boolean space, String defaultValue, String help, Field field) {
             super(prefix, space, defaultValue, help);
@@ -78,9 +78,9 @@ public final class VMOptions {
         }
     }
 
-    static final class FloatFieldOption extends VMFloatOption {
+    public static final class FloatFieldOption extends VMFloatOption {
 
-        private final Field field;
+        public final Field field;
 
         FloatFieldOption(String prefix, float defaultValue, String help, Field field) {
             super(prefix, defaultValue, help);
@@ -103,9 +103,9 @@ public final class VMOptions {
         }
     }
 
-    static final class IntFieldOption extends VMIntOption {
+    public static final class IntFieldOption extends VMIntOption {
 
-        private final Field field;
+        public final Field field;
 
         IntFieldOption(String prefix, int defaultValue, String help, Field field) {
             super(prefix, defaultValue, help);
@@ -128,9 +128,9 @@ public final class VMOptions {
         }
     }
 
-    static final class SizeFieldOption extends VMSizeOption {
+    public static final class SizeFieldOption extends VMSizeOption {
 
-        private final Field field;
+        public final Field field;
 
         SizeFieldOption(String prefix, Size defaultValue, String help, Field field) {
             super(prefix, defaultValue, help);
@@ -164,9 +164,9 @@ public final class VMOptions {
         }
     }
 
-    static final class BooleanFieldOption extends VMBooleanXXOption {
+    public static final class BooleanFieldOption extends VMBooleanXXOption {
 
-        private final Field field;
+        public final Field field;
 
         BooleanFieldOption(String prefix, String name, String help, Field field) {
             super(prefix, name, help);
