@@ -56,8 +56,23 @@ static Address theJavaTrapStub;
 static boolean traceTraps = false;
 
 #if !os_GUESTVMXEN
-static sigset_t normalThreadSignalMask;
-static sigset_t vmOperationThreadSignalMask;
+
+/**
+ * All signals.
+ */
+static sigset_t allSignals;
+
+/**
+ * The signals directly handled by the VM.
+ */
+static sigset_t vmSignals;
+
+/**
+ * The signals directly handled by the VM as well as those
+ * that can be dispatched by SignalDispatcher.java.
+ */
+static sigset_t vmAndDefaultSignals;
+
 #endif
 
 int getTrapNumber(int signal) {
@@ -89,9 +104,10 @@ int getTrapNumber(int signal) {
 void setCurrentThreadSignalMask(boolean isVmOperationThread) {
 #if !os_GUESTVMXEN
     if (isVmOperationThread) {
-        thread_setSignalMask(SIG_SETMASK, &vmOperationThreadSignalMask, NULL);
+        thread_setSignalMask(SIG_SETMASK, &vmAndDefaultSignals, NULL);
     } else {
-        thread_setSignalMask(SIG_SETMASK, &normalThreadSignalMask, NULL);
+        thread_setSignalMask(SIG_BLOCK, &allSignals, NULL);
+        thread_setSignalMask(SIG_UNBLOCK, &vmSignals, NULL);
     }
 #endif
 }
@@ -320,11 +336,20 @@ static void logTrap(int signal, Address ip, Address fault, ThreadLocals disabled
     log_unlock();
 }
 
-static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
+/**
+ * The handler for signals dealt with by Trap.trapStub().
+ */
+static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
     int primordial = 0;
     int trapNumber = getTrapNumber(signal);
     Address ip = getInstructionPointer(ucontext);
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
+
+    /* Only VM signals should get here. */
+    if (trapNumber < 0) {
+        logTrap(signal, ip, faultAddress, 0);
+        log_exit(-22, "Non VM signal %d should be handled by the Java signal handler", signal);
+    }
 
 #if isa_AMD64
     if (signal == SIGFPE && handleDivideOverflow(ucontext)) {
@@ -416,38 +441,58 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     setInstructionPointer(ucontext, theJavaTrapStub);
 }
 
-SignalHandlerFunction vmSignalHandler = (SignalHandlerFunction) globalSignalHandler;
+/**
+ * The handler for signals handled by SignalDispatcher.java.
+ */
+static void userSignalHandlerDef(int signal, SigInfo *signalInfo, UContext *ucontext) {
+    void postSignal(int signal);
+    postSignal(signal);
+}
 
-Address nativeInitialize(Address javaTrapStub) {
+/* Defined global declared in trap.h */
+SignalHandlerFunction userSignalHandler = (SignalHandlerFunction) userSignalHandlerDef;
+
+/**
+ * Implementation of com.sun.max.vm.runtime.Trap.nativeInitialize().
+ */
+void nativeTrapInitialize(Address javaTrapStub) {
     /* This function must be called on the primordial thread. */
     c_ASSERT(getThreadLocal(int, threadLocals_current(), ID) == 0);
 
     theJavaTrapStub = javaTrapStub;
-    setSignalHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
-    setSignalHandler(SIGILL, (SignalHandlerFunction) globalSignalHandler);
-    setSignalHandler(SIGFPE, (SignalHandlerFunction) globalSignalHandler);
+    setSignalHandler(SIGSEGV, (SignalHandlerFunction) vmSignalHandler);
+    setSignalHandler(SIGILL, (SignalHandlerFunction) vmSignalHandler);
+    setSignalHandler(SIGFPE, (SignalHandlerFunction) vmSignalHandler);
 
 #if !os_GUESTVMXEN
-    setSignalHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
-    setSignalHandler(SIGUSR1, (SignalHandlerFunction) globalSignalHandler);
+    setSignalHandler(SIGBUS, (SignalHandlerFunction) vmSignalHandler);
+    setSignalHandler(SIGUSR1, (SignalHandlerFunction) vmSignalHandler);
+
+    sigfillset(&allSignals);
 
     /* Save the current signal mask to apply it to the VM operation thread. */
-    thread_setSignalMask(0, NULL, &vmOperationThreadSignalMask);
+    thread_setSignalMask(0, NULL, &vmAndDefaultSignals);
 
-    /* Block all asynchronous signals for threads exception the VM operation thread. */
-    sigfillset(&normalThreadSignalMask);
-    sigdelset(&normalThreadSignalMask, SIGSEGV);
-    sigdelset(&normalThreadSignalMask, SIGBUS);
-    sigdelset(&normalThreadSignalMask, SIGILL);
-    sigdelset(&normalThreadSignalMask, SIGFPE);
-    sigdelset(&normalThreadSignalMask, SIGUSR1);
+    /* Define the VM signals mask. */
+    sigemptyset(&vmSignals);
+    sigaddset(&vmSignals, SIGSEGV);
+    sigaddset(&vmSignals, SIGBUS);
+    sigaddset(&vmSignals, SIGILL);
+    sigaddset(&vmSignals, SIGFPE);
+    sigaddset(&vmSignals, SIGUSR1);
 
     /* Let all threads be stopped by a debugger. */
-    sigdelset(&normalThreadSignalMask, SIGTRAP);
+    sigaddset(&vmSignals, SIGTRAP);
 
     /* Apply the normal thread mask to the primordial thread. */
-    thread_setSignalMask(SIG_BLOCK, &normalThreadSignalMask, NULL);
+    thread_setSignalMask(SIG_BLOCK, &allSignals, NULL);
+    thread_setSignalMask(SIG_UNBLOCK, &vmSignals, NULL);
 #endif
+}
 
-    return (Address) &traceTraps;
+/**
+ * Implementation of com.sun.max.vm.runtime.Trap.nativeSetTracing().
+ */
+void nativeSetTrapTracing(boolean flag) {
+    traceTraps = flag;
 }

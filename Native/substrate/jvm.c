@@ -1009,7 +1009,7 @@ JVM_GetStackAccessControlContext(JNIEnv *env, jclass cls) {
 
 void*
 JVM_RegisterSignal(jint sig, void* handler) {
-    void *newHandler = handler == (void *) 2 ? (void *) vmSignalHandler : handler;
+    void *newHandler = handler == (void *) 2 ? (void *) userSignalHandler : handler;
     switch (sig) {
         /* The following are already used by the VM. */
         case SIGFPE:
@@ -1020,7 +1020,7 @@ JVM_RegisterSignal(jint sig, void* handler) {
 
     void* oldHandler = setSignalHandler(sig, (SignalHandlerFunction) newHandler);
 
-    if (oldHandler == (void *) vmSignalHandler) {
+    if (oldHandler == (void *) userSignalHandler) {
         return (void *)2;
     } else {
         return oldHandler;
