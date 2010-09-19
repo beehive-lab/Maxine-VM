@@ -48,9 +48,9 @@ typedef void (*SignalHandlerFunction)(int signal, SigInfo *signalInfo, void *uco
 void* setSignalHandler(int signal, SignalHandlerFunction handler);
 
 /**
- * The handler for the signals handled directly by the VM.
+ * The handler for signals dispatched by SignalDispatcher.java.
  */
-extern SignalHandlerFunction vmSignalHandler;
+extern SignalHandlerFunction userSignalHandler;
 
 /**
  * Sets the signal mask for the current thread. The signals in the mask are those
