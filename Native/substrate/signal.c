@@ -24,28 +24,25 @@
  *
  * @author Doug Simon
  */
+#include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "c.h"
 #include "threads.h"
-#include "virtualMemory.h"
 #include "log.h"
-#include "jni.h"
-#include "os.h"
-#include "isa.h"
-#include "image.h"
-#include "trap.h"
 
 #if os_DARWIN
 #include <mach/mach.h>
 static semaphore_t signal_sem;
 #elif os_SOLARIS
+#include <synch.h>
 #define sem_post    sema_post
 #define sem_wait    sema_wait
 #define sem_init    sema_init
 #define sem_destroy sema_destroy
 #define sem_t       sema_t
 static sem_t signal_sem;
-#elif os_SOLARIS
-#include <synch.h>
 #elif os_LINUX
 #include <semaphore.h>
 static sem_t signal_sem;
