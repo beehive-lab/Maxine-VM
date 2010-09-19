@@ -1379,6 +1379,20 @@ Please enter your 'sudo' password:" \
 }
 
 #=======================================
+# 'core' command
+#=======================================
+
+core_usage="[options] <core file>"
+core_help="inspect a core file with the Inspector"
+
+function run_core() {
+    # Prepend the expanded macro to the positional parameters
+    core_file=${!#}
+    set --  --mode=attach --target=file --location=$core_file "$@"
+    run_inspect "$@"
+}
+
+#=======================================
 # 'inspectoragent' command
 #=======================================
 
