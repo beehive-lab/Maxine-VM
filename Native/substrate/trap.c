@@ -137,9 +137,9 @@ void* setSignalHandler(int signal, SignalHandlerFunction handler) {
 
     if (traceTraps || log_TRAP) {
         log_lock();
-        log_print("Registered handler ");
+        log_print("Registered handler %p [", handler);
         log_print_symbol((Address) handler);
-        log_print(" for signal %d", signal);
+        log_print("] for signal %d", signal);
         if (oldSigaction.sa_handler != NULL) {
             log_print(" replacing handler ");
             log_print_symbol((Address) oldSigaction.sa_handler);
