@@ -53,6 +53,11 @@ void* setSignalHandler(int signal, SignalHandlerFunction handler);
 extern SignalHandlerFunction userSignalHandler;
 
 /**
+ * Option controlling tracing of signal related functionality.
+ */
+extern boolean traceSignals;
+
+/**
  * Sets the signal mask for the current thread. The signals in the mask are those
  * that are blocked for the thread.
  */

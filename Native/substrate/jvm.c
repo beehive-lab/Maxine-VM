@@ -1027,11 +1027,21 @@ JVM_RegisterSignal(jint sig, void* handler) {
     }
 }
 
-
 jboolean
 JVM_RaiseSignal(jint sig) {
-#if os_SOLARIS || os_LINUX || os_DARWIN
-    raise(sig);
+    if (traceSignals) {
+        log_print("Thread %p raising signal %d\n", thread_self(), sig);
+    }
+#if os_SOLARIS || os_DARWIN
+    if (raise((int) sig) < 0) {
+        log_println("error raising signal %d in current process: %s", sig, strerror(errno));
+    }
+#elif os_LINUX
+    /* For some reason raise(3) does not work on the Linux gate machine.
+     * Instead we use kill(2) and getpid(2) explicitly. */
+    if (kill(getpid(), sig) < 0) {
+        log_println("error raising signal %d in current process: %s", sig, strerror(errno));
+    }
 #else
     UNIMPLEMENTED();
 #endif

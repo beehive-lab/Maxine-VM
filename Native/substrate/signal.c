@@ -50,7 +50,7 @@ static sem_t signal_sem;
 // no signals, so nothing necessary
 #endif
 
-static boolean traceSignals = false;
+boolean traceSignals = false;
 
 /**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.runtime.SignalDispatcher.tryPostSignal(int)'.

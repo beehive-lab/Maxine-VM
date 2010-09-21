@@ -31,7 +31,7 @@ import sun.misc.SignalHandler;
  */
 public class SignalHandling {
 
-    public static final int NUMBER_OF_SIGNALS = 30000;
+    public static final int NUMBER_OF_SIGNALS = 1000;
 
     public static final String SIGNAL_NAME = System.getProperty("signalName", "HUP");
     public static final int PER_SIGNAL_PAUSE = Integer.getInteger("perSignalPause", 0);
