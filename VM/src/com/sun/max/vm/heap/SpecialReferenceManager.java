@@ -253,7 +253,7 @@ public class SpecialReferenceManager {
      * @param phase the phase in which the VM is in
      */
     public static void initialize(Phase phase) {
-        if (phase == Phase.STARTING) {
+        if (phase == Phase.PRISTINE) {
             startReferenceHandlerThread();
             startFinalizerThread();
         }
