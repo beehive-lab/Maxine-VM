@@ -42,8 +42,8 @@ public class BcdeSPARCCompiler extends BcdeCompiler<SPARCEirGenerator> implement
 
     public BcdeSPARCCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        Platform platform = vmConfiguration.platform();
-        ProgramError.check(platform.endianess() == Endianness.BIG);
+        Platform platform = vmConfiguration.platform;
+        ProgramError.check(platform.endianness() == Endianness.BIG);
         ProgramError.check(platform.instructionSet() == InstructionSet.SPARC);
         ProgramError.check(platform.processorModel() == ProcessorModel.SPARCV9);
         ProgramError.check(platform.wordWidth() == WordWidth.BITS_64);

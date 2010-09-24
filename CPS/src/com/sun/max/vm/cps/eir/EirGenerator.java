@@ -51,12 +51,12 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
     protected EirGenerator(EirGeneratorScheme_Type eirGeneratorScheme) {
         super(eirGeneratorScheme, "EIR");
         final VMConfiguration vmConfiguration = compilerScheme().vmConfiguration();
-        final Platform platform = vmConfiguration.platform();
-        wordWidth = platform.processorKind.dataModel.wordWidth;
+        final Platform platform = vmConfiguration.platform;
+        wordWidth = platform.wordWidth();
         final MaxPackage eirPackage = new com.sun.max.vm.cps.eir.Package();
-        final MaxPackage p = eirPackage.subPackage(platform.processorKind.instructionSet.name().toLowerCase(),
+        final MaxPackage p = eirPackage.subPackage(platform.instructionSet().name().toLowerCase(),
                                                    platform.operatingSystem.name().toLowerCase());
-        eirABIsScheme = vmConfiguration.loadAndInstantiateScheme(p, EirABIsScheme.class, vmConfiguration);
+        eirABIsScheme = p.loadAndInstantiateScheme(EirABIsScheme.class, vmConfiguration);
     }
 
     @Override

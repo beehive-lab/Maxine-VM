@@ -33,7 +33,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.test.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 public final class JavaTester {
 

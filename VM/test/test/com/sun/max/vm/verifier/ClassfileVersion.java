@@ -23,7 +23,7 @@ package test.com.sun.max.vm.verifier;
 import java.io.*;
 
 import com.sun.max.program.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * Utility class to determine the class file version of a given class without actually loading the class.

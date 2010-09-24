@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.type;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 
 import java.io.*;
@@ -73,6 +74,9 @@ public final class JavaTypeDescriptor {
 
         @Override
         public String toJavaString() {
+            if (isHosted() && kind == null) {
+                return javaClass.getName();
+            }
             return kind.name.toString();
         }
 

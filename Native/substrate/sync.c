@@ -20,9 +20,11 @@
  */
 /**
  * @author Simon Wilkinson
+ * @author Doug Simon
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "condition.h"
 #include "log.h"
@@ -48,8 +50,6 @@ Java_com_sun_max_vm_monitor_modal_sync_nat_NativeMutex_nativeMutexLock(JNIEnv *e
 jboolean nativeMutexUnlock(Mutex mutex) {
     return mutex_exit(mutex) == 0;
 }
-
-
 
 jint nativeConditionSize(void) {
     return sizeof(condition_Struct);

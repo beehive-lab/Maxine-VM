@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
@@ -187,7 +189,7 @@ public class C1XRuntimeCalls {
         if (MaxineVM.isHosted()) {
             new CriticalMethod(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         } else {
-            VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor);
+            vmConfig().compilationScheme().synchronousCompile(classMethodActor);
         }
     }
 }

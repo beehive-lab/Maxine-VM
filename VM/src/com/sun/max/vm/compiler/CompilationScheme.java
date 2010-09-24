@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -149,11 +151,11 @@ public interface CompilationScheme extends VMScheme {
                 // fast path: method is already compiled just once
                 current = (TargetMethod) targetState;
             } else {
-                if (MaxineVM.isHosted() && VMConfiguration.target().bootCompilerScheme().compiledType() == null) {
+                if (MaxineVM.isHosted() && vmConfig().bootCompilerScheme().compiledType() == null) {
                     return MethodID.fromMethodActor(classMethodActor).asAddress();
                 }
                 // slower path: method has not been compiled, or been compiled more than once
-                current = VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor);
+                current = vmConfig().compilationScheme().synchronousCompile(classMethodActor);
             }
             return current.getEntryPoint(callEntryPoint).asAddress();
         }
@@ -207,7 +209,7 @@ public interface CompilationScheme extends VMScheme {
         public static void instrumentationCounterOverflow(MethodProfile mpo, int mpoIndex) {
             ClassMethodActor classMethodActor = (ClassMethodActor) mpo.method;
             TargetMethod oldMethod = TargetState.currentTargetMethod(classMethodActor.targetState);
-            TargetMethod newMethod = VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor, VMConfiguration.target().optCompilerScheme());
+            TargetMethod newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, vmConfig().optCompilerScheme());
             if (newMethod != oldMethod) {
                 oldMethod.forwardTo(newMethod);
             }

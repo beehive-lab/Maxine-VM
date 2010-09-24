@@ -43,8 +43,8 @@ public class BcdeAMD64Compiler extends BcdeCompiler<AMD64EirGenerator> implement
     public BcdeAMD64Compiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
 
-        Platform platform = vmConfiguration.platform();
-        ProgramError.check(platform.endianess() == Endianness.LITTLE);
+        Platform platform = vmConfiguration.platform;
+        ProgramError.check(platform.endianness() == Endianness.LITTLE);
         ProgramError.check(platform.instructionSet() == InstructionSet.AMD64);
         ProgramError.check(platform.processorModel() == ProcessorModel.AMD64);
         ProgramError.check(platform.wordWidth() == WordWidth.BITS_64);

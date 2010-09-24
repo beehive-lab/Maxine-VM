@@ -26,7 +26,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * A null VM instance, with the boot image but no process.
@@ -49,7 +49,7 @@ public final class ReadOnlyTeleVM extends TeleVM {
 
     @Override
     protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration.platform(), programFile());
+        return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration.platform, programFile());
     }
 
     @Override

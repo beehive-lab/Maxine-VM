@@ -24,10 +24,8 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.template.*;
@@ -63,7 +61,7 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
         final Class templateHolderClassInTarget = initializeClassInTarget(templateSourceClass);
         final Method[] templateMethods = templateHolderClassInTarget.getDeclaredMethods();
         for (Method method : templateMethods) {
-            if (Platform.target().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
+            if (Platform.platform().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
                 BYTECODE_TEMPLATE bct = method.getAnnotation(BYTECODE_TEMPLATE.class);
                 if (bct != null) {
                     BytecodeTemplate bt = bct.value();
@@ -74,29 +72,25 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
     }
 
     private TargetMethod generateBytecodeTemplate(final ClassMethodActor bytecodeSourceTemplate) {
-        return MaxineVM.usingTarget(new Function<TargetMethod>() {
-            public TargetMethod call() {
-                if (hasStackParameters(bytecodeSourceTemplate)) {
-                    ProgramError.unexpected("Template must not have *any* stack parameters: " + bytecodeSourceTemplate, null);
-                }
-                final TargetMethod targetMethod = targetGenerator().compile(bytecodeSourceTemplate);
-                if (!(targetMethod.referenceLiterals() == null)) {
-                    StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + targetMethod);
-                    for (int i = 0; i < targetMethod.referenceLiterals().length; i++) {
-                        Object literal = targetMethod.referenceLiterals()[i];
-                        sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"");
-                    }
-                    ProgramError.unexpected(sb.toString());
-                }
-                if (targetMethod.scalarLiterals() != null) {
-                    ProgramError.unexpected("Template must not have *any* scalar literals: " + targetMethod + "\n\n" + targetMethod.traceToString(), null);
-                }
-                if (targetMethod.frameSize() > maxTemplateFrameSize) {
-                    maxTemplateFrameSize = targetMethod.frameSize();
-                }
-                return targetMethod;
+        if (hasStackParameters(bytecodeSourceTemplate)) {
+            ProgramError.unexpected("Template must not have *any* stack parameters: " + bytecodeSourceTemplate, null);
+        }
+        final TargetMethod targetMethod = targetGenerator().compile(bytecodeSourceTemplate);
+        if (!(targetMethod.referenceLiterals() == null)) {
+            StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + targetMethod);
+            for (int i = 0; i < targetMethod.referenceLiterals().length; i++) {
+                Object literal = targetMethod.referenceLiterals()[i];
+                sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"");
             }
-        });
+            ProgramError.unexpected(sb.toString());
+        }
+        if (targetMethod.scalarLiterals() != null) {
+            ProgramError.unexpected("Template must not have *any* scalar literals: " + targetMethod + "\n\n" + targetMethod.traceToString(), null);
+        }
+        if (targetMethod.frameSize() > maxTemplateFrameSize) {
+            maxTemplateFrameSize = targetMethod.frameSize();
+        }
+        return targetMethod;
     }
 
     private TargetMethod generateBytecodeTemplate(Method bytecodeSourceTemplate) {

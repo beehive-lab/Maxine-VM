@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.ir.observer.*;
@@ -56,10 +55,6 @@ public abstract class IrGenerator<CompilerScheme_Type extends RuntimeCompilerSch
         return compilerScheme;
     }
 
-    public boolean isCrossCompiling() {
-        return !compilerScheme.vmConfiguration().equals(VMConfiguration.host());
-    }
-
     /**
      * Obtain the representation of the given class method actor in this IR,
      * creating the result object if necessary.
@@ -78,14 +73,10 @@ public abstract class IrGenerator<CompilerScheme_Type extends RuntimeCompilerSch
 
     public final void makeIrMethod(final IrMethod_Type irMethod) {
         if (!irMethod.isGenerated()) {
-            MaxineVM.usingTarget(new Runnable() {
-                public void run() {
-                    notifyBeforeGeneration(irMethod);
-                    generateIrMethod(irMethod);
-                    notifyAfterGeneration(irMethod);
-                    irMethod.cleanup();
-                }
-            });
+            notifyBeforeGeneration(irMethod);
+            generateIrMethod(irMethod);
+            notifyAfterGeneration(irMethod);
+            irMethod.cleanup();
         }
     }
 

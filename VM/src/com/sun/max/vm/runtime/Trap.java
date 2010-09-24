@@ -20,9 +20,9 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.runtime.Trap.Number.*;
-import static com.sun.max.vm.runtime.VmOperation.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -39,12 +39,27 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * This class handles operating systems traps that can arise from implicit null pointer checks, integer divide by zero,
- * safepoint triggering, etc. It contains a number of very low-level functions to directly handle operating system
- * signals (e.g. SIGSEGV on POSIX) and dispatch to the correct handler (e.g. construct and throw a null pointer
- * exception object or {@linkplain VmOperation freeze} the current thread).
- *
- * A small amount of native code supports this class by connecting to the OS-specific signal handling mechanisms.
+ * This class handles synchronous operating systems signals used to implement the following VM features:
+ * <ul>
+ * <li>safepoints</li>
+ * <li>runtime exceptions: {@link NullPointerException}, {@link ArithmeticException}, {@link StackOverflowError}</li>
+ * <li>de-opt</li>
+ * </ul>
+ * The execution path from an OS signal to {@link #trapStub(int, Pointer, Address)} is as follows:
+ * <ol>
+ * <li>A native handler is notified of the signal (see 'vmSignalHandler' in trap.c)</li>
+ * <li>The native handler analyzes the context of the signal to detect stack-overflow.</li>
+ * <li>The native handler writes trap {@linkplain VmThreadLocal#TRAP_NUMBER number},
+ *     {@linkplain VmThreadLocal#TRAP_FAULT_ADDRESS address} and
+ *     {@link VmThreadLocal#TRAP_INSTRUCTION_POINTER pc} into thread locals.</li>
+ * <li>The native handler disables safepoints by modifying the register context of the
+ *     trap in (almost) the same way as {@link Safepoint#disable()}.</li>
+ * <li>The native handler modifies the instruction pointer in the trap context to point to the
+ *     entry point of the {@linkplain #trapStub Java handler}.</li>
+ * <li>The native handler returns which effects a jump to {@link #trapStub} in the frame of
+ *     the trapped method/function. The trap stub has been specially compiled to immediately
+ *     push a new frame and save all the registers on the stack.</li>
+ * </ol>
  *
  * @author Ben L. Titzer
  * @author Doug Simon
@@ -132,14 +147,15 @@ public abstract class Trap {
     public static final int stackGuardSize = 12 * Ints.K;
 
     /**
-     * This method is {@linkplain #isTrapStub(MethodActor) known} by the compilation system. In particular, no adapter
-     * frame code generated for it. As such, it's entry point is at it's first compiled instruction which corresponds
-     * with its entry point it it were to be called from C code.
+     * Handle to {@link #isTrapStub(MethodActor)}.
      */
     private static final CriticalMethod trapStub = new CriticalMethod(Trap.class, "trapStub", null, CallEntryPoint.C_ENTRY_POINT);
 
     /**
      * Determines if a given method actor denotes the method used to handle runtime traps.
+     * This is used by the boot strap compiler to generate a special prologue and
+     * epilogue for the Java trap handler that saves/restores the register state
+     * at the trap site.
      *
      * @param methodActor the method actor to test
      * @return true if {@code classMethodActor} is the actor for {@link #trapStub(int, Pointer, Address)}
@@ -153,37 +169,39 @@ public abstract class Trap {
     }
 
     /**
-     * The address of the 'traceTrap' static variable in 'trap.c'.
-     */
-    static Pointer nativeTraceTrapVariable = Pointer.zero();
-
-    /**
      * A VM option to enable tracing of traps, both in the C and Java parts of trap handling.
      */
-    private static VMBooleanXXOption traceTrap = register(new VMBooleanXXOption("-XX:-TraceTraps", "Trace traps.") {
+    private static VMBooleanXXOption TraceTrapsOption = register(new VMBooleanXXOption("-XX:-TraceTraps", "Trace traps.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
-            if (getValue() && !nativeTraceTrapVariable.isZero()) {
-                nativeTraceTrapVariable.writeBoolean(0, true);
-            }
+            TraceTraps = TraceTrapsOption.getValue();
+            nativeSetTrapTracing(TraceTraps);
             return true;
         }
     }, MaxineVM.Phase.PRISTINE);
+
+    private static boolean TraceTraps = TraceTrapsOption.getValue();
 
     /**
      * Initializes the native side of trap handling by informing the C code of the address of {@link #trapStub(int, Pointer, Address)}.
      *
      * @param the entry point of {@link #trapStub(int, Pointer, Address)}
-     * @return the address of the 'traceTrap' static variable in 'trap.c'
      */
     @C_FUNCTION
-    private static native Pointer nativeInitialize(Word trapHandler);
+    private static native void nativeTrapInitialize(Word vmTrapHandler);
+
+    /**
+     * Updates the tracing flag for traps in the native substrate.
+     */
+    @C_FUNCTION // called on primordial thread
+    private static native void nativeSetTrapTracing(boolean flag);
 
     /**
      * Installs the trap handlers using the operating system's API.
      */
     public static void initialize() {
-        nativeTraceTrapVariable = nativeInitialize(trapStub.address());
+        nativeTrapInitialize(trapStub.address());
+        nativeSetTrapTracing(TraceTraps);
     }
 
     /**
@@ -194,7 +212,7 @@ public abstract class Trap {
      * This trap stub saves all of the registers onto the stack which are available in the {@code trapState}
      * pointer.
      *
-     * @param trapNumber the trap (>= 0) or signal (< 0) number that occurred
+     * @param trapNumber the trap that occurred
      * @param trapState a pointer to the stack location where trap state is stored
      * @param faultAddress the faulting address that caused this trap (memory faults only)
      */
@@ -208,32 +226,6 @@ public abstract class Trap {
 
         if (trapNumber == ASYNC_INTERRUPT) {
             VmThread.current().setInterrupted();
-            return;
-        }
-
-        if (trapNumber < 0) {
-            int signal = -trapNumber;
-            if (!VmThread.current().isVmOperationThread()) {
-                boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Asyncronous signal ");
-                Log.print(signal);
-                Log.print(" should be masked for non-VM operation thread ");
-                Log.printThread(VmThread.current(), true);
-                Log.unlock(lockDisabledSafepoints);
-                FatalError.unexpected("Asynchronous signal delivered to non VM operation thread");
-            }
-
-            if (!UseCASBasedThreadFreezing && !FROZEN.getVariableWord().isZero()) {
-                FatalError.unexpected("VM operation thread should never have non-zero value for FROZEN");
-            }
-
-            // The VM operation thread may be either in Java code (executing a VM operation) or in
-            // native code (waiting on the VM operation queue lock). In both cases, it's imperative that
-            // the MUTATOR_STATE variable is preserved across this trap.
-            Word savedState = MUTATOR_STATE.getVariableWord();
-            MUTATOR_STATE.setVariableWord(THREAD_IN_JAVA);
-            SignalDispatcher.postSignal(signal);
-            MUTATOR_STATE.setVariableWord(savedState);
             return;
         }
 
@@ -299,7 +291,7 @@ public abstract class Trap {
         // check to see if this fault originated in a target method
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
 
-        if (traceTrap.getValue() || DumpStackOnTrap) {
+        if (TraceTraps || DumpStackOnTrap) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             if (targetMethod != null) {
@@ -343,7 +335,7 @@ public abstract class Trap {
     private static void handleMemoryFault(Pointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapState, Address faultAddress) {
         final Pointer disabledVmThreadLocals = VmThread.currentVmThreadLocals();
 
-        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint;
+        final Safepoint safepoint = vmConfig().safepoint;
         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
         final Pointer triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
         final Pointer safepointLatch = trapStateAccess.getSafepointLatch(trapState);

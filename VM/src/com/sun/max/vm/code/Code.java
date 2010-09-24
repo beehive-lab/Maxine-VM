@@ -25,13 +25,11 @@ import static com.sun.max.vm.VMOptions.*;
 import java.lang.management.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.management.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Utilities for managing target code. This class offers a number of services
@@ -59,34 +57,12 @@ public final class Code {
     @INSPECTED
     public static final CodeRegion bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).wordAligned(), Size.fromInt(Integer.MAX_VALUE / 4), CODE_BOOT_NAME);
 
-    /**
-     * Creates the singleton code manager for this operating system.
-     * @return a new code manager
-     */
-    @HOSTED_ONLY
-    private static CodeManager createCodeManager() {
-        switch (Platform.hostOrTarget().operatingSystem) {
-            case LINUX: {
-                return new LowAddressCodeManager();
-            }
-
-            case GUESTVM:
-            case DARWIN:
-            case SOLARIS: {
-                return new FixedAddressCodeManager();
-            }
-            default: {
-                FatalError.unimplemented();
-                return null;
-            }
-        }
-    }
 
     /**
      * The code manager singleton instance.
      */
     @INSPECTED
-    private static final CodeManager codeManager = createCodeManager();
+    private static final CodeManager codeManager = VMConfiguration.vmConfig().heapScheme().createCodeManager();
 
     public static CodeManager getCodeManager() {
         return codeManager;

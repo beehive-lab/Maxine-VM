@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 
 import test.com.sun.max.vm.compiler.*;
@@ -29,15 +31,13 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.max.program.option.*;
 import com.sun.max.test.*;
-import com.sun.max.test.JavaExecHarness.*;
-import com.sun.max.vm.*;
+import com.sun.max.test.JavaExecHarness.Executor;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.c1x.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 public class HIRTestExecutor implements Executor {
     private static HIRGenerator generator;
@@ -46,10 +46,9 @@ public class HIRTestExecutor implements Executor {
 
     private static void initialize(boolean loadingPackages) {
         C1XOptions.setOptimizationLevel(Integer.parseInt(JavaTester.options.getStringValue("c1x-optlevel")));
-
-        new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
+        JavaPrototype.initialize(loadingPackages);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
-        C1XCompilerScheme compilerScheme = C1XCompilerScheme.create(VMConfiguration.hostOrTarget());
+        C1XCompilerScheme compilerScheme = C1XCompilerScheme.create(vmConfig());
 
         runtime = C1XCompilerScheme.globalRuntime;
         // create MaxineRuntime

@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -41,7 +43,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * A simple harness to run the C1X compiler and test it in various modes, without
@@ -174,15 +176,18 @@ public class C1XTest {
 
         // create the prototype
         if (verboseOption.getValue() > 0) {
-            out.print("Creating Java prototype... ");
+            out.print("Initializing Java prototype... ");
         }
-        new PrototypeGenerator(options).createJavaPrototype(false);
+
+        VMConfigurator vmConfigurator = new VMConfigurator(options);
+        vmConfigurator.create(true);
+        JavaPrototype.initialize(false);
         if (verboseOption.getValue() > 0) {
             out.println("done");
         }
 
         // create MaxineRuntime
-        VMConfiguration configuration = VMConfiguration.target();
+        VMConfiguration configuration = vmConfig();
         final RuntimeCompilerScheme compilerScheme;
 
         String compilerName = compilerOption.getValue();
@@ -206,12 +211,8 @@ public class C1XTest {
         final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, C1XTest.class.getClassLoader());
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
-        MaxineVM.usingTarget(new Runnable() {
-            public void run() {
-                doWarmup(compilerScheme, methods);
-                doCompile(compilerScheme, methods, progress);
-            }
-        });
+        doWarmup(compilerScheme, methods);
+        doCompile(compilerScheme, methods, progress);
 
         if (verboseOption.getValue() > 0) {
             progress.report();
@@ -406,7 +407,7 @@ public class C1XTest {
         @Override
         protected void addMethod(MethodActor method, List<MethodActor> methods) {
 
-            if (isCompilable(method) && clinitOption.getValue() || method.name != SymbolTable.CLINIT) {
+            if (isCompilable(method) && (clinitOption.getValue() || method.name != SymbolTable.CLINIT)) {
                 super.addMethod(method, methods);
                 if ((methods.size() % 1000) == 0 && verboseOption.getValue() >= 1) {
                     out.print('.');

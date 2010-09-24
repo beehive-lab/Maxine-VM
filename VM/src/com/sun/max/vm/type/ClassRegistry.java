@@ -21,8 +21,8 @@
 package com.sun.max.vm.type;
 
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
+import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
 import static com.sun.max.vm.jdk.JDK.*;
-import static com.sun.max.vm.prototype.HostedBootClassLoader.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -109,6 +109,8 @@ public final class ClassRegistry {
     public static final FieldActor ClassLoader_nativeLibraries = findField(ClassLoader.class, "nativeLibraries");
     public static final FieldActor AccessControlContext_privilegedContext = findField(AccessControlContext.class, "privilegedContext");
     public static final FieldActor Throwable_stackTrace = findField(Throwable.class, "stackTrace");
+    public static final FieldActor Signal_handlers = findField(Signal.class, "handlers");
+    public static final FieldActor Signal_signals = findField(Signal.class, "signals");
 
     public static final MethodActor ThreadGroup_add_Thread = findMethod(ThreadGroup.class, "add", Thread.class);
     public static final MethodActor Thread_init = findMethod("init", Thread.class);
@@ -126,7 +128,6 @@ public final class ClassRegistry {
     public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
     public static final MethodActor AccessControlContext_init = findMethod(AccessControlContext.class, "<init>", ProtectionDomain[].class, boolean.class);
     public static final MethodActor DirectByteBuffer_init = findMethod(Classes.forName("java.nio.DirectByteBuffer"), "<init>", long.class, int.class);
-    public static final MethodActor Signal_dispatch = findMethod(Signal.class, "dispatch", int.class);
 
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded

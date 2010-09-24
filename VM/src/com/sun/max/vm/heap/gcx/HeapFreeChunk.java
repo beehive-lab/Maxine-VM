@@ -204,6 +204,7 @@ public class HeapFreeChunk {
             if (chunk.size.greaterEqual(size)) {
                 return chunk;
             }
+            chunk = chunk.next;
         }
         return null;
     }

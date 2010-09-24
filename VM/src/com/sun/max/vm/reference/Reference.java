@@ -20,9 +20,10 @@
  */
 package com.sun.max.vm.reference;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 
@@ -37,13 +38,13 @@ public abstract class Reference implements Accessor {
     @UNSAFE
     @FOLD
     private static ReferenceScheme referenceScheme() {
-        return VMConfiguration.hostOrTarget().referenceScheme();
+        return vmConfig().referenceScheme();
     }
 
     @UNSAFE
     @FOLD
     private static GripScheme gripScheme() {
-        return VMConfiguration.hostOrTarget().gripScheme();
+        return vmConfig().gripScheme();
     }
 
     @INLINE

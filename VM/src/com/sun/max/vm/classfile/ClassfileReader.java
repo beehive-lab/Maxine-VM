@@ -436,7 +436,7 @@ public final class ClassfileReader {
                         if (annotation.annotationType() == HOSTED_ONLY.class) {
                             continue nextField;
                         } else if (annotation.annotationType() == PLATFORM.class) {
-                            if (!Platform.target().isAcceptedBy((PLATFORM) annotation)) {
+                            if (!Platform.platform().isAcceptedBy((PLATFORM) annotation)) {
                                 continue nextField;
                             }
                         } else if (annotation.annotationType() == RESET.class) {
@@ -893,7 +893,7 @@ public final class ClassfileReader {
                             accessor = ((ACCESSOR) annotation).value();
                             flags |= UNSAFE;
                         } else if (annotation.annotationType() == PLATFORM.class) {
-                            if (!Platform.target().isAcceptedBy((PLATFORM) annotation)) {
+                            if (!Platform.platform().isAcceptedBy((PLATFORM) annotation)) {
                                 continue nextMethod;
                             }
                         } else if (annotation.annotationType() == BYTECODE_TEMPLATE.class) {
@@ -1436,6 +1436,9 @@ public final class ClassfileReader {
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
         final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
+
+        ClassDirectory.addToHierarchy(classActor);
+
         return classActor;
     }
 

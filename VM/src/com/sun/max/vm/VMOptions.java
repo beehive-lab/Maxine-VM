@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -37,8 +39,8 @@ import com.sun.max.util.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.VMOption.Category;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -51,9 +53,9 @@ import com.sun.max.vm.reference.*;
  */
 public final class VMOptions {
 
-    static final class StringFieldOption extends VMStringOption {
+    public static final class StringFieldOption extends VMStringOption {
 
-        private final Field field;
+        public final Field field;
 
         StringFieldOption(String prefix, boolean space, String defaultValue, String help, Field field) {
             super(prefix, space, defaultValue, help);
@@ -76,9 +78,9 @@ public final class VMOptions {
         }
     }
 
-    static final class FloatFieldOption extends VMFloatOption {
+    public static final class FloatFieldOption extends VMFloatOption {
 
-        private final Field field;
+        public final Field field;
 
         FloatFieldOption(String prefix, float defaultValue, String help, Field field) {
             super(prefix, defaultValue, help);
@@ -101,9 +103,9 @@ public final class VMOptions {
         }
     }
 
-    static final class IntFieldOption extends VMIntOption {
+    public static final class IntFieldOption extends VMIntOption {
 
-        private final Field field;
+        public final Field field;
 
         IntFieldOption(String prefix, int defaultValue, String help, Field field) {
             super(prefix, defaultValue, help);
@@ -126,9 +128,9 @@ public final class VMOptions {
         }
     }
 
-    static final class SizeFieldOption extends VMSizeOption {
+    public static final class SizeFieldOption extends VMSizeOption {
 
-        private final Field field;
+        public final Field field;
 
         SizeFieldOption(String prefix, Size defaultValue, String help, Field field) {
             super(prefix, defaultValue, help);
@@ -162,9 +164,9 @@ public final class VMOptions {
         }
     }
 
-    static final class BooleanFieldOption extends VMBooleanXXOption {
+    public static final class BooleanFieldOption extends VMBooleanXXOption {
 
-        private final Field field;
+        public final Field field;
 
         BooleanFieldOption(String prefix, String name, String help, Field field) {
             super(prefix, name, help);
@@ -304,7 +306,7 @@ public final class VMOptions {
         register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exit") {
             @Override
             public boolean parseValue(Pointer optionValue) {
-                VMConfiguration.target().print(Log.out, "  ");
+                vmConfig().print(Log.out, "  ");
                 return true;
             }
             @Override
@@ -316,7 +318,7 @@ public final class VMOptions {
         register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continue") {
             @Override
             public boolean parseValue(Pointer optionValue) {
-                VMConfiguration.target().print(Log.out, "  ");
+                vmConfig().print(Log.out, "  ");
                 return true;
             }
         }, MaxineVM.Phase.STARTING);

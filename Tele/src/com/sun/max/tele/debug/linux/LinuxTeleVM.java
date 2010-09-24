@@ -24,7 +24,7 @@ import java.io.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * @author Bernd Mathiske
@@ -38,11 +38,11 @@ public final class LinuxTeleVM extends TeleVM {
 
     @Override
     protected LinuxTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new LinuxTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments);
+        return new LinuxTeleProcess(this, bootImage().vmConfiguration.platform, programFile(), commandLineArguments);
     }
 
     @Override
     protected LinuxTeleProcess attachToTeleProcess() throws BootImageException {
-        return new LinuxTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), targetLocation().id);
+        return new LinuxTeleProcess(this, bootImage().vmConfiguration.platform, programFile(), targetLocation().id);
     }
 }

@@ -20,20 +20,18 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import java.io.*;
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
@@ -62,6 +60,7 @@ public final class VMConfiguration {
     public final VMPackage bootCompilerPackage;
     public final VMPackage jitCompilerPackage;
     public final VMPackage optCompilerPackage;
+    public final VMPackage compilationPackage;
     public final VMPackage trampolinePackage;
     public final VMPackage targetABIsPackage;
     public final VMPackage runPackage;
@@ -106,9 +105,9 @@ public final class VMConfiguration {
                            VMPackage bootCompilerPackage,
                            VMPackage jitCompilerPackage,
                            VMPackage optCompilerPackage,
+                           VMPackage compilationPackage,
                            VMPackage trampolinePackage,
-                           VMPackage targetABIsPackage,
-                           VMPackage runPackage) {
+                           VMPackage targetABIsPackage, VMPackage runPackage) {
         this.buildLevel = buildLevel;
         this.platform = platform;
         this.gripPackage = gripPackage;
@@ -119,21 +118,12 @@ public final class VMConfiguration {
         this.bootCompilerPackage = bootCompilerPackage;
         this.jitCompilerPackage = jitCompilerPackage;
         this.optCompilerPackage = optCompilerPackage;
+        this.compilationPackage = compilationPackage;
         this.trampolinePackage = trampolinePackage;
         this.targetABIsPackage = targetABIsPackage;
         this.runPackage = runPackage;
         this.safepoint = Safepoint.create(this);
         this.trapStateAccess = TrapStateAccess.create(this);
-    }
-
-    @INLINE
-    public BuildLevel buildLevel() {
-        return buildLevel;
-    }
-
-    @INLINE
-    public Platform platform() {
-        return platform;
     }
 
     @INLINE
@@ -203,6 +193,7 @@ public final class VMConfiguration {
             heapPackage,
             monitorPackage,
             bootCompilerPackage,
+            compilationPackage,
             trampolinePackage,
             targetABIsPackage,
             gripPackage,
@@ -213,36 +204,49 @@ public final class VMConfiguration {
         return vmSchemes;
     }
 
-    public synchronized <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(MaxPackage p, Class<VMScheme_Type> vmSchemeType, Object... arguments) {
+    private <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(List<VMScheme> loadedSchemes, MaxPackage p, Class<VMScheme_Type> vmSchemeType, Object... arguments) {
         if (p == null) {
             throw ProgramError.unexpected("Package not found for scheme: " + vmSchemeType.getSimpleName());
         }
+
+        if (loadedSchemes != null) {
+            Class< ? extends VMScheme_Type> impl = p.loadSchemeImplementation(vmSchemeType);
+            for (VMScheme vmScheme : loadedSchemes) {
+                if (vmScheme.getClass() == impl) {
+                    vmSchemes.add(vmScheme);
+                    return vmSchemeType.cast(vmScheme);
+                }
+            }
+        }
+
         final VMScheme_Type vmScheme = p.loadAndInstantiateScheme(vmSchemeType, arguments);
         vmSchemes.add(vmScheme);
         return vmScheme;
     }
 
+    /**
+     * Loads and instantiates all the schemes of this configuration.
+     *
+     * @param loadedSchemes the set of schemes already loaded and instantiated in this process. If non-{@code null},
+     *            this list is used to prevent any given scheme implementation from being instantiated more than once.
+     */
     @HOSTED_ONLY
-    public void loadAndInstantiateSchemes(boolean isTarget) {
+    public void loadAndInstantiateSchemes(List<VMScheme> loadedSchemes) {
         if (areSchemesLoadedAndInstantiated) {
             return;
         }
-        gripScheme = loadAndInstantiateScheme(gripPackage, GripScheme.class, this);
-        referenceScheme = loadAndInstantiateScheme(referencePackage, ReferenceScheme.class, this);
-        layoutScheme = loadAndInstantiateScheme(layoutPackage, LayoutScheme.class, this, gripScheme);
-        monitorScheme = loadAndInstantiateScheme(monitorPackage, MonitorScheme.class, this);
-        heapScheme = loadAndInstantiateScheme(heapPackage, HeapScheme.class, this);
-        if (targetABIsPackage != null) {
-            targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage, TargetABIsScheme.class, this);
-        }
-        bootCompilerScheme = loadAndInstantiateScheme(bootCompilerPackage, BootstrapCompilerScheme.class, this);
 
-        if (trampolinePackage != null) {
-            trampolineScheme = loadAndInstantiateScheme(trampolinePackage, DynamicTrampolineScheme.class, this);
-        }
+        gripScheme = loadAndInstantiateScheme(loadedSchemes, gripPackage, GripScheme.class, this);
+        referenceScheme = loadAndInstantiateScheme(loadedSchemes, referencePackage, ReferenceScheme.class, this);
+        layoutScheme = loadAndInstantiateScheme(loadedSchemes, layoutPackage, LayoutScheme.class, this, gripScheme);
+        monitorScheme = loadAndInstantiateScheme(loadedSchemes, monitorPackage, MonitorScheme.class, this);
+        heapScheme = loadAndInstantiateScheme(loadedSchemes, heapPackage, HeapScheme.class, this);
+        targetABIsScheme = loadAndInstantiateScheme(loadedSchemes, targetABIsPackage, TargetABIsScheme.class, this);
+        bootCompilerScheme = loadAndInstantiateScheme(loadedSchemes, bootCompilerPackage, BootstrapCompilerScheme.class, this);
+        trampolineScheme = loadAndInstantiateScheme(loadedSchemes, trampolinePackage, DynamicTrampolineScheme.class, this);
 
         if (jitCompilerPackage != null) {
-            jitCompilerScheme = loadAndInstantiateScheme(jitCompilerPackage, RuntimeCompilerScheme.class, this);
+            jitCompilerScheme = loadAndInstantiateScheme(loadedSchemes, jitCompilerPackage, RuntimeCompilerScheme.class, this);
         } else {
             // no JIT, always using the optimizing compiler
             jitCompilerScheme = bootCompilerScheme;
@@ -254,10 +258,10 @@ public final class VMConfiguration {
         } else if (optCompilerPackage == null) {
             optCompilerScheme = bootCompilerScheme;
         } else {
-            optCompilerScheme = loadAndInstantiateScheme(optCompilerPackage, RuntimeCompilerScheme.class, this);
+            optCompilerScheme = loadAndInstantiateScheme(loadedSchemes, optCompilerPackage, RuntimeCompilerScheme.class, this);
         }
 
-        if (isTarget) {
+        if (loadedSchemes == null) {
             // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
             if (needsAdapters()) {
                 OPTIMIZED_ENTRY_POINT.init(8, 8);
@@ -270,11 +274,8 @@ public final class VMConfiguration {
             }
         }
 
-        compilationScheme = new AdaptiveCompilationScheme(this);
-        vmSchemes.add(compilationScheme);
-        if (runPackage != null) {
-            runScheme = loadAndInstantiateScheme(runPackage, RunScheme.class, this);
-        }
+        compilationScheme = loadAndInstantiateScheme(loadedSchemes, compilationPackage, CompilationScheme.class, this);
+        runScheme = loadAndInstantiateScheme(loadedSchemes, runPackage, RunScheme.class, this);
         areSchemesLoadedAndInstantiated = true;
     }
 
@@ -301,19 +302,14 @@ public final class VMConfiguration {
         }
     }
 
-    public static VMConfiguration host() {
-        return MaxineVM.host().configuration;
-    }
-
+    /**
+     * Convenience method for accessing the configuration associated with the
+     * current {@linkplain MaxineVM#vm() VM} context.
+     * @return
+     */
     @FOLD
-    public static VMConfiguration target() {
-        return MaxineVM.target().configuration;
-    }
-
-    @UNSAFE
-    @FOLD
-    public static VMConfiguration hostOrTarget() {
-        return MaxineVM.hostOrTarget().configuration;
+    public static VMConfiguration vmConfig() {
+        return vm().config;
     }
 
     @Override
@@ -324,8 +320,8 @@ public final class VMConfiguration {
     }
 
     public void print(PrintStream out, String indent) {
-        out.println(indent + "Build level: " + buildLevel());
-        out.println(indent + "Platform: " + platform());
+        out.println(indent + "Build level: " + buildLevel);
+        out.println(indent + "Platform: " + platform);
         for (VMScheme vmScheme : vmSchemes()) {
             final String specification = vmScheme.specification().getSimpleName();
             out.println(indent + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
@@ -337,12 +333,7 @@ public final class VMConfiguration {
      */
     @FOLD
     public boolean debugging() {
-        return buildLevel() == BuildLevel.DEBUG;
-    }
-
-    @INLINE
-    public WordWidth wordWidth() {
-        return platform.processorKind.dataModel.wordWidth;
+        return buildLevel == BuildLevel.DEBUG;
     }
 
     /**
@@ -355,7 +346,7 @@ public final class VMConfiguration {
         }
         if (maxPackage instanceof AsmPackage) {
             final AsmPackage asmPackage = (AsmPackage) maxPackage;
-            return asmPackage.isPartOfAssembler(platform().processorKind.instructionSet);
+            return asmPackage.isPartOfAssembler(platform.instructionSet());
         }
         if (maxPackage instanceof VMPackage) {
             final VMPackage vmPackage = (VMPackage) maxPackage;

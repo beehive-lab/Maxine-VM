@@ -22,6 +22,7 @@
 package com.sun.max.vm.reference.heap;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -45,13 +46,13 @@ public final class HeapReferenceScheme extends AbstractVMScheme implements Refer
     @UNSAFE
     @FOLD
     private static HeapScheme heapScheme() {
-        return VMConfiguration.hostOrTarget().heapScheme();
+        return vmConfig().heapScheme();
     }
 
     @UNSAFE
     @FOLD
     private static GripScheme gripScheme() {
-        return VMConfiguration.hostOrTarget().gripScheme();
+        return vmConfig().gripScheme();
     }
 
     @INLINE

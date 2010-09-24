@@ -158,6 +158,8 @@ public class C1XOptions {
     public static boolean GenFinalizerRegistration      = true;
     public static boolean GenTableRanges                = ____;
     public static boolean AlignCallsForPatching         = ____;
+    public static boolean NullCheckUniquePc             = ____;
+    public static boolean invokeinterfaceTemplatePos    = ____;
 
     public static int     InitialCodeBufferSize         = 232;
     public static boolean DetailedAsserts               = true;

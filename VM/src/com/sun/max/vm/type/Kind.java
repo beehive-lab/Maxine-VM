@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.type;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 
 import com.sun.cri.ci.*;
@@ -791,7 +792,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
             if (boxedJavaValue instanceof WordValue) {
                 return (WordValue) boxedJavaValue;
             }
-            if (Word.isBoxed()) {
+            if (isHosted()) {
                 if (boxedJavaValue instanceof Boxed) {
                     final Boxed box = (Boxed) boxedJavaValue;
                     return new WordValue(Address.fromLong(box.value()));

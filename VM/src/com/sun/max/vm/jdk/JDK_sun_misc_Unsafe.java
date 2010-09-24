@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 import java.security.*;
 
@@ -29,11 +31,10 @@ import sun.reflect.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -692,7 +693,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public int pageSize() {
-        return VMConfiguration.hostOrTarget().platform().pageSize;
+        return vmConfig().platform.pageSize;
     }
 
     /**
@@ -753,7 +754,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void monitorEnter(Object object) {
-        VMConfiguration.hostOrTarget().monitorScheme().monitorEnter(object);
+        vmConfig().monitorScheme().monitorEnter(object);
     }
 
     /**
@@ -763,7 +764,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void monitorExit(Object object) {
-        VMConfiguration.hostOrTarget().monitorScheme().monitorExit(object);
+        vmConfig().monitorScheme().monitorExit(object);
     }
 
     /**

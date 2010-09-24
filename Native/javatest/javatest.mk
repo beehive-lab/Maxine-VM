@@ -27,7 +27,7 @@ include $(PROJECT)/platform/platform.mk
 
 SOURCES = jvmni.c tests.c threads.c jnitests.c
 
-SOURCE_DIRS = javatest jni platform prototype share substrate
+SOURCE_DIRS = javatest jni platform hosted share substrate
 
 include $(PROJECT)/share/share.mk
 

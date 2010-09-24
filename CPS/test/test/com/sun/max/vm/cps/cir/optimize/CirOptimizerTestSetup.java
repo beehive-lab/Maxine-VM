@@ -23,10 +23,10 @@ package test.com.sun.max.vm.cps.cir.optimize;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.cir.*;
 
-import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
+import com.sun.max.vm.hosted.*;
 
 public class CirOptimizerTestSetup extends CirCompilerTestSetup {
 
@@ -40,8 +40,7 @@ public class CirOptimizerTestSetup extends CirCompilerTestSetup {
     }
 
     @Override
-    protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
-                                     new com.sun.max.vm.cps.b.c.Package());
+    protected void initializeVM() {
+        VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.Package());
     }
 }

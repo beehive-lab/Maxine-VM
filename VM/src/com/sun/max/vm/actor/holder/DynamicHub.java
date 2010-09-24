@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.actor.holder;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -94,8 +96,9 @@ public final class DynamicHub extends Hub {
             assert virtualMethodActor.vTableIndex() == vTableIndex;
             assert getWord(vTableIndex).isZero();
             Address vTableEntry;
+
             if (compilerCreatesTargetMethods) {
-                vTableEntry = VMConfiguration.target().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
+                vTableEntry = vmConfig().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
             } else {
                 vTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
             }
@@ -112,7 +115,7 @@ public final class DynamicHub extends Hub {
             final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
             final int vTableIndex = firstWordIndex() + i;
             assert virtualMethodActor.vTableIndex() == vTableIndex;
-            Address vTableEntry = CallEntryPoint.VTABLE_ENTRY_POINT.in(VMConfiguration.target().compilationScheme().synchronousCompile(virtualMethodActor));
+            Address vTableEntry = CallEntryPoint.VTABLE_ENTRY_POINT.in(vmConfig().compilationScheme().synchronousCompile(virtualMethodActor));
             setWord(vTableIndex, vTableEntry);
         }
     }
@@ -129,7 +132,7 @@ public final class DynamicHub extends Hub {
                     assert getWord(iTableIndex).isZero();
                     Address iTableEntry;
                     if (compilerCreatesTargetMethods) {
-                        iTableEntry = VMConfiguration.target().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
+                        iTableEntry = vmConfig().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
                     } else {
                         iTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
                     }
@@ -146,7 +149,7 @@ public final class DynamicHub extends Hub {
      */
     @FOLD
     private static boolean compilerCreatesTargetMethods() {
-        return !MaxineVM.isHosted() || VMConfiguration.target().bootCompilerScheme().compiledType() != null;
+        return !MaxineVM.isHosted() || vmConfig().bootCompilerScheme().compiledType() != null;
     }
 
     @Override

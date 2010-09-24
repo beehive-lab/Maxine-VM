@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.template.generate;
 
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -27,10 +30,11 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.TargetLocation.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.compiler.target.TargetLocation.FloatingPointRegister;
+import com.sun.max.vm.compiler.target.TargetLocation.IntegerRegister;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.template.source.*;
 
 @HOSTED_ONLY
@@ -39,7 +43,7 @@ public class TemplateGenerator {
     protected RuntimeCompilerScheme targetCompiler;
 
     public TemplateGenerator() {
-        targetCompiler = MaxineVM.target().configuration.bootCompilerScheme();
+        targetCompiler = vm().config.bootCompilerScheme();
 
         // Make sure the JavaStackFrame class used for generating the templates are initialized in the target.
         // This will enable all sorts of compiler optimization that we want the templates to benefit from.
@@ -51,19 +55,15 @@ public class TemplateGenerator {
     }
 
     public static Class initializeClassInTarget(final Class javaClass) {
-        return MaxineVM.usingTarget(new Function<Class>() {
-            public Class call() {
-                assert !MaxineVM.isHostedOnly(javaClass);
-                final Class targetClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, javaClass.getName());
-                final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(targetClass);
-                MakeClassInitialized.makeClassInitialized(tupleClassActor);
-                return targetClass;
-            }
-        });
+        assert !MaxineVM.isHostedOnly(javaClass);
+        final Class targetClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, javaClass.getName());
+        final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(targetClass);
+        MakeClassInitialized.makeClassInitialized(tupleClassActor);
+        return targetClass;
     }
 
     public static boolean hasStackParameters(ClassMethodActor classMethodActor) {
-        TargetABI abi = VMConfiguration.target().targetABIsScheme().optimizedJavaABI;
+        TargetABI abi = vmConfig().targetABIsScheme().optimizedJavaABI;
         TargetLocation[] locations = abi.getParameterTargetLocations(classMethodActor.getParameterKinds());
         for (TargetLocation location : locations) {
             if (!(location instanceof IntegerRegister) && !(location instanceof FloatingPointRegister)) {
@@ -74,14 +74,10 @@ public class TemplateGenerator {
     }
 
     public TargetMethod generateTargetTemplate(final ClassMethodActor sourceTemplate) {
-        return MaxineVM.usingTarget(new Function<TargetMethod>() {
-            public TargetMethod call() {
-                ProgramError.check(hasStackParameters(sourceTemplate), "Template must not have *any* stack parameters: " + sourceTemplate);
-                final TargetMethod targetMethod = targetGenerator().compile(sourceTemplate);
-                ProgramError.check(targetMethod.referenceLiterals() == null, "Template must not have *any* reference literals: " + targetMethod);
-                ProgramError.check(targetMethod.scalarLiterals() == null, "Template must not have *any* scalar literals: " + targetMethod);
-                return targetMethod;
-            }
-        });
+        ProgramError.check(hasStackParameters(sourceTemplate), "Template must not have *any* stack parameters: " + sourceTemplate);
+        final TargetMethod targetMethod = targetGenerator().compile(sourceTemplate);
+        ProgramError.check(targetMethod.referenceLiterals() == null, "Template must not have *any* reference literals: " + targetMethod);
+        ProgramError.check(targetMethod.scalarLiterals() == null, "Template must not have *any* scalar literals: " + targetMethod);
+        return targetMethod;
     }
 }

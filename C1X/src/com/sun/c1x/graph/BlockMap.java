@@ -263,7 +263,8 @@ public class BlockMap {
      * @return an array of the successors of the specified block
      */
     public BlockBegin[] getSuccessors(BlockBegin block) {
-        return successorMap[block.bci()];
+        BlockBegin[] succ = successorMap[block.bci()];
+        return succ == null ? NONE : succ;
     }
 
     /**

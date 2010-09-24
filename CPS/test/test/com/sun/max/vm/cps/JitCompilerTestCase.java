@@ -38,7 +38,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
@@ -99,38 +99,30 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
     }
 
     protected Class initializeClassInTarget(final Class classToInitialize) {
-        return MaxineVM.usingTarget(new Function<Class>() {
-            public Class call() {
-                assert !MaxineVM.isHostedOnly(classToInitialize);
-                final Class targetClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, classToInitialize.getName());
-                final ClassActor classActor = ClassActor.fromJava(targetClass);
-                MakeClassInitialized.makeClassInitialized(classActor);
-                return targetClass;
-            }
-        });
+        assert !MaxineVM.isHostedOnly(classToInitialize);
+        final Class targetClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, classToInitialize.getName());
+        final ClassActor classActor = ClassActor.fromJava(targetClass);
+        MakeClassInitialized.makeClassInitialized(classActor);
+        return targetClass;
     }
 
     @Override
     protected JitTargetMethod compileMethod(final ClassMethodActor classMethodActor) {
         Trace.line(2, "Compiling " + classMethodActor.name);
-        return MaxineVM.usingTarget(new Function<JitTargetMethod>() {
-            public JitTargetMethod call() {
-                try {
-                    final JitTargetMethod method = compiler().compile(classMethodActor);
-                    assertNotNull(method);
-                    if (Trace.hasLevel(1)) {
-                        if (jitTestSetup().disassembleCompiledMethods()) {
-                            traceBundleAndDisassemble(method);
-                            Trace.line(1);
-                            Trace.line(1);
-                        }
-                    }
-                    return method;
-                } catch (AssertionError e) {
-                    throw ProgramError.unexpected("assertion failure while compiling: " + classMethodActor, e);
+        try {
+            final JitTargetMethod method = compiler().compile(classMethodActor);
+            assertNotNull(method);
+            if (Trace.hasLevel(1)) {
+                if (jitTestSetup().disassembleCompiledMethods()) {
+                    traceBundleAndDisassemble(method);
+                    Trace.line(1);
+                    Trace.line(1);
                 }
             }
-        });
+            return method;
+        } catch (AssertionError e) {
+            throw ProgramError.unexpected("assertion failure while compiling: " + classMethodActor, e);
+        }
     }
 
     @Override
