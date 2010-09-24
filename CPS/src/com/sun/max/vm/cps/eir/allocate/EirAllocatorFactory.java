@@ -47,7 +47,7 @@ public abstract class EirAllocatorFactory {
      * {@link EirAllocatorFactory} is to be instantiated and used at runtime to create {@link EirAllocator} instances.
      * The factory class instantiated is the class named {@code "Factory"} in the sub-package of {@code
      * com.sun.max.vm.compiler.eir.allocate} obtained by appending the algorithm name followed by the lowercase name of
-     * the {@linkplain InstructionSet ISA} specified by the {@linkplain Platform#target() target platform}. For example,
+     * the {@linkplain InstructionSet ISA} specified by the {@linkplain Platform#platform() target platform}. For example,
      * if the value of this system property is "linearscan" and the target ISA is "amd64" then the factory class to be
      * instantiated is {@code com.sun.max.vm.compiler.eir.allocate.linearscan.amd64}.
      *
@@ -67,7 +67,7 @@ public abstract class EirAllocatorFactory {
     static {
         String factoryClassName = System.getProperty(EIR_ALLOCATOR_FACTORY_CLASS_PROPERTY_NAME);
         if (factoryClassName == null) {
-            final String isa = Platform.hostOrTarget().processorKind.instructionSet.name().toLowerCase();
+            final String isa = Platform.platform().instructionSet().name().toLowerCase();
             final String algorithm = System.getProperty(EIR_ALLOCATOR_ALGORITHM_PROPERTY_NAME, DEFAULT_ALGORITHM);
             final String factoryPackageName = new Package().subPackage(algorithm, isa).name();
             factoryClassName = factoryPackageName + ".Factory";

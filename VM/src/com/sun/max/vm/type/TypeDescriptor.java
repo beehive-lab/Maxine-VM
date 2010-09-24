@@ -30,7 +30,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.JavaTypeDescriptor.*;
 
 /**
@@ -250,14 +250,16 @@ public abstract class TypeDescriptor extends Descriptor {
             }
 
             final Class<?> javaClass;
+            String className = typeDescriptor.toJavaString();
             try {
                 // Don't trigger class initialization
-                javaClass = Classes.forName(typeDescriptor.toJavaString(), false, getClass().getClassLoader());
+                javaClass = Classes.forName(className, false, getClass().getClassLoader());
             } catch (NoClassDefFoundError e) {
                 // couldn't find the class, obviously it cannot be resolvable
                 return false;
             }
-            if (javaClass.getPackage().getName().equals("java.lang")) {
+
+            if (Classes.getPackageName(className).equals("java.lang")) {
                 return true;
             }
 
@@ -273,7 +275,7 @@ public abstract class TypeDescriptor extends Descriptor {
                 return false;
             }
 
-            if (MaxineVM.target().configuration.isMaxineVMPackage(MaxPackage.fromClass(javaClass))) {
+            if (MaxineVM.vm().config.isMaxineVMPackage(MaxPackage.fromClass(javaClass))) {
                 return true;
             }
 

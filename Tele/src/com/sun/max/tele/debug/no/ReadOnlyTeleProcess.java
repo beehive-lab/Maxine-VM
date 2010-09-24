@@ -32,8 +32,8 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.prototype.*;
-import com.sun.max.vm.prototype.BootImage.*;
+import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.hosted.BootImage.*;
 
 /**
  * A null process that "contains" the boot image for inspection, as if it were a VM.
@@ -108,7 +108,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
         int heapOffset = bootImage.heapOffset();
         int heapAndCodeSize = header.heapSize + header.codeSize;
         final MappedByteBuffer bootImageBuffer = randomAccessFile.getChannel().map(MapMode.PRIVATE, heapOffset, heapAndCodeSize);
-        bootImageBuffer.order(bootImage.vmConfiguration.platform().processorKind.dataModel.endianness.asByteOrder());
+        bootImageBuffer.order(bootImage.vmConfiguration.platform.endianness().asByteOrder());
         randomAccessFile.close();
 
         if (!heapPointer.isZero()) {

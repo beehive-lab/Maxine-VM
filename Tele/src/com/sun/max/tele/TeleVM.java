@@ -21,6 +21,7 @@
 package com.sun.max.tele;
 
 import static com.sun.max.tele.debug.ProcessState.*;
+import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -64,10 +65,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.reference.prototype.*;
+import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
@@ -474,6 +475,34 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Creates and installs the {@linkplain MaxineVM#vm() global VM} context based on a given
+     * configuration loaded from a boot image.
+     *
+     * @param bootImageConfig
+     */
+    private static void initializeVM(VMConfiguration bootImageConfig) {
+        bootImageConfig.loadAndInstantiateSchemes(null);
+        final VMConfiguration config = new VMConfiguration(
+                        bootImageConfig.buildLevel,
+                        bootImageConfig.platform,
+                        getInspectorGripPackage(bootImageConfig.gripPackage),
+                        new com.sun.max.tele.reference.plain.Package(),
+                        bootImageConfig.layoutPackage,
+                        bootImageConfig.heapPackage,
+                        bootImageConfig.monitorPackage,
+                        bootImageConfig.bootCompilerPackage,
+                        bootImageConfig.jitCompilerPackage,
+                        null,
+                        bootImageConfig.compilationPackage,
+                        bootImageConfig.trampolinePackage,
+                        bootImageConfig.targetABIsPackage, bootImageConfig.runPackage);
+        final MaxineVM vm = new MaxineVM(config);
+        MaxineVM.set(vm);
+        config.loadAndInstantiateSchemes(bootImageConfig.vmSchemes());
+        JavaPrototype.initialize(false);
+    }
+
+    /**
      * Create the appropriate subclass of {@link TeleVM} based on VM configuration.
      *
      * @param bootImageFile
@@ -484,8 +513,10 @@ public abstract class TeleVM implements MaxVM {
      */
     private static TeleVM create(File bootImageFile, Classpath sourcepath, String[] commandlineArguments) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
+        initializeVM(bootImage.vmConfiguration);
+
         TeleVM teleVM = null;
-        final OperatingSystem operatingSystem = bootImage.vmConfiguration.platform().operatingSystem;
+        final OperatingSystem operatingSystem = bootImage.vmConfiguration.platform.operatingSystem;
         final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
@@ -516,6 +547,7 @@ public abstract class TeleVM implements MaxVM {
      */
     private static TeleVM createReadOnly(File bootImageFile, Classpath sourcepath) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
+        initializeVM(bootImage.vmConfiguration);
         return new ReadOnlyTeleVM(bootImageFile, bootImage, sourcepath);
     }
 
@@ -552,29 +584,14 @@ public abstract class TeleVM implements MaxVM {
         return (VMPackage) MaxPackage.fromName(inspectorGripRootPackage.name() + suffix);
     }
 
-    private static MaxineVM createVM(BootImage bootImage) {
-        final VMConfiguration b = bootImage.vmConfiguration;
-        final VMConfiguration vmConfiguration = new VMConfiguration(
-                b.buildLevel(),
-                b.platform(),
-                getInspectorGripPackage(b.gripPackage),
-                new com.sun.max.tele.reference.plain.Package(),
-                b.layoutPackage, b.heapPackage, b.monitorPackage,
-                b.bootCompilerPackage, b.jitCompilerPackage, null, b.trampolinePackage, b.targetABIsPackage,
-                b.runPackage);
-        vmConfiguration.loadAndInstantiateSchemes(true);
-
-        final MaxineVM vm = new MaxineVM(vmConfiguration);
-        MaxineVM.setTarget(vm);
-        MaxineVM.setGlobalHostOrTarget(vm);
-        new JavaPrototype(vm.configuration, false);
-        return vm;
-    }
-
     private String  tracePrefix() {
         return "[TeleVM: " + Thread.currentThread().getName() + "] ";
     }
 
+    /**
+     * Note that this is identical to the value returned by {@link VMConfiguration#vmConfig()}
+     * after {@link #initializeVM(VMConfiguration)} has been called.
+     */
     private final VMConfiguration vmConfiguration;
 
     private final Size wordSize;
@@ -715,16 +732,15 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        setTeleChannelProtocol(bootImage.vmConfiguration.platform().operatingSystem);
-        final MaxineVM vm = createVM(this.bootImage);
-        vmConfiguration = vm.configuration;
+        setTeleChannelProtocol(bootImage.vmConfiguration.platform.operatingSystem);
+        vmConfiguration = vmConfig();
 
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating all");
 
-        // Pre-initialize an appropriate disassembler to save time.
-        TeleDisassembler.initialize(vmConfiguration.platform().processorKind);
+        // Pre-initialize the disassembler to save time.
+        TeleDisassembler.initialize(vmConfiguration.platform);
 
-        this.wordSize = Size.fromInt(vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes);
+        this.wordSize = Size.fromInt(vmConfiguration.platform.wordWidth().numberOfBytes);
         this.pageSize = Size.fromInt(vmConfiguration.platform.pageSize);
         this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
@@ -735,7 +751,7 @@ public abstract class TeleVM implements MaxVM {
         }
         this.bootImageStart = loadBootImage();
 
-        final TeleGripScheme teleGripScheme = (TeleGripScheme) vmConfiguration.gripScheme();
+        final TeleGripScheme teleGripScheme = (TeleGripScheme) vmConfig().gripScheme();
         teleGripScheme.setTeleVM(this);
 
         if (!tryLock()) {
@@ -1782,7 +1798,7 @@ public abstract class TeleVM implements MaxVM {
     public final ReferenceValue createReferenceValue(Reference reference) {
         if (reference instanceof TeleReference) {
             return TeleReferenceValue.from(this, reference);
-        } else if (reference instanceof PrototypeReference) {
+        } else if (reference instanceof HostedReference) {
             return TeleReferenceValue.from(this, Reference.fromJava(reference.toJava()));
         }
         throw ProgramError.unexpected("Got a non-Prototype, non-Tele reference in createReferenceValue");

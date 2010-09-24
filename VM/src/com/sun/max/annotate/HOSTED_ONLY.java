@@ -49,7 +49,7 @@ import java.lang.annotation.*;
  * For example, to test the implementation of {@link com.sun.max.vm.bytecode.Bytecodes#INVOKEVIRTUAL INVOKEVIRTUAL}, a test
  * case can be written that calls a method in a class annotated with this annotation.
  * <p>
- * During {@linkplain com.sun.max.vm.prototype.BootImageGenerator boot image generation}, all such annotated entities are omitted from the
+ * During {@linkplain com.sun.max.vm.hosted.BootImageGenerator boot image generation}, all such annotated entities are omitted from the
  * generated image.
  *
  * @author Doug Simon

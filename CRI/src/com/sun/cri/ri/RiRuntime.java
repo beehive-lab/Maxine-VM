@@ -189,4 +189,20 @@ public interface RiRuntime {
      * @return the result of folding the operation if it is foldable, {@code null} otherwise
      */
     CiConstant foldWordOperation(int opcode, CiMethodInvokeArguments args);
+
+    /**
+     * Used by the canonicalizer to compare objects, since a given runtime might not want to expose the real objects to the compiler.
+     * 
+     * @return true if the two parameters represent the same runtime object, false otherwise
+     */
+    boolean compareConstantObjects(Object x, Object y);
+
+    /**
+     * Records an assumption made by this compilation that the specified method is a leaf method.
+     *
+     * @param method the method that is assumed to be a leaf method
+     * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
+     */
+    boolean recordLeafMethodAssumption(RiMethod method);
+
 }

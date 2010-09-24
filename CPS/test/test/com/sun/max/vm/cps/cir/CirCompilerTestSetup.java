@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.cps.cir;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
@@ -33,7 +34,7 @@ public abstract class CirCompilerTestSetup extends CompilerTestSetup<CirMethod> 
     }
 
     public static CirGeneratorScheme cirGeneratorScheme() {
-        return (CirGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
+        return (CirGeneratorScheme) vmConfig().bootCompilerScheme();
     }
 
     public static CirGenerator cirGenerator() {

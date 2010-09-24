@@ -26,7 +26,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * Interactive, visual tool for debugging a running instance of the Maxine VM.

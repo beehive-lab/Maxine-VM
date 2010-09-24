@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.thread;
 
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -37,6 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.refmaps.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
@@ -318,7 +321,7 @@ public class VmThread {
      * Initializes the VM thread system and starts the main Java thread.
      */
     public static void createAndRunMainThread() {
-        final Size requestedStackSize = STACK_SIZE_OPTION.getValue().aligned(Platform.host().pageSize).asSize();
+        final Size requestedStackSize = STACK_SIZE_OPTION.getValue().aligned(Platform.platform().pageSize).asSize();
 
         final Word nativeThread = nativeThreadCreate(mainThread.id, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
@@ -327,7 +330,7 @@ public class VmThread {
             nonJniNativeJoin(nativeThread);
         }
         // Drop back to PRIMORDIAL because we are now in the primordial thread
-        MaxineVM vm = MaxineVM.host();
+        MaxineVM vm = vm();
         vm.phase = MaxineVM.Phase.PRIMORDIAL;
     }
 
@@ -371,7 +374,7 @@ public class VmThread {
     private static void executeRunnable(VmThread vmThread) throws Throwable {
         try {
             if (vmThread == mainThread) {
-                VMConfiguration.hostOrTarget().runScheme().run();
+                vmConfig().runScheme().run();
             } else {
                 vmThread.javaThread.run();
             }
@@ -467,7 +470,7 @@ public class VmThread {
         }
 
         HIGHEST_STACK_SLOT_ADDRESS.setConstantWord(threadLocals, stackEnd);
-        LOWEST_STACK_SLOT_ADDRESS.setConstantWord(threadLocals, stackYellowZone.plus(Platform.target().pageSize));
+        LOWEST_STACK_SLOT_ADDRESS.setConstantWord(threadLocals, stackYellowZone.plus(Platform.platform().pageSize));
 
         thread.nativeThread = nativeThread;
         thread.vmThreadLocals = threadLocals;
@@ -514,9 +517,26 @@ public class VmThread {
 
         // If this is the main thread, then start up the VM operation thread and other special VM threads
         if (thread == mainThread) {
+            // NOTE:
+            // The main thread must bring the VM to the pristine state before all so as to
+            //  provide all basic services for the other "system" threads, most importantly, heap allocation.
+            // This could be done in the primordial thread as well, but it would allocate it a TLAB, which in turn
+            // requires heap schemes to process explicitly at every GC (something they don't do at the moment;
+            // they only iterate over threads in the ACTIVE thread map, which doesn't comprise the primordial thread).
+            //
+            // Code manager initialization must happen after parsing of pristine options
+            // It must also be performed before pristine initialization of the heap scheme (see VmThread.run())
+            // This is a temporary issue due to all code manager being FixedAddressCodeManager and assuming to be
+            // allocated directly after the boot region. If the heap scheme is initialized first, it might take this address first, causing failure.
+            // In the future, code manager initialization will be dictated by the heap scheme directly, and this issue will disappear.
+
+            Code.initialize();
+            vmConfig().initializeSchemes(MaxineVM.Phase.PRISTINE);
+
+            // We can now start the other system threads.
             // Start the VM operation thread
             VmThread.vmOperationThread.start0();
-            SpecialReferenceManager.initialize(MaxineVM.Phase.STARTING);
+            SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
             VmThread.signalDispatcherThread.start0();
         }
 
@@ -747,14 +767,14 @@ public class VmThread {
      * Gets the size of the yellow stack guard zone.
      */
     public static int yellowZoneSize() {
-        return STACK_YELLOW_ZONE_PAGES * VMConfiguration.target().platform().pageSize;
+        return STACK_YELLOW_ZONE_PAGES * Platform.platform().pageSize;
     }
 
     /**
      * Gets the size of the red stack guard zone.
      */
     public static int redZoneSize() {
-        return STACK_YELLOW_ZONE_PAGES * VMConfiguration.target().platform().pageSize;
+        return STACK_YELLOW_ZONE_PAGES * Platform.platform().pageSize;
     }
 
     private static Address traceStackRegion(String label, Address base, Address start, Address end, Address lastRegionStart, int usedStackSize) {
@@ -1079,7 +1099,7 @@ public class VmThread {
     public final void start0() {
         assert state == Thread.State.NEW;
         state = Thread.State.RUNNABLE;
-        VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().aligned(Platform.host().pageSize).asSize(), javaThread.getPriority());
+        VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().aligned(Platform.platform().pageSize).asSize(), javaThread.getPriority());
     }
 
     public final boolean isInterrupted(boolean clearInterrupted) {

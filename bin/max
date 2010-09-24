@@ -56,6 +56,8 @@
 #
 # Author: Doug Simon, Mick Jordan
 
+#set -x
+
 verbose=false
 unknown_option=""
 show_help=false
@@ -95,10 +97,10 @@ while [ "${1:0:1}" = "-" ]; do
             shift
             MAXVM_DIR=$1
             ;;
-        -host.os )
+        -os )
             shift
             MAXINE_OS=$1
-            jvm_args="$jvm_args -Dmax.host.os=$1"
+            jvm_args="$jvm_args -Dmax.os=$1"
             remote=1
             ;;
         -make )
@@ -304,8 +306,8 @@ projects=( ${projects[@]} ${extra_projects[@]} )
 
 test -n "${JUNIT4_CP}" || { echo "Need to use '-junit4' option or JUNIT4_CP environment variable to specify a class path for Junit4 classes"; exit 1; }
 junit_version="`$jvm -cp ${JUNIT4_CP} junit.runner.Version 2>&1`"
-if [[ "$junit_version" != 4.* ]]; then
-    echo "The value of JUNIT4_CP ($JUNIT4_CP) does not denote a JUnit4 installation."
+if [[ "$junit_version" != 4.8.1 ]]; then
+    echo "The value of JUNIT4_CP ($JUNIT4_CP) does not denote a JUnit4.8.1 installation."
     echo "Running \"$jvm -cp ${JUNIT4_CP} junit.runner.Version\" produced:"
     echo "$junit_version"
     exit 255
@@ -875,7 +877,7 @@ function run_javadoc() {
 
 # To add new configs, see class test.com.sun.max.vm.MaxineTesterConfiguration
 configs_usage=""
-configs_help="prints all the defined image configuration aliases"
+configs_help="prints the predefined image configurations"
 
 function run_configs() {
     image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
@@ -904,8 +906,26 @@ function image_help() {
     Package names are differentiated from class names by being prefixed
     with '^'.
 
+    The platform configuration for the generated image is auto-detected
+    by native methods. However, the following system properties can be
+    used to override the defaults:
+    
+    Name            | Description                   | Example values
+    ================+===============================+================
+    max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64 
+    max.cpu         | processor model               | AMD64 IA32 SPARCV9   
+    max.isa         | instruction set architecture  | AMD64 ARM PPC SPARC
+    max.os          | operating system              | Darwin Linux Solaris 
+    max.endianness  | endianness                    | BIG LITTLE
+    max.bits        | machine word size             | 64 32
+    max.page        | page size                     | 4096 8192 
+    max.nsig        | number of signals             | 32
+    
+    These system properties can be specified as options to the image
+    command (e.g. '-os Darwin -bits 32').
+
     An option starting with '@' denotes a preconfigured set of
-    options. `run_configs`
+    options. $(run_configs)
 "
     image_help_message="$image_help_message
 
@@ -920,20 +940,23 @@ function image_help() {
 }
 
 function run_image() {
-    image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
-
+    system_props=""
     vm_args=""
     image_args=""
     while [ "$1" != "" ]; do
         case $1 in
             @*)
+                if [ -z "$image_configs" ]; then
+                    # Lazily construct this variable as it requires running a Java program
+                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort)
+                fi
                 image_config_arg=${1/@/}
                 for image_config in ${image_configs[@]}; do
                     image_config_name=${image_config/\#*/}
                     if [ "$image_config_name" = "$image_config_arg" ]; then
                         image_config_args="${image_config/*\#/}"
 
-                        # Prepand the expanded macro to the positional parameters
+                        # Prepend the expanded macro to the positional parameters
                         shift
                         set -- ${image_config_args//,/ } "$@"
 
@@ -945,12 +968,26 @@ function run_image() {
                 run_help image
                 exit 1
                 ;;
+            -vmargs=* )
+                # Merge with VM args specified by '--' prefix
+                if [ -z "$vm_args" ]; then
+                    vm_args="${1/-vmargs=/}"
+                else
+                    vm_args="$vm_args ${1/-vmargs=/}"
+                fi
+                ;;
             --* )
+                # Merge with VM args specified by explicit '-vmarg' option
                 if [ -z "$vm_args" ]; then
                     vm_args="${1/-/}"
                 else
                     vm_args="$vm_args ${1/-/}"
                 fi
+                ;;
+            -platform | -cpu | -isa | -os | -endianness | -bits | -page | -nsig )
+                prop_name="max.${1/-/}"
+                shift
+                system_props="$system_props -D${prop_name}=$1"
                 ;;
             *)
                 image_args="$image_args $1"
@@ -960,9 +997,9 @@ function run_image() {
     done
 
     if [ -z "$vm_args" ]; then
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args
+        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args
     else
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
+        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
     fi
 }
 
@@ -1257,11 +1294,15 @@ inspect_help="launch a given program under the Inspector
     are those accepted by the 'max vm' command plus the Inspector specific
     options. To debug a program in the Inspector, simply replace 'vm' on the
     command line that launches the program with 'inspect'.
-
+    
     Use \"max inspect --help\" to see what the Inspector options are. These options
     must be specified with a '--' prefix so that they can be distinguished from
     the VM options.
 
+    The inspect command also accepts the same system property related options
+    as the 'image' command except that a '--' prefix must be used (e.g.
+    '--os Darwin --bits 32'). Use \"max help image\" for more detail.
+    
     Use \"max vm -help\" to see what the VM options are."
 
 function run_inspect() {
@@ -1270,6 +1311,7 @@ function run_inspect() {
     inspector_args="-vmdir=$MAXVM_DIR"
     inspector_cp="$MAXVM_DIR/inspected_classes"
     mkdir -p $save_class_dir || { echo "Failed to created directory $save_class_dir"; exit 1; }
+    system_props=""
 
     while [ "$1" != "" ]; do
         case $1 in
@@ -1291,6 +1333,11 @@ function run_inspect() {
                 shift
                 vm_args="$vm_args -jar $1"
                 inspector_cp="$inspector_cp:$1"
+                ;;
+            --platform | --cpu | --isa | --os | --endianness | --bits | --page | --nsig )
+                prop_name="max.${1/--/}"
+                shift
+                system_props="$system_props -D${prop_name}=$1"
                 ;;
             --cp=* )
                 inspector_cp="$inspector_cp:${1/--cp=/}"
@@ -1325,10 +1372,24 @@ function run_inspect() {
         run sudo -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+        ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
     else
-        run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+        run ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
     fi
+}
+
+#=======================================
+# 'core' command
+#=======================================
+
+core_usage="[options] <core file>"
+core_help="inspect a core file with the Inspector"
+
+function run_core() {
+    # Prepend the expanded macro to the positional parameters
+    core_file=${!#}
+    set --  --mode=attach --target=file --location=$core_file "$@"
+    run_inspect "$@"
 }
 
 #=======================================
@@ -1338,19 +1399,19 @@ Please enter your 'sudo' password:" \
 inspectoragent_usage="[-impl target] [-port port]"
 inspectoragent_help="launch the Inspector agent
 
-Launch the Inspector agent.
+    Launch the Inspector agent.
 
-The agent listens on a given port for an incoming connection from
-a remote Inspector process."
+    The agent listens on a given port for an incoming connection from
+    a remote Inspector process."
 
 function run_inspectoragent() {
     if [ "$MAXINE_OS" = "darwin" ]; then
         run sudo -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent -trace 1 $@
+        ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent $@
     else
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent -trace 1 $@
+        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent  $@
     fi
 }
 
@@ -1432,7 +1493,7 @@ nm_help="print the contents of a boot image
     Use \"max nm -help\" to see what other options this command accepts."
 
 function run_nm() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImagePrinter "$@" ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImagePrinter "$@" ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
 }
 
 #=======================================
@@ -1452,7 +1513,7 @@ objecttree_help="print the causality spanning-tree of the object graph in the bo
     Use \"max objecttree -help\" to see what other options this command accepts."
 
 function run_objecttree() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
 
 #=======================================
@@ -1472,7 +1533,7 @@ methodtree_help="print the causality spanning-tree of the method graph in the bo
     Use \"max methodtree -help\" to see what other options this command accepts."
 
 function run_methodtree() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
 }
 
 #=======================================
@@ -1695,6 +1756,7 @@ function usage() {
     echo "                    (default: ${maxine_dir})"
     echo " -junit4 <cp>     class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
     echo " -make <path>     path to GNU make executable (default: $make)"
+    echo " -os osname       operating system hosting the VM (all lower case) for remote inspecting"
 }
 
 if [ -n "${unknown_option}" ]; then

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import java.io.*;
@@ -53,7 +54,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
     final AMD64GeneralRegister32 scratch32;
 
     static {
-        if (VMConfiguration.target().needsAdapters()) {
+        if (vmConfig().needsAdapters()) {
             // Create and register the adapter generators
             new Jit2Opt();
             new Opt2Jit();

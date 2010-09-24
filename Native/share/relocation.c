@@ -87,7 +87,7 @@ void relocation_apply(void *heap, Address relocatedHeap, void *relocationData, i
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_prototype_BootImage_nativeRelocate(JNIEnv *env, jclass c, jlong heap, jlong relocatedHeap,
+Java_com_sun_max_vm_hosted_BootImage_nativeRelocate(JNIEnv *env, jclass c, jlong heap, jlong relocatedHeap,
                                                        jbyteArray relocationData, jint relocationDataSize,
                                                        jint isBigEndian, jint wordSize) {
     jboolean isCopy;

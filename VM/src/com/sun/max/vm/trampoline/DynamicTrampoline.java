@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm.trampoline;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -83,7 +83,7 @@ public final class DynamicTrampoline {
 
     @FOLD
     private DynamicTrampolineExit trampolineExit() {
-        return VMConfiguration.target().trampolineScheme().dynamicTrampolineExit();
+        return vmConfig().trampolineScheme().dynamicTrampolineExit();
     }
 
     /**

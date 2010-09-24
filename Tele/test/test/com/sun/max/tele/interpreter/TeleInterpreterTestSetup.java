@@ -23,13 +23,13 @@ package test.com.sun.max.tele.interpreter;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  *  @author Athul Acharya
@@ -50,8 +50,15 @@ public class TeleInterpreterTestSetup extends CompilerTestSetup<ActorIrMethod> {
     }
 
     @Override
-    protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createPrototype(BuildLevel.DEBUG, Platform.host());
+    protected void initializeVM() {
+        VMConfigurator vmConfigurator = new VMConfigurator(null);
+        vmConfigurator.gripScheme.setValue(new com.sun.max.vm.grip.hosted.Package());
+        vmConfigurator.referenceScheme.setValue(new com.sun.max.vm.reference.hosted.Package());
+        vmConfigurator.heapScheme.setValue(new com.sun.max.vm.heap.hosted.Package());
+        vmConfigurator.layoutScheme.setValue(new com.sun.max.vm.layout.hosted.Package());
+        vmConfigurator.monitorScheme.setValue(new com.sun.max.vm.monitor.hosted.Package());
+        vmConfigurator.buildLevel.setValue(BuildLevel.DEBUG);
+        vmConfigurator.create(true);
     }
 
     @Override

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.debug;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -54,7 +56,7 @@ public final class DebugHeap {
 
     @FOLD
     public static boolean isTagging() {
-        return MaxineVM.isDebug() && MaxineVM.target().configuration.heapScheme().supportsTagging();
+        return MaxineVM.isDebug() && vmConfig().heapScheme().supportsTagging();
     }
 
     public static byte[] tagBytes(DataModel dataModel) {

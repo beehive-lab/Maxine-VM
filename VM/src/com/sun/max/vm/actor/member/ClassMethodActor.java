@@ -36,7 +36,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 import com.sun.org.apache.bcel.internal.generic.*;
@@ -248,15 +248,20 @@ public abstract class ClassMethodActor extends MethodActor {
                     return compilee;
                 }
 
-                if (!isHiddenToReflection()) {
+                //if (!isHiddenToReflection()) {
+                if (!isMiranda()) { // allows constructor substitution
+                    final boolean isConstructor = isInitializer();
                     final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
                     if (substitute != null) {
+                        if (isConstructor) {
+                            System.console();
+                        }
                         compilee = substitute.compilee();
                         codeAttribute = compilee.codeAttribute;
                         originalCodeAttribute = compilee.originalCodeAttribute;
                         return compilee;
                     }
-                    if (MaxineVM.isHosted() && !hostedVerificationDisabled) {
+                    if (MaxineVM.isHosted() && !hostedVerificationDisabled && !isConstructor) {
                         validateInlineAnnotation(this);
                     }
                 }

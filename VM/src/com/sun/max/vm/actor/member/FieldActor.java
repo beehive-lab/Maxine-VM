@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.actor.member;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
 
@@ -38,10 +39,10 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -144,15 +145,53 @@ public class FieldActor extends MemberActor implements RiField {
         return offset;
     }
 
+    /**
+     * Analogous to {@link Field#get(Object)}.
+     */
+    public Object get(Object obj) {
+        if (isHosted()) {
+            Object tuple = isStatic() ? null : obj;
+            return HostTupleAccess.readValue(tuple, this).asBoxedJavaValue();
+        }
+        Reference ref = isStatic() ? Reference.fromJava(holder().staticTuple()) : Reference.fromJava(obj);
+        return kind.readValue(ref, offset).asBoxedJavaValue();
+    }
+
+    /**
+     * Reads the value of this field in a given object. This method assumes
+     * that {@code reference} is a static tuple if this is a static field.
+     *
+     * @param reference the object or static tuple containing the value of this field
+     * @return the value of this field within {@code reference}
+     */
     public Value readValue(Reference reference) {
         if (MaxineVM.isHosted() && this instanceof InjectedFieldActor) {
             final InjectedFieldActor injectedFieldActor = Utils.cast(this);
-            return injectedFieldActor.readInjectedValue(reference);
+            return injectedFieldActor.readInjectedValue(reference.toJava());
         }
 
         return kind.readValue(reference, offset);
     }
 
+    /**
+     * Analogous to {@link Field#set(Object, Object)}.
+     */
+    public void set(Object obj, Object value) {
+        if (isHosted()) {
+            Object tuple = isStatic() ? null : obj;
+            HostTupleAccess.writeObject(tuple, this, value);
+        }
+        Object ref = isStatic() ? holder().staticTuple() : obj;
+        writeValue(ref, kind.asValue(value));
+    }
+
+    /**
+     * Updates the value of this field in a given object. This method assumes
+     * that {@code reference} is a static tuple if this is a static field.
+     *
+     * @param reference the object or static tuple containing this field
+     * @param value the value to which this field in {@code reference} will be updated
+     */
     public void writeValue(Object reference, Value value) {
         kind.writeErasedValue(reference, offset, value);
     }
@@ -185,9 +224,15 @@ public class FieldActor extends MemberActor implements RiField {
         return format("%H.%n");
     }
 
-    public Pointer pointer(Object object) {
+    /**
+     * Gets the address of this field in a given object.
+     *
+     * @param object the object for which the field address is requested. This is ignored if this is a static field.
+     * @return the address of this field in {@code object} or the relevant static tuple if this is a static field
+     */
+    public Pointer addressOf(Object object) {
         if (isStatic()) {
-            return Pointer.zero();
+            return Reference.fromJava(holder().staticTuple()).toOrigin().plus(offset());
         }
         return Reference.fromJava(object).toOrigin().plus(offset());
     }
@@ -308,7 +353,6 @@ public class FieldActor extends MemberActor implements RiField {
                 } else {
                     assert object != null;
                 }
-
                 if (MaxineVM.isHosted()) {
                     v = HostTupleAccess.readValue(object, this);
                 } else {

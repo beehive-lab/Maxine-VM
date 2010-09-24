@@ -33,7 +33,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 
 
 /**
@@ -50,8 +50,8 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
     private UnixTeleProcessAdaptor(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, int id) throws BootImageException {
         super(teleVM, platform, ProcessState.STOPPED);
         protocol = TeleVM.teleChannelProtocol();
-        dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
-        protocol.initialize(teleVM.bootImage().header.threadLocalsAreaSize, teleVM.vmConfiguration().platform().processorKind.dataModel.endianness == Endianness.BIG ? true : false);
+        dataAccess = new PageDataAccess(this, platform.dataModel());
+        protocol.initialize(teleVM.bootImage().header.threadLocalsAreaSize, teleVM.vmConfiguration().platform.endianness() == Endianness.BIG ? true : false);
         if (commandLineArguments != null) {
             final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments);
             if (processHandle < 0) {

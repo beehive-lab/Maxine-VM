@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -36,34 +36,45 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.BootImage.Header;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.prototype.*;
-import com.sun.max.vm.prototype.BootImage.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Maxine.
+ * The global VM context. There is a {@linkplain #vm() single VM context} in existence at any time.
+ * The {@linkplain VMConfiguration configuration} for a VM context can be accessed via the
+ * {@link #config} field although the preferred mechanism for accessing the configuration for the
+ * global VM context is {@linkplain VMConfiguration#vmConfig()}.
+ * <p>
+ * Other functionality encapsulated in this class includes:
+ * <li>The {@link #isHosted()} method that can be used to guard blocks of code that will be omitted from a boot image.</li>
+ * <li>The current execution {@linkplain #phase phase} of the VM, denoting what language and VM capabilities
+ * have been initialized and are available.</li>
+ * <li>Some global native methods used at runtime that don't particularly
+ * belong to other classes (e.g. {@link #native_currentTimeMillis()}, {@link #native_exit(int)}, etc).</li>
+ * <li>Methods for {@linkplain #registerCriticalMethod(CriticalMethod) registering} methods to be
+ * loaded & compiled into the boot image.</li>
+ *
+ * @author Bernd Mathiske
+ * @author Ben L. Titzer
+ * @author Doug Simon
  * @author Paul Caprioli
  */
 public final class MaxineVM {
 
-    @HOSTED_ONLY
-    private static ThreadLocal<MaxineVM> hostOrTarget = new ThreadLocal<MaxineVM>() {
-        @Override
-        protected synchronized MaxineVM initialValue() {
-            return host();
-        }
-    };
-
     public static final String VERSION = "0.2";
     public static final int HARD_EXIT_CODE = -2;
 
+    /**
+     * The list of package prefixes denoting classes for which {@link #isMaxineClass(ClassActor)}
+     * and {@link #isMaxineClass(TypeDescriptor)} will return true.
+     */
     private static final List<String> MAXINE_CODE_BASE_LIST = new ArrayList<String>();
+
     private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
     private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = "test." + MAXINE_CLASS_PACKAGE_PREFIX;
     private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
@@ -83,23 +94,11 @@ public final class MaxineVM {
         }
     }, MaxineVM.Phase.PRISTINE);
 
-    @HOSTED_ONLY
-    private static MaxineVM globalHostOrTarget = null;
-
     /**
-     * Assigned twice by the prototype generator. First, assigned to the host VM during
-     * {@linkplain Prototype#initializeHost() prototype initialization}. Second, all references to the host MaxineVM
-     * object are {@linkplain HostObjectAccess#hostToTarget(Object) swapped} to be references to the target MaxineVM
-     * object as the boot image is being generated.
+     * The current VM context.
      */
     @CONSTANT
-    private static MaxineVM host;
-
-    /**
-     * Assigned only once by the prototype generator.
-     */
-    @CONSTANT
-    private static MaxineVM target;
+    private static MaxineVM vm;
 
     /**
      * The primordial thread locals.
@@ -186,11 +185,6 @@ public final class MaxineVM {
         }
     }
 
-    public static void initialize(VMConfiguration hostVMConfiguration, VMConfiguration targetVMConfiguration) {
-        host = new MaxineVM(hostVMConfiguration);
-        target = new MaxineVM(targetVMConfiguration);
-    }
-
     public static String name() {
         return "Maxine VM";
     }
@@ -199,136 +193,29 @@ public final class MaxineVM {
         return "The Maxine Virtual Machine, see <http://kenai.com/projects/maxine>";
     }
 
-    @HOSTED_ONLY
-    public static boolean isHostInitialized() {
-        return host != null;
-    }
-
-    public static MaxineVM host() {
-        if (host == null) {
-            Prototype.initializeHost();
-        }
-        return host;
-    }
-
-    @UNSAFE
-    @LOCAL_SUBSTITUTION
-    private static MaxineVM host_() {
-        return host;
-    }
-
     /**
-     * This differs from {@link #host()} only while running the prototype generator.
-     *
-     * When bootstrapping, returns the VM that is being generated else returns the new host VM (that has once been
-     * generated as a "target").
-     *
-     * @return the prototype generator's "target" VM
+     * Gets the current VM context.
      */
     @INLINE
-    public static MaxineVM target() {
-        if (target != null) {
-            Prototype.initializeHost();
-        }
-        return target;
-    }
-
-    @UNSAFE
-    @LOCAL_SUBSTITUTION
-    private static MaxineVM target_() {
-        return target;
-    }
-
-    @HOSTED_ONLY
-    public static void setTarget(MaxineVM vm) {
-        target = vm;
+    public static MaxineVM vm() {
+        return vm;
     }
 
     /**
-     * Runs a given command that is not expected to throw a checked exception in the context of the target VM
-     * configuration.
-     */
-    public static void usingTarget(Runnable runnable) {
-        if (isHosted()) {
-            final MaxineVM vm = hostOrTarget.get();
-            hostOrTarget.set(target());
-            runnable.run();
-            hostOrTarget.set(vm);
-        } else {
-            runnable.run();
-        }
-    }
-
-    /**
-     * Runs a given function that is not expected to throw a checked exception in the context of the target VM
-     * configuration.
-     */
-    public static <Result_Type> Result_Type usingTarget(Function<Result_Type> function) {
-        if (isHosted()) {
-            final MaxineVM vm = hostOrTarget.get();
-            hostOrTarget.set(target());
-            try {
-                return function.call();
-            } catch (RuntimeException runtimeException) {
-                // re-throw runtime exceptions.
-                throw runtimeException;
-            } catch (Exception exception) {
-                throw ProgramError.unexpected(exception);
-            } finally {
-                hostOrTarget.set(vm);
-            }
-        }
-        try {
-            return function.call();
-        } catch (RuntimeException runtimeException) {
-            // re-throw runtime exceptions.
-            throw runtimeException;
-        } catch (Exception exception) {
-            throw ProgramError.unexpected(exception);
-        }
-    }
-
-    /**
-     * Runs a given function that may throw a checked exception in the context of the target VM configuration.
-     */
-    public static <Result_Type> Result_Type usingTargetWithException(Function<Result_Type> function) throws Exception {
-        if (isHosted()) {
-            final MaxineVM vm = hostOrTarget.get();
-            hostOrTarget.set(target());
-            try {
-                return function.call();
-            } finally {
-                hostOrTarget.set(vm);
-            }
-        }
-        return function.call();
-    }
-
-    /**
-     * Sets the single unique VM context. Subsequent to the call, all calls to {@link #hostOrTarget()} will return
-     * the {@code vm} value passed to this method.
+     * Initializes or changes the current VM context.
+     * This also {@linkplain Platform#set(Platform) sets} the current platform context
+     * to {@code vm.configuration.platform}. That is,
+     * changing the VM context also changes the platform context.
      *
-     * @param vm the global VM object that will be the answer to all subsequent requests for a hot or target VM context request
+     * @param vm the new VM context (must not be {@code null})
+     * @return the previous VM context
      */
     @HOSTED_ONLY
-    public static void setGlobalHostOrTarget(MaxineVM vm) {
-        globalHostOrTarget = vm;
-    }
-
-    /**
-     * Gets the current VM context. All {@linkplain VMConfiguration configurable} parts of the VM consult
-     * the current VM context via this method.
-     * @return
-     */
-    @FOLD
-    public static MaxineVM hostOrTarget() {
-        if (isHosted()) {
-            if (globalHostOrTarget != null) {
-                return globalHostOrTarget;
-            }
-            return hostOrTarget.get();
-        }
-        return host;
+    public static MaxineVM set(MaxineVM vm) {
+        MaxineVM old = MaxineVM.vm;
+        Platform.set(vm.config.platform);
+        MaxineVM.vm = vm;
+        return old;
     }
 
     /**
@@ -352,7 +239,7 @@ public final class MaxineVM {
      */
     @FOLD
     public static boolean isDebug() {
-        return target().configuration.debugging();
+        return vm().config.debugging();
     }
 
     /**
@@ -364,7 +251,7 @@ public final class MaxineVM {
     @HOSTED_ONLY
     public static boolean isHostedOnly(AccessibleObject member) {
         return member.getAnnotation(HOSTED_ONLY.class) != null ||
-               !Platform.target().isAcceptedBy(member.getAnnotation(PLATFORM.class)) ||
+               !Platform.platform().isAcceptedBy(member.getAnnotation(PLATFORM.class)) ||
                isHostedOnly(Classes.getDeclaringClass(member));
     }
 
@@ -393,7 +280,7 @@ public final class MaxineVM {
             return true;
         }
 
-        if (!Platform.target().isAcceptedBy(javaClass.getAnnotation(PLATFORM.class))) {
+        if (!Platform.platform().isAcceptedBy(javaClass.getAnnotation(PLATFORM.class))) {
             HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
             return true;
         }
@@ -422,24 +309,24 @@ public final class MaxineVM {
     }
 
     public static boolean isPrimordial() {
-        return host().phase == Phase.PRIMORDIAL;
+        return vm().phase == Phase.PRIMORDIAL;
     }
 
     public static boolean isPristine() {
-        return host().phase == Phase.PRISTINE;
+        return vm().phase == Phase.PRISTINE;
     }
 
     public static boolean isStarting() {
-        return host().phase == Phase.STARTING;
+        return vm().phase == Phase.STARTING;
     }
 
     public static boolean isPrimordialOrPristine() {
-        final Phase phase = host().phase;
+        final Phase phase = vm().phase;
         return phase == Phase.PRIMORDIAL || phase == Phase.PRISTINE;
     }
 
     public static boolean isRunning() {
-        return host().phase == Phase.RUNNING;
+        return vm().phase == Phase.RUNNING;
     }
 
     public static long getStartupTime() {
@@ -518,15 +405,17 @@ public final class MaxineVM {
         // Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();
 
-        VMConfiguration.target().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
+        vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 
-        MaxineVM vm = hostOrTarget();
+        MaxineVM vm = vm();
         vm.phase = Phase.PRISTINE;
 
         if (VMOptions.parsePristine(argc, argv)) {
-
             // Code manager initialization must happen after parsing of pristine options
-            Code.initialize();
+            // It must also be performed before pristine initialization of the heap scheme (see VmThread.run())
+            // This is a temporary issue due to all code manager being FixedAddressCodeManager and assuming to be
+            // allocated directly after the boot region. If the heap scheme is initialized first, it might take this address first, causing failure.
+            // In the future, code manager initialization will be dictated by the heap scheme directly, and this issue will disappear.
 
             if (!VMOptions.earlyVMExitRequested()) {
                 VmThread.createAndRunMainThread();
@@ -602,11 +491,11 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native void native_trap_exit(int code, Address address);
 
-    public final VMConfiguration configuration;
+    public final VMConfiguration config;
     public Phase phase = Phase.BOOTSTRAPPING;
 
-    public MaxineVM(VMConfiguration vmConfiguration) {
-        configuration = vmConfiguration;
+    public MaxineVM(VMConfiguration configuration) {
+        this.config = configuration;
     }
 
     public static void reportPristineMemoryFailure(String memoryAreaName, String operation, Size numberOfBytes) {

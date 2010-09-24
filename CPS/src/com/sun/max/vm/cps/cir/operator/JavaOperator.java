@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.cir.operator;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
@@ -352,7 +354,7 @@ public abstract class JavaOperator extends CirOperator {
         private final Builtin builtin;
         private final Snippet snippet;
         private JavaBuiltinOrSnippetOperator(Builtin builtin, Snippet snippet) {
-            super(VMConfiguration.target().bootCompilerScheme().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL_STOP);
+            super(vmConfig().bootCompilerScheme().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL_STOP);
             this.builtin = builtin;
             this.snippet = snippet;
         }

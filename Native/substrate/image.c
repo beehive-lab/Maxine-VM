@@ -20,6 +20,7 @@
  */
 /**
  * @author Bernd Mathiske
+ *
  */
 #include "os.h"
 
@@ -45,7 +46,6 @@
 #define IMAGE_IDENTIFICATION             0xcafe4dad
 #define IMAGE_VERSION                    1
 #define DEFAULT_RELOCATION_SCHEME        0
-#define TERA_BYTE (1024*1024*1024*1024L)
 
 #if os_GUESTVMXEN
 #define MEMORY_IMAGE 1
@@ -287,7 +287,6 @@ static void mapHeapAndCode(int fd) {
     int heapOffsetInImage = virtualMemory_pageAlign(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize);
     int heapAndCodeSize = theHeader->heapSize + theHeader->codeSize;
     c_ASSERT(virtualMemory_pageAlign((Size) heapAndCodeSize) == (Size) heapAndCodeSize);
-
 #if log_LOADER
     log_println("image.mapHeapAndCode");
 #endif
@@ -299,36 +298,48 @@ static void mapHeapAndCode(int fd) {
         log_exit(4, "could not map boot image");
     }
 #elif os_SOLARIS || os_DARWIN
-    // Reserve more than -Xmx should ever demand.
-    // Most of this will be released again once in Java code by the heap scheme
-    theHeap = virtualMemory_allocatePrivateAnon((Address) 0, TERA_BYTE, JNI_FALSE, JNI_FALSE, HEAP_VM);
-    if (theHeap == ALLOC_FAILED) {
-        log_exit(4, "could not reserve boot image");
+    Address reservedVirtualSpace = (Address) 0;
+    size_t virtualSpaceSize = 1024L * theHeader->reservedVirtualSpaceSize;
+    c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
+    if (virtualSpaceSize != 0) {
+        // VM configuration asks for reserving an address space of size reservedVirtualSpaceSize.
+        // The following will create a mapping in virtual space of the requested size.The address returned might subsequently be used to memory map the
+        // boot heap region, automatically splitting this mapping in two.
+        // In any case,  the VM (mostly the heap scheme) is responsible for reserved space.
+        reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
+        if (reservedVirtualSpace == ALLOC_FAILED) {
+            log_exit(4, "could not reserve requested virtual space");
+        }
     }
-//   log_println("boot heap at %p", theHeap);
-#if log_LOADER
-    log_println("reserved 1 TB at %p", theHeap);
-    log_println("reserved address space ends at %p", theHeap + TERA_BYTE);
-#endif
+    if (theHeader->bootRegionMappingConstraint == 1) {
+        // Map the boot heap region at the start of the reserved space
+        theHeap = reservedVirtualSpace;
+    } else if (theHeader->bootRegionMappingConstraint == 2) {
+        // Map the boot heap region at the end of the reserved space. The start of the boot heap region is page-aligned.
+        theHeap = reservedVirtualSpace + virtualSpaceSize - heapAndCodeSize;
+    } else {
+        // Map the boot heap region anywhere.
+        theHeap = virtualMemory_allocatePrivateAnon((Address) 0, heapAndCodeSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
+        if (theHeap == ALLOC_FAILED) {
+            log_exit(4, "could not reserve virtual space for boot image");
+        }
+    }
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
-#ifdef DEBUG_DARWIN_IMAGE_MAPPING_PROBLEM
-    int page;
-    Byte *heapAndCode = (Byte *) theHeap;
-    for (page = (heapAndCodeSize - virtualMemory_getPageSize()) / virtualMemory_getPageSize(); page >= 0; --page) {
-        int offset = page * virtualMemory_getPageSize();
-        log_println("image page %d [heap+%d]", page, offset);
-        heapAndCode[offset] = heapAndCode[offset];
+    if (reservedVirtualSpace) {
+        Address *addr = image_offset_as_address(Address *, reservedVirtualSpaceFieldOffset);
+        *addr = reservedVirtualSpace;
     }
-#endif
-
 #else
     c_UNIMPLEMENTED();
 #endif
 #if os_GUESTVMXEN
-    // heap and code must be mapped together (the method offsets in boot image are relative to heap base)
+    // boot heap and code must be mapped together (the method offsets in boot image are relative to heap base)
     theHeap = guestvmXen_remap_boot_code_region(theHeap, heapAndCodeSize);
+#endif
+#if log_LOADER
+    log_println("boot heap mapped at %p", theHeap);
 #endif
     theCode = theHeap + theHeader->heapSize;
     theCodeEnd = theCode + theHeader->codeSize;

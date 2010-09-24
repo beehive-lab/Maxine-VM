@@ -31,7 +31,7 @@ import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.natives.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 
 /**

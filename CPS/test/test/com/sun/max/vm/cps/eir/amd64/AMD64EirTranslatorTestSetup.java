@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.cps.eir.amd64;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
@@ -31,6 +33,7 @@ import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.amd64.*;
+import com.sun.max.vm.hosted.*;
 
 /**
  * @author Bernd Mathiske
@@ -42,7 +45,7 @@ public class AMD64EirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     }
 
     public static AMD64EirGeneratorScheme eirGeneratorScheme() {
-        return (AMD64EirGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
+        return (AMD64EirGeneratorScheme) vmConfig().bootCompilerScheme();
     }
 
     public static AMD64EirGenerator eirGenerator() {
@@ -60,7 +63,8 @@ public class AMD64EirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     }
 
     @Override
-    protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64), new com.sun.max.vm.cps.b.c.d.e.amd64.Package());
+    protected void initializeVM() {
+        Platform.set(platform().constrainedByInstructionSet(InstructionSet.AMD64));
+        VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.d.e.amd64.Package());
     }
 }

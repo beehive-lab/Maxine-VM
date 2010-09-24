@@ -645,7 +645,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        InstructionSet instructionSet = vm().vmConfiguration().platform().instructionSet();
+        InstructionSet instructionSet = vm().vmConfiguration().platform.instructionSet();
         switch (instructionSet) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;

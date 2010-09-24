@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap.gcx.ms;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
@@ -34,6 +35,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -108,7 +110,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
         objectSpace = new FreeHeapSpaceManager();
         largeObjectSpace = new LargeObjectSpace();
-        afterGCVerifier = MaxineVM.isDebug() ? new AfterMarkSweepVerifier(heapMarker, objectSpace) : null;
+        afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, objectSpace);
     }
 
     @Override
@@ -124,37 +126,91 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
     }
 
+    @Override
+    public CodeManager createCodeManager() {
+        switch (Platform.platform().operatingSystem) {
+            case LINUX: {
+                return new LowAddressCodeManager();
+            }
+            case GUESTVM:
+            case DARWIN:
+            case SOLARIS: {
+                return new FixedAddressCodeManager();
+            }
+            default: {
+                FatalError.unimplemented();
+                return null;
+            }
+        }
+    }
+
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
      */
     private void allocateHeapAndGCStorage() {
+        final Size reservedSpace = Size.K.times(reservedVirtualSpaceSize());
         final Size initSize = Heap.initialSize();
         final Size maxSize = Heap.maxSize();
+        final int pageSize = Platform.platform().pageSize;
 
-        Address endOfCodeRegion = Code.bootCodeRegion.end().roundedUpBy(Platform.target().pageSize);
-        CodeManager codeManager = Code.getCodeManager();
-        if (codeManager instanceof FixedAddressCodeManager && codeManager.getRuntimeCodeRegion().start().equals(endOfCodeRegion)) {
-            endOfCodeRegion = codeManager.getRuntimeCodeRegion().end();
-        } else {
-            FatalError.unimplemented();
-        }
-        final Address heapStart = endOfCodeRegion;
+        // Verify that the constraint of the heap scheme are met:
+        FatalError.check(Heap.bootHeapRegion.start() == Heap.startOfReservedVirtualSpace(),
+                        "Boot heap region must be mapped at start of reserved virtual space");
+
+        final Address endOfBootCodeRegion = Code.bootCodeRegion.end().roundedUpBy(pageSize);
+        final Address endOfCodeRegion = Code.getCodeManager().getRuntimeCodeRegion().end();
+        final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
+
+        final Address  heapLowerBound = endOfCodeRegion.greaterEqual(endOfBootCodeRegion) ? endOfCodeRegion : endOfBootCodeRegion;
+        final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
+
+
+        final Address heapStart = heapLowerBound.roundedUpBy(pageSize);
+        final Address heapMarkerDataStart = heapStart.plus(maxSize).roundedUpBy(pageSize);
+        final Address leftoverStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
+
         objectSpace.initialize(heapStart, initSize, maxSize);
+        ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();
 
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
-        final Address heapMarkerDataStart = heapStart.plus(maxSize);
-        final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
+
         if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
             MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
         }
 
-        ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();
         heapMarker.initialize(markedSpace.start(), markedSpace.committedEnd(), heapMarkerDataStart, heapMarkerDatasize);
+
+        // Free reserved space we will not be using.
+        Size leftoverSize = endOfReservedSpace.minus(leftoverStart).asSize();
+
+        // First, uncommit range we want to free (this will create a new mapping that can then be deallocated)
+        if (!VirtualMemory.uncommitMemory(leftoverStart, leftoverSize,  VirtualMemory.Type.DATA)) {
+            MaxineVM.reportPristineMemoryFailure("reserved space leftover", "uncommit", leftoverSize);
+        }
+
+        if (VirtualMemory.deallocate(leftoverStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
+            MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
+        }
+
+        // From now on, we can allocate. The followsingdoes this because of the var-arg arguments.
+        InspectableHeapInfo.init(markedSpace);
     }
 
 
     public int auxiliarySpaceSize(int bootImageSize) {
         return 0;
+    }
+
+    @Override
+    public int reservedVirtualSpaceSize() {
+        // 2^30 Kb = 1 TB of reserved space.
+        // This will be truncated as soon as we taxed what we need at initialization time.
+        return Size.G.toInt();
+    }
+
+    @Override
+    public BootRegionMappingConstraint bootRegionMappingConstraint() {
+        return BootRegionMappingConstraint.AT_START;
     }
 
     public boolean collectGarbage(Size requestedFreeSpace) {
@@ -317,7 +373,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
             HeapScheme.Inspect.notifyGCStarted();
 
-            VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+            vmConfig().monitorScheme().beforeGarbageCollection();
 
             collectionCount++;
             if (MaxineVM.isDebug() && Heap.traceGCPhases()) {
@@ -335,7 +391,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             if (MaxineVM.isDebug()) {
                 afterGCVerifier.run();
             }
-            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+            vmConfig().monitorScheme().afterGarbageCollection();
 
             if (heapResizingPolicy.resizeAfterCollection(objectSpace.totalSpace(), freeSpaceAfterGC, objectSpace)) {
                 // Heap was resized.

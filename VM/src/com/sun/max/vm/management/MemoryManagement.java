@@ -20,10 +20,11 @@
  */
 package com.sun.max.vm.management;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.management.*;
 import java.util.*;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 
@@ -59,7 +60,7 @@ public class MemoryManagement {
         final MemoryManagerMXBean[] result = new MemoryManagerMXBean[3];
         result[0] = Code.getMemoryManagerMXBean();
         result[1] = ImmortalHeap.getMemoryManagerMXBean();
-        result[2] = VMConfiguration.target().heapScheme().getGarbageCollectorMXBean();
+        result[2] = vmConfig().heapScheme().getGarbageCollectorMXBean();
         return result;
     }
 
@@ -68,7 +69,7 @@ public class MemoryManagement {
         if (heap) {
             pools = new ArrayList<MemoryPoolMXBean>();
             pools.addAll(getMemoryManagerMXBeanPools(ImmortalHeap.getMemoryManagerMXBean()).getAll());
-            pools.addAll(getMemoryManagerMXBeanPools(VMConfiguration.target().heapScheme().getGarbageCollectorMXBean()).getAll());
+            pools.addAll(getMemoryManagerMXBeanPools(vmConfig().heapScheme().getGarbageCollectorMXBean()).getAll());
         } else {
             pools = getMemoryManagerMXBeanPools(Code.getMemoryManagerMXBean()).getAll();
         }

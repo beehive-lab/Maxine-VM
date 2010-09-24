@@ -259,7 +259,7 @@ public final class FrameMap {
      *
      * @param argsSize the amount of space to reserve for stack-based outgoing arguments
      */
-    private void reserveOutgoing(int argsSize) {
+    public void reserveOutgoing(int argsSize) {
         assert spillSlotCount == -2 : "cannot reserve outgoing stack slot space once register allocation has started";
         if (argsSize > outgoingSize) {
             outgoingSize = Util.roundUp(argsSize, compiler.target.spillSlotSize);

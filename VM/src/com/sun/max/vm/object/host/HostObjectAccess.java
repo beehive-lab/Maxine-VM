@@ -30,9 +30,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -206,7 +206,6 @@ public final class HostObjectAccess {
         objectMap.put(VmThread.signalDispatcherThread.javaThread(), VmThread.signalDispatcherThread.javaThread());
 
         objectMap.put(Trace.stream(), Log.out);
-        objectMap.put(MaxineVM.host(), MaxineVM.target());
         objectMap.put(TTY.out(), new LogStream(Log.os));
         objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor.initialSystemProperties);
     }

@@ -274,8 +274,11 @@ public abstract class LIRAssembler {
                 emitLea(op.operand(), op.result());
                 break;
             case NullCheck:
-                asm.recordImplicitException(codePos(), op.info);
                 assert op.operand().isRegister();
+                if (C1XOptions.NullCheckUniquePc) {
+                    asm.nop();
+                }
+                asm.recordImplicitException(codePos(), op.info);
                 asm.nullCheck(op.operand().asRegister());
                 break;
             case Lsb:

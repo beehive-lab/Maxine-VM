@@ -25,14 +25,15 @@ import java.nio.*;
 import java.util.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.unix.*;
-
+import com.sun.max.tele.debug.dump.*;
 
 /**
+ * Linux implementation of the channel protocol for accessing core dump files.
+ *
  * @author Mick Jordan
  *
  */
-public class LinuxDumpTeleChannelProtocol extends UnixDumpTeleChannelProtocolAdaptor implements LinuxTeleChannelProtocol {
+public class LinuxDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAdaptor implements LinuxTeleChannelProtocol {
     private List<TaskData> taskDataList = new ArrayList<TaskData>();
     private ByteBuffer taskPsInfo;
     private LinuxDumpThreadAccess linuxDumpThreadAccess;

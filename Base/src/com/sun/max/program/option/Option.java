@@ -126,8 +126,10 @@ public class Option<T> implements Cloneable {
      * @return the current value of this option
      */
     public T getValue() {
-        return value == null ? defaultValue : value;
+        return !assigned ? defaultValue : value;
     }
+
+    private boolean assigned;
 
     /**
      * The {@code setValue()) method sets the value of this option.
@@ -135,6 +137,7 @@ public class Option<T> implements Cloneable {
      * @param value the new value to this option
      */
     public void setValue(T value) {
+        assigned = true;
         this.value = value;
     }
 
