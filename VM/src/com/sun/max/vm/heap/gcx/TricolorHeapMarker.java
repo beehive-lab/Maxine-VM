@@ -289,7 +289,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         // num bits in bitmaps = coveredAreaSize >> log2BytesCoveredPerBit
         // bitmap size in bytes = num bits >> log2numberOfBits per byte
         FatalError.check(coveredAreaSize.isWordAligned(), "Area covered by a mark bitmap must be word aligned");
-        return coveredAreaSize.unsignedShiftedRight(log2BytesCoveredPerBit + WordWidth.BITS_8.log2numberOfBits);
+        Size numberOfBytesNeeded = coveredAreaSize.unsignedShiftedRight(log2BytesCoveredPerBit + WordWidth.BITS_8.log2numberOfBits);
+
+        // Mark bitmap must be word-aligned (the marking algorithm operates on mark bitmap words)
+        // We also add an extra-word at the end to allow termination of the marking algorithm:
+        return numberOfBytesNeeded.aligned(Word.size()).plus(Word.size());
     }
 
 
