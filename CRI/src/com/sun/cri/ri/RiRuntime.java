@@ -48,7 +48,7 @@ public interface RiRuntime {
      * @return an OSR frame that describes the layout of the frame
      */
     RiOsrFrame getOsrFrame(RiMethod method, int bci);
-    
+
     /**
      * Checks whether the specified method is required to be inlined (for semantic reasons).
      * If this method returns true, then the null-check of the receiver emitted during
@@ -189,7 +189,14 @@ public interface RiRuntime {
      * @return the result of folding the operation if it is foldable, {@code null} otherwise
      */
     CiConstant foldWordOperation(int opcode, CiMethodInvokeArguments args);
-    
+
+    /**
+     * Used by the canonicalizer to compare objects, since a given runtime might not want to expose the real objects to the compiler.
+     * 
+     * @return true if the two parameters represent the same runtime object, false otherwise
+     */
+    boolean compareConstantObjects(Object x, Object y);
+
     /**
      * Records an assumption made by this compilation that the specified method is a leaf method.
      *
@@ -197,5 +204,5 @@ public interface RiRuntime {
      * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
      */
     boolean recordLeafMethodAssumption(RiMethod method);
-    
+
 }

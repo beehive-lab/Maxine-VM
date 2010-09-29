@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * Condition codes used in conditionals.
@@ -137,10 +138,11 @@ public enum Condition {
      * Attempts to fold a comparison between two constants and return the result.
      * @param lt the constant on the left side of the comparison
      * @param rt the constant on the right side of the comparison
+     * @param runtime the RiRuntime (might be needed to compare runtime-specific types)
      * @return {@link Boolean#TRUE} if the comparison is known to be true,
      * {@link Boolean#FALSE} if the comparison is known to be false, <code>null</code> otherwise.
      */
-    public Boolean foldCondition(CiConstant lt, CiConstant rt) {
+    public Boolean foldCondition(CiConstant lt, CiConstant rt, RiRuntime runtime) {
         switch (lt.kind) {
             case Int: {
                 int x = lt.asInt();
@@ -176,8 +178,8 @@ public enum Condition {
                 Object x = lt.asObject();
                 Object y = rt.asObject();
                 switch (this) {
-                    case EQ: return x == y;
-                    case NE: return x != y;
+                    case EQ: return runtime.compareConstantObjects(x, y);
+                    case NE: return !runtime.compareConstantObjects(x, y);
                 }
                 break;
             }

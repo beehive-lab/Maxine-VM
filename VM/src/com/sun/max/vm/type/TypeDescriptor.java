@@ -250,14 +250,16 @@ public abstract class TypeDescriptor extends Descriptor {
             }
 
             final Class<?> javaClass;
+            String className = typeDescriptor.toJavaString();
             try {
                 // Don't trigger class initialization
-                javaClass = Classes.forName(typeDescriptor.toJavaString(), false, getClass().getClassLoader());
+                javaClass = Classes.forName(className, false, getClass().getClassLoader());
             } catch (NoClassDefFoundError e) {
                 // couldn't find the class, obviously it cannot be resolvable
                 return false;
             }
-            if (javaClass.getPackage().getName().equals("java.lang")) {
+
+            if (Classes.getPackageName(className).equals("java.lang")) {
                 return true;
             }
 

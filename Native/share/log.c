@@ -159,7 +159,7 @@ void log_print_symbol(Address address) {
     Dl_info info;
     if (dladdr((void *) address, &info) != 0) {
         if (info.dli_sname == NULL) {
-            log_print("%s (%p)", info.dli_fname, info.dli_fbase);
+            log_print("%s (%p+%d)", info.dli_fname, info.dli_fbase, address - (Address) info.dli_fbase);
             return;
         } else {
             log_print("%s (%p) at %s (%p%+d)",

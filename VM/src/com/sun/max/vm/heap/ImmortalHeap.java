@@ -61,6 +61,8 @@ public final class ImmortalHeap {
      */
     private static Size PermSize = Size.M.times(1);
     static {
+        // FIXME: immortal heap is initialized at PRIMORDIAL time, so the value specified on the command line will always be ignored!
+        // Beside, PermSize shouldn't really be used as it clash with what it really means in the HotSpot VM
         VMOptions.addFieldOption("-XX:", "PermSize", ImmortalHeap.class, "Size of immortal heap.", MaxineVM.Phase.PRISTINE);
     }
 

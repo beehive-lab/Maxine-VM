@@ -182,7 +182,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      * It also parses some program arguments that were not parsed earlier.
      */
     protected final void initializeBasicFeatures() {
-        vmConfig().initializeSchemes(MaxineVM.Phase.PRISTINE);
         MaxineVM vm = vm();
         vm.phase = MaxineVM.Phase.STARTING;
 
