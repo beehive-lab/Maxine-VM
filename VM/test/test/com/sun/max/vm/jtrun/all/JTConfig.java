@@ -541,6 +541,7 @@ public class JTConfig {
         jtt.micro.InvokeVirtual_01.class,
         jtt.micro.InvokeVirtual_02.class,
         jtt.micro.Matrix01.class,
+        jtt.micro.ReferenceMap01.class,
         jtt.micro.StrangeFrames.class,
         jtt.micro.String_format01.class,
         jtt.micro.String_format02.class,

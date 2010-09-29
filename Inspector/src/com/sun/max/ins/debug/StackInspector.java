@@ -252,6 +252,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             } else {
                 component.setForeground(style().wordCallReturnPointColor());
             }
+            component.setFont(style().defaultFont());
             return component;
         }
     }

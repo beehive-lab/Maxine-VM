@@ -57,6 +57,8 @@ public class CriticalNativeMethod extends CriticalMethod {
     public CriticalNativeMethod(Class javaClass, String methodName) {
         super(javaClass, methodName, null, CallEntryPoint.C_ENTRY_POINT);
         registerCriticalNativeMethod(this);
+        assert classMethodActor.isNative() : classMethodActor + " cannot be registered as a " + CriticalNativeMethod.class.getSimpleName() +
+        " as it is not native";
     }
 
     /**

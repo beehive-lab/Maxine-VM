@@ -80,6 +80,9 @@ public abstract class FrameState {
         final MutableFrameState other = new MutableFrameState(scope, localsSize(), maxStackSize());
         if (withLocals && withStack) {
             // fast path: use array copy
+//            assert other.values.length >= valuesSize() : "array size: " + other.values.length + ", valuesSize: " + valuesSize() + ", maxStackSize: " + maxStackSize() + ", localsSize: " + localsSize();
+//            assert values.length >= valuesSize() : "array size: " + values.length + ", valuesSize: " + valuesSize() + ", maxStackSize: " + maxStackSize() + ", localsSize: " + localsSize();
+//            System.out.println("values: " + values.length + ", other.values: " + other.values.length + ", valueSize: " + valuesSize()+ ", maxStackSize: " + maxStackSize() + ", localsSize: " + localsSize() + ", stackSize: " + stackSize());
             System.arraycopy(values, 0, other.values, 0, valuesSize());
             other.stackIndex = stackIndex;
         } else {

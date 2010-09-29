@@ -123,6 +123,9 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     flags |= HAS_RUNTIME_CALL.mask;
                     break;
                 case Jmp:
+                    // jmp can be either into the snippet or to a runtime target
+                    flags |= i.extra instanceof XirLabel ? HAS_CONTROL_FLOW.mask : HAS_RUNTIME_CALL.mask;
+                    break;
                 case Jeq:
                 case Jneq:
                 case Jgt:
@@ -162,7 +165,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
         XirConstant[] constantOperands = constants.toArray(new XirConstant[constants.size()]);
         XirTemplate[] calleeTemplateArray = calleeTemplates.toArray(new XirTemplate[calleeTemplates.size()]);
         XirMark[] marksArray = marks.toArray(new XirMark[marks.size()]);
-        return new XirTemplate(name, this.variableCount, this.allocateResultOperand, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags, calleeTemplateArray, marksArray);
+        return new XirTemplate(name, this.variableCount, this.allocateResultOperand, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags, calleeTemplateArray, marksArray, outgoingStackSize);
     }
 
     @Override

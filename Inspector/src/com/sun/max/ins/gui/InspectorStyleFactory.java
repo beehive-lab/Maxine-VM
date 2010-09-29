@@ -32,6 +32,9 @@ public class InspectorStyleFactory extends AbstractInspectionHolder {
     private final InspectorStyle standard10;
     private final InspectorStyle standard11;
     private final InspectorStyle standard12;
+    private final InspectorStyle standard14;
+    private final InspectorStyle standard16;
+    private final InspectorStyle standard20;
     private final InspectorStyle[] allStyles;
 
     public InspectorStyleFactory(Inspection inspection) {
@@ -39,7 +42,10 @@ public class InspectorStyleFactory extends AbstractInspectionHolder {
         standard10 = new StandardInspectorStyle(inspection, 10, 16);
         standard11 = new StandardInspectorStyle(inspection, 11, 18);
         standard12 = new StandardInspectorStyle(inspection, 12, 20);
-        allStyles = new InspectorStyle[] {standard10, standard11, standard12};
+        standard14 = new StandardInspectorStyle(inspection, 14, 23);
+        standard16 = new StandardInspectorStyle(inspection, 16, 26);
+        standard20 = new StandardInspectorStyle(inspection, 20, 32);
+        allStyles = new InspectorStyle[] {standard10, standard11, standard12, standard14, standard16, standard20};
     }
 
     /**

@@ -28,7 +28,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 
 /**
  * Free heap space management.
@@ -661,7 +660,6 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         refillManager.setRefillPolicy(minLargeObjectSize, Size.fromInt(Word.widthValue().numberOfBytes * 64));
         smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE, minReclaimableSpace);
         useTLABBin = false;
-        InspectableHeapInfo.init(committedHeapSpace);
     }
 
     private Size lockedFreeSpaceLeft() {

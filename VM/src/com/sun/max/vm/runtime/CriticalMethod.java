@@ -63,7 +63,8 @@ public class CriticalMethod {
      *
      * @param javaClass the class in which the method was declared
      * @param methodName the name of the method as a string
-     * @param methodSignature the signature of the method
+     * @param methodSignature the signature of the method to find. If this value is {@code null}, then the first method found
+     *            based on {@code name} is returned.
      * @param callEntryPoint the entrypoint in the method that is desired
      * @throws NoSuchMethodError if a method with the specified name could not be found in the specified class
      */

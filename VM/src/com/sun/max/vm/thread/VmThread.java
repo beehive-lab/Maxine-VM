@@ -39,6 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.refmaps.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
@@ -516,9 +517,26 @@ public class VmThread {
 
         // If this is the main thread, then start up the VM operation thread and other special VM threads
         if (thread == mainThread) {
+            // NOTE:
+            // The main thread must bring the VM to the pristine state before all so as to
+            //  provide all basic services for the other "system" threads, most importantly, heap allocation.
+            // This could be done in the primordial thread as well, but it would allocate it a TLAB, which in turn
+            // requires heap schemes to process explicitly at every GC (something they don't do at the moment;
+            // they only iterate over threads in the ACTIVE thread map, which doesn't comprise the primordial thread).
+            //
+            // Code manager initialization must happen after parsing of pristine options
+            // It must also be performed before pristine initialization of the heap scheme (see VmThread.run())
+            // This is a temporary issue due to all code manager being FixedAddressCodeManager and assuming to be
+            // allocated directly after the boot region. If the heap scheme is initialized first, it might take this address first, causing failure.
+            // In the future, code manager initialization will be dictated by the heap scheme directly, and this issue will disappear.
+
+            Code.initialize();
+            vmConfig().initializeSchemes(MaxineVM.Phase.PRISTINE);
+
+            // We can now start the other system threads.
             // Start the VM operation thread
             VmThread.vmOperationThread.start0();
-            SpecialReferenceManager.initialize(MaxineVM.Phase.STARTING);
+            SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
             VmThread.signalDispatcherThread.start0();
         }
 
