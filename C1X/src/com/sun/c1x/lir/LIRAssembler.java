@@ -458,6 +458,8 @@ public abstract class LIRAssembler {
 
     protected abstract void emitReadPC(CiValue dst);
 
+    protected abstract void emitMonitorAddress(int monitor, CiValue dst);
+
     protected abstract void emitPause();
 
     protected abstract void emitStackAllocate(StackBlock src, CiValue dst);

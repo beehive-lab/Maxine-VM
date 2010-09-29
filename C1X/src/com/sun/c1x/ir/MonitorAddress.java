@@ -18,50 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.cri.ci;
+package com.sun.c1x.ir;
+
+import com.sun.cri.ci.*;
 
 /**
- * Denotes a register that stores a value of a fixed kind. There is exactly one (canonical) instance of {@code
- * CiRegisterValue} for each ({@link CiRegister}, {@link CiKind}) pair. Use {@link CiRegister#asValue(CiKind)} to
- * retrieve the canonical {@link CiRegisterValue} instance for a given (register,kind) pair.
+ * Instruction that is used to refer to the address of a on-stack.
  *
- * @author Ben L. Titzer
- * @author Doug Simon
+ * @author Lukas Stadler
  */
-public final class CiRegisterValue extends CiValue {
+public final class MonitorAddress extends Instruction {
 
-    /**
-     * The register.
-     */
-    // sorry about the name - "register" is a C++ keyword, and doesn't play well with the c1x4hotspot macro magic
-    public final CiRegister _register;
-    
+    private int monitor;
 
-    /**
-     * Should only be called from {@link CiRegister#CiRegister} to ensure canonicalization.
-     */
-    CiRegisterValue(CiKind kind, CiRegister register) {
-        super(kind);
-        this._register = register;
+    public MonitorAddress(int monitor) {
+        super(CiKind.Word);
+        this.monitor = monitor;
+        setFlag(Flag.NonNull);
+        redundantNullCheck();
     }
 
     @Override
-    public int hashCode() {
-        return kind.ordinal() ^ _register.number;
+    public void accept(ValueVisitor v) {
+        v.visitMonitorAddress(this);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        return o == this;
-    }
-
-    @Override
-    public String name() {
-        return _register.name;
-    }
-
-    @Override
-    public CiRegister asRegister() {
-        return _register;
+    public int monitor() {
+        return monitor;
     }
 }

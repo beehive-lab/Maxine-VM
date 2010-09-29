@@ -1091,28 +1091,44 @@ public final class GraphBuilder {
         if (Modifier.isSynchronized(method().accessFlags())) {
             FrameState stateBefore = curState.immutableCopy();
             // unlock before exiting the method
-            int lockNumber = curState.locksSize() - 1;
-            append(new MonitorExit(rootMethodSynchronizedObject, lockNumber, stateBefore));
+            int lockNumber = getLockNumber() - 1;
+            MonitorAddress lockAddress = new MonitorAddress(lockNumber);
+            append(lockAddress);
+            append(new MonitorExit(rootMethodSynchronizedObject, lockAddress, lockNumber, stateBefore));
             curState.unlock();
         }
         append(new Return(x));
     }
 
+    private int getLockNumber() {
+        int num = 0;
+        FrameState state = curState;
+        while (state != null) {
+            num += state.locksSize();
+            state = state.scope().callerState();
+        }
+        return num;
+    }
+
     void genMonitorEnter(Value x, int bci) {
         FrameState stateBefore = curState.immutableCopy();
-        int lockNumber = curState.locksSize();
-        appendWithoutOptimization(new MonitorEnter(x, lockNumber, stateBefore), bci);
-        curState.lock(scope(), x);
+        int lockNumber = getLockNumber();
+        MonitorAddress lockAddress = new MonitorAddress(lockNumber);
+        append(lockAddress);
+        appendWithoutOptimization(new MonitorEnter(x, lockAddress, lockNumber, stateBefore), bci);
+        curState.lock(scope(), x, lockNumber + 1);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
     void genMonitorExit(Value x, int bci) {
-        int lockNumber = curState.locksSize() - 1;
+        int lockNumber = getLockNumber() - 1;
         if (lockNumber < 0) {
             throw new CiBailout("monitor stack underflow");
         }
         FrameState stateBefore = curState.immutableCopy();
-        appendWithoutOptimization(new MonitorExit(x, lockNumber, stateBefore), bci);
+        MonitorAddress lockAddress = new MonitorAddress(lockNumber);
+        append(lockAddress);
+        appendWithoutOptimization(new MonitorExit(x, lockAddress, lockNumber, stateBefore), bci);
         curState.unlock();
         killMemoryMap(); // prevent any optimizations across synchronization
     }
@@ -1676,7 +1692,7 @@ public final class GraphBuilder {
 
         int bci = Instruction.SYNCHRONIZATION_ENTRY_BCI;
         assert lock != null;
-        assert curState.locksSize() > 0 && curState.lockAt(curState.locksSize() - 1) == lock;
+        assert curState.locksSize() > 0 && curState.lockAt(getLockNumber() - 1) == lock;
         if (lock instanceof Instruction) {
             Instruction l = (Instruction) lock;
             if (!l.isAppended()) {

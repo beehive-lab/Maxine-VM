@@ -26,14 +26,23 @@ package jtt.jdk;
  */
 public class System_nanoTime02 {
     public static boolean test(int arg) {
-        long start = System.nanoTime();
-        long delta = 0;
-        for (int i = 0; delta == 0 && i < 50000; i++) {
-            delta = System.nanoTime() - start;
-            // do nothing.
+        long minDelta = Long.MAX_VALUE;
+
+        // the first call to System.nanoTime might take a long time due to call resolution
+        for (int c = 0; c < 10; c++) {
+            long start = System.nanoTime();
+            long delta = 0;
+            int i;
+            for (i = 0; delta == 0 && i < 50000; i++) {
+                delta = System.nanoTime() - start;
+                // do nothing.
+            }
+            if (delta < minDelta) {
+                minDelta = delta;
+            }
         }
 
         // better get at least 30 microsecond resolution.
-        return delta > 1 && delta < 30000;
+        return minDelta > 1 && minDelta < 30000;
     }
 }

@@ -213,11 +213,6 @@ public class CiTargetMethod implements Serializable {
      */
     public final List<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
     
-    /**
-     * List of entry point code offsets.
-     */
-    public final Map<Object, Integer> entrypointCodeOffsets = new HashMap<Object, Integer>(); 
-    
     public final List<Mark> marks = new ArrayList<Mark>();
     
 

@@ -358,7 +358,7 @@ public class C1XCompilation {
     }
 
     public boolean needsDebugInformation() {
-        return false;
+        return true;
     }
 
     public int nextID() {
