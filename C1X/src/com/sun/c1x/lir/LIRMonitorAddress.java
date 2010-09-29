@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,44 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.threads;
+package com.sun.c1x.lir;
 
-/*
- * @Harness: java
- * @Runs: 0 = true
+import com.sun.cri.ci.*;
+
+/**
+ * LIR instruction used in to represent the address of a monitor object within the stack frame.
+ *
+ * @author Doug Simon
  */
+public class LIRMonitorAddress extends LIRInstruction {
 
-// Interrupted while running, do nothing, just set the flag and continue
-public class Thread_isInterrupted04 {
+    public final int monitor;
 
-    public static boolean test(int i) throws InterruptedException {
-        final Thread1 thread = new Thread1();
-        thread.start();
-        while (!thread.running) {
-            Thread.sleep(10);
-        }
-        thread.interrupt();
-        thread.setStop(true);
-        return thread.isInterrupted();
+    public LIRMonitorAddress(CiValue result, int monitor) {
+        super(LIROpcode.MonitorAddress, result, null, false);
+        this.monitor = monitor;
     }
 
-    private static class Thread1 extends java.lang.Thread {
-
-        private volatile boolean stop = false;
-        public volatile boolean running = false;
-        private long i = 0;
-
-        @Override
-        public void run() {
-            running = true;
-            while (!stop) {
-                i++;
-            }
-        }
-
-        public void setStop(boolean value) {
-            stop = value;
-        }
-
+    @Override
+    public void emitCode(LIRAssembler masm) {
+        masm.emitMonitorAddress(monitor, this.result());
     }
 }

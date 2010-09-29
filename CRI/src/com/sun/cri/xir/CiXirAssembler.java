@@ -511,7 +511,11 @@ public abstract class CiXirAssembler {
          */
         Align,
         /**
-         * Creates the stack frame for the method. This is also where stack banging is implemented.
+         * Creates the stack banging overflow check.
+         */
+        StackOverflowCheck,
+        /**
+         * Creates the stack frame for the method.
          */
         PushFrame,
         /**
@@ -690,10 +694,14 @@ public abstract class CiXirAssembler {
     public void safepoint() {
         append(new XirInstruction(CiKind.Void, null, Safepoint, null));
     }
-
+    
     public void align(int multiple) {
         assert multiple > 0;
         append(new XirInstruction(CiKind.Void, multiple, Align, null));
+    }
+    
+    public void stackOverflowCheck() {
+        append(new XirInstruction(CiKind.Void, null, StackOverflowCheck, null));
     }
     
     public void pushFrame() {
