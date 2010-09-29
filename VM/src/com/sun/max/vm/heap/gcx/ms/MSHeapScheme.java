@@ -35,6 +35,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -190,6 +191,9 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         if (VirtualMemory.deallocate(leftoverStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
             MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
         }
+
+        // From now on, we can allocate. The followsingdoes this because of the var-arg arguments.
+        InspectableHeapInfo.init(markedSpace);
     }
 
 

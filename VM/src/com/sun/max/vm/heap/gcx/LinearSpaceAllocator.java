@@ -82,7 +82,6 @@ public class LinearSpaceAllocator {
      * Maximum size one can allocate with this allocator. Request for size larger than this
      * gets delegated to the allocation failure handler.
      */
-    @CONSTANT_WHEN_NOT_ZERO
     private Size sizeLimit;
 
     /**
@@ -205,7 +204,6 @@ public class LinearSpaceAllocator {
                 // Lost the race
                 cell = start;
             }
-            // Should we refill given the space we
             if (refillManager.shouldRefill(hardLimit.minus(cell).asSize())) {
                   // Don't refill, waste would be too high. Allocate from the bin table.
                 Address result = forTLAB ? refillManager.allocateTLAB(size) : refillManager.allocate(size);

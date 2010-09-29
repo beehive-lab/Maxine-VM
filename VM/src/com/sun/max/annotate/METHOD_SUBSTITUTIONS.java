@@ -65,7 +65,8 @@ public @interface METHOD_SUBSTITUTIONS {
 
         /**
          * @param substitutee a class that has one or more methods to be substituted
-         * @param substitutor a class that provides substitute implementations for one or more methods in {@code substitutee}
+         * @param substitutor a class that provides substitute implementations for one or more methods in
+         *            {@code substitutee}
          */
         private static void register(Class substitutee, Class substitutor) {
             boolean substitutionFound = false;
@@ -78,28 +79,52 @@ public @interface METHOD_SUBSTITUTIONS {
                         substituteName = substituteMethod.getName();
                     }
                     boolean conditional = substituteAnnotation.conditional();
-
-                    final Method originalMethod = findMethod(substitutee, substituteName, SignatureDescriptor.fromJava(substituteMethod));
-                    if (originalMethod == null) {
-                        if (conditional) {
-                            Trace.line(1, "Substitutee for " + substituteMethod + " not found - skipping");
-                            continue;
-                        }
-                        ProgramError.unexpected("could not find unconditional substitutee method in " + substitutee + " substituted by " + substituteMethod);
-                    }
+                    boolean isConstructor = substituteAnnotation.constructor();
 
                     final ClassMethodActor originalMethodActor;
-                    try {
-                        originalMethodActor = ClassMethodActor.fromJava(originalMethod);
-                    } catch (NoSuchMethodError e) {
-                        if (conditional) {
-                            continue;
+                    Constructor constructor = null;
+                    Method originalMethod = null;
+
+                    if (isConstructor) {
+                        constructor = findConstructor(substitutee, SignatureDescriptor.fromJava(substituteMethod));
+                        if (constructor == null) {
+                            if (conditional) {
+                                Trace.line(1, "Substitutee for " + substituteMethod + " not found - skipping");
+                                continue;
+                            }
+                            ProgramError.unexpected("could not find unconditional substitutee constructor in " + substitutee + " substituted by " + substituteMethod);
                         }
-                        throw e;
+                        try {
+                            originalMethodActor = (ClassMethodActor) MethodActor.fromJavaConstructor(constructor);
+                        } catch (NoSuchMethodError e) {
+                            if (conditional) {
+                                continue;
+                            }
+                            throw e;
+                        }
+                    } else {
+                        originalMethod = findMethod(substitutee, substituteName, SignatureDescriptor.fromJava(substituteMethod));
+                        if (originalMethod == null) {
+                            if (conditional) {
+                                Trace.line(1, "Substitutee for " + substituteMethod + " not found - skipping");
+                                continue;
+                            }
+                            ProgramError.unexpected("could not find unconditional substitutee method in " + substitutee + " substituted by " + substituteMethod);
+                        }
+
+                        try {
+                            originalMethodActor = ClassMethodActor.fromJava(originalMethod);
+                        } catch (NoSuchMethodError e) {
+                            if (conditional) {
+                                continue;
+                            }
+                            throw e;
+                        }
                     }
+
                     ClassMethodActor substituteMethodActor = ClassMethodActor.fromJava(substituteMethod);
                     if (originalToSubstitute.put(originalMethodActor, substituteMethodActor) != null) {
-                        ProgramError.unexpected("a substitute has already been registered for " + originalMethod);
+                        ProgramError.unexpected("a substitute has already been registered for " + (isConstructor ? constructor : originalMethod));
                     }
                     if (substituteToOriginal.put(substituteMethodActor, originalMethodActor) != null) {
                         ProgramError.unexpected("only one original method per substitute allowed - " + substituteMethod);
@@ -110,12 +135,9 @@ public @interface METHOD_SUBSTITUTIONS {
                     MaxineVM.registerImageMethod(originalMethodActor); // TODO: loosen this requirement
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.
-                    if (substituteMethod.getAnnotation(INLINE.class) == null &&
-                                    substituteMethod.getAnnotation(INTRINSIC.class) == null &&
-                                    !Modifier.isStatic(substituteMethod.getModifiers())) {
-                        ProgramError.unexpected(
-                            "method without @" + SUBSTITUTE.class.getSimpleName() + " annotation in " + substitutor +
-                            " must be static, have @" + INTRINSIC.class.getSimpleName() + "(UNSAFE_CAST) or @" + INLINE.class.getSimpleName() + " annotation: " + substituteMethod);
+                    if (substituteMethod.getAnnotation(INLINE.class) == null && substituteMethod.getAnnotation(INTRINSIC.class) == null && !Modifier.isStatic(substituteMethod.getModifiers())) {
+                        ProgramError.unexpected("method without @" + SUBSTITUTE.class.getSimpleName() + " annotation in " + substitutor + " must be static, have @" + INTRINSIC.class.getSimpleName() +
+                                        "(UNSAFE_CAST) or @" + INLINE.class.getSimpleName() + " annotation: " + substituteMethod);
                     }
                 }
             }
@@ -151,6 +173,15 @@ public @interface METHOD_SUBSTITUTIONS {
                     if (signatureDescriptor.parametersEqual(SignatureDescriptor.fromJava(javaMethod))) {
                         return javaMethod;
                     }
+                }
+            }
+            return null;
+        }
+
+        private static Constructor findConstructor(Class declaringClass, SignatureDescriptor signatureDescriptor) {
+            for (Constructor constructor : declaringClass.getDeclaredConstructors()) {
+                if (signatureDescriptor.parametersEqual(SignatureDescriptor.fromJava(constructor))) {
+                    return constructor;
                 }
             }
             return null;

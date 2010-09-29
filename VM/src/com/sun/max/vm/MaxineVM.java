@@ -36,10 +36,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.BootImage.Header;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.hosted.BootImage.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -412,9 +411,11 @@ public final class MaxineVM {
         vm.phase = Phase.PRISTINE;
 
         if (VMOptions.parsePristine(argc, argv)) {
-
             // Code manager initialization must happen after parsing of pristine options
-            Code.initialize();
+            // It must also be performed before pristine initialization of the heap scheme (see VmThread.run())
+            // This is a temporary issue due to all code manager being FixedAddressCodeManager and assuming to be
+            // allocated directly after the boot region. If the heap scheme is initialized first, it might take this address first, causing failure.
+            // In the future, code manager initialization will be dictated by the heap scheme directly, and this issue will disappear.
 
             if (!VMOptions.earlyVMExitRequested()) {
                 VmThread.createAndRunMainThread();

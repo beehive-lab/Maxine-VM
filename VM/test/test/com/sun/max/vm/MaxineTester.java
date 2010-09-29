@@ -1373,7 +1373,12 @@ public class MaxineTester {
             command.addClasspath(System.getProperty("java.class.path"));
             // Some tests have native code in libraries that have been copied to the image directory
             command.addSystemProperty("java.library.path", imageDir.getAbsolutePath());
-            testJavaProgram(mainClass.getName(), command, null, outputDir, null, imageDir, new OutputComparison());
+            OutputComparison comparison = new OutputComparison();
+            String[] ignored = {
+                "*runtime-variable*"
+            };
+            comparison.stdoutIgnore = ignored;
+            testJavaProgram(mainClass.getName(), command, null, outputDir, null, imageDir, comparison);
         }
     }
 
