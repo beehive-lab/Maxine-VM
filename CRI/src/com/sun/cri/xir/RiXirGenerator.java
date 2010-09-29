@@ -54,9 +54,9 @@ public abstract interface RiXirGenerator {
 
     public XirSnippet genInvokeStatic(XirSite site, RiMethod method);
 
-    public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver);
+    public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver, XirArgument lockAddress);
 
-    public XirSnippet genMonitorExit(XirSite site, XirArgument receiver);
+    public XirSnippet genMonitorExit(XirSite site, XirArgument receiver, XirArgument lockAddress);
 
     public XirSnippet genGetField(XirSite site, XirArgument receiver, RiField field);
 

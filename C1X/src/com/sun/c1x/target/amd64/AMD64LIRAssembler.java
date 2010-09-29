@@ -101,6 +101,11 @@ public class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
+    protected void emitMonitorAddress(int monitor, CiValue dst) {
+        masm.leaq(dst.asRegister(), frameMap.toMonitorBaseStackAddress(monitor));
+    }
+
+    @Override
     protected void emitPause() {
         masm.pause();
     }
@@ -1111,7 +1116,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
-        assert opr1.kind.stackKind() == opr2.kind.stackKind();
+        assert opr1.kind.stackKind() == opr2.kind.stackKind() : "nonmatching stack kinds (" + condition + "): " + opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
         if (opr1.isRegister()) {
             CiRegister reg1 = opr1.asRegister();
             if (opr2.isRegister()) {
@@ -1595,8 +1600,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case PointerLoadDisp: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
 
-                    if (addressInformation.canTrap && info != null) {
-                        asm.recordImplicitException(codePos(), info);
+                    if (addressInformation.canTrap) {
+                        //assert info != null;
                     }
 
                     CiAddress.Scale scale = addressInformation.scale;
@@ -1618,15 +1623,15 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         src = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
-                    moveOp(src, result, inst.kind, null, false);
+                    moveOp(src, result, inst.kind, info, false);
                     break;
                 }
 
                 case PointerStoreDisp: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
 
-                    if (addressInformation.canTrap && info != null) {
-                        asm.recordImplicitException(codePos(), info);
+                    if (addressInformation.canTrap) {
+                        assert info != null;
                     }
 
                     CiAddress.Scale scale = addressInformation.scale;
@@ -1648,7 +1653,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         dst = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
-                    moveOp(value, dst, inst.kind, null, false);
+                    moveOp(value, dst, inst.kind, info, false);
                     break;
                 }
 
@@ -1749,7 +1754,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case Safepoint: {
-                    asm.recordSafepoint(codePos(), info.registerRefMap(), info.stackRefMap(), info.debugInfo());
+                    asm.recordSafepoint(codePos(), info.registerRefMap(), info.stackRefMap(), info);
                     break;
                 }
                 case NullCheck: {
@@ -1762,14 +1767,16 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     asm.align((Integer) inst.extra);
                     break;
                 }
-                case PushFrame: {
-                    int frameSizeInBytes = initialFrameSizeInBytes();
-                    masm.decrementq(AMD64.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
-                    int framePages = frameSizeInBytes / target.pageSize;
+                case StackOverflowCheck: {
+                    int framePages = initialFrameSizeInBytes() / target.pageSize;
                     // emit multiple stack bangs for methods with frames larger than a page
                     for (int i = 0; i <= framePages; i++) {
                         bangStackWithOffset((i + C1XOptions.StackShadowPages) * target.pageSize);
                     }
+                    break;
+                }
+                case PushFrame: {
+                    masm.decrementq(AMD64.rsp, initialFrameSizeInBytes()); // does not emit code for frameSize == 0
                     break;
                 }
                 case PopFrame: {

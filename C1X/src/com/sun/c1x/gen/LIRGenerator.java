@@ -223,14 +223,16 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitMonitorEnter(MonitorEnter x) {
         XirArgument obj = toXirArgument(x.object());
-        XirSnippet snippet = xir.genMonitorEnter(site(x), obj);
+        XirArgument lockAddress = toXirArgument(x.lockAddress());
+        XirSnippet snippet = xir.genMonitorEnter(site(x), obj, lockAddress);
         emitXir(snippet, x, maybeStateFor(x), null, true);
     }
 
     @Override
     public void visitMonitorExit(MonitorExit x) {
         XirArgument obj = toXirArgument(x.object());
-        XirSnippet snippet = xir.genMonitorExit(site(x), obj);
+        XirArgument lockAddress = toXirArgument(x.lockAddress());
+        XirSnippet snippet = xir.genMonitorExit(site(x), obj, lockAddress);
         emitXir(snippet, x, maybeStateFor(x), null, true);
     }
 
@@ -602,6 +604,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert x.size().isConstant() : "ALLOCA bytecode 'size' operand is not a constant: " + x.size();
         StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size().asConstant().asInt());
         lir.alloca(stackBlock, result);
+    }
+
+    @Override
+    public void visitMonitorAddress(MonitorAddress x) {
+        CiValue result = createResultVariable(x);
+        lir.monitorAddress(x.monitor(), result);
     }
 
     @Override

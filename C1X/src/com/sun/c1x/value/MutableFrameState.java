@@ -327,13 +327,12 @@ public class MutableFrameState extends FrameState {
      * @param scope the IRScope in which this locking operation occurs
      * @param obj the object being locked
      */
-    public void lock(IRScope scope, Value obj) {
+    public void lock(IRScope scope, Value obj, int totalNumberOfLocks) {
         if (locks == null) {
             locks = new ArrayList<Value>();
         }
         locks.add(obj);
-        int size = locks.size();
-        scope.setMinimumNumberOfLocks(size);
+        scope.setMinimumNumberOfLocks(totalNumberOfLocks);
     }
 
     /**

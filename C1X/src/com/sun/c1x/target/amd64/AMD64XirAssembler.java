@@ -141,6 +141,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     break;
                 case Safepoint:
                 case Align:
+                case StackOverflowCheck:
                 case PushFrame:
                 case PopFrame:
                 case Push:

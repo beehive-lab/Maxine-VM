@@ -250,8 +250,17 @@ public final class FrameMap {
      * @param monitorIndex the monitor index
      * @return a representation of the stack address
      */
-    public CiAddress toMonitorStackAddress(int monitorIndex) {
+    public CiAddress toMonitorObjectStackAddress(int monitorIndex) {
         return new CiAddress(CiKind.Object, CiRegister.Frame.asValue(), spOffsetForMonitorObject(monitorIndex));
+    }
+
+    /**
+     * Converts the monitor index into a stack address.
+     * @param monitorIndex the monitor index
+     * @return a representation of the stack address
+     */
+    public CiAddress toMonitorBaseStackAddress(int monitorIndex) {
+        return new CiAddress(CiKind.Object, CiRegister.Frame.asValue(), spOffsetForMonitorBase(monitorIndex));
     }
 
     /**
