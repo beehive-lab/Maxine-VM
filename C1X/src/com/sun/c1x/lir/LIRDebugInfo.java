@@ -115,7 +115,7 @@ public class LIRDebugInfo {
                     numLocks++;
                     assert v instanceof CiAddress;
                     CiAddress adr = (CiAddress) v;
-                    assert adr.base.isRegister() && ((CiRegisterValue) adr.base)._register == CiRegister.Frame;
+                    assert adr.base.isRegister() && ((CiRegisterValue) adr.base).reg == CiRegister.Frame;
                     assert adr.index == CiValue.IllegalValue;
 
                     // TODO this is a hack ... and not portable, etc.
@@ -142,8 +142,8 @@ public class LIRDebugInfo {
         } else {
             assert location.isRegister() : "objects can only be in a register";
             CiRegisterValue registerLocation = (CiRegisterValue) location;
-            int index = target.allocationSpec.refMapIndexMap[registerLocation._register.number];
-            assert index >= 0 : "object cannot be in non-object register " + registerLocation._register;
+            int index = target.allocationSpec.refMapIndexMap[registerLocation.reg.number];
+            assert index >= 0 : "object cannot be in non-object register " + registerLocation.reg;
             setBit(debugInfo.registerRefMap, index);
         }
     }
