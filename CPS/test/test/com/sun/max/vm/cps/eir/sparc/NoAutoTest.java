@@ -25,12 +25,12 @@ import junit.framework.*;
 import com.sun.max.ide.*;
 
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public final class AutoTest {
-    private AutoTest() {
+public final class NoAutoTest {
+    private NoAutoTest() {
     }
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(AutoTest.suite());
+        junit.textui.TestRunner.run(NoAutoTest.suite());
     }
 
     public static Test suite() {
