@@ -33,8 +33,7 @@ public final class CiRegisterValue extends CiValue {
     /**
      * The register.
      */
-    // sorry about the name - "register" is a C++ keyword, and doesn't play well with the c1x4hotspot macro magic
-    public final CiRegister _register;
+    public final CiRegister reg;
     
 
     /**
@@ -42,12 +41,12 @@ public final class CiRegisterValue extends CiValue {
      */
     CiRegisterValue(CiKind kind, CiRegister register) {
         super(kind);
-        this._register = register;
+        this.reg = register;
     }
 
     @Override
     public int hashCode() {
-        return kind.ordinal() ^ _register.number;
+        return kind.ordinal() ^ reg.number;
     }
 
     @Override
@@ -57,11 +56,11 @@ public final class CiRegisterValue extends CiValue {
 
     @Override
     public String name() {
-        return _register.name;
+        return reg.name;
     }
 
     @Override
     public CiRegister asRegister() {
-        return _register;
+        return reg;
     }
 }
