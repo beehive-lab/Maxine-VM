@@ -1631,7 +1631,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
 
                     if (addressInformation.canTrap) {
-                        assert info != null;
+                        //assert info != null;
                     }
 
                     CiAddress.Scale scale = addressInformation.scale;
