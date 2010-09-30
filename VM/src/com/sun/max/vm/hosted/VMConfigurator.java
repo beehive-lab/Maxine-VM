@@ -127,8 +127,6 @@ public final class VMConfigurator {
         switch (platform().instructionSet()) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
-            case SPARC:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.sparc.target");
             default:
                 throw FatalError.unimplemented();
         }
@@ -141,8 +139,6 @@ public final class VMConfigurator {
         switch (platform().instructionSet()) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.amd64");
-            case SPARC:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.sparc");
             default:
                 throw FatalError.unimplemented();
         }
@@ -162,8 +158,6 @@ public final class VMConfigurator {
         switch (platform().instructionSet()) {
             case AMD64:
                 return new com.sun.max.vm.compiler.target.amd64.Package();
-            case SPARC:
-                return new com.sun.max.vm.compiler.target.sparc.systemV.Package();
             default:
                 throw FatalError.unimplemented();
         }

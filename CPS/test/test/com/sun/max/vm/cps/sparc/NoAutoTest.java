@@ -26,16 +26,16 @@ import junit.framework.*;
  * @author Laurent Daynes
  */
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public final class AutoTest {
-    private AutoTest() {
+public final class NoAutoTest {
+    private NoAutoTest() {
     }
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(AutoTest.suite());
+        junit.textui.TestRunner.run(NoAutoTest.suite());
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(AutoTest.class.getPackage().getName());
+        final TestSuite suite = new TestSuite(NoAutoTest.class.getPackage().getName());
         suite.addTestSuite(SPARCTranslatorTest_snippets.class);
         suite.addTestSuite(SPARCTranslatorTest_regressions.class);
         suite.addTestSuite(SPARCTranslatorTest_reflection.class);
