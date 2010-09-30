@@ -806,11 +806,6 @@ public class VmOperation {
         }
     }
 
-    private void performOperation() {
-        tracePhase("Running operation");
-        doIt();
-    }
-
     private void thaw() {
         tracePhase("Thawing thread(s)");
 
