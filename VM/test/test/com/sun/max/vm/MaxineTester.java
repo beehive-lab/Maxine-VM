@@ -504,15 +504,20 @@ public class MaxineTester {
             final JUnitCore junit = new JUnitCore();
             junit.addListener(new RunListener() {
                 boolean failedFlag;
+                boolean setupDone;
 
                 @Override
                 public void testStarted(Description description) throws Exception {
+                    setupDone = true;
                     System.out.println("running " + description);
                 }
 
                 @Override
                 public void testFailure(Failure failure) throws Exception {
                     failure.getException().printStackTrace(System.out);
+                    if (!setupDone) {
+                        failed.println(failure.getDescription());
+                    }
                     failedFlag = true;
                 }
 
