@@ -173,7 +173,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link HeapScheme}.
      */
     public static VMPackage defaultHeapScheme() {
-        return new com.sun.max.vm.heap.sequential.semiSpace.Package();
+        return new com.sun.max.vm.heap.gcx.ms.Package();
     }
 
     /**
