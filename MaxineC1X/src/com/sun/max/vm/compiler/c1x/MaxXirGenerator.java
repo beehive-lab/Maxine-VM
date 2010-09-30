@@ -980,6 +980,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildMonitorExit() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
+        XirParameter lock = asm.createInputParameter("lock", CiKind.Word);
         callRuntimeThroughStub(asm, "monitorExit", null, object);
         return finishTemplate(asm, "monitorexit");
     }
@@ -987,6 +988,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildMonitorEnter() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
+        XirParameter lock = asm.createInputParameter("lock", CiKind.Word);
         callRuntimeThroughStub(asm, "monitorEnter", null, object);
         return finishTemplate(asm, "monitorenter");
     }
