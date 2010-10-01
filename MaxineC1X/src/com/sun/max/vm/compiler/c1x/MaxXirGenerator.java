@@ -260,6 +260,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.rawBytes(os.toByteArray());
         }
         asm.pushFrame();
+        asm.stackOverflowCheck();
         return new XirSnippet(finishTemplate(asm, "prologue"));
     }
 
@@ -334,13 +335,14 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @Override
-    public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver) {
-        return new XirSnippet(monitorEnterTemplate, receiver);
+    public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver, XirArgument lockAddress) {
+        assert lockAddress != null;
+        return new XirSnippet(monitorEnterTemplate, receiver, lockAddress);
     }
 
     @Override
-    public XirSnippet genMonitorExit(XirSite site, XirArgument receiver) {
-        return new XirSnippet(monitorExitTemplate, receiver);
+    public XirSnippet genMonitorExit(XirSite site, XirArgument receiver, XirArgument lockAddress) {
+        return new XirSnippet(monitorExitTemplate, receiver, lockAddress);
     }
 
     @Override
@@ -975,16 +977,20 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
+    @SuppressWarnings("unused")
     private XirTemplate buildMonitorExit() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
+        XirParameter lock = asm.createInputParameter("lock", CiKind.Word);
         callRuntimeThroughStub(asm, "monitorExit", null, object);
         return finishTemplate(asm, "monitorexit");
     }
 
+    @SuppressWarnings("unused")
     private XirTemplate buildMonitorEnter() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
+        XirParameter lock = asm.createInputParameter("lock", CiKind.Word);
         callRuntimeThroughStub(asm, "monitorEnter", null, object);
         return finishTemplate(asm, "monitorenter");
     }

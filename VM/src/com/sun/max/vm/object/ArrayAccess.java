@@ -20,9 +20,12 @@
  */
 package com.sun.max.vm.object;
 
+import static com.sun.max.vm.MaxineVM.*;
+
+import java.lang.reflect.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.layout.*;
@@ -50,6 +53,16 @@ public final class ArrayAccess {
      */
     @INLINE
     public static int readArrayLength(Object array) {
+        if (isHosted()) {
+            if (array.getClass().isArray()) {
+                return Array.getLength(array);
+            }
+            if (array instanceof Hybrid) {
+                final Hybrid hybrid = (Hybrid) array;
+                return hybrid.length();
+            }
+            throw FatalError.unexpected("Cannot get array length of " + array.getClass().getName() + " instance");
+        }
         return Layout.readArrayLength(Reference.fromJava(array));
     }
 
@@ -76,10 +89,24 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void checkSetObject(Object array, Object value) {
-        if (value != null) {
-            final ClassActor arrayClassActor = ObjectAccess.readClassActor(array);
-            if (!arrayClassActor.componentClassActor().isNonNullInstance(value)) {
-                Throw.arrayStoreException(array, value);
+        if (isHosted()) {
+            final Class arrayClass = array.getClass();
+            final Class componentType = arrayClass.getComponentType();
+            if (value != null) {
+                if (!componentType.isInstance(value)) {
+                    Throw.arrayStoreException(array, value);
+                }
+            } else {
+                if (Word.class.isAssignableFrom(componentType)) {
+                    Throw.arrayStoreException(array, value);
+                }
+            }
+        } else {
+            if (value != null) {
+                final ClassActor arrayClassActor = ObjectAccess.readClassActor(array);
+                if (!arrayClassActor.componentClassActor().isNonNullInstance(value)) {
+                    Throw.arrayStoreException(array, value);
+                }
             }
         }
     }
@@ -102,7 +129,12 @@ public final class ArrayAccess {
      */
     @INLINE
     public static byte getByte(Object array, int index) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
+            if (array instanceof boolean[]) {
+                final boolean[] booleanArray = (boolean[]) array;
+                return booleanArray[index] ? (byte) 1 : (byte) 0;
+            }
+            assert array instanceof byte[];
             final byte[] byteArray = (byte[]) array;
             return byteArray[index];
         }
@@ -118,12 +150,17 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setByte(Object array, int index, byte value) {
-        if (MaxineVM.isHosted()) {
-            final byte[] byteArray = (byte[]) array;
-            byteArray[index] = value;
-            return;
+        if (isHosted()) {
+            if (array instanceof boolean[]) {
+                final boolean[] booleanArray = (boolean[]) array;
+                booleanArray[index] = value != 0;
+            } else {
+                final byte[] byteArray = (byte[]) array;
+                byteArray[index] = value;
+            }
+        } else {
+            Layout.setByte(Reference.fromJava(array), index, value);
         }
-        Layout.setByte(Reference.fromJava(array), index, value);
     }
 
     /**
@@ -135,7 +172,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static boolean getBoolean(Object array, int index) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final boolean[] booleanArray = (boolean[]) array;
             return booleanArray[index];
         }
@@ -151,7 +188,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setBoolean(Object array, int index, boolean value) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final boolean[] booleanArray = (boolean[]) array;
             booleanArray[index] = value;
             return;
@@ -168,7 +205,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static short getShort(Object array, int index) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final short[] shortArray = (short[]) array;
             return shortArray[index];
         }
@@ -184,7 +221,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setShort(Object array, int index, short value) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final short[] shortArray = (short[]) array;
             shortArray[index] = value;
             return;
@@ -201,7 +238,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static char getChar(Object array, int index) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final char[] charArray = (char[]) array;
             return charArray[index];
         }
@@ -217,7 +254,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setChar(Object array, int index, char value) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final char[] charArray = (char[]) array;
             charArray[index] = value;
             return;
@@ -234,7 +271,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static int getInt(Object array, int index) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final int[] intArray = (int[]) array;
             return intArray[index];
         }
@@ -250,7 +287,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setInt(Object array, int index, int value) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final int[] intArray = (int[]) array;
             intArray[index] = value;
             return;
@@ -267,7 +304,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static float getFloat(Object array, int index) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final float[] floatArray = (float[]) array;
             return floatArray[index];
         }
@@ -283,7 +320,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setFloat(Object array, int index, float value) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final float[] floatArray = (float[]) array;
             floatArray[index] = value;
             return;
@@ -300,7 +337,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static long getLong(Object array, int index) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final long[] longArray = (long[]) array;
             return longArray[index];
         }
@@ -316,7 +353,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setLong(Object array, int index, long value) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final long[] longArray = (long[]) array;
             longArray[index] = value;
             return;
@@ -333,7 +370,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static double getDouble(Object array, int index) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final double[] doubleArray = (double[]) array;
             return doubleArray[index];
         }
@@ -349,7 +386,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setDouble(Object array, int index, double value) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final double[] doubleArray = (double[]) array;
             doubleArray[index] = value;
             return;
@@ -366,7 +403,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static Word getWord(Object array, int index) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final Word[] wordArray = (Word[]) array;
             return WordArray.get(wordArray, index);
         }
@@ -382,7 +419,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setWord(Object array, int index, Word value) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final Word[] wordArray = (Word[]) array;
             WordArray.set(wordArray, index, value);
             return;
@@ -399,7 +436,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static Object getObject(Object array, int index) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final Object[] objectArray = (Object[]) array;
             return objectArray[index];
         }
@@ -415,7 +452,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setObject(Object array, int index, Object value) {
-        if (MaxineVM.isHosted()) {
+        if (isHosted()) {
             final Object[] objectArray = (Object[]) array;
             objectArray[index] = value;
             return;

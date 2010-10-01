@@ -37,8 +37,8 @@ import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
 
 /**
- * This class represents a list of LIR instructions and contains factory methods for
- * creating and appending LIR instructions to this list.
+ * This class represents a list of LIR instructions and contains factory methods for creating and appending LIR
+ * instructions to this list.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
@@ -161,6 +161,10 @@ public class LIRList {
 
     public void returnOp(CiValue result) {
         append(new LIROp1(LIROpcode.Return, result));
+    }
+
+    public void monitorAddress(int monitor, CiValue dst) {
+        append(new LIRMonitorAddress(dst, monitor));
     }
 
     public void readPC(CiValue dst) {
@@ -515,7 +519,8 @@ public class LIRList {
         operations.add(i, op);
     }
 
-    public void xir(XirSnippet snippet, CiValue[] operands, CiValue outputOperand, int tempInputCount, int tempCount, CiValue[] inputOperands, int[] operandIndices, int outputOperandIndex, LIRDebugInfo info, RiMethod method) {
+    public void xir(XirSnippet snippet, CiValue[] operands, CiValue outputOperand, int tempInputCount, int tempCount, CiValue[] inputOperands, int[] operandIndices, int outputOperandIndex,
+                    LIRDebugInfo info, RiMethod method) {
         append(new LIRXirInstruction(snippet, operands, outputOperand, tempInputCount, tempCount, inputOperands, operandIndices, outputOperandIndex, info, method));
     }
 }

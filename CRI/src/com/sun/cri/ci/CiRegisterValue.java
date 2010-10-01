@@ -33,19 +33,20 @@ public final class CiRegisterValue extends CiValue {
     /**
      * The register.
      */
-    public final CiRegister register;
+    public final CiRegister reg;
+    
 
     /**
      * Should only be called from {@link CiRegister#CiRegister} to ensure canonicalization.
      */
     CiRegisterValue(CiKind kind, CiRegister register) {
         super(kind);
-        this.register = register;
+        this.reg = register;
     }
 
     @Override
     public int hashCode() {
-        return kind.ordinal() ^ register.number;
+        return kind.ordinal() ^ reg.number;
     }
 
     @Override
@@ -55,11 +56,11 @@ public final class CiRegisterValue extends CiValue {
 
     @Override
     public String name() {
-        return register.name;
+        return reg.name;
     }
 
     @Override
     public CiRegister asRegister() {
-        return register;
+        return reg;
     }
 }

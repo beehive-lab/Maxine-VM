@@ -35,11 +35,11 @@ import com.sun.cri.ci.*;
 public class IRScopeDebugInfo {
 
     public final IRScope scope;
-    private final int bci;
-    private final List<CiValue> locals;
-    private final List<CiValue> expressions;
-    private final List<CiValue> monitors;
-    private final IRScopeDebugInfo caller;
+    public final int bci;
+    public final List<CiValue> locals;
+    public final List<CiValue> expressions;
+    public final List<CiValue> monitors;
+    public final IRScopeDebugInfo caller;
 
     public IRScopeDebugInfo(IRScope scope, int bci, List<CiValue> locals, List<CiValue> expressions, List<CiValue> monitors, IRScopeDebugInfo caller) {
         this.scope = scope;
@@ -48,5 +48,31 @@ public class IRScopeDebugInfo {
         this.expressions = expressions;
         this.monitors = monitors;
         this.caller = caller;
+    }
+
+    public void print() {
+        System.out.println("IRScopeDebugInfo " + scope + " @" + bci);
+        if (locals != null) {
+            System.out.print(" locals: ");
+            for (CiValue v : locals) {
+                System.out.print(v + " ");
+            }
+            System.out.println();
+        }
+        if (expressions != null) {
+            System.out.print(" expressions: ");
+            for (CiValue v : expressions) {
+                System.out.print(v + " ");
+            }
+            System.out.println();
+        }
+        if (monitors != null) {
+            System.out.print(" monitors: ");
+            for (CiValue v : monitors) {
+                System.out.print(v + " ");
+            }
+            System.out.println();
+        }
+        System.out.println(" caller: " + caller);
     }
 }

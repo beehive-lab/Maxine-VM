@@ -25,7 +25,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.object.host.*;
 
 /**
  * @author Bernd Mathiske
@@ -45,7 +44,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
      */
     @HOSTED_ONLY
     static FieldActor findFieldActor(Object tuple, int offset) {
-        return HostObjectAccess.readHub(tuple).findFieldActor(offset);
+        return ObjectAccess.readHub(tuple).findFieldActor(offset);
     }
 
     public static final class ReadByte extends TupleOffsetSnippet {
@@ -53,7 +52,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static byte readByte(Object tuple, int offset) {
             if (MaxineVM.isHosted()) {
-                return HostTupleAccess.readByte(tuple, findFieldActor(tuple, offset));
+                return findFieldActor(tuple, offset).getByte(tuple);
             }
             return TupleAccess.readByte(tuple, offset);
         }
@@ -65,7 +64,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static boolean readBoolean(Object tuple, int offset) {
             if (MaxineVM.isHosted()) {
-                return HostTupleAccess.readBoolean(tuple, findFieldActor(tuple, offset));
+                return findFieldActor(tuple, offset).getBoolean(tuple);
             }
             return TupleAccess.readBoolean(tuple, offset);
         }
@@ -77,7 +76,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static short readShort(Object tuple, int offset) {
             if (MaxineVM.isHosted()) {
-                return HostTupleAccess.readShort(tuple, findFieldActor(tuple, offset));
+                return findFieldActor(tuple, offset).getShort(tuple);
             }
             return TupleAccess.readShort(tuple, offset);
         }
@@ -90,7 +89,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static char readChar(Object tuple, int offset) {
             if (MaxineVM.isHosted()) {
-                return HostTupleAccess.readChar(tuple, findFieldActor(tuple, offset));
+                return findFieldActor(tuple, offset).getChar(tuple);
             }
             return TupleAccess.readChar(tuple, offset);
         }
@@ -103,7 +102,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static int readInt(Object tuple, int offset) {
             if (MaxineVM.isHosted()) {
-                return HostTupleAccess.readInt(tuple, findFieldActor(tuple, offset));
+                return findFieldActor(tuple, offset).getInt(tuple);
             }
             return TupleAccess.readInt(tuple, offset);
         }
@@ -116,7 +115,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static float readFloat(Object tuple, int offset) {
             if (MaxineVM.isHosted()) {
-                return HostTupleAccess.readFloat(tuple, findFieldActor(tuple, offset));
+                return findFieldActor(tuple, offset).getFloat(tuple);
             }
             return TupleAccess.readFloat(tuple, offset);
         }
@@ -129,7 +128,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static long readLong(Object tuple, int offset) {
             if (MaxineVM.isHosted()) {
-                return HostTupleAccess.readLong(tuple, findFieldActor(tuple, offset));
+                return findFieldActor(tuple, offset).getLong(tuple);
             }
             return TupleAccess.readLong(tuple, offset);
         }
@@ -142,7 +141,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static double readDouble(Object tuple, int offset) {
             if (MaxineVM.isHosted()) {
-                return HostTupleAccess.readDouble(tuple, findFieldActor(tuple, offset));
+                return findFieldActor(tuple, offset).getDouble(tuple);
             }
             return TupleAccess.readDouble(tuple, offset);
         }
@@ -155,7 +154,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static Word readWord(Object tuple, int offset) {
             if (MaxineVM.isHosted()) {
-                return HostTupleAccess.readWord(tuple, findFieldActor(tuple, offset));
+                return findFieldActor(tuple, offset).getWord(tuple);
             }
             return TupleAccess.readWord(tuple, offset);
         }
@@ -168,7 +167,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
         @INLINE
         public static Object readReference(Object tuple, int offset) {
             if (MaxineVM.isHosted()) {
-                return HostTupleAccess.readObject(tuple, findFieldActor(tuple, offset));
+                return findFieldActor(tuple, offset).getObject(tuple);
             }
             return TupleAccess.readObject(tuple, offset);
         }

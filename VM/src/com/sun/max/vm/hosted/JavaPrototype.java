@@ -29,11 +29,13 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.sun.c1x.debug.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -43,6 +45,7 @@ import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.jdk.Package;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * The {@link ClassActor} context when {@linkplain BootImageGenerator generating} the
@@ -124,6 +127,22 @@ public final class JavaPrototype extends Prototype {
     }
 
     private final PackageLoader packageLoader;
+
+    /**
+     * A object to signal that all references to a particular object should be set to null.
+     */
+    public static final Object NULL = new Object();
+
+    /**
+     * A map used during bootstrapping to replace references to a particular object with
+     * references to another object during graph reachability.
+     */
+    public Map<Object, Object> objectMap;
+
+    /**
+     * A map used to canonicalize instances of the Maxine value classes.
+     */
+    private final Map<Object, Object> valueMap = new HashMap<Object, Object>();
 
     /**
      * Gets the package loader for this java prototype.
@@ -589,5 +608,91 @@ public final class JavaPrototype extends Prototype {
             }
             return fieldActor;
         }
+    }
+
+    /**
+     * Gets the system thread group.
+     *
+     * @return the thread group for the entire system
+     */
+    private static ThreadGroup getSystemThreadGroup() {
+        ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
+        while (true) {
+            final ThreadGroup parent = threadGroup.getParent();
+            if (parent == null) {
+                assert threadGroup.getName().equals("system");
+                return threadGroup;
+            }
+            threadGroup = parent;
+        }
+    }
+
+    /**
+     * This method maps a host object to a target object. For most objects, this method will return the parameter
+     * object, but some objects are not portable from the host VM to the target VM and references to them must be
+     * updated with references to a different object (perhaps {@code null}).
+     *
+     * @param object the host object to translate
+     * @return a reference to the corresponding object in the target VM
+     */
+    public static Object hostToTarget(Object object) {
+        return theJavaPrototype.hostToTarget0(object);
+    }
+
+    private Object hostToTarget0(Object object) {
+        if (object instanceof String || object instanceof Value || object instanceof NameAndTypeConstant) {
+            // canonicalize all instances of these classes using .equals()
+            Object result = valueMap.get(object);
+            if (result == null) {
+                result = object;
+                valueMap.put(object, object);
+            }
+            return result;
+        }
+        final Object replace = getObjectReplacement(object);
+        if (replace != null) {
+            return replace == NULL ? null : replace;
+        }
+        if (object instanceof Thread || object instanceof ThreadGroup) {
+            if (MaxineVM.isMaxineClass(ClassActor.fromJava(object.getClass()))) {
+                ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
+            }
+            return null;
+        }
+        return object;
+    }
+
+    private Object getObjectReplacement(Object object) {
+        if (objectMap == null) {
+            // check the object identity map certain objects to certain other objects
+            initializeObjectIdentityMap();
+        }
+        final Object replace = objectMap.get(object);
+        return replace;
+    }
+
+    private void initializeObjectIdentityMap() {
+        objectMap = new IdentityHashMap<Object, Object>();
+
+        objectMap.put(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, BootClassLoader.BOOT_CLASS_LOADER);
+        objectMap.put(BootClassLoader.BOOT_CLASS_LOADER.getParent(), NULL);
+
+        objectMap.put(VmThread.hostSystemThreadGroup, VmThread.systemThreadGroup);
+        objectMap.put(VmThread.hostMainThreadGroup, VmThread.mainThreadGroup);
+        objectMap.put(VmThread.hostReferenceHandlerThread, VmThread.referenceHandlerThread.javaThread());
+        objectMap.put(VmThread.hostFinalizerThread, VmThread.finalizerThread.javaThread());
+        objectMap.put(VmThread.hostMainThread, VmThread.mainThread.javaThread());
+
+        objectMap.put(VmThread.systemThreadGroup, VmThread.systemThreadGroup);
+        objectMap.put(VmThread.mainThreadGroup, VmThread.mainThreadGroup);
+        objectMap.put(VmThread.referenceHandlerThread.javaThread(), VmThread.referenceHandlerThread.javaThread());
+        objectMap.put(VmThread.finalizerThread.javaThread(), VmThread.finalizerThread.javaThread());
+        objectMap.put(VmThread.mainThread.javaThread(), VmThread.mainThread.javaThread());
+        objectMap.put(VmThread.vmOperationThread.javaThread(), VmThread.vmOperationThread.javaThread());
+        objectMap.put(VmThread.signalDispatcherThread.javaThread(), VmThread.signalDispatcherThread.javaThread());
+
+        objectMap.put(Trace.stream(), Log.out);
+        objectMap.put(TTY.out(), new LogStream(Log.os));
+        objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor.initialSystemProperties);
     }
 }

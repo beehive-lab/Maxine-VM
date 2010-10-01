@@ -35,20 +35,25 @@ public abstract class AccessMonitor extends StateSplit {
      */
     Value object;
 
+    private Value lockAddress;
+
     /**
      * The lock number of this monitor access.
      */
     public final int lockNumber;
 
+
     /**
      * Creates a new AccessMonitor instruction.
      * @param object the instruction producing the object
+     * @param lockAddress the address of the on-stack lock object
      * @param stateBefore the state before executing the monitor operation
      * @param lockNumber the number of the lock being acquired
      */
-    public AccessMonitor(Value object, FrameState stateBefore, int lockNumber) {
+    public AccessMonitor(Value object, Value lockAddress, FrameState stateBefore, int lockNumber) {
         super(CiKind.Illegal, stateBefore);
         this.object = object;
+        this.lockAddress = lockAddress;
         this.lockNumber = lockNumber;
     }
 
@@ -60,12 +65,20 @@ public abstract class AccessMonitor extends StateSplit {
     }
 
     /**
+     * Gets the instruction producing the address of the lock object.
+     */
+    public Value lockAddress() {
+        return lockAddress;
+    }
+
+    /**
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);
+        lockAddress = closure.apply(lockAddress);
     }
 
     @Override

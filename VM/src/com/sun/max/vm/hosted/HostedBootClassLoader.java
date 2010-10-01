@@ -30,14 +30,13 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
 
 /**
  * The VM class loader used when running in hosted mode.
  * The singleton {@link #HOSTED_BOOT_CLASS_LOADER} instance is identical to the
  * singleton {@link BootClassLoader#BOOT_CLASS_LOADER} instance of the {@link BootClassLoader}
- * at runtime thanks to {@link HostObjectAccess#hostToTarget(Object)}.
+ * at runtime thanks to {@link JavaPrototype#hostToTarget(Object)}.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -160,7 +159,7 @@ public final class HostedBootClassLoader extends ClassLoader {
     /**
      * This value is identical to {@link BootClassLoader#BOOT_CLASS_LOADER} at runtime.
      *
-     * @see HostObjectAccess#hostToTarget(Object)
+     * @see JavaPrototype#hostToTarget(Object)
      */
     public static final HostedBootClassLoader HOSTED_BOOT_CLASS_LOADER = new HostedBootClassLoader();
 

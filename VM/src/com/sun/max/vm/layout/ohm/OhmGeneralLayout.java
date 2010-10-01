@@ -26,9 +26,10 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
-import com.sun.max.vm.layout.SpecificLayout.*;
-import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.layout.SpecificLayout.ObjectCellVisitor;
+import com.sun.max.vm.layout.SpecificLayout.ObjectMirror;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -219,7 +220,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @HOSTED_ONLY
     public void visitHeader(ObjectCellVisitor visitor, Object object) {
-        final Hub hub = HostObjectAccess.readHub(object);
+        final Hub hub = ObjectAccess.readHub(object);
         visitor.visitHeaderField(hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
         visitor.visitHeaderField(miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(gripScheme().vmConfiguration().monitorScheme().createMisc(object)));
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.cps.eir.sparc;
+package com.sun.c1x.ir;
 
-import junit.framework.*;
-import test.com.sun.max.vm.cps.bytecode.*;
+import com.sun.cri.ci.*;
 
-public class SPARCEirTranslatorTest_getfield extends BytecodeTest_getfield {
+/**
+ * Instruction that is used to refer to the address of a on-stack.
+ *
+ * @author Lukas Stadler
+ */
+public final class MonitorAddress extends Instruction {
 
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_getfield.class.getSimpleName());
-        suite.addTestSuite(SPARCEirTranslatorTest_getfield.class);
-        return new SPARCEirTranslatorTestSetup(suite);
+    private int monitor;
+
+    public MonitorAddress(int monitor) {
+        super(CiKind.Word);
+        this.monitor = monitor;
+        setFlag(Flag.NonNull);
+        redundantNullCheck();
     }
 
-    public SPARCEirTranslatorTest_getfield(String name) {
-        super(name);
+    @Override
+    public void accept(ValueVisitor v) {
+        v.visitMonitorAddress(this);
     }
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(SPARCEirTranslatorTest_getfield.suite());
+    public int monitor() {
+        return monitor;
     }
-
 }

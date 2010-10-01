@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.cps.eir.sparc;
+package com.sun.c1x.lir;
 
-import junit.framework.*;
-import test.com.sun.max.vm.cps.bytecode.*;
+import com.sun.cri.ci.*;
 
-public class SPARCEirTranslatorTest_wide extends BytecodeTest_wide {
+/**
+ * LIR instruction used in to represent the address of a monitor object within the stack frame.
+ *
+ * @author Doug Simon
+ */
+public class LIRMonitorAddress extends LIRInstruction {
 
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_wide.class.getSimpleName());
-        suite.addTestSuite(SPARCEirTranslatorTest_wide.class);
-        return new SPARCEirTranslatorTestSetup(suite);
+    public final int monitor;
+
+    public LIRMonitorAddress(CiValue result, int monitor) {
+        super(LIROpcode.MonitorAddress, result, null, false);
+        this.monitor = monitor;
     }
 
-    public SPARCEirTranslatorTest_wide(String name) {
-        super(name);
+    @Override
+    public void emitCode(LIRAssembler masm) {
+        masm.emitMonitorAddress(monitor, this.result());
     }
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(SPARCEirTranslatorTest_wide.suite());
-    }
-
 }

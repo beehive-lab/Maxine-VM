@@ -106,7 +106,7 @@ public class SpecialReferenceManager {
     public static void processDiscoveredSpecialReferences(GripForwarder gripForwarder) {
         // the first pass over the list finds the references that have referents that are no longer reachable
         java.lang.ref.Reference ref = UnsafeCast.asJDKReference(discoveredList.toJava());
-        java.lang.ref.Reference last = UnsafeCast.asJDKReference(TupleAccess.readObject(pendingField.holder().staticTuple(), pendingField.offset()));
+        java.lang.ref.Reference last = UnsafeCast.asJDKReference(pendingField.getObject(null));
         final boolean isForwardingGC = gripForwarder.isForwarding();
 
         while (ref != null) {

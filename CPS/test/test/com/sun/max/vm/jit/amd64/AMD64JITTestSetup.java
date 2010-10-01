@@ -46,7 +46,7 @@ public class AMD64JITTestSetup extends AMD64TranslatorTestSetup implements JITTe
 
     @Override
     protected void initializeVM() {
-        Platform.set(platform().constrainedByInstructionSet(InstructionSet.SPARC));
+        Platform.set(platform().constrainedByInstructionSet(InstructionSet.AMD64));
         VMConfigurator.installStandardJit(BuildLevel.DEBUG);
     }
 

@@ -31,7 +31,9 @@ public class Thread_isInterrupted04 {
     public static boolean test(int i) throws InterruptedException {
         final Thread1 thread = new Thread1();
         thread.start();
-        Thread.sleep(10);
+        while (!thread.running) {
+            Thread.sleep(10);
+        }
         thread.interrupt();
         thread.setStop(true);
         return thread.isInterrupted();
@@ -40,10 +42,12 @@ public class Thread_isInterrupted04 {
     private static class Thread1 extends java.lang.Thread {
 
         private volatile boolean stop = false;
+        public volatile boolean running = false;
         private long i = 0;
 
         @Override
         public void run() {
+            running = true;
             while (!stop) {
                 i++;
             }

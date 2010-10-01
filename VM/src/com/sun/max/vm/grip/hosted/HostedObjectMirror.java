@@ -31,7 +31,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.SpecificLayout.ObjectMirror;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -95,11 +94,11 @@ public class HostedObjectMirror implements ObjectMirror {
     }
 
     public int readArrayLength() {
-        return HostObjectAccess.getArrayLength(object);
+        return ArrayAccess.readArrayLength(object);
     }
 
     public void writeArrayLength(Value value) {
-        assert value.asInt() == HostObjectAccess.getArrayLength(object);
+        assert value.asInt() == ArrayAccess.readArrayLength(object);
     }
 
     public void writeHub(Value value) {

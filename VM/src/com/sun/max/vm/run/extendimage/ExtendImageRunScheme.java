@@ -31,10 +31,9 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.run.java.*;
 import com.sun.max.vm.runtime.*;
 
@@ -180,7 +179,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             ClassActor classActor = ClassActor.fromJava(sun.misc.Launcher.class);
             final FieldActor rfa = classActor.findLocalStaticFieldActor("bootstrapClassPath");
             if (rfa != null) {
-                TupleAccess.writeObject(rfa.holder().staticTuple(), rfa.offset(), null);
+                rfa.setObject(null, null);
             }
             try {
                 launcherClassActor.callInitializer();

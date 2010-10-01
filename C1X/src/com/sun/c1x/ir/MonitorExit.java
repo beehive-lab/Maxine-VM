@@ -35,8 +35,8 @@ public final class MonitorExit extends AccessMonitor {
      * @param lockNumber the number of the lock
      * @param stateBefore the state before executing this instruction
      */
-    public MonitorExit(Value object, int lockNumber, FrameState stateBefore) {
-        super(object, stateBefore, lockNumber);
+    public MonitorExit(Value object, Value lockAddress, int lockNumber, FrameState stateBefore) {
+        super(object, lockAddress, stateBefore, lockNumber);
         if (object.isNonNull()) {
             redundantNullCheck();
         }
