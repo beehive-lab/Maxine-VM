@@ -40,7 +40,6 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.VMOption.Category;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -216,7 +215,7 @@ public final class VMOptions {
 
     /**
      * This is a reference to the initial value of {@link System#props} when the VM starts up.
-     * The "magic" in {@link HostObjectAccess#hostToTarget(Object)} will ensure that this map
+     * The "magic" in {@link JavaPrototype#hostToTarget(Object)} will ensure that this map
      * only has the properties from the host specified by {@link JDKInterceptor#REMEMBERED_PROPERTY_NAMES}.
      * The system properties parsed on the command line are stored in this map.
      * This is required so that they are available before the System class is initialized.

@@ -311,7 +311,7 @@ public class VmThread {
     }
 
     public static VmThread fromJava(Thread javaThread) {
-        return (VmThread) TupleAccess.readObject(javaThread, Thread_vmThread.offset());
+        return (VmThread) Thread_vmThread.getObject(javaThread);
     }
 
     @C_FUNCTION

@@ -26,6 +26,7 @@ import static com.sun.max.vm.jdk.JDK.*;
 
 import java.io.*;
 import java.lang.reflect.*;
+import java.nio.*;
 import java.security.*;
 import java.util.*;
 
@@ -43,7 +44,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.object.*;
+import com.sun.max.vm.jdk.JDK.ClassRef;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
@@ -111,6 +112,7 @@ public final class ClassRegistry {
     public static final FieldActor Throwable_stackTrace = findField(Throwable.class, "stackTrace");
     public static final FieldActor Signal_handlers = findField(Signal.class, "handlers");
     public static final FieldActor Signal_signals = findField(Signal.class, "signals");
+    public static final FieldActor Buffer_address = findField(Buffer.class, "address");
 
     public static final MethodActor ThreadGroup_add_Thread = findMethod(ThreadGroup.class, "add", Thread.class);
     public static final MethodActor Thread_init = findMethod("init", Thread.class);
@@ -324,7 +326,8 @@ public final class ClassRegistry {
             return BOOT_CLASS_REGISTRY;
         }
 
-        final ClassRegistry result = (ClassRegistry) TupleAccess.readObject(classLoader, ClassLoader_classRegistry.offset());
+        FieldActor crField = Utils.cast(ClassLoader_classRegistry);
+        final ClassRegistry result = (ClassRegistry) crField.getObject(classLoader);
         if (result != null) {
             return result;
         }
@@ -332,7 +335,7 @@ public final class ClassRegistry {
         // Non-blocking synchronization is used here to swap in a new ClassRegistry reference.
         // This could lead to some extra ClassRegistry objects being created that become garbage, but should be harmless.
         final ClassRegistry newRegistry = new ClassRegistry(classLoader);
-        final Reference oldRegistry = Reference.fromJava(classLoader).compareAndSwapReference(ClassLoader_classRegistry.offset(), null,  Reference.fromJava(newRegistry));
+        final Reference oldRegistry = Reference.fromJava(classLoader).compareAndSwapReference(crField.offset(), null,  Reference.fromJava(newRegistry));
         if (oldRegistry == null) {
             return newRegistry;
         }

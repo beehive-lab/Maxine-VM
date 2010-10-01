@@ -42,7 +42,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -202,8 +201,8 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     /**
-     * @return whether this method was generated merely to provide an entry in a vtable slot
-     * that would otherwise be empty.
+     * @return whether this method was generated merely to provide an entry in a vtable slot that would otherwise be
+     *         empty.
      *
      * @see MirandaMethodActor
      */
@@ -262,11 +261,11 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
             return JavaPrototype.javaPrototype().toMethodActor(javaMethod);
         }
         // The injected field in a Method object that is used to speed up this translation is lazily initialized.
-        MethodActor methodActor = (MethodActor) TupleAccess.readObject(javaMethod, Method_methodActor.offset());
+        MethodActor methodActor = (MethodActor) Method_methodActor.getObject(javaMethod);
         if (methodActor == null) {
             final String name = javaMethod.getName();
             methodActor = findMethodActor(ClassActor.fromJava(javaMethod.getDeclaringClass()), SymbolTable.makeSymbol(name), SignatureDescriptor.fromJava(javaMethod));
-            TupleAccess.writeObject(javaMethod, Method_methodActor.offset(), methodActor);
+            Method_methodActor.setObject(javaMethod, methodActor);
         }
         return methodActor;
     }
@@ -281,10 +280,10 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
             return JavaPrototype.javaPrototype().toMethodActor(javaConstructor);
         }
         // The injected field in a Constructor object that is used to speed up this translation is lazily initialized.
-        MethodActor methodActor = (MethodActor) TupleAccess.readObject(javaConstructor, Constructor_methodActor.offset());
+        MethodActor methodActor = (MethodActor) Constructor_methodActor.getObject(javaConstructor);
         if (methodActor == null) {
             methodActor = findMethodActor(ClassActor.fromJava(javaConstructor.getDeclaringClass()), SymbolTable.INIT, SignatureDescriptor.fromJava(javaConstructor));
-            TupleAccess.writeObject(javaConstructor, Constructor_methodActor.offset(), methodActor);
+            Constructor_methodActor.setObject(javaConstructor, methodActor);
         }
         return methodActor;
     }
@@ -319,7 +318,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
                         runtimeVisibleAnnotationsBytes(),
                         runtimeVisibleParameterAnnotationsBytes(),
                         annotationDefaultBytes());
-        TupleAccess.writeObject(javaMethod, Method_methodActor.offset(), this);
+        Method_methodActor.setObject(javaMethod, this);
         return javaMethod;
     }
 
@@ -341,7 +340,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
                         genericSignatureString(),
                         runtimeVisibleAnnotationsBytes(),
                         runtimeVisibleParameterAnnotationsBytes());
-        TupleAccess.writeObject(javaConstructor, Constructor_methodActor.offset(), this);
+        Constructor_methodActor.setObject(javaConstructor, this);
         return javaConstructor;
     }
 
@@ -563,7 +562,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     public final boolean isOverridden() {
         // TODO: do more sophisticated leaf method check than just if class has subclass
-        return !canBeStaticallyBound() && holder().hasSubclass();   // TODO what about interfaces?
+        return !canBeStaticallyBound() && holder().hasSubclass(); // TODO what about interfaces?
     }
 
     public final boolean isResolved() {

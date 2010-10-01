@@ -32,7 +32,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -232,7 +231,7 @@ final class JDK_java_security_AccessController {
             final AccessControlContext result = (AccessControlContext) AccessControlContext_init.newInstance(protectionDomains, context.isPrivileged);
             if (context.isPrivileged) {
                 // need to manually set privilegedContext as no constructor for that
-                TupleAccess.writeObject(result, AccessControlContext_privilegedContext.offset(), context.privilegedContext);
+                AccessControlContext_privilegedContext.setObject(result, context.privilegedContext);
             }
             return result;
         } catch (OutOfMemoryError ex) {
@@ -252,6 +251,6 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static AccessControlContext getInheritedAccessControlContext() {
-        return UnsafeCast.asAccessControlContext(TupleAccess.readObject(Thread.currentThread(), ClassRegistry.Thread_inheritedAccessControlContext.offset()));
+        return UnsafeCast.asAccessControlContext(Thread_inheritedAccessControlContext.getObject(Thread.currentThread()));
     }
 }

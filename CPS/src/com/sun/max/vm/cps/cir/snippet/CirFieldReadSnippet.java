@@ -27,7 +27,6 @@ import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.optimize.*;
 import com.sun.max.vm.cps.cir.transform.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -111,7 +110,7 @@ public final class CirFieldReadSnippet extends CirSnippet {
             if (fieldActor.isConstantWhenNotZero()) {
                 if (isConstantArgument(arguments, FieldReadParameter.tuple)) {
                     final Value tuple = getConstantArgumentValue(arguments, FieldReadParameter.tuple);
-                    final Value value = MaxineVM.isHosted() ? HostTupleAccess.readValue(tuple.asObject(), fieldActor) : fieldActor.readValue(tuple.asReference());
+                    final Value value = fieldActor.getValue(tuple.asObject());
                     if (!value.isZero()) {
                         return super.fold(cirOptimizer, arguments);
                     }

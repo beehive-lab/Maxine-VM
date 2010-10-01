@@ -31,7 +31,6 @@ import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -131,8 +130,6 @@ import com.sun.max.vm.cps.cir.operator.JavaOperator.JavaBuiltinOperator;
 import com.sun.max.vm.cps.cir.operator.Throw;
 import com.sun.max.vm.cps.cir.snippet.*;
 import com.sun.max.vm.cps.cir.variable.*;
-import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.Role;
 import com.sun.max.vm.type.*;
@@ -1255,12 +1252,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                 final FieldActor fieldActor = fieldRef.resolve(constantPool, index);
                 if (fieldActor.isFinal() && JavaTypeDescriptor.isPrimitive(fieldActor.descriptor()) && fieldActor.holder().isInitialized()) {
                     // This can be transformed directly into a constant value if the field holder has been initialized
-                    final Value fieldValue;
-                    if (MaxineVM.isHosted()) {
-                        fieldValue = HostTupleAccess.readValue(null, fieldActor);
-                    } else {
-                        fieldValue = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));
-                    }
+                    final Value fieldValue = fieldActor.getValue(null);
                     push(fieldValue);
                     return;
                 }

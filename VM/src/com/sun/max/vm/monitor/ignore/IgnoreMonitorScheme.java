@@ -26,7 +26,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.thread.*;
 
 /**

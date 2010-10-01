@@ -977,6 +977,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
+    @SuppressWarnings("unused")
     private XirTemplate buildMonitorExit() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
@@ -985,6 +986,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         return finishTemplate(asm, "monitorexit");
     }
 
+    @SuppressWarnings("unused")
     private XirTemplate buildMonitorEnter() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);

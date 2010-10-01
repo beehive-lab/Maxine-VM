@@ -25,8 +25,8 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
-import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -59,7 +59,7 @@ public class HostedArrayHeaderLayout extends HostedGeneralLayout implements Arra
     }
 
     public Kind getElementKind(Accessor accessor) {
-        return HostObjectAccess.readHub(accessor).classActor.componentClassActor().kind;
+        return ObjectAccess.readHub(accessor).classActor.componentClassActor().kind;
     }
 
     public int arrayLengthOffset() {
@@ -68,7 +68,7 @@ public class HostedArrayHeaderLayout extends HostedGeneralLayout implements Arra
 
     public int readLength(Accessor accessor) {
         final Reference reference = (Reference) accessor;
-        return HostObjectAccess.getArrayLength(reference.toJava());
+        return ArrayAccess.readArrayLength(reference.toJava());
     }
 
     public void writeLength(Accessor accessor, int length) {

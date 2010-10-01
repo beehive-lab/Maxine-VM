@@ -21,6 +21,7 @@
 package com.sun.max.vm.type;
 
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.io.*;
 import java.util.*;
@@ -31,10 +32,8 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
@@ -98,7 +97,7 @@ public final class BootClassLoader extends ClassLoader {
     private Object createNativeLibrary(String path, Word handle) {
         try {
             final Object nativeLibrary = ClassRegistry.NativeLibrary_init.invokeConstructor(ReferenceValue.from(BootClassLoader.class), ReferenceValue.from(path)).asObject();
-            TupleAccess.writeLong(nativeLibrary, ClassRegistry.NativeLibrary_handle.offset(), handle.asAddress().toLong());
+            NativeLibrary_handle.setLong(nativeLibrary, handle.asAddress().toLong());
             return nativeLibrary;
         } catch (Throwable throwable) {
             throw FatalError.unexpected("Error calling NativeLibrary constructor", throwable);
@@ -111,10 +110,10 @@ public final class BootClassLoader extends ClassLoader {
         final Object nativeLibrary = createNativeLibrary(fileName, handle);
 
         final Class<Vector<Object>> type = null;
-        final Vector<Object> loadedLibraryNames = Utils.cast(type, TupleAccess.readObject(StaticTuple.fromJava(ClassLoader.class), ClassRegistry.ClassLoader_loadedLibraryNames.offset()));
+        final Vector<Object> loadedLibraryNames = Utils.cast(type, ClassLoader_loadedLibraryNames.getObject(null));
         loadedLibraryNames.addElement(fileName);
 
-        final Vector<Object> nativeLibraries = Utils.cast(type, TupleAccess.readObject(this, ClassRegistry.ClassLoader_nativeLibraries.offset()));
+        final Vector<Object> nativeLibraries = Utils.cast(type, ClassLoader_nativeLibraries.getObject(this));
         nativeLibraries.addElement(nativeLibrary);
     }
 

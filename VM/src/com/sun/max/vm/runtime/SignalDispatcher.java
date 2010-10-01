@@ -175,8 +175,8 @@ public final class SignalDispatcher extends Thread {
 
     @Override
     public void run() {
-        Hashtable handlers = (Hashtable) ClassRegistry.Signal_handlers.get(null);
-        Hashtable signals = (Hashtable) ClassRegistry.Signal_signals.get(null);
+        Hashtable handlers = (Hashtable) ClassRegistry.Signal_handlers.getObject(null);
+        Hashtable signals = (Hashtable) ClassRegistry.Signal_signals.getObject(null);
         nativeSignalInit(tryPostSignal.address());
         started = true;
 

@@ -298,7 +298,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
             } else {
                 reference = state.pop(Kind.REFERENCE);
             }
-            state.push(toStackValue(fieldActor.readValue(reference.asReference())));
+            state.push(toStackValue(fieldActor.getValue(reference.asObject())));
         }
 
         @Override
