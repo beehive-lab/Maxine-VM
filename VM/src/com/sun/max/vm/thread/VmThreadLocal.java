@@ -261,16 +261,6 @@ public class VmThreadLocal {
     public static final VmThreadLocal IMMORTAL_ALLOCATION_ENABLED
         = new VmThreadLocal("IMMORTAL_ALLOCATION_ENABLED", false, "Non-zero if thread is allocating on the immortal heap");
 
-    /**
-     * Used to pass a method from an {@link InterpreterStub} to the interpreter.
-     */
-    public static final VmThreadLocal INTERPRETED_METHOD = new VmThreadLocal("INTERPRETED_METHOD", true, "ClassMethodActor being interpreted");
-
-    /**
-     * Records the size of the native call stack.
-     */
-    public static final VmThreadLocal NATIVE_CALL_STACK_SIZE = new VmThreadLocal("NATIVE_CALL_STACK_SIZE", false, "Size of the native call stack");
-
     private static VmThreadLocal[] valuesNeedingInitialization;
 
     /**
