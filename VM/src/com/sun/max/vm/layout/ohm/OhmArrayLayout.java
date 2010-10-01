@@ -27,7 +27,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -93,13 +93,13 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
     @Override
     public void visitHeader(ObjectCellVisitor visitor, Object array) {
         super.visitHeader(visitor, array);
-        visitor.visitHeaderField(lengthOffset, "length", JavaTypeDescriptor.INT, IntValue.from(HostObjectAccess.getArrayLength(array)));
+        visitor.visitHeaderField(lengthOffset, "length", JavaTypeDescriptor.INT, IntValue.from(ArrayAccess.readArrayLength(array)));
     }
 
     @HOSTED_ONLY
     private void visitElements(ObjectCellVisitor visitor, Object array) {
         final int length = Array.getLength(array);
-        final Hub hub = HostObjectAccess.readHub(array);
+        final Hub hub = ObjectAccess.readHub(array);
         final Kind elementKind = hub.classActor.componentClassActor().kind;
         if (elementKind.isReference) {
             for (int i = 0; i < length; i++) {

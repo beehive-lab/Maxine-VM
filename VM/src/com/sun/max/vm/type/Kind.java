@@ -153,15 +153,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         throw new ClassCastException("there is no canonical array class for a non-primitive Java type");
     }
 
-    public Value_Type readValue(Reference reference, Offset offset) {
-        throw new ClassCastException();
-    }
-
     public Value_Type readValue(Reference reference, int offset) {
-        throw new ClassCastException();
-    }
-
-    public void writeValue(Object object, Offset offset, Value_Type value) {
         throw new ClassCastException();
     }
 
@@ -247,18 +239,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public IntValue readValue(Reference reference, Offset offset) {
-            return IntValue.from(reference.readInt(offset));
-        }
-
-        @Override
         public IntValue readValue(Reference reference, int offset) {
             return IntValue.from(reference.readInt(offset));
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, IntValue value) {
-            TupleAccess.writeInt(object, offset, value.asInt());
         }
 
         @Override
@@ -310,18 +292,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public ByteValue readValue(Reference reference, Offset offset) {
-            return ByteValue.from(reference.readByte(offset));
-        }
-
-        @Override
         public ByteValue readValue(Reference reference, int offset) {
             return ByteValue.from(reference.readByte(offset));
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, ByteValue value) {
-            TupleAccess.writeByte(object, offset, value.asByte());
         }
 
         @Override
@@ -374,18 +346,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public BooleanValue readValue(Reference reference, Offset offset) {
-            return BooleanValue.from(reference.readBoolean(offset));
-        }
-
-        @Override
         public BooleanValue readValue(Reference reference, int offset) {
             return BooleanValue.from(reference.readBoolean(offset));
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, BooleanValue value) {
-            TupleAccess.writeBoolean(object, offset, value.asBoolean());
         }
 
         @Override
@@ -438,18 +400,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public ShortValue readValue(Reference reference, Offset offset) {
-            return ShortValue.from(reference.readShort(offset));
-        }
-
-        @Override
         public ShortValue readValue(Reference reference, int offset) {
             return ShortValue.from(reference.readShort(offset));
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, ShortValue value) {
-            TupleAccess.writeShort(object, offset, value.asShort());
         }
 
         @Override
@@ -502,18 +454,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public CharValue readValue(Reference reference, Offset offset) {
-            return CharValue.from(reference.readChar(offset));
-        }
-
-        @Override
         public CharValue readValue(Reference reference, int offset) {
             return CharValue.from(reference.readChar(offset));
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, CharValue value) {
-            TupleAccess.writeChar(object, offset, value.asChar());
         }
 
         @Override
@@ -566,18 +508,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public FloatValue readValue(Reference reference, Offset offset) {
-            return FloatValue.from(reference.readFloat(offset));
-        }
-
-        @Override
         public FloatValue readValue(Reference reference, int offset) {
             return FloatValue.from(reference.readFloat(offset));
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, FloatValue value) {
-            TupleAccess.writeFloat(object, offset, value.asFloat());
         }
 
         @Override
@@ -630,18 +562,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public LongValue readValue(Reference reference, Offset offset) {
-            return LongValue.from(reference.readLong(offset));
-        }
-
-        @Override
         public LongValue readValue(Reference reference, int offset) {
             return LongValue.from(reference.readLong(offset));
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, LongValue value) {
-            TupleAccess.writeLong(object, offset, value.asLong());
         }
 
         @Override
@@ -694,18 +616,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public DoubleValue readValue(Reference reference, Offset offset) {
-            return DoubleValue.from(reference.readDouble(offset));
-        }
-
-        @Override
         public DoubleValue readValue(Reference reference, int offset) {
             return DoubleValue.from(reference.readDouble(offset));
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, DoubleValue value) {
-            TupleAccess.writeDouble(object, offset, value.asDouble());
         }
 
         @Override
@@ -753,18 +665,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                                                                    WordValue.class, 'W', Word.class, JavaTypeDescriptor.WORD,
                                                                    Word.widthValue()) {
         @Override
-        public WordValue readValue(Reference reference, Offset offset) {
-            return new WordValue(reference.readWord(offset));
-        }
-
-        @Override
         public WordValue readValue(Reference reference, int offset) {
             return new WordValue(reference.readWord(offset));
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, WordValue value) {
-            TupleAccess.writeWord(object, offset, value.asWord());
         }
 
         @Override
@@ -820,18 +722,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                                                                                   ReferenceValue.class, 'R', Object.class, JavaTypeDescriptor.REFERENCE,
                                                                                   Word.widthValue()) {
         @Override
-        public ReferenceValue readValue(Reference reference, Offset offset) {
-            return ReferenceValue.from(reference.readReference(offset).toJava());
-        }
-
-        @Override
         public ReferenceValue readValue(Reference reference, int offset) {
             return ReferenceValue.from(reference.readReference(offset).toJava());
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, ReferenceValue value) {
-            TupleAccess.writeObject(object, offset, value.asObject());
         }
 
         @Override

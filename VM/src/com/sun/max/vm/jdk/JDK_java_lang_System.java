@@ -22,6 +22,7 @@ package com.sun.max.vm.jdk;
 
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -68,8 +69,7 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setIn0(InputStream in) {
-        final FieldActor fieldActor = ClassRegistry.System_in;
-        TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), in);
+        System_in.setObject(null, in);
     }
 
     /**
@@ -79,8 +79,7 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setOut0(PrintStream out) {
-        final FieldActor fieldActor = ClassRegistry.System_out;
-        TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), out);
+        System_out.setObject(null, out);
     }
 
     /**
@@ -90,8 +89,7 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setErr0(PrintStream err) {
-        final FieldActor fieldActor = ClassRegistry.System_err;
-        TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), err);
+        System_err.setObject(null, err);
     }
 
     /**

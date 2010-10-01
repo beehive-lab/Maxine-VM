@@ -128,7 +128,7 @@ public final class VMConfigurator {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
             default:
-                throw FatalError.unimplemented();
+                throw FatalError.unexpected(platform().instructionSet().toString());
         }
     }
 
@@ -167,7 +167,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link HeapScheme}.
      */
     public static VMPackage defaultHeapScheme() {
-        return new com.sun.max.vm.heap.gcx.ms.Package();
+        return new com.sun.max.vm.heap.sequential.semiSpace.Package();
     }
 
     /**

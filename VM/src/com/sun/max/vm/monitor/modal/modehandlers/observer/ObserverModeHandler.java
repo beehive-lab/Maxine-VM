@@ -23,12 +23,12 @@ package com.sun.max.vm.monitor.modal.modehandlers.observer;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
-import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.*;
-import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.*;
+import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.DelegatedThreadHoldsMonitorResult;
+import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.MonitorSchemeEntry;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.thread.*;
 
 /**

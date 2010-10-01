@@ -23,7 +23,6 @@ package com.sun.max.vm.type;
 import java.util.*;
 
 import com.sun.cri.ri.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 
 /**

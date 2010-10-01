@@ -23,13 +23,13 @@ package com.sun.max.vm.monitor.modal.modehandlers.inflated;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin.*;
 import com.sun.max.vm.monitor.modal.sync.*;
-import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.*;
+import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.UnboundMiscWordWriter;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.thread.*;
 
 /**

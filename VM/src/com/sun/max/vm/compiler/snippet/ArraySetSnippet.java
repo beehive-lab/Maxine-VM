@@ -25,7 +25,6 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
 
 public abstract class ArraySetSnippet extends BuiltinsSnippet {
@@ -39,11 +38,7 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void setByte(Object array, int index, int value) {
-            if (MaxineVM.isHosted()) {
-                HostArrayAccess.setByte(array, index, (byte) value);
-            } else {
-                ArrayAccess.setByte(array, index, (byte) value);
-            }
+            ArrayAccess.setByte(array, index, (byte) value);
         }
         public static final SetByte SNIPPET = new SetByte();
     }
