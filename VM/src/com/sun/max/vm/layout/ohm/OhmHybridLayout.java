@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.type.*;
@@ -53,10 +52,9 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
     private final OhmTupleLayout tupleLayout;
     private final IntArrayLayout intArrayLayout;
 
-    OhmHybridLayout(GripScheme gripScheme) {
-        super(gripScheme);
-        tupleLayout = new OhmTupleLayout(gripScheme);
-        intArrayLayout = new OhmIntArrayLayout(gripScheme);
+    OhmHybridLayout() {
+        tupleLayout = new OhmTupleLayout();
+        intArrayLayout = new OhmIntArrayLayout();
     }
 
     public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {

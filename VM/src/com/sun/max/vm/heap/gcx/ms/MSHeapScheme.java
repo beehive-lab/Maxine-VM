@@ -384,7 +384,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             objectSpace.makeParsable();
             heapMarker.markAll();
             startTimer(weakRefTimer);
-            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
+            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceRefForwarder());
             stopTimer(weakRefTimer);
             startTimer(reclaimTimer);
             Size freeSpaceAfterGC = reclaim();

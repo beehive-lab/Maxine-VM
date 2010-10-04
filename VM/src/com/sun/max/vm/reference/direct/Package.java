@@ -18,18 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.reference.plain;
+package com.sun.max.vm.reference.direct;
 
-import com.sun.max.tele.grip.*;
-import com.sun.max.tele.reference.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * @author Bernd Mathiske
  */
-public class PlainTeleReference extends TeleReference {
-
-    PlainTeleReference(TeleGrip grip) {
-        super(grip);
+public class Package extends VMPackage {
+    public Package() {
+        registerScheme(ReferenceScheme.class, DirectReferenceScheme.class);
     }
 
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.referencePackage.equals(this);
+    }
 }

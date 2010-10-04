@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.grip;
+package com.sun.max.tele.reference;
 
 import com.sun.max.unsafe.*;
 
@@ -28,16 +28,16 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  * @author Hannes Payer
  */
-public final class MutableTeleGrip extends RemoteTeleGrip {
+public final class MutableTeleReference extends RemoteTeleReference {
 
     private int index;
     private Address lastValidPointer = Address.zero();
 
     int index() {
-        if (forwardedTeleGrip != null) {
-            if (forwardedTeleGrip instanceof MutableTeleGrip) {
-                final MutableTeleGrip mutableTeleGrip = (MutableTeleGrip) getForwardedTeleGrip();
-                return mutableTeleGrip.index();
+        if (forwardedTeleRef != null) {
+            if (forwardedTeleRef instanceof MutableTeleReference) {
+                final MutableTeleReference mutableTeleRef = (MutableTeleReference) getForwardedTeleRef();
+                return mutableTeleRef.index();
             }
         }
         return index;
@@ -45,9 +45,9 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
 
     @Override
     public TeleObjectMemory.State getTeleObjectMemoryState() {
-        if (forwardedTeleGrip != null) {
-            MutableTeleGrip forwardedTeleGrip = (MutableTeleGrip) getForwardedTeleGrip();
-            if (forwardedTeleGrip.index() == -1) {
+        if (forwardedTeleRef != null) {
+            MutableTeleReference forwardedTeleRef = (MutableTeleReference) getForwardedTeleRef();
+            if (forwardedTeleRef.index() == -1) {
                 return TeleObjectMemory.State.DEAD;
             }
             return TeleObjectMemory.State.OBSOLETE;
@@ -60,10 +60,10 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
 
     @Override
     public Address raw() {
-        if (index == -1 || forwardedTeleGrip != null) {
+        if (index == -1 || forwardedTeleRef != null) {
             return lastValidPointer;
         }
-        Address tmp = teleGripScheme().getRawGrip(this);
+        Address tmp = teleReferenceScheme().getRawReference(this);
         if (!tmp.equals(Address.zero())) {
             lastValidPointer = tmp;
             return tmp;
@@ -72,16 +72,16 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
         return lastValidPointer;
     }
 
-    MutableTeleGrip(TeleGripScheme teleGripScheme, int index) {
-        super(teleGripScheme);
+    MutableTeleReference(TeleReferenceScheme teleReferenceScheme, int index) {
+        super(teleReferenceScheme);
         this.index = index;
     }
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof MutableTeleGrip) {
-            final MutableTeleGrip mutableTeleGrip = (MutableTeleGrip) other;
-            return index == mutableTeleGrip.index;
+        if (other instanceof MutableTeleReference) {
+            final MutableTeleReference mutableTeleRef = (MutableTeleReference) other;
+            return index == mutableTeleRef.index;
         }
         return false;
     }
@@ -94,7 +94,7 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
     @Override
     public void finalize() throws Throwable {
         if (isLive()) {
-            teleGripScheme().finalizeMutableTeleGrip(index);
+            teleReferenceScheme().finalizeMutableTeleReference(index);
         }
         super.finalize();
     }

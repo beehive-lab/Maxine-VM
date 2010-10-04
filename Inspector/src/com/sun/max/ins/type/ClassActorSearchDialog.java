@@ -26,7 +26,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.vm.type.*;
 
@@ -110,7 +109,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     /**
      * Displays a dialog to let the user select a class from the {@linkplain TeleClassRegistry inspector class registry}.
      *
-     * @return the reference to the selected class actor or {@link TeleReference#ZERO} if the user canceled the dialog
+     * @return the reference to the selected class actor or {@link XXX_TeleReference#ZERO} if the user canceled the dialog
      */
     public static TeleClassActor show(Inspection inspection) {
         final ClassActorSearchDialog dialog = new ClassActorSearchDialog(inspection);

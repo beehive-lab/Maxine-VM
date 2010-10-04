@@ -25,7 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.object.*;
@@ -54,10 +53,6 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     public Size specificSize(Accessor accessor) {
         final Hub hub = UnsafeCast.asHub(readHubReference(accessor).toJava());
         return hub.tupleSize;
-    }
-
-    public OhmTupleLayout(GripScheme gripScheme) {
-        super(gripScheme);
     }
 
     private final int headerSize = 2 * Word.size();

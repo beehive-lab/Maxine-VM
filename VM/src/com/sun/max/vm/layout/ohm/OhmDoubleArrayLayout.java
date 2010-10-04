@@ -22,7 +22,6 @@ package com.sun.max.vm.layout.ohm;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -32,8 +31,8 @@ import com.sun.max.vm.value.*;
  */
 public class OhmDoubleArrayLayout extends OhmPrimitiveArrayLayout<DoubleValue> implements DoubleArrayLayout {
 
-    public OhmDoubleArrayLayout(GripScheme gripScheme) {
-        super(gripScheme, Kind.DOUBLE);
+    public OhmDoubleArrayLayout() {
+        super(Kind.DOUBLE);
     }
 
     @INLINE

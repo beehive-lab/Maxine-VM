@@ -30,7 +30,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
@@ -585,16 +584,16 @@ public final class Heap {
         return bootHeapRegion.contains(address) || Code.contains(address) || ImmortalHeap.getImmortalHeap().contains(address);
     }
 
-    public static boolean isValidGrip(Grip grip) {
-        if (grip.isZero()) {
+    public static boolean isValidRef(Reference ref) {
+        if (ref.isZero()) {
             return true;
         }
-        Pointer origin = grip.toOrigin();
+        Pointer origin = ref.toOrigin();
         if (!bootHeapRegion.contains(origin) && !heapScheme().contains(origin) && !Code.contains(origin) && !ImmortalHeap.getImmortalHeap().contains(origin)) {
             return false;
         }
         if (DebugHeap.isTagging()) {
-            return DebugHeap.isValidNonnullGrip(grip);
+            return DebugHeap.isValidNonnullRef(ref);
         }
         return true;
     }

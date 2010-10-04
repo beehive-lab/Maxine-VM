@@ -23,9 +23,8 @@ package com.sun.max.vm.layout.ohm;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.type.*;
 
 /**
@@ -49,8 +48,7 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
         return new HeaderField[] {HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH};
     }
 
-    OhmArrayHeaderLayout(GripScheme gripScheme) {
-        super(gripScheme);
+    OhmArrayHeaderLayout() {
         lengthOffset = miscOffset + Word.size();
         headerSize = lengthOffset + Word.size();
     }
