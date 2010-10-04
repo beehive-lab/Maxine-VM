@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.type;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.util.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
@@ -147,7 +149,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
             } else {
                 final Reference typeDescriptorToClassActorReference = vm().teleFields().ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryReference);
                 tableReference = vm().teleFields().HashMap_table.readReference(typeDescriptorToClassActorReference);
-                final int length = vm().layoutScheme().arrayHeaderLayout.readLength(tableReference);
+                final int length = vmConfig().layoutScheme().arrayHeaderLayout.readLength(tableReference);
                 for (int i = 0; i < length; i++) {
                     Reference entryReference = vm().readReference(tableReference, i);
                     while (!entryReference.isZero()) {

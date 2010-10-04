@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.object;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -282,7 +284,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         try {
             // If the location in fact points to a well-formed object in the VM, we will be able to determine the
             // meta-information necessary to understanding how to access information in the object.
-            hubReference = vm().wordToReference(vm().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
+            hubReference = vm().wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
             classActorReference = vm().teleFields().Hub_classActor.readReference(hubReference);
             classActor = vm().makeClassActor(classActorReference);
         } catch (InvalidReferenceException invalidReferenceException) {
@@ -293,7 +295,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         }
 
         // Must check for the static tuple case first; it doesn't follow the usual rules
-        final Reference hubhubReference = vm().wordToReference(vm().layoutScheme().generalLayout.readHubReferenceAsWord(hubReference));
+        final Reference hubhubReference = vm().wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(hubReference));
         final Reference hubClassActorReference = vm().teleFields().Hub_classActor.readReference(hubhubReference);
         final ClassActor hubClassActor = vm().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub

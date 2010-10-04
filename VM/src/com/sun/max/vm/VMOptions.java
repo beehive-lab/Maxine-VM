@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.lang.reflect.*;
@@ -305,6 +306,7 @@ public final class VMOptions {
         register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exit") {
             @Override
             public boolean parseValue(Pointer optionValue) {
+                Log.println("  Platform: " + platform());
                 vmConfig().print(Log.out, "  ");
                 return true;
             }
@@ -317,6 +319,7 @@ public final class VMOptions {
         register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continue") {
             @Override
             public boolean parseValue(Pointer optionValue) {
+                Log.println("  Platform: " + platform());
                 vmConfig().print(Log.out, "  ");
                 return true;
             }

@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.reference;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.util.*;
 
 import com.sun.max.tele.*;
@@ -64,7 +66,7 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
         tracer.begin();
 
         this.teleReferenceScheme = teleReferenceScheme;
-        this.wordArrayLayout = teleReferenceScheme.vm().layoutScheme().wordArrayLayout;
+        this.wordArrayLayout = vmConfig().layoutScheme().wordArrayLayout;
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(null);

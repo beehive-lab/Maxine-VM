@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.lang.reflect.*;
@@ -693,7 +694,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public int pageSize() {
-        return vmConfig().platform.pageSize;
+        return platform().pageSize;
     }
 
     /**

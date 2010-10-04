@@ -132,10 +132,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     @HOSTED_ONLY
     public AdaptiveCompilationScheme() {
-        VMConfiguration vmConfiguration = vmConfig();
-        optCompiler = vmConfiguration.optCompilerScheme();
-        jitCompiler = vmConfiguration.jitCompilerScheme();
-        bootCompiler = TESTING_C1X_AS_BOOT_COMPILER ? optCompiler : vmConfiguration.bootCompilerScheme();
+        optCompiler = vmConfig().optCompilerScheme();
+        jitCompiler = vmConfig().jitCompilerScheme();
+        bootCompiler = TESTING_C1X_AS_BOOT_COMPILER ? optCompiler : vmConfig().bootCompilerScheme();
     }
 
     /**

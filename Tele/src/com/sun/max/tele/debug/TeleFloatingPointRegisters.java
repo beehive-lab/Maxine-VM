@@ -20,10 +20,11 @@
  */
 package com.sun.max.tele.debug;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.asm.amd64.*;
 import com.sun.max.tele.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -36,7 +37,7 @@ import com.sun.max.vm.runtime.*;
 public final class TeleFloatingPointRegisters extends TeleRegisters {
 
     public TeleFloatingPointRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
-        super(teleVM, teleRegisterSet, symbolizer(teleVM.vmConfiguration()));
+        super(teleVM, teleRegisterSet, createSymbolizer());
     }
 
     /**
@@ -73,8 +74,8 @@ public final class TeleFloatingPointRegisters extends TeleRegisters {
      * Gets the symbols representing all the floating point registers of the instruction set denoted by a given VM
      * configuration.
      */
-    public static Symbolizer<? extends Symbol> symbolizer(VMConfiguration vmConfiguration) {
-        switch (vmConfiguration.platform.instructionSet()) {
+    public static Symbolizer<? extends Symbol> createSymbolizer() {
+        switch (platform().instructionSet()) {
             case AMD64:
                 return AMD64XMMRegister.ENUMERATOR;
             case SPARC:

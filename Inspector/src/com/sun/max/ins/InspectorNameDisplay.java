@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -45,7 +47,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public InspectorNameDisplay(Inspection inspection) {
         super(inspection);
 
-        heapSchemeSuffix = "{" + vm().vmConfiguration().heapScheme().getClass().getSimpleName() + "}";
+        heapSchemeSuffix = "{" + vmConfig().heapScheme().getClass().getSimpleName() + "}";
 
         referenceRenderers.put(TeleArrayObject.class, new ArrayReferenceRenderer());
         referenceRenderers.put(TeleHub.class, new HubReferenceRenderer());

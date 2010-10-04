@@ -20,15 +20,17 @@
  */
 package com.sun.max.tele;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.io.*;
 import java.util.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.*;
+import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.bytecode.BytecodeLocation;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 
@@ -250,7 +252,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
                 vm().unlock();
             }
             if (code != null) {
-                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform, getCodeStart(), code, null);
+                instructions = TeleDisassembler.decode(platform(), getCodeStart(), code, null);
             }
         }
         return instructions;

@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug.darwin;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.io.*;
 
 import com.sun.max.program.*;
@@ -33,7 +35,7 @@ public final class DarwinTeleVM extends TeleVM {
 
     @Override
     protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new DarwinTeleProcess(this, bootImage().vmConfiguration.platform, programFile(), commandLineArguments);
+        return new DarwinTeleProcess(this, platform(), programFile(), commandLineArguments);
     }
 
     public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
@@ -42,6 +44,6 @@ public final class DarwinTeleVM extends TeleVM {
 
     @Override
     protected DarwinTeleProcess attachToTeleProcess() throws BootImageException {
-        return new DarwinTeleProcess(this, bootImage().vmConfiguration.platform, programFile(), targetLocation().id);
+        return new DarwinTeleProcess(this, platform(), programFile(), targetLocation().id);
     }
 }

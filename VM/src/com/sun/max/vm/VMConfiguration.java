@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
@@ -51,7 +52,6 @@ import com.sun.max.vm.trampoline.*;
 public final class VMConfiguration {
 
     public final BuildLevel buildLevel;
-    public final Platform platform;
     public final VMPackage referencePackage;
     public final VMPackage layoutPackage;
     public final VMPackage heapPackage;
@@ -105,7 +105,6 @@ public final class VMConfiguration {
                            VMPackage trampolinePackage,
                            VMPackage targetABIsPackage, VMPackage runPackage) {
         this.buildLevel = buildLevel;
-        this.platform = platform;
         this.referencePackage = referencePackage;
         this.layoutPackage = layoutPackage;
         this.heapPackage = heapPackage;
@@ -309,7 +308,6 @@ public final class VMConfiguration {
 
     public void print(PrintStream out, String indent) {
         out.println(indent + "Build level: " + buildLevel);
-        out.println(indent + "Platform: " + platform);
         for (VMScheme vmScheme : vmSchemes()) {
             final String specification = vmScheme.specification().getSimpleName();
             out.println(indent + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
@@ -334,7 +332,7 @@ public final class VMConfiguration {
         }
         if (maxPackage instanceof AsmPackage) {
             final AsmPackage asmPackage = (AsmPackage) maxPackage;
-            return asmPackage.isPartOfAssembler(platform.instructionSet());
+            return asmPackage.isPartOfAssembler(platform().instructionSet());
         }
         if (maxPackage instanceof VMPackage) {
             final VMPackage vmPackage = (VMPackage) maxPackage;

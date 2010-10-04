@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static java.lang.reflect.Modifier.*;
 
@@ -153,7 +154,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         this.hub_mTableLength = FieldActor.findInstance(Hub.class, "mTableLength").offset();
         this.hub_mTableStartIndex = FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
         this.hub_componentHub = FieldActor.findInstance(Hub.class, "componentHub").offset();
-        this.wordSize = vmConfiguration.platform.wordWidth().numberOfBytes;
+        this.wordSize = platform().wordWidth().numberOfBytes;
         assert wordSize == target.wordSize : "word size mismatch";
         this.arrayLengthOffset = Layout.arrayHeaderLayout().arrayLengthOffset();
         this.offsetOfFirstArrayElement = Layout.byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
