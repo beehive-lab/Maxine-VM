@@ -21,6 +21,8 @@
 package com.sun.max.ins;
 
 
+import static com.sun.max.platform.Platform.*;
+
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -82,7 +84,7 @@ public final class BootImageTable extends InspectorTable {
             final BootImage bootImage = vm().bootImage();
             final BootImage.Header header = bootImage.header;
             final VMConfiguration vmConfiguration = bootImage.vmConfiguration;
-            final Platform platform = vmConfiguration.platform;
+            final Platform platform = platform();
             final DataModel processorDataModel = platform.dataModel();
             dummyLabel = new PlainLabel(inspection, "");
 

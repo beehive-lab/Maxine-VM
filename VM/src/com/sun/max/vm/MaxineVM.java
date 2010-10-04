@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
@@ -213,7 +214,7 @@ public final class MaxineVM {
     @HOSTED_ONLY
     public static MaxineVM set(MaxineVM vm) {
         MaxineVM old = MaxineVM.vm;
-        Platform.set(vm.config.platform);
+        Platform.set(platform());
         MaxineVM.vm = vm;
         return old;
     }

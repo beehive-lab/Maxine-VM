@@ -21,6 +21,7 @@
 package com.sun.max.vm.runtime.sparc;
 
 import static com.sun.max.asm.sparc.GPR.*;
+import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -68,7 +69,7 @@ public final class SPARCSafepoint extends Safepoint {
 
     @HOSTED_ONLY
     public SPARCSafepoint(VMConfiguration vmConfiguration) {
-        is32Bit = vmConfiguration.platform.wordWidth() == WordWidth.BITS_32;
+        is32Bit = platform().wordWidth() == WordWidth.BITS_32;
     }
 
     /**

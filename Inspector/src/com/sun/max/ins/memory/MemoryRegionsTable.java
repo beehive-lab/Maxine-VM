@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.memory;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -33,10 +35,9 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.ins.value.WordValueLabel.*;
+import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -46,7 +47,6 @@ import com.sun.max.vm.value.*;
  */
 public final class MemoryRegionsTable extends InspectorTable {
 
-    private final HeapScheme heapScheme;
     private final String heapSchemeName;
 
     private final MemoryRegionsTableModel tableModel;
@@ -54,8 +54,7 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
-        heapScheme = inspection.vm().vmConfiguration().heapScheme();
-        heapSchemeName = heapScheme.getClass().getSimpleName();
+        heapSchemeName = vmConfig().heapScheme().getClass().getSimpleName();
         tableModel = new MemoryRegionsTableModel(inspection);
         columnModel = new MemoryRegionsColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);

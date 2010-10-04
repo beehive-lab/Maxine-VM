@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.runtime.amd64;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.vm.*;
@@ -36,7 +38,7 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.platform.instructionSet() == InstructionSet.AMD64;
+        return platform().instructionSet() == InstructionSet.AMD64;
     }
 
 }

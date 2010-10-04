@@ -20,15 +20,17 @@
  */
 package com.sun.max.tele.debug;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.VMRegister.*;
+import com.sun.max.vm.runtime.VMRegister.Role;
 
 /**
  * Encapsulates the values of the integer (or general purpose) registers for a tele native thread.
@@ -42,8 +44,8 @@ public final class TeleIntegerRegisters extends TeleRegisters {
     private final Symbol indirectCallRegister;
 
     public TeleIntegerRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
-        super(teleVM, teleRegisterSet, symbolizer(teleVM.vmConfiguration()));
-        switch (teleVM.vmConfiguration().platform.instructionSet()) {
+        super(teleVM, teleRegisterSet, createSymbolizer());
+        switch (platform().instructionSet()) {
             case AMD64: {
                 indirectCallRegister = AMD64GeneralRegister64.RAX;
                 break;
@@ -62,8 +64,8 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * Gets the symbols representing all the integer registers of the instruction set denoted by a given VM
      * configuration.
      */
-    public static Symbolizer<? extends Symbol> symbolizer(VMConfiguration vmConfiguration) {
-        switch (vmConfiguration.platform.instructionSet()) {
+    public static Symbolizer<? extends Symbol> createSymbolizer() {
+        switch (platform().instructionSet()) {
             case AMD64:
                 return AMD64GeneralRegister64.ENUMERATOR;
             case SPARC:
@@ -113,7 +115,7 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * @return the value of the register denoted by {@code role} and {@code targetABI}
      */
     Pointer get(VMRegister.Role role, TargetABI targetABI) {
-        final TargetABI abi = targetABI == null ? vm().vmConfiguration().targetABIsScheme().nativeABI : targetABI;
+        final TargetABI abi = targetABI == null ? vmConfig().targetABIsScheme().nativeABI : targetABI;
         final Symbol register = abi.registerRoleAssignment.integerRegisterActingAs(role);
         return getValue(register).asPointer();
     }

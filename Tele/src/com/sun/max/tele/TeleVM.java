@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.tele.debug.ProcessState.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -477,10 +478,12 @@ public abstract class TeleVM implements MaxVM {
      * @param bootImageConfig
      */
     private static void initializeVM(VMConfiguration bootImageConfig) {
+        MaxineVM vm = new MaxineVM(bootImageConfig);
+        MaxineVM.set(vm);
         bootImageConfig.loadAndInstantiateSchemes(null);
         final VMConfiguration config = new VMConfiguration(
                         bootImageConfig.buildLevel,
-                        bootImageConfig.platform,
+                        platform(),
                         getInspectorReferencePackage(bootImageConfig.referencePackage),
                         bootImageConfig.layoutPackage,
                         bootImageConfig.heapPackage,
@@ -491,7 +494,7 @@ public abstract class TeleVM implements MaxVM {
                         bootImageConfig.compilationPackage,
                         bootImageConfig.trampolinePackage,
                         bootImageConfig.targetABIsPackage, bootImageConfig.runPackage);
-        final MaxineVM vm = new MaxineVM(config);
+        vm = new MaxineVM(config);
         MaxineVM.set(vm);
         config.loadAndInstantiateSchemes(bootImageConfig.vmSchemes());
         JavaPrototype.initialize(false);
@@ -511,7 +514,7 @@ public abstract class TeleVM implements MaxVM {
         initializeVM(bootImage.vmConfiguration);
 
         TeleVM teleVM = null;
-        final OperatingSystem operatingSystem = bootImage.vmConfiguration.platform.operatingSystem;
+        final OperatingSystem operatingSystem = platform().operatingSystem;
         final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
@@ -582,12 +585,6 @@ public abstract class TeleVM implements MaxVM {
     private String  tracePrefix() {
         return "[TeleVM: " + Thread.currentThread().getName() + "] ";
     }
-
-    /**
-     * Note that this is identical to the value returned by {@link VMConfiguration#vmConfig()}
-     * after {@link #initializeVM(VMConfiguration)} has been called.
-     */
-    private final VMConfiguration vmConfiguration;
 
     private final Size wordSize;
 
@@ -727,16 +724,15 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        setTeleChannelProtocol(bootImage.vmConfiguration.platform.operatingSystem);
-        vmConfiguration = vmConfig();
+        setTeleChannelProtocol(platform().operatingSystem);
 
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating all");
 
         // Pre-initialize the disassembler to save time.
-        TeleDisassembler.initialize(vmConfiguration.platform);
+        TeleDisassembler.initialize(platform());
 
-        this.wordSize = Size.fromInt(vmConfiguration.platform.wordWidth().numberOfBytes);
-        this.pageSize = Size.fromInt(vmConfiguration.platform.pageSize);
+        this.wordSize = Size.fromInt(platform().wordWidth().numberOfBytes);
+        this.pageSize = Size.fromInt(platform().pageSize);
         this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
         if (mode == Mode.ATTACH || mode == Mode.ATTACHWAITING) {
@@ -849,10 +845,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final String getDescription() {
         return MaxineVM.description();
-    }
-
-    public VMConfiguration vmConfiguration() {
-        return vmConfiguration;
     }
 
     public final File vmDirectory() {
@@ -1199,15 +1191,8 @@ public abstract class TeleVM implements MaxVM {
         teleFields().Trace_threshold.writeLong(this, newThreshold);
     }
 
-    public TeleReferenceScheme referenceScheme() {
-        return (TeleReferenceScheme) vmConfiguration.referenceScheme();
-    }
-
-    /**
-     * @return the scheme used to manage object layouts in this VM.
-     */
-    public final LayoutScheme layoutScheme() {
-        return vmConfiguration.layoutScheme();
+    public TeleReferenceScheme teleReferenceScheme() {
+        return (TeleReferenceScheme) VMConfiguration.vmConfig().referenceScheme();
     }
 
     /**
@@ -1234,15 +1219,15 @@ public abstract class TeleVM implements MaxVM {
     }
 
     private RemoteTeleReference createTemporaryRemoteTeleReference(Word rawReference) {
-        return referenceScheme().createTemporaryRemoteTeleReference(rawReference.asAddress());
+        return teleReferenceScheme().createTemporaryRemoteTeleReference(rawReference.asAddress());
     }
 
     private RemoteTeleReference temporaryRemoteTeleReferenceFromOrigin(Word origin) {
-        return referenceScheme().temporaryRemoteTeleReferenceFromOrigin(origin);
+        return teleReferenceScheme().temporaryRemoteTeleReferenceFromOrigin(origin);
     }
 
     public final Reference originToReference(final Pointer origin) {
-        return vmConfiguration.referenceScheme().fromOrigin(origin);
+        return vmConfig().referenceScheme().fromOrigin(origin);
     }
 
     public final Reference bootClassRegistryReference() {
@@ -1263,7 +1248,7 @@ public abstract class TeleVM implements MaxVM {
                 return false;
             }
             if (false && bootImage.vmConfiguration.debugging()) {
-                final Pointer cell = layoutScheme().generalLayout.originToCell(origin);
+                final Pointer cell = vmConfig().layoutScheme().generalLayout.originToCell(origin);
                 // Checking is easy in a debugging build; there's a special word preceding each object
                 final Word tag = dataAccess().getWord(cell, 0, -1);
                 return DebugHeap.isValidCellTag(tag);
@@ -1279,14 +1264,14 @@ public abstract class TeleVM implements MaxVM {
             // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
             // class {@link DynamicHub}.
             //          tuple -> dynamicHub of the tuple's class -> dynamicHub of DynamicHub
-            Word hubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
+            Word hubWord = vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
             for (int i = 0; i < 3; i++) {
                 final RemoteTeleReference hubRef = createTemporaryRemoteTeleReference(hubWord);
                 final Pointer hubOrigin = hubRef.toOrigin();
                 if (!heap().contains(hubOrigin) && !codeCache().contains(hubOrigin)) {
                     return false;
                 }
-                final Word nextHubWord = layoutScheme().generalLayout.readHubReferenceAsWord(hubRef);
+                final Word nextHubWord = vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(hubRef);
                 if (nextHubWord.equals(hubWord)) {
                     // We arrived at a DynamicHub for the class DynamicHub
                     if (i < 2) {
@@ -1329,7 +1314,7 @@ public abstract class TeleVM implements MaxVM {
      */
     private boolean isStaticTuple(Pointer origin) {
         // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
-        Word staticHubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
+        Word staticHubWord = vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
         final RemoteTeleReference staticHubRef = createTemporaryRemoteTeleReference(staticHubWord);
         final Pointer staticHubOrigin = staticHubRef.toOrigin();
         if (!heap().contains(staticHubOrigin) && !codeCache().contains(staticHubOrigin)) {
@@ -1383,7 +1368,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Reference wordToReference(Word word) {
-        return referenceScheme().fromOrigin(word.asPointer());
+        return teleReferenceScheme().fromOrigin(word.asPointer());
     }
 
     /**
@@ -1393,7 +1378,7 @@ public abstract class TeleVM implements MaxVM {
      * @return a reference to a location in VM memory that is not safe across GC
      */
     public final Reference wordToTemporaryReference(Address address) {
-        return referenceScheme().createTemporaryRemoteTeleReference(address);
+        return teleReferenceScheme().createTemporaryRemoteTeleReference(address);
     }
 
     /**
@@ -1404,7 +1389,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public final Reference readReference(Reference reference, int index) throws InvalidReferenceException {
         checkReference(reference);
-        return wordToReference(layoutScheme().wordArrayLayout.getWord(reference, index));
+        return wordToReference(vmConfig().layoutScheme().wordArrayLayout.getWord(reference, index));
     }
 
     /**
@@ -1421,7 +1406,7 @@ public abstract class TeleVM implements MaxVM {
         int offset = teleFields().String_offset.readInt(stringReference);
         final int count = teleFields().String_count.readInt(stringReference);
         final char[] chars = new char[count];
-        final CharArrayLayout charArrayLayout = layoutScheme().charArrayLayout;
+        final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
         for (int i = 0; i < count; i++) {
             chars[i] = charArrayLayout.getChar(valueReference, offset);
             offset++;
@@ -1451,7 +1436,7 @@ public abstract class TeleVM implements MaxVM {
             int offset = stringRef.readInt(teleFields.String_offset.fieldActor().offset());
             final int count = stringRef.readInt(teleFields.String_count.fieldActor().offset());
             final char[] chars = new char[count];
-            final CharArrayLayout charArrayLayout = layoutScheme().charArrayLayout;
+            final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
             for (int i = 0; i < count; i++) {
                 chars[i] = charArrayLayout.getChar(valueRef, offset);
                 offset++;
@@ -1491,12 +1476,12 @@ public abstract class TeleVM implements MaxVM {
         if (!fieldValue.isZero()) {
             // Assert that this points to an array of references
             final RemoteTeleReference arrayReference = createTemporaryRemoteTeleReference(fieldValue);
-            final int length = vm().layoutScheme().arrayHeaderLayout.readLength(arrayReference);
+            final int length = vmConfig().layoutScheme().arrayHeaderLayout.readLength(arrayReference);
 
             // Read the references as words to avoid using too much machinery
             for (int index = 0; index < length; index++) {
                 // Read an entry from the array
-                final Word regionReferenceWord = vm().layoutScheme().wordArrayLayout.getWord(arrayReference, index);
+                final Word regionReferenceWord = vmConfig().layoutScheme().wordArrayLayout.getWord(arrayReference, index);
                 // Assert that this points to an object of type {@link MemoryRegion} in the VM
                 RemoteTeleReference regionReference = createTemporaryRemoteTeleReference(regionReferenceWord);
                 final Address address = regionReference.readWord(teleFields.MemoryRegion_start.fieldActor().offset()).asAddress();
@@ -1571,7 +1556,7 @@ public abstract class TeleVM implements MaxVM {
 
     public final ClassActor makeClassActorForTypeOf(Reference objectReference)  throws InvalidReferenceException {
         checkReference(objectReference);
-        final Reference hubReference = wordToReference(layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
+        final Reference hubReference = wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
         final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
         return makeClassActor(classActorReference);
     }
@@ -1583,7 +1568,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public final Hub makeLocalHubForObject(Reference objectReference) throws InvalidReferenceException {
         checkReference(objectReference);
-        final Reference hubReference = wordToReference(layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
+        final Reference hubReference = wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
         final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
         final ClassActor objectClassActor = makeClassActor(classActorReference);
         final ClassActor hubClassActor = makeClassActorForTypeOf(hubReference);
@@ -1592,61 +1577,63 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Value getElementValue(Kind kind, Reference reference, int index) throws InvalidReferenceException {
+        LayoutScheme layoutScheme = vmConfig().layoutScheme();
         switch (kind.asEnum) {
             case BYTE:
-                return ByteValue.from(layoutScheme().byteArrayLayout.getByte(reference, index));
+                return ByteValue.from(layoutScheme.byteArrayLayout.getByte(reference, index));
             case BOOLEAN:
-                return BooleanValue.from(layoutScheme().booleanArrayLayout.getBoolean(reference, index));
+                return BooleanValue.from(layoutScheme.booleanArrayLayout.getBoolean(reference, index));
             case SHORT:
-                return ShortValue.from(layoutScheme().shortArrayLayout.getShort(reference, index));
+                return ShortValue.from(layoutScheme.shortArrayLayout.getShort(reference, index));
             case CHAR:
-                return CharValue.from(layoutScheme().charArrayLayout.getChar(reference, index));
+                return CharValue.from(layoutScheme.charArrayLayout.getChar(reference, index));
             case INT:
-                return IntValue.from(layoutScheme().intArrayLayout.getInt(reference, index));
+                return IntValue.from(layoutScheme.intArrayLayout.getInt(reference, index));
             case FLOAT:
-                return FloatValue.from(layoutScheme().floatArrayLayout.getFloat(reference, index));
+                return FloatValue.from(layoutScheme.floatArrayLayout.getFloat(reference, index));
             case LONG:
-                return LongValue.from(layoutScheme().longArrayLayout.getLong(reference, index));
+                return LongValue.from(layoutScheme.longArrayLayout.getLong(reference, index));
             case DOUBLE:
-                return DoubleValue.from(layoutScheme().doubleArrayLayout.getDouble(reference, index));
+                return DoubleValue.from(layoutScheme.doubleArrayLayout.getDouble(reference, index));
             case WORD:
-                return new WordValue(layoutScheme().wordArrayLayout.getWord(reference, index));
+                return new WordValue(layoutScheme.wordArrayLayout.getWord(reference, index));
             case REFERENCE:
                 checkReference(reference);
-                return TeleReferenceValue.from(this, wordToReference(layoutScheme().wordArrayLayout.getWord(reference, index)));
+                return TeleReferenceValue.from(this, wordToReference(layoutScheme.wordArrayLayout.getWord(reference, index)));
             default:
                 throw ProgramError.unknownCase("unknown array kind");
         }
     }
 
     public final void copyElements(Kind kind, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
+        LayoutScheme layoutScheme = vmConfig().layoutScheme();
         switch (kind.asEnum) {
             case BYTE:
-                layoutScheme().byteArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.byteArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case BOOLEAN:
-                layoutScheme().booleanArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.booleanArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case SHORT:
-                layoutScheme().shortArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.shortArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case CHAR:
-                layoutScheme().charArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.charArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case INT:
-                layoutScheme().intArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.intArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case FLOAT:
-                layoutScheme().floatArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.floatArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case LONG:
-                layoutScheme().longArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.longArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case DOUBLE:
-                layoutScheme().doubleArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.doubleArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case WORD:
-                layoutScheme().wordArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.wordArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             default:
                 throw ProgramError.unknownCase("unknown array kind");

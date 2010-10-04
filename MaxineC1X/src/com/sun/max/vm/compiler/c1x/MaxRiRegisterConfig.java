@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.util.*;
 
 import com.sun.c1x.target.amd64.*;
@@ -59,7 +61,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
 
     @HOSTED_ONLY
     public MaxRiRegisterConfig(VMConfiguration vmConfiguration) {
-        if (vmConfiguration.platform.instructionSet() != InstructionSet.AMD64) {
+        if (platform().instructionSet() != InstructionSet.AMD64) {
             FatalError.unimplemented();
         }
         CiArchitecture arch = new AMD64();

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.c1x.*;
@@ -83,10 +84,9 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                 }
                 // create the RiRuntime object passed to C1X
                 c1xRuntime = new MaxRiRuntime(this);
-                VMConfiguration configuration = vmConfig();
                 // create the CiTarget object passed to C1X
-                MaxRiRegisterConfig config = new MaxRiRegisterConfig(configuration);
-                InstructionSet isa = configuration.platform.instructionSet();
+                MaxRiRegisterConfig config = new MaxRiRegisterConfig(vmConfig());
+                InstructionSet isa = platform().instructionSet();
                 CiArchitecture arch;
                 switch (isa) {
                     case AMD64:
@@ -96,11 +96,11 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                         throw FatalError.unimplemented();
                 }
 
-                TargetABI<?, ?> targetABI = configuration.targetABIsScheme().optimizedJavaABI;
+                TargetABI<?, ?> targetABI = vmConfig().targetABIsScheme().optimizedJavaABI;
 
                 int wordSize = arch.wordSize;
 
-                c1xTarget = new CiTarget(arch, config, true, wordSize, wordSize, wordSize, targetABI.stackFrameAlignment, configuration.platform.pageSize, wordSize, wordSize, 16, false);
+                c1xTarget = new CiTarget(arch, config, true, wordSize, wordSize, wordSize, targetABI.stackFrameAlignment, platform().pageSize, wordSize, wordSize, 16, false);
                 c1xXirGenerator = new MaxXirGenerator(vmConfig(), c1xTarget, c1xRuntime);
                 c1xCompiler = new C1XCompiler(c1xRuntime, c1xTarget, c1xXirGenerator);
             } else if (phase == MaxineVM.Phase.COMPILING) {
@@ -122,7 +122,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     @HOSTED_ONLY
-    public static C1XCompilerScheme create(VMConfiguration configuration) {
+    public static C1XCompilerScheme create() {
         C1XCompilerScheme compilerScheme = new C1XCompilerScheme();
         compilerScheme.initialize(MaxineVM.Phase.BOOTSTRAPPING);
         return compilerScheme;

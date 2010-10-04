@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug.no;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.io.*;
 
 import com.sun.max.program.*;
@@ -49,7 +51,7 @@ public final class ReadOnlyTeleVM extends TeleVM {
 
     @Override
     protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration.platform, programFile());
+        return new ReadOnlyTeleProcess(this, platform(), programFile());
     }
 
     @Override

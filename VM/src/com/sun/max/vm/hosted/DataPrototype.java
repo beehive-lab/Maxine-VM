@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.hosted;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
@@ -1130,7 +1131,7 @@ public final class DataPrototype extends Prototype {
      */
     public DataPrototype(GraphPrototype graphPrototype, File mapFile) {
         this.graphPrototype = graphPrototype;
-        final Platform platform = vmConfig().platform;
+        final Platform platform = platform();
         pageSize = platform.pageSize;
         dataModel = platform.dataModel();
         alignment = Word.size();

@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.io.*;
 import java.lang.management.*;
 import java.util.*;
@@ -129,7 +131,7 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         this.teleNativeThread = teleNativeThread;
         this.entityDescription = "The stack in " + vm().entityName() + " for " + teleNativeThread.entityName();
         this.stackMemoryRegion = new StackMemoryRegion(teleVM, this, name, start, size);
-        this.offsetToReturnPC = teleVM.vmConfiguration().platform.instructionSet().offsetToReturnPC;
+        this.offsetToReturnPC = platform().instructionSet().offsetToReturnPC;
     }
 
     public String entityName() {
