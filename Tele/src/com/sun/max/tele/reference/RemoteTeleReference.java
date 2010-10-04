@@ -18,41 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.grip.hosted;
+package com.sun.max.tele.reference;
 
-import com.sun.max.program.*;
-import com.sun.max.vm.grip.*;
+import com.sun.max.unsafe.*;
 
 /**
+ *
  * @author Bernd Mathiske
  */
-public class HostedGrip extends Grip {
+public abstract class RemoteTeleReference extends TeleReference {
 
-    private final Object object;
+    private final TeleReferenceScheme teleReferenceScheme;
 
-    public HostedGrip(Object object) {
-        this.object = object;
+    protected TeleReferenceScheme teleReferenceScheme() {
+        return teleReferenceScheme;
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (other == object) {
-            ProgramWarning.message("prototype grip bypassed");
-            return true;
-        }
-        if (other instanceof HostedGrip) {
-            final HostedGrip prototypeGrip = (HostedGrip) other;
-            return prototypeGrip.object == object;
-        }
-        return false;
+    protected RemoteTeleReference(TeleReferenceScheme teleReferenceScheme) {
+        this.teleReferenceScheme = teleReferenceScheme;
     }
 
-    @Override
-    public int hashCode() {
-        return object.hashCode();
-    }
+    public abstract Address raw();
 
-    public Object getObject() {
-        return object;
-    }
 }

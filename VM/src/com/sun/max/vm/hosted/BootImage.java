@@ -418,7 +418,6 @@ public class BootImage {
         public final String instructionSetName;
         public final String operatingSystemName;
 
-        public final String gripPackageName;
         public final String referencePackageName;
         public final String layoutPackageName;
         public final String heapPackageName;
@@ -444,10 +443,6 @@ public class BootImage {
 
         public OperatingSystem operatingSystem() {
             return Enums.fromString(OperatingSystem.class, operatingSystemName);
-        }
-
-        public VMPackage gripPackage() {
-            return (VMPackage) MaxPackage.fromName(gripPackageName);
         }
 
         public VMPackage referencePackage() {
@@ -500,7 +495,6 @@ public class BootImage {
             instructionSetName = Utf8.readString(inputStream);
             operatingSystemName = Utf8.readString(inputStream);
 
-            gripPackageName = Utf8.readString(inputStream);
             referencePackageName = Utf8.readString(inputStream);
             layoutPackageName = Utf8.readString(inputStream);
             heapPackageName = Utf8.readString(inputStream);
@@ -520,7 +514,6 @@ public class BootImage {
             instructionSetName = vmConfiguration.platform.instructionSet().name();
             operatingSystemName = vmConfiguration.platform.operatingSystem.name();
 
-            gripPackageName = vmConfiguration.gripPackage.name();
             referencePackageName = vmConfiguration.referencePackage.name();
             layoutPackageName = vmConfiguration.layoutPackage.name();
             heapPackageName = vmConfiguration.heapPackage.name();
@@ -549,7 +542,6 @@ public class BootImage {
             BootImageException.check(instructionSet() != null, "unknown instruction set: " + instructionSetName);
             BootImageException.check(operatingSystem() != null, "unknown operating system: " + operatingSystemName);
 
-            checkPackage(gripPackageName);
             checkPackage(referencePackageName);
             checkPackage(layoutPackageName);
             checkPackage(heapPackageName);
@@ -683,7 +675,6 @@ public class BootImage {
                 Platform.set(platform);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
                                                       platform,
-                                                      stringInfo.gripPackage(),
                                                       stringInfo.referencePackage(),
                                                       stringInfo.layoutPackage(),
                                                       stringInfo.heapPackage(),

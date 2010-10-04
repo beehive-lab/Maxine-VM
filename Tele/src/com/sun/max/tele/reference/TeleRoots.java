@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.grip;
+package com.sun.max.tele.reference;
 
 import java.util.*;
 
@@ -30,7 +30,7 @@ import com.sun.max.vm.tele.*;
 
 /**
  * Access to and management of a special array in the VM
- * that holds GC roots on behalf of References held in the Inspector.
+ * that holds GC roots on behalf of references held in the Inspector.
  * <br>
  * Remote references held by the inspector are implemented as a
  * handle that identifies an entry in this table, which contains actual
@@ -52,23 +52,19 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
 
     private final TimedTrace updateTracer;
 
-    private final TeleGripScheme teleGripScheme;
+    private final TeleReferenceScheme teleReferenceScheme;
     private final WordArrayLayout wordArrayLayout;
-
-    // Points to the static field {@link TeleHeap#_roots TeleHeap._roots} in the VM, assuming that the
-    // static tuple of the class will not be relocated because it is in the boot image.
-    private Pointer teleRootsPointer = Pointer.zero();
 
     private final Address[] cachedRoots = new Address[InspectableHeapInfo.MAX_NUMBER_OF_ROOTS];
     private final BitSet usedIndices = new BitSet();
 
-    TeleRoots(TeleGripScheme teleGripScheme) {
-        super(teleGripScheme.vm());
+    TeleRoots(TeleReferenceScheme teleReferenceScheme) {
+        super(teleReferenceScheme.vm());
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
 
-        this.teleGripScheme = teleGripScheme;
-        this.wordArrayLayout = teleGripScheme.vm().layoutScheme().wordArrayLayout;
+        this.teleReferenceScheme = teleReferenceScheme;
+        this.wordArrayLayout = teleReferenceScheme.vm().layoutScheme().wordArrayLayout;
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(null);
@@ -79,28 +75,26 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
         // Flush local cache; copy remote contents of Inspectors' root table into Inspector's local cache.
         final int numberOfIndices = usedIndices.length();
         for (int i = 0; i < numberOfIndices; i++) {
-            //WordArray.set(cachedRoots, i, wordArrayLayout.getWord(teleRoots(), i).asAddress());
-            WordArray.set(cachedRoots, i, teleRootsGrip().getWord(0, i).asAddress());
+            WordArray.set(cachedRoots, i, teleRootsReference().getWord(0, i).asAddress());
         }
         updateTracer.end(null);
     }
 
 
-    private RemoteTeleGrip teleRootsGrip() {
-        return teleGripScheme.createTemporaryRemoteTeleGrip(vm().dataAccess().readWord(heap().teleRootsPointer()).asAddress());
+    private RemoteTeleReference teleRootsReference() {
+        return teleReferenceScheme.createTemporaryRemoteTeleReference(vm().dataAccess().readWord(heap().teleRootsPointer()).asAddress());
     }
 
     /**
      * Register a VM location in the VM's Inspector root table.
      */
-    int register(Address rawGrip) {
+    int register(Address rawReference) {
         final int index = usedIndices.nextClearBit(0);
         usedIndices.set(index);
         // Local copy of root table
-        WordArray.set(cachedRoots, index, rawGrip);
+        WordArray.set(cachedRoots, index, rawReference);
         // Remote root table
-        //wordArrayLayout.setWord(teleRoots(), index, rawGrip);
-        teleRootsGrip().setWord(0, index, rawGrip);
+        teleRootsReference().setWord(0, index, rawReference);
         return index;
     }
 
@@ -110,18 +104,13 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
     void unregister(int index) {
         WordArray.set(cachedRoots, index, Address.zero());
         usedIndices.clear(index);
-        //wordArrayLayout.setWord(teleRoots(), index, Word.zero());
-        teleRootsGrip().setWord(0, index, Word.zero());
+        teleRootsReference().setWord(0, index, Word.zero());
     }
 
     /**
      * The remote location bits currently at a position in the Inspector root table.
      */
-    Address getRawGrip(int index) {
-        /*WordArray.set(cachedRoots, index, teleRoots().getWord(0, index).asAddress());
-        if (WordArray.get(cachedRoots, index).equals(Word.zero())) {
-            System.out.println("Word at " + index + " is zero");
-        }*/
+    Address getRawReference(int index) {
         return WordArray.get(cachedRoots, index).asAddress();
     }
 

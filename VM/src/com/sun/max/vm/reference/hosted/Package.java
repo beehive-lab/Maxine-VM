@@ -26,7 +26,7 @@ import com.sun.max.vm.reference.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
 public class Package extends VMPackage {

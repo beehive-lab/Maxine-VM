@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.reference.plain;
+package com.sun.max.tele.reference.direct;
 
 import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
@@ -29,7 +29,7 @@ import com.sun.max.vm.reference.*;
 public class Package extends VMPackage {
     public Package() {
         super();
-        registerScheme(ReferenceScheme.class, PlainTeleReferenceScheme.class);
+        registerScheme(ReferenceScheme.class, DirectInspectorReferenceScheme.class);
     }
 
 }

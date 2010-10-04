@@ -25,7 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.object.*;
@@ -67,8 +66,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
 
     private final int headerSize = 2 * Word.size();
 
-    public HomTupleLayout(GripScheme gripScheme) {
-        super(gripScheme);
+    public HomTupleLayout() {
     }
 
     public HeaderField[] headerFields() {

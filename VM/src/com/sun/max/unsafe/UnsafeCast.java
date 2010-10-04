@@ -29,7 +29,6 @@ import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.stack.*;
@@ -70,7 +69,6 @@ public final class UnsafeCast {
     @INTRINSIC(UNSAFE_CAST) public static Throwable                asThrowable(Object object) { return (Throwable) object; }
     @INTRINSIC(UNSAFE_CAST) public static int[]                    asIntArray(Object object) { return (int[]) object; }
     @INTRINSIC(UNSAFE_CAST) public static DynamicHub               asDynamicHub(Object object) { return (DynamicHub) object; }
-    @INTRINSIC(UNSAFE_CAST) public static Grip                     asGrip(Object object) { return (Grip) object; }
     @INTRINSIC(UNSAFE_CAST) public static Hub                      asHub(Object object) { return (Hub) object; }
     @INTRINSIC(UNSAFE_CAST) public static ArrayClassActor          asArrayClassActor(Object object) { return (ArrayClassActor) object; }
     @INTRINSIC(UNSAFE_CAST) public static ClassActor               asClassActor(Object object) { return (ClassActor) object; }

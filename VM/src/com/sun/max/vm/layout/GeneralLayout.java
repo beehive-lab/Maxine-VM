@@ -21,7 +21,6 @@
 package com.sun.max.vm.layout;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 
@@ -34,8 +33,6 @@ import com.sun.max.vm.reference.*;
 public interface GeneralLayout {
 
     String name();
-
-    GripScheme gripScheme();
 
     Pointer cellToOrigin(Pointer cell);
 
@@ -71,16 +68,16 @@ public interface GeneralLayout {
 
     Offset getOffsetFromOrigin(HeaderField headerField);
 
-    Grip forwarded(Grip grip);
+    Reference forwarded(Reference ref);
 
     /**
      * @return the forward reference stored by the GC in the object, null if none stored
      */
-    Grip readForwardGrip(Accessor accessor);
+    Reference readForwardRef(Accessor accessor);
 
-    Grip readForwardGripValue(Accessor accessor);
+    Reference readForwardRefValue(Accessor accessor);
 
-    void writeForwardGrip(Accessor accessor, Grip forwardGrip);
+    void writeForwardRef(Accessor accessor, Reference forwardRef);
 
-    Grip compareAndSwapForwardGrip(Accessor accessor, Grip suspectedGrip, Grip forwardGrip);
+    Reference compareAndSwapForwardRef(Accessor accessor, Reference suspectedRef, Reference forwardRef);
 }

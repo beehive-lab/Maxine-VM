@@ -20,9 +20,9 @@
  */
 package com.sun.max.vm.reference;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.grip.*;
 
 /**
  * Reference-based object access methods for mutator use.
@@ -31,20 +31,31 @@ import com.sun.max.vm.grip.*;
  * It can be stored in fields and array elements of other objects.
  * The mutator refers to objects and parts thereof by using references.
  *
- * A reference is almost the same as a "grip".
- * The difference is that the former's access operations may incur barriers.
- *
- * @see Grip
- *
  * @author Bernd Mathiske
  */
 public interface ReferenceScheme extends VMScheme {
 
-    Reference fromGrip(Grip grip);
+    Reference fromOrigin(Pointer origin);
 
     Reference fromJava(Object object);
 
     Object toJava(Reference reference);
+    Pointer toOrigin(Reference reference);
+
+    /**
+     * @return the "zero" ref that represents 'null'.
+     */
+    Reference zero();
+
+    boolean isZero(Reference ref);
+
+    boolean isAllOnes(Reference ref);
+
+    boolean isMarked(Reference ref);
+
+    Reference marked(Reference ref);
+
+    Reference unmarked(Reference ref);
 
     byte readByte(Reference reference, Offset offset);
     byte readByte(Reference reference, int offset);
@@ -158,4 +169,20 @@ public interface ReferenceScheme extends VMScheme {
     Reference compareAndSwapReference(Reference reference, int offset, Reference expectedValue, Reference newValue);
 
     void copyElements(int displacement, Reference src, int srcIndex, Object dst, int dstIndex, int length);
+
+    /**
+     * Gets the byte pattern for a reference to be written into the boot image.
+     *
+     * @param origin the origin of the reference to be written
+     */
+    @HOSTED_ONLY
+    byte[] asBytes(Pointer origin);
+
+    /**
+     * Gets the byte pattern for a null reference to be written into the boot image.
+     */
+    @HOSTED_ONLY
+    byte[] nullAsBytes();
+
+
 }

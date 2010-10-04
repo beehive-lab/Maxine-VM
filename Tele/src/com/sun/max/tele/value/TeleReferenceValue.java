@@ -28,7 +28,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
@@ -128,11 +127,6 @@ public final class TeleReferenceValue extends ReferenceValue {
     }
 
     @Override
-    public Grip asGrip() {
-        return reference.grip();
-    }
-
-    @Override
     public Reference asReference() {
         return reference;
     }
@@ -148,7 +142,7 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public Word toWord() {
-        return teleVM.vmConfiguration().gripScheme().toOrigin(reference.grip());
+        return teleVM.vmConfiguration().referenceScheme().toOrigin(reference);
     }
 
     @Override

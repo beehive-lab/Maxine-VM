@@ -21,7 +21,6 @@
 package com.sun.max.vm.layout.hosted;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -32,8 +31,8 @@ import com.sun.max.vm.value.*;
  */
 public class HostedReferenceArrayLayout extends HostedArrayLayout<ReferenceValue> implements ReferenceArrayLayout {
 
-    public HostedReferenceArrayLayout(GripScheme gripScheme) {
-        super(gripScheme, Kind.REFERENCE);
+    public HostedReferenceArrayLayout() {
+        super(Kind.REFERENCE);
     }
 
     public Reference getReference(Accessor accessor, int index) {

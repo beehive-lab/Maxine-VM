@@ -24,10 +24,9 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
-import com.sun.max.vm.layout.SpecificLayout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.layout.SpecificLayout.ObjectCellVisitor;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -49,16 +48,6 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
 
     public boolean isReferenceArrayLayout() {
         return false;
-    }
-
-    private final GripScheme gripScheme;
-
-    public HostedGeneralLayout(GripScheme gripScheme) {
-        this.gripScheme = gripScheme;
-    }
-
-    public GripScheme gripScheme() {
-        return gripScheme;
     }
 
     public Pointer cellToOrigin(Pointer cell) {
@@ -132,23 +121,23 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
         throw ProgramError.unexpected();
     }
 
-    public Grip forwarded(Grip reference) {
+    public Reference forwarded(Reference reference) {
         throw ProgramError.unexpected();
     }
 
-    public Grip readForwardGrip(Accessor accessor) {
+    public Reference readForwardRef(Accessor accessor) {
         throw ProgramError.unexpected();
     }
 
-    public Grip readForwardGripValue(Accessor accessor) {
+    public Reference readForwardRefValue(Accessor accessor) {
         throw ProgramError.unexpected();
     }
 
-    public void writeForwardGrip(Accessor accessor, Grip forwardGrip) {
+    public void writeForwardRef(Accessor accessor, Reference forwardRef) {
         ProgramError.unexpected();
     }
 
-    public Grip compareAndSwapForwardGrip(Accessor accessor, Grip suspectedGrip, Grip forwardGrip) {
+    public Reference compareAndSwapForwardRef(Accessor accessor, Reference suspectedRef, Reference forwardRef) {
         throw ProgramError.unexpected();
     }
 

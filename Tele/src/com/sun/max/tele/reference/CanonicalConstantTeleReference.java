@@ -18,62 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.grip;
+package com.sun.max.tele.reference;
 
-import com.sun.max.vm.grip.*;
+import com.sun.max.unsafe.*;
 
 /**
- * A local object wrapped into a {@link Grip} for tele interpreter use.
+ * Canonicalized constant tele reference, for locations known not to change under GC.
  *
  * @author Bernd Mathiske
  */
-public class LocalTeleGrip extends TeleGrip {
+public class CanonicalConstantTeleReference extends ConstantTeleReference {
 
-    private final Object object;
+    CanonicalConstantTeleReference(TeleReferenceScheme teleReferenceScheme, Address raw) {
+        super(teleReferenceScheme, raw);
+    }
 
-    public Object object() {
-        return object;
+    @Override
+    public void finalize() throws Throwable {
+        teleReferenceScheme().finalizeCanonicalConstantTeleReference(this);
+        super.finalize();
     }
 
     @Override
     public TeleObjectMemory.State getTeleObjectMemoryState() {
         return TeleObjectMemory.State.LIVE;
-    }
-
-    private final TeleGripScheme teleGripScheme;
-
-    LocalTeleGrip(TeleGripScheme teleGripScheme, Object object) {
-        this.teleGripScheme = teleGripScheme;
-        this.object = object;
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        teleGripScheme.disposeCanonicalLocalGrip(object);
-        super.finalize();
-    }
-
-    @Override
-    public String toString() {
-        return object.toString();
-    }
-
-    @Override
-    public boolean isLocal() {
-        return true;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof LocalTeleGrip) {
-            final LocalTeleGrip localTeleGrip = (LocalTeleGrip) other;
-            return object == localTeleGrip.object();
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return System.identityHashCode(object);
     }
 }

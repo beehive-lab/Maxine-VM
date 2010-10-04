@@ -27,7 +27,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.object.*;
 
 /**
@@ -74,7 +73,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion {
         }
 
         for (Reference specialReference : specialReferences) {
-            SpecialReferenceManager.discoverSpecialReference(Grip.fromJava(specialReference));
+            SpecialReferenceManager.discoverSpecialReference(com.sun.max.vm.reference.Reference.fromJava(specialReference));
         }
     }
 }

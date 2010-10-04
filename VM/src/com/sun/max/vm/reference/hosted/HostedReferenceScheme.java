@@ -20,315 +20,427 @@
  */
 package com.sun.max.vm.reference.hosted;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.grip.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
- * A reference scheme execution when {@linkplain MaxineVM#isHosted() hosted}.
+ * A reference scheme for use when executing in {@linkplain MaxineVM#isHosted() hosted} mode.
  *
- * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public class HostedReferenceScheme extends AbstractVMScheme implements ReferenceScheme {
-
-    private final GripScheme gripScheme;
-
-    @FOLD
-    public GripScheme gripScheme() {
-        return gripScheme;
-    }
+public final class HostedReferenceScheme extends AbstractVMScheme implements ReferenceScheme {
 
     public HostedReferenceScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        gripScheme = vmConfiguration.gripScheme();
+    }
+
+    public boolean isConstant() {
+        return false;
     }
 
     public Reference fromJava(Object object) {
-        return new HostedReference(gripScheme.fromJava(object));
+        return new HostedReference(object);
     }
 
-    public Object toJava(Reference reference) {
-        final HostedReference prototypeReference = (HostedReference) reference;
-        return gripScheme.toJava(prototypeReference.grip());
+    public Object toJava(Reference ref) {
+        final HostedReference prototypeReference = (HostedReference) ref;
+        return prototypeReference.getObject();
     }
 
-    public Reference fromGrip(Grip grip) {
-        return new HostedReference(grip);
+    public Reference fromReference(Reference reference) {
+        return fromJava(reference.toJava());
     }
 
-    public byte readByte(Reference reference, Offset offset) {
-        return gripScheme().fromReference(reference).readByte(offset);
+    public Reference fromOrigin(Pointer origin) {
+        throw FatalError.unimplemented();
     }
 
-    public byte readByte(Reference reference, int offset) {
-        return gripScheme().fromReference(reference).readByte(offset);
-    }
-
-    public byte getByte(Reference reference, int displacement, int index) {
-        return gripScheme().fromReference(reference).getByte(displacement, index);
-    }
-
-    public boolean readBoolean(Reference reference, Offset offset) {
-        return gripScheme().fromReference(reference).readBoolean(offset);
-    }
-
-    public boolean readBoolean(Reference reference, int offset) {
-        return gripScheme().fromReference(reference).readBoolean(offset);
-    }
-
-    public boolean getBoolean(Reference reference, int displacement, int index) {
-        return gripScheme().fromReference(reference).getBoolean(displacement, index);
-    }
-
-    public short readShort(Reference reference, Offset offset) {
-        return gripScheme().fromReference(reference).readShort(offset);
-    }
-
-    public short readShort(Reference reference, int offset) {
-        return gripScheme().fromReference(reference).readShort(offset);
-    }
-
-    public short getShort(Reference reference, int displacement, int index) {
-        return gripScheme().fromReference(reference).getShort(displacement, index);
-    }
-
-    public char readChar(Reference reference, Offset offset) {
-        return gripScheme().fromReference(reference).readChar(offset);
-    }
-
-    public char readChar(Reference reference, int offset) {
-        return gripScheme().fromReference(reference).readChar(offset);
-    }
-
-    public char getChar(Reference reference, int displacement, int index) {
-        return gripScheme().fromReference(reference).getChar(displacement, index);
-    }
-
-    public int readInt(Reference reference, Offset offset) {
-        return gripScheme().fromReference(reference).readInt(offset);
-    }
-
-    public int readInt(Reference reference, int offset) {
-        return gripScheme().fromReference(reference).readInt(offset);
-    }
-
-    public int getInt(Reference reference, int displacement, int index) {
-        return gripScheme().fromReference(reference).getInt(displacement, index);
-    }
-
-    public float readFloat(Reference reference, Offset offset) {
-        return gripScheme().fromReference(reference).readFloat(offset);
-    }
-
-    public float readFloat(Reference reference, int offset) {
-        return gripScheme().fromReference(reference).readFloat(offset);
-    }
-
-    public float getFloat(Reference reference, int displacement, int index) {
-        return gripScheme().fromReference(reference).getFloat(displacement, index);
-    }
-
-    public long readLong(Reference reference, Offset offset) {
-        return gripScheme().fromReference(reference).readLong(offset);
-    }
-
-    public long readLong(Reference reference, int offset) {
-        return gripScheme().fromReference(reference).readLong(offset);
-    }
-
-    public long getLong(Reference reference, int displacement, int index) {
-        return gripScheme().fromReference(reference).getLong(displacement, index);
-    }
-
-    public double readDouble(Reference reference, Offset offset) {
-        return gripScheme().fromReference(reference).readDouble(offset);
-    }
-
-    public double readDouble(Reference reference, int offset) {
-        return gripScheme().fromReference(reference).readDouble(offset);
-    }
-
-    public double getDouble(Reference reference, int displacement, int index) {
-        return gripScheme().fromReference(reference).getDouble(displacement, index);
-    }
-
-    public Word readWord(Reference reference, Offset offset) {
-        return gripScheme().fromReference(reference).readWord(offset);
-    }
-
-    public Word readWord(Reference reference, int offset) {
-        return gripScheme().fromReference(reference).readWord(offset);
-    }
-
-    public Word getWord(Reference reference, int displacement, int index) {
-        return gripScheme().fromReference(reference).getWord(displacement, index);
-    }
-
-    public Reference readReference(Reference reference, Offset offset) {
-        return gripScheme().fromReference(reference).readGrip(offset).toReference();
-    }
-
-    public Reference readReference(Reference reference, int offset) {
-        return gripScheme().fromReference(reference).readGrip(offset).toReference();
-    }
-
-    public Reference getReference(Reference reference, int displacement, int index) {
-        return gripScheme().fromReference(reference).getGrip(displacement, index).toReference();
-    }
-
-    public void writeByte(Reference reference, Offset offset, byte value) {
-        gripScheme().fromReference(reference).writeByte(offset, value);
-    }
-
-    public void writeByte(Reference reference, int offset, byte value) {
-        gripScheme().fromReference(reference).writeByte(offset, value);
-    }
-
-    public void setByte(Reference reference, int displacement, int index, byte value) {
-        gripScheme().fromReference(reference).setByte(displacement, index, value);
-    }
-
-    public void writeBoolean(Reference reference, Offset offset, boolean value) {
-        gripScheme().fromReference(reference).writeBoolean(offset, value);
-    }
-
-    public void writeBoolean(Reference reference, int offset, boolean value) {
-        gripScheme().fromReference(reference).writeBoolean(offset, value);
-    }
-
-    public void setBoolean(Reference reference, int displacement, int index, boolean value) {
-        gripScheme().fromReference(reference).setBoolean(displacement, index, value);
-    }
-
-    public void writeShort(Reference reference, Offset offset, short value) {
-        gripScheme().fromReference(reference).writeShort(offset, value);
-    }
-
-    public void writeShort(Reference reference, int offset, short value) {
-        gripScheme().fromReference(reference).writeShort(offset, value);
-    }
-
-    public void setShort(Reference reference, int displacement, int index, short value) {
-        gripScheme().fromReference(reference).setShort(displacement, index, value);
-    }
-
-    public void writeChar(Reference reference, Offset offset, char value) {
-        gripScheme().fromReference(reference).writeChar(offset, value);
-    }
-
-    public void writeChar(Reference reference, int offset, char value) {
-        gripScheme().fromReference(reference).writeChar(offset, value);
-    }
-
-    public void setChar(Reference reference, int displacement, int index, char value) {
-        gripScheme().fromReference(reference).setChar(displacement, index, value);
-    }
-
-    public void writeInt(Reference reference, Offset offset, int value) {
-        gripScheme().fromReference(reference).writeInt(offset, value);
-    }
-
-    public void writeInt(Reference reference, int offset, int value) {
-        gripScheme().fromReference(reference).writeInt(offset, value);
-    }
-
-    public void setInt(Reference reference, int displacement, int index, int value) {
-        gripScheme().fromReference(reference).setInt(displacement, index, value);
-    }
-
-    public void writeFloat(Reference reference, Offset offset, float value) {
-        gripScheme().fromReference(reference).writeFloat(offset, value);
-    }
-
-    public void writeFloat(Reference reference, int offset, float value) {
-        gripScheme().fromReference(reference).writeFloat(offset, value);
-    }
-
-    public void setFloat(Reference reference, int displacement, int index, float value) {
-        gripScheme().fromReference(reference).setFloat(displacement, index, value);
-    }
-
-    public void writeLong(Reference reference, Offset offset, long value) {
-        gripScheme().fromReference(reference).writeLong(offset, value);
-    }
-
-    public void writeLong(Reference reference, int offset, long value) {
-        gripScheme().fromReference(reference).writeLong(offset, value);
-    }
-
-    public void setLong(Reference reference, int displacement, int index, long value) {
-        gripScheme().fromReference(reference).setLong(displacement, index, value);
-    }
-
-    public void writeDouble(Reference reference, Offset offset, double value) {
-        gripScheme().fromReference(reference).writeDouble(offset, value);
-    }
-
-    public void writeDouble(Reference reference, int offset, double value) {
-        gripScheme().fromReference(reference).writeDouble(offset, value);
-    }
-
-    public void setDouble(Reference reference, int displacement, int index, double value) {
-        gripScheme().fromReference(reference).setDouble(displacement, index, value);
-    }
-
-    public void writeWord(Reference reference, Offset offset, Word value) {
-        gripScheme().fromReference(reference).writeWord(offset, value);
-    }
-
-    public void writeWord(Reference reference, int offset, Word value) {
-        gripScheme().fromReference(reference).writeWord(offset, value);
-    }
-
-    public void setWord(Reference reference, int displacement, int index, Word value) {
-        gripScheme().fromReference(reference).setWord(displacement, index, value);
-    }
-
-    public void writeReference(Reference reference, Offset offset, Reference value) {
-        gripScheme().fromReference(reference).writeGrip(offset, value.toGrip());
-    }
-
-    public void writeReference(Reference reference, int offset, Reference value) {
-        gripScheme().fromReference(reference).writeGrip(offset, value.toGrip());
-    }
-
-    public void setReference(Reference reference, int displacement, int index, Reference value) {
-        gripScheme().fromReference(reference).setGrip(displacement, index, value.toGrip());
+    public Reference updateReference(Reference ref, Pointer origin) {
+        throw FatalError.unimplemented();
     }
 
     @INLINE
-    public int compareAndSwapInt(Reference reference, Offset offset, int expectedValue, int newValue) {
-        return gripScheme().fromReference(reference).compareAndSwapInt(offset, expectedValue, newValue);
+    public Reference zero() {
+        return null;
+    }
+
+    public boolean isZero(Reference ref) {
+        return toJava(ref) == null;
     }
 
     @INLINE
-    public int compareAndSwapInt(Reference reference, int offset, int expectedValue, int newValue) {
-        return gripScheme().fromReference(reference).compareAndSwapInt(offset, expectedValue, newValue);
+    public boolean isAllOnes(Reference ref) {
+        throw FatalError.unimplemented();
     }
 
-    @INLINE
-    public Word compareAndSwapWord(Reference reference, Offset offset, Word expectedValue, Word newValue) {
-        return gripScheme().fromReference(reference).compareAndSwapWord(offset, expectedValue, newValue);
+    public boolean equals(Reference ref1, Reference ref2) {
+        return ref1.equals(ref2);
     }
 
-    @INLINE
-    public Word compareAndSwapWord(Reference reference, int offset, Word expectedValue, Word newValue) {
-        return gripScheme().fromReference(reference).compareAndSwapWord(offset, expectedValue, newValue);
+    public boolean isMarked(Reference ref) {
+        throw FatalError.unimplemented();
     }
 
-    @INLINE
-    public Reference compareAndSwapReference(Reference reference, Offset offset, Reference expectedValue, Reference newValue) {
-        return gripScheme().fromReference(reference).compareAndSwapReference(offset, expectedValue, newValue);
+    public Reference marked(Reference ref) {
+        throw FatalError.unimplemented();
     }
 
-    @INLINE
-    public Reference compareAndSwapReference(Reference reference, int offset, Reference expectedValue, Reference newValue) {
-        return gripScheme().fromReference(reference).compareAndSwapReference(offset, expectedValue, newValue);
+    public Reference unmarked(Reference ref) {
+        throw FatalError.unimplemented();
+    }
+
+    public Pointer toOrigin(Reference ref) {
+        throw FatalError.unimplemented();
+    }
+
+    private void setValue(Reference ref, int displacement, int index, Object wordOrBoxedJavaValue) {
+        final Object object = toJava(ref);
+        final HostedObjectMirror mirror = new HostedObjectMirror(object);
+        final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
+        ProgramError.check(displacement == ((ArrayLayout) specificLayout).getElementOffsetFromOrigin(0).toInt(), "invalid array displacement");
+        final Value value = wordOrBoxedJavaValue instanceof Word ? WordValue.from((Word) wordOrBoxedJavaValue) : Value.fromBoxedJavaValue(wordOrBoxedJavaValue);
+        mirror.writeElement(value.kind(), index, value);
+    }
+
+    private <T> T getValue(Reference ref, Class<T> type, int displacement, int index) {
+        final Object object = toJava(ref);
+        final HostedObjectMirror mirror = new HostedObjectMirror(object);
+        final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
+        ProgramError.check(displacement == ((ArrayLayout) specificLayout).getElementOffsetFromOrigin(0).toInt(), "invalid array displacement");
+        final Kind kind = Kind.fromJava(type);
+        final Class<T> castType = null;
+        return Utils.cast(castType, mirror.readElement(kind, index).asBoxedJavaValue());
+    }
+
+    private void writeValue(Reference ref, int offset, Object wordOrBoxedJavaValue) {
+        final Object object = toJava(ref);
+        if (object instanceof StaticTuple) {
+            final StaticTuple staticTuple = (StaticTuple) object;
+            final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
+            final Class javaClass = staticTuple.classActor().toJava();
+            try {
+                WithoutAccessCheck.setStaticField(javaClass, fieldActor.name.toString(), wordOrBoxedJavaValue);
+            } catch (Throwable throwable) {
+                ProgramError.unexpected("could not write field: " + fieldActor, throwable);
+            }
+        } else {
+            final HostedObjectMirror mirror = new HostedObjectMirror(object);
+            final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
+
+            final Value value = wordOrBoxedJavaValue instanceof Word ? WordValue.from((Word) wordOrBoxedJavaValue) : Value.fromBoxedJavaValue(wordOrBoxedJavaValue);
+            specificLayout.writeValue(value.kind(), mirror, offset, value);
+            return;
+        }
+    }
+
+    private <T> T readValue(Reference ref, Class<T> type, int offset) {
+        final Class<T> castType = null;
+        final Object object = toJava(ref);
+
+        if (object instanceof StaticTuple) {
+            final StaticTuple staticTuple = (StaticTuple) object;
+            final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
+            try {
+                return Utils.cast(castType, WithoutAccessCheck.getStaticField(staticTuple.classActor().toJava(), fieldActor.name.toString()));
+            } catch (Throwable throwable) {
+                ProgramError.unexpected("could not read field: " + fieldActor, throwable);
+            }
+        }
+
+        final HostedObjectMirror mirror = new HostedObjectMirror(object);
+        final ClassActor classActor = mirror.classActor();
+        final SpecificLayout specificLayout = classActor.dynamicHub().specificLayout;
+
+        final Kind kind = Kind.fromJava(type);
+        final Value value = specificLayout.readValue(kind, mirror, offset);
+        return Utils.cast(castType, value.asBoxedJavaValue());
+    }
+
+    public byte readByte(Reference ref, Offset offset) {
+        return readByte(ref, offset.toInt());
+    }
+
+    public byte readByte(Reference ref, int offset) {
+        return readValue(ref, byte.class, offset).byteValue();
+    }
+
+    public byte getByte(Reference ref, int displacement, int index) {
+        return getValue(ref, byte.class, displacement, index);
+    }
+
+    public boolean readBoolean(Reference ref, Offset offset) {
+        return readBoolean(ref, offset.toInt());
+    }
+
+    public boolean readBoolean(Reference ref, int offset) {
+        return readValue(ref, boolean.class, offset).booleanValue();
+    }
+
+    public boolean getBoolean(Reference ref, int displacement, int index) {
+        return getValue(ref, boolean.class, displacement, index);
+    }
+
+    public short readShort(Reference ref, Offset offset) {
+        return readShort(ref, offset.toInt());
+    }
+
+    public short readShort(Reference ref, int offset) {
+        return readValue(ref, short.class, offset).shortValue();
+    }
+
+    public short getShort(Reference ref, int displacement, int index) {
+        return getValue(ref, short.class, displacement, index);
+    }
+
+    public char readChar(Reference ref, Offset offset) {
+        return readChar(ref, offset.toInt());
+    }
+
+    public char readChar(Reference ref, int offset) {
+        return readValue(ref, char.class, offset).charValue();
+    }
+
+    public char getChar(Reference ref, int displacement, int index) {
+        return getValue(ref, char.class, displacement, index);
+    }
+
+    public int readInt(Reference ref, Offset offset) {
+        return readInt(ref, offset.toInt());
+    }
+
+    public int readInt(Reference ref, int offset) {
+        return readValue(ref, int.class, offset).intValue();
+    }
+
+    public int getInt(Reference ref, int displacement, int index) {
+        return getValue(ref, int.class, displacement, index);
+    }
+
+    public float readFloat(Reference ref, Offset offset) {
+        return readFloat(ref, offset.toInt());
+    }
+
+    public float readFloat(Reference ref, int offset) {
+        return readValue(ref, float.class, offset).floatValue();
+    }
+
+    public float getFloat(Reference ref, int displacement, int index) {
+        return getValue(ref, float.class, displacement, index);
+    }
+
+    public long readLong(Reference ref, Offset offset) {
+        return readLong(ref, offset.toInt());
+    }
+
+    public long readLong(Reference ref, int offset) {
+        return readValue(ref, long.class, offset).longValue();
+    }
+
+    public long getLong(Reference ref, int displacement, int index) {
+        return getValue(ref, long.class, displacement, index);
+    }
+
+    public double readDouble(Reference ref, Offset offset) {
+        return readDouble(ref, offset.toInt());
+    }
+
+    public double readDouble(Reference ref, int offset) {
+        return readValue(ref, double.class, offset).doubleValue();
+    }
+
+    public double getDouble(Reference ref, int displacement, int index) {
+        return getValue(ref, double.class, displacement, index);
+    }
+
+    public Word readWord(Reference ref, Offset offset) {
+        return readWord(ref, offset.toInt());
+    }
+
+    public Word readWord(Reference ref, int offset) {
+        return readValue(ref, Word.class, offset);
+    }
+
+    public Word getWord(Reference ref, int displacement, int index) {
+        return getValue(ref, Word.class, displacement, index);
+    }
+
+    public Reference readReference(Reference ref, Offset offset) {
+        return readReference(ref, offset.toInt());
+    }
+
+    public Reference readReference(Reference ref, int offset) {
+        return fromJava(readValue(ref, Object.class, offset));
+    }
+
+    public Reference getReference(Reference ref, int displacement, int index) {
+        return fromJava(getValue(ref, Object.class, displacement, index));
+    }
+
+    public void writeByte(Reference ref, Offset offset, byte value) {
+        writeByte(ref, offset.toInt(), value);
+    }
+
+    public void writeByte(Reference ref, int offset, byte value) {
+        writeValue(ref, offset, Byte.valueOf(value));
+    }
+
+    public void setByte(Reference ref, int displacement, int index, byte value) {
+        setValue(ref, displacement, index, Byte.valueOf(value));
+    }
+
+    public void writeBoolean(Reference ref, Offset offset, boolean value) {
+        writeBoolean(ref, offset.toInt(), value);
+    }
+
+    public void writeBoolean(Reference ref, int offset, boolean value) {
+        writeValue(ref, offset, Boolean.valueOf(value));
+    }
+
+    public void setBoolean(Reference ref, int displacement, int index, boolean value) {
+        setValue(ref, displacement, index, Boolean.valueOf(value));
+    }
+
+    public void writeShort(Reference ref, Offset offset, short value) {
+        writeShort(ref, offset.toInt(), value);
+    }
+
+    public void writeShort(Reference ref, int offset, short value) {
+        writeValue(ref, offset, Short.valueOf(value));
+    }
+
+    public void setShort(Reference ref, int displacement, int index, short value) {
+        setValue(ref, displacement, index, Short.valueOf(value));
+    }
+
+    public void writeChar(Reference ref, Offset offset, char value) {
+        writeChar(ref, offset.toInt(), value);
+    }
+
+    public void writeChar(Reference ref, int offset, char value) {
+        writeValue(ref, offset, Character.valueOf(value));
+    }
+
+    public void setChar(Reference ref, int displacement, int index, char value) {
+        setValue(ref, displacement, index, Character.valueOf(value));
+    }
+
+    public void writeInt(Reference ref, Offset offset, int value) {
+        writeInt(ref, offset.toInt(), value);
+    }
+
+    public void writeInt(Reference ref, int offset, int value) {
+        writeValue(ref, offset, Integer.valueOf(value));
+    }
+
+    public void setInt(Reference ref, int displacement, int index, int value) {
+        setValue(ref, displacement, index, Integer.valueOf(value));
+    }
+
+    public void writeFloat(Reference ref, Offset offset, float value) {
+        writeFloat(ref, offset.toInt(), value);
+    }
+
+    public void writeFloat(Reference ref, int offset, float value) {
+        writeValue(ref, offset, Float.valueOf(value));
+    }
+
+    public void setFloat(Reference ref, int displacement, int index, float value) {
+        setValue(ref, displacement, index, Float.valueOf(value));
+    }
+
+    public void writeLong(Reference ref, Offset offset, long value) {
+        writeLong(ref, offset.toInt(), value);
+    }
+
+    public void writeLong(Reference ref, int offset, long value) {
+        writeValue(ref, offset, Long.valueOf(value));
+    }
+
+    public void setLong(Reference ref, int displacement, int index, long value) {
+        setValue(ref, displacement, index, Long.valueOf(value));
+    }
+
+    public void writeDouble(Reference ref, Offset offset, double value) {
+        writeDouble(ref, offset.toInt(), value);
+    }
+
+    public void writeDouble(Reference ref, int offset, double value) {
+        writeValue(ref, offset, Double.valueOf(value));
+    }
+
+    public void setDouble(Reference ref, int displacement, int index, double value) {
+        setValue(ref, displacement, index, Double.valueOf(value));
+    }
+
+    public void writeWord(Reference ref, Offset offset, Word value) {
+        writeWord(ref, offset.toInt(), value);
+    }
+
+    public void writeWord(Reference ref, int offset, Word value) {
+        writeValue(ref, offset, value);
+    }
+
+    public void setWord(Reference ref, int displacement, int index, Word value) {
+        setValue(ref, displacement, index, new BoxedWord(value));
+    }
+
+    public void writeReference(Reference ref, Offset offset, Reference value) {
+        writeReference(ref, offset.toInt(), value);
+    }
+
+    public void writeReference(Reference ref, int offset, Reference value) {
+        writeValue(ref, offset, value.toJava());
+    }
+
+    public void setReference(Reference ref, int displacement, int index, Reference value) {
+        setValue(ref, displacement, index, value.toJava());
+    }
+
+    public int compareAndSwapInt(Reference ref, Offset offset, int expectedValue, int newValue) {
+        return toOrigin(ref).compareAndSwapInt(offset, expectedValue, newValue);
+    }
+
+    public int compareAndSwapInt(Reference ref, int offset, int expectedValue, int newValue) {
+        return toOrigin(ref).compareAndSwapInt(offset, expectedValue, newValue);
+    }
+
+    public Word compareAndSwapWord(Reference ref, Offset offset, Word expectedValue, Word newValue) {
+        throw FatalError.unimplemented();
+    }
+
+    public Word compareAndSwapWord(Reference ref, int offset, Word expectedValue, Word newValue) {
+        throw FatalError.unimplemented();
+    }
+
+    public Reference compareAndSwapReference(Reference ref, Offset offset, Reference expectedValue, Reference newValue) {
+        throw FatalError.unimplemented();
+    }
+
+    public Reference compareAndSwapReference(Reference ref, int offset, Reference expectedValue, Reference newValue) {
+        throw FatalError.unimplemented();
     }
 
     public void copyElements(int displacement, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
-        gripScheme().fromReference(src).copyElements(displacement, srcIndex, dst, dstIndex, length);
+        throw FatalError.unimplemented();
+    }
+
+    @Override
+    public byte[] asBytes(Pointer origin) {
+        throw FatalError.unimplemented();
+    }
+
+    @Override
+    public byte[] nullAsBytes() {
+        throw FatalError.unimplemented();
     }
 }

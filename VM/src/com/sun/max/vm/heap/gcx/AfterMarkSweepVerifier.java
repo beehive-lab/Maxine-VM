@@ -74,7 +74,7 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
 
     @Override
     public void visit(Pointer pointer, int wordIndex) {
-        visit(pointer.getGrip(wordIndex).toOrigin());
+        visit(pointer.getReference(wordIndex).toOrigin());
     }
 
     public Pointer visitCell(Pointer cell) {
@@ -104,7 +104,7 @@ public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellV
             } else if (specificLayout.isReferenceArrayLayout()) {
                 final int length = Layout.readArrayLength(origin);
                 for (int index = 0; index < length; index++) {
-                    visit(Layout.getGrip(origin, index).toOrigin());
+                    visit(Layout.getReference(origin, index).toOrigin());
                 }
             }
             liveDataByteCount += size.toLong();

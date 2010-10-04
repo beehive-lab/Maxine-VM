@@ -57,7 +57,6 @@ public class TeleInterpreterTestSetup extends CompilerTestSetup<ActorIrMethod> {
         vmConfigurator.jitScheme.setValue(null);
         vmConfigurator.optScheme.setValue(null);
         vmConfigurator.referenceScheme.setValue(new com.sun.max.vm.reference.hosted.Package());
-        vmConfigurator.gripScheme.setValue(new com.sun.max.vm.grip.hosted.Package());
         vmConfigurator.create(true);
     }
 
