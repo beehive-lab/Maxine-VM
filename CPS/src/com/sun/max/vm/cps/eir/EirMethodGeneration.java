@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.cps.eir;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.cps.eir.EirStackSlot.Purpose.*;
 
 import java.util.*;
@@ -32,7 +33,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.cps.eir.EirAssignment.*;
+import com.sun.max.vm.cps.eir.EirAssignment.Type;
 import com.sun.max.vm.cps.eir.allocate.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.runtime.*;
@@ -92,7 +93,7 @@ public abstract class EirMethodGeneration {
     protected EirMethodGeneration(EirGenerator eirGenerator, EirABI abi, boolean isTemplate, boolean usesSharedEpilogue) {
         this.eirGenerator = eirGenerator;
         this.abi = abi;
-        this.memoryModel = eirGenerator.compilerScheme().vmConfiguration().platform.processorModel().memoryModel;
+        this.memoryModel = platform().processorModel().memoryModel;
         this.isTemplate = isTemplate;
         this.usesSharedEpilogue = usesSharedEpilogue;
 

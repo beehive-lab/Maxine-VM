@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.adaptive;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import java.util.*;
@@ -129,8 +130,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      *
      * @param vmConfiguration the configuration of the virtual machine
      */
-    public AdaptiveCompilationScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public AdaptiveCompilationScheme() {
+        VMConfiguration vmConfiguration = vmConfig();
         optCompiler = vmConfiguration.optCompilerScheme();
         jitCompiler = vmConfiguration.jitCompilerScheme();
         bootCompiler = TESTING_C1X_AS_BOOT_COMPILER ? optCompiler : vmConfiguration.bootCompilerScheme();

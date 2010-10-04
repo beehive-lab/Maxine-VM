@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.run.jitTest;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.run.java.*;
@@ -30,8 +31,8 @@ import com.sun.max.vm.run.java.*;
  */
 public class JitTestRunScheme extends JavaRunScheme {
 
-    public JitTestRunScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public JitTestRunScheme() {
     }
 
     @Override

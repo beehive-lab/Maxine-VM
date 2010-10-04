@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.layout.hosted;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -28,9 +27,8 @@ import com.sun.max.vm.layout.*;
  */
 public class HostedLayoutScheme extends LayoutScheme {
 
-    public HostedLayoutScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration,
-              new HostedGeneralLayout(),
+    public HostedLayoutScheme() {
+        super(new HostedGeneralLayout(),
               new HostedTupleLayout(),
               new HostedHybridLayout(),
               new HostedArrayHeaderLayout(),

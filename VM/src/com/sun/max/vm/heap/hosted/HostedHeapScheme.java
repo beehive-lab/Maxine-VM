@@ -41,8 +41,8 @@ import com.sun.max.vm.runtime.*;
  */
 public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
 
-    public HostedHeapScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    public HostedHeapScheme() {
+        super();
     }
 
     public boolean isGcThread(Thread thread) {

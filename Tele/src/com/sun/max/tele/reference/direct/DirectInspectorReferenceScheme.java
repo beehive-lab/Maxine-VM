@@ -26,7 +26,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
@@ -37,10 +36,6 @@ import com.sun.max.vm.runtime.*;
  * @author Michael Van De Vanter
  */
 public final class DirectInspectorReferenceScheme extends TeleReferenceScheme {
-
-    public DirectInspectorReferenceScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
 
     public boolean isConstant() {
         return false;

@@ -39,8 +39,8 @@ import com.sun.max.vm.reference.*;
  */
 public final class DirectReferenceScheme extends AbstractVMScheme implements ReferenceScheme {
 
-    public DirectReferenceScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public DirectReferenceScheme() {
     }
 
     @INLINE

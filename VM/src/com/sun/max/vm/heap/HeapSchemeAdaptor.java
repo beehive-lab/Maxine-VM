@@ -141,8 +141,8 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
      */
     protected boolean allocationEnabled = true;
 
-    public HeapSchemeAdaptor(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public HeapSchemeAdaptor() {
     }
 
     @Override

@@ -54,8 +54,7 @@ public abstract class TeleReferenceScheme extends AbstractVMScheme implements Re
     private TeleVM vm;
     private TeleRoots teleRoots;
 
-    protected TeleReferenceScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    protected TeleReferenceScheme() {
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 

@@ -35,8 +35,8 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
     @HOSTED_ONLY
     private boolean isInitialized;
 
-    protected JitCompiler(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    protected JitCompiler() {
     }
 
     @Override

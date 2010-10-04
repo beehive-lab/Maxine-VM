@@ -363,8 +363,6 @@ public abstract class TeleVM implements MaxVM {
      * @return a new VM instance
      */
     public static TeleVM create(Options options) throws BootImageException {
-        //HostObjectAccess.setMainThread(Thread.currentThread());
-
         mode = Mode.valueOf(options.modeOption.getValue().toUpperCase());
 
         TargetLocation.set(options);

@@ -25,7 +25,6 @@ import static com.sun.max.asm.sparc.GPR.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.sparc.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.sparc.*;
@@ -51,9 +50,8 @@ public final class SPARCSystemVTargetABIsScheme extends SPARCTargetABIsScheme {
     }
 
     @HOSTED_ONLY
-    public SPARCSystemVTargetABIsScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration,
-              createSPARC64TargetABI(javaJitRegisterRoleAssignment(), CallEntryPoint.JIT_ENTRY_POINT, incomingIntegerparameterregisters(), outgoingIntegerParameterRegisters(), floatingPointParameterRegisters(), false, false),
+    public SPARCSystemVTargetABIsScheme() {
+        super(createSPARC64TargetABI(javaJitRegisterRoleAssignment(), CallEntryPoint.JIT_ENTRY_POINT, incomingIntegerparameterregisters(), outgoingIntegerParameterRegisters(), floatingPointParameterRegisters(), false, false),
               createSPARC64TargetABI(javaRegisterRoleAssignment(), CallEntryPoint.OPTIMIZED_ENTRY_POINT, incomingIntegerparameterregisters(), outgoingIntegerParameterRegisters(), floatingPointParameterRegisters(), true, false));
     }
 }

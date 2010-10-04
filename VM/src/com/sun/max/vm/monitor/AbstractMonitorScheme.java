@@ -29,8 +29,8 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class AbstractMonitorScheme extends AbstractVMScheme  implements MonitorScheme {
 
-    protected AbstractMonitorScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    protected AbstractMonitorScheme() {
     }
 
     private int counter;

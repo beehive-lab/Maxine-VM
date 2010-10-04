@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.layout.ohm;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -30,9 +29,8 @@ import com.sun.max.vm.layout.*;
  */
 public class OhmLayoutScheme extends LayoutScheme {
 
-    public OhmLayoutScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration,
-              new OhmGeneralLayout(),
+    public OhmLayoutScheme() {
+        super(new OhmGeneralLayout(),
               new OhmTupleLayout(),
               new OhmHybridLayout(),
               new OhmArrayHeaderLayout(),
