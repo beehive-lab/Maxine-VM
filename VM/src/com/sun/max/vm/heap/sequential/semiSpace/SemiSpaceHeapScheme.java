@@ -176,8 +176,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             "Perform a garbage collection before every allocation from the global heap.", MaxineVM.Phase.PRISTINE);
     }
 
-    public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    public SemiSpaceHeapScheme() {
+        super();
     }
 
     @Override

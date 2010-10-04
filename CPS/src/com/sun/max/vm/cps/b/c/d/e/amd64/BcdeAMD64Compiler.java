@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.amd64;
 
+import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.cps.b.c.d.e.*;
 import com.sun.max.vm.cps.eir.amd64.*;
@@ -40,10 +40,9 @@ public class BcdeAMD64Compiler extends BcdeCompiler<AMD64EirGenerator> implement
         return dirToEirTranslator;
     }
 
-    public BcdeAMD64Compiler(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-
-        Platform platform = vmConfiguration.platform;
+    @HOSTED_ONLY
+    public BcdeAMD64Compiler() {
+        Platform platform = Platform.platform();
         ProgramError.check(platform.endianness() == Endianness.LITTLE);
         ProgramError.check(platform.instructionSet() == InstructionSet.AMD64);
         ProgramError.check(platform.processorModel() == ProcessorModel.AMD64);

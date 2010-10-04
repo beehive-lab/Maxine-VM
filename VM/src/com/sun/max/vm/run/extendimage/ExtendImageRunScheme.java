@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.run.extendimage;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.hosted.JavaPrototype.*;
 
 import java.io.*;
@@ -117,8 +118,8 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     private static JavaRunScheme tester;
     private static boolean resetLauncher;
 
-    public ExtendImageRunScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public ExtendImageRunScheme() {
     }
 
     @Override
@@ -209,7 +210,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             try {
                 final Class<?> klass = Class.forName(testerRunSchemeClassname);
                 final Constructor<?> cons = klass.getConstructor(new Class<?>[] {VMConfiguration.class});
-                tester = (JavaRunScheme) cons.newInstance(new Object[] {vmConfiguration()});
+                tester = (JavaRunScheme) cons.newInstance(new Object[] {vmConfig()});
                 Trace.line(1, "extending image with " + testerRunSchemeClassname);
                 forceCompileMethod(testerRunSchemeClassname + ".run");
                 forceClass(testRunPackageName + ".JTRuns", false);

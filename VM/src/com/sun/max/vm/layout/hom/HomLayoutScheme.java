@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.layout.hom;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -31,9 +30,8 @@ import com.sun.max.vm.layout.*;
  */
 public class HomLayoutScheme extends LayoutScheme {
 
-    public HomLayoutScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration,
-              new HomGeneralLayout(),
+    public HomLayoutScheme() {
+        super(new HomGeneralLayout(),
               new HomTupleLayout(),
               new HomHybridLayout(),
               new HomArrayHeaderLayout(),

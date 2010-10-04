@@ -20,16 +20,11 @@
  */
 package com.sun.max.vm.monitor.hosted;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.ignore.*;
 
 /**
  * @author Mick Jordan
  */
 public class HostedMonitorScheme extends IgnoreMonitorScheme {
-
-    public HostedMonitorScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
 
 }

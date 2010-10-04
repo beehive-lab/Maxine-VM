@@ -25,7 +25,6 @@ import static com.sun.max.vm.runtime.VMRegister.Role.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.amd64.*;
@@ -39,8 +38,8 @@ import com.sun.max.vm.jni.*;
 public class UnixAMD64EirNativeABI extends UnixAMD64EirCFunctionABI {
 
     @HOSTED_ONLY
-    public UnixAMD64EirNativeABI(VMConfiguration vmConfiguration) {
-        super(vmConfiguration, false);
+    public UnixAMD64EirNativeABI() {
+        super(false);
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = super.targetABI();
         final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> registerRoleAssignment =
             new RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister>(

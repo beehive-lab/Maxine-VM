@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.schemes.biased_thin_inflated;
 
-import com.sun.max.vm.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
@@ -33,8 +33,9 @@ import com.sun.max.vm.monitor.modal.schemes.*;
  * @author Simon Wilkinson
  */
 public class BiasedThinInflatedMonitorScheme extends ModalMonitorScheme {
-    public BiasedThinInflatedMonitorScheme(VMConfiguration vmConfiguration) {
-         super(vmConfiguration, BiasedLockModeHandler.asFastPath(false,
+    @HOSTED_ONLY
+    public BiasedThinInflatedMonitorScheme() {
+         super(BiasedLockModeHandler.asFastPath(false,
                                 ThinLockModeHandler.asBiasedLockDelegate(
                                 InflatedMonitorModeHandler.asThinLockDelegate())));
     }

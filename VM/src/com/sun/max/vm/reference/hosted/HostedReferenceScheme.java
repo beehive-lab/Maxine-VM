@@ -40,10 +40,6 @@ import com.sun.max.vm.value.*;
  */
 public final class HostedReferenceScheme extends AbstractVMScheme implements ReferenceScheme {
 
-    public HostedReferenceScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
-
     public boolean isConstant() {
         return false;
     }

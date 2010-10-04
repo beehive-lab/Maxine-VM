@@ -23,7 +23,6 @@ package com.sun.max.vm.cps.b.c.d;
 
 import java.util.*;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.cps.b.c.*;
 import com.sun.max.vm.cps.cir.dir.*;
 import com.sun.max.vm.cps.dir.*;
@@ -36,8 +35,7 @@ public class BcdCompiler extends BcCompiler implements DirGeneratorScheme {
 
     private final CirToDirTranslator cirToDirTranslator;
 
-    public BcdCompiler(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    public BcdCompiler() {
         cirToDirTranslator = new CirToDirTranslator(this);
     }
 

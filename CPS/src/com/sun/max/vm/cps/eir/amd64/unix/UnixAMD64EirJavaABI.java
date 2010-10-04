@@ -23,17 +23,12 @@ package com.sun.max.vm.cps.eir.amd64.unix;
 import java.util.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 
 /**
  * @author Bernd Mathiske
  */
 public class UnixAMD64EirJavaABI extends UnixAMD64EirABI {
-
-    public UnixAMD64EirJavaABI(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
 
     /**
      * Allocated registers from the allocatable set are caller saved.

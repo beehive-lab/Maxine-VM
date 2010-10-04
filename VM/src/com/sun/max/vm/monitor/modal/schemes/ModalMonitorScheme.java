@@ -46,12 +46,10 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
     /**
      * Constructs a ModalMonitorScheme, setting the fastest-path mode
      * to entryHandler.
-     *
-     * @param vmConfiguration the build-time VM configuration
      * @param entryHandler the fastest-path locking mode handler
      */
-    public ModalMonitorScheme(VMConfiguration vmConfiguration, MonitorSchemeEntry entryHandler) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public ModalMonitorScheme(MonitorSchemeEntry entryHandler) {
         this.entryHandler = entryHandler;
 
         // Inform all mode handlers about the current monitor scheme

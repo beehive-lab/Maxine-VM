@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.eir.amd64;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.cps.eir.*;
 
 /**
@@ -31,15 +30,14 @@ import com.sun.max.vm.cps.eir.*;
 public abstract class AMD64EirABIsScheme extends EirABIsScheme<AMD64EirRegister> {
 
     @HOSTED_ONLY
-    protected AMD64EirABIsScheme(VMConfiguration vmConfiguration,
-                    EirABI<AMD64EirRegister> javaABI,
+    protected AMD64EirABIsScheme(EirABI<AMD64EirRegister> javaABI,
                     EirABI<AMD64EirRegister> nativeABI,
                     EirABI<AMD64EirRegister> j2cFunctionABI,
                     EirABI<AMD64EirRegister> c2jFunctionABI,
                     EirABI<AMD64EirRegister> trampolineABI,
                     EirABI<AMD64EirRegister> templateABI,
                     EirABI<AMD64EirRegister> treeABI) {
-        super(vmConfiguration, javaABI, nativeABI, j2cFunctionABI, c2jFunctionABI, trampolineABI, templateABI, treeABI);
+        super(javaABI, nativeABI, j2cFunctionABI, c2jFunctionABI, trampolineABI, templateABI, treeABI);
     }
 
     @Override

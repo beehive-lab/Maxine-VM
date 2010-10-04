@@ -46,6 +46,7 @@ import com.sun.max.vm.trampoline.*;
  *
  * @author Bernd Mathiske
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public final class VMConfiguration {
 
@@ -224,16 +225,16 @@ public final class VMConfiguration {
             return;
         }
 
-        referenceScheme = loadAndInstantiateScheme(loadedSchemes, referencePackage, ReferenceScheme.class, this);
-        layoutScheme = loadAndInstantiateScheme(loadedSchemes, layoutPackage, LayoutScheme.class, this);
-        monitorScheme = loadAndInstantiateScheme(loadedSchemes, monitorPackage, MonitorScheme.class, this);
-        heapScheme = loadAndInstantiateScheme(loadedSchemes, heapPackage, HeapScheme.class, this);
-        targetABIsScheme = loadAndInstantiateScheme(loadedSchemes, targetABIsPackage, TargetABIsScheme.class, this);
-        bootCompilerScheme = loadAndInstantiateScheme(loadedSchemes, bootCompilerPackage, BootstrapCompilerScheme.class, this);
-        trampolineScheme = loadAndInstantiateScheme(loadedSchemes, trampolinePackage, DynamicTrampolineScheme.class, this);
+        referenceScheme = loadAndInstantiateScheme(loadedSchemes, referencePackage, ReferenceScheme.class);
+        layoutScheme = loadAndInstantiateScheme(loadedSchemes, layoutPackage, LayoutScheme.class);
+        monitorScheme = loadAndInstantiateScheme(loadedSchemes, monitorPackage, MonitorScheme.class);
+        heapScheme = loadAndInstantiateScheme(loadedSchemes, heapPackage, HeapScheme.class);
+        targetABIsScheme = loadAndInstantiateScheme(loadedSchemes, targetABIsPackage, TargetABIsScheme.class);
+        bootCompilerScheme = loadAndInstantiateScheme(loadedSchemes, bootCompilerPackage, BootstrapCompilerScheme.class);
+        trampolineScheme = loadAndInstantiateScheme(loadedSchemes, trampolinePackage, DynamicTrampolineScheme.class);
 
         if (jitCompilerPackage != null) {
-            jitCompilerScheme = loadAndInstantiateScheme(loadedSchemes, jitCompilerPackage, RuntimeCompilerScheme.class, this);
+            jitCompilerScheme = loadAndInstantiateScheme(loadedSchemes, jitCompilerPackage, RuntimeCompilerScheme.class);
         } else {
             // no JIT, always using the optimizing compiler
             jitCompilerScheme = bootCompilerScheme;
@@ -245,7 +246,7 @@ public final class VMConfiguration {
         } else if (optCompilerPackage == null) {
             optCompilerScheme = bootCompilerScheme;
         } else {
-            optCompilerScheme = loadAndInstantiateScheme(loadedSchemes, optCompilerPackage, RuntimeCompilerScheme.class, this);
+            optCompilerScheme = loadAndInstantiateScheme(loadedSchemes, optCompilerPackage, RuntimeCompilerScheme.class);
         }
 
         if (loadedSchemes == null) {
@@ -261,8 +262,8 @@ public final class VMConfiguration {
             }
         }
 
-        compilationScheme = loadAndInstantiateScheme(loadedSchemes, compilationPackage, CompilationScheme.class, this);
-        runScheme = loadAndInstantiateScheme(loadedSchemes, runPackage, RunScheme.class, this);
+        compilationScheme = loadAndInstantiateScheme(loadedSchemes, compilationPackage, CompilationScheme.class);
+        runScheme = loadAndInstantiateScheme(loadedSchemes, runPackage, RunScheme.class);
         areSchemesLoadedAndInstantiated = true;
     }
 

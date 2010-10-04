@@ -36,8 +36,9 @@ import com.sun.max.vm.thread.*;
  */
 public class IgnoreMonitorScheme extends AbstractMonitorScheme implements MonitorScheme {
 
-    public IgnoreMonitorScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public IgnoreMonitorScheme() {
+        super();
     }
 
     @INLINE

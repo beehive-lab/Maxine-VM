@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.cps.b.c.d.*;
 import com.sun.max.vm.cps.eir.*;
@@ -37,8 +36,8 @@ import com.sun.max.vm.cps.ir.*;
  */
 public abstract class BcdeCompiler<EirGenerator_Type extends EirGenerator> extends BcdCompiler implements EirGeneratorScheme<EirGenerator_Type> {
 
-    public BcdeCompiler(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public BcdeCompiler() {
     }
 
     @Override
