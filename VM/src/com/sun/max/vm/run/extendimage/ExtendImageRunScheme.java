@@ -124,7 +124,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
-            if (MaxineVM.isHosted()) {
+            if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
                 extendImage();
             }
         }

@@ -132,22 +132,32 @@ public class RunBench {
         }
     }
 
+    public enum RunType {
+        ENCAP("E"),
+        ACTUAL("R");
+        private String fileChar;
+        RunType(String fileChar) {
+            this.fileChar = fileChar;
+        }
+    }
+
     private static int warmupCount = -1;
     private static boolean report = true;
     private static boolean trace;
-    private static final int DEFAULT_LOOP_COUNT = 100;
-    private static final int DEFAULT_THREAD_COUNT = 1;
-    private static final int DEFAULT_RUN_ITER_COUNT = 100000;
-    private static final int DEFAULT_OUTLIER_PERCENT = 1;
 
-    private static final String LOOP_COUNT_PROPERTY = "test.bench.loopcount";
-    private static final String RUN_ITER_COUNT_PROPERTY = "test.bench.runitercount";
-    private static final String WARMUP_COUNT_PROPERTY = "test.bench.warmupcount";
-    private static final String THREAD_COUNT_PROPERTY = "test.bench.threadcount";
-    private static final String FILE_PROPERTY = "test.bench.file";
-    private static final String TRACE_PROPERTY = "test.bench.trace";
-    private static final String NO_REPORT_PROPERTY = "test.bench.noreport";
-    private static final String OUTLIER_PROPERTY = "test.bench.outlier";
+    public static final int DEFAULT_LOOP_COUNT = 100;
+    public static final int DEFAULT_THREAD_COUNT = 1;
+    public static final int DEFAULT_RUN_ITER_COUNT = 100000;
+    public static final int DEFAULT_OUTLIER_PERCENT = 1;
+
+    public static final String LOOP_COUNT_PROPERTY = "test.bench.loopcount";
+    public static final String RUN_ITER_COUNT_PROPERTY = "test.bench.runitercount";
+    public static final String WARMUP_COUNT_PROPERTY = "test.bench.warmupcount";
+    public static final String THREAD_COUNT_PROPERTY = "test.bench.threadcount";
+    public static final String FILE_PROPERTY = "test.bench.file";
+    public static final String TRACE_PROPERTY = "test.bench.trace";
+    public static final String NO_REPORT_PROPERTY = "test.bench.noreport";
+    public static final String OUTLIER_PROPERTY = "test.bench.outlier";
     private static final MicroBenchmark emptyEncap = new EmptyEncap();
     private static String fileNameBase;
     private static int fileNameIndex;
@@ -169,7 +179,7 @@ public class RunBench {
     /**
      * Check if any control properties are set.
      */
-    private static void getBenchProperties() {
+    public static void getBenchProperties() {
         final String lps = System.getProperty(LOOP_COUNT_PROPERTY);
         final String wps = System.getProperty(WARMUP_COUNT_PROPERTY);
         final String ips = System.getProperty(RUN_ITER_COUNT_PROPERTY);
@@ -362,32 +372,17 @@ public class RunBench {
 
         void doReport() {
             if (reporting) {
-                final long[] sortEncapElapsed = Arrays.copyOf(encapElapsed, encapElapsed.length);
-                Arrays.sort(sortEncapElapsed);
-                final long[] sortElapsed = Arrays.copyOf(elapsed, elapsed.length);
-                Arrays.sort(sortElapsed);
-                final SubArray encapSubArray = removeOutliers(sortEncapElapsed);
-                final SubArray elapsedSubArray = removeOutliers(sortElapsed);
-
-                final double avgEncapElapsed = average(encapSubArray);
-                final double avgElapsed = average(elapsedSubArray);
-                final double benchElapsed = avgElapsed - avgEncapElapsed;
-                final double avgElapsedStdDev = stddev(elapsedSubArray, avgElapsed);
-                final long[] minMaxArr = maxmin(elapsedSubArray);
-                System.out.println("Benchmark results (nanoseconds per iteration) for thread " + this.getName());
-                System.out.println("  loopcount: " + loopCount + ", warmupcount: " + warmupCount);
-                System.out.format("  averge overhead: %.3f, median overhead: %.3f\n", avgEncapElapsed, median(encapSubArray, true));
-                System.out.format("  average elapsed: %.3f, median elapsed: %.3f, \n", avgElapsed, median(elapsedSubArray, true));
-                System.out.format("  average elapsed minus overhead: %.3f\n", benchElapsed);
-                System.out.format("  stddev: %.3f, max: %d, min: %d\n", avgElapsedStdDev, minMaxArr[1], minMaxArr[0]);
-                System.out.format("  operations/ms: %.3f\n", (double) 1000000 / (double) benchElapsed);
+                final long[] copyEncapElapsed = Arrays.copyOf(encapElapsed, encapElapsed.length);
+                final long[] copyElapsed = Arrays.copyOf(elapsed, elapsed.length);
+                final SubArray encapSubArray = removeOutliers(copyEncapElapsed);
+                final SubArray elapsedSubArray = removeOutliers(copyElapsed);
+                report(encapSubArray, elapsedSubArray, this.getName());
             }
-
         }
 
         void doFileOutput() {
-            fileOutput("E", myId, encapElapsed);
-            fileOutput("R", myId, elapsed);
+            fileOutput(RunType.ENCAP, myId, encapElapsed);
+            fileOutput(RunType.ACTUAL, myId, elapsed);
             fileNameIndex++;
         }
 
@@ -397,27 +392,44 @@ public class RunBench {
 
     }
 
-    static class SubArray {
+    public static class SubArray {
         long[] values;
         int lwb;
         int upb;
-        SubArray(long[] values, int lwb, int upb) {
+
+        public SubArray(long[] values, int lwb, int upb) {
             this.values = values;
             this.lwb = lwb;
             this.upb = upb;
         }
 
-        int length() {
+        public int length() {
             return upb - lwb;
         }
     }
 
+    public static void report(SubArray encapSubArray, SubArray elapsedSubArray, String threadName) {
+        final double avgEncapElapsed = average(encapSubArray);
+        final double avgElapsed = average(elapsedSubArray);
+        final double benchElapsed = avgElapsed - avgEncapElapsed;
+        final double avgElapsedStdDev = stddev(elapsedSubArray, avgElapsed);
+        final long[] minMaxArr = maxmin(elapsedSubArray);
+        System.out.println("Benchmark results (nanoseconds per iteration) for thread " + threadName);
+        System.out.println("  loopcount: " + loopCount + ", warmupcount: " + warmupCount);
+        System.out.format("  average overhead: %.3f, median overhead: %.3f\n", avgEncapElapsed, median(encapSubArray, true));
+        System.out.format("  average elapsed: %.3f, median elapsed: %.3f, \n", avgElapsed, median(elapsedSubArray, true));
+        System.out.format("  average elapsed minus overhead: %.3f\n", benchElapsed);
+        System.out.format("  stddev: %.3f, max: %d, min: %d\n", avgElapsedStdDev, minMaxArr[1], minMaxArr[0]);
+        System.out.format("  operations/ms: %.3f\n", (double) 1000000 / (double) benchElapsed);
+    }
+
     /**
-     * Remove outliers.
+     * Remove outliers by sorting {@code timings} and removing {@link #outlierPercent} largest values.
      * @param timings
      * @return
      */
-    private SubArray removeOutliers(long[] timings) {
+    public static SubArray removeOutliers(long[] timings) {
+        Arrays.sort(timings);
         final int length = timings.length;
         final int n = (length * outlierPercent) / 100;
         return new SubArray(timings, n, length - n);
@@ -433,7 +445,7 @@ public class RunBench {
         return stddev(array, average(array));
     }
 
-    private double stddev(SubArray array, double avg) {
+    private static double stddev(SubArray array, double avg) {
         double res = 0;
         for (int i = array.lwb; i < array.upb; i++) {
             res += Math.pow(array.values[i] - avg, 2);
@@ -446,7 +458,7 @@ public class RunBench {
      * @param timings array of timing values
      * @return array {@code m} of length 2; {@code m[0] == min; m[1] == max}
      */
-    public long[] maxmin(SubArray array) {
+    public static long[] maxmin(SubArray array) {
         long[] minMaxArr = new long[]{Long.MAX_VALUE, Long.MIN_VALUE};
         for (int i = array.lwb; i < array.upb; i++) {
             final long val = array.values[i];
@@ -460,10 +472,10 @@ public class RunBench {
         return minMaxArr;
     }
 
-    private void fileOutput(String type, int threadId, long[] timings) {
+    private void fileOutput(RunType runType, int threadId, long[] timings) {
         PrintWriter bs = null;
         try {
-            bs = new PrintWriter(new BufferedWriter(new FileWriter(fileNameBase + "-" + "T" + threadId + "-" + type + fileNameIndex)));
+            bs = new PrintWriter(new BufferedWriter(new FileWriter(fileOutputName(fileNameBase, runType, threadId, fileNameIndex))));
             for (int i = 0; i < timings.length; i++) {
                 bs.println(timings[i]);
             }
@@ -474,11 +486,14 @@ public class RunBench {
                 bs.close();
             }
         }
+    }
 
+    public static String fileOutputName(String baseName, RunType runType, int threadId, int seqno) {
+        return baseName + "-" + "T" + threadId + "-" + runType.fileChar + seqno;
     }
 
     /**
-     * Return the median value the values in the given array.
+     * Return the median value of the values in the given array.
      * @param array
      * @return the median value
      */
@@ -491,7 +506,7 @@ public class RunBench {
      * @param array
      * @return the median value
      */
-    public double median(SubArray array, boolean isSorted) {
+    public static double median(SubArray array, boolean isSorted) {
         long[] values = array.values;
         final int length = array.length();
         if (length == 1) {
@@ -529,7 +544,7 @@ public class RunBench {
      * @param values
      * @return the average value
      */
-    public double average(SubArray array) {
+    public static double average(SubArray array) {
         long result = 0;
         for (int i = array.lwb; i < array.upb; i++) {
             result += array.values[i];

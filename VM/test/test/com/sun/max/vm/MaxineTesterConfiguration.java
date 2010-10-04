@@ -53,7 +53,8 @@ public class MaxineTesterConfiguration {
     static final Expectation PASS_DARWIN_AMD64 = new Expectation(OperatingSystem.DARWIN, ProcessorModel.AMD64, ExpectedResult.PASS);
 
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
-    static final List<String> zeeDacapoTests = new LinkedList<String>();
+    static final List<String> zeeDacapo2006Tests = new LinkedList<String>();
+    static final List<String> zeeDacapoBachTests = new LinkedList<String>();
     static final List<String> zeeSpecjvm98Tests = new LinkedList<String>();
     static final List<String> zeeSpecjvm2008Tests = new LinkedList<String>();
     static final List<String> zeeShootoutTests = new LinkedList<String>();
@@ -114,17 +115,32 @@ public class MaxineTesterConfiguration {
         jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitcps, @cpscps
         jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:  @jitcps, @cpscps
 
-        dacapo("antlr");
-        dacapo("bloat");
-        dacapo("xalan",    FAIL_ALL);
-        dacapo("hsqldb");
-        dacapo("luindex");
-        dacapo("lusearch", FAIL_ALL);
-        dacapo("jython",   FAIL_ALL);
-        dacapo("chart",    FAIL_ALL);
-        dacapo("eclipse",  FAIL_ALL);
-        dacapo("fop");
-        dacapo("pmd");
+        dacapo2006("antlr");
+        dacapo2006("bloat");
+        dacapo2006("xalan",    FAIL_ALL);
+        dacapo2006("hsqldb");
+        dacapo2006("luindex");
+        dacapo2006("lusearch", FAIL_ALL);
+        dacapo2006("jython");
+        dacapo2006("chart",    FAIL_ALL);
+        dacapo2006("eclipse");
+        dacapo2006("fop");
+        dacapo2006("pmd");
+
+        dacapoBach("avrora");
+        dacapoBach("batik",  FAIL_ALL);
+        dacapoBach("eclipse");
+        dacapoBach("fop");
+        dacapoBach("h2", FAIL_ALL);
+        dacapoBach("jython", FAIL_ALL);
+        dacapoBach("luindex", FAIL_ALL);
+        dacapoBach("lusearch");
+        dacapoBach("pmd");
+        dacapoBach("sunflow");
+        dacapoBach("tomcat", FAIL_ALL);
+        dacapoBach("tradebeans",  FAIL_ALL);
+        dacapoBach("tradesoap",  FAIL_ALL);
+        dacapoBach("xalan",  FAIL_ALL);
 
         specjvm98("_201_compress");
         specjvm98("_202_jess");
@@ -292,9 +308,14 @@ public class MaxineTesterConfiguration {
         addExpectedResults(javaClass.getName(), results);
     }
 
-    private static void dacapo(String name, Expectation... results) {
-        zeeDacapoTests.add(name);
-        addExpectedResults("Dacapo " + name, results);
+    private static void dacapo2006(String name, Expectation... results) {
+        zeeDacapo2006Tests.add(name);
+        addExpectedResults("Dacapo2006 " + name, results);
+    }
+
+    private static void dacapoBach(String name, Expectation... results) {
+        zeeDacapoBachTests.add(name);
+        addExpectedResults("DacapoBach " + name, results);
     }
 
     private static void specjvm98(String name, Expectation... results) {
