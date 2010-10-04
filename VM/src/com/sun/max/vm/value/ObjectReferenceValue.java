@@ -29,7 +29,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -105,11 +104,6 @@ public final class ObjectReferenceValue extends ReferenceValue {
     @Override
     public Object asBoxedJavaValue() {
         return value;
-    }
-
-    @Override
-    public Grip asGrip() {
-        return Grip.fromJava(value);
     }
 
     @Override

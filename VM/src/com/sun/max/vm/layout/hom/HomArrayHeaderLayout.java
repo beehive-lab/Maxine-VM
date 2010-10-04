@@ -23,9 +23,8 @@ package com.sun.max.vm.layout.hom;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.type.*;
 
 /**
@@ -35,8 +34,7 @@ import com.sun.max.vm.type.*;
 public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeaderLayout {
     protected final int headerSize;
 
-    HomArrayHeaderLayout(GripScheme gripScheme) {
-        super(gripScheme);
+    HomArrayHeaderLayout() {
         headerSize = -arrayLengthOffset;
     }
 

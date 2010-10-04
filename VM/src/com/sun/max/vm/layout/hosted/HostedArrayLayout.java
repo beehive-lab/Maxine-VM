@@ -22,7 +22,6 @@ package com.sun.max.vm.layout.hosted;
 
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -34,8 +33,7 @@ public abstract class HostedArrayLayout<Value_Type extends Value<Value_Type>> ex
 
     protected final Kind<Value_Type> elementKind;
 
-    public HostedArrayLayout(GripScheme gripScheme, Kind<Value_Type> elementKind) {
-        super(gripScheme);
+    public HostedArrayLayout(Kind<Value_Type> elementKind) {
         this.elementKind = elementKind;
     }
 

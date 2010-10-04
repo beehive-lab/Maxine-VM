@@ -102,7 +102,6 @@ public final class BootImageTable extends InspectorTable {
             addRow("operating system:", new DataLabel.EnumAsText(inspection(), platform.operatingSystem), null);
             addRow("page size:", new DataLabel.IntAsDecimal(inspection(), platform.pageSize), null);
 
-            addRow("grip scheme:", new JavaNameLabel(inspection(), vmConfiguration.gripScheme().name(), vmConfiguration.gripScheme().getClass().getName()), null);
             addRow("reference scheme:", new JavaNameLabel(inspection(), vmConfiguration.referenceScheme().name(), vmConfiguration.referenceScheme().getClass().getName()), null);
             addRow("layout scheme:",  new JavaNameLabel(inspection(), vmConfiguration.layoutScheme().name, vmConfiguration.layoutScheme().getClass().getName()), null);
             addRow("heap scheme:", new JavaNameLabel(inspection(), vmConfiguration.heapScheme().name(), vmConfiguration.heapScheme().getClass().getName()), null);

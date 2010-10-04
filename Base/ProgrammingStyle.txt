@@ -112,7 +112,7 @@ In general, we never use non-private fields unless we "absolutely have to".
 "index" - measure of units of whatever, referring to a position
 "scale" - unit size in bytes
 
-Concerning pointer/reference/grip/accessor operations:
+Concerning pointer/reference/accessor operations:
 
 "read", "write" - access by byte offset
 "get", "set"    - access by index with scale (and displacement)

@@ -33,7 +33,6 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
@@ -53,7 +52,6 @@ public final class VMConfiguration {
     public final BuildLevel buildLevel;
     public final Platform platform;
     public final VMPackage referencePackage;
-    public final VMPackage gripPackage;
     public final VMPackage layoutPackage;
     public final VMPackage heapPackage;
     public final VMPackage monitorPackage;
@@ -72,8 +70,6 @@ public final class VMConfiguration {
 
     @CONSTANT_WHEN_NOT_ZERO
     private ReferenceScheme referenceScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
-    private GripScheme gripScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
     private LayoutScheme layoutScheme;
     @CONSTANT_WHEN_NOT_ZERO
@@ -97,7 +93,6 @@ public final class VMConfiguration {
 
     public VMConfiguration(BuildLevel buildLevel,
                            Platform platform,
-                           VMPackage gripPackage,
                            VMPackage referencePackage,
                            VMPackage layoutPackage,
                            VMPackage heapPackage,
@@ -110,7 +105,6 @@ public final class VMConfiguration {
                            VMPackage targetABIsPackage, VMPackage runPackage) {
         this.buildLevel = buildLevel;
         this.platform = platform;
-        this.gripPackage = gripPackage;
         this.referencePackage = referencePackage;
         this.layoutPackage = layoutPackage;
         this.heapPackage = heapPackage;
@@ -129,11 +123,6 @@ public final class VMConfiguration {
     @INLINE
     public ReferenceScheme referenceScheme() {
         return referenceScheme;
-    }
-
-    @INLINE
-    public GripScheme gripScheme() {
-        return gripScheme;
     }
 
     @INLINE
@@ -196,7 +185,6 @@ public final class VMConfiguration {
             compilationPackage,
             trampolinePackage,
             targetABIsPackage,
-            gripPackage,
             runPackage});
     }
 
@@ -236,9 +224,8 @@ public final class VMConfiguration {
             return;
         }
 
-        gripScheme = loadAndInstantiateScheme(loadedSchemes, gripPackage, GripScheme.class, this);
         referenceScheme = loadAndInstantiateScheme(loadedSchemes, referencePackage, ReferenceScheme.class, this);
-        layoutScheme = loadAndInstantiateScheme(loadedSchemes, layoutPackage, LayoutScheme.class, this, gripScheme);
+        layoutScheme = loadAndInstantiateScheme(loadedSchemes, layoutPackage, LayoutScheme.class, this);
         monitorScheme = loadAndInstantiateScheme(loadedSchemes, monitorPackage, MonitorScheme.class, this);
         heapScheme = loadAndInstantiateScheme(loadedSchemes, heapPackage, HeapScheme.class, this);
         targetABIsScheme = loadAndInstantiateScheme(loadedSchemes, targetABIsPackage, TargetABIsScheme.class, this);

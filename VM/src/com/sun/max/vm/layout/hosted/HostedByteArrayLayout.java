@@ -21,7 +21,6 @@
 package com.sun.max.vm.layout.hosted;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -31,8 +30,8 @@ import com.sun.max.vm.value.*;
  */
 public class HostedByteArrayLayout extends HostedPrimitiveArrayLayout<ByteValue> implements ByteArrayLayout {
 
-    public HostedByteArrayLayout(GripScheme gripScheme) {
-        super(gripScheme, Kind.BYTE);
+    public HostedByteArrayLayout() {
+        super(Kind.BYTE);
     }
 
     public byte getByte(Accessor accessor, int index) {

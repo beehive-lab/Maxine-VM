@@ -25,7 +25,6 @@ import java.lang.reflect.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.type.*;
@@ -38,8 +37,7 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
 
     protected final Kind<Value_Type> elementKind;
 
-    public OhmArrayLayout(GripScheme gripScheme, Kind<Value_Type> elementKind) {
-        super(gripScheme);
+    public OhmArrayLayout(Kind<Value_Type> elementKind) {
         this.elementKind = elementKind;
     }
 

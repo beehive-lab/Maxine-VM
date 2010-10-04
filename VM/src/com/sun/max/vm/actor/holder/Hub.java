@@ -69,10 +69,6 @@ public abstract class Hub extends Hybrid {
     public final int referenceMapStartIndex;
     public final boolean isSpecialReference;
 
-    public WordWidth wordWidth() {
-        return specificLayout.gripScheme().dataModel().wordWidth;
-    }
-
     /**
      * @return whether the given serial numbers collide in a hash table of size 'divisor' using as "hash function" simply '% divisor'.
      */

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.layout.ohm;
 
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -29,8 +28,8 @@ import com.sun.max.vm.value.*;
  */
 abstract class OhmPrimitiveArrayLayout<Value_Type extends Value<Value_Type>> extends OhmArrayLayout<Value_Type> {
 
-    protected OhmPrimitiveArrayLayout(GripScheme gripScheme, Kind<Value_Type> elementKind) {
-        super(gripScheme, elementKind);
+    protected OhmPrimitiveArrayLayout(Kind<Value_Type> elementKind) {
+        super(elementKind);
     }
 
 }

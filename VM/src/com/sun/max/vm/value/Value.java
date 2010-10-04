@@ -25,7 +25,6 @@ import java.io.*;
 import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -380,16 +379,8 @@ public abstract class Value<Value_Type extends Value<Value_Type>> implements Cla
     }
 
     /**
-     * @return the Grip boxed by this
-     * @throws IllegalArgumentException if this is not a GripValue or a ReferenceValue
-     */
-    public Grip asGrip() {
-        throw illegalConversion("grip");
-    }
-
-    /**
      * @return the Reference boxed by this
-     * @throws IllegalArgumentException if this is not a ReferenceValue or a GripValue
+     * @throws IllegalArgumentException if this is not a ReferenceValue
      */
     public Reference asReference() {
         throw illegalConversion("reference");

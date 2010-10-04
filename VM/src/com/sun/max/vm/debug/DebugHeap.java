@@ -29,11 +29,11 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -141,19 +141,19 @@ public final class DebugHeap {
         }
     }
 
-    private static void checkGripTag(Grip grip) {
+    private static void checkRefTag(Reference ref) {
         if (isTagging()) {
-            if (!grip.isZero()) {
-                final Pointer origin = grip.toOrigin();
+            if (!ref.isZero()) {
+                final Pointer origin = ref.toOrigin();
                 final Pointer cell = Layout.originToCell(origin);
                 checkCellTag(cell, cell.minusWords(1).getWord(0));
             }
         }
     }
 
-    public static void checkNonNullGripTag(Grip grip) {
+    public static void checkNonNullRefTag(Reference ref) {
         if (isTagging()) {
-            final Pointer origin = grip.toOrigin();
+            final Pointer origin = ref.toOrigin();
             final Pointer cell = Layout.originToCell(origin);
             checkCellTag(cell, cell.minusWords(1).getWord(0));
         }
@@ -165,7 +165,7 @@ public final class DebugHeap {
      * @param address the base pointer of a reference. If this value is {@link Address#zero()}, then both it and {@code
      *            index} are ignored.
      * @param index the offset in words from {@code address} of the reference to be verified
-     * @param grip the reference to be verified
+     * @param ref the reference to be verified
      * @param space1 an address space in which valid objects can be found apart from the boot
      *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions. This value is
      *            ignored if null.
@@ -173,14 +173,14 @@ public final class DebugHeap {
      *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions. This value is
      *            ignored if null.
      */
-    public static void verifyGripAtIndex(Address address, int index, Grip grip, MemoryRegion space1, MemoryRegion space2) {
-        if (grip.isZero()) {
+    public static void verifyRefAtIndex(Address address, int index, Reference ref, MemoryRegion space1, MemoryRegion space2) {
+        if (ref.isZero()) {
             return;
         }
         if (isTagging()) {
-            checkNonNullGripTag(grip);
+            checkNonNullRefTag(ref);
         }
-        final Pointer origin = grip.toOrigin();
+        final Pointer origin = ref.toOrigin();
         if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.getImmortalHeap().contains(origin)) {
             return;
         }
@@ -190,7 +190,7 @@ public final class DebugHeap {
         if (space2 != null && space2.contains(origin)) {
             return;
         }
-        Log.print("invalid grip: ");
+        Log.print("invalid ref: ");
         Log.print(origin.asAddress());
         if (!address.isZero()) {
             Log.print(" @ ");
@@ -199,15 +199,15 @@ public final class DebugHeap {
             Log.print(index * Word.size());
         }
         Log.println();
-        FatalError.unexpected("invalid grip");
+        FatalError.unexpected("invalid ref");
     }
 
     private static Hub checkHub(Pointer origin, MemoryRegion space) {
-        final Grip hubGrip = Layout.readHubGrip(origin);
-        FatalError.check(!hubGrip.isZero(), "null hub");
+        final Reference hubRef = Layout.readHubReference(origin);
+        FatalError.check(!hubRef.isZero(), "null hub");
         final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
-        verifyGripAtIndex(origin, hubIndex, hubGrip, space, null);
-        final Hub hub = UnsafeCast.asHub(hubGrip.toJava());
+        verifyRefAtIndex(origin, hubIndex, hubRef, space, null);
+        final Hub hub = UnsafeCast.asHub(hubRef.toJava());
 
         Hub h = hub;
         if (h instanceof StaticHub) {
@@ -240,7 +240,7 @@ public final class DebugHeap {
      * @param space the address space in which valid objects can be found apart from the boot
      *            {@linkplain Heap#bootHeapRegion heap} and {@linkplain Code#bootCodeRegion code} regions.
      * @param verifier a {@link PointerOffsetVisitor} instance that will call
-     *            {@link #verifyGripAtIndex(Address, int, Grip, MemoryRegion, MemoryRegion)} for a reference value denoted by a base
+     *            {@link #verifyRefAtIndex(Address, int, Reference, MemoryRegion, MemoryRegion)} for a reference value denoted by a base
      *            pointer and offset
      */
     public static void verifyRegion(String description, Address start, final Address end, final MemoryRegion space, PointerIndexVisitor verifier) {
@@ -288,7 +288,7 @@ public final class DebugHeap {
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {
-                        verifyGripAtIndex(origin, index, Layout.getGrip(origin, index), space, null);
+                        verifyRefAtIndex(origin, index, Layout.getReference(origin, index), space, null);
                     }
                 }
                 cell = cell.plus(Layout.size(origin));
@@ -311,9 +311,9 @@ public final class DebugHeap {
         return mark;
     }
 
-    public static boolean isValidNonnullGrip(Grip grip) {
+    public static boolean isValidNonnullRef(Reference ref) {
         if (isTagging()) {
-            final Pointer origin = grip.toOrigin();
+            final Pointer origin = ref.toOrigin();
             final Pointer cell = Layout.originToCell(origin);
             return isValidCellTag(cell.minusWords(1).getWord(0));
         }

@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * A reference scheme that uses the write barrier for references defined by the heap scheme.
+ * Direct references.
  *
  * @author Bernd Mathiske
  */
-package com.sun.max.vm.reference.heap;
+package com.sun.max.tele.reference.direct;
