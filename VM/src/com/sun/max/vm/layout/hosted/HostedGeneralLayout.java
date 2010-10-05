@@ -105,7 +105,7 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
         return (ReferenceClassActor) ClassActor.fromJava(reference.toJava().getClass());
     }
 
-    public void writeHubReference(Accessor accessor, Reference referenceClassReference) {
+    public void writeHubReference(Accessor accessor, Reference hub) {
         ProgramError.unexpected();
     }
 
