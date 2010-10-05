@@ -106,49 +106,41 @@ public final class Layout {
         return layoutScheme().arrayHeaderLayout;
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer cellToOrigin(Pointer cell) {
         return generalLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer tupleCellToOrigin(Pointer cell) {
         return tupleLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer hybridCellToOrigin(Pointer cell) {
         return hybridLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer arrayCellToOrigin(Pointer cell) {
         return arrayHeaderLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer originToCell(Pointer origin) {
         return generalLayout().originToCell(origin);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer tupleOriginToCell(Pointer origin) {
         return tupleLayout().originToCell(origin);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer hybridOriginToCell(Pointer origin) {
         return hybridLayout().originToCell(origin);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer arrayOriginToCell(Pointer origin) {
         return arrayHeaderLayout().originToCell(origin);

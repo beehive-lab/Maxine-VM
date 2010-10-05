@@ -22,7 +22,6 @@ package com.sun.max.vm.layout.hom;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.type.*;
@@ -67,12 +66,6 @@ public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeade
     @Override
     public boolean isArrayLayout() {
         return true;
-    }
-
-    @INLINE
-    public final Kind getElementKind(Accessor accessor) {
-        final ArrayClassActor arrayClassActor = UnsafeCast.asArrayClassActor(readHubReference(accessor).toJava());
-        return arrayClassActor.componentClassActor().kind;
     }
 
     @Override
