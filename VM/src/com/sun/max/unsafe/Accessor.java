@@ -20,7 +20,6 @@
  */
 package com.sun.max.unsafe;
 
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -436,50 +435,6 @@ public interface Accessor {
      * @param value the data to be written
      */
     void setWord(int displacement, int index, Word value);
-
-    /**
-     * Reads a Grip at an offset from this location.
-     * @param offset the signed offset in bytes from this
-     * @return the Grip value
-     */
-    Grip readGrip(Offset offset);
-
-    /**
-     * Reads a Grip at an offset from this location.
-     * @param offset the signed offset in bytes from this
-     * @return the Grip value
-     */
-    Grip readGrip(int offset);
-
-    /**
-     * Gets a Grip at the scaled index plus displacement from this location.
-     * @param displacement signed displacement in bytes
-     * @param index signed index measured in Grips
-     * @return the Grip value
-     */
-    Grip getGrip(int displacement, int index);
-
-    /**
-     * Writes a Grip at an offset from this location.
-     * @param offset the signed offset in bytes from this
-     * @param value the data to be written
-     */
-    void writeGrip(Offset offset, Grip value);
-
-    /**
-     * Writes a Grip at an offset from this location.
-     * @param offset the signed offset in bytes from this
-     * @param value the data to be written
-     */
-    void writeGrip(int offset, Grip value);
-
-    /**
-     * Writes a Grip at index plus displacement from this location.
-     * @param displacement signed displacement in bytes
-     * @param index signed index measured in Grips
-     * @param value the data to be written
-     */
-    void setGrip(int displacement, int index, Grip value);
 
     /**
      * Reads a Reference at an offset from this location.

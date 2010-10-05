@@ -30,9 +30,9 @@ import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -289,7 +289,11 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         // num bits in bitmaps = coveredAreaSize >> log2BytesCoveredPerBit
         // bitmap size in bytes = num bits >> log2numberOfBits per byte
         FatalError.check(coveredAreaSize.isWordAligned(), "Area covered by a mark bitmap must be word aligned");
-        return coveredAreaSize.unsignedShiftedRight(log2BytesCoveredPerBit + WordWidth.BITS_8.log2numberOfBits);
+        Size numberOfBytesNeeded = coveredAreaSize.unsignedShiftedRight(log2BytesCoveredPerBit + WordWidth.BITS_8.log2numberOfBits);
+
+        // Mark bitmap must be word-aligned (the marking algorithm operates on mark bitmap words)
+        // We also add an extra-word at the end to allow termination of the marking algorithm:
+        return numberOfBytesNeeded.aligned(Word.size()).plus(Word.size());
     }
 
 
@@ -672,7 +676,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
         @Override
         public void visit(Pointer pointer, int wordIndex) {
-            markExternalRoot(Layout.originToCell(pointer.getGrip(wordIndex).toOrigin()));
+            markExternalRoot(Layout.originToCell(pointer.getReference(wordIndex).toOrigin()));
         }
 
         /**
@@ -686,16 +690,16 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 printVisitedCell(cell, "Visiting root cell ");
             }
             final Pointer origin = Layout.cellToOrigin(cell);
-            final Grip hubGrip = Layout.readHubGrip(origin);
-            markExternalRoot(Layout.originToCell(hubGrip.toOrigin()));
-            final Hub hub = UnsafeCast.asHub(hubGrip.toJava());
+            final Reference hubRef = Layout.readHubReference(origin);
+            markExternalRoot(Layout.originToCell(hubRef.toOrigin()));
+            final Hub hub = UnsafeCast.asHub(hubRef.toJava());
 
             // Update the other references in the object
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
                 if (hub.isSpecialReference) {
-                    SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
+                    SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
                 }
                 return cell.plus(hub.tupleSize);
             }
@@ -704,7 +708,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             } else if (specificLayout.isReferenceArrayLayout()) {
                 final int length = Layout.readArrayLength(origin);
                 for (int index = 0; index < length; index++) {
-                    markExternalRoot(Layout.originToCell(Layout.getGrip(origin, index).toOrigin()));
+                    markExternalRoot(Layout.originToCell(Layout.getReference(origin, index).toOrigin()));
                 }
             }
             return cell.plus(Layout.size(origin));
@@ -788,13 +792,13 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             heapMarker.markBlackFromGrey(cell);
         }
         @INLINE
-        private void markGripGrey(Grip grip) {
-            markObjectGrey(Layout.originToCell(grip.toOrigin()));
+        private void markRefGrey(Reference ref) {
+            markObjectGrey(Layout.originToCell(ref.toOrigin()));
         }
 
         @Override
         public void visit(Pointer pointer, int wordIndex) {
-            markGripGrey(pointer.getGrip(wordIndex));
+            markRefGrey(pointer.getReference(wordIndex));
         }
 
         @INLINE
@@ -819,9 +823,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             }
 
             final Pointer origin = Layout.cellToOrigin(cell);
-            final Grip hubGrip = Layout.readHubGrip(origin);
-            markGripGrey(hubGrip);
-            final Hub hub = UnsafeCast.asHub(hubGrip.toJava());
+            final Reference hubRef = Layout.readHubReference(origin);
+            markRefGrey(hubRef);
+            final Hub hub = UnsafeCast.asHub(hubRef.toJava());
             if (MaxineVM.isDebug()) {
                 FatalError.check(hub != HeapFreeChunk.HEAP_FREE_CHUNK_HUB, "Must never mark a HeapFreeChunk");
             }
@@ -830,14 +834,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
                 if (hub.isSpecialReference) {
-                    SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
+                    SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
                 }
             } else if (specificLayout.isHybridLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
             } else if (specificLayout.isReferenceArrayLayout()) {
                 final int length = Layout.readArrayLength(origin);
                 for (int index = 0; index < length; index++) {
-                    markGripGrey(Layout.getGrip(origin, index));
+                    markRefGrey(Layout.getReference(origin, index));
                 }
             }
             heapMarker.markBlackFromGrey(bitIndex);
@@ -938,24 +942,24 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         @INLINE
-        private void markGripGrey(Grip grip) {
-            markObjectGrey(Layout.originToCell(grip.toOrigin()));
+        private void markRefGrey(Reference ref) {
+            markObjectGrey(Layout.originToCell(ref.toOrigin()));
         }
 
         @Override
         public void visit(Pointer pointer, int wordIndex) {
-            markGripGrey(pointer.getGrip(wordIndex));
+            markRefGrey(pointer.getReference(wordIndex));
         }
 
         public void visitArrayReferences(Pointer origin) {
             final int length = Layout.readArrayLength(origin);
             for (int index = 0; index < length; index++) {
-                markGripGrey(Layout.getGrip(origin, index));
+                markRefGrey(Layout.getReference(origin, index));
             }
         }
 
-        public void visit(Grip grip) {
-            markGripGrey(grip);
+        public void visit(Reference ref) {
+            markRefGrey(ref);
         }
 
         @INLINE
@@ -964,9 +968,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 printVisitedCell(cell, "Visiting grey cell ");
             }
             final Pointer origin = Layout.cellToOrigin(cell);
-            final Grip hubGrip = Layout.readHubGrip(origin);
-            markGripGrey(hubGrip);
-            final Hub hub = UnsafeCast.asHub(hubGrip.toJava());
+            final Reference hubRef = Layout.readHubReference(origin);
+            markRefGrey(hubRef);
+            final Hub hub = UnsafeCast.asHub(hubRef.toJava());
             if (MaxineVM.isDebug()) {
                 FatalError.check(hub != HeapFreeChunk.HEAP_FREE_CHUNK_HUB, "Must never mark a HeapFreeChunk");
             }
@@ -981,7 +985,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     // allows for a single call only). We need to protect against this, so we test here if
                     // the object wasn't set black already.
                     if (!heapMarker.isBlackWhenNotWhite(origin)) {
-                        SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
+                        SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
                     }
                 }
                 return cell.plus(hub.tupleSize);
@@ -1349,26 +1353,26 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         @INLINE
-        private void markGripGrey(Grip grip) {
-            markObjectGrey(Layout.originToCell(grip.toOrigin()));
+        private void markRefGrey(Reference ref) {
+            markObjectGrey(Layout.originToCell(ref.toOrigin()));
         }
 
         @Override
         public void visit(Pointer pointer, int wordIndex) {
-            markGripGrey(pointer.getGrip(wordIndex));
+            markRefGrey(pointer.getReference(wordIndex));
         }
 
         @Override
         public void visitArrayReferences(Pointer origin) {
             final int length = Layout.readArrayLength(origin);
             for (int index = 0; index < length; index++) {
-                markGripGrey(Layout.getGrip(origin, index));
+                markRefGrey(Layout.getReference(origin, index));
             }
         }
 
         @Override
-        public void visit(Grip grip) {
-            markGripGrey(grip);
+        public void visit(Reference ref) {
+            markRefGrey(ref);
         }
 
 
@@ -1613,14 +1617,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
     @INLINE
-    final void markGripBlack(Grip grip) {
-        markObjectBlack(Layout.originToCell(grip.toOrigin()));
+    final void markRefBlack(Reference ref) {
+        markObjectBlack(Layout.originToCell(ref.toOrigin()));
     }
 
     final PointerIndexVisitor markBlackPointerIndexVisitor = new PointerIndexVisitor() {
         @Override
         public  final void visit(Pointer pointer, int wordIndex) {
-            markGripBlack(pointer.getGrip(wordIndex));
+            markRefBlack(pointer.getReference(wordIndex));
         }
     };
 
@@ -1629,16 +1633,16 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             printVisitedCell(cell, "Visiting black cell ");
         }
         final Pointer origin = Layout.cellToOrigin(cell);
-        final Grip hubGrip = Layout.readHubGrip(origin);
-        markGripBlack(hubGrip);
-        final Hub hub = UnsafeCast.asHub(hubGrip.toJava());
+        final Reference hubRef = Layout.readHubReference(origin);
+        markRefBlack(hubRef);
+        final Hub hub = UnsafeCast.asHub(hubRef.toJava());
 
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, markBlackPointerIndexVisitor);
             if (hub.isSpecialReference) {
-                SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
+                SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
             }
             return cell.plus(hub.tupleSize);
         }
@@ -1647,7 +1651,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         } else if (specificLayout.isReferenceArrayLayout()) {
             final int length = Layout.readArrayLength(origin);
             for (int index = 0; index < length; index++) {
-                markGripBlack(Layout.getGrip(origin, index));
+                markRefBlack(Layout.getReference(origin, index));
             }
         }
         return cell.plus(Layout.size(origin));
@@ -1916,15 +1920,15 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
     }
 
-    private static final class GripForwarder implements SpecialReferenceManager.GripForwarder {
+    private static final class RefForwarder implements SpecialReferenceManager.ReferenceForwarder {
         final TricolorHeapMarker heapMarker;
 
-        GripForwarder(TricolorHeapMarker heapMarker) {
+        RefForwarder(TricolorHeapMarker heapMarker) {
             this.heapMarker = heapMarker;
         }
 
-        public boolean isReachable(Grip grip) {
-            Pointer origin = grip.toOrigin();
+        public boolean isReachable(Reference ref) {
+            Pointer origin = ref.toOrigin();
             if (heapMarker.isCovered(origin)) {
                 return heapMarker.isBlackWhenNoGreys(origin);
             }
@@ -1937,16 +1941,16 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             return false;
         }
 
-        public Grip getForwardGrip(Grip grip) {
+        public Reference getForwardRefence(Reference ref) {
             // We aren't relocating object (for now).
-            return grip;
+            return ref;
         }
     }
 
-    private final GripForwarder specialReferenceGripForwarder = new GripForwarder(this);
+    private final RefForwarder specialReferenceRefForwarder = new RefForwarder(this);
 
-    public SpecialReferenceManager.GripForwarder getSpecialReferenceGripForwarder() {
-        return specialReferenceGripForwarder;
+    public SpecialReferenceManager.ReferenceForwarder getSpecialReferenceRefForwarder() {
+        return specialReferenceRefForwarder;
     }
 
 }

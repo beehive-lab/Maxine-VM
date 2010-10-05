@@ -35,9 +35,8 @@ import com.sun.max.vm.trampoline.*;
 public class RecompileTrampolineScheme extends AbstractVMScheme implements DynamicTrampolineScheme {
     private final DynamicTrampolineExit dynamicTrampolineExit;
 
-    public RecompileTrampolineScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-        dynamicTrampolineExit = DynamicTrampolineExit.create(vmConfiguration);
+    public RecompileTrampolineScheme() {
+        dynamicTrampolineExit = DynamicTrampolineExit.create();
     }
 
     public boolean isDynamicTrampoline(ClassMethodActor classMethodActor) {

@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.tele.debug.ProcessState.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -46,7 +47,6 @@ import com.sun.max.tele.channel.tcp.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.no.*;
 import com.sun.max.tele.field.*;
-import com.sun.max.tele.grip.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.jdwputil.*;
 import com.sun.max.tele.memory.*;
@@ -64,7 +64,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -365,8 +364,6 @@ public abstract class TeleVM implements MaxVM {
      * @return a new VM instance
      */
     public static TeleVM create(Options options) throws BootImageException {
-        //HostObjectAccess.setMainThread(Thread.currentThread());
-
         mode = Mode.valueOf(options.modeOption.getValue().toUpperCase());
 
         TargetLocation.set(options);
@@ -481,12 +478,13 @@ public abstract class TeleVM implements MaxVM {
      * @param bootImageConfig
      */
     private static void initializeVM(VMConfiguration bootImageConfig) {
+        MaxineVM vm = new MaxineVM(bootImageConfig);
+        MaxineVM.set(vm);
         bootImageConfig.loadAndInstantiateSchemes(null);
         final VMConfiguration config = new VMConfiguration(
                         bootImageConfig.buildLevel,
-                        bootImageConfig.platform,
-                        getInspectorGripPackage(bootImageConfig.gripPackage),
-                        new com.sun.max.tele.reference.plain.Package(),
+                        platform(),
+                        getInspectorReferencePackage(bootImageConfig.referencePackage),
                         bootImageConfig.layoutPackage,
                         bootImageConfig.heapPackage,
                         bootImageConfig.monitorPackage,
@@ -496,7 +494,7 @@ public abstract class TeleVM implements MaxVM {
                         bootImageConfig.compilationPackage,
                         bootImageConfig.trampolinePackage,
                         bootImageConfig.targetABIsPackage, bootImageConfig.runPackage);
-        final MaxineVM vm = new MaxineVM(config);
+        vm = new MaxineVM(config);
         MaxineVM.set(vm);
         config.loadAndInstantiateSchemes(bootImageConfig.vmSchemes());
         JavaPrototype.initialize(false);
@@ -516,7 +514,7 @@ public abstract class TeleVM implements MaxVM {
         initializeVM(bootImage.vmConfiguration);
 
         TeleVM teleVM = null;
-        final OperatingSystem operatingSystem = bootImage.vmConfiguration.platform.operatingSystem;
+        final OperatingSystem operatingSystem = platform().operatingSystem;
         final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
@@ -577,22 +575,16 @@ public abstract class TeleVM implements MaxVM {
     private final Tracer refreshTracer = new Tracer("refresh");
 
 
-    private static VMPackage getInspectorGripPackage(VMPackage gripPackage) {
-        final MaxPackage vmGripRootPackage = new com.sun.max.vm.grip.Package();
-        final String suffix = gripPackage.name().substring(vmGripRootPackage.name().length());
-        final MaxPackage inspectorGripRootPackage = new com.sun.max.tele.grip.Package();
-        return (VMPackage) MaxPackage.fromName(inspectorGripRootPackage.name() + suffix);
+    private static VMPackage getInspectorReferencePackage(VMPackage referencePackage) {
+        final MaxPackage vmReferenceRootPackage = new com.sun.max.vm.reference.Package();
+        final String suffix = referencePackage.name().substring(vmReferenceRootPackage.name().length());
+        final MaxPackage inspectorReferenceRootPackage = new com.sun.max.tele.reference.Package();
+        return (VMPackage) MaxPackage.fromName(inspectorReferenceRootPackage.name() + suffix);
     }
 
     private String  tracePrefix() {
         return "[TeleVM: " + Thread.currentThread().getName() + "] ";
     }
-
-    /**
-     * Note that this is identical to the value returned by {@link VMConfiguration#vmConfig()}
-     * after {@link #initializeVM(VMConfiguration)} has been called.
-     */
-    private final VMConfiguration vmConfiguration;
 
     private final Size wordSize;
 
@@ -732,16 +724,15 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        setTeleChannelProtocol(bootImage.vmConfiguration.platform.operatingSystem);
-        vmConfiguration = vmConfig();
+        setTeleChannelProtocol(platform().operatingSystem);
 
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating all");
 
         // Pre-initialize the disassembler to save time.
-        TeleDisassembler.initialize(vmConfiguration.platform);
+        TeleDisassembler.initialize(platform());
 
-        this.wordSize = Size.fromInt(vmConfiguration.platform.wordWidth().numberOfBytes);
-        this.pageSize = Size.fromInt(vmConfiguration.platform.pageSize);
+        this.wordSize = Size.fromInt(platform().wordWidth().numberOfBytes);
+        this.pageSize = Size.fromInt(platform().pageSize);
         this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
         if (mode == Mode.ATTACH || mode == Mode.ATTACHWAITING) {
@@ -751,8 +742,8 @@ public abstract class TeleVM implements MaxVM {
         }
         this.bootImageStart = loadBootImage();
 
-        final TeleGripScheme teleGripScheme = (TeleGripScheme) vmConfig().gripScheme();
-        teleGripScheme.setTeleVM(this);
+        final TeleReferenceScheme teleReferenceScheme = (TeleReferenceScheme) vmConfig().referenceScheme();
+        teleReferenceScheme.setTeleVM(this);
 
         if (!tryLock()) {
             ProgramError.unexpected("unable to lock during creation");
@@ -854,10 +845,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final String getDescription() {
         return MaxineVM.description();
-    }
-
-    public VMConfiguration vmConfiguration() {
-        return vmConfiguration;
     }
 
     public final File vmDirectory() {
@@ -1204,15 +1191,8 @@ public abstract class TeleVM implements MaxVM {
         teleFields().Trace_threshold.writeLong(this, newThreshold);
     }
 
-    public TeleGripScheme gripScheme() {
-        return (TeleGripScheme) vmConfiguration.gripScheme();
-    }
-
-    /**
-     * @return the scheme used to manage object layouts in this VM.
-     */
-    public final LayoutScheme layoutScheme() {
-        return vmConfiguration.layoutScheme();
+    public TeleReferenceScheme teleReferenceScheme() {
+        return (TeleReferenceScheme) VMConfiguration.vmConfig().referenceScheme();
     }
 
     /**
@@ -1238,16 +1218,16 @@ public abstract class TeleVM implements MaxVM {
         teleProcess.dataAccess().readFully(address, bytes);
     }
 
-    private RemoteTeleGrip createTemporaryRemoteTeleGrip(Word rawGrip) {
-        return gripScheme().createTemporaryRemoteTeleGrip(rawGrip.asAddress());
+    private RemoteTeleReference createTemporaryRemoteTeleReference(Word rawReference) {
+        return teleReferenceScheme().createTemporaryRemoteTeleReference(rawReference.asAddress());
     }
 
-    private RemoteTeleGrip temporaryRemoteTeleGripFromOrigin(Word origin) {
-        return gripScheme().temporaryRemoteTeleGripFromOrigin(origin);
+    private RemoteTeleReference temporaryRemoteTeleReferenceFromOrigin(Word origin) {
+        return teleReferenceScheme().temporaryRemoteTeleReferenceFromOrigin(origin);
     }
 
     public final Reference originToReference(final Pointer origin) {
-        return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromOrigin(origin));
+        return vmConfig().referenceScheme().fromOrigin(origin);
     }
 
     public final Reference bootClassRegistryReference() {
@@ -1268,7 +1248,7 @@ public abstract class TeleVM implements MaxVM {
                 return false;
             }
             if (false && bootImage.vmConfiguration.debugging()) {
-                final Pointer cell = layoutScheme().generalLayout.originToCell(origin);
+                final Pointer cell = vmConfig().layoutScheme().generalLayout.originToCell(origin);
                 // Checking is easy in a debugging build; there's a special word preceding each object
                 final Word tag = dataAccess().getWord(cell, 0, -1);
                 return DebugHeap.isValidCellTag(tag);
@@ -1284,14 +1264,14 @@ public abstract class TeleVM implements MaxVM {
             // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
             // class {@link DynamicHub}.
             //          tuple -> dynamicHub of the tuple's class -> dynamicHub of DynamicHub
-            Word hubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(origin));
+            Word hubWord = vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
             for (int i = 0; i < 3; i++) {
-                final RemoteTeleGrip hubGrip = createTemporaryRemoteTeleGrip(hubWord);
-                final Pointer hubOrigin = hubGrip.toOrigin();
+                final RemoteTeleReference hubRef = createTemporaryRemoteTeleReference(hubWord);
+                final Pointer hubOrigin = hubRef.toOrigin();
                 if (!heap().contains(hubOrigin) && !codeCache().contains(hubOrigin)) {
                     return false;
                 }
-                final Word nextHubWord = layoutScheme().generalLayout.readHubReferenceAsWord(hubGrip);
+                final Word nextHubWord = vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(hubRef);
                 if (nextHubWord.equals(hubWord)) {
                     // We arrived at a DynamicHub for the class DynamicHub
                     if (i < 2) {
@@ -1334,45 +1314,41 @@ public abstract class TeleVM implements MaxVM {
      */
     private boolean isStaticTuple(Pointer origin) {
         // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
-        Word staticHubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(origin));
-        final RemoteTeleGrip staticHubGrip = createTemporaryRemoteTeleGrip(staticHubWord);
-        final Pointer staticHubOrigin = staticHubGrip.toOrigin();
+        Word staticHubWord = vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
+        final RemoteTeleReference staticHubRef = createTemporaryRemoteTeleReference(staticHubWord);
+        final Pointer staticHubOrigin = staticHubRef.toOrigin();
         if (!heap().contains(staticHubOrigin) && !codeCache().contains(staticHubOrigin)) {
             return false;
         }
         // If we really have a {@link StaticHub}, then a known field points at a {@link ClassActor}.
         final int hubClassActorOffset = teleFields().Hub_classActor.fieldActor().offset();
         final Word classActorWord = dataAccess().readWord(staticHubOrigin, hubClassActorOffset);
-        final RemoteTeleGrip classActorGrip = createTemporaryRemoteTeleGrip(classActorWord);
-        final Pointer classActorOrigin = classActorGrip.toOrigin();
+        final RemoteTeleReference classActorRef = createTemporaryRemoteTeleReference(classActorWord);
+        final Pointer classActorOrigin = classActorRef.toOrigin();
         if (!heap().contains(classActorOrigin) && !codeCache().contains(classActorOrigin)) {
             return false;
         }
         // If we really have a {@link ClassActor}, then a known field points at the {@link StaticTuple} for the class.
         final int classActorStaticTupleOffset = teleFields().ClassActor_staticTuple.fieldActor().offset();
         final Word staticTupleWord = dataAccess().readWord(classActorOrigin, classActorStaticTupleOffset);
-        final RemoteTeleGrip staticTupleGrip = createTemporaryRemoteTeleGrip(staticTupleWord);
-        final Pointer staticTupleOrigin = staticTupleGrip.toOrigin();
+        final RemoteTeleReference staticTupleRef = createTemporaryRemoteTeleReference(staticTupleWord);
+        final Pointer staticTupleOrigin = staticTupleRef.toOrigin();
         // If we really started with a {@link StaticTuple}, then this field will point at it
         return staticTupleOrigin.equals(origin);
     }
 
-    private boolean isValidGrip(Grip grip) {
+    public final boolean isValidReference(Reference ref) {
 //        if (isInGC()) {
-//            final TeleGrip teleGrip = (TeleGrip) grip;
-//            if (teleGrip instanceof MutableTeleGrip) {
+//            final TeleReference teleReference = (TeleReference) ref;
+//            if (teleReference instanceof MutableTeleReference) {
 //                // Assume invalid during GC.
 //                return false;//TODO: check for forwarding pointer
 //            }
 //        }
-        if (grip instanceof LocalTeleGrip) {
+        if (ref instanceof LocalTeleReference) {
             return true;
         }
-        return isValidOrigin(grip.toOrigin());
-    }
-
-    public final boolean isValidReference(Reference reference) {
-        return isValidGrip(reference.toGrip());
+        return isValidOrigin(ref.toOrigin());
     }
 
     /**
@@ -1386,13 +1362,13 @@ public abstract class TeleVM implements MaxVM {
      * at a valid heap object.
      */
     private void checkReference(Reference reference) throws InvalidReferenceException {
-        if (!isValidOrigin(reference.toGrip().toOrigin())) {
+        if (!isValidOrigin(reference.toOrigin())) {
             throw new InvalidReferenceException(reference);
         }
     }
 
     public final Reference wordToReference(Word word) {
-        return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromOrigin(word.asPointer()));
+        return teleReferenceScheme().fromOrigin(word.asPointer());
     }
 
     /**
@@ -1402,7 +1378,7 @@ public abstract class TeleVM implements MaxVM {
      * @return a reference to a location in VM memory that is not safe across GC
      */
     public final Reference wordToTemporaryReference(Address address) {
-        return vmConfiguration.referenceScheme().fromGrip(gripScheme().createTemporaryRemoteTeleGrip(address));
+        return teleReferenceScheme().createTemporaryRemoteTeleReference(address);
     }
 
     /**
@@ -1413,7 +1389,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public final Reference readReference(Reference reference, int index) throws InvalidReferenceException {
         checkReference(reference);
-        return wordToReference(layoutScheme().wordArrayLayout.getWord(reference, index));
+        return wordToReference(vmConfig().layoutScheme().wordArrayLayout.getWord(reference, index));
     }
 
     /**
@@ -1430,7 +1406,7 @@ public abstract class TeleVM implements MaxVM {
         int offset = teleFields().String_offset.readInt(stringReference);
         final int count = teleFields().String_count.readInt(stringReference);
         final char[] chars = new char[count];
-        final CharArrayLayout charArrayLayout = layoutScheme().charArrayLayout;
+        final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
         for (int i = 0; i < count; i++) {
             chars[i] = charArrayLayout.getChar(valueReference, offset);
             offset++;
@@ -1445,24 +1421,24 @@ public abstract class TeleVM implements MaxVM {
      * <br>
      * The intention is to provide a fast, low-level mechanism for reading strings that
      * can be used outside of the AWT event thread without danger of deadlock,
-     * for example on the canonical grip machinery.
+     * for example on the canonical reference machinery.
      *
      * @param stringReference a {@link String} object in the VM
      * @return A local {@link String} representing the remote object's contents, null if it can't be read.
      */
     public final String getStringUnsafe(Reference stringReference) {
-        // Work only with temporary grips that are unsafe across GC
+        // Work only with temporary references that are unsafe across GC
         // Do no testing to determine if the reference points to a valid String object in live memory.
         try {
-            final RemoteTeleGrip stringGrip = temporaryRemoteTeleGripFromOrigin(stringReference.toOrigin());
-            final Word valueWord = stringGrip.readWord(teleFields().String_value.fieldActor().offset());
-            final RemoteTeleGrip valueGrip = createTemporaryRemoteTeleGrip(valueWord);
-            int offset = stringGrip.readInt(teleFields.String_offset.fieldActor().offset());
-            final int count = stringGrip.readInt(teleFields.String_count.fieldActor().offset());
+            final RemoteTeleReference stringRef = temporaryRemoteTeleReferenceFromOrigin(stringReference.toOrigin());
+            final Word valueWord = stringRef.readWord(teleFields().String_value.fieldActor().offset());
+            final RemoteTeleReference valueRef = createTemporaryRemoteTeleReference(valueWord);
+            int offset = stringRef.readInt(teleFields.String_offset.fieldActor().offset());
+            final int count = stringRef.readInt(teleFields.String_count.fieldActor().offset());
             final char[] chars = new char[count];
-            final CharArrayLayout charArrayLayout = layoutScheme().charArrayLayout;
+            final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
             for (int i = 0; i < count; i++) {
-                chars[i] = charArrayLayout.getChar(valueGrip, offset);
+                chars[i] = charArrayLayout.getChar(valueRef, offset);
                 offset++;
             }
             return new String(chars);
@@ -1486,7 +1462,7 @@ public abstract class TeleVM implements MaxVM {
      * in the VM, empty array if no such heap regions
      */
     public final List<MaxMemoryRegion> getDynamicHeapRegionsUnsafe() {
-        // Work only with temporary grips that are unsafe across GC
+        // Work only with temporary references that are unsafe across GC
         // Do no testing to determine if the reference points to a valid object in live memory of the correct types.
 
         final List<MaxMemoryRegion> regions = new ArrayList<MaxMemoryRegion>();
@@ -1499,17 +1475,17 @@ public abstract class TeleVM implements MaxVM {
 
         if (!fieldValue.isZero()) {
             // Assert that this points to an array of references
-            final RemoteTeleGrip arrayGrip = createTemporaryRemoteTeleGrip(fieldValue);
-            final int length = vm().layoutScheme().arrayHeaderLayout.readLength(arrayGrip);
+            final RemoteTeleReference arrayReference = createTemporaryRemoteTeleReference(fieldValue);
+            final int length = vmConfig().layoutScheme().arrayHeaderLayout.readLength(arrayReference);
 
             // Read the references as words to avoid using too much machinery
             for (int index = 0; index < length; index++) {
                 // Read an entry from the array
-                final Word regionReferenceWord = vm().layoutScheme().wordArrayLayout.getWord(arrayGrip, index);
+                final Word regionReferenceWord = vmConfig().layoutScheme().wordArrayLayout.getWord(arrayReference, index);
                 // Assert that this points to an object of type {@link MemoryRegion} in the VM
-                RemoteTeleGrip regionGrip = createTemporaryRemoteTeleGrip(regionReferenceWord);
-                final Address address = regionGrip.readWord(teleFields.MemoryRegion_start.fieldActor().offset()).asAddress();
-                final int size = regionGrip.readInt(teleFields.MemoryRegion_size.fieldActor().offset());
+                RemoteTeleReference regionReference = createTemporaryRemoteTeleReference(regionReferenceWord);
+                final Address address = regionReference.readWord(teleFields.MemoryRegion_start.fieldActor().offset()).asAddress();
+                final int size = regionReference.readInt(teleFields.MemoryRegion_size.fieldActor().offset());
                 regions.add(new TeleFixedMemoryRegion(vm(), "Fake", address, Size.fromInt(size)));
             }
         }
@@ -1580,7 +1556,7 @@ public abstract class TeleVM implements MaxVM {
 
     public final ClassActor makeClassActorForTypeOf(Reference objectReference)  throws InvalidReferenceException {
         checkReference(objectReference);
-        final Reference hubReference = wordToReference(layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
+        final Reference hubReference = wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
         final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
         return makeClassActor(classActorReference);
     }
@@ -1592,7 +1568,7 @@ public abstract class TeleVM implements MaxVM {
      */
     public final Hub makeLocalHubForObject(Reference objectReference) throws InvalidReferenceException {
         checkReference(objectReference);
-        final Reference hubReference = wordToReference(layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
+        final Reference hubReference = wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
         final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
         final ClassActor objectClassActor = makeClassActor(classActorReference);
         final ClassActor hubClassActor = makeClassActorForTypeOf(hubReference);
@@ -1601,61 +1577,63 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Value getElementValue(Kind kind, Reference reference, int index) throws InvalidReferenceException {
+        LayoutScheme layoutScheme = vmConfig().layoutScheme();
         switch (kind.asEnum) {
             case BYTE:
-                return ByteValue.from(layoutScheme().byteArrayLayout.getByte(reference, index));
+                return ByteValue.from(layoutScheme.byteArrayLayout.getByte(reference, index));
             case BOOLEAN:
-                return BooleanValue.from(layoutScheme().booleanArrayLayout.getBoolean(reference, index));
+                return BooleanValue.from(layoutScheme.booleanArrayLayout.getBoolean(reference, index));
             case SHORT:
-                return ShortValue.from(layoutScheme().shortArrayLayout.getShort(reference, index));
+                return ShortValue.from(layoutScheme.shortArrayLayout.getShort(reference, index));
             case CHAR:
-                return CharValue.from(layoutScheme().charArrayLayout.getChar(reference, index));
+                return CharValue.from(layoutScheme.charArrayLayout.getChar(reference, index));
             case INT:
-                return IntValue.from(layoutScheme().intArrayLayout.getInt(reference, index));
+                return IntValue.from(layoutScheme.intArrayLayout.getInt(reference, index));
             case FLOAT:
-                return FloatValue.from(layoutScheme().floatArrayLayout.getFloat(reference, index));
+                return FloatValue.from(layoutScheme.floatArrayLayout.getFloat(reference, index));
             case LONG:
-                return LongValue.from(layoutScheme().longArrayLayout.getLong(reference, index));
+                return LongValue.from(layoutScheme.longArrayLayout.getLong(reference, index));
             case DOUBLE:
-                return DoubleValue.from(layoutScheme().doubleArrayLayout.getDouble(reference, index));
+                return DoubleValue.from(layoutScheme.doubleArrayLayout.getDouble(reference, index));
             case WORD:
-                return new WordValue(layoutScheme().wordArrayLayout.getWord(reference, index));
+                return new WordValue(layoutScheme.wordArrayLayout.getWord(reference, index));
             case REFERENCE:
                 checkReference(reference);
-                return TeleReferenceValue.from(this, wordToReference(layoutScheme().wordArrayLayout.getWord(reference, index)));
+                return TeleReferenceValue.from(this, wordToReference(layoutScheme.wordArrayLayout.getWord(reference, index)));
             default:
                 throw ProgramError.unknownCase("unknown array kind");
         }
     }
 
     public final void copyElements(Kind kind, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
+        LayoutScheme layoutScheme = vmConfig().layoutScheme();
         switch (kind.asEnum) {
             case BYTE:
-                layoutScheme().byteArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.byteArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case BOOLEAN:
-                layoutScheme().booleanArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.booleanArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case SHORT:
-                layoutScheme().shortArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.shortArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case CHAR:
-                layoutScheme().charArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.charArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case INT:
-                layoutScheme().intArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.intArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case FLOAT:
-                layoutScheme().floatArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.floatArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case LONG:
-                layoutScheme().longArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.longArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case DOUBLE:
-                layoutScheme().doubleArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.doubleArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case WORD:
-                layoutScheme().wordArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                layoutScheme.wordArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             default:
                 throw ProgramError.unknownCase("unknown array kind");
@@ -1743,7 +1721,7 @@ public abstract class TeleVM implements MaxVM {
             addGCCompletedListener(new MaxGCCompletedListener() {
                 // The purpose of this listener, which doesn't do anything explicitly,
                 // is to force a VM stop at the end of each GC cycle, even if there are
-                // no other listeners.  This presents an opportunity for the Reference/Grip/Object
+                // no other listeners.  This presents an opportunity for the Reference/Object
                 // code to update heap-related information that may have been changed as
                 // a result of the GC.
                 public void gcCompleted() {

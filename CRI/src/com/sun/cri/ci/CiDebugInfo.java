@@ -61,7 +61,7 @@ public class CiDebugInfo {
         this.frame = frame;
         this.registerRefMap = registerRefMap;
         this.frameRefMap = frameRefMap;
-        assert frame == null || frame.codePos == codePos : "code positions do not match";
+        assert frame == null || frame.codePos.matches(codePos) : "code positions do not match: " + frame.codePos + "==" + codePos;
     }
 
     /**

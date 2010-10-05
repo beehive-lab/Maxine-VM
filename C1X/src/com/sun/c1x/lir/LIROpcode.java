@@ -28,6 +28,7 @@ package com.sun.c1x.lir;
  */
 public enum LIROpcode {
     // Checkstyle: stop
+    // @formatter:off
     BeginOp0,
         Label,
         StdEntry,
@@ -35,7 +36,7 @@ public enum LIROpcode {
         ReadPC,
         Alloca,
         Pause,
-    RuntimeCall,
+        RuntimeCall,
         Membar,
         MembarAcquire,
         MembarRelease,
@@ -53,6 +54,7 @@ public enum LIROpcode {
         Convert,
         Lsb,
         Msb,
+        MonitorAddress,
     EndOp1,
     BeginOp2,
         Cmp,
@@ -103,5 +105,6 @@ public enum LIROpcode {
     CasObj,
     CasInt,
     Xir,
+    // @formatter:on
     // Checkstyle: resume
 }

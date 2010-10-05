@@ -27,7 +27,6 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.amd64.*;
@@ -51,14 +50,13 @@ public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
 
     /**
      * Creates an ABI for a VM entry point or VM exit point.
-     *
      * @param isVmEntryPoint {@code true} if this is an ABI for methods called from C/native code, {@code false} if it
      *            is for {@code native} methods called from compiled Java code
+     *
      * @see C_FUNCTION
      * @see VM_ENTRY_POINT
      */
-    public UnixAMD64EirCFunctionABI(VMConfiguration vmConfiguration, boolean isVmEntryPoint) {
-        super(vmConfiguration);
+    public UnixAMD64EirCFunctionABI(boolean isVmEntryPoint) {
         calleeSavedRegisters = Arrays.asList(new AMD64EirRegister[] {RBX, RBP, R12, R13, R14, R15});
         // Native target ABI uses different entry point.
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = targetABI();

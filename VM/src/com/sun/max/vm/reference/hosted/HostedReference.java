@@ -20,26 +20,37 @@
  */
 package com.sun.max.vm.reference.hosted;
 
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public class HostedReference extends Reference {
 
-    private final Grip grip;
+    private final Object object;
 
-    public Grip grip() {
-        return grip;
+    public HostedReference(Object object) {
+        this.object = object;
     }
 
-    HostedReference(Grip grip) {
-        this.grip = grip;
+    @Override
+    public boolean equals(Reference other) {
+        if (other == object) {
+            return true;
+        }
+        if (other instanceof HostedReference) {
+            final HostedReference href = (HostedReference) other;
+            return href.object == object;
+        }
+        return false;
     }
 
     @Override
     public int hashCode() {
-        return grip.hashCode();
+        return object.hashCode();
+    }
+
+    public Object getObject() {
+        return object;
     }
 }

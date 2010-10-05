@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiDebugInfo.Frame;
 
 /**
  * This class represents debugging and deoptimization information attached to a LIR instruction.
@@ -78,7 +79,53 @@ public class LIRDebugInfo {
     public void allocateDebugInfo(int registerSize, int frameSize, CiTarget target) {
         byte[] registerRefMap = registerSize > 0 ? newRefMap(registerSize) : null;
         byte[] stackRefMap = frameSize > 0 ? newRefMap(frameSize / target.spillSlotSize) : null;
-        debugInfo = new CiDebugInfo(state.scope().toCodeSite(bci), null, registerRefMap, stackRefMap);
+        Frame frame = scopeDebugInfo == null ? null : makeFrame(scopeDebugInfo);
+        debugInfo = new CiDebugInfo(state.scope().toCodeSite(bci), frame, registerRefMap, stackRefMap);
+    }
+
+    private static Frame makeFrame(IRScopeDebugInfo scope) {
+        Frame caller = null;
+        if (scope.caller != null) {
+            caller = makeFrame(scope.caller);
+        }
+        int numLocals = 0;
+        int numStack = 0;
+        int numLocks = 0;
+        ArrayList<CiValue> values = new ArrayList<CiValue>();
+
+        if (scope.locals != null) {
+            for (CiValue v : scope.locals) {
+                if (v != null) {
+                    numLocals++;
+                    values.add(v);
+                }
+            }
+        }
+        if (scope.expressions != null) {
+            for (CiValue v : scope.expressions) {
+                if (v != null) {
+                    numStack++;
+                    values.add(v);
+                }
+            }
+        }
+        if (scope.monitors != null) {
+            for (CiValue v : scope.monitors) {
+                if (v != null) {
+                    numLocks++;
+                    assert v instanceof CiAddress;
+                    CiAddress adr = (CiAddress) v;
+                    assert adr.base.isRegister() && ((CiRegisterValue) adr.base).reg == CiRegister.Frame;
+                    assert adr.index == CiValue.IllegalValue;
+
+                    // TODO this is a hack ... and not portable, etc.
+                    CiValue value = CiStackSlot.get(CiKind.Object, adr.displacement / 8);
+
+                    values.add(value);
+                }
+            }
+        }
+        return new Frame(caller, scope.scope.toCodeSite(scope.bci), values.toArray(new CiValue[values.size()]), numLocals, numStack, numLocks);
     }
 
     public void setOop(CiValue location, CiTarget target) {
@@ -95,8 +142,8 @@ public class LIRDebugInfo {
         } else {
             assert location.isRegister() : "objects can only be in a register";
             CiRegisterValue registerLocation = (CiRegisterValue) location;
-            int index = target.allocationSpec.refMapIndexMap[registerLocation.register.number];
-            assert index >= 0 : "object cannot be in non-object register " + registerLocation.register;
+            int index = target.allocationSpec.refMapIndexMap[registerLocation.reg.number];
+            assert index >= 0 : "object cannot be in non-object register " + registerLocation.reg;
             setBit(debugInfo.registerRefMap, index);
         }
     }

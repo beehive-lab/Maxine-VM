@@ -22,7 +22,6 @@ package com.sun.max.vm.layout.hom;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -32,8 +31,8 @@ import com.sun.max.vm.value.*;
  */
 public class HomLongArrayLayout extends HomPrimitiveArrayLayout<LongValue> implements LongArrayLayout {
 
-    public HomLongArrayLayout(GripScheme gripScheme) {
-        super(gripScheme, Kind.LONG);
+    public HomLongArrayLayout() {
+        super(Kind.LONG);
     }
 
     @INLINE

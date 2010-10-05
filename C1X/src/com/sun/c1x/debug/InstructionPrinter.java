@@ -795,4 +795,9 @@ public class InstructionPrinter extends ValueVisitor {
     public void visitPause(Pause i) {
         out.print("pause");
     }
+
+    @Override
+    public void visitMonitorAddress(MonitorAddress i) {
+        out.println("monitor_address (").print(i.monitor()).print(")");
+    }
 }

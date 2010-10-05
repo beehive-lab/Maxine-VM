@@ -1952,6 +1952,14 @@ public class LinearScan {
 
         info.allocateDebugInfo(compilation.target.allocationSpec.refMapSize, compilation.frameMap().frameSize(), compilation.target);
 
+        if (info.scopeDebugInfo != null && info.scopeDebugInfo.monitors != null) {
+            for (CiValue monitor : info.scopeDebugInfo.monitors) {
+                CiAddress adr = (CiAddress) monitor;
+                assert adr.index == CiValue.IllegalValue;
+                info.setOop(new CiAddress(adr.kind, adr.base, adr.displacement + compilation.runtime.basicObjectLockOffsetInBytes()), compilation.target);
+            }
+        }
+
         // Iterate through active intervals
         for (Interval interval = iw.activeLists.get(RegisterBinding.Fixed); interval != Interval.EndMarker; interval = interval.next) {
             CiValue operand = interval.operand;
@@ -2023,7 +2031,13 @@ public class LinearScan {
                 return 2;
             }
 
+            case Jsr:
+                // TODO is this correct?
+                scopeValues.add(CiValue.IllegalValue);
+                return 1;
+
             default:
+                System.out.println("unexpected kind: " + c.kind);
                 Util.shouldNotReachHere();
                 return -1;
         }
@@ -2044,7 +2058,7 @@ public class LinearScan {
     }
 
     int appendScopeValue(int opId, Value value, List<CiValue> scopeValues) {
-        if (value != null) {
+        if (value != null && value.operand() != CiValue.IllegalValue) {
             CiValue operand = value.operand();
             Constant con = null;
             if (value instanceof Constant) {
@@ -2052,7 +2066,7 @@ public class LinearScan {
             }
 
             assert con == null || operand.isVariable() || operand.isConstant() || operand.isIllegal() : "asumption: Constant instructions have only constant operands (or illegal if constant is optimized away)";
-            assert con != null || operand.isVariable() : "asumption: non-Constant instructions have only virtual operands";
+            assert con != null || operand.isVariable() : "asumption: non-Constant instructions have only virtual operands: " + operand;
 
             if (con != null && !con.isLive() && !operand.isConstant()) {
                 // Unpinned constants may have a virtual operand for a part of the lifetime
@@ -2103,7 +2117,7 @@ public class LinearScan {
     }
 
     IRScopeDebugInfo computeDebugInfoForScope(int opId, IRScope curScope, FrameState curState, FrameState innermostState, int curBci, int stackEnd, int locksEnd) {
-        if (true) {
+        if (false) {
             return null;
         }
         IRScopeDebugInfo callerDebugInfo = null;
@@ -2165,8 +2179,8 @@ public class LinearScan {
                 Value expression = innermostState.stackAt(pos);
                 appendScopeValue(opId, expression, expressions);
 
-                assert expressions.size() + stackBegin == pos : "must match";
                 pos++;
+                assert expressions.size() + stackBegin == pos : "must match: " + (expressions.size() + stackBegin) + " == " + pos;
             }
         }
 
@@ -2176,21 +2190,23 @@ public class LinearScan {
         if (nofLocks > 0) {
             monitors = new ArrayList<CiValue>(nofLocks);
             for (int i = locksBegin; i < locksEnd; i++) {
-                monitors.add(frameMap.toMonitorStackAddress(i));
+                monitors.add(frameMap.toMonitorBaseStackAddress(i));
             }
         }
-        return null;
+        IRScopeDebugInfo info = new IRScopeDebugInfo(curScope, curBci, locals, expressions, monitors, callerDebugInfo);
+        //info.print();
+        return info;
         // TODO:
     }
 
     void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
         assert iw != null : "interval walker needed for debug information";
-        computeOopMap(iw, op);
-
         LIRDebugInfo info = op.info;
         if (info != null) {
             computeDebugInfo(info, op.id);
         }
+
+        computeOopMap(iw, op);
     }
 
     void computeDebugInfo(LIRDebugInfo info, int opId) {

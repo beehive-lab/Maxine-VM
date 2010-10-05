@@ -28,7 +28,6 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
@@ -51,8 +50,6 @@ public final class VMConfigurator {
 
     public final Option<BuildLevel> buildLevel = options.newEnumOption("build", BuildLevel.PRODUCT, BuildLevel.class,
             "This option selects the build level of the virtual machine.");
-    public final Option<MaxPackage> gripScheme = schemeOption("grip", new com.sun.max.vm.grip.Package(), GripScheme.class,
-            "Specifies the grip scheme for the target.", VMConfigurator.defaultGripScheme());
     public final Option<MaxPackage> referenceScheme = schemeOption("reference", new com.sun.max.vm.reference.Package(), ReferenceScheme.class,
             "Specifies the reference scheme for the target.", VMConfigurator.defaultReferenceScheme());
     public final Option<MaxPackage> layoutScheme = schemeOption("layout", new com.sun.max.vm.layout.Package(), LayoutScheme.class,
@@ -101,7 +98,6 @@ public final class VMConfigurator {
      */
     public MaxineVM create(boolean install) {
         VMConfiguration config = new VMConfiguration(buildLevel.getValue(), platform(),
-                                    vm(gripScheme),
                                     vm(referenceScheme),
                                     vm(layoutScheme),
                                     vm(heapScheme),
@@ -127,10 +123,8 @@ public final class VMConfigurator {
         switch (platform().instructionSet()) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
-            case SPARC:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.sparc.target");
             default:
-                throw FatalError.unimplemented();
+                throw FatalError.unexpected(platform().instructionSet().toString());
         }
     }
 
@@ -141,8 +135,6 @@ public final class VMConfigurator {
         switch (platform().instructionSet()) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.amd64");
-            case SPARC:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.sparc");
             default:
                 throw FatalError.unimplemented();
         }
@@ -162,8 +154,6 @@ public final class VMConfigurator {
         switch (platform().instructionSet()) {
             case AMD64:
                 return new com.sun.max.vm.compiler.target.amd64.Package();
-            case SPARC:
-                return new com.sun.max.vm.compiler.target.sparc.systemV.Package();
             default:
                 throw FatalError.unimplemented();
         }
@@ -180,7 +170,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link ReferenceScheme}.
      */
     public static VMPackage defaultReferenceScheme() {
-        return new com.sun.max.vm.reference.heap.Package();
+        return new com.sun.max.vm.reference.direct.Package();
     }
 
     /**
@@ -204,13 +194,6 @@ public final class VMConfigurator {
      */
     public static VMPackage defaultRunScheme() {
         return new com.sun.max.vm.run.java.Package();
-    }
-
-    /**
-     * Gets the package providing the default {@link GripScheme}.
-     */
-    public static VMPackage defaultGripScheme() {
-        return new com.sun.max.vm.grip.direct.Package();
     }
 
     /**

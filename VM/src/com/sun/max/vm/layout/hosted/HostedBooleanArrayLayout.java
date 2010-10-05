@@ -21,7 +21,6 @@
 package com.sun.max.vm.layout.hosted;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -30,8 +29,8 @@ import com.sun.max.vm.value.*;
  */
 public class HostedBooleanArrayLayout extends HostedPrimitiveArrayLayout<BooleanValue> implements com.sun.max.vm.layout.BooleanArrayLayout {
 
-    public HostedBooleanArrayLayout(GripScheme gripScheme) {
-        super(gripScheme, Kind.BOOLEAN);
+    public HostedBooleanArrayLayout() {
+        super(Kind.BOOLEAN);
     }
 
     public boolean getBoolean(Accessor accessor, int index) {

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.schemes.inflated_only;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
@@ -34,11 +35,12 @@ import com.sun.max.vm.monitor.modal.sync.*;
  * the user has already done so. The value was empirically determined.
  *
  * @author Simon Wilkinson
- * @authjr Mick Jordan
+ * @author Mick Jordan
  */
 public class InflatedOnlyMonitorScheme extends ModalMonitorScheme {
-    public InflatedOnlyMonitorScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration, InflatedMonitorModeHandler.asFastPath());
+    @HOSTED_ONLY
+    public InflatedOnlyMonitorScheme() {
+        super(InflatedMonitorModeHandler.asFastPath());
     }
 
     @Override

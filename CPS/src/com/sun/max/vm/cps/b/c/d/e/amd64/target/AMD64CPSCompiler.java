@@ -83,8 +83,8 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
 
     private final AMD64EirToTargetTranslator eirToTargetTranslator;
 
-    public AMD64CPSCompiler(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public AMD64CPSCompiler() {
         eirToTargetTranslator = new AMD64EirToTargetTranslator(this);
     }
 

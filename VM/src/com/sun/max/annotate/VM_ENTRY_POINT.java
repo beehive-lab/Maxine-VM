@@ -25,7 +25,7 @@ import java.lang.annotation.*;
 import com.sun.max.vm.jni.*;
 
 /**
- * Denotes a method that is a VM entry point (e.g. a {@linkplain JniFunctions JNI function}.
+ * Denotes a method that is a VM entry point (e.g. a {@linkplain JniFunctions JNI function}).
  * These must be <i>static</i> methods and are compiled so as to
  * conform to the native ABI (e.g. implement callee saved registers if necessary) so that it can be called as
  * a C function pointer.

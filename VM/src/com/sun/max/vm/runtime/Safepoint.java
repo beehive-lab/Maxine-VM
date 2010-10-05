@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
@@ -78,7 +79,7 @@ public abstract class Safepoint {
     @HOSTED_ONLY
     public static Safepoint create(VMConfiguration vmConfiguration) {
         try {
-            final String isa = vmConfiguration.platform.instructionSet().name();
+            final String isa = platform().instructionSet().name();
             final Class<?> safepointClass = Class.forName(MaxPackage.fromClass(Safepoint.class).subPackage(isa.toLowerCase()).name() + "." + isa + Safepoint.class.getSimpleName());
             final Constructor<?> constructor = safepointClass.getConstructor(VMConfiguration.class);
             return (Safepoint) constructor.newInstance(vmConfiguration);

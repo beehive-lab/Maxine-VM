@@ -383,10 +383,10 @@ public class WordValueLabel extends ValueLabel {
                     }
                 } else if (vm().isValidReference(vm().wordToReference(newValue.toWord()))) {
                     displayMode = (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
-                    final TeleReference reference = (TeleReference) vm().wordToReference(newValue.toWord());
+                    final TeleReference ref = (TeleReference) vm().wordToReference(newValue.toWord());
 
                     try {
-                        teleObject = vm().heap().findTeleObject(reference);
+                        teleObject = vm().heap().findTeleObject(ref);
                         if (teleObject == null) {
                             displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         }

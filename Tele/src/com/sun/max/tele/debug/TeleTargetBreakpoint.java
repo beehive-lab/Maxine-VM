@@ -20,16 +20,18 @@
  */
 package com.sun.max.tele.debug;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.BreakpointCondition.*;
+import com.sun.max.tele.debug.BreakpointCondition.ExpressionException;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.*;
+import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
@@ -313,7 +315,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
         TargetBreakpointManager(TeleVM teleVM) {
             super(teleVM);
-            this.code = TargetBreakpoint.createBreakpointCode(teleVM.vmConfiguration().platform.instructionSet());
+            this.code = TargetBreakpoint.createBreakpointCode(platform().instructionSet());
         }
 
         /**

@@ -71,8 +71,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     private static final AgentVMOption javaagentOption = register(new AgentVMOption(
         "-javaagent", "load Java programming language agent, see java.lang.instrument"), MaxineVM.Phase.STARTING);
 
-    public JavaRunScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public JavaRunScheme() {
     }
 
     /**

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.run.extendimage;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.hosted.JavaPrototype.*;
 
 import java.io.*;
@@ -31,10 +32,9 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.run.java.*;
 import com.sun.max.vm.runtime.*;
 
@@ -118,14 +118,14 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     private static JavaRunScheme tester;
     private static boolean resetLauncher;
 
-    public ExtendImageRunScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public ExtendImageRunScheme() {
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
-            if (MaxineVM.isHosted()) {
+            if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
                 extendImage();
             }
         }
@@ -180,7 +180,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             ClassActor classActor = ClassActor.fromJava(sun.misc.Launcher.class);
             final FieldActor rfa = classActor.findLocalStaticFieldActor("bootstrapClassPath");
             if (rfa != null) {
-                TupleAccess.writeObject(rfa.holder().staticTuple(), rfa.offset(), null);
+                rfa.setObject(null, null);
             }
             try {
                 launcherClassActor.callInitializer();
@@ -210,7 +210,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             try {
                 final Class<?> klass = Class.forName(testerRunSchemeClassname);
                 final Constructor<?> cons = klass.getConstructor(new Class<?>[] {VMConfiguration.class});
-                tester = (JavaRunScheme) cons.newInstance(new Object[] {vmConfiguration()});
+                tester = (JavaRunScheme) cons.newInstance(new Object[] {vmConfig()});
                 Trace.line(1, "extending image with " + testerRunSchemeClassname);
                 forceCompileMethod(testerRunSchemeClassname + ".run");
                 forceClass(testRunPackageName + ".JTRuns", false);

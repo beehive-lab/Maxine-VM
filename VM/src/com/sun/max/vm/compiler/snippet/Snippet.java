@@ -30,7 +30,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -170,11 +169,7 @@ public abstract class Snippet extends Routine {
         @SNIPPET
         @INLINE
         public static void checkArrayIndex(Object array, int index) throws ArrayIndexOutOfBoundsException {
-            if (MaxineVM.isHosted()) {
-                HostArrayAccess.checkIndex(array, index);
-            } else {
-                ArrayAccess.checkIndex(array, index);
-            }
+            ArrayAccess.checkIndex(array, index);
         }
         public static final CheckArrayIndex SNIPPET = new CheckArrayIndex();
     }
@@ -183,11 +178,7 @@ public abstract class Snippet extends Routine {
         @SNIPPET
         @INLINE
         public static void checkReferenceArrayStore(Object array, Object value) throws ArrayIndexOutOfBoundsException {
-            if (MaxineVM.isHosted()) {
-                HostArrayAccess.checkSetObject(array, value);
-            } else {
-                ArrayAccess.checkSetObject(array, value);
-            }
+            ArrayAccess.checkSetObject(array, value);
         }
         public static final CheckReferenceArrayStore SNIPPET = new CheckReferenceArrayStore();
     }

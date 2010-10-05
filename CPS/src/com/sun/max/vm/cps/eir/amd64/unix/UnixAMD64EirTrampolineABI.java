@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.eir.amd64.unix;
 
 import java.util.*;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 
 /**
@@ -31,9 +30,7 @@ import com.sun.max.vm.cps.eir.amd64.*;
  * @author Bernd Mathiske
  */
 public class UnixAMD64EirTrampolineABI extends UnixAMD64EirJavaABI {
-    public UnixAMD64EirTrampolineABI(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-
+    public UnixAMD64EirTrampolineABI() {
         // Make all potential parameters of the trampoline's compilee callee-saved
         calleeSavedRegisters = new ArrayList<AMD64EirRegister>(integerParameterRegisters());
         calleeSavedRegisters.addAll(floatingPointParameterRegisters());

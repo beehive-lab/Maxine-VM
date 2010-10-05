@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.type.*;
@@ -53,10 +52,9 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
     private final HomTupleLayout tupleLayout;
     private final IntArrayLayout intArrayLayout;
 
-    public HomHybridLayout(GripScheme gripScheme) {
-        super(gripScheme);
-        tupleLayout = new HomTupleLayout(gripScheme);
-        intArrayLayout = new HomIntArrayLayout(gripScheme);
+    public HomHybridLayout() {
+        tupleLayout = new HomTupleLayout();
+        intArrayLayout = new HomIntArrayLayout();
     }
 
     public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {

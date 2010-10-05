@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.amd64.solaris;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
@@ -39,6 +41,6 @@ public class Package extends VMPackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return vmConfiguration.bootCompilerScheme() instanceof AMD64EirGeneratorScheme &&
-               vmConfiguration.platform.operatingSystem == OperatingSystem.SOLARIS;
+               platform().operatingSystem == OperatingSystem.SOLARIS;
     }
 }

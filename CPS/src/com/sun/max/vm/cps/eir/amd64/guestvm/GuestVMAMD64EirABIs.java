@@ -21,21 +21,20 @@
 package com.sun.max.vm.cps.eir.amd64.guestvm;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.eir.amd64.unix.*;
 
 public class GuestVMAMD64EirABIs extends AMD64EirABIsScheme {
 
     @HOSTED_ONLY
-    public GuestVMAMD64EirABIs(VMConfiguration vmConfiguration) {
-        super(vmConfiguration, new UnixAMD64EirJavaABI(vmConfiguration),
-                                new UnixAMD64EirNativeABI(vmConfiguration),
-                                new UnixAMD64EirCFunctionABI(vmConfiguration, false /*called from Java only*/),
-                                new UnixAMD64EirCFunctionABI(vmConfiguration, true /*called from native code only*/),
-                                new UnixAMD64EirTrampolineABI(vmConfiguration),
-                                new UnixAMD64EirTemplateABI(vmConfiguration),
-                                new UnixAMD64EirTreeABI(vmConfiguration));
+    public GuestVMAMD64EirABIs() {
+        super(new UnixAMD64EirJavaABI(),
+              new UnixAMD64EirNativeABI(),
+              new UnixAMD64EirCFunctionABI(false /*called from Java only*/),
+              new UnixAMD64EirCFunctionABI(true /*called from native code only*/),
+              new UnixAMD64EirTrampolineABI(),
+              new UnixAMD64EirTemplateABI(),
+              new UnixAMD64EirTreeABI());
     }
 
 }

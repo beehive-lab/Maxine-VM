@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.hosted;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
@@ -332,15 +333,15 @@ public class BootImage {
         }
 
         private Header(DataPrototype dataPrototype, int stringInfoSize) {
-            super(vmConfig().platform.endianness(), 0);
+            super(platform().endianness(), 0);
             final VMConfiguration vmConfiguration = vmConfig();
             isBigEndian = endianness() == Endianness.LITTLE ? 0 : 0xffffffff;
             identification = IDENTIFICATION;
             version = VERSION;
             randomID = UUID.randomUUID().hashCode();
-            wordSize = vmConfiguration.platform.wordWidth().numberOfBytes;
-            cacheAlignment = vmConfiguration.platform.dataModel().cacheAlignment;
-            pageSize = vmConfiguration.platform.pageSize;
+            wordSize = platform().wordWidth().numberOfBytes;
+            cacheAlignment = platform().dataModel().cacheAlignment;
+            pageSize = platform().pageSize;
             vmRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.MaxineVM_run, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadAddMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_add, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_run, CallEntryPoint.C_ENTRY_POINT).toInt();
@@ -418,7 +419,6 @@ public class BootImage {
         public final String instructionSetName;
         public final String operatingSystemName;
 
-        public final String gripPackageName;
         public final String referencePackageName;
         public final String layoutPackageName;
         public final String heapPackageName;
@@ -444,10 +444,6 @@ public class BootImage {
 
         public OperatingSystem operatingSystem() {
             return Enums.fromString(OperatingSystem.class, operatingSystemName);
-        }
-
-        public VMPackage gripPackage() {
-            return (VMPackage) MaxPackage.fromName(gripPackageName);
         }
 
         public VMPackage referencePackage() {
@@ -500,7 +496,6 @@ public class BootImage {
             instructionSetName = Utf8.readString(inputStream);
             operatingSystemName = Utf8.readString(inputStream);
 
-            gripPackageName = Utf8.readString(inputStream);
             referencePackageName = Utf8.readString(inputStream);
             layoutPackageName = Utf8.readString(inputStream);
             heapPackageName = Utf8.readString(inputStream);
@@ -516,11 +511,10 @@ public class BootImage {
         private StringInfo(VMConfiguration vmConfiguration, int offset) {
             super(offset);
             buildLevelName = vmConfiguration.buildLevel.name();
-            processorModelName = vmConfiguration.platform.processorModel().name();
-            instructionSetName = vmConfiguration.platform.instructionSet().name();
-            operatingSystemName = vmConfiguration.platform.operatingSystem.name();
+            processorModelName = platform().processorModel().name();
+            instructionSetName = platform().instructionSet().name();
+            operatingSystemName = platform().operatingSystem.name();
 
-            gripPackageName = vmConfiguration.gripPackage.name();
             referencePackageName = vmConfiguration.referencePackage.name();
             layoutPackageName = vmConfiguration.layoutPackage.name();
             heapPackageName = vmConfiguration.heapPackage.name();
@@ -549,7 +543,6 @@ public class BootImage {
             BootImageException.check(instructionSet() != null, "unknown instruction set: " + instructionSetName);
             BootImageException.check(operatingSystem() != null, "unknown operating system: " + operatingSystemName);
 
-            checkPackage(gripPackageName);
             checkPackage(referencePackageName);
             checkPackage(layoutPackageName);
             checkPackage(heapPackageName);
@@ -683,7 +676,6 @@ public class BootImage {
                 Platform.set(platform);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
                                                       platform,
-                                                      stringInfo.gripPackage(),
                                                       stringInfo.referencePackage(),
                                                       stringInfo.layoutPackage(),
                                                       stringInfo.heapPackage(),
@@ -825,7 +817,7 @@ public class BootImage {
             final RandomAccessFile raf = new RandomAccessFile(imageFile, "r");
             final MappedByteBuffer buffer = raf.getChannel().map(MapMode.READ_ONLY, offset, size);
             raf.close();
-            ByteOrder byteOrder = vmConfiguration.platform.endianness().asByteOrder();
+            ByteOrder byteOrder = platform().endianness().asByteOrder();
             buffer.order(byteOrder);
             raf.close();
             return buffer;

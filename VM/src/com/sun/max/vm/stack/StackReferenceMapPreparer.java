@@ -30,10 +30,10 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -629,16 +629,16 @@ public final class StackReferenceMapPreparer {
             throw FatalError.unexpected("reference map has extraneous high order bits set");
         }
         if (verify) {
-            // look at the contents of the stack and check they are valid grips
+            // look at the contents of the stack and check they are valid refs
             for (int i = 0; i < numBits; i++) {
                 if (((refMap >> i) & 1) == 1) {
-                    Grip grip = slotPointer.getGrip(i);
-                    if (Heap.isValidGrip(grip)) {
+                    Reference ref = slotPointer.getReference(i);
+                    if (Heap.isValidRef(ref)) {
                         if (Heap.traceRootScanning()) {
-                            printGrip(grip, cursor, slotPointer, i, true);
+                            printRef(ref, cursor, slotPointer, i, true);
                         }
                     } else {
-                        invalidGrip(grip, cursor, slotPointer, i);
+                        invalidRef(ref, cursor, slotPointer, i);
                     }
                 }
             }
@@ -665,21 +665,21 @@ public final class StackReferenceMapPreparer {
 
     }
 
-    private void printGrip(Grip grip, Cursor cursor, Pointer slotPointer, int slotIndex, boolean valid) {
-        Log.print("    grip @ ");
+    private void printRef(Reference ref, Cursor cursor, Pointer slotPointer, int slotIndex, boolean valid) {
+        Log.print("    ref @ ");
         Log.print(slotPointer.plusWords(slotIndex));
         Log.print(" [sp + ");
         Log.print(slotPointer.plusWords(slotIndex).minus(cursor.sp()).toInt());
         Log.print("] = ");
-        Log.print(grip.toOrigin());
+        Log.print(ref.toOrigin());
         Log.print(valid ? " ok\n" : " (invalid)\n");
     }
 
     @NEVER_INLINE
-    private void invalidGrip(Grip grip, Cursor cursor, Pointer slotPointer, int slotIndex) {
-        printGrip(grip, cursor, slotPointer, slotIndex, false);
-        Throw.StackFrameDumper.dumpFrame("invalid grip ### ", cursor.targetMethod(), cursor.ip(), false);
-        throw FatalError.unexpected("invalid grip");
+    private void invalidRef(Reference ref, Cursor cursor, Pointer slotPointer, int slotIndex) {
+        printRef(ref, cursor, slotPointer, slotIndex, false);
+        Throw.StackFrameDumper.dumpFrame("invalid ref ### ", cursor.targetMethod(), cursor.ip(), false);
+        throw FatalError.unexpected("invalid ref");
     }
 
     private boolean inThisStack(Pointer pointer) {
@@ -689,7 +689,7 @@ public final class StackReferenceMapPreparer {
     /**
      * This method can be called to walk the stack of the current thread from the current
      * instruction pointer, stack pointer, and frame pointer, verifying the reference map
-     * for each stack frame by using the {@link Heap#isValidGrip(com.sun.max.vm.grip.Grip)}
+     * for each stack frame by using the {@link Heap#isValidRef(com.sun.max.vm.ref.Reference)}
      * heuristic.
      */
     public static void verifyReferenceMapsForThisThread() {

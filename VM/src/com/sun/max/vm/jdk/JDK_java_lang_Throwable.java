@@ -32,7 +32,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -81,7 +80,7 @@ public final class JDK_java_lang_Throwable {
 
         final List<StackFrame> stackFrames = stackFrameWalker.frames(null, instructionPointer, cpuStackPointer, cpuFramePointer);
         StackTraceElement[] stackTrace = asStackTrace(stackFrames, throwableActor, Integer.MAX_VALUE);
-        TupleAccess.writeObject(thisThrowable, Throwable_stackTrace.offset(), stackTrace);
+        Throwable_stackTrace.setObject(thisThrowable, stackTrace);
         return thisThrowable;
     }
 
@@ -211,7 +210,7 @@ public final class JDK_java_lang_Throwable {
      */
     @INLINE
     private StackTraceElement[] getStackTraceElements() {
-        return (StackTraceElement[]) TupleAccess.readObject(thisThrowable(), Throwable_stackTrace.offset());
+        return (StackTraceElement[]) Throwable_stackTrace.getObject(thisThrowable());
     }
 
 }

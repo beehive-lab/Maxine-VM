@@ -20,12 +20,12 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.type.ClassRegistry.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Implements method substitutions necessary for native library handling.
@@ -68,7 +68,7 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
                 }
             }
         }
-        TupleAccess.writeLong(this, ClassRegistry.NativeLibrary_handle.offset(), address.toLong());
+        NativeLibrary_handle.setLong(this, address.toLong());
     }
 
     /**
@@ -79,7 +79,7 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @SUBSTITUTE
     long find(String symbolName) {
-        final Address handle = Address.fromLong(TupleAccess.readLong(this, ClassRegistry.NativeLibrary_handle.offset()));
+        final Address handle = Address.fromLong(NativeLibrary_handle.getLong(this));
         return DynamicLinker.lookupSymbol(handle, symbolName).asAddress().toLong();
     }
 
@@ -89,7 +89,7 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @SUBSTITUTE
     void unload() {
-        final Address handle = Address.fromLong(TupleAccess.readLong(this, ClassRegistry.NativeLibrary_handle.offset()));
+        final Address handle = Address.fromLong(NativeLibrary_handle.getLong(this));
         DynamicLinker.close(handle);
     }
 

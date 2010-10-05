@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug.linux;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.io.*;
 
 import com.sun.max.program.*;
@@ -38,11 +40,11 @@ public final class LinuxTeleVM extends TeleVM {
 
     @Override
     protected LinuxTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new LinuxTeleProcess(this, bootImage().vmConfiguration.platform, programFile(), commandLineArguments);
+        return new LinuxTeleProcess(this, platform(), programFile(), commandLineArguments);
     }
 
     @Override
     protected LinuxTeleProcess attachToTeleProcess() throws BootImageException {
-        return new LinuxTeleProcess(this, bootImage().vmConfiguration.platform, programFile(), targetLocation().id);
+        return new LinuxTeleProcess(this, platform(), programFile(), targetLocation().id);
     }
 }

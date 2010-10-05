@@ -40,6 +40,10 @@ import test.com.sun.max.vm.jtrun.all.JTRuns;
  */
 public abstract class JTAbstractRunScheme extends JavaRunScheme {
 
+    @HOSTED_ONLY
+    public JTAbstractRunScheme() {
+    }
+
     protected static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
     protected static boolean nativeTests;
     protected static boolean noTests;
@@ -52,10 +56,6 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
     private static VMIntOption endOption  = register(new VMIntOption("-XX:TesterEnd=", -1,
                     "The number of the last test to run. Specify 0 to run exactly one test."), MaxineVM.Phase.STARTING);
     private static final boolean COMPILE_ALL_TEST_METHODS = true;
-
-    public JTAbstractRunScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
 
     @HOSTED_ONLY
     public void addClassToImage(Class<?> javaClass) {

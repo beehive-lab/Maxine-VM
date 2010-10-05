@@ -21,6 +21,8 @@
 package com.sun.max.ins;
 
 
+import static com.sun.max.platform.Platform.*;
+
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -82,7 +84,7 @@ public final class BootImageTable extends InspectorTable {
             final BootImage bootImage = vm().bootImage();
             final BootImage.Header header = bootImage.header;
             final VMConfiguration vmConfiguration = bootImage.vmConfiguration;
-            final Platform platform = vmConfiguration.platform;
+            final Platform platform = platform();
             final DataModel processorDataModel = platform.dataModel();
             dummyLabel = new PlainLabel(inspection, "");
 
@@ -102,7 +104,6 @@ public final class BootImageTable extends InspectorTable {
             addRow("operating system:", new DataLabel.EnumAsText(inspection(), platform.operatingSystem), null);
             addRow("page size:", new DataLabel.IntAsDecimal(inspection(), platform.pageSize), null);
 
-            addRow("grip scheme:", new JavaNameLabel(inspection(), vmConfiguration.gripScheme().name(), vmConfiguration.gripScheme().getClass().getName()), null);
             addRow("reference scheme:", new JavaNameLabel(inspection(), vmConfiguration.referenceScheme().name(), vmConfiguration.referenceScheme().getClass().getName()), null);
             addRow("layout scheme:",  new JavaNameLabel(inspection(), vmConfiguration.layoutScheme().name, vmConfiguration.layoutScheme().getClass().getName()), null);
             addRow("heap scheme:", new JavaNameLabel(inspection(), vmConfiguration.heapScheme().name(), vmConfiguration.heapScheme().getClass().getName()), null);

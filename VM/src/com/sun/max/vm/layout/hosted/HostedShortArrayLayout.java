@@ -21,7 +21,6 @@
 package com.sun.max.vm.layout.hosted;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -31,8 +30,8 @@ import com.sun.max.vm.value.*;
  */
 public class HostedShortArrayLayout extends HostedPrimitiveArrayLayout<ShortValue> implements ShortArrayLayout {
 
-    public HostedShortArrayLayout(GripScheme gripScheme) {
-        super(gripScheme, Kind.SHORT);
+    public HostedShortArrayLayout() {
+        super(Kind.SHORT);
     }
 
     public short getShort(Accessor accessor, int index) {

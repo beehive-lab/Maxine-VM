@@ -56,7 +56,6 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
 
     /**
      *
-     * @param vmConfiguration
      * @param javaABI
      * @param nativeABI the ABI
      * @param j2cFunctionABI ABI for {@linkplain C_FUNCTION VM exit} methods
@@ -66,8 +65,7 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
      * @param treeABI abi for tree calls.
      */
     @HOSTED_ONLY
-    protected EirABIsScheme(VMConfiguration vmConfiguration,
-                            EirABI<EirRegister_Type> javaABI,
+    protected EirABIsScheme(EirABI<EirRegister_Type> javaABI,
                             EirABI<EirRegister_Type> nativeABI,
                             EirABI<EirRegister_Type> j2cFunctionABI,
                             EirABI<EirRegister_Type> c2jFunctionABI,
@@ -75,7 +73,6 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
                             EirABI<EirRegister_Type> templateABI,
                             EirABI<EirRegister_Type> treeABI
                             ) {
-        super(vmConfiguration);
         this.javaABI = javaABI;
         this.trampolineABI = trampolineABI;
         this.templateABI = templateABI;
