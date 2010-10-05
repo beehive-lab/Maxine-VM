@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.target.amd64;
 
 import static com.sun.max.asm.amd64.AMD64GeneralRegister64.*;
 import static com.sun.max.asm.amd64.AMD64XMMRegister.*;
+import static com.sun.max.platform.Platform.*;
 
 import java.util.*;
 
@@ -29,7 +30,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 
@@ -65,23 +65,22 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
     private static final int NULL_STACK_BIAS = 0;
 
     @HOSTED_ONLY
-    static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> createAMD64TargetABI(RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> registerRoleAssignment, CallEntryPoint callEntryPoint, VMConfiguration vmConfiguration) {
+    static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> createAMD64TargetABI(RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> registerRoleAssignment, CallEntryPoint callEntryPoint) {
         return  new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(registerRoleAssignment, callEntryPoint,
                         integerParameterRegisters, integerParameterRegisters, floatingPointParameterRegisters,
-                        false, true, stackFrameAlignment(vmConfiguration), NULL_STACK_BIAS);
+                        false, true, stackFrameAlignment(), NULL_STACK_BIAS);
     }
 
     @HOSTED_ONLY
-    public AMD64TargetABIsScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration,
-                        createAMD64TargetABI(nativeRegisterRoleAssignment, CallEntryPoint.C_ENTRY_POINT, vmConfiguration),
-                        createAMD64TargetABI(jitRegisterRoleAssignment, CallEntryPoint.JIT_ENTRY_POINT, vmConfiguration),
-                        createAMD64TargetABI(optimizedJavaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT, vmConfiguration));
+    public AMD64TargetABIsScheme() {
+        super(createAMD64TargetABI(nativeRegisterRoleAssignment, CallEntryPoint.C_ENTRY_POINT),
+              createAMD64TargetABI(jitRegisterRoleAssignment, CallEntryPoint.JIT_ENTRY_POINT),
+              createAMD64TargetABI(optimizedJavaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT));
     }
 
     @HOSTED_ONLY
-    private static int stackFrameAlignment(VMConfiguration vmConfiguration) {
-        if (vmConfiguration.platform.operatingSystem == OperatingSystem.DARWIN) {
+    private static int stackFrameAlignment() {
+        if (platform().operatingSystem == OperatingSystem.DARWIN) {
             // Darwin requires 16-byte stack frame alignment.
             return 16;
         }

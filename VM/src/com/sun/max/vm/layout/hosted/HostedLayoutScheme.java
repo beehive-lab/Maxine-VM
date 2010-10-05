@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.layout.hosted;
 
-import com.sun.max.vm.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -29,22 +27,21 @@ import com.sun.max.vm.layout.*;
  */
 public class HostedLayoutScheme extends LayoutScheme {
 
-    public HostedLayoutScheme(VMConfiguration vmConfiguration, GripScheme gripScheme) {
-        super(vmConfiguration,
-              new HostedGeneralLayout(gripScheme),
-              new HostedTupleLayout(gripScheme),
-              new HostedHybridLayout(gripScheme),
-              new HostedArrayHeaderLayout(gripScheme),
-              new HostedByteArrayLayout(gripScheme),
-              new HostedBooleanArrayLayout(gripScheme),
-              new HostedShortArrayLayout(gripScheme),
-              new HostedCharArrayLayout(gripScheme),
-              new HostedIntArrayLayout(gripScheme),
-              new HostedFloatArrayLayout(gripScheme),
-              new HostedLongArrayLayout(gripScheme),
-              new HostedDoubleArrayLayout(gripScheme),
-              new HostedWordArrayLayout(gripScheme),
-              new HostedReferenceArrayLayout(gripScheme));
+    public HostedLayoutScheme() {
+        super(new HostedGeneralLayout(),
+              new HostedTupleLayout(),
+              new HostedHybridLayout(),
+              new HostedArrayHeaderLayout(),
+              new HostedByteArrayLayout(),
+              new HostedBooleanArrayLayout(),
+              new HostedShortArrayLayout(),
+              new HostedCharArrayLayout(),
+              new HostedIntArrayLayout(),
+              new HostedFloatArrayLayout(),
+              new HostedLongArrayLayout(),
+              new HostedDoubleArrayLayout(),
+              new HostedWordArrayLayout(),
+              new HostedReferenceArrayLayout());
     }
 
 }

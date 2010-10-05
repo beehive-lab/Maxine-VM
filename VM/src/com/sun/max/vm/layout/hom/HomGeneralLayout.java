@@ -20,15 +20,17 @@
  */
 package com.sun.max.vm.layout.hom;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
-import com.sun.max.vm.layout.SpecificLayout.*;
-import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.layout.SpecificLayout.ObjectCellVisitor;
+import com.sun.max.vm.layout.SpecificLayout.ObjectMirror;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -73,8 +75,6 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         return false;
     }
 
-    private final GripScheme gripScheme;
-
     /**
      * The offset of the hub pointer.
      */
@@ -90,15 +90,10 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
      */
     protected final int arrayLengthOffset;
 
-    public HomGeneralLayout(GripScheme gripScheme) {
-        this.gripScheme = gripScheme;
+    public HomGeneralLayout() {
         this.miscOffset = 0 - Word.size();
         this.hubOffset = miscOffset - Word.size();
         this.arrayLengthOffset = hubOffset - Word.size();
-    }
-
-    public final GripScheme gripScheme() {
-        return gripScheme;
     }
 
     @INLINE(override = true)
@@ -197,49 +192,49 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     @INLINE
-    public final Grip forwarded(Grip grip) {
-        if (grip.isMarked()) {
-            return grip.readGrip(hubOffset).unmarked();
+    public final Reference forwarded(Reference ref) {
+        if (ref.isMarked()) {
+            return ref.readReference(hubOffset).unmarked();
         }
-        return grip;
+        return ref;
     }
 
     @INLINE
-    public final Grip readForwardGrip(Accessor accessor) {
-        final Grip forwardGrip = accessor.readGrip(hubOffset);
-        if (forwardGrip.isMarked()) {
-            return forwardGrip.unmarked();
-        }
-        // no forward reference has been stored
-        return gripScheme.zero();
-    }
-
-    @INLINE
-    public final Grip readForwardGripValue(Accessor accessor) {
-        final Grip forwardGrip = accessor.readGrip(hubOffset);
-        if (forwardGrip.isMarked()) {
-            return forwardGrip.unmarked();
+    public final Reference readForwardRef(Accessor accessor) {
+        final Reference forwardRef = accessor.readReference(hubOffset);
+        if (forwardRef.isMarked()) {
+            return forwardRef.unmarked();
         }
         // no forward reference has been stored
-        return gripScheme.zero();
+        return Reference.zero();
     }
 
     @INLINE
-    public final void writeForwardGrip(Accessor accessor, Grip forwardGrip) {
-        accessor.writeGrip(hubOffset, forwardGrip.marked());
+    public final Reference readForwardRefValue(Accessor accessor) {
+        final Reference forwardRef = accessor.readReference(hubOffset);
+        if (forwardRef.isMarked()) {
+            return forwardRef.unmarked();
+        }
+        // no forward reference has been stored
+        return Reference.zero();
     }
 
     @INLINE
-    public final Grip compareAndSwapForwardGrip(Accessor accessor, Grip suspectedGrip, Grip forwardGrip) {
-        return accessor.compareAndSwapReference(hubOffset, suspectedGrip.toReference(), forwardGrip.marked().toReference()).toGrip();
+    public final void writeForwardRef(Accessor accessor, Reference forwardRef) {
+        accessor.writeReference(hubOffset, forwardRef.marked());
+    }
+
+    @INLINE
+    public final Reference compareAndSwapForwardRef(Accessor accessor, Reference suspectedRef, Reference forwardRef) {
+        return accessor.compareAndSwapReference(hubOffset, suspectedRef, forwardRef.marked());
     }
 
     @HOSTED_ONLY
     public void visitHeader(ObjectCellVisitor visitor, Object object) {
-        final Hub hub = HostObjectAccess.readHub(object);
+        final Hub hub = ObjectAccess.readHub(object);
         final int origin = hub.specificLayout.headerSize();
         visitor.visitHeaderField(origin + hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
-        visitor.visitHeaderField(origin + miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(gripScheme().vmConfiguration().monitorScheme().createMisc(object)));
+        visitor.visitHeaderField(origin + miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(vmConfig().monitorScheme().createMisc(object)));
     }
 
     @HOSTED_ONLY

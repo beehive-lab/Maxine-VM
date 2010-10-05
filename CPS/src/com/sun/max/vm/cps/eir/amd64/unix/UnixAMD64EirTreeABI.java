@@ -21,10 +21,9 @@
 package com.sun.max.vm.cps.eir.amd64.unix;
 
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.eir.*;
-import com.sun.max.vm.cps.eir.EirStackSlot.*;
+import com.sun.max.vm.cps.eir.EirStackSlot.Purpose;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
@@ -34,9 +33,6 @@ import com.sun.max.vm.type.*;
  * @author Michael Bebenita
  */
 public class UnixAMD64EirTreeABI extends UnixAMD64EirJavaABI {
-    public UnixAMD64EirTreeABI(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
 
     @Override
     public EirLocation[] getParameterLocations(Purpose stackSlotPurpose, Kind... kinds) {

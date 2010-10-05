@@ -20,11 +20,12 @@
  */
 package com.sun.max.vm.cps.eir;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.ir.*;
@@ -50,13 +51,12 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
 
     protected EirGenerator(EirGeneratorScheme_Type eirGeneratorScheme) {
         super(eirGeneratorScheme, "EIR");
-        final VMConfiguration vmConfiguration = compilerScheme().vmConfiguration();
-        final Platform platform = vmConfiguration.platform;
+        final Platform platform = platform();
         wordWidth = platform.wordWidth();
         final MaxPackage eirPackage = new com.sun.max.vm.cps.eir.Package();
         final MaxPackage p = eirPackage.subPackage(platform.instructionSet().name().toLowerCase(),
                                                    platform.operatingSystem.name().toLowerCase());
-        eirABIsScheme = p.loadAndInstantiateScheme(EirABIsScheme.class, vmConfiguration);
+        eirABIsScheme = p.loadAndInstantiateScheme(EirABIsScheme.class);
     }
 
     @Override

@@ -29,8 +29,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.hosted.GraphPrototype.*;
-import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.hosted.GraphPrototype.ClassInfo;
+import com.sun.max.vm.object.*;
 
 /**
  * This class collects and reports statistics about the size of a {@link GraphPrototype}, which
@@ -259,7 +259,7 @@ public class GraphStats {
         if (object == null) {
             return 0;
         }
-        return HostObjectAccess.getSize(object).toInt();
+        return ObjectAccess.size(object).toInt();
     }
 
     private MethodStats getMethodStats(MethodActor methodActor) {

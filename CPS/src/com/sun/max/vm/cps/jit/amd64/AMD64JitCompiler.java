@@ -49,14 +49,13 @@ public class AMD64JitCompiler extends JitCompiler {
     private final AMD64TemplateBasedTargetGenerator targetGenerator;
 
     @HOSTED_ONLY
-    public AMD64JitCompiler(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    public AMD64JitCompiler() {
         targetGenerator = new AMD64TemplateBasedTargetGenerator(this);
     }
 
     @HOSTED_ONLY
-    public AMD64JitCompiler(VMConfiguration vmConfiguration, TemplateTable templateTable) {
-        this(vmConfiguration);
+    public AMD64JitCompiler(TemplateTable templateTable) {
+        this();
         targetGenerator.initializeTemplateTable(templateTable);
     }
 

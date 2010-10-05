@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.heap;
 
-import java.lang.ref.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -29,7 +28,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.grip.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
@@ -65,10 +64,10 @@ public class SpecialReferenceManager {
      *
      * @author Ben L. Titzer
      */
-    public interface GripForwarder {
-        boolean isReachable(Grip grip);
+    public interface ReferenceForwarder {
+        boolean isReachable(Reference ref);
         boolean isForwarding();
-        Grip getForwardGrip(Grip grip);
+        Reference getForwardRefence(Reference ref);
     }
 
     private static final FieldActor nextField = getReferenceClassField("next");
@@ -88,11 +87,11 @@ public class SpecialReferenceManager {
         JavaMonitorManager.bindStickyMonitor(REFERENCE_LOCK);
     }
 
-    private static Grip discoveredList;
+    private static Reference discoveredList;
 
     /**
      * This method processes the special reference objects that were
-     * {@linkplain #discoverSpecialReference(Grip) discovered} during the
+     * {@linkplain #discoverSpecialReference(Reference) discovered} during the
      * GC's exploration of the heap. These live reference objects must be checked to see whether
      * their "referent" objects have been collected. If so, they must be enqueued as "pending"
      * so that the {@link Reference.ReferenceHandler} thread can pick them up
@@ -100,28 +99,28 @@ public class SpecialReferenceManager {
      * The reference handler lock is notified by the thread that {@linkplain VmOperationThread#submit(VmOperation) submitted}
      * the GC operation as it holds the lock. See {@link GCOperation#doItEpilogue(boolean)}.
      *
-     * @param gripForwarder an object from the GC algorithm that can detect whether a grip
-     * is live and can also return a forwarded version of the grip
+     * @param refForwarder an object from the GC algorithm that can detect whether a ref
+     * is live and can also return a forwarded version of the ref
      */
-    public static void processDiscoveredSpecialReferences(GripForwarder gripForwarder) {
+    public static void processDiscoveredSpecialReferences(ReferenceForwarder refForwarder) {
         // the first pass over the list finds the references that have referents that are no longer reachable
         java.lang.ref.Reference ref = UnsafeCast.asJDKReference(discoveredList.toJava());
-        java.lang.ref.Reference last = UnsafeCast.asJDKReference(TupleAccess.readObject(pendingField.holder().staticTuple(), pendingField.offset()));
-        final boolean isForwardingGC = gripForwarder.isForwarding();
+        java.lang.ref.Reference last = UnsafeCast.asJDKReference(pendingField.getObject(null));
+        final boolean isForwardingGC = refForwarder.isForwarding();
 
         while (ref != null) {
-            final Grip referent = Grip.fromJava(ref).readGrip(referentField.offset());
+            final Reference referent = Reference.fromJava(ref).readReference(referentField.offset());
             if (referent.isZero()) {
                 TupleAccess.writeObject(ref, nextField.offset(), last);
                 last = ref;
-            } else if (!gripForwarder.isReachable(referent)) {
+            } else if (!refForwarder.isReachable(referent)) {
                 TupleAccess.writeObject(ref, referentField.offset(), null);
                 TupleAccess.writeObject(ref, nextField.offset(), last);
                 last = ref;
             } else if (isForwardingGC) {
                 // this object is reachable, however the "referent" field was not scanned.
                 // we need to update this field manually
-                TupleAccess.writeObject(ref, referentField.offset(), gripForwarder.getForwardGrip(referent));
+                TupleAccess.writeObject(ref, referentField.offset(), refForwarder.getForwardRefence(referent));
             }
 
             java.lang.ref.Reference r = ref;
@@ -152,15 +151,15 @@ public class SpecialReferenceManager {
             }
         }
         TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
-        discoveredList = Grip.fromOrigin(Pointer.zero());
+        discoveredList = Reference.fromOrigin(Pointer.zero());
 
         // Special reference map of Inspector
         if (Inspectable.isVmInspected()) {
-            processInspectableWeakReferencesMemory(gripForwarder);
+            processInspectableWeakReferencesMemory(refForwarder);
         }
     }
 
-    private static void processInspectableWeakReferencesMemory(GripForwarder gripForwarder) {
+    private static void processInspectableWeakReferencesMemory(ReferenceForwarder refForwarder) {
         final RootTableMemoryRegion rootsMemoryRegion = InspectableHeapInfo.rootsMemoryRegion();
         assert rootsMemoryRegion != null;
         final Pointer rootsPointer = rootsMemoryRegion.start().asPointer();
@@ -169,9 +168,9 @@ public class SpecialReferenceManager {
         for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
             final Pointer rootPointer = rootsPointer.getWord(i).asPointer();
             if (!rootPointer.isZero()) {
-                final Grip referent = Grip.fromOrigin(rootPointer);
-                if (gripForwarder.isReachable(referent)) {
-                    rootsPointer.setWord(i, gripForwarder.getForwardGrip(referent).toOrigin());
+                final Reference referent = Reference.fromOrigin(rootPointer);
+                if (refForwarder.isReachable(referent)) {
+                    rootsPointer.setWord(i, refForwarder.getForwardRefence(referent).toOrigin());
                     wordsUsedCounter++;
                 } else {
                     rootsPointer.setWord(i, Pointer.zero());
@@ -196,31 +195,31 @@ public class SpecialReferenceManager {
      * reference object. This method checks to see whether the object has been processed previously,
      * and if not, then adds it to the queue to be processed later.
      *
-     * @param grip the grip that has been discovered
+     * @param ref the reference that has been discovered
      */
-    public static void discoverSpecialReference(Grip grip) {
-        if (grip.readGrip(nextField.offset()).isZero()) {
+    public static void discoverSpecialReference(Reference ref) {
+        if (ref.readReference(nextField.offset()).isZero()) {
             // the "next" field of this object is null, queue it for later processing
             if (MaxineVM.isDebug()) {
-                boolean hasNullDiscoveredField = grip.readGrip(discoveredField.offset()).isZero();
-                boolean isHeadOfDiscoveredList = grip.equals(discoveredList);
+                boolean hasNullDiscoveredField = ref.readReference(discoveredField.offset()).isZero();
+                boolean isHeadOfDiscoveredList = ref.equals(discoveredList);
                 if (!(hasNullDiscoveredField && !isHeadOfDiscoveredList)) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Discovered reference ");
-                    Log.print(grip.toOrigin());
+                    Log.print(ref.toOrigin());
                     Log.print(" ");
                     Log.unlock(lockDisabledSafepoints);
                     FatalError.unexpected(": already discovered");
                 }
             }
-            grip.writeGrip(discoveredField.offset(), discoveredList);
-            discoveredList = grip;
+            ref.writeReference(discoveredField.offset(), discoveredList);
+            discoveredList = ref;
             if (TraceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
-                Log.print(grip.toOrigin());
+                Log.print(ref.toOrigin());
                 Log.print(" ");
-                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(grip).toJava());
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(ref).toJava());
                 Log.print(hub.classActor.name.string);
                 Log.println(" to list of discovered references");
                 Log.unlock(lockDisabledSafepoints);

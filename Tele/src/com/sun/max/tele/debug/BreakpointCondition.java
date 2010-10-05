@@ -46,7 +46,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
         super(teleVM);
         this.condition = condition;
         if (integerRegisterSymbols == null) {
-            integerRegisterSymbols = Symbolizer.Static.toSymbolMap(TeleIntegerRegisters.symbolizer(teleVM.vmConfiguration()));
+            integerRegisterSymbols = Symbolizer.Static.toSymbolMap(TeleIntegerRegisters.createSymbolizer());
         }
         this.expression = parse();
     }

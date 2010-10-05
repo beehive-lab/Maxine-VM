@@ -36,6 +36,8 @@ import com.sun.max.vm.jni.*;
  * <p>
  * No parameter type or return type of VM entry or exit points may refer to object references - only primitive Java
  * values and 'Word' values are allowed.
+ * <p>
+ * This annotation should <b>never</b> be used for calling native code that can block.
  *
  * @author Bernd Mathiske
  * @author Doug Simon

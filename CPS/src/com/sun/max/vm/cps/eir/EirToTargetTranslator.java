@@ -28,6 +28,7 @@ import java.util.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -224,7 +225,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
         eirMethod.emit(emitter);
 
-        final DataModel dataModel = compilerScheme().vmConfiguration().platform.dataModel();
+        final DataModel dataModel = Platform.platform().dataModel();
 
         final Collection<EirLiteral> scalarLiterals = eirMethod.literalPool().scalarLiterals();
         final Collection<EirLiteral> referenceLiterals = eirMethod.literalPool().referenceLiterals();

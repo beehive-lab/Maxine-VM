@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static java.lang.reflect.Modifier.*;
 
@@ -153,7 +154,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         this.hub_mTableLength = FieldActor.findInstance(Hub.class, "mTableLength").offset();
         this.hub_mTableStartIndex = FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
         this.hub_componentHub = FieldActor.findInstance(Hub.class, "componentHub").offset();
-        this.wordSize = vmConfiguration.platform.wordWidth().numberOfBytes;
+        this.wordSize = platform().wordWidth().numberOfBytes;
         assert wordSize == target.wordSize : "word size mismatch";
         this.arrayLengthOffset = Layout.arrayHeaderLayout().arrayLengthOffset();
         this.offsetOfFirstArrayElement = Layout.byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
@@ -260,6 +261,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.rawBytes(os.toByteArray());
         }
         asm.pushFrame();
+        asm.stackOverflowCheck();
         return new XirSnippet(finishTemplate(asm, "prologue"));
     }
 
@@ -334,13 +336,14 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @Override
-    public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver) {
-        return new XirSnippet(monitorEnterTemplate, receiver);
+    public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver, XirArgument lockAddress) {
+        assert lockAddress != null;
+        return new XirSnippet(monitorEnterTemplate, receiver, lockAddress);
     }
 
     @Override
-    public XirSnippet genMonitorExit(XirSite site, XirArgument receiver) {
-        return new XirSnippet(monitorExitTemplate, receiver);
+    public XirSnippet genMonitorExit(XirSite site, XirArgument receiver, XirArgument lockAddress) {
+        return new XirSnippet(monitorExitTemplate, receiver, lockAddress);
     }
 
     @Override
@@ -975,16 +978,20 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
+    @SuppressWarnings("unused")
     private XirTemplate buildMonitorExit() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
+        XirParameter lock = asm.createInputParameter("lock", CiKind.Word);
         callRuntimeThroughStub(asm, "monitorExit", null, object);
         return finishTemplate(asm, "monitorexit");
     }
 
+    @SuppressWarnings("unused")
     private XirTemplate buildMonitorEnter() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
+        XirParameter lock = asm.createInputParameter("lock", CiKind.Word);
         callRuntimeThroughStub(asm, "monitorEnter", null, object);
         return finishTemplate(asm, "monitorenter");
     }

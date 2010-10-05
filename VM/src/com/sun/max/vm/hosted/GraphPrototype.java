@@ -33,10 +33,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.hosted.GraphStats.*;
-import com.sun.max.vm.hosted.JDKInterceptor.*;
+import com.sun.max.vm.hosted.GraphStats.ClassStats;
+import com.sun.max.vm.hosted.JDKInterceptor.InterceptedField;
 import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -145,7 +144,7 @@ public class GraphPrototype extends Prototype {
                 return fieldActor.kind.zeroValue();
             }
             try {
-                return HostObjectAccess.hostToTarget(field.get(object));
+                return JavaPrototype.hostToTarget(field.get(object));
             } catch (IllegalArgumentException e) {
                 throw ProgramError.unexpected(e);
             } catch (IllegalAccessException e) {
@@ -472,7 +471,7 @@ public class GraphPrototype extends Prototype {
      * link between the parent object and the child object
      */
     private void add(Object parent, Object child, Object fieldNameOrArrayIndex) {
-        final Object object = HostObjectAccess.hostToTarget(child);
+        final Object object = JavaPrototype.hostToTarget(child);
         if (object != null && !objects.contains(object)) {
             assert fixedObjects == null : "Cannot add more objects to graph prototype once the fixed set objects has been created";
             objects.add(object);
@@ -565,7 +564,7 @@ public class GraphPrototype extends Prototype {
         if (object instanceof Object[] && !(object instanceof Word[])) {
             final Object[] array = (Object[]) object;
             for (int i = 0; i < array.length; i++) {
-                add(array, HostObjectAccess.hostToTarget(array[i]), i);
+                add(array, JavaPrototype.hostToTarget(array[i]), i);
             }
         }
     }
@@ -599,7 +598,7 @@ public class GraphPrototype extends Prototype {
     private void walkFields(Object object, List<ReferenceFieldInfo> fieldInfos) throws ProgramError {
         for (ReferenceFieldInfo fieldInfo : fieldInfos) {
             try {
-                final Object value = HostObjectAccess.hostToTarget(fieldInfo.getValue(object));
+                final Object value = JavaPrototype.hostToTarget(fieldInfo.getValue(object));
                 add(object, value, fieldInfo.getName());
             } catch (IllegalArgumentException e) {
                 throw ProgramError.unexpected(e);

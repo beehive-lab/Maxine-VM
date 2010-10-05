@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -53,9 +52,8 @@ public class HostedHybridLayout extends HostedWordArrayLayout implements HybridL
 
     private final HostedTupleLayout tupleLayout;
 
-    public HostedHybridLayout(GripScheme gripScheme) {
-        super(gripScheme);
-        tupleLayout = new HostedTupleLayout(gripScheme);
+    public HostedHybridLayout() {
+        tupleLayout = new HostedTupleLayout();
     }
 
     public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {

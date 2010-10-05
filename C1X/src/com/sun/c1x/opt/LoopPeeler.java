@@ -479,7 +479,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitMonitorEnter(MonitorEnter i) {
-        MonitorEnter other = new MonitorEnter(lookup(i.object()), i.lockNumber, i.stateBefore());
+        MonitorEnter other = new MonitorEnter(lookup(i.object()), lookup(i.lockAddress()), i.lockNumber, i.stateBefore());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -489,7 +489,16 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitMonitorExit(MonitorExit i) {
-        MonitorExit other = new MonitorExit(lookup(i.object()), i.lockNumber, i.stateBefore());
+        MonitorExit other = new MonitorExit(lookup(i.object()), lookup(i.lockAddress()), i.lockNumber, i.stateBefore());
+        other.setBCI(i.bci());
+        bind(i, other);
+        updateState(other);
+        addInstruction(other);
+    }
+
+    @Override
+    public void visitMonitorAddress(MonitorAddress i) {
+        MonitorAddress other = new MonitorAddress(i.monitor());
         other.setBCI(i.bci());
         bind(i, other);
         updateState(other);

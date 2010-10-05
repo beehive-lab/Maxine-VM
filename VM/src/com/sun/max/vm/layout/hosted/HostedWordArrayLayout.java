@@ -21,7 +21,6 @@
 package com.sun.max.vm.layout.hosted;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -31,8 +30,8 @@ import com.sun.max.vm.value.*;
  */
 public class HostedWordArrayLayout extends HostedPrimitiveArrayLayout<WordValue> implements WordArrayLayout {
 
-    public HostedWordArrayLayout(GripScheme gripScheme) {
-        super(gripScheme, Kind.WORD);
+    public HostedWordArrayLayout() {
+        super(Kind.WORD);
     }
 
     public Word getWord(Accessor accessor, int index) {

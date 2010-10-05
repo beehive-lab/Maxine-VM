@@ -1129,6 +1129,10 @@ public class IRChecker extends ValueVisitor {
         }
     }
 
+    @Override
+    public void visitMonitorAddress(MonitorAddress i) {
+    }
+
     private void assertKind(Value i, CiKind kind) {
         assertNonNull(i, "Value should not be null");
         if (i.kind != kind) {

@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.object;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -27,7 +29,6 @@ import com.sun.max.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.grip.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.util.*;
@@ -36,7 +37,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -160,7 +161,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     protected TeleObject(TeleVM vm, Reference reference, SpecificLayout specificLayout) {
         super(vm);
         this.reference = (TeleReference) reference;
-        this.layoutScheme = vm.vmConfiguration().layoutScheme();
+        this.layoutScheme = vmConfig().layoutScheme();
         this.specificLayout = specificLayout;
         oid = this.reference.makeOID();
         lastValidPointer = Pointer.zero();
@@ -217,27 +218,27 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     }
 
     public final TeleObjectMemory.State getTeleObjectMemoryState() {
-        return reference.grip().getTeleObjectMemoryState();
+        return reference.getTeleObjectMemoryState();
     }
 
     public final boolean isLive() {
-        return reference.grip().isLive();
+        return reference.isLive();
     }
 
     public final boolean isObsolete() {
-        return reference.grip().isObsolete();
+        return reference.isObsolete();
     }
 
     public final boolean isDead() {
-        return reference.grip().isDead();
+        return reference.isDead();
     }
 
     public final TeleObject getForwardedTeleObject() {
         if (isObsolete()) {
-            TeleGrip forwardedTeleGrip = reference.grip().getForwardedTeleGrip();
-            TeleObject teleObject = heap().findObjectByOID(forwardedTeleGrip.makeOID());
+            TeleReference forwardedTeleRef = reference.getForwardedTeleRef();
+            TeleObject teleObject = heap().findObjectByOID(forwardedTeleRef.makeOID());
             if (teleObject == null) {
-                reference = (TeleReference) forwardedTeleGrip.toReference();
+                reference = (TeleReference) forwardedTeleRef;
                 return this;
             }
             return teleObject;
@@ -338,7 +339,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
 
     public final MaxMemoryRegion getForwardedMemoryRegion() {
         if (isObsolete()) {
-            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.grip().getForwardedTeleGrip().toOrigin()), objectSize());
+            return new TeleFixedMemoryRegion(vm(), "", specificLayout.originToCell(reference.getForwardedTeleRef().toOrigin()), objectSize());
         }
         return null;
     }
@@ -408,7 +409,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      */
     public TeleHub getTeleHub() {
         if (teleHub == null) {
-            final Reference hubReference = vm().wordToReference(vm().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
+            final Reference hubReference = vm().wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
             teleHub = (TeleHub) heap().makeTeleObject(hubReference);
         }
         return teleHub;
@@ -420,7 +421,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * @return the "misc" word from the header of this object in the VM
      */
     public Word getMiscWord() {
-        return vm().layoutScheme().generalLayout.readMisc(reference);
+        return vmConfig().layoutScheme().generalLayout.readMisc(reference);
     }
 
     /**

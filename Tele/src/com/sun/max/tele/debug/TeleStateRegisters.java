@@ -20,10 +20,11 @@
  */
 package com.sun.max.tele.debug;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -39,8 +40,8 @@ public final class TeleStateRegisters extends TeleRegisters {
     private final Symbol flagsRegister;
 
     public TeleStateRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
-        super(teleVM, teleRegisterSet, symbolizer(teleVM.vmConfiguration()));
-        switch (teleVM.vmConfiguration().platform.instructionSet()) {
+        super(teleVM, teleRegisterSet, createSymbolizer());
+        switch (platform().instructionSet()) {
             case AMD64: {
                 instructionPointerRegister = Amd64StateRegister.RIP;
                 flagsRegister = Amd64StateRegister.FLAGS;
@@ -133,8 +134,8 @@ public final class TeleStateRegisters extends TeleRegisters {
     /**
      * Gets the symbols representing all the state registers of the instruction set denoted by a given VM configuration.
      */
-    private static Symbolizer<? extends Symbol> symbolizer(VMConfiguration vmConfiguration) {
-        switch (vmConfiguration.platform.instructionSet()) {
+    private static Symbolizer<? extends Symbol> createSymbolizer() {
+        switch (platform().instructionSet()) {
             case AMD64:
                 return Amd64StateRegister.ENUMERATOR;
             case SPARC:
@@ -155,7 +156,7 @@ public final class TeleStateRegisters extends TeleRegisters {
     }
 
     public static String flagsToString(TeleVM teleVM, long flags) {
-        switch (teleVM.vmConfiguration().platform.instructionSet()) {
+        switch (platform().instructionSet()) {
             case AMD64: {
                 return Amd64StateRegister.flagsToString(flags);
             }

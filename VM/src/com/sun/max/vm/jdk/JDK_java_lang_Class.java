@@ -29,8 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
-import com.sun.max.vm.object.*;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.type.*;
 
 /*
@@ -458,8 +457,7 @@ final class JDK_java_lang_Class {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         final FieldActor fieldActor = classActor.findLocalStaticFieldActor(ASSERTIONS_DISABLED, JavaTypeDescriptor.BOOLEAN);
         if (fieldActor != null) {
-            final FieldActor booleanFieldActor = fieldActor;
-            return TupleAccess.readBoolean(classActor.staticTuple(), booleanFieldActor.offset());
+            return fieldActor.getBoolean(null);
         }
         return false;
     }

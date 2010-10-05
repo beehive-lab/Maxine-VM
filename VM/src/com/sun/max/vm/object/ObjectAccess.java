@@ -20,6 +20,10 @@
  */
 package com.sun.max.vm.object;
 
+import static com.sun.max.vm.MaxineVM.*;
+
+import java.lang.reflect.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -78,6 +82,13 @@ public final class ObjectAccess {
      */
     @INLINE
     public static Hub readHub(Object object) {
+        if (isHosted()) {
+            if (object instanceof StaticTuple) {
+                final StaticTuple staticTuple = (StaticTuple) object;
+                return staticTuple.classActor().staticHub();
+            }
+            return ClassActor.fromJava(object.getClass()).dynamicHub();
+        }
         return UnsafeCast.asHub(Reference.fromJava(object).readHubReference().toJava());
     }
 
@@ -145,6 +156,19 @@ public final class ObjectAccess {
      * @return the size of the objects in bytes
      */
     public static Size size(Object object) {
+        if (isHosted()) {
+            Hub hub = readHub(object);
+            if (object.getClass().isArray()) {
+                final ArrayLayout arrayLayout = (ArrayLayout) hub.specificLayout;
+                return arrayLayout.getArraySize(Array.getLength(object));
+            }
+            if (object instanceof Hybrid) {
+                final Hybrid hybrid = (Hybrid) object;
+                final HybridLayout hybridLayout = (HybridLayout) hub.specificLayout;
+                return hybridLayout.getArraySize(hybrid.length());
+            }
+            return hub.tupleSize;
+        }
         return Layout.size(Reference.fromJava(object));
     }
 

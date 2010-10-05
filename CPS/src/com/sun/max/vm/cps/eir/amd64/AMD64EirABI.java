@@ -23,7 +23,6 @@ package com.sun.max.vm.cps.eir.amd64;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.runtime.*;
@@ -33,8 +32,8 @@ import com.sun.max.vm.runtime.*;
  */
 public abstract class AMD64EirABI extends EirABI<AMD64EirRegister> {
 
-    protected AMD64EirABI(VMConfiguration vmConfiguration, TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI) {
-        super(vmConfiguration, AMD64EirRegister.class);
+    protected AMD64EirABI(TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI) {
+        super(AMD64EirRegister.class);
         this.targetABI = targetABI;
     }
 

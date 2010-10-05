@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
 
 public abstract class ArrayGetSnippet extends BuiltinsSnippet {
@@ -38,7 +37,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @INLINE
         public static int readLength(Object array) {
             if (MaxineVM.isHosted()) {
-                return HostObjectAccess.getArrayLength(array);
+                return ArrayAccess.readArrayLength(array);
             }
             return ArrayAccess.readArrayLength(array);
         }
@@ -50,9 +49,6 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static byte getByte(Object array, int index) {
-            if (MaxineVM.isHosted()) {
-                return HostArrayAccess.getByte(array, index);
-            }
             return ArrayAccess.getByte(array, index);
         }
 

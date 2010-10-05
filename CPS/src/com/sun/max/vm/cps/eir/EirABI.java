@@ -26,10 +26,9 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.eir.EirStackSlot.*;
+import com.sun.max.vm.cps.eir.EirStackSlot.Purpose;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -44,16 +43,9 @@ import com.sun.max.vm.type.*;
  */
 public abstract class EirABI<EirRegister_Type extends EirRegister> {
 
-    private final VMConfiguration vmConfiguration;
-
-    public VMConfiguration vmConfiguration() {
-        return vmConfiguration;
-    }
-
     private final Class<EirRegister_Type> registerType;
 
-    protected EirABI(VMConfiguration vmConfiguration, Class<EirRegister_Type> registerType) {
-        this.vmConfiguration = vmConfiguration;
+    protected EirABI(Class<EirRegister_Type> registerType) {
         this.registerType = registerType;
     }
 

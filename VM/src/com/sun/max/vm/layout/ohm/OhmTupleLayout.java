@@ -25,10 +25,9 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
-import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -54,10 +53,6 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     public Size specificSize(Accessor accessor) {
         final Hub hub = UnsafeCast.asHub(readHubReference(accessor).toJava());
         return hub.tupleSize;
-    }
-
-    public OhmTupleLayout(GripScheme gripScheme) {
-        super(gripScheme);
     }
 
     private final int headerSize = 2 * Word.size();
@@ -151,14 +146,14 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     @HOSTED_ONLY
     private void visitFields(ObjectCellVisitor visitor, Object tuple, FieldActor[] fieldActors) {
         for (FieldActor fieldActor : fieldActors) {
-            final Value value = HostTupleAccess.readValue(tuple, fieldActor);
+            final Value value = fieldActor.getValue(tuple);
             visitor.visitField(getFieldOffsetInCell(fieldActor), fieldActor.name, fieldActor.descriptor(), value);
         }
     }
 
     @HOSTED_ONLY
     void visitFields(ObjectCellVisitor visitor, Object tuple) {
-        final Hub hub = HostObjectAccess.readHub(tuple);
+        final Hub hub = ObjectAccess.readHub(tuple);
         ClassActor classActor = hub.classActor;
         if (hub instanceof StaticHub) {
             visitFields(visitor, tuple, classActor.localStaticFieldActors());

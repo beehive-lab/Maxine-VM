@@ -162,7 +162,9 @@ public abstract class AbstractAssembler {
         targetMethod.recordCall(posBefore, target, debugInfo, stackMap, false);
     }
 
-    public void recordSafepoint(int pos, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
+    public void recordSafepoint(int pos, byte[] registerMap, byte[] stackMap, LIRDebugInfo info) {
+        // safepoints always need debug info
+        CiDebugInfo debugInfo = info.debugInfo();
         targetMethod.recordSafepoint(pos, registerMap, stackMap, debugInfo);
     }
 

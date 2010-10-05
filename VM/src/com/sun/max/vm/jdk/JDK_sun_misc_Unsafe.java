@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.lang.reflect.*;
@@ -693,7 +694,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public int pageSize() {
-        return vmConfig().platform.pageSize;
+        return platform().pageSize;
     }
 
     /**
@@ -1031,6 +1032,37 @@ final class JDK_sun_misc_Unsafe {
     @SUBSTITUTE
     public void putDoubleVolatile(Object object, long offset, double value) {
         putDouble(object, offset, value);
+    }
+
+    /**
+     * Version of {@link #putObjectVolatile(Object, long, Object)}
+     * that does not guarantee immediate visibility of the store to
+     * other threads. This method is generally only useful if the
+     * underlying field is a Java volatile (or if an array cell, one
+     * that is otherwise only accessed using volatile accesses).
+     */
+    @SUBSTITUTE
+    public void putOrderedObject(Object o, long offset, Object x) {
+        // no optimization yet
+        putObjectVolatile(o, offset, x);
+    }
+
+    /**
+     * Ordered/Lazy version of {@link #putIntVolatile(Object, long, int)}.
+     */
+    @SUBSTITUTE
+    public void putOrderedInt(Object o, long offset, int x) {
+        // no optimization yet
+        putIntVolatile(o, offset, x);
+    }
+
+    /**
+     * Ordered/Lazy version of {@link #putLongVolatile(Object, long, long)}.
+     */
+    @SUBSTITUTE
+    public void putOrderedLong(Object o, long offset, long x) {
+        // no optimization yet
+        putLongVolatile(o, offset, x);
     }
 
     /**

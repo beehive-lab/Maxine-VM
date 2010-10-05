@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.object;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.util.*;
 
 import com.sun.max.io.*;
@@ -158,7 +160,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         if (instructions == null) {
             final byte[] code = getCode();
             if (code != null) {
-                instructions = TeleDisassembler.decode(vm().vmConfiguration().platform, getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
+                instructions = TeleDisassembler.decode(platform(), getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
             }
         }
         return instructions;

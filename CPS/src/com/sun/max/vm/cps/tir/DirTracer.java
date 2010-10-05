@@ -21,8 +21,6 @@
 
 package com.sun.max.vm.cps.tir;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.util.*;
 
 import com.sun.max.*;
@@ -50,7 +48,7 @@ public class DirTracer {
     }
 
     public static DirMethod makeDirMethod(ClassMethodActor method) {
-        final BcdCompiler compiler = new BcdCompiler(vmConfig());
+        final BcdCompiler compiler = new BcdCompiler();
         final CirToDirTranslator translator = new CirToDirTranslator(compiler);
         return translator.makeIrMethod(method);
     }

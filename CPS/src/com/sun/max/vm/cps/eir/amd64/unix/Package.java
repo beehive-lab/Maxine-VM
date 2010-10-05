@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.amd64.unix;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
@@ -38,6 +40,6 @@ public class Package extends VMPackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return vmConfiguration.bootCompilerScheme() instanceof AMD64EirGeneratorScheme &&
-               OperatingSystem.UNIX_GUESTVM.contains(vmConfiguration.platform.operatingSystem);
+               OperatingSystem.UNIX_GUESTVM.contains(platform().operatingSystem);
     }
 }

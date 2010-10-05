@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.schemes.thin_inflated;
 
-import com.sun.max.vm.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin.*;
@@ -32,8 +32,9 @@ import com.sun.max.vm.monitor.modal.schemes.*;
  * @author Simon Wilkinson
  */
 public class ThinInflatedMonitorScheme extends ModalMonitorScheme {
-    public ThinInflatedMonitorScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration, ThinLockModeHandler.asFastPath(InflatedMonitorModeHandler.asThinLockDelegate()));
+    @HOSTED_ONLY
+    public ThinInflatedMonitorScheme() {
+        super(ThinLockModeHandler.asFastPath(InflatedMonitorModeHandler.asThinLockDelegate()));
     }
 
     @Override

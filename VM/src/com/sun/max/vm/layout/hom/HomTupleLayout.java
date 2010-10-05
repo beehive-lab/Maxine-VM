@@ -25,10 +25,9 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
-import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -67,8 +66,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
 
     private final int headerSize = 2 * Word.size();
 
-    public HomTupleLayout(GripScheme gripScheme) {
-        super(gripScheme);
+    public HomTupleLayout() {
     }
 
     public HeaderField[] headerFields() {
@@ -165,12 +163,12 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
 
     @HOSTED_ONLY
     static void visitFields(ObjectCellVisitor visitor, Object tuple, TupleLayout layout) {
-        final Hub hub = HostObjectAccess.readHub(tuple);
+        final Hub hub = ObjectAccess.readHub(tuple);
         ClassActor classActor = hub.classActor;
         do {
             final FieldActor[] fieldActors = (hub instanceof StaticHub) ? classActor.localStaticFieldActors() : classActor.localInstanceFieldActors();
             for (FieldActor fieldActor : fieldActors) {
-                final Value value = HostTupleAccess.readValue(tuple, fieldActor);
+                final Value value = fieldActor.getValue(tuple);
                 visitor.visitField(layout.getFieldOffsetInCell(fieldActor), fieldActor.name, fieldActor.descriptor(), value);
             }
             if (hub instanceof StaticHub) {

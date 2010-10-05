@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.layout.hom;
 
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -29,8 +28,8 @@ import com.sun.max.vm.value.*;
  */
 abstract class HomPrimitiveArrayLayout<Value_Type extends Value<Value_Type>> extends HomArrayLayout<Value_Type> {
 
-    protected HomPrimitiveArrayLayout(GripScheme gripScheme, Kind<Value_Type> elementKind) {
-        super(gripScheme, elementKind);
+    protected HomPrimitiveArrayLayout(Kind<Value_Type> elementKind) {
+        super(elementKind);
     }
 
 }

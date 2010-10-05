@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.object;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 
 import com.sun.max.lang.*;
@@ -44,7 +46,7 @@ import com.sun.max.vm.value.*;
 public class TeleTupleObject extends TeleObject {
 
     protected TeleTupleObject(TeleVM vm, Reference reference) {
-        super(vm, reference, vm.vmConfiguration().layoutScheme().tupleLayout);
+        super(vm, reference, vmConfig().layoutScheme().tupleLayout);
     }
 
     @Override

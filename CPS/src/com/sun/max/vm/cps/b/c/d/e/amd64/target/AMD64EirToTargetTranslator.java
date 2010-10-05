@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.amd64.target;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -49,7 +51,7 @@ public final class AMD64EirToTargetTranslator extends EirToTargetTranslator {
     @Override
     protected EirTargetEmitter createEirTargetEmitter(EirMethod eirMethod) {
         AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(eirMethod.classMethodActor(), eirMethod.abi.targetABI().callEntryPoint);
-        return new AMD64EirTargetEmitter((AMD64EirABI) eirMethod.abi, eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint, adapterGenerator);
+        return new AMD64EirTargetEmitter((AMD64EirABI) eirMethod.abi, eirMethod.frameSize(), vmConfig().safepoint, adapterGenerator);
     }
 
 }

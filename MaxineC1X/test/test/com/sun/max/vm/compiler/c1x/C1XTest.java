@@ -192,7 +192,7 @@ public class C1XTest {
 
         String compilerName = compilerOption.getValue();
         if (compilerName.equals("c1x")) {
-            compilerScheme = C1XCompilerScheme.create(configuration);
+            compilerScheme = C1XCompilerScheme.create();
         } else if (compilerName.equals("boot")) {
             configuration.initializeSchemes(MaxineVM.Phase.COMPILING);
             compilerScheme = configuration.bootCompilerScheme();

@@ -90,12 +90,13 @@ public class MaxineTester {
                     "A list of configurations for which to run the Java tester tests.");
     private static final Option<List<String>> testsOption = options.newStringListOption("tests", "junit,output,javatester",
                     "The list of test harnesses to run, which may include JUnit tests (junit), output tests (output), " +
-                    "the JavaTester (javatester), DaCapo (dacapo), SpecJVM98 (specjvm98) and SPECjvm2008 (specjvm2008).\n\nA subset of the JUnit/Output/Dacapo/SpecJVM98/Shootout tests " +
+                    "the JavaTester (javatester), DaCapo-2006 (dacapo2006), DaCapo-bach (dacapobach), SpecJVM98 (specjvm98) and SPECjvm2008 (specjvm2008).\n\nA subset of the JUnit/Output/Dacapo/SpecJVM98/Shootout tests " +
                     "can be specified by appending a ':' followed by a '+' separated list of test name substrings. For example:\n\n" +
-                    "-tests=specjvm98:jess+db,dacapo:pmd+fop\n\nwill " +
-                    "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo benchmarks.\n\n" +
+                    "-tests=specjvm98:jess+db,dacapobach:pmd+fop\n\nwill " +
+                    "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo-bach benchmarks.\n\n" +
                     "Output tests: " + MaxineTesterConfiguration.zeeOutputTests.toString().replace("class ", "") + "\n\n" +
-                    "Dacapo tests: " + MaxineTesterConfiguration.zeeDacapoTests + "\n\n" +
+                    "Dacapo-2006 tests: " + MaxineTesterConfiguration.zeeDacapo2006Tests + "\n\n" +
+                    "Dacapo-bach tests: " + MaxineTesterConfiguration.zeeDacapoBachTests + "\n\n" +
                     "SpecJVM98 tests: " + MaxineTesterConfiguration.zeeSpecjvm98Tests + "\n\n" +
                     "SPECjvm2008 tests: " + MaxineTesterConfiguration.zeeSpecjvm2008Tests + "\n\n" +
                     "Shootout tests: " + MaxineTesterConfiguration.zeeShootoutTests);
@@ -115,8 +116,10 @@ public class MaxineTester {
                     "Location of zipped up SpecJVM98 directory. If not provided, then the SPECJVM98_ZIP environment variable is used.");
     private static final Option<File> specjvm2008ZipOption = options.newFileOption("specjvm2008", (File) null,
                     "Location of zipped up SPECjvm2008 directory. If not provided, then the SPECJVM2008_ZIP environment variable is used.");
-    private static final Option<File> dacapoJarOption = options.newFileOption("dacapo", (File) null,
-                    "Location of DaCapo JAR file. If not provided, then the DACAPO_JAR environment variable is used.");
+    private static final Option<File> dacapo2006JarOption = options.newFileOption("dacapo2006", (File) null,
+                    "Location of DaCapo-2006 JAR file. If not provided, then the DACAPO2006_JAR environment variable is used.");
+    private static final Option<File> dacapoBachJarOption = options.newFileOption("dacapoBach", (File) null,
+                    "Location of DaCapo-bach JAR file. If not provided, then the DACAPOBACH_JAR environment variable is used.");
     private static final Option<File> shootoutDirOption = options.newFileOption("shootout", (File) null,
                     "Location of the Programming Language Shootout tests. If not provided, then the SHOOTOUT_DIR environment variable is used.");
     private static final Option<Boolean> timingOption = options.newBooleanOption("timing", true,
@@ -171,12 +174,18 @@ public class MaxineTester {
                 } else if ("jtload".equals(test)) {
                     // run the JTLoad tests
                     new JTLoadHarness().run();
-                } else if ("dacapo".equals(test)) {
-                    // run the DaCapo tests
-                    new DaCapoHarness(MaxineTesterConfiguration.zeeDacapoTests).run();
-                } else if (test.startsWith("dacapo:")) {
-                    // run the DaCapo tests
-                    new DaCapoHarness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeDacapoTests, test.substring("dacapo:".length()).split("\\+"))).run();
+                } else if ("dacapo2006".equals(test)) {
+                    // run the DaCapo 2006 tests
+                    new DaCapo2006Harness(MaxineTesterConfiguration.zeeDacapo2006Tests).run();
+                } else if ("dacapobach".equals(test) || "dacapo".equals(test)) {
+                    // run the DaCapo bach tests
+                    new DaCapoBachHarness(MaxineTesterConfiguration.zeeDacapoBachTests).run();
+                } else if (test.startsWith("dacapo2006:")) {
+                    // run subset of the DaCapo 2006 tests
+                    new DaCapo2006Harness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeDacapo2006Tests, test.substring("dacapo2006:".length()).split("\\+"))).run();
+                } else if (test.startsWith("dacapobach:")) {
+                    // run subset of the DaCapo tests
+                    new DaCapoBachHarness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeDacapoBachTests, test.substring("dacapobach:".length()).split("\\+"))).run();
                 } else if ("specjvm98".equals(test)) {
                     // run the SpecJVM98 tests
                     new SpecJVM98Harness(MaxineTesterConfiguration.zeeSpecjvm98Tests).run();
@@ -504,15 +513,20 @@ public class MaxineTester {
             final JUnitCore junit = new JUnitCore();
             junit.addListener(new RunListener() {
                 boolean failedFlag;
+                boolean setupDone;
 
                 @Override
                 public void testStarted(Description description) throws Exception {
+                    setupDone = true;
                     System.out.println("running " + description);
                 }
 
                 @Override
                 public void testFailure(Failure failure) throws Exception {
                     failure.getException().printStackTrace(System.out);
+                    if (!setupDone) {
+                        failed.println(failure.getDescription());
+                    }
                     failedFlag = true;
                 }
 
@@ -1587,21 +1601,28 @@ public class MaxineTester {
     }
 
     /**
-     * This class implements a test harness that is capable of running the DaCapo suite of programs
+     * This class implements a test harness that is capable of running the DaCapo 2006 suite of programs
      * and comparing their outputs to that obtained by running each of them on a reference VM.
      *
      * @author Ben L. Titzer
      */
-    public static class DaCapoHarness extends TimedHarness implements Harness {
-        final Iterable<String> testList;
-        DaCapoHarness(Iterable<String> tests) {
+    private static class DaCapoHarness extends TimedHarness implements Harness {
+        protected final Iterable<String> testList;
+        protected final Option<File> option;
+        protected final String jarEnv;
+        protected final String variant;
+
+        DaCapoHarness(String variant, Option<File> option, Iterable<String> tests) {
+            this.variant = variant;
+            this.option = option;
+            this.jarEnv = "DACAPO" + variant.toUpperCase() + "_JAR";
             testList = tests;
         }
 
         public boolean run() {
-            final File dacapoJar = getFileFromOptionOrEnv(dacapoJarOption, "DACAPO_JAR");
+            final File dacapoJar = getFileFromOptionOrEnv(option, jarEnv);
             if (dacapoJar == null) {
-                out().println("Need to specify the location of Dacapo JAR file with -" + dacapoJarOption + " or in the DACAPO_JAR environment variable");
+                out().println("Need to specify the location of Dacapo JAR file with -" + option + " or in the " + jarEnv + " environment variable");
                 return false;
             }
             final File outputDir = new File(outputDirOption.getValue(), javaConfig);
@@ -1620,7 +1641,7 @@ public class MaxineTester {
         }
 
         void runDaCapoTest(File outputDir, File imageDir, String test, File dacapoJar) {
-            final String testName = "DaCapo " + test;
+            final String testName = "DaCapo-" + variant + " " + test;
             final JavaCommand command = new JavaCommand(dacapoJar);
             command.addArgument(test);
             OutputComparison comparison = new OutputComparison();
@@ -1646,7 +1667,20 @@ public class MaxineTester {
         }
     }
 
-    /**
+    public static class DaCapo2006Harness extends DaCapoHarness {
+        DaCapo2006Harness(Iterable<String> tests) {
+            super("2006", dacapo2006JarOption,  tests);
+        }
+
+    }
+
+    public static class DaCapoBachHarness extends DaCapoHarness {
+        DaCapoBachHarness(Iterable<String> tests) {
+            super("bach", dacapoBachJarOption, tests);
+        }
+    }
+
+   /**
      * This class implements a test harness that is capable of running the Programming Language Shootout suite of programs
      * and comparing their outputs to that obtained by running each of them on a reference VM.
      *

@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.b;
 
 import java.util.*;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.bir.*;
 import com.sun.max.vm.cps.ir.*;
@@ -39,8 +38,7 @@ public class BCompiler extends CPSAbstractCompiler implements BirGeneratorScheme
         return actorToBirTranslator;
     }
 
-    public BCompiler(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    public BCompiler() {
         actorToBirTranslator = new ActorToBirTranslator(this);
     }
 

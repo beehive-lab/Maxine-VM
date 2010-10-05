@@ -22,6 +22,7 @@ package com.sun.max.vm.actor.holder;
 
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
 
 import java.io.*;
@@ -1357,8 +1358,8 @@ public abstract class ClassActor extends Actor implements RiType {
         // Non-blocking synchronization is used here to swap in the mirror reference.
         // This could lead to some extra Class objects being created that become garbage, but should be harmless.
         final Class newJavaClass = (Class) Heap.createTuple(ClassRegistry.CLASS.dynamicHub());
-        TupleAccess.writeObject(newJavaClass, Class_classActor.offset(), this);
-        final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(ClassRegistry.ClassActor_javaClass.offset(), null,  Reference.fromJava(newJavaClass));
+        Class_classActor.setObject(newJavaClass, this);
+        final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(ClassActor_javaClass.offset(), null,  Reference.fromJava(newJavaClass));
         if (oldValue == null) {
             return newJavaClass;
         }
@@ -1400,7 +1401,7 @@ public abstract class ClassActor extends Actor implements RiType {
         if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toClassActor(javaClass);
         }
-        return (ClassActor) TupleAccess.readObject(javaClass, Class_classActor.offset());
+        return (ClassActor) Class_classActor.getObject(javaClass);
     }
 
     /**
@@ -1603,13 +1604,19 @@ public abstract class ClassActor extends Actor implements RiType {
         return null;
     }
 
-    public WordWidth wordWidth() {
-        return dynamicHub.wordWidth();
-    }
-
+    /**
+     * Determines if a given object is an instance of this class. Unlike {@link Class#isInstance(Object)},
+     * this method raises a {@link NullPointerException} if {@code object == null}.
+     *
+     * @return {@code true} if {@code object} is an instance of this class
+     * @throws NullPointerException if {@code object == null}
+     */
     @INLINE
     public final boolean isInstance(Object object) {
         if (MaxineVM.isHosted()) {
+            if (object == null) {
+                throw new NullPointerException();
+            }
             return toJava().isInstance(object);
         }
         final Hub hub = ObjectAccess.readHub(object);

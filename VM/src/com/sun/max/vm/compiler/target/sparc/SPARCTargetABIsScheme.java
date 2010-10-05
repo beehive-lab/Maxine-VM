@@ -20,14 +20,13 @@
  */
 package com.sun.max.vm.compiler.target.sparc;
 
-import static com.sun.max.asm.sparc.GPR.*;
 import static com.sun.max.asm.sparc.FPR.*;
+import static com.sun.max.asm.sparc.GPR.*;
 
 import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.sparc.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -85,16 +84,15 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
 
     @HOSTED_ONLY
     public SPARCTargetABIsScheme(
-                    VMConfiguration vmConfiguration,
                     TargetABI<GPR, FPR> jitABI,
                     TargetABI<GPR, FPR> optimizedJavaABI) {
-        super(vmConfiguration,
-                        createSPARC64TargetABI(
-                                        nativeRegisterRoleAssignment(),
-                                        CallEntryPoint.C_ENTRY_POINT,
-                                        incomingIntegerparameterregisters(),
-                                        outgoingIntegerParameterRegisters(),
-                                        null, false, false),
-                                        jitABI, optimizedJavaABI);
+        super(createSPARC64TargetABI(
+                        nativeRegisterRoleAssignment(),
+                        CallEntryPoint.C_ENTRY_POINT,
+                        incomingIntegerparameterregisters(),
+                        outgoingIntegerParameterRegisters(),
+                        null, false, false),
+                        jitABI,
+                                        optimizedJavaABI);
     }
 }

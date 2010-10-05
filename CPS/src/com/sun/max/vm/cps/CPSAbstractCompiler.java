@@ -25,7 +25,7 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -41,10 +41,6 @@ import com.sun.max.vm.trampoline.*;
  * @author Bernd Mathiske
  */
 public abstract class CPSAbstractCompiler extends AbstractVMScheme implements BootstrapCompilerScheme {
-
-    public CPSAbstractCompiler(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
 
     /**
      * Gets this compiler's last IR generator (typically a {@link com.sun.max.vm.cps.target.TargetGenerator}).

@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug.no;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.io.*;
 import java.math.*;
 import java.nio.*;
@@ -108,7 +110,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
         int heapOffset = bootImage.heapOffset();
         int heapAndCodeSize = header.heapSize + header.codeSize;
         final MappedByteBuffer bootImageBuffer = randomAccessFile.getChannel().map(MapMode.PRIVATE, heapOffset, heapAndCodeSize);
-        bootImageBuffer.order(bootImage.vmConfiguration.platform.endianness().asByteOrder());
+        bootImageBuffer.order(platform().endianness().asByteOrder());
         randomAccessFile.close();
 
         if (!heapPointer.isZero()) {

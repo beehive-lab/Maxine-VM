@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug.unix;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.io.*;
 import java.nio.*;
 import java.util.*;
@@ -51,7 +53,7 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
         super(teleVM, platform, ProcessState.STOPPED);
         protocol = TeleVM.teleChannelProtocol();
         dataAccess = new PageDataAccess(this, platform.dataModel());
-        protocol.initialize(teleVM.bootImage().header.threadLocalsAreaSize, teleVM.vmConfiguration().platform.endianness() == Endianness.BIG ? true : false);
+        protocol.initialize(teleVM.bootImage().header.threadLocalsAreaSize, platform().endianness() == Endianness.BIG ? true : false);
         if (commandLineArguments != null) {
             final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments);
             if (processHandle < 0) {

@@ -20,13 +20,15 @@
  */
 package com.sun.max.tele;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.util.*;
 
 import com.sun.max.program.*;
-import com.sun.max.tele.grip.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -82,7 +84,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
     public static TeleHeap make(TeleVM teleVM) {
         // TODO (mlvdv) Replace this hard-wired GC-specific dispatch with something more sensible.
         if (teleHeap ==  null) {
-            final String heapSchemeName = teleVM.vmConfiguration().heapScheme().name();
+            final String heapSchemeName = vmConfig().heapScheme().name();
             TeleHeapScheme teleHeapScheme = null;
             if (heapSchemeName.equals("SemiSpaceHeapScheme")) {
                 teleHeapScheme = new TeleSemiSpaceHeapScheme(teleVM);
@@ -253,7 +255,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
                 // we checked, so cached reference data is out of date
                 // Sanity check; collection count increases monotonically
                 assert oldGcStartedCount < gcStartedCount;
-                vm().gripScheme().refresh();
+                vm().teleReferenceScheme().refresh();
             } else {
                 // oldGcStartedCount == gcStartedCount == gcCompletedCount
                 // GC is not in progress, and no new GCs have happened, so cached reference data is up to date

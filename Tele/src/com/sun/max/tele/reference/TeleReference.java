@@ -20,48 +20,88 @@
  */
 package com.sun.max.tele.reference;
 
-import com.sun.max.tele.grip.*;
+import java.util.concurrent.atomic.*;
+
 import com.sun.max.vm.reference.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Hannes Payer
  */
-public abstract class TeleReference extends Reference {
+public abstract class TeleReference extends Reference implements TeleObjectMemory {
 
-    private TeleGrip grip;
+    private long refOID = 0;
 
-    public TeleGrip grip() {
-//        if (grip.getForwardedTeleGrip() != null) {
-//            grip = grip.getForwardedTeleGrip();
-//        }
-        return grip;
-    }
+    protected TeleReference forwardedTeleRef = null;
 
-    protected TeleReference(TeleGrip grip) {
-        this.grip = grip;
-    }
+    protected boolean collectedByGC = false;
 
-    @Override
-    public int hashCode() {
-        return grip().hashCode();
+    private TeleObjectMemory.State state = TeleObjectMemory.State.LIVE;
+
+    protected TeleReference() {
     }
 
     /**
-     * @return a non-zero integer uniquely identifying the referred-to object in the tele VM
+     * @return a non-zero integer uniquely identifying the referred-to object in the tele VM, assigned lazily
      */
-    public long makeOID() {
-        return grip().makeOID();
+    public synchronized long makeOID() {
+        if (refOID == 0) {
+            refOID = nextOID.incrementAndGet();
+        }
+        return refOID;
     }
+
+    private static final AtomicLong nextOID = new AtomicLong(1);
 
     public boolean isLocal() {
-        return grip().isLocal();
+        return false;
     }
 
-    public static final TeleReference ZERO = new TeleReference(TeleGrip.ZERO) {};
-
-    @Override
-    public String toString() {
-        return grip().toString();
+    public final void setForwardedTeleReference(TeleReference forwardedMutableTeleRef) {
+        this.forwardedTeleRef = forwardedMutableTeleRef;
     }
 
+    public final TeleReference getForwardedTeleRef() {
+        if (forwardedTeleRef != null) {
+            return forwardedTeleRef.getForwardedTeleRef();
+        }
+        return this;
+    }
+
+    public abstract TeleObjectMemory.State getTeleObjectMemoryState();
+
+    public boolean isLive() {
+        return getTeleObjectMemoryState() == TeleObjectMemory.State.LIVE;
+    }
+
+    public boolean isObsolete() {
+        return getTeleObjectMemoryState() == TeleObjectMemory.State.OBSOLETE;
+    }
+
+    public boolean isDead() {
+        return getTeleObjectMemoryState() == TeleObjectMemory.State.DEAD;
+    }
+
+    public static final TeleReference ZERO = new TeleReference() {
+
+        @Override
+        public TeleObjectMemory.State getTeleObjectMemoryState() {
+            return TeleObjectMemory.State.DEAD;
+        }
+
+        @Override
+        public String toString() {
+            return "null";
+        }
+
+        @Override
+        public boolean equals(Reference other) {
+            return this == other;
+        }
+
+        @Override
+        public int hashCode() {
+            return 0;
+        }
+    };
 }

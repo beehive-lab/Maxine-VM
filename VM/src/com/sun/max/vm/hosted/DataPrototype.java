@@ -20,12 +20,13 @@
  */
 package com.sun.max.vm.hosted;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.io.*;
-import java.lang.ref.*;
+import java.lang.ref.Reference;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -43,14 +44,15 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.hosted.GraphPrototype.*;
+import com.sun.max.vm.hosted.GraphPrototype.ClassInfo;
+import com.sun.max.vm.hosted.GraphPrototype.ReferenceFieldInfo;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.SpecificLayout.*;
-import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.layout.SpecificLayout.ObjectCellVisitor;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -82,7 +84,7 @@ public final class DataPrototype extends Prototype {
      * @return the address of the specified object
      */
     public Address objectToCell(Object object) {
-        return objectToCell.get(HostObjectAccess.hostToTarget(object));
+        return objectToCell.get(JavaPrototype.hostToTarget(object));
     }
 
     /**
@@ -101,7 +103,7 @@ public final class DataPrototype extends Prototype {
      * @return a pointer to the origin of the object in this data prototype
      */
     public Pointer objectToOrigin(Object object) {
-        final Hub hub = HostObjectAccess.readHub(object);
+        final Hub hub = ObjectAccess.readHub(object);
         final SpecificLayout specificLayout = hub.specificLayout;
         return specificLayout.cellToOrigin(objectToCell(object).asPointer());
     }
@@ -139,7 +141,7 @@ public final class DataPrototype extends Prototype {
             final Pointer cell = start.plus(targetBundleLayout.cellOffset(field)).asPointer();
             if (assignCell(object, cell)) {
                 codeObjects.add(object);
-                assert HostObjectAccess.getSize(object).equals(cellSize);
+                assert ObjectAccess.size(object).equals(cellSize);
             }
         }
     }
@@ -191,11 +193,11 @@ public final class DataPrototype extends Prototype {
      */
     private void preventNullConfusion() {
         final Object object = new Object();
-        final Address cell = Heap.bootHeapRegion.allocate(HostObjectAccess.getSize(object), true);
+        final Address cell = Heap.bootHeapRegion.allocate(ObjectAccess.size(object), true);
         assignHeapCell(object, cell);
-        objectHub = HostObjectAccess.readHub(object);
-        hubHub = HostObjectAccess.readHub(objectHub);
-        assert hubHub == HostObjectAccess.readHub(hubHub);
+        objectHub = ObjectAccess.readHub(object);
+        hubHub = ObjectAccess.readHub(objectHub);
+        assert hubHub == ObjectAccess.readHub(hubHub);
 
         nonZeroBootHeapStart = Heap.bootHeapRegion.getAllocationMark();
     }
@@ -242,7 +244,7 @@ public final class DataPrototype extends Prototype {
 
         final Object alignment = createPageAlignmentObject(heapRegion);
         if (alignment != null) {
-            assignHeapCell(alignment, heapRegion.allocate(HostObjectAccess.getSize(alignment), true));
+            assignHeapCell(alignment, heapRegion.allocate(ObjectAccess.size(alignment), true));
         }
 
         heapRegion.trim();
@@ -270,8 +272,7 @@ public final class DataPrototype extends Prototype {
                 if (cell != null) {
                     assert Code.bootCodeRegion.contains(cell);
                 } else {
-                    final Hub hub = HostObjectAccess.readHub(object);
-                    final Size size = HostObjectAccess.getSize(hub, object);
+                    final Size size = ObjectAccess.size(object);
                     cell = heapRegion.allocate(size, true);
                     assignHeapCell(object, cell);
 
@@ -310,7 +311,7 @@ public final class DataPrototype extends Prototype {
             final ClassInfo classInfo = graphPrototype.classInfoFor(object);
             assert classInfo.containsMutableReferences(object);
             final Address cell = objectToCell.get(object);
-            final Hub hub = HostObjectAccess.readHub(object);
+            final Hub hub = ObjectAccess.readHub(object);
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isArrayLayout()) {
                 if (specificLayout.isReferenceArrayLayout()) {
@@ -382,8 +383,8 @@ public final class DataPrototype extends Prototype {
         }
 
         final Reference[] specialReferenceArray = specialReferences.toArray(new Reference[specialReferences.size()]);
-        assignHeapCell(referenceMapBytes, heapRegion.allocate(HostObjectAccess.getSize(referenceMapBytes), true));
-        assignHeapCell(specialReferenceArray, heapRegion.allocate(HostObjectAccess.getSize(specialReferenceArray), true));
+        assignHeapCell(referenceMapBytes, heapRegion.allocate(ObjectAccess.size(referenceMapBytes), true));
+        assignHeapCell(specialReferenceArray, heapRegion.allocate(ObjectAccess.size(specialReferenceArray), true));
         heapRegion.init(referenceMapBytes, specialReferenceArray);
         Trace.end(1, "createHeapReferenceMap: width=" + referenceMap.width() + ", cardinality=" +
             referenceMap.cardinality() + ", size=" + referenceMap.size() + ", #special references=" + specialReferenceArray.length);
@@ -463,7 +464,7 @@ public final class DataPrototype extends Prototype {
          * @param object the object for which to find the origin
          * @return the origin for {@code object}
          */
-        Address originFor(Object object) {
+        Pointer originFor(Object object) {
             final Address cell = objectToCell(object);
             // This will occur if some code is executed after the GraphPrototype has been created where that
             // code mutates the object graph.
@@ -492,7 +493,7 @@ public final class DataPrototype extends Prototype {
 
         final byte[] data;
         final boolean[] used;
-        final byte[] nullGripBytes;
+        final byte[] nullRefBytes;
 
         /**
          * Creates a new instance for the specified memory region with the specified name.
@@ -504,7 +505,7 @@ public final class DataPrototype extends Prototype {
             super(region, name);
             data = new byte[region.size().roundedUpBy(pageSize).toInt()];
             used = new boolean[data.length];
-            nullGripBytes = gripScheme.createPrototypeNullGrip();
+            nullRefBytes = referenceScheme.nullAsBytes();
         }
 
         /**
@@ -571,7 +572,7 @@ public final class DataPrototype extends Prototype {
         private void write(Value value, int offsetInCell) {
             final byte[] valueBytes;
             if (value.kind().isReference) {
-                valueBytes = (value.asObject() == null) ? nullGripBytes : gripScheme.createPrototypeGrip(originFor(value.asObject()));
+                valueBytes = (value.asObject() == null) ? nullRefBytes : referenceScheme.asBytes(originFor(value.asObject()));
             } else {
                 valueBytes = value.toBytes(dataModel);
             }
@@ -694,7 +695,7 @@ public final class DataPrototype extends Prototype {
             printLastObject();
 
             if (object != null) {
-                final Size size = HostObjectAccess.getSize(object);
+                final Size size = ObjectAccess.size(object);
                 this.object = object;
                 values = new String[size.toInt()];
                 objectIsArray = object.getClass().isArray();
@@ -823,8 +824,8 @@ public final class DataPrototype extends Prototype {
                     Object previousObject = null;
                     for (int i = start; i < end; i++) {
                         final Object object = objects.get(i);
-                        final Hub hub = HostObjectAccess.readHub(object);
-                        final int size = HostObjectAccess.getSize(hub, object).toInt();
+                        final Hub hub = ObjectAccess.readHub(object);
+                        final int size = ObjectAccess.size(object).toInt();
                         numberOfBytes += size;
 
                         final int offset = objectToCell(object).minus(regionStart).toInt();
@@ -979,7 +980,7 @@ public final class DataPrototype extends Prototype {
      * @return the number of references within the object
      */
     private synchronized int setRelocationFlags(Object object, Address cell) {
-        final Hub hub = HostObjectAccess.readHub(object);
+        final Hub hub = ObjectAccess.readHub(object);
         final SpecificLayout specificLayout = hub.specificLayout;
 
         setRelocationFlag(cell.plus(specificLayout.getHubReferenceOffsetInCell()));
@@ -987,7 +988,7 @@ public final class DataPrototype extends Prototype {
             if (specificLayout.isReferenceArrayLayout()) {
                 final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
                 assert arrayLayout.elementKind().isReference;
-                final int n = HostObjectAccess.getArrayLength(object);
+                final int n = ArrayAccess.readArrayLength(object);
                 for (int i = 0; i < n; i++) {
                     final Address address = cell.plus(arrayLayout.getElementOffsetInCell(i));
                     setRelocationFlag(address);
@@ -1119,7 +1120,7 @@ public final class DataPrototype extends Prototype {
     private final DataModel dataModel;
     private final int alignment;
     private final LayoutScheme layoutScheme;
-    private final GripScheme gripScheme;
+    private final ReferenceScheme referenceScheme;
     private final boolean tagging;
 
     /**
@@ -1130,12 +1131,12 @@ public final class DataPrototype extends Prototype {
      */
     public DataPrototype(GraphPrototype graphPrototype, File mapFile) {
         this.graphPrototype = graphPrototype;
-        final Platform platform = vmConfig().platform;
+        final Platform platform = platform();
         pageSize = platform.pageSize;
         dataModel = platform.dataModel();
         alignment = Word.size();
         layoutScheme = vmConfig().layoutScheme();
-        gripScheme = vmConfig().gripScheme();
+        referenceScheme = vmConfig().referenceScheme();
         tagging = vmConfig().debugging() && vmConfig().heapScheme().supportsTagging();
         Trace.begin(1, DataPrototype.class.getSimpleName());
 

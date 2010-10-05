@@ -39,8 +39,7 @@ public abstract class LayoutScheme extends AbstractVMScheme implements VMScheme 
     public final WordArrayLayout wordArrayLayout;
     public final ReferenceArrayLayout referenceArrayLayout;
 
-    protected LayoutScheme(VMConfiguration vmConfiguration,
-                    final GeneralLayout generalLayout,
+    protected LayoutScheme(final GeneralLayout generalLayout,
                     final TupleLayout tupleLayout,
                     final HybridLayout hybridLayout,
                     final ArrayHeaderLayout arrayHeaderLayout,
@@ -54,7 +53,6 @@ public abstract class LayoutScheme extends AbstractVMScheme implements VMScheme 
                     final DoubleArrayLayout doubleArrayLayout,
                     final WordArrayLayout wordArrayLayout,
                     final ReferenceArrayLayout referenceArrayLayout) {
-        super(vmConfiguration);
         this.generalLayout = generalLayout;
         this.tupleLayout = tupleLayout;
         this.hybridLayout = hybridLayout;

@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.layout.ohm;
 
-import com.sun.max.vm.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -31,22 +29,21 @@ import com.sun.max.vm.layout.*;
  */
 public class OhmLayoutScheme extends LayoutScheme {
 
-    public OhmLayoutScheme(VMConfiguration vmConfiguration, GripScheme gripScheme) {
-        super(vmConfiguration,
-              new OhmGeneralLayout(gripScheme),
-              new OhmTupleLayout(gripScheme),
-              new OhmHybridLayout(gripScheme),
-              new OhmArrayHeaderLayout(gripScheme),
-              new OhmByteArrayLayout(gripScheme),
-              new OhmBooleanArrayLayout(gripScheme),
-              new OhmShortArrayLayout(gripScheme),
-              new OhmCharArrayLayout(gripScheme),
-              new OhmIntArrayLayout(gripScheme),
-              new OhmFloatArrayLayout(gripScheme),
-              new OhmLongArrayLayout(gripScheme),
-              new OhmDoubleArrayLayout(gripScheme),
-              new OhmWordArrayLayout(gripScheme),
-              new OhmReferenceArrayLayout(gripScheme));
+    public OhmLayoutScheme() {
+        super(new OhmGeneralLayout(),
+              new OhmTupleLayout(),
+              new OhmHybridLayout(),
+              new OhmArrayHeaderLayout(),
+              new OhmByteArrayLayout(),
+              new OhmBooleanArrayLayout(),
+              new OhmShortArrayLayout(),
+              new OhmCharArrayLayout(),
+              new OhmIntArrayLayout(),
+              new OhmFloatArrayLayout(),
+              new OhmLongArrayLayout(),
+              new OhmDoubleArrayLayout(),
+              new OhmWordArrayLayout(),
+              new OhmReferenceArrayLayout());
     }
 
 }

@@ -28,8 +28,8 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.hosted.GraphPrototype.*;
-import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.hosted.GraphPrototype.Link;
+import com.sun.max.vm.object.*;
 
 /**
  * A mechanism for saving, loading and printing the
@@ -274,7 +274,7 @@ public final class BootImageObjectTree {
             }
             final Object object = objectPoolIndices[i];
             final int address = allocationMap.get(object).toInt();
-            final long size = HostObjectAccess.getSize(object).toLong();
+            final long size = ObjectAccess.size(object).toLong();
             final String toString = object.toString();
 
             dataOutputStream.writeInt(classPool.get(object.getClass()));
