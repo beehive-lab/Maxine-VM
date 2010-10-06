@@ -80,7 +80,7 @@ public abstract class Reference implements Accessor {
         return referenceScheme().isAllOnes(this);
     }
 
-    @INLINE
+    @INLINE(override = true)
     public boolean equals(Reference other) {
         return other == this;
     }
