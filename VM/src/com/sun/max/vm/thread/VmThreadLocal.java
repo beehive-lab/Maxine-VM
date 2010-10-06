@@ -43,7 +43,7 @@ import com.sun.max.vm.stack.*;
  * the {@linkplain #SAFEPOINT_LATCH safepoint latch} must be first.
  * <p>
  * All thread locals are in a contiguous block of memory called a thread locals area (TLA) and there
- * are TLAs per thread, one for each of the {@linkplain Safepoint safepoint} states:
+ * are three TLAs per thread, one for each of the {@linkplain Safepoint safepoint} states:
  * <dl>
  * <dt>Enabled</dt>
  * <dd>Safepoints for the thread are {@linkplain Safepoint#enable() enabled}. The base address of this TLA is
@@ -84,8 +84,8 @@ import com.sun.max.vm.stack.*;
  * (high addresses)
  * </pre>
  *
- * The memory for the three TLAs is located on the stack as described in the thread stack layout
- * diagram {@linkplain VmThread here}.
+ * The thread local block layout for each thread is traced when a thread starts up if
+ * the {@link VmThread#TraceThreads -XX:+TraceThreads} VM option is used.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -620,7 +620,7 @@ public class VmThreadLocal {
      */
     @INLINE
     public final Word getConstantWord(Pointer vmThreadLocals) {
-        return vmThreadLocals.getWord(index);
+        return vmThreadLocals.getWord(this);
     }
 
     /**
