@@ -33,6 +33,7 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -268,7 +269,7 @@ public class TeleFields extends AbstractTeleVMHolder {
                     if (inInspector) {
                         ProgramWarning.message("Error while verifying that " + sourceFile + " is up to date: " + exception);
                     } else {
-                        ProgramError.unexpected(exception);
+                        TeleError.unexpected(exception);
                     }
                 }
             }
@@ -332,7 +333,7 @@ public class TeleFields extends AbstractTeleVMHolder {
                         break;
                     }
                     default: {
-                        ProgramError.unexpected("Invalid field kind: " + kind);
+                        TeleError.unexpected("Invalid field kind: " + kind);
                     }
                 }
                 writer.println(";");

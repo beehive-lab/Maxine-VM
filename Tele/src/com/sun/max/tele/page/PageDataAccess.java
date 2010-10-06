@@ -25,6 +25,7 @@ import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.hosted.*;
 
@@ -48,7 +49,7 @@ public class PageDataAccess extends DataAccessAdapter {
     public PageDataAccess(TeleIO teleProcess, DataModel dataModel) {
         super(dataModel.wordWidth, dataModel.endianness.asByteOrder());
         teleIO = teleProcess;
-        ProgramError.check(Ints.isPowerOfTwoOrZero(teleIO.pageSize()), "Page size is not a power of 2: " + teleIO.pageSize());
+        TeleError.check(Ints.isPowerOfTwoOrZero(teleIO.pageSize()), "Page size is not a power of 2: " + teleIO.pageSize());
         indexShift = Integer.numberOfTrailingZeros(teleProcess.pageSize());
         offsetMask = teleProcess.pageSize() - 1;
         writeBuffer = ByteBuffer.wrap(new byte[Longs.SIZE]).order(byteOrder);

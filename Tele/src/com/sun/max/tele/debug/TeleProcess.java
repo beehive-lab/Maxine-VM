@@ -206,7 +206,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                         resumeExecution = false;
                         pauseRequestPending = false;
                     }
-                    ProgramError.check(eventCauseFound, "Process halted for no apparent cause");
+                    TeleError.check(eventCauseFound, "Process halted for no apparent cause");
                     if (resumeExecution) {
                         Trace.line(TRACE_VALUE + 1, tracePrefix() + "Resuming execution after handling event triggers: " + request);
                         restoreBreakpointsAndResume(request.withClientBreakpoints);
@@ -594,7 +594,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     try {
                         breakpoint = breakpointManager().makeTransientTargetBreakpoint(compiledCodeLocation);
                     } catch (MaxVMBusyException e) {
-                        ProgramError.unexpected("run to instruction should alwasy be executed inside VM lock on request handling thread");
+                        TeleError.unexpected("run to instruction should alwasy be executed inside VM lock on request handling thread");
                     }
                     breakpoint.setDescription("transient breakpoint for low-level run-to-instruction operation");
                 }

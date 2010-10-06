@@ -23,10 +23,9 @@ package com.sun.max.tele.channel.agent;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.program.*;
-import com.sun.max.tele.channel.TeleChannelDataIOProtocol;
-import com.sun.max.tele.channel.TeleChannelProtocol;
-import com.sun.max.tele.channel.iostream.TeleChannelDataIOProtocolImpl.*;
+import com.sun.max.tele.channel.*;
+import com.sun.max.tele.channel.iostream.TeleChannelDataIOProtocolImpl.ArrayMode;
+import com.sun.max.tele.util.*;
 
 /**
  * Base class for agent-side implementations of {@link TeleChannelProtocol}.
@@ -186,7 +185,7 @@ public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdapt
             threadData = bs.toByteArray();
             return bs.size();
         } catch (IOException ex) {
-            ProgramError.unexpected(getClass().getName() + ".gatherThreads unexpected I/O error: ", ex);
+            TeleError.unexpected(getClass().getName() + ".gatherThreads unexpected I/O error: ", ex);
         } finally {
             if (oos != null) {
                 try {

@@ -20,8 +20,8 @@
  */
 package com.sun.max.tele.method;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -32,7 +32,7 @@ public class TeleStaticMethodAccess extends TeleMethodAccess {
 
     public TeleStaticMethodAccess(TeleVM teleVM, Class holder, String name, SignatureDescriptor signature) {
         super(teleVM, holder, name, signature);
-        ProgramError.check(methodActor().isStatic());
+        TeleError.check(methodActor().isStatic());
     }
 
 }

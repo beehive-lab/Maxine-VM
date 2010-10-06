@@ -23,9 +23,9 @@ package com.sun.max.tele.debug;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Encapsulates the values of the state registers for a tele native thread.
@@ -53,7 +53,7 @@ public final class TeleStateRegisters extends TeleRegisters {
                 break;
             }
             default: {
-                throw FatalError.unimplemented();
+                throw TeleError.unimplemented();
             }
         }
     }
@@ -141,7 +141,7 @@ public final class TeleStateRegisters extends TeleRegisters {
             case SPARC:
                 return SparcStateRegister.ENUMERATOR;
             default:
-                throw FatalError.unimplemented();
+                throw TeleError.unimplemented();
         }
     }
 
@@ -164,7 +164,7 @@ public final class TeleStateRegisters extends TeleRegisters {
                 return SparcStateRegister.flagsToString(flags);
             }
             default: {
-                throw FatalError.unimplemented();
+                throw TeleError.unimplemented();
             }
         }
     }

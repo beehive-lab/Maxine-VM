@@ -21,8 +21,11 @@
 package com.sun.max.tele.channel.iostream;
 
 import java.io.*;
+
 import com.sun.max.program.*;
-import com.sun.max.tele.channel.TeleChannelDataIOProtocol;
+import com.sun.max.tele.channel.*;
+import com.sun.max.tele.channel.agent.*;
+import com.sun.max.tele.util.*;
 
 /**
  * An implementation of {@link TeleChannelDataIOProtocol} that communicates using {@link DataInputStream} and {@link DataOutputStream) and is
@@ -93,7 +96,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return false;
         }
     }
@@ -137,7 +140,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readInt();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return 0;
         }
     }
@@ -149,7 +152,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readLong();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return 0;
         }
     }
@@ -161,7 +164,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readInt();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return 0;
         }
     }
@@ -179,7 +182,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             final int result = in.readInt();
             return result;
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return 0;
         }
     }
@@ -202,7 +205,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             inByteArray(stateRegisters, 0, stateRegistersSize);
             return in.readBoolean();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return false;
         }
     }
@@ -214,7 +217,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readInt();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return 0;
         }
     }
@@ -226,7 +229,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readLong();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return 0;
         }
     }
@@ -240,7 +243,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return false;
         }
     }
@@ -253,7 +256,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return false;
         }
     }
@@ -267,7 +270,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return false;
         }
     }
@@ -279,7 +282,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readInt();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return 0;
         }
     }
@@ -292,7 +295,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return false;
         }
     }
@@ -305,7 +308,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return false;
         }
     }
@@ -317,7 +320,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return false;
         }
     }
@@ -329,7 +332,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readBoolean();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return false;
         }
     }
@@ -345,7 +348,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readInt();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return 0;
         }
     }
@@ -359,7 +362,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             out.flush();
             return in.readInt();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return 0;
         }
     }
@@ -374,7 +377,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
             inByteArray(gatherThreadData, 0, size);
             return in.readInt();
         } catch (IOException ex) {
-            ProgramError.unexpected(ex);
+            TeleError.unexpected(ex);
             return 0;
         }
     }
@@ -407,7 +410,7 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
     }
 
     private void unimplemented(String name) {
-        ProgramError.unexpected(getClass().getName() + "." + name + " unimplemented");
+        TeleError.unimplemented(getClass().getName() + "." + name);
     }
 
 }

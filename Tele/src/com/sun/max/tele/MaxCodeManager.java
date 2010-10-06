@@ -20,8 +20,8 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -48,9 +48,9 @@ public interface MaxCodeManager {
      * @param methodKey an abstract description of a method
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
-     * @throws ProgramError if methodKey is null
+     * @throws TeleError if methodKey is null
      */
-    MaxCodeLocation createBytecodeLocation(MethodKey methodKey, String description) throws ProgramError;
+    MaxCodeLocation createBytecodeLocation(MethodKey methodKey, String description) throws TeleError;
 
     /**
      * Creates a code location in the VM specified as a position in the bytecodes representation of a method
@@ -65,9 +65,9 @@ public interface MaxCodeManager {
      * @param bytecodePosition offset into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
-     * @throws ProgramError if teleClassMethodActor is null or bytecodePosition &lt; -1
+     * @throws TeleError if teleClassMethodActor is null or bytecodePosition &lt; -1
      */
-    MaxCodeLocation createBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws ProgramError;
+    MaxCodeLocation createBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws TeleError;
 
     /**
      * Creates a code location in VM specified as the memory address of a compiled machine code instruction.
@@ -77,9 +77,9 @@ public interface MaxCodeManager {
      * @param address a non-zero address in VM memory that represents the beginning of a compiled machine code instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a newly created location
-     * @throws ProgramError if the address is null or zero
+     * @throws TeleError if the address is null or zero
      */
-    MaxCodeLocation createMachineCodeLocation(Address address, String description) throws ProgramError;
+    MaxCodeLocation createMachineCodeLocation(Address address, String description) throws TeleError;
 
     /**
      * Creates a code location in the VM based on both a bytecode and compiled machine code description:
@@ -94,8 +94,8 @@ public interface MaxCodeManager {
      * @param bytecodePosition offset into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
-     * @throws ProgramError if the address is null or zero or  if teleClassMethodActor is null or bytecodePosition &lt; -1
+     * @throws TeleError if the address is null or zero or  if teleClassMethodActor is null or bytecodePosition &lt; -1
      */
-    MaxCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws ProgramError;
+    MaxCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws TeleError;
 
 }

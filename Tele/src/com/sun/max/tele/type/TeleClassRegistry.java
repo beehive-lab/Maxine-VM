@@ -168,7 +168,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
             }
             ClassID.setMapping(classIDMapping);
         } catch (Throwable throwable) {
-            ProgramError.unexpected("could not build inspector type registry", throwable);
+            TeleError.unexpected("could not build inspector type registry", throwable);
         }
         initialClassCount = count;
         initTracer.end(statsPrinter);
@@ -327,7 +327,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
             final Result_Type result = function.call();
             return result;
         } catch (Exception exception) {
-            throw ProgramError.unexpected(exception);
+            throw TeleError.unexpected(exception);
         } finally {
             usingTeleClassIDs.set(oldValue);
         }

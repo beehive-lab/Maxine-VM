@@ -24,10 +24,10 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -172,7 +172,7 @@ public final class Machine extends AbstractTeleVMHolder{
             try {
                 return (Throwable) vm.heap().makeTeleObject(throwableReference.asReference()).deepCopy();
             } catch (Exception e1) {
-                throw ProgramError.unexpected("Could not make a local copy of a remote Throwable", e1);
+                throw TeleError.unexpected("Could not make a local copy of a remote Throwable", e1);
             }
         } else {
             return (Throwable) throwableReference.asBoxedJavaValue();
@@ -252,7 +252,7 @@ public final class Machine extends AbstractTeleVMHolder{
 
     public void putStatic(int cpIndex, Value value) {
         if (vm() != null) {
-            ProgramError.unexpected("Cannot run putstatic remotely!");
+            TeleError.unexpected("Cannot run putstatic remotely!");
         } else {
             final ConstantPool cp = currentThread.frame().constantPool();
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
@@ -283,7 +283,7 @@ public final class Machine extends AbstractTeleVMHolder{
 
     public void putField(Object instance, int cpIndex, Value value) {
         if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
-            ProgramError.unexpected("Cannot run putfield remotely!");
+            TeleError.unexpected("Cannot run putfield remotely!");
         } else {
             final ConstantPool cp = currentThread.frame().constantPool();
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
@@ -371,7 +371,7 @@ public final class Machine extends AbstractTeleVMHolder{
 
             localArray = array;
         } else {
-            ProgramError.unexpected("readRemoteArray called without a primitive array type");
+            TeleError.unexpected("readRemoteArray called without a primitive array type");
         }
 
         return localArray;

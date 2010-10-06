@@ -23,13 +23,12 @@ package com.sun.max.tele.reference.direct;
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -91,7 +90,7 @@ public final class DirectInspectorReferenceScheme extends TeleReferenceScheme {
         if (ref.isZero()) {
             return false;
         } else if (ref instanceof LocalTeleReference) {
-            ProgramError.unexpected();
+            TeleError.unexpected();
         }
         return toOrigin(ref).isAllOnes();
     }
@@ -121,7 +120,7 @@ public final class DirectInspectorReferenceScheme extends TeleReferenceScheme {
             try {
                 return WithoutAccessCheck.getStaticField(javaClass, fieldActor.name.toString());
             } catch (Throwable throwable) {
-                ProgramError.unexpected("could not access static field: " + fieldActor.name, throwable);
+                TeleError.unexpected("could not access static field: " + fieldActor.name, throwable);
             }
         }
         final Class javaClass = object.getClass();
@@ -135,7 +134,7 @@ public final class DirectInspectorReferenceScheme extends TeleReferenceScheme {
         try {
             return WithoutAccessCheck.getInstanceField(object, fieldActor.name.toString());
         } catch (Throwable throwable) {
-            throw ProgramError.unexpected("could not access field: " + fieldActor.name, throwable);
+            throw TeleError.unexpected("could not access field: " + fieldActor.name, throwable);
         }
     }
 
@@ -406,7 +405,7 @@ public final class DirectInspectorReferenceScheme extends TeleReferenceScheme {
             try {
                 WithoutAccessCheck.setStaticField(javaClass, fieldActor.name.toString(), value);
             } catch (Throwable throwable) {
-                ProgramError.unexpected("could not access static field: " + fieldActor.name, throwable);
+                TeleError.unexpected("could not access static field: " + fieldActor.name, throwable);
             }
         } else {
             final Class javaClass = object.getClass();
@@ -706,22 +705,22 @@ public final class DirectInspectorReferenceScheme extends TeleReferenceScheme {
     }
 
     public Word compareAndSwapWord(Reference ref, Offset offset, Word expectedValue, Word newValue) {
-        FatalError.unimplemented();
+        TeleError.unimplemented();
         return Word.zero();
     }
 
     public Word compareAndSwapWord(Reference ref, int offset, Word expectedValue, Word newValue) {
-        FatalError.unimplemented();
+        TeleError.unimplemented();
         return Word.zero();
     }
 
     public Reference compareAndSwapReference(Reference ref, Offset offset, Reference expectedValue, Reference newValue) {
-        FatalError.unimplemented();
+        TeleError.unimplemented();
         return null;
     }
 
     public Reference compareAndSwapReference(Reference ref, int offset, Reference expectedValue, Reference newValue) {
-        FatalError.unimplemented();
+        TeleError.unimplemented();
         return null;
     }
 
@@ -735,11 +734,11 @@ public final class DirectInspectorReferenceScheme extends TeleReferenceScheme {
 
     @Override
     public byte[] asBytes(Pointer origin) {
-        throw FatalError.unimplemented();
+        throw TeleError.unimplemented();
     }
 
     @Override
     public byte[] nullAsBytes() {
-        throw FatalError.unimplemented();
+        throw TeleError.unimplemented();
     }
 }

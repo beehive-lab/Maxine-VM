@@ -37,8 +37,8 @@ import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Disassembler for machine code in the VM.
@@ -310,22 +310,22 @@ public final class TeleDisassembler {
         //final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
         switch (platform.instructionSet()) {
             case ARM:
-                FatalError.unimplemented();
+                TeleError.unimplemented();
                 return null;
             case AMD64: {
                 return new AMD64LoadLiteralParser(disassembler, codeStart);
             }
             case IA32:
-                FatalError.unimplemented();
+                TeleError.unimplemented();
                 return null;
             case PPC:
-                FatalError.unimplemented();
+                TeleError.unimplemented();
                 return null;
             case SPARC: {
                 return new SPARCLoadLiteralParser(disassembler, codeStart, code);
             }
         }
-        ProgramError.unknownCase();
+        TeleError.unknownCase();
         return null;
     }
 
