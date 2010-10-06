@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins.memory;
 
-import com.sun.max.ins.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;

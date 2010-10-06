@@ -24,7 +24,6 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import com.sun.max.ins.*;
 import com.sun.max.ins.gui.Inspector.MenuKind;
 import com.sun.max.ins.util.*;
 
