@@ -30,7 +30,10 @@ import javax.swing.table.*;
 
 import com.sun.max.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
+import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
+import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -171,10 +174,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
             } catch (UnsupportedFlavorException e) {
                 e.printStackTrace();
-                ProgramError.unexpected("Attempt to drop an unsupported data flavor");
+                InspectorError.unexpected("Attempt to drop an unsupported data flavor");
             } catch (IOException e) {
                 e.printStackTrace();
-                ProgramError.unexpected("Unknown drop failure");
+                InspectorError.unexpected("Unknown drop failure");
             }
             return false;
         }
@@ -516,7 +519,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                     menuBar.setStateColor(inspection.style().vmTerminatedBackgroundColor());
                     break;
                 default:
-                    ProgramError.unknownCase(maxVMState.processState().toString());
+                    InspectorError.unknownCase(maxVMState.processState().toString());
             }
         }
         repaint();
