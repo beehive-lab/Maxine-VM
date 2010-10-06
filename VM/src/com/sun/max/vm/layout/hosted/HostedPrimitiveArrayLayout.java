@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.layout.hosted;
 
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -29,8 +28,8 @@ import com.sun.max.vm.value.*;
  */
 public class HostedPrimitiveArrayLayout<Value_Type extends Value<Value_Type>> extends HostedArrayLayout<Value_Type> {
 
-    protected HostedPrimitiveArrayLayout(GripScheme gripScheme, Kind<Value_Type> elementKind) {
-        super(gripScheme, elementKind);
+    protected HostedPrimitiveArrayLayout(Kind<Value_Type> elementKind) {
+        super(elementKind);
     }
 
 }

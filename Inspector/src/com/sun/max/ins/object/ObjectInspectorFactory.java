@@ -181,7 +181,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
 
     public boolean isObjectInspectorObservingObject(long oid) {
         for (TeleObject teleObject : teleObjectToInspector.keySet()) {
-            if (teleObject.reference().grip().makeOID() == oid) {
+            if (teleObject.reference().makeOID() == oid) {
                 return true;
             }
         }

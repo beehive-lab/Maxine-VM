@@ -50,43 +50,43 @@ public final class Log {
     }
 
     @C_FUNCTION
-    private static native void log_print_buffer(Address val);
+    static native void log_print_buffer(Address val);
 
     @C_FUNCTION
-    private static native void log_print_boolean(boolean val);
+    static native void log_print_boolean(boolean val);
 
     @C_FUNCTION
-    private static native void log_print_char(int val);
+    static native void log_print_char(int val);
 
     @C_FUNCTION
-    private static native void log_print_int(int val);
+    static native void log_print_int(int val);
 
     @C_FUNCTION
-    private static native void log_print_long(long val);
+    static native void log_print_long(long val);
 
     @C_FUNCTION
-    private static native void log_print_float(float val);
+    static native void log_print_float(float val);
 
     @C_FUNCTION
-    private static native void log_print_double(double val);
+    static native void log_print_double(double val);
 
     @C_FUNCTION
-    private static native void log_print_word(Word val);
+    static native void log_print_word(Word val);
 
     @C_FUNCTION
-    private static native void log_print_newline();
+    static native void log_print_newline();
 
     @C_FUNCTION
-    private static native void log_print_symbol(Address address);
+    static native void log_print_symbol(Address address);
 
     @C_FUNCTION
-    private static native void log_lock();
+    static native void log_lock();
 
     @C_FUNCTION
-    private static native void log_unlock();
+    static native void log_unlock();
 
     @C_FUNCTION
-    private static native void log_flush();
+    static native void log_flush();
 
     /**
      * The singleton VM log output stream.

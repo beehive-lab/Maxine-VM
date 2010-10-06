@@ -168,8 +168,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     private Size initialTlabSize;
 
-    public HeapSchemeWithTLAB(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public HeapSchemeWithTLAB() {
     }
 
     @Override

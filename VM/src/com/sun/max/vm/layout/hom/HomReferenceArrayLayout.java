@@ -22,7 +22,6 @@ package com.sun.max.vm.layout.hom;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -33,8 +32,8 @@ import com.sun.max.vm.value.*;
  */
 public final class HomReferenceArrayLayout extends HomArrayLayout<ReferenceValue> implements ReferenceArrayLayout {
 
-    public HomReferenceArrayLayout(GripScheme gripScheme) {
-        super(gripScheme, Kind.REFERENCE);
+    public HomReferenceArrayLayout() {
+        super(Kind.REFERENCE);
     }
 
     @INLINE

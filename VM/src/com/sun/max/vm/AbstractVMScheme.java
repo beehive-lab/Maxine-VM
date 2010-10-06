@@ -28,15 +28,9 @@ import com.sun.max.program.*;
  */
 public abstract class AbstractVMScheme extends AbstractScheme {
 
-    private final VMConfiguration vmConfiguration;
     private final Class<? extends VMScheme> specification;
 
-    public VMConfiguration vmConfiguration() {
-        return vmConfiguration;
-    }
-
-    protected AbstractVMScheme(VMConfiguration vmConfiguration) {
-        this.vmConfiguration = vmConfiguration;
+    protected AbstractVMScheme() {
         Class<? extends VMScheme> specification = null;
         Class<?> implementation = getClass();
         ProgramError.check(VMScheme.class.isAssignableFrom(implementation), "Subclass of " + AbstractVMScheme.class + " must implement " + VMScheme.class + ": " + implementation);

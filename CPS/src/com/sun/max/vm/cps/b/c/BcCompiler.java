@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -33,7 +32,7 @@ import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.b.*;
 import com.sun.max.vm.cps.cir.*;
-import com.sun.max.vm.cps.cir.CirTraceObserver.*;
+import com.sun.max.vm.cps.cir.CirTraceObserver.TransformationType;
 import com.sun.max.vm.cps.cir.optimize.*;
 import com.sun.max.vm.cps.cir.snippet.*;
 import com.sun.max.vm.cps.cir.variable.*;
@@ -47,8 +46,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
 
     private final BirToCirTranslator birToCirTranslator;
 
-    public BcCompiler(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    public BcCompiler() {
         birToCirTranslator = new BirToCirTranslator(this);
     }
 

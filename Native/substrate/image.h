@@ -101,7 +101,6 @@ typedef struct image_StringInfo {
     char *instructionSet;
     char *operatingSystem;
 
-    char *gripPackageName;
     char *referencePackageName;
     char *layoutPackageName;
     char *heapPackageName;

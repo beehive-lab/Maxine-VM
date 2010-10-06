@@ -1604,10 +1604,6 @@ public abstract class ClassActor extends Actor implements RiType {
         return null;
     }
 
-    public WordWidth wordWidth() {
-        return dynamicHub.wordWidth();
-    }
-
     /**
      * Determines if a given object is an instance of this class. Unlike {@link Class#isInstance(Object)},
      * this method raises a {@link NullPointerException} if {@code object == null}.

@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.eir.amd64.unix;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.amd64.*;
@@ -39,8 +38,7 @@ import com.sun.max.vm.runtime.*;
 public class UnixAMD64EirTemplateABI extends UnixAMD64EirJavaABI {
 
     @HOSTED_ONLY
-    public UnixAMD64EirTemplateABI(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    public UnixAMD64EirTemplateABI() {
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = super.targetABI();
         final AMD64GeneralRegister64 bp = originalTargetABI.registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.CPU_FRAME_POINTER);
         final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> registerRoleAssignment =

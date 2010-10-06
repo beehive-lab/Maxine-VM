@@ -38,11 +38,9 @@ public abstract class TargetABIsScheme<IntegerRegister_Type extends Symbol, Floa
 
     public final TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> optimizedJavaABI;
 
-    protected TargetABIsScheme(VMConfiguration vmConfiguration,
-                               TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> nativeABI,
+    protected TargetABIsScheme(TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> nativeABI,
                                TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> jitABI,
                                TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> optimizedJavaABI) {
-        super(vmConfiguration);
         this.nativeABI = nativeABI;
         this.jitABI = jitABI;
         this.optimizedJavaABI = optimizedJavaABI;

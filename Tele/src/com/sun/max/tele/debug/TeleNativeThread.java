@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.debug;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.tele.MaxThreadState.*;
 
 import java.util.*;
@@ -38,7 +39,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.classfile.*;
@@ -144,7 +144,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
         this.handle = params.handle;
         this.entityName = "Thread-" + this.localHandle;
         this.entityDescription = "The thread named " + this.entityName + " in the " + teleProcess.vm().entityName();
-        final VMConfiguration vmConfiguration = teleProcess.vm().vmConfiguration();
         this.teleRegisterSet = new TeleRegisterSet(teleProcess.vm(), this);
         if (params.threadLocalsRegion == null) {
             final String name = this.entityName + " Locals (NULL, not allocated)";
@@ -153,7 +152,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             final String name = this.entityName + " Locals";
             this.threadLocalsBlock = new TeleThreadLocalsBlock(this, name, params.threadLocalsRegion.start(), params.threadLocalsRegion.size());
         }
-        this.breakpointIsAtInstructionPointer = vmConfiguration.platform.instructionSet() == InstructionSet.SPARC;
+        this.breakpointIsAtInstructionPointer = platform().instructionSet() == InstructionSet.SPARC;
         final String stackName = this.entityName + " Stack";
         this.teleStack = new TeleStack(teleProcess.vm(), this, stackName, params.stackRegion.start(), params.stackRegion.size());
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");

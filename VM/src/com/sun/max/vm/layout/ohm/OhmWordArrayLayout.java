@@ -22,7 +22,6 @@ package com.sun.max.vm.layout.ohm;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -31,8 +30,8 @@ import com.sun.max.vm.value.*;
  */
 public class OhmWordArrayLayout extends OhmPrimitiveArrayLayout<WordValue> implements com.sun.max.vm.layout.WordArrayLayout {
 
-    public OhmWordArrayLayout(GripScheme gripScheme) {
-        super(gripScheme, Kind.WORD);
+    public OhmWordArrayLayout() {
+        super(Kind.WORD);
     }
 
     @INLINE

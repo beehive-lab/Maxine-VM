@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -60,7 +62,7 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
 
         this.teleRegisterSet = teleRegisterSet;
         this.symbolizer = symbolizer;
-        this.endianness = teleVM.vmConfiguration().platform.endianness();
+        this.endianness = platform().endianness();
         this.registerValues = new Address[symbolizer.numberOfValues()];
         this.registerData = new byte[symbolizer.numberOfValues() * Address.size()];
         this.registerDataInputStream = new ByteArrayInputStream(registerData);

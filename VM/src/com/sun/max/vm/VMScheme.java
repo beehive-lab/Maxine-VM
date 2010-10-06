@@ -32,8 +32,6 @@ public interface VMScheme extends Scheme {
      */
     Class<? extends VMScheme> specification();
 
-    VMConfiguration vmConfiguration();
-
     /**
      * Performs any scheme specific actions when entering a given VM phase.
      *

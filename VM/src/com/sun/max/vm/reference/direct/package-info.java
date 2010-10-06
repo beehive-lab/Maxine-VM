@@ -18,18 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.grip.direct;
-
-import com.sun.max.vm.*;
-import com.sun.max.vm.grip.*;
-
 /**
+ * A reference scheme that uses the write barrier for references defined by the heap scheme.
+ *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-        registerScheme(GripScheme.class, DirectInspectorGripScheme.class);
-    }
-
-}
+package com.sun.max.vm.reference.direct;

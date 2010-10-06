@@ -20,15 +20,14 @@
  */
 package test.com.sun.max.vm.jtrun.all;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
-
 import test.com.sun.max.vm.jtrun.*;
+
+import com.sun.max.annotate.*;
 
 public class JTRunScheme extends JTAbstractRunScheme {
 
-    public JTRunScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public JTRunScheme() {
     }
 
     @Override

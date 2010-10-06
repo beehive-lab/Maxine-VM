@@ -21,7 +21,6 @@
 package test.com.sun.max.vm.jit.amd64;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.amd64.*;
 import test.com.sun.max.vm.jit.*;
@@ -51,7 +50,7 @@ public class AMD64JITTestSetup extends AMD64TranslatorTestSetup implements JITTe
     }
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
-        return new AMD64JitCompiler(vmConfig(), templateTable);
+        return new AMD64JitCompiler(templateTable);
     }
 
     public boolean disassembleCompiledMethods() {

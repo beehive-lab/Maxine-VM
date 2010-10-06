@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
@@ -371,7 +372,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the path of the Java home
      */
     private static String findJavaHome() {
-        switch (vmConfig().platform.operatingSystem) {
+        switch (platform().operatingSystem) {
             case GUESTVM:
             case SOLARIS:
             case LINUX: {
@@ -417,7 +418,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the java library path as determined from the OS environment
      */
     private static String getenvJavaLibraryPath() {
-        switch (vmConfig().platform.operatingSystem) {
+        switch (platform().operatingSystem) {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
@@ -438,7 +439,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the Java class path as determined from the OS environment
      */
     private static String getenvClassPath() {
-        switch (vmConfig().platform.operatingSystem) {
+        switch (platform().operatingSystem) {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
@@ -906,7 +907,7 @@ public final class JDK_java_lang_System {
         if (libraryName == null) {
             throw new NullPointerException();
         }
-        switch (vmConfig().platform.operatingSystem) {
+        switch (platform().operatingSystem) {
             case DARWIN:
                 // System.loadLibrary() first wants to look for a library with the extension ".jnilib",
                 // then if the library was not found, try again with extension ".dylib".

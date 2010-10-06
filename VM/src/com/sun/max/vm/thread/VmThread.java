@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.thread;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
@@ -33,7 +34,6 @@ import sun.misc.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -78,6 +78,9 @@ import com.sun.max.vm.value.*;
  * Low addresses
  * </pre>
  *
+ * The stack layout for each thread is traced when a thread starts up if
+ * the {@link #TraceThreads -XX:+TraceThreads} VM option is used.
+ *
  * @see VmThreadLocal
  *
  * @author Bernd Mathiske
@@ -89,7 +92,7 @@ public class VmThread {
 
     static boolean TraceThreads;
     static {
-        VMOptions.addFieldOption("-XX:", "TraceThreads",  VmThread.class, "Trace thread management activity for debugging purposes.", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "TraceThreads",  VmThread.class, "Trace thread start-up and shutdown.", MaxineVM.Phase.PRISTINE);
     }
 
     private static final Size DEFAULT_STACK_SIZE = Size.K.times(256);
@@ -321,7 +324,7 @@ public class VmThread {
      * Initializes the VM thread system and starts the main Java thread.
      */
     public static void createAndRunMainThread() {
-        final Size requestedStackSize = STACK_SIZE_OPTION.getValue().aligned(Platform.platform().pageSize).asSize();
+        final Size requestedStackSize = STACK_SIZE_OPTION.getValue().aligned(platform().pageSize).asSize();
 
         final Word nativeThread = nativeThreadCreate(mainThread.id, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
@@ -470,7 +473,7 @@ public class VmThread {
         }
 
         HIGHEST_STACK_SLOT_ADDRESS.setConstantWord(threadLocals, stackEnd);
-        LOWEST_STACK_SLOT_ADDRESS.setConstantWord(threadLocals, stackYellowZone.plus(Platform.platform().pageSize));
+        LOWEST_STACK_SLOT_ADDRESS.setConstantWord(threadLocals, stackYellowZone.plus(platform().pageSize));
 
         thread.nativeThread = nativeThread;
         thread.vmThreadLocals = threadLocals;
@@ -765,30 +768,30 @@ public class VmThread {
      * Gets the size of the yellow stack guard zone.
      */
     public static int yellowZoneSize() {
-        return STACK_YELLOW_ZONE_PAGES * Platform.platform().pageSize;
+        return STACK_YELLOW_ZONE_PAGES * platform().pageSize;
     }
 
     /**
      * Gets the size of the red stack guard zone.
      */
     public static int redZoneSize() {
-        return STACK_YELLOW_ZONE_PAGES * Platform.platform().pageSize;
+        return STACK_YELLOW_ZONE_PAGES * platform().pageSize;
     }
 
-    private static Address traceStackRegion(String label, Address base, Address start, Address end, Address lastRegionStart, int usedStackSize) {
-        return traceStackRegion(label, base, start, end.minus(start).toInt(), lastRegionStart, usedStackSize);
+    private static Address traceRegion(String label, Address areaStart, Address regionStart, Address regionEnd, Address lastRegionStart, int areaSize) {
+        return traceRegion(label, areaStart, regionStart, regionEnd.minus(regionStart).toInt(), lastRegionStart, areaSize);
     }
 
-    private static Address traceStackRegion(String label, Address base, Address start, int size, Address lastRegionStart, int usedStackSize) {
-        FatalError.check(lastRegionStart.isZero() || start.lessEqual(lastRegionStart), "Overlapping stack regions");
-        if (size > 0) {
-            final Address end = start.plus(size);
-            FatalError.check(lastRegionStart.isZero() || end.lessEqual(lastRegionStart), "Overlapping stack regions");
-            final int startOffset = start.minus(base).toInt();
-            final int endOffset = startOffset + size;
-            if (lastRegionStart.isZero() || !lastRegionStart.equals(end)) {
-                Log.print("  +----- ");
-                Log.print(end);
+    private static Address traceRegion(String label, Address areaStart, Address regionStart, int regionSize, Address lastRegionStart, int areaSize) {
+        FatalError.check(lastRegionStart.isZero() || regionStart.lessEqual(lastRegionStart), "Overlapping regions");
+        if (regionSize > 0) {
+            final Address regionEnd = regionStart.plus(regionSize);
+            FatalError.check(lastRegionStart.isZero() || regionEnd.lessEqual(lastRegionStart), "Overlapping regions");
+            final int startOffset = regionStart.minus(areaStart).toInt();
+            final int endOffset = startOffset + regionSize;
+            if (lastRegionStart.isZero() || !lastRegionStart.equals(regionEnd)) {
+                Log.print("  +--------- ");
+                Log.print(regionEnd);
                 Log.print("  [");
                 Log.print(endOffset >= 0 ? "+" : "");
                 Log.print(endOffset);
@@ -798,19 +801,19 @@ public class VmThread {
             Log.print("  | ");
             Log.print(label);
             Log.print(" [");
-            Log.print(size);
+            Log.print(regionSize);
             Log.print(" bytes, ");
-            Log.print(((float) size * 100) / usedStackSize);
+            Log.print(((float) regionSize * 100) / areaSize);
             Log.println("%]");
             Log.println("  |");
-            Log.print("  +----- ");
-            Log.print(start);
+            Log.print("  +--------- ");
+            Log.print(regionStart);
             Log.print(" [");
             Log.print(startOffset >= 0 ? "+" : "");
             Log.print(startOffset);
             Log.println("]");
         }
-        return start;
+        return regionStart;
     }
 
     /**
@@ -971,14 +974,34 @@ public class VmThread {
             Log.print("\", native id=");
             Log.print(nativeThread);
             Log.println("]:");
-            Log.println("  Stack layout:");
+            Log.println("Stack layout:");
             Address lastRegionStart = Address.zero();
             final int stackSize = stackEnd.minus(stackBase).toInt();
             final Pointer stackPointer = VMRegister.getCpuStackPointer();
-            lastRegionStart = traceStackRegion("OS thread specific data and native frames", stackBase, stackPointer, stackEnd, lastRegionStart, stackSize);
-            lastRegionStart = traceStackRegion("Frame of Java methods, native stubs and native functions", stackBase, stackYellowZoneEnd(), stackPointer, lastRegionStart, stackSize);
-            lastRegionStart = traceStackRegion("Stack yellow zone", stackBase, stackYellowZone, stackYellowZoneEnd(), lastRegionStart, stackSize);
-            lastRegionStart = traceStackRegion("Stack red zone", stackBase, stackRedZone(), stackYellowZone, lastRegionStart, stackSize);
+            lastRegionStart = traceRegion("OS thread specific data and native frames", stackBase, stackPointer, stackEnd, lastRegionStart, stackSize);
+            lastRegionStart = traceRegion("Frame of Java methods, native stubs and native functions", stackBase, stackYellowZoneEnd(), stackPointer, lastRegionStart, stackSize);
+            lastRegionStart = traceRegion("Stack yellow zone", stackBase, stackYellowZone, stackYellowZoneEnd(), lastRegionStart, stackSize);
+            lastRegionStart = traceRegion("Stack red zone", stackBase, stackRedZone(), stackYellowZone, lastRegionStart, stackSize);
+
+            lastRegionStart = Address.zero();
+            Address ntl = NATIVE_THREAD_LOCALS.getConstantWord().asAddress();
+            Pointer triggeredTL = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord().asPointer();
+            Pointer enabledTL = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
+            Pointer disabledTL = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer();
+            Pointer tlb = triggeredTL.roundedDownBy(platform().pageSize);
+            Address refMap = STACK_REFERENCE_MAP.getConstantWord().asAddress();
+            Address tlbEnd = refMap.plus(STACK_REFERENCE_MAP_SIZE.getConstantWord().asAddress());
+            int tlbSize = tlbEnd.minus(tlb).toInt();
+            Log.println();
+            Log.println("Thread locals block layout:");
+            lastRegionStart = traceRegion("reference map", tlb, refMap, tlbEnd, lastRegionStart, tlbSize);
+            lastRegionStart = traceRegion("native thread locals", tlb, ntl, refMap, lastRegionStart, tlbSize);
+            lastRegionStart = traceRegion("safepoints-disabled thread locals area", tlb, disabledTL, ntl, lastRegionStart, tlbSize);
+            lastRegionStart = traceRegion("safepoints-enabled thread locals area", tlb, enabledTL, disabledTL, lastRegionStart, tlbSize);
+            lastRegionStart = traceRegion("safepoints-triggered thread locals area", tlb, triggeredTL, enabledTL, lastRegionStart, tlbSize);
+            lastRegionStart = traceRegion("unmapped page", tlb, tlb, triggeredTL, lastRegionStart, tlbSize);
+
+            Log.println();
             Log.printThreadLocals(vmThreadLocals, true);
             Log.unlock(lockDisabledSafepoints);
         }
@@ -1035,7 +1058,7 @@ public class VmThread {
 
     /**
      * Sets or clears the exception to be thrown once this thread returns from the native function most recently entered
-     * via a {@linkplain NativeStubGenerator native stub}. This mechanism is used to propogate exceptions through native
+     * via a {@linkplain NativeStubGenerator native stub}. This mechanism is used to propagate exceptions through native
      * frames and should be used used for any other purpose.
      *
      * @param exception if non-null, this exception will be raised upon returning from the closest native function on
@@ -1097,7 +1120,7 @@ public class VmThread {
     public final void start0() {
         assert state == Thread.State.NEW;
         state = Thread.State.RUNNABLE;
-        VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().aligned(Platform.platform().pageSize).asSize(), javaThread.getPriority());
+        VmThreadMap.ACTIVE.startThread(this, STACK_SIZE_OPTION.getValue().aligned(platform().pageSize).asSize(), javaThread.getPriority());
     }
 
     public final boolean isInterrupted(boolean clearInterrupted) {

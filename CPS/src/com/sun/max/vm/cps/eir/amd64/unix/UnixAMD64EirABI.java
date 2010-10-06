@@ -20,20 +20,19 @@
  */
 package com.sun.max.vm.cps.eir.amd64.unix;
 
+import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.cps.eir.amd64.AMD64EirRegister.General.*;
 import static com.sun.max.vm.cps.eir.amd64.AMD64EirRegister.XMM.*;
 
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
-import com.sun.max.vm.cps.eir.EirStackSlot.*;
+import com.sun.max.vm.cps.eir.EirStackSlot.Purpose;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -178,13 +177,13 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
         allocatableRegisters.remove(register);
     }
 
-    private static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI(VMConfiguration vmConfiguration) {
+    private static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> initTargetABI() {
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        return Utils.cast(type, vmConfiguration.targetABIsScheme().optimizedJavaABI);
+        return Utils.cast(type, vmConfig().targetABIsScheme().optimizedJavaABI);
     }
 
-    protected UnixAMD64EirABI(VMConfiguration vmConfiguration) {
-        super(vmConfiguration, targetABI(vmConfiguration));
+    protected UnixAMD64EirABI() {
+        super(initTargetABI());
         resultRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
         resultRegisters.add((AMD64EirRegister) getResultLocation(Kind.LONG));
         resultRegisters.add((AMD64EirRegister) getResultLocation(Kind.DOUBLE));

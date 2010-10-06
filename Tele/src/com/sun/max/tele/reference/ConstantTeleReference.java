@@ -18,7 +18,46 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.tele.reference;
+
+import com.sun.max.unsafe.*;
+
 /**
+ * The raw bits do not change.
+ *
  * @author Bernd Mathiske
  */
-package com.sun.max.vm.grip;
+public abstract class ConstantTeleReference extends RemoteTeleReference {
+
+    private final Address raw;
+
+    @Override
+    public Address raw() {
+        return raw;
+    }
+
+    protected ConstantTeleReference(TeleReferenceScheme teleReferenceScheme, Address rawRef) {
+        super(teleReferenceScheme);
+        raw = rawRef;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof ConstantTeleReference) {
+            final ConstantTeleReference constantTeleRef = (ConstantTeleReference) other;
+            return raw.equals(constantTeleRef.raw);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return raw.toInt();
+    }
+
+    @Override
+    public String toString() {
+        return raw().toString();
+    }
+
+}

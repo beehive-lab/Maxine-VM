@@ -24,7 +24,6 @@ import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -41,22 +40,6 @@ public abstract class Reference implements Accessor {
         return vmConfig().referenceScheme();
     }
 
-    @UNSAFE
-    @FOLD
-    private static GripScheme gripScheme() {
-        return vmConfig().gripScheme();
-    }
-
-    @INLINE
-    public static Reference fromGrip(Grip grip) {
-        return referenceScheme().fromGrip(grip);
-    }
-
-    @INLINE
-    public final Grip toGrip() {
-        return gripScheme().fromReference(this);
-    }
-
     @INLINE
     public static Reference fromJava(Object object) {
         return referenceScheme().fromJava(object);
@@ -69,12 +52,12 @@ public abstract class Reference implements Accessor {
 
     @INLINE
     public static Reference fromOrigin(Pointer origin) {
-        return fromGrip(gripScheme().fromOrigin(origin));
+        return referenceScheme().fromOrigin(origin);
     }
 
     @INLINE
     public final Pointer toOrigin() {
-        return gripScheme().fromReference(this).toOrigin();
+        return referenceScheme().toOrigin(this);
     }
 
     @INLINE
@@ -84,17 +67,37 @@ public abstract class Reference implements Accessor {
 
     @INLINE
     public final boolean isZero() {
-        return gripScheme().isZero(toGrip());
+        return referenceScheme().isZero(this);
+    }
+
+    @INLINE
+    public static Reference zero() {
+        return referenceScheme().zero();
     }
 
     @INLINE
     public final boolean isAllOnes() {
-        return gripScheme().isAllOnes(toGrip());
+        return referenceScheme().isAllOnes(this);
     }
 
     @INLINE
-    public final boolean equals(Reference other) {
-        return gripScheme().equals(toGrip(), other.toGrip());
+    public boolean equals(Reference other) {
+        return other == this;
+    }
+
+    @INLINE
+    public final boolean isMarked() {
+        return referenceScheme().isMarked(this);
+    }
+
+    @INLINE
+    public final Reference marked() {
+        return referenceScheme().marked(this);
+    }
+
+    @INLINE
+    public final Reference unmarked() {
+        return referenceScheme().unmarked(this);
     }
 
     @INLINE
@@ -230,21 +233,6 @@ public abstract class Reference implements Accessor {
     @INLINE
     public final Word getWord(int displacement, int index) {
         return referenceScheme().getWord(this, displacement, index);
-    }
-
-    @INLINE
-    public final Grip readGrip(Offset offset) {
-        return referenceScheme().readReference(this, offset).toGrip();
-    }
-
-    @INLINE
-    public final Grip readGrip(int offset) {
-        return referenceScheme().readReference(this, offset).toGrip();
-    }
-
-    @INLINE
-    public final Grip getGrip(int displacement, int index) {
-        return referenceScheme().getReference(this, displacement, index).toGrip();
     }
 
     @INLINE
@@ -395,21 +383,6 @@ public abstract class Reference implements Accessor {
     @INLINE
     public final void setWord(int displacement, int index, Word value) {
         referenceScheme().setWord(this, displacement, index, value);
-    }
-
-    @INLINE
-    public final void writeGrip(Offset offset, Grip value) {
-        referenceScheme().writeReference(this, offset, value.toReference());
-    }
-
-    @INLINE
-    public final void writeGrip(int offset, Grip value) {
-        referenceScheme().writeReference(this, offset, value.toReference());
-    }
-
-    @INLINE
-    public final void setGrip(int displacement, int index, Grip value) {
-        referenceScheme().setReference(this, displacement, index, value.toReference());
     }
 
     @INLINE

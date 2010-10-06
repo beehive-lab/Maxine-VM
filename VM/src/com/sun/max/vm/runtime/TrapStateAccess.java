@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 
 import java.lang.reflect.*;
@@ -56,7 +57,7 @@ public abstract class TrapStateAccess {
     @HOSTED_ONLY
     public static TrapStateAccess create(VMConfiguration vmConfiguration) {
         try {
-            final String isa = vmConfiguration.platform.instructionSet().name();
+            final String isa = platform().instructionSet().name();
             final Class<?> trapStateAccessClass = Class.forName(MaxPackage.fromClass(TrapStateAccess.class).subPackage(isa.toLowerCase()).name()
                                                   + "." + isa + TrapStateAccess.class.getSimpleName());
             final Constructor<?> constructor = trapStateAccessClass.getConstructor(VMConfiguration.class);

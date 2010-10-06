@@ -24,9 +24,8 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -46,10 +45,6 @@ public class HostedTupleLayout extends HostedGeneralLayout implements TupleLayou
 
     public Size specificSize(Accessor accessor) {
         throw ProgramError.unexpected();
-    }
-
-    public HostedTupleLayout(GripScheme gripScheme) {
-        super(gripScheme);
     }
 
     public int headerSize() {

@@ -43,7 +43,7 @@ public class InvalidReferenceException extends RuntimeException {
     @Override
     public String getMessage() {
         try {
-            return "Reference " + reference.toGrip().toOrigin().toHexString() + " does not point at a valid heap object";
+            return "Reference " + reference.toOrigin().toHexString() + " does not point at a valid heap object";
         } catch (Throwable t) {
             return "Error converting invalid reference to string: " + t;
         }

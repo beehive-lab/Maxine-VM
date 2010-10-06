@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.object;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.logging.*;
@@ -69,7 +71,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
      */
     public int getLength() {
         if (length < 0) {
-            length = vm().layoutScheme().arrayHeaderLayout.readLength(reference());
+            length = vmConfig().layoutScheme().arrayHeaderLayout.readLength(reference());
         }
         return length;
     }
@@ -84,7 +86,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public Size objectSize() {
-        return vm().layoutScheme().arrayHeaderLayout.getArraySize(componentKind(), length);
+        return vmConfig().layoutScheme().arrayHeaderLayout.getArraySize(componentKind(), length);
     }
 
     @Override

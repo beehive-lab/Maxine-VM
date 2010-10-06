@@ -21,6 +21,8 @@
 /*VCSID=e74ecb84-ca6a-4129-a3b6-b9f3408cec81*/
 package com.sun.max.tele.value;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -28,7 +30,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
@@ -128,11 +129,6 @@ public final class TeleReferenceValue extends ReferenceValue {
     }
 
     @Override
-    public Grip asGrip() {
-        return reference.grip();
-    }
-
-    @Override
     public Reference asReference() {
         return reference;
     }
@@ -148,7 +144,7 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public Word toWord() {
-        return teleVM.vmConfiguration().gripScheme().toOrigin(reference.grip());
+        return vmConfig().referenceScheme().toOrigin(reference);
     }
 
     @Override

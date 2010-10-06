@@ -20,34 +20,31 @@
  */
 package com.sun.max.vm.layout.hom;
 
-import com.sun.max.vm.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public class HomLayoutScheme extends LayoutScheme {
 
-    public HomLayoutScheme(VMConfiguration vmConfiguration, GripScheme gripScheme) {
-        super(vmConfiguration,
-              new HomGeneralLayout(gripScheme),
-              new HomTupleLayout(gripScheme),
-              new HomHybridLayout(gripScheme),
-              new HomArrayHeaderLayout(gripScheme),
-              new HomByteArrayLayout(gripScheme),
-              new HomBooleanArrayLayout(gripScheme),
-              new HomShortArrayLayout(gripScheme),
-              new HomCharArrayLayout(gripScheme),
-              new HomIntArrayLayout(gripScheme),
-              new HomFloatArrayLayout(gripScheme),
-              new HomLongArrayLayout(gripScheme),
-              new HomDoubleArrayLayout(gripScheme),
-              new HomWordArrayLayout(gripScheme),
-              new HomReferenceArrayLayout(gripScheme));
+    public HomLayoutScheme() {
+        super(new HomGeneralLayout(),
+              new HomTupleLayout(),
+              new HomHybridLayout(),
+              new HomArrayHeaderLayout(),
+              new HomByteArrayLayout(),
+              new HomBooleanArrayLayout(),
+              new HomShortArrayLayout(),
+              new HomCharArrayLayout(),
+              new HomIntArrayLayout(),
+              new HomFloatArrayLayout(),
+              new HomLongArrayLayout(),
+              new HomDoubleArrayLayout(),
+              new HomWordArrayLayout(),
+              new HomReferenceArrayLayout());
     }
 
 }

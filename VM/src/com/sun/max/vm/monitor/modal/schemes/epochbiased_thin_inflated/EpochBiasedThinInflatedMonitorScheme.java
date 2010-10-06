@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.schemes.epochbiased_thin_inflated;
 
-import com.sun.max.vm.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
@@ -33,8 +33,9 @@ import com.sun.max.vm.monitor.modal.schemes.*;
  * @author Simon Wilkinson
  */
 public class EpochBiasedThinInflatedMonitorScheme extends ModalMonitorScheme {
-    public EpochBiasedThinInflatedMonitorScheme(VMConfiguration vmConfiguration) {
-         super(vmConfiguration, BiasedLockModeHandler.asFastPath(true,
+    @HOSTED_ONLY
+    public EpochBiasedThinInflatedMonitorScheme() {
+         super(BiasedLockModeHandler.asFastPath(true,
                                 ThinLockModeHandler.asBiasedLockDelegate(
                                 InflatedMonitorModeHandler.asThinLockDelegate())));
     }

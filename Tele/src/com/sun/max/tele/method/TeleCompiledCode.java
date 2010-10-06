@@ -21,6 +21,7 @@
 package com.sun.max.tele.method;
 
 import static com.sun.max.asm.dis.Disassembler.*;
+import static com.sun.max.platform.Platform.*;
 
 import java.io.*;
 import java.util.*;
@@ -230,16 +231,16 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
 
     public String targetLocationToString(TargetLocation targetLocation) {
         final String framePointerRegisterName =
-            TeleIntegerRegisters.symbolizer(vm().vmConfiguration()).fromValue(teleTargetMethod.getAbi().framePointer().value()).toString();
+            TeleIntegerRegisters.createSymbolizer().fromValue(teleTargetMethod.getAbi().framePointer().value()).toString();
 
         switch (targetLocation.tag()) {
             case INTEGER_REGISTER: {
                 final TargetLocation.IntegerRegister integerRegister = (TargetLocation.IntegerRegister) targetLocation;
-                return TeleIntegerRegisters.symbolizer(vm().vmConfiguration()).fromValue(integerRegister.index()).toString();
+                return TeleIntegerRegisters.createSymbolizer().fromValue(integerRegister.index()).toString();
             }
             case FLOATING_POINT_REGISTER: {
                 final TargetLocation.FloatingPointRegister floatingPointRegister = (TargetLocation.FloatingPointRegister) targetLocation;
-                return TeleFloatingPointRegisters.symbolizer(vm().vmConfiguration()).fromValue(floatingPointRegister.index()).toString();
+                return TeleFloatingPointRegisters.createSymbolizer().fromValue(floatingPointRegister.index()).toString();
             }
             case LOCAL_STACK_SLOT: {
                 final TargetLocation.LocalStackSlot localStackSlot = (TargetLocation.LocalStackSlot) targetLocation;
@@ -274,7 +275,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         writer.println("compilation: " + compilationIndex());
         teleTargetMethod.disassemble(writer);
         writer.flush();
-        final Platform platform = vm().vmConfiguration().platform;
+        final Platform platform = platform();
         final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod().encodedInlineDataDescriptors());
         final Address startAddress = getCodeStart();
         final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {

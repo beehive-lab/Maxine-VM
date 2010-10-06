@@ -26,12 +26,12 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.grip.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -238,9 +238,9 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     protected void refreshView(boolean force) {
         if (teleObject.isObsolete() && followingTeleObject) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().grip().getForwardedTeleGrip().toOrigin().toHexString());
+            Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardedTeleRef().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
-            if (factory.isObjectInspectorObservingObject(forwardedTeleObject.reference().grip().makeOID())) {
+            if (factory.isObjectInspectorObservingObject(forwardedTeleObject.reference().makeOID())) {
                 followingTeleObject = false;
                 setWarning();
                 setTitle();

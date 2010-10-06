@@ -20,13 +20,14 @@
  */
 package com.sun.max.tele.type;
 
+import static com.sun.max.vm.VMConfiguration.*;
+
 import java.util.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.grip.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
@@ -148,11 +149,11 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
             } else {
                 final Reference typeDescriptorToClassActorReference = vm().teleFields().ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryReference);
                 tableReference = vm().teleFields().HashMap_table.readReference(typeDescriptorToClassActorReference);
-                final int length = vm().layoutScheme().arrayHeaderLayout.readLength(tableReference);
+                final int length = vmConfig().layoutScheme().arrayHeaderLayout.readLength(tableReference);
                 for (int i = 0; i < length; i++) {
                     Reference entryReference = vm().readReference(tableReference, i);
                     while (!entryReference.isZero()) {
-                        if (entryReference.toGrip() instanceof TemporaryTeleGrip && TeleVM.isAttaching()) {
+                        if (entryReference instanceof TemporaryTeleReference && TeleVM.isAttaching()) {
                             // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not fully initialized yet.
                             // so we add it to a fix-up list and handle it later
                             attachFixupList.add(i);

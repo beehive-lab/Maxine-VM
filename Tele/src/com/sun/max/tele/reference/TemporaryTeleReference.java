@@ -18,23 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.grip.hosted;
+package com.sun.max.tele.reference;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.grip.*;
+import com.sun.max.unsafe.*;
 
 /**
+ * Non-GC safe.
+ * Constant tele reference without canonicalization.
+ * For temporary use only.
+ *
  * @author Bernd Mathiske
  */
-@HOSTED_ONLY
-public class Package extends VMPackage {
-    public Package() {
-        registerScheme(GripScheme.class, HostedGripScheme.class);
+public final class TemporaryTeleReference extends ConstantTeleReference {
+
+    TemporaryTeleReference(TeleReferenceScheme teleReferenceScheme, Address raw) {
+        super(teleReferenceScheme, raw);
     }
 
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return false;
+    public TeleObjectMemory.State getTeleObjectMemoryState() {
+        return TeleObjectMemory.State.DEAD;
     }
 }

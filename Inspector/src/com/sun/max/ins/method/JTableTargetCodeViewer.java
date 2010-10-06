@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.method;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;
@@ -645,7 +647,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        InstructionSet instructionSet = vm().vmConfiguration().platform.instructionSet();
+        InstructionSet instructionSet = platform().instructionSet();
         switch (instructionSet) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;

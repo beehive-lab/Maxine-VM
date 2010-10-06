@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.target.sparc;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.vm.*;
@@ -36,6 +38,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.platform.instructionSet() == InstructionSet.SPARC;
+        return platform().instructionSet() == InstructionSet.SPARC;
     }
 }

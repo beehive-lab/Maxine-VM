@@ -20,11 +20,12 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.trampoline.*;
 
@@ -53,9 +54,9 @@ public abstract class DynamicTrampolineExit {
     public abstract Address trampolineReturnAddress(DynamicTrampoline dynamicTrampoline, Address vtableEntryPoint, Pointer stackPointer);
 
     @HOSTED_ONLY
-    public static DynamicTrampolineExit create(VMConfiguration vmConfiguration) {
+    public static DynamicTrampolineExit create() {
         try {
-            final String isa = vmConfiguration.platform.instructionSet().name();
+            final String isa = platform().instructionSet().name();
             final Class<?> dynamicTrampolineExitClass = Class.forName(MaxPackage.fromClass(DynamicTrampolineExit.class).subPackage(isa.toLowerCase()).name() + "." + isa + DynamicTrampolineExit.class.getSimpleName());
             return (DynamicTrampolineExit) dynamicTrampolineExitClass.newInstance();
         } catch (Exception exception) {

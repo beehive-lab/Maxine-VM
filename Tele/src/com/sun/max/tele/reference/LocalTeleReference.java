@@ -18,25 +18,62 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.grip;
+package com.sun.max.tele.reference;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.reference.*;
 
 /**
- * Non-GC safe.
- * Constant tele grip without canonicalization.
- * For temporary use only.
+ * A local object wrapped into a {@link Reference} for tele interpreter use.
  *
  * @author Bernd Mathiske
  */
-public final class TemporaryTeleGrip extends ConstantTeleGrip {
+public class LocalTeleReference extends TeleReference {
 
-    TemporaryTeleGrip(TeleGripScheme teleGripScheme, Address raw) {
-        super(teleGripScheme, raw);
+    private final Object object;
+
+    public Object object() {
+        return object;
     }
 
     @Override
     public TeleObjectMemory.State getTeleObjectMemoryState() {
-        return TeleObjectMemory.State.DEAD;
+        return TeleObjectMemory.State.LIVE;
+    }
+
+    private final TeleReferenceScheme teleReferenceScheme;
+
+    LocalTeleReference(TeleReferenceScheme teleReferenceScheme, Object object) {
+        this.teleReferenceScheme = teleReferenceScheme;
+        this.object = object;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        teleReferenceScheme.disposeCanonicalLocalReference(object);
+        super.finalize();
+    }
+
+    @Override
+    public String toString() {
+        return object.toString();
+    }
+
+    @Override
+    public boolean isLocal() {
+        return true;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof LocalTeleReference) {
+            final LocalTeleReference localTeleRef = (LocalTeleReference) other;
+            return object == localTeleRef.object();
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(object);
     }
 }

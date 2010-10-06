@@ -20,12 +20,13 @@
  */
 package com.sun.max.vm.hosted;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.io.*;
-import java.lang.ref.*;
+import java.lang.ref.Reference;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -45,13 +46,13 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.GraphPrototype.ClassInfo;
 import com.sun.max.vm.hosted.GraphPrototype.ReferenceFieldInfo;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.SpecificLayout.ObjectCellVisitor;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -463,7 +464,7 @@ public final class DataPrototype extends Prototype {
          * @param object the object for which to find the origin
          * @return the origin for {@code object}
          */
-        Address originFor(Object object) {
+        Pointer originFor(Object object) {
             final Address cell = objectToCell(object);
             // This will occur if some code is executed after the GraphPrototype has been created where that
             // code mutates the object graph.
@@ -492,7 +493,7 @@ public final class DataPrototype extends Prototype {
 
         final byte[] data;
         final boolean[] used;
-        final byte[] nullGripBytes;
+        final byte[] nullRefBytes;
 
         /**
          * Creates a new instance for the specified memory region with the specified name.
@@ -504,7 +505,7 @@ public final class DataPrototype extends Prototype {
             super(region, name);
             data = new byte[region.size().roundedUpBy(pageSize).toInt()];
             used = new boolean[data.length];
-            nullGripBytes = gripScheme.createPrototypeNullGrip();
+            nullRefBytes = referenceScheme.nullAsBytes();
         }
 
         /**
@@ -571,7 +572,7 @@ public final class DataPrototype extends Prototype {
         private void write(Value value, int offsetInCell) {
             final byte[] valueBytes;
             if (value.kind().isReference) {
-                valueBytes = (value.asObject() == null) ? nullGripBytes : gripScheme.createPrototypeGrip(originFor(value.asObject()));
+                valueBytes = (value.asObject() == null) ? nullRefBytes : referenceScheme.asBytes(originFor(value.asObject()));
             } else {
                 valueBytes = value.toBytes(dataModel);
             }
@@ -1119,7 +1120,7 @@ public final class DataPrototype extends Prototype {
     private final DataModel dataModel;
     private final int alignment;
     private final LayoutScheme layoutScheme;
-    private final GripScheme gripScheme;
+    private final ReferenceScheme referenceScheme;
     private final boolean tagging;
 
     /**
@@ -1130,12 +1131,12 @@ public final class DataPrototype extends Prototype {
      */
     public DataPrototype(GraphPrototype graphPrototype, File mapFile) {
         this.graphPrototype = graphPrototype;
-        final Platform platform = vmConfig().platform;
+        final Platform platform = platform();
         pageSize = platform.pageSize;
         dataModel = platform.dataModel();
         alignment = Word.size();
         layoutScheme = vmConfig().layoutScheme();
-        gripScheme = vmConfig().gripScheme();
+        referenceScheme = vmConfig().referenceScheme();
         tagging = vmConfig().debugging() && vmConfig().heapScheme().supportsTagging();
         Trace.begin(1, DataPrototype.class.getSimpleName());
 

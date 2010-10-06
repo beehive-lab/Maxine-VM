@@ -38,7 +38,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
@@ -83,21 +82,21 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         register(new VMStringOption("-XX:HeapGrowPolicy=", false, DOUBLE_GROW_POLICY_NAME, "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
 
     /**
-     * Procedure used to update a grip so that it points to an object in 'toSpace'.
+     * Procedure used to update a reference so that it points to an object in 'toSpace'.
      */
-    private final GripUpdater gripUpdater = new GripUpdater();
+    private final RefUpdater refUpdater = new RefUpdater();
 
-    private final GripForwarder gripForwarder = new GripForwarder();
+    private final RefForwarder refForwarder = new RefForwarder();
 
     /**
      * The procedure that will identify all the GC roots except those in the boot heap and code regions.
      */
-    private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(gripUpdater);
+    private final SequentialHeapRootsScanner heapRootsScanner = new SequentialHeapRootsScanner(refUpdater);
 
     /**
-     * Procedure used to verify a grip.
+     * Procedure used to verify a reference.
      */
-    private final GripVerifier gripVerifier = new GripVerifier();
+    private final RefVerifier refVerifier = new RefVerifier();
 
     /**
      * A VM option for enabling extra checking of references. This should be disabled when running GC benchmarks.
@@ -112,7 +111,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     /**
      * Procedure used to verify GC root reference well-formedness.
      */
-    private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(gripVerifier);
+    private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
 
     private CollectHeap collectHeap;
 
@@ -177,8 +176,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             "Perform a garbage collection before every allocation from the global heap.", MaxineVM.Phase.PRISTINE);
     }
 
-    public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    public SemiSpaceHeapScheme() {
+        super();
     }
 
     @Override
@@ -272,13 +271,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         }
     }
 
-    private final class GripForwarder implements SpecialReferenceManager.GripForwarder {
+    private final class RefForwarder implements SpecialReferenceManager.ReferenceForwarder {
 
-        public boolean isReachable(Grip grip) {
-            final Pointer origin = grip.toOrigin();
+        public boolean isReachable(Reference ref) {
+            final Pointer origin = ref.toOrigin();
             if (fromSpace.contains(origin)) {
-                final Grip forwardGrip = Layout.readForwardGrip(origin);
-                if (forwardGrip.isZero()) {
+                final Reference forwardRef = Layout.readForwardRef(origin);
+                if (forwardRef.isZero()) {
                     return false;
                 }
             }
@@ -289,35 +288,35 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             return true;
         }
 
-        public Grip getForwardGrip(Grip grip) {
-            final Pointer origin = grip.toOrigin();
+        public Reference getForwardRefence(Reference ref) {
+            final Pointer origin = ref.toOrigin();
             if (fromSpace.contains(origin)) {
-                return Layout.readForwardGrip(origin);
+                return Layout.readForwardRef(origin);
             }
-            return grip;
+            return ref;
         }
     }
 
     /**
-     * A procedure to update a grip so that it points to an object in 'toSpace'.
+     * A procedure to update a reference so that it points to an object in 'toSpace'.
      *
-     * @see SemiSpaceHeapScheme#mapGrip(Grip)
+     * @see SemiSpaceHeapScheme#mapRef(Reference)
      */
-    private final class GripUpdater extends PointerIndexVisitor {
+    private final class RefUpdater extends PointerIndexVisitor {
         @Override
         public void visit(Pointer pointer, int wordIndex) {
-            final Grip oldGrip = pointer.getGrip(wordIndex);
-            final Grip newGrip = mapGrip(oldGrip);
-            if (newGrip != oldGrip) {
-                pointer.setGrip(wordIndex, newGrip);
+            final Reference oldRef = pointer.getReference(wordIndex);
+            final Reference newRef = mapRef(oldRef);
+            if (newRef != oldRef) {
+                pointer.setReference(wordIndex, newRef);
             }
         }
     }
 
-    private final class GripVerifier extends PointerIndexVisitor {
+    private final class RefVerifier extends PointerIndexVisitor {
         @Override
         public void visit(Pointer pointer, int index) {
-            DebugHeap.verifyGripAtIndex(pointer, index, pointer.getGrip(index), toSpace, null);
+            DebugHeap.verifyRefAtIndex(pointer, index, pointer.getReference(index), toSpace, null);
         }
     }
 
@@ -391,7 +390,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 }
 
                 startTimer(weakRefTimer);
-                SpecialReferenceManager.processDiscoveredSpecialReferences(gripForwarder);
+                SpecialReferenceManager.processDiscoveredSpecialReferences(refForwarder);
                 stopTimer(weakRefTimer);
                 stopTimer(gcTimer);
 
@@ -510,30 +509,30 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     }
 
     /**
-     * Maps a given grip to the grip of an object in 'toSpace'.
-     * The action taken depends on which of the three following states {@code grip} is in:
+     * Maps a given reference to the reference of an object in 'toSpace'.
+     * The action taken depends on which of the three following states {@code ref} is in:
      * <ul>
      * <li>Points to a not-yet-copied object in 'fromSpace'. The object is
      * copied and a forwarding pointer is installed in the header of
-     * the source object (i.e. the one in 'fromSpace'). The grip of the
+     * the source object (i.e. the one in 'fromSpace'). The reference of the
      * destination object (i.e the one in 'toSpace') is returned.</li>
      * <li>Points to a object in 'fromSpace' for which a copy in 'toSpace' exists.
-     * The grip of the 'toSpace' copy is derived from the forwarding pointer and returned.</li>
-     * <li>Points to a object in 'toSpace'. The value of {@code grip} is returned.</li>
+     * The reference of the 'toSpace' copy is derived from the forwarding pointer and returned.</li>
+     * <li>Points to a object in 'toSpace'. The value of {@code ref} is returned.</li>
      * </ul>
      *
-     * @param grip a pointer to an object either in 'fromSpace' or 'toSpace'
+     * @param ref a pointer to an object either in 'fromSpace' or 'toSpace'
      * @return the reference to the object in 'toSpace' obtained by the algorithm described above
      */
-    private Grip mapGrip(Grip grip) {
-        final Pointer fromOrigin = grip.toOrigin();
+    private Reference mapRef(Reference ref) {
+        final Pointer fromOrigin = ref.toOrigin();
         if (fromSpace.contains(fromOrigin)) {
-            final Grip forwardGrip = Layout.readForwardGrip(fromOrigin);
-            if (!forwardGrip.isZero()) {
-                return forwardGrip;
+            final Reference forwardRef = Layout.readForwardRef(fromOrigin);
+            if (!forwardRef.isZero()) {
+                return forwardRef;
             }
             if (verifyReferences) {
-                DebugHeap.verifyGripAtIndex(Address.zero(), 0, grip, toSpace, fromSpace);
+                DebugHeap.verifyRefAtIndex(Address.zero(), 0, ref, toSpace, fromSpace);
             }
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
@@ -544,7 +543,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
-                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(grip).toJava());
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(ref).toJava());
                 Log.print("Forwarding ");
                 Log.print(hub.classActor.name.string);
                 Log.print(" from ");
@@ -562,22 +561,22 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             HeapScheme.Inspect.notifyObjectRelocated(fromCell, toCell);
 
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
-            final Grip toGrip = Grip.fromOrigin(toOrigin);
-            Layout.writeForwardGrip(fromOrigin, toGrip);
+            final Reference toRef = Reference.fromOrigin(toOrigin);
+            Layout.writeForwardRef(fromOrigin, toRef);
 
 
-            return toGrip;
+            return toRef;
         }
-        return grip;
+        return ref;
     }
 
     private void scanReferenceArray(Pointer origin) {
         final int length = Layout.readArrayLength(origin);
         for (int index = 0; index < length; index++) {
-            final Grip oldGrip = Layout.getGrip(origin, index);
-            final Grip newGrip = mapGrip(oldGrip);
-            if (newGrip != oldGrip) {
-                Layout.setGrip(origin, index, newGrip);
+            final Reference oldRef = Layout.getReference(origin, index);
+            final Reference newRef = mapRef(oldRef);
+            if (newRef != oldRef) {
+                Layout.setReference(origin, index, newRef);
             }
         }
     }
@@ -586,7 +585,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      * Visits a cell for an object that has been copied to 'toSpace' to
      * update any references in the object. If any of the references being
      * updated still point to objects in 'fromSpace', then those objects
-     * will be copied as a side effect of the call to {@link #mapGrip(Grip)}
+     * will be copied as a side effect of the call to {@link #mapRef(Reference)}
      * that yields the updated value of a reference.
      *
      * @param cell a cell in 'toSpace' to whose references are to be updated
@@ -602,25 +601,25 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
         // Update the hub first so that is can be dereferenced to obtain
         // the reference map needed to find the other references in the object
-        final Grip oldHubGrip = Layout.readHubGrip(origin);
-        final Grip newHubGrip = mapGrip(oldHubGrip);
-        if (newHubGrip != oldHubGrip) {
+        final Reference oldHubRef = Layout.readHubReference(origin);
+        final Reference newHubRef = mapRef(oldHubRef);
+        if (newHubRef != oldHubRef) {
             // The hub was copied
-            Layout.writeHubGrip(origin, newHubGrip);
+            Layout.writeHubReference(origin, newHubRef);
         }
-        final Hub hub = UnsafeCast.asHub(newHubGrip.toJava());
+        final Hub hub = UnsafeCast.asHub(newHubRef.toJava());
 
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
-            TupleReferenceMap.visitReferences(hub, origin, gripUpdater);
+            TupleReferenceMap.visitReferences(hub, origin, refUpdater);
             if (hub.isSpecialReference) {
-                SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
+                SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
             }
             return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
-            TupleReferenceMap.visitReferences(hub, origin, gripUpdater);
+            TupleReferenceMap.visitReferences(hub, origin, refUpdater);
         } else if (specificLayout.isReferenceArrayLayout()) {
             scanReferenceArray(origin);
         }
@@ -636,7 +635,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     }
 
     void scanBootHeap() {
-        Heap.bootHeapRegion.visitReferences(gripUpdater);
+        Heap.bootHeapRegion.visitReferences(refUpdater);
     }
 
     void scanCode() {
@@ -992,14 +991,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             if (Heap.traceGCPhases()) {
                 Log.println("Verifying heap objects...");
             }
-            DebugHeap.verifyRegion(toSpace.regionName(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
+            DebugHeap.verifyRegion(toSpace.regionName(), toSpace.start().asPointer(), allocationMark(), toSpace, refVerifier);
             if (Heap.traceGCPhases()) {
                 Log.println("Verifying code objects...");
             }
 
             CodeRegion codeRegion = Code.getCodeManager().getRuntimeCodeRegion();
             if (!codeRegion.size().isZero()) {
-                DebugHeap.verifyRegion(codeRegion.regionName(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, gripVerifier);
+                DebugHeap.verifyRegion(codeRegion.regionName(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, refVerifier);
             }
 
         }

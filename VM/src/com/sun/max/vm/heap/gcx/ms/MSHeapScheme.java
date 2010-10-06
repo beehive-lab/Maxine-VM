@@ -105,8 +105,8 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     final AfterMarkSweepVerifier afterGCVerifier;
 
-    public MSHeapScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    @HOSTED_ONLY
+    public MSHeapScheme() {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
         objectSpace = new FreeHeapSpaceManager();
         largeObjectSpace = new LargeObjectSpace();
@@ -384,7 +384,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             objectSpace.makeParsable();
             heapMarker.markAll();
             startTimer(weakRefTimer);
-            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGripForwarder());
+            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceRefForwarder());
             stopTimer(weakRefTimer);
             startTimer(reclaimTimer);
             Size freeSpaceAfterGC = reclaim();

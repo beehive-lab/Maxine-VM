@@ -163,8 +163,8 @@ public class HeapFreeChunk {
     private static native HeapFreeChunk asHeapFreeChunk(Object freeChunk);
 
     @INLINE
-    public static HeapFreeChunk toHeapFreeChunk(Address address) {
-        return asHeapFreeChunk(Reference.fromOrigin(Layout.cellToOrigin(address.asPointer())).toJava());
+    public static HeapFreeChunk toHeapFreeChunk(Address cell) {
+        return asHeapFreeChunk(Reference.fromOrigin(Layout.cellToOrigin(cell.asPointer())).toJava());
     }
 
     @INLINE

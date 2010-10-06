@@ -24,7 +24,6 @@ import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -107,49 +106,41 @@ public final class Layout {
         return layoutScheme().arrayHeaderLayout;
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer cellToOrigin(Pointer cell) {
         return generalLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer tupleCellToOrigin(Pointer cell) {
         return tupleLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer hybridCellToOrigin(Pointer cell) {
         return hybridLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer arrayCellToOrigin(Pointer cell) {
         return arrayHeaderLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer originToCell(Pointer origin) {
         return generalLayout().originToCell(origin);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer tupleOriginToCell(Pointer origin) {
         return tupleLayout().originToCell(origin);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer hybridOriginToCell(Pointer origin) {
         return hybridLayout().originToCell(origin);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer arrayOriginToCell(Pointer origin) {
         return arrayHeaderLayout().originToCell(origin);
@@ -185,12 +176,6 @@ public final class Layout {
         return generalLayout().readHubReference(reference);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Reference readHubReference(Grip grip) {
-        return generalLayout().readHubReference(grip);
-    }
-
     @ACCESSOR(Pointer.class)
     @INLINE
     public static Reference readHubReference(Pointer origin) {
@@ -199,38 +184,14 @@ public final class Layout {
 
     @ACCESSOR(Reference.class)
     @INLINE
-    public static Grip readHubGrip(Reference reference) {
-        return readHubReference(reference).toGrip();
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static Grip readHubGrip(Pointer origin) {
-        return readHubReference(origin).toGrip();
-    }
-
-    @ACCESSOR(Reference.class)
-    @INLINE
     public static void writeHubReference(Reference reference, Reference hubReference) {
         generalLayout().writeHubReference(reference, hubReference);
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void writeHubReference(Grip grip, Reference hubReference) {
-        generalLayout().writeHubReference(grip, hubReference);
     }
 
     @ACCESSOR(Pointer.class)
     @INLINE
     public static void writeHubReference(Pointer origin, Reference hubReference) {
         generalLayout().writeHubReference(origin, hubReference);
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void writeHubGrip(Pointer origin, Grip hubGrip) {
-        writeHubReference(origin, hubGrip.toReference());
     }
 
     @ACCESSOR(Reference.class)
@@ -285,14 +246,14 @@ public final class Layout {
 
     @ACCESSOR(Pointer.class)
     @INLINE
-    public static Grip readForwardGrip(Pointer origin) {
-        return generalLayout().readForwardGrip(origin);
+    public static Reference readForwardRef(Pointer origin) {
+        return generalLayout().readForwardRef(origin);
     }
 
     @ACCESSOR(Pointer.class)
     @INLINE
-    public static void writeForwardGrip(Pointer origin, Grip forwardGrip) {
-        generalLayout().writeForwardGrip(origin, forwardGrip);
+    public static void writeForwardRef(Pointer origin, Reference forwardRef) {
+        generalLayout().writeForwardRef(origin, forwardRef);
     }
 
     @UNSAFE
@@ -469,12 +430,6 @@ public final class Layout {
         return referenceArrayLayout().getReference(array, index);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Reference getReference(Grip array, int index) {
-        return referenceArrayLayout().getReference(array, index);
-    }
-
     @ACCESSOR(Pointer.class)
     @INLINE
     public static Reference getReference(Pointer array, int index) {
@@ -487,51 +442,9 @@ public final class Layout {
         referenceArrayLayout().setReference(array, index, value);
     }
 
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setReference(Grip array, int index, Reference value) {
-        referenceArrayLayout().setReference(array, index, value);
-    }
-
     @ACCESSOR(Pointer.class)
     @INLINE
     public static void setReference(Pointer array, int index, Reference value) {
         referenceArrayLayout().setReference(array, index, value);
-    }
-
-    @ACCESSOR(Reference.class)
-    @INLINE
-    public static Grip getGrip(Reference array, int index) {
-        return getReference(array, index).toGrip();
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static Grip getGrip(Grip array, int index) {
-        return getReference(array, index).toGrip();
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static Grip getGrip(Pointer array, int index) {
-        return getReference(array, index).toGrip();
-    }
-
-    @ACCESSOR(Reference.class)
-    @INLINE
-    public static void setGrip(Reference array, int index, Grip value) {
-        referenceArrayLayout().setReference(array, index, value.toReference());
-    }
-
-    @ACCESSOR(Grip.class)
-    @INLINE
-    public static void setGrip(Grip array, int index, Grip value) {
-        referenceArrayLayout().setReference(array, index, value.toReference());
-    }
-
-    @ACCESSOR(Pointer.class)
-    @INLINE
-    public static void setGrip(Pointer array, int index, Grip value) {
-        referenceArrayLayout().setReference(array, index, value.toReference());
     }
 }
