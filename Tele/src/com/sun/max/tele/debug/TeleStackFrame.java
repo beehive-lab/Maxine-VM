@@ -24,11 +24,11 @@ import static com.sun.max.platform.Platform.*;
 
 import java.util.*;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.TeleStackFrameWalker.*;
+import com.sun.max.tele.debug.TeleStackFrameWalker.ErrorStackFrame;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -104,7 +104,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             final ErrorStackFrame errorStackFrame = (ErrorStackFrame) stackFrame;
             return new ErrorFrame(teleVM, teleStack, position, errorStackFrame);
         }
-        ProgramError.unexpected("Unknown stack frame kind");
+        TeleError.unexpected("Unknown stack frame kind");
         return null;
     }
 

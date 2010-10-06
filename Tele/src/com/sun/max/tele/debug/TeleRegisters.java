@@ -27,7 +27,6 @@ import java.util.*;
 
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -82,7 +81,7 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
             try {
                 registerValues[i] = Word.read(registerDataInputStream, endianness).asAddress();
             } catch (IOException ioException) {
-                ProgramError.unexpected(ioException);
+                TeleError.unexpected(ioException);
             }
         }
         updateTracer.end(null);

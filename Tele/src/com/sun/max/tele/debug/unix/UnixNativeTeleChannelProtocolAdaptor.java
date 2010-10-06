@@ -30,9 +30,9 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.natives.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Provides default implementations of the methods in {@link UnixAgentTeleChannelProtocol}.
@@ -104,7 +104,7 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
             agent.close();
             return heap.toLong();
         } catch (Exception ioException) {
-            FatalError.unexpected("Error while reading boot image address from VM process", ioException);
+            TeleError.unexpected("Error while reading boot image address from VM process", ioException);
             return 0;
         }
     }
@@ -231,13 +231,13 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
 
     @Override
     public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
-        ProgramError.unexpected("TeleChannelProtocol.gatherThreads(int, int) should not be called in this configuration");
+        TeleError.unexpected("TeleChannelProtocol.gatherThreads(int, int) should not be called in this configuration");
         return 0;
     }
 
     @Override
     public int readThreads(int size, byte[] gatherThreadsData) {
-        ProgramError.unexpected("TeleChannelProtocol.readThreads should not be called in this configuration");
+        TeleError.unexpected("TeleChannelProtocol.readThreads should not be called in this configuration");
         return 0;
     }
 

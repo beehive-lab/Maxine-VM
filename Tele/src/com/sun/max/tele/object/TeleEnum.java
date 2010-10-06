@@ -20,8 +20,8 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 
@@ -52,7 +52,7 @@ public final class TeleEnum extends TeleTupleObject {
             while (enumClass.getSuperclass() != Enum.class) {
                 enumClass = enumClass.getSuperclass();
                 if (enumClass == null) {
-                    throw ProgramError.unexpected(classActor + " is not a valid enum class");
+                    throw TeleError.unexpected(classActor + " is not a valid enum class");
                 }
             }
             enumCopy = (Enum) enumClass.getEnumConstants()[vm().teleFields().Enum_ordinal.readInt(reference())];

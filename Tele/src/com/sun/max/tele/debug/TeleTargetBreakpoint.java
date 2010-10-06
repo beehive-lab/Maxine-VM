@@ -26,12 +26,12 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.ExpressionException;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
@@ -282,7 +282,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
         @Override
         public void setEnabled(boolean enabled) {
-            ProgramError.unexpected("Can't enable/disable transient breakpoints");
+            TeleError.unexpected("Can't enable/disable transient breakpoints");
         }
 
         @Override
@@ -293,7 +293,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
         @Override
         public void setCondition(String conditionDescriptor) throws ExpressionException {
-            ProgramError.unexpected("Transient breakpoints do not have conditions");
+            TeleError.unexpected("Transient breakpoints do not have conditions");
         }
 
     }
@@ -429,7 +429,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         TeleTargetBreakpoint makeSystemBreakpoint(CodeLocation codeLocation, VMTriggerEventHandler handler, TeleBytecodeBreakpoint owner) throws MaxVMBusyException {
             assert codeLocation.hasAddress();
             final Address address = codeLocation.address();
-            ProgramError.check(!address.isZero());
+            TeleError.check(!address.isZero());
             if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }
@@ -466,7 +466,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         TeleTargetBreakpoint makeTransientBreakpoint(CodeLocation codeLocation) throws MaxVMBusyException {
             assert codeLocation.hasAddress();
             final Address address = codeLocation.address();
-            ProgramError.check(!address.isZero());
+            TeleError.check(!address.isZero());
             if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }
@@ -491,7 +491,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
                 result = vm().teleMethods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
             } catch (MaxVMBusyException maxVMBusyException) {
             } catch (TeleInterpreterException e) {
-                throw ProgramError.unexpected(e);
+                throw TeleError.unexpected(e);
             }
             if (result != null) {
                 final Reference reference = result.asReference();

@@ -23,7 +23,6 @@ package com.sun.max.tele.method;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
@@ -194,7 +193,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
                 }
             } catch (MaxVMBusyException maxVMBusyException) {
             } catch (TeleInterpreterException e) {
-                throw ProgramError.unexpected(e);
+                throw TeleError.unexpected(e);
             }
             // If a new method was discovered, then it will have been added to the registry.
             teleCompiledCode = codeRegistry.getCompiledCode(address);

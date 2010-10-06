@@ -28,9 +28,10 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -44,7 +45,7 @@ import com.sun.max.vm.type.*;
  * only supported in limited numbers, or only permitted in certain sizes or locations.
  * <br>
  * A new watchpoint is "alive" and remains so until removed (deleted), at which time it become permanently inert.  Any attempt
- * to enable or otherwise manipulate a removed watchpoint will cause a ProgramError to be thrown.
+ * to enable or otherwise manipulate a removed watchpoint will cause a TeleError to be thrown.
  * <br>
  * A watchpoint is by definition "enabled" (client concept) if it is alive and one or more of the three trigger settings
  * is true:  <strong>trapOnRead</strong>, <strong>trapOnWrite</strong>, or <strong>trapOnExec</strong>.
@@ -64,7 +65,7 @@ import com.sun.max.vm.type.*;
  * in which the Inspector is able to update its state in response to GC actions.
  * <br>
  * A watchpoint may only be created on an object known to the inspector as live (neither collected/dead nor forwarded/obsolete).
- * Attempting to set a watchpoint on an object known to the inspector to be not live will cause a ProgramError to be thrown.
+ * Attempting to set a watchpoint on an object known to the inspector to be not live will cause a TeleError to be thrown.
  * <br>
  * A relocatable watchpoint associated with an object that is eventually determined to have been collected will be removed and
  * replaced with a non-relocatable watchpoint covering the same memory region.
@@ -179,8 +180,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         return settings;
     }
 
-    public final boolean setTrapOnRead(boolean trapOnRead) throws MaxVMBusyException, ProgramError {
-        ProgramError.check(alive, "Attempt to modify settings on a removed watchpoint");
+    public final boolean setTrapOnRead(boolean trapOnRead) throws MaxVMBusyException, TeleError {
+        TeleError.check(alive, "Attempt to modify settings on a removed watchpoint");
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
@@ -198,8 +199,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         return success;
     }
 
-    public final boolean setTrapOnWrite(boolean trapOnWrite) throws MaxVMBusyException, ProgramError {
-        ProgramError.check(alive, "Attempt to modify settings on a removed watchpoint");
+    public final boolean setTrapOnWrite(boolean trapOnWrite) throws MaxVMBusyException, TeleError {
+        TeleError.check(alive, "Attempt to modify settings on a removed watchpoint");
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
@@ -217,8 +218,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         return success;
     }
 
-    public final boolean setTrapOnExec(boolean trapOnExec) throws MaxVMBusyException, ProgramError {
-        ProgramError.check(alive, "Attempt to modify settings on a removed watchpoint");
+    public final boolean setTrapOnExec(boolean trapOnExec) throws MaxVMBusyException, TeleError {
+        TeleError.check(alive, "Attempt to modify settings on a removed watchpoint");
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
@@ -236,8 +237,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         return success;
     }
 
-    public final boolean setEnabledDuringGC(boolean enabledDuringGC) throws MaxVMBusyException, ProgramError {
-        ProgramError.check(alive, "Attempt to modify settings on a removed watchpoint");
+    public final boolean setEnabledDuringGC(boolean enabledDuringGC) throws MaxVMBusyException, TeleError {
+        TeleError.check(alive, "Attempt to modify settings on a removed watchpoint");
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
@@ -263,8 +264,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         return alive && (settings.trapOnRead || settings.trapOnWrite || settings.trapOnExec);
     }
 
-    public boolean remove() throws MaxVMBusyException, ProgramError {
-        ProgramError.check(alive, "Attempt to remove a removed watchpoint");
+    public boolean remove() throws MaxVMBusyException, TeleError {
+        TeleError.check(alive, "Attempt to remove a removed watchpoint");
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
@@ -363,12 +364,12 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      *
      * @param active the desired activation state
      * @return whether the change succeeded
-     * @throws ProgramError if requested state same as current state
+     * @throws TeleError if requested state same as current state
      */
     private boolean setActive(boolean active) {
         assert alive;
         if (active) {  // Try to activate
-            ProgramError.check(!this.active, "Attempt to activate an active watchpoint:", this);
+            TeleError.check(!this.active, "Attempt to activate an active watchpoint:", this);
             if (watchpointManager.teleProcess.activateWatchpoint(this)) {
                 this.active = true;
                 Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint activated: " + this);
@@ -378,7 +379,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                 return false;
             }
         } else { // Try to deactivate
-            ProgramError.check(this.active, "Attempt to deactivate an inactive watchpoint:", this);
+            TeleError.check(this.active, "Attempt to deactivate an inactive watchpoint:", this);
             if (watchpointManager.teleProcess.deactivateWatchpoint(this)) {
                 this.active = false;
                 Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint deactivated " + this);
@@ -531,7 +532,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         private TeleObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, Offset offset, Size size, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException  {
             super(kind, watchpointManager, description, teleObject.origin().plus(offset), size, settings);
-            ProgramError.check(teleObject.isLive(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
+            TeleError.check(teleObject.isLive(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
             this.teleObject = teleObject;
             this.offset = offset;
             setRelocationWatchpoint(teleObject.origin());
@@ -568,7 +569,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                             try {
                                 thisWatchpoint.setRelocationWatchpoint(newTeleObject.origin());
                             } catch (TooManyWatchpointsException tooManyWatchpointsException) {
-                                ProgramError.unexpected(thisWatchpoint.tracePrefix() + " failed to relocate the relocation watchpoint for " + thisWatchpoint);
+                                TeleError.unexpected(thisWatchpoint.tracePrefix() + " failed to relocate the relocation watchpoint for " + thisWatchpoint);
                             }
                         }
                     } else {
@@ -589,16 +590,16 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                 try {
                     relocationWatchpoint.remove();
                 } catch (MaxVMBusyException maxVMBusyException) {
-                    ProgramError.unexpected("Should only be called with lock held");
-                } catch (ProgramError programError) {
-                    ProgramError.unexpected("Attempt to remove an already removed object relocation watchpoint");
+                    TeleError.unexpected("Should only be called with lock held");
+                } catch (TeleError teleError) {
+                    TeleError.unexpected("Attempt to remove an already removed object relocation watchpoint");
                 }
                 relocationWatchpoint = null;
             }
         }
 
         @Override
-        public boolean remove() throws MaxVMBusyException, ProgramError {
+        public boolean remove() throws MaxVMBusyException, TeleError {
             if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
             }
@@ -652,7 +653,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                     } catch (DuplicateWatchpointException duplicateWatchpointException) {
                         ProgramWarning.message("Failed to replace object watchpoint with region watchpoint: " + duplicateWatchpointException);
                     } catch (MaxVMBusyException maxVMBusyException) {
-                        ProgramError.unexpected("Should only be called on request handling thread, where lock acquision should not fail");
+                        TeleError.unexpected("Should only be called on request handling thread, where lock acquision should not fail");
                     }
             }
         }
@@ -1202,7 +1203,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             switch(teleWatchpoint.kind) {
                 case CLIENT: {
                     if (!clientWatchpoints.remove(teleWatchpoint)) {
-                        ProgramError.unexpected(tracePrefix() + " Failed to remove watchpoint: " + teleWatchpoint);
+                        TeleError.unexpected(tracePrefix() + " Failed to remove watchpoint: " + teleWatchpoint);
                     }
                     Trace.line(TRACE_VALUE, tracePrefix() + "Removed watchpoint: " + teleWatchpoint);
                     updateAfterWatchpointChanges();
@@ -1210,13 +1211,13 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                 }
                 case SYSTEM: {
                     if (!systemWatchpoints.remove(teleWatchpoint)) {
-                        ProgramError.unexpected(teleWatchpoint.tracePrefix() + " Failed to remove watchpoint: " + teleWatchpoint);
+                        TeleError.unexpected(teleWatchpoint.tracePrefix() + " Failed to remove watchpoint: " + teleWatchpoint);
                     }
                     Trace.line(TRACE_VALUE, teleWatchpoint.tracePrefix() + "Removed watchpoint: " + teleWatchpoint);
                     return true;
                 }
                 default:
-                    ProgramError.unknownCase();
+                    TeleError.unknownCase();
                     return false;
             }
         }

@@ -32,6 +32,7 @@ import com.sun.max.tele.debug.BreakpointCondition.ExpressionException;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.member.*;
@@ -515,7 +516,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 try {
                     removeCompilerBreakpoint();
                 } catch (MaxVMBusyException maxVMBusyException) {
-                    ProgramError.unexpected("Unable to remove compiler breakpont for " + teleBytecodeBreakpoint);
+                    TeleError.unexpected("Unable to remove compiler breakpont for " + teleBytecodeBreakpoint);
                 }
             }
             updateBreakpointCache();
@@ -564,7 +565,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                             try {
                                 teleBytecodeBreakpoint.handleNewCompilation(teleTargetMethod);
                             } catch (MaxVMBusyException maxVMBusyException) {
-                                ProgramError.unexpected("Unable to create target breakpoint for new compilation of " + teleBytecodeBreakpoint);
+                                TeleError.unexpected("Unable to create target breakpoint for new compilation of " + teleBytecodeBreakpoint);
                             }
                         }
                     }
@@ -626,7 +627,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     address = teleTargetMethod.callEntryPoint();
                     Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint at method entry in " + teleTargetMethod);
                 } else {
-                    ProgramError.unexpected(tracePrefix + "Non-entry bytecode breakpoint unimplemented for target method=" + teleTargetMethod);
+                    TeleError.unexpected(tracePrefix + "Non-entry bytecode breakpoint unimplemented for target method=" + teleTargetMethod);
                 }
             }
             if (teleTargetBreakpointManager.getTargetBreakpointAt(address) == null) {
@@ -667,13 +668,13 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 errMsg.append("bytecode breakpoints must not exceed ");
                 errMsg.append(InspectableCodeInfo.BREAKPOINT_DESCRIPTORS_ARRAY_LENGTH).append(" characters.  ");
                 errMsg.append("Current length=").append(breakpointClassDescriptorsString.length()).append(" characters.");
-                ProgramError.unexpected(errMsg.toString());
+                TeleError.unexpected(errMsg.toString());
             }
             Trace.line(TRACE_VALUE, tracePrefix + "Writing to VM type descriptors for breakpoint classes =\"" + breakpointClassDescriptorsString + "\"");
             // Write the string into the designated region in the VM, along with length and incremented epoch counter
             final int charsLength = breakpointClassDescriptorsString.length();
             final Reference charArrayReference = vm().teleFields().InspectableCodeInfo_breakpointClassDescriptorCharArray.readReference(vm());
-            ProgramError.check(charArrayReference != null && !charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
+            TeleError.check(charArrayReference != null && !charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
             final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
             for (int index = 0; index < charsLength; index++) {
                 charArrayLayout.setChar(charArrayReference, index, breakpointClassDescriptorsString.charAt(index));

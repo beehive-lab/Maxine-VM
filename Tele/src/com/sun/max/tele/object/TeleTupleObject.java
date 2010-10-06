@@ -27,13 +27,14 @@ import java.lang.reflect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
@@ -109,9 +110,9 @@ public class TeleTupleObject extends TeleObject {
                         try {
                             field.set(newTupleObject, asBoxedJavaValue);
                         } catch (IllegalAccessException illegalAccessException) {
-                            ProgramError.unexpected("could not access field: " + field, illegalAccessException);
+                            TeleError.unexpected("could not access field: " + field, illegalAccessException);
                         } catch (IllegalArgumentException illegalArgumentException) {
-                            ProgramError.unexpected("illegal argument field: " + field, illegalArgumentException);
+                            TeleError.unexpected("illegal argument field: " + field, illegalArgumentException);
                         }
                     }
                 }
@@ -119,7 +120,7 @@ public class TeleTupleObject extends TeleObject {
             } while (holderClassActor != null);
             return newTupleObject;
         } catch (InstantiationException instantiationException) {
-            ProgramError.unexpected("could not allocate instance: " + javaClass, instantiationException);
+            TeleError.unexpected("could not allocate instance: " + javaClass, instantiationException);
             return null;
         }
     }
@@ -150,7 +151,7 @@ public class TeleTupleObject extends TeleObject {
             } while (holderClassActor != null);
             return newTuple;
         } catch (InstantiationException instantiationException) {
-            ProgramError.unexpected("could not allocate instance: " + javaClass, instantiationException);
+            TeleError.unexpected("could not allocate instance: " + javaClass, instantiationException);
             return null;
         } finally {
             Trace.end(COPY_TRACE_VALUE, classMessage);

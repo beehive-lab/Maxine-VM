@@ -26,6 +26,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.compiler.target.*;
@@ -55,7 +56,7 @@ public final class TeleIntegerRegisters extends TeleRegisters {
                 break;
             }
             default: {
-                throw FatalError.unimplemented();
+                throw TeleError.unimplemented();
             }
         }
     }
@@ -71,7 +72,7 @@ public final class TeleIntegerRegisters extends TeleRegisters {
             case SPARC:
                 return GPR.SYMBOLIZER;
             default:
-                FatalError.unimplemented();
+                TeleError.unimplemented();
                 return null;
         }
     }
