@@ -32,11 +32,11 @@ import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.ins.value.WordValueLabel.*;
+import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -155,7 +155,7 @@ public final class WatchpointsTable extends InspectorTable {
                 case GC:
                     return watchpoint.getSettings().enabledDuringGC;
                 default:
-                    throw FatalError.unexpected("Unexpected Watchpoint Data column");
+                    throw InspectorError.unexpected("Unexpected Watchpoint Data column");
             }
         }
 
@@ -267,7 +267,7 @@ public final class WatchpointsTable extends InspectorTable {
                 }
                 count++;
             }
-            throw FatalError.unexpected("WatchpointsInspector.get(" + row + ") failed");
+            throw InspectorError.unexpected("WatchpointsInspector.get(" + row + ") failed");
         }
 
         int findRow(MaxWatchpoint findWatchpoint) {

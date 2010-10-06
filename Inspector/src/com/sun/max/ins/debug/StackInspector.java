@@ -33,6 +33,7 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.ins.memory.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -72,7 +73,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             try {
                 defaultMaxFramesDisplay = Integer.parseInt(value);
             } catch (NumberFormatException ex) {
-                ProgramError.unexpected(MAX_FRAMES_DISPLAY_PROPERTY + " value " +  value + " not an integer");
+                InspectorError.unexpected(MAX_FRAMES_DISPLAY_PROPERTY + " value " +  value + " not an integer");
             }
         } else {
             defaultMaxFramesDisplay = DEFAULT_MAX_FRAMES_DISPLAY;
@@ -500,7 +501,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     protected void refreshView(boolean force) {
-        ProgramError.check(stack != null);
+        InspectorError.check(stack != null);
         if (stack.thread() != null && stack.thread().isLive()) {
             if (force || stack.lastUpdated() == null || vm().state().newerThan(lastUpdatedState)) {
                 final List<MaxStackFrame> frames = stack.frames();

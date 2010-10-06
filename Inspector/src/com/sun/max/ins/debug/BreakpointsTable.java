@@ -30,11 +30,11 @@ import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * A table specialized for displaying code breakpoints in the VM.
@@ -164,7 +164,7 @@ public final class BreakpointsTable extends InspectorTable {
                 case TRIGGER_THREAD:
                     return  breakpointData.triggerThreadName();
                 default:
-                    throw FatalError.unexpected("Unexpected Breakpoint Data column");
+                    throw InspectorError.unexpected("Unexpected Breakpoint Data column");
             }
         }
 
@@ -232,7 +232,7 @@ public final class BreakpointsTable extends InspectorTable {
                 case TRIGGER_THREAD:
                     return String.class;
                 default:
-                    throw FatalError.unexpected("Unexected Breakpoint Data column");
+                    throw InspectorError.unexpected("Unexected Breakpoint Data column");
             }
         }
 
@@ -287,7 +287,7 @@ public final class BreakpointsTable extends InspectorTable {
                 }
                 count++;
             }
-            throw FatalError.unexpected("BreakpointsInspector.get(" + row + ") failed");
+            throw InspectorError.unexpected("BreakpointsInspector.get(" + row + ") failed");
         }
 
         /**

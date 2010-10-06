@@ -23,7 +23,7 @@ package com.sun.max.ins.gui;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.util.*;
 
 /**
  * A specialization of popup menus for use in the VM Inspector.
@@ -51,7 +51,7 @@ public class InspectorPopupMenu extends JPopupMenu {
             final JMenu menu = (JMenu) object;
             this.add(menu);
         } else {
-            ProgramError.unexpected("Inappropriate argument");
+            InspectorError.unexpected("Inappropriate argument");
         }
     }
 

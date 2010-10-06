@@ -30,7 +30,7 @@ import javax.swing.event.*;
 
 import com.sun.max.*;
 import com.sun.max.ins.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.util.*;
 
 /**
  * An abstract class for a dialog that presents the user a list that can
@@ -120,7 +120,7 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
     private class TextListener implements DocumentListener {
         public void changedUpdate(DocumentEvent e) {
             // This should never be called
-            ProgramError.unexpected();
+            InspectorError.unexpected();
         }
 
         public void insertUpdate(DocumentEvent event) {

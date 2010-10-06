@@ -28,6 +28,7 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -507,7 +508,7 @@ public final class MemoryWordsInspector extends Inspector {
             case WORD:
                 break;
             default:
-                ProgramError.unknownCase();
+                InspectorError.unknownCase();
         }
         setTitle();
     }
@@ -553,7 +554,7 @@ public final class MemoryWordsInspector extends Inspector {
                 }
                 break;
             default:
-                ProgramError.unknownCase();
+                InspectorError.unknownCase();
         }
         return titleBuilder.toString();
     }
@@ -619,7 +620,7 @@ public final class MemoryWordsInspector extends Inspector {
                 growRegionUp(1);
                 break;
             default:
-                ProgramError.unknownCase();
+                InspectorError.unknownCase();
         }
     }
 
@@ -638,7 +639,7 @@ public final class MemoryWordsInspector extends Inspector {
                 growRegionDown(1);
                 break;
             default:
-                ProgramError.unknownCase();
+                InspectorError.unknownCase();
         }
     }
 

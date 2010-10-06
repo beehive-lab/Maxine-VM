@@ -22,12 +22,12 @@ package com.sun.max.ins.method;
 
 import java.io.*;
 import java.util.*;
-import java.util.Arrays;
 
 import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
@@ -182,7 +182,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                 bytecodeRow++;
                 currentBytecodeOffset = nextBytecodeOffset;
             } catch (Throwable throwable) {
-                throw new InspectorError("could not disassemble byte code", throwable);
+                InspectorError.unexpected("could not disassemble bytecode", throwable);
             }
         }
     }

@@ -30,11 +30,12 @@ import java.util.*;
 import javax.swing.*;
 
 import com.sun.cri.ci.*;
-import com.sun.max.ins.InspectionPreferences.*;
+import com.sun.max.ins.InspectionPreferences.ExternalViewerType;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.object.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -75,14 +76,14 @@ public final class Inspection implements InspectionHolder {
      */
     public static void initializeSwing() {
         final String lookAndFeelName = "javax.swing.plaf.metal.MetalLookAndFeel";
-//        final String lookAndFeelName = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-//        final String lookAndFeelName = "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
-//        final String lookAndFeelName = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
+//      final String lookAndFeelName = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+//      final String lookAndFeelName = "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
+//      final String lookAndFeelName = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
         Trace.line(TRACE_VALUE, "[Inspection]  setting Look & Feel:  " + lookAndFeelName);
         try {
             UIManager.setLookAndFeel(lookAndFeelName);
         } catch (Exception e) {
-            ProgramError.unexpected("Failed to set L&F:  " + lookAndFeelName);
+            InspectorError.unexpected("Failed to set L&F:  " + lookAndFeelName, e);
         }
         //System.setProperty("apple.laf.useScreenMenuBar", "true");
         JFrame.setDefaultLookAndFeelDecorated(true);
@@ -565,7 +566,7 @@ public final class Inspection implements InspectionHolder {
             final MaxThread focusThread = focus().thread();
             focus().setStackFrame(focusThread.stack().top(), false);
         } catch (Throwable throwable) {
-            new InspectorError("could not update view", throwable).display(this);
+            InspectorError.unexpected("could not update view", throwable).display(this);
         } finally {
             gui().showInspectorBusy(false);
         }
@@ -677,7 +678,7 @@ public final class Inspection implements InspectionHolder {
                 break;
             }
             default: {
-                ProgramError.unknownCase();
+                InspectorError.unknownCase();
             }
         }
         return true;

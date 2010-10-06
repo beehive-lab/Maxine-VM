@@ -25,6 +25,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -284,7 +285,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 return classMethodActor.format("%n(%p)" + methodCompilationID(compiledCode) + " %r");
             }
             default: {
-                throw ProgramError.unknownCase();
+                throw InspectorError.unknownCase();
             }
         }
     }
@@ -348,7 +349,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 return classMethodActor.format("%n(%p) %r");
             }
             default: {
-                throw ProgramError.unknownCase();
+                throw InspectorError.unknownCase();
             }
         }
     }
@@ -541,7 +542,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 }
                 teleObjectClass = teleObjectClass.getSuperclass();
             }
-            ProgramError.unexpected("InspectorNameDisplay failed to find renderer for teleObject = " + teleObject);
+            InspectorError.unexpected("InspectorNameDisplay failed to find renderer for teleObject = " + teleObject);
         }
         return null;
     }
@@ -572,7 +573,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                     }
                     teleObjectClass = teleObjectClass.getSuperclass();
                 }
-                ProgramError.unexpected("InspectorNameDisplay failed to find renderer for teleObject = " + teleObject);
+                InspectorError.unexpected("InspectorNameDisplay failed to find renderer for teleObject = " + teleObject);
             } catch (Throwable e) {
                 e.printStackTrace(Trace.stream());
                 return "<html><b><font color=\"red\">" + e + "</font></b><br>See log for complete stack trace.";

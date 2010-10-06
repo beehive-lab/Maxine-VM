@@ -29,13 +29,12 @@ import javax.swing.border.*;
 
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectorNameDisplay.*;
+import com.sun.max.ins.InspectorNameDisplay.ReturnTypeSpecification;
 import com.sun.max.ins.method.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Visual inspector and debugger for a Java method and other routines in the VM, able to display one or more kinds of code
@@ -290,10 +289,10 @@ public class JavaMethodInspector extends MethodInspector {
             case BYTECODES:
                 return new JTableBytecodeViewer(inspection(), this, teleClassMethodActor, compiledCode);
             case JAVA_SOURCE:
-                FatalError.unimplemented();
+                InspectorError.unimplemented();
                 return null;
             default:
-                ProgramError.unexpected("Unexpected MethodCodeKind");
+                InspectorError.unexpected("Unexpected MethodCodeKind");
         }
         return null;
     }
