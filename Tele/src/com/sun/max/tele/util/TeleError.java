@@ -21,8 +21,8 @@
 package com.sun.max.tele.util;
 
 /**
- * Error reporting, with a collection of static methods for
- * responding in situations that should not occur.
+ * Static methods for responding with unchecked exceptions
+ * in situations that should not occur.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
