@@ -252,7 +252,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
      *
      * @return {@code null} if this method has no {@link ACCESSOR} annotation
      */
-    public final Class accessor() {
+    public final Class<?> accessor() {
         return holder().classRegistry().get(ACCESSOR, this);
     }
 

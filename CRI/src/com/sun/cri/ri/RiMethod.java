@@ -158,4 +158,10 @@ public interface RiMethod {
      * @return the list of exception handlers
      */
     RiExceptionHandler[] exceptionHandlers();
+    
+    /**
+     * Temporary work-around to support the @ACCESSOR Maxine annotation.
+     * Non-Maxine VMs should just return {@code null}.
+     */
+    Class<?> accessor();
 }

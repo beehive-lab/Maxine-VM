@@ -894,11 +894,64 @@ public final class GraphBuilder {
         }
     }
 
+    /**
+     * Temporary work-around to support the @ACCESSOR Maxine annotation.
+     */
+    private static final Class<?> Accessor;
+    static {
+        Class<?> c = null;
+        try {
+            c = Class.forName("com.sun.max.unsafe.Accessor");
+        } catch (ClassNotFoundException e) {
+        }
+        Accessor = c;
+    }
+
+    /**
+     * Temporary work-around to support the @ACCESSOR Maxine annotation.
+     */
+    private static ThreadLocal<RiType> boundAccessor = new ThreadLocal<RiType>();
+
+    /**
+     * Temporary work-around to support the @ACCESSOR Maxine annotation.
+     */
+    private static RiMethod bindAccessorMethod(RiMethod target) {
+        if (target.holder().javaClass() == Accessor) {
+            RiType accessor = boundAccessor.get();
+            assert accessor != null : "Cannot compile call to method in " + target.holder() + " without enclosing @ACCESSOR annotated method";
+            RiMethod newTarget = accessor.resolveMethodImpl(target);
+            assert target != newTarget : "Could not bind " + target + " to a method in " + accessor;
+            target = newTarget;
+        }
+        return target;
+    }
+
+    /**
+     * Temporary work-around to support the @ACCESSOR Maxine annotation.
+     */
+    private boolean inlineWithBoundAccessor(RiMethod target, Value[] args, FrameState stateBefore, boolean forcedInline) {
+        Class<?> accessor = target.accessor();
+        if (accessor != null) {
+            assert boundAccessor.get() == null;
+            boundAccessor.set(compilation.runtime.getRiType(accessor));
+            try {
+                inline(target, args, forcedInline, stateBefore);
+            } finally {
+                boundAccessor.set(null);
+            }
+            return true;
+        }
+        return false;
+    }
+
     private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, FrameState stateBefore, int cpi, RiConstantPool constantPool) {
         Value receiver = args[0];
         // attempt to devirtualize the call
         if (target.isResolved()) {
             RiType klass = target.holder();
+
+            target = bindAccessorMethod(target);
+
             // 0. check for trivial cases
             if (target.canBeStaticallyBound() && !isAbstract(target.accessFlags())) {
                 // check for trivial cases (e.g. final methods, nonvirtual methods)
@@ -1465,7 +1518,11 @@ public final class GraphBuilder {
                     log.println("|");
                 }
             }
-            inline(target, args, forcedInline, stateBefore);
+
+            if (!inlineWithBoundAccessor(target, args, stateBefore, forcedInline)) {
+                inline(target, args, forcedInline, stateBefore);
+            }
+
             if (traceLevel > 0) {
                 if (traceLevel < TRACELEVEL_STATE) {
                     log.println("|");

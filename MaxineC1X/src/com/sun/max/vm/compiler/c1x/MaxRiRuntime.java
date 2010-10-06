@@ -96,7 +96,7 @@ public class MaxRiRuntime implements RiRuntime {
     /**
      * Remove once C1X implements the semantics of the ACCESSOR annotation.
      */
-    public static final boolean CAN_COMPILE_ACCESSOR_METHODS = false;
+    public static final boolean CAN_COMPILE_ACCESSOR_METHODS = "true".equals(System.getenv("C1X_CAN_COMPILE_ACCESSOR_METHODS"));
 
     /**
      * Checks whether the runtime requires inlining of the specified method.
