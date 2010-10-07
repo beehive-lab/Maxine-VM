@@ -183,7 +183,7 @@ public final class Inspection implements InspectionHolder {
                 BreakpointsInspector.make(this);
                 focus.setCodeLocation(focus.thread().ipLocation());
             } catch (Throwable throwable) {
-                System.err.println("Error during initialization");
+                InspectorWarning.message("Error during initialization", throwable);
                 throwable.printStackTrace();
                 System.exit(1);
             }
@@ -596,7 +596,7 @@ public final class Inspection implements InspectionHolder {
                 vm().terminateVM();
             }
         } catch (Exception exception) {
-            ProgramWarning.message("error during VM termination: " + exception);
+            InspectorWarning.message("error during VM termination: " + exception);
         } finally {
             Trace.line(1, tracePrefix() + " exiting, Goodbye");
             System.exit(0);
@@ -651,7 +651,7 @@ public final class Inspection implements InspectionHolder {
                         Trace.line(1, tracePrefix() + "Opening file by executing " + command);
                         Runtime.getRuntime().exec(command);
                     } catch (IOException ioException) {
-                        ProgramWarning.message("Error opening file by executing " + command + ": " + ioException);
+                        InspectorWarning.message("Error opening file by executing " + command, ioException);
                         return false;
                     }
                 }
@@ -671,7 +671,7 @@ public final class Inspection implements InspectionHolder {
                         fileViewerStream.flush();
                         fileViewer.close();
                     } catch (IOException ioException) {
-                        ProgramWarning.message("Error opening file via localhost:" + portString + ": " + ioException);
+                        InspectorWarning.message("Error opening file via localhost:" + portString + ": " + ioException);
                         return false;
                     }
                 }

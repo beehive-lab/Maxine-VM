@@ -298,7 +298,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 setBounds(x, y, width, height);
             }
         } catch (Option.Error optionError) {
-            ProgramWarning.message("Inspector Main Frame settings: " + optionError.getMessage());
+            InspectorWarning.message("Inspector Main Frame settings", optionError);
         }
 
         desktopPane.setTransferHandler(new MainFrameTransferHandler());

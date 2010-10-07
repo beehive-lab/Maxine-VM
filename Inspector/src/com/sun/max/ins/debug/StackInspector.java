@@ -29,9 +29,9 @@ import javax.swing.event.*;
 
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
@@ -233,7 +233,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 final MaxStackFrame.Error errorStackFrame = (MaxStackFrame.Error) stackFrame;
                 toolTip = errorStackFrame.errorMessage();
             } else {
-                ProgramWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
+                InspectorWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.ip();
                 final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
                 if (externalCode != null) {

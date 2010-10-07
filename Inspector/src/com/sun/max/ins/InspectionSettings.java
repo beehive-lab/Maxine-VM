@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.hosted.*;
@@ -188,7 +189,7 @@ public class InspectionSettings {
             fileReader.close();
         } catch (FileNotFoundException ioException) {
         } catch (IOException ioException) {
-            ProgramWarning.message(tracePrefix() + "Error while loading settings from " + settingsFile + ": " + ioException.getMessage());
+            InspectorWarning.message(tracePrefix() + "Error while loading settings from " + settingsFile, ioException);
         }
 
         final BootImage bootImage = inspection.vm().bootImage();
@@ -370,7 +371,7 @@ public class InspectionSettings {
             properties.store(fileWriter, null);
             fileWriter.close();
         } catch (IOException ioException) {
-            ProgramWarning.message(tracePrefix() + "Error while saving settings to " + settingsFile + ": " + ioException.getMessage());
+            InspectorWarning.message(tracePrefix() + "Error while saving settings to " + settingsFile, ioException);
         }
 
     }
