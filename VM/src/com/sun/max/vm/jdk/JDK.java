@@ -23,7 +23,6 @@ package com.sun.max.vm.jdk;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * This class implements a centralized place for naming specific classes in the JDK that are referenced
@@ -167,17 +166,6 @@ public class JDK {
         @Override
         public final Class javaClass() {
             return Classes.forName(className);
-        }
-    }
-
-    /**
-     * Invokes a given class's <clinit> method, translating any exception raised into a {@link FatalError}.
-     */
-    public static void callInitializer(ClassActor classActor) {
-        try {
-            classActor.callInitializer();
-        } catch (Exception e) {
-            FatalError.unexpected("Error re-initializing" + classActor.name(), e);
         }
     }
 }

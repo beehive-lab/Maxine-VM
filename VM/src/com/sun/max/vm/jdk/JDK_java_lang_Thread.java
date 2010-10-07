@@ -22,7 +22,8 @@ package com.sun.max.vm.jdk;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
-import static com.sun.max.vm.type.ClassRegistry.*;
+
+import java.security.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
@@ -33,7 +34,6 @@ import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * Method substitutions for {@link java.lang.Thread java.lang.Thread}.
@@ -70,32 +70,58 @@ public final class JDK_java_lang_Thread {
         return VmThread.fromJava(thisThread());
     }
 
+    @ALIAS(declaringClass = Thread.class)
+    private static native int nextThreadNum();
+
+    @ALIAS(declaringClass = ThreadGroup.class)
+    private native void add(Thread thread);
+
+    @ALIAS(declaringClass = Thread.class, optional = true)
+    private native void init(ThreadGroup g, Runnable target, String name, long stackSize);
+
+    @ALIAS(declaringClass = Thread.class, optional = true)
+    private native void init(ThreadGroup g, Runnable target, String name, long stackSize, boolean setPriority);
+
+    @ALIAS(declaringClass = Thread.class)
+    int priority;
+
+    @ALIAS(declaringClass = Thread.class)
+    char[] name;
+
+    @ALIAS(declaringClass = Thread.class)
+    AccessControlContext inheritedAccessControlContext;
+
+    @INTRINSIC(UNSAFE_CAST)
+    static native JDK_java_lang_Thread asThis(ThreadGroup tg);
+
+    @INTRINSIC(UNSAFE_CAST)
+    static native JDK_java_lang_Thread asThis(Thread t);
+
     public static Thread createThreadForAttach(VmThread vmThread, String name, ThreadGroup group, boolean daemon) throws Throwable {
         FatalError.check(group != null, "ThreadGroup for attaching thread cannot be null");
 
         final Thread javaThread = (Thread) Heap.createTuple(ClassRegistry.THREAD.dynamicHub());
         Thread_vmThread.setObject(javaThread, vmThread);
-        Thread_priority.setInt(javaThread, Thread.NORM_PRIORITY);
+        JDK_java_lang_Thread thisThread = asThis(javaThread);
+        thisThread.priority = Thread.NORM_PRIORITY;
         vmThread.setJavaThread(javaThread, name);
-        ReferenceValue threadValue = ReferenceValue.from(javaThread);
-        ReferenceValue groupValue = ReferenceValue.from(group);
-        ReferenceValue targetValue = ReferenceValue.NULL;
-        ReferenceValue nameValue = ReferenceValue.from(name == null ? (String) Thread_nextThreadNum.invoke().asObject() : name);
-        LongValue stackSizeValue = LongValue.ZERO;
+        if (name == null) {
+            name = String.valueOf(nextThreadNum());
+        }
         if (Platform.platform().operatingSystem == OperatingSystem.DARWIN) {
             // The Thread.init() method on Apple takes an extra boolean parameter named 'set_priority'
             // which indicates if the priority should be explicitly set. For all calls to init() this
             // argument is true *except* for a call for the purpose of attaching a thread when it is false.
-            Thread_init.invoke(threadValue, groupValue, targetValue, nameValue, stackSizeValue, BooleanValue.FALSE);
+            thisThread.init(group, null, name, 0L, false);
         } else {
-            Thread_init.invoke(threadValue, groupValue, targetValue, nameValue, stackSizeValue);
+            thisThread.init(group, null, name, 0L);
         }
 
         if (daemon) {
             javaThread.setDaemon(true);
         }
 
-        ThreadGroup_add_Thread.invoke(groupValue, threadValue);
+        asThis(group).add(javaThread);
         return javaThread;
     }
 
@@ -295,6 +321,6 @@ public final class JDK_java_lang_Thread {
         if (thisVMThread() != null) {
             thisVMThread().setName(name);
         }
-        Thread_name.setObject(this, name.toCharArray());
+        this.name = name.toCharArray();
     }
 }

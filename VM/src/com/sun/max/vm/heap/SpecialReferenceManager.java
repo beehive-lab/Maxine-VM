@@ -28,16 +28,14 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * This class implements support for collecting and processing special references
@@ -227,6 +225,9 @@ public class SpecialReferenceManager {
         }
     }
 
+    @ALIAS(declaringClassName = "java.lang.ref.Finalizer")
+    private static native void register(Object finalizee);
+
     /**
      * Registers an object that has a finalizer with the special reference manager.
      * A call to this method is inserted after allocation of such objects.
@@ -234,11 +235,7 @@ public class SpecialReferenceManager {
      */
     public static void registerFinalizee(Object object) {
         if (FINALIZERS_SUPPORTED) {
-            try {
-                ClassRegistry.Finalizer_register_Object.invoke(ReferenceValue.from(object));
-            } catch (Exception e) {
-                FatalError.unexpected("Could not register object for finalization", e);
-            }
+            register(object);
         }
     }
 
@@ -272,25 +269,8 @@ public class SpecialReferenceManager {
      * Start the thread to handle enqueuing weak references.
      */
     private static void startReferenceHandlerThread() {
-        if (VmThread.referenceHandlerThread != null) {
-            // The thread was built into the boot image. We simply need to start it:
-            VmThread.referenceHandlerThread.start0();
-        } else {
-            // Note: this code is partially copied from java.lang.Reference <clinit>
-            // We cannot simply rerun static initialization because it would allocate a new lock object.
-            ThreadGroup tg = VmThread.systemThreadGroup;
-            try {
-                final Thread handler = (Thread) ClassRegistry.ReferenceHandler_init.invokeConstructor(ReferenceValue.from(tg), ReferenceValue.from("Reference Handler")).asObject();
-                /* If there were a special system-only priority greater than
-                 * MAX_PRIORITY, it would be used here
-                 */
-                handler.setPriority(Thread.MAX_PRIORITY);
-                handler.setDaemon(true);
-                handler.start();
-            } catch (Exception e) {
-                throw FatalError.unexpected("Could not start ReferenceHandler thread", e);
-            }
-        }
+        // The thread was built into the boot image. We simply need to start it:
+        VmThread.referenceHandlerThread.start0();
     }
 
     /**
@@ -298,13 +278,8 @@ public class SpecialReferenceManager {
      */
     private static void startFinalizerThread() {
         if (FINALIZERS_SUPPORTED) {
-            if (VmThread.finalizerThread != null) {
-                // The thread was built into the boot image. We simply need to start it:
-                VmThread.finalizerThread.start0();
-            } else {
-                // it is sufficient just to reinitialize the finalizer class
-                JDK.callInitializer(JDK.java_lang_ref_Finalizer.classActor());
-            }
+            // The thread was built into the boot image. We simply need to start it:
+            VmThread.finalizerThread.start0();
         }
     }
 }
