@@ -172,8 +172,8 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     @INLINE
-    public final void writeHubReference(Accessor accessor, Reference referenceClassReference) {
-        accessor.writeReference(hubOffset, referenceClassReference);
+    public final void writeHubReference(Accessor accessor, Reference hub) {
+        accessor.writeReference(hubOffset, hub);
     }
 
     @INLINE
