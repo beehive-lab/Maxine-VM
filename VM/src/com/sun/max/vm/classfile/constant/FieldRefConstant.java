@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
@@ -160,10 +162,22 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
         }
 
         static FieldActor resolve(ConstantPool pool, int index, ClassActor holder, Utf8Constant name, TypeDescriptor type) {
-            final FieldActor fieldActor = holder.findFieldActor(name, type);
+            FieldActor fieldActor = holder.findFieldActor(name, type);
             if (fieldActor != null) {
                 fieldActor.checkAccessBy(pool.holder());
-                pool.updateAt(index, new Resolved(fieldActor));
+                if (isHosted()) {
+                    FieldActor aliasedFieldActor = ALIAS.Static.aliasedField(fieldActor);
+                    if (aliasedFieldActor == null) {
+                        // Only update constant pool if no aliasing occurred.
+                        // Otherwise, subsequent verification of bytecode
+                        // referencing the alias field will fail.
+                        pool.updateAt(index, new Resolved(fieldActor));
+                    } else {
+                        fieldActor = aliasedFieldActor;
+                    }
+                } else {
+                    pool.updateAt(index, new Resolved(fieldActor));
+                }
                 return fieldActor;
             }
             final String errorMessage = type + " " + holder.javaSignature(true) + "." + name;

@@ -37,7 +37,6 @@ import com.sun.max.atomic.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
@@ -680,18 +679,15 @@ public class VmThread {
         JniFunctions.epilogue(anchor, null);
     }
 
+    @ALIAS(declaringClassName = "java.lang.Shutdown")
+    private static native void shutdown();
+
     private static void invokeShutdownHooks() {
         VMOptions.beforeExit();
         if (TraceThreads) {
             Log.println("invoking Shutdown hooks");
         }
-        try {
-            final ClassActor classActor = ClassActor.fromJava(Class.forName("java.lang.Shutdown"));
-            final StaticMethodActor shutdownMethod = classActor.findLocalStaticMethodActor("shutdown");
-            shutdownMethod.invoke();
-        } catch (Throwable throwable) {
-            FatalError.unexpected("error invoking shutdown hooks", throwable);
-        }
+        shutdown();
     }
 
     /*

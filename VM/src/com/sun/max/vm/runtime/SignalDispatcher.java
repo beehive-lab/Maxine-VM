@@ -33,7 +33,6 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.type.*;
 
 /**
  * The thread used to post and dispatch signals to user supplied {@link SignalHandler}s.
@@ -173,10 +172,14 @@ public final class SignalDispatcher extends Thread {
             "Run Java signal handlers on a single thread.");
     }
 
+    @ALIAS(declaringClass = Signal.class)
+    static Hashtable<Signal, SignalHandler> handlers;
+
+    @ALIAS(declaringClass = Signal.class)
+    static Hashtable<Integer, Signal> signals;
+
     @Override
     public void run() {
-        Hashtable handlers = (Hashtable) ClassRegistry.Signal_handlers.getObject(null);
-        Hashtable signals = (Hashtable) ClassRegistry.Signal_signals.getObject(null);
         nativeSignalInit(tryPostSignal.address());
         started = true;
 
@@ -188,8 +191,8 @@ public final class SignalDispatcher extends Thread {
                 return;
             }
 
-            final Signal sig = (Signal) signals.get(Integer.valueOf(signal));
-            final SignalHandler handler = (SignalHandler) handlers.get(sig);
+            final Signal sig = signals.get(signal);
+            final SignalHandler handler = handlers.get(sig);
             if (handler != null) {
                 if (SerializeSignals) {
                     try {

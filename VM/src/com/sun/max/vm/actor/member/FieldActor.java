@@ -640,7 +640,14 @@ public class FieldActor extends MemberActor implements RiField {
 
     @Override
     public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-        return toJava().getAnnotation(annotationClass);
+        try {
+            return toJava().getAnnotation(annotationClass);
+        } catch (NoSuchFieldError e) {
+            if (MaxineVM.isHosted()) {
+                return null;
+            }
+            throw e;
+        }
     }
 
     /**

@@ -20,22 +20,22 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.max.vm.type.ClassRegistry.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
-import java.lang.reflect.*;
 import java.security.*;
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Method substitutions for the {@link java.security.AccessController} class.
@@ -43,8 +43,6 @@ import com.sun.max.vm.type.*;
  */
 @METHOD_SUBSTITUTIONS(AccessController.class)
 final class JDK_java_security_AccessController {
-
-    private static final Constructor<?> AccessControlContext_init = ClassRegistry.AccessControlContext_init.toJavaConstructor();
 
     private JDK_java_security_AccessController() {
     }
@@ -209,6 +207,15 @@ final class JDK_java_security_AccessController {
         return context;
     }
 
+    @ALIAS(declaringClass = AccessControlContext.class, name = "<init>")
+    private native void init(ProtectionDomain[] context, boolean isPrivileged);
+
+    @INTRINSIC(UNSAFE_CAST)
+    static native JDK_java_security_AccessController asThis(AccessControlContext acc);
+
+    @ALIAS(declaringClass = AccessControlContext.class)
+    AccessControlContext privilegedContext;
+
     /**
      * Gets the access control context for the current stack.
      *
@@ -227,20 +234,14 @@ final class JDK_java_security_AccessController {
             protectionDomains = context.protectionDomains.toArray(new ProtectionDomain[context.protectionDomains.size()]);
         }
 
-        try {
-            final AccessControlContext result = (AccessControlContext) AccessControlContext_init.newInstance(protectionDomains, context.isPrivileged);
-            if (context.isPrivileged) {
-                // need to manually set privilegedContext as no constructor for that
-                AccessControlContext_privilegedContext.setObject(result, context.privilegedContext);
-            }
-            return result;
-        } catch (OutOfMemoryError ex) {
-            // the only exception that could happen if were using "new"
-            throw ex;
-        } catch (Exception ex) {
-            ProgramError.unexpected("failed to instantiate AccessControlContext", ex);
-            return null;
+        AccessControlContext acc = (AccessControlContext) Heap.createTuple(ClassActor.fromJava(AccessControlContext.class).dynamicHub());
+        JDK_java_security_AccessController thisAccessControlContext = asThis(acc);
+        thisAccessControlContext.init(protectionDomains, context.isPrivileged);
+        if (context.isPrivileged) {
+            // need to manually set privilegedContext as no constructor for that
+            thisAccessControlContext.privilegedContext = context.privilegedContext;
         }
+        return acc;
     }
 
     /**
@@ -251,6 +252,7 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static AccessControlContext getInheritedAccessControlContext() {
-        return UnsafeCast.asAccessControlContext(Thread_inheritedAccessControlContext.getObject(Thread.currentThread()));
+        JDK_java_lang_Thread thread = JDK_java_lang_Thread.asThis(Thread.currentThread());
+        return thread.inheritedAccessControlContext;
     }
 }

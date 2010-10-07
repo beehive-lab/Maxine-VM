@@ -34,7 +34,7 @@ import com.sun.max.vm.*;
  *
  * @author Ben L. Titzer
  */
-@METHOD_SUBSTITUTIONS(hiddenClass = "java.lang.ProcessEnvironment")
+@METHOD_SUBSTITUTIONS(className = "java.lang.ProcessEnvironment")
 public class JDK_java_lang_ProcessEnvironment {
 
     /**
