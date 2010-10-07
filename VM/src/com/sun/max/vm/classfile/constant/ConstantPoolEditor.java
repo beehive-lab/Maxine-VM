@@ -229,9 +229,13 @@ public final class ConstantPoolEditor {
                     case INTERFACE_METHOD_REF:
                     case METHOD_REF:
                     case FIELD_REF: {
-                        final MemberRefConstant field = pool.memberAt(index);
-                        final int classIndex = indexOf(createClassConstant(field.holder(pool)));
-                        final int nameAndTypeIndex = indexOf(createNameAndTypeConstant(field.name(pool), field.descriptor(pool)));
+                        final MemberRefConstant member = pool.memberAt(index);
+                        final int classIndex = indexOf(createClassConstant(member.holder(pool)));
+                        Utf8Constant name = member.name(pool);
+                        if (name == SymbolTable.CLINIT) {
+                            name = $CLINIT$;
+                        }
+                        final int nameAndTypeIndex = indexOf(createNameAndTypeConstant(name, member.descriptor(pool)));
                         stream.writeShort(classIndex);
                         stream.writeShort(nameAndTypeIndex);
                         break;
@@ -279,9 +283,13 @@ public final class ConstantPoolEditor {
                     case INTERFACE_METHOD_REF:
                     case METHOD_REF:
                     case FIELD_REF: {
-                        final MemberRefConstant field = pool.memberAt(index);
-                        indexOf(createClassConstant(field.holder(pool)));
-                        indexOf(createNameAndTypeConstant(field.name(pool), field.descriptor(pool)));
+                        final MemberRefConstant member = pool.memberAt(index);
+                        Utf8Constant name = member.name(pool);
+                        if (name == SymbolTable.CLINIT) {
+                            name = $CLINIT$;
+                        }
+                        indexOf(createClassConstant(member.holder(pool)));
+                        indexOf(createNameAndTypeConstant(name, member.descriptor(pool)));
                         break;
                     }
                     case STRING: {
@@ -296,4 +304,14 @@ public final class ConstantPoolEditor {
             }
         }
     }
+
+    // Checkstyle: stop
+    /**
+     * It's illegal to have a MethodRef in a class file's constant pool referring to
+     * method named "<clinit>". As such, any the entry in an invocation stub for
+     * a class iniitalizer is rewritten to refer to a method named "$clinit$" instead.
+     * This does not break the stub but makes it possible for the reconstituted
+     * class file to be loaded (in the Inspector for example).
+     */
+    public static final Utf8Constant $CLINIT$ = SymbolTable.makeSymbol("$clinit$");
 }
