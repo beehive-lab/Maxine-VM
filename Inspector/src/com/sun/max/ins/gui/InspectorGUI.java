@@ -45,7 +45,7 @@ public interface InspectorGUI {
     Inspector findInspector(Predicate<Inspector> predicate);
 
     /**
-     * Removes and disposes all instances of {@link Inspector} currently in the GUI display that matches a predicate.
+     * Removes and disposes all instances of {@link Inspector} currently in the GUI display that match a predicate.
      */
     void removeInspectors(Predicate<Inspector> predicate);
 
@@ -70,6 +70,7 @@ public interface InspectorGUI {
      * Displays an error message in a modal dialog with specified frame title.
      */
     void errorMessage(String message, String title);
+
     /**
      * Displays an error message in a modal dialog with default frame title.
      */
@@ -124,6 +125,12 @@ public interface InspectorGUI {
      */
     void moveToMiddleIfNotVisble(Inspector inspector);
 
+    /**
+     * Moves a {@link JDialog} frame down and to the right of the current mouse location.
+     *
+     * @param dialog a dialog
+     * @param offset number of pixels down and to right for new location
+     */
     void setLocationRelativeToMouse(JDialog dialog, int offset);
 
     /**
