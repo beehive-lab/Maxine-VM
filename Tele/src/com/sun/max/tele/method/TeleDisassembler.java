@@ -340,7 +340,7 @@ public final class TeleDisassembler {
             final Class<List<DisassembledObject>> type = null;
             disassembledObjects = Utils.cast(type, disassembler.scan(new BufferedInputStream(new ByteArrayInputStream(code))));
         } catch (Throwable throwable) {
-            ProgramWarning.message("Could not completely disassemble given code stream - trying partial disassembly instead [error: " + throwable + "]");
+            TeleWarning.message("Could not completely disassemble given code stream - trying partial disassembly instead", throwable);
             final BufferedInputStream bufferedInputStream = new BufferedInputStream(new ByteArrayInputStream(code));
             final List<DisassembledObject> objects = new ArrayList<DisassembledObject>();
             try {
@@ -348,7 +348,7 @@ public final class TeleDisassembler {
                     objects.add((DisassembledObject) disassembler.scanOne(bufferedInputStream).get(0));
                 }
             } catch (Throwable t) {
-                ProgramWarning.message("Only partially disassembled given code stream [error: " + t + "]");
+                TeleWarning.message("Only partially disassembled given code stream", t);
             }
             disassembledObjects = objects;
         }

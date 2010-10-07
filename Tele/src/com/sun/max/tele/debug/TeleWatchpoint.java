@@ -375,7 +375,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                 Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint activated: " + this);
                 return true;
             } else {
-                ProgramWarning.message("Failed to activate watchpoint: " + this);
+                TeleWarning.message("Failed to activate watchpoint: " + this);
                 return false;
             }
         } else { // Try to deactivate
@@ -385,7 +385,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                 Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint deactivated " + this);
                 return true;
             }
-            ProgramWarning.message("Failed to deactivate watchpoint: " + this);
+            TeleWarning.message("Failed to deactivate watchpoint: " + this);
             return false;
         }
     }
@@ -400,11 +400,11 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         assert alive;
         if (active) {
             if (!setActive(false)) {
-                ProgramWarning.message("Failed to reset watchpoint: " + this);
+                TeleWarning.message("Failed to reset watchpoint: " + this);
                 return false;
             }
             if (!setActive(true)) {
-                ProgramWarning.message("Failed to reset and install watchpoint: " + this);
+                TeleWarning.message("Failed to reset and install watchpoint: " + this);
                 return false;
             }
         }
@@ -430,12 +430,12 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         if (active) {
             // Must deactivate before we change the location
             if (!setActive(false)) {
-                ProgramWarning.message("Failed to reset watchpoint: " + this);
+                TeleWarning.message("Failed to reset watchpoint: " + this);
                 return false;
             }
             setStart(newAddress);
             if (!setActive(true)) {
-                ProgramWarning.message("Failed to reset and install watchpoint: " + this);
+                TeleWarning.message("Failed to reset and install watchpoint: " + this);
                 return false;
             }
         } else {  // not active
@@ -558,7 +558,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                     if (heap().isObjectForwarded(origin)) {
                         final TeleObject newTeleObject = heap().getForwardedObject(origin);
                         if (newTeleObject == null) {
-                            ProgramWarning.message("Unlable to find relocated teleObject" + this);
+                            TeleWarning.message("Unlable to find relocated teleObject" + this);
                         } else {
                             TeleObjectWatchpoint.this.teleObject = newTeleObject;
                             final Pointer newWatchpointStart = newTeleObject.origin().plus(thisWatchpoint.offset);
@@ -631,14 +631,14 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                     // A relocatable watchpoint on a live object should have been relocated
                     // (eagerly) just as the relocation took place.   Check that the locations match.
                     if (!teleObject.objectMemoryRegion().start().plus(offset).equals(memoryRegion().start())) {
-                        ProgramWarning.message("Watchpoint relocation failure - watchpoint on live object at wrong location " + this);
+                        TeleWarning.message("Watchpoint relocation failure - watchpoint on live object at wrong location " + this);
                     }
                     break;
                 case OBSOLETE:
                     // A relocatable watchpoint should not exist on an obsolete (forwarded)
                     // object.  It should not be permitted in the first place, and a transition
                     // from live to obsolete should have caused this watchpoint to be relocated.
-                    ProgramWarning.message("Watchpoint relocation failure - watchpoint on obsolete object: " + this);
+                    TeleWarning.message("Watchpoint relocation failure - watchpoint on obsolete object: " + this);
                     break;
                 case DEAD:
                     // The watchpoint's object has been collected; convert it to a fixed memory region watchpoint
@@ -649,9 +649,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                             watchpointManager.createRegionWatchpoint("Replacement for watchpoint on GC'd object", watchpointRegion, getSettings());
                         Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint on collected object replaced: " + newRegionWatchpoint);
                     } catch (TooManyWatchpointsException tooManyWatchpointsException) {
-                        ProgramWarning.message("Failed to replace object watchpoint with region watchpoint: " + tooManyWatchpointsException);
+                        TeleWarning.message("Failed to replace object watchpoint with region watchpoint", tooManyWatchpointsException);
                     } catch (DuplicateWatchpointException duplicateWatchpointException) {
-                        ProgramWarning.message("Failed to replace object watchpoint with region watchpoint: " + duplicateWatchpointException);
+                        TeleWarning.message("Failed to replace object watchpoint with region watchpoint", duplicateWatchpointException);
                     } catch (MaxVMBusyException maxVMBusyException) {
                         TeleError.unexpected("Should only be called on request handling thread, where lock acquision should not fail");
                     }
@@ -1100,7 +1100,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                     try {
                         vm().addGCCompletedListener(gcCompletedListener);
                     } catch (MaxVMBusyException maxVMBusyException) {
-                        ProgramWarning.message("update after watchpoint changes failed to set GC completed listener");
+                        TeleWarning.message("update after watchpoint changes failed to set GC completed listener", maxVMBusyException);
                         gcCompletedListener = null;
                     }
                 }
@@ -1109,7 +1109,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                     try {
                         vm().removeGCCompletedListener(gcCompletedListener);
                     } catch (MaxVMBusyException maxVMBusyException) {
-                        ProgramWarning.message("update after watchpoint changes failed to remove GC completed listener");
+                        TeleWarning.message("update after watchpoint changes failed to remove GC completed listener", maxVMBusyException);
                         gcCompletedListener = null;
                     }
                     gcCompletedListener = null;

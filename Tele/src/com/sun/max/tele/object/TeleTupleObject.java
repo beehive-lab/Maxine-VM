@@ -135,7 +135,7 @@ public class TeleTupleObject extends TeleObject {
             final Object newTuple = Objects.allocateInstance(javaClass);
 
             if (javaClass.getName().startsWith("java.lang") && !Number.class.isAssignableFrom(javaClass)) {
-                ProgramWarning.message("Deep copying instance of " + javaClass.getName());
+                TeleWarning.message("Deep copying instance of " + javaClass.getName());
             }
 
             context.register(this, newTuple, true);

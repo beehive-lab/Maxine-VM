@@ -462,7 +462,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     breakpoint.setTriggerEventHandler(handler);
                     breakpoint.setDescription(codeLocation.description());
                 } else if (breakpoint.kind() != BreakpointKind.SYSTEM) {
-                    ProgramWarning.message("Can't create system bytecode breakpoint - client breakpoint already exists: " + codeLocation);
+                    TeleWarning.message("Can't create system bytecode breakpoint - client breakpoint already exists: " + codeLocation);
                     breakpoint = null;
                 }
             } finally {
@@ -511,7 +511,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private void removeBreakpoint(TeleBytecodeBreakpoint teleBytecodeBreakpoint) {
             final TeleBytecodeBreakpoint removedBreakpoint = breakpoints.remove(teleBytecodeBreakpoint.methodPositionKey);
-            ProgramWarning.check(removedBreakpoint != null, "Failed to remove breakpoint" + teleBytecodeBreakpoint);
+            TeleWarning.check(removedBreakpoint != null, "Failed to remove breakpoint" + teleBytecodeBreakpoint);
             if (breakpoints.size() == 0) {
                 try {
                     removeCompilerBreakpoint();

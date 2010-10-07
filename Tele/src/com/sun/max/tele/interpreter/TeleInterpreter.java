@@ -182,7 +182,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                             int bcp = Integer.parseInt(instruction.substring(0, colonIndex));
                             bcpToTrace.put(bcp, instruction);
                         } catch (NumberFormatException numberFormatException) {
-                            ProgramWarning.message("instruction trace does not start with expected '<bcp>:': " + instruction);
+                            TeleWarning.message("instruction trace does not start with expected '<bcp>:': " + instruction);
                         }
                     }
                 }

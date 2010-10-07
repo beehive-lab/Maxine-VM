@@ -738,12 +738,12 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                     final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
                     final TeleClassMethodActor teleClassMethodActor = vm().findTeleMethodActor(TeleClassMethodActor.class, classMethodActor);
                     if (teleClassMethodActor == null) {
-                        ProgramWarning.message("Could not find tele class method actor for " + classMethodActor);
+                        TeleWarning.message("Could not find tele class method actor for " + classMethodActor);
                         continue;
                     }
                     compiledCode = vm().codeCache().findCompiledCode(targetMethod.codeStart().asAddress());
                     if (compiledCode == null) {
-                        ProgramWarning.message("Could not find tele target method actor for " + classMethodActor);
+                        TeleWarning.message("Could not find tele target method actor for " + classMethodActor);
                         continue;
                     }
                 }
