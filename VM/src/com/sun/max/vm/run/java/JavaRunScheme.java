@@ -130,6 +130,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         initIDMethods = methods.toArray(new StaticMethodActor[methods.size()]);
     }
 
+    @ALIAS(declaringClass = System.class)
+    public static native void initializeSystemClass();
+
     /**
      * The initialization method of the Java run scheme runs at both bootstrapping and startup.
      * While bootstrapping, it gathers the methods needed for native initialization, and at startup
@@ -143,11 +146,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 // This hack enables (platform-dependent) tracing before the eventual System properties are set:
                 System.setProperty("line.separator", "\n");
 
-                try {
-                    ClassActor.fromJava(System.class).findLocalStaticMethodActor("initializeSystemClass").invoke();
-                } catch (Throwable throwable) {
-                    FatalError.unexpected("error in initializeSystemClass", throwable);
-                }
+                initializeSystemClass();
 
                 // Normally, we would have to initialize tracing this late,
                 // because 'PrintWriter.<init>()' relies on a system property ("line.separator"), which is accessed during 'initializeSystemClass()'.

@@ -27,10 +27,7 @@ import static com.sun.max.vm.jdk.JDK.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.nio.*;
-import java.security.*;
 import java.util.*;
-
-import sun.misc.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -99,27 +96,8 @@ public final class ClassRegistry {
     public static final ArrayClassActor<DoubleValue> DOUBLE_ARRAY = createPrimitiveArrayClass(DOUBLE);
 
     public static final FieldActor ClassActor_javaClass = findField(ClassActor.class, "javaClass");
-    public static final FieldActor System_in = findField(System.class, "in");
-    public static final FieldActor System_out = findField(System.class, "out");
-    public static final FieldActor System_err = findField(System.class, "err");
-    public static final FieldActor Thread_priority = findField(Thread.class, "priority");
-    public static final FieldActor Thread_name = findField(Thread.class, "name");
-    public static final FieldActor NativeLibrary_handle = findField(java_lang_ClassLoader$NativeLibrary, "handle");
-    public static final FieldActor Thread_inheritedAccessControlContext = findField(Thread.class, "inheritedAccessControlContext");
-    public static final FieldActor ClassLoader_loadedLibraryNames = findField(ClassLoader.class, "loadedLibraryNames");
-    public static final FieldActor ClassLoader_nativeLibraries = findField(ClassLoader.class, "nativeLibraries");
-    public static final FieldActor AccessControlContext_privilegedContext = findField(AccessControlContext.class, "privilegedContext");
-    public static final FieldActor Throwable_stackTrace = findField(Throwable.class, "stackTrace");
-    public static final FieldActor Signal_handlers = findField(Signal.class, "handlers");
-    public static final FieldActor Signal_signals = findField(Signal.class, "signals");
     public static final FieldActor Buffer_address = findField(Buffer.class, "address");
 
-    public static final MethodActor ThreadGroup_add_Thread = findMethod(ThreadGroup.class, "add", Thread.class);
-    public static final MethodActor Thread_init = findMethod("init", Thread.class);
-    public static final MethodActor Thread_nextThreadNum = findMethod("nextThreadNum", Thread.class);
-    public static final MethodActor ClassLoader_findNative = findMethod(ClassLoader.class, "findNative", ClassLoader.class, String.class);
-    public static final MethodActor NativeLibrary_init = findMethod(java_lang_ClassLoader$NativeLibrary, "<init>", Class.class, String.class);
-    public static final MethodActor Finalizer_register_Object = findMethod(java_lang_ref_Finalizer, "register", Object.class);
     public static final MethodActor ReferenceHandler_init = findMethod(java_lang_ref_Reference$ReferenceHandler, "<init>", ThreadGroup.class, String.class);
     public static final MethodActor FinalizerThread_init = findMethod(java_lang_ref_Finalizer$FinalizerThread, "<init>", ThreadGroup.class);
     public static final MethodActor Method_invoke = findMethod(Method.class, "invoke", Object.class, Object[].class);
@@ -128,8 +106,6 @@ public final class ClassRegistry {
     public static final MethodActor VmThread_run = findMethod("run", VmThread.class);
     public static final MethodActor VmThread_attach = findMethod("attach", VmThread.class);
     public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
-    public static final MethodActor AccessControlContext_init = findMethod(AccessControlContext.class, "<init>", ProtectionDomain[].class, boolean.class);
-    public static final MethodActor DirectByteBuffer_init = findMethod(Classes.forName("java.nio.DirectByteBuffer"), "<init>", long.class, int.class);
 
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded

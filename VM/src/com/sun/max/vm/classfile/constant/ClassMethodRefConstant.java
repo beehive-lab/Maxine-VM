@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import static com.sun.max.vm.MaxineVM.*;
+
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -129,18 +132,29 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
             // because we created Miranda methods for the TupleClassActor.
             // If we did not come across any of those above,
             // then there isn't any matching interface method either.
-            final MethodActor classMethodActor = classActor.findClassMethodActor(name, signature);
-            if (classMethodActor != null) {
-                if (classMethodActor.isAbstract() && !classActor.isAbstract()) {
+            MethodActor methodActor = classActor.findClassMethodActor(name, signature);
+            if (methodActor != null) {
+                if (methodActor.isAbstract() && !classActor.isAbstract()) {
                     throw new AbstractMethodError();
                 }
-
-                classMethodActor.checkAccessBy(pool.holder());
-                pool.updateAt(index, new Resolved(classMethodActor));
-                return classMethodActor;
+                methodActor.checkAccessBy(pool.holder());
+                if (isHosted()) {
+                    MethodActor aliasedMethodActor = ALIAS.Static.resolveAlias(methodActor);
+                    if (aliasedMethodActor == null) {
+                        // Only update constant pool if no aliasing occurred.
+                        // Otherwise, subsequent verification of bytecode
+                        // referencing the alias method will fail.
+                        pool.updateAt(index, new Resolved(methodActor));
+                    } else {
+                        methodActor = aliasedMethodActor;
+                    }
+                } else {
+                    pool.updateAt(index, new Resolved(methodActor));
+                }
+                return methodActor;
             }
             final String errorMessage = classActor.javaSignature(true) + "." + name + signature;
-            if (MaxineVM.isHosted()) {
+            if (isHosted()) {
                 final Class<?> javaClass = classActor.toJava();
                 final Class[] parameterTypes = signature.resolveParameterTypes(javaClass.getClassLoader());
                 final Class returnType = signature.resolveReturnType(javaClass.getClassLoader());

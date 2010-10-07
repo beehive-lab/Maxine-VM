@@ -20,13 +20,16 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.lang.reflect.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
 import com.sun.max.vm.type.*;
 
 /**
@@ -134,8 +137,21 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
                 throw new IncompatibleClassChangeError();
             }
             final InterfaceActor interfaceActor = (InterfaceActor) classActor;
-            final MethodActor methodActor = findInterfaceMethodActor(interfaceActor, name, signature);
+            MethodActor methodActor = findInterfaceMethodActor(interfaceActor, name, signature);
             if (methodActor != null) {
+                if (isHosted()) {
+                    MethodActor aliasedMethodActor = ALIAS.Static.resolveAlias(methodActor);
+                    if (aliasedMethodActor == null) {
+                        // Only update constant pool if no aliasing occurred.
+                        // Otherwise, subsequent verification of bytecode
+                        // referencing the alias method will fail.
+                        pool.updateAt(index, new Resolved(methodActor));
+                    } else {
+                        methodActor = aliasedMethodActor;
+                    }
+                } else {
+                    pool.updateAt(index, new Resolved(methodActor));
+                }
                 pool.updateAt(index, new Resolved(methodActor));
                 return methodActor;
             }
