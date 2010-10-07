@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.max.vm.type.ClassRegistry.*;
+import static com.sun.cri.bytecode.Bytecodes.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -68,8 +69,15 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
                 }
             }
         }
-        NativeLibrary_handle.setLong(this, address.toLong());
+        JDK_java_lang_ClassLoader_NativeLibrary thisNativeLibrary = asThis(this);
+        thisNativeLibrary.handle = address.toLong();
     }
+
+    @ALIAS(declaringClass = ClassLoader.class, innerClass = "NativeLibrary")
+    private long handle;
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native JDK_java_lang_ClassLoader_NativeLibrary asThis(Object nativeLibrary);
 
     /**
      * Looks up a symbol in this native library.
@@ -79,7 +87,8 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @SUBSTITUTE
     long find(String symbolName) {
-        final Address handle = Address.fromLong(NativeLibrary_handle.getLong(this));
+        JDK_java_lang_ClassLoader_NativeLibrary thisNativeLibrary = asThis(this);
+        final Address handle = Address.fromLong(thisNativeLibrary.handle);
         return DynamicLinker.lookupSymbol(handle, symbolName).asAddress().toLong();
     }
 
@@ -89,7 +98,8 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @SUBSTITUTE
     void unload() {
-        final Address handle = Address.fromLong(NativeLibrary_handle.getLong(this));
+        JDK_java_lang_ClassLoader_NativeLibrary thisNativeLibrary = asThis(this);
+        final Address handle = Address.fromLong(thisNativeLibrary.handle);
         DynamicLinker.close(handle);
     }
 

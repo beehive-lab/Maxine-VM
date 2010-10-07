@@ -29,6 +29,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -43,10 +44,28 @@ import com.sun.max.vm.type.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface METHOD_SUBSTITUTIONS {
+
+    /**
+     * Specifies the substitutee class.
+     *
+     * If the default value is specified for this element, then a non-default
+     * value must be given for the {@link #className()} element.
+     */
     Class value() default METHOD_SUBSTITUTIONS.class;
 
-    String hiddenClass() default "";
+    /**
+     * Specifies the substitutee class.
+     * This method is provided for cases where the substitutee class
+     * is not accessible (according to Java language access control rules).
+     *
+     * If the default value is specified for this element, then a non-default
+     * value must be given for the {@link #value()} element.
+     */
+    String className() default "";
 
+    /**
+     * Specifies the suffix of the substitutee class name when it is an inner class.
+     */
     String innerClass() default "";
 
     public static final class Static {
@@ -68,6 +87,7 @@ public @interface METHOD_SUBSTITUTIONS {
          * @param substitutor a class that provides substitute implementations for one or more methods in
          *            {@code substitutee}
          */
+        @HOSTED_ONLY
         private static void register(Class substitutee, Class substitutor) {
             boolean substitutionFound = false;
             for (Method substituteMethod : substitutor.getDeclaredMethods()) {
@@ -78,7 +98,7 @@ public @interface METHOD_SUBSTITUTIONS {
                     if (substituteName.length() == 0) {
                         substituteName = substituteMethod.getName();
                     }
-                    boolean conditional = substituteAnnotation.conditional();
+                    boolean conditional = substituteAnnotation.optional();
                     boolean isConstructor = substituteAnnotation.constructor();
 
                     final ClassMethodActor originalMethodActor;
@@ -135,7 +155,10 @@ public @interface METHOD_SUBSTITUTIONS {
                     MaxineVM.registerImageMethod(originalMethodActor); // TODO: loosen this requirement
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.
-                    if (substituteMethod.getAnnotation(INLINE.class) == null && substituteMethod.getAnnotation(INTRINSIC.class) == null && !Modifier.isStatic(substituteMethod.getModifiers())) {
+                    if (substituteMethod.getAnnotation(INLINE.class) == null &&
+                        substituteMethod.getAnnotation(ALIAS.class) == null &&
+                        substituteMethod.getAnnotation(INTRINSIC.class) == null &&
+                        !Modifier.isStatic(substituteMethod.getModifiers())) {
                         ProgramError.unexpected("method without @" + SUBSTITUTE.class.getSimpleName() + " annotation in " + substitutor + " must be static, have @" + INTRINSIC.class.getSimpleName() +
                                         "(UNSAFE_CAST) or @" + INLINE.class.getSimpleName() + " annotation: " + substituteMethod);
                     }
@@ -144,21 +167,26 @@ public @interface METHOD_SUBSTITUTIONS {
             ProgramError.check(substitutionFound, "no method with " + SUBSTITUTE.class.getSimpleName() + " annotation found in " + substitutor);
         }
 
+        @HOSTED_ONLY
         public static void processAnnotationInfo(METHOD_SUBSTITUTIONS annotation, ClassActor substitutor) {
 
-            // These two checks make it impossible for method substitutions holders to have instance fields.
+            // These two checks make it impossible for method substitutions holders to have (non-alias) instance fields.
             // A substitute non-static method could never access such a field given that the receiver is
             // cast (via UNSAFE_CAST) to be an instance of the substitutee.
             ProgramError.check(substitutor.superClassActor.typeDescriptor == JavaTypeDescriptor.OBJECT, "method substitution class must directly subclass java.lang.Object");
-            ProgramError.check(substitutor.localInstanceFieldActors().length == 0, "method substitution class cannot declare any dynamic fields");
+            for (FieldActor field : substitutor.localInstanceFieldActors()) {
+                if (field.getAnnotation(ALIAS.class) == null) {
+                    throw FatalError.unexpected("method substitution class cannot declare any non-aliased instance fields");
+                }
+            }
 
             Class holder;
             if (annotation.value() != METHOD_SUBSTITUTIONS.class) {
-                assert annotation.hiddenClass().isEmpty();
+                assert annotation.className().isEmpty();
                 holder = annotation.value();
             } else {
-                assert !annotation.hiddenClass().isEmpty();
-                holder = Classes.forName(annotation.hiddenClass(), false, substitutor.classLoader);
+                assert !annotation.className().isEmpty();
+                holder = Classes.forName(annotation.className(), false, substitutor.classLoader);
             }
 
             if (!annotation.innerClass().isEmpty()) {
@@ -167,7 +195,8 @@ public @interface METHOD_SUBSTITUTIONS {
             register(holder, substitutor.toJava());
         }
 
-        private static Method findMethod(Class declaringClass, String name, SignatureDescriptor signatureDescriptor) {
+        @HOSTED_ONLY
+        public static Method findMethod(Class declaringClass, String name, SignatureDescriptor signatureDescriptor) {
             for (Method javaMethod : declaringClass.getDeclaredMethods()) {
                 if (javaMethod.getName().equals(name)) {
                     if (signatureDescriptor.parametersEqual(SignatureDescriptor.fromJava(javaMethod))) {
@@ -178,7 +207,8 @@ public @interface METHOD_SUBSTITUTIONS {
             return null;
         }
 
-        private static Constructor findConstructor(Class declaringClass, SignatureDescriptor signatureDescriptor) {
+        @HOSTED_ONLY
+        public static Constructor findConstructor(Class declaringClass, SignatureDescriptor signatureDescriptor) {
             for (Constructor constructor : declaringClass.getDeclaredConstructors()) {
                 if (signatureDescriptor.parametersEqual(SignatureDescriptor.fromJava(constructor))) {
                     return constructor;

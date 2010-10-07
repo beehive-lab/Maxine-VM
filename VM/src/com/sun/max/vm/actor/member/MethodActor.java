@@ -370,7 +370,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     /**
      * Gets the invocation stub for this method actor, creating it first if necessary.
      */
-    public InvocationStub makeInvocationStub() {
+    public final InvocationStub makeInvocationStub() {
         ClassRegistry classRegistry = holder().classRegistry();
         InvocationStub invocationStub = classRegistry.get(INVOCATION_STUB, this);
         if (invocationStub == null) {
@@ -403,9 +403,12 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
      *
      * This method throws the same exceptions as {@link Method#invoke(Object, Object...)}.
      *
+     * NOTE: Reflection invocation should not be used for accessing otherwise hidden methods in the JDK.
+     * Instead, method {@linkplain ALIAS aliasing} mechanism should be used.
+     *
      * @param argumentValues the values to be passed as the arguments of the invocation
      */
-    public Value invoke(Value... argumentValues) throws InvocationTargetException, IllegalAccessException {
+    public final Value invoke(Value... argumentValues) throws InvocationTargetException, IllegalAccessException {
         assert !isInstanceInitializer();
         if (MaxineVM.isHosted()) {
             // When running hosted, the generated stub cannot be executed, because it does not verify.
@@ -434,10 +437,13 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
      *
      * This method throws the same exceptions as {@link Constructor#newInstance(Object...)}.
      *
+     * NOTE: Reflection invocation should not be used for accessing otherwise hidden constructors in the JDK.
+     * Instead, method {@linkplain ALIAS aliasing} mechanism should be used.
+     *
      * @param argumentValues the values to be passed as the arguments of the invocation. Note that this does not include
      *            the uninitialized object as it is created by this invocation.
      */
-    public Value invokeConstructor(Value... argumentValues) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+    public final Value invokeConstructor(Value... argumentValues) throws InvocationTargetException, IllegalAccessException, InstantiationException {
         assert isInstanceInitializer();
         final ConstructorInvocationStub stub = UnsafeCast.asConstructorInvocationStub(makeInvocationStub());
         if (MaxineVM.isHosted()) {
