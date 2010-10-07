@@ -23,6 +23,7 @@ package com.sun.max.ins;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;
+import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -30,7 +31,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -77,6 +78,8 @@ public final class NotepadInspector extends Inspector {
     private final Action pasteAction;
     private final InspectorAction selectAllAction;
     private final InspectorAction clearAction;
+    private final InspectorAction insertFromFileAction;
+    private final InspectorAction writeToFileAction;
     private final InspectorAction notepadPrintAction;
     private final InspectSelectedAddressMemoryAction inspectSelectedAddressMemoryAction;
     private final InspectSelectedAddressRegionAction inspectSelectedAddressRegionAction;
@@ -173,6 +176,8 @@ public final class NotepadInspector extends Inspector {
         });
 
         notepadPrintAction = new NotepadPrintAction(inspection);
+        insertFromFileAction = new InsertFromFileAction(inspection);
+        writeToFileAction = new WriteToFileAction(inspection);
         inspectSelectedAddressMemoryAction = new InspectSelectedAddressMemoryAction(inspection);
         inspectSelectedAddressRegionAction = new InspectSelectedAddressRegionAction(inspection);
         inspectSelectedAddressObjectAction = new InspectSelectedAddressObjectAction(inspection);
@@ -197,6 +202,8 @@ public final class NotepadInspector extends Inspector {
         editMenu.add(pasteAction);
         editMenu.add(selectAllAction);
         editMenu.add(clearAction);
+        editMenu.add(insertFromFileAction);
+        editMenu.add(writeToFileAction);
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(inspectSelectedAddressMemoryAction);
         memoryMenu.add(inspectSelectedAddressRegionAction);
@@ -442,6 +449,79 @@ public final class NotepadInspector extends Inspector {
         @Override
         protected void procedure() {
             textArea.setText("");
+        }
+    }
+    /**
+     * Action:  produces a dialog for writing notepad contents to an interactively specified file.
+     */
+    final class InsertFromFileAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Insert text from a file...";
+
+        InsertFromFileAction(Inspection inspection) {
+            super(inspection, DEFAULT_TITLE);
+        }
+
+        @Override
+        protected void procedure() {
+            //Create a file chooser
+            final JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);
+            fileChooser.setDialogTitle("Insert text from file:");
+            final int returnVal = fileChooser.showOpenDialog(gui().frame());
+            if (returnVal != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+            final File file = fileChooser.getSelectedFile();
+            if (!file.exists()) {
+                gui().errorMessage("File doesn't exist:" + file.getName());
+                return;
+            }
+            try {
+                final BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+                String line = bufferedReader.readLine();
+                while (line != null) {
+                    textArea.insert(line + "\n", textArea.getCaretPosition());
+                    line = bufferedReader.readLine();
+                }
+            } catch (IOException ioException) {
+                gui().errorMessage("Failed reading from " + file + " " + ioException);
+            }
+        }
+    }
+
+
+    /**
+     * Action:  produces a dialog for writing notepad contents to an interactively specified file.
+     */
+    final class WriteToFileAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Write contents to a file...";
+
+        WriteToFileAction(Inspection inspection) {
+            super(inspection, DEFAULT_TITLE);
+        }
+
+        @Override
+        protected void procedure() {
+            //Create a file chooser
+            final JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+            fileChooser.setDialogTitle("Write notepad contents to file:");
+            final int returnVal = fileChooser.showSaveDialog(gui().frame());
+            if (returnVal != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+            final File file = fileChooser.getSelectedFile();
+            if (file.exists() && !gui().yesNoDialog("File " + file + "exists.  Overwrite?\n")) {
+                return;
+            }
+            try {
+                final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));
+                printStream.print(textArea.getText());
+            } catch (FileNotFoundException fileNotFoundException) {
+                gui().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
+            }
         }
     }
 
