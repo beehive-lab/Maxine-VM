@@ -96,7 +96,7 @@ public abstract class RemoteInvocationProtocolAdaptor {
     }
 
     /**
-     * Set the array paramater mode for given parameter of given method.
+     * Set the array parameter mode for given parameter of given method.
      * @param methodName name of method
      * @param param parameter index, based at zero
      * @param mode the array mode
