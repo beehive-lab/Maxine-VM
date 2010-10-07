@@ -614,7 +614,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, refUpdater);
             if (hub.isSpecialReference) {
-                SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
+                SpecialReferenceManager.discoverSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }

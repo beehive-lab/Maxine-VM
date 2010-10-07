@@ -1569,7 +1569,7 @@ function run_test() {
 #=======================================
 
 gate_usage="[options]"
-gate_presets="-maxvm-config-alias=cpscps -fail-fast"
+gate_presets="-maxvm-config-alias=mscpscps -fail-fast"
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
     If this commands exits with a 0 exit code, then the source code is in
@@ -1582,10 +1582,29 @@ gate_help="run the tests used to validate a push to the stable Maxine repository
 
     Use \"max gate -help\" to see what other options this command accepts."
 
-function run_gate() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
-}
+ssgc_presets="-maxvm-config-alias=cpscps -fail-fast"
 
+ssgc_testlist="-tests=output:"
+sep=""
+i=0
+while [ ! $i == "8" ] ; do
+  ssgc_testlist="${ssgc_testlist}${sep}GCTest$i"
+  i=$[ $i + 1 ]
+  sep="+"
+done
+i=1
+while [ ! $i == "5" ] ; do
+  ssgc_testlist="${ssgc_testlist}${sep}WeakReferenceTestt$i"
+  i=$[ $i + 1 ]
+done
+
+ssgc_presets="$ssgc_presets $ssgc_testlist"
+
+
+function run_gate() {
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@" || 
+       run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${ssgc_presets} "$@"
+}
 
 
 #=======================================
