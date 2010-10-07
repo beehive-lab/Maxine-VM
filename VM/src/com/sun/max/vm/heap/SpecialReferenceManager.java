@@ -87,7 +87,12 @@ public class SpecialReferenceManager {
         JavaMonitorManager.bindStickyMonitor(REFERENCE_LOCK);
     }
 
-    private static Reference discoveredList;
+    /**
+     * The head of the list of discovered reference.
+     * Use an opaque pointer to avoid this to be subject to read/write barriers and reference map.
+     * FIXME: maybe using annotation to do this would be better.
+     */
+    private static Pointer discoveredList;
 
     /**
      * This method processes the special reference objects that were
@@ -104,7 +109,8 @@ public class SpecialReferenceManager {
      */
     public static void processDiscoveredSpecialReferences(ReferenceForwarder refForwarder) {
         // the first pass over the list finds the references that have referents that are no longer reachable
-        java.lang.ref.Reference ref = UnsafeCast.asJDKReference(discoveredList.toJava());
+
+        java.lang.ref.Reference ref = UnsafeCast.asJDKReference(Reference.fromOrigin(Layout.cellToOrigin(discoveredList)).toJava());
         java.lang.ref.Reference last = UnsafeCast.asJDKReference(pendingField.getObject(null));
         final boolean isForwardingGC = refForwarder.isForwarding();
 
@@ -151,7 +157,7 @@ public class SpecialReferenceManager {
             }
         }
         TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
-        discoveredList = Reference.fromOrigin(Pointer.zero());
+        discoveredList = Pointer.zero();
 
         // Special reference map of Inspector
         if (Inspectable.isVmInspected()) {
@@ -195,31 +201,33 @@ public class SpecialReferenceManager {
      * reference object. This method checks to see whether the object has been processed previously,
      * and if not, then adds it to the queue to be processed later.
      *
-     * @param ref the reference that has been discovered
+     * @param cell a pointer at the origin of the reference that has been discovered
      */
-    public static void discoverSpecialReference(Reference ref) {
-        if (ref.readReference(nextField.offset()).isZero()) {
+    public static void discoverSpecialReference(Pointer cell) {
+        final Pointer origin = Layout.cellToOrigin(cell);
+
+        if (origin.readWord(nextField.offset()).isZero()) {
             // the "next" field of this object is null, queue it for later processing
             if (MaxineVM.isDebug()) {
-                boolean hasNullDiscoveredField = ref.readReference(discoveredField.offset()).isZero();
-                boolean isHeadOfDiscoveredList = ref.equals(discoveredList);
+                boolean hasNullDiscoveredField = origin.readWord(discoveredField.offset()).isZero();
+                boolean isHeadOfDiscoveredList = cell.equals(discoveredList);
                 if (!(hasNullDiscoveredField && !isHeadOfDiscoveredList)) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Discovered reference ");
-                    Log.print(ref.toOrigin());
+                    Log.print(cell);
                     Log.print(" ");
                     Log.unlock(lockDisabledSafepoints);
                     FatalError.unexpected(": already discovered");
                 }
             }
-            ref.writeReference(discoveredField.offset(), discoveredList);
-            discoveredList = ref;
+            origin.writeWord(discoveredField.offset(), discoveredList);
+            discoveredList = cell;
             if (TraceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
-                Log.print(ref.toOrigin());
+                Log.print(cell);
                 Log.print(" ");
-                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(ref).toJava());
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
                 Log.print(hub.classActor.name.string);
                 Log.println(" to list of discovered references");
                 Log.unlock(lockDisabledSafepoints);
