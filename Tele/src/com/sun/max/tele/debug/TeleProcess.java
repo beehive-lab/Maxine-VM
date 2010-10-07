@@ -262,7 +262,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     requests.putFirst(request);
                     Trace.end(TRACE_VALUE + 1, tracePrefix() + "scheduled execution request: " + request + traceSuffix(isSynchronous));
                 } catch (InterruptedException interruptedException) {
-                    ProgramWarning.message(tracePrefix() + "Could not schedule " + request + ": " + interruptedException);
+                    TeleWarning.message(tracePrefix() + "Could not schedule " + request, interruptedException);
                     return;
                 }
 
@@ -276,7 +276,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
 
         private void execute(TeleEventRequest request, boolean isNested) {
             if (!isNested && processState != STOPPED) {
-                ProgramWarning.message(tracePrefix() + "Cannot execute \"" + request + "\" unless process state is " + STOPPED);
+                TeleWarning.message(tracePrefix() + "Cannot execute \"" + request + "\" unless process state is " + STOPPED);
             } else {
                 try {
                     lastSingleStepThread = null;
@@ -302,9 +302,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     execute(request, false);
                     Trace.end(TRACE_VALUE + 1, tracePrefix() + "handling execution request: " + request);
                 } catch (InterruptedException interruptedException) {
-                    ProgramWarning.message(tracePrefix() + "Could not take request from sceduling queue: " + interruptedException);
+                    TeleWarning.message(tracePrefix() + "Could not take request from sceduling queue", interruptedException);
                 } catch (Throwable throwable) {
-                    ProgramWarning.message(tracePrefix() + "Error on RequestHandlingThread: " + Utils.stackTraceAsString(throwable));
+                    TeleWarning.message(tracePrefix() + "Error on RequestHandlingThread: " + Utils.stackTraceAsString(throwable));
                 } finally {
                     vm().unlock();
                 }
@@ -683,7 +683,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
             throw new DataIOError(address, "Attempt to read the memory when the process is in state " + TERMINATED);
         }
         if (processState != STOPPED && processState != null && Thread.currentThread() != requestHandlingThread) {
-        //    ProgramWarning.message("Reading from process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
+        //    TeleWarning.message("Reading from process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
         }
         DataIO.Static.checkRead(buffer, offset, length);
         final int bytesRead = read0(address, buffer, offset, length);
@@ -698,7 +698,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
             throw new DataIOError(address, "Attempt to write to memory when the process is in state " + TERMINATED);
         }
         if (processState != STOPPED && processState != null && Thread.currentThread() != requestHandlingThread) {
-            //ProgramWarning.message("Writing to process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
+            //TeleWarning.message("Writing to process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
             /* Uncomment to trace the culprit
             try {
                 throw new Exception();

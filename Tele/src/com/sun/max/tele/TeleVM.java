@@ -371,7 +371,7 @@ public abstract class TeleVM implements MaxVM {
         try {
             LogManager.getLogManager().getLogger("").setLevel(Level.parse(logLevel));
         } catch (IllegalArgumentException e) {
-            ProgramWarning.message("Invalid level specified for java.util.logging root logger: " + logLevel + " [using " + Level.SEVERE + "]");
+            TeleWarning.message("Invalid level specified for java.util.logging root logger: " + logLevel + " [using " + Level.SEVERE + "]");
             LogManager.getLogManager().getLogger("").setLevel(Level.SEVERE);
         }
 
@@ -528,7 +528,7 @@ public abstract class TeleVM implements MaxVM {
     private static void checkClasspath(Classpath classpath) {
         for (Entry classpathEntry : classpath.entries()) {
             if (classpathEntry.isPlainFile()) {
-                ProgramWarning.message("Class path entry is neither a directory nor a JAR file: " + classpathEntry);
+                TeleWarning.message("Class path entry is neither a directory nor a JAR file: " + classpathEntry);
             }
         }
     }

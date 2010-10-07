@@ -92,7 +92,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
                 teleHeapScheme = new TeleMSHeapScheme(teleVM);
             } else {
                 teleHeapScheme = new TeleUnknownHeapScheme(teleVM);
-                ProgramWarning.message("Unable to locate implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
+                TeleWarning.message("Unable to locate implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
             }
             teleHeap = new TeleHeap(teleVM, teleHeapScheme);
             Trace.line(1, "[TeleHeap] Scheme=" + heapSchemeName + " using TeleHeapScheme=" + teleHeapScheme.getClass().getSimpleName());
