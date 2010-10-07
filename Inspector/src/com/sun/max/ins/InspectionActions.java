@@ -3530,7 +3530,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             } catch (DuplicateWatchpointException duplicateWatchpointException) {
                 gui().errorMessage(duplicateWatchpointException.getMessage());
             } catch (MaxVMBusyException maxVMBusyException) {
-                ProgramWarning.message("Watchpoint creation failed:  VM busy");
+                InspectorWarning.message("Watchpoint creation failed", maxVMBusyException);
             }
         }
 
