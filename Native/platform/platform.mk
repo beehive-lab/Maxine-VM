@@ -220,7 +220,9 @@ ifeq ($(OS),solaris)
         CFLAGS = -g -xc99 -errwarn -errtags -errfmt=error $(KPIC_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) -D$(TARGET_WORD_SIZE) $(OTHER_CFLAGS)
     endif
     C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) 
-    LINK_MAIN = $(CC) $(ARCH_FLAG) -lc -lthread -ldl -o $(MAIN)
+    # The '-R' linker option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
+    # find Maxine's version of the libjvm.so library.
+    LINK_MAIN = $(CC) $(ARCH_FLAG) -lc -lthread -ldl -R$(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
     LINK_LIB = $(CC) -G $(ARCH_FLAG) -lresolv -lc -lm -ldl -lthread -lrt -lproc
     LIB_PREFIX = lib
     LIB_SUFFIX = .so
