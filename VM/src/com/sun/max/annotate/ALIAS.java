@@ -28,14 +28,44 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * Mechanism for referring to fields, methods and constructors otherwise
- * inaccessible due to Java language access control rules.
- * This enables VM code to directly access a private field or invoke a
- * private method in a JDK class without using reflection.
- * Aliases avoid the boxing/unboxing required by reflection and they
- * type check an aliased field access or method invocation statically.
+ * Mechanism for referring to fields, methods and constructors otherwise inaccessible due to Java language access
+ * control rules. This enables VM code to directly access a private field or invoke a private method in a JDK class
+ * without using reflection. Aliases avoid the boxing/unboxing required by reflection and they type check an aliased
+ * field access or method invocation statically.
+ *
+ * The idiom for using ALIAS is somewhat related to the {@link @SUBSTITUTE} annotation, but reversed and are often used
+ * in combination. In both cases a separate class is used to declare the aliased or substituted methods. In the
+ * substitution case occurrences of {@code this} actually refer to the instance of the class being substituted. In the
+ * aliased case we pretend that the class declaring the aliased method is an instance of the aliasee in order to access
+ * its fields or invoke its methods.
+ *
+ * For example, assume we want to create an instance of a class {@code Foo} which has a private constructor
+ * that takes one {@code int} argument. To to this we declare a new class {@code FooAlias} that contains the following:
+ *
+ * <code>
+ * final class FooAlias {
+ *     @ALIAS(declaringClass = Foo.class, name="<init>");
+ *     private native void init(int arg);
+ *
+ *     @INTRINSIC(UNSAFE_CAST)
+ *     static native FooAlias asThis(Foo foo);
+ *
+ *     public static Foo createFoo(int arg) {
+ *         final Foo foo = (Foo) Heap.createTuple(ClassActor.fromJava(Foo,.class).dynamicHub());
+ *         FooAlias thisFoo = asThis(foo);
+ *         thisFoo.init(arg);
+ *         return foo;
+ *     }
+ * }
+ * </code>
+ *
+ * The idiomatic use of {@code native} serves merely to avoid providing a body for the annotated methods.
+ *
+ * The code for field access is similar; declare an {@code @ALIAS} annotated field in the class with the same
+ * name as the field in the aliasee and then use {@code thisFoo.field}.
  *
  * @author Doug Simon
+ * @author Mick Jordan
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD})
