@@ -164,4 +164,10 @@ public interface RiMethod {
      * Non-Maxine VMs should just return {@code null}.
      */
     Class<?> accessor();
+    
+    /**
+     * Temporary work-around to support the @ACCESSOR Maxine annotation.
+     * Non-Maxine VMs should just return 0.
+     */
+    int intrinsic();
 }

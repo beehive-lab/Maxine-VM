@@ -870,7 +870,33 @@ public final class GraphBuilder {
         }
     }
 
+    /**
+     * Temporary work-around to support the @ACCESSOR Maxine annotation.
+     */
+    private RiMethod handleInvokeAccessor(RiMethod target) {
+        target = bindAccessorMethod(target);
+        if (target.intrinsic() != 0) {
+            int intrinsic = target.intrinsic();
+            int opcode = intrinsic & 0xff;
+            switch (opcode) {
+                case PREAD          : genLoadPointer(intrinsic); break;
+                case PGET           : genLoadPointer(intrinsic); break;
+                case PWRITE         : genStorePointer(intrinsic); break;
+                case PSET           : genStorePointer(intrinsic); break;
+                case PCMPSWP        : getCompareAndSwap(intrinsic); break;
+                default:
+                    throw new CiBailout("unknown bytecode " + opcode + " (" + nameOf(opcode) + ")");
+            }
+            return null;
+        }
+        return target;
+    }
+
     void genInvokeInterface(RiMethod target, int cpi, RiConstantPool constantPool) {
+        target = handleInvokeAccessor(target);
+        if (target == null) {
+            return;
+        }
         FrameState stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
@@ -916,7 +942,7 @@ public final class GraphBuilder {
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      */
     private static RiMethod bindAccessorMethod(RiMethod target) {
-        if (target.holder().javaClass() == Accessor) {
+        if (target.isResolved() && target.holder().javaClass() == Accessor) {
             RiType accessor = boundAccessor.get();
             assert accessor != null : "Cannot compile call to method in " + target.holder() + " without enclosing @ACCESSOR annotated method";
             RiMethod newTarget = accessor.resolveMethodImpl(target);
@@ -949,8 +975,6 @@ public final class GraphBuilder {
         // attempt to devirtualize the call
         if (target.isResolved()) {
             RiType klass = target.holder();
-
-            target = bindAccessorMethod(target);
 
             // 0. check for trivial cases
             if (target.canBeStaticallyBound() && !isAbstract(target.accessFlags())) {
@@ -1144,7 +1168,7 @@ public final class GraphBuilder {
         if (Modifier.isSynchronized(method().accessFlags())) {
             FrameState stateBefore = curState.immutableCopy();
             // unlock before exiting the method
-            int lockNumber = getLockNumber() - 1;
+            int lockNumber = locksSize() - 1;
             MonitorAddress lockAddress = new MonitorAddress(lockNumber);
             append(lockAddress);
             append(new MonitorExit(rootMethodSynchronizedObject, lockAddress, lockNumber, stateBefore));
@@ -1153,19 +1177,16 @@ public final class GraphBuilder {
         append(new Return(x));
     }
 
-    private int getLockNumber() {
-        int num = 0;
-        FrameState state = curState;
-        while (state != null) {
-            num += state.locksSize();
-            state = state.scope().callerState();
-        }
-        return num;
+    /**
+     * Gets the number of locks held.
+     */
+    private int locksSize() {
+        return curState.locksSize();
     }
 
     void genMonitorEnter(Value x, int bci) {
         FrameState stateBefore = curState.immutableCopy();
-        int lockNumber = getLockNumber();
+        int lockNumber = locksSize();
         MonitorAddress lockAddress = new MonitorAddress(lockNumber);
         append(lockAddress);
         appendWithoutOptimization(new MonitorEnter(x, lockAddress, lockNumber, stateBefore), bci);
@@ -1174,7 +1195,7 @@ public final class GraphBuilder {
     }
 
     void genMonitorExit(Value x, int bci) {
-        int lockNumber = getLockNumber() - 1;
+        int lockNumber = locksSize() - 1;
         if (lockNumber < 0) {
             throw new CiBailout("monitor stack underflow");
         }
@@ -1706,7 +1727,8 @@ public final class GraphBuilder {
         }
 
         // fill the exception handler for synchronized methods with instructions
-        if (Modifier.isSynchronized(target.accessFlags())) {
+        if (syncHandler != null && syncHandler.stateBefore() != null) {
+            // generate unlocking code if the exception handler is reachable
             fillSyncHandler(lock, syncHandler, true);
         } else {
             popScope();
@@ -1749,7 +1771,7 @@ public final class GraphBuilder {
 
         int bci = Instruction.SYNCHRONIZATION_ENTRY_BCI;
         assert lock != null;
-        assert curState.locksSize() > 0 && curState.lockAt(getLockNumber() - 1) == lock;
+        assert curState.locksSize() > 0 && curState.lockAt(locksSize() - 1) == lock;
         if (lock instanceof Instruction) {
             Instruction l = (Instruction) lock;
             if (!l.isAppended()) {
