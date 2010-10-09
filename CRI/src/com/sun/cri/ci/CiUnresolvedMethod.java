@@ -134,4 +134,8 @@ public class CiUnresolvedMethod implements RiMethod {
     public Class<?> accessor() {
         return null;
     }
+    
+    public int intrinsic() {
+        return 0;
+    }
 }
