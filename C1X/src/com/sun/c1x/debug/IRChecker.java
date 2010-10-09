@@ -48,8 +48,8 @@ public class IRChecker extends ValueVisitor {
     public static class IRCheckException extends RuntimeException {
         public static final long serialVersionUID = 8974598793158772L;
 
-        public IRCheckException(String phase, String msg) {
-            super("IRCheck error " + phase + ": " + msg);
+        public IRCheckException(String msg) {
+            super(msg);
         }
     }
 
@@ -116,10 +116,15 @@ public class IRChecker extends ValueVisitor {
         }
     }
 
+    private Instruction currentInstruction;
+    private BlockBegin currentBlock;
+
     private class CheckValues implements BlockClosure {
         public void apply(BlockBegin block) {
+            currentBlock = block;
             Instruction instr = block;
             while (instr != null) {
+                currentInstruction = instr;
                 basicChecker.apply(instr);
                 instr.allValuesDo(basicChecker);
                 instr.accept(IRChecker.this);
@@ -1190,7 +1195,12 @@ public class IRChecker extends ValueVisitor {
     }
 
     private void fail(String msg) {
-        throw new IRCheckException(phase, msg);
+        String location = "";
+        try {
+            location = currentBlock.stateBefore().scope().method + "@" + currentInstruction.bci() + ": ";
+        } catch (Throwable e) {
+        }
+        throw new IRCheckException(location + "IR error " + phase + ": " + msg);
     }
 
     private class BasicValueChecker implements ValueClosure {
