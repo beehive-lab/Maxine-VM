@@ -219,6 +219,9 @@ public class C1XTest {
         }
         reportTimings();
         reportMetrics();
+
+        // Non-zero exit code indicates number of failures
+        System.exit(progress.failed());
     }
 
     private static void doCompile(RuntimeCompilerScheme compilerScheme, List<MethodActor> methods, ProgressPrinter progress) {
