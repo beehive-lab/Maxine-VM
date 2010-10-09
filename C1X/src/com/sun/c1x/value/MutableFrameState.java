@@ -87,7 +87,7 @@ public class MutableFrameState extends FrameState {
     }
 
     public void clearLocals() {
-        for (int i = 0; i < values.length; i++) {
+        for (int i = 0; i < maxLocals; i++) {
             values[i] = null;
         }
     }
