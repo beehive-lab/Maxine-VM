@@ -24,7 +24,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * This is a utility class for collection the system properties, class path,
+ * This is a utility class for collecting the system properties, class path,
  * VM options, and arguments to a java command.
  *
  * @author Ben L. Titzer
