@@ -143,8 +143,8 @@ public class LIRItem {
     }
 
     public CiValue result() {
-        assert !destructive || resultOperand.isVariable() : "shouldn't use setDestroysRegister with physical registers";
-        if (destructive && resultOperand.isVariable()) {
+        assert !destructive || !resultOperand.isRegister() : "shouldn't use setDestroysRegister with physical registers";
+        if (destructive && (resultOperand.isVariable() || resultOperand.isConstant())) {
             if (intermediateOperand.isIllegal()) {
                 intermediateOperand = gen.newVariable(instruction.kind);
                 gen.lir.move(resultOperand, intermediateOperand);
