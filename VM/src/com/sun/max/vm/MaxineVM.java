@@ -378,7 +378,7 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @VM_ENTRY_POINT
-    public static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
+    public static int run(Pointer bootHeapRegionStart, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
@@ -387,8 +387,6 @@ public final class MaxineVM {
         Pointer vmThreadLocals = primordialThreadLocals;
 
         Safepoint.initializePrimordial(vmThreadLocals);
-
-        Heap.initializeAuxiliarySpace(vmThreadLocals, auxiliarySpace);
 
         // The primordial thread should never allocate from the heap
         Heap.disableAllocationForCurrentThread();
@@ -488,6 +486,9 @@ public final class MaxineVM {
 
     @C_FUNCTION
     public static native void native_trap_exit(int code, Address address);
+
+    @C_FUNCTION
+    public static native void core_dump();
 
     public final VMConfiguration config;
     public Phase phase = Phase.BOOTSTRAPPING;

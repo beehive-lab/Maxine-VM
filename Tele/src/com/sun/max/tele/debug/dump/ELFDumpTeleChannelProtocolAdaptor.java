@@ -181,6 +181,11 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
 
     @Override
     public long getBootHeapStart() {
+        // Check if an option has specified the heap address.
+        final long heapAddress = TeleHeap.heapAddressOption();
+        if (heapAddress != 0) {
+            return heapAddress;
+        }
         if (true) {
             return getBootHeapStartHack();
         } else {

@@ -23,19 +23,18 @@ package com.sun.max.tele.debug.no;
 import static com.sun.max.platform.Platform.*;
 
 import java.io.*;
-import java.math.*;
 import java.nio.*;
-import java.nio.channels.FileChannel.*;
+import java.nio.channels.FileChannel.MapMode;
 import java.util.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.debug.TeleNativeThread.Params;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.hosted.BootImage.*;
+import com.sun.max.vm.hosted.BootImage.Header;
 
 /**
  * A null process that "contains" the boot image for inspection, as if it were a VM.
@@ -44,12 +43,6 @@ import com.sun.max.vm.hosted.BootImage.*;
  * @author Michael Van De Vanter
  */
 public final class ReadOnlyTeleProcess extends TeleProcess {
-
-    /**
-     * Name of system property that specifies the address to which the read-only heapPointer should be relocated.
-     */
-    public static final String HEAP_PROPERTY = "max.heap";
-
     private final DataAccess dataAccess;
     private final Pointer heapPointer;
 
@@ -60,23 +53,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
 
     public ReadOnlyTeleProcess(TeleVM teleVM, Platform platform, File programFile) throws BootImageException {
         super(teleVM, platform, ProcessState.UNKNOWN);
-        long heap = 0L;
-        String heapValue = System.getProperty(HEAP_PROPERTY);
-        if (heapValue != null) {
-            try {
-                int radix = 10;
-                if (heapValue.startsWith("0x")) {
-                    radix = 16;
-                    heapValue = heapValue.substring(2);
-                }
-                // Use BigInteger to handle unsigned 64-bit values that are greater than Long.MAX_VALUE
-                BigInteger bi = new BigInteger(heapValue, radix);
-                heap = bi.longValue();
-            } catch (NumberFormatException e) {
-                throw new BootImageException("Error parsing value of " + HEAP_PROPERTY + " system property: " + heapValue, e);
-            }
-        }
-        this.heapPointer = Pointer.fromLong(heap);
+        this.heapPointer = Pointer.fromLong(TeleHeap.heapAddressOption());
         try {
             dataAccess = map(teleVM.bootImageFile(), teleVM.bootImage());
         } catch (IOException ioException) {

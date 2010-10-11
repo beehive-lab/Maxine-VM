@@ -214,8 +214,6 @@ public class BootImage {
 
         public final int dynamicHeapRegionsArrayFieldOffset;
 
-        public final int auxiliarySpaceSize;
-
         /**
          * Instruct the boot image loader to reserve a range of contiguous virtual space of specified size.
          */
@@ -299,7 +297,6 @@ public class BootImage {
             codeSize = endian.readInt(dataInputStream);
 
             dynamicHeapRegionsArrayFieldOffset = endian.readInt(dataInputStream);
-            auxiliarySpaceSize = endian.readInt(dataInputStream);
             reservedVirtualSpaceSize = endian.readInt(dataInputStream);
             reservedVirtualSpaceFieldOffset = endian.readInt(dataInputStream);
             bootRegionMappingConstraint = endian.readInt(dataInputStream);
@@ -355,7 +352,6 @@ public class BootImage {
 
             dynamicHeapRegionsArrayFieldOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "dynamicHeapMemoryRegions");
 
-            auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(heapSize + codeSize);
             reservedVirtualSpaceSize = vmConfiguration.heapScheme().reservedVirtualSpaceSize();
             reservedVirtualSpaceFieldOffset =  staticFieldPointerOffset(dataPrototype, Heap.class, "reservedVirtualSpace");
             bootRegionMappingConstraint = vmConfiguration.heapScheme().bootRegionMappingConstraint().ordinal();
