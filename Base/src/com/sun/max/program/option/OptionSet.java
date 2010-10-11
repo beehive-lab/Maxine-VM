@@ -23,7 +23,6 @@ package com.sun.max.program.option;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.Arrays;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -510,6 +509,19 @@ public class OptionSet {
     public void printHelp(PrintStream stream, int width) {
         printHelpHeader(stream);
         for (Option<?> option : getSortedOptions()) {
+            if (option.type == OptionTypes.BLANK_BOOLEAN_TYPE && option instanceof FieldOption) {
+                FieldOption fopt = (FieldOption) option;
+                try {
+                    if (!fopt.nullValue.equals(fopt.field.getBoolean(null))) {
+                        // Don't show message for "-XX:+<opt>" option if the default is represented by the
+                        // "-XX:-<opt>" option instead (and vice versa).
+                        continue;
+                    }
+                } catch (Exception e) {
+                }
+            }
+
+
             final Option<Object> opt = Utils.cast(option);
             stream.print("    " + getUsage(opt));
             final Object defaultValue = opt.getDefaultValue();
@@ -523,7 +535,6 @@ public class OptionSet {
                 stream.print(Strings.formatParagraphs(help, 8, 0, width));
                 stream.println();
             }
-            stream.println();
         }
     }
 
