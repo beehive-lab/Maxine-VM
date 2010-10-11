@@ -1126,9 +1126,7 @@ public final class GraphBuilder {
                 // if the inlined method is synchronized, then the monitor
                 // must be released before jumping to the continuation point
                 assert C1XOptions.OptInlineSynchronized;
-                int i = curState.scope().callerState().locksSize();
-                assert curState.locksSize() == i + 1;
-                Value object = curState.lockAt(i);
+                Value object = curState.lockAt(0);
                 if (object instanceof Instruction) {
                     Instruction obj = (Instruction) object;
                     if (!obj.isAppended()) {

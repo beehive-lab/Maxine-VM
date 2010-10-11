@@ -95,7 +95,7 @@ public class BlockPrinter implements BlockClosure {
           }
           out.print(']');
         }
-        if (!newFrameState.noActiveLocks()) {
+        if (newFrameState.locksSize() != 0) {
             // print out the lines on the line below this
             // one at the same indentation level.
             out.println();
