@@ -175,28 +175,22 @@ public abstract class FrameState {
     }
 
     /**
-     * Returns the size of the locks.
-     *
-     * @return the size of the locks
+     * Gets number of locks held by this frame state.
      */
     public int locksSize() {
         return locks == null ? 0 : locks.size();
     }
 
     /**
-     * Returns the current size (height) of the stack.
-     *
-     * @return the size of the stack
+     * Gets the current size (height) of the stack.
      */
     public int stackSize() {
         return stackIndex;
     }
 
     /**
-     * Returns the maximum size of the stack.
-     *
-     * @return the maximum size of the stack
-     */
+     * Gets the maximum size (height) of the stack.
+]     */
     public int maxStackSize() {
         return values.length - maxLocals;
     }
@@ -208,15 +202,6 @@ public abstract class FrameState {
      */
     public boolean stackEmpty() {
         return stackIndex == 0;
-    }
-
-    /**
-     * Checks whether there are any active locks.
-     *
-     * @return {@code true} if there are <i>no</i> active locks
-     */
-    public boolean noActiveLocks() {
-        return locksSize() == 0;
     }
 
     /**
