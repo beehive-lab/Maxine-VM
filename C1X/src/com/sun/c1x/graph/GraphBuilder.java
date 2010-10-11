@@ -153,7 +153,6 @@ public final class GraphBuilder {
         }
 
         // 5.
-        scope().computeLockStackSize();
         C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(rootMethod);
         if (intrinsic != null) {
             // 6A.1 the root method is an intrinsic; load the parameters onto the stack and try to inline it
@@ -1656,9 +1655,6 @@ public final class GraphBuilder {
         // but without the return value on the stack.
         scopeData.setContinuationState(scope().callerState());
 
-        // compute the lock stack size for callee scope
-        scope().computeLockStackSize();
-
         Value lock = null;
         BlockBegin syncHandler = null;
         // inline the locking code if the target method is synchronized
@@ -1667,7 +1663,6 @@ public final class GraphBuilder {
             lock = synchronizedObject(curState, target);
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, ir.nextBlockNumber());
             inlineSyncEntry(lock, syncHandler);
-            scope().computeLockStackSize();
         }
 
         BlockBegin calleeStartBlock = blockAt(0);
@@ -1821,9 +1816,9 @@ public final class GraphBuilder {
     }
 
     void popScope() {
-        int numberOfLocks = scope().numberOfLocks();
+        int maxLocks = scope().maxLocks();
         scopeData = scopeData.parent;
-        scope().setMinimumNumberOfLocks(numberOfLocks);
+        scope().updateMaxLocks(maxLocks);
     }
 
     void popScopeForJsr() {
@@ -2212,11 +2207,8 @@ public final class GraphBuilder {
         }
 
         // if the method terminates, we don't need the stack anymore
-        if (end instanceof Return) {
+        if (end instanceof Return || end instanceof Throw) {
             curState.clearStack();
-        } else if (end instanceof Throw) {
-            // may have exception handlers in caller scopes
-            curState.truncateStack(scope().lockStackSize());
         }
 
         // connect to begin and set state

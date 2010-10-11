@@ -332,7 +332,7 @@ public class MutableFrameState extends FrameState {
             locks = new ArrayList<Value>();
         }
         locks.add(obj);
-        scope.setMinimumNumberOfLocks(totalNumberOfLocks);
+        scope.updateMaxLocks(totalNumberOfLocks);
     }
 
     /**
