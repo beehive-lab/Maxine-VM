@@ -328,10 +328,6 @@ public final class Heap {
         return heapScheme().isGcThread(thread);
     }
 
-    public static void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
-        heapScheme().initializeAuxiliarySpace(primordialVmThreadLocals, auxiliarySpace);
-    }
-
     @INLINE
     public static Object createArray(DynamicHub hub, int length) {
         final Object array = heapScheme().createArray(hub, length);

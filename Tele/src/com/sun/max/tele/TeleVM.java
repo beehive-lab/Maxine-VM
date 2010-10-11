@@ -402,6 +402,11 @@ public abstract class TeleVM implements MaxVM {
             sourcepath = sourcepath.prepend(new Classpath(sourcepathList.toArray(new String[sourcepathList.size()])));
         }
         checkClasspath(sourcepath);
+        String heap = options.heapOption.getValue();
+
+        if (heap != null) {
+            System.setProperty(TeleHeap.HEAP_ADDRESS_PROPERTY, heap);
+        }
 
         switch (mode) {
             case CREATE:
@@ -430,7 +435,7 @@ public abstract class TeleVM implements MaxVM {
                  * AND the boot heap will contain references to the dynamic heap.
                  * So the delicate dance that us normally performed when setting up the
                  * TeleClassRegistry is neither entirely necessary nor sufficient.
-                 * The is handled by doing two passes over the class registry and
+                 * This is handled by doing two passes over the class registry and
                  * deferring resolution of those references that are outside the boot heap
                  * until the second pass, after the TeleHeap is fully initialized.
                  * We also need to explicitly refresh the threads and update state.
@@ -446,11 +451,6 @@ public abstract class TeleVM implements MaxVM {
                 break;
 
             case IMAGE:
-                String heap = options.heapOption.getValue();
-                if (heap != null) {
-                    assert System.getProperty(ReadOnlyTeleProcess.HEAP_PROPERTY) == null;
-                    System.setProperty(ReadOnlyTeleProcess.HEAP_PROPERTY, heap);
-                }
                 vm = createReadOnly(bootImageFile, sourcepath);
                 vm.updateVMCaches();
         }
