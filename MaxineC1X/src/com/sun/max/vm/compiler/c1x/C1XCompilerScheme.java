@@ -35,7 +35,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -61,7 +60,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                 return false;
             }
         }, MaxineVM.Phase.STARTING);
-
 
     @HOSTED_ONLY
     public C1XCompilerScheme() {
@@ -103,9 +101,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                 c1xTarget = new CiTarget(arch, config, true, wordSize, wordSize, wordSize, targetABI.stackFrameAlignment, platform().pageSize, wordSize, wordSize, 16, false);
                 c1xXirGenerator = new MaxXirGenerator(vmConfig(), c1xTarget, c1xRuntime);
                 c1xCompiler = new C1XCompiler(c1xRuntime, c1xTarget, c1xXirGenerator);
-            } else if (phase == MaxineVM.Phase.COMPILING) {
-                // can only refer to JavaPrototype while bootstrapping.
-                JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
             }
         }
     }
