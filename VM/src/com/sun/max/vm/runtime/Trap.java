@@ -344,7 +344,7 @@ public abstract class Trap {
         final Pointer safepointLatch = trapStateAccess.getSafepointLatch(trapState);
 
         if (VmThread.current().isVmOperationThread()) {
-            FatalError.unexpected("Memory fault on a GC thread", false, null, trapState);
+            FatalError.unexpected("Memory fault on the VM operation thread", false, null, trapState);
         }
 
         // check to see if a safepoint has been triggered for this thread
