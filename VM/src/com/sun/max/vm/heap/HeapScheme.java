@@ -275,9 +275,8 @@ public interface HeapScheme extends VMScheme {
     void disableImmortalMemoryAllocation();
 
     /**
-     *   Announces that the current thread is detaching from the VM.
-     *   GC pre-allocating resources to a thread may need to be informed to reclaim, or prepare, these resources
-     *   (e.g., TLABs).
+     * Announces that the current thread is detaching from the VM so that
+     * thread-local resources (e.g. TLABs) can be released.
      */
     void notifyCurrentThreadDetach();
 
