@@ -20,13 +20,18 @@
  */
 package com.sun.max.vm.object;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.MaxineVM.*;
 
 import java.lang.reflect.*;
+import java.nio.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
@@ -38,6 +43,8 @@ import com.sun.max.vm.reference.*;
  * @author Bernd Mathiske
  */
 public final class ObjectAccess {
+
+    private static final ClassActor DirectByteBuffer = ClassActor.fromJava(Classes.forName("java.nio.DirectByteBuffer"));
 
     protected ObjectAccess() {
     }
@@ -172,4 +179,19 @@ public final class ObjectAccess {
         return Layout.size(Reference.fromJava(object));
     }
 
+    @INTRINSIC(UNSAFE_CAST)
+    private static native ObjectAccess asThis(Object buffer);
+
+    @ALIAS(declaringClassName = "java.nio.DirectByteBuffer", name = "<init>")
+    private native void init(long addr, int capacity);
+
+    /**
+     * Creates a new instance of the package private class java.nio.DirectByteBuffer.
+     */
+    public static ByteBuffer createDirectByteBuffer(long address, int capacity) {
+        Object buffer = Heap.createTuple(DirectByteBuffer.dynamicHub());
+        asThis(buffer).init(address, capacity);
+        ByteBuffer directBuffer = (ByteBuffer) buffer;
+        return directBuffer;
+    }
 }

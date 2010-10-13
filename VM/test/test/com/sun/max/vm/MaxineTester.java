@@ -35,10 +35,11 @@ import org.junit.runner.*;
 import org.junit.runner.notification.*;
 import org.junit.runners.AllTests;
 
-import test.com.sun.max.vm.ExternalCommand.*;
+import test.com.sun.max.vm.ExternalCommand.OutputComparison;
 import test.com.sun.max.vm.ExternalCommand.Result;
-import test.com.sun.max.vm.MaxineTesterConfiguration.*;
+import test.com.sun.max.vm.MaxineTesterConfiguration.ExpectedResult;
 
+import com.sun.max.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -88,12 +89,14 @@ public class MaxineTester {
     private static final Option<List<String>> jtImageConfigsOption = options.newStringListOption("java-tester-configs",
                     MaxineTesterConfiguration.defaultJavaTesterConfigs(),
                     "A list of configurations for which to run the Java tester tests.");
-    private static final Option<List<String>> testsOption = options.newStringListOption("tests", "junit,output,javatester",
-                    "The list of test harnesses to run, which may include JUnit tests (junit), output tests (output), " +
-                    "the JavaTester (javatester), DaCapo-2006 (dacapo2006), DaCapo-bach (dacapobach), SpecJVM98 (specjvm98) and SPECjvm2008 (specjvm2008).\n\nA subset of the JUnit/Output/Dacapo/SpecJVM98/Shootout tests " +
+    private static final Option<List<String>> testsOption = options.newStringListOption("tests", "c1x,junit,output,javatester",
+                    "The list of test harnesses to run, which may include C1X tests (c1x), JUnit tests (junit), output tests (output), " +
+                    "the JavaTester (javatester), DaCapo-2006 (dacapo2006), DaCapo-bach (dacapobach), SpecJVM98 (specjvm98) " +
+                    "and SPECjvm2008 (specjvm2008).\n\nA subset of the C1X/JUnit/Output/Dacapo/SpecJVM98/Shootout tests " +
                     "can be specified by appending a ':' followed by a '+' separated list of test name substrings. For example:\n\n" +
                     "-tests=specjvm98:jess+db,dacapobach:pmd+fop\n\nwill " +
                     "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo-bach benchmarks.\n\n" +
+                    "C1X tests: " + MaxineTesterConfiguration.zeeC1XTests.keySet().toString() + "\n\n" +
                     "Output tests: " + MaxineTesterConfiguration.zeeOutputTests.toString().replace("class ", "") + "\n\n" +
                     "Dacapo-2006 tests: " + MaxineTesterConfiguration.zeeDacapo2006Tests + "\n\n" +
                     "Dacapo-bach tests: " + MaxineTesterConfiguration.zeeDacapoBachTests + "\n\n" +
@@ -162,6 +165,12 @@ public class MaxineTester {
                 } else if (test.startsWith("junit:")) {
                     // run the JUnit tests
                     new JUnitHarness(test.substring("junit:".length()).split("\\+")).run();
+                } else if ("c1x".equals(test)) {
+                    // run the C1X tests
+                    new C1XHarness(null).run();
+                } else if (test.startsWith("c1x:")) {
+                    // run the C1X tests
+                    new C1XHarness(test.substring("c1x:".length())).run();
                 } else if ("output".equals(test)) {
                     // run the Output tests
                     new OutputHarness(MaxineTesterConfiguration.zeeOutputTests).run();
@@ -918,7 +927,8 @@ public class MaxineTester {
      * @param logs the files to which stdout and stderr should be redirected. Use {@code new Logs()} if these output
      *            streams are to be discarded
      * @param name a descriptive name for the command or {@code null} if {@code command[0]} should be used instead
-     * @param timeout the timeout in seconds    @return
+     * @param timeout the timeout in seconds
+     * @return
      */
     private static int exec(File workingDir, String[] command, String[] env, File inputFile, Logs logs, boolean append, String name, int timeout) {
         traceExec(workingDir, command);
@@ -1393,6 +1403,56 @@ public class MaxineTester {
             };
             comparison.stdoutIgnore = ignored;
             testJavaProgram(mainClass.getName(), command, null, outputDir, null, imageDir, comparison);
+        }
+    }
+
+    /**
+     * This class implements a harness that is capable of running C1XTest.
+     *
+     * @author Doug Simon
+     */
+    public static class C1XHarness implements Harness {
+        String filter;
+        public C1XHarness(String filter) {
+            this.filter = filter;
+        }
+        public boolean run() {
+            final File outputDir = new File(outputDirOption.getValue(), "c1x");
+            for (Map.Entry<String, String[]> entry : MaxineTesterConfiguration.zeeC1XTests.entrySet()) {
+                String name = entry.getKey();
+                if (!stopTesting() && (filter == null || name.contains(filter))) {
+                    PrintStream out = out();
+                    String[] paramList = entry.getValue();
+                    final JavaCommand javaCommand = new JavaCommand(Classes.forName("test.com.sun.max.vm.compiler.c1x.C1XTest"));
+                    for (String param : paramList) {
+                        javaCommand.addArgument(param);
+                    }
+                    javaCommand.addVMOptions(defaultJVMOptions());
+                    javaCommand.addClasspath(System.getProperty("java.class.path"));
+                    final String[] javaArgs = javaCommand.getExecArgs(javaExecutableOption.getValue());
+                    out.println("Started C1X " + name + ": " + Utils.toString(paramList, " "));
+                    out.flush();
+                    final Logs logs = new Logs(outputDir, "c1x", name);
+                    final long start = System.currentTimeMillis();
+                    final int exitValue = exec(null, javaArgs, null, null, logs, "C1XTest", 60);
+                    out.print("Stopped C1X " + name + ":");
+                    if (exitValue != 0) {
+                        if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
+                            out.print(" (timed out)");
+                        } else {
+                            out.print(" (exit value == " + exitValue + ")");
+                        }
+                        addTestResult("c1x-" + name, exitValue + " compilation failures");
+                    }
+                    final long runTime = System.currentTimeMillis() - start;
+                    out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
+                    if (exitValue != 0) {
+                        out.println("    see: " + fileRef(logs.get(STDOUT)));
+                        out.println("    see: " + fileRef(logs.get(STDERR)));
+                    }
+                }
+            }
+            return true;
         }
     }
 

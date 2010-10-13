@@ -58,6 +58,7 @@ public class MaxineTesterConfiguration {
     static final List<String> zeeSpecjvm98Tests = new LinkedList<String>();
     static final List<String> zeeSpecjvm2008Tests = new LinkedList<String>();
     static final List<String> zeeShootoutTests = new LinkedList<String>();
+    static final Map<String, String[]> zeeC1XTests = new TreeMap<String, String[]>();
     static final List<String> zeeMaxvmConfigs = new LinkedList<String>();
 
     static final Map<String, Expectation[]> configResultMap = new HashMap<String, Expectation[]>();
@@ -293,6 +294,11 @@ public class MaxineTesterConfiguration {
         imageConfig("msjitcps", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit");
         imageConfig("msjitjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit", "-test-callee-jit");
         imageConfig("mscpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
+
+        c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.jni.");
+        c1xTest("opt1", "-C1X:OptLevel=1", "^jtt");
+        c1xTest("opt2", "-C1X:OptLevel=2", "^jtt");
+        c1xTest("opt3", "-C1X:OptLevel=3", "^jtt");
     }
 
     private static void output(Class javaClass, Expectation... results) {
@@ -356,6 +362,10 @@ public class MaxineTesterConfiguration {
         if (results.length != 0) {
             configResultMap.put(name, results);
         }
+    }
+
+    private static void c1xTest(String name, String... params) {
+        zeeC1XTests.put(name, params);
     }
 
     private static void jtLoadConfig(String name, String... params) {

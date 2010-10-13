@@ -311,7 +311,7 @@ public class C1XCompilation {
                 C1XTimers.LIR_CREATE.start();
             }
 
-            initFrameMap(hir.topScope.numberOfLocks());
+            initFrameMap(hir.topScope.maxLocks());
 
             final LIRGenerator lirGenerator = compiler.backend.newLIRGenerator(this);
             for (BlockBegin begin : hir.linearScanOrder()) {

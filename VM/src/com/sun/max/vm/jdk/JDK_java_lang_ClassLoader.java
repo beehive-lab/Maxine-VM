@@ -88,7 +88,7 @@ public final class JDK_java_lang_ClassLoader {
      * @param source
      * @return a new {@code Class} instance representing the class
      */
-    @SUBSTITUTE(conditional = true)
+    @SUBSTITUTE(optional = true)
     private Class defineClass1(String name, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, String source) {
         final ClassActor classActor = ClassfileReader.defineClassActor(name, thisClassLoader(), bytes, offset, length, protectionDomain, source, false);
         return classActor.toJava();
@@ -108,7 +108,7 @@ public final class JDK_java_lang_ClassLoader {
      * @param verify if true, then verification is not performed for the class
      * @return a new {@code Class} instance representing the class
      */
-    @SUBSTITUTE(conditional = true)
+    @SUBSTITUTE(optional = true)
     private Class defineClass1(String name, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, String source, boolean verify) {
         final ClassActor classActor = ClassfileReader.defineClassActor(name, thisClassLoader(), bytes, offset, length, protectionDomain, source, false);
         if (!verify) {
@@ -130,7 +130,7 @@ public final class JDK_java_lang_ClassLoader {
      * @param source
      * @return a new {@code Class} instance representing the class
      */
-    @SUBSTITUTE(conditional = true)
+    @SUBSTITUTE(optional = true)
     private Class defineClass2(String name, java.nio.ByteBuffer byteBuffer, int offset, int length, ProtectionDomain protectionDomain, String source) {
         return defineClass1(name, byteBuffer.array(), offset, length, protectionDomain, source);
     }
@@ -149,7 +149,7 @@ public final class JDK_java_lang_ClassLoader {
      * @param verify if true, then verification is not performed for the class
      * @return a new {@code Class} instance representing the class
      */
-    @SUBSTITUTE(conditional = true)
+    @SUBSTITUTE(optional = true)
     private Class defineClass2(String name, java.nio.ByteBuffer byteBuffer, int offset, int length, ProtectionDomain protectionDomain, String source, boolean verify) {
         return defineClass1(name, byteBuffer.array(), offset, length, protectionDomain, source, verify);
     }

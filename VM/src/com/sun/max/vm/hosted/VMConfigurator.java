@@ -62,7 +62,7 @@ public final class VMConfigurator {
             "Specifies the boot compiler scheme for the target.", VMConfigurator.defaultCompilerScheme());
     public final Option<MaxPackage> optScheme = schemeOption("opt", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
             "Specifies the optimizing compiler scheme for the target.", VMConfigurator.defaultCompilerScheme());
-    public final Option<MaxPackage> jitScheme = schemeOption("jit", MaxPackage.fromName("com.sun.max.vm.jit"), RuntimeCompilerScheme.class,
+    public final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
             "Specifies the JIT scheme for the target.", VMConfigurator.defaultJitCompilerScheme());
     public final Option<MaxPackage> compScheme = schemeOption("comp", new com.sun.max.vm.compiler.Package(), CompilationScheme.class,
             "Specifies the compilation scheme for the target.", VMConfigurator.defaultCompilationScheme());

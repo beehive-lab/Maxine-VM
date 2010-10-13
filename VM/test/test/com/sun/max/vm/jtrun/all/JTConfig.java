@@ -335,6 +335,7 @@ public class JTConfig {
         jtt.except.Throw_InCatch01.class,
         jtt.except.Throw_InCatch02.class,
         jtt.except.Throw_InCatch03.class,
+        jtt.except.Throw_InNested.class,
         jtt.except.Throw_NPE_01.class,
         jtt.except.Throw_Synchronized01.class,
         jtt.except.Throw_Synchronized02.class,

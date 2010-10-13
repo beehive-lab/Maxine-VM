@@ -798,6 +798,6 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitMonitorAddress(MonitorAddress i) {
-        out.println("monitor_address (").print(i.monitor()).print(")");
+        out.print("monitor_address (").print(i.monitor()).print(")");
     }
 }

@@ -578,7 +578,7 @@ final class JDK_sun_misc_Unsafe {
      *
      * @since 1.7
      */
-    @SUBSTITUTE(conditional = true)
+    @SUBSTITUTE(optional = true)
     public void copyMemory(Object srcBase, long srcOffset,
                                   Object destBase, long destOffset,
                                   long bytes) {

@@ -54,7 +54,7 @@ public @interface SUBSTITUTE {
      * Specifies if the substitutee must exist. This property is useful to handle differences
      * in JDK versions for private methods.
      */
-    boolean conditional() default false;
+    boolean optional() default false;
 
     /**
      * Specifies the substitution of a constructor. The substitute method can have an arbitrary name but must have a void result.

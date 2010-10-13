@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.jdk;
 
-import java.lang.reflect.*;
 import java.nio.*;
 import java.util.*;
 
@@ -28,10 +27,9 @@ import sun.misc.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Method sustitutions for the {@link sun.misc.Perf} class.
@@ -75,8 +73,6 @@ final class JDK_sun_misc_Perf {
     }
 
     private static final Map<String, PerfData> perfDataMap = new HashMap<String, PerfData>();
-    private static final Constructor<?> directByteBufferConstructor = ClassRegistry.DirectByteBuffer_init.toJavaConstructor();
-
     /**
      * Register any native methods.
      */
@@ -153,15 +149,7 @@ final class JDK_sun_misc_Perf {
         Memory.writeBytes(value, address);
         final PerfString perfString = new PerfString(name, variability, units, address);
         perfDataMap.put(name, perfString);
-        try {
-            directByteBufferConstructor.setAccessible(true);
-            return (ByteBuffer) directByteBufferConstructor.newInstance(new Object[] {address.toLong(), maxLength});
-        } catch (IllegalAccessException ex) {
-        } catch (InvocationTargetException ex) {
-        } catch (InstantiationException ex) {
-        }
-        ProgramError.unexpected("failed to create DirectByteBuffer");
-        return null;
+        return ObjectAccess.createDirectByteBuffer(address.toLong(), maxLength);
     }
 
     /**

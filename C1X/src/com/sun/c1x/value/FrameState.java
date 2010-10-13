@@ -35,11 +35,32 @@ import com.sun.cri.ri.*;
  */
 public abstract class FrameState {
 
-    protected final Value[] values; // manages both stack and locals
+    /**
+     * The operand stack and local variables.
+     * The local variables occupy the index range {@code [0 .. maxLocals)}.
+     * The operand stack occupies the index range {@code [maxLocals .. values.length)}.
+     * The top of the operand stack is at index {@code maxLocals + stackIndex}.
+     * This does not include the operand stack or local variables of parent frames.
+     */
+    protected final Value[] values;
+
+    /**
+     * The depth of the operand stack.
+     * The top of stack value is in {@code values[maxLocals + stackIndex]}.
+     */
     protected int stackIndex;
+
+    /**
+     * The number of local variables.
+     */
     protected final int maxLocals;
 
     protected final IRScope scope;
+
+    /**
+     * The list of locks held by this frame state.
+     * This does not include locks held by parent frames.
+     */
     protected ArrayList<Value> locks;
 
     /**
@@ -83,7 +104,6 @@ public abstract class FrameState {
             int valuesSize = valuesSize();
             assert other.values.length >= valuesSize : "array size: " + other.values.length + ", valuesSize: " + valuesSize + ", maxStackSize: " + maxStackSize() + ", localsSize: " + localsSize();
             assert values.length >= valuesSize : "array size: " + values.length + ", valuesSize: " + valuesSize + ", maxStackSize: " + maxStackSize() + ", localsSize: " + localsSize();
-//            System.out.println("values: " + values.length + ", other.values: " + other.values.length + ", valueSize: " + valuesSize()+ ", maxStackSize: " + maxStackSize() + ", localsSize: " + localsSize() + ", stackSize: " + stackSize());
             System.arraycopy(values, 0, other.values, 0, valuesSize);
             other.stackIndex = stackIndex;
         } else {
@@ -155,28 +175,22 @@ public abstract class FrameState {
     }
 
     /**
-     * Returns the size of the locks.
-     *
-     * @return the size of the locks
+     * Gets number of locks held by this frame state.
      */
     public int locksSize() {
         return locks == null ? 0 : locks.size();
     }
 
     /**
-     * Returns the current size (height) of the stack.
-     *
-     * @return the size of the stack
+     * Gets the current size (height) of the stack.
      */
     public int stackSize() {
         return stackIndex;
     }
 
     /**
-     * Returns the maximum size of the stack.
-     *
-     * @return the maximum size of the stack
-     */
+     * Gets the maximum size (height) of the stack.
+]     */
     public int maxStackSize() {
         return values.length - maxLocals;
     }
@@ -191,16 +205,7 @@ public abstract class FrameState {
     }
 
     /**
-     * Checks whether there are any active locks.
-     *
-     * @return {@code true} if there are <i>no</i> active locks
-     */
-    public boolean noActiveLocks() {
-        return locksSize() == 0;
-    }
-
-    /**
-     * Invalidate the local variable at the specified index. If the specified index refers to a doubleword local, then
+     * Invalidates the local variable at the specified index. If the specified index refers to a doubleword local, then
      * invalid the high word as well.
      *
      * @param i the index of the local to invalidate
@@ -213,12 +218,13 @@ public abstract class FrameState {
     }
 
     /**
-     * Load the local variable at the specified index.
+     * Loads the local variable at the specified index.
      *
      * @param i the index of the local variable to load
      * @return the instruction that produced the specified local
      */
     public Value loadLocal(int i) {
+        assert i < maxLocals : "local variable index out of range: " + i;
         Value x = values[i];
         if (x != null) {
             if (x.isIllegal()) {
@@ -237,6 +243,7 @@ public abstract class FrameState {
      * @param x the instruction which produces the value for the local
      */
     public void storeLocal(int i, Value x) {
+        assert i < maxLocals : "local variable index out of range: " + i;
         invalidateLocal(i);
         values[i] = x;
         if (isDoubleWord(x)) {
@@ -268,12 +275,13 @@ public abstract class FrameState {
     }
 
     /**
-     * Get the value in the local variable at the specified offset.
+     * Gets the value in the local variables at the specified offset.
      *
      * @param i the index into the locals
      * @return the instruction that produced the value for the specified local
      */
     public Value localAt(int i) {
+        assert i < maxLocals : "local variable index out of range: " + i;
         return values[i];
     }
 

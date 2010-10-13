@@ -20,9 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import java.lang.reflect.*;
-
-import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
@@ -43,9 +40,12 @@ public class IRScope {
     CiCodePos callerCodeSite;
 
     FrameState callerState;
-    int numberOfLocks;
 
-    int lockStackSize;
+    /**
+     * The maximum number of locks held in this scope at any one time
+     * (c.f. maxStack and maxLocals of the Code attribute in a class file).
+     */
+    int maxLocks;
 
     BitMap storesInLoops;
 
@@ -57,12 +57,13 @@ public class IRScope {
     }
 
     /**
-     * Sets the minimum number of locks that are necessary for this context.
-     * @param size the number of locks required
+     * Updates the maximum number of locks held in this scope at any one time.
+     *
+     * @param locks a lock count that will replace the current {@linkplain #maxLocks() max locks} for this scope if it is greater
      */
-    public void setMinimumNumberOfLocks(int size) {
-        if (size > numberOfLocks) {
-            numberOfLocks = size;
+    public void updateMaxLocks(int locks) {
+        if (locks > maxLocks) {
+            maxLocks = locks;
         }
     }
 
@@ -70,8 +71,8 @@ public class IRScope {
      * Gets the number of locks in this IR scope.
      * @return the number of locks
      */
-    public final int numberOfLocks() {
-        return numberOfLocks;
+    public final int maxLocks() {
+        return maxLocks;
     }
 
     /**
@@ -126,35 +127,6 @@ public class IRScope {
         } else {
             return "inlined-scope: " + method + " [caller bci: " + callerBCI + "]";
         }
-    }
-
-    /**
-     * Computes the size of the lock stack and saves it in a field of this scope.
-     */
-    public final void computeLockStackSize() {
-        if (!C1XOptions.OptInlineExcept) {
-            lockStackSize = 0;
-            return;
-        }
-        // (ds) This calculation seems bogus to me. It's computing the stack depth of the closest caller
-        // that has no exception handlers. If I understand how this value is used, I think the correct
-        // thing to compute is the stack depth of the closest inlined call site not covered by an
-        // exception handler.
-        IRScope curScope = this;
-        // Synchronized methods are implemented with a synthesized exception handler
-        while (curScope != null && (curScope.method.exceptionHandlers().length > 0 || Modifier.isSynchronized(curScope.method.accessFlags()))) {
-            curScope = curScope.caller;
-        }
-        lockStackSize = curScope == null ? 0 : curScope.callerState() == null ? 0 : curScope.callerState().stackSize();
-    }
-
-    /**
-     * Gets the lock stack size. The method {@link #computeLockStackSize()} has to be called for this value to be valid.
-     * @return the lock stack size.
-     */
-    public int lockStackSize() {
-        assert lockStackSize >= 0;
-        return lockStackSize;
     }
 
     public CiCodePos callerCodeSite() {

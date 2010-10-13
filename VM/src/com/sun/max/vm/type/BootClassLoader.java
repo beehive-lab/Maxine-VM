@@ -20,23 +20,23 @@
  */
 package com.sun.max.vm.type;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.value.*;
 
 /**
  * The VM internal class loader that is commonly referred to as the bootstrap class
@@ -95,14 +95,27 @@ public final class BootClassLoader extends ClassLoader {
         return findClass(classpath(), name);
     }
 
+    @ALIAS(declaringClass = ClassLoader.class, innerClass = "NativeLibrary", name = "<init>")
+    private native void init(Class fromClass, String name);
+
+    @ALIAS(declaringClass = ClassLoader.class, innerClass = "NativeLibrary")
+    private long handle;
+
+    @ALIAS(declaringClass = ClassLoader.class)
+    private static Vector<Object> loadedLibraryNames;
+
+    @ALIAS(declaringClass = ClassLoader.class)
+    private Vector<Object> nativeLibraries;
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native BootClassLoader asThis(Object nativeLibrary);
+
     private Object createNativeLibrary(String path, Word handle) {
-        try {
-            final Object nativeLibrary = ClassRegistry.NativeLibrary_init.invokeConstructor(ReferenceValue.from(BootClassLoader.class), ReferenceValue.from(path)).asObject();
-            NativeLibrary_handle.setLong(nativeLibrary, handle.asAddress().toLong());
-            return nativeLibrary;
-        } catch (Throwable throwable) {
-            throw FatalError.unexpected("Error calling NativeLibrary constructor", throwable);
-        }
+        final Object nativeLibrary = Heap.createTuple(JDK.java_lang_ClassLoader$NativeLibrary.classActor().dynamicHub());
+        BootClassLoader thisNativeLibrary = asThis(nativeLibrary);
+        thisNativeLibrary.init(BootClassLoader.class, path);
+        thisNativeLibrary.handle = handle.asAddress().toLong();
+        return nativeLibrary;
     }
 
     private void loadNativeLibrary(String libraryPath, String libraryName) {
@@ -110,12 +123,8 @@ public final class BootClassLoader extends ClassLoader {
         final Word handle = DynamicLinker.load(fileName);
         final Object nativeLibrary = createNativeLibrary(fileName, handle);
 
-        final Class<Vector<Object>> type = null;
-        final Vector<Object> loadedLibraryNames = Utils.cast(type, ClassLoader_loadedLibraryNames.getObject(null));
         loadedLibraryNames.addElement(fileName);
-
-        final Vector<Object> nativeLibraries = Utils.cast(type, ClassLoader_nativeLibraries.getObject(this));
-        nativeLibraries.addElement(nativeLibrary);
+        nativeLibraries.add(nativeLibrary);
     }
 
     public void loadJavaAndZipNativeLibraries(String javaLibraryPath, String zipLibraryPath) {

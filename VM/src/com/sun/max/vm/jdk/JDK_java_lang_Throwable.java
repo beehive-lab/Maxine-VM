@@ -21,7 +21,6 @@
 package com.sun.max.vm.jdk;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.util.*;
 
@@ -55,6 +54,12 @@ public final class JDK_java_lang_Throwable {
     @INTRINSIC(UNSAFE_CAST)
     private native Throwable thisThrowable();
 
+    @INTRINSIC(UNSAFE_CAST)
+    static native JDK_java_lang_Throwable asThis(Throwable t);
+
+    @ALIAS(declaringClass = Throwable.class)
+    StackTraceElement[] stackTrace;
+
     /**
      * Fills in the stack trace for this exception. This implementation eagerly creates a
      * stack trace and fills in all the {@link java.lang.StackTraceElement stack trace elements}.
@@ -63,15 +68,20 @@ public final class JDK_java_lang_Throwable {
      */
     @SUBSTITUTE
     public synchronized Throwable fillInStackTrace() {
+        return fillInStackTraceNoSync();
+    }
+
+    @INLINE
+    private Throwable fillInStackTraceNoSync() {
         // TODO: one possible optimization is to only record the sequence of frames for an exception
         // and build the exception stack trace elements later. There is a field in the Throwable object
         // called "backtrace" to allow for some natively cached stuff for this purpose.
-        final Throwable thisThrowable = thisThrowable();
-        if (thisThrowable instanceof OutOfMemoryError) {
+        final Throwable throwable = thisThrowable();
+        if (throwable instanceof OutOfMemoryError) {
             // Don't record stack traces in situations where memory may be exhausted
-            return thisThrowable;
+            return throwable;
         }
-        final ClassActor throwableActor = ClassActor.fromJava(thisThrowable.getClass());
+        final ClassActor throwableActor = ClassActor.fromJava(throwable.getClass());
         // use the stack walker to collect the frames
         final StackFrameWalker stackFrameWalker = new VmStackFrameWalker(VmThread.current().vmThreadLocals());
         final Pointer instructionPointer = VMRegister.getInstructionPointer();
@@ -80,8 +90,9 @@ public final class JDK_java_lang_Throwable {
 
         final List<StackFrame> stackFrames = stackFrameWalker.frames(null, instructionPointer, cpuStackPointer, cpuFramePointer);
         StackTraceElement[] stackTrace = asStackTrace(stackFrames, throwableActor, Integer.MAX_VALUE);
-        Throwable_stackTrace.setObject(thisThrowable, stackTrace);
-        return thisThrowable;
+        JDK_java_lang_Throwable thisThrowable = asThis(throwable);
+        thisThrowable.stackTrace = stackTrace;
+        return throwable;
     }
 
     /**
@@ -210,7 +221,8 @@ public final class JDK_java_lang_Throwable {
      */
     @INLINE
     private StackTraceElement[] getStackTraceElements() {
-        return (StackTraceElement[]) Throwable_stackTrace.getObject(thisThrowable());
+        JDK_java_lang_Throwable thisThrowable = asThis(thisThrowable());
+        return thisThrowable.stackTrace;
     }
 
 }
