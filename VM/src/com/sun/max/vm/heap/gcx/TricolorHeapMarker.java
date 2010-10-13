@@ -699,7 +699,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
                 if (hub.isSpecialReference) {
-                    SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
+                    SpecialReferenceManager.discoverSpecialReference(cell);
                 }
                 return cell.plus(hub.tupleSize);
             }
@@ -834,7 +834,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
                 if (hub.isSpecialReference) {
-                    SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
+                    SpecialReferenceManager.discoverSpecialReference(cell);
                 }
             } else if (specificLayout.isHybridLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
@@ -985,7 +985,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                     // allows for a single call only). We need to protect against this, so we test here if
                     // the object wasn't set black already.
                     if (!heapMarker.isBlackWhenNotWhite(origin)) {
-                        SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
+                        SpecialReferenceManager.discoverSpecialReference(cell);
                     }
                 }
                 return cell.plus(hub.tupleSize);
@@ -1642,7 +1642,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, markBlackPointerIndexVisitor);
             if (hub.isSpecialReference) {
-                SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
+                SpecialReferenceManager.discoverSpecialReference(cell);
             }
             return cell.plus(hub.tupleSize);
         }

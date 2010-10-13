@@ -170,7 +170,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         final Address heapMarkerDataStart = heapStart.plus(maxSize).roundedUpBy(pageSize);
         final Address leftoverStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
 
-        objectSpace.initialize(heapStart, initSize, maxSize);
+        objectSpace.initialize(this, heapStart, initSize, maxSize);
         ContiguousHeapSpace markedSpace = objectSpace.committedHeapSpace();
 
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
@@ -195,11 +195,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
         // From now on, we can allocate. The followsingdoes this because of the var-arg arguments.
         InspectableHeapInfo.init(markedSpace);
-    }
-
-
-    public int auxiliarySpaceSize(int bootImageSize) {
-        return 0;
     }
 
     @Override
@@ -235,9 +230,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     public boolean contains(Address address) {
         return objectSpace.committedHeapSpace().inCommittedSpace(address);
-    }
-
-    public final void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
     }
 
     public boolean isGcThread(Thread thread) {
@@ -291,6 +283,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             HeapFreeChunk.makeParsable(nextChunk);
         }
     }
+
+    @Override
+    protected void tlabReset(Pointer vmThreadLocals) {
+        collect.tlabFiller.run(vmThreadLocals);
+    }
+
 
     /**
      * Class implementing the garbage collection routine.

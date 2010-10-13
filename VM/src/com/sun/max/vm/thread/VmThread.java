@@ -664,6 +664,9 @@ public class VmThread {
 
         thread.traceThreadAfterTermination();
 
+        // GC may now reclaim or prepare any of its resources before the thread vanished forever.
+        vmConfig().heapScheme().notifyCurrentThreadDetach();
+
         synchronized (VmThreadMap.THREAD_LOCK) {
             // It is the monitor scheme's responsibility to ensure that this thread isn't
             // reset to RUNNABLE if it blocks here.

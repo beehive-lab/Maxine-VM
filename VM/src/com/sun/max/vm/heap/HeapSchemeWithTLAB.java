@@ -24,6 +24,7 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -49,6 +50,24 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public static final String TLAB_TOP_THREAD_LOCAL_NAME = "TLAB_TOP";
     public static final String TLAB_MARK_THREAD_LOCAL_NAME = "TLAB_MARK";
     public static final String TLAB_DISABLED_THREAD_LOCAL_NAME = "TLAB_DISABLED";
+
+    private static boolean TraceTLAB;
+
+    /**
+     * Determines if TLABs should be traced.
+     *
+     * @returns {@code false} if the VM build level is not {@link BuildLevel#DEBUG}.
+     */
+    @INLINE
+    public static boolean traceTLAB() {
+        return MaxineVM.isDebug() && TraceTLAB;
+    }
+
+    static {
+        if (MaxineVM.isDebug()) {
+            VMOptions.addFieldOption("-XX:", "TraceTLAB", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "TraceTLAB"), "Trace TLAB.", MaxineVM.Phase.PRISTINE);
+        }
+    }
 
     /**
      * A VM option for disabling use of TLABs.
@@ -109,7 +128,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
             final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
             Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
-            if (Heap.traceAllocation()) {
+            if (traceTLAB()) {
                 final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.printThread(vmThread, false);
@@ -142,6 +161,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             enabledVmThreadLocals.setWord(TLAB_MARK.index, Address.zero());
         }
     }
+
+    protected abstract void tlabReset(Pointer vmThreadLocals);
 
     /**
      * A TLAB policy that never refills. Just a convenience to disable TLAB use.
@@ -262,13 +283,13 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
         enabledVmThreadLocals.setWord(TLAB_MARK.index, tlab);
-        if (Heap.traceAllocation() || Heap.traceGC()) {
+        if (traceTLAB() || Heap.traceAllocation() || Heap.traceGC()) {
             final boolean lockDisabledSafepoints = Log.lock();
             final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
             Log.printThread(vmThread, false);
-            Log.print(": Refill TLAB with ");
+            Log.print(": Refill TLAB with [MARK = ");
             Log.print(tlab);
-            Log.print(" [TOP=");
+            Log.print(", TOP=");
             Log.print(tlabTop);
             Log.print(", end=");
             Log.print(tlab.plus(initialTlabSize));
@@ -426,5 +447,12 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             enabledVmThreadLocals.setWord(TLAB_TOP_TMP.index, Word.zero());
         }
     }
+
+
+    @Override
+    public void notifyCurrentThreadDetach() {
+        tlabReset(VmThread.currentVmThreadLocals());
+    }
+
 }
 

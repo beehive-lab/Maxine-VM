@@ -49,18 +49,6 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
         return false;
     }
 
-    public int adjustedCardTableShift() {
-        return -1;
-    }
-
-    public int auxiliarySpaceSize(int bootImageSize) {
-        return 0;
-    }
-
-    public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
-
-    }
-
     public Object createArrayIntoCell(DynamicHub hub, int length, Pointer cell) {
         throw ProgramError.unexpected();
     }

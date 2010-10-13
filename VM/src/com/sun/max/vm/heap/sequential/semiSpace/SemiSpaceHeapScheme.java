@@ -153,6 +153,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         }
     };
 
+    @Override
+    protected void tlabReset(Pointer vmThreadLocals) {
+        resetTLAB.run(vmThreadLocals);
+    }
+
     // Create timing facilities.
     private final TimerMetric clearTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric gcTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
@@ -493,17 +498,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         return thread instanceof VmOperationThread;
     }
 
-    public int adjustedCardTableShift() {
-        return -1;
-    }
-
-    public int auxiliarySpaceSize(int bootImageSize) {
-        return 0;
-    }
-
-    public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
-    }
-
     private Size immediateFreeSpace() {
         return top.minus(allocationMark()).asSize();
     }
@@ -614,7 +608,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, refUpdater);
             if (hub.isSpecialReference) {
-                SpecialReferenceManager.discoverSpecialReference(Reference.fromOrigin(origin));
+                SpecialReferenceManager.discoverSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
         }
@@ -793,20 +787,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
         Pointer tlab = retryAllocate(tlabSize, false);
         refillTLAB(enabledVmThreadLocals, tlab, tlabSize);
-        if (Heap.traceAllocation()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.printCurrentThread(false);
-            Log.print(": Allocated TLAB at ");
-            Log.print(tlab);
-            Log.print(" [TOP=");
-            Log.print(tlab.plus(tlabSize));
-            Log.print(", end=");
-            Log.print(tlab.plus(tlabSize));
-            Log.print(", size=");
-            Log.print(tlabSize.toInt());
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
-        }
     }
     /**
      * Handling of TLAB Overflow. This may refill the TLAB or allocate memory directly from the underlying heap.
@@ -929,7 +909,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      */
     static void padTLAB(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
         final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
-        if (Heap.traceAllocation()) {
+        if (traceTLAB()) {
             final boolean lockDisabledSafepoints = Log.lock();
             final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
             Log.printThread(vmThread, false);

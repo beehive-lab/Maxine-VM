@@ -73,7 +73,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion {
         }
 
         for (Reference specialReference : specialReferences) {
-            SpecialReferenceManager.discoverSpecialReference(com.sun.max.vm.reference.Reference.fromJava(specialReference));
+            SpecialReferenceManager.discoverSpecialReference(com.sun.max.vm.reference.Reference.fromJava(specialReference).toOrigin());
         }
     }
 }

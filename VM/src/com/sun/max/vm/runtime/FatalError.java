@@ -43,6 +43,11 @@ import com.sun.max.vm.thread.*;
  */
 public final class FatalError extends Error {
 
+    private static boolean CoreOnFatalError;
+    static {
+        VMOptions.addFieldOption("-XX:", "CoreOnFatalError", FatalError.class, "Generate core dump on exit due to FatalError.", MaxineVM.Phase.PRISTINE);
+    }
+
     static {
         ProgramError.setHandler(new Handler() {
             public void handle(String message, Throwable throwable) {
@@ -123,7 +128,7 @@ public final class FatalError extends Error {
 
         if (recursionCount >= MAX_RECURSION_COUNT) {
             Log.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
-            MaxineVM.native_exit(11);
+            exit(false, Address.zero());
         }
         recursionCount++;
 
@@ -167,12 +172,24 @@ public final class FatalError extends Error {
             Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
         }
         Log.unlock(lockDisabledSafepoints);
-        if (!trappedInNative) {
-            MaxineVM.native_exit(11);
+        Address ip = Address.zero();
+        if (trappedInNative && !trapState.isZero())  {
+            ip = TrapStateAccess.instance().getInstructionPointer(trapState);
         }
-        MaxineVM.native_trap_exit(11, trapState.isZero() ? Address.zero() :  TrapStateAccess.instance().getInstructionPointer(trapState));
+        exit(trappedInNative, ip);
         throw null; // unreachable
     }
+
+    private static void exit(boolean doTrapExit, Address instructionPointer) {
+        if (CoreOnFatalError) {
+            MaxineVM.core_dump();
+        }
+        if (doTrapExit) {
+            MaxineVM.native_trap_exit(11, instructionPointer);
+        }
+        MaxineVM.native_exit(11);
+    }
+
 
     /**
      * Causes the VM to print an error message and exit immediately.
@@ -182,7 +199,7 @@ public final class FatalError extends Error {
     @NEVER_INLINE
     public static void crash(String message) {
         Log.println(message);
-        MaxineVM.native_exit(11); // should be symbolic
+        exit(false, Address.zero());
     }
 
     /**

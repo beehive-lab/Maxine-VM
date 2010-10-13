@@ -22,6 +22,7 @@ package com.sun.max.tele;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
+import java.math.*;
 import java.util.*;
 
 import com.sun.max.program.*;
@@ -66,12 +67,37 @@ import com.sun.max.vm.tele.*;
  * @see TeleHeapScheme
  */
 public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache, MaxHeap, TeleHeapScheme {
+     /**
+     * Name of system property that specifies the address where the heap is located, or where it should be relocated, depending
+     * on the user of the TeleHeap class.
+     */
+    public static final String HEAP_ADDRESS_PROPERTY = "max.heap";
 
     private static final int TRACE_VALUE = 1;
 
     private final TimedTrace updateTracer;
 
     protected static TeleHeap teleHeap;
+
+    public static long heapAddressOption() {
+        long heap = 0L;
+        String heapValue = System.getProperty(HEAP_ADDRESS_PROPERTY);
+        if (heapValue != null) {
+            try {
+                int radix = 10;
+                if (heapValue.startsWith("0x")) {
+                    radix = 16;
+                    heapValue = heapValue.substring(2);
+                }
+                // Use BigInteger to handle unsigned 64-bit values that are greater than Long.MAX_VALUE
+                BigInteger bi = new BigInteger(heapValue, radix);
+                heap = bi.longValue();
+            } catch (NumberFormatException e) {
+                System.err.println("Error parsing value of " + HEAP_ADDRESS_PROPERTY + " system property: " + heapValue + ": " +  e);
+            }
+        }
+        return heap;
+    }
 
     /**
      * Returns the singleton manager of cached information about the heap in the VM,
