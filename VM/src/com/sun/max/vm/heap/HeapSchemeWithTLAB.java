@@ -378,10 +378,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         }
     }
 
-    protected final void setTlabAllocationMark(Pointer enabledVmThreadLocals, Pointer newAllocationMark) {
-        enabledVmThreadLocals.setWord(TLAB_MARK.index, newAllocationMark);
-    }
-
     @INLINE
     @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public final Object createArray(DynamicHub dynamicHub, int length) {
@@ -453,6 +449,5 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public void notifyCurrentThreadDetach() {
         tlabReset(VmThread.currentVmThreadLocals());
     }
-
 }
 
