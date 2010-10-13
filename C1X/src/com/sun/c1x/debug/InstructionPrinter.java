@@ -414,6 +414,8 @@ public class InstructionPrinter extends ValueVisitor {
             } else {
                 out.print("<object: ").print(value.kind.format(object)).print('>');
             }
+        } else if (value.kind.isWord()) {
+            out.print("0x").print(Long.toHexString(value.asLong()));
         } else if (value.kind.isJsr()) {
             out.print("bci:").print(constant.asConstant().valueString());
         } else {
