@@ -51,7 +51,6 @@
 #define ILLEGAL_INSTRUCTION 3
 #define ARITHMETIC_EXCEPTION 4
 #define ASYNC_INTERRUPT 5
-#define CORE_DUMP 8 /* to force a core dump on fatal error */
 
 static Address theJavaTrapStub;
 static boolean traceTraps = false;
@@ -90,8 +89,6 @@ int getTrapNumber(int signal) {
 #if !os_GUESTVMXEN
     case SIGUSR1:
         return ASYNC_INTERRUPT;
-    case SIGABRT:
-        return CORE_DUMP;
 #endif
     }
     return -signal;

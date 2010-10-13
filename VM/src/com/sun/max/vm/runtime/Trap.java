@@ -85,7 +85,6 @@ public abstract class Trap {
         public static final int ASYNC_INTERRUPT = 5;
         public static final int NULL_POINTER_EXCEPTION = 6;
         public static final int SAFEPOINT = 7;
-        public static final int CORE_DUMP = 8;
 
         public static String toExceptionName(int trapNumber) {
             switch (trapNumber) {
@@ -103,8 +102,6 @@ public abstract class Trap {
                     return "NULL_POINTER_EXCEPTION";
                 case SAFEPOINT:
                     return "SAFEPOINT";
-                case CORE_DUMP:
-                    return "CORE_DUMP";
                 default:
                     return "unknown";
             }
