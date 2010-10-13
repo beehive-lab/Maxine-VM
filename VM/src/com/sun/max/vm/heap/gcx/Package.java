@@ -33,4 +33,9 @@ public class Package extends VMPackage {
     public Package() {
         super();
     }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.heapPackage.isSubPackageOf(this);
+    }
 }
