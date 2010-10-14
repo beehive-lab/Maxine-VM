@@ -30,8 +30,6 @@ import com.sun.cri.ci.*;
  */
 public final class CompareOp extends Op2 {
 
-    FrameState stateBefore;
-
     /**
      * Creates a new compare operation.
      * @param opcode the bytecode opcode
@@ -41,16 +39,6 @@ public final class CompareOp extends Op2 {
      */
     public CompareOp(int opcode, Value x, Value y, FrameState stateBefore) {
         super(CiKind.Int, opcode, x, y);
-        this.stateBefore = stateBefore;
-    }
-
-    /**
-     * Gets the value stack representing the state before the comparison is performed.
-     * @return the state before the comparison is performed
-     */
-    @Override
-    public FrameState stateBefore() {
-        return stateBefore;
     }
 
     /**
