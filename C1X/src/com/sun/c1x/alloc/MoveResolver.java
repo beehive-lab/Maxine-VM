@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -194,7 +195,7 @@ final class MoveResolver {
 
     private void insertMove(Interval fromInterval, Interval toInterval) {
         assert fromInterval.operand != toInterval.operand : "from and to interval equal: " + fromInterval;
-        assert fromInterval.kind() == toInterval.kind() : "move between different types";
+        assert Util.archKindsEqual(fromInterval.kind(), toInterval.kind()) : "move between different types";
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
@@ -340,7 +341,7 @@ final class MoveResolver {
         }
 
         assert fromInterval.operand != toInterval.operand : "from and to interval equal: " + fromInterval;
-        assert fromInterval.kind() == toInterval.kind();
+        assert Util.archKindsEqual(fromInterval.kind(), toInterval.kind());
         mappingFrom.add(fromInterval);
         mappingFromOpr.add(CiValue.IllegalValue);
         mappingTo.add(toInterval);

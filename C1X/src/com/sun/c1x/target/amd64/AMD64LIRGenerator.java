@@ -380,7 +380,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             return;
         }
 
-        assert x.x().kind == x.kind && x.y().kind == x.kind : "wrong parameter types: " + Bytecodes.nameOf(x.opcode);
+        assert Util.archKindsEqual(x.x().kind, x.kind) && Util.archKindsEqual(x.y().kind, x.kind) : "wrong parameter types: " + Bytecodes.nameOf(x.opcode);
         switch (x.kind) {
             case Float:
             case Double:
@@ -445,7 +445,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
             int code = x.opcode;
             lir.fcmp2int(left.result(), right.result(), reg, (code == Bytecodes.FCMPL || code == Bytecodes.DCMPL));
-        } else if (x.x().kind.isLong()) {
+        } else if (x.x().kind.isLong() || x.x().kind.isWord()) {
             lir.lcmp2int(left.result(), right.result(), reg);
         } else {
             Util.unimplemented();
@@ -481,8 +481,8 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
 
         assert pointer.instruction.kind.isWord();
-        assert expectedValue.instruction.kind == kind : "invalid type";
-        assert newValue.instruction.kind == kind : "invalid type";
+        assert Util.archKindsEqual(expectedValue.instruction.kind, kind) : "invalid type";
+        assert Util.archKindsEqual(newValue.instruction.kind, kind) : "invalid type";
 
         pointer.loadItem();
         CiAddress addr = getAddressForPointerOp(x, x.kind, pointer);

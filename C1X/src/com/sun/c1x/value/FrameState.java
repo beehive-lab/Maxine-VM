@@ -64,11 +64,6 @@ public abstract class FrameState {
     protected ArrayList<Value> locks;
 
     /**
-     * Specifies if operand stack accesses should be checked for type safety.
-     */
-    public boolean unsafe;
-
-    /**
      * The number of minimum stack slots required for doing IR wrangling during
      * {@linkplain GraphBuilder bytecode parsing}. While this may hide stack
      * overflow issues in the original bytecode, the assumption is that such
@@ -117,7 +112,6 @@ public abstract class FrameState {
         if (withLocks) {
             other.replaceLocks(this);
         }
-        other.unsafe = unsafe;
         return other;
     }
 
@@ -257,9 +251,6 @@ public abstract class FrameState {
                 values[i - 1] = null;
             }
         }
-        if (x.kind.isWord()) {
-            unsafe = true;
-        }
     }
 
     /**
@@ -269,8 +260,8 @@ public abstract class FrameState {
      * @return the instruction at the specified position in the stack
      */
     public Value stackAt(int i) {
-        final Value x = values[i + maxLocals];
         assert i < stackIndex;
+        final Value x = values[i + maxLocals];
         return x;
     }
 
@@ -511,9 +502,6 @@ public abstract class FrameState {
             for (int i = 0; i < max; i++) {
                 if (state.values[i] != null) {
                     Value newValue = closure.apply(state.values[i]);
-                    if (!state.unsafe && newValue.kind.isWord()) {
-                        state.unsafe = true;
-                    }
                     state.values[i] = newValue;
                 }
             }
@@ -575,9 +563,7 @@ public abstract class FrameState {
     public MutableFrameState pushScope(IRScope scope) {
         assert scope.caller == this.scope;
         RiMethod method = scope.method;
-        MutableFrameState res = new MutableFrameState(scope, method.maxLocals(), method.maxStackSize());
-        res.unsafe = unsafe;
-        return res;
+        return new MutableFrameState(scope, method.maxLocals(), method.maxStackSize());
     }
 
     /**
@@ -594,7 +580,6 @@ public abstract class FrameState {
         System.arraycopy(values, maxLocals, res.values, res.maxLocals + callerState.stackIndex, stackIndex);
         res.stackIndex = callerState.stackIndex + stackIndex;
         res.replaceLocks(callerState);
-        res.unsafe = unsafe;
         return res;
     }
 }

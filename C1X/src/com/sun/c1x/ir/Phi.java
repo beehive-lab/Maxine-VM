@@ -118,8 +118,7 @@ public final class Phi extends Value {
     }
 
     /**
-     * Get the number of inputs to this phi (i.e. the number of predecessors to the
-     * join block).
+     * Get the number of inputs to this phi (i.e. the number of predecessors to the join block).
      * @return the number of inputs in this phi
      */
     public int inputCount() {

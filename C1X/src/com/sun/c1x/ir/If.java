@@ -44,16 +44,16 @@ public final class If extends BlockEnd {
      * @param y the instruction that produces the second input to this instruction
      * @param trueSucc the block representing the true successor
      * @param falseSucc the block representing the false successor
-     * @param stateBefore the state before the branch
+     * @param stateAfter the state before the branch but after the input values have been popped
      * @param isSafepoint {@code true} if this branch should be considered a safepoint
      */
     public If(Value x, Condition cond, boolean unorderedIsTrue, Value y,
-              BlockBegin trueSucc, BlockBegin falseSucc, FrameState stateBefore, boolean isSafepoint) {
-        super(CiKind.Illegal, stateBefore, isSafepoint);
+              BlockBegin trueSucc, BlockBegin falseSucc, FrameState stateAfter, boolean isSafepoint) {
+        super(CiKind.Illegal, stateAfter, isSafepoint);
         this.x = x;
         this.y = y;
         condition = cond;
-        assert Util.equalKinds(x, y);
+        assert Util.archKindsEqual(x, y);
         initFlag(Flag.UnorderedIsTrue, unorderedIsTrue);
         successors.add(trueSucc);
         successors.add(falseSucc);

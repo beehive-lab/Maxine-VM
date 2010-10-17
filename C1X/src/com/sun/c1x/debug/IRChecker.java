@@ -723,7 +723,7 @@ public class IRChecker extends ValueVisitor {
     @Override
     public void visitIf(If i) {
         assertKind(i, CiKind.Illegal);
-        if (!Util.equalKinds(i.x(), i.y())) {
+        if (!Util.archKindsEqual(i.x(), i.y())) {
             fail("Operands of If instruction must have same type");
         }
         if (i.successors().size() != 2) {
@@ -1039,7 +1039,7 @@ public class IRChecker extends ValueVisitor {
     public void visitLoadPointer(LoadPointer i) {
         assertKind(i.pointer(), CiKind.Word);
         if (i.displacement() == null) {
-            if (!i.offset().kind.isWord()) {
+            if (!Util.archKindsEqual(i.offset().kind, CiKind.Word)) {
                 assertKind(i.offset(), CiKind.Int);
             }
         } else {
@@ -1096,7 +1096,7 @@ public class IRChecker extends ValueVisitor {
     public void visitStorePointer(StorePointer i) {
         assertKind(i.pointer(), CiKind.Word);
         if (i.displacement() == null) {
-            if (!i.offset().kind.isWord()) {
+            if (!Util.archKindsEqual(i.offset().kind, CiKind.Word)) {
                 assertKind(i.offset(), CiKind.Int);
             }
         } else {
@@ -1140,7 +1140,7 @@ public class IRChecker extends ValueVisitor {
 
     private void assertKind(Value i, CiKind kind) {
         assertNonNull(i, "Value should not be null");
-        if (i.kind != kind) {
+        if (!Util.archKindsEqual(i.kind, kind)) {
             fail("Type mismatch: " + i + " should be of type " + kind);
         }
     }
@@ -1197,7 +1197,7 @@ public class IRChecker extends ValueVisitor {
     private void fail(String msg) {
         String location = "";
         try {
-            location = currentBlock.stateBefore().scope().method + "@" + currentInstruction.bci() + ": ";
+            location = "B" + currentBlock.blockID + ", bci " + currentInstruction.bci() + ": ";
         } catch (Throwable e) {
         }
         throw new IRCheckException(location + "IR error " + phase + ": " + msg);

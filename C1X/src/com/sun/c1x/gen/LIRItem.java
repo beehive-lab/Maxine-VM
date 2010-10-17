@@ -93,13 +93,6 @@ public class LIRItem {
         setInstruction(null);
     }
 
-    private CiKind nonWordKind(CiKind kind) {
-        if (kind.isWord()) {
-            return gen.is64 ? CiKind.Long : CiKind.Int;
-        }
-        return kind;
-    }
-
     /**
      * Forces the result of this item's {@linkplain #instruction} to be available in a given operand,
      * inserting move instructions if necessary.
@@ -110,7 +103,7 @@ public class LIRItem {
         CiValue result = result();
         if (result != operand) {
             assert result.kind != CiKind.Illegal;
-            if (nonWordKind(result.kind) != nonWordKind(operand.kind)) {
+            if (!gen.compilation.archKindsEqual(result.kind, operand.kind)) {
                 // moves between different types need an intervening spill slot
                 CiValue tmp = gen.forceToSpill(result, operand.kind, false);
                 gen.lir.move(tmp, operand);

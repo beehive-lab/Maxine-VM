@@ -43,7 +43,6 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.XirInstruction;
 import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
@@ -614,6 +613,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitUnsafeCast(UnsafeCast i) {
+        assert !i.redundant : "redundant UnsafeCasts must be eliminated by the front end";
         CiValue src = load(i.value());
         CiValue dst = createResultVariable(i);
         lir.move(src, dst);
@@ -1561,7 +1561,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             TTY.println("Operand for " + instr + " = " + instr.operand());
         }
 
-        assert (instr.operand().isLegal()) || !isUsedForValue(instr) || instr.isConstant() : "operand was not set for live instruction";
+        assert (instr.operand().isLegal()) || !isUsedForValue(instr) || instr.isConstant() || instr instanceof UnsafeCast : "operand was not set for live instruction";
     }
 
     private boolean isUsedForValue(Instruction instr) {
@@ -1736,7 +1736,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             return;
         }
         for (int index = 0; index < state.stackSize(); index++) {
-            walkStateInstruction(state.stackAt(index));
+            walkStateValue(state.stackAt(index));
         }
         FrameState s = state;
         int bci = x.bci();
@@ -1762,7 +1762,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 final Value value = s.localAt(index);
                 if (value != null) {
                     if ((liveness == null || liveness.get(index)) && !value.isIllegal()) {
-                        walkStateInstruction(value);
+                        walkStateValue(value);
                     } else {
                         // null out this local so that linear scan can assume that all non-null values are live.
                         s.invalidateLocal(index);
@@ -1774,16 +1774,16 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    private void walkStateInstruction(Value instruction) {
-        if (instruction != null) {
-            assert !instruction.hasSubst() : "missed substitution";
-            assert instruction.isLive() : "value must be marked live in frame state";
-            if (instruction instanceof Phi && !instruction.isIllegal()) {
+    private void walkStateValue(Value value) {
+        if (value != null) {
+            assert !value.hasSubst() : "missed substitution";
+            assert value.isLive() : "value must be marked live in frame state";
+            if (value instanceof Phi && !value.isIllegal()) {
                 // phi's are special
-                operandForPhi((Phi) instruction);
-            } else if (instruction.operand().isIllegal()) {
+                operandForPhi((Phi) value);
+            } else if (value.operand().isIllegal() && !(value instanceof UnsafeCast)) {
                 // instruction doesn't have an operand yet
-                CiValue operand = makeOperand(instruction);
+                CiValue operand = makeOperand(value);
                 assert operand.isLegal() : "must be evaluated now";
             }
         }
