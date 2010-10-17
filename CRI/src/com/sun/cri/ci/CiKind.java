@@ -192,16 +192,6 @@ public enum CiKind {
     }
 
     /**
-     * Gets the element size of this kind in bytes.
-     * @param oopSize the size of an object reference
-     * @param wordSize the size of a word
-     * @return the size of this kind in bytes
-     */
-    public int elementSizeInBytes(int oopSize, int wordSize) {
-        return sizeInBytes(oopSize, wordSize);
-    }
-
-    /**
      * Gets the kind of array elements for the array type code that appears
      * in a {@link Bytecodes#NEWARRAY} bytecode.
      * @param code the array type code

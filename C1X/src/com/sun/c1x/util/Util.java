@@ -330,14 +330,33 @@ public class Util {
     }
 
     /**
-     * Utility method to check that two instructions have the same kind.
-     * @param i the first instruction
-     * @param other the second instruction
-     * @return {@code true} if the instructions have the same kind
+     * Determines if the kinds of two given IR nodes are equal at the {@linkplain #archKind(CiKind) architecture}
+     * level in the context of the {@linkplain C1XCompilation#current()} compilation.
      */
-    public static boolean equalKinds(Value i, Value other) {
-        return i.kind == other.kind;
+    public static boolean archKindsEqual(Value i, Value other) {
+        return archKindsEqual(i.kind, other.kind);
     }
+
+    /**
+     * Determines if two given kinds are equal at the {@linkplain #archKind(CiKind) architecture} level
+     * in the context of the {@linkplain C1XCompilation#current()} compilation.
+     */
+    public static boolean archKindsEqual(CiKind k1, CiKind k2) {
+        C1XCompilation compilation = C1XCompilation.current();
+        assert compilation != null : "missing compilation context";
+        return compilation.archKindsEqual(k1, k2);
+    }
+
+    /**
+     * Translates a given kind to a {@linkplain C1XCompilation#archKind(CiKind) canonical architecture}
+     * kind in the context of the {@linkplain C1XCompilation#current() current} compilation.
+     */
+    public static CiKind archKind(CiKind kind) {
+        C1XCompilation compilation = C1XCompilation.current();
+        assert compilation != null : "missing compilation context";
+        return compilation.archKind(kind);
+    }
+
 
     /**
      * Checks that two instructions are equivalent, optionally comparing constants.

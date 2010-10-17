@@ -55,8 +55,7 @@ public abstract class Hub extends Hybrid {
     public final ClassActor classActor;
     public final Layout.Category layoutCategory;
     public BiasedLockEpoch64 biasedLockEpoch = BiasedLockEpoch64.init();
-    @CONSTANT_WHEN_NOT_ZERO
-    private static int firstWordIndex;
+    private static final int firstWordIndex;
     public final int iTableStartIndex;
     public final int iTableLength;
     @INSPECTED
@@ -95,17 +94,29 @@ public abstract class Hub extends Hybrid {
         return divisor;
     }
 
+    static {
+        final ClassActor classActor = ClassActor.fromJava(Hub.class);
+
+        // Although the actual super class is 'Object', since it has no fields, we may pass 'null' here instead
+        // and indeed we must to avoid not-yet-bootstrapped calls on the super class actor:
+        final ClassActor superClassActor = null;
+
+        final Size tupleSize = Layout.hybridLayout().layoutFields(superClassActor, classActor.localInstanceFieldActors());
+        firstWordIndex = Layout.hybridLayout().firstAvailableWordArrayIndex(tupleSize);
+    }
+
+    private static int computeFirstWordIndex() {
+        final ClassActor classActor = ClassActor.fromJava(Hub.class);
+
+        // Although the actual super class is 'Object', since it has no fields, we may pass 'null' here instead
+        // and indeed we must to avoid not-yet-bootstrapped calls on the super class actor:
+        final ClassActor superClassActor = null;
+
+        final Size tupleSize = Layout.hybridLayout().layoutFields(superClassActor, classActor.localInstanceFieldActors());
+        return Layout.hybridLayout().firstAvailableWordArrayIndex(tupleSize);
+    }
+
     private static int getFirstWordIndex() {
-        if (firstWordIndex == 0) {
-            final ClassActor classActor = ClassActor.fromJava(Hub.class);
-
-            // Although the actual super class is 'Object', since it has no fields, we may pass 'null' here instead
-            // and indeed we must to avoid not-yet-bootstrapped calls on the super class actor:
-            final ClassActor superClassActor = null;
-
-            final Size tupleSize = Layout.hybridLayout().layoutFields(superClassActor, classActor.localInstanceFieldActors());
-            firstWordIndex = Layout.hybridLayout().firstAvailableWordArrayIndex(tupleSize);
-        }
         return firstWordIndex;
     }
 

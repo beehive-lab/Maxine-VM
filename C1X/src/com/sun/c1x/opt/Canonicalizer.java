@@ -242,7 +242,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 // floating point operations need to be extra careful
             }
         }
-        assert Util.equalKinds(i, canonical);
+        assert Util.archKindsEqual(i, canonical);
     }
 
     private Value reduceIntOp2(Op2 original, Value x, int y) {
@@ -388,6 +388,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 if (CiUtil.isPowerOf2(y)) {
                     return setCanonical(new ShiftOp(target.arch.is64bit() ? LUSHR : IUSHR, x, intInstr(CiUtil.log2(y))));
                 }
+                break;
             }
             case WREMI: {
                 if (y == 1) {
@@ -395,8 +396,14 @@ public class Canonicalizer extends DefaultValueVisitor {
                 }
                 if (CiUtil.isPowerOf2(y)) {
                     int mask = (int) y - 1;
+                    if (target.arch.is64bit()) {
+                        Convert l2i = new Convert(L2I, x, CiKind.Int);
+                        addInstr(l2i);
+                        return setCanonical(new LogicOp(IAND, l2i, intInstr(mask)));
+                    }
                     return setCanonical(new LogicOp(CiKind.Int, IAND, x, intInstr(mask)));
                 }
+                break;
             }
             case WREM: {
                 if (y == 1) {
@@ -410,6 +417,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                     int mask = (int) y - 1;
                     return setCanonical(new LogicOp(IAND, x, intInstr(mask)));
                 }
+                break;
             }
         }
         return null;
@@ -657,7 +665,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 }
             }
         }
-        assert Util.equalKinds(i, canonical);
+        assert Util.archKindsEqual(i, canonical);
     }
 
     @Override
@@ -837,7 +845,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             // folding did not work, try recognizing special intrinsics
             reduceIntrinsic(i);
         }
-        assert Util.equalKinds(i, canonical);
+        assert Util.archKindsEqual(i, canonical);
     }
 
     private void reduceIntrinsic(Intrinsic i) {
@@ -863,7 +871,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 return;
             }
         }
-        assert Util.equalKinds(i, canonical);
+        assert Util.archKindsEqual(i, canonical);
     }
 
     private boolean foldIntrinsic(Intrinsic i) {
