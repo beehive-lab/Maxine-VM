@@ -76,8 +76,8 @@ public class LivenessMarker {
         ir.startBlock.iteratePreOrder(new BlockClosure() {
             public void apply(BlockBegin block) {
                 Instruction prev = block;
-                Instruction i = block;
-                while ((i = i.next()) != null) {
+                Instruction i = block.next();
+                while (i != null) {
                     if (i.isLive()) {
                         prev.resetNext(i); // skip any previous dead instructions
                         prev = i;
