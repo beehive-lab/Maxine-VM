@@ -338,7 +338,7 @@ method_finder_pattern_help='A pattern is a class name pattern followed by an opt
     method name contains "wait", all methods in a class whose name
     contains "String" and all methods in any class whose name
     contains "Util", the method name contains "add" and the
-    megnature is (int, float).
+    signature is (int, float).
     
     The type of matching performed for a given class/method name is determined
     by the position of '^' in the pattern name as follows:

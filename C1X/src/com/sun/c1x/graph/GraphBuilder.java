@@ -651,10 +651,9 @@ public final class GraphBuilder {
     }
 
     void genCompareOp(CiKind kind, int opcode) {
-        FrameState stateBefore = curState.immutableCopy();
         Value y = pop(kind);
         Value x = pop(kind);
-        ipush(append(new CompareOp(opcode, x, y, stateBefore)));
+        ipush(append(new CompareOp(opcode, x, y)));
     }
 
     void genUnsignedCompareOp(CiKind kind, int opcode, int op) {
