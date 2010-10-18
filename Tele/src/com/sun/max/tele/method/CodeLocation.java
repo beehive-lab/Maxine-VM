@@ -669,7 +669,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         }
 
         private void tryLocateTeleClassMethodActor() {
-            if (teleClassMethodActor == null) {
+            while (teleClassMethodActor == null) {
                 teleClassMethodActor = methodAccessToTeleClassMethodActor(teleMethodAccess);
             }
         }
