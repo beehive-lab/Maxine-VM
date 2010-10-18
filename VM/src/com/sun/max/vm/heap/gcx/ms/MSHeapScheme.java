@@ -130,9 +130,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     @Override
     public CodeManager createCodeManager() {
         switch (Platform.platform().operatingSystem) {
-            case LINUX: {
-                return new LowAddressCodeManager();
-            }
+            case LINUX:
             case GUESTVM:
             case DARWIN:
             case SOLARIS: {
