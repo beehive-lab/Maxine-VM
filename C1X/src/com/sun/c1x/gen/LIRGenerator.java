@@ -576,7 +576,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem pointer = new LIRItem(x.pointer(), this);
         pointer.loadItem();
         CiValue dst = createResultVariable(x);
-        CiAddress src = getAddressForPointerOp(x, x.kind, pointer);
+        CiAddress src = getAddressForPointerOp(x, x.dataKind, pointer);
         lir.load(src, dst, info);
     }
 
@@ -587,7 +587,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem value = new LIRItem(x.value(), this);
         value.loadItem();
         pointer.loadItem();
-        CiAddress dst = getAddressForPointerOp(x, x.value().kind, pointer);
+        CiAddress dst = getAddressForPointerOp(x, x.dataKind, pointer);
         lir.store(value.result(), dst, info);
     }
 

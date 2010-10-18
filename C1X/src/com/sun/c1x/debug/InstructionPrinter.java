@@ -727,7 +727,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = target.sizeInBytes(i.kind);
+            int scale = target.sizeInBytes(i.dataKind);
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(")");
@@ -762,7 +762,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = target.sizeInBytes(i.pointer().kind);
+            int scale = target.sizeInBytes(i.dataKind);
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(") := ").print(i.value());

@@ -46,7 +46,7 @@ public final class LoadPointer extends PointerOp {
      * @see PointerOp#PointerOp(CiKind, int, Value, Value, Value, FrameState, boolean)
      */
     public LoadPointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
-        super(kind, opcode, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
+        super(kind, kind, opcode, pointer, displacement, offsetOrIndex, stateBefore, isVolatile);
     }
 
     /**
