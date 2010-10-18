@@ -60,7 +60,7 @@ public abstract class PointerOp extends StateSplit {
         super(kind.stackKind(), stateBefore);
         this.opcode = opcode;
         this.pointer = pointer;
-        this.dataKind = kind;
+        this.dataKind = dataKind;
         this.displacement = displacement;
         this.offsetOrIndex = offsetOrIndex;
         this.isVolatile = isVolatile;
