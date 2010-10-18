@@ -285,7 +285,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
         int flags = classMethodActor.flags() | classMethodActor.compilee().flags();
         if (Actor.isUnsafe(flags)) {
-            if (classMethodActor.accessor() != null || classMethodActor.holder().isGenerated()) {
+            if (classMethodActor.holder().isGenerated()) {
+                return bootCompiler;
+            }
+            if (classMethodActor.isTemplate()) {
                 return bootCompiler;
             }
             return optCompiler;
