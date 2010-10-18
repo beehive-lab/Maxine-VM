@@ -21,7 +21,6 @@
 package com.sun.c1x.opt;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
-import static java.lang.reflect.Modifier.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -460,26 +459,22 @@ public class Canonicalizer extends DefaultValueVisitor {
 
     @Override
     public void visitLoadField(LoadField i) {
+        if (!i.isLoaded() || !C1XOptions.CanonicalizeConstantFields) {
+            return;
+        }
         if (i.isStatic()) {
-            if (i.isLoaded() && C1XOptions.CanonicalizeConstantFields) {
-
-                // only try to canonicalize static field loads
-                RiField field = i.field();
-                if (field.isConstant()) {
-                    if (method.isClassInitializer()) {
-                        // don't do canonicalization in the <clinit> method
-                        return;
-                    }
-
-                    CiConstant value = field.constantValue(null);
-                    if (value != null) {
-                        setConstant(value);
-                    }
+            RiField field = i.field();
+            CiConstant value = field.constantValue(null);
+            if (value != null) {
+                if (method.isClassInitializer()) {
+                    // don't do canonicalization in the <clinit> method
+                    return;
                 }
+                setConstant(value);
             }
         } else {
             RiField field = i.field();
-            if (i.object().isConstant() && field.isConstant()) {
+            if (i.object().isConstant()) {
                 CiConstant value = field.constantValue(i.object().asConstant().asObject());
                 if (value != null) {
                     setConstant(value);
@@ -524,14 +519,12 @@ public class Canonicalizer extends DefaultValueVisitor {
             }
         } else if (array instanceof LoadField) {
             // the array is a load of a field; check if it is a constant
-            RiField field = ((LoadField) array).field();
-            if (field.isConstant() && isStatic(field.accessFlags())) {
-                CiConstant cons = field.constantValue(null);
-                if (cons != null) {
-                    Object obj = cons.asObject();
-                    if (obj != null) {
-                        setIntConstant(Array.getLength(obj));
-                    }
+            LoadField load = (LoadField) array;
+            CiConstant cons = load.constantValue();
+            if (cons != null) {
+                Object obj = cons.asObject();
+                if (obj != null) {
+                    setIntConstant(Array.getLength(obj));
                 }
             }
         } else if (array.isConstant()) {

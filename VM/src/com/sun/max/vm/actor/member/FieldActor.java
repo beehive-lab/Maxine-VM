@@ -693,7 +693,7 @@ public class FieldActor extends MemberActor implements RiField {
             return true;
         }
 
-        if (isConstant(flags()) || isConstantWhenNotZero()) {
+        if (isConstant(flags())) {
             assert MaxineVM.isMaxineClass(holder()) : "@CONSTANT applied to field of non-Maxine class: " + this;
             return MaxineVM.isHosted() || !isStatic() || holder.isInitialized();
         }
@@ -746,7 +746,7 @@ public class FieldActor extends MemberActor implements RiField {
     }
 
     public final CiConstant constantValue(Object object) {
-        if (isConstant()) {
+        if (isConstant() || isConstantWhenNotZero()) {
             Value v;
             if (isStatic()) {
                 v = constantValue();
