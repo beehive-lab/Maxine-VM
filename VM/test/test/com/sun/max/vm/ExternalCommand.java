@@ -69,7 +69,7 @@ public class ExternalCommand {
                 sb.append(" 2>&1");
             }
 
-            final String[] cmdarray = new String[] {"sh", "-c", sb.toString()};
+            final String[] cmdarray = new String[] {"bash", "-c", sb.toString()};
 
             if (logs.base != null) {
                 final PrintStream ps = new PrintStream(new FileOutputStream(logs.get(COMMAND)));
