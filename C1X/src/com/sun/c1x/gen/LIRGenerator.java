@@ -585,7 +585,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRDebugInfo info = maybeStateFor(x);
         LIRItem pointer = new LIRItem(x.pointer(), this);
         LIRItem value = new LIRItem(x.value(), this);
-        value.loadItem();
+        value.loadItem(x.dataKind);
         pointer.loadItem();
         CiAddress dst = getAddressForPointerOp(x, x.dataKind, pointer);
         lir.store(value.result(), dst, info);
