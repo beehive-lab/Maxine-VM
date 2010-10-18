@@ -34,6 +34,8 @@ import com.sun.max.lang.*;
  */
 public class X86InstructionHeader {
 
+    public static final X86InstructionHeader INVALID = new X86InstructionHeader();
+
     protected boolean hasAddressSizePrefix;
     protected HexByte rexPrefix;
     protected HexByte instructionSelectionPrefix;
