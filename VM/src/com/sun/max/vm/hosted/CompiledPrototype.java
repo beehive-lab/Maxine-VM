@@ -34,7 +34,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -43,7 +43,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.hosted.CompiledPrototype.Link.*;
+import com.sun.max.vm.hosted.CompiledPrototype.Link.Relationship;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.run.*;
@@ -655,7 +655,16 @@ public class CompiledPrototype extends Prototype {
                     adapter = gen != null ? gen.make(classMethodActor) : null;
                 }
                 if (!targetMethod.linkDirectCalls(adapter)) {
-                    ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
+                    final Object[] directCallees = targetMethod.directCallees();
+                    if (directCallees != null) {
+                        for (int i = 0; i < directCallees.length; i++) {
+                            Object currentDirectCallee = directCallees[i];
+                            final TargetMethod callee = targetMethod.getTargetMethod(currentDirectCallee);
+                            if (callee == null) {
+                                ProgramWarning.message("did not link direct callee " + currentDirectCallee + " in method: " + targetMethod);
+                            }
+                        }
+                    }
                 }
             }
         }

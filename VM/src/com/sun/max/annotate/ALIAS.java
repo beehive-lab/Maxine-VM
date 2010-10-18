@@ -20,6 +20,7 @@
  */
 package com.sun.max.annotate;
 import java.lang.annotation.*;
+import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.holder.*;
@@ -105,27 +106,41 @@ public @interface ALIAS {
     public static class Static {
 
         /**
+         * Map from method alias to aliased method.
+         */
+        private static final HashMap<MethodActor, MethodActor> aliasedMethods = new HashMap<MethodActor, MethodActor>();
+
+        /**
+         * Map from aliased field to aliased field.
+         */
+        private static final HashMap<FieldActor, FieldActor> aliasedFields = new HashMap<FieldActor, FieldActor>();
+
+        /**
          * Gets the field aliased by a given field, if any.
          *
          * @param field a field that may be an alias (i.e. annotated with {@link ALIAS})
          * @return the field aliased by {@code field} or {@code null} if it is not an alias
          */
-        public static FieldActor aliasedField(FieldActor field) {
+        public static synchronized FieldActor aliasedField(FieldActor field) {
             ALIAS alias = field.getAnnotation(ALIAS.class);
             if (alias != null) {
-                Class holder = declaringClass(alias);
-                String name = alias.name();
-                if (name.isEmpty()) {
-                    name = field.name();
-                }
-                FieldActor aliasedField = ClassActor.fromJava(holder).findLocalFieldActor(SymbolTable.makeSymbol(name), field.descriptor());
+                FieldActor aliasedField = aliasedFields.get(field);
                 if (aliasedField == null) {
-                    if (alias.optional()) {
-                        return field;
+                    Class holder = declaringClass(alias);
+                    String name = alias.name();
+                    if (name.isEmpty()) {
+                        name = field.name();
                     }
-                    throw FatalError.unexpected("Could not find target for alias " + field + " in " + holder.getName());
+                    aliasedField = ClassActor.fromJava(holder).findLocalFieldActor(SymbolTable.makeSymbol(name), field.descriptor());
+                    if (aliasedField == null) {
+                        if (alias.optional()) {
+                            return field;
+                        }
+                        throw FatalError.unexpected("Could not find target for alias " + field + " in " + holder.getName());
+                    }
+                    assert aliasedField.isStatic() == field.isStatic() : "Alias " + field + " must be static if " + aliasedField + " is";
+                    aliasedFields.put(field, aliasedField);
                 }
-                assert aliasedField.isStatic() == field.isStatic() : "Alias " + field + " must be static if " + aliasedField + " is";
                 return aliasedField;
             }
             return null;
@@ -137,26 +152,38 @@ public @interface ALIAS {
          * @param method a method that may be an alias (i.e. annotated with {@link ALIAS})
          * @return the method aliased by {@code method} or {@code null} if it is not an alias
          */
-        public static MethodActor resolveAlias(MethodActor method) {
+        public static synchronized MethodActor resolveAlias(MethodActor method) {
             ALIAS alias = method.getAnnotation(ALIAS.class);
             if (alias != null) {
-                Class holder = declaringClass(alias);
-                String name = alias.name();
-                if (name.isEmpty()) {
-                    name = method.name();
-                }
-
-                MethodActor aliasedMethod = ClassActor.fromJava(holder).findLocalMethodActor(SymbolTable.makeSymbol(name), method.descriptor());
+                MethodActor aliasedMethod = aliasedMethods.get(method);
                 if (aliasedMethod == null) {
-                    if (alias.optional()) {
-                        return method;
+                    Class holder = declaringClass(alias);
+                    String name = alias.name();
+                    if (name.isEmpty()) {
+                        name = method.name();
                     }
-                    throw FatalError.unexpected("Could not find target for alias " + method + " in " + holder.getName());
+
+                    aliasedMethod = ClassActor.fromJava(holder).findLocalMethodActor(SymbolTable.makeSymbol(name), method.descriptor());
+                    if (aliasedMethod == null) {
+                        if (alias.optional()) {
+                            return method;
+                        }
+                        throw FatalError.unexpected("Could not find target for alias " + method + " in " + holder.getName());
+                    }
+                    assert aliasedMethod.isStatic() == method.isStatic() : "Alias " + method + " must be static if " + aliasedMethod + " is";
+                    aliasedMethods.put(method, aliasedMethod);
                 }
-                assert aliasedMethod.isStatic() == method.isStatic() : "Alias " + method + " must be static if " + aliasedMethod + " is";
                 return aliasedMethod;
             }
             return null;
+        }
+
+        public static synchronized boolean isAliased(FieldActor field) {
+            return aliasedFields.containsValue(field);
+        }
+
+        public static synchronized boolean isAliased(MethodActor method) {
+            return aliasedMethods.containsValue(method);
         }
 
         private static Class declaringClass(ALIAS alias) {

@@ -207,20 +207,25 @@ public class CFGPrinter {
         FrameState state = block.stateBefore();
 
         do {
-            if (state.stackSize() > 0) {
+            int stackSize = state.stackSize();
+            if (stackSize > 0) {
                 begin("stack");
-                out.print("size ").println(state.stackSize());
+                out.print("size ").println(stackSize);
                 out.print("method \"").print(CiUtil.format("%f %h.%n(%p):%r", state.scope().method, false)).println('"');
 
                 int i = 0;
-                while (i < state.stackSize()) {
+                while (i < stackSize) {
                     Value value = state.stackAt(i);
                     out.disableIndentation();
                     out.print(InstructionPrinter.stateString(i, value, block));
                     printOperand(value);
                     out.println();
                     out.enableIndentation();
-                    i += value.kind.sizeInSlots();
+                    if (value == null) {
+                        i++;
+                    } else {
+                        i += value.kind.sizeInSlots();
+                    }
                 }
                 end("stack");
             }

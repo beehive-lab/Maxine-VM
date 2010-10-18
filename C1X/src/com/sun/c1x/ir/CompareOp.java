@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -35,9 +34,8 @@ public final class CompareOp extends Op2 {
      * @param opcode the bytecode opcode
      * @param x the first input
      * @param y the second input
-     * @param stateBefore the state before the comparison is performed
      */
-    public CompareOp(int opcode, Value x, Value y, FrameState stateBefore) {
+    public CompareOp(int opcode, Value x, Value y) {
         super(CiKind.Int, opcode, x, y);
     }
 

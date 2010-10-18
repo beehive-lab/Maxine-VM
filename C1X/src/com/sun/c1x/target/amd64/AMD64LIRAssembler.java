@@ -183,9 +183,9 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Char    :
             case Short   :
             case Int     : const2reg(dest.asRegister(), c.asInt()); break;
+            case Word    :
             case Long    : const2reg(dest.asRegister(), c.asLong()); break;
             case Jsr     : const2reg(dest.asRegister(), c.asJsr()); break;
-            case Word    : const2reg(dest.asRegister(), c.asLong()); break;
             case Object  : const2reg(dest.asRegister(), c.asObject()); break;
             case Float   : const2reg(asXmmFloatReg(dest), c.asFloat()); break;
             case Double  : const2reg(asXmmDoubleReg(dest), c.asDouble()); break;
@@ -280,8 +280,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Jsr     :
             case Int     : masm.movl(addr, src.asRegister()); break;
             case Object  :
-            case Long    :
-            case Word    : masm.movq(addr, src.asRegister()); break;
+            case Word    :
+            case Long    : masm.movq(addr, src.asRegister()); break;
             case Float   : masm.movflt(addr, asXmmFloatReg(src)); break;
             case Double  : masm.movsd(addr, asXmmDoubleReg(src)); break;
             default      : throw Util.shouldNotReachHere();
@@ -340,8 +340,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Jsr     :
             case Int     : masm.movl(dest.asRegister(), addr); break;
             case Object  :
-            case Long    :
-            case Word    : masm.movq(dest.asRegister(), addr); break;
+            case Word    :
+            case Long    : masm.movq(dest.asRegister(), addr); break;
             case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
             case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
             default      : throw Util.shouldNotReachHere();
@@ -387,23 +387,21 @@ public class AMD64LIRAssembler extends LIRAssembler {
         assert dest.isRegister();
 
         CiAddress addr = (CiAddress) src;
-        CiAddress fromAddr = addr;
-
         if (info != null) {
             asm.recordImplicitException(codePos(), info);
         }
 
         switch (kind) {
-            case Float   : masm.movflt(asXmmFloatReg(dest), fromAddr); break;
-            case Double  : masm.movdbl(asXmmDoubleReg(dest), fromAddr); break;
+            case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
+            case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
+            case Object  : masm.movq(dest.asRegister(), addr); break;
+            case Int     : masm.movslq(dest.asRegister(), addr); break;
             case Word    :
-            case Object  : masm.movq(dest.asRegister(), fromAddr); break;
-            case Int     : masm.movslq(dest.asRegister(), fromAddr); break;
             case Long    : masm.movq(dest.asRegister(), addr); break;
             case Boolean :
-            case Byte    : masm.movsxb(dest.asRegister(), fromAddr); break;
-            case Char    : masm.movzxl(dest.asRegister(), fromAddr); break;
-            case Short   : masm.movswl(dest.asRegister(), fromAddr); break;
+            case Byte    : masm.movsxb(dest.asRegister(), addr); break;
+            case Char    : masm.movzxl(dest.asRegister(), addr); break;
+            case Short   : masm.movswl(dest.asRegister(), addr); break;
             default      : throw Util.shouldNotReachHere();
         }
 
@@ -415,12 +413,10 @@ public class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitReadPrefetch(CiValue src) {
         CiAddress addr = (CiAddress) src;
-        CiAddress fromAddr = addr;
-
         switch (C1XOptions.ReadPrefetchInstr) {
-            case 0  : masm.prefetchnta(fromAddr); break;
-            case 1  : masm.prefetcht0(fromAddr); break;
-            case 2  : masm.prefetcht2(fromAddr); break;
+            case 0  : masm.prefetchnta(addr); break;
+            case 1  : masm.prefetcht0(addr); break;
+            case 2  : masm.prefetcht2(addr); break;
             default : throw Util.shouldNotReachHere();
         }
     }
@@ -740,13 +736,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
-        if (left.kind != right.kind) {
-            System.out.println("mismatch: " + left.kind + " <--> " + right.kind);
-            System.out.println("mismatch: " + left + " <--> " + right);
-            System.out.println(" at " + code);
-        }
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
-        assert left.kind == right.kind;
+        assert Util.archKindsEqual(left.kind, right.kind);
         assert left.equals(dest) : "left and dest must be equal";
         CiKind kind = left.kind;
 
@@ -802,13 +793,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         }
                     } else if (right.isConstant()) {
                         // register - constant
-                        if (kind.isInt()) {
-                            int delta = ((CiConstant) right).asInt();
-                            switch (code) {
-                                case Add : masm.incrementl(lreg, delta); break;
-                                case Sub : masm.decrementl(lreg, delta); break;
-                                default  : throw Util.shouldNotReachHere();
-                            }
+                        assert kind.isInt();
+                        int delta = ((CiConstant) right).asInt();
+                        switch (code) {
+                            case Add : masm.incrementl(lreg, delta); break;
+                            case Sub : masm.decrementl(lreg, delta); break;
+                            default  : throw Util.shouldNotReachHere();
                         }
                     }
                 } else if (kind.isFloat()) {
@@ -846,17 +836,27 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 } else {
                     // register - constant
                     assert target.sizeInBytes(kind) == 8;
-                    assert right.isConstant();
-                    long c = ((CiConstant) right).asLong();
-                    masm.mov64(rscratch1, c);
-                    switch (code) {
-                        case Add : masm.addq(lreg, rscratch1); break;
-                        case Sub : masm.subq(lreg, rscratch1); break;
-                        default  : throw Util.shouldNotReachHere();
+                    if (right.isStackSlot()) {
+                        // register - stack
+                        CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
+                        switch (code) {
+                            case Add : masm.addq(lreg, raddr); break;
+                            case Sub : masm.subq(lreg, raddr); break;
+                            default  : throw Util.shouldNotReachHere();
+                        }
+                    } else {
+                        // register - constant
+                        assert right.isConstant();
+                        long c = ((CiConstant) right).asLong();
+                        masm.mov64(rscratch1, c);
+                        switch (code) {
+                            case Add : masm.addq(lreg, rscratch1); break;
+                            case Sub : masm.subq(lreg, rscratch1); break;
+                            default  : throw Util.shouldNotReachHere();
+                        }
                     }
                 }
             }
-
         } else {
             assert kind.isInt();
             CiAddress laddr = asAddress(left);
@@ -1116,7 +1116,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
-        assert opr1.kind.stackKind() == opr2.kind.stackKind() : "nonmatching stack kinds (" + condition + "): " + opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
+        assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) : "nonmatching stack kinds (" + condition + "): " + opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
         if (opr1.isRegister()) {
             CiRegister reg1 = opr1.asRegister();
             if (opr2.isRegister()) {

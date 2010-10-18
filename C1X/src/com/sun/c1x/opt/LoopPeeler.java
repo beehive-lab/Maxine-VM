@@ -354,7 +354,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitCompareOp(CompareOp i) {
-        CompareOp other = new CompareOp(i.opcode, lookup(i.x()), lookup(i.y()), i.stateBefore());
+        CompareOp other = new CompareOp(i.opcode, lookup(i.x()), lookup(i.y()));
         other.setBCI(i.bci());
         bind(i, other);
         updateState(other);

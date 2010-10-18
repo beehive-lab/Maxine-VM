@@ -37,11 +37,11 @@ public final class Throw extends BlockEnd {
     /**
      * Creates a new Throw instruction.
      * @param exception the instruction that generates the exception to throw
-     * @param stateBefore the state before the exception is thrown
+     * @param stateAfter the state before the exception is thrown but after the exception object has been popped
      */
-    public Throw(Value exception, FrameState stateBefore) {
+    public Throw(Value exception, FrameState stateAfter) {
         super(CiKind.Illegal, null, true);
-        this.stateBefore = stateBefore;
+        this.stateBefore = stateAfter;
         this.exception = exception;
     }
 

@@ -22,6 +22,7 @@ package com.sun.c1x.value;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
@@ -111,9 +112,6 @@ public class MutableFrameState extends FrameState {
         if (kind.sizeInSlots() == 2) {
             xpush(null);
         }
-        if (kind.isWord()) {
-            unsafe = true;
-        }
     }
 
     /**
@@ -155,7 +153,6 @@ public class MutableFrameState extends FrameState {
      * @param x the instruction to push onto the stack
      */
     public void wpush(Value x) {
-        unsafe = true;
         xpush(assertWord(x));
     }
 
@@ -265,43 +262,43 @@ public class MutableFrameState extends FrameState {
         return assertDouble(xpop());
     }
 
-    private Value assertKind(CiKind kind, Value x) {
-        assert x != null && (unsafe || x.kind == kind) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
+    private static Value assertKind(CiKind kind, Value x) {
+        assert x != null && (x.kind == kind || !isTypesafe()) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
         return x;
     }
 
-    private Value assertLong(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Long);
+    private static Value assertLong(Value x) {
+        assert x != null && (x.kind == CiKind.Long || !isTypesafe());
         return x;
     }
 
-    private Value assertJsr(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Jsr);
+    private static Value assertJsr(Value x) {
+        assert x != null && (x.kind == CiKind.Jsr || !isTypesafe());
         return x;
     }
 
-    private Value assertInt(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Int);
+    private static Value assertInt(Value x) {
+        assert x != null && (x.kind == CiKind.Int || !isTypesafe());
         return x;
     }
 
-    private Value assertFloat(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Float);
+    private static Value assertFloat(Value x) {
+        assert x != null && (x.kind == CiKind.Float || !isTypesafe());
         return x;
     }
 
-    private Value assertObject(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Object);
+    private static Value assertObject(Value x) {
+        assert x != null && (x.kind == CiKind.Object || !isTypesafe());
         return x;
     }
 
-    private Value assertWord(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Word);
+    private static Value assertWord(Value x) {
+        assert x != null && (x.kind == CiKind.Word || !isTypesafe());
         return x;
     }
 
-    private Value assertDouble(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Double);
+    private static Value assertDouble(Value x) {
+        assert x != null && (x.kind == CiKind.Double || !isTypesafe());
         return x;
     }
 
@@ -347,6 +344,13 @@ public class MutableFrameState extends FrameState {
      */
     public FrameState immutableCopy() {
         return copy(true, true, true);
+    }
+
+    /**
+     * Determines if the current compilation is typesafe.
+     */
+    private static boolean isTypesafe() {
+        return C1XCompilation.current().isTypesafe();
     }
 
     private static void assertHigh(Value x) {

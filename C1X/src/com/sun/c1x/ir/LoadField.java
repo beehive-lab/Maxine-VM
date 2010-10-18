@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -70,5 +71,23 @@ public final class LoadField extends AccessField {
     @Override
     public void accept(ValueVisitor v) {
         v.visitLoadField(this);
+    }
+
+    /**
+     * Gets a constant value to which this load can be reduced.
+     *
+     * @return {@code null} if this load cannot be reduced to a constant
+     */
+    public CiConstant constantValue() {
+        if (isStatic()) {
+            return field.constantValue(null);
+        } else if (object().isConstant()) {
+            CiConstant cons = field.constantValue(object().asConstant().asObject());
+            if (cons != null) {
+                return cons;
+            }
+            return cons;
+        }
+        return null;
     }
 }

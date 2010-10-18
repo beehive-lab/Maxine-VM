@@ -1569,7 +1569,7 @@ function run_test() {
 #=======================================
 
 gate_usage="[options]"
-gate_presets="-maxvm-config-alias=mscpscps -fail-fast"
+gate_presets="-maxvm-config-alias=cpscps -fail-fast"
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
     If this commands exits with a 0 exit code, then the source code is in
@@ -1582,28 +1582,27 @@ gate_help="run the tests used to validate a push to the stable Maxine repository
 
     Use \"max gate -help\" to see what other options this command accepts."
 
-ssgc_presets="-maxvm-config-alias=cpscps -fail-fast"
+msgc_presets="-maxvm-config-alias=mscpscps -fail-fast"
 
-ssgc_testlist="-tests=output:"
+msgc_testlist="-tests=output:"
 sep=""
-i=0
-while [ ! $i == "8" ] ; do
-  ssgc_testlist="${ssgc_testlist}${sep}GCTest$i"
-  i=$[ $i + 1 ]
+for i in 0 1 2 3 4 5 6 7; do
+  msgc_testlist="${msgc_testlist}${sep}GCTest$i"
   sep="+"
 done
-i=1
-while [ ! $i == "5" ] ; do
-  ssgc_testlist="${ssgc_testlist}${sep}WeakReferenceTestt$i"
-  i=$[ $i + 1 ]
+
+for i in 1 2 3 4; do
+  msgc_testlist="${msgc_testlist}${sep}WeakReferenceTestt$i"
 done
 
-ssgc_presets="$ssgc_presets $ssgc_testlist"
-
+msgc_presets="$msgc_presets $msgc_testlist"
 
 function run_gate() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@" || 
-       run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${ssgc_presets} "$@"
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
+    if [ $? -eq 0 -a "$MAXINE_OS" != "linux" ]; then
+       # Remove the conditional test for Linux above once MSHeapScheme has been tested on Linux 
+       run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${msgc_presets} "$@"
+    fi
 }
 
 
