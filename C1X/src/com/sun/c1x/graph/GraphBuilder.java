@@ -2381,7 +2381,13 @@ public final class GraphBuilder {
         append(new StoreRegister(CiKind.Word, register, value));
     }
 
-    private static CiKind kindForPointerOp(int opcode) {
+    /**
+     * Gets the data kind corresponding to a given pointer operation opcode.
+     * The data kind may be more specific than a {@linkplain CiKind#stackKind()}.
+     *
+     * @return the kind of value at the address accessed by the pointer operation denoted by {@code opcode}
+     */
+    private static CiKind dataKindForPointerOp(int opcode) {
         switch (opcode) {
             case PGET_BYTE          :
             case PSET_BYTE          :
@@ -2441,7 +2447,7 @@ public final class GraphBuilder {
 
     private void genLoadPointer(int opcode) {
         FrameState stateBefore = curState.immutableCopy();
-        CiKind kind = kindForPointerOp(opcode);
+        CiKind dataKind = dataKindForPointerOp(opcode);
         Value offsetOrIndex;
         Value displacement;
         if ((opcode & 0xff) == PREAD) {
@@ -2452,13 +2458,13 @@ public final class GraphBuilder {
             displacement = ipop();
         }
         Value pointer = wpop();
-        push(kind.stackKind(), append(new LoadPointer(kind.stackKind(), opcode, pointer, displacement, offsetOrIndex, stateBefore, false)));
+        push(dataKind.stackKind(), append(new LoadPointer(dataKind, opcode, pointer, displacement, offsetOrIndex, stateBefore, false)));
     }
 
     private void genStorePointer(int opcode) {
         FrameState stateBefore = curState.immutableCopy();
-        CiKind kind = kindForPointerOp(opcode);
-        Value value = pop(kind.stackKind());
+        CiKind dataKind = dataKindForPointerOp(opcode);
+        Value value = pop(dataKind.stackKind());
         Value offsetOrIndex;
         Value displacement;
         if ((opcode & 0xff) == PWRITE) {
@@ -2469,7 +2475,7 @@ public final class GraphBuilder {
             displacement = ipop();
         }
         Value pointer = wpop();
-        append(new StorePointer(opcode, pointer, displacement, offsetOrIndex, value, stateBefore, false));
+        append(new StorePointer(opcode, dataKind, pointer, displacement, offsetOrIndex, value, stateBefore, false));
     }
 
     private static CiKind kindForCompareAndSwap(int opcode) {

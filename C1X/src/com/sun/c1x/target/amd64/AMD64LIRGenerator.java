@@ -474,41 +474,41 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitCompareAndSwap(CompareAndSwap x) {
-        CiKind kind = x.kind;
+        CiKind dataKind = x.dataKind;
         LIRItem pointer = new LIRItem(x.pointer(), this);
         LIRItem expectedValue = new LIRItem(x.expectedValue(), this);
         LIRItem newValue = new LIRItem(x.newValue(), this);
 
 
         assert pointer.instruction.kind.isWord();
-        assert Util.archKindsEqual(expectedValue.instruction.kind, kind) : "invalid type";
-        assert Util.archKindsEqual(newValue.instruction.kind, kind) : "invalid type";
+        assert Util.archKindsEqual(expectedValue.instruction.kind, dataKind) : "invalid type";
+        assert Util.archKindsEqual(newValue.instruction.kind, dataKind) : "invalid type";
 
         pointer.loadItem();
-        CiAddress addr = getAddressForPointerOp(x, x.kind, pointer);
+        CiAddress addr = getAddressForPointerOp(x, dataKind, pointer);
 
-        expectedValue.loadItemForce(AMD64.rax.asValue(kind));
+        expectedValue.loadItemForce(AMD64.rax.asValue(dataKind));
         newValue.loadItem();
 
-        if (kind.isObject()) { // Write-barrier needed for Object fields.
+        if (dataKind.isObject()) { // Write-barrier needed for Object fields.
             // Do the pre-write barrier : if any.
             preGCWriteBarrier(addr, false, null);
         }
 
         CiValue result = createResultVariable(x);
-        CiValue resultReg = AMD64.rax.asValue(kind);
-        if (kind.isObject()) {
+        CiValue resultReg = AMD64.rax.asValue(dataKind);
+        if (dataKind.isObject()) {
             lir.casObj(addr, expectedValue.result(), newValue.result());
-        } else if (kind.isInt()) {
+        } else if (dataKind.isInt()) {
             lir.casInt(addr, expectedValue.result(), newValue.result());
         } else {
-            assert kind.isLong() || kind.isWord();
+            assert dataKind.isLong() || dataKind.isWord();
             lir.casLong(addr, expectedValue.result(), newValue.result());
         }
 
         lir.move(resultReg, result);
 
-        if (kind.isObject()) { // Write-barrier needed for Object fields.
+        if (dataKind.isObject()) { // Write-barrier needed for Object fields.
             // Seems to be precise
             postGCWriteBarrier(addr, newValue.result());
         }
