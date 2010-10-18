@@ -1294,7 +1294,7 @@ public final class GraphBuilder {
         } else if (array.isConstant()) {
             // the array itself is a constant
             return true;
-        } else if (array instanceof AccessField && ((AccessField) array).field().isConstant()) {
+        } else if (array instanceof LoadField && ((LoadField) array).constantValue() != null) {
             // the length is derived from a constant array
             return true;
         } else if (array instanceof NewArray) {

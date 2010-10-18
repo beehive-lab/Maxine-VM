@@ -64,10 +64,6 @@ public class CiUnresolvedField implements RiField {
         throw unresolved("accessFlags()");
     }
 
-    public boolean isConstant()  {
-        return false;
-    }
-
     public CiConstant constantValue(Object object) {
         return null;
     }
