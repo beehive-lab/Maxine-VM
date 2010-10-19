@@ -1599,10 +1599,13 @@ msgc_presets="$msgc_presets $msgc_testlist"
 
 function run_gate() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
-    if [ $? -eq 0 -a "$MAXINE_OS" != "linux" ]; then
-       # Remove the conditional test for Linux above once MSHeapScheme has been tested on Linux 
-       run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${msgc_presets} "$@"
+    result=$?
+    if [ $result -eq 0 -a "$MAXINE_OS" != "linux" ]; then
+        # Remove the conditional test for Linux above once MSHeapScheme has been tested on Linux 
+        run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${msgc_presets} "$@"
+        result=$?
     fi
+    exit $result
 }
 
 
