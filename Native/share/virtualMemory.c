@@ -72,6 +72,11 @@ static Address check_mmap_result(void *result) {
  */
 Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean reserveSwap, jboolean protNone, int type) {
   int flags = MAP_PRIVATE | MAP_ANON;
+#if os_LINUX
+  /* For some reason, subsequent calls to mmap to allocate out of the space
+   * reserved here only work if the reserved space is in 32-bit space. */
+//  flags |= MAP_32BIT;
+#endif
   int prot = protNone == JNI_TRUE ? PROT_NONE : PROT;
   if (reserveSwap == JNI_FALSE) {
      flags |= MAP_NORESERVE;
@@ -148,7 +153,7 @@ Address virtualMemory_deallocate(Address start, Size size, int type) {
 }
 
 boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
-#if os_SOLARIS || os_DARWIN || os_LINUX
+#if os_SOLARIS || os_DARWIN
     return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0)) != ALLOC_FAILED;
 #elif os_GUESTVMXEN
     return (Address) guestvmXen_virtualMemory_allocateAtFixedAddress((unsigned long)address, size, type) != ALLOC_FAILED;

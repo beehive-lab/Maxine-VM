@@ -159,13 +159,15 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     @HOSTED_ONLY
     public CodeManager createCodeManager() {
         switch (Platform.platform().operatingSystem) {
-            case GUESTVM:
-                return new FixedAddressCodeManager();
-
-            case LINUX:
+            case LINUX: {
+                return new LowAddressCodeManager();
+            }
             case DARWIN:
             case SOLARIS: {
                 return new VariableAddressCodeManager();
+            }
+            case GUESTVM: {
+                return new FixedAddressCodeManager();
             }
             default: {
                 FatalError.unimplemented();
