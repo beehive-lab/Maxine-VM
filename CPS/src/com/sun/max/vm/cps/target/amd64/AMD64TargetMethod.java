@@ -76,7 +76,9 @@ public abstract class AMD64TargetMethod {
 
     private static void patchCode(TargetMethod targetMethod, int offset, long target, int controlTransferOpcode) {
         final Pointer callSite = targetMethod.codeStart().plus(offset);
-        final long displacement = (target - (callSite.toLong() + 5L)) & 0xFFFFFFFFL;
+        long displacement = target - (callSite.toLong() + 5L);
+        FatalError.check((int) displacement == displacement, "Code displacement out of 32-bit range");
+        displacement = displacement & 0xFFFFFFFFL;
         if (MaxineVM.isHosted()) {
             final byte[] code = targetMethod.code();
             code[offset] = (byte) controlTransferOpcode;
