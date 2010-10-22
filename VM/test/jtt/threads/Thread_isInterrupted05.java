@@ -20,6 +20,8 @@
  */
 package jtt.threads;
 
+import java.lang.Thread.UncaughtExceptionHandler;
+
 /*
  * @Harness: java
  * @Runs: 0 = true
@@ -30,9 +32,20 @@ public class Thread_isInterrupted05 {
 
     public static boolean test(int i)  throws InterruptedException {
         final Thread waitInterruptee = new WaitInterruptee();
+        final Throwable[] throwable = new Throwable[1];
+        waitInterruptee.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread thread, Throwable t) {
+                t.printStackTrace();
+                throwable[0] = t;
+            }
+        });
+
         waitInterruptee.start();
         waitInterruptee.interrupt();
         waitInterruptee.join();
+
+        if (throwable[0] != null) throw new RuntimeException(throwable[0]);
         return true;
     }
 
