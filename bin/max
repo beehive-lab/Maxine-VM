@@ -170,7 +170,7 @@ if [ -z "${JAVA_HOME}" ]; then
     elif [ -d /usr/jdk/latest ]; then
        export JAVA_HOME=/usr/jdk/latest
     else
-       echo "JAVA_HOME must be set to a JDK 6 installation directory"
+       echo "JAVA_HOME is not defined. It must point to a JDK 6 installation directory"
        exit 1;
     fi
 fi
@@ -306,7 +306,7 @@ projects=( ${projects[@]} ${extra_projects[@]} )
 
 test -n "${JUNIT4_CP}" || { echo "Need to use '-junit4' option or JUNIT4_CP environment variable to specify a class path for Junit4 classes"; exit 1; }
 junit_version="`$jvm -cp ${JUNIT4_CP} junit.runner.Version 2>&1`"
-if [[ "$junit_version" != 4.8.1 ]]; then
+if [[ "$junit_version" != 4.8.1  && "$junit_version" != 4.5 ]]; then
     echo "The value of JUNIT4_CP ($JUNIT4_CP) does not denote a JUnit4.8.1 installation."
     echo "Running \"$jvm -cp ${JUNIT4_CP} junit.runner.Version\" produced:"
     echo "$junit_version"
