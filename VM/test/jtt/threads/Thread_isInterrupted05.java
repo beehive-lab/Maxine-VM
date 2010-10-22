@@ -45,7 +45,9 @@ public class Thread_isInterrupted05 {
         waitInterruptee.interrupt();
         waitInterruptee.join();
 
-        if (throwable[0] != null) throw new RuntimeException(throwable[0]);
+        if (throwable[0] != null) {
+            throw new RuntimeException(throwable[0]);
+        }
         return true;
     }
 
