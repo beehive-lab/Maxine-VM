@@ -958,7 +958,7 @@ public final class GraphBuilder {
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      */
     private static RiMethod bindAccessorMethod(RiMethod target) {
-        if (target.isResolved() && target.holder().javaClass() == Accessor) {
+        if (target.isResolved() && target.holder().javaClass() == Accessor && Accessor != null) {
             RiType accessor = boundAccessor.get();
             assert accessor != null : "Cannot compile call to method in " + target.holder() + " without enclosing @ACCESSOR annotated method";
             RiMethod newTarget = accessor.resolveMethodImpl(target);
