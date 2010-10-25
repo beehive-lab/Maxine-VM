@@ -75,19 +75,24 @@ public class C1XCompiler extends CiCompiler {
 
     @Override
     public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
-        C1XCompilation compilation = new C1XCompilation(this, target, runtime, method, osrBCI);
-        CiResult result = compilation.compile();
-        if (false) {
-            if (result.bailout() != null) {
-                int oldLevel = C1XOptions.TraceBytecodeParserLevel;
-                String oldFilter = C1XOptions.PrintFilter;
-                C1XOptions.TraceBytecodeParserLevel = 2;
-                C1XOptions.PrintFilter = null;
-                new C1XCompilation(this, target, runtime, method, osrBCI).compile();
-                C1XOptions.TraceBytecodeParserLevel = oldLevel;
-                C1XOptions.PrintFilter = oldFilter;
+        long startTime = 0;
+        int index = C1XMetrics.CompiledMethods++;
+        if (C1XOptions.PrintCompilation) {
+            TTY.print(String.format("Compiling method %4d %-55s %-40s | ", index, method.holder().name(), method.name()));
+            startTime = System.nanoTime();
+        }
+
+        CiResult result = null;
+        try {
+            C1XCompilation compilation = new C1XCompilation(this, target, runtime, method, osrBCI);
+            result = compilation.compile();
+        } finally {
+            if (C1XOptions.PrintCompilation) {
+                long time = (System.nanoTime() - startTime) / 1000000;
+                TTY.println((time) + "ms");
             }
         }
+
         return result;
     }
 

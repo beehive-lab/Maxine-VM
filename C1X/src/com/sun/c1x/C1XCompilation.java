@@ -343,10 +343,6 @@ public class C1XCompilation {
 
     public IR emitHIR() {
 
-        if (C1XOptions.PrintCompilation) {
-            TTY.println();
-            TTY.println("Compiling method: " + method.toString());
-        }
         hir = new IR(this);
         hir.build();
         return hir;
