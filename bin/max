@@ -215,16 +215,23 @@ if [ -z "${MAXINE_OS}" ]; then
     OS=`uname -s`
     case $OS in
         Darwin* )
-            if [ "$java_version" != "1.6.0_20" ]; then
+            supported_macosx_jdks="1.6.0_20 1.6.0_22"
+            version_found=0
+            for maxos_java_version in $supported_macosx_jdks; do
+                if [ "$java_version" = "$maxos_java_version" ]; then
+                    version_found=1
+                fi
+            done
+            if [ $version_found -eq 0 ]; then
                 # Integration with the JDK on Mac OS X has proven to be brittle
                 # due to the way in which the JDK libraries are linked against
                 # each other. For example, in version 1.6.0_17 libjava.jnilib
                 # had a Mach-O load command that explicitly specified a hard coded
                 # absolute path to libclient.dylib. In version 1.6.0_20, the linkage
                 # mechanism was changed to use @rpath/ commands instead (see the
-                # man page for dyld(1)). To keep things simple, only an exact
-                # version of the Mac OS X JDK is supported.
-                echo "WARNING: Only JDK 1.6.0_20 is known to work with Maxine on Mac OS X"
+                # man page for dyld(1)). To keep things simple, only exact
+                # versions of the Mac OS X JDK are supported.
+                echo "WARNING: Only the following JDK versions are known to work with Maxine on Mac OS X: ${supported_macosx_jdks/ /, }"
             fi
             MAXINE_OS=darwin
             ;;
