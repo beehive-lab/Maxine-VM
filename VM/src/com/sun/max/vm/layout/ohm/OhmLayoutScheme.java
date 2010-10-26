@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.layout.ohm;
 
+import static com.sun.max.vm.type.Kind.*;
+
 import com.sun.max.vm.layout.*;
 
 /**
@@ -33,17 +35,17 @@ public class OhmLayoutScheme extends LayoutScheme {
         super(new OhmGeneralLayout(),
               new OhmTupleLayout(),
               new OhmHybridLayout(),
-              new OhmArrayHeaderLayout(),
-              new OhmByteArrayLayout(),
-              new OhmBooleanArrayLayout(),
-              new OhmShortArrayLayout(),
-              new OhmCharArrayLayout(),
-              new OhmIntArrayLayout(),
-              new OhmFloatArrayLayout(),
-              new OhmLongArrayLayout(),
-              new OhmDoubleArrayLayout(),
-              new OhmWordArrayLayout(),
-              new OhmReferenceArrayLayout());
+              new OhmArrayLayout(null),
+              new OhmArrayLayout(BYTE),
+              new OhmArrayLayout(BOOLEAN),
+              new OhmArrayLayout(SHORT),
+              new OhmArrayLayout(CHAR),
+              new OhmArrayLayout(INT),
+              new OhmArrayLayout(FLOAT),
+              new OhmArrayLayout(LONG),
+              new OhmArrayLayout(DOUBLE),
+              new OhmArrayLayout(WORD),
+              new OhmArrayLayout(REFERENCE));
     }
 
 }

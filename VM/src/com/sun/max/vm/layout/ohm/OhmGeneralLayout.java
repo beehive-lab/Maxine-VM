@@ -133,7 +133,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
             case TUPLE:
                 return Layout.tupleLayout().specificSize(accessor);
             case ARRAY:
-                return Layout.arrayHeaderLayout().getArraySize(hub.classActor.componentClassActor().kind, Layout.arrayHeaderLayout().readLength(accessor));
+                return Layout.arrayLayout().getArraySize(hub.classActor.componentClassActor().kind, Layout.arrayLayout().readLength(accessor));
             case HYBRID:
                 return Layout.hybridLayout().specificSize(accessor);
         }
