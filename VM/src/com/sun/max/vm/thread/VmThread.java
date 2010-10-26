@@ -504,6 +504,7 @@ public class VmThread {
      * @param stackYellowZone the stack page(s) that have been protected to detect stack overflow
      */
     @VM_ENTRY_POINT
+    @INSPECTED
     private static void run(Pointer threadLocals,
                     Pointer stackBase,
                     Pointer stackEnd) {
@@ -629,6 +630,13 @@ public class VmThread {
         }
     }
 
+
+    @INSPECTED
+    @NEVER_INLINE
+    private static void detached() {
+
+    }
+
     /**
      * Cleans up a thread that is terminating.
      *
@@ -672,7 +680,9 @@ public class VmThread {
             // reset to RUNNABLE if it blocks here.
             VmThreadMap.ACTIVE.removeThreadLocals(thread);
         }
-
+        if (MaxineVM.isDebug()) {
+            detached();
+        }
         // Monitor acquisition after point this MUST NOT HAPPEN as it may reset state to RUNNABLE
         thread.nativeThread = Address.zero();
         thread.vmThreadLocals = Pointer.zero();
