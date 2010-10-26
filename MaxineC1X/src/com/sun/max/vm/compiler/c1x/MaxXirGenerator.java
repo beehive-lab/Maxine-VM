@@ -156,7 +156,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         this.hub_componentHub = FieldActor.findInstance(Hub.class, "componentHub").offset();
         this.wordSize = platform().wordWidth().numberOfBytes;
         assert wordSize == target.wordSize : "word size mismatch";
-        this.arrayLengthOffset = Layout.arrayHeaderLayout().arrayLengthOffset();
+        this.arrayLengthOffset = Layout.arrayLayout().arrayLengthOffset();
         this.offsetOfFirstArrayElement = Layout.byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
     }
 

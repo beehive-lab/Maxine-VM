@@ -1406,7 +1406,7 @@ public abstract class TeleVM implements MaxVM {
         int offset = teleFields().String_offset.readInt(stringReference);
         final int count = teleFields().String_count.readInt(stringReference);
         final char[] chars = new char[count];
-        final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
+        final ArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
         for (int i = 0; i < count; i++) {
             chars[i] = charArrayLayout.getChar(valueReference, offset);
             offset++;
@@ -1436,7 +1436,7 @@ public abstract class TeleVM implements MaxVM {
             int offset = stringRef.readInt(teleFields.String_offset.fieldActor().offset());
             final int count = stringRef.readInt(teleFields.String_count.fieldActor().offset());
             final char[] chars = new char[count];
-            final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
+            final ArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
             for (int i = 0; i < count; i++) {
                 chars[i] = charArrayLayout.getChar(valueRef, offset);
                 offset++;
@@ -1476,7 +1476,7 @@ public abstract class TeleVM implements MaxVM {
         if (!fieldValue.isZero()) {
             // Assert that this points to an array of references
             final RemoteTeleReference arrayReference = createTemporaryRemoteTeleReference(fieldValue);
-            final int length = vmConfig().layoutScheme().arrayHeaderLayout.readLength(arrayReference);
+            final int length = vmConfig().layoutScheme().arrayLayout.readLength(arrayReference);
 
             // Read the references as words to avoid using too much machinery
             for (int index = 0; index < length; index++) {

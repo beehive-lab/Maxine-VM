@@ -178,7 +178,7 @@ public class LargeObjectSpace extends HeapSweeper {
         // points to the appropriate list.
         // Given that BLOCK_SIZE >> LOG2_BLOCK_SIZE == 1, we just need to set the start at the address
         // of the first element (index 0) minus 1.
-        ReferenceArrayLayout layout = vmConfig().layoutScheme().referenceArrayLayout;
+        ArrayLayout layout = vmConfig().layoutScheme().referenceArrayLayout;
         Pointer tableOrigin = Reference.fromJava(chunkSizeTable).toOrigin();
         Pointer tableFirstElementPointer = tableOrigin.plus(layout.getElementOffsetInCell(0));
         chunkSizeTableStart = tableFirstElementPointer.minus(layout.getElementOffsetFromOrigin(1));

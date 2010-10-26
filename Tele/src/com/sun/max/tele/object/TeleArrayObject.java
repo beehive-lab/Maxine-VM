@@ -63,7 +63,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public HeaderField[] headerFields() {
-        return Layout.arrayHeaderLayout().headerFields();
+        return Layout.arrayLayout().headerFields();
     }
 
     /**
@@ -71,7 +71,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
      */
     public int getLength() {
         if (length < 0) {
-            length = vmConfig().layoutScheme().arrayHeaderLayout.readLength(reference());
+            length = vmConfig().layoutScheme().arrayLayout.readLength(reference());
         }
         return length;
     }
@@ -86,7 +86,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public Size objectSize() {
-        return vmConfig().layoutScheme().arrayHeaderLayout.getArraySize(componentKind(), length);
+        return vmConfig().layoutScheme().arrayLayout.getArraySize(componentKind(), length);
     }
 
     @Override
