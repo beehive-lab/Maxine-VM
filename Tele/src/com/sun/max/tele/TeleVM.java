@@ -954,41 +954,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
-      /*  assert listener != null;
-        gcStartedListeners.add(listener);
-        if (!gcStartedListeners.isEmpty() && gcStartedBreakpoint == null) {
-            final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
-
-                public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-                    Trace.line(TRACE_VALUE, tracePrefix() + " updating GCStartedListeners");
-                    for (MaxGCStartedListener listener : gcStartedListeners) {
-                        listener.gcStarted();
-                    }
-                    return false;
-                }
-            };
-            try {
-                gcStartedBreakpoint = teleProcess.targetBreakpointManager().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
-                gcStartedBreakpoint.setDescription("Internal breakpoint, just after start of GC, to notify listeners");
-            } catch (MaxVMBusyException maxVMBusyException) {
-                gcStartedListeners.remove(listener);
-                throw maxVMBusyException;
-            }
-        }*/
+        gcStartedListeners.add(listener, teleProcess);
     }
 
     public void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
-       /* assert listener != null;
         gcStartedListeners.remove(listener);
-        if (gcStartedListeners.isEmpty() && gcStartedBreakpoint != null) {
-            try {
-                gcStartedBreakpoint.remove();
-            } catch (MaxVMBusyException maxVMBusyException) {
-                gcStartedListeners.add(listener);
-                throw maxVMBusyException;
-            }
-            gcStartedBreakpoint = null;
-        }*/
     }
 
     public void addThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException {
