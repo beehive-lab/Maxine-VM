@@ -20,48 +20,14 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
 
 /**
- * An object that refer to some aspect of the VM state, with
- * convenience methods for access to other aspects.
+ * Listener interface for VM thread entry.
+ * Notification of thread enter is made when a thread hit the first instruction of the VMThread run method.
  *
- * @author Michael Van De Vanter
+ * @author Laurent Daynes
+ *
  */
-public interface TeleVMAccess {
-
-    /**
-     * @return the instance of VM being managed by this code.
-     */
-    TeleVM vm();
-
-    /**
-     * Gets the manager for locating and managing code related information in the VM.
-     * <br>
-     * Thread-safe
-     *
-     * @return the singleton manager for information about code in the VM.
-     */
-    CodeManager codeManager();
-
-    /**
-     * Gets the factory for creating and managing VM breakpoints.
-     * <br>
-     * Thread-safe
-     *
-     * @return the singleton factory for creating and managing VM breakpoints
-     */
-    TeleBreakpointManager breakpointManager();
-
-    /**
-     * Gets the factory for creating and managing VM watchpoints; null
-     * if watchpoints are not supported on this platform.
-     * <br>
-     * Thread-safe
-     *
-     * @return the singleton factory for creating and managing VM watchpoints, or
-     * null if watchpoints not supported.
-     */
-    TeleWatchpoint.WatchpointManager watchpointManager();
+public interface MaxVMThreadEntryListener {
+    void entered(MaxThread thread);
 }

@@ -28,11 +28,12 @@ import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
-import com.sun.max.tele.field.TeleFields.*;
+import com.sun.max.tele.field.TeleFields.InspectedMemberReifier;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.tele.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -63,6 +64,8 @@ public class TeleMethods extends AbstractTeleVMHolder {
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCCompleted = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCCompleted", SignatureDescriptor.create("(J)V"));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCStarted = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCStarted", SignatureDescriptor.create("(J)V"));
     public final TeleStaticMethodAccess TargetBreakpoint_findOriginalCode = new TeleStaticMethodAccess(vm(), TargetBreakpoint.class, "findOriginalCode", SignatureDescriptor.create("(J)[B"));
+    public final TeleStaticMethodAccess VmThread_detached = new TeleStaticMethodAccess(vm(), VmThread.class, "detached", SignatureDescriptor.create("()V"));
+    public final TeleStaticMethodAccess VmThread_run = new TeleStaticMethodAccess(vm(), VmThread.class, "run", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Pointer;Lcom/sun/max/unsafe/Pointer;Lcom/sun/max/unsafe/Pointer;)V"));
     // END GENERATED CONTENT
 
     // Checkstyle: resume field name check
@@ -72,6 +75,8 @@ public class TeleMethods extends AbstractTeleVMHolder {
     private CodeLocation compilationComplete = CodeLocation.createMachineCodeLocation(vm(), InspectableCodeInfo_inspectableCompilationComplete, "Compilation complete (internal)");
     private CodeLocation gcCompleted = CodeLocation.createMachineCodeLocation(vm(), InspectableHeapInfo_inspectableGCCompleted, "GC completed (internal)");
     private CodeLocation gcStarted = CodeLocation.createMachineCodeLocation(vm(), InspectableHeapInfo_inspectableGCStarted, "GC started (internal)");
+    private CodeLocation vmThreadRunning = CodeLocation.createMachineCodeLocation(vm(), VmThread_run, "VmThread running (internal) ");
+    private CodeLocation vmThreadDetached = CodeLocation.createMachineCodeLocation(vm(), VmThread_detached, "VmThread detached (internal) ");
 
     private final List<CodeLocation> clientInspectableMethods;
 
@@ -106,6 +111,20 @@ public class TeleMethods extends AbstractTeleVMHolder {
      */
     public CodeLocation compilationComplete() {
         return compilationComplete;
+    }
+
+    /**
+     * @return a VM method for internal (non-client) use that is called whenever a thread enter its run method (equivalent to whenever a new thread is running) .
+     */
+    public CodeLocation vmThreadRun() {
+        return vmThreadRunning;
+    }
+
+    /**
+     * @return a VM method for internal (non-client) use that is called whenever a VmThread has detached itself from the active list.
+     */
+    public CodeLocation vmThreadDetached() {
+        return vmThreadDetached;
     }
 
     /**

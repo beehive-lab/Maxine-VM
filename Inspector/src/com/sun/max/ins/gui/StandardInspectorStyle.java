@@ -250,17 +250,21 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
 
     private static final Color vmTerminatedBackgroundColor = InspectorStyle.LightCoral;
 
-    public Color vmStoppedBackgroundColor() {
-        return InspectorStyle.SunBlue3;
+    public Color vmStoppedBackgroundColor(boolean withInvalidReferences) {
+        return withInvalidReferences ? InspectorStyle.SunBlue1 : InspectorStyle.SunBlue3;
     }
-    public Color vmStoppedinGCBackgroundColor() {
-        return InspectorStyle.SunYellow3;
+    public Color vmStoppedinGCBackgroundColor(boolean withInvalidReferences) {
+        return withInvalidReferences ? InspectorStyle.SunYellow1 : InspectorStyle.SunYellow3;
     }
     public Color vmRunningBackgroundColor() {
         return InspectorStyle.SunGreen3;
     }
     public Color vmTerminatedBackgroundColor() {
         return vmTerminatedBackgroundColor;
+    }
+
+    public Color vmStoppedWithInvalidReferenceBackgroundColor() {
+        return InspectorStyle.SunBlue1;
     }
 
     private static final Color debugSelectionBorderColor = InspectorStyle.Blue;
