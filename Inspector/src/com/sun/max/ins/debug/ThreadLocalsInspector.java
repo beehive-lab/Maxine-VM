@@ -85,6 +85,9 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
+        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
+        Watchpoints.buildThreadLocalWatchpointMenu(inspection, editMenu);
+
         refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
     }

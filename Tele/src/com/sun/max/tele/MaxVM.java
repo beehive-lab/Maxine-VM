@@ -189,6 +189,34 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException;
 
     /**
+     * Adds a listener for VmThreads entering their run methods in the VM.
+     * @param listener a listener for thread enter
+     * @throws MaxVMBusyException
+     */
+    void addThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException;
+
+    /**
+     * Adds a listener for VmThreads that just detached from the ACTIVE list of threads.
+     * @param listener a listener for thread detach
+     * @throws MaxVMBusyException
+     */
+    void addThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException;
+
+    /**
+     * Removes a listener for VmThreads entering their run methods in the VM.
+     * @param listener a listener for thread enter
+     * @throws MaxVMBusyException
+     */
+    void removeThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException;
+
+   /**
+    * Removes a listener for VmThreads that just detached from the ACTIVE list of threads.
+    * @param listener a listener for thread detach
+    * @throws MaxVMBusyException
+    */
+    void removeThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException;
+
+    /**
      * Finds the allocated region of memory in the VM, if any, that includes an address.
      *
      * @param address a memory location in the VM
@@ -515,5 +543,13 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      */
     void releaseLegacyVMAccess();
 
+    /**
+     * Gets the logger used to record detected invalid references.
+     * <br>
+     * Thread-safe
+     *
+     * @return the singleton invalid reference logger for this VM.
+     */
+    InvalidReferencesLogger invalidReferencesLogger();
 }
 

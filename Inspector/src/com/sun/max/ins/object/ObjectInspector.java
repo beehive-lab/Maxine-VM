@@ -269,7 +269,7 @@ public abstract class ObjectInspector extends Inspector {
         if (teleObject.isDead()) {
             setStateColor(style().vmTerminatedBackgroundColor());
         } else if (teleObject.isObsolete()) {
-            setStateColor(style().vmStoppedinGCBackgroundColor());
+            setStateColor(style().vmStoppedinGCBackgroundColor(false));
         } else {
             setStateColor(null);
         }

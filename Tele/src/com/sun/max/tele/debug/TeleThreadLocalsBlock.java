@@ -107,6 +107,11 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
     private long lastRefreshedEpoch = -1L;
 
     /**
+     * Control to prevent infinite recursion due to cycle in call path.
+     */
+    private boolean updatingCache = false;
+
+    /**
      * The VM thread object pointed to by the most recently read value of a particular thread local variable.
      */
     private TeleVmThread teleVmThread = null;
@@ -167,6 +172,10 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
             // This gets called redundantly from several places; be sure it only gets done once per epoch.
             if (lastRefreshedEpoch < processEpoch) {
                 assert vm().lockHeldByCurrentThread();
+                if (updatingCache) {
+                    return;
+                }
+                updatingCache = true;
                 updateTracer.begin();
                 for (TeleThreadLocalsArea teleThreadLocalsArea : areas.values()) {
                     if (teleThreadLocalsArea != null) {
@@ -181,6 +190,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
                         teleVmThread = (TeleVmThread) heap().makeTeleObject(vmThreadReference);
                     }
                 }
+                updatingCache = false;
                 lastRefreshedEpoch = processEpoch;
                 updateTracer.end(null);
             }
